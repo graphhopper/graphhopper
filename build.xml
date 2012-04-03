@@ -1,0 +1,17 @@
+<project name="MyProject" default="replaceall" basedir=".">
+    <description>
+        simple example build file
+    </description>
+    
+  <!-- ************ REPLACE STRINGS ********** -->
+    <target name="replaceall" description="replace string">
+        <replace dir="./" summary="true">
+            <include name="src/**/*"/>            
+                        
+    <!-- replacetoken = fromString  replacevalue = toString;   -->
+            <replacetoken><![CDATA[jetwick_@_pannous_._info]]></replacetoken>
+            <replacevalue><![CDATA[info@jetsli.de]]></replacevalue>
+        </replace>
+    </target>
+  
+</project>

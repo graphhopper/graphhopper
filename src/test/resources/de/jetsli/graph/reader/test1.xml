@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm">
+    <node id="10" lat="51.2492152" lon="9.4317166" uid="24853">
+        <tag k="is_in" v="Wiesbaden,Hessen,Germany,Europe" />
+        <tag k="name" v="Wiesbaden-Naurod" />
+        <tag k="place" v="village" />
+    </node>
+    <node id="20" lat="52" lon="9" uid="24854">
+        <tag k="name" v="Halbendorf-Spree" />
+    </node>
+    <node id="30" lat="51.2" lon="9.4" uid="24855">
+        <tag k="name" v="Dresden" />
+    </node>
+    <node id="40" lat="51.25" lon="9.43" uid="24856">
+        <tag k="name" v="Cottbus" />
+    </node>
+    <node id="50" lat="51.2" lon="9.431" uid="24857">
+        <tag k="name" v="Tester" />
+    </node>
+    
+    <way id="10" uid="85761">
+        <!-- 0-1, 1-2 -->
+        <nd ref="10"/>
+        <nd ref="20"/>        
+        <nd ref="30"/>
+        <tag k="highway" v="motorway" />
+    </way> 
+    
+    <way id="11" uid="85762">
+        <!-- 1-4 -->
+        <nd ref="20"/>        
+        <nd ref="50"/>        
+        <tag k="highway" v="service" />
+    </way> 
+
+</osm>
