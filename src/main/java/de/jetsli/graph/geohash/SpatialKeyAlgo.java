@@ -83,7 +83,6 @@ public class SpatialKeyAlgo {
         initialBits = 1L << (allBits - 1);
         // TODO calculate precision from available bits. something like:
         // roundToNextExponentOf10(CalcDistance.C / (1 << (allBits / 2)));
-        // TODO interesting: we could even use any value without rounding it to next exponent of 10!
         setPrecision(10000000);
         return this;
     }

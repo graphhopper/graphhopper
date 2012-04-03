@@ -302,6 +302,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         return list;
     }
 
+    @Override
     public Collection<CoordTrig<T>> getNeighbours(BBox boundingBox) {
         List<CoordTrig<T>> list = new ArrayList<CoordTrig<T>>();
         getNeighbours(BBox.createEarthMax(), boundingBox, root, acceptAll, list);
@@ -338,7 +339,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         // 00 01
         QTNode<T> node10 = current.get(2);
         if (node10 != null) {
-            BBox nodeRect10 = new BBox(lat12, nodeBB.lon1, nodeBB.lat2, lon12);
+            BBox nodeRect10 = new BBox(nodeBB.lat1, nodeBB.lon1, lat12, lon12);
             if (searchRect.intersect(nodeRect10))
                 getNeighbours(nodeRect10, searchRect, node10, acceptor, result);
         }
@@ -346,7 +347,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         // top-right
         QTNode<T> node11 = current.get(3);
         if (node11 != null) {
-            BBox nodeRect11 = new BBox(lat12, lon12, nodeBB.lat2, nodeBB.lon2);
+            BBox nodeRect11 = new BBox(nodeBB.lat1, lon12, lat12, nodeBB.lon2);
             if (searchRect.intersect(nodeRect11))
                 getNeighbours(nodeRect11, searchRect, node11, acceptor, result);
         }
@@ -354,7 +355,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         // bottom-left
         QTNode<T> node00 = current.get(0);
         if (node00 != null) {
-            BBox nodeRect00 = new BBox(nodeBB.lat1, nodeBB.lon1, lat12, lon12);
+            BBox nodeRect00 = new BBox(lat12, nodeBB.lon1, nodeBB.lat2, lon12);
             if (searchRect.intersect(nodeRect00))
                 getNeighbours(nodeRect00, searchRect, node00, acceptor, result);
         }
@@ -362,7 +363,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         // bottom-right
         QTNode<T> node01 = current.get(1);
         if (node01 != null) {
-            BBox nodeRect01 = new BBox(nodeBB.lat1, lon12, lat12, nodeBB.lon2);
+            BBox nodeRect01 = new BBox(lat12, lon12, nodeBB.lat2, nodeBB.lon2);
             if (searchRect.intersect(nodeRect01))
                 getNeighbours(nodeRect01, searchRect, node01, acceptor, result);
         }

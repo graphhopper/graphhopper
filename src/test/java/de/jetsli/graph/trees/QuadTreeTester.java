@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.trees;
 
-import de.jetsli.graph.reader.CalcDistance;
+import de.jetsli.graph.util.BBox;
 import de.jetsli.graph.util.CoordTrig;
 import java.util.Collection;
 import java.util.Iterator;
@@ -143,6 +143,13 @@ public abstract class QuadTreeTester {
         assertEquals(3, coll.size());
     }
 
+    @Test
+    public void testGetNeighboursRectangleSearch() {
+        QuadTree<Integer> instance = createQuadTree(100);
+        Collection<CoordTrig<Integer>> coll = instance.getNeighbours(new BBox(10, 12, 9.5f, 12.5f));
+        // TODO
+    }
+    
     @Test
     public void testGetNeighboursSearch() {
         QuadTree<Integer> instance = createQuadTree(100);

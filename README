@@ -8,3 +8,6 @@ http://karussell.github.com/GraphHopper/
 Language: Java
 Status:   Highly alpha - nothing for production
 Author:   https://twitter.com/timetabling
+
+For more lucene & graph experiments have a look at
+https://github.com/karussell/lumeo

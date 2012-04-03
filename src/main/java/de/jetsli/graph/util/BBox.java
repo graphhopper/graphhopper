@@ -18,7 +18,8 @@ package de.jetsli.graph.util;
 import de.jetsli.graph.reader.CalcDistance;
 
 /**
- * A simple bounding box
+ * A simple bounding box - Use top-left and bottom right corner, although we use bottom-to-top
+ * direction for latitude! See tests - e.g. 10, 20, 5, 25
  *
  * @author Peter Karich
  */
@@ -47,19 +48,22 @@ public class BBox {
         // length of a circle is independent of the longitude
         float dLat = (float) (360 / (CalcDistance.C / radiusInKm));
 
-        // Now return bounding box in coordinates. As we use the unmodified bottom to top 
-        // coordinate system we need to use bottom-left and top-right corner to specify bounding box 
-        // for our specific intersect method (designed for the top-to-bottom case). See tests.
-        return new BBox(lat - dLat, lon - dLon, lat + dLat, lon + dLon);
+        // Now return bounding box in coordinates
+        return new BBox(lat + dLat, lon - dLon, lat - dLat, lon + dLon);
     }
 
     public static BBox createEarthMax() {
-        return new BBox(-90, -180, 90, 180);
+        return new BBox(90, -180, -90, 180);
+    }
+
+    public boolean intersectIfBottomLeftAndTopRight(BBox o) {
+        return (o.lon1 < lon1 && o.lon2 > lon1 || o.lon1 < lon2 && o.lon1 >= lon1)
+                && (o.lat1 < lat1 && o.lat2 >= lat1 || o.lat1 < lat2 && o.lat1 >= lat1);
     }
 
     public boolean intersect(BBox o) {
         return (o.lon1 < lon1 && o.lon2 > lon1 || o.lon1 < lon2 && o.lon1 >= lon1)
-                && (o.lat1 < lat1 && o.lat2 >= lat1 || o.lat1 < lat2 && o.lat1 >= lat1);
+                && (o.lat1 < lat1 && o.lat1 >= lat2 || o.lat1 >= lat1 && o.lat2 < lat1);
     }
 
     @Override

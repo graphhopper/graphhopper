@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.trees;
 
+import de.jetsli.graph.util.BBox;
 import de.jetsli.graph.util.CoordTrig;
 import java.util.Collection;
 
@@ -42,6 +43,8 @@ public interface QuadTree<V> {
      * @return points near the specified latitude/longitude
      */
     Collection<CoordTrig<V>> getNeighbours(float lat, float lon, float distanceInKm);
+    
+    Collection<CoordTrig<V>> getNeighbours(BBox boundingBox);
     
     void clear();
     
