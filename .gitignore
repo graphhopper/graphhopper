@@ -2,3 +2,4 @@ target/
 graphdb/
 *~
 src/test/resources/de/jetsli/graph/reader/largeEWD.txt.gz
+TODO.txt

@@ -1,0 +1,10 @@
+GraphHopper - Memory efficient datastructures & algorithms on (geo) graphs
+
+This software stands under Apache License 2
+
+For more information have a look at
+http://karussell.github.com/GraphHopper/
+
+Language: Java
+Status:   Highly alpha - nothing for production
+Author:   https://twitter.com/timetabling
