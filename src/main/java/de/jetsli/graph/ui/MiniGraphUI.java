@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.ui;
 
+import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.QuadTree;
@@ -56,14 +57,7 @@ public class MiniGraphUI {
         this.graph = g;
 
         this.quadTree = new QuadTreeSimple<Integer>(8, 6 * 8);
-        StopWatch sw = new StopWatch().start();
-        // TODO LATER persist quad tree to make things faster and store osm ids instead nothing
-        Integer empty = new Integer(1);
-        int locs = graph.getLocations();
-        for (int i = 0; i < locs; i++) {
-            quadTree.put(graph.getLatitude(i), graph.getLongitude(i), empty);
-        }
-        System.out.println("readed quad tree " + quadTree.size() + " in " + sw.stop().getSeconds() + "sec");
+        PerfTest.fillQuadTree(quadTree, graph);
 
         infoPanel = new JPanel() {
 

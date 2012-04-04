@@ -51,18 +51,22 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         CalcDistance calc;
         float lat;
         float lon;
-        float distInKm;
+        double normalizedDist;
 
         public AcceptInDistance(CalcDistance calc, float lat, float lon, float distInKm) {
             this.calc = calc;
             this.lat = lat;
             this.lon = lon;
             // add 10cm to reduce rounding mistakes and requires no comparing
-            this.distInKm = distInKm + 1e-4f;
+            this.normalizedDist = distInKm + 1e-4f;
+            // now apply some transformation to use the faster distance calculation
+            // normalizedDist = Math.cos(normalizedDist / CalcDistance.R);
         }
 
         @Override public boolean accept(CoordTrig entry) {
-            return calc.calcDistKm(lat, lon, entry.lat, entry.lon) < distInKm;
+            // TODO use an even faster method!! e.g. simple pythagoras without sqrt(): x^2 + y^2 + z^2
+            return calc.calcDistKm(lat, lon, entry.lat, entry.lon) < normalizedDist;
+//            return calc.calcDistFaster(lat, lon, lat, lon) < normalizedDist;
         }
     };
     private final int mbits;
@@ -419,5 +423,17 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             list.add(current.get(0));
             list.add(current.get(1));
         }
+    }
+
+    @Override
+    public long getMemoryUsageInBytes(int factor) {
+        QTNode node = root;
+
+        // + some bytes for the deep objects
+        long offset = 3 * 4 + 8 + 3 * Helper.sizeOfObjectRef(factor);
+        if (root != null)
+            return node.getMemoryUsageInBytes(factor) + offset;
+
+        return offset;
     }
 }

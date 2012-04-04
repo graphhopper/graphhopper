@@ -19,6 +19,7 @@ import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.ui.MiniGraphUI;
+import de.jetsli.graph.util.Helper;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.File;
 import java.io.FileInputStream;
@@ -71,8 +72,7 @@ public class OSMReaderTrials implements OSMReader {
             }
         }.read(args);
     }
-
-    private static final int MB = 1 << 20;
+    
     private int maxLocs;
     private Logger logger = LoggerFactory.getLogger(getClass());
     private int locations = 0;
@@ -105,7 +105,10 @@ public class OSMReaderTrials implements OSMReader {
             writeOsm2Binary(new FileInputStream(osmFile));
         }
 
-        stats();
+        // stats();
+        
+        new PerfTest(readGraph()).start();
+//        new MiniGraphUI(readGraph()).visualize();
 
 //        boolean dijkstraSearchTest = storage instanceof MMyGraphStorage;
         boolean dijkstraSearchTest = false;
@@ -143,7 +146,7 @@ public class OSMReaderTrials implements OSMReader {
     }
 
     public boolean init(boolean forceCreateNew) {
-        printMemInfo();
+        logger.info("starting with " + Helper.getBeanMemInfo());
         try {
 //            storage = new LuceneStorage().init();
 //            storage = new Neo4JStorage(file).init();
@@ -176,8 +179,7 @@ public class OSMReaderTrials implements OSMReader {
                     event = sReader.next()) {
                 if (++counter % 1000000 == 0) {
                     logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
-                            + " (" + skippedEdges + "), totalMB:" + Runtime.getRuntime().totalMemory() / MB
-                            + ", usedMB:" + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / MB);
+                            + " (" + skippedEdges + "), " + Helper.getMemInfo());
                 }
 
                 switch (event) {
@@ -290,14 +292,6 @@ public class OSMReaderTrials implements OSMReader {
         return this;
     }
 
-    private void printMemInfo() {
-        java.lang.management.OperatingSystemMXBean mxbean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-        com.sun.management.OperatingSystemMXBean sunmxbean = (com.sun.management.OperatingSystemMXBean) mxbean;
-        long freeMemory = sunmxbean.getFreePhysicalMemorySize();
-        long availableMemory = sunmxbean.getTotalPhysicalMemorySize();
-        logger.info("starting with free:" + freeMemory / MB + ", available:" + availableMemory / MB + ", rfree:" + Runtime.getRuntime().freeMemory() / MB);
-    }
-
     @Override
     public Graph readGraph() {
         if (storage instanceof MMyGraphStorage)
@@ -320,9 +314,7 @@ public class OSMReaderTrials implements OSMReader {
 
 //        printSorted(countMap.entrySet());
 //        printSorted(highwayMap.entrySet());
-        storage.stats();
-
-        new MiniGraphUI(readGraph()).visualize();
+        storage.stats();        
     }
 
     private void printSorted(Set<Entry<String, Integer>> entrySet) {

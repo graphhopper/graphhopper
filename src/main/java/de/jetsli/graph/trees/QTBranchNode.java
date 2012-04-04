@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.trees;
 
+import de.jetsli.graph.util.Helper;
+
 /**
  * @author Peter Karich
  */
@@ -56,5 +58,20 @@ class QTBranchNode<V> implements QTNode<V> {
     @Override
     public String toString() {
         return "B 0:" + node0.hasData() + " 1:" + node1.hasData() + " 2:" + node2.hasData() + " 3:" + node3.hasData();
-    }        
+    }
+
+    @Override
+    public long getMemoryUsageInBytes(int factor) {
+        // recursivly fetch the results
+        long all = 4 * Helper.sizeOfObjectRef(factor);
+        if (node0 != null)
+            all += node0.getMemoryUsageInBytes(factor);
+        if (node1 != null)
+            all += node1.getMemoryUsageInBytes(factor);
+        if (node2 != null)
+            all += node2.getMemoryUsageInBytes(factor);
+        if (node3 != null)
+            all += node3.getMemoryUsageInBytes(factor);
+        return all;
+    }
 }

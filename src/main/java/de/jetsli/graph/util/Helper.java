@@ -40,6 +40,8 @@ import java.util.Map.Entry;
  */
 public class Helper {
 
+    public static final int MB = 1 << 20;
+
     public static BufferedReader createBuffReader(File file) throws FileNotFoundException, UnsupportedEncodingException {
         return new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
     }
@@ -129,5 +131,34 @@ public class Helper {
             if (f.getName().startsWith(specificFile.getName()))
                 f.delete();
         }
+    }
+
+    public static String getBeanMemInfo() {
+        java.lang.management.OperatingSystemMXBean mxbean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+        com.sun.management.OperatingSystemMXBean sunmxbean = (com.sun.management.OperatingSystemMXBean) mxbean;
+        long freeMemory = sunmxbean.getFreePhysicalMemorySize();
+        long availableMemory = sunmxbean.getTotalPhysicalMemorySize();
+        return "free:" + freeMemory / MB + ", available:" + availableMemory / MB + ", rfree:" + Runtime.getRuntime().freeMemory() / MB;
+    }
+
+    public static String getMemInfo() {
+        return "totalMB:" + Runtime.getRuntime().totalMemory() / MB
+                + ", usedMB:" + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / MB;
+    }
+
+    public static int sizeOfObjectRef(int factor) {
+        // pointer to class, flags, lock
+        return factor * (4 + 4 + 4);
+    }
+
+    public static int sizeOfLongArray(int length, int factor) {
+        // pointer to class, flags, lock, size
+        return factor * (4 + 4 + 4 + 4) + 8 * length;
+    }
+
+    public static int sizeOfObjectArray(int length, int factor) {
+        // TODO add 4byte to make a multiple of 8 in some cases
+        // TODO compressed oop
+        return factor * (4 + 4 + 4 + 4) + 4 * length;
     }
 }

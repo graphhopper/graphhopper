@@ -17,6 +17,7 @@ package de.jetsli.graph.trees;
 
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
 import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.Helper;
 
 /**
  * @author Peter Karich
@@ -162,9 +163,14 @@ class QTDataNode<V> implements QTNode<V> {
         for (int i = 0; i < keys.length; i++) {
             if (values[i] == null)
                 break;
-            
+
             sb.append(values[i]).append(" ");
         }
         return sb.toString();
+    }
+
+    @Override
+    public long getMemoryUsageInBytes(int factor) {
+        return Helper.sizeOfLongArray(keys.length, factor) +  Helper.sizeOfLongArray(values.length, factor);
     }
 }

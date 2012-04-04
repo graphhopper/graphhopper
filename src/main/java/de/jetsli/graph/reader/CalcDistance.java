@@ -52,7 +52,7 @@ public class CalcDistance {
         return (float) (R * 2 * Math.asin(Math.sqrt(a)));
     }
 
-    public double fasterCalcDist(double fromLat, double fromLon, double toLat, double toLon) {
+    public double calcDistFaster(double fromLat, double fromLon, double toLat, double toLon) {
         return Math.acos(Math.sin(fromLat) * Math.sin(toLat)
                 + Math.cos(fromLat) * Math.cos(toLat)
                 * Math.cos(toLon - fromLon)) * R;

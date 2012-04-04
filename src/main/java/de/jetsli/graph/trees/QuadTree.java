@@ -49,4 +49,6 @@ public interface QuadTree<V> {
     void clear();
     
     String toDetailString();
+        
+    long getMemoryUsageInBytes(int factor);
 }
