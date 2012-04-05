@@ -50,9 +50,9 @@ public class PerfTest {
         System.out.println("locations:" + g.getLocations());
         // for query: 16 entriesPerNode seems to be fast and not such a memory waste
         // approx 46 bytes/entry + sizeOf(Integer)
-        // 10km search => 0.055s,~  83k nodes per search retrieved
-        // 20km search => 0.198s,~ 313k
-        // 40km search => 0.623s,~1031k
+        // 10km search => 0.046s,~  83k nodes per search retrieved
+        // 20km search => 0.167s,~ 313k
+        // 40km search => 0.529s,~1031k
 
         int maxDist = 50;
         int maxEPerL = 20;

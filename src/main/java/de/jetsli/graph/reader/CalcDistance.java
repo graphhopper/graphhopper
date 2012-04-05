@@ -44,18 +44,55 @@ public class CalcDistance {
      * http://en.wikipedia.org/wiki/Haversine_formula a = sin²(Δlat/2) +
      * cos(lat1).cos(lat2).sin²(Δlong/2) c = 2.atan2(√a, √(1−a)) d = R.c
      */
-    public float calcDistKm(double fromLat, double fromLon, double toLat, double toLon) {
+    public double calcDistKm(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = Math.toRadians(toLat - fromLat);
         double dLon = Math.toRadians(toLon - fromLon);
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
                 + Math.cos(Math.toRadians(fromLat)) * Math.cos(Math.toRadians(toLat)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        return (float) (R * 2 * Math.asin(Math.sqrt(a)));
+        return R * 2 * Math.asin(Math.sqrt(a));
     }
 
-    public double calcDistFaster(double fromLat, double fromLon, double toLat, double toLon) {
-        return Math.acos(Math.sin(fromLat) * Math.sin(toLat)
-                + Math.cos(fromLat) * Math.cos(toLat)
-                * Math.cos(toLon - fromLon)) * R;
+    public double normalizeDist(double dist) {
+        double tmp = Math.sin(dist / 2 / R);
+        return tmp * tmp;
+    }
+
+    public double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
+        double dLat = Math.toRadians(toLat - fromLat);
+        double dLon = Math.toRadians(toLon - fromLon);
+        return Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(fromLat)) * Math.cos(Math.toRadians(toLat)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    }
+
+    public double calcCartesianDist(double fromLat, double fromLon, double toLat, double toLon) {
+        fromLat = Math.toRadians(fromLat);
+        fromLon = Math.toRadians(fromLon);
+
+        double tmp = Math.cos(fromLat);
+        double x1 = tmp * Math.cos(fromLon);
+        double y1 = tmp * Math.sin(fromLon);
+        double z1 = Math.sin(fromLat);
+
+        toLat = Math.toRadians(toLat);
+        toLon = Math.toRadians(toLon);
+        tmp = Math.cos(toLat);
+        double x2 = tmp * Math.cos(toLon);
+        double y2 = tmp * Math.sin(toLon);
+        double z2 = Math.sin(toLat);
+
+        double dx = x1 - x2;
+        double dy = y1 - y2;
+        double dz = z1 - z2;
+        return R * Math.sqrt(dx * dx + dy * dy + dz * dz);
+        // now make quadratic stuff faster:
+//        dx = Math.abs(dx);
+//        dy = Math.abs(dy);
+//        int mn = (int) Math.min(dx, dy);
+//        return dx + dy - (mn >> 1) - (mn >> 2) + (mn >> 4);
+    }
+
+    void calcBearing() {
+        // http://stackoverflow.com/questions/2232911/why-is-this-bearing-calculation-so-inacurate
     }
 
     /**

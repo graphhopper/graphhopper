@@ -59,14 +59,13 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             this.lon = lon;
             // add 10cm to reduce rounding mistakes and requires no comparing
             this.normalizedDist = distInKm + 1e-4f;
-            // now apply some transformation to use the faster distance calculation
-            // normalizedDist = Math.cos(normalizedDist / CalcDistance.R);
+            // now apply some transformation to use the faster distance calculation in accept()
+            normalizedDist = calc.normalizeDist(normalizedDist);
         }
 
         @Override public boolean accept(CoordTrig entry) {
-            // TODO use an even faster method!! e.g. simple pythagoras without sqrt(): x^2 + y^2 + z^2
-            return calc.calcDistKm(lat, lon, entry.lat, entry.lon) < normalizedDist;
-//            return calc.calcDistFaster(lat, lon, lat, lon) < normalizedDist;
+            // return calc.calcDistKm(lat, lon, entry.lat, entry.lon) < normalizedDist;
+            return calc.calcNormalizedDist(lat, lon, entry.lat, entry.lon) < normalizedDist;
         }
     };
     private final int mbits;

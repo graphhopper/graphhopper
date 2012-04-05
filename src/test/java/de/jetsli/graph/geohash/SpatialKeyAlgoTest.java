@@ -50,8 +50,8 @@ public class SpatialKeyAlgoTest {
         assertEquals(lat, fl.lat, .1);
         assertEquals(lon, fl.lon, .1);
 
-        float expectedDist = ((float) CalcDistance.C / (1 << bits / 2));
-        float d = new CalcDistance().calcDistKm(lat, lon, fl.lat, fl.lon);
+        double expectedDist = ((float) CalcDistance.C / (1 << bits / 2));
+        double d = new CalcDistance().calcDistKm(lat, lon, fl.lat, fl.lon);
         assertTrue("Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d, d < expectedDist);
     }
 
@@ -69,8 +69,8 @@ public class SpatialKeyAlgoTest {
         assertEquals(lat, fl.lat, 1e-2);
         assertEquals(lon, fl.lon, 1e-2);
 
-        float expectedDist = ((float) CalcDistance.C / (1 << bits / 2));
-        float d = new CalcDistance().calcDistKm(lat, lon, fl.lat, fl.lon);
+        double expectedDist = ((float) CalcDistance.C / (1 << bits / 2));
+        double d = new CalcDistance().calcDistKm(lat, lon, fl.lat, fl.lon);
         assertTrue("Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d, d < expectedDist);
     }
 
@@ -88,8 +88,8 @@ public class SpatialKeyAlgoTest {
         assertEquals(lat, fl.lat, 1e-4);
         assertEquals(lon, fl.lon, 1e-4);
 
-        float expectedDist = ((float) CalcDistance.C / (1 << bits / 2));
-        float d = new CalcDistance().calcDistKm(lat, lon, fl.lat, fl.lon);
+        double expectedDist = ((float) CalcDistance.C / (1 << bits / 2));
+        double d = new CalcDistance().calcDistKm(lat, lon, fl.lat, fl.lon);
         assertTrue("Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d, d < expectedDist);
     }
 }

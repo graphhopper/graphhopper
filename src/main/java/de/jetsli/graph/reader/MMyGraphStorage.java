@@ -65,7 +65,7 @@ public class MMyGraphStorage implements Storage {
             float lof = g.getLongitude(fromIndex);
             float lat = g.getLatitude(toIndex);
             float lot = g.getLongitude(toIndex);
-            float dist = callback.calcDistKm(laf, lof, lat, lot);
+            float dist = (float) callback.calcDistKm(laf, lof, lat, lot);
             if (dist <= 0) {
                 counter++;
                 if (counter % 10000 == 0)
