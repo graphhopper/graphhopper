@@ -49,10 +49,10 @@ public class PerfTest {
     public void start() {
         System.out.println("locations:" + g.getLocations());
         // for query: 16 entriesPerNode seems to be fast and not such a memory waste
-        // approx 45 bytes/entry + sizeOf(Integer)
-        // 10km search => 0.054s,~  83k nodes per search retrieved
-        // 20km search => 0.200s,~ 315k
-        // 40km search => 0.618s,~1037k
+        // approx 46 bytes/entry + sizeOf(Integer)
+        // 10km search => 0.055s,~  83k nodes per search retrieved
+        // 20km search => 0.198s,~ 313k
+        // 40km search => 0.623s,~1031k
 
         int maxDist = 50;
         int maxEPerL = 20;
@@ -82,7 +82,7 @@ public class PerfTest {
     }
 
     private void measureSearch(int maxDist, int maxEPerL) {
-        for (int distance = 20; distance < maxDist; distance *= 2) {
+        for (int distance = 10; distance < maxDist; distance *= 2) {
             for (int entriesPerLeaf = 16; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
                 final QuadTree<Integer> quadTree = new QuadTreeSimple<Integer>(entriesPerLeaf);
                 fillQuadTree(quadTree, g);
@@ -98,7 +98,7 @@ public class PerfTest {
                         float lon = (random.nextInt(lonMax - lonMin) + lonMin) / 10000.0f;
                         return quadTree.getNeighbours(lat, lon, tmp).size();
                     }
-                }.setMax(500).setShowProgress(false).setSeed(0).start();
+                }.setMax(500).setShowProgress(true).setSeed(0).start();
             }
         }
     }
@@ -150,13 +150,13 @@ public class PerfTest {
             int part = (int) (maxNo / partition);
             for (int i = 0; i < maxNo; i++) {
                 if (showProgress && i % part == 0)
-                    System.out.println(new Date() + "# progress " + i * partition / part + "% => secs/iter:" + (sw.stop().start().getSeconds() / i));
+                    System.out.println(new Date() + "# progress " + i * 100 / maxNo + "% => secs/iter:" + (sw.stop().start().getSeconds() / i));
 
                 res += doCalc(i);
             }
-            System.out.println(new Date() + "# done in " + sw.stop().getSeconds()
-                    + " => secs/iter:" + sw.stop().getSeconds() / maxNo + ", avoid jvm removal:" + res
-                    + ", memInfo:" + Helper.getMemInfo() + " " + Helper.getBeanMemInfo());
+            System.out.println(new Date() + "# progress 100% in " + sw.stop().getSeconds()
+                    + " secs => secs/iter:" + sw.stop().getSeconds() / maxNo + "\n avoid jvm removal:" + res
+                    + ", memInfo:" + Helper.getMemInfo() + " " + Helper.getBeanMemInfo() + "\n");
         }
 
         /**
