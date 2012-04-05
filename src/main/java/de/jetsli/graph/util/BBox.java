@@ -32,6 +32,8 @@ public class BBox {
     public float lon2;
 
     public BBox(float lat1, float lon1, float lat2, float lon2) {
+        assert lat2 < lat1 : "second latitude should be smaller than the first";
+        assert lon1 < lon2 : "second longitude should be bigger than the first";
         this.lat1 = lat1;
         this.lon1 = lon1;
         this.lat2 = lat2;

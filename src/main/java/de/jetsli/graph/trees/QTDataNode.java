@@ -37,22 +37,6 @@ class QTDataNode<V> implements QTNode<V> {
         return true;
     }
 
-    public String toString(SpatialKeyAlgo algo) {
-        StringBuilder sb = new StringBuilder("dn:").append(count()).append(" ");
-        CoordTrig obj = new CoordTrig();
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] == null)
-                break;
-            algo.decode(keys[i], obj);
-            sb.append(values[i]).append(":").append(obj).append(" ");
-        }
-        return sb.toString();
-    }
-
-    public boolean isFull() {
-        return values[values.length - 1] != null;
-    }
-
     public boolean isEmpty() {
         return values[0] == null;
     }
@@ -86,6 +70,9 @@ class QTDataNode<V> implements QTNode<V> {
             if (values[i] == null || keys[i] == key) {
                 keys[i] = key;
                 values[i] = value;
+                i++;
+                if (i < values.length)
+                    values[i] = null;
                 return false;
             }
         }
@@ -138,6 +125,7 @@ class QTDataNode<V> implements QTNode<V> {
         return null;
     }
 
+    @Override
     public int count() {
         int i = 0;
         for (; i < values.length; i++) {
@@ -169,8 +157,20 @@ class QTDataNode<V> implements QTNode<V> {
         return sb.toString();
     }
 
+    public String toString(SpatialKeyAlgo algo) {
+        StringBuilder sb = new StringBuilder("dn:").append(count()).append(" ");
+        CoordTrig obj = new CoordTrig();
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == null)
+                break;
+            algo.decode(keys[i], obj);
+            sb.append(values[i]).append(":").append(obj).append(" ");
+        }
+        return sb.toString();
+    }
+
     @Override
     public long getMemoryUsageInBytes(int factor) {
-        return Helper.sizeOfLongArray(keys.length, factor) +  Helper.sizeOfLongArray(values.length, factor);
+        return Helper.sizeOfLongArray(keys.length, factor) + Helper.sizeOfLongArray(values.length, factor);
     }
 }

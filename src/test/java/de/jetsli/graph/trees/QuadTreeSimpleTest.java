@@ -33,7 +33,7 @@ public class QuadTreeSimpleTest extends QuadTreeTester {
     public void testNodePutNull() {
         try {
             createQuadTree(10).put(10, 10, null);
-            assertTrue("exception on null storage as we rely on this in datanode", false);
+            assertTrue("an exception should be thrown on 'storing null' as we rely on this in datanode", false);
         } catch (Exception ex) {
         }
     }

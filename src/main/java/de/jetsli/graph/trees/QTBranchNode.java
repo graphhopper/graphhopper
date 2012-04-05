@@ -74,4 +74,18 @@ class QTBranchNode<V> implements QTNode<V> {
             all += node3.getMemoryUsageInBytes(factor);
         return all;
     }
+
+    @Override
+    public int count() {
+        int all = 0;
+        if (node0 != null)
+            all += node0.count();
+        if (node1 != null)
+            all += node1.count();
+        if (node2 != null)
+            all += node2.count();
+        if (node3 != null)
+            all += node3.count();
+        return all;
+    }
 }

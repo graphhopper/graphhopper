@@ -13,29 +13,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.util;
+package de.jetsli.graph.trees;
+
+import de.jetsli.graph.geohash.SpatialKeyAlgo;
+import org.junit.*;
+import static org.junit.Assert.*;
 
 /**
  *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich
  */
-public class CoordTrigIntEntry extends CoordTrig<Integer> {
+public class QTDataNodeTest {
 
-    private int value;
-
-    public CoordTrigIntEntry() {
-    }
-
-    public CoordTrigIntEntry(int value, float lat, float lon) {
-        super(lat, lon);
-        this.value = value;
-    }
-
-    @Override public void setValue(Integer value) {
-        this.value = value;
-    }
-
-    @Override public Integer getValue() {
-        return value;
+    @Test
+    public void testGetMemoryUsageInBytes() {
+        QTDataNode<Integer> dn = new QTDataNode<Integer>(8);
+        dn.keys[1] = 111;
+        dn.values[1] = 222;
+        assertEquals(0, dn.count());
+        dn.put(1, 1);
+        assertEquals(1, dn.count());
     }
 }

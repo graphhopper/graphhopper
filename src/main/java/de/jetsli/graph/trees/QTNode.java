@@ -36,4 +36,6 @@ interface QTNode<V> {
      * @param factor is 1 for 32 bit and 2 for 64 bit systems
      */
     long getMemoryUsageInBytes(int factor);
+    
+    int count();
 }

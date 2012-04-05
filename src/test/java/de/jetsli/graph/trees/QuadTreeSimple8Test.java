@@ -13,29 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.util;
+package de.jetsli.graph.trees;
 
 /**
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class CoordTrigIntEntry extends CoordTrig<Integer> {
+public class QuadTreeSimple8Test extends QuadTreeTester {
 
-    private int value;
-
-    public CoordTrigIntEntry() {
-    }
-
-    public CoordTrigIntEntry(int value, float lat, float lon) {
-        super(lat, lon);
-        this.value = value;
-    }
-
-    @Override public void setValue(Integer value) {
-        this.value = value;
-    }
-
-    @Override public Integer getValue() {
-        return value;
+    @Override
+    protected QuadTree createQuadTree(int items) {
+        return new QuadTreeSimple(8).init(items);
     }
 }

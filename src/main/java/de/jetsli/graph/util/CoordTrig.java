@@ -34,6 +34,10 @@ public class CoordTrig<T> {
 
     public void setValue(T t) {
     }
+    
+    public T getValue() {
+        return null;
+    }
 
     @Override
     public String toString() {

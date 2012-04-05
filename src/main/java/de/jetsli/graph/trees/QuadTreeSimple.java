@@ -324,17 +324,16 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
                 if (dataNode.values[i] == null)
                     break;
 
-                CoordTrigObjEntry f = new CoordTrigObjEntry();
+                CoordTrigObjEntry<T> f = new CoordTrigObjEntry<T>();
                 algo.decode(dataNode.keys[i], f);
-                f.setValue(dataNode.values[i]);
                 if (acceptor.accept(f))
                     result.add(f);
+
+                f.setValue((T) dataNode.values[i]);
             }
             return;
         }
 
-        // TODO avoid rounding error and more expensive intersect comparisons via transforming 
-        //      search bbox into spatialKey?
         float lat12 = (nodeBB.lat1 + nodeBB.lat2) / 2;
         float lon12 = (nodeBB.lon1 + nodeBB.lon2) / 2;
 
@@ -435,5 +434,12 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             return node.getMemoryUsageInBytes(factor) + offset;
 
         return offset;
+    }
+
+    @Override
+    public int count() {
+        if (root != null)
+            return root.count();
+        return 0;
     }
 }

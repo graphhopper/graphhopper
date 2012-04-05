@@ -29,6 +29,9 @@ public interface QuadTree<V> {
 
     int size();
     
+    /** only for tests - remove later*/
+    int count();
+    
     boolean isEmpty();
     
     QuadTree init(int maxItemsHint) throws Exception;
