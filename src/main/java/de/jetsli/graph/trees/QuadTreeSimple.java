@@ -209,32 +209,26 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     }
 
     @Override
-    public T get(double lat, double lon) {
+    public T get(final double lat, final double lon) {
         if (root == null)
             return null;
 
-        long spatialKey = algo.encode(lat, lon);
-        QTNode<T> current = root;
-        long maxBit = globalMaxBit;
-        int num;
-        while (maxBit != 0) {
-            if (current.hasData())
-                return (T) ((QTDataNode) current).getValue(spatialKey);
+        final long spatialKey = algo.encode(lat, lon);
+        final CoordTrig<T> ret = new CoordTrigObjEntry<T>();
+        LeafWorker<T> worker = new LeafWorker<T>() {
 
-            // latitude
-            num = (spatialKey & maxBit) == 0 ? 0 : 2;
-            maxBit >>>= 1;
-            // longitude
-            if ((spatialKey & maxBit) != 0)
-                num |= 1;
-            maxBit >>>= 1;
-            current = current.get(num);
-            if (current == null)
-                return null;
-        }
+            @Override public boolean doWork(QTDataNode<T> dataNode, int i) {
+                if (dataNode.keys[i] == spatialKey) {
+                    ret.setValue((T) dataNode.values[i]);
+                    return true;
+                }
 
-        // not found
-        return null;
+                return false;
+            }
+        };
+        double err = 1.0 / Math.pow(10, algo.getExactPrecision());
+        getNeighbours(BBox.createEarthMax(), new BBox(lat + err, lon - err, lat - err, lon + err), root, worker);
+        return ret.getValue();
     }
 
     @Override
@@ -242,14 +236,14 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         if (root == null)
             return false;
 
-        final long key = algo.encode(lat, lon);
-        // we need to workaround the precision mistakes so do a neighbour search
-        // TODO is there a better solution?        
+        final long spatialKey = algo.encode(lat, lon);
         LeafWorker<T> worker = new LeafWorker<T>() {
 
             @Override
             public boolean doWork(QTDataNode<T> entry, int index) {
-                if (entry.remove(key)) {
+                // we need to workaround the precision mistakes so do a neighbour search
+                // TODO is there a better solution?
+                if (entry.remove(spatialKey)) {
                     size--;
                     // stop search
                     return true;

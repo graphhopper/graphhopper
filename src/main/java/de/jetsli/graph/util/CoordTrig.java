@@ -34,10 +34,11 @@ public class CoordTrig<T> {
     }
 
     public void setValue(T t) {
+        throw new UnsupportedOperationException("Use CoordTrigObjEntry for value access");
     }
 
     public T getValue() {
-        return null;
+        throw new UnsupportedOperationException("Use CoordTrigObjEntry for value access");
     }
 
     @Override
