@@ -69,10 +69,10 @@ public class CalcDistanceTest {
                 
         res = 150.748;
         assertEquals(res, dist.calcDistKm(lat, lon, lat - 1, lon + 1), 1e-3);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 1, lon + 1), 1e-2);
+        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 1, lon + 1), 1e-3);
         
         res = 1527.919;
         assertEquals(res, dist.calcDistKm(lat, lon, lat - 10, lon + 10), 1e-3);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 10, lon + 10), 10);
+        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 10, lon + 10), 1e-3);
     }
 }

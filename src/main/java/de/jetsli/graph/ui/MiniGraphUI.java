@@ -27,9 +27,7 @@ import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.util.Collection;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
 /**
  * @author Peter Karich
@@ -237,7 +235,7 @@ public class MiniGraphUI {
                             // show quad tree nodes
                             float lat = getLat(e.getY());
                             float lon = getLon(e.getX());
-                            
+
                             StopWatch sw = new StopWatch().start();
                             quadTreeNodes = quadTree.getNeighbours(lat, lon, 10);
                             System.out.println("search at " + lat + "," + lon + " took " + sw.stop().getSeconds());
@@ -286,6 +284,21 @@ public class MiniGraphUI {
                     mainPanel.addMouseListener(ml);
                     mainPanel.addMouseMotionListener(ml);
                     
+                    // just for fun
+                    mainPanel.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), "deleteNodes");
+                    mainPanel.getActionMap().put("deleteNodes", new AbstractAction() {
+
+                        @Override public void actionPerformed(ActionEvent e) {
+                            for (CoordTrig<Integer> coord : quadTreeNodes) {
+                                boolean ret = quadTree.remove(coord.lat, coord.lon);
+                                if(!ret) {
+                                    //System.out.println("cannot remove " + coord + " " + ret);
+                                    ret = quadTree.remove(coord.lat, coord.lon);
+                                }
+                            }
+                        }
+                    });
+
                     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                     frame.setSize(frameWidth + 10, frameHeight + 30);
                     frame.setVisible(true);

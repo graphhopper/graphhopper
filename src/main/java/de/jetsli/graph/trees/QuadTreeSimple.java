@@ -107,11 +107,14 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
 
     @Override
     public T put(float lat, float lon, T value) {
+        return put(algo.encode(lat, lon), value);
+    }
+
+    public T put(long spatialKey, T value) {
         if (value == null)
             throw new IllegalArgumentException("This quad tree does not support null values");
 
         long maxBit = globalMaxBit;
-        long spatialKey = algo.encode(lat, lon);
         if (root == null) {
             size++;
             QTDataNode<T> d = new QTDataNode<T>(entriesPerLeaf);
@@ -245,10 +248,13 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
 
     @Override
     public boolean remove(float lat, float lon) {
+        return remove(algo.encode(lat, lon));
+    }
+
+    public boolean remove(long spatialKey) {
         if (root == null)
             return false;
 
-        long spatialKey = algo.encode(lat, lon);
         QTNode<T> previous = null;
         int previousNum = -1;
         QTNode<T> current = root;
@@ -285,6 +291,8 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
                 previousNum |= 1;
             maxBit >>>= 1;
             current = current.get(previousNum);
+            if (current == null)
+                return false;
         }
 
         // not found

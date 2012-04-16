@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.geohash;
 
+import de.jetsli.graph.reader.CalcDistance;
 import de.jetsli.graph.util.CoordTrig;
 
 // A 2 bit precision spatial key could look like
@@ -77,13 +78,16 @@ public class SpatialKeyAlgo {
 
     public SpatialKeyAlgo init(int allBits) {
         if ((allBits & 0x1) == 1)
-            throw new IllegalStateException("the available bits needs to be splitted into two equal areas");
+            throw new IllegalStateException("bits needs to be even to use the same amount for lat and lon");
 
         iterations = allBits / 2;
         initialBits = 1L << (allBits - 1);
-        // TODO calculate precision from available bits. something like:
-        // roundToNextExponentOf10(CalcDistance.C / (1 << (allBits / 2)));
         setPrecision(10000000);
+
+        // to ensure encode(decode(key)) != key we should not set precision too high
+        // minimal resolution calculates as CalcDistance.C / (1 << (allBits / 2))
+        // double res = 10 * (1 << (allBits / 2)) / CalcDistance.C;
+        // setPrecision((int) res);
         return this;
     }
 
@@ -114,14 +118,14 @@ public class SpatialKeyAlgo {
         while (true) {
             int midLat = (minLat + maxLat) / 2;
             int midLon = (minLon + maxLon) / 2;
-            if (latI > midLat) {
+            if (latI >= midLat) {
                 hash |= 1;
                 minLat = midLat;
             } else
                 maxLat = midLat;
 
             hash <<= 1;
-            if (lonI > midLon) {
+            if (lonI >= midLon) {
                 hash |= 1;
                 minLon = midLon;
             } else
@@ -166,12 +170,17 @@ public class SpatialKeyAlgo {
                 break;
         }
 
+//        lat = lat / 1000;
+//        latLon.lat = lat / 10000f;
+//
+//        lon = lon / 1000;
+//        latLon.lon = lon / 10000f;
         latLon.lat = toFloat(lat);
         latLon.lon = toFloat(lon);
     }
 
     protected int toInt(float fl) {
-        return Math.round(fl * precision);
+        return (int) (fl * precision);
     }
 
     private float toFloat(int integer) {

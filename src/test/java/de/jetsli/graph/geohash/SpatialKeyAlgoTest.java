@@ -92,4 +92,54 @@ public class SpatialKeyAlgoTest {
         double d = new CalcDistance().calcDistKm(lat, lon, fl.lat, fl.lon);
         assertTrue("Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d, d < expectedDist);
     }
+
+    @Test
+    public void testBijectionBug2() {
+        // TODO until 64
+        for (long i = 4; i <= 48; i += 4) {
+            SpatialKeyAlgo algo = new SpatialKeyAlgo().init((int) i);
+            long keyX = algo.encode(1, 1);
+
+            CoordTrig coord = new CoordTrig();
+            algo.decode(keyX, coord);
+            long keyY = algo.encode(coord.lat, coord.lon);
+
+            CoordTrig coord2 = new CoordTrig();
+            algo.decode(keyY, coord2);
+
+            double precision = CalcDistance.C / (1 << (i / 2 - 2)) / 4;
+            double dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
+            assertEquals(0, dist, 1e-5);
+            // System.out.println("\n\n##" + i + "\nkeyX:" + BitUtil.toBitString(keyX));
+            // System.out.println("keyY:" + BitUtil.toBitString(keyY));
+            // System.out.println("distanceX:" + dist + " precision:" + precision + " difference:" + (dist - precision) + " factor:" + dist / precision);
+        }
+    }
+
+    @Test
+    public void testBijectionBug() {
+        SpatialKeyAlgo algo = new SpatialKeyAlgo().init(6 * 8);
+        CoordTrig coord = new CoordTrig();
+        long key = algo.encode(1, 1);
+        // System.out.println("key:" + BitUtil.toBitString(key));
+        algo.decode(key, coord);
+        // System.out.println("coord:" + coord);
+        long resKey = algo.encode(coord.lat, coord.lon);
+
+        CoordTrig coord2 = new CoordTrig();
+        algo.decode(resKey, coord2);
+        // System.out.println("key:" + BitUtil.toBitString(resKey));
+
+        // distance is 2.658 meter
+        // double precision = CalcDistance.C / (1 << 48 / 2);
+        // double dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
+        // System.out.println("distance:" + dist + " precision:" + precision + " difference:" + (precision - dist));
+        assertEquals(key, resKey);
+
+        // TODO
+        //50.022846,9.2123575 => 246558108000351 vs 246558108000350
+//        key = algo.encode(50.02285f, 9.21236f);
+//        algo.decode(key, coord);
+//        assertEquals(key, algo.encode(coord.lat, coord.lon));
+    }
 }

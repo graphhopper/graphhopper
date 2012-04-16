@@ -19,6 +19,7 @@ import de.jetsli.graph.util.BBox;
 import de.jetsli.graph.util.CoordTrig;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Random;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -159,7 +160,7 @@ public abstract class QuadTreeTester {
         assertEquals(null, instance.put(8.124f, 8.123f, 1));
         assertEquals(null, instance.put(8.123f, 8.123f, 2));
         assertEquals(null, instance.put(9.124f, 8.123f, 3));
-        assertEquals(null, instance.put(8, 9, 4));        
+        assertEquals(null, instance.put(8, 9, 4));
         assertEquals(null, instance.put(9, 9, 5));
         assertEquals(null, instance.put(7, 7, 6));
         assertEquals(null, instance.put(7, 8, 7));

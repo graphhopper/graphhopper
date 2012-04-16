@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.trees;
 
+import de.jetsli.graph.geohash.SpatialKeyAlgo;
+import de.jetsli.graph.util.CoordTrig;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
