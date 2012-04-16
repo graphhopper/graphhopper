@@ -50,9 +50,13 @@ public class PerfTest {
         System.out.println("locations:" + g.getLocations());
         // for query: 16 entriesPerNode seems to be fast and not such a memory waste
         // approx 46 bytes/entry + sizeOf(Integer)
-        // 10km search => 0.046s,~  83k nodes per search retrieved
-        // 20km search => 0.167s,~ 313k
-        // 40km search => 0.529s,~1031k
+        // 10km search => 0.048s,~  83k nodes per search retrieved
+        // 20km search => 0.173s,~ 313k
+        // 40km search => 0.550s,~1031k
+        
+        // increase speed about 
+        //  => 2% when using int   instead double    in BBox (multiplied with 1e+7 before) => but too complicated
+        //  => 2% when using float instead of double in CoordTrig => but bad in other cases. if double and float implementation => too complicated
 
         int maxDist = 50;
         int maxEPerL = 20;

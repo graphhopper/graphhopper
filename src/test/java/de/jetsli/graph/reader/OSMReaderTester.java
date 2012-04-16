@@ -17,7 +17,6 @@ package de.jetsli.graph.reader;
 
 import de.jetsli.graph.storage.DistEntry;
 import java.util.Iterator;
-import java.io.InputStream;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static de.jetsli.graph.util.MyIteratorable.*;

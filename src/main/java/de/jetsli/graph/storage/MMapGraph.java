@@ -560,27 +560,8 @@ public class MMapGraph implements Graph, java.io.Closeable {
         System.out.println("edges      :" + edgesNo + "\t" + ((float) edgesNo / locs));
         System.out.println("edges - out:" + outEdgesNo + "\t" + ((float) outEdgesNo / locs));
         System.out.println("edges - in :" + inEdgesNo + "\t" + ((float) inEdgesNo / locs));
-
-//        currentNodeSize:2620432
-//maxRecognizedNodeIndex:2620431
-//nextEdgePosition:1
         System.out.println("currentNodeSize:" + currentNodeSize);
         System.out.println("maxRecognizedNodeIndex:" + maxRecognizedNodeIndex);
         System.out.println("nextEdgePosition:" + nextEdgePosition);
-
-        // new data does not fit to old results - see isInBounds
-//        2012-03-31 20:00:54,711 [main] INFO  de.jetsli.graph.reader.OSMReaderTrials$1 - 351000000, locs:2620432 (87495079), edges:780292 (35256613), totalMB:1199, usedMB:310
-//2012-03-31 20:00:54,849 [main] INFO  de.jetsli.graph.reader.OSMReaderTrials$1 - Stats
-//0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	
-//1903994	30035	550601	115515	19550	669	63	5	0	0	0	0	0	0	0	0	0	0	0	0	
-//1903994	30035	550601	115515	19550	669	63	5	0	0	0	0	0	0	0	0	0	0	0	0	
-//1903994	30035	550601	115515	19550	669	63	5	0	0	0	0	0	0	0	0	0	0	0	0	
-//-----------
-//edges      :1559740	0.5952225
-//edges - out:1559740	0.5952225
-//edges - in :1559740	0.5952225
-//currentNodeSize:2620432
-//maxRecognizedNodeIndex:2620431
-//nextEdgePosition:3003969
     }
 }

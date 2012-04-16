@@ -18,6 +18,8 @@ package de.jetsli.graph.geohash;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.reader.CalcDistance;
 import de.jetsli.graph.util.BitUtil;
+import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.CoordTrig;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -95,8 +97,7 @@ public class SpatialKeyAlgoTest {
 
     @Test
     public void testBijectionBug2() {
-        // TODO until 64
-        for (long i = 4; i <= 48; i += 4) {
+        for (long i = 4; i <= 64; i += 4) {
             SpatialKeyAlgo algo = new SpatialKeyAlgo().init((int) i);
             long keyX = algo.encode(1, 1);
 
@@ -110,36 +111,51 @@ public class SpatialKeyAlgoTest {
             double precision = CalcDistance.C / (1 << (i / 2 - 2)) / 4;
             double dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
             assertEquals(0, dist, 1e-5);
-            // System.out.println("\n\n##" + i + "\nkeyX:" + BitUtil.toBitString(keyX));
-            // System.out.println("keyY:" + BitUtil.toBitString(keyY));
-            // System.out.println("distanceX:" + dist + " precision:" + precision + " difference:" + (dist - precision) + " factor:" + dist / precision);
+//            System.out.println("\n\n##" + i + "\nkeyX:" + BitUtil.toBitString(keyX));
+//            System.out.println("keyY:" + BitUtil.toBitString(keyY));
+//            System.out.println("distanceX:" + dist + " precision:" + precision + " difference:" + (dist - precision) + " factor:" + dist / precision);
         }
     }
 
     @Test
     public void testBijectionBug() {
         SpatialKeyAlgo algo = new SpatialKeyAlgo().init(6 * 8);
-        CoordTrig coord = new CoordTrig();
+        CoordTrig coord11 = new CoordTrig();
         long key = algo.encode(1, 1);
-        // System.out.println("key:" + BitUtil.toBitString(key));
-        algo.decode(key, coord);
-        // System.out.println("coord:" + coord);
-        long resKey = algo.encode(coord.lat, coord.lon);
+        algo.decode(key, coord11);
+        long resKey = algo.encode(coord11.lat, coord11.lon);
 
         CoordTrig coord2 = new CoordTrig();
         algo.decode(resKey, coord2);
-        // System.out.println("key:" + BitUtil.toBitString(resKey));
-
-        // distance is 2.658 meter
-        // double precision = CalcDistance.C / (1 << 48 / 2);
-        // double dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
-        // System.out.println("distance:" + dist + " precision:" + precision + " difference:" + (precision - dist));
         assertEquals(key, resKey);
 
-        // TODO
-        //50.022846,9.2123575 => 246558108000351 vs 246558108000350
-//        key = algo.encode(50.02285f, 9.21236f);
-//        algo.decode(key, coord);
-//        assertEquals(key, algo.encode(coord.lat, coord.lon));
+        CoordTrig coord = new CoordTrig(50.022846, 9.2123575);
+        key = algo.encode(coord);
+        algo.decode(key, coord2);
+        assertEquals(key, algo.encode(coord2));
+        double dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
+        assertTrue(dist + "", dist < 1e-2);
+
+        coord = new CoordTrig(50.022846f, 9.2123575f);
+        key = algo.encode(coord);
+        algo.decode(key, coord2);
+        assertEquals(key, algo.encode(coord2));
+        dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
+        assertTrue(dist + "", dist < 1e-2);
+
+        coord = new CoordTrig(50.143425f, 9.104125f);
+        key = algo.encode(coord);
+        algo.decode(key, coord2);
+        assertEquals(key, algo.encode(coord2));
+        dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
+        assertTrue(dist + "", dist < 1e-2);
+
+        long queriedKey = 246557819640268L;
+        long storedKey = 246557819640269L;
+        algo.decode(storedKey, coord);
+        algo.decode(queriedKey, coord2);
+        // System.out.println("stored:" + coord + " queried:" + coord2);
+        algo.decode(storedKey, coord2);
+        assertEquals(storedKey, algo.encode(coord2));
     }
 }

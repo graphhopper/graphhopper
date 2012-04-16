@@ -54,8 +54,9 @@ public class MiniGraphUI {
     public MiniGraphUI(Graph g) {
         this.graph = g;
 
-        this.quadTree = new QuadTreeSimple<Integer>(8, 6 * 8);
+        this.quadTree = new QuadTreeSimple<Integer>(8, 7 * 8);
         PerfTest.fillQuadTree(quadTree, graph);
+        System.out.println("read " + quadTree.size() + " entries");
 
         infoPanel = new JPanel() {
 
@@ -130,19 +131,19 @@ public class MiniGraphUI {
         };
     }
 
-    private void plotEdge(Graphics g, float lat, float lon, float lat2, float lon2) {
+    private void plotEdge(Graphics g, double lat, double lon, double lat2, double lon2) {
         g.drawLine((int) getX(lon), (int) getY(lat), (int) getX(lon2), (int) getY(lat2));
     }
 
-    private double getX(float lon) {
+    private double getX(double lon) {
         return (lon + offsetX) / scaleX;
     }
 
-    private double getY(float lat) {
+    private double getY(double lat) {
         return (90 - lat + offsetY) / scaleY;
     }
 
-    private void plot(Graphics g, float lat, float lon, int count, int width) {
+    private void plot(Graphics g, double lat, double lon, int count, int width) {
         double x = getX(lon);
         double y = getY(lat);
         if (y < minY)
@@ -233,8 +234,8 @@ public class MiniGraphUI {
                             });
 
                             // show quad tree nodes
-                            float lat = getLat(e.getY());
-                            float lon = getLon(e.getX());
+                            double lat = getLat(e.getY());
+                            double lon = getLon(e.getX());
 
                             StopWatch sw = new StopWatch().start();
                             quadTreeNodes = quadTree.getNeighbours(lat, lon, 10);
@@ -273,29 +274,32 @@ public class MiniGraphUI {
                             mainPanel.repaint();
                         }
 
-                        float getLon(int x) {
-                            return (float) (x * scaleX - offsetX);
+                        double getLon(int x) {
+                            return x * scaleX - offsetX;
                         }
 
-                        float getLat(int y) {
-                            return (float) (90 - (y * scaleY - offsetY));
+                        double getLat(int y) {
+                            return 90 - (y * scaleY - offsetY);
                         }
                     };
                     mainPanel.addMouseListener(ml);
                     mainPanel.addMouseMotionListener(ml);
-                    
+
                     // just for fun
                     mainPanel.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), "deleteNodes");
                     mainPanel.getActionMap().put("deleteNodes", new AbstractAction() {
 
                         @Override public void actionPerformed(ActionEvent e) {
+                            int counter = 0;
                             for (CoordTrig<Integer> coord : quadTreeNodes) {
                                 boolean ret = quadTree.remove(coord.lat, coord.lon);
-                                if(!ret) {
-                                    //System.out.println("cannot remove " + coord + " " + ret);
-                                    ret = quadTree.remove(coord.lat, coord.lon);
-                                }
+                                if (!ret) {
+//                                    System.out.println("cannot remove " + coord + " " + ret);
+//                                    ret = quadTree.remove(coord.getLatitude(), coord.getLongitude());
+                                } else
+                                    counter++;
                             }
+                            System.out.println("Deleted " + counter + " of " + quadTreeNodes.size() + " nodes");
                         }
                     });
 

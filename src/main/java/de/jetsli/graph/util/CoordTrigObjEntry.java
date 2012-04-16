@@ -26,7 +26,7 @@ public class CoordTrigObjEntry<T> extends CoordTrig<T> {
     public CoordTrigObjEntry() {
     }
 
-    public CoordTrigObjEntry(T o, float lat, float lon) {
+    public CoordTrigObjEntry(T o, double lat, double lon) {
         super(lat, lon);
         this.obj = o;
     }

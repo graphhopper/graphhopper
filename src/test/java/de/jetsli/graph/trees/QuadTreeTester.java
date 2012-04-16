@@ -19,7 +19,6 @@ import de.jetsli.graph.util.BBox;
 import de.jetsli.graph.util.CoordTrig;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Random;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -128,19 +127,19 @@ public abstract class QuadTreeTester {
     @Test
     public void testGetNeighboursExactHit() {
         QuadTree<Integer> instance = createQuadTree(100);
-        Collection<CoordTrig<Integer>> coll = instance.getNeighbours(8.124f, 8.123f, 10);
+        Collection<CoordTrig<Integer>> coll = instance.getNeighbours(8.124, 8.123, 10);
         assertTrue(coll.isEmpty());
 
-        assertEquals(null, instance.put(8.124f, 8.123f, 1));
-        assertEquals(null, instance.put(8.123f, 8.123f, 2));
-        assertEquals(null, instance.put(9.124f, 8.123f, 3));
+        assertEquals(null, instance.put(8.124, 8.123, 1));
+        assertEquals(null, instance.put(8.123, 8.123, 2));
+        assertEquals(null, instance.put(9.124, 8.123, 3));
         assertEquals(3, instance.size());
 
         // search in 10km - exact hit
-        coll = instance.getNeighbours(8.124f, 8.123f, 10);
+        coll = instance.getNeighbours(8.124, 8.123, 10);
         assertEquals(2, coll.size());
 
-        coll = instance.getNeighbours(8.124f, 8.123f, 120);
+        coll = instance.getNeighbours(8.124, 8.123, 120);
         assertEquals(3, coll.size());
     }
 
@@ -154,12 +153,12 @@ public abstract class QuadTreeTester {
     @Test
     public void testGetNeighboursSearch() {
         QuadTree<Integer> instance = createQuadTree(100);
-        Collection<CoordTrig<Integer>> coll = instance.getNeighbours(8.124f, 8.123f, 10);
+        Collection<CoordTrig<Integer>> coll = instance.getNeighbours(8.124, 8.123, 10);
         assertTrue(coll.isEmpty());
 
-        assertEquals(null, instance.put(8.124f, 8.123f, 1));
-        assertEquals(null, instance.put(8.123f, 8.123f, 2));
-        assertEquals(null, instance.put(9.124f, 8.123f, 3));
+        assertEquals(null, instance.put(8.124, 8.123, 1));
+        assertEquals(null, instance.put(8.123, 8.123, 2));
+        assertEquals(null, instance.put(9.124, 8.123, 3));
         assertEquals(null, instance.put(8, 9, 4));
         assertEquals(null, instance.put(9, 9, 5));
         assertEquals(null, instance.put(7, 7, 6));
@@ -190,21 +189,21 @@ public abstract class QuadTreeTester {
         assertEquals(10, instance.count());
         assertEquals(10, instance.size());
 
-        assertEquals(2, instance.getNeighbours(8.12f, 8.12f, 10).size());
-        assertEquals(2, instance.getNeighbours(8.12f, 8.12f, 50).size());
-        assertEquals(1, instance.getNeighbours(8.12f, 8.12f, 0.5f).size());
-        Iterator<CoordTrig<Integer>> iter = instance.getNeighbours(8.12f, 8.12f, 0.5f).iterator();
+        assertEquals(2, instance.getNeighbours(8.12, 8.12, 10).size());
+        assertEquals(2, instance.getNeighbours(8.12, 8.12, 50).size());
+        assertEquals(1, instance.getNeighbours(8.12, 8.12, 0.5).size());
+        Iterator<CoordTrig<Integer>> iter = instance.getNeighbours(8.12, 8.12, 0.5).iterator();
         assertEquals(2, (int) iter.next().getValue());
-        assertEquals(3, instance.getNeighbours(8.12f, 8.12f, 100).size());
-        assertEquals(6, instance.getNeighbours(8.12f, 8.12f, 130).size());
-        assertEquals(9, instance.getNeighbours(8.12f, 8.12f, 175).size());
-        assertEquals(10, instance.getNeighbours(8.12f, 8.12f, 176).size());
+        assertEquals(3, instance.getNeighbours(8.12, 8.12, 100).size());
+        assertEquals(6, instance.getNeighbours(8.12, 8.12, 130).size());
+        assertEquals(9, instance.getNeighbours(8.12, 8.12, 175).size());
+        assertEquals(10, instance.getNeighbours(8.12, 8.12, 176).size());
     }
 
-    public static void assertOrder(Collection<CoordTrig> coll, float... latitudes) {
+    public static void assertOrder(Collection<CoordTrig> coll, double... latitudes) {
         Iterator<CoordTrig> iter = coll.iterator();
         for (int i = 0; i < latitudes.length; i++) {
-            float f = latitudes[i];
+            double f = latitudes[i];
             CoordTrig f2d = iter.next();
             assertEquals(f, f2d.lat, 1e-8);
         }

@@ -49,11 +49,11 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     public static class AcceptInDistance implements Acceptor<CoordTrig> {
 
         CalcDistance calc;
-        float lat;
-        float lon;
+        double lat;
+        double lon;
         double normalizedDist;
 
-        public AcceptInDistance(CalcDistance calc, float lat, float lon, float distInKm) {
+        public AcceptInDistance(CalcDistance calc, double lat, double lon, double distInKm) {
             this.calc = calc;
             this.lat = lat;
             this.lon = lon;
@@ -81,14 +81,10 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     }
 
     public QuadTreeSimple(int entriesPerLeafNode) {
-        // maximum precision which fits into a 'long'
         this(entriesPerLeafNode, 64);
     }
 
     public QuadTreeSimple(int entriesPerLeafNode, int bitsForLatLon) {
-        if (bitsForLatLon > 64)
-            throw new IllegalStateException("Precision is too high and does not fit into 8 bytes");
-
         mbits = bitsForLatLon;
         entriesPerLeaf = entriesPerLeafNode;
         globalMaxBit = 1L << (bitsForLatLon - 1);
@@ -106,7 +102,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     }
 
     @Override
-    public T put(float lat, float lon, T value) {
+    public T put(double lat, double lon, T value) {
         return put(algo.encode(lat, lon), value);
     }
 
@@ -218,7 +214,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     }
 
     @Override
-    public T get(float lat, float lon) {
+    public T get(double lat, double lon) {
         if (root == null)
             return null;
 
@@ -247,7 +243,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     }
 
     @Override
-    public boolean remove(float lat, float lon) {
+    public boolean remove(double lat, double lon) {
         return remove(algo.encode(lat, lon));
     }
 
@@ -305,7 +301,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     }
 
     @Override
-    public Collection<CoordTrig<T>> getNeighbours(float lat, float lon, float distanceInKm) {
+    public Collection<CoordTrig<T>> getNeighbours(double lat, double lon, double distanceInKm) {
         List<CoordTrig<T>> list = new ArrayList<CoordTrig<T>>();
         AcceptInDistance distanceAcceptor = new AcceptInDistance(calc, lat, lon, distanceInKm);
         getNeighbours(BBox.createEarthMax(), BBox.create(lat, lon, distanceInKm, calc), root,
@@ -341,8 +337,8 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             return;
         }
 
-        float lat12 = (nodeBB.lat1 + nodeBB.lat2) / 2;
-        float lon12 = (nodeBB.lon1 + nodeBB.lon2) / 2;
+        double lat12 = (nodeBB.lat1 + nodeBB.lat2) / 2;
+        double lon12 = (nodeBB.lon1 + nodeBB.lon2) / 2;
 
         // top-left - see SpatialKeyAlgo that latitude goes from bottom to top and is 1 if on top
         // 10 11

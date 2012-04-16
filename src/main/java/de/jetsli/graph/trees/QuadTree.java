@@ -36,16 +36,16 @@ public interface QuadTree<V> {
     
     QuadTree init(int maxItemsHint) throws Exception;
     
-    V put(float lat, float lon, V value);
+    V put(double lat, double lon, V value);
     
-    V get(float lat, float lon);
+    V get(double lat, double lon);
     
-    boolean remove(float lat, float lon);
+    boolean remove(double lat, double lon);
 
     /**
      * @return points near the specified latitude/longitude
      */
-    Collection<CoordTrig<V>> getNeighbours(float lat, float lon, float distanceInKm);
+    Collection<CoordTrig<V>> getNeighbours(double lat, double lon, double distanceInKm);
     
     Collection<CoordTrig<V>> getNeighbours(BBox boundingBox);
     

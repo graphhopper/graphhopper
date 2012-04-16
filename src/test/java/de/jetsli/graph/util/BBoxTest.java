@@ -32,11 +32,11 @@ public class BBoxTest {
 
         // The calclulated bounding box has no negative values (also for southern hemisphere and negative meridians)
         // and the ordering is always the same (top to bottom and left to right)
-        assertEquals(52.8993, b.lat1, 1e-4);
-        assertEquals(8.5393, b.lon1, 1e-4);
+        assertEquals(52.8993, b.lat1(), 1e-4);
+        assertEquals(8.5393, b.lon1(), 1e-4);
 
-        assertEquals(51.1007, b.lat2, 1e-4);
-        assertEquals(11.4607, b.lon2, 1e-4);
+        assertEquals(51.1007, b.lat2(), 1e-4);
+        assertEquals(11.4607, b.lon2(), 1e-4);
         
         // something about 141 = sqrt(2*100^2)
 //        System.out.println(c.calcDistKm(52, 10, 52.8993, 11.4607));

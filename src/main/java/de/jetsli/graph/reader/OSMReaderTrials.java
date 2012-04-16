@@ -107,8 +107,8 @@ public class OSMReaderTrials implements OSMReader {
 
         // stats();
         
-//        new PerfTest(readGraph()).start();
-        new MiniGraphUI(readGraph()).visualize();
+        new PerfTest(readGraph()).start();
+//        new MiniGraphUI(readGraph()).visualize();
 
 //        boolean dijkstraSearchTest = storage instanceof MMyGraphStorage;
         boolean dijkstraSearchTest = false;

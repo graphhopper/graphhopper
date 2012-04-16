@@ -16,25 +16,26 @@
 package de.jetsli.graph.util;
 
 /**
+ * Double precision coordinates without an associated value. To add one - subclass.
  *
  * @author Peter Karich, info@jetsli.de
  */
 public class CoordTrig<T> {
 
-    public float lat;
-    public float lon;
+    public double lat;
+    public double lon;
 
     public CoordTrig() {
     }
 
-    public CoordTrig(float lat, float lon) {
+    public CoordTrig(double lat, double lon) {
         this.lat = lat;
         this.lon = lon;
     }
 
     public void setValue(T t) {
     }
-    
+
     public T getValue() {
         return null;
     }

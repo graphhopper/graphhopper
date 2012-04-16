@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.util;
 
+import de.jetsli.graph.geohash.SpatialKeyAlgo;
 import de.jetsli.graph.reader.CalcDistance;
 
 /**
@@ -26,12 +27,12 @@ import de.jetsli.graph.reader.CalcDistance;
 public class BBox {
 
     // latitude (phi),  longitude (theta)
-    public float lat1;
-    public float lon1;
-    public float lat2;
-    public float lon2;
+    public double lat1;
+    public double lon1;
+    public double lat2;
+    public double lon2;
 
-    public BBox(float lat1, float lon1, float lat2, float lon2) {
+    public BBox(double lat1, double lon1, double lat2, double lon2) {
         assert lat2 < lat1 : "second latitude should be smaller than the first";
         assert lon1 < lon2 : "second longitude should be bigger than the first";
         this.lat1 = lat1;
@@ -40,22 +41,42 @@ public class BBox {
         this.lon2 = lon2;
     }
 
-    public static BBox create(float lat, float lon, float radiusInKm, CalcDistance calc) {
+    public double lat1() {
+        return (double) lat1 / SpatialKeyAlgo.DEFAULT_FACTOR;
+    }
+
+    public double lat2() {
+        return (double) lat2 / SpatialKeyAlgo.DEFAULT_FACTOR;
+    }
+
+    public double lon1() {
+        return (double) lon1 / SpatialKeyAlgo.DEFAULT_FACTOR;
+    }
+
+    public double lon2() {
+        return (double) lon2 / SpatialKeyAlgo.DEFAULT_FACTOR;
+    }
+
+//    public static BBox create(int lat1, int lon1, int lat2, int lon2) {
+//        return new BBox(lat1, lon1, lat2, lon2);
+//    }
+
+    public static BBox create(double lat, double lon, double radiusInKm, CalcDistance calc) {
         if (radiusInKm <= 0)
             throw new IllegalArgumentException("Distance cannot be 0 or negative! " + radiusInKm + " lat,lon:" + lat + "," + lon);
 
         // length of a circle at specified lat / dist
-        float dLon = (float) (360 / (calc.calcCircumference(lat) / radiusInKm));
+        double dLon = (360 / (calc.calcCircumference(lat) / radiusInKm));
 
         // length of a circle is independent of the longitude
-        float dLat = (float) (360 / (CalcDistance.C / radiusInKm));
+        double dLat = (360 / (CalcDistance.C / radiusInKm));
 
         // Now return bounding box in coordinates
         return new BBox(lat + dLat, lon - dLon, lat - dLat, lon + dLon);
     }
 
     public static BBox createEarthMax() {
-        return new BBox(90, -180, -90, 180);
+        return new BBox(90.0, -180.0, -90.0, 180.0);
     }
 
     public boolean intersectIfBottomLeftAndTopRight(BBox o) {

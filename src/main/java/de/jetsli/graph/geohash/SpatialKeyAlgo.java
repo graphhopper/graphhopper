@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.geohash;
 
-import de.jetsli.graph.reader.CalcDistance;
 import de.jetsli.graph.util.CoordTrig;
 
 // A 2 bit precision spatial key could look like
@@ -42,7 +41,9 @@ import de.jetsli.graph.util.CoordTrig;
  * The bits are usable as key for hash tables like our SpatialKeyHashtable or for a spatial tree
  * like QuadTreeSimple. Also the binary form makes it relative simple for implementations using this
  * encoding scheme to expand to arbitrary dimension (e.g. shifting n-times if n would be the
- * dimension). A 32 bit representation has a precision of approx 600 meters = 40000/2^16
+ * dimension).
+ *
+ * A 32 bit representation has a precision of approx 600 meters = 40000/2^16
  *
  * There are different possibilities how to handle different precision and order of bits. Either:
  *
@@ -64,7 +65,8 @@ import de.jetsli.graph.util.CoordTrig;
  */
 public class SpatialKeyAlgo {
 
-    private int precision;
+    public static final int DEFAULT_FACTOR = 10000000;
+    private int factorForPrecision;
     // normally +90 degree (south to nord)
     private int maxLatI;
     // normally -90 degree
@@ -76,23 +78,42 @@ public class SpatialKeyAlgo {
     private int iterations;
     private long initialBits;
 
-    public SpatialKeyAlgo init(int allBits) {
-        if ((allBits & 0x1) == 1)
-            throw new IllegalStateException("bits needs to be even to use the same amount for lat and lon");
-
-        iterations = allBits / 2;
-        initialBits = 1L << (allBits - 1);
-        setPrecision(10000000);
-
-        // to ensure encode(decode(key)) != key we should not set precision too high
-        // minimal resolution calculates as CalcDistance.C / (1 << (allBits / 2))
-        // double res = 10 * (1 << (allBits / 2)) / CalcDistance.C;
-        // setPrecision((int) res);
+    /**
+     * @param precision specifies how many positions after the decimal point are significant.
+     */
+    public SpatialKeyAlgo initFromPrecision(int precision) {
+        // 360 / 2^(allBits/2) = 1/precision = x
+        double x = 1d / Math.pow(10, precision);
+        double allbits = Math.round(2 * Math.log(360 / x) / Math.log(2));
+        // add 4 bits to make the last position correct
+        init(Math.min((int) allbits + 4 * 2, 64));
+        setPrecision(precision);
         return this;
     }
 
-    public void setPrecision(int precision) {
-        this.precision = precision;
+    public SpatialKeyAlgo init(int allBits) {
+        if (allBits > 64)
+            throw new IllegalStateException("allBits is too big and does not fit into 8 bytes");
+
+        if ((allBits & 0x1) == 1)
+            throw new IllegalStateException("allBits needs to be even to use the same amount for lat and lon");
+
+        iterations = allBits / 2;
+        initialBits = 1L << (allBits - 1);
+        setPrecision(DEFAULT_FACTOR);
+        return this;
+    }
+
+    public int getExactPrecision() {
+        // 360 / 2^(allBits/2) = 1/precision
+        int p = (int) (Math.pow(2, iterations) / 360);
+        // no rounding error
+        p++;
+        return (int) Math.log10(p);
+    }
+
+    protected void setPrecision(int factorForPrecision) {
+        this.factorForPrecision = factorForPrecision;
         minLatI = toInt(-90f);
         maxLatI = toInt(90f);
         minLonI = toInt(-180f);
@@ -104,11 +125,21 @@ public class SpatialKeyAlgo {
      *
      * @return the spatial key
      */
-    public long encode(float lat, float lon) {
-        // float operation are often more expensive so use an integer for further comparison etc
-        // (assumption: |floatValue| < 180)
-        int latI = toInt(lat);
-        int lonI = toInt(lon);
+    public long encode(double lat, double lon) {
+        return encode(toInt(lat), toInt(lon));
+    }
+
+    public long encode(CoordTrig coord) {
+        return encode(coord.lat, coord.lon);
+    }
+
+    /**
+     * @param latI the multiplied integer value of the latitude. The factor depends on the necessary
+     * precision
+     * @param lonI the multiplied integer value of the longitude.
+     */
+    public long encode(int latI, int lonI) {
+        // double operation are often more expensive so use an integer for further comparison etc        
         long hash = 0;
         int minLat = minLatI;
         int maxLat = maxLatI;
@@ -170,20 +201,15 @@ public class SpatialKeyAlgo {
                 break;
         }
 
-//        lat = lat / 1000;
-//        latLon.lat = lat / 10000f;
-//
-//        lon = lon / 1000;
-//        latLon.lon = lon / 10000f;
-        latLon.lat = toFloat(lat);
-        latLon.lon = toFloat(lon);
+        latLon.lat = toDouble(lat);
+        latLon.lon = toDouble(lon);
     }
 
-    protected int toInt(float fl) {
-        return (int) (fl * precision);
+    protected int toInt(double d) {
+        return (int) (d * factorForPrecision);
     }
 
-    private float toFloat(int integer) {
-        return (float) integer / precision;
+    private double toDouble(int integer) {
+        return (double) integer / factorForPrecision;
     }
 }
