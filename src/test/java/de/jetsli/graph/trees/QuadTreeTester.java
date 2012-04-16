@@ -88,16 +88,24 @@ public abstract class QuadTreeTester {
     @Test
     public void testPutBatch() {
         QuadTree instance = createQuadTree(100);
-        for (float i = 0; i < 1000; i++) {
-            instance.put(i / 100, i / 100, i);
-            assertEquals((int) i + 1, instance.size());
+        int max = 1000;
+        for (int i = 0; i < max; i++) {
+            instance.put(i / 100.0, i / 100.0, i);
+            assertEquals(i + 1, instance.size());
         }
 
-        assertEquals(1000, instance.size());
-        for (float i = 0; i < 1000; i++) {
-            Float fl = (Float) instance.get(i / 100, i / 100);
-            assertNotNull("i/100 " + i / 100, fl);
-            assertEquals("i/100 " + i / 100, i, fl, 1e-4);
+        assertEquals(max, instance.size());
+        for (int i = 0; i < max; i++) {
+            Integer integ = (Integer) instance.get(i / 100.0, i / 100.0);
+            assertNotNull("i/100 ", integ);
+            assertEquals(i + "/100", i, (int) integ);
+        }
+
+        for (int i = 0; i < max; i++) {
+            assertEquals(max - i, instance.size());
+            Collection<CoordTrig> res = instance.getNeighbours(i / 100.0, i / 100.0, 0.001d);
+            CoordTrig coord = res.iterator().next();
+            assertTrue("couldn't remove " + i / 100.0 + " -> " + coord, instance.remove(coord.lat, coord.lon));
         }
     }
 

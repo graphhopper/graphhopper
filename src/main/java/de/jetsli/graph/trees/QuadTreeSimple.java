@@ -98,13 +98,10 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
 
     @Override
     public T put(double lat, double lon, T value) {
-        return put(algo.encode(lat, lon), value);
-    }
-
-    public T put(long spatialKey, T value) {
         if (value == null)
             throw new IllegalArgumentException("This quad tree does not support null values");
 
+        long spatialKey = algo.encode(lat, lon);
         long maxBit = globalMaxBit;
         if (root == null) {
             size++;
@@ -202,10 +199,10 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
                 current = new QTDataNode<T>(entriesPerLeaf);
                 previousBranch.set(previousNum, current);
             }
-
         }
 
-        throw new UnsupportedOperationException("Cannot put element?? spatial key:" + spatialKey + " value:" + value);
+        throw new UnsupportedOperationException("Cannot put element? Too many entries per area? Try increasing entries per leaf! "
+                + lat + "," + lon + " spatial key:" + spatialKey + " value:" + value + " size:" + size);
     }
 
     @Override

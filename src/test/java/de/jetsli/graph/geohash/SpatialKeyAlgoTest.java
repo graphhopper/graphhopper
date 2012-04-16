@@ -119,15 +119,6 @@ public class SpatialKeyAlgoTest {
 
     @Test
     public void testBijection() {
-        SpatialKeyAlgo algo = new SpatialKeyAlgo().init(6 * 8);
-        CoordTrig coord11 = new CoordTrig();
-        long key = algo.encode(1, 1);
-        algo.decode(key, coord11);
-        long resKey = algo.encode(coord11.lat, coord11.lon);
-        CoordTrig coord2 = new CoordTrig();
-        algo.decode(resKey, coord2);
-        assertEquals(key, resKey);
-
         // fix bijection precision problem!
         //
         // the latitude encoding "10" would result in 1.0 but a rounding error could lead to e.g. 0.99
@@ -140,12 +131,26 @@ public class SpatialKeyAlgoTest {
         //
         // 0   .5   1.0   1.5  2.0
         // |--- ^ ---|--- ^ ---|
+        testBijection(6 * 8);
+        testBijection(8 * 8);
+    }
+
+    public void testBijection(int bits) {
+        SpatialKeyAlgo algo = new SpatialKeyAlgo().init(bits);
+        CoordTrig coord11 = new CoordTrig();
+        long key = algo.encode(1, 1);
+        algo.decode(key, coord11);
+        long resKey = algo.encode(coord11.lat, coord11.lon);
+        CoordTrig coord2 = new CoordTrig();
+        algo.decode(resKey, coord2);
+        assertEquals(key, resKey);
+
         CoordTrig coord = new CoordTrig(50.022846, 9.2123575);
         key = algo.encode(coord);
         algo.decode(key, coord2);
         assertEquals(key, algo.encode(coord2));
         double dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
-        // but ensure small distance
+        // and ensure small distance
         assertTrue(dist + "", dist < 5e-3);
 
         long queriedKey = 246557819640268L;
@@ -156,7 +161,7 @@ public class SpatialKeyAlgoTest {
         // 2. wont fix bijection precision problem
         assertEquals(storedKey, algo.encode(coord2));
         dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
-        // but ensure small distance
+        // and ensure small distance
         assertTrue(dist + "", dist < 5e-3);
 
         coord = new CoordTrig(50.0606072, 9.6277542);
@@ -164,7 +169,15 @@ public class SpatialKeyAlgoTest {
         algo.decode(key, coord2);
         assertEquals(key, algo.encode(coord2));
         dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
-        // but ensure small distance
+        // and ensure small distance
+        assertTrue(dist + "", dist < 5e-3);
+
+        coord = new CoordTrig(0.01, 0.01);
+        key = algo.encode(coord);
+        algo.decode(key, coord2);
+        assertEquals(key, algo.encode(coord2));
+        dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
+        // and ensure small distance
         assertTrue(dist + "", dist < 5e-3);
     }
 }
