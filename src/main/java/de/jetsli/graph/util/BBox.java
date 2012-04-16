@@ -42,19 +42,19 @@ public class BBox {
     }
 
     public double lat1() {
-        return (double) lat1 / SpatialKeyAlgo.DEFAULT_FACTOR;
+        return (double) lat1;
     }
 
     public double lat2() {
-        return (double) lat2 / SpatialKeyAlgo.DEFAULT_FACTOR;
+        return (double) lat2;
     }
 
     public double lon1() {
-        return (double) lon1 / SpatialKeyAlgo.DEFAULT_FACTOR;
+        return (double) lon1;
     }
 
     public double lon2() {
-        return (double) lon2 / SpatialKeyAlgo.DEFAULT_FACTOR;
+        return (double) lon2;
     }
 
 //    public static BBox create(int lat1, int lon1, int lat2, int lon2) {

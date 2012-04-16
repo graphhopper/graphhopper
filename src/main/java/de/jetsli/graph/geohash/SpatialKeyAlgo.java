@@ -192,13 +192,16 @@ public class SpatialKeyAlgo {
             if ((spatialKey & bits) != 0)
                 lon += midLon;
 
+            midLat >>>= 1;
+            midLon >>>= 1;
             if (bits != 0) {
-                midLat >>>= 1;
-
                 bits >>>= 1;
-                midLon >>>= 1;
-            } else
+            } else {
+                // stable rounding - see testBijection
+                lat += midLat;
+                lon += midLon;
                 break;
+            }
         }
 
         latLon.lat = toDouble(lat);

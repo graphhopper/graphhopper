@@ -39,35 +39,30 @@ import java.util.List;
  */
 public class QuadTreeSimple<T> implements QuadTree<T> {
 
-    public static Acceptor<CoordTrig> acceptAll = new Acceptor<CoordTrig>() {
+    private static class Acceptor<T> implements LeafWorker<T> {
 
-        @Override public boolean accept(CoordTrig entry) {
+        public final List<CoordTrig<T>> result = new ArrayList<CoordTrig<T>>();
+        SpatialKeyAlgo algo;
+
+        public Acceptor(SpatialKeyAlgo algo) {
+            this.algo = algo;
+        }
+
+        @Override public boolean doWork(QTDataNode<T> dataNode, int i) {
+            CoordTrigObjEntry<T> entry = new CoordTrigObjEntry<T>();
+            algo.decode(dataNode.keys[i], entry);
+            if (accept(entry)) {
+                entry.setValue((T) dataNode.values[i]);
+                result.add(entry);
+            }
+
+            return false;
+        }
+
+        public boolean accept(CoordTrig<T> entry) {
             return true;
         }
-    };
-
-    public static class AcceptInDistance implements Acceptor<CoordTrig> {
-
-        CalcDistance calc;
-        double lat;
-        double lon;
-        double normalizedDist;
-
-        public AcceptInDistance(CalcDistance calc, double lat, double lon, double distInKm) {
-            this.calc = calc;
-            this.lat = lat;
-            this.lon = lon;
-            // add 10cm to reduce rounding mistakes and requires no comparing
-            this.normalizedDist = distInKm + 1e-4f;
-            // now apply some transformation to use the faster distance calculation in accept()
-            normalizedDist = calc.normalizeDist(normalizedDist);
-        }
-
-        @Override public boolean accept(CoordTrig entry) {
-            // return calc.calcDistKm(lat, lon, entry.lat, entry.lon) < normalizedDist;
-            return calc.calcNormalizedDist(lat, lon, entry.lat, entry.lon) < normalizedDist;
-        }
-    };
+    }
     private final int mbits;
     private final long globalMaxBit;
     private final SpatialKeyAlgo algo;
@@ -244,55 +239,27 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
 
     @Override
     public boolean remove(double lat, double lon) {
-        return remove(algo.encode(lat, lon));
-    }
-
-    public boolean remove(long spatialKey) {
         if (root == null)
             return false;
 
-        QTNode<T> previous = null;
-        int previousNum = -1;
-        QTNode<T> current = root;
-        long maxBit = globalMaxBit;
-        while (maxBit != 0) {
-            if (current.hasData()) {
-                QTDataNode<T> dataNode = (QTDataNode<T>) current;
-                boolean found = dataNode.remove(spatialKey);
-                if (!found)
-                    return false;
+        final long key = algo.encode(lat, lon);
+        // we need to workaround the precision mistakes so do a neighbour search
+        // TODO is there a better solution?        
+        LeafWorker<T> worker = new LeafWorker<T>() {
 
-                size--;
-                if (!dataNode.isEmpty())
-                    return true;
-
-                // Now underflow! -> TODO remove lengthly tail of branches -> going from root again or temp save branches?
-
-                // Remove data node 'current' and branch node 'previous'.
-                if (previous == null) {
-                    root = null;
+            @Override
+            public boolean doWork(QTDataNode<T> entry, int index) {
+                if (entry.remove(key)) {
+                    size--;
+                    // stop search
                     return true;
                 }
 
-                previous.set(previousNum, null);
-                return true;
-            }
-
-            previous = current;
-            // latitude
-            previousNum = (spatialKey & maxBit) == 0 ? 0 : 2;
-            maxBit >>>= 1;
-            // longitude
-            if ((spatialKey & maxBit) != 0)
-                previousNum |= 1;
-            maxBit >>>= 1;
-            current = current.get(previousNum);
-            if (current == null)
                 return false;
-        }
-
-        // not found
-        return false;
+            }
+        };
+        double err = 1.0 / Math.pow(10, algo.getExactPrecision());
+        return getNeighbours(BBox.createEarthMax(), new BBox(lat + err, lon - err, lat - err, lon + err), root, worker);
     }
 
     @Override
@@ -301,25 +268,30 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     }
 
     @Override
-    public Collection<CoordTrig<T>> getNeighbours(double lat, double lon, double distanceInKm) {
-        List<CoordTrig<T>> list = new ArrayList<CoordTrig<T>>();
-        AcceptInDistance distanceAcceptor = new AcceptInDistance(calc, lat, lon, distanceInKm);
+    public Collection<CoordTrig<T>> getNeighbours(final double lat, final double lon, final double distanceInKm) {
+        final double normalizedDist = calc.normalizeDist(distanceInKm + 1e-4f);
+        Acceptor<T> distanceAcceptor = new Acceptor<T>(algo) {
+
+            @Override public boolean accept(CoordTrig<T> entry) {
+                // return calc.calcDistKm(lat, lon, entry.lat, entry.lon) < normalizedDist;
+                return calc.calcNormalizedDist(lat, lon, entry.lat, entry.lon) < normalizedDist;
+            }
+        };
         getNeighbours(BBox.createEarthMax(), BBox.create(lat, lon, distanceInKm, calc), root,
-                distanceAcceptor, list);
-        return list;
+                distanceAcceptor);
+        return distanceAcceptor.result;
     }
 
     @Override
     public Collection<CoordTrig<T>> getNeighbours(BBox boundingBox) {
-        List<CoordTrig<T>> list = new ArrayList<CoordTrig<T>>();
-        getNeighbours(BBox.createEarthMax(), boundingBox, root, acceptAll, list);
-        return list;
+        Acceptor<T> worker = new Acceptor<T>(algo);
+        getNeighbours(BBox.createEarthMax(), boundingBox, root, worker);
+        return worker.result;
     }
 
-    private void getNeighbours(BBox nodeBB, BBox searchRect, QTNode current,
-            Acceptor<CoordTrig> acceptor, Collection<CoordTrig<T>> result) {
+    private boolean getNeighbours(BBox nodeBB, BBox searchRect, QTNode current, LeafWorker<T> worker) {
         if (current == null)
-            return;
+            return false;
 
         if (current.hasData()) {
             QTDataNode<T> dataNode = (QTDataNode<T>) current;
@@ -327,14 +299,10 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
                 if (dataNode.values[i] == null)
                     break;
 
-                CoordTrigObjEntry<T> f = new CoordTrigObjEntry<T>();
-                algo.decode(dataNode.keys[i], f);
-                if (acceptor.accept(f))
-                    result.add(f);
-
-                f.setValue((T) dataNode.values[i]);
+                if (worker.doWork(dataNode, i))
+                    return true;
             }
-            return;
+            return false;
         }
 
         double lat12 = (nodeBB.lat1 + nodeBB.lat2) / 2;
@@ -346,33 +314,42 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         QTNode<T> node10 = current.get(2);
         if (node10 != null) {
             BBox nodeRect10 = new BBox(nodeBB.lat1, nodeBB.lon1, lat12, lon12);
-            if (searchRect.intersect(nodeRect10))
-                getNeighbours(nodeRect10, searchRect, node10, acceptor, result);
+            if (searchRect.intersect(nodeRect10)) {
+                if (getNeighbours(nodeRect10, searchRect, node10, worker))
+                    return true;
+            }
         }
 
         // top-right
         QTNode<T> node11 = current.get(3);
         if (node11 != null) {
             BBox nodeRect11 = new BBox(nodeBB.lat1, lon12, lat12, nodeBB.lon2);
-            if (searchRect.intersect(nodeRect11))
-                getNeighbours(nodeRect11, searchRect, node11, acceptor, result);
+            if (searchRect.intersect(nodeRect11)) {
+                if (getNeighbours(nodeRect11, searchRect, node11, worker))
+                    return true;
+            }
         }
 
         // bottom-left
         QTNode<T> node00 = current.get(0);
         if (node00 != null) {
             BBox nodeRect00 = new BBox(lat12, nodeBB.lon1, nodeBB.lat2, lon12);
-            if (searchRect.intersect(nodeRect00))
-                getNeighbours(nodeRect00, searchRect, node00, acceptor, result);
+            if (searchRect.intersect(nodeRect00)) {
+                if (getNeighbours(nodeRect00, searchRect, node00, worker))
+                    return true;
+            }
         }
 
         // bottom-right
         QTNode<T> node01 = current.get(1);
         if (node01 != null) {
             BBox nodeRect01 = new BBox(lat12, lon12, nodeBB.lat2, nodeBB.lon2);
-            if (searchRect.intersect(nodeRect01))
-                getNeighbours(nodeRect01, searchRect, node01, acceptor, result);
+            if (searchRect.intersect(nodeRect01)) {
+                if (getNeighbours(nodeRect01, searchRect, node01, worker))
+                    return true;
+            }
         }
+        return false;
     }
 
     @Override

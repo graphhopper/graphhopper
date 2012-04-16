@@ -13,12 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.util;
+package de.jetsli.graph.trees;
 
 /**
  * @author Peter Karich
  */
-public interface Acceptor<T> {
+interface LeafWorker<T> {
 
-    boolean accept(T entry);
+    /**
+     * @return true if no further search necessary
+     */
+    boolean doWork(QTDataNode<T> entry, int index);
 }

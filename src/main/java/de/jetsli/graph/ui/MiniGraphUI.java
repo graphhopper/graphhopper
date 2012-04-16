@@ -294,7 +294,7 @@ public class MiniGraphUI {
                             for (CoordTrig<Integer> coord : quadTreeNodes) {
                                 boolean ret = quadTree.remove(coord.lat, coord.lon);
                                 if (!ret) {
-//                                    System.out.println("cannot remove " + coord + " " + ret);
+                                    System.out.println("cannot remove " + coord + " " + ret);
 //                                    ret = quadTree.remove(coord.getLatitude(), coord.getLongitude());
                                 } else
                                     counter++;

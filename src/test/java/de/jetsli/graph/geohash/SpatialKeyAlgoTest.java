@@ -116,7 +116,7 @@ public class SpatialKeyAlgoTest {
 //            System.out.println("distanceX:" + dist + " precision:" + precision + " difference:" + (dist - precision) + " factor:" + dist / precision);
         }
     }
-    
+
     @Test
     public void testBijection() {
         SpatialKeyAlgo algo = new SpatialKeyAlgo().init(6 * 8);
@@ -128,25 +128,43 @@ public class SpatialKeyAlgoTest {
         algo.decode(resKey, coord2);
         assertEquals(key, resKey);
 
+        // fix bijection precision problem!
+        //
+        // the latitude encoding "10" would result in 1.0 but a rounding error could lead to e.g. 0.99
+        // this new float decodes to an entire different latitude "01" which again could result in 
+        // another different value like 0.49 and so on. 
+        // To avoid this unstable rounding we need to add the half of the next interval in the last 
+        // iteration in decode: else { ... break; }
+        // Now the latitude encoding "10" results in 1.25 and a minor rounding error such as 1.24 
+        // results in the same encoding "10"!
+        //
+        // 0   .5   1.0   1.5  2.0
+        // |--- ^ ---|--- ^ ---|
         CoordTrig coord = new CoordTrig(50.022846, 9.2123575);
         key = algo.encode(coord);
         algo.decode(key, coord2);
-        
-        // 1. wont fix bijection precision problem
-        // assertEquals(key, algo.encode(coord2));
+        assertEquals(key, algo.encode(coord2));
         double dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
         // but ensure small distance
-        assertTrue(dist + "", dist < 1e-2);
+        assertTrue(dist + "", dist < 5e-3);
 
         long queriedKey = 246557819640268L;
         long storedKey = 246557819640269L;
         algo.decode(queriedKey, coord);
         algo.decode(storedKey, coord2);
-        
+
         // 2. wont fix bijection precision problem
-        // assertEquals(storedKey, algo.encode(coord2));
+        assertEquals(storedKey, algo.encode(coord2));
         dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
         // but ensure small distance
-        assertTrue(dist + "", dist < 1e-2);
+        assertTrue(dist + "", dist < 5e-3);
+
+        coord = new CoordTrig(50.0606072, 9.6277542);
+        key = algo.encode(coord);
+        algo.decode(key, coord2);
+        assertEquals(key, algo.encode(coord2));
+        dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
+        // but ensure small distance
+        assertTrue(dist + "", dist < 5e-3);
     }
 }
