@@ -15,10 +15,8 @@
  */
 package de.jetsli.graph.geohash;
 
-import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.reader.CalcDistance;
 import de.jetsli.graph.util.BitUtil;
-import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.CoordTrig;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -31,7 +29,7 @@ public class SpatialKeyAlgoTest {
 
     @Test
     public void testEncode() {
-        SpatialKeyAlgo algo = new SpatialKeyAlgo().init(32);
+        SpatialKeyAlgo algo = new SpatialKeyAlgo(32);
         long val = algo.encode(-24.235345f, 47.234234f);
         assertEquals("01100110101000111100000110010100", BitUtil.toBitString(val, 32));
     }
@@ -40,7 +38,7 @@ public class SpatialKeyAlgoTest {
     public void testEncode3BytesPrecision() {
         // 3 bytes => c / 1^12 = ~10km
         int bits = 3 * 8;
-        SpatialKeyAlgo algo = new SpatialKeyAlgo().init(bits);
+        SpatialKeyAlgo algo = new SpatialKeyAlgo(bits);
         float lat = 24.235345f;
         float lon = 47.234234f;
         long val = algo.encode(lat, lon);
@@ -60,7 +58,7 @@ public class SpatialKeyAlgoTest {
     @Test
     public void testEncode4BytesPrecision() {
         int bits = 4 * 8;
-        SpatialKeyAlgo algo = new SpatialKeyAlgo().init(bits);
+        SpatialKeyAlgo algo = new SpatialKeyAlgo(bits);
         float lat = 24.235345f;
         float lon = 47.234234f;
         long val = algo.encode(lat, lon);
@@ -79,7 +77,7 @@ public class SpatialKeyAlgoTest {
     @Test
     public void testEncode6BytesPrecision() {
         int bits = 6 * 8;
-        SpatialKeyAlgo algo = new SpatialKeyAlgo().init(bits);
+        SpatialKeyAlgo algo = new SpatialKeyAlgo(bits);
         float lat = 24.235345f;
         float lon = 47.234234f;
         long val = algo.encode(lat, lon);
@@ -98,7 +96,7 @@ public class SpatialKeyAlgoTest {
     @Test
     public void testBijectionBug2() {
         for (long i = 4; i <= 64; i += 4) {
-            SpatialKeyAlgo algo = new SpatialKeyAlgo().init((int) i);
+            SpatialKeyAlgo algo = new SpatialKeyAlgo((int) i);
             long keyX = algo.encode(1, 1);
 
             CoordTrig coord = new CoordTrig();
@@ -130,13 +128,14 @@ public class SpatialKeyAlgoTest {
         // results in the same encoding "10"!
         //
         // 0   .5   1.0   1.5  2.0
-        // |--- ^ ---|--- ^ ---|
+        // |--- ^ ---|--- ^ ---|        
         testBijection(6 * 8);
+        testBijection(7 * 8);
         testBijection(8 * 8);
     }
 
     public void testBijection(int bits) {
-        SpatialKeyAlgo algo = new SpatialKeyAlgo().init(bits);
+        SpatialKeyAlgo algo = new SpatialKeyAlgo(bits);
         CoordTrig coord11 = new CoordTrig();
         long key = algo.encode(1, 1);
         algo.decode(key, coord11);
@@ -158,7 +157,7 @@ public class SpatialKeyAlgoTest {
         algo.decode(queriedKey, coord);
         algo.decode(storedKey, coord2);
 
-        // 2. wont fix bijection precision problem
+        // 2. fix bijection precision problem
         assertEquals(storedKey, algo.encode(coord2));
         dist = new CalcDistance().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
         // and ensure small distance

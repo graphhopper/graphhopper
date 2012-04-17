@@ -65,12 +65,11 @@ import de.jetsli.graph.util.CoordTrig;
  */
 public class SpatialKeyAlgo {
 
-    public static final int DEFAULT_FACTOR = 10000000;
-    private int factorForPrecision;
+    // private int factorForPrecision;
     // normally +90 degree (south to nord)
-    private int maxLatI;
+    private double maxLatI;
     // normally -90 degree
-    private int minLatI;
+    private double minLatI;
     // normally +180 degree (parallel to equator)
     private int maxLonI;
     // normally -180 degree
@@ -86,22 +85,28 @@ public class SpatialKeyAlgo {
         double x = 1d / Math.pow(10, precision);
         double allbits = Math.round(2 * Math.log(360 / x) / Math.log(2));
         // add 4 bits to make the last position correct
-        init(Math.min((int) allbits + 4 * 2, 64));
+        myinit(Math.min((int) allbits + 4 * 2, 64));
         setPrecision(precision);
         return this;
     }
 
-    public SpatialKeyAlgo init(int allBits) {
+    public SpatialKeyAlgo(int allBits) {
+        myinit(allBits);
+    }
+
+    private void myinit(int allBits) {
         if (allBits > 64)
             throw new IllegalStateException("allBits is too big and does not fit into 8 bytes");
+
+        if (allBits <= 0)
+            throw new IllegalStateException("allBits must be positive");
 
         if ((allBits & 0x1) == 1)
             throw new IllegalStateException("allBits needs to be even to use the same amount for lat and lon");
 
         iterations = allBits / 2;
         initialBits = 1L << (allBits - 1);
-        setPrecision(DEFAULT_FACTOR);
-        return this;
+        setPrecision(11930460);
     }
 
     public int getExactPrecision() {
@@ -113,20 +118,11 @@ public class SpatialKeyAlgo {
     }
 
     protected void setPrecision(int factorForPrecision) {
-        this.factorForPrecision = factorForPrecision;
-        minLatI = toInt(-90f);
-        maxLatI = toInt(90f);
-        minLonI = toInt(-180f);
-        maxLonI = toInt(180f);
-    }
-
-    /**
-     * Take latitude and longitude as input.
-     *
-     * @return the spatial key
-     */
-    public long encode(double lat, double lon) {
-        return encode(toInt(lat), toInt(lon));
+        // this.factorForPrecision = factorForPrecision;
+        minLatI = -90;
+        maxLatI = 90;
+        minLonI = -180;
+        maxLonI = 180;
     }
 
     public long encode(CoordTrig coord) {
@@ -134,33 +130,39 @@ public class SpatialKeyAlgo {
     }
 
     /**
-     * @param latI the multiplied integer value of the latitude. The factor depends on the necessary
-     * precision
-     * @param lonI the multiplied integer value of the longitude.
+     * Take latitude and longitude as input.
+     *
+     * @return the spatial key
      */
-    public long encode(int latI, int lonI) {
-        // double operation are often more expensive so use an integer for further comparison etc        
+    public long encode(double latI, double lonI) {
+        // PERFORMANCE: int operations would be faster than double (for further comparison etc)
+        // but we would need 'long' because 'int factorForPrecision' is not enough (problem: coord!=decode(encode(coord)) see testBijection)
+        // and 'long'-ops are more expensive than double (at least on 32bit systems)
         long hash = 0;
-        int minLat = minLatI;
-        int maxLat = maxLatI;
-        int minLon = minLonI;
-        int maxLon = maxLonI;
+        double minLat = minLatI;
+        double maxLat = maxLatI;
+        double minLon = minLonI;
+        double maxLon = maxLonI;
         int i = 0;
         while (true) {
-            int midLat = (minLat + maxLat) / 2;
-            int midLon = (minLon + maxLon) / 2;
-            if (latI >= midLat) {
-                hash |= 1;
-                minLat = midLat;
-            } else
-                maxLat = midLat;
+            if (minLat < maxLat) {
+                double midLat = (minLat + maxLat) / 2;
+                if (latI > midLat) {
+                    hash |= 1;
+                    minLat = midLat;
+                } else
+                    maxLat = midLat;
+            }
 
             hash <<= 1;
-            if (lonI >= midLon) {
-                hash |= 1;
-                minLon = midLon;
-            } else
-                maxLon = midLon;
+            if (minLon < maxLon) {
+                double midLon = (minLon + maxLon) / 2;
+                if (lonI > midLon) {
+                    hash |= 1;
+                    minLon = midLon;
+                } else
+                    maxLon = midLon;
+            }
 
             i++;
             if (i < iterations)
@@ -178,22 +180,28 @@ public class SpatialKeyAlgo {
      */
     public void decode(long spatialKey, CoordTrig latLon) {
         // use the value in the middle => start from "min" use "max" as initial step-size
-        int midLat = maxLatI;
-        int midLon = maxLonI;
+        double midLat = maxLatI;
+        double midLon = maxLonI;
 
         long bits = initialBits;
-        int lat = minLatI;
-        int lon = minLonI;
+        double lat = minLatI;
+        double lon = minLonI;
         while (true) {
-            if ((spatialKey & bits) != 0)
-                lat += midLat;
+            if (midLat != 0) {
+                if ((spatialKey & bits) != 0)
+                    lat += midLat;
+
+                midLat /= 2;
+            }
 
             bits >>>= 1;
-            if ((spatialKey & bits) != 0)
-                lon += midLon;
+            if (midLon != 0) {
+                if ((spatialKey & bits) != 0)
+                    lon += midLon;
 
-            midLat >>>= 1;
-            midLon >>>= 1;
+                midLon /= 2;
+            }
+
             if (bits != 0) {
                 bits >>>= 1;
             } else {
@@ -204,15 +212,13 @@ public class SpatialKeyAlgo {
             }
         }
 
-        latLon.lat = toDouble(lat);
-        latLon.lon = toDouble(lon);
+        latLon.lat = lat;
+        latLon.lon = lon;
     }
-
-    protected int toInt(double d) {
-        return (int) (d * factorForPrecision);
-    }
-
-    private double toDouble(int integer) {
-        return (double) integer / factorForPrecision;
-    }
+//    protected int toLong(double d) {
+//        return (int) (d * factorForPrecision);
+//    }
+//    private double toDouble(int val) {
+//        return (double) val / factorForPrecision;
+//    }
 }

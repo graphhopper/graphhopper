@@ -83,7 +83,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         mbits = bitsForLatLon;
         entriesPerLeaf = entriesPerLeafNode;
         globalMaxBit = 1L << (bitsForLatLon - 1);
-        algo = new SpatialKeyAlgo().init(bitsForLatLon);
+        algo = new SpatialKeyAlgo(bitsForLatLon);
     }
 
     @Override
@@ -238,8 +238,6 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
 
             @Override
             public boolean doWork(QTDataNode<T> entry, int index) {
-                // we need to workaround the precision mistakes so do a neighbour search
-                // TODO is there a better solution?
                 if (entry.remove(spatialKey)) {
                     size--;
                     // stop search

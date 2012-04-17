@@ -93,7 +93,6 @@ public class SpatialKeyHashtable {
     // private byte[] tmpBytes;
 
     public SpatialKeyHashtable() {
-        encodeAlgo = new SpatialKeyAlgo();
     }
 
     public SpatialKeyHashtable init() {
@@ -106,10 +105,7 @@ public class SpatialKeyHashtable {
         this.bytesForBucketIndex = bForBucketIndex;
         this.bytesForSpatialKeyRest = bytesForSpatialKeyRest;
         this.bitsForSpatialKey = (bytesForBucketIndex + bytesForSpatialKeyRest) * BITS8;
-        if (bitsForSpatialKey > 64)
-            throw new IllegalStateException("geo hash is type long but allowed size is bigger: " + bitsForSpatialKey + " bits");
-
-        encodeAlgo.init(bitsForSpatialKey);
+        encodeAlgo = new SpatialKeyAlgo(bitsForSpatialKey);
         bytesPerValue = 4;
         bytesPerEntry = bytesForSpatialKeyRest + bytesPerValue;
         entriesPerBucket = 6;

@@ -51,24 +51,27 @@ public class PerfTest {
         // for query: 16 entriesPerNode seems to be fast and not such a memory waste
         // => approx 46 bytes/entry + sizeOf(Integer)
         // current results for 64 bits:
-        // 10km search => 0.047s,~  83k nodes per search retrieved
-        // 20km search => 0.171s,~ 313k
-        // 40km search => 0.545s,~1031k
+        // 10km search => 0.058s,~  83k nodes per search retrieved
+        // 20km search => 0.212s,~ 313k
+        // 40km search => 0.669s,~1031k
 
-        // increase speed about 
-        //  => 2% when using int   instead double    in BBox (multiplied with 1e+7 before) => but too complicated
-        //  => 2% when using float instead of double in CoordTrig => but bad in other cases. if double and float implementation => too complicated
-        //  => 1000% when using only 32 bits for encoding instead 64
-        int maxDist = 40;
+        // increase speed about
+        //  => ~2%    when using int   instead double    in BBox (multiplied with 1e+7 before) => but too complicated
+        //  => ~2%    when using float instead of double in CoordTrig => but bad in other cases. if double and float implementation => too complicated
+        //  => ~10%   when using int   instead double    in SpatialKeyAlgo for de/encode => but problems with precision if allBits >= 46
+        //  => ~30%   when using int   instead long      in SpatialKeyAlgo for de/encode => but problems with precision if allBits >= 46
+        //  => ~1000% when using only 32 bits for encoding instead >=48
+        int maxDist = 50;
         int maxEntriesPerL = 20;
-        System.out.println(new Date() + "# maxDist:" + maxDist + ", maxEntries/leaf:" + maxEntriesPerL);
+        int minBits = 64;
+        System.out.println(new Date() + "# maxDist:" + maxDist + ", maxEntries/leaf:" + maxEntriesPerL + ", minBits:" + minBits);
 
-        measureFill(maxEntriesPerL);
-        measureSearch(maxDist, maxEntriesPerL);
+//        measureFill(minBits, maxEntriesPerL);
+        measureSearch(minBits, maxDist, maxEntriesPerL);
     }
 
-    private void measureFill(int maxEPerL) {
-        for (int bits = 32; bits <= 64; bits += 16) {
+    private void measureFill(int minBits, int maxEPerL) {
+        for (int bits = minBits; bits <= 64; bits += 16) {
             for (int entriesPerLeaf = 16; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
                 final QuadTree<Integer> quadTree = new QuadTreeSimple<Integer>(entriesPerLeaf, bits);
                 fillQuadTree(quadTree, g);
@@ -91,8 +94,8 @@ public class PerfTest {
         }
     }
 
-    private void measureSearch(int maxDist, int maxEPerL) {
-        for (int bits = 32; bits <= 64; bits += 16) {
+    private void measureSearch(int minBits, int maxDist, int maxEPerL) {
+        for (int bits = minBits; bits <= 64; bits += 16) {
             for (int distance = 10; distance < maxDist; distance *= 2) {
                 for (int entriesPerLeaf = 16; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
                     final QuadTree<Integer> quadTree = new QuadTreeSimple<Integer>(entriesPerLeaf, bits);
