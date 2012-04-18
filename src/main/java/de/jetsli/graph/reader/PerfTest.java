@@ -51,9 +51,9 @@ public class PerfTest {
         // for query: 16 entriesPerNode seems to be fast and not such a memory waste
         // => approx 46 bytes/entry + sizeOf(Integer)
         // current results for 64 bits:
-        // 10km search => 0.058s,~  83k nodes per search retrieved
-        // 20km search => 0.212s,~ 313k
-        // 40km search => 0.669s,~1031k
+        // 10km search => 0.054s,~  83k nodes per search retrieved
+        // 20km search => 0.200s,~ 313k
+        // 40km search => 0.610s,~1031k
 
         // increase speed about
         //  => ~2%    when using int   instead double    in BBox (multiplied with 1e+7 before) => but too complicated

@@ -187,21 +187,16 @@ public class SpatialKeyAlgo {
         double lat = minLatI;
         double lon = minLonI;
         while (true) {
-            if (midLat != 0) {
-                if ((spatialKey & bits) != 0)
-                    lat += midLat;
+            if ((spatialKey & bits) != 0)
+                lat += midLat;
 
-                midLat /= 2;
-            }
-
+            midLat /= 2;
             bits >>>= 1;
-            if (midLon != 0) {
-                if ((spatialKey & bits) != 0)
-                    lon += midLon;
 
-                midLon /= 2;
-            }
+            if ((spatialKey & bits) != 0)
+                lon += midLon;
 
+            midLon /= 2;
             if (bits != 0) {
                 bits >>>= 1;
             } else {
