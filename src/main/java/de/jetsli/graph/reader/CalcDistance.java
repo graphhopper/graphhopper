@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.reader;
 
+import de.jetsli.graph.util.shapes.BBox;
 import java.util.Arrays;
 
 /**
@@ -64,6 +65,9 @@ public class CalcDistance {
                 + Math.cos(Math.toRadians(fromLat)) * Math.cos(Math.toRadians(toLat)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     }
 
+    /**
+     * @deprecated hmmh seems to be lot slower than calcDistKm
+     */
     public double calcCartesianDist(double fromLat, double fromLon, double toLat, double toLon) {
         fromLat = Math.toRadians(fromLat);
         fromLon = Math.toRadians(fromLon);
@@ -153,5 +157,19 @@ public class CalcDistance {
 //    }
     public boolean isDateLineCrossOver(double lon1, double lon2) {
         return Math.abs(lon1 - lon2) > 180.0;
+    }
+
+    public BBox createBBox(double lat, double lon, double radiusInKm) {
+        if (radiusInKm <= 0)
+            throw new IllegalArgumentException("Distance cannot be 0 or negative! " + radiusInKm + " lat,lon:" + lat + "," + lon);
+
+        // length of a circle at specified lat / dist
+        double dLon = (360 / (calcCircumference(lat) / radiusInKm));
+
+        // length of a circle is independent of the longitude
+        double dLat = (360 / (CalcDistance.C / radiusInKm));
+
+        // Now return bounding box in coordinates
+        return new BBox(lat + dLat, lon - dLon, lat - dLat, lon + dLon);
     }
 }

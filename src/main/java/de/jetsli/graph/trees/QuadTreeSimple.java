@@ -15,10 +15,12 @@
  */
 package de.jetsli.graph.trees;
 
-import de.jetsli.graph.util.BBox;
+import de.jetsli.graph.util.shapes.BBox;
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
 import de.jetsli.graph.reader.CalcDistance;
 import de.jetsli.graph.util.*;
+import de.jetsli.graph.util.shapes.Circle;
+import de.jetsli.graph.util.shapes.Shape;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -258,27 +260,26 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
 
     @Override
     public Collection<CoordTrig<T>> getNeighbours(final double lat, final double lon, final double distanceInKm) {
-        final double normalizedDist = calc.normalizeDist(distanceInKm + 1e-4f);
+        final Circle c = new Circle(lat, lon, distanceInKm);
         Acceptor<T> distanceAcceptor = new Acceptor<T>(algo) {
 
             @Override public boolean accept(CoordTrig<T> entry) {
-                // return calc.calcDistKm(lat, lon, entry.lat, entry.lon) < normalizedDist;
-                return calc.calcNormalizedDist(lat, lon, entry.lat, entry.lon) < normalizedDist;
+                return c.contains(entry.lat, entry.lon);
             }
-        };
-        getNeighbours(BBox.createEarthMax(), BBox.create(lat, lon, distanceInKm, calc), root,
+        };        
+        getNeighbours(BBox.createEarthMax(), c, root,
                 distanceAcceptor);
         return distanceAcceptor.result;
     }
 
     @Override
-    public Collection<CoordTrig<T>> getNeighbours(BBox boundingBox) {
+    public Collection<CoordTrig<T>> getNeighbours(Shape boundingBox) {
         Acceptor<T> worker = new Acceptor<T>(algo);
         getNeighbours(BBox.createEarthMax(), boundingBox, root, worker);
         return worker.result;
     }
 
-    private boolean getNeighbours(BBox nodeBB, BBox searchRect, QTNode current, LeafWorker<T> worker) {
+    private boolean getNeighbours(BBox nodeBB, Shape searchRect, QTNode current, LeafWorker<T> worker) {
         if (current == null)
             return false;
 

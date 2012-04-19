@@ -15,8 +15,8 @@
  */
 package de.jetsli.graph.trees;
 
-import de.jetsli.graph.util.BBox;
 import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.shapes.Shape;
 import java.util.Collection;
 
 /**
@@ -47,7 +47,7 @@ public interface QuadTree<V> {
      */
     Collection<CoordTrig<V>> getNeighbours(double lat, double lon, double distanceInKm);
     
-    Collection<CoordTrig<V>> getNeighbours(BBox boundingBox);
+    Collection<CoordTrig<V>> getNeighbours(Shape boundingBox);
     
     void clear();
     
