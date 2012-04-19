@@ -39,16 +39,6 @@ public class Circle implements Shape {
     }
 
     @Override
-    public boolean intersect(Shape o) {
-        if (o instanceof Circle) {
-            return intersect((Circle) o);
-        } else if (o instanceof BBox)
-            return intersect((BBox) o);
-
-        return o.intersect(this);
-    }
-
-    @Override
     public boolean contains(double lat1, double lon1) {
         return normDist(lat1, lon1) <= normedDist;
     }
@@ -60,6 +50,16 @@ public class Circle implements Shape {
 
     private double normDist(double lat1, double lon1) {
         return calc.calcNormalizedDist(lat, lon, lat1, lon1);
+    }
+
+    @Override
+    public boolean intersect(Shape o) {
+        if (o instanceof Circle) {
+            return intersect((Circle) o);
+        } else if (o instanceof BBox)
+            return intersect((BBox) o);
+
+        return o.intersect(this);
     }
 
     public boolean intersect(BBox b) {

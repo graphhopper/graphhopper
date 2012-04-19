@@ -19,9 +19,7 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeSimple;
 import de.jetsli.graph.util.Helper;
-import de.jetsli.graph.util.StopWatch;
 import java.util.Date;
-import java.util.Random;
 
 /**
  * Memory usage calculation according to
@@ -66,6 +64,10 @@ public class PerfTest {
         int minBits = 64;
         System.out.println(new Date() + "# maxDist:" + maxDist + ", maxEntries/leaf:" + maxEntriesPerL + ", minBits:" + minBits);
 
+        // TODO1 some entries are skipped. duplicates?
+        // TODO2 load is too slow
+        // TODO3 why is the sis query time the same although it returns a different number of nodes?
+
 //        measureFill(minBits, maxEntriesPerL);
         measureSearch(minBits, maxDist, maxEntriesPerL);
     }
@@ -89,7 +91,7 @@ public class PerfTest {
                         fillQuadTree(quadTree, g);
                         return quadTree.size();
                     }
-                }.setMax(20).start();
+                }.setMax(40).start();
             }
         }
     }
@@ -123,7 +125,12 @@ public class PerfTest {
         Integer empty = new Integer(1);
         int locs = graph.getLocations();
         for (int i = 0; i < locs; i++) {
-            quadTree.put(graph.getLatitude(i), graph.getLongitude(i), empty);
+            float lat = graph.getLatitude(i);
+            float lon = graph.getLongitude(i);
+            //if(49.764732, 9.932277)
+            Object ret = quadTree.put(lat, lon, empty);
+//            if (ret != null)
+//                throw new IllegalStateException("already existing:" + lat + ", " + lon + " size:" + quadTree.size());
         }
     }
 }

@@ -134,7 +134,7 @@ public class SpatialKeyAlgo {
      *
      * @return the spatial key
      */
-    public long encode(double latI, double lonI) {
+    public final long encode(double latI, double lonI) {
         // PERFORMANCE: int operations would be faster than double (for further comparison etc)
         // but we would need 'long' because 'int factorForPrecision' is not enough (problem: coord!=decode(encode(coord)) see testBijection)
         // and 'long'-ops are more expensive than double (at least on 32bit systems)
@@ -178,7 +178,7 @@ public class SpatialKeyAlgo {
      *
      * @param spatialKey is the input
      */
-    public void decode(long spatialKey, CoordTrig latLon) {
+    public final void decode(long spatialKey, CoordTrig latLon) {
         // use the value in the middle => start from "min" use "max" as initial step-size
         double midLat = maxLatI;
         double midLon = maxLonI;

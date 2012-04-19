@@ -112,91 +112,26 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             root = d;
             return null;
         }
-        QTNode<T> previousBranch = null;
+        QTBranchNode<T> previousBranch = null;
         int previousNum = -1;
         QTNode<T> current = root;
-        // System.out.println("sp.key:" + BitUtil.toBitString(spatialKey, mbits));
         while (maxBit != 0) {
-            // System.out.println("maxbit:" + BitUtil.toBitString(maxBit, mbits));            
             if (current.hasData()) {
-                QTDataNode<T> dataNode = (QTDataNode) current;
-                T old = dataNode.getValue(spatialKey);
-                // overwrite means we don't need to handle overflow
-                if (old != null) {
-                    dataNode.put(spatialKey, value);
-                    return old;
-                }
-
-                size++;
-                boolean overflow = dataNode.put(spatialKey, value);
-                if (!overflow)
-                    return null;
-
-                QTBranchNode<T> n = new QTBranchNode<T>();
-                if (previousBranch != null)
-                    previousBranch.set(previousNum, n);
-                else
-                    root = n;
-                QTDataNode<T> data00 = new QTDataNode<T>(entriesPerLeaf);
-                QTDataNode<T> data01 = new QTDataNode<T>(entriesPerLeaf);
-                QTDataNode<T> data10 = new QTDataNode<T>(entriesPerLeaf);
-                QTDataNode<T> data11 = new QTDataNode<T>(entriesPerLeaf);
-                for (; maxBit != 0; maxBit >>>= 2) {
-                    // not necessary to clear dataxy as it is overwritten if necessary in the next loop
-                    overflow = data00.overwriteFrom(0, maxBit, dataNode, spatialKey, value);
-                    if (overflow) {
-                        // '0' would be full so try to divide it again
-                        QTBranchNode<T> tmp = new QTBranchNode<T>();
-                        n.set(0, tmp);
-                        n = tmp;
-                        continue;
-                    }
-
-                    overflow = data01.overwriteFrom(1, maxBit, dataNode, spatialKey, value);
-                    if (overflow) {
-                        QTBranchNode<T> tmp = new QTBranchNode<T>();
-                        n.set(1, tmp);
-                        n = tmp;
-                        continue;
-                    }
-
-                    overflow = data10.overwriteFrom(2, maxBit, dataNode, spatialKey, value);
-                    if (overflow) {
-                        QTBranchNode<T> tmp = new QTBranchNode<T>();
-                        n.set(2, tmp);
-                        n = tmp;
-                        continue;
-                    }
-
-                    overflow = data11.overwriteFrom(3, maxBit, dataNode, spatialKey, value);
-                    if (overflow) {
-                        QTBranchNode<T> tmp = new QTBranchNode<T>();
-                        n.set(3, tmp);
-                        n = tmp;
-                        continue;
-                    }
-
-                    // optimization: if(!data00.isEmpty()) n.set(0, data00); etc
-
-                    n.set(0, data00);
-                    n.set(1, data01);
-                    n.set(2, data10);
-                    n.set(3, data11);
-                    return null;
-                }
-                throw new IllegalStateException("tree full!? too many entries in datanode 0 "
-                        + data00 + " or 1 " + data01 + " or 2 " + data10 + " or 3 " + data11);
+                return putData(spatialKey, value, current, previousBranch, previousNum, maxBit);
             }
 
-            previousBranch = current;
+            previousBranch = (QTBranchNode<T>) current;
             // latitude
             previousNum = (spatialKey & maxBit) == 0 ? 0 : 2;
             maxBit >>>= 1;
             // longitude
-            if ((spatialKey & maxBit) != 0)
-                previousNum |= 1;
+            if ((spatialKey & maxBit) == 0) {
+                current = previousNum == 0 ? previousBranch.node0 : previousBranch.node2;
+            } else {
+                current = previousNum == 0 ? previousBranch.node1 : previousBranch.node3;
+                previousNum++;
+            }
             maxBit >>>= 1;
-            current = current.get(previousNum);
             if (current == null) {
                 current = new QTDataNode<T>(entriesPerLeaf);
                 previousBranch.set(previousNum, current);
@@ -205,6 +140,77 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
 
         throw new UnsupportedOperationException("Cannot put element? Too many entries per area? Try increasing entries per leaf! "
                 + lat + "," + lon + " spatial key:" + spatialKey + " value:" + value + " size:" + size);
+    }
+
+    private T putData(long spatialKey, T value, QTNode<T> current, QTNode<T> previousBranch,
+            int previousNum, long maxBit) {
+        QTDataNode<T> dataNode = (QTDataNode) current;
+        T old = dataNode.getValue(spatialKey);
+        // overwrite means we don't need to handle overflow
+        if (old != null) {
+            dataNode.put(spatialKey, value);
+            return old;
+        }
+
+        size++;
+        boolean overflow = dataNode.put(spatialKey, value);
+        if (!overflow)
+            return null;
+
+        QTBranchNode<T> n = new QTBranchNode<T>();
+        if (previousBranch != null)
+            previousBranch.set(previousNum, n);
+        else
+            root = n;
+        QTDataNode<T> data00 = new QTDataNode<T>(entriesPerLeaf);
+        QTDataNode<T> data01 = new QTDataNode<T>(entriesPerLeaf);
+        QTDataNode<T> data10 = new QTDataNode<T>(entriesPerLeaf);
+        QTDataNode<T> data11 = new QTDataNode<T>(entriesPerLeaf);
+        for (; maxBit != 0; maxBit >>>= 2) {
+            // not necessary to clear dataxy as it is overwritten if necessary in the next loop
+            overflow = data00.overwriteFrom(0, maxBit, dataNode, spatialKey, value);
+            if (overflow) {
+                // '0' would be full so try to divide it again
+                QTBranchNode<T> tmp = new QTBranchNode<T>();
+                n.set(0, tmp);
+                n = tmp;
+                continue;
+            }
+
+            overflow = data01.overwriteFrom(1, maxBit, dataNode, spatialKey, value);
+            if (overflow) {
+                QTBranchNode<T> tmp = new QTBranchNode<T>();
+                n.set(1, tmp);
+                n = tmp;
+                continue;
+            }
+
+            overflow = data10.overwriteFrom(2, maxBit, dataNode, spatialKey, value);
+            if (overflow) {
+                QTBranchNode<T> tmp = new QTBranchNode<T>();
+                n.set(2, tmp);
+                n = tmp;
+                continue;
+            }
+
+            overflow = data11.overwriteFrom(3, maxBit, dataNode, spatialKey, value);
+            if (overflow) {
+                QTBranchNode<T> tmp = new QTBranchNode<T>();
+                n.set(3, tmp);
+                n = tmp;
+                continue;
+            }
+
+            // optimization: if(!data00.isEmpty()) n.set(0, data00); etc
+
+            n.set(0, data00);
+            n.set(1, data01);
+            n.set(2, data10);
+            n.set(3, data11);
+            return null;
+        }
+        throw new IllegalStateException("tree full!? too many entries in datanode 0 "
+                + data00 + " or 1 " + data01 + " or 2 " + data10 + " or 3 " + data11);
     }
 
     @Override
@@ -266,7 +272,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             @Override public boolean accept(CoordTrig<T> entry) {
                 return c.contains(entry.lat, entry.lon);
             }
-        };        
+        };
         getNeighbours(BBox.createEarthMax(), c, root,
                 distanceAcceptor);
         return distanceAcceptor.result;

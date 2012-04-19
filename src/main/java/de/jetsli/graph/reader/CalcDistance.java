@@ -58,7 +58,7 @@ public class CalcDistance {
         return tmp * tmp;
     }
 
-    public double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
+    public final double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = Math.toRadians(toLat - fromLat);
         double dLon = Math.toRadians(toLon - fromLon);
         return Math.sin(dLat / 2) * Math.sin(dLat / 2)

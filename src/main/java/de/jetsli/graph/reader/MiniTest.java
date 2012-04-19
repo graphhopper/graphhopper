@@ -44,6 +44,9 @@ public class MiniTest {
         return this;
     }
 
+    /**
+     * set the iterations
+     */
     public MiniTest setMax(int max) {
         this.max = max;
         return this;
@@ -52,7 +55,7 @@ public class MiniTest {
     public void start() {
         int maxNo = max / 4;
         long res = 0;
-        System.out.println(new Date() + "# start performance " + name + ", iterations:" + max);
+        System.out.println(new Date() + "# start performance **" + name + "**, iterations:" + max);
         StopWatch sw = new StopWatch().start();
         for (int i = 0; i < maxNo; i++) {
             res += doJvmInit(i);

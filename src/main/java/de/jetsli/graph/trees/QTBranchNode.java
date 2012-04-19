@@ -31,27 +31,39 @@ class QTBranchNode<V> implements QTNode<V> {
     }
 
     @Override
-    public QTNode get(int num) {
-        return (num & 2) == 0 ? (num == 0 ? node0 : node1) : ((num & 1) == 0 ? node2 : node3);
-    }
-
-    @Override
-    public void set(int num, QTNode n) {
-        if ((num & 2) == 0) {
-            if (num == 0)
-                node0 = n;
-            else
-                node1 = n;
-        } else {
-            if ((num & 1) == 0)
-                node2 = n;
-            else
-                node3 = n;
+    public final QTNode get(int num) {
+        switch (num) {
+            case 0:
+                return node0;
+            case 1:
+                return node1;
+            case 2:
+                return node2;
+            default:
+                return node3;
         }
     }
 
     @Override
-    public boolean hasData() {
+    public void set(int num, QTNode n) {
+        switch (num) {
+            case 0:
+                node0 = n;
+                return;
+            case 1:
+                node1 = n;
+                return;
+            case 2:
+                node2 = n;
+                return;
+            default:
+                node3 = n;
+                return;
+        }
+    }
+
+    @Override
+    public final boolean hasData() {
         return false;
     }
 

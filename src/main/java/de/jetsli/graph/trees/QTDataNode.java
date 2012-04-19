@@ -33,7 +33,7 @@ class QTDataNode<V> implements QTNode<V> {
     }
 
     @Override
-    public boolean hasData() {
+    public final boolean hasData() {
         return true;
     }
 
