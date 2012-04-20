@@ -64,10 +64,8 @@ public class PerfTest {
         int minBits = 64;
         System.out.println(new Date() + "# maxDist:" + maxDist + ", maxEntries/leaf:" + maxEntriesPerL + ", minBits:" + minBits);
 
-        // TODO1 some entries are skipped. duplicates?
-        // TODO2 load is too slow
-        // TODO3 why is the sis query time the same although it returns a different number of nodes?
-
+        // TODO some entries are skipped. duplicates?
+        
 //        measureFill(minBits, maxEntriesPerL);
         measureSearch(minBits, maxDist, maxEntriesPerL);
     }

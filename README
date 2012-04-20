@@ -4,13 +4,3 @@ This software stands under Apache License 2
 
 For more information have a look at
 http://karussell.github.com/GraphHopper/
-
-Language: Java
-Status:   Highly alpha - nothing for production
-Author:   https://twitter.com/timetabling
-
-For more lucene & graph experiments have a look at
-https://github.com/karussell/lumeo
-
-For a production ready (?) in-memory & memory efficient graph look at
-https://github.com/twitter/cassovary
