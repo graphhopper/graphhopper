@@ -35,7 +35,9 @@ import java.util.List;
  * shift only once. If the branch node would have 8 children then it would be an oct tree - shifting
  * 3 times.
  *
- * Warning: cannot store null values - an exception will be thrown
+ * Warning: cannot store null values - an exception will be thrown.
+ * 
+ * Cannot store duplicates - the old value will be returned and overwritten.
  *
  * @author Peter Karich, info@jetsli.de
  */

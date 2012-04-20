@@ -18,6 +18,7 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeSimple;
+import de.jetsli.graph.util.CoordFloat;
 import de.jetsli.graph.util.Helper;
 import java.util.Date;
 
@@ -64,8 +65,6 @@ public class PerfTest {
         int minBits = 64;
         System.out.println(new Date() + "# maxDist:" + maxDist + ", maxEntries/leaf:" + maxEntriesPerL + ", minBits:" + minBits);
 
-        // TODO some entries are skipped. duplicates?
-        
 //        measureFill(minBits, maxEntriesPerL);
         measureSearch(minBits, maxDist, maxEntriesPerL);
     }
@@ -125,10 +124,9 @@ public class PerfTest {
         for (int i = 0; i < locs; i++) {
             float lat = graph.getLatitude(i);
             float lon = graph.getLongitude(i);
-            //if(49.764732, 9.932277)
-            Object ret = quadTree.put(lat, lon, empty);
+            Object ret = quadTree.put(lat, lon, new CoordFloat(lat, lon));
 //            if (ret != null)
-//                throw new IllegalStateException("already existing:" + lat + ", " + lon + " size:" + quadTree.size());
+//                throw new IllegalStateException("already existing:" + lat + ", " + lon + " vs:" + ret);
         }
     }
 }
