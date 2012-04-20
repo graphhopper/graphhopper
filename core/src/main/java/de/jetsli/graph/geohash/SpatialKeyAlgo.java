@@ -66,14 +66,14 @@ import de.jetsli.graph.util.CoordTrig;
 public class SpatialKeyAlgo {
 
     // private int factorForPrecision;
-    // normally +90 degree (south to nord)
-    private double maxLatI;
+    // normally -180 degree
+    private double minLonI;
+    // normally +180 degree (parallel to equator)
+    private double maxLonI;
     // normally -90 degree
     private double minLatI;
-    // normally +180 degree (parallel to equator)
-    private int maxLonI;
-    // normally -180 degree
-    private int minLonI;
+    // normally +90 degree (south to nord)
+    private double maxLatI;
     private int iterations;
     private long initialBits;
 
@@ -86,7 +86,7 @@ public class SpatialKeyAlgo {
         double allbits = Math.round(2 * Math.log(360 / x) / Math.log(2));
         // add 4 bits to make the last position correct
         myinit(Math.min((int) allbits + 4 * 2, 64));
-        setPrecision(precision);
+        setInitialBounds();
         return this;
     }
 
@@ -106,7 +106,7 @@ public class SpatialKeyAlgo {
 
         iterations = allBits / 2;
         initialBits = 1L << (allBits - 1);
-        setPrecision(11930460);
+        setInitialBounds();
     }
 
     public int getExactPrecision() {
@@ -117,7 +117,7 @@ public class SpatialKeyAlgo {
         return (int) Math.log10(p);
     }
 
-    protected void setPrecision(int factorForPrecision) {
+    protected void setInitialBounds() {
         // this.factorForPrecision = factorForPrecision;
         minLatI = -90;
         maxLatI = 90;

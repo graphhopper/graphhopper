@@ -64,28 +64,28 @@ public class Circle implements Shape {
 
     public boolean intersect(BBox b) {
         // test top intersect
-        if (lat > b.lat1) {
-            if (lon < b.lon1)
-                return normDist(b.lat1, b.lon1) <= normedDist;
-            if (lon > b.lon2)
-                return normDist(b.lat1, b.lon2) <= normedDist;
-            return b.lat1 - bbox.lat2 > 0;
+        if (lat > b.maxLat) {
+            if (lon < b.minLon)
+                return normDist(b.maxLat, b.minLon) <= normedDist;
+            if (lon > b.maxLon)
+                return normDist(b.maxLat, b.maxLon) <= normedDist;
+            return b.maxLat - bbox.minLat > 0;
         }
 
         // test bottom intersect
-        if (lat < b.lat2) {
-            if (lon < b.lon1)
-                return normDist(b.lat2, b.lon1) <= normedDist;
-            if (lon > b.lon2)
-                return normDist(b.lat2, b.lon2) <= normedDist;
-            return bbox.lat1 - b.lat2 > 0;
+        if (lat < b.minLat) {
+            if (lon < b.minLon)
+                return normDist(b.minLat, b.minLon) <= normedDist;
+            if (lon > b.maxLon)
+                return normDist(b.minLat, b.maxLon) <= normedDist;
+            return bbox.maxLat - b.minLat > 0;
         }
 
         // test middle intersect
-        if (lon < b.lon1)
-            return bbox.lon2 - b.lon1 > 0;
-        if (lon > b.lon2)
-            return b.lon2 - bbox.lon1 > 0;
+        if (lon < b.minLon)
+            return bbox.maxLon - b.minLon > 0;
+        if (lon > b.maxLon)
+            return b.maxLon - bbox.minLon > 0;
         return true;
     }
 

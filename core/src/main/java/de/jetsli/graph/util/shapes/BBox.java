@@ -16,43 +16,34 @@
 package de.jetsli.graph.util.shapes;
 
 /**
- * A simple bounding box - Use top-left and bottom right corner, although we use bottom-to-top
- * direction for latitude! See tests - e.g. 10, 20, 5, 25 and identical to GeoNetworks.
+ * A simple bounding box defined as follows: minLon, maxLon followed by minLat which is south(!) and
+ * maxLat. Equally to EX_GeographicBoundingBox in the ISO 19115 standard see
+ * http://osgeo-org.1560.n6.nabble.com/Boundingbox-issue-for-discussion-td3875533.html
  *
- * See http://osgeo-org.1560.n6.nabble.com/Boundingbox-issue-for-discussion-td3875533.html
- *
- * So overall GeoNetwork seems to define the bounding box differently to ISO 19115 and GML Standard
- * (OGC 07-036 -> WGS84BoundingBox).
- *
- * Gute Übersicht:
+ * Nice German overview:
  * http://www.geoinf.uni-jena.de/fileadmin/Geoinformatik/Lehre/Diplomarbeiten/DA_Andres.pdf
  *
  * @author Peter Karich
  */
 public class BBox implements Shape {
 
-    // latitude (phi),  longitude (theta)
-    public final double lat1;
-    public final double lon1;
-    public final double lat2;
-    public final double lon2;
+    // longitude (theta) = x, latitude (phi) = y
+    public final double minLon;
+    public final double maxLon;
+    public final double minLat;
+    public final double maxLat;
 
-    public BBox(double lat1, double lon1, double lat2, double lon2) {
-        assert lat2 < lat1 : "second latitude should be smaller than the first";
-        assert lon1 < lon2 : "second longitude should be bigger than the first";
-        this.lat1 = lat1;
-        this.lon1 = lon1;
-        this.lat2 = lat2;
-        this.lon2 = lon2;
+    public BBox(double minLon, double maxLon, double minLat, double maxLat) {
+        assert minLon < maxLon : "second longitude should be bigger than the first";
+        assert minLat < maxLat : "second latitude should be smaller than the first";
+        this.maxLat = maxLat;
+        this.minLon = minLon;
+        this.minLat = minLat;
+        this.maxLon = maxLon;
     }
 
     public static BBox createEarthMax() {
-        return new BBox(90.0, -180.0, -90.0, 180.0);
-    }
-
-    public boolean intersectIfBottomLeftAndTopRight(BBox o) {
-        return (o.lon1 < lon1 && o.lon2 > lon1 || o.lon1 < lon2 && o.lon1 >= lon1)
-                && (o.lat1 < lat1 && o.lat2 >= lat1 || o.lat1 < lat2 && o.lat1 >= lat1);
+        return new BBox(-180.0, 180.0, -90.0, 90.0);
     }
 
     @Override
@@ -70,8 +61,8 @@ public class BBox implements Shape {
     }
 
     public boolean intersect(BBox o) {
-        return (o.lon1 < lon1 && o.lon2 > lon1 || o.lon1 < lon2 && o.lon1 >= lon1)
-                && (o.lat1 < lat1 && o.lat1 >= lat2 || o.lat1 >= lat1 && o.lat2 < lat1);
+        return (o.minLon < minLon && o.maxLon > minLon || o.minLon < maxLon && o.minLon >= minLon)
+                && (o.maxLat < maxLat && o.maxLat >= minLat || o.maxLat >= maxLat && o.minLat < maxLat);
     }
 
     @Override
@@ -81,7 +72,7 @@ public class BBox implements Shape {
 
     @Override
     public String toString() {
-        return lat1 + "," + lon1 + " | " + lat2 + "," + lon2;
+        return minLon + "," + maxLon + " | " + minLat + "," + maxLat;
     }
 
     @Override

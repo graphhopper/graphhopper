@@ -32,10 +32,10 @@ public class CircleTest {
 
     @Test
     public void testIntersectCircleBBox() {
-        assertTrue(new Circle(10, 10, 120).intersect(new BBox(9, 9, 8, 11)));
-        assertTrue(new BBox(9, 9, 8, 11).intersect(new Circle(10, 10, 120)));
+        assertTrue(new Circle(10, 10, 120).intersect(new BBox(9, 11, 8, 9)));
+        assertTrue(new BBox(9, 11, 8, 9).intersect(new Circle(10, 10, 120)));
 
-        assertFalse(new Circle(10, 10, 110).intersect(new BBox(9, 9, 8, 11)));
-        assertFalse(new BBox(9, 9, 8, 11).intersect(new Circle(10, 10, 110)));
+        assertFalse(new Circle(10, 10, 110).intersect(new BBox(9, 11, 8, 9)));
+        assertFalse(new BBox(9, 11, 8, 9).intersect(new Circle(10, 10, 110)));
     }
 }

@@ -234,7 +234,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             }
         };
         double err = 1.0 / Math.pow(10, algo.getExactPrecision());
-        getNeighbours(BBox.createEarthMax(), new BBox(lat + err, lon - err, lat - err, lon + err), root, worker);
+        getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err), root, worker);
         return ret.getValue();
     }
 
@@ -258,7 +258,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             }
         };
         double err = 1.0 / Math.pow(10, algo.getExactPrecision());
-        return getNeighbours(BBox.createEarthMax(), new BBox(lat + err, lon - err, lat - err, lon + err), root, worker);
+        return getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err), root, worker);
     }
 
     @Override
@@ -303,15 +303,15 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             return false;
         }
 
-        double lat12 = (nodeBB.lat1 + nodeBB.lat2) / 2;
-        double lon12 = (nodeBB.lon1 + nodeBB.lon2) / 2;
+        double lat12 = (nodeBB.maxLat + nodeBB.minLat) / 2;
+        double lon12 = (nodeBB.minLon + nodeBB.maxLon) / 2;
 
         // top-left - see SpatialKeyAlgo that latitude goes from bottom to top and is 1 if on top
         // 10 11
         // 00 01
         QTNode<T> node10 = current.get(2);
         if (node10 != null) {
-            BBox nodeRect10 = new BBox(nodeBB.lat1, nodeBB.lon1, lat12, lon12);
+            BBox nodeRect10 = new BBox(nodeBB.minLon, lon12, lat12, nodeBB.maxLat);
             if (searchRect.intersect(nodeRect10)) {
                 if (getNeighbours(nodeRect10, searchRect, node10, worker))
                     return true;
@@ -321,7 +321,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         // top-right
         QTNode<T> node11 = current.get(3);
         if (node11 != null) {
-            BBox nodeRect11 = new BBox(nodeBB.lat1, lon12, lat12, nodeBB.lon2);
+            BBox nodeRect11 = new BBox(lon12, nodeBB.maxLon, lat12, nodeBB.maxLat);
             if (searchRect.intersect(nodeRect11)) {
                 if (getNeighbours(nodeRect11, searchRect, node11, worker))
                     return true;
@@ -331,7 +331,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         // bottom-left
         QTNode<T> node00 = current.get(0);
         if (node00 != null) {
-            BBox nodeRect00 = new BBox(lat12, nodeBB.lon1, nodeBB.lat2, lon12);
+            BBox nodeRect00 = new BBox(nodeBB.minLon, lon12, nodeBB.minLat, lat12);
             if (searchRect.intersect(nodeRect00)) {
                 if (getNeighbours(nodeRect00, searchRect, node00, worker))
                     return true;
@@ -341,7 +341,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         // bottom-right
         QTNode<T> node01 = current.get(1);
         if (node01 != null) {
-            BBox nodeRect01 = new BBox(lat12, lon12, nodeBB.lat2, nodeBB.lon2);
+            BBox nodeRect01 = new BBox(lon12, nodeBB.maxLon, nodeBB.minLat, lat12);
             if (searchRect.intersect(nodeRect01)) {
                 if (getNeighbours(nodeRect01, searchRect, node01, worker))
                     return true;

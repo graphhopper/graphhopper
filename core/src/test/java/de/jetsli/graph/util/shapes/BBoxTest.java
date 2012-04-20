@@ -15,9 +15,7 @@
  */
 package de.jetsli.graph.util.shapes;
 
-import de.jetsli.graph.util.shapes.BBox;
 import de.jetsli.graph.reader.CalcDistance;
-import java.util.concurrent.CountDownLatch;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -34,11 +32,11 @@ public class BBoxTest {
 
         // The calclulated bounding box has no negative values (also for southern hemisphere and negative meridians)
         // and the ordering is always the same (top to bottom and left to right)
-        assertEquals(52.8993, b.lat1, 1e-4);
-        assertEquals(8.5393, b.lon1, 1e-4);
+        assertEquals(52.8993, b.maxLat, 1e-4);
+        assertEquals(8.5393, b.minLon, 1e-4);
 
-        assertEquals(51.1007, b.lat2, 1e-4);
-        assertEquals(11.4607, b.lon2, 1e-4);
+        assertEquals(51.1007, b.minLat, 1e-4);
+        assertEquals(11.4607, b.maxLon, 1e-4);
 
         // something about 141 = sqrt(2*100^2)
 //        System.out.println(c.calcDistKm(52, 10, 52.8993, 11.4607));
@@ -55,24 +53,24 @@ public class BBoxTest {
         //    |_|
         //
 
-        // use bottom-to-top coord for lat
-        assertTrue(new BBox(15, 12, 12, 15).intersect(new BBox(16, 13, 11, 14)));
+        // use ISO 19115 standard (minLon, maxLon followed by minLat(south!),maxLat)
+        assertTrue(new BBox(12, 15, 12, 15).intersect(new BBox(13, 14, 11, 16)));
         // assertFalse(new BBox(15, 12, 12, 15).intersect(new BBox(16, 15, 11, 14)));
 
         // DOES NOT WORK: use bottom to top coord for lat
         // assertFalse(new BBox(6, 2, 11, 6).intersect(new BBox(5, 3, 12, 5)));
         // so, use bottom-left and top-right corner!
-        assertTrue(new BBox(11, 2, 6, 6).intersect(new BBox(12, 3, 5, 5)));
+        assertTrue(new BBox(2, 6, 6, 11).intersect(new BBox(3, 5, 5, 12)));
 
         // DOES NOT WORK: use bottom to top coord for lat and right to left for lon
         // assertFalse(new BBox(6, 11, 11, 6).intersect(new BBox(5, 10, 12, 7)));
         // so, use bottom-right and top-left corner
-        assertTrue(new BBox(11, 6, 6, 11).intersect(new BBox(12, 7, 5, 10)));
+        assertTrue(new BBox(6, 11, 6, 11).intersect(new BBox(7, 10, 5, 12)));
     }
 
     @Test
     public void testBasicJavaOverload() {
-        new BBox(1, 2, 0, 4) {
+        new BBox(2, 4, 0, 1) {
 
             @Override public boolean intersect(Circle c) {
                 assertTrue(true);

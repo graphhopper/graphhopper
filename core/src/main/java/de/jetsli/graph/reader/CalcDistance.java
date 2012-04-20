@@ -170,6 +170,6 @@ public class CalcDistance {
         double dLat = (360 / (CalcDistance.C / radiusInKm));
 
         // Now return bounding box in coordinates
-        return new BBox(lat + dLat, lon - dLon, lat - dLat, lon + dLon);
+        return new BBox(lon - dLon, lon + dLon, lat - dLat, lat + dLat);
     }
 }

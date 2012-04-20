@@ -154,7 +154,7 @@ public abstract class QuadTreeTester {
     @Test
     public void testGetNeighboursRectangleSearch() {
         QuadTree<Integer> instance = createQuadTree(100);
-        Collection<CoordTrig<Integer>> coll = instance.getNeighbours(new BBox(10, 12, 9.5f, 12.5f));
+        Collection<CoordTrig<Integer>> coll = instance.getNeighbours(new BBox(12, 12.5f, 9.5f, 10));
         // TODO
     }
 
