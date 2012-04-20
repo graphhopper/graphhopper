@@ -134,7 +134,7 @@ public class SpatialKeyAlgo {
      *
      * @return the spatial key
      */
-    public final long encode(double latI, double lonI) {
+    public final long encode(double lat, double lon) {
         // PERFORMANCE: int operations would be faster than double (for further comparison etc)
         // but we would need 'long' because 'int factorForPrecision' is not enough (problem: coord!=decode(encode(coord)) see testBijection)
         // and 'long'-ops are more expensive than double (at least on 32bit systems)
@@ -147,7 +147,7 @@ public class SpatialKeyAlgo {
         while (true) {
             if (minLat < maxLat) {
                 double midLat = (minLat + maxLat) / 2;
-                if (latI > midLat) {
+                if (lat > midLat) {
                     hash |= 1;
                     minLat = midLat;
                 } else
@@ -157,7 +157,7 @@ public class SpatialKeyAlgo {
             hash <<= 1;
             if (minLon < maxLon) {
                 double midLon = (minLon + maxLon) / 2;
-                if (lonI > midLon) {
+                if (lon > midLon) {
                     hash |= 1;
                     minLon = midLon;
                 } else

@@ -192,6 +192,7 @@ public class OSMReaderTrials implements OSMReader {
                         break;
                 }
             }
+            storage.flush();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         } finally {

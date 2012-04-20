@@ -125,8 +125,8 @@ public class PerfTest {
             float lat = graph.getLatitude(i);
             float lon = graph.getLongitude(i);
             Object ret = quadTree.put(lat, lon, new CoordFloat(lat, lon));
-            if (ret != null)
-                throw new IllegalStateException("already existing:" + lat + ", " + lon + " vs:" + ret);
+//            if (ret != null)
+//                throw new IllegalStateException("already existing:" + lat + ", " + lon + " vs:" + ret);
         }
     }
 }
