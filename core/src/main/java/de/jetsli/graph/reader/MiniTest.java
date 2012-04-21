@@ -61,17 +61,21 @@ public class MiniTest {
             res += doJvmInit(i);
         }
         if (showProgress)
-            System.out.println(new Date() + "# jvm initialized! secs/iter:" + sw.stop().getSeconds() / maxNo);
+            System.out.println(new Date() + "# jvm initialized! secs/iter:" + sw.stop().getSeconds() / maxNo + ", res:" + res);
+        res = 0;
         sw = new StopWatch().start();
         maxNo = max;
         float partition = 5.0F;
         int part = (int) (maxNo / partition);
         for (int i = 0; i < maxNo; i++) {
             if (showProgress && i % part == 0)
-                System.out.println(new Date() + "# progress " + i * 100 / maxNo + "% => secs/iter:" + (sw.stop().start().getSeconds() / i));
+                System.out.println(new Date() + "# progress " + i * 100 / maxNo
+                        + "% => secs/iter:" + (sw.stop().start().getSeconds() / i));
             res += doCalc(i);
         }
-        System.out.println(new Date() + "# progress 100% in " + sw.stop().getSeconds() + " secs => secs/iter:" + sw.stop().getSeconds() / maxNo + "\n avoid jvm removal:" + res + ", memInfo:" + Helper.getMemInfo() + " " + Helper.getBeanMemInfo() + "\n");
+        System.out.println(new Date() + "# progress 100% in " + sw.stop().getSeconds()
+                + " secs => secs/iter:" + sw.stop().getSeconds() / maxNo + "\n avoid jvm removal:"
+                + res + ", memInfo:" + Helper.getMemInfo() + " " + Helper.getBeanMemInfo() + "\n");
     }
 
     /**

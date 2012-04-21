@@ -50,9 +50,9 @@ public class PerfTest {
         // for query: 16 entriesPerNode seems to be fast and not such a memory waste
         // => approx 46 bytes/entry + sizeOf(Integer)
         // current results for 64 bits:
-        // 10km search => 0.048s,~  83k nodes per search retrieved
-        // 20km search => 0.175s,~ 313k
-        // 40km search => 0.590s,~1031k
+        // 10km search => 0.048s, ~  70k nodes per search retrieved
+        // 20km search => 0.175s, ~ 300k
+        // 40km search => 0.590s, ~ 850k
 
         // increase speed about
         //  => ~2%    when using int   instead double    in BBox (multiplied with 1e+7 before) => but too complicated
@@ -111,7 +111,7 @@ public class PerfTest {
                             float lon = (random.nextInt(lonMax - lonMin) + lonMin) / 10000.0f;
                             return quadTree.getNeighbours(lat, lon, tmp).size();
                         }
-                    }.setMax(500).setShowProgress(true).setSeed(0).start();
+                    }.setMax(10).setShowProgress(true).setSeed(0).start();
                 }
             }
         }

@@ -31,7 +31,8 @@ public class SISTree implements SimplisticQuadTree {
     }
 
     public void init(int size) {
-        qt = new org.apache.sis.storage.QuadTree(size, 14);
+        // 32 entries per leaf
+        qt = new org.apache.sis.storage.QuadTree(16, 100);
     }
 
     public void put(double lat, double lon) {

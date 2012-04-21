@@ -35,10 +35,10 @@ public class App {
         }
         Graph g = osm.readGraph();
         System.out.println("graph contains " + g.getLocations() + " nodes");
-        // runBenchmark(SimpleArray.class, g);
+//         runBenchmark(SimpleArray.class, g);
 //        runBenchmark(GHTree.class, g);
         runBenchmark(SISTree.class, g);
-        runBenchmark(JTSTree.class, g);
+//        runBenchmark(JTSTree.class, g);
     }
 
     void runBenchmark(final Class qtClass, final Graph graph) {
@@ -65,18 +65,22 @@ public class App {
         }
 
         fillQuadTree(quadTree, graph);
+        System.out.println("quadtree size:" + quadTree.size());
         final int latMin = 497354, latMax = 501594;
         final int lonMin = 91924, lonMax = 105784;
+        
         for (int i = 10; i < 50; i *= 2) {
             final double dist = i;
-            new MiniTest("query " + dist + " " + qtClass.getSimpleName()) {
+            new MiniTest("query " + dist + "km " + qtClass.getSimpleName()) {
 
                 @Override public long doCalc(int run) {
                     float lat = (random.nextInt(latMax - latMin) + latMin) / 10000.0f;
                     float lon = (random.nextInt(lonMax - lonMin) + lonMin) / 10000.0f;
-                    return quadTree.countNodes(lat, lon, dist);
+                    int ret = quadTree.countNodes(lat, lon, dist);
+                    System.out.println("ret:" + ret);
+                    return ret;
                 }
-            }.setMax(20).start();
+            }.setMax(50).start();
         }
     }
 
