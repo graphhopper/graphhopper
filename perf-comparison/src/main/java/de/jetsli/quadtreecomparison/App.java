@@ -27,16 +27,16 @@ public class App {
         OSMReaderTrials osm = new OSMReaderTrials("/tmp/mmap-graph", 5 * 1000 * 1000);
         // use existing OR create new and overwrite old
         boolean createNew = false;
-        if (createNew) {
-            osm.init(true);
+        boolean alreadyFilled = osm.init(createNew);
+        if(!alreadyFilled) {
+            osm.close();
+            osm.init(createNew = true);
             osm.writeOsm2Binary(new FileInputStream(osmFile));
-        } else {
-            osm.init(false);
         }
         Graph g = osm.readGraph();
         System.out.println("graph contains " + g.getLocations() + " nodes");
         // runBenchmark(SimpleArray.class, g);
-        runBenchmark(GHTree.class, g);
+//        runBenchmark(GHTree.class, g);
         runBenchmark(SISTree.class, g);
         runBenchmark(JTSTree.class, g);
     }

@@ -19,9 +19,11 @@ import org.apache.sis.core.LatLon;
 import org.apache.sis.storage.QuadTreeData;
 
 /**
+ * Spatial Information System implementation
+ * 
  * @author Peter Karich
  */
-class SISTree implements SimplisticQuadTree {
+public class SISTree implements SimplisticQuadTree {
 
     org.apache.sis.storage.QuadTree qt;
 

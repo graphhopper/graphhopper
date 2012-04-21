@@ -21,9 +21,10 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.util.GeometricShapeFactory;
 
 /**
+ * Java Topology suite implementaion which is also used in OpenTripPlanner
+ *
  * @author Peter Karich
  */
-// jts/opentripplanner
 class JTSTree implements SimplisticQuadTree {
 
     Integer integ = new Integer(1);

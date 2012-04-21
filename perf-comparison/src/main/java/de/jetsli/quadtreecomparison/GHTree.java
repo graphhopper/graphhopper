@@ -20,10 +20,11 @@ import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeSimple;
 
 /**
+ * GraphHopper implementation 
+ * 
  * @author Peter Karich
  */
-// GraphHopper
-class GHTree implements SimplisticQuadTree {
+public class GHTree implements SimplisticQuadTree {
     Integer integ = new Integer(0);
     QuadTree qt = new QuadTreeSimple(16, 56);
 
@@ -35,8 +36,8 @@ class GHTree implements SimplisticQuadTree {
 
     public void put(double lat, double lon) {
         Object ret = qt.put(lat, lon, integ);
-        if (ret != null)
-            throw new IllegalStateException("point already exists:" + lat + ", " + lon + " size:" + qt.size());
+//        if (ret != null)
+//            throw new IllegalStateException("point already exists:" + lat + ", " + lon + " size:" + qt.size());
     }
 
     public int countNodes(double lat, double lon, double radiusInKm) {

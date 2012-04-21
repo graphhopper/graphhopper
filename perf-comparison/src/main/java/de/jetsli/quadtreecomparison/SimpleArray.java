@@ -22,6 +22,8 @@ import java.util.List;
 import org.apache.sis.core.LatLon;
 
 /**
+ * Using a simple array as implementation
+ * 
  * @author Peter Karich
  */
 class SimpleArray implements SimplisticQuadTree {

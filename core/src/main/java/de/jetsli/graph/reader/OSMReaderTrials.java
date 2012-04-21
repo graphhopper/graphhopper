@@ -145,6 +145,9 @@ public class OSMReaderTrials implements OSMReader {
         maxLocs = size;
     }
 
+    /** 
+     * @return the number of already existing nodes
+     */
     public boolean init(boolean forceCreateNew) {
         logger.info("starting with " + Helper.getBeanMemInfo());
         try {
