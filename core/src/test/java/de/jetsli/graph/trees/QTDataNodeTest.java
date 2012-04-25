@@ -34,4 +34,48 @@ public class QTDataNodeTest {
         dn.add(1, 1);
         assertEquals(1, dn.count());
     }
+
+    @Test
+    public void testAddDuplicates() {
+        QTDataNode<String> dn = new QTDataNode<String>(4);
+        dn.add(1, "test1");
+        assertEquals(1, dn.count());
+        dn.add(1, "test5");
+        dn.add(1, "test2");
+        assertEquals(3, dn.count());
+    }
+
+    @Test
+    public void testNodeAdd() {
+        QTDataNode<String> dn = new QTDataNode<String>(2);
+        assertFalse(dn.add(1, "test1"));
+        assertFalse(dn.add(5, "test5"));
+        assertTrue(dn.add(2, "test2"));
+    }
+
+    @Test
+    public void testNodeRemove() {
+        QTDataNode<String> dn = new QTDataNode<String>(4);
+        dn.add(1, "test1");
+        dn.add(5, "test5");
+        dn.add(2, "test2");
+        dn.add(3, "test3");
+
+        assertEquals(1, dn.remove(3));
+        assertEquals(1, dn.remove(5));
+
+        assertNull(dn.getValue(5));
+        assertNull(dn.getValue(3));
+        assertEquals("test1", dn.getValue(1));
+        assertEquals("test2", dn.getValue(2));
+    }
+
+    @Test
+    public void testNodeRemoveWithDuplicates() {
+        QTDataNode<String> dn = new QTDataNode<String>(4);
+        dn.add(1, "test1");
+        dn.add(1, "test5");
+
+        assertEquals(2, dn.remove(1));
+    }
 }

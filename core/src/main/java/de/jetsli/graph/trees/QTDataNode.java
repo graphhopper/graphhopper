@@ -25,6 +25,10 @@ import de.jetsli.graph.util.Helper;
 class QTDataNode<V> implements QTNode<V> {
 
     long[] keys;
+    
+    /**
+     * Use 'null' to mark the end of the array and to avoid an additional capacity int
+     */
     Object[] values;
 
     public QTDataNode(int entries) {
@@ -44,25 +48,25 @@ class QTDataNode<V> implements QTNode<V> {
     public boolean isFull() {
         return count() == values.length;
     }
-
+    
     public int remove(long key) {
         int removed = 0;
-        for (int i = 0; i < values.length; i++) {
+        for (int i = 0; i < values.length; ) {
             if (values[i] == null)
-                return removed;
+                break;
             if (keys[i] == key) {
-                // is array copy more efficient when some null entries? does it create a temp array?
-                // System.arraycopy(keys, i + 1, keys, i, keys.length - i - 1);
-                // System.arraycopy(values, i + 1, values, i, values.length - i - 1);
+                // is array copy more efficient?
                 int max = values.length - 1;
-                for (; i < max; i++) {
-                    keys[i] = keys[i + 1];
-                    values[i] = values[i + 1];
+                int j = i;
+                for (; j < max; j++) {
+                    keys[j] = keys[j + 1];
+                    values[j] = values[j + 1];
                 }
                 // new end
-                values[i] = null;
+                values[j] = null;
                 removed++;
-            }
+            } else
+                i++;
         }
         return removed;
     }

@@ -28,16 +28,11 @@ import java.util.List;
  */
 public interface QuadTree<V> {
 
+    QuadTree init(int maxItemsHint) throws Exception;
+    
     int size();
 
-    /**
-     * only for tests - remove later
-     */
-    int count();
-
-    boolean isEmpty();
-
-    QuadTree init(int maxItemsHint) throws Exception;
+    boolean isEmpty();    
 
     void add(double lat, double lon, V value);
 
@@ -58,9 +53,15 @@ public interface QuadTree<V> {
 
     void clear();
 
+    /**
+     * For debugging purposes
+     */
     String toDetailString();
 
     long getMemoryUsageInBytes(int factor);
 
+    /**
+     * Good for memory estimation
+     */
     long getEmptyEntries(boolean onlyBranches);
 }
