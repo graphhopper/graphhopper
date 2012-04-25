@@ -164,7 +164,6 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         MAIN:
         for (; maxBit != 0; maxBit >>>= 2) {
             for (num = 0; num < 4; num++) {
-                // TODO clear data node to avoid memory leak
                 QTDataNode<T> dn = new QTDataNode<T>(entriesPerLeaf);
                 overflow = dn.overwriteFrom(num, maxBit, dataNode, spatialKey, value);
                 if (overflow) {
@@ -225,8 +224,6 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         if (root == null)
             return 0;
 
-        // TODO some bug still present as not all values gets removed!?
-        
         final long spatialKey = algo.encode(lat, lon);
         final AtomicInteger removedWrapper = new AtomicInteger(0);
         LeafWorker<T> worker = new LeafWorker<T>() {

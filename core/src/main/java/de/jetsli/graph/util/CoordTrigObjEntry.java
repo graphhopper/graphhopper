@@ -21,25 +21,25 @@ package de.jetsli.graph.util;
  */
 public class CoordTrigObjEntry<T> extends CoordTrig<T> {
 
-    public T obj;
+    private T v;
 
     public CoordTrigObjEntry() {
     }
 
     public CoordTrigObjEntry(T o, double lat, double lon) {
         super(lat, lon);
-        this.obj = o;
+        this.v = o;
     }
 
     @Override public void setValue(T t) {
-        obj = t;
+        v = t;
     }
 
     @Override public T getValue() {
-        return obj;
+        return v;
     }
 
     @Override public String toString() {
-        return super.toString() + " " + obj;
+        return super.toString() + " value:" + v;
     }
 }
