@@ -24,16 +24,7 @@ public class App {
     }
 
     public void start(String osmFile) throws FileNotFoundException {
-        OSMReaderTrials osm = new OSMReaderTrials("/tmp/mmap-graph", 5 * 1000 * 1000);
-        // use existing OR create new and overwrite old
-        boolean createNew = false;
-        boolean alreadyFilled = osm.init(createNew);
-        if(!alreadyFilled) {
-            osm.close();
-            osm.init(createNew = true);
-            osm.writeOsm2Binary(new FileInputStream(osmFile));
-        }
-        Graph g = osm.readGraph();
+        Graph g = OSMReaderTrials.defaultRead(osmFile, "/tmp/mmap-graph");
         System.out.println("graph contains " + g.getLocations() + " nodes");
 //         runBenchmark(SimpleArray.class, g);
 //        runBenchmark(GHTree.class, g);
@@ -54,7 +45,7 @@ public class App {
 //                    throw new RuntimeException(ex);
 //                }
 //            }
-//        }.setMax(20).start();
+//        }.setMax(20).setSeed(0).start();
 
         // test neighbor SEARCH performance
         final SimplisticQuadTree quadTree;
@@ -69,6 +60,10 @@ public class App {
         final int latMin = 497354, latMax = 501594;
         final int lonMin = 91924, lonMax = 105784;
         
+        // sis is a memory hog because there is no difference of data+branchnode
+        // long emptyEntries = quadTree.getEmptyEntries(true);
+        // long emptyAllEntries = quadTree.getEmptyEntries(false);
+        // + " empty all entries:" + emptyAllEntries + " empty entries:" + emptyEntries
         for (int i = 10; i < 50; i *= 2) {
             final double dist = i;
             new MiniTest("query " + dist + "km " + qtClass.getSimpleName()) {
@@ -76,11 +71,9 @@ public class App {
                 @Override public long doCalc(int run) {
                     float lat = (random.nextInt(latMax - latMin) + latMin) / 10000.0f;
                     float lon = (random.nextInt(lonMax - lonMin) + lonMin) / 10000.0f;
-                    int ret = quadTree.countNodes(lat, lon, dist);
-                    System.out.println("ret:" + ret);
-                    return ret;
+                    return quadTree.countNodes(lat, lon, dist);
                 }
-            }.setMax(50).start();
+            }.setMax(50).setSeed(0).start();
         }
     }
 

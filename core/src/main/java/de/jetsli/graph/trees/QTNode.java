@@ -38,4 +38,6 @@ interface QTNode<V> {
     long getMemoryUsageInBytes(int factor);
     
     int count();
+
+    long getEmptyEntries(boolean onlyBranches);
 }

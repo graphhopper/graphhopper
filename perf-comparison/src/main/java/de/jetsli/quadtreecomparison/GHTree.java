@@ -35,13 +35,11 @@ public class GHTree implements SimplisticQuadTree {
     }
 
     public void put(double lat, double lon) {
-        Object ret = qt.put(lat, lon, integ);
-//        if (ret != null)
-//            throw new IllegalStateException("point already exists:" + lat + ", " + lon + " size:" + qt.size());
+        qt.add(lat, lon, integ);
     }
 
     public int countNodes(double lat, double lon, double radiusInKm) {
-        return qt.getNeighbours(lat, lon, radiusInKm).size();
+        return qt.getNodes(lat, lon, radiusInKm).size();
     }
 
     @Override
@@ -53,4 +51,7 @@ public class GHTree implements SimplisticQuadTree {
         return qt.size();
     }
 
+    public long getEmptyEntries(boolean b) {
+        return qt.getEmptyEntries(b);
+    }
 }

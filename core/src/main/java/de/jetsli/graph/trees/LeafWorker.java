@@ -23,5 +23,5 @@ interface LeafWorker<T> {
     /**
      * @return true if no further search necessary
      */
-    boolean doWork(QTDataNode<T> entry, int index);
+    void doWork(QTDataNode<T> entry, int index);
 }

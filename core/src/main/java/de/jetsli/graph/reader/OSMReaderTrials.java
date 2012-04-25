@@ -23,6 +23,7 @@ import de.jetsli.graph.util.Helper;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.List;
@@ -85,6 +86,19 @@ public class OSMReaderTrials implements OSMReader {
     private CalcDistance callback = new CalcDistance();
     private HashMap<String, Integer> countMap = new HashMap<String, Integer>(1000);
     private HashMap<String, Integer> highwayMap = new HashMap<String, Integer>(100000);
+    
+    public static Graph defaultRead(String osmFile, String mmapFile) throws FileNotFoundException {
+        OSMReaderTrials osm = new OSMReaderTrials(mmapFile, 5 * 1000 * 1000);
+        // use existing OR create new and overwrite old
+        boolean createNew = false;
+        boolean alreadyFilled = osm.init(createNew);
+        if (!alreadyFilled) {
+            osm.close();
+            osm.init(createNew = true);
+            osm.writeOsm2Binary(new FileInputStream(osmFile));
+        }
+        return osm.readGraph();
+    }
             
     public void read(String[] args) throws Exception {
         // get osm file via wget -O muenchen.osm "http://api.openstreetmap.org/api/0.6/map?bbox=11.54,48.14,11.543,48.145"
@@ -104,11 +118,6 @@ public class OSMReaderTrials implements OSMReader {
             logger.info("Start creating graph from " + osmFile);
             writeOsm2Binary(new FileInputStream(osmFile));
         }
-
-        // stats();
-        
-        new PerfTest(readGraph()).start();
-//        new MiniGraphUI(readGraph()).visualize();
 
 //        boolean dijkstraSearchTest = storage instanceof MMyGraphStorage;
         boolean dijkstraSearchTest = false;

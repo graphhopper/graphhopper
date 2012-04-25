@@ -23,7 +23,9 @@ import de.jetsli.graph.util.shapes.Circle;
 import de.jetsli.graph.util.shapes.Shape;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A simple implementation of a spatial index via a spatial key trie - the normal java way (a bit
@@ -36,8 +38,8 @@ import java.util.List;
  * 3 times.
  *
  * Warning: cannot store null values - an exception will be thrown.
- * 
- * Cannot store duplicates - the old value will be returned and overwritten.
+ *
+ * Duplicates allowed.
  *
  * @author Peter Karich, info@jetsli.de
  */
@@ -52,15 +54,13 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             this.algo = algo;
         }
 
-        @Override public boolean doWork(QTDataNode<T> dataNode, int i) {
+        @Override public void doWork(QTDataNode<T> dataNode, int i) {
             CoordTrigObjEntry<T> entry = new CoordTrigObjEntry<T>();
             algo.decode(dataNode.keys[i], entry);
             if (accept(entry)) {
                 entry.setValue((T) dataNode.values[i]);
                 result.add(entry);
             }
-
-            return false;
         }
 
         public boolean accept(CoordTrig<T> entry) {
@@ -101,7 +101,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     }
 
     @Override
-    public T put(double lat, double lon, T value) {
+    public void add(double lat, double lon, T value) {
         if (value == null)
             throw new IllegalArgumentException("This quad tree does not support null values");
 
@@ -110,16 +110,17 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         if (root == null) {
             size++;
             QTDataNode<T> d = new QTDataNode<T>(entriesPerLeaf);
-            d.put(spatialKey, value);
+            d.add(spatialKey, value);
             root = d;
-            return null;
+            return;
         }
         QTBranchNode<T> previousBranch = null;
         int previousNum = -1;
         QTNode<T> current = root;
         while (maxBit != 0) {
             if (current.hasData()) {
-                return putData(spatialKey, value, current, previousBranch, previousNum, maxBit);
+                addData(spatialKey, value, current, previousBranch, previousNum, maxBit);
+                return;
             }
 
             previousBranch = (QTBranchNode<T>) current;
@@ -144,121 +145,107 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
                 + lat + "," + lon + " spatial key:" + spatialKey + " value:" + value + " size:" + size);
     }
 
-    private T putData(long spatialKey, T value, QTNode<T> current, QTNode<T> previousBranch,
+    private void addData(long spatialKey, T value, QTNode<T> current, QTNode<T> previousBranch,
             int previousNum, long maxBit) {
-        QTDataNode<T> dataNode = (QTDataNode) current;
-        T old = dataNode.getValue(spatialKey);
-        // overwrite means we don't need to handle overflow
-        if (old != null) {
-            dataNode.put(spatialKey, value);
-            return old;
-        }
-
         size++;
-        boolean overflow = dataNode.put(spatialKey, value);
+
+        QTDataNode<T> dataNode = (QTDataNode) current;
+        boolean overflow = dataNode.add(spatialKey, value);
         if (!overflow)
-            return null;
+            return;
 
         QTBranchNode<T> n = new QTBranchNode<T>();
         if (previousBranch != null)
             previousBranch.set(previousNum, n);
         else
             root = n;
-        QTDataNode<T> data00 = new QTDataNode<T>(entriesPerLeaf);
-        QTDataNode<T> data01 = new QTDataNode<T>(entriesPerLeaf);
-        QTDataNode<T> data10 = new QTDataNode<T>(entriesPerLeaf);
-        QTDataNode<T> data11 = new QTDataNode<T>(entriesPerLeaf);
-        for (; maxBit != 0; maxBit >>>= 2) {
-            // not necessary to clear dataxy as it is overwritten if necessary in the next loop
-            overflow = data00.overwriteFrom(0, maxBit, dataNode, spatialKey, value);
-            if (overflow) {
-                // '0' would be full so try to divide it again
-                QTBranchNode<T> tmp = new QTBranchNode<T>();
-                n.set(0, tmp);
-                n = tmp;
-                continue;
-            }
 
-            overflow = data01.overwriteFrom(1, maxBit, dataNode, spatialKey, value);
-            if (overflow) {
-                QTBranchNode<T> tmp = new QTBranchNode<T>();
-                n.set(1, tmp);
-                n = tmp;
-                continue;
-            }
-
-            overflow = data10.overwriteFrom(2, maxBit, dataNode, spatialKey, value);
-            if (overflow) {
-                QTBranchNode<T> tmp = new QTBranchNode<T>();
-                n.set(2, tmp);
-                n = tmp;
-                continue;
-            }
-
-            overflow = data11.overwriteFrom(3, maxBit, dataNode, spatialKey, value);
-            if (overflow) {
-                QTBranchNode<T> tmp = new QTBranchNode<T>();
-                n.set(3, tmp);
-                n = tmp;
-                continue;
-            }
-
-            // optimization: if(!data00.isEmpty()) n.set(0, data00); etc
-
-            n.set(0, data00);
-            n.set(1, data01);
-            n.set(2, data10);
-            n.set(3, data11);
-            return null;
+        QTDataNode<T> newNodes[] = new QTDataNode[4];
+        int num;
+        for (num = 0; num < 4; num++) {
+            newNodes[num] = new QTDataNode<T>(entriesPerLeaf);
         }
-        throw new IllegalStateException("tree full!? too many entries in datanode 0 "
-                + data00 + " or 1 " + data01 + " or 2 " + data10 + " or 3 " + data11);
+
+        MAIN:
+        for (; maxBit != 0; maxBit >>>= 2) {
+            for (num = 0; num < 4; num++) {
+                // not necessary to clear data node as it is overwritten if necessary in the next loop
+                QTDataNode<T> dn = newNodes[num];
+                overflow = dn.overwriteFrom(num, maxBit, dataNode, spatialKey, value);
+                if (overflow) {
+                    if ((maxBit & 0x3) != 0) {
+                        // if the dataNode contains duplicates or if too many nodes have a very similar position
+                        // it couldn't be splitted, so we need to increase size
+                        dn.ensure(dn.keys.length + 1);
+                        dn.add(spatialKey, value);
+                        n.set(num, dn);
+                        continue;
+                    } else {
+                        // current node would be full so divide it again
+                        QTBranchNode<T> tmp = new QTBranchNode<T>();
+                        n.set(num, tmp);
+                        n = tmp;
+                        continue MAIN;
+                    }
+                } else if (!dn.isEmpty()) {
+                    n.set(num, dn);
+                    continue;
+                }
+            }
+
+            return;
+        }
+
+        throw new IllegalStateException("Cannot happen? datanode:" + dataNode + " new entry:" + spatialKey + "->" + value);
     }
 
     @Override
-    public T get(final double lat, final double lon) {
+    public Collection<CoordTrig<T>> getNodesFromValue(final double lat, final double lon, final T value) {
         if (root == null)
-            return null;
+            return Collections.EMPTY_LIST;
 
         final long spatialKey = algo.encode(lat, lon);
-        final CoordTrig<T> ret = new CoordTrigObjEntry<T>();
+        final List<CoordTrig<T>> nodes = new ArrayList<CoordTrig<T>>(1);
         LeafWorker<T> worker = new LeafWorker<T>() {
 
-            @Override public boolean doWork(QTDataNode<T> dataNode, int i) {
-                if (dataNode.keys[i] == spatialKey) {
-                    ret.setValue((T) dataNode.values[i]);
-                    return true;
-                }
+            @Override public void doWork(QTDataNode<T> dataNode, int i) {
+                if (value != null && !value.equals(dataNode.values[i]))
+                    return;
 
-                return false;
+                if (dataNode.keys[i] == spatialKey) {
+                    CoordTrig<T> ret = new CoordTrigObjEntry<T>();
+                    algo.decode(dataNode.keys[i], ret);
+                    ret.setValue((T) dataNode.values[i]);
+                    nodes.add(ret);
+                }
             }
         };
         double err = 1.0 / Math.pow(10, algo.getExactPrecision());
         getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err), root, worker);
-        return ret.getValue();
+        return nodes;
     }
 
     @Override
-    public boolean remove(double lat, double lon) {
+    public int remove(double lat, double lon) {
         if (root == null)
-            return false;
+            return 0;
 
         final long spatialKey = algo.encode(lat, lon);
+        final AtomicInteger removedWrapper = new AtomicInteger(0);
         LeafWorker<T> worker = new LeafWorker<T>() {
 
             @Override
-            public boolean doWork(QTDataNode<T> entry, int index) {
-                if (entry.remove(spatialKey)) {
-                    size--;
-                    // stop search
-                    return true;
+            public void doWork(QTDataNode<T> entry, int i) {
+                int removed = entry.remove(spatialKey);
+                if (removed > 0) {
+                    removedWrapper.addAndGet(removed);
+                    size -= removed;
                 }
-
-                return false;
             }
         };
         double err = 1.0 / Math.pow(10, algo.getExactPrecision());
-        return getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err), root, worker);
+        getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err), root, worker);
+        return removedWrapper.get();
     }
 
     @Override
@@ -267,7 +254,10 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     }
 
     @Override
-    public Collection<CoordTrig<T>> getNeighbours(final double lat, final double lon, final double distanceInKm) {
+    public Collection<CoordTrig<T>> getNodes(final double lat, final double lon, final double distanceInKm) {
+        if (root == null)
+            return Collections.EMPTY_LIST;
+
         final Circle c = new Circle(lat, lon, distanceInKm);
         Acceptor<T> distanceAcceptor = new Acceptor<T>(algo) {
 
@@ -275,32 +265,30 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
                 return c.contains(entry.lat, entry.lon);
             }
         };
-        getNeighbours(BBox.createEarthMax(), c, root,
-                distanceAcceptor);
+        getNeighbours(BBox.createEarthMax(), c, root, distanceAcceptor);
         return distanceAcceptor.result;
     }
 
     @Override
-    public Collection<CoordTrig<T>> getNeighbours(Shape boundingBox) {
+    public Collection<CoordTrig<T>> getNodes(Shape boundingBox) {
+        if (root == null)
+            return Collections.EMPTY_LIST;
+
         Acceptor<T> worker = new Acceptor<T>(algo);
         getNeighbours(BBox.createEarthMax(), boundingBox, root, worker);
         return worker.result;
     }
 
-    private boolean getNeighbours(BBox nodeBB, Shape searchRect, QTNode current, LeafWorker<T> worker) {
-        if (current == null)
-            return false;
-
+    private void getNeighbours(BBox nodeBB, Shape searchRect, QTNode current, LeafWorker<T> worker) {
         if (current.hasData()) {
             QTDataNode<T> dataNode = (QTDataNode<T>) current;
             for (int i = 0; i < dataNode.values.length; i++) {
                 if (dataNode.values[i] == null)
                     break;
 
-                if (worker.doWork(dataNode, i))
-                    return true;
+                worker.doWork(dataNode, i);
             }
-            return false;
+            return;
         }
 
         double lat12 = (nodeBB.maxLat + nodeBB.minLat) / 2;
@@ -312,42 +300,33 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         QTNode<T> node10 = current.get(2);
         if (node10 != null) {
             BBox nodeRect10 = new BBox(nodeBB.minLon, lon12, lat12, nodeBB.maxLat);
-            if (searchRect.intersect(nodeRect10)) {
-                if (getNeighbours(nodeRect10, searchRect, node10, worker))
-                    return true;
-            }
+            if (searchRect.intersect(nodeRect10))
+                getNeighbours(nodeRect10, searchRect, node10, worker);
         }
 
         // top-right
         QTNode<T> node11 = current.get(3);
         if (node11 != null) {
             BBox nodeRect11 = new BBox(lon12, nodeBB.maxLon, lat12, nodeBB.maxLat);
-            if (searchRect.intersect(nodeRect11)) {
-                if (getNeighbours(nodeRect11, searchRect, node11, worker))
-                    return true;
-            }
+            if (searchRect.intersect(nodeRect11))
+                getNeighbours(nodeRect11, searchRect, node11, worker);
         }
 
         // bottom-left
         QTNode<T> node00 = current.get(0);
         if (node00 != null) {
             BBox nodeRect00 = new BBox(nodeBB.minLon, lon12, nodeBB.minLat, lat12);
-            if (searchRect.intersect(nodeRect00)) {
-                if (getNeighbours(nodeRect00, searchRect, node00, worker))
-                    return true;
-            }
+            if (searchRect.intersect(nodeRect00))
+                getNeighbours(nodeRect00, searchRect, node00, worker);
         }
 
         // bottom-right
         QTNode<T> node01 = current.get(1);
         if (node01 != null) {
             BBox nodeRect01 = new BBox(lon12, nodeBB.maxLon, nodeBB.minLat, lat12);
-            if (searchRect.intersect(nodeRect01)) {
-                if (getNeighbours(nodeRect01, searchRect, node01, worker))
-                    return true;
-            }
+            if (searchRect.intersect(nodeRect01))
+                getNeighbours(nodeRect01, searchRect, node01, worker);
         }
-        return false;
     }
 
     @Override
@@ -412,6 +391,14 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             return node.getMemoryUsageInBytes(factor) + offset;
 
         return offset;
+    }
+
+    @Override
+    public long getEmptyEntries(boolean onlyBranches) {
+        if (root != null)
+            return root.getEmptyEntries(onlyBranches);
+
+        return 0;
     }
 
     @Override

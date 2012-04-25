@@ -76,19 +76,7 @@ public class SpatialKeyAlgo {
     private double maxLatI;
     private int iterations;
     private long initialBits;
-
-    /**
-     * @param precision specifies how many positions after the decimal point are significant.
-     */
-    public SpatialKeyAlgo initFromPrecision(int precision) {
-        // 360 / 2^(allBits/2) = 1/precision = x
-        double x = 1d / Math.pow(10, precision);
-        double allbits = Math.round(2 * Math.log(360 / x) / Math.log(2));
-        // add 4 bits to make the last position correct
-        myinit(Math.min((int) allbits + 4 * 2, 64));
-        setInitialBounds();
-        return this;
-    }
+    public long bits[];
 
     public SpatialKeyAlgo(int allBits) {
         myinit(allBits);
@@ -106,6 +94,11 @@ public class SpatialKeyAlgo {
 
         iterations = allBits / 2;
         initialBits = 1L << (allBits - 1);
+        bits = new long[allBits];
+        bits[0] = initialBits;
+        for (int i = 1; i < allBits; i++) {
+            bits[i] = bits[i - 1] >>> 1;
+        }
         setInitialBounds();
     }
 
@@ -179,7 +172,10 @@ public class SpatialKeyAlgo {
      * @param spatialKey is the input
      */
     public final void decode(long spatialKey, CoordTrig latLon) {
-        // use the value in the middle => start from "min" use "max" as initial step-size
+        // Performance: calculating 'midLon' and 'midLat' on the fly is not slower than using 
+        // precalculated values from arrays and for 'bits' a precalculated array is even a bit slower!
+
+        // Use the value in the middle => start from "min" use "max" as initial step-size
         double midLat = maxLatI;
         double midLon = maxLonI;
 
@@ -192,28 +188,20 @@ public class SpatialKeyAlgo {
 
             midLat /= 2;
             bits >>>= 1;
-
             if ((spatialKey & bits) != 0)
                 lon += midLon;
 
             midLon /= 2;
-            if (bits != 0) {
+            if (bits != 0)
                 bits >>>= 1;
-            } else {
-                // stable rounding - see testBijection
-                lat += midLat;
-                lon += midLon;
+            else
                 break;
-            }
         }
 
+        // stable rounding - see testBijection
+        lat += midLat;
+        lon += midLon;
         latLon.lat = lat;
         latLon.lon = lon;
     }
-//    protected int toLong(double d) {
-//        return (int) (d * factorForPrecision);
-//    }
-//    private double toDouble(int val) {
-//        return (double) val / factorForPrecision;
-//    }
 }

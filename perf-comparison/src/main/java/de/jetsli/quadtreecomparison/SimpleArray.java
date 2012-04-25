@@ -67,4 +67,7 @@ class SimpleArray implements SimplisticQuadTree {
         return currentIndex;
     }
 
+    public long getEmptyEntries(boolean b) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

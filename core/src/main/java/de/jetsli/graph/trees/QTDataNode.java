@@ -41,10 +41,15 @@ class QTDataNode<V> implements QTNode<V> {
         return values[0] == null;
     }
 
-    public boolean remove(long key) {
+    public boolean isFull() {
+        return count() == values.length;
+    }
+
+    public int remove(long key) {
+        int removed = 0;
         for (int i = 0; i < values.length; i++) {
             if (values[i] == null)
-                return false;
+                return removed;
             if (keys[i] == key) {
                 // is array copy more efficient when some null entries? does it create a temp array?
                 // System.arraycopy(keys, i + 1, keys, i, keys.length - i - 1);
@@ -56,18 +61,18 @@ class QTDataNode<V> implements QTNode<V> {
                 }
                 // new end
                 values[i] = null;
-                return true;
+                removed++;
             }
         }
-        return false;
+        return removed;
     }
 
     /**
      * @return true if overflow necessary
      */
-    public boolean put(long key, V value) {
+    public boolean add(long key, V value) {
         for (int i = 0; i < values.length; i++) {
-            if (values[i] == null || keys[i] == key) {
+            if (values[i] == null) {
                 keys[i] = key;
                 values[i] = value;
                 i++;
@@ -87,7 +92,7 @@ class QTDataNode<V> implements QTNode<V> {
         long nextBitPos = bitPosition >>> 1;
         int tmp = (key & bitPosition) == 0 ? 0 : 2;
         if ((key & nextBitPos) != 0)
-            tmp |= 1;
+            tmp++;
 
         if (tmp == num) {
             keys[counter] = key;
@@ -99,7 +104,7 @@ class QTDataNode<V> implements QTNode<V> {
                 break;
             tmp = (dn.keys[i] & bitPosition) == 0 ? 0 : 2;
             if ((dn.keys[i] & nextBitPos) != 0)
-                tmp |= 1;
+                tmp++;
 
             if (tmp == num) {
                 if (counter >= values.length)
@@ -115,7 +120,7 @@ class QTDataNode<V> implements QTNode<V> {
         return false;
     }
 
-    public V getValue(long key) {
+    V getValue(long key) {
         for (int i = 0; i < values.length; i++) {
             if (values[i] == null)
                 return null;
@@ -123,16 +128,6 @@ class QTDataNode<V> implements QTNode<V> {
                 return (V) values[i];
         }
         return null;
-    }
-
-    @Override
-    public int count() {
-        int i = 0;
-        for (; i < values.length; i++) {
-            if (values[i] == null)
-                return i;
-        }
-        return i;
     }
 
     @Override
@@ -172,5 +167,43 @@ class QTDataNode<V> implements QTNode<V> {
     @Override
     public long getMemoryUsageInBytes(int factor) {
         return Helper.sizeOfLongArray(keys.length, factor) + Helper.sizeOfLongArray(values.length, factor);
+    }
+
+    @Override
+    public long getEmptyEntries(boolean onlyBranches) {
+        if (onlyBranches)
+            return 0;
+
+        return values.length - count();
+    }
+
+    @Override
+    public int count() {
+        int i = 0;
+        for (; i < values.length; i++) {
+            if (values[i] == null)
+                return i;
+        }
+        return i;
+    }
+
+    void ensure(int newSize) {
+        long[] tmpKeys = new long[newSize];
+        Object[] tmpValues = new Object[newSize];
+        System.arraycopy(keys, 0, tmpKeys, 0, keys.length);
+        System.arraycopy(values, 0, tmpValues, 0, values.length);
+        keys = tmpKeys;
+        values = tmpValues;
+    }
+
+    int count(long spatialKey) {
+        int counter = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (spatialKey == keys[i])
+                counter++;
+            if (values[i] == null)
+                break;
+        }
+        return counter;
     }
 }

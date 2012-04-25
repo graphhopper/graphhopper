@@ -31,7 +31,7 @@ public class QTDataNodeTest {
         dn.keys[1] = 111;
         dn.values[1] = 222;
         assertEquals(0, dn.count());
-        dn.put(1, 1);
+        dn.add(1, 1);
         assertEquals(1, dn.count());
     }
 }

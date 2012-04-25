@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.ui;
 
+import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
@@ -34,6 +35,14 @@ import javax.swing.*;
  */
 public class MiniGraphUI {
 
+    public static void main(String[] args) throws Exception {
+        if (args.length < 1)
+            throw new IllegalArgumentException("Osm file missing");
+
+        String osmFile = args[0];
+        Graph g = OSMReaderTrials.defaultRead(osmFile, "/tmp/mmap-graph");
+        new MiniGraphUI(g).visualize();
+    }
     private final QuadTree<Integer> quadTree;
     private Collection<CoordTrig<Integer>> quadTreeNodes;
     private final Graph graph;
@@ -238,7 +247,7 @@ public class MiniGraphUI {
                             double lon = getLon(e.getX());
 
                             StopWatch sw = new StopWatch().start();
-                            quadTreeNodes = quadTree.getNeighbours(lat, lon, 10);
+                            quadTreeNodes = quadTree.getNodes(lat, lon, 10);
                             System.out.println("search at " + lat + "," + lon + " took " + sw.stop().getSeconds());
 
                             // open browser
@@ -292,8 +301,8 @@ public class MiniGraphUI {
                         @Override public void actionPerformed(ActionEvent e) {
                             int counter = 0;
                             for (CoordTrig<Integer> coord : quadTreeNodes) {
-                                boolean ret = quadTree.remove(coord.lat, coord.lon);
-                                if (!ret) {
+                                int ret = quadTree.remove(coord.lat, coord.lon);
+                                if (ret < 1) {
                                     System.out.println("cannot remove " + coord + " " + ret);
 //                                    ret = quadTree.remove(coord.getLatitude(), coord.getLongitude());
                                 } else

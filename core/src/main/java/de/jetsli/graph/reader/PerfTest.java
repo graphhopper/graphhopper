@@ -20,6 +20,8 @@ import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeSimple;
 import de.jetsli.graph.util.CoordFloat;
 import de.jetsli.graph.util.Helper;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Date;
 
 /**
@@ -36,6 +38,14 @@ import java.util.Date;
  */
 public class PerfTest {
 
+    public static void main(String[] args) throws Exception {
+        if (args.length < 1)
+            throw new IllegalArgumentException("Osm file missing");
+        
+        String osmFile = args[0];
+        Graph g = OSMReaderTrials.defaultRead(osmFile, "/tmp/mmap-graph");
+        new PerfTest(g).start();
+    }
     Graph g;
 
     public PerfTest(Graph graph) {
@@ -47,6 +57,8 @@ public class PerfTest {
 
     public void start() {
         System.out.println("locations:" + g.getLocations());
+        // for fill: 1.80sec/iter
+
         // for query: 16 entriesPerNode seems to be fast and not such a memory waste
         // => approx 46 bytes/entry + sizeOf(Integer)
         // current results for 64 bits:
@@ -102,16 +114,19 @@ public class PerfTest {
                     System.gc();
                     System.gc();
                     float mem = (float) quadTree.getMemoryUsageInBytes(1) / Helper.MB;
+                    long emptyEntries = quadTree.getEmptyEntries(true);
+                    long emptyAllEntries = quadTree.getEmptyEntries(false);
                     final int tmp = distance;
                     new MiniTest("neighbour search e/leaf:" + entriesPerLeaf + ", bits:" + bits
-                            + ", dist:" + distance + ", mem:" + mem) {
+                            + ", dist:" + distance + ", mem:" + mem + ", empty entries:" + emptyEntries
+                            + ", empty all entries:" + emptyAllEntries) {
 
                         @Override public long doCalc(int run) {
                             float lat = (random.nextInt(latMax - latMin) + latMin) / 10000.0f;
                             float lon = (random.nextInt(lonMax - lonMin) + lonMin) / 10000.0f;
-                            return quadTree.getNeighbours(lat, lon, tmp).size();
+                            return quadTree.getNodes(lat, lon, tmp).size();
                         }
-                    }.setMax(10).setShowProgress(true).setSeed(0).start();
+                    }.setMax(100).setShowProgress(true).setSeed(0).start();
                 }
             }
         }
@@ -124,9 +139,7 @@ public class PerfTest {
         for (int i = 0; i < locs; i++) {
             float lat = graph.getLatitude(i);
             float lon = graph.getLongitude(i);
-            Object ret = quadTree.put(lat, lon, new CoordFloat(lat, lon));
-//            if (ret != null)
-//                throw new IllegalStateException("already existing:" + lat + ", " + lon + " vs:" + ret);
+            quadTree.add(lat, lon, new CoordFloat(lat, lon));
         }
     }
 }

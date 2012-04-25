@@ -100,4 +100,29 @@ class QTBranchNode<V> implements QTNode<V> {
             all += node3.count();
         return all;
     }
+
+    @Override
+    public long getEmptyEntries(boolean onlyBranches) {
+        int all = 0;
+        if (node0 == null)
+            all++;
+        else
+            all += node0.getEmptyEntries(onlyBranches);
+
+        if (node1 == null)
+            all++;
+        else
+            all += node1.getEmptyEntries(onlyBranches);
+
+        if (node2 == null)
+            all++;
+        else
+            all += node2.getEmptyEntries(onlyBranches);
+
+        if (node3 == null)
+            all++;
+        else
+            all += node3.getEmptyEntries(onlyBranches);
+        return all;
+    }
 }

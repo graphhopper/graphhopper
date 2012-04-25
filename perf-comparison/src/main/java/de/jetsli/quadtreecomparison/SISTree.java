@@ -20,7 +20,7 @@ import org.apache.sis.storage.QuadTreeData;
 
 /**
  * Spatial Information System implementation
- * 
+ *
  * @author Peter Karich
  */
 public class SISTree implements SimplisticQuadTree {
@@ -50,6 +50,10 @@ public class SISTree implements SimplisticQuadTree {
 
     public int size() {
         return qt.size();
+    }
+
+    public long getEmptyEntries(boolean b) {
+        return qt.getEmptyEntries(b);
     }
 
     private static class SisPoint implements QuadTreeData {

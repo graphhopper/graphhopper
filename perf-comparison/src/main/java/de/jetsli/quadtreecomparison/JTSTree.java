@@ -60,4 +60,8 @@ class JTSTree implements SimplisticQuadTree {
         shapeFactory.setSize(radiusInWhat * 2);
         return shapeFactory.createCircle();
     }
+
+    public long getEmptyEntries(boolean b) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

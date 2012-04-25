@@ -28,5 +28,7 @@ interface SimplisticQuadTree {
     int size();
 
     void init(int size);
+
+    public long getEmptyEntries(boolean b);
     
 }

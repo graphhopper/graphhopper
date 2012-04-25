@@ -18,40 +18,49 @@ package de.jetsli.graph.trees;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.shapes.Shape;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * A quad tree interface - think Map<latitude+longitude, V> with the possibility to get neighbouring
  * entries fast.
- * 
+ *
  * @author Peter Karich, info@jetsli.de
  */
 public interface QuadTree<V> {
 
     int size();
-    
-    /** only for tests - remove later*/
+
+    /**
+     * only for tests - remove later
+     */
     int count();
-    
+
     boolean isEmpty();
-    
+
     QuadTree init(int maxItemsHint) throws Exception;
-    
-    V put(double lat, double lon, V value);
-    
-    V get(double lat, double lon);
-    
-    boolean remove(double lat, double lon);
+
+    void add(double lat, double lon, V value);
+
+    int remove(double lat, double lon);
+
+    /**
+     * @return The nodes matching the specified latitude and longitude. If value is null all values
+     * will be returned
+     */
+    Collection<CoordTrig<V>> getNodesFromValue(double lat, double lon, V value);
 
     /**
      * @return points near the specified latitude/longitude
      */
-    Collection<CoordTrig<V>> getNeighbours(double lat, double lon, double distanceInKm);
-    
-    Collection<CoordTrig<V>> getNeighbours(Shape boundingBox);
-    
+    Collection<CoordTrig<V>> getNodes(double lat, double lon, double distanceInKm);
+
+    Collection<CoordTrig<V>> getNodes(Shape boundingBox);
+
     void clear();
-    
+
     String toDetailString();
-        
+
     long getMemoryUsageInBytes(int factor);
+
+    long getEmptyEntries(boolean onlyBranches);
 }
