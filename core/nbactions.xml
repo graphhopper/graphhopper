@@ -18,7 +18,7 @@
         </goals>
         <properties>
             <exec.classpathScope>runtime</exec.classpathScope>
-            <exec.args>-Xms500m -Xmx500m -XX:PermSize=20m -XX:MaxPermSize=20m -classpath %classpath de.jetsli.graph.ui.MiniGraphUI /media/SAMSUNG/unterfranken.osm</exec.args>
+            <exec.args>-Xms500m -Xmx500m -XX:PermSize=20m -XX:MaxPermSize=20m -classpath %classpath de.jetsli.graph.geohash.SpatialKeyTree /media/SAMSUNG/unterfranken.osm</exec.args>
             <exec.executable>java</exec.executable>
         </properties>
     </action>
@@ -30,7 +30,7 @@
         </goals>
         <properties>
             <exec.classpathScope>runtime</exec.classpathScope>
-            <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -Xms500m -Xmx500m -XX:PermSize=20m -XX:MaxPermSize=20m -classpath %classpath de.jetsli.graph.ui.MiniGraphUI /media/SAMSUNG/unterfranken.osm</exec.args>
+            <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -Xms500m -Xmx500m -XX:PermSize=20m -XX:MaxPermSize=20m -classpath %classpath de.jetsli.graph.geohash.SpatialKeyTree /media/SAMSUNG/unterfranken.osm</exec.args>
             <jpda.listen>true</jpda.listen>
             <exec.executable>java</exec.executable>
         </properties>
@@ -42,7 +42,7 @@
             <goal>org.codehaus.mojo:exec-maven-plugin:1.1.1:exec</goal>
         </goals>
         <properties>
-            <exec.args>${profiler.args} -Xms500m -Xmx500m -XX:PermSize=20m -XX:MaxPermSize=20m -classpath %classpath de.jetsli.graph.ui.MiniGraphUI /media/SAMSUNG/unterfranken.osm</exec.args>
+            <exec.args>${profiler.args} -Xms500m -Xmx500m -XX:PermSize=20m -XX:MaxPermSize=20m -classpath %classpath de.jetsli.graph.geohash.SpatialKeyTree /media/SAMSUNG/unterfranken.osm</exec.args>
             <profiler.action>profile</profiler.action>
             <exec.executable>${profiler.java}</exec.executable>
         </properties>

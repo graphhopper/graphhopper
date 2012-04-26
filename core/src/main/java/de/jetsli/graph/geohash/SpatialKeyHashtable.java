@@ -82,7 +82,6 @@ public class SpatialKeyHashtable {
     private int bytesPerEntry;
     private int entriesPerBucket;
     private int bytesPerBucket;
-    private int bytesPerValue;
     private int bytesForSpatialKeyRest;
     private int bytesForOverflowBucket;
     private long indexByteMask;
@@ -106,7 +105,7 @@ public class SpatialKeyHashtable {
         this.bytesForSpatialKeyRest = bytesForSpatialKeyRest;
         this.bitsForSpatialKey = (bytesForBucketIndex + bytesForSpatialKeyRest) * BITS8;
         encodeAlgo = new SpatialKeyAlgo(bitsForSpatialKey);
-        bytesPerValue = 4;
+        int bytesPerValue = 4;
         bytesPerEntry = bytesForSpatialKeyRest + bytesPerValue;
         entriesPerBucket = 6;
 

@@ -137,7 +137,7 @@ public class PerfTest {
         for (int i = 0; i < locs; i++) {
             float lat = graph.getLatitude(i);
             float lon = graph.getLongitude(i);
-            quadTree.add(lat, lon, new CoordFloat(lat, lon));
+            quadTree.add(lat, lon, empty);
         }
     }
 }

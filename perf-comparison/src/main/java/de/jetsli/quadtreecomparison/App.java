@@ -1,5 +1,6 @@
 package de.jetsli.quadtreecomparison;
 
+import de.jetsli.graph.geohash.SpatialKeyTree;
 import de.jetsli.graph.reader.MiniTest;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.storage.Graph;
@@ -26,9 +27,21 @@ public class App {
     public void start(String osmFile) throws FileNotFoundException {
         Graph g = OSMReaderTrials.defaultRead(osmFile, "/tmp/mmap-graph");
         System.out.println("graph contains " + g.getLocations() + " nodes");
+
+//        for (int i = 0; i < 32; i++) {
+//            System.out.println("\n\n #### skipLeft:" + i);
+//            for (int j = 1; j < 32; j++) {
+//                System.out.print("\nentriesPerBucket:" + j + "      ");
+//                SimplisticQuadTree qt = new GHSpatialTree(i, j);
+//                fillQuadTree(qt, g);
+//                qt.toString();
+//            }
+//        }
+
+        runBenchmark(GHSpatialTree.class, g);
 //         runBenchmark(SimpleArray.class, g);
 //        runBenchmark(GHTree.class, g);
-        runBenchmark(SISTree.class, g);
+//        runBenchmark(SISTree.class, g);
 //        runBenchmark(JTSTree.class, g);
     }
 
@@ -56,10 +69,9 @@ public class App {
         }
 
         fillQuadTree(quadTree, graph);
-        System.out.println("quadtree size:" + quadTree.size());
         final int latMin = 497354, latMax = 501594;
         final int lonMin = 91924, lonMax = 105784;
-        
+
         // sis is a memory hog because there is no difference of data+branchnode
         // long emptyEntries = quadTree.getEmptyEntries(true);
         // long emptyAllEntries = quadTree.getEmptyEntries(false);
