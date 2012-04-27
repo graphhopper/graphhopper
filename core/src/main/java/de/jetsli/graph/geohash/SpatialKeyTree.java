@@ -15,6 +15,11 @@
  */
 package de.jetsli.graph.geohash;
 
+import de.genvlin.core.data.*;
+import de.genvlin.core.plugin.ComponentPlatform;
+import de.genvlin.core.plugin.PluginPool;
+import de.genvlin.gui.plot.GPlotPanel;
+import de.genvlin.gui.plot.XYData;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
@@ -25,7 +30,9 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
+import java.util.Random;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 /**
  * This class maps latitude and longitude through there spatial key to integeger values like osm
@@ -50,24 +57,44 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         int locs = g.getLocations();
         System.out.println("graph contains " + locs + " nodes");
 
+        final GPlotPanel panel = new GPlotPanel();
+        PluginPool.getDefault().add(new ComponentPlatform(panel));
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override public void run() {
+                int frameHeight = 800;
+                int frameWidth = 1200;
+                JFrame frame = new JFrame("UI - Fast&Ugly");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                frame.setSize(frameWidth, frameHeight);
+                frame.setContentPane(panel);
+                frame.setVisible(true);
+            }
+        });
+
         // for this OSM a smaller skipLeft is hopeless => the maximul fill would be more than 5000
         for (int i = 14; i < 48; i++) {
-            System.out.println("\n\n" + new Date() + "#### skipLeft:" + i);
+            // System.out.println("\n\n" + new Date() + "#### skipLeft:" + i);
             for (int j = 1; j < 48; j++) {
                 final int epb = j;
-                QuadTree<Integer> qt = new SpatialKeyTree(i) {
+                SpatialKeyTree qt = new SpatialKeyTree(i) {
 
                     @Override protected int getEntriesPerBucket() {
                         return epb;
                     }
                 }.init(locs);
                 PerfTest.fillQuadTree(qt, g);
+                XYData data = qt.getXY(500);
+                panel.addData(data);
+                data.setName("skipLeft:" + i + " e/b:" + j);
 
-                String str = qt.toDetailString();
-                if (!str.isEmpty()) {
-                    System.out.print("\nentriesPerBucket:" + j + "      ");
-                    System.out.println(str);
-                }
+                // panel.automaticOneScale(data);
+
+//                String str = qt.toDetailString();
+//                if (!str.isEmpty()) {
+//                    System.out.print("\nentriesPerBucket:" + j + "      ");
+//                    System.out.println(str);
+//                }
             }
         }
 
@@ -247,20 +274,35 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         initBuffers();
     }
 
-    @Override
-    public String toDetailString() {
-        int max = 100;
+    public XYData getXY(int max) {
+
+        TIntIntHashMap stats = getStats(max);
+        MainPool pool = MainPool.getDefault();
+        VectorInterface x = pool.create(DoubleVectorInterface.class);
+        VectorInterface y = pool.create(DoubleVectorInterface.class);
+        XYData data = new XYData(x, y);
+        for (int i = 0; i < max; i++) {
+            x.add(i);
+            y.add(stats.get(i));
+        }
+        return data;
+    }
+
+    public TIntIntHashMap getStats(int max) {
         TIntIntHashMap stats = new TIntIntHashMap(max);
         for (int i = 0; i < max; i++) {
             stats.put(i, 0);
         }
-
-        int all = 0;
         for (int i = 0; i < maxBuckets; i++) {
-            all += usedEntries[i];
             stats.increment(usedEntries[i]);
         }
+        return stats;
+    }
 
+    @Override
+    public String toDetailString() {
+        int max = 100;
+        TIntIntHashMap stats = getStats(max);
         int maxFill = -1;
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < max; i++) {
@@ -269,10 +311,10 @@ public class SpatialKeyTree implements QuadTree<Integer> {
                 maxFill = v;
             sb.append(v).append("\t");
         }
-
         if (maxFill > 5000)
             return "";
-        return sb.toString() + "\n counted:" + all + " maxFill:" + maxFill;
+
+        return sb.toString() + " maxFill:" + maxFill;
     }
 
     @Override
@@ -289,4 +331,4 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         }
         return counter;
     }
-}
+};
