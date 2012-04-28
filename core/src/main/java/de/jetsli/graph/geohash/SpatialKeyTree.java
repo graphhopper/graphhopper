@@ -77,10 +77,9 @@ public class SpatialKeyTree implements QuadTree<Integer> {
                 int epb = qt.getEntriesPerBucket();
                 System.out.println("\n\n" + new Date() + "#### skipLeft:" + i + " entries/buck:" + epb);
                 PerfTest.fillQuadTree(qt, g);
-                XYVectorInterface data = qt.getXY(500);
+                XYVectorInterface data = qt.getXY();
                 data.setTitle("skipLeft:" + i + " e/b:" + epb);
                 panel.addData(data);
-
                 // panel.automaticOneScale(data);
 
                 String str = qt.toDetailString();
@@ -279,7 +278,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         initBuffers();
     }
 
-    public XYVectorInterface getXY(int max) {
+    public XYVectorInterface getXY() {
         MainPool pool = MainPool.getDefault();
         XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, DoubleVectorInterface.class);
         for (int i = 0; i < maxBuckets; i++) {
