@@ -16,10 +16,7 @@
 package de.jetsli.graph.geohash;
 
 import de.genvlin.core.data.*;
-import de.genvlin.core.plugin.ComponentPlatform;
-import de.genvlin.core.plugin.PluginPool;
 import de.genvlin.gui.plot.GPlotPanel;
-import de.genvlin.gui.plot.XYData;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
@@ -28,9 +25,10 @@ import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.shapes.Shape;
 import gnu.trove.map.hash.TIntIntHashMap;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Random;
+import java.util.Date;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
@@ -58,7 +56,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         System.out.println("graph contains " + locs + " nodes");
 
         final GPlotPanel panel = new GPlotPanel();
-        PluginPool.getDefault().add(new ComponentPlatform(panel));
+        // PluginPool.getDefault().add(new ComponentPlatform(panel));
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override public void run() {
@@ -67,37 +65,31 @@ public class SpatialKeyTree implements QuadTree<Integer> {
                 JFrame frame = new JFrame("UI - Fast&Ugly");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 frame.setSize(frameWidth, frameHeight);
-                frame.setContentPane(panel);
+                frame.add(panel.getComponent());
                 frame.setVisible(true);
             }
         });
 
         // for this OSM a smaller skipLeft is hopeless => the maximul fill would be more than 5000
-        for (int i = 14; i < 48; i++) {
-            // System.out.println("\n\n" + new Date() + "#### skipLeft:" + i);
-            for (int j = 1; j < 48; j++) {
-                final int epb = j;
-                SpatialKeyTree qt = new SpatialKeyTree(i) {
-
-                    @Override protected int getEntriesPerBucket() {
-                        return epb;
-                    }
-                }.init(locs);
+        for (int i = 14; i < 20; i++) {
+            for (int entriesPerBuck = 3; entriesPerBuck < 20; entriesPerBuck += 8) {
+                SpatialKeyTree qt = new SpatialKeyTree(i, entriesPerBuck).init(locs);
+                int epb = qt.getEntriesPerBucket();
+                System.out.println("\n\n" + new Date() + "#### skipLeft:" + i + " entries/buck:" + epb);
                 PerfTest.fillQuadTree(qt, g);
-                XYData data = qt.getXY(500);
+                XYVectorInterface data = qt.getXY(500);
+                data.setTitle("skipLeft:" + i + " e/b:" + epb);
                 panel.addData(data);
-                data.setName("skipLeft:" + i + " e/b:" + j);
 
                 // panel.automaticOneScale(data);
 
-//                String str = qt.toDetailString();
-//                if (!str.isEmpty()) {
-//                    System.out.print("\nentriesPerBucket:" + j + "      ");
-//                    System.out.println(str);
-//                }
+                String str = qt.toDetailString();
+                if (!str.isEmpty()) {
+                    System.out.print("\nentriesPerBucket:" + epb + "      ");
+                    System.out.println(str);
+                }
             }
         }
-
     }
     private static final int BITS8 = 8;
     private ByteBuffer bucketBytes;
@@ -110,14 +102,20 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     private int size;
     private int maxBuckets;
     private SpatialKeyAlgo algo;
-    private int[] usedEntries;
+    private IntBuffer usedEntries;
     private int spatialKeyBits;
 
     public SpatialKeyTree() {
+        this(8, 3);
     }
 
     public SpatialKeyTree(int skipKeyBeginningBits) {
+        this(skipKeyBeginningBits, 3);
+    }
+
+    public SpatialKeyTree(int skipKeyBeginningBits, int initialEntriesPerBucket) {
         this.skipKeyBeginningBits = skipKeyBeginningBits;
+        this.entriesPerBucket = initialEntriesPerBucket;
     }
 
     // GOALS:
@@ -136,7 +134,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         initKey();
         initBucketSizes(maxEntries);
         initBuffers();
-        usedEntries = new int[maxBuckets];
+        usedEntries = ByteBuffer.allocateDirect(maxBuckets * 4).asIntBuffer();
         return this;
     }
 
@@ -166,12 +164,14 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         // 2^(3 * 8) = 16mio bytes to overflow
         int bytesForOverflowLink = getBytesForOverflowLink();
         int bytesPerValue = getBytesPerValue();
-        entriesPerBucket = getEntriesPerBucket();
         maxBuckets = correctDivide(maxEntries, entriesPerBucket);
 
         // Always use lower bits to guarantee that all indices are smaller than maxBuckets
         int bucketIndexBits = (int) (Math.log(maxBuckets) / Math.log(2));
 
+        // now adjust maxBuckets and entriesPerBucket to avoid memory waste and fit a power of 2
+        maxBuckets = (int) Math.pow(2, bucketIndexBits);
+        entriesPerBucket = correctDivide(maxEntries, maxBuckets);
         // Bytes which are not encoded as bucket index needs to be stored => 'rest' bytes
         bytesPerRest = correctDivide(spatialKeyBits - bucketIndexBits, BITS8);
         bytesPerEntry = bytesPerRest + bytesPerValue;
@@ -202,7 +202,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     }
 
     protected int getEntriesPerBucket() {
-        return 3;
+        return entriesPerBucket;
     }
 
     public int getMaxBuckets() {
@@ -217,9 +217,13 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         // 2^20 * 3 .. 12 =     ~3-12 mio
         // 2^24 * 3 .. 12 =   ~50-200 mio                
         // 2^28 * 3 ..  6 = ~800-1600 mio -> not possible to address this in a bytebuffer (int index!)
+        // System.out.println(BitUtil.toBitString(spatialKey, 64));
         spatialKey <<= skipKeyBeginningBits;
+        // System.out.println(BitUtil.toBitString(spatialKey, 64));
         spatialKey >>>= skipKeyBeginningBits;
+        // System.out.println(BitUtil.toBitString(spatialKey, 64));
         spatialKey >>>= skipKeyEndBits;
+        // System.out.println(BitUtil.toBitString(spatialKey, 64));
         if (spatialKey >= maxBuckets)
             throw new IllegalStateException("Index devived from spatial key is to high!? " + spatialKey
                     + " vs. " + maxBuckets + " skipBeginning:" + skipKeyBeginningBits
@@ -242,7 +246,8 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     public void add(double lat, double lon, Integer value) {
         long key = algo.encode(lat, lon);
         int bucketIndex = getBucketIndex(key);
-        usedEntries[bucketIndex]++;
+        int res = usedEntries.get(bucketIndex);
+        usedEntries.put(bucketIndex, res + 1);
         size++;
     }
 
@@ -274,18 +279,13 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         initBuffers();
     }
 
-    public XYData getXY(int max) {
-
-        TIntIntHashMap stats = getStats(max);
+    public XYVectorInterface getXY(int max) {
         MainPool pool = MainPool.getDefault();
-        VectorInterface x = pool.create(DoubleVectorInterface.class);
-        VectorInterface y = pool.create(DoubleVectorInterface.class);
-        XYData data = new XYData(x, y);
-        for (int i = 0; i < max; i++) {
-            x.add(i);
-            y.add(stats.get(i));
+        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, DoubleVectorInterface.class);
+        for (int i = 0; i < maxBuckets; i++) {
+            xy.add(i, usedEntries.get(i));
         }
-        return data;
+        return xy;
     }
 
     public TIntIntHashMap getStats(int max) {
@@ -294,7 +294,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
             stats.put(i, 0);
         }
         for (int i = 0; i < maxBuckets; i++) {
-            stats.increment(usedEntries[i]);
+            stats.increment(usedEntries.get(i));
         }
         return stats;
     }
@@ -307,11 +307,11 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < max; i++) {
             int v = stats.get(i);
-            if (v > maxFill)
+            if (i > 0 && v > maxFill)
                 maxFill = v;
             sb.append(v).append("\t");
         }
-        if (maxFill > 5000)
+        if (maxFill > 200)
             return "";
 
         return sb.toString() + " maxFill:" + maxFill;
@@ -326,7 +326,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     public long getEmptyEntries(boolean onlyBranches) {
         int counter = 0;
         for (int i = 0; i < maxBuckets; i++) {
-            if (usedEntries[i] == 0)
+            if (usedEntries.get(i) == 0)
                 counter++;
         }
         return counter;
