@@ -1,7 +1,7 @@
 package de.jetsli.quadtreecomparison;
 
 import de.jetsli.graph.geohash.SpatialKeyTree;
-import de.jetsli.graph.reader.MiniTest;
+import de.jetsli.graph.reader.MiniPerfTest;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.storage.Graph;
 import java.io.FileInputStream;
@@ -78,7 +78,7 @@ public class App {
         // + " empty all entries:" + emptyAllEntries + " empty entries:" + emptyEntries
         for (int i = 10; i < 50; i *= 2) {
             final double dist = i;
-            new MiniTest("query " + dist + "km " + qtClass.getSimpleName()) {
+            new MiniPerfTest("query " + dist + "km " + qtClass.getSimpleName()) {
 
                 @Override public long doCalc(int run) {
                     float lat = (random.nextInt(latMax - latMin) + latMin) / 10000.0f;

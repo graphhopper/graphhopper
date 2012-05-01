@@ -17,6 +17,7 @@ package de.jetsli.graph.geohash;
 
 import de.genvlin.core.data.*;
 import de.genvlin.gui.plot.GPlotPanel;
+import de.jetsli.graph.reader.MiniPerfTest;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
@@ -37,8 +38,8 @@ import javax.swing.SwingUtilities;
  * ids, geo IPs, references or similar.
  *
  * It is similar to SpatialKeyHashtable but should be more robust and more applicable to real world
- * due to the QuadTree interface. Although SpatialKeyHashtable is exactly the same idea no neighbor
- * search was implemented there.
+ * due to the QuadTree interface. Although SpatialKeyHashtable is exactly the same idea - except
+ * that no neighbor search was implemented there.
  *
  * Another feature of this implementation is to move the "bucket-index-window" to the front of the
  * spatial key (ie. skipKeyEndBits is maximal). Then it'll behave like a normal quadtree but will
@@ -51,9 +52,25 @@ import javax.swing.SwingUtilities;
 public class SpatialKeyTree implements QuadTree<Integer> {
 
     public static void main(String[] args) throws Exception {
-        Graph g = OSMReaderTrials.defaultRead(args[0], "/tmp/mmap-graph");
-        int locs = g.getLocations();
+        final Graph g = OSMReaderTrials.defaultRead(args[0], "/tmp/mmap-graph");
+        final int locs = g.getLocations();
         System.out.println("graph contains " + locs + " nodes");
+
+        // make sure getBucketIndex is okayish fast
+//        new MiniPerfTest("test") {
+//
+//            @Override
+//            public long doCalc(int run) {
+//                try {
+//                    SpatialKeyTree qt = new SpatialKeyTree(10, 4).init(locs);
+//                    PerfTest.fillQuadTree(qt, g);
+//                    return qt.size();
+//                } catch (Exception ex) {
+//                    ex.printStackTrace();
+//                    return -1;
+//                }
+//            }
+//        }.setMax(50).start();
 
         final GPlotPanel panel = new GPlotPanel();
         // PluginPool.getDefault().add(new ComponentPlatform(panel));
@@ -71,28 +88,45 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         });
 
         // for this OSM a smaller skipLeft is hopeless => the maximul fill would be more than 5000
-        for (int i = 14; i < 20; i++) {
-            for (int entriesPerBuck = 3; entriesPerBuck < 20; entriesPerBuck += 8) {
-                SpatialKeyTree qt = new SpatialKeyTree(i, entriesPerBuck).init(locs);
-                int epb = qt.getEntriesPerBucket();
-                System.out.println("\n\n" + new Date() + "#### skipLeft:" + i + " entries/buck:" + epb);
-                PerfTest.fillQuadTree(qt, g);
-                XYVectorInterface data = qt.getXY();
-                data.setTitle("skipLeft:" + i + " e/b:" + epb);
-                panel.addData(data);
-                // panel.automaticOneScale(data);
+        MainPool pool = MainPool.getDefault();
+        XYVectorInterface rms = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
+        rms.setTitle("RMS");
+        XYVectorInterface max = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
+        max.setTitle("MAX");
+        panel.addData(rms);
+        panel.addData(max);
 
-                String str = qt.toDetailString();
-                if (!str.isEmpty()) {
-                    System.out.print("\nentriesPerBucket:" + epb + "      ");
-                    System.out.println(str);
-                }
+        try {
+            for (int skipLeft = 0; skipLeft < 40; skipLeft += 2) {
+                int entriesPerBuck = 3;
+//            for (; entriesPerBuck < 20; entriesPerBuck += 8) {
+                SpatialKeyTree qt = new SpatialKeyTree(skipLeft, entriesPerBuck).init(locs);
+                int epb = qt.getEntriesPerBucket();
+                String title = "skipLeft:" + skipLeft + " entries/buck:" + epb;
+                PerfTest.fillQuadTree(qt, g);
+                XYVectorInterface data = qt.getHist(title);
+                HistogrammInterface hist = (HistogrammInterface) data.getY();
+                // mean value is irrelevant as it is always the same
+                max.add(skipLeft, hist.getMax());
+                rms.add(skipLeft, hist.getRMSError());
+                System.out.println("\n\n" + new Date() + "#### " + title + " max:" + hist.getMax() + " rms:" + hist.getRMSError());
+                panel.repaint();
+
+                // panel.automaticOneScale(data);
+//                String str = qt.toDetailString();
+//                if (!str.isEmpty()) {
+//                    System.out.print("\nentriesPerBucket:" + epb + "      ");
+//                    System.out.println(str);
+//                }
+//            }
             }
+        } catch (Exception ex) {
+            // do not crash the UI if 'overflow'
+            ex.printStackTrace();
         }
     }
     private static final int BITS8 = 8;
     private ByteBuffer bucketBytes;
-    private ByteBuffer overflowBytes;
     private int bytesPerBucket;
     private int bytesPerEntry;
     private int entriesPerBucket;
@@ -103,6 +137,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     private SpatialKeyAlgo algo;
     private IntBuffer usedEntries;
     private int spatialKeyBits;
+    private int bucketIndexBits;
 
     public SpatialKeyTree() {
         this(8, 3);
@@ -128,6 +163,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     // * possibility to increase size => multiple mmap files or efficient copy + close + reinit?
     // * no "is-it-really-empty?" problem => bitset for used entries
     // * no integer limit (~500mio) due to the use of ByteBuffer.get(*int*) => use multiple bytebuffers!
+    // * no explicit overflow area -> use the same buckets and store in one byte the number of overflowing entries
     @Override
     public SpatialKeyTree init(int maxEntries) throws Exception {
         initKey();
@@ -140,7 +176,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     protected void initKey() {
         // TODO calculate necessary spatial key precision (=>unusedBits) and maxBuckets from maxEntries
         //
-        // one unused byte in spatial key => but still higher precision than float
+        // one unused byte in spatial key (making things a bit faster) => but still higher precision than float
         int unusedBits = BITS8;
         spatialKeyBits = 8 * BITS8 - unusedBits;
         algo = new SpatialKeyAlgo(spatialKeyBits);
@@ -166,7 +202,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         maxBuckets = correctDivide(maxEntries, entriesPerBucket);
 
         // Always use lower bits to guarantee that all indices are smaller than maxBuckets
-        int bucketIndexBits = (int) (Math.log(maxBuckets) / Math.log(2));
+        bucketIndexBits = (int) (Math.log(maxBuckets) / Math.log(2));
 
         // now adjust maxBuckets and entriesPerBucket to avoid memory waste and fit a power of 2
         maxBuckets = (int) Math.pow(2, bucketIndexBits);
@@ -189,7 +225,10 @@ public class SpatialKeyTree implements QuadTree<Integer> {
             throw new IllegalStateException("Too many elements. TODO: use multiple buffers to workaround 4GB limitation");
 
         bucketBytes = ByteBuffer.allocateDirect(capacity);
-        overflowBytes = ByteBuffer.allocateDirect(capacity / 20);
+    }
+
+    public SpatialKeyAlgo getAlgo() {
+        return algo;
     }
 
     protected int getBytesForOverflowLink() {
@@ -215,16 +254,31 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         // 2^16 * 6       =      ~400 k
         // 2^20 * 3 .. 12 =     ~3-12 mio
         // 2^24 * 3 .. 12 =   ~50-200 mio                
-        // 2^28 * 3 ..  6 = ~800-1600 mio -> not possible to address this in a bytebuffer (int index!)
-        // System.out.println(BitUtil.toBitString(spatialKey, 64));
+        // 2^28 * 3 ..  6 = ~800-1600 mio -> not possible to address this in a bytebuffer (int index!)        
+        
+        // | unusedBits | skipBeginning | bucketIndexBits | veryRightSide | skipEnd |
+        // result is bucketIndexBits ^= veryRightSide
+        
+        long veryRightSide = spatialKey;
+        veryRightSide <<= bucketIndexBits + skipKeyBeginningBits;
+        veryRightSide >>>= 8 * BITS8 - bucketIndexBits;
+
         spatialKey <<= skipKeyBeginningBits;
         // System.out.println(BitUtil.toBitString(spatialKey, 64));
         spatialKey >>>= skipKeyBeginningBits;
         // System.out.println(BitUtil.toBitString(spatialKey, 64));
         spatialKey >>>= skipKeyEndBits;
+        spatialKey ^= veryRightSide;
+
+        // maxBuckets is a power of two so x-1 is very likely 'some kind' of prime number :)
+        // spatialKey %= maxBuckets - 1;
+
+        // bit operations are ~20% faster but there is only this equivalence: x % 2^n == x & (2^n - 1) 
+        // which is not sufficient for a good distribution. We would need: x % (2^n-1)= ..
+
         // System.out.println(BitUtil.toBitString(spatialKey, 64));
-        if (spatialKey >= maxBuckets)
-            throw new IllegalStateException("Index devived from spatial key is to high!? " + spatialKey
+        if (spatialKey >= maxBuckets || spatialKey < 0)
+            throw new IllegalStateException("Index devived from spatial key is to high or negative!? " + spatialKey
                     + " vs. " + maxBuckets + " skipBeginning:" + skipKeyBeginningBits
                     + " skipEnd:" + skipKeyEndBits + " log(index):" + Math.log(spatialKey) / Math.log(2));
 
@@ -278,12 +332,19 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         initBuffers();
     }
 
-    public XYVectorInterface getXY() {
+    public XYVectorInterface getHist(String title) {
         MainPool pool = MainPool.getDefault();
-        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, DoubleVectorInterface.class);
+
+        // 1. simplist possibility
+        // XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, DoubleVectorInterface.class);
+        // 2. possibility with histogramm
+        // HistogrammInterface hist = pool.createVector(HistogrammInterface.class); VectorInterface x = pool.createVector(DoubleVectorInterface.class);
+        // 3.
+        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         for (int i = 0; i < maxBuckets; i++) {
             xy.add(i, usedEntries.get(i));
         }
+        xy.setTitle(title);
         return xy;
     }
 
@@ -303,17 +364,20 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         int max = 100;
         TIntIntHashMap stats = getStats(max);
         int maxFill = -1;
+        int whichI = -1;
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < max; i++) {
             int v = stats.get(i);
-            if (i > 0 && v > maxFill)
+            if (v > 0) {
                 maxFill = v;
+                whichI = i;
+            }
             sb.append(v).append("\t");
         }
         if (maxFill > 200)
             return "";
 
-        return sb.toString() + " maxFill:" + maxFill;
+        return sb.toString() + " maxFill:" + maxFill + "[" + whichI + "]";
     }
 
     @Override

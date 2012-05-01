@@ -17,19 +17,6 @@ package de.jetsli.graph.geohash;
 
 import de.jetsli.graph.util.CoordTrig;
 
-// A 2 bit precision spatial key could look like
-// 
-//  |----|----|----|----|
-//  |1010|1011|1110|1111|
-//  |----|----|----|----|  lat0 == 1
-//  |1000|1001|1100|1101|
-// -|----|----|----|----|------
-//  |0010|0011|0110|0111|
-//  |----|----|----|----|  lat0 == 0
-//  |0000|0001|0100|0101|
-//  |----|----|----|----|
-//            |
-//  lon0 == 0 | lon0 == 1
 /**
  * This class implements the idea of a geohash but in 'binary form' - to avoid confusion this is
  * called 'spatial key'. The idea of mixing the latitude and longitude is also taken to allow
@@ -63,6 +50,20 @@ import de.jetsli.graph.util.CoordTrig;
  *
  * @author Peter Karich, info@jetsli.de
  */
+
+// A 2 bit precision spatial key could look like
+// 
+//  |----|----|----|----|
+//  |1010|1011|1110|1111|
+//  |----|----|----|----|  lat0 == 1
+//  |1000|1001|1100|1101|
+// -|----|----|----|----|------
+//  |0010|0011|0110|0111|
+//  |----|----|----|----|  lat0 == 0
+//  |0000|0001|0100|0101|
+//  |----|----|----|----|
+//            |
+//  lon0 == 0 | lon0 == 1
 public class SpatialKeyAlgo {
 
     // private int factorForPrecision;
@@ -76,7 +77,6 @@ public class SpatialKeyAlgo {
     private double maxLatI;
     private int iterations;
     private long initialBits;
-    public long bits[];
 
     public SpatialKeyAlgo(int allBits) {
         myinit(allBits);
@@ -94,11 +94,6 @@ public class SpatialKeyAlgo {
 
         iterations = allBits / 2;
         initialBits = 1L << (allBits - 1);
-        bits = new long[allBits];
-        bits[0] = initialBits;
-        for (int i = 1; i < allBits; i++) {
-            bits[i] = bits[i - 1] >>> 1;
-        }
         setInitialBounds();
     }
 
@@ -173,7 +168,7 @@ public class SpatialKeyAlgo {
      */
     public final void decode(long spatialKey, CoordTrig latLon) {
         // Performance: calculating 'midLon' and 'midLat' on the fly is not slower than using 
-        // precalculated values from arrays and for 'bits' a precalculated array is even a bit slower!
+        // precalculated values from arrays and for 'bits' a precalculated array is even slightly slower!
 
         // Use the value in the middle => start from "min" use "max" as initial step-size
         double midLat = maxLatI;

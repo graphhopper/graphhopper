@@ -91,7 +91,7 @@ public class PerfTest {
                 System.out.println(new Date() + "# entries/leaf:" + entriesPerLeaf + ", bits:" + bits + ", mem:" + mem);
                 final int epl = entriesPerLeaf;
                 final int b = bits;
-                new MiniTest("fill") {
+                new MiniPerfTest("fill") {
 
                     @Override public long doCalc(int run) {
                         QuadTree<Integer> quadTree = new QuadTreeSimple<Integer>(epl, b);
@@ -115,7 +115,7 @@ public class PerfTest {
                     long emptyEntries = quadTree.getEmptyEntries(true);
                     long emptyAllEntries = quadTree.getEmptyEntries(false);
                     final int tmp = distance;
-                    new MiniTest("neighbour search e/leaf:" + entriesPerLeaf + ", bits:" + bits
+                    new MiniPerfTest("neighbour search e/leaf:" + entriesPerLeaf + ", bits:" + bits
                             + ", dist:" + distance + ", mem:" + mem + ", empty entries:" + emptyEntries
                             + ", empty all entries:" + emptyAllEntries) {
 

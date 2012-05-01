@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.geohash;
 
+import java.util.Random;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -35,19 +36,20 @@ public class SpatialKeyTreeTest {
 //    }
 
     @Test
-    public void testMaxBuckets() throws Exception {
-        for (int i = 0; i < 24; i += 3) {
-            int maxBuckets = createSKTWithoutBuffer(i).init(2000000).getMaxBuckets();
-            assertTrue(i + " " + maxBuckets, maxBuckets > 600000);
-            assertTrue(i + " " + maxBuckets, maxBuckets < 700000);
-
-            maxBuckets = createSKTWithoutBuffer(i).init(10000000).getMaxBuckets();
-            assertTrue(i + " " + maxBuckets, maxBuckets > 3000000);
-            assertTrue(i + " " + maxBuckets, maxBuckets < 4000000);
-
-            maxBuckets = createSKTWithoutBuffer(i).init(100000000).getMaxBuckets();
-            assertTrue(i + " " + maxBuckets, maxBuckets > 30000000);
-            assertTrue(i + " " + maxBuckets, maxBuckets < 40000000);
+    public void testBucketIndex() throws Exception {
+        for (int i = 9; i < 20; i += 3) {
+            SpatialKeyTree tree = createSKTWithoutBuffer(i);
+            SpatialKeyAlgo algo = tree.getAlgo();
+            Random rand = new Random();
+            for (int j = 0; j < 10000; j++) {
+                double lat = rand.nextDouble() * 5;
+                double lon = rand.nextDouble() * 5;
+                try {
+                    tree.getBucketIndex(algo.encode(lat, lon));
+                } catch (Exception ex) {
+                    assertFalse("Problem while " + lat + "," + lon + " " + ex.getMessage(), false);
+                }
+            }
         }
     }
 

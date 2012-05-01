@@ -23,23 +23,23 @@ import java.util.Random;
 /**
  * @author Peter Karich
  */
-public class MiniTest {
+public class MiniPerfTest {
 
     protected int max = 20;
     protected String name = "";
     protected boolean showProgress = true;
     protected Random random = new Random(0);
 
-    public MiniTest(String name) {
+    public MiniPerfTest(String name) {
         this.name = name;
     }
 
-    public MiniTest setShowProgress(boolean showProgress) {
+    public MiniPerfTest setShowProgress(boolean showProgress) {
         this.showProgress = showProgress;
         return this;
     }
 
-    public MiniTest setSeed(long seed) {
+    public MiniPerfTest setSeed(long seed) {
         random.setSeed(seed);
         return this;
     }
@@ -47,7 +47,7 @@ public class MiniTest {
     /**
      * set the iterations
      */
-    public MiniTest setMax(int max) {
+    public MiniPerfTest setMax(int max) {
         this.max = max;
         return this;
     }
@@ -69,7 +69,7 @@ public class MiniTest {
         int part = (int) (maxNo / partition);
         for (int i = 0; i < maxNo; i++) {
             if (showProgress && i % part == 0)
-                System.out.println(new Date() + "# progress " + i * 100 / maxNo
+                System.out.println(new Date() + "# progress " + i * 100L / maxNo
                         + "% => secs/iter:" + (sw.stop().start().getSeconds() / i));
             res += doCalc(i);
         }
