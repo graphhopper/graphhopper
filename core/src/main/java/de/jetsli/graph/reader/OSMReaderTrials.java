@@ -158,6 +158,11 @@ public class OSMReaderTrials implements OSMReader {
      * @return the number of already existing nodes
      */
     public boolean init(boolean forceCreateNew) {
+        String pre = "";
+        if(forceCreateNew)
+            pre = "CREATE NEW - ";
+        else
+            pre = "USE EXISTING - ";
         logger.info("starting with " + Helper.getBeanMemInfo());
         try {
 //            storage = new LuceneStorage().init();

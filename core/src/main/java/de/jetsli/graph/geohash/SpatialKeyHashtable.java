@@ -37,7 +37,7 @@ import java.nio.ByteBuffer;
  * Warning 2: still highly alpha software and not thread safe! use thread local because
  * mmapped/bytebuffer is also not thread safe. And eliminate temporary variables
  *
- * Idea 1: The first bit of an entry marks if it is compresses. If it is 0 then simply read the raw
+ * Idea 1: The first bit of an entry marks if it is compressed. If it is 0 then simply read the raw
  * bytes. If not then the next 3 bits (customizable) represent how many bits the binary geohashes
  * have in common.
  *

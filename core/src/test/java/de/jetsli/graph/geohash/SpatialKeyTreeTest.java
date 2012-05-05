@@ -36,6 +36,14 @@ public class SpatialKeyTreeTest {
 //    }
 
     @Test
+    public void testSize() throws Exception {
+        SpatialKeyTree key = new SpatialKeyTree(0, 7).init(20);
+        assertTrue(key.getEntriesPerBucket() + "", key.getEntriesPerBucket() >= 7);
+        assertTrue(key.getMaxBuckets() + " " + key.getEntriesPerBucket(),
+                key.getMaxBuckets() * key.getEntriesPerBucket() >= 20);
+    }
+
+    @Test
     public void testBucketIndex() throws Exception {
         for (int i = 9; i < 20; i += 3) {
             SpatialKeyTree tree = createSKTWithoutBuffer(i);
@@ -52,6 +60,75 @@ public class SpatialKeyTreeTest {
             }
         }
     }
+
+    @Test
+    public void testAddAndGetWithOverflow() {
+        SpatialKeyTree tree = createTree(10, false);
+        int max = tree.getEntriesPerBucket() * 2;
+        long[] vals = new long[max];
+
+        Random rand = new Random(0);
+        for (int i = 0; i < max; i++) {
+            vals[i] = rand.nextLong() / 123000;
+        }
+        for (int i = 0; i < max; i++) {
+            try {
+                tree.add(vals[i], i);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                assertFalse("Problem with " + i + " " + vals[i] + " " + ex.getMessage(), true);
+            }
+        }
+
+        for (int i = 0; i < max; i++) {
+            assertEquals(1, tree.getNodes(vals[i]).size());
+            assertEquals(i, tree.getNodes(vals[i]).get(0));
+        }
+    }
+
+    @Test
+    public void testWriteAndGetKey() {
+        SpatialKeyTree tree = createTree(0, false);
+        tree.putKey(0, 123);
+        assertEquals(123, tree.getKey(0));
+
+        tree.putKey(0, -1);
+        assertEquals(-1, tree.getKey(0));
+
+        tree.putKey(30, 123);
+        assertEquals(123, tree.getKey(30));
+
+        tree.writeNoOfEntries(0, 3, false);
+        assertFalse(tree.isOverflowed(0));        
+        tree.writeNoOfEntries(0, 3, true);
+        assertTrue(tree.isOverflowed(0));
+    }
+
+    @Test
+    public void testKeyDuplicates() {
+        // 0 => force that it is a bad hash creation algo
+        // false => do not compress key
+        SpatialKeyTree tree = createTree(0, false);
+        int max = tree.getEntriesPerBucket() * 2;
+        for (int i = 0; i < max; i++) {
+            tree.add(0, i);
+            tree.add(1, i);
+            tree.add(2, i);
+        }
+
+        assertEquals(max, tree.getNodes(0).size());
+        assertEquals(max, tree.getNodes(1).size());
+        assertEquals(max, tree.getNodes(2).size());
+    }
+
+    SpatialKeyTree createTree(final int skipLeft, boolean compress) {
+        try {
+            return new SpatialKeyTree(skipLeft, 1).setCompressKey(compress).init(120);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    // faster - but not functional
 
     SpatialKeyTree createSKTWithoutBuffer(int i) {
         return new SpatialKeyTree(i) {

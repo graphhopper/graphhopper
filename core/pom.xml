@@ -152,6 +152,7 @@
             <layout>default</layout>
         </repository> -->
         
+        <!-- for de.genvlin -->
         <repository>            
             <id>karussell_snapshot</id>
             <name>karussell snapshots</name>

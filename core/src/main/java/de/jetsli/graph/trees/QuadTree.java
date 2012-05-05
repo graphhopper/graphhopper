@@ -18,7 +18,6 @@ package de.jetsli.graph.trees;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.shapes.Shape;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * A quad tree interface - think Map<latitude+longitude, V> with the possibility to get neighbouring
@@ -28,9 +27,9 @@ import java.util.List;
  */
 public interface QuadTree<V> {
 
-    QuadTree init(int maxItemsHint) throws Exception;
+    QuadTree init(long maxItemsHint) throws Exception;
     
-    int size();
+    long size();
 
     boolean isEmpty();    
 

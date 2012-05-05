@@ -17,19 +17,18 @@ package de.jetsli.graph.geohash;
 
 import de.genvlin.core.data.*;
 import de.genvlin.gui.plot.GPlotPanel;
-import de.jetsli.graph.reader.MiniPerfTest;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.shapes.Shape;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
@@ -73,7 +72,6 @@ public class SpatialKeyTree implements QuadTree<Integer> {
 //        }.setMax(50).start();
 
         final GPlotPanel panel = new GPlotPanel();
-        // PluginPool.getDefault().add(new ComponentPlatform(panel));
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override public void run() {
@@ -87,7 +85,6 @@ public class SpatialKeyTree implements QuadTree<Integer> {
             }
         });
 
-        // for this OSM a smaller skipLeft is hopeless => the maximul fill would be more than 5000
         MainPool pool = MainPool.getDefault();
         XYVectorInterface rms = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         rms.setTitle("RMS");
@@ -96,46 +93,57 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         panel.addData(rms);
         panel.addData(max);
 
-        try {
-            for (int skipLeft = 0; skipLeft < 40; skipLeft += 2) {
-                int entriesPerBuck = 3;
-//            for (; entriesPerBuck < 20; entriesPerBuck += 8) {
-                SpatialKeyTree qt = new SpatialKeyTree(skipLeft, entriesPerBuck).init(locs);
-                int epb = qt.getEntriesPerBucket();
-                String title = "skipLeft:" + skipLeft + " entries/buck:" + epb;
-                PerfTest.fillQuadTree(qt, g);
-                XYVectorInterface data = qt.getHist(title);
-                HistogrammInterface hist = (HistogrammInterface) data.getY();
-                // mean value is irrelevant as it is always the same
-                max.add(skipLeft, hist.getMax());
-                rms.add(skipLeft, hist.getRMSError());
-                System.out.println("\n\n" + new Date() + "#### " + title + " max:" + hist.getMax() + " rms:" + hist.getRMSError());
-                panel.repaint();
-
-                // panel.automaticOneScale(data);
-//                String str = qt.toDetailString();
-//                if (!str.isEmpty()) {
-//                    System.out.print("\nentriesPerBucket:" + epb + "      ");
-//                    System.out.println(str);
-//                }
-//            }
-            }
-        } catch (Exception ex) {
-            // do not crash the UI if 'overflow'
-            ex.printStackTrace();
+        {
+            SpatialKeyTree qt = new SpatialKeyTree(10, 3).init(locs);
+            PerfTest.fillQuadTree(qt, g);
+            XYVectorInterface data = qt.getHist("10 - 3");
+            panel.addData(data);
         }
+
+//        try {
+//            for (int skipLeft = 0; skipLeft < 40; skipLeft += 2) {
+//                int entriesPerBuck = 3;
+////                for (; entriesPerBuck < 20; entriesPerBuck += 8) {
+//                SpatialKeyTree qt = new SpatialKeyTree(skipLeft, entriesPerBuck).init(locs);
+//                int epb = qt.getEntriesPerBucket();
+//                String title = "skipLeft:" + skipLeft + " entries/buck:" + epb;
+//                PerfTest.fillQuadTree(qt, g);
+//                XYVectorInterface data = qt.getHist(title);
+//                HistogrammInterface hist = (HistogrammInterface) data.getY();
+//                // mean value is irrelevant as it is always the same
+//                max.add(skipLeft, hist.getMax());
+//                rms.add(skipLeft, hist.getRMSError());
+//                System.out.println("\n\n" + new Date() + "#### " + title + " max:" + hist.getMax() + " rms:" + hist.getRMSError());
+//                panel.repaint();
+//
+//                // panel.automaticOneScale(data);
+////                String str = qt.toDetailString();
+////                if (!str.isEmpty()) {
+////                    System.out.print("\nentriesPerBucket:" + epb + "      ");
+////                    System.out.println(str);
+////                }
+////                }
+//            }
+//        } catch (Exception ex) {
+//            // do not crash the UI if 'overflow'
+//            ex.printStackTrace();
+//        }
     }
-    private static final int BITS8 = 8;
-    private ByteBuffer bucketBytes;
-    private int bytesPerBucket;
-    private int bytesPerEntry;
-    private int entriesPerBucket;
-    private int skipKeyBeginningBits, skipKeyEndBits;
-    private int bytesPerRest;
     private int size;
     private int maxBuckets;
     private SpatialKeyAlgo algo;
+    private boolean compressKey = true;
     private IntBuffer usedEntries;
+    // bits & byte stuff
+    private static final int BITS8 = 8;
+    private ByteBuffer storage;
+    private int bytesPerBucket;
+    private int bytesPerEntry;
+    private int bytesPerOverflowEntry;
+    private int maxEntriesPerBucket;
+    // key compression
+    private int skipKeyBeginningBits, skipKeyEndBits;
+    private int bytesPerKeyRest;
     private int spatialKeyBits;
     private int bucketIndexBits;
 
@@ -149,27 +157,44 @@ public class SpatialKeyTree implements QuadTree<Integer> {
 
     public SpatialKeyTree(int skipKeyBeginningBits, int initialEntriesPerBucket) {
         this.skipKeyBeginningBits = skipKeyBeginningBits;
-        this.entriesPerBucket = initialEntriesPerBucket;
+        this.maxEntriesPerBucket = initialEntriesPerBucket;
     }
 
-    // GOALS:
-    // * memory efficient: 8bytes per entry, but this should apply for smaller collections too and:
+    // REQUIREMENTS:
+    // * memory efficient spatial storage, even for smaller collections of data
     // * relative simple implementation ("safe bytes not bits")
-    // * thread safe
-    // * moving bucket-index-window to configure between hashtable and quadtree
+    // * moving bucket-index-window to configure between hashtable and quadtree 
+    //   -> avoid configuration, auto-determine necessary window
     // * implement neighbor search
     // * allow duplicate keys => only a "List get(key, distance)" method
     // * implement removing via distance search => TODO change QuadTree interface
-    // * possibility to increase size => multiple mmap files or efficient copy + close + reinit?
-    // * no "is-it-really-empty?" problem => bitset for used entries
-    // * no integer limit (~500mio) due to the use of ByteBuffer.get(*int*) => use multiple bytebuffers!
-    // * no explicit overflow area -> use the same buckets and store in one byte the number of overflowing entries
+    // * possibility to increase size => efficient copy + close + reinit
+    //   see Netty's DynamicChannelBuffer.ensureWritableBytes(int minWritableBytes)
+    // * there should be no problem to identify if an entry is empty or not => length for used entries, 
+    //   offset byte for overflow entries which are > 0
+    // * no explicit overflow area -> use the same buckets and use one byte in an overflow entries 
+    //   to indentify the origin of it
+    //
+    // LATER GOALS:
+    // * thread safe
+    //   ByteBuffer is not thread safe, though we could a lock object per index or simply using Read+WriteLocks
+    // * no integer limit due to the use of ByteBuffer.get(*int*) => use multiple bytebuffers 
+    //  -> see FatBuffer.java or ByteBufferLongBigList.java from it.unimi.dsi dsiutils (grepcode)!
+    //   would be a lot slower due to i1=longIndex/len;i2=longIndex%len;
+    // * extract general purpose big-hashtable. ie. store less bytes for key (long/int)
+    //   we would need spatialKeyAlgo.encode(lat,lon,bytes,iterations), getBucketIndex(bytes), add(byte[] bytes, int value)
     @Override
-    public SpatialKeyTree init(int maxEntries) throws Exception {
+    public SpatialKeyTree init(long maxEntries) throws Exception {
         initKey();
-        initBucketSizes(maxEntries);
+        initBucketSizes((int) maxEntries);
         initBuffers();
+        // TODO remove stats stuff
         usedEntries = ByteBuffer.allocateDirect(maxBuckets * 4).asIntBuffer();
+        return this;
+    }
+
+    public SpatialKeyTree setCompressKey(boolean compressKey) {
+        this.compressKey = compressKey;
         return this;
     }
 
@@ -196,43 +221,46 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     }
 
     protected void initBucketSizes(int maxEntries) {
-        // 2^(3 * 8) = 16mio bytes to overflow
-        int bytesForOverflowLink = getBytesForOverflowLink();
         int bytesPerValue = getBytesPerValue();
-        maxBuckets = correctDivide(maxEntries, entriesPerBucket);
+        maxBuckets = correctDivide(maxEntries, maxEntriesPerBucket);
 
         // Always use lower bits to guarantee that all indices are smaller than maxBuckets
         bucketIndexBits = (int) (Math.log(maxBuckets) / Math.log(2));
 
-        // now adjust maxBuckets and entriesPerBucket to avoid memory waste and fit a power of 2
+        // now adjust maxBuckets and maxEntriesPerBucket to avoid memory waste and fit a power of 2
         maxBuckets = (int) Math.pow(2, bucketIndexBits);
-        entriesPerBucket = correctDivide(maxEntries, maxBuckets);
+        maxEntriesPerBucket = correctDivide(maxEntries, maxBuckets);
         // Bytes which are not encoded as bucket index needs to be stored => 'rest' bytes
-        bytesPerRest = correctDivide(spatialKeyBits - bucketIndexBits, BITS8);
-        bytesPerEntry = bytesPerRest + bytesPerValue;
-        bytesPerBucket = entriesPerBucket * bytesPerEntry + bytesForOverflowLink;
-        skipKeyEndBits = 8 * BITS8 - skipKeyBeginningBits - bucketIndexBits;
-        if (skipKeyEndBits < 0)
-            throw new IllegalStateException("Too many entries (" + maxEntries + "). Try to "
-                    + "reduce them, avoid a big skipBeginning (" + skipKeyBeginningBits
-                    + ") or increase spatialKeyBits (" + spatialKeyBits + ")");
+        if (compressKey) {
+            bytesPerKeyRest = correctDivide(spatialKeyBits - bucketIndexBits, BITS8);
+            skipKeyEndBits = 8 * BITS8 - skipKeyBeginningBits - bucketIndexBits;
+            if (skipKeyEndBits < 0)
+                throw new IllegalStateException("Too many entries (" + maxEntries + "). Try to "
+                        + "reduce them, avoid a big skipBeginning (" + skipKeyBeginningBits
+                        + ") or increase spatialKeyBits (" + spatialKeyBits + ")");
+        } else {
+            skipKeyEndBits = 0;
+            // complete key
+            bytesPerKeyRest = 8;
+        }
+
+        bytesPerEntry = bytesPerKeyRest + bytesPerValue;
+        bytesPerOverflowEntry = bytesPerEntry + 1;
+        // store used entries per bucket in one byte => maximum entries per bucket = 256
+        int bytesForLength = 1;
+        bytesPerBucket = maxEntriesPerBucket * bytesPerEntry + bytesForLength;
     }
 
     protected void initBuffers() {
-        // 500mio entries maximum due to the use of *int* in byteBuffer.get(int)
-        int capacity = maxBuckets * bytesPerBucket;
-        if (capacity < 0)
+        long capacity = maxBuckets * bytesPerBucket;
+        if (capacity > Integer.MAX_VALUE)
             throw new IllegalStateException("Too many elements. TODO: use multiple buffers to workaround 4GB limitation");
 
-        bucketBytes = ByteBuffer.allocateDirect(capacity);
+        storage = ByteBuffer.allocateDirect((int) capacity);
     }
 
     public SpatialKeyAlgo getAlgo() {
         return algo;
-    }
-
-    protected int getBytesForOverflowLink() {
-        return 3;
     }
 
     protected int getBytesPerValue() {
@@ -240,14 +268,17 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     }
 
     protected int getEntriesPerBucket() {
-        return entriesPerBucket;
+        return maxEntriesPerBucket;
     }
 
-    public int getMaxBuckets() {
+    public long getMaxBuckets() {
         return maxBuckets;
     }
 
     int getBucketIndex(long spatialKey) {
+        if (!compressKey)
+            return Math.abs((int) (spatialKey % (maxBuckets - 1)));
+
         // IMPORTANT: there is no need for bucket index to be a multiple of 8. Though memory savings 
         // will be maximized then, because then *all* bits encoded as bucket index are not stored as key
 
@@ -255,10 +286,10 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         // 2^20 * 3 .. 12 =     ~3-12 mio
         // 2^24 * 3 .. 12 =   ~50-200 mio                
         // 2^28 * 3 ..  6 = ~800-1600 mio -> not possible to address this in a bytebuffer (int index!)        
-        
+
         // | unusedBits | skipBeginning | bucketIndexBits | veryRightSide | skipEnd |
         // result is bucketIndexBits ^= veryRightSide
-        
+
         long veryRightSide = spatialKey;
         veryRightSide <<= bucketIndexBits + skipKeyBeginningBits;
         veryRightSide >>>= 8 * BITS8 - bucketIndexBits;
@@ -286,7 +317,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     }
 
     @Override
-    public int size() {
+    public long size() {
         return size;
     }
 
@@ -295,13 +326,261 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         return size == 0;
     }
 
+    //####################
+    // bucket byte layout: 1 byte + maxEntriesPerBucket * bytesPerEntry
+    //   | size | entry1 | entry2 | ... | empty space | ... | oe2 | overflow entry1 |
+    // overflow entry layout:
+    //   offset to original bucket (7 bits) | stop bit | overflow entry
+    // size byte layout
+    //   entries per bucket (without overflowed entries!) (7 bits) | overflowed bit - marks if the current bucket is already overflowed
+    //####################
+    //
+    public void add(long key, int value) {
+        int bucketPointer = getBucketIndex(key);
+        if (compressKey) {
+            // TODO compress: ie. skip parts of the key which are already stored via bucketIndex
+            key = key;
+        }
+        // convert bucketIndex to byte pointer
+        bucketPointer *= bytesPerBucket;
+
+        if (isOverflowed(bucketPointer)) {
+            bucketPointer = findExistingOverflow(bucketPointer, key);
+        } else {
+            int ovflPointer = bucketPointer + bytesPerBucket - bytesPerOverflowEntry;
+            int ovflBytes = countOverflowBytes(ovflPointer);
+            byte no = getNoOfEntries(bucketPointer);
+            // will the new entry fit into the current bucket or do we need to overflow?
+            if (ovflBytes + (no + 1) * bytesPerEntry < bytesPerBucket) {
+                // store current entries in this bucket
+                writeNoOfEntries(bucketPointer, no + 1, false);
+                // skip old entries and one byte for length info
+                bucketPointer += no * bytesPerEntry + 1;
+            } else {
+                // store overflowed bit but old size
+                writeNoOfEntries(bucketPointer, no, true);
+                // Use overflow area! Ie. empty space from right to left of one bucket
+                bucketPointer = findFreeOverflow(bucketPointer, 0);
+            }
+        }
+
+        putKey(bucketPointer, key);
+        putInt(bucketPointer + bytesPerKeyRest, value);
+        size++;
+        // TODO create stats of: entries per bucket & overflow entries per bucket
+    }
+
+    void writeNoOfEntries(int bucketPointer, int no, boolean overflow) {
+        no <<= 1;
+        if (overflow)
+            storage.put(bucketPointer, (byte) (no | 0x1));
+        else
+            storage.put(bucketPointer, (byte) no);
+    }
+
+    boolean isOverflowed(int bucketPointer) {
+        return (storage.get(bucketPointer) & 0x1) == 1;
+    }
+
+    byte getNoOfEntries(int bucketPointer) {
+        byte no = storage.get(bucketPointer);
+        // skip overflowed bit
+        no >>>= 1;
+        if (no > maxEntriesPerBucket)
+            throw new IllegalStateException("Entries shouldn't exceed maxEntriesPerBucket! Was "
+                    + no + " vs. " + maxEntriesPerBucket);
+        return no;
+    }
+
+    /**
+     * find last overflow entry with identical key and stopbit (1)
+     */
+    private int findExistingOverflow(int bucketPointer, long key) {
+        BucketOverflowLoop loop1 = new KeyCheckLoop(key);
+        bucketPointer = loop1.throughBuckets(bucketPointer);
+        // write offset and remove stopbit
+        storage.put(loop1.overflowPointer, (byte) ((loop1.lastOffset >>> 1) << 1));
+        return findFreeOverflow(bucketPointer, loop1.newOffset - 1);
+    }
+
+    /**
+     * find next free overflow entry
+     */
+    private int findFreeOverflow(int bucketPointer, int oldOffset) {
+        BucketOverflowLoop loop2 = new BucketOverflowLoop();
+        loop2.newOffset = oldOffset;
+        loop2.throughBuckets(bucketPointer);
+        // write offset and set stopbit
+        storage.put(loop2.overflowPointer, (byte) ((loop2.newOffset << 1) | 0x1));
+        // skip the overflow-offset byte
+        return loop2.overflowPointer + 1;
+    }
+
+    /**
+     * @param overflowPointer points not to the beginning of the bucket but to the first possible
+     * overflow entry (which are filled from right to left)
+     * @return count the number of used overflow bytes
+     */
+    int countOverflowBytes(int overflowPointer) {
+        byte offsetAndStopBit = storage.get(overflowPointer);
+        // check if at least on overflow entry exists
+        if (offsetAndStopBit == 0)
+            return 0;
+
+        int count = 1;
+        while ((offsetAndStopBit & 1) == 0) {
+            offsetAndStopBit = storage.get(overflowPointer);
+            count++;
+            overflowPointer -= bytesPerOverflowEntry;
+        }
+        return count;
+    }
+
+    final long getKey(int index) {
+        int key = 0;
+        int max = index + bytesPerKeyRest;
+        while (true) {
+            key |= storage.get(index);
+            index++;
+            if (index >= max)
+                break;
+            key <<= BITS8;
+        }
+        return key;
+    }
+
+    final void putKey(int index, long val) {
+        int start = index + bytesPerKeyRest - 1;
+        while (true) {
+            storage.put(start, (byte) val);
+            val >>>= BITS8;
+            if (val == 0)
+                break;
+
+            start--;
+        }
+    }
+
+    private void putInt(int index, int val) {
+        int start = index + 3;
+        while (true) {
+            storage.put(start, (byte) val);
+            val >>>= BITS8;
+            if (val == 0)
+                break;
+
+            start--;
+        }
+    }
+
+    TIntArrayList getNodes(final long key) {
+        final TIntArrayList res = new TIntArrayList();
+        int bucketPointer = getBucketIndex(key);
+        // convert to pointer:
+        bucketPointer *= bytesPerBucket;
+        byte no = getNoOfEntries(bucketPointer);
+        int max = bucketPointer + no * bytesPerEntry + 1;
+        for (int index = bucketPointer + 1; index < max; index += bytesPerEntry) {
+            long storedKey = getKey(index);
+            if (storedKey == key)
+                res.add(storage.getInt(index + bytesPerKeyRest));
+        }
+
+        if (isOverflowed(bucketPointer)) {
+            // iterate through overflow entries (with identical key) of the next buckets until stopbit found
+            new BucketOverflowLoop() {
+
+                @Override
+                boolean doWork() {
+                    long tmpKey = getKey(overflowPointer + 1);
+                    if (tmpKey == key) {
+                        res.add(storage.get(overflowPointer + 1 + bytesPerKeyRest));
+                        // stopbit
+                        if ((lastOffset & 0x1) == 1)
+                            return true;
+                    }
+                    return false;
+                }
+            }.throughBuckets(bucketPointer);
+        }
+
+        return res;
+    }
+
+    class BucketOverflowLoop {
+
+        int lastOffset;
+        int newOffset;
+        int overflowPointer;
+
+        /**
+         * steps through bucket by bucket
+         */
+        int throughBuckets(int bucketPointer) {
+            MAIN:
+            while (true) {
+                newOffset++;
+                bucketPointer += bytesPerBucket;
+                byte no = getNoOfEntries(bucketPointer);
+                int maxBytes = bucketPointer + no * bytesPerEntry + 1;
+                overflowPointer = bucketPointer + bytesPerBucket - bytesPerOverflowEntry;
+                if (throughOverflowEntries(maxBytes))
+                    break;
+
+                assert (newOffset < 200);
+            }
+            return bucketPointer;
+        }
+
+        /**
+         * loops through overflow entries of one bucket
+         *
+         * @return 1 if overflow entry of identical key with stopbit found, and -1 if not found.
+         * returns 0 if empty overflow space found.
+         */
+        boolean throughOverflowEntries(int maxBytes) {
+            while (overflowPointer > maxBytes) {
+                lastOffset = storage.get(overflowPointer);
+                if (lastOffset == 0)
+                    return true;
+
+                if (doWork())
+                    return true;
+                overflowPointer -= bytesPerOverflowEntry;
+            }
+            return false;
+        }
+
+        boolean doWork() {
+            return false;
+        }
+    }
+
+    class KeyCheckLoop extends BucketOverflowLoop {
+
+        long key;
+
+        public KeyCheckLoop(long key) {
+            this.key = key;
+        }
+
+        @Override
+        boolean doWork() {
+            // stopbit
+            if ((lastOffset & 0x1) == 1) {
+                long tmpKey = getKey(overflowPointer + 1);
+                if (tmpKey == key)
+                    return true;
+            }
+            return false;
+        }
+    }
+
     @Override
     public void add(double lat, double lon, Integer value) {
-        long key = algo.encode(lat, lon);
-        int bucketIndex = getBucketIndex(key);
-        int res = usedEntries.get(bucketIndex);
-        usedEntries.put(bucketIndex, res + 1);
-        size++;
+        if (value == null)
+            throw new UnsupportedOperationException("You cannot add null value. Auto convert this to  e.g. 0?");
+        add(algo.encode(lat, lon), value);
     }
 
     @Override

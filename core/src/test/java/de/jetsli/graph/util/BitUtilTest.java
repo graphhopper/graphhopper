@@ -28,37 +28,53 @@ public class BitUtilTest {
     public void testToFloat() {
         byte[] bytes = BitUtil.fromFloat(Float.MAX_VALUE);
         assertEquals(Float.MAX_VALUE, BitUtil.toFloat(bytes), 1e-9);
-        
+
         bytes = BitUtil.fromFloat(Float.MAX_VALUE / 3);
         assertEquals(Float.MAX_VALUE / 3, BitUtil.toFloat(bytes), 1e-9);
     }
-    
+
     @Test
     public void testToInt() {
         byte[] bytes = BitUtil.fromInt(Integer.MAX_VALUE);
         assertEquals(Integer.MAX_VALUE, BitUtil.toInt(bytes));
-        
+
         bytes = BitUtil.fromInt(Integer.MAX_VALUE / 3);
         assertEquals(Integer.MAX_VALUE / 3, BitUtil.toInt(bytes));
     }
-    
+
     @Test
     public void testToLong() {
         byte[] bytes = BitUtil.fromLong(Long.MAX_VALUE);
         assertEquals(Long.MAX_VALUE, BitUtil.toLong(bytes));
-        
+
         bytes = BitUtil.fromLong(Long.MAX_VALUE / 7);
         assertEquals(Long.MAX_VALUE / 7, BitUtil.toLong(bytes));
     }
-    
+
     @Test
-    public void testToBitString() {        
+    public void testToBitString() {
         assertEquals("0010101010101010101010101010101010101010101010101010101010101010", BitUtil.toBitString(Long.MAX_VALUE / 3));
         assertEquals("0111111111111111111111111111111111111111111111111111111111111111", BitUtil.toBitString(Long.MAX_VALUE));
-                
+
         assertEquals("00101010101010101010101010101010", BitUtil.toBitString(BitUtil.fromInt(Integer.MAX_VALUE / 3)));
-        
-        assertEquals("10000000000000000000000000000000", BitUtil.toBitString((1L << 31), 32));        
+
+        assertEquals("10000000000000000000000000000000", BitUtil.toBitString((1L << 31), 32));
         assertEquals("00000000000000000000000000000001", BitUtil.toBitString(1, 32));
+    }
+
+    @Test
+    public void testFromBitString() {
+        String str = "011011100";
+        assertEquals(str + "0000000", BitUtil.toBitString(BitUtil.fromBitString(str)));
+
+        str = "01011110010111000000111111000111";
+        assertEquals(str, BitUtil.toBitString(BitUtil.fromBitString(str)));
+
+        str = "0101111001011100000011111100011";
+        assertEquals(str + "0", BitUtil.toBitString(BitUtil.fromBitString(str)));
+    }
+
+    String toString(byte[] bytes) {
+        return BitUtil.toBitString(bytes);
     }
 }

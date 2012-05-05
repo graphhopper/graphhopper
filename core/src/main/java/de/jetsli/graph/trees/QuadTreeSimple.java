@@ -91,12 +91,12 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     }
 
     @Override
-    public int size() {
+    public long size() {
         return size;
     }
 
     @Override
-    public QuadTreeSimple init(int maxItemsHint) {
+    public QuadTreeSimple init(long maxItemsHint) {
         return this;
     }
 

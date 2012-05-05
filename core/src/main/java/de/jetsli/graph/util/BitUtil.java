@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.util;
 
+import java.util.Arrays;
+
 /**
  *
  * @author Peter Karich, info@jetsli.de
@@ -50,7 +52,7 @@ public class BitUtil {
     public static int toInt(byte[] b, int offset) {
         return (b[offset] & 0xFF) << 24 | (b[++offset] & 0xFF) << 16 | (b[++offset] & 0xFF) << 8 | (b[++offset] & 0xFF);
     }
-    
+
     public static int toIntLittle(byte[] b, int offset) {
         return (b[offset] & 0xFF) << 24 | (b[++offset] & 0xFF) << 16 | (b[++offset] & 0xFF) << 8 | (b[++offset] & 0xFF);
     }
@@ -97,10 +99,42 @@ public class BitUtil {
         bytes[++offset] = (byte) (value);
     }
 
+    public static long fromBitString2Long(String str) {
+        if (str.length() > 64)
+            throw new UnsupportedOperationException("Strings needs to fit into long (8*8 bits) but length was " + str.length());
+        byte[] res = fromBitString(str);
+        if (res.length < 8)
+            res = Arrays.copyOf(res, 8);
+        return toLong(res);
+    }
+
+    public static byte[] fromBitString(String str) {
+        // no need for performance or memory tuning ...        
+        int strLen = str.length();
+        int bLen = str.length() / 8;
+        if (strLen % 8 != 0)
+            bLen++;
+
+        byte[] bytes = new byte[bLen];
+        int charI = 0;
+        for (int b = 0; b < bLen; b++) {
+            byte res = 0;
+            for (int i = 0; i < 8; i++) {
+                res <<= 1;
+                if (charI < strLen && str.charAt(charI) != '0')
+                    res |= 1;
+
+                charI++;
+            }
+            bytes[b] = res;
+        }
+        return bytes;
+    }
+
     public static String toBitString(long value) {
         return toBitString(value, 64);
     }
-    
+
     public static String toBitString(long value, int bits) {
         StringBuilder sb = new StringBuilder(bits);
         long lastBit = 1L << (bits - 1);

@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
  */
 public abstract class QuadTreeTester {
 
-    protected abstract QuadTree<Integer> createQuadTree(int items);
+    protected abstract QuadTree<Integer> createQuadTree(long items);
 
     @Test
     public void testSize() {

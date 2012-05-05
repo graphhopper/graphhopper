@@ -50,7 +50,6 @@ import de.jetsli.graph.util.CoordTrig;
  *
  * @author Peter Karich, info@jetsli.de
  */
-
 // A 2 bit precision spatial key could look like
 // 
 //  |----|----|----|----|
