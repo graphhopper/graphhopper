@@ -1,1 +1,5 @@
 language: java
+before_script: cd core
+notifications:
+  email:
+    - info@jetsli.de
