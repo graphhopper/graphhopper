@@ -21,6 +21,7 @@ import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;
+import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.shapes.Shape;
 import gnu.trove.list.array.TIntArrayList;
@@ -133,7 +134,6 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     private int maxBuckets;
     private SpatialKeyAlgo algo;
     private boolean compressKey = true;
-    private IntBuffer usedEntries;
     // bits & byte stuff
     private static final int BITS8 = 8;
     private ByteBuffer storage;
@@ -188,8 +188,6 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         initKey();
         initBucketSizes((int) maxEntries);
         initBuffers();
-        // TODO remove stats stuff
-        usedEntries = ByteBuffer.allocateDirect(maxBuckets * 4).asIntBuffer();
         return this;
     }
 
@@ -365,7 +363,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         }
 
         putKey(bucketPointer, key);
-        putInt(bucketPointer + bytesPerKeyRest, value);
+        storage.putInt(bucketPointer + bytesPerKeyRest, value);
         size++;
         // TODO create stats of: entries per bucket & overflow entries per bucket
     }
@@ -437,10 +435,11 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     }
 
     final long getKey(int index) {
-        int key = 0;
+        long key = 0;
         int max = index + bytesPerKeyRest;
         while (true) {
-            key |= storage.get(index);
+            // uh, byte to long makes all longish bits to 1!?
+            key |= storage.get(index) & 0xff;
             index++;
             if (index >= max)
                 break;
@@ -451,18 +450,6 @@ public class SpatialKeyTree implements QuadTree<Integer> {
 
     final void putKey(int index, long val) {
         int start = index + bytesPerKeyRest - 1;
-        while (true) {
-            storage.put(start, (byte) val);
-            val >>>= BITS8;
-            if (val == 0)
-                break;
-
-            start--;
-        }
-    }
-
-    private void putInt(int index, int val) {
-        int start = index + 3;
         while (true) {
             storage.put(start, (byte) val);
             val >>>= BITS8;
@@ -621,7 +608,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         // 3.
         XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         for (int i = 0; i < maxBuckets; i++) {
-            xy.add(i, usedEntries.get(i));
+            // TODO xy.add(i, usedEntries.get(i));
         }
         xy.setTitle(title);
         return xy;
@@ -633,7 +620,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
             stats.put(i, 0);
         }
         for (int i = 0; i < maxBuckets; i++) {
-            stats.increment(usedEntries.get(i));
+            // TODO stats.increment(usedEntries.get(i));
         }
         return stats;
     }
@@ -668,8 +655,9 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     public long getEmptyEntries(boolean onlyBranches) {
         int counter = 0;
         for (int i = 0; i < maxBuckets; i++) {
-            if (usedEntries.get(i) == 0)
-                counter++;
+            // TODO
+//            if (usedEntries.get(i) == 0)
+//                counter++;
         }
         return counter;
     }

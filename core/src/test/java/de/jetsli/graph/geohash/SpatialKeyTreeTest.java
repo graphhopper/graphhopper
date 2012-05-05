@@ -62,7 +62,7 @@ public class SpatialKeyTreeTest {
     }
 
     @Test
-    public void testAddAndGetWithOverflow() {
+    public void testAddAndGet() {
         SpatialKeyTree tree = createTree(10, false);
         int max = tree.getEntriesPerBucket() * 2;
         long[] vals = new long[max];
@@ -91,10 +91,10 @@ public class SpatialKeyTreeTest {
         SpatialKeyTree tree = createTree(0, false);
         tree.putKey(0, 123);
         assertEquals(123, tree.getKey(0));
-
+        tree.putKey(2, Long.MAX_VALUE / 3);
+        assertEquals(Long.MAX_VALUE / 3, tree.getKey(2));
         tree.putKey(0, -1);
         assertEquals(-1, tree.getKey(0));
-
         tree.putKey(30, 123);
         assertEquals(123, tree.getKey(30));
 
@@ -105,7 +105,7 @@ public class SpatialKeyTreeTest {
     }
 
     @Test
-    public void testKeyDuplicates() {
+    public void testKeyDuplicatesForceOverflow() {
         // 0 => force that it is a bad hash creation algo
         // false => do not compress key
         SpatialKeyTree tree = createTree(0, false);
