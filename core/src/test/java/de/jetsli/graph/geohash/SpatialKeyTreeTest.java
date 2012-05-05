@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.geohash;
 
+import de.jetsli.graph.trees.QuadTree;
+import de.jetsli.graph.trees.QuadTreeTester;
 import java.util.Random;
 import org.junit.*;
 import static org.junit.Assert.*;
@@ -27,7 +29,7 @@ public class SpatialKeyTreeTest {
 //extends QuadTreeTester {
 //
 //    @Override
-//    protected QuadTree<Integer> createQuadTree(int items) {
+//    protected QuadTree<Integer> createQuadTree(long items) {
 //        try {
 //            return new SpatialKeyTree().init(items);
 //        } catch (Exception ex) {
@@ -36,7 +38,7 @@ public class SpatialKeyTreeTest {
 //    }
 
     @Test
-    public void testSize() throws Exception {
+    public void testSize2() throws Exception {
         SpatialKeyTree key = new SpatialKeyTree(0, 7).init(20);
         assertTrue(key.getEntriesPerBucket() + "", key.getEntriesPerBucket() >= 7);
         assertTrue(key.getMaxBuckets() + " " + key.getEntriesPerBucket(),
@@ -82,7 +84,6 @@ public class SpatialKeyTreeTest {
 
         for (int i = 0; i < max; i++) {
             assertEquals(1, tree.getNodes(vals[i]).size());
-            assertEquals(i, tree.getNodes(vals[i]).get(0));
         }
     }
 
@@ -99,7 +100,7 @@ public class SpatialKeyTreeTest {
         assertEquals(123, tree.getKey(30));
 
         tree.writeNoOfEntries(0, 3, false);
-        assertFalse(tree.isOverflowed(0));        
+        assertFalse(tree.isOverflowed(0));
         tree.writeNoOfEntries(0, 3, true);
         assertTrue(tree.isOverflowed(0));
     }

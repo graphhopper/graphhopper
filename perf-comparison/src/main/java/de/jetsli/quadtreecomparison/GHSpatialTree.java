@@ -64,7 +64,7 @@ public class GHSpatialTree implements SimplisticQuadTree {
     }
 
     public int size() {
-        return qt.size();
+        return (int) qt.size();
     }
 
     public long getEmptyEntries(boolean b) {

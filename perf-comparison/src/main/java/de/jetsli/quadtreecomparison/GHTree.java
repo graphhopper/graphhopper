@@ -13,18 +13,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package de.jetsli.quadtreecomparison;
 
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeSimple;
 
 /**
- * GraphHopper implementation 
- * 
+ * GraphHopper implementation
+ *
  * @author Peter Karich
  */
 public class GHTree implements SimplisticQuadTree {
+
     Integer integ = new Integer(0);
     QuadTree qt = new QuadTreeSimple(16, 56);
 
@@ -48,7 +48,7 @@ public class GHTree implements SimplisticQuadTree {
     }
 
     public int size() {
-        return qt.size();
+        return (int) qt.size();
     }
 
     public long getEmptyEntries(boolean b) {

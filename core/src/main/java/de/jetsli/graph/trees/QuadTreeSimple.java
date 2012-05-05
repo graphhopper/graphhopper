@@ -194,32 +194,6 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     }
 
     @Override
-    public Collection<CoordTrig<T>> getNodesFromValue(final double lat, final double lon, final T value) {
-        if (root == null)
-            return Collections.EMPTY_LIST;
-
-        final long spatialKey = algo.encode(lat, lon);
-        final List<CoordTrig<T>> nodes = new ArrayList<CoordTrig<T>>(1);
-        LeafWorker<T> worker = new LeafWorker<T>() {
-
-            @Override public void doWork(QTDataNode<T> dataNode, int i) {
-                if (value != null && !value.equals(dataNode.values[i]))
-                    return;
-
-                if (dataNode.keys[i] == spatialKey) {
-                    CoordTrig<T> ret = new CoordTrigObjEntry<T>();
-                    algo.decode(dataNode.keys[i], ret);
-                    ret.setValue((T) dataNode.values[i]);
-                    nodes.add(ret);
-                }
-            }
-        };
-        double err = 1.0 / Math.pow(10, algo.getExactPrecision());
-        getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err), root, worker);
-        return nodes;
-    }
-
-    @Override
     public int remove(double lat, double lon) {
         if (root == null)
             return 0;
@@ -247,6 +221,32 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         return size == 0;
     }
 
+    @Override
+    public Collection<CoordTrig<T>> getNodesFromValue(final double lat, final double lon, final T value) {
+        if (root == null)
+            return Collections.EMPTY_LIST;
+
+        final long spatialKey = algo.encode(lat, lon);
+        final List<CoordTrig<T>> nodes = new ArrayList<CoordTrig<T>>(1);
+        LeafWorker<T> worker = new LeafWorker<T>() {
+
+            @Override public void doWork(QTDataNode<T> dataNode, int i) {
+                if (value != null && !value.equals(dataNode.values[i]))
+                    return;
+
+                if (dataNode.keys[i] == spatialKey) {
+                    CoordTrig<T> ret = new CoordTrigObjEntry<T>();
+                    algo.decode(dataNode.keys[i], ret);
+                    ret.setValue((T) dataNode.values[i]);
+                    nodes.add(ret);
+                }
+            }
+        };
+        double err = 1.0 / Math.pow(10, algo.getExactPrecision());
+        getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err), root, worker);
+        return nodes;
+    }
+    
     @Override
     public Collection<CoordTrig<T>> getNodes(final double lat, final double lon, final double distanceInKm) {
         if (root == null)

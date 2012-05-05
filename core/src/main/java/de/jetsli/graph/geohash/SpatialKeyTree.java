@@ -17,19 +17,22 @@ package de.jetsli.graph.geohash;
 
 import de.genvlin.core.data.*;
 import de.genvlin.gui.plot.GPlotPanel;
+import de.jetsli.graph.geohash.SpatialKeyTree.BucketOverflowLoop;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;
-import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.CoordTrigIntEntry;
+import de.jetsli.graph.util.shapes.BBox;
+import de.jetsli.graph.util.shapes.Circle;
 import de.jetsli.graph.util.shapes.Shape;
-import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
@@ -86,49 +89,40 @@ public class SpatialKeyTree implements QuadTree<Integer> {
             }
         });
 
-        MainPool pool = MainPool.getDefault();
-        XYVectorInterface rms = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
-        rms.setTitle("RMS");
-        XYVectorInterface max = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
-        max.setTitle("MAX");
-        panel.addData(rms);
-        panel.addData(max);
+        try {
+            for (int skipLeft = 0; skipLeft < 40; skipLeft += 2) {
+                int entriesPerBuck = 3;
+                for (; entriesPerBuck < 20; entriesPerBuck += 8) {
+                    SpatialKeyTree qt = new SpatialKeyTree(skipLeft, entriesPerBuck).init(locs);
+                    int epb = qt.getEntriesPerBucket();
+                    String title = "skipLeft:" + skipLeft + " entries/buck:" + epb;
+                    System.out.println(title);
+                    PerfTest.fillQuadTree(qt, g);
 
-        {
-            SpatialKeyTree qt = new SpatialKeyTree(10, 3).init(locs);
-            PerfTest.fillQuadTree(qt, g);
-            XYVectorInterface data = qt.getHist("10 - 3");
-            panel.addData(data);
+                    XYVectorInterface entries = qt.getEntries("E " + title);
+                    XYVectorInterface overflow = qt.getOverflowEntries("O " + title);
+                    XYVectorInterface overflowOff = qt.getOverflowOffset("OO " + title);
+                    panel.addData(entries);
+                    panel.addData(overflow);
+                    panel.addData(overflowOff);
+//                    XYVectorInterface data = qt.getHist(title);
+//                    HistogrammInterface hist = (HistogrammInterface) data.getY();
+                    // mean value is irrelevant as it is always the same                    
+//                    System.out.println("\n\n" + new Date() + "#### " + title + " max:" + hist.getMax() + " rms:" + hist.getRMSError());
+                    panel.repaint();
+
+                    // panel.automaticOneScale(data);
+//                String str = qt.toDetailString();
+//                if (!str.isEmpty()) {
+//                    System.out.print("\nentriesPerBucket:" + epb + "      ");
+//                    System.out.println(str);
+//                }
+                }
+            }
+        } catch (Exception ex) {
+            // do not crash the UI if 'overflow'
+            ex.printStackTrace();
         }
-
-//        try {
-//            for (int skipLeft = 0; skipLeft < 40; skipLeft += 2) {
-//                int entriesPerBuck = 3;
-////                for (; entriesPerBuck < 20; entriesPerBuck += 8) {
-//                SpatialKeyTree qt = new SpatialKeyTree(skipLeft, entriesPerBuck).init(locs);
-//                int epb = qt.getEntriesPerBucket();
-//                String title = "skipLeft:" + skipLeft + " entries/buck:" + epb;
-//                PerfTest.fillQuadTree(qt, g);
-//                XYVectorInterface data = qt.getHist(title);
-//                HistogrammInterface hist = (HistogrammInterface) data.getY();
-//                // mean value is irrelevant as it is always the same
-//                max.add(skipLeft, hist.getMax());
-//                rms.add(skipLeft, hist.getRMSError());
-//                System.out.println("\n\n" + new Date() + "#### " + title + " max:" + hist.getMax() + " rms:" + hist.getRMSError());
-//                panel.repaint();
-//
-//                // panel.automaticOneScale(data);
-////                String str = qt.toDetailString();
-////                if (!str.isEmpty()) {
-////                    System.out.print("\nentriesPerBucket:" + epb + "      ");
-////                    System.out.println(str);
-////                }
-////                }
-//            }
-//        } catch (Exception ex) {
-//            // do not crash the UI if 'overflow'
-//            ex.printStackTrace();
-//        }
     }
     private int size;
     private int maxBuckets;
@@ -197,9 +191,9 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     }
 
     protected void initKey() {
-        // TODO calculate necessary spatial key precision (=>unusedBits) and maxBuckets from maxEntries
+        // TODO calculate necessary spatial key precision (=>unusedBits) from maxEntries
         //
-        // one unused byte in spatial key (making things a bit faster) => but still higher precision than float
+        // one unused byte in spatial key (making encode/decode a bit faster) => but still higher precision than float
         int unusedBits = BITS8;
         spatialKeyBits = 8 * BITS8 - unusedBits;
         algo = new SpatialKeyAlgo(spatialKeyBits);
@@ -219,7 +213,6 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     }
 
     protected void initBucketSizes(int maxEntries) {
-        int bytesPerValue = getBytesPerValue();
         maxBuckets = correctDivide(maxEntries, maxEntriesPerBucket);
 
         // Always use lower bits to guarantee that all indices are smaller than maxBuckets
@@ -227,7 +220,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
 
         // now adjust maxBuckets and maxEntriesPerBucket to avoid memory waste and fit a power of 2
         maxBuckets = (int) Math.pow(2, bucketIndexBits);
-        maxEntriesPerBucket = correctDivide(maxEntries, maxBuckets);
+        maxEntriesPerBucket = (int) Math.round(correctDivide(maxEntries, maxBuckets) * 10);
         // Bytes which are not encoded as bucket index needs to be stored => 'rest' bytes
         if (compressKey) {
             bytesPerKeyRest = correctDivide(spatialKeyBits - bucketIndexBits, BITS8);
@@ -242,6 +235,8 @@ public class SpatialKeyTree implements QuadTree<Integer> {
             bytesPerKeyRest = 8;
         }
 
+        // if you change this getInt/putInt of value needs to be changed to!
+        int bytesPerValue = 4;
         bytesPerEntry = bytesPerKeyRest + bytesPerValue;
         bytesPerOverflowEntry = bytesPerEntry + 1;
         // store used entries per bucket in one byte => maximum entries per bucket = 256
@@ -251,7 +246,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
 
     protected void initBuffers() {
         long capacity = maxBuckets * bytesPerBucket;
-        if (capacity > Integer.MAX_VALUE)
+        if (capacity >= Integer.MAX_VALUE)
             throw new IllegalStateException("Too many elements. TODO: use multiple buffers to workaround 4GB limitation");
 
         storage = ByteBuffer.allocateDirect((int) capacity);
@@ -259,10 +254,6 @@ public class SpatialKeyTree implements QuadTree<Integer> {
 
     public SpatialKeyAlgo getAlgo() {
         return algo;
-    }
-
-    protected int getBytesPerValue() {
-        return 4;
     }
 
     protected int getEntriesPerBucket() {
@@ -285,11 +276,11 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         // 2^24 * 3 .. 12 =   ~50-200 mio                
         // 2^28 * 3 ..  6 = ~800-1600 mio -> not possible to address this in a bytebuffer (int index!)        
 
-        // | unusedBits | skipBeginning | bucketIndexBits | veryRightSide | skipEnd |
+        // | skipBeginning (incl. unusedBits) | bucketIndexBits | veryRightSide | skipEnd |
         // result is bucketIndexBits ^= veryRightSide
 
         long veryRightSide = spatialKey;
-        veryRightSide <<= bucketIndexBits + skipKeyBeginningBits;
+        veryRightSide <<= skipKeyBeginningBits + bucketIndexBits;
         veryRightSide >>>= 8 * BITS8 - bucketIndexBits;
 
         spatialKey <<= skipKeyBeginningBits;
@@ -312,6 +303,19 @@ public class SpatialKeyTree implements QuadTree<Integer> {
                     + " skipEnd:" + skipKeyEndBits + " log(index):" + Math.log(spatialKey) / Math.log(2));
 
         return (int) spatialKey;
+    }
+
+    /**
+     * First part of spatialKey should be smaller than second. (In this implementation they are the
+     * same length but to use more than 2^32 buckets => it is necessary to make a different length.
+     * And second part is better distributed and first XOR second is better distributed only if
+     * second is longer) And because it is smaller => less space consumed. Also the first part is
+     * more equal to other spatialKeys => in future implementations better compressable.
+     */
+    long getPartOfKeyToStore(long spatialKey) {
+        spatialKey <<= skipKeyBeginningBits;
+        spatialKey >>>= 8 * BITS8 - bucketIndexBits;
+        return spatialKey;
     }
 
     @Override
@@ -337,7 +341,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         int bucketPointer = getBucketIndex(key);
         if (compressKey) {
             // TODO compress: ie. skip parts of the key which are already stored via bucketIndex
-            key = key;
+            key = getPartOfKeyToStore(key);
         }
         // convert bucketIndex to byte pointer
         bucketPointer *= bytesPerBucket;
@@ -421,7 +425,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
      */
     int countOverflowBytes(int overflowPointer) {
         byte offsetAndStopBit = storage.get(overflowPointer);
-        // check if at least on overflow entry exists
+        // check if at least one overflow entry exists
         if (offsetAndStopBit == 0)
             return 0;
 
@@ -430,6 +434,8 @@ public class SpatialKeyTree implements QuadTree<Integer> {
             offsetAndStopBit = storage.get(overflowPointer);
             count++;
             overflowPointer -= bytesPerOverflowEntry;
+            if(overflowPointer < 0)
+                throw new IllegalStateException(count + " " + offsetAndStopBit + " " + overflowPointer);
         }
         return count;
     }
@@ -460,17 +466,43 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         }
     }
 
-    TIntArrayList getNodes(final long key) {
-        final TIntArrayList res = new TIntArrayList();
-        int bucketPointer = getBucketIndex(key);
+    @Override
+    public void add(double lat, double lon, Integer value) {
+        if (value == null)
+            throw new UnsupportedOperationException("You cannot add null value. Auto convert this to  e.g. 0?");
+        add(algo.encode(lat, lon), value);
+    }
+
+    @Override
+    public int remove(double lat, double lon) {
+        algo.encode(lat, lon);
+        // TODO
+        return 0;
+    }
+
+    List<CoordTrig<Integer>> getNodes(long key) {
+        final List<CoordTrig<Integer>> res = new ArrayList<CoordTrig<Integer>>();
+        getNodes(res, key);
+        return res;
+    }
+
+    /**
+     * returns nodes of specified key
+     */
+    void getNodes(final List<CoordTrig<Integer>> res, final long key) {
+        int bucketIndex = getBucketIndex(key);
         // convert to pointer:
-        bucketPointer *= bytesPerBucket;
+        int bucketPointer = bucketIndex * bytesPerBucket;
         byte no = getNoOfEntries(bucketPointer);
         int max = bucketPointer + no * bytesPerEntry + 1;
         for (int index = bucketPointer + 1; index < max; index += bytesPerEntry) {
             long storedKey = getKey(index);
-            if (storedKey == key)
-                res.add(storage.getInt(index + bytesPerKeyRest));
+            if (storedKey == key) {
+                CoordTrig<Integer> coord = new CoordTrigIntEntry();
+                algo.decode(storedKey, coord);
+                coord.setValue(storage.getInt(index + bytesPerKeyRest));
+                res.add(coord);
+            }
         }
 
         if (isOverflowed(bucketPointer)) {
@@ -479,9 +511,12 @@ public class SpatialKeyTree implements QuadTree<Integer> {
 
                 @Override
                 boolean doWork() {
-                    long tmpKey = getKey(overflowPointer + 1);
-                    if (tmpKey == key) {
-                        res.add(storage.get(overflowPointer + 1 + bytesPerKeyRest));
+                    long storedKey = getKey(overflowPointer + 1);
+                    if (storedKey == key) {
+                        CoordTrig<Integer> coord = new CoordTrigIntEntry();
+                        algo.decode(storedKey, coord);
+                        coord.setValue(storage.getInt(overflowPointer + 1 + bytesPerKeyRest));
+                        res.add(coord);
                         // stopbit
                         if ((lastOffset & 0x1) == 1)
                             return true;
@@ -490,8 +525,205 @@ public class SpatialKeyTree implements QuadTree<Integer> {
                 }
             }.throughBuckets(bucketPointer);
         }
+    }
 
-        return res;
+    private void getNeighbours(BBox nodeBB, Shape searchRect, long bucketIndexBit, LeafWorker worker) {
+        if (bucketIndexBit < spatialKeyBits) {
+            // TODO where to get current key
+            worker.doWork(123, 321);
+            return;
+        }
+
+        double lat12 = (nodeBB.maxLat + nodeBB.minLat) / 2;
+        double lon12 = (nodeBB.minLon + nodeBB.maxLon) / 2;
+
+        // top-left - see SpatialKeyAlgo that latitude goes from bottom to top and is 1 if on top
+        // 10 11
+        // 00 01
+        // TODO node10?
+        long node10 = bucketIndexBit >> 1;
+        BBox nodeRect10 = new BBox(nodeBB.minLon, lon12, lat12, nodeBB.maxLat);
+        if (searchRect.intersect(nodeRect10))
+            getNeighbours(nodeRect10, searchRect, node10, worker);
+
+        // top-right
+        // TODO 
+        long node11 = bucketIndexBit >> 1;
+        BBox nodeRect11 = new BBox(lon12, nodeBB.maxLon, lat12, nodeBB.maxLat);
+        if (searchRect.intersect(nodeRect11))
+            getNeighbours(nodeRect11, searchRect, node11, worker);
+
+        // bottom-left
+        // TODO 
+        long node00 = bucketIndexBit >> 1;
+        BBox nodeRect00 = new BBox(nodeBB.minLon, lon12, nodeBB.minLat, lat12);
+        if (searchRect.intersect(nodeRect00))
+            getNeighbours(nodeRect00, searchRect, node00, worker);
+
+        // bottom-right
+        // TODO 
+        long node01 = bucketIndexBit >> 1;
+        BBox nodeRect01 = new BBox(lon12, nodeBB.maxLon, nodeBB.minLat, lat12);
+        if (searchRect.intersect(nodeRect01))
+            getNeighbours(nodeRect01, searchRect, node01, worker);
+    }
+
+    @Override
+    public Collection<CoordTrig<Integer>> getNodes(final double lat, final double lon,
+            final double distanceInKm) {
+        final List<CoordTrig<Integer>> result = new ArrayList<CoordTrig<Integer>>();
+        final Circle c = new Circle(lat, lon, distanceInKm);
+        LeafWorker distanceAcceptor = new LeafWorker() {
+
+            @Override public void doWork(long key, int value) {
+                CoordTrigIntEntry coord = new CoordTrigIntEntry();
+                algo.decode(key, coord);
+                if (c.contains(coord.lat, coord.lon))
+                    result.add(coord);
+                coord.setValue(value);
+            }
+        };
+
+        // TODO maxBIT
+        getNeighbours(BBox.createEarthMax(), c, 123, distanceAcceptor);
+        return result;
+    }
+
+    @Override
+    public Collection<CoordTrig<Integer>> getNodes(Shape boundingBox) {
+        // TODO
+        return Collections.EMPTY_LIST;
+    }
+
+    interface LeafWorker {
+
+        void doWork(long key, int value);
+    }
+
+    @Override
+    public Collection<CoordTrig<Integer>> getNodesFromValue(final double lat, final double lon,
+            final Integer value) {
+        // TODO no spatialKey necessary?
+        // final long spatialKey = algo.encode(lat, lon);
+        final List<CoordTrig<Integer>> nodes = new ArrayList<CoordTrig<Integer>>(1);
+        LeafWorker worker = new LeafWorker() {
+
+            @Override public void doWork(long key, int value) {
+                // TODO unused value?
+                getNodes(nodes, key);
+            }
+        };
+        // TODO maxBIT
+        long maxBit = 1 << spatialKeyBits;
+        double err = 1.0 / Math.pow(10, algo.getExactPrecision());
+        getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err),
+                maxBit, worker);
+        return nodes;
+    }
+
+    @Override
+    public void clear() {
+        size = 0;
+        initBuffers();
+    }
+
+    public XYVectorInterface getHist(String title) {
+        MainPool pool = MainPool.getDefault();
+        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
+        for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
+            int entries = getNoOfEntries(bucketIndex);
+            int ovfl = countOverflowBytes(bucketIndex);
+            int unusedBytes = bytesPerBucket - 1 - (entries * bytesPerEntry + ovfl * bytesPerOverflowEntry);
+            xy.add(bucketIndex, unusedBytes);
+        }
+        xy.setTitle(title);
+        return xy;
+    }
+
+    private XYVectorInterface getOverflowOffset(String title) {
+        MainPool pool = MainPool.getDefault();
+        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
+        for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
+            BucketOverflowLoop loop = new BucketOverflowLoop();
+            loop.throughBuckets(bucketIndex);
+            xy.add(bucketIndex, loop.newOffset);
+        }
+        xy.setTitle(title);
+        return xy;
+    }
+
+    private XYVectorInterface getOverflowEntries(String title) {
+        MainPool pool = MainPool.getDefault();
+        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
+        for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
+            xy.add(bucketIndex, countOverflowBytes(bucketIndex));
+        }
+        xy.setTitle(title);
+        return xy;
+    }
+
+    private XYVectorInterface getEntries(String title) {
+        MainPool pool = MainPool.getDefault();
+        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
+        for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
+            xy.add(bucketIndex, getNoOfEntries(bucketIndex));
+        }
+        xy.setTitle(title);
+        return xy;
+    }
+
+    public TIntIntHashMap getStats(int max) {
+        TIntIntHashMap stats = new TIntIntHashMap(max);
+        for (int i = 0; i < max; i++) {
+            stats.put(i, 0);
+        }
+        for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
+            int entries = getNoOfEntries(bucketIndex);
+            int ovfl = countOverflowBytes(bucketIndex);
+            int unusedBytes = bytesPerBucket - 1 - (entries * bytesPerEntry + ovfl * bytesPerOverflowEntry);
+            stats.increment(unusedBytes);
+        }
+        return stats;
+    }
+
+    @Override
+    public String toDetailString() {
+        int max = 100;
+        TIntIntHashMap stats = getStats(max);
+        int maxFill = -1;
+        int whichI = -1;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < max; i++) {
+            int v = stats.get(i);
+            if (v > 0) {
+                maxFill = v;
+                whichI = i;
+            }
+            sb.append(v).append("\t");
+        }
+        if (maxFill > 200)
+            return "";
+
+        return sb.toString() + " maxFill:" + maxFill + "[" + whichI + "]";
+    }
+
+    @Override
+    public long getMemoryUsageInBytes(int factor) {
+        return maxBuckets * bytesPerBucket;
+    }
+
+    @Override
+    public long getEmptyEntries(boolean onlyBranches) {
+        if (onlyBranches)
+            return 0;
+
+        int countEmptyBytes = 0;
+        for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
+            int entries = getNoOfEntries(bucketIndex);
+            int ovfl = countOverflowBytes(bucketIndex);
+            countEmptyBytes += bytesPerBucket - 1 - (entries * bytesPerEntry + ovfl * bytesPerOverflowEntry);
+        }
+        return countEmptyBytes;
     }
 
     class BucketOverflowLoop {
@@ -508,13 +740,17 @@ public class SpatialKeyTree implements QuadTree<Integer> {
             while (true) {
                 newOffset++;
                 bucketPointer += bytesPerBucket;
+                if (bucketPointer >= getMemoryUsageInBytes(0))
+                    throw new IllegalStateException("bp:" + bucketPointer + " offset:" + newOffset);
+
                 byte no = getNoOfEntries(bucketPointer);
                 int maxBytes = bucketPointer + no * bytesPerEntry + 1;
                 overflowPointer = bucketPointer + bytesPerBucket - bytesPerOverflowEntry;
                 if (throughOverflowEntries(maxBytes))
                     break;
 
-                assert (newOffset < 200);
+                if (newOffset > 200)
+                    throw new IllegalStateException("bp:" + bucketPointer + " offset:" + newOffset);
             }
             return bucketPointer;
         }
@@ -561,104 +797,5 @@ public class SpatialKeyTree implements QuadTree<Integer> {
             }
             return false;
         }
-    }
-
-    @Override
-    public void add(double lat, double lon, Integer value) {
-        if (value == null)
-            throw new UnsupportedOperationException("You cannot add null value. Auto convert this to  e.g. 0?");
-        add(algo.encode(lat, lon), value);
-    }
-
-    @Override
-    public int remove(double lat, double lon) {
-        algo.encode(lat, lon);
-        return 0;
-    }
-
-    @Override
-    public Collection<CoordTrig<Integer>> getNodes(final double lat, final double lon, final double distanceInKm) {
-        return Collections.EMPTY_LIST;
-    }
-
-    @Override
-    public Collection<CoordTrig<Integer>> getNodes(Shape boundingBox) {
-        return Collections.EMPTY_LIST;
-    }
-
-    @Override
-    public Collection<CoordTrig<Integer>> getNodesFromValue(final double lat, final double lon, final Integer value) {
-        return Collections.EMPTY_LIST;
-    }
-
-    @Override
-    public void clear() {
-        // nextOverflow = 0;
-        size = 0;
-        initBuffers();
-    }
-
-    public XYVectorInterface getHist(String title) {
-        MainPool pool = MainPool.getDefault();
-
-        // 1. simplist possibility
-        // XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, DoubleVectorInterface.class);
-        // 2. possibility with histogramm
-        // HistogrammInterface hist = pool.createVector(HistogrammInterface.class); VectorInterface x = pool.createVector(DoubleVectorInterface.class);
-        // 3.
-        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
-        for (int i = 0; i < maxBuckets; i++) {
-            // TODO xy.add(i, usedEntries.get(i));
-        }
-        xy.setTitle(title);
-        return xy;
-    }
-
-    public TIntIntHashMap getStats(int max) {
-        TIntIntHashMap stats = new TIntIntHashMap(max);
-        for (int i = 0; i < max; i++) {
-            stats.put(i, 0);
-        }
-        for (int i = 0; i < maxBuckets; i++) {
-            // TODO stats.increment(usedEntries.get(i));
-        }
-        return stats;
-    }
-
-    @Override
-    public String toDetailString() {
-        int max = 100;
-        TIntIntHashMap stats = getStats(max);
-        int maxFill = -1;
-        int whichI = -1;
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < max; i++) {
-            int v = stats.get(i);
-            if (v > 0) {
-                maxFill = v;
-                whichI = i;
-            }
-            sb.append(v).append("\t");
-        }
-        if (maxFill > 200)
-            return "";
-
-        return sb.toString() + " maxFill:" + maxFill + "[" + whichI + "]";
-    }
-
-    @Override
-    public long getMemoryUsageInBytes(int factor) {
-        return maxBuckets * bytesPerBucket;
-    }
-
-    @Override
-    public long getEmptyEntries(boolean onlyBranches) {
-        int counter = 0;
-        for (int i = 0; i < maxBuckets; i++) {
-            // TODO
-//            if (usedEntries.get(i) == 0)
-//                counter++;
-        }
-        return counter;
     }
 };
