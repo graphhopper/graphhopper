@@ -102,7 +102,7 @@ public class MiniGraphUI {
                 maxX = 0;
                 maxY = 0;
                 g.setColor(Color.RED);
-                g.drawOval((int) getX(49.990532f), (int) getY(9.020827f), 10, 10);
+                g.drawOval((int) getX(49.990532), (int) getY(9.020827), 10, 10);
 
                 int size;
                 if (scaleX < 3e-5)
