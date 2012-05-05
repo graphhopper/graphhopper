@@ -220,7 +220,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
 
         // now adjust maxBuckets and maxEntriesPerBucket to avoid memory waste and fit a power of 2
         maxBuckets = (int) Math.pow(2, bucketIndexBits);
-        maxEntriesPerBucket = (int) Math.round(correctDivide(maxEntries, maxBuckets) * 10);
+        maxEntriesPerBucket = (int) Math.round(correctDivide(maxEntries, maxBuckets) * 1.5);
         // Bytes which are not encoded as bucket index needs to be stored => 'rest' bytes
         if (compressKey) {
             bytesPerKeyRest = correctDivide(spatialKeyBits - bucketIndexBits, BITS8);
