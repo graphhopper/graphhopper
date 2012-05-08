@@ -15,59 +15,139 @@
  */
 package de.jetsli.graph.geohash;
 
-import org.junit.Test;
+import de.jetsli.graph.trees.QuadTree;
+import de.jetsli.graph.trees.QuadTreeTester;
+import java.util.Random;
+import org.junit.*;
 import static org.junit.Assert.*;
 
 /**
  *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich
  */
 public class SpatialKeyHashtableTest {
+//extends QuadTreeTester {
+//
+//    @Override
+//    protected QuadTree<Integer> createQuadTree(long items) {
+//        try {
+//            return new SpatialKeyTree().init(items);
+//        } catch (Exception ex) {
+//            throw new RuntimeException(ex);
+//        }
+//    }
 
     @Test
-    public void testHashCollisionAndBucketOverflow() {
-        SpatialKeyHashtable store = new SpatialKeyHashtable().init(1, 2);
-        // force same bucket but different geohashcode
-        writeAndCheck(store, 0, 8);
-        writeAndCheck(store, 1, 8);
+    public void testSize2() throws Exception {
+        SpatialKeyHashtable key = new SpatialKeyHashtable(0, 7).init(20);
+        assertTrue(key.getEntriesPerBucket() + "", key.getEntriesPerBucket() >= 7);
+        assertTrue(key.getMaxBuckets() + " " + key.getEntriesPerBucket(),
+                key.getMaxBuckets() * key.getEntriesPerBucket() >= 20);
     }
 
     @Test
-    public void testDifferentBucketsNoOverflow() {
-        SpatialKeyHashtable store = new SpatialKeyHashtable().init(1, 2);
-        // force same bucket but different geohashcode        
-        writeAndCheck(store, 0, 4);
-        writeAndCheck(store, 1, 4);
+    public void testBucketIndex() throws Exception {
+        for (int i = 9; i < 20; i += 3) {
+            SpatialKeyHashtable tree = createSKTWithoutBuffer(i);
+            SpatialKeyAlgo algo = tree.getAlgo();
+            Random rand = new Random();
+            for (int j = 0; j < 10000; j++) {
+                double lat = rand.nextDouble() * 5;
+                double lon = rand.nextDouble() * 5;
+                try {
+                    tree.getBucketIndex(algo.encode(lat, lon));
+                } catch (Exception ex) {
+                    assertFalse("Problem while " + lat + "," + lon + " " + ex.getMessage(), false);
+                }
+            }
+        }
     }
-    
-    private void writeAndCheck(SpatialKeyHashtable store, long indexPartOfGeoHash, int maxEntries) {
-        for (int i = 1; i <= maxEntries; i++) {
-            assertEquals("write i:" + i, 0, store.put(indexPartOfGeoHash | i << 8, Integer.MAX_VALUE / i));
+
+    @Test
+    public void testStatsNoError() throws Exception {
+        SpatialKeyHashtable tree = new SpatialKeyHashtable(10, 2).init(10000);
+        Random rand = new Random(12);
+        for (int i = 0; i < 10000; i++) {
+            tree.add(Math.abs(rand.nextDouble()), Math.abs(rand.nextDouble()), i * 100);
+        }
+        tree.getEntries("e");
+        tree.getOverflowEntries("o");
+        tree.getOverflowOffset("oo");
+    }
+
+    @Test
+    public void testAddAndGet() {
+        SpatialKeyHashtable tree = createTree(10, false);
+        int max = tree.getEntriesPerBucket() * 2;
+        long[] vals = new long[max];
+
+        Random rand = new Random(0);
+        for (int i = 0; i < max; i++) {
+            vals[i] = rand.nextLong() / 123000;
+        }
+        for (int i = 0; i < max; i++) {
+            try {
+                tree.add(vals[i], i);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                assertFalse("Problem with " + i + " " + vals[i] + " " + ex.getMessage(), true);
+            }
         }
 
-        for (int i = 1; i <= maxEntries; i++) {
-            assertEquals("check i:" + i, Integer.MAX_VALUE / i, store.get(indexPartOfGeoHash | i << 8));
+        for (int i = 0; i < max; i++) {
+            assertEquals(1, tree.getNodes(vals[i]).size());
         }
     }
 
     @Test
-    public void testAdd() {
-        SpatialKeyHashtable store = new SpatialKeyHashtable().init();
-        assertEquals(0, store.put(12, 21, 123));
-        assertEquals(123, store.get(12, 21));
-        assertEquals(1, store.size());
+    public void testWriteAndGetKey() {
+        SpatialKeyHashtable tree = createTree(0, false);
+        tree.putKey(0, 123);
+        assertEquals(123, tree.getKey(0));
+        tree.putKey(2, Long.MAX_VALUE / 3);
+        assertEquals(Long.MAX_VALUE / 3, tree.getKey(2));
+        tree.putKey(0, -1);
+        assertEquals(-1, tree.getKey(0));
+        tree.putKey(30, 123);
+        assertEquals(123, tree.getKey(30));
 
-        assertEquals(0, store.put(12, 21.0001f, 321));
-        assertEquals(321, store.get(12, 21.0001f));
-        assertEquals(2, store.size());
+        tree.writeNoOfEntries(0, 3, false);
+        assertFalse(tree.isOverflowed(0));
+        tree.writeNoOfEntries(0, 3, true);
+        assertTrue(tree.isOverflowed(0));
     }
 
     @Test
-    public void testDuplicates() {
-        SpatialKeyHashtable store = new SpatialKeyHashtable().init();
-        assertEquals(0, store.put(12, 21, 123));
-        assertEquals(1, store.size());
-        assertEquals("location should already exist", 123, store.put(12, 21, 321));
-        assertEquals(1, store.size());
+    public void testKeyDuplicatesForceOverflow() {
+        // 0 => force that it is a bad hash creation algo
+        // false => do not compress key
+        SpatialKeyHashtable tree = createTree(0, false);
+        int max = tree.getEntriesPerBucket() * 2;
+        for (int i = 0; i < max; i++) {
+            tree.add(0, i);
+            tree.add(1, i);
+            tree.add(2, i);
+        }
+
+        assertEquals(max, tree.getNodes(0).size());
+        assertEquals(max, tree.getNodes(1).size());
+        assertEquals(max, tree.getNodes(2).size());
+    }
+
+    SpatialKeyHashtable createTree(final int skipLeft, boolean compress) {
+        try {
+            return new SpatialKeyHashtable(skipLeft, 1).setCompressKey(compress).init(120);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    // faster - but not functional
+
+    SpatialKeyHashtable createSKTWithoutBuffer(int i) {
+        return new SpatialKeyHashtable(i) {
+
+            @Override protected void initBuffers() {
+            }
+        };
     }
 }

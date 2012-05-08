@@ -15,7 +15,7 @@
  */
 package de.jetsli.quadtreecomparison;
 
-import de.jetsli.graph.geohash.SpatialKeyTree;
+import de.jetsli.graph.geohash.SpatialKeyHashtable;
 
 /**
  * Spatial Information System implementation
@@ -24,7 +24,7 @@ import de.jetsli.graph.geohash.SpatialKeyTree;
  */
 public class GHSpatialTree implements SimplisticQuadTree {
 
-    SpatialKeyTree qt;
+    SpatialKeyHashtable qt;
     int skipLeftBits;
     int entriesPerBucket;
 
@@ -38,7 +38,7 @@ public class GHSpatialTree implements SimplisticQuadTree {
 
     public void init(int size) {
         try {
-            qt = new SpatialKeyTree(skipLeftBits) {
+            qt = new SpatialKeyHashtable(skipLeftBits) {
 
                 @Override protected int getEntriesPerBucket() {
                     return entriesPerBucket;
