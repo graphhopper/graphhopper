@@ -64,6 +64,18 @@ public class SpatialKeyTreeTest {
     }
 
     @Test
+    public void testStatsNoError() throws Exception {
+        SpatialKeyTree tree = new SpatialKeyTree(10, 2).init(10000);
+        Random rand = new Random(12);
+        for (int i = 0; i < 10000; i++) {
+            tree.add(Math.abs(rand.nextDouble()), Math.abs(rand.nextDouble()), i * 100);
+        }
+        tree.getEntries("e");
+        tree.getOverflowEntries("o");
+        tree.getOverflowOffset("oo");
+    }
+
+    @Test
     public void testAddAndGet() {
         SpatialKeyTree tree = createTree(10, false);
         int max = tree.getEntriesPerBucket() * 2;

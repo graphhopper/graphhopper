@@ -220,6 +220,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
 
         // now adjust maxBuckets and maxEntriesPerBucket to avoid memory waste and fit a power of 2
         maxBuckets = (int) Math.pow(2, bucketIndexBits);
+        // introduce hash overflow area => factor > 1
         maxEntriesPerBucket = (int) Math.round(correctDivide(maxEntries, maxBuckets) * 1.5);
         // Bytes which are not encoded as bucket index needs to be stored => 'rest' bytes
         if (compressKey) {
@@ -373,6 +374,9 @@ public class SpatialKeyTree implements QuadTree<Integer> {
     }
 
     void writeNoOfEntries(int bucketPointer, int no, boolean overflow) {
+        if (no > maxEntriesPerBucket)
+            throw new IllegalStateException("Entries shouldn't exceed maxEntriesPerBucket! Was "
+                    + no + " vs. " + maxEntriesPerBucket);
         no <<= 1;
         if (overflow)
             storage.put(bucketPointer, (byte) (no | 0x1));
@@ -434,7 +438,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
             offsetAndStopBit = storage.get(overflowPointer);
             count++;
             overflowPointer -= bytesPerOverflowEntry;
-            if(overflowPointer < 0)
+            if (overflowPointer < 0)
                 throw new IllegalStateException(count + " " + offsetAndStopBit + " " + overflowPointer);
         }
         return count;
@@ -640,7 +644,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         return xy;
     }
 
-    private XYVectorInterface getOverflowOffset(String title) {
+    XYVectorInterface getOverflowOffset(String title) {
         MainPool pool = MainPool.getDefault();
         XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
@@ -652,7 +656,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         return xy;
     }
 
-    private XYVectorInterface getOverflowEntries(String title) {
+    XYVectorInterface getOverflowEntries(String title) {
         MainPool pool = MainPool.getDefault();
         XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
@@ -662,7 +666,7 @@ public class SpatialKeyTree implements QuadTree<Integer> {
         return xy;
     }
 
-    private XYVectorInterface getEntries(String title) {
+    XYVectorInterface getEntries(String title) {
         MainPool pool = MainPool.getDefault();
         XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
