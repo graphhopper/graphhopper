@@ -75,7 +75,7 @@ public class BitUtil {
     }
 
     public static long toLong(byte[] b) {
-        return ((long) toInt(b, 0) << 32) | (toInt(b, 1) & 0xFFFFFFFFL);
+        return ((long) toInt(b, 0) << 32) | (toInt(b, 4) & 0xFFFFFFFFL);
     }
 
     public static byte[] fromLong(long value) {
@@ -103,8 +103,11 @@ public class BitUtil {
         if (str.length() > 64)
             throw new UnsupportedOperationException("Strings needs to fit into long (8*8 bits) but length was " + str.length());
         byte[] res = fromBitString(str);
-        if (res.length < 8)
-            res = Arrays.copyOf(res, 8);
+        if (res.length < 8) {
+            byte[] newBytes = new byte[8];
+            System.arraycopy(res, 0, newBytes, 8 - res.length, res.length);
+            res = newBytes;
+        }
         return toLong(res);
     }
 

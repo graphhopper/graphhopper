@@ -74,6 +74,12 @@ public class BitUtilTest {
         assertEquals(str + "0", BitUtil.toBitString(BitUtil.fromBitString(str)));
     }
 
+    @Test
+    public void testBitString2Long() {
+        String str = "01000000000110000011100000011110";
+        assertEquals("00000000000000000000000000000000" + str, BitUtil.toBitString(BitUtil.fromBitString2Long(str)));
+    }
+
     String toString(byte[] bytes) {
         return BitUtil.toBitString(bytes);
     }

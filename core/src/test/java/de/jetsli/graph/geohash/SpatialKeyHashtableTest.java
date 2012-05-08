@@ -17,6 +17,7 @@ package de.jetsli.graph.geohash;
 
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeTester;
+import de.jetsli.graph.util.BitUtil;
 import java.util.Random;
 import org.junit.*;
 import static org.junit.Assert.*;
@@ -64,6 +65,13 @@ public class SpatialKeyHashtableTest {
     }
 
     @Test
+    public void testGetPartOfKeyToStore() {
+        SpatialKeyHashtable tree = createStorage(0, true);
+        long part = tree.getPartOfKeyToStore(BitUtil.fromBitString2Long("01000000000110000011100000011110"));
+        assertEquals("00000000000000000000000000010000", BitUtil.toBitString(part, 4 * 8));
+    }
+
+    @Test
     public void testStatsNoError() throws Exception {
         SpatialKeyHashtable tree = new SpatialKeyHashtable(10, 2).init(10000);
         Random rand = new Random(12);
@@ -77,7 +85,7 @@ public class SpatialKeyHashtableTest {
 
     @Test
     public void testAddAndGet() {
-        SpatialKeyHashtable tree = createTree(10, false);
+        SpatialKeyHashtable tree = createStorage(10, false);
         int max = tree.getEntriesPerBucket() * 2;
         long[] vals = new long[max];
 
@@ -101,7 +109,7 @@ public class SpatialKeyHashtableTest {
 
     @Test
     public void testWriteAndGetKey() {
-        SpatialKeyHashtable tree = createTree(0, false);
+        SpatialKeyHashtable tree = createStorage(0, false);
         tree.putKey(0, 123);
         assertEquals(123, tree.getKey(0));
         tree.putKey(2, Long.MAX_VALUE / 3);
@@ -121,7 +129,7 @@ public class SpatialKeyHashtableTest {
     public void testKeyDuplicatesForceOverflow() {
         // 0 => force that it is a bad hash creation algo
         // false => do not compress key
-        SpatialKeyHashtable tree = createTree(0, false);
+        SpatialKeyHashtable tree = createStorage(0, false);
         int max = tree.getEntriesPerBucket() * 2;
         for (int i = 0; i < max; i++) {
             tree.add(0, i);
@@ -134,7 +142,7 @@ public class SpatialKeyHashtableTest {
         assertEquals(max, tree.getNodes(2).size());
     }
 
-    SpatialKeyHashtable createTree(final int skipLeft, boolean compress) {
+    SpatialKeyHashtable createStorage(final int skipLeft, boolean compress) {
         try {
             return new SpatialKeyHashtable(skipLeft, 1).setCompressKey(compress).init(120);
         } catch (Exception ex) {

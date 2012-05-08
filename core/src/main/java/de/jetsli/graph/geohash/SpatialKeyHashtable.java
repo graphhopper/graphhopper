@@ -22,6 +22,7 @@ import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;
+import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.CoordTrigIntEntry;
 import de.jetsli.graph.util.shapes.BBox;
@@ -40,9 +41,9 @@ import javax.swing.SwingUtilities;
  * This class maps latitude and longitude through there spatial key to integeger values like osm
  * ids, geo IPs, references or similar.
  *
- * It is similar to SpatialKeyHashtable but should be more robust and more applicable to real world
- * due to the QuadTree interface. Although SpatialKeyHashtable is exactly the same idea - except
- * that no neighbor search was implemented there.
+ * It is similar to SpatialKeyHashtableOld but should be more robust and more applicable to real
+ * world due to the QuadTree interface. Although SpatialKeyHashtableOld is exactly the same idea -
+ * except that no neighbor search was implemented there.
  *
  * Another feature of this implementation is to move the "bucket-index-window" to the front of the
  * spatial key (ie. skipKeyEndBits is maximal). Then it'll behave like a normal quadtree but will
@@ -314,8 +315,11 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
      * more equal to other spatialKeys => in future implementations better compressable.
      */
     long getPartOfKeyToStore(long spatialKey) {
+        System.out.println(BitUtil.toBitString(spatialKey));
         spatialKey <<= skipKeyBeginningBits;
+        System.out.println(BitUtil.toBitString(spatialKey));
         spatialKey >>>= 8 * BITS8 - bucketIndexBits;
+        System.out.println(BitUtil.toBitString(spatialKey));
         return spatialKey;
     }
 
