@@ -15,8 +15,6 @@
  */
 package de.jetsli.graph.geohash;
 
-import de.jetsli.graph.trees.QuadTree;
-import de.jetsli.graph.trees.QuadTreeTester;
 import de.jetsli.graph.util.BitUtil;
 import java.util.Random;
 import org.junit.*;
@@ -100,6 +98,76 @@ public class SpatialKeyHashtableTest {
         tree.getEntries("e");
         tree.getOverflowEntries("o");
         tree.getOverflowOffset("oo");
+    }
+
+    @Test
+    public void testArrayIsACircle() throws Exception {
+        SpatialKeyHashtable tree = new SpatialKeyHashtable(0, 1).setCompressKey(false).init(2);
+        assertEquals(2, tree.getEntriesPerBucket());
+        tree.add(1, 1);
+        tree.add(1, 2);
+        tree.add(1, 3);
+
+        try {
+            assertEquals(1, tree.getNodes(0).size());
+            assertFalse(true);
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().contains("too small"));
+        }
+    }
+
+    @Test
+    public void testArrayIsACircle2() throws Exception {
+        SpatialKeyHashtable tree = new SpatialKeyHashtable(0, 1).setCompressKey(false).init(12);
+        assertEquals(3, tree.getEntriesPerBucket());
+        int bpb = tree.getBytesPerBucket();
+        int bpo = tree.getBytesPerEntry() + 1;
+        // fill bucket 6 and 7 (we cannot reach 7 directly as the bucketindex=key%(max-1))
+        tree.add(6, 1);
+        tree.add(6, 2);
+        tree.add(6, 3);
+
+        // 2*overflow to 7
+        tree.add(6, 4);
+        tree.add(6, 5);
+        // overflow into 0
+        tree.add(6, 6);
+
+        assertEquals(2, tree.getLastOffset(0));
+
+        assertEquals(6, tree.getNodes(6).size());
+        assertEquals(6, (int) tree.getNodes(6).get(5).getValue());
+
+        assertEquals(3, tree.getNoOfEntries(6 * bpb));
+        assertEquals(0, tree.getNoOfEntries(7 * bpb));
+        assertEquals(0, tree.getNoOfEntries(0 * bpb));
+        assertEquals(0, tree.getNoOfEntries(1 * bpb));
+        assertEquals(0, tree.countOverflowBytes(6 * bpb));
+        assertEquals(2 * bpo, tree.countOverflowBytes(7 * bpb));
+        assertEquals(1 * bpo, tree.countOverflowBytes(0 * bpb));
+        assertEquals(0, tree.countOverflowBytes(1 * bpb));
+
+        // now add some entries to check if stopbit for different offsets works
+        tree.add(5, 7);
+        tree.add(5, 8);
+        tree.add(5, 9);
+        assertEquals(1 * bpo, tree.countOverflowBytes(0 * bpb));
+        // overflow into 0
+        tree.add(5, 10);
+        assertEquals(2 * bpo, tree.countOverflowBytes(0 * bpb));
+        assertEquals(4, tree.getNodes(5).size());
+        assertEquals(10, (int) tree.getNodes(5).get(3).getValue());
+        assertEquals(6, tree.getNodes(6).size());
+        assertEquals(6, (int) tree.getNodes(6).get(5).getValue());
+
+        assertEquals(3, tree.getLastOffset(0));
+        assertEquals(-1, tree.getLastOffset(6));
+        assertEquals(1, tree.getLastOffset(7));
+        try {
+            assertEquals(1, tree.getLastOffset(8));
+            assertFalse(true);
+        } catch (IndexOutOfBoundsException ex) {
+        }
     }
 
     @Test

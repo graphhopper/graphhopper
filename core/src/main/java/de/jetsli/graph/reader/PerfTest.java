@@ -39,7 +39,7 @@ public class PerfTest {
     public static void main(String[] args) throws Exception {
         if (args.length < 1)
             throw new IllegalArgumentException("Osm file missing");
-        
+
         String osmFile = args[0];
         Graph g = OSMReaderTrials.defaultRead(osmFile, "/tmp/mmap-graph");
         new PerfTest(g).start();
@@ -134,6 +134,9 @@ public class PerfTest {
         // TODO LATER persist quad tree to make things faster and store osm ids instead nothing
         Integer empty = new Integer(1);
         int locs = graph.getLocations();
+
+        // hack to find bug
+//        locs = 1400000;
         for (int i = 0; i < locs; i++) {
             float lat = graph.getLatitude(i);
             float lon = graph.getLongitude(i);
