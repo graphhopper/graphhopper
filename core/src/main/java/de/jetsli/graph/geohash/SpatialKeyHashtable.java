@@ -134,6 +134,7 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
     private ByteBuffer storage;
     private int bytesPerBucket;
     private int bytesPerEntry;
+    private int bytesPerValue;
     private int bytesPerOverflowEntry;
     private int maxEntriesPerBucket;
     // key compression
@@ -237,21 +238,34 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
             bytesPerKeyRest = 8;
         }
 
-        // if you change this getInt/putInt of value needs to be changed to!
-        int bytesPerValue = 4;
+        bytesPerValue = 4;
         bytesPerEntry = bytesPerKeyRest + bytesPerValue;
         bytesPerOverflowEntry = bytesPerEntry + 1;
-        // store used entries per bucket in one byte => maximum entries per bucket = 256
+        // store used entries per bucket in one byte (use one bit to mark bucket as full)
+        // => maximum entries per bucket = 128
         int bytesForLength = 1;
         bytesPerBucket = maxEntriesPerBucket * bytesPerEntry + bytesForLength;
     }
 
     protected void initBuffers() {
-        long capacity = maxBuckets * bytesPerBucket;
+        // last bucket needs some space to overflow => + bytesPerBucket
+        long capacity = maxBuckets * bytesPerBucket + bytesPerBucket;
         if (capacity >= Integer.MAX_VALUE)
             throw new IllegalStateException("Too many elements. TODO: use multiple buffers to workaround 4GB limitation");
 
         storage = ByteBuffer.allocateDirect((int) capacity);
+    }
+
+    void setBucketIndexBits(int bucketIndexBits) {
+        this.bucketIndexBits = bucketIndexBits;
+    }
+
+    int getBytesPerBucket() {
+        return bytesPerBucket;
+    }
+
+    int getBytesPerEntry() {
+        return bytesPerEntry;
     }
 
     public SpatialKeyAlgo getAlgo() {
@@ -296,9 +310,7 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
         // spatialKey %= maxBuckets - 1;
 
         // bit operations are ~20% faster but there is only this equivalence: x % 2^n == x & (2^n - 1) 
-        // which is not sufficient for a good distribution. We would need: x % (2^n-1)= ..
-
-        // System.out.println(BitUtil.toBitString(spatialKey, 64));
+        // which is not sufficient for a good distribution. We would need: x % (2^n-1)= .. this is ok now: x^y
         if (spatialKey >= maxBuckets || spatialKey < 0)
             throw new IllegalStateException("Index devived from spatial key is to high or negative!? " + spatialKey
                     + " vs. " + maxBuckets + " skipBeginning:" + skipKeyBeginningBits
@@ -315,11 +327,8 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
      * more equal to other spatialKeys => in future implementations better compressable.
      */
     long getPartOfKeyToStore(long spatialKey) {
-        System.out.println(BitUtil.toBitString(spatialKey));
         spatialKey <<= skipKeyBeginningBits;
-        System.out.println(BitUtil.toBitString(spatialKey));
         spatialKey >>>= 8 * BITS8 - bucketIndexBits;
-        System.out.println(BitUtil.toBitString(spatialKey));
         return spatialKey;
     }
 
@@ -344,21 +353,20 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
     //
     public void add(long key, int value) {
         int bucketPointer = getBucketIndex(key);
-        if (compressKey) {
-            // TODO compress: ie. skip parts of the key which are already stored via bucketIndex
+        if (compressKey)
             key = getPartOfKeyToStore(key);
-        }
+
         // convert bucketIndex to byte pointer
         bucketPointer *= bytesPerBucket;
 
-        if (isOverflowed(bucketPointer)) {
+        if (isBucketFull(bucketPointer)) {
             bucketPointer = findExistingOverflow(bucketPointer, key);
         } else {
-            int ovflPointer = bucketPointer + bytesPerBucket - bytesPerOverflowEntry;
-            int ovflBytes = countOverflowBytes(ovflPointer);
             byte no = getNoOfEntries(bucketPointer);
+            int ovflBytes = countOverflowBytesUnsafe(bucketPointer, no);
+
             // will the new entry fit into the current bucket or do we need to overflow?
-            if (ovflBytes + (no + 1) * bytesPerEntry < bytesPerBucket) {
+            if (ovflBytes + (no + 1) * bytesPerEntry + 1 <= bytesPerBucket) {
                 // store current entries in this bucket
                 writeNoOfEntries(bucketPointer, no + 1, false);
                 // skip old entries and one byte for length info
@@ -372,33 +380,33 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
         }
 
         putKey(bucketPointer, key);
-        storage.putInt(bucketPointer + bytesPerKeyRest, value);
+        putValue(bucketPointer + bytesPerKeyRest, value);
         size++;
         // TODO create stats of: entries per bucket & overflow entries per bucket
     }
 
-    void writeNoOfEntries(int bucketPointer, int no, boolean overflow) {
+    void writeNoOfEntries(int bucketPointer, int no, boolean fullBucket) {
         if (no > maxEntriesPerBucket)
             throw new IllegalStateException("Entries shouldn't exceed maxEntriesPerBucket! Was "
                     + no + " vs. " + maxEntriesPerBucket);
         no <<= 1;
-        if (overflow)
-            storage.put(bucketPointer, (byte) (no | 0x1));
+        if (fullBucket)
+            put(bucketPointer, (byte) (no | 0x1));
         else
-            storage.put(bucketPointer, (byte) no);
+            put(bucketPointer, (byte) no);
     }
 
-    boolean isOverflowed(int bucketPointer) {
-        return (storage.get(bucketPointer) & 0x1) == 1;
+    boolean isBucketFull(int bucketPointer) {
+        return (get(bucketPointer) & 0x1) == 1;
     }
 
     byte getNoOfEntries(int bucketPointer) {
-        byte no = storage.get(bucketPointer);
+        byte no = get(bucketPointer);
         // skip overflowed bit
         no >>>= 1;
         if (no > maxEntriesPerBucket)
             throw new IllegalStateException("Entries shouldn't exceed maxEntriesPerBucket! Was "
-                    + no + " vs. " + maxEntriesPerBucket);
+                    + no + " vs. " + maxEntriesPerBucket + " at " + bucketPointer);
         return no;
     }
 
@@ -409,7 +417,7 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
         BucketOverflowLoop loop1 = new KeyCheckLoop(key);
         bucketPointer = loop1.throughBuckets(bucketPointer);
         // write offset and remove stopbit
-        storage.put(loop1.overflowPointer, (byte) ((loop1.lastOffset >>> 1) << 1));
+        put(loop1.overflowPointer, (byte) ((loop1.lastOffset >>> 1) << 1));
         return findFreeOverflow(bucketPointer, loop1.newOffset - 1);
     }
 
@@ -421,39 +429,49 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
         loop2.newOffset = oldOffset;
         loop2.throughBuckets(bucketPointer);
         // write offset and set stopbit
-        storage.put(loop2.overflowPointer, (byte) ((loop2.newOffset << 1) | 0x1));
+        put(loop2.overflowPointer, (byte) ((loop2.newOffset << 1) | 0x1));
         // skip the overflow-offset byte
         return loop2.overflowPointer + 1;
     }
 
+    int countOverflowBytes(int buckerPointer) {
+        int no = getNoOfEntries(buckerPointer);
+        return countOverflowBytesUnsafe(buckerPointer, no);
+    }
+
     /**
-     * @param overflowPointer points not to the beginning of the bucket but to the first possible
-     * overflow entry (which are filled from right to left)
      * @return count the number of used overflow bytes
      */
-    int countOverflowBytes(int overflowPointer) {
-        byte offsetAndStopBit = storage.get(overflowPointer);
-        // check if at least one overflow entry exists
-        if (offsetAndStopBit == 0)
-            return 0;
+    int countOverflowBytesUnsafe(int bucketPointer, int entriesNo) {
+        int overflowPointer = bucketPointer + bytesPerBucket - bytesPerOverflowEntry;
+        int lastEntryByte = bucketPointer + 1 + entriesNo * bytesPerEntry - 1;
 
-        int count = 1;
-        while ((offsetAndStopBit & 1) == 0) {
-            offsetAndStopBit = storage.get(overflowPointer);
+        // loop until last normal entry!
+        int count = 0;
+        while (lastEntryByte < overflowPointer) {
+            byte offsetAndStopBit = get(overflowPointer);
+            if (offsetAndStopBit == 0)
+                break;
+
             count++;
             overflowPointer -= bytesPerOverflowEntry;
-            if (overflowPointer < 0)
-                throw new IllegalStateException(count + " " + offsetAndStopBit + " " + overflowPointer);
         }
-        return count;
+        return count * bytesPerOverflowEntry;
     }
 
     final long getKey(int index) {
+        return getHelper(index + bytesPerKeyRest, index);
+    }
+
+    final long getValue(int index) {
+        return getHelper(index + bytesPerValue, index);
+    }
+
+    private long getHelper(int max, int index) {
         long key = 0;
-        int max = index + bytesPerKeyRest;
         while (true) {
-            // uh, byte to long makes all longish bits to 1!?
-            key |= storage.get(index) & 0xff;
+            // uh, byte converted to long makes all longish bits to 1!?
+            key |= get(index) & 0xff;
             index++;
             if (index >= max)
                 break;
@@ -462,16 +480,31 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
         return key;
     }
 
-    final void putKey(int index, long val) {
-        int start = index + bytesPerKeyRest - 1;
+    final byte get(int index) {
+        return storage.get(index);
+    }
+
+    final void putValue(int index, long val) {
+        putHelper(index + bytesPerValue - 1, val);
+    }
+
+    final void putKey(int index, long key) {
+        putHelper(index + bytesPerKeyRest - 1, key);
+    }
+
+    private void putHelper(int start, long val) {
         while (true) {
-            storage.put(start, (byte) val);
+            put(start, (byte) val);
             val >>>= BITS8;
             if (val == 0)
                 break;
 
             start--;
         }
+    }
+
+    private void put(int index, byte b) {
+        storage.put(index, b);
     }
 
     @Override
@@ -508,12 +541,12 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
             if (storedKey == key) {
                 CoordTrig<Integer> coord = new CoordTrigIntEntry();
                 algo.decode(storedKey, coord);
-                coord.setValue(storage.getInt(index + bytesPerKeyRest));
+                coord.setValue((int) getValue(index + bytesPerKeyRest));
                 res.add(coord);
             }
         }
 
-        if (isOverflowed(bucketPointer)) {
+        if (isBucketFull(bucketPointer)) {
             // iterate through overflow entries (with identical key) of the next buckets until stopbit found
             new BucketOverflowLoop() {
 
@@ -639,8 +672,8 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
         MainPool pool = MainPool.getDefault();
         XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
-            int entries = getNoOfEntries(bucketIndex);
-            int ovfl = countOverflowBytes(bucketIndex);
+            int entries = getNoOfEntries(bucketIndex * bytesPerBucket);
+            int ovfl = countOverflowBytes(bucketIndex * bytesPerBucket);
             int unusedBytes = bytesPerBucket - 1 - (entries * bytesPerEntry + ovfl * bytesPerOverflowEntry);
             xy.add(bucketIndex, unusedBytes);
         }
@@ -653,7 +686,7 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
         XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
             BucketOverflowLoop loop = new BucketOverflowLoop();
-            loop.throughBuckets(bucketIndex);
+            loop.throughBuckets(bucketIndex * bytesPerBucket);
             xy.add(bucketIndex, loop.newOffset);
         }
         xy.setTitle(title);
@@ -664,7 +697,7 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
         MainPool pool = MainPool.getDefault();
         XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
-            xy.add(bucketIndex, countOverflowBytes(bucketIndex));
+            xy.add(bucketIndex, countOverflowBytes(bucketIndex * bytesPerBucket));
         }
         xy.setTitle(title);
         return xy;
@@ -674,7 +707,7 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
         MainPool pool = MainPool.getDefault();
         XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
-            xy.add(bucketIndex, getNoOfEntries(bucketIndex));
+            xy.add(bucketIndex, getNoOfEntries(bucketIndex * bytesPerBucket));
         }
         xy.setTitle(title);
         return xy;
@@ -686,8 +719,8 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
             stats.put(i, 0);
         }
         for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
-            int entries = getNoOfEntries(bucketIndex);
-            int ovfl = countOverflowBytes(bucketIndex);
+            int entries = getNoOfEntries(bucketIndex * bytesPerBucket);
+            int ovfl = countOverflowBytes(bucketIndex * bytesPerBucket);
             int unusedBytes = bytesPerBucket - 1 - (entries * bytesPerEntry + ovfl * bytesPerOverflowEntry);
             stats.increment(unusedBytes);
         }
@@ -748,8 +781,9 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
             while (true) {
                 newOffset++;
                 bucketPointer += bytesPerBucket;
-                if (bucketPointer >= getMemoryUsageInBytes(0))
-                    throw new IllegalStateException("bp:" + bucketPointer + " offset:" + newOffset);
+                // byte area is one bucket bigger so use ">" instead ">="
+                if (bucketPointer > getMemoryUsageInBytes(0))
+                    break;
 
                 byte no = getNoOfEntries(bucketPointer);
                 int maxBytes = bucketPointer + no * bytesPerEntry + 1;
@@ -758,7 +792,7 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
                     break;
 
                 if (newOffset > 200)
-                    throw new IllegalStateException("bp:" + bucketPointer + " offset:" + newOffset);
+                    throw new IllegalStateException("at:" + bucketPointer + " offset:" + newOffset);
             }
             return bucketPointer;
         }
@@ -771,7 +805,7 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
          */
         boolean throughOverflowEntries(int maxBytes) {
             while (overflowPointer > maxBytes) {
-                lastOffset = storage.get(overflowPointer);
+                lastOffset = get(overflowPointer);
                 if (lastOffset == 0)
                     return true;
 

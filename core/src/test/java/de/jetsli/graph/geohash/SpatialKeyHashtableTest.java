@@ -66,9 +66,28 @@ public class SpatialKeyHashtableTest {
 
     @Test
     public void testGetPartOfKeyToStore() {
-        SpatialKeyHashtable tree = createStorage(0, true);
-        long part = tree.getPartOfKeyToStore(BitUtil.fromBitString2Long("01000000000110000011100000011110"));
-        assertEquals("00000000000000000000000000010000", BitUtil.toBitString(part, 4 * 8));
+        SpatialKeyHashtable tree = new SpatialKeyHashtable(8).setCompressKey(true);
+        tree.setBucketIndexBits(6);
+        long part = tree.getPartOfKeyToStore(BitUtil.fromBitString2Long("01000000000110000011100000011110") << 32);
+        assertEquals("00000000000000000000000000000110", BitUtil.toBitString(part, 4 * 8));
+    }
+
+    @Test
+    public void testWriteNoOfEntries() throws Exception {
+        SpatialKeyHashtable tree = new SpatialKeyHashtable(2, 10).setCompressKey(true).init(200);
+        tree.writeNoOfEntries(0, 9, true);
+        assertTrue(tree.isBucketFull(0));
+        assertEquals(9, tree.getNoOfEntries(0));
+
+        tree.writeNoOfEntries(10, 10, false);
+        assertFalse(tree.isBucketFull(10));
+        assertEquals(10, tree.getNoOfEntries(10));
+
+        try {
+            tree.writeNoOfEntries(10, 21, false);
+            assertTrue(false);
+        } catch (Exception ex) {
+        }
     }
 
     @Test
@@ -120,9 +139,30 @@ public class SpatialKeyHashtableTest {
         assertEquals(123, tree.getKey(30));
 
         tree.writeNoOfEntries(0, 3, false);
-        assertFalse(tree.isOverflowed(0));
+        assertFalse(tree.isBucketFull(0));
         tree.writeNoOfEntries(0, 3, true);
-        assertTrue(tree.isOverflowed(0));
+        assertTrue(tree.isBucketFull(0));
+    }
+
+    @Test
+    public void testCountEntriesAndOverflowEntries() {
+        SpatialKeyHashtable tree = createStorage(0, false);
+        assertEquals(3, tree.getEntriesPerBucket());
+        tree.add(0, 1);
+        tree.add(0, 2);
+        assertEquals(0, tree.countOverflowBytes(0));
+
+        tree.add(0, 3);
+        assertEquals(0, tree.countOverflowBytes(0));
+
+        tree.add(0, 4);
+        assertEquals(0, tree.countOverflowBytes(0));
+        assertEquals(tree.getBytesPerEntry() + 1, tree.countOverflowBytes(tree.getBytesPerBucket()));
+
+        tree.add(1, 5);
+        tree.add(1, 6);
+        assertEquals(tree.getBytesPerEntry() + 1, tree.countOverflowBytes(tree.getBytesPerBucket()));
+        assertEquals(1, tree.getNoOfEntries(tree.getBytesPerBucket()));
     }
 
     @Test
@@ -130,7 +170,10 @@ public class SpatialKeyHashtableTest {
         // 0 => force that it is a bad hash creation algo
         // false => do not compress key
         SpatialKeyHashtable tree = createStorage(0, false);
-        int max = tree.getEntriesPerBucket() * 2;
+        assertEquals(3, tree.getEntriesPerBucket());
+        int max = 6;
+        int bytesPerBucket = tree.getBytesPerBucket();
+        int bytesPerEntry = tree.getBytesPerEntry();
         for (int i = 0; i < max; i++) {
             tree.add(0, i);
             tree.add(1, i);
@@ -140,6 +183,16 @@ public class SpatialKeyHashtableTest {
         assertEquals(max, tree.getNodes(0).size());
         assertEquals(max, tree.getNodes(1).size());
         assertEquals(max, tree.getNodes(2).size());
+        assertEquals(0, tree.getNodes(3).size());
+
+        // no overflow stuff
+        assertEquals(0, tree.countOverflowBytes(0));
+        assertEquals(0, tree.countOverflowBytes(bytesPerBucket));
+        assertEquals(0, tree.countOverflowBytes(2 * bytesPerBucket));
+
+        // one overflow entry only
+        assertEquals(2 * (bytesPerEntry + 1), tree.countOverflowBytes(3 * bytesPerBucket));
+        assertEquals(2 * (bytesPerEntry + 1), tree.countOverflowBytes(4 * bytesPerBucket));
     }
 
     SpatialKeyHashtable createStorage(final int skipLeft, boolean compress) {
