@@ -93,7 +93,7 @@ public class SpatialKeyHashtableTest {
         SpatialKeyHashtable tree = new SpatialKeyHashtable(10, 2).init(10000);
         Random rand = new Random(12);
         for (int i = 0; i < 10000; i++) {
-            tree.add(Math.abs(rand.nextDouble()), Math.abs(rand.nextDouble()), i * 100);
+            tree.add(Math.abs(rand.nextDouble()), Math.abs(rand.nextDouble()), (long) i * 100);
         }
         tree.getEntries("e");
         tree.getOverflowEntries("o");
@@ -136,7 +136,7 @@ public class SpatialKeyHashtableTest {
         assertEquals(2, tree.getLastOffset(0));
 
         assertEquals(6, tree.getNodes(6).size());
-        assertEquals(6, (int) tree.getNodes(6).get(5).getValue());
+        assertEquals(6, (long) tree.getNodes(6).get(5).getValue());
 
         assertEquals(3, tree.getNoOfEntries(6 * bpb));
         assertEquals(0, tree.getNoOfEntries(7 * bpb));
@@ -156,9 +156,9 @@ public class SpatialKeyHashtableTest {
         tree.add(5, 10);
         assertEquals(2, tree.getNoOfOverflowEntries(0 * bpb));
         assertEquals(4, tree.getNodes(5).size());
-        assertEquals(10, (int) tree.getNodes(5).get(3).getValue());
+        assertEquals(10, (long) tree.getNodes(5).get(3).getValue());
         assertEquals(6, tree.getNodes(6).size());
-        assertEquals(6, (int) tree.getNodes(6).get(5).getValue());
+        assertEquals(6, (long) tree.getNodes(6).get(5).getValue());
 
         assertEquals(3, tree.getLastOffset(0));
         assertEquals(-1, tree.getLastOffset(6));

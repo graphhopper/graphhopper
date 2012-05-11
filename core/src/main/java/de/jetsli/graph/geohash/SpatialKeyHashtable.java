@@ -24,6 +24,7 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.CoordTrigIntEntry;
+import de.jetsli.graph.util.CoordTrigLongEntry;
 import de.jetsli.graph.util.shapes.BBox;
 import de.jetsli.graph.util.shapes.Circle;
 import de.jetsli.graph.util.shapes.Shape;
@@ -55,7 +56,7 @@ import javax.swing.SwingUtilities;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class SpatialKeyHashtable implements QuadTree<Integer> {
+public class SpatialKeyHashtable implements QuadTree<Long> {
 
     public static void main(String[] args) throws Exception {
         final Graph g = OSMReaderTrials.defaultRead(args[0], "/tmp/mmap-graph");
@@ -379,7 +380,7 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
     //   entries per bucket (without overflowed entries!) (7 bits) | overflowed bit - marks if the current bucket is already overflowed
     //####################
     //
-    public void add(long key, int value) {
+    public void add(long key, long value) {
         int bucketPointer = getBucketIndex(key);
         if (compressKey)
             key = getPartOfKeyToStore(key);
@@ -540,7 +541,7 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
     }
 
     @Override
-    public void add(double lat, double lon, Integer value) {
+    public void add(double lat, double lon, Long value) {
         if (value == null)
             throw new UnsupportedOperationException("You cannot add null value. Auto convert this to  e.g. 0?");
         add(algo.encode(lat, lon), value);
@@ -553,8 +554,8 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
         return 0;
     }
 
-    List<CoordTrig<Integer>> getNodes(long key) {
-        final List<CoordTrig<Integer>> res = new ArrayList<CoordTrig<Integer>>();
+    List<CoordTrig<Long>> getNodes(long key) {
+        final List<CoordTrig<Long>> res = new ArrayList<CoordTrig<Long>>();
         int bucketIndex = getBucketIndex(key);
         getNodes(res, bucketIndex * bytesPerBucket, key);
         return res;
@@ -563,7 +564,7 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
     /**
      * returns nodes of specified key
      */
-    void getNodes(final List<CoordTrig<Integer>> res, final int bucketPointer, final long key) {
+    void getNodes(final List<CoordTrig<Long>> res, final int bucketPointer, final long key) {
         // convert to pointer:        
         byte no = getNoOfEntries(bucketPointer);
         int max = bucketPointer + no * bytesPerEntry + 1;
@@ -588,15 +589,15 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
         }
     }
 
-    boolean _add(final List<CoordTrig<Integer>> res, long storedKey, long key, int pointer) {
+    boolean _add(final List<CoordTrig<Long>> res, long storedKey, long key, int pointer) {
         if (storedKey == key || key == Long.MIN_VALUE) {
-            CoordTrig<Integer> coord = new CoordTrigIntEntry();
+            CoordTrig<Long> coord = new CoordTrigLongEntry();
             algo.decode(storedKey, coord);
 
             if (pointer + bytesPerKeyRest + 4 > getMemoryUsageInBytes(0))
                 throw new IllegalStateException("pointer " + pointer + " " + getMemoryUsageInBytes(0) + " " + bytesPerKeyRest);
 
-            coord.setValue((int) getValue(pointer + bytesPerKeyRest));
+            coord.setValue(getValue(pointer + bytesPerKeyRest));
             res.add(coord);
             return true;
         }
@@ -646,14 +647,14 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
     }
 
     @Override
-    public Collection<CoordTrig<Integer>> getNodes(final double lat, final double lon,
+    public Collection<CoordTrig<Long>> getNodes(final double lat, final double lon,
             final double distanceInKm) {
-        final List<CoordTrig<Integer>> result = new ArrayList<CoordTrig<Integer>>();
+        final List<CoordTrig<Long>> result = new ArrayList<CoordTrig<Long>>();
         final Circle c = new Circle(lat, lon, distanceInKm);
         LeafWorker distanceAcceptor = new LeafWorker() {
 
-            @Override public void doWork(long key, int value) {
-                CoordTrigIntEntry coord = new CoordTrigIntEntry();
+            @Override public void doWork(long key, long value) {
+                CoordTrigLongEntry coord = new CoordTrigLongEntry();
                 algo.decode(key, coord);
                 if (c.contains(coord.lat, coord.lon))
                     result.add(coord);
@@ -667,25 +668,25 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
     }
 
     @Override
-    public Collection<CoordTrig<Integer>> getNodes(Shape boundingBox) {
+    public Collection<CoordTrig<Long>> getNodes(Shape boundingBox) {
         // TODO
         return Collections.EMPTY_LIST;
     }
 
     interface LeafWorker {
 
-        void doWork(long key, int value);
+        void doWork(long key, long value);
     }
 
     @Override
-    public Collection<CoordTrig<Integer>> getNodesFromValue(final double lat, final double lon,
-            final Integer value) {
+    public Collection<CoordTrig<Long>> getNodesFromValue(final double lat, final double lon,
+            final Long value) {
         // TODO no spatialKey necessary?
         // final long spatialKey = algo.encode(lat, lon);
-        final List<CoordTrig<Integer>> nodes = new ArrayList<CoordTrig<Integer>>(1);
+        final List<CoordTrig<Long>> nodes = new ArrayList<CoordTrig<Long>>(1);
         LeafWorker worker = new LeafWorker() {
 
-            @Override public void doWork(long key, int value) {
+            @Override public void doWork(long key, long value) {
                 // TODO !
                 getNodes(nodes, 0, key);
             }
@@ -758,7 +759,7 @@ public class SpatialKeyHashtable implements QuadTree<Integer> {
         XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
             // getNoOfEntries(bucketIndex * bytesPerBucket)
-            final List<CoordTrig<Integer>> res = new ArrayList<CoordTrig<Integer>>();
+            final List<CoordTrig<Long>> res = new ArrayList<CoordTrig<Long>>();
             getNodes(res, bucketIndex * bytesPerBucket, Long.MIN_VALUE);
             xy.add(bucketIndex, res.size());
         }
