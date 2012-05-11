@@ -27,11 +27,17 @@ import java.util.Collection;
  */
 public interface QuadTree<V> {
 
-    QuadTree init(long maxItemsHint) throws Exception;
-    
+    /**
+     * The quadtree could be configured with implementation specific values. After this it needs to
+     * be configured.
+     *
+     * @throws RuntimeException could be thrown
+     */
+    QuadTree init(long maxItemsHint);
+
     long size();
 
-    boolean isEmpty();    
+    boolean isEmpty();
 
     void add(double lat, double lon, V value);
 

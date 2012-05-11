@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -160,5 +161,14 @@ public class Helper {
         // TODO add 4byte to make a multiple of 8 in some cases
         // TODO compressed oop
         return factor * (4 + 4 + 4 + 4) + 4 * length;
+    }
+
+    public static void cleanMappedByteBuffer(MappedByteBuffer mapping) {
+        if (mapping == null)
+            return;
+
+        sun.misc.Cleaner cleaner = ((sun.nio.ch.DirectBuffer) mapping).cleaner();
+        if (cleaner != null)
+            cleaner.clean();
     }
 }

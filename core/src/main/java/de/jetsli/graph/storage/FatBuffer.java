@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.util.Helper;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -23,8 +24,6 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
-import sun.misc.Cleaner;
-import sun.nio.ch.DirectBuffer;
 
 /**
  * Testing a memory mapped buffer with nearly unlimited storage capabilities on 64bit systems.
@@ -90,10 +89,6 @@ public class FatBuffer implements Closeable {
     }
 
     private void clean(MappedByteBuffer mapping) {
-        if (mapping == null)
-            return;
-        Cleaner cleaner = ((DirectBuffer) mapping).cleaner();
-        if (cleaner != null)
-            cleaner.clean();
+        Helper.cleanMappedByteBuffer(mapping);        
     }
 }

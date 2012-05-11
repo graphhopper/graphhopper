@@ -37,7 +37,7 @@ public class SpatialKeyHashtableTest {
 //    }
 
     @Test
-    public void testSize2() throws Exception {
+    public void testSize2() {
         SpatialKeyHashtable key = new SpatialKeyHashtable(0, 7).init(20);
         assertTrue(key.getEntriesPerBucket() + "", key.getEntriesPerBucket() >= 7);
         assertTrue(key.getMaxBuckets() + " " + key.getEntriesPerBucket(),
@@ -45,7 +45,7 @@ public class SpatialKeyHashtableTest {
     }
 
     @Test
-    public void testBucketIndex() throws Exception {
+    public void testBucketIndex() {
         for (int i = 9; i < 20; i += 3) {
             SpatialKeyHashtable tree = createSKTWithoutBuffer(i);
             SpatialKeyAlgo algo = tree.getAlgo();
@@ -71,7 +71,7 @@ public class SpatialKeyHashtableTest {
     }
 
     @Test
-    public void testWriteNoOfEntries() throws Exception {
+    public void testWriteNoOfEntries() {
         SpatialKeyHashtable tree = new SpatialKeyHashtable(2, 10).setCompressKey(true).init(200);
         tree.writeNoOfEntries(0, 9, true);
         assertTrue(tree.isBucketFull(0));
@@ -89,7 +89,7 @@ public class SpatialKeyHashtableTest {
     }
 
     @Test
-    public void testStatsNoError() throws Exception {
+    public void testStatsNoError() {
         SpatialKeyHashtable tree = new SpatialKeyHashtable(10, 2).init(10000);
         Random rand = new Random(12);
         for (int i = 0; i < 10000; i++) {
@@ -101,7 +101,7 @@ public class SpatialKeyHashtableTest {
     }
 
     @Test
-    public void testArrayIsACircle() throws Exception {
+    public void testArrayIsACircle() {
         SpatialKeyHashtable tree = new SpatialKeyHashtable(0, 1).setCompressKey(false).init(2);
         assertEquals(2, tree.getEntriesPerBucket());
         tree.add(1, 1);
@@ -117,7 +117,7 @@ public class SpatialKeyHashtableTest {
     }
 
     @Test
-    public void testArrayIsACircle2() throws Exception {
+    public void testArrayIsACircle2() {
         SpatialKeyHashtable tree = new SpatialKeyHashtable(0, 1).setCompressKey(false).init(12);
         assertEquals(3, tree.getEntriesPerBucket());
         int bpb = tree.getBytesPerBucket();

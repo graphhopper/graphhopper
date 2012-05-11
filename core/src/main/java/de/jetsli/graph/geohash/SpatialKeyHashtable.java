@@ -23,7 +23,6 @@ import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;
 import de.jetsli.graph.util.CoordTrig;
-import de.jetsli.graph.util.CoordTrigIntEntry;
 import de.jetsli.graph.util.CoordTrigLongEntry;
 import de.jetsli.graph.util.shapes.BBox;
 import de.jetsli.graph.util.shapes.Circle;
@@ -105,6 +104,7 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
                 try {
                     PerfTest.fillQuadTree(qt, g);
                 } catch (Exception ex) {
+//                    ex.printStackTrace();
                     log(ex.getMessage());
                     continue;
                 }
@@ -196,7 +196,7 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
     // * extract general purpose big-hashtable. ie. store less bytes for key (long/int)
     //   we would need spatialKeyAlgo.encode(lat,lon,bytes,iterations), getBucketIndex(bytes), add(byte[] bytes, int value)
     @Override
-    public SpatialKeyHashtable init(long maxEntries) throws Exception {
+    public SpatialKeyHashtable init(long maxEntries) {
         initKey();
         initBucketSizes((int) maxEntries);
         initBuffers();
@@ -263,7 +263,7 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
             bytesPerKeyRest = 8;
         }
 
-        if (bytesPerValue <= 0)
+        if (bytesPerValue <= 0 || bytesPerValue > 8)
             bytesPerValue = 4;
         bytesPerEntry = bytesPerKeyRest + bytesPerValue;
         bytesPerOverflowEntry = bytesPerEntry + 1;

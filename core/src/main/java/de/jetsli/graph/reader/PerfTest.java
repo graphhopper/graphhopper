@@ -18,7 +18,6 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeSimple;
-import de.jetsli.graph.util.CoordFloat;
 import de.jetsli.graph.util.Helper;
 import java.util.Date;
 
@@ -82,7 +81,7 @@ public class PerfTest {
     private void measureFill(int minBits, int maxEPerL) {
         for (int bits = minBits; bits <= 64; bits += 16) {
             for (int entriesPerLeaf = 16; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
-                final QuadTree<Integer> quadTree = new QuadTreeSimple<Integer>(entriesPerLeaf, bits);
+                final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
                 fillQuadTree(quadTree, g);
                 System.gc();
                 System.gc();
@@ -94,7 +93,7 @@ public class PerfTest {
                 new MiniPerfTest("fill") {
 
                     @Override public long doCalc(int run) {
-                        QuadTree<Integer> quadTree = new QuadTreeSimple<Integer>(epl, b);
+                        QuadTree<Long> quadTree = new QuadTreeSimple<Long>(epl, b);
                         fillQuadTree(quadTree, g);
                         return quadTree.size();
                     }
@@ -107,7 +106,7 @@ public class PerfTest {
         for (int bits = minBits; bits <= 64; bits += 16) {
             for (int distance = 10; distance < maxDist; distance *= 2) {
                 for (int entriesPerLeaf = 16; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
-                    final QuadTree<Integer> quadTree = new QuadTreeSimple<Integer>(entriesPerLeaf, bits);
+                    final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
                     fillQuadTree(quadTree, g);
                     System.gc();
                     System.gc();
@@ -130,9 +129,8 @@ public class PerfTest {
         }
     }
 
-    public static void fillQuadTree(QuadTree quadTree, Graph graph) {
+    public static void fillQuadTree(QuadTree<Long> quadTree, Graph graph) {
         // TODO LATER persist quad tree to make things faster and store osm ids instead nothing
-        Integer empty = new Integer(1);
         int locs = graph.getLocations();
 
         // hack to find bug
@@ -140,7 +138,7 @@ public class PerfTest {
         for (int i = 0; i < locs; i++) {
             float lat = graph.getLatitude(i);
             float lon = graph.getLongitude(i);
-            quadTree.add(lat, lon, empty);
+            quadTree.add(lat, lon, 1L);
         }
     }
 }

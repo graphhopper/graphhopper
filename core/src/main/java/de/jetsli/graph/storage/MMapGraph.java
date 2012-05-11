@@ -27,8 +27,6 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.Cleaner;
-import sun.nio.ch.DirectBuffer;
 import static de.jetsli.graph.util.MyIteratorable.*;
 import gnu.trove.impl.hash.TIntFloatHash;
 import gnu.trove.map.hash.TIntFloatHashMap;
@@ -488,9 +486,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
     }
 
     private void clean(MappedByteBuffer mapping) {
-        Cleaner cleaner = ((DirectBuffer) mapping).cleaner();
-        if (cleaner != null)
-            cleaner.clean();
+        Helper.cleanMappedByteBuffer(mapping);
     }
 
     public void stats() {

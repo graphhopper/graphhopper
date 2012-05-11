@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.ui;
 
+import de.jetsli.graph.geohash.SpatialKeyHashtable;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.DistEntry;
@@ -43,8 +44,8 @@ public class MiniGraphUI {
         Graph g = OSMReaderTrials.defaultRead(osmFile, "/tmp/mmap-graph");
         new MiniGraphUI(g).visualize();
     }
-    private final QuadTree<Integer> quadTree;
-    private Collection<CoordTrig<Integer>> quadTreeNodes;
+    private final QuadTree<Long> quadTree;
+    private Collection<CoordTrig<Long>> quadTreeNodes;
     private final Graph graph;
     private double scaleX = 0.001f;
     private double scaleY = 0.001f;
@@ -63,7 +64,9 @@ public class MiniGraphUI {
     public MiniGraphUI(Graph g) {
         this.graph = g;
 
-        this.quadTree = new QuadTreeSimple<Integer>(8, 7 * 8);
+        // this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
+        this.quadTree = new SpatialKeyHashtable(10, 3).init(graph.getLocations());
+
         PerfTest.fillQuadTree(quadTree, graph);
         System.out.println("read " + quadTree.size() + " entries");
 
@@ -130,7 +133,7 @@ public class MiniGraphUI {
 
                 if (quadTreeNodes != null) {
                     System.out.println("found neighbors:" + quadTreeNodes.size());
-                    for (CoordTrig<Integer> coord : quadTreeNodes) {
+                    for (CoordTrig<Long> coord : quadTreeNodes) {
                         plot(g, coord.lat, coord.lon, 1, 1);
                     }
                 }
@@ -300,7 +303,7 @@ public class MiniGraphUI {
 
                         @Override public void actionPerformed(ActionEvent e) {
                             int counter = 0;
-                            for (CoordTrig<Integer> coord : quadTreeNodes) {
+                            for (CoordTrig<Long> coord : quadTreeNodes) {
                                 int ret = quadTree.remove(coord.lat, coord.lon);
                                 if (ret < 1) {
 //                                    System.out.println("cannot remove " + coord + " " + ret);

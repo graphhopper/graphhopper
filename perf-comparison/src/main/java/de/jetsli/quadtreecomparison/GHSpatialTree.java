@@ -37,20 +37,17 @@ public class GHSpatialTree implements SimplisticQuadTree {
     }
 
     public void init(int size) {
-        try {
-            qt = new SpatialKeyHashtable(skipLeftBits) {
+        qt = new SpatialKeyHashtable(skipLeftBits) {
 
-                @Override protected int getEntriesPerBucket() {
-                    return entriesPerBucket;
-                }
-            }.init(size);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
+            @Override protected int getEntriesPerBucket() {
+                return entriesPerBucket;
+            }
+        }.init(size);
+
     }
 
     public void put(double lat, double lon) {
-        qt.add(lat, lon, 0);
+        qt.add(lat, lon, 0L);
     }
 
     public int countNodes(double lat, double lon, double radiusInKm) {
