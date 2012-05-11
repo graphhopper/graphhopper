@@ -142,19 +142,19 @@ public class SpatialKeyHashtableTest {
         assertEquals(0, tree.getNoOfEntries(7 * bpb));
         assertEquals(0, tree.getNoOfEntries(0 * bpb));
         assertEquals(0, tree.getNoOfEntries(1 * bpb));
-        assertEquals(0, tree.countOverflowBytes(6 * bpb));
-        assertEquals(2 * bpo, tree.countOverflowBytes(7 * bpb));
-        assertEquals(1 * bpo, tree.countOverflowBytes(0 * bpb));
-        assertEquals(0, tree.countOverflowBytes(1 * bpb));
+        assertEquals(0, tree.getNoOfOverflowEntries(6 * bpb));
+        assertEquals(2, tree.getNoOfOverflowEntries(7 * bpb));
+        assertEquals(1, tree.getNoOfOverflowEntries(0 * bpb));
+        assertEquals(0, tree.getNoOfOverflowEntries(1 * bpb));
 
         // now add some entries to check if stopbit for different offsets works
         tree.add(5, 7);
         tree.add(5, 8);
         tree.add(5, 9);
-        assertEquals(1 * bpo, tree.countOverflowBytes(0 * bpb));
+        assertEquals(1, tree.getNoOfOverflowEntries(0 * bpb));
         // overflow into 0
         tree.add(5, 10);
-        assertEquals(2 * bpo, tree.countOverflowBytes(0 * bpb));
+        assertEquals(2, tree.getNoOfOverflowEntries(0 * bpb));
         assertEquals(4, tree.getNodes(5).size());
         assertEquals(10, (int) tree.getNodes(5).get(3).getValue());
         assertEquals(6, tree.getNodes(6).size());
@@ -218,18 +218,18 @@ public class SpatialKeyHashtableTest {
         assertEquals(3, tree.getEntriesPerBucket());
         tree.add(0, 1);
         tree.add(0, 2);
-        assertEquals(0, tree.countOverflowBytes(0));
+        assertEquals(0, tree.getNoOfOverflowEntries(0));
 
         tree.add(0, 3);
-        assertEquals(0, tree.countOverflowBytes(0));
+        assertEquals(0, tree.getNoOfOverflowEntries(0));
 
         tree.add(0, 4);
-        assertEquals(0, tree.countOverflowBytes(0));
-        assertEquals(tree.getBytesPerEntry() + 1, tree.countOverflowBytes(tree.getBytesPerBucket()));
+        assertEquals(0, tree.getNoOfOverflowEntries(0));
+        assertEquals(1, tree.getNoOfOverflowEntries(tree.getBytesPerBucket()));
 
         tree.add(1, 5);
         tree.add(1, 6);
-        assertEquals(tree.getBytesPerEntry() + 1, tree.countOverflowBytes(tree.getBytesPerBucket()));
+        assertEquals(1, tree.getNoOfOverflowEntries(tree.getBytesPerBucket()));
         assertEquals(1, tree.getNoOfEntries(tree.getBytesPerBucket()));
     }
 
@@ -254,13 +254,13 @@ public class SpatialKeyHashtableTest {
         assertEquals(0, tree.getNodes(3).size());
 
         // no overflow stuff
-        assertEquals(0, tree.countOverflowBytes(0));
-        assertEquals(0, tree.countOverflowBytes(bytesPerBucket));
-        assertEquals(0, tree.countOverflowBytes(2 * bytesPerBucket));
+        assertEquals(0, tree.getNoOfOverflowEntries(0));
+        assertEquals(0, tree.getNoOfOverflowEntries(bytesPerBucket));
+        assertEquals(0, tree.getNoOfOverflowEntries(2 * bytesPerBucket));
 
         // one overflow entry only
-        assertEquals(2 * (bytesPerEntry + 1), tree.countOverflowBytes(3 * bytesPerBucket));
-        assertEquals(2 * (bytesPerEntry + 1), tree.countOverflowBytes(4 * bytesPerBucket));
+        assertEquals(2, tree.getNoOfOverflowEntries(3 * bytesPerBucket));
+        assertEquals(2, tree.getNoOfOverflowEntries(4 * bytesPerBucket));
     }
 
     SpatialKeyHashtable createStorage(final int skipLeft, boolean compress) {
