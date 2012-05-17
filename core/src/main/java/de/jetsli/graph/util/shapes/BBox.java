@@ -73,7 +73,7 @@ public class BBox implements Shape {
 
     @Override
     public String toString() {
-        return minLon + "," + maxLon + " | " + minLat + "," + maxLat;
+        return minLon + "," + maxLon + "," + minLat + "," + maxLat;
     }
 
     @Override

@@ -22,6 +22,7 @@ import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;
+import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.CoordTrigLongEntry;
 import de.jetsli.graph.util.shapes.BBox;
@@ -185,6 +186,7 @@ public class SpatialHashtable implements QuadTree<Long> {
     private int bytesPerOverflowEntry;
     private int maxEntriesPerBucket;
     // key compression
+    private int unusedBits = BITS8;
     private int skipKeyBeginningBits, skipKeyEndBits;
     private int bytesPerKeyRest;
     private int spatialKeyBits;
@@ -219,12 +221,11 @@ public class SpatialHashtable implements QuadTree<Long> {
     protected void initKey() {
         // TODO calculate necessary spatial key precision (=>unusedBits) from maxEntries
         //
-        // one unused byte in spatial key (making encode/decode a bit faster) => but still higher precision than float
-        int unusedBits = BITS8;
+        // one unused byte in spatial key (making encode/decode a bit faster) => but still higher precision than float        
         spatialKeyBits = 8 * BITS8 - unusedBits;
         algo = new SpatialKeyAlgo(spatialKeyBits);
 
-        // skip the first byte for the bucket index + the unused byte        
+        // skip the first byte for the bucket index + the unused byte
         if (skipKeyBeginningBits < 0)
             skipKeyBeginningBits = BITS8 + unusedBits;
         else
@@ -338,15 +339,19 @@ public class SpatialHashtable implements QuadTree<Long> {
         // 2^28 * 3 ..  6 = ~800-1600 mio -> not possible to address this in a bytebuffer (int index)
         // bucket index = leftSide ^= veryRightSide
 
+        // System.out.println(BitUtil.toBitString(spatialKey));
         long veryRightSide = spatialKey;
         veryRightSide <<= skipKeyBeginningBits + bucketIndexBits;
+        // System.out.println(BitUtil.toBitString(veryRightSide));
         veryRightSide >>>= 8 * BITS8 - bucketIndexBits;
+        // System.out.println(BitUtil.toBitString(veryRightSide));
 
         spatialKey <<= skipKeyBeginningBits;
-        // System.out.println(BitUtil.toBitString(spatialKey, 64));
+        // System.out.println(BitUtil.toBitString(spatialKey));
         spatialKey >>>= skipKeyBeginningBits;
-        // System.out.println(BitUtil.toBitString(spatialKey, 64));
+        // System.out.println(BitUtil.toBitString(spatialKey));
         spatialKey >>>= skipKeyEndBits;
+        // System.out.println(BitUtil.toBitString(spatialKey));
         spatialKey ^= veryRightSide;
 
         // maxBuckets is a power of two so x-1 is very likely 'some kind' of prime number :)
@@ -387,6 +392,7 @@ public class SpatialHashtable implements QuadTree<Long> {
     }
 
     public void add(long key, long value) {
+        // System.out.println(BitUtil.toBitString(key));
         int bucketPointer = getBucketIndex(key);
         if (compressKey)
             key = getPartOfKeyToStore(key);
@@ -617,7 +623,8 @@ public class SpatialHashtable implements QuadTree<Long> {
     }
 
     private void getNeighbours(BBox nodeBB, Shape searchRect, int depth, long key, LeafWorker worker) {
-        if (depth >= bucketIndexBits * 2) {
+        if (depth >= bucketIndexBits * 2 + skipKeyBeginningBits - unusedBits) {
+            key <<= (skipKeyEndBits - bucketIndexBits);
             int bucketPointer = bytesPerBucket * getBucketIndex(key);
             getNodes(worker, bucketPointer);
             return;
