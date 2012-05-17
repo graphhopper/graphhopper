@@ -60,7 +60,6 @@ public abstract class QuadTreeTester {
         instance.add(12, 12, 333L);
         assertEquals(3, instance.size());
 
-
         assertEquals(2, instance.getNodesFromValue(12, 10, null).size());
         instance.add(12.0001, 12.0001, 444L);
         assertEquals(4, instance.size());
@@ -84,8 +83,8 @@ public abstract class QuadTreeTester {
 
     @Test
     public void testPutBatch() {
-        QuadTree<Long> instance = createQuadTree(100);
         int max = 1000;
+        QuadTree<Long> instance = createQuadTree(max);
         for (long i = 0; i < max; i++) {
             instance.add(i / 100.0, i / 100.0, i);
             assertEquals(i + 1, instance.size());

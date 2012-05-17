@@ -64,8 +64,8 @@ public class MiniGraphUI {
     public MiniGraphUI(Graph g) {
         this.graph = g;
 
-        // this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
-        this.quadTree = new SpatialKeyHashtable(10, 3).init(graph.getLocations());
+        this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
+//        this.quadTree = new SpatialKeyHashtable(10, 3).init(graph.getLocations());
 
         PerfTest.fillQuadTree(quadTree, graph);
         System.out.println("read " + quadTree.size() + " entries");

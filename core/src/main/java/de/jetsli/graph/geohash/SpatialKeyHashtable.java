@@ -688,7 +688,7 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
         LeafWorker worker = new LeafWorker() {
 
             @Override public boolean doWork(long key, long value) {
-                if (v == value) {
+                if (v == null || v == value) {
                     CoordTrigLongEntry e = new CoordTrigLongEntry();
                     algo.decode(key, e);
                     e.setValue(value);

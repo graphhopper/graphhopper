@@ -26,13 +26,12 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class SpatialKeyHashtableTest {
-//extends QuadTreeTester {
-//
-//    @Override
-//    protected QuadTree<Long> createQuadTree(long items) {
-//        return new SpatialKeyHashtable().init(items);
-//    }
+public class SpatialKeyHashtableTest extends QuadTreeTester {
+
+    @Override
+    protected QuadTree<Long> createQuadTree(long items) {
+        return new SpatialKeyHashtable().init(items);
+    }
 
     @Test
     public void testSize2() {
