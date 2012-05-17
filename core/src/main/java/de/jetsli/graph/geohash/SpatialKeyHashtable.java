@@ -43,15 +43,47 @@ import javax.swing.SwingUtilities;
  * This class maps latitude and longitude through there spatial key to values like osm ids, geo IPs,
  * references or similar.
  *
- * It is similar to SpatialKeyHashtableOld but should be more robust and more applicable to real
- * world due to the QuadTree interface. Although SpatialKeyHashtableOld is exactly the same idea -
- * except that no neighbor search was implemented there.
+ * ##### FEATURES #####
  *
- * Another feature of this implementation is to move the "bucket-index-window" to the front of the
- * spatial key (ie. skipKeyEndBits is maximal). Then it'll behave like a normal quadtree but will
- * have too many collisions/overflows. If you move the window to the end of the key (ie.
- * skipKeyEndBits is minimal) then this class will behave like a good spatial key hashtable
- * (collisions are minimal), but the neighbor searches are most inefficient.
+ * # memory efficient spatial storage, even for smaller collections of data
+ *
+ * # relative simple implementation ("safe bytes not bits"), use maintainable amount of methods even
+ * if its slower
+ *
+ * # implements QuadTree interface - with neighborhood search
+ *
+ * # duplicate key allowed
+ *
+ * # no separate overflow area necessary -> use the same buckets and use one byte in an overflow
+ * entries to indentify the origin of it (count distance to original bucket). ring: at the end use
+ * beginning as overflow area
+ *
+ * # moving the "bucket-index-window" to the front of the spatial key (ie. skipKeyEndBits is
+ * maximal). Then it'll behave like a normal quadtree but will have too many collisions/overflows.
+ *
+ * # moving the window to the end of the key (ie. skipKeyEndBits is minimal) then this class will
+ * behave like a good spatial key hashtable (collisions are minimal), but the neighbor searches are
+ * most inefficient.
+ *
+ * ##### TODOs: #####
+ *
+ * # possibility to increase size => efficient copy + close + reinit see Netty's
+ * DynamicChannelBuffer.ensureWritableBytes(int minWritableBytes)
+ *
+ * # implement removing via distance search => TODO change QuadTree interface
+ *
+ * ##### LATER GOALS: #####
+ *
+ * # thread safety ByteBuffer is not thread safe, though we could a lock object per index or simply
+ * using Read+WriteLocks
+ *
+ * # no integer limit due to the use of ByteBuffer.get(*int*) => use multiple bytebuffers -> see
+ * FatBuffer.java or ByteBufferLongBigList.java from it.unimi.dsi dsiutils (grepcode)! would be a
+ * lot slower due to i1=longIndex/len;i2=longIndex%len; in our put and get?
+ *
+ * # extract general purpose big-hashtable. ie. store less bytes for key (long/int) we would need
+ * spatialKeyAlgo.encode(lat,lon,bytes,iterations), getBucketIndex(bytes), add(byte[] bytes, int
+ * value)
  *
  * @author Peter Karich, info@jetsli.de
  */
@@ -171,30 +203,6 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
         this.maxEntriesPerBucket = initialEntriesPerBucket;
     }
 
-    // REQUIREMENTS:
-    // * memory efficient spatial storage, even for smaller collections of data
-    // * relative simple implementation ("safe bytes not bits"), use maintainable amount of methods even if its slower
-    // * moving bucket-index-window to configure between hashtable and quadtree 
-    //   -> avoid configuration, auto-determine all stuff like necessary window, maxBuckets, ...
-    // * implement neighbor search
-    // * allow duplicate keys => only a "List get(key, distance)" method
-    // * implement removing via distance search => TODO change QuadTree interface
-    // * possibility to increase size => efficient copy + close + reinit
-    //   see Netty's DynamicChannelBuffer.ensureWritableBytes(int minWritableBytes)
-    // * there should be no problem to identify if an entry is empty or not => length for used entries, 
-    //   offset byte for overflow entries which are > 0
-    // * no explicit overflow area -> use the same buckets and use one byte in an overflow entries 
-    //   to indentify the origin of it (count distance to original bucket). 
-    //   ring: at the end use beginning as overflow area
-    //
-    // LATER GOALS:
-    // * thread safe
-    //   ByteBuffer is not thread safe, though we could a lock object per index or simply using Read+WriteLocks
-    // * no integer limit due to the use of ByteBuffer.get(*int*) => use multiple bytebuffers 
-    //  -> see FatBuffer.java or ByteBufferLongBigList.java from it.unimi.dsi dsiutils (grepcode)!
-    //   would be a lot slower due to i1=longIndex/len;i2=longIndex%len; in our put and get?
-    // * extract general purpose big-hashtable. ie. store less bytes for key (long/int)
-    //   we would need spatialKeyAlgo.encode(lat,lon,bytes,iterations), getBucketIndex(bytes), add(byte[] bytes, int value)
     @Override
     public SpatialKeyHashtable init(long maxEntries) {
         initKey();
@@ -309,20 +317,26 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
         return maxBuckets;
     }
 
+    //####################
+    // bucket byte layout: 1 byte + maxEntriesPerBucket * bytesPerEntry
+    //   | size | entry1 | entry2 | ... | empty space | ... | oe2 | overflow entry1 |
+    //
+    // overflow entry layout:
+    //   offset to original bucket (7 bits) | stop bit | overflow entry
+    //
+    // size byte layout
+    //   entries per bucket (without overflowed entries!) (7 bits) | overflowed bit - marks if the current bucket is already overflowed
+    //
+    // key bit layout
+    // | skipBeginning (incl. unusedBits) | bucketIndexBits | veryRightSide | skipEnd |        
+    //####################
+    //
     int getBucketIndex(long spatialKey) {
         if (!compressKey)
             return Math.abs((int) (spatialKey % (maxBuckets - 1)));
 
-        // IMPORTANT: there is no need for bucket index to be a multiple of 8. Though memory savings 
-        // will be maximized then, because then *all* bits encoded as bucket index are not stored as key
-
-        // 2^16 * 6       =      ~400 k
-        // 2^20 * 3 .. 12 =     ~3-12 mio
-        // 2^24 * 3 .. 12 =   ~50-200 mio                
-        // 2^28 * 3 ..  6 = ~800-1600 mio -> not possible to address this in a bytebuffer (int index!)        
-
-        // | skipBeginning (incl. unusedBits) | bucketIndexBits | veryRightSide | skipEnd |
-        // result is bucketIndexBits ^= veryRightSide
+        // 2^28 * 3 ..  6 = ~800-1600 mio -> not possible to address this in a bytebuffer (int index)
+        // bucket index = leftSide ^= veryRightSide
 
         long veryRightSide = spatialKey;
         veryRightSide <<= skipKeyBeginningBits + bucketIndexBits;
@@ -351,9 +365,10 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
     /**
      * First part of spatialKey should be smaller than second. (In this implementation they are the
      * same length but to use more than 2^32 buckets => it is necessary to make a different length.
-     * And second part is better distributed and first XOR second is better distributed only if
+     * And second part is better distributed and 'first' XOR 'second' is better distributed only if
      * second is longer) And because it is smaller => less space consumed. Also the first part is
-     * more equal to other spatialKeys => in future implementations better compressable.
+     * more equal to other spatialKeys => in future implementations this could be better
+     * compressable.
      */
     long getPartOfKeyToStore(long spatialKey) {
         spatialKey <<= skipKeyBeginningBits;
@@ -371,15 +386,6 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
         return size == 0;
     }
 
-    //####################
-    // bucket byte layout: 1 byte + maxEntriesPerBucket * bytesPerEntry
-    //   | size | entry1 | entry2 | ... | empty space | ... | oe2 | overflow entry1 |
-    // overflow entry layout:
-    //   offset to original bucket (7 bits) | stop bit | overflow entry
-    // size byte layout
-    //   entries per bucket (without overflowed entries!) (7 bits) | overflowed bit - marks if the current bucket is already overflowed
-    //####################
-    //
     public void add(long key, long value) {
         int bucketPointer = getBucketIndex(key);
         if (compressKey)
@@ -503,7 +509,7 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
     private long getHelper(int pointer, int max) {
         long key = 0;
         while (true) {
-            // uh, byte converted to long makes all longish bits to 1!?
+            // byte converted to long makes all longish bits to 1 so remove them via & 0xff!
             key |= get(pointer) & 0xff;
             pointer++;
             if (pointer >= max)
@@ -543,33 +549,46 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
     @Override
     public void add(double lat, double lon, Long value) {
         if (value == null)
-            throw new UnsupportedOperationException("You cannot add null value. Auto convert this to  e.g. 0?");
+            throw new UnsupportedOperationException("You cannot add null values. Auto convert this to e.g. 0?");
         add(algo.encode(lat, lon), value);
     }
 
     @Override
     public int remove(double lat, double lon) {
-        algo.encode(lat, lon);
+        // TODO
+        // algo.encode(lat, lon);
         // size--;
         return 0;
     }
 
-    List<CoordTrig<Long>> getNodes(long key) {
-        final List<CoordTrig<Long>> res = new ArrayList<CoordTrig<Long>>();
+    List<CoordTrig<Long>> getNodes(final long key) {
         int bucketIndex = getBucketIndex(key);
-        getNodes(res, bucketIndex * bytesPerBucket, key);
+        final List<CoordTrig<Long>> res = new ArrayList<CoordTrig<Long>>();
+        getNodes(new LeafWorker() {
+
+            @Override public boolean doWork(long storedKey, long value) {
+                if (storedKey == key) {
+                    CoordTrig<Long> coord = new CoordTrigLongEntry();
+                    algo.decode(storedKey, coord);
+                    coord.setValue(value);
+                    res.add(coord);
+                    return true;
+                }
+                return false;
+            }
+        }, bucketIndex * bytesPerBucket);
         return res;
     }
 
     /**
      * returns nodes of specified key
      */
-    void getNodes(final List<CoordTrig<Long>> res, final int bucketPointer, final long key) {
-        // convert to pointer:        
+    void getNodes(final LeafWorker worker, final int bucketPointer) {
+        // convert to pointer:
         byte no = getNoOfEntries(bucketPointer);
         int max = bucketPointer + no * bytesPerEntry + 1;
         for (int pointer = bucketPointer + 1; pointer < max; pointer += bytesPerEntry) {
-            _add(res, getKey(pointer), key, pointer);
+            _add(getKey(pointer), pointer, worker);
         }
 
         if (isBucketFull(bucketPointer)) {
@@ -578,7 +597,7 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
 
                 @Override
                 boolean doWork() {
-                    if (_add(res, getKey(overflowPointer + 1), key, overflowPointer + 1)) {
+                    if (_add(getKey(overflowPointer + 1), overflowPointer + 1, worker)) {
                         // stopbit
                         if ((lastOffset & 0x1) == 1)
                             return true;
@@ -589,24 +608,18 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
         }
     }
 
-    boolean _add(final List<CoordTrig<Long>> res, long storedKey, long key, int pointer) {
-        if (storedKey == key || key == Long.MIN_VALUE) {
-            CoordTrig<Long> coord = new CoordTrigLongEntry();
-            algo.decode(storedKey, coord);
-            if (pointer + bytesPerKeyRest + 4 > getMemoryUsageInBytes(0))
-                throw new IllegalStateException("pointer " + pointer + " "
-                        + getMemoryUsageInBytes(0) + " " + bytesPerKeyRest);
+    boolean _add(long storedKey, int pointer, LeafWorker worker) {
+        if (pointer + bytesPerKeyRest + 4 > getMemoryUsageInBytes(0))
+            throw new IllegalStateException("pointer " + pointer + " "
+                    + getMemoryUsageInBytes(0) + " " + bytesPerKeyRest);
 
-            coord.setValue(getValue(pointer + bytesPerKeyRest));
-            res.add(coord);
-            return true;
-        }
-        return false;
+        return worker.doWork(storedKey, getValue(pointer + bytesPerKeyRest));
     }
 
     private void getNeighbours(BBox nodeBB, Shape searchRect, int depth, long key, LeafWorker worker) {
         if (depth >= bucketIndexBits * 2) {
-            // getNodes(key, searchRect, worker);
+            int bucketPointer = bytesPerBucket * getBucketIndex(key);
+            getNodes(worker, bucketPointer);
             return;
         }
 
@@ -640,7 +653,7 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
 
     interface LeafWorker {
 
-        void doWork(long key, long value);
+        boolean doWork(long key, long value);
     }
 
     @Override
@@ -648,14 +661,15 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
         final List<CoordTrig<Long>> result = new ArrayList<CoordTrig<Long>>();
         LeafWorker worker = new LeafWorker() {
 
-            @Override public void doWork(long key, long value) {
+            @Override public boolean doWork(long key, long value) {
                 CoordTrigLongEntry coord = new CoordTrigLongEntry();
                 algo.decode(key, coord);
                 if (boundingBox.contains(coord.lat, coord.lon)) {
                     result.add(coord);
                     coord.setValue(value);
-                    result.add(coord);
+                    return true;
                 }
+                return false;
             }
         };
         getNeighbours(BBox.createEarthMax(), boundingBox, 0, 0L, worker);
@@ -663,8 +677,7 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
     }
 
     @Override
-    public Collection<CoordTrig<Long>> getNodes(final double lat, final double lon,
-            final double distanceInKm) {
+    public Collection<CoordTrig<Long>> getNodes(double lat, double lon, double distanceInKm) {
         return getNodes(new Circle(lat, lon, distanceInKm));
     }
 
@@ -674,13 +687,15 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
         final List<CoordTrig<Long>> nodes = new ArrayList<CoordTrig<Long>>(1);
         LeafWorker worker = new LeafWorker() {
 
-            @Override public void doWork(long key, long value) {
+            @Override public boolean doWork(long key, long value) {
                 if (v == value) {
                     CoordTrigLongEntry e = new CoordTrigLongEntry();
                     algo.decode(key, e);
                     e.setValue(value);
                     nodes.add(e);
+                    return true;
                 }
+                return false;
             }
         };
         double err = 1.0 / Math.pow(10, algo.getExactPrecision());
@@ -748,9 +763,17 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
         MainPool pool = MainPool.getDefault();
         XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
-            // getNoOfEntries(bucketIndex * bytesPerBucket)
             final List<CoordTrig<Long>> res = new ArrayList<CoordTrig<Long>>();
-            getNodes(res, bucketIndex * bytesPerBucket, Long.MIN_VALUE);
+            getNodes(new LeafWorker() {
+
+                @Override public boolean doWork(long storedKey, long value) {
+                    CoordTrig<Long> coord = new CoordTrigLongEntry();
+                    algo.decode(storedKey, coord);
+                    coord.setValue(value);
+                    res.add(coord);
+                    return true;
+                }
+            }, bucketIndex * bytesPerBucket);
             xy.add(bucketIndex, res.size());
         }
         xy.setTitle(title);

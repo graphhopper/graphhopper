@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.geohash;
 
+import de.jetsli.graph.trees.QuadTree;
+import de.jetsli.graph.trees.QuadTreeTester;
 import de.jetsli.graph.util.BitUtil;
 import java.util.Random;
 import org.junit.*;
@@ -28,12 +30,8 @@ public class SpatialKeyHashtableTest {
 //extends QuadTreeTester {
 //
 //    @Override
-//    protected QuadTree<Integer> createQuadTree(long items) {
-//        try {
-//            return new SpatialKeyTree().init(items);
-//        } catch (Exception ex) {
-//            throw new RuntimeException(ex);
-//        }
+//    protected QuadTree<Long> createQuadTree(long items) {
+//        return new SpatialKeyHashtable().init(items);
 //    }
 
     @Test

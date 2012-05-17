@@ -248,27 +248,21 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     }
     
     @Override
-    public Collection<CoordTrig<T>> getNodes(final double lat, final double lon, final double distanceInKm) {
-        if (root == null)
-            return Collections.EMPTY_LIST;
-
-        final Circle c = new Circle(lat, lon, distanceInKm);
-        Acceptor<T> distanceAcceptor = new Acceptor<T>(algo) {
-
-            @Override public boolean accept(CoordTrig<T> entry) {
-                return c.contains(entry.lat, entry.lon);
-            }
-        };
-        getNeighbours(BBox.createEarthMax(), c, root, distanceAcceptor);
-        return distanceAcceptor.result;
+    public Collection<CoordTrig<T>> getNodes(double lat, double lon, double distanceInKm) {
+        return getNodes(new Circle(lat, lon, distanceInKm));
     }
 
     @Override
-    public Collection<CoordTrig<T>> getNodes(Shape boundingBox) {
+    public Collection<CoordTrig<T>> getNodes(final Shape boundingBox) {
         if (root == null)
             return Collections.EMPTY_LIST;
 
-        Acceptor<T> worker = new Acceptor<T>(algo);
+        Acceptor<T> worker = new Acceptor<T>(algo) {
+            
+            @Override public boolean accept(CoordTrig<T> entry) {
+                return boundingBox.contains(entry.lat, entry.lon);
+            }
+        };
         getNeighbours(BBox.createEarthMax(), boundingBox, root, worker);
         return worker.result;
     }
