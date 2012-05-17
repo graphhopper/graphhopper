@@ -1,6 +1,6 @@
 package de.jetsli.quadtreecomparison;
 
-import de.jetsli.graph.geohash.SpatialKeyHashtable;
+import de.jetsli.graph.geohash.SpatialHashtable;
 import de.jetsli.graph.reader.MiniPerfTest;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.storage.Graph;

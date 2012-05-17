@@ -17,7 +17,7 @@ package de.jetsli.graph.geohash;
 
 import de.genvlin.core.data.*;
 import de.genvlin.gui.plot.GPlotPanel;
-import de.jetsli.graph.geohash.SpatialKeyHashtable.BucketOverflowLoop;
+import de.jetsli.graph.geohash.SpatialHashtable.BucketOverflowLoop;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
@@ -45,7 +45,7 @@ import javax.swing.SwingUtilities;
  *
  * ##### FEATURES #####
  *
- * # memory efficient spatial storage, even for smaller collections of data
+ * # memory efficient spatial storage, also for smaller collections of data
  *
  * # relative simple implementation ("safe bytes not bits"), use maintainable amount of methods even
  * if its slower
@@ -67,10 +67,10 @@ import javax.swing.SwingUtilities;
  *
  * ##### TODOs: #####
  *
- * # possibility to increase size => efficient copy + close + reinit see Netty's
+ * # possibility to increase size => efficient copy + close + rehash see Netty's
  * DynamicChannelBuffer.ensureWritableBytes(int minWritableBytes)
  *
- * # implement removing via distance search => TODO change QuadTree interface
+ * # implement removing via distance search => change QuadTree interface
  *
  * ##### LATER GOALS: #####
  *
@@ -87,7 +87,7 @@ import javax.swing.SwingUtilities;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class SpatialKeyHashtable implements QuadTree<Long> {
+public class SpatialHashtable implements QuadTree<Long> {
 
     public static void main(String[] args) throws Exception {
         final Graph g = OSMReaderTrials.defaultRead(args[0], "/tmp/mmap-graph");
@@ -129,7 +129,7 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
                 int entriesPerBuck = 3;
 //                for (; entriesPerBuck < 20; entriesPerBuck += 8) {
                 log("\n");
-                SpatialKeyHashtable qt = new SpatialKeyHashtable(skipLeft, entriesPerBuck).init(locs);
+                SpatialHashtable qt = new SpatialHashtable(skipLeft, entriesPerBuck).init(locs);
                 int epb = qt.getEntriesPerBucket();
                 String title = "skipLeft:" + skipLeft + " entries/buck:" + epb;
                 log(title);
@@ -190,28 +190,28 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
     private int spatialKeyBits;
     private int bucketIndexBits;
 
-    public SpatialKeyHashtable() {
+    public SpatialHashtable() {
         this(8, 3);
     }
 
-    public SpatialKeyHashtable(int skipKeyBeginningBits) {
+    public SpatialHashtable(int skipKeyBeginningBits) {
         this(skipKeyBeginningBits, 3);
     }
 
-    public SpatialKeyHashtable(int skipKeyBeginningBits, int initialEntriesPerBucket) {
+    public SpatialHashtable(int skipKeyBeginningBits, int initialEntriesPerBucket) {
         this.skipKeyBeginningBits = skipKeyBeginningBits;
         this.maxEntriesPerBucket = initialEntriesPerBucket;
     }
 
     @Override
-    public SpatialKeyHashtable init(long maxEntries) {
+    public SpatialHashtable init(long maxEntries) {
         initKey();
         initBucketSizes((int) maxEntries);
         initBuffers();
         return this;
     }
 
-    public SpatialKeyHashtable setCompressKey(boolean compressKey) {
+    public SpatialHashtable setCompressKey(boolean compressKey) {
         this.compressKey = compressKey;
         return this;
     }
@@ -238,6 +238,20 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
             return val / div + 1;
     }
 
+    //####################
+    // bucket byte layout: 1 byte + maxEntriesPerBucket * bytesPerEntry
+    //   | size | entry1 | entry2 | ... | empty space | ... | oe2 | overflow entry1 |
+    //
+    // overflow entry layout:
+    //   offset to original bucket (7 bits) | stop bit | overflow entry
+    //
+    // size byte layout
+    //   entries per bucket (without overflowed entries!) (7 bits) | overflowed bit - marks if the current bucket is already overflowed
+    //
+    // key bit layout
+    // | skipBeginning (incl. unusedBits) | bucketIndexBits | veryRightSide | skipEnd |        
+    //####################
+    //
     protected void initBucketSizes(int maxEntries) {
         maxBuckets = correctDivide(maxEntries, maxEntriesPerBucket);
 
@@ -317,20 +331,6 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
         return maxBuckets;
     }
 
-    //####################
-    // bucket byte layout: 1 byte + maxEntriesPerBucket * bytesPerEntry
-    //   | size | entry1 | entry2 | ... | empty space | ... | oe2 | overflow entry1 |
-    //
-    // overflow entry layout:
-    //   offset to original bucket (7 bits) | stop bit | overflow entry
-    //
-    // size byte layout
-    //   entries per bucket (without overflowed entries!) (7 bits) | overflowed bit - marks if the current bucket is already overflowed
-    //
-    // key bit layout
-    // | skipBeginning (incl. unusedBits) | bucketIndexBits | veryRightSide | skipEnd |        
-    //####################
-    //
     int getBucketIndex(long spatialKey) {
         if (!compressKey)
             return Math.abs((int) (spatialKey % (maxBuckets - 1)));

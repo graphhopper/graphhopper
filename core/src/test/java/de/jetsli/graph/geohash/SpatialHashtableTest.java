@@ -26,16 +26,16 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class SpatialKeyHashtableTest extends QuadTreeTester {
+public class SpatialHashtableTest extends QuadTreeTester {
 
     @Override
     protected QuadTree<Long> createQuadTree(long items) {
-        return new SpatialKeyHashtable().init(items);
+        return new SpatialHashtable().init(items);
     }
 
     @Test
     public void testSize2() {
-        SpatialKeyHashtable key = new SpatialKeyHashtable(0, 7).init(20);
+        SpatialHashtable key = new SpatialHashtable(0, 7).init(20);
         assertTrue(key.getEntriesPerBucket() + "", key.getEntriesPerBucket() >= 7);
         assertTrue(key.getMaxBuckets() + " " + key.getEntriesPerBucket(),
                 key.getMaxBuckets() * key.getEntriesPerBucket() >= 20);
@@ -44,7 +44,7 @@ public class SpatialKeyHashtableTest extends QuadTreeTester {
     @Test
     public void testBucketIndex() {
         for (int i = 9; i < 20; i += 3) {
-            SpatialKeyHashtable tree = createSKTWithoutBuffer(i);
+            SpatialHashtable tree = createSKTWithoutBuffer(i);
             SpatialKeyAlgo algo = tree.getAlgo();
             Random rand = new Random();
             for (int j = 0; j < 10000; j++) {
@@ -61,7 +61,7 @@ public class SpatialKeyHashtableTest extends QuadTreeTester {
 
     @Test
     public void testGetPartOfKeyToStore() {
-        SpatialKeyHashtable tree = new SpatialKeyHashtable(8).setCompressKey(true);
+        SpatialHashtable tree = new SpatialHashtable(8).setCompressKey(true);
         tree.setBucketIndexBits(6);
         long part = tree.getPartOfKeyToStore(BitUtil.fromBitString2Long("01000000000110000011100000011110") << 32);
         assertEquals("00000000000000000000000000000110", BitUtil.toBitString(part, 4 * 8));
@@ -69,7 +69,7 @@ public class SpatialKeyHashtableTest extends QuadTreeTester {
 
     @Test
     public void testWriteNoOfEntries() {
-        SpatialKeyHashtable tree = new SpatialKeyHashtable(2, 10).setCompressKey(true).init(200);
+        SpatialHashtable tree = new SpatialHashtable(2, 10).setCompressKey(true).init(200);
         tree.writeNoOfEntries(0, 9, true);
         assertTrue(tree.isBucketFull(0));
         assertEquals(9, tree.getNoOfEntries(0));
@@ -87,7 +87,7 @@ public class SpatialKeyHashtableTest extends QuadTreeTester {
 
     @Test
     public void testStatsNoError() {
-        SpatialKeyHashtable tree = new SpatialKeyHashtable(10, 2).init(10000);
+        SpatialHashtable tree = new SpatialHashtable(10, 2).init(10000);
         Random rand = new Random(12);
         for (int i = 0; i < 10000; i++) {
             tree.add(Math.abs(rand.nextDouble()), Math.abs(rand.nextDouble()), (long) i * 100);
@@ -99,7 +99,7 @@ public class SpatialKeyHashtableTest extends QuadTreeTester {
 
     @Test
     public void testArrayIsACircle() {
-        SpatialKeyHashtable tree = new SpatialKeyHashtable(0, 1).setCompressKey(false).init(2);
+        SpatialHashtable tree = new SpatialHashtable(0, 1).setCompressKey(false).init(2);
         assertEquals(2, tree.getEntriesPerBucket());
         tree.add(1, 1);
         tree.add(1, 2);
@@ -115,7 +115,7 @@ public class SpatialKeyHashtableTest extends QuadTreeTester {
 
     @Test
     public void testArrayIsACircle2() {
-        SpatialKeyHashtable tree = new SpatialKeyHashtable(0, 1).setCompressKey(false).init(12);
+        SpatialHashtable tree = new SpatialHashtable(0, 1).setCompressKey(false).init(12);
         assertEquals(3, tree.getEntriesPerBucket());
         int bpb = tree.getBytesPerBucket();
         int bpo = tree.getBytesPerEntry() + 1;
@@ -169,7 +169,7 @@ public class SpatialKeyHashtableTest extends QuadTreeTester {
 
     @Test
     public void testAddAndGet() {
-        SpatialKeyHashtable tree = createStorage(10, false);
+        SpatialHashtable tree = createStorage(10, false);
         int max = tree.getEntriesPerBucket() * 2;
         long[] vals = new long[max];
 
@@ -193,7 +193,7 @@ public class SpatialKeyHashtableTest extends QuadTreeTester {
 
     @Test
     public void testWriteAndGetKey() {
-        SpatialKeyHashtable tree = createStorage(0, false);
+        SpatialHashtable tree = createStorage(0, false);
         tree.putKey(0, 123);
         assertEquals(123, tree.getKey(0));
         tree.putKey(2, Long.MAX_VALUE / 3);
@@ -211,7 +211,7 @@ public class SpatialKeyHashtableTest extends QuadTreeTester {
 
     @Test
     public void testCountEntriesAndOverflowEntries() {
-        SpatialKeyHashtable tree = createStorage(0, false);
+        SpatialHashtable tree = createStorage(0, false);
         assertEquals(3, tree.getEntriesPerBucket());
         tree.add(0, 1);
         tree.add(0, 2);
@@ -234,7 +234,7 @@ public class SpatialKeyHashtableTest extends QuadTreeTester {
     public void testKeyDuplicatesForceOverflow() {
         // 0 => force that it is a bad hash creation algo
         // false => do not compress key
-        SpatialKeyHashtable tree = createStorage(0, false);
+        SpatialHashtable tree = createStorage(0, false);
         assertEquals(3, tree.getEntriesPerBucket());
         int max = 6;
         int bytesPerBucket = tree.getBytesPerBucket();
@@ -260,17 +260,17 @@ public class SpatialKeyHashtableTest extends QuadTreeTester {
         assertEquals(2, tree.getNoOfOverflowEntries(4 * bytesPerBucket));
     }
 
-    SpatialKeyHashtable createStorage(final int skipLeft, boolean compress) {
+    SpatialHashtable createStorage(final int skipLeft, boolean compress) {
         try {
-            return new SpatialKeyHashtable(skipLeft, 1).setCompressKey(compress).init(120);
+            return new SpatialHashtable(skipLeft, 1).setCompressKey(compress).init(120);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
     // faster - but not functional
 
-    SpatialKeyHashtable createSKTWithoutBuffer(int i) {
-        return new SpatialKeyHashtable(i) {
+    SpatialHashtable createSKTWithoutBuffer(int i) {
+        return new SpatialHashtable(i) {
 
             @Override protected void initBuffers() {
             }

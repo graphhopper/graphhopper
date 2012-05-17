@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.ui;
 
-import de.jetsli.graph.geohash.SpatialKeyHashtable;
+import de.jetsli.graph.geohash.SpatialHashtable;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.DistEntry;
