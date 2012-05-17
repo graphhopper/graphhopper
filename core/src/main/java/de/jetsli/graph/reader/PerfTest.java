@@ -130,11 +130,7 @@ public class PerfTest {
     }
 
     public static void fillQuadTree(QuadTree<Long> quadTree, Graph graph) {
-        // TODO LATER persist quad tree to make things faster and store osm ids instead nothing
         int locs = graph.getLocations();
-
-        // hack to find bug
-//        locs = 1400000;
         for (int i = 0; i < locs; i++) {
             float lat = graph.getLatitude(i);
             float lon = graph.getLongitude(i);

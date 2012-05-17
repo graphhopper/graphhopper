@@ -173,7 +173,7 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
 
     // REQUIREMENTS:
     // * memory efficient spatial storage, even for smaller collections of data
-    // * relative simple implementation ("safe bytes not bits"), use lots of methods even if its slower
+    // * relative simple implementation ("safe bytes not bits"), use maintainable amount of methods even if its slower
     // * moving bucket-index-window to configure between hashtable and quadtree 
     //   -> avoid configuration, auto-determine all stuff like necessary window, maxBuckets, ...
     // * implement neighbor search
@@ -593,84 +593,49 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
         if (storedKey == key || key == Long.MIN_VALUE) {
             CoordTrig<Long> coord = new CoordTrigLongEntry();
             algo.decode(storedKey, coord);
-
             if (pointer + bytesPerKeyRest + 4 > getMemoryUsageInBytes(0))
-                throw new IllegalStateException("pointer " + pointer + " " + getMemoryUsageInBytes(0) + " " + bytesPerKeyRest);
+                throw new IllegalStateException("pointer " + pointer + " "
+                        + getMemoryUsageInBytes(0) + " " + bytesPerKeyRest);
 
             coord.setValue(getValue(pointer + bytesPerKeyRest));
             res.add(coord);
             return true;
         }
         return false;
-
     }
 
-    private void getNeighbours(BBox nodeBB, Shape searchRect, long bucketIndexBit, LeafWorker worker) {
-        if (bucketIndexBit < spatialKeyBits) {
-            // TODO where to get current key
-            worker.doWork(123, 321);
+    private void getNeighbours(BBox nodeBB, Shape searchRect, int depth, long key, LeafWorker worker) {
+        if (depth >= bucketIndexBits * 2) {
+            // getNodes(key, searchRect, worker);
             return;
         }
 
         double lat12 = (nodeBB.maxLat + nodeBB.minLat) / 2;
         double lon12 = (nodeBB.minLon + nodeBB.maxLon) / 2;
-
-        // top-left - see SpatialKeyAlgo that latitude goes from bottom to top and is 1 if on top
+        depth += 2;
+        key <<= 2;
+        // see SpatialKeyAlgo that latitude goes from bottom to top and is 1 if on top
         // 10 11
-        // 00 01
-        // TODO node10?
-        long node10 = bucketIndexBit >>> 1;
+        // 00 01    
+        // top-left    
         BBox nodeRect10 = new BBox(nodeBB.minLon, lon12, lat12, nodeBB.maxLat);
         if (searchRect.intersect(nodeRect10))
-            getNeighbours(nodeRect10, searchRect, node10, worker);
+            getNeighbours(nodeRect10, searchRect, depth, key | 0x2L, worker);
 
-        // top-right
-        // TODO 
-        long node11 = bucketIndexBit >>> 1;
+        // top-right        
         BBox nodeRect11 = new BBox(lon12, nodeBB.maxLon, lat12, nodeBB.maxLat);
         if (searchRect.intersect(nodeRect11))
-            getNeighbours(nodeRect11, searchRect, node11, worker);
+            getNeighbours(nodeRect11, searchRect, depth, key | 0x3L, worker);
 
         // bottom-left
-        // TODO 
-        long node00 = bucketIndexBit >>> 1;
         BBox nodeRect00 = new BBox(nodeBB.minLon, lon12, nodeBB.minLat, lat12);
         if (searchRect.intersect(nodeRect00))
-            getNeighbours(nodeRect00, searchRect, node00, worker);
+            getNeighbours(nodeRect00, searchRect, depth, key, worker);
 
         // bottom-right
-        // TODO 
-        long node01 = bucketIndexBit >>> 1;
         BBox nodeRect01 = new BBox(lon12, nodeBB.maxLon, nodeBB.minLat, lat12);
         if (searchRect.intersect(nodeRect01))
-            getNeighbours(nodeRect01, searchRect, node01, worker);
-    }
-
-    @Override
-    public Collection<CoordTrig<Long>> getNodes(final double lat, final double lon,
-            final double distanceInKm) {
-        final List<CoordTrig<Long>> result = new ArrayList<CoordTrig<Long>>();
-        final Circle c = new Circle(lat, lon, distanceInKm);
-        LeafWorker distanceAcceptor = new LeafWorker() {
-
-            @Override public void doWork(long key, long value) {
-                CoordTrigLongEntry coord = new CoordTrigLongEntry();
-                algo.decode(key, coord);
-                if (c.contains(coord.lat, coord.lon))
-                    result.add(coord);
-                coord.setValue(value);
-            }
-        };
-
-        // TODO maxBIT
-        getNeighbours(BBox.createEarthMax(), c, 123, distanceAcceptor);
-        return result;
-    }
-
-    @Override
-    public Collection<CoordTrig<Long>> getNodes(Shape boundingBox) {
-        // TODO
-        return Collections.EMPTY_LIST;
+            getNeighbours(nodeRect01, searchRect, depth, key | 0x1L, worker);
     }
 
     interface LeafWorker {
@@ -679,23 +644,48 @@ public class SpatialKeyHashtable implements QuadTree<Long> {
     }
 
     @Override
+    public Collection<CoordTrig<Long>> getNodes(final Shape boundingBox) {
+        final List<CoordTrig<Long>> result = new ArrayList<CoordTrig<Long>>();
+        LeafWorker worker = new LeafWorker() {
+
+            @Override public void doWork(long key, long value) {
+                CoordTrigLongEntry coord = new CoordTrigLongEntry();
+                algo.decode(key, coord);
+                if (boundingBox.contains(coord.lat, coord.lon)) {
+                    result.add(coord);
+                    coord.setValue(value);
+                    result.add(coord);
+                }
+            }
+        };
+        getNeighbours(BBox.createEarthMax(), boundingBox, 0, 0L, worker);
+        return result;
+    }
+
+    @Override
+    public Collection<CoordTrig<Long>> getNodes(final double lat, final double lon,
+            final double distanceInKm) {
+        return getNodes(new Circle(lat, lon, distanceInKm));
+    }
+
+    @Override
     public Collection<CoordTrig<Long>> getNodesFromValue(final double lat, final double lon,
-            final Long value) {
-        // TODO no spatialKey necessary?
-        // final long spatialKey = algo.encode(lat, lon);
+            final Long v) {
         final List<CoordTrig<Long>> nodes = new ArrayList<CoordTrig<Long>>(1);
         LeafWorker worker = new LeafWorker() {
 
             @Override public void doWork(long key, long value) {
-                // TODO !
-                getNodes(nodes, 0, key);
+                if (v == value) {
+                    CoordTrigLongEntry e = new CoordTrigLongEntry();
+                    algo.decode(key, e);
+                    e.setValue(value);
+                    nodes.add(e);
+                }
             }
         };
-        // TODO maxBIT
-        long maxBit = 1 << spatialKeyBits;
         double err = 1.0 / Math.pow(10, algo.getExactPrecision());
         getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err),
-                maxBit, worker);
+                0, 0L, worker);
         return nodes;
     }
 

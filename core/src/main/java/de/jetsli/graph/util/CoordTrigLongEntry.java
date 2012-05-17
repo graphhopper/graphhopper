@@ -26,7 +26,7 @@ public class CoordTrigLongEntry extends CoordTrig<Long> {
     public CoordTrigLongEntry() {
     }
 
-    public CoordTrigLongEntry(int o, double lat, double lon) {
+    public CoordTrigLongEntry(long o, double lat, double lon) {
         super(lat, lon);
         this.v = o;
     }
