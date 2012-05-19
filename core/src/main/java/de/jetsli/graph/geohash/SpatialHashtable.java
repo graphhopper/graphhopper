@@ -33,7 +33,6 @@ import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -269,7 +268,7 @@ public class SpatialHashtable implements QuadTree<Long> {
             maxEntriesPerBucket++;
 
             bytesPerKeyRest = correctDivide(spatialKeyBits - bucketIndexBits, BITS8);
-            skipKeyEndBits = 8 * BITS8 - skipKeyBeginningBits - bucketIndexBits;
+            skipKeyEndBits = 8 * BITS8 - skipKeyBeginningBits - bucketIndexBits * 2;
             if (skipKeyEndBits < 0)
                 throw new IllegalStateException("Too many entries (" + maxEntries + ") for this"
                         + " skipBeginning value (" + skipKeyBeginningBits
@@ -320,6 +319,14 @@ public class SpatialHashtable implements QuadTree<Long> {
         return bytesPerEntry;
     }
 
+    public int getSkipKeyBeginningBits() {
+        return skipKeyBeginningBits;
+    }
+
+    public int getBucketIndexBits() {
+        return bucketIndexBits;
+    }
+
     public SpatialKeyAlgo getAlgo() {
         return algo;
     }
@@ -348,9 +355,7 @@ public class SpatialHashtable implements QuadTree<Long> {
 
         spatialKey <<= skipKeyBeginningBits;
         // System.out.println(BitUtil.toBitString(spatialKey));
-        spatialKey >>>= skipKeyBeginningBits;
-        // System.out.println(BitUtil.toBitString(spatialKey));
-        spatialKey >>>= skipKeyEndBits;
+        spatialKey >>>= skipKeyBeginningBits + skipKeyEndBits + bucketIndexBits;
         // System.out.println(BitUtil.toBitString(spatialKey));
         spatialKey ^= veryRightSide;
 
@@ -375,10 +380,47 @@ public class SpatialHashtable implements QuadTree<Long> {
      * more equal to other spatialKeys => in future implementations this could be better
      * compressable.
      */
-    long getPartOfKeyToStore(long spatialKey) {
-        spatialKey <<= skipKeyBeginningBits;
-        spatialKey >>>= 8 * BITS8 - bucketIndexBits;
-        return spatialKey;
+    long getStoredKey(long spatialKey) {
+        if (!compressKey)
+            return spatialKey;
+
+        // | skipKeyBeginningBits | x (bucketIndexBits) | y (bucketIndexBits) | skipped
+        // => REMOVE y
+        long skippedRight = spatialKey;
+        int tmp = skipKeyBeginningBits + bucketIndexBits * 2;
+        skippedRight <<= tmp;
+        skippedRight >>>= tmp;
+
+//        System.out.println(BitUtil.toBitString(spatialKey));
+        spatialKey >>>= bucketIndexBits + skipKeyEndBits;
+        spatialKey <<= skipKeyEndBits;
+//        System.out.println(BitUtil.toBitString(spatialKey));
+//        System.out.println(BitUtil.toBitString(skippedRight));
+        return spatialKey | skippedRight;
+    }
+
+    long toUncompressedKey(long storedKey, int bucketIndex) {
+        if (!compressKey)
+            return storedKey;
+
+        // | skipKeyBeginningBits | x (bucketIndexBits) | y (bucketIndexBits) | skipped
+        // => INSERT y
+        int tmp = BITS8 * 8 - skipKeyEndBits;
+        long right = storedKey;
+        right <<= tmp;
+        right >>>= tmp;
+        long x = storedKey << BITS8 * 8 - bucketIndexBits - skipKeyEndBits;
+        x >>>= BITS8 * 8 - bucketIndexBits;
+        storedKey >>>= skipKeyEndBits;
+        storedKey <<= skipKeyEndBits + bucketIndexBits;
+//        System.out.println(BitUtil.toBitString(storedKey));
+//        System.out.println(BitUtil.toBitString(right));
+        storedKey |= right;
+//        System.out.println(BitUtil.toBitString(bucketIndex));
+        long y = (x ^ bucketIndex) << skipKeyEndBits;
+//        System.out.println(BitUtil.toBitString(x));
+//        System.out.println(BitUtil.toBitString(y));
+        return storedKey | y;
     }
 
     @Override
@@ -392,36 +434,33 @@ public class SpatialHashtable implements QuadTree<Long> {
     }
 
     public void add(long key, long value) {
-        // System.out.println(BitUtil.toBitString(key));
-        int bucketPointer = getBucketIndex(key);
-        if (compressKey)
-            key = getPartOfKeyToStore(key);
+        int bucketIndex = getBucketIndex(key);
+        long storedKey = getStoredKey(key);
 
         // convert bucketIndex to byte pointer
-        bucketPointer *= bytesPerBucket;
-
-        if (isBucketFull(bucketPointer)) {
-            bucketPointer = findExistingOverflow(bucketPointer + bytesPerBucket, key);
+        int pointer = bucketIndex * bytesPerBucket;
+        if (isBucketFull(pointer)) {
+            pointer = findExistingOverflow(pointer + bytesPerBucket, storedKey);
         } else {
-            byte no = getNoOfEntries(bucketPointer);
-            int ovflBytes = getNoOfOverflowEntries(bucketPointer, no);
+            byte no = getNoOfEntries(pointer);
+            int ovflBytes = getNoOfOverflowEntries(pointer, no);
 
             // will the new entry fit into the current bucket or do we need to overflow?
             if (ovflBytes * bytesPerOverflowEntry + (no + 1) * bytesPerEntry + 1 <= bytesPerBucket) {
                 // store current entries in this bucket
-                writeNoOfEntries(bucketPointer, no + 1, false);
+                writeNoOfEntries(pointer, no + 1, false);
                 // skip old entries and one byte for length info
-                bucketPointer += no * bytesPerEntry + 1;
+                pointer += no * bytesPerEntry + 1;
             } else {
                 // store overflowed bit but old size
-                writeNoOfEntries(bucketPointer, no, true);
+                writeNoOfEntries(pointer, no, true);
                 // Use overflow area! Ie. empty space from right to left of one bucket
-                bucketPointer = findFreeOverflow(bucketPointer + bytesPerBucket, 0);
+                pointer = findFreeOverflow(pointer + bytesPerBucket, 0);
             }
         }
 
-        putKey(bucketPointer, key);
-        putValue(bucketPointer + bytesPerKeyRest, value);
+        putKey(pointer, storedKey);
+        putValue(pointer + bytesPerKeyRest, value);
         size++;
     }
 
@@ -455,8 +494,8 @@ public class SpatialHashtable implements QuadTree<Long> {
      *
      * @param bytesPointer use the pointer from the overflow area (next to the original bucket)
      */
-    private int findExistingOverflow(int bytesPointer, long key) {
-        BucketOverflowLoop loop1 = new KeyCheckLoop(key);
+    private int findExistingOverflow(int bytesPointer, long storedKey) {
+        BucketOverflowLoop loop1 = new KeyCheckLoop(storedKey);
         bytesPointer = loop1.throughBuckets(bytesPointer);
         // write offset and remove stopbit
         put(loop1.overflowPointer, (byte) ((loop1.lastOffset >>> 1) << 1));
@@ -504,8 +543,9 @@ public class SpatialHashtable implements QuadTree<Long> {
         return count;
     }
 
-    final long getKey(int pointer) {
-        return getHelper(pointer, pointer + bytesPerKeyRest);
+    final long getKey(int pointer, int bucketIndex) {
+        long storedKey = getHelper(pointer, pointer + bytesPerKeyRest);
+        return toUncompressedKey(storedKey, bucketIndex);
     }
 
     final long getValue(int pointer) {
@@ -525,31 +565,31 @@ public class SpatialHashtable implements QuadTree<Long> {
         return key;
     }
 
-    final byte get(int index) {
-        return storage.get(index);
+    final byte get(int pointer) {
+        return storage.get(pointer);
     }
 
-    final void putValue(int index, long val) {
-        putHelper(index + bytesPerValue - 1, val);
+    final void putValue(int pointer, long val) {
+        putHelper(pointer + bytesPerValue - 1, val);
     }
 
-    final void putKey(int index, long key) {
-        putHelper(index + bytesPerKeyRest - 1, key);
+    final void putKey(int pointer, long storedKey) {
+        putHelper(pointer + bytesPerKeyRest - 1, storedKey);
     }
 
-    private void putHelper(int start, long val) {
+    private void putHelper(int pointer, long val) {
         while (true) {
-            put(start, (byte) val);
+            put(pointer, (byte) val);
             val >>>= BITS8;
             if (val == 0)
                 break;
 
-            start--;
+            pointer--;
         }
     }
 
-    private void put(int index, byte b) {
-        storage.put(index, b);
+    private void put(int pointer, byte b) {
+        storage.put(pointer, b);
     }
 
     @Override
@@ -582,19 +622,20 @@ public class SpatialHashtable implements QuadTree<Long> {
                 }
                 return false;
             }
-        }, bucketIndex * bytesPerBucket);
+        }, bucketIndex);
         return res;
     }
 
     /**
-     * returns nodes of specified key
+     * allows the worker to process nodes of the specified bucketIndex
      */
-    void getNodes(final LeafWorker worker, final int bucketPointer) {
+    private void getNodes(final LeafWorker worker, final int bucketIndex) {
+        int bucketPointer = bucketIndex * bytesPerBucket;
         // convert to pointer:
         byte no = getNoOfEntries(bucketPointer);
         int max = bucketPointer + no * bytesPerEntry + 1;
         for (int pointer = bucketPointer + 1; pointer < max; pointer += bytesPerEntry) {
-            _add(getKey(pointer), pointer, worker);
+            _add(getKey(pointer, bucketIndex), pointer, worker);
         }
 
         if (isBucketFull(bucketPointer)) {
@@ -603,7 +644,7 @@ public class SpatialHashtable implements QuadTree<Long> {
 
                 @Override
                 boolean doWork() {
-                    if (_add(getKey(overflowPointer + 1), overflowPointer + 1, worker)) {
+                    if (_add(getKey(overflowPointer + 1, bucketIndex), overflowPointer + 1, worker)) {
                         // stopbit
                         if ((lastOffset & 0x1) == 1)
                             return true;
@@ -624,9 +665,8 @@ public class SpatialHashtable implements QuadTree<Long> {
 
     private void getNeighbours(BBox nodeBB, Shape searchRect, int depth, long key, LeafWorker worker) {
         if (depth >= bucketIndexBits * 2 + skipKeyBeginningBits - unusedBits) {
-            key <<= (skipKeyEndBits - bucketIndexBits);
-            int bucketPointer = bytesPerBucket * getBucketIndex(key);
-            getNodes(worker, bucketPointer);
+            key <<= skipKeyEndBits;
+            getNodes(worker, getBucketIndex(key));
             return;
         }
 
@@ -780,7 +820,7 @@ public class SpatialHashtable implements QuadTree<Long> {
                     res.add(coord);
                     return true;
                 }
-            }, bucketIndex * bytesPerBucket);
+            }, bucketIndex);
             xy.add(bucketIndex, res.size());
         }
         xy.setTitle(title);
@@ -859,11 +899,13 @@ public class SpatialHashtable implements QuadTree<Long> {
         int lastOffset;
         int newOffset;
         int overflowPointer;
+        int startBucketIndex;
 
         /**
          * steps through bucket by bucket and restarts at 0 if "too far"
          */
         int throughBuckets(int bucketPointer) {
+            startBucketIndex = bucketPointer / bytesPerBucket;
             int i = -1;
             MAIN:
             for (; i < maxBuckets; i++) {
@@ -915,18 +957,18 @@ public class SpatialHashtable implements QuadTree<Long> {
 
     class KeyCheckLoop extends BucketOverflowLoop {
 
-        long key;
+        long storedKey;
 
-        public KeyCheckLoop(long key) {
-            this.key = key;
+        public KeyCheckLoop(long storedKey) {
+            this.storedKey = storedKey;
         }
 
         @Override
         boolean doWork() {
             // stopbit
             if ((lastOffset & 0x1) == 1) {
-                long tmpKey = getKey(overflowPointer + 1);
-                if (tmpKey == key)
+                long tmpKey = getKey(overflowPointer + 1, startBucketIndex);
+                if (tmpKey == storedKey)
                     return true;
             }
             return false;
