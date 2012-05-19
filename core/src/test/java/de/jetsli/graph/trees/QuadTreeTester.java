@@ -92,9 +92,11 @@ public abstract class QuadTreeTester {
 
         assertEquals(max, instance.size());
         for (int i = 0; i < max; i++) {
-            Long val = (Long) instance.getNodesFromValue(i / 100.0, i / 100.0, null).iterator().next().getValue();
-            assertNotNull("i/100 ", val);
-            assertEquals(i + "/100", i, (long) val);
+            Collection<CoordTrig<Long>> coll = instance.getNodesFromValue(i / 100.0, i / 100.0, null);
+            assertEquals(i + "/" + max, 1, coll.size());
+            Long val = (Long) coll.iterator().next().getValue();
+            assertNotNull(i + "/" + max, val);
+            assertEquals(i + "/" + max, i, (long) val);
         }
 
         for (int i = 0; i < max; i++) {
