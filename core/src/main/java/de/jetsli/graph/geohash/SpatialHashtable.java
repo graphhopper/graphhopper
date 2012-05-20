@@ -17,13 +17,12 @@ package de.jetsli.graph.geohash;
 
 import de.genvlin.core.data.*;
 import de.genvlin.gui.plot.GPlotPanel;
-import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.geohash.SpatialHashtable.BucketOverflowLoop;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;
+import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.CoordTrigLongEntry;
 import de.jetsli.graph.util.shapes.BBox;
@@ -194,6 +193,7 @@ public class SpatialHashtable implements QuadTree<Long> {
     private int bytesPerKeyRest;
     private int spatialKeyBits;
     private int bucketIndexBits;
+    private long rightMask;
 
     public SpatialHashtable() {
         this(8, 3);
@@ -267,9 +267,13 @@ public class SpatialHashtable implements QuadTree<Long> {
         maxEntriesPerBucket = (int) Math.round(correctDivide(maxEntries, maxBuckets));
 
         // introduce hash overflow area
-        maxEntriesPerBucket++;
-        // TODO does not work for small values
-        // maxEntriesPerBucket *= 1.25;
+        if (maxEntriesPerBucket < 5)
+            maxEntriesPerBucket++;
+        else if (maxEntriesPerBucket < 8)
+            maxEntriesPerBucket += 2;
+        else
+            maxEntriesPerBucket *= 1.25;
+
         // TODO overflow area: When keys are uncompressed we could easily increase maxBucket size.
         // maxBuckets *= 1.1;
         // For the compressed case we would need to adjust bucketIndexBits to use the bigger buckets
@@ -297,6 +301,8 @@ public class SpatialHashtable implements QuadTree<Long> {
         // => maximum entries per bucket = 128
         int bytesForLength = 1;
         bytesPerBucket = maxEntriesPerBucket * bytesPerEntry + bytesForLength;
+        if (skipKeyEndBits > 0)
+            rightMask = (1L << skipKeyEndBits) - 1;
     }
 
     public void setBytesPerValue(int bytesPerValue) {
@@ -390,11 +396,7 @@ public class SpatialHashtable implements QuadTree<Long> {
 
         // | skipKeyBeginningBits | x (bucketIndexBits) | y (bucketIndexBits) | skipped
         // => REMOVE y
-        long skippedRight = spatialKey;
-        int tmp = skipKeyBeginningBits + bucketIndexBits * 2;
-        skippedRight <<= tmp;
-        skippedRight >>>= tmp;
-
+        long skippedRight = spatialKey & rightMask;
 //        System.out.println(BitUtil.toBitString(spatialKey));
         spatialKey >>>= bucketIndexBits + skipKeyEndBits;
         spatialKey <<= skipKeyEndBits;
@@ -727,6 +729,7 @@ public class SpatialHashtable implements QuadTree<Long> {
     @Override
     public Collection<CoordTrig<Long>> getNodes(final Shape boundingBox) {
         final List<CoordTrig<Long>> result = new ArrayList<CoordTrig<Long>>();
+
         LeafWorker worker = new LeafWorker(maxBuckets) {
 
             @Override public boolean doWork(long key, long value) {
@@ -740,6 +743,12 @@ public class SpatialHashtable implements QuadTree<Long> {
                 return false;
             }
         };
+
+        // brute force:
+//        for (int bi = 0; bi < maxBuckets; bi++) {
+//            getNodes(worker, bi);            
+//        }        
+        // quadtree:
         getNeighbours(BBox.createEarthMax(), boundingBox, 0, 0L, worker);
         return result;
     }
@@ -911,8 +920,8 @@ public class SpatialHashtable implements QuadTree<Long> {
 
         int countEmptyBytes = 0;
         for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
-            int entries = getNoOfEntries(bucketIndex);
-            int ovfl = getNoOfOverflowEntries(bucketIndex);
+            int entries = getNoOfEntries(bucketIndex * bytesPerBucket);
+            int ovfl = getNoOfOverflowEntries(bucketIndex * bytesPerBucket);
             countEmptyBytes += bytesPerBucket - 1 - (entries * bytesPerEntry + ovfl * bytesPerOverflowEntry);
         }
         return countEmptyBytes;

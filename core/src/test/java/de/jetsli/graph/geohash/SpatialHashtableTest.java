@@ -37,13 +37,13 @@ public class SpatialHashtableTest extends QuadTreeTester {
     }
 
     @Test
-    @Override public void testRemove() {
-        // TODO not yet implemented
+    @Override public void testPutBatch() {
+        // TODO remove this (fix problem)
     }
 
     @Test
-    @Override public void testPutBatch() {
-        // TODO fix problem
+    @Override public void testRemove() {
+        // TODO remove this (not yet implemented)
     }
 
     @Test

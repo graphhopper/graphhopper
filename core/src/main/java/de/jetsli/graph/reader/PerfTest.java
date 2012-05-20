@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.reader;
 
+import de.jetsli.graph.geohash.SpatialHashtable;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeSimple;
@@ -69,18 +70,19 @@ public class PerfTest {
         //  => ~10%   when using int   instead double    in SpatialKeyAlgo for de/encode => but problems with precision if allBits >= 46
         //  => ~30%   when using int   instead long      in SpatialKeyAlgo for de/encode => but problems with precision if allBits >= 46
         //  => ~1000% when using only 32 bits for encoding instead >=48
-        int maxDist = 50;
-        int maxEntriesPerL = 20;
-        int minBits = 64;
+        int maxDist = 10;
+        int maxEntriesPerL = 30;
+        int minBits = 10;
         System.out.println(new Date() + "# maxDist:" + maxDist + ", maxEntries/leaf:" + maxEntriesPerL + ", minBits:" + minBits);
 
-        measureFill(minBits, maxEntriesPerL);
-//        measureSearch(minBits, maxDist, maxEntriesPerL);
+//        measureFill(minBits, maxEntriesPerL);
+        measureSearch(minBits, maxDist, maxEntriesPerL);
     }
 
     private void measureFill(int minBits, int maxEPerL) {
-        for (int bits = minBits; bits <= 64; bits += 16) {
-            for (int entriesPerLeaf = 16; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
+        for (int bits = minBits; bits <= 30; bits += 2) {
+            int entriesPerLeaf = 3;
+//            for (; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
                 final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
                 fillQuadTree(quadTree, g);
                 System.gc();
@@ -97,16 +99,18 @@ public class PerfTest {
                         fillQuadTree(quadTree, g);
                         return quadTree.size();
                     }
-                }.setMax(40).start();
-            }
+                }.setMax(20).start();
+//            }
         }
     }
 
     private void measureSearch(int minBits, int maxDist, int maxEPerL) {
-        for (int bits = minBits; bits <= 64; bits += 16) {
-            for (int distance = 10; distance < maxDist; distance *= 2) {
-                for (int entriesPerLeaf = 16; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
-                    final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
+        for (int bits = minBits; bits <= 30; bits += 2) {
+            for (int distance = 1; distance < maxDist; distance *= 2) {
+                int entriesPerLeaf = 3;
+//                for (; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
+                    //final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
+                    final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getLocations());
                     fillQuadTree(quadTree, g);
                     System.gc();
                     System.gc();
@@ -123,8 +127,8 @@ public class PerfTest {
                             float lon = (random.nextInt(lonMax - lonMin) + lonMin) / 10000.0f;
                             return quadTree.getNodes(lat, lon, tmp).size();
                         }
-                    }.setMax(100).setShowProgress(true).setSeed(0).start();
-                }
+                    }.setMax(10).setShowProgress(true).setSeed(0).start();
+//                }
             }
         }
     }
