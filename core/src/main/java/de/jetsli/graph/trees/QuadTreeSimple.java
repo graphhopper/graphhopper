@@ -249,7 +249,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     
     @Override
     public Collection<CoordTrig<T>> getNodes(double lat, double lon, double distanceInKm) {
-        return getNodes(new Circle(lat, lon, distanceInKm));
+        return getNodes(new Circle(lat, lon, distanceInKm, calc));
     }
 
     @Override

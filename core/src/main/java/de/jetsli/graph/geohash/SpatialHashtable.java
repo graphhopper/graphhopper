@@ -18,6 +18,7 @@ package de.jetsli.graph.geohash;
 import de.genvlin.core.data.*;
 import de.genvlin.gui.plot.GPlotPanel;
 import de.jetsli.graph.geohash.SpatialHashtable.BucketOverflowLoop;
+import de.jetsli.graph.reader.CalcDistance;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
@@ -176,6 +177,7 @@ public class SpatialHashtable implements QuadTree<Long> {
     }
     private int size;
     private int maxBuckets;
+    private CalcDistance calc = new CalcDistance();
     private SpatialKeyAlgo algo;
     private boolean compressKey = true;
     // bits & byte stuff
@@ -763,7 +765,7 @@ public class SpatialHashtable implements QuadTree<Long> {
 
     @Override
     public Collection<CoordTrig<Long>> getNodes(double lat, double lon, double distanceInKm) {
-        return getNodes(new Circle(lat, lon, distanceInKm));
+        return getNodes(new Circle(lat, lon, distanceInKm, calc));
     }
 
     @Override

@@ -22,8 +22,8 @@ import de.jetsli.graph.reader.CalcDistance;
  */
 public class Circle implements Shape {
 
-    // need an instance per circle??
-    private static CalcDistance calc = new CalcDistance();
+    private final static CalcDistance SINGLETON = new CalcDistance();
+    private CalcDistance calc = new CalcDistance();
     private final double radiusInKm;
     private final double lat;
     private final double lon;
@@ -31,6 +31,11 @@ public class Circle implements Shape {
     private final BBox bbox;
 
     public Circle(double lat, double lon, double radiusInKm) {
+        this(lat, lon, radiusInKm, SINGLETON);
+    }
+
+    public Circle(double lat, double lon, double radiusInKm, CalcDistance calc) {
+        this.calc = calc;
         this.lat = lat;
         this.lon = lon;
         this.radiusInKm = radiusInKm;
