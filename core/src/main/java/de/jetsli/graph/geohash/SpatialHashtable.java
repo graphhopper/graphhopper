@@ -22,7 +22,6 @@ import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;
-import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.CoordTrigLongEntry;
 import de.jetsli.graph.util.shapes.BBox;

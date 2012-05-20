@@ -53,24 +53,26 @@ public class PerfTest {
     int lonMin = 91924, lonMax = 105784;
     // Try to use MemoryMeter https://github.com/jbellis/jamm
 
-    public void start() {
-        System.out.println("locations:" + g.getLocations());
+    {
+        // QuadTreeSimple (with spatial key)
         // for fill: 1.82sec/iter
-
         // for query: 16 entriesPerNode seems to be fast and not such a memory waste
         // => approx 46 bytes/entry + sizeOf(Integer)
         // current results for 64 bits:
         // 10km search => 0.048s, ~  70k nodes per search retrieved
         // 20km search => 0.185s, ~ 300k
         // 40km search => 0.620s, ~ 850k
-
         // increase speed about
         //  => ~2%    when using int   instead double    in BBox (multiplied with 1e+7 before) => but too complicated
         //  => ~2%    when using float instead of double in CoordTrig => but bad in other cases. if double and float implementation => too complicated
         //  => ~10%   when using int   instead double    in SpatialKeyAlgo for de/encode => but problems with precision if allBits >= 46
         //  => ~30%   when using int   instead long      in SpatialKeyAlgo for de/encode => but problems with precision if allBits >= 46
         //  => ~1000% when using only 32 bits for encoding instead >=48
-        int maxDist = 10;
+    }
+
+    public void start() {
+        System.out.println("locations:" + g.getLocations());
+        int maxDist = 4;
         int maxEntriesPerL = 30;
         int minBits = 10;
         System.out.println(new Date() + "# maxDist:" + maxDist + ", maxEntries/leaf:" + maxEntriesPerL + ", minBits:" + minBits);
@@ -83,23 +85,25 @@ public class PerfTest {
         for (int bits = minBits; bits <= 30; bits += 2) {
             int entriesPerLeaf = 3;
 //            for (; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
-                final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
-                fillQuadTree(quadTree, g);
-                System.gc();
-                System.gc();
-                float mem = (float) quadTree.getMemoryUsageInBytes(1) / Helper.MB;
-                quadTree.clear();
-                System.out.println(new Date() + "# entries/leaf:" + entriesPerLeaf + ", bits:" + bits + ", mem:" + mem);
-                final int epl = entriesPerLeaf;
-                final int b = bits;
-                new MiniPerfTest("fill") {
+            //final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
+            final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getLocations());
+            fillQuadTree(quadTree, g);
+            System.gc();
+            System.gc();
+            float mem = (float) quadTree.getMemoryUsageInBytes(1) / Helper.MB;
+            quadTree.clear();
+            System.out.println(new Date() + "# entries/leaf:" + entriesPerLeaf + ", bits:" + bits + ", mem:" + mem);
+            final int epl = entriesPerLeaf;
+            final int b = bits;
+            new MiniPerfTest("fill") {
 
-                    @Override public long doCalc(int run) {
-                        QuadTree<Long> quadTree = new QuadTreeSimple<Long>(epl, b);
-                        fillQuadTree(quadTree, g);
-                        return quadTree.size();
-                    }
-                }.setMax(20).start();
+                @Override public long doCalc(int run) {
+                    //QuadTree<Long> quadTree = new QuadTreeSimple<Long>(epl, b);
+                    QuadTree<Long> quadTree = new SpatialHashtable(b, epl).init(g.getLocations());
+                    fillQuadTree(quadTree, g);
+                    return quadTree.size();
+                }
+            }.setMax(20).start();
 //            }
         }
     }
@@ -109,25 +113,25 @@ public class PerfTest {
             for (int distance = 1; distance < maxDist; distance *= 2) {
                 int entriesPerLeaf = 3;
 //                for (; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
-                    //final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
-                    final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getLocations());
-                    fillQuadTree(quadTree, g);
-                    System.gc();
-                    System.gc();
-                    float mem = (float) quadTree.getMemoryUsageInBytes(1) / Helper.MB;
-                    long emptyEntries = quadTree.getEmptyEntries(true);
-                    long emptyAllEntries = quadTree.getEmptyEntries(false);
-                    final int tmp = distance;
-                    new MiniPerfTest("neighbour search e/leaf:" + entriesPerLeaf + ", bits:" + bits
-                            + ", dist:" + distance + ", mem:" + mem + ", empty entries:" + emptyEntries
-                            + ", empty all entries:" + emptyAllEntries) {
+                //final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
+                final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getLocations());
+                fillQuadTree(quadTree, g);
+                System.gc();
+                System.gc();
+                float mem = (float) quadTree.getMemoryUsageInBytes(1) / Helper.MB;
+                long emptyEntries = quadTree.getEmptyEntries(true);
+                long emptyAllEntries = quadTree.getEmptyEntries(false);
+                final int tmp = distance;
+                new MiniPerfTest("neighbour search e/leaf:" + entriesPerLeaf + ", bits:" + bits
+                        + ", dist:" + distance + ", mem:" + mem + ", empty entries:" + emptyEntries
+                        + ", empty all entries:" + emptyAllEntries) {
 
-                        @Override public long doCalc(int run) {
-                            float lat = (random.nextInt(latMax - latMin) + latMin) / 10000.0f;
-                            float lon = (random.nextInt(lonMax - lonMin) + lonMin) / 10000.0f;
-                            return quadTree.getNodes(lat, lon, tmp).size();
-                        }
-                    }.setMax(10).setShowProgress(true).setSeed(0).start();
+                    @Override public long doCalc(int run) {
+                        float lat = (random.nextInt(latMax - latMin) + latMin) / 10000.0f;
+                        float lon = (random.nextInt(lonMax - lonMin) + lonMin) / 10000.0f;
+                        return quadTree.getNodes(lat, lon, tmp).size();
+                    }
+                }.setMax(10).setShowProgress(true).setSeed(0).start();
 //                }
             }
         }
