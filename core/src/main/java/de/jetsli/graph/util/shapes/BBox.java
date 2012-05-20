@@ -48,11 +48,21 @@ public class BBox implements Shape {
 
     @Override
     public boolean intersect(Shape s) {
-        if (s instanceof BBox) {
+        if (s instanceof BBox)
             return intersect((BBox) s);
-        } else if (s instanceof Circle) {
+        else if (s instanceof Circle)
             return ((Circle) s).intersect(this);
-        }
+
+        throw new UnsupportedOperationException("unsupported shape");
+    }
+
+    @Override
+    public boolean contains(Shape s) {
+        if (s instanceof BBox)
+            return contains((BBox) s);
+        else if (s instanceof Circle)
+            return contains((Circle) s);
+
         throw new UnsupportedOperationException("unsupported shape");
     }
 
@@ -68,7 +78,15 @@ public class BBox implements Shape {
 
     @Override
     public boolean contains(double lat, double lon) {
-        throw new UnsupportedOperationException("not yet implemented");
+        return lat < maxLat && lat >= minLat && lon < maxLon && lon >= minLon;
+    }
+
+    public boolean contains(BBox b) {
+        return maxLat >= b.maxLat && minLat <= b.minLat && maxLon >= b.maxLon && minLon <= b.minLon;
+    }
+
+    public boolean contains(Circle c) {
+        return contains(c.getBBox());
     }
 
     @Override

@@ -668,17 +668,22 @@ public class SpatialHashtable implements QuadTree<Long> {
         return worker.doWork(key, getValue(pointer + bytesPerKeyRest));
     }
 
-    private void getNeighbours(BBox nodeBB, Shape searchRect, int depth, long key, LeafWorker worker) {
-        // check if searchRect is entirely consumed from nodeBB => we could simply iterate from smallest to highest bucketIndex
-        // adapt intersect() method for this to return -1 (no intersection), 1 (intersection), 2 (intersection and complete consumption)
+    private void getNeighbours(BBox nodeBB, Shape searchRect, int depth, long key, LeafWorker worker, boolean contained) {
+        if (contained) {
+            // check if searchRect is entirely consumed from nodeBB => we could simply iterate from smallest to highest bucketIndex
+            
+            // return;
+        }
 
         // instead of nodeBB we could use rectangle: top-left (xxx1010...), top-right (xxx1111...), bottom-left (xxx0000...), bottom-right (xxx0101...) created from key
 
         if (depth >= bucketIndexBits * 2 + skipKeyBeginningBits - unusedBits) {
             int bucketIndex = getBucketIndex(key << skipKeyEndBits);
+            // worker.setCheckContained(contained);
             // avoid processing duplicate bucket indexes (due to "x XOR y")
             if (!worker.markDone(bucketIndex))
                 getNodes(worker, bucketIndex);
+            // worker.setCheckContained(true);
             return;
         }
 
@@ -691,23 +696,27 @@ public class SpatialHashtable implements QuadTree<Long> {
         // 00 01    
         // top-left    
         BBox nodeRect10 = new BBox(nodeBB.minLon, lon12, lat12, nodeBB.maxLat);
-        if (searchRect.intersect(nodeRect10))
-            getNeighbours(nodeRect10, searchRect, depth, key | 0x2L, worker);
+        boolean res = searchRect.intersect(nodeRect10);
+        if (res)
+            getNeighbours(nodeRect10, searchRect, depth, key | 0x2L, worker, false);
 
         // top-right        
         BBox nodeRect11 = new BBox(lon12, nodeBB.maxLon, lat12, nodeBB.maxLat);
-        if (searchRect.intersect(nodeRect11))
-            getNeighbours(nodeRect11, searchRect, depth, key | 0x3L, worker);
+        res = searchRect.intersect(nodeRect11);
+        if (res)
+            getNeighbours(nodeRect11, searchRect, depth, key | 0x3L, worker, false);
 
         // bottom-left
         BBox nodeRect00 = new BBox(nodeBB.minLon, lon12, nodeBB.minLat, lat12);
-        if (searchRect.intersect(nodeRect00))
-            getNeighbours(nodeRect00, searchRect, depth, key, worker);
+        res = searchRect.intersect(nodeRect00);
+        if (res)
+            getNeighbours(nodeRect00, searchRect, depth, key, worker, false);
 
         // bottom-right
         BBox nodeRect01 = new BBox(lon12, nodeBB.maxLon, nodeBB.minLat, lat12);
-        if (searchRect.intersect(nodeRect01))
-            getNeighbours(nodeRect01, searchRect, depth, key | 0x1L, worker);
+        res = searchRect.intersect(nodeRect01);
+        if (res)
+            getNeighbours(nodeRect01, searchRect, depth, key | 0x1L, worker, false);
     }
 
     private static abstract class LeafWorker {
@@ -748,7 +757,7 @@ public class SpatialHashtable implements QuadTree<Long> {
 //            getNodes(worker, bi);            
 //        }        
         // quadtree:
-        getNeighbours(BBox.createEarthMax(), boundingBox, 0, 0L, worker);
+        getNeighbours(BBox.createEarthMax(), boundingBox, 0, 0L, worker, false);
         return result;
     }
 
@@ -779,7 +788,7 @@ public class SpatialHashtable implements QuadTree<Long> {
         };
         double err = 1.0 / Math.pow(10, algo.getExactPrecision());
         getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err),
-                0, 0L, worker);
+                0, 0L, worker, false);
         return nodes;
     }
 

@@ -44,6 +44,17 @@ public class BBoxTest {
     }
 
     @Test
+    public void testContains() {
+        assertTrue(new BBox(1, 2, 0, 1).contains(new BBox(1, 2, 0, 1)));
+        assertTrue(new BBox(1, 2, 0, 1).contains(new BBox(1.5, 2, 0.5, 1)));
+        assertFalse(new BBox(1, 2, 0, 0.5).contains(new BBox(1.5, 2, 0.5, 1)));
+
+        Circle c = new Circle(10, 10, 120);
+        assertTrue(c.getBBox().contains(c));
+        assertFalse(new BBox(8.9, 11.09, 8.9, 11.2).contains(c));
+    }
+
+    @Test
     public void testIntersect() {
         //    ---
         //    | |

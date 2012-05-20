@@ -38,6 +38,14 @@ public class Circle implements Shape {
         bbox = calc.createBBox(lat, lon, radiusInKm);
     }
 
+    public double getLat() {
+        return lat;
+    }
+
+    public double getLon() {
+        return lon;
+    }
+
     @Override
     public boolean contains(double lat1, double lon1) {
         return normDist(lat1, lon1) <= normedDist;
@@ -60,6 +68,16 @@ public class Circle implements Shape {
             return intersect((BBox) o);
 
         return o.intersect(this);
+    }
+
+    @Override
+    public boolean contains(Shape o) {
+        if (o instanceof Circle) {
+            return contains((Circle) o);
+        } else if (o instanceof BBox)
+            return contains((BBox) o);
+
+        throw new UnsupportedOperationException("unsupported shape");
     }
 
     public boolean intersect(BBox b) {
@@ -95,6 +113,22 @@ public class Circle implements Shape {
             return false;
 
         return normDist(c.lat, c.lon) <= calc.normalizeDist(radiusInKm + c.radiusInKm);
+    }
+
+    public boolean contains(BBox b) {
+        if (bbox.contains(b))
+            return contains(b.maxLat, b.minLon) && contains(b.minLat, b.minLon)
+                    && contains(b.maxLat, b.maxLon) && contains(b.minLat, b.maxLon);
+
+        return false;
+    }
+
+    public boolean contains(Circle c) {
+        double res = radiusInKm - c.radiusInKm;
+        if (res < 0)
+            return false;
+
+        return calc.calcDistKm(lat, lon, c.lat, c.lon) <= res;
     }
 
     @Override
