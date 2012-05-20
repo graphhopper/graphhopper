@@ -286,11 +286,11 @@ public class SpatialHashtableTest extends QuadTreeTester {
         tree = createStorage(8, true);
         tree.add(12, 10, 1L);
         tree.add(12.00001, 10.0001, 2L);
-        Collection<CoordTrig<Long>> res2 = tree.getNodes(12, 10, 0.0001);
+        Collection<CoordTrig<Long>> res2 = tree.getNodes(12, 10, 0.0001d);
         assertEquals(1, res2.size());
         assertEquals(1L, (long) res2.iterator().next().getValue());
 
-        res2 = tree.getNodes(12.00001, 10.0001, 0.001);
+        res2 = tree.getNodes(12.00001, 10.0001, 0.001d);
         assertEquals(1, res2.size());
         assertEquals(2L, (long) res2.iterator().next().getValue());
     }

@@ -18,7 +18,6 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.geohash.SpatialHashtable;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.QuadTree;
-import de.jetsli.graph.trees.QuadTreeSimple;
 import de.jetsli.graph.util.Helper;
 import java.util.Date;
 
@@ -72,7 +71,7 @@ public class PerfTest {
 
     public void start() {
         System.out.println("locations:" + g.getLocations());
-        int maxDist = 4;
+        int maxDist = 6;
         int maxEntriesPerL = 30;
         int minBits = 10;
         System.out.println(new Date() + "# maxDist:" + maxDist + ", maxEntries/leaf:" + maxEntriesPerL + ", minBits:" + minBits);

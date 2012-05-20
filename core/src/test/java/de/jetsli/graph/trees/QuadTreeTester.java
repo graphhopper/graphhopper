@@ -199,6 +199,7 @@ public abstract class QuadTreeTester {
         Iterator<CoordTrig<Long>> iter = instance.getNodes(8.12, 8.12, 0.5).iterator();
         assertEquals(2, (long) iter.next().getValue());
         assertEquals(3, instance.getNodes(8.12, 8.12, 100).size());
+//        System.out.println(instance.getNodes(8.12, 8.12, 130));
         assertEquals(6, instance.getNodes(8.12, 8.12, 130).size());
         assertEquals(9, instance.getNodes(8.12, 8.12, 175).size());
         assertEquals(10, instance.getNodes(8.12, 8.12, 176).size());

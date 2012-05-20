@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
-import org.apache.lucene.util.OpenBitSet;
 
 /**
  * This class maps latitude and longitude through there spatial key to values like osm ids, geo IPs,
@@ -614,138 +613,15 @@ public class SpatialHashtable implements QuadTree<Long> {
         return 0;
     }
 
-    List<CoordTrig<Long>> getNodes(final long key) {
-        int bucketIndex = getBucketIndex(key);
-        final List<CoordTrig<Long>> res = new ArrayList<CoordTrig<Long>>();
-        getNodes(new LeafWorker(maxBuckets) {
-
-            @Override public boolean doWork(long storedKey, long value) {
-                if (storedKey == key) {
-                    CoordTrig<Long> coord = new CoordTrigLongEntry();
-                    algo.decode(storedKey, coord);
-                    coord.setValue(value);
-                    res.add(coord);
-                    return true;
-                }
-                return false;
-            }
-        }, bucketIndex);
-        return res;
-    }
-
-    /**
-     * allows the worker to process nodes of the specified bucketIndex
-     */
-    private void getNodes(final LeafWorker worker, final int bucketIndex) {
-        int bucketPointer = bucketIndex * bytesPerBucket;
-        // convert to pointer:
-        byte no = getNoOfEntries(bucketPointer);
-        int max = bucketPointer + no * bytesPerEntry + 1;
-        for (int pointer = bucketPointer + 1; pointer < max; pointer += bytesPerEntry) {
-            _add(getKey(pointer, bucketIndex), pointer, worker);
-        }
-
-        if (isBucketFull(bucketPointer)) {
-            // iterate through overflow entries (with identical key) of the next buckets until stopbit found
-            new BucketOverflowLoop() {
-
-                @Override
-                boolean doWork() {
-                    if (_add(getKey(overflowPointer + 1, bucketIndex), overflowPointer + 1, worker)) {
-                        // stopbit
-                        if ((lastOffset & 0x1) == 1)
-                            return true;
-                    }
-                    return false;
-                }
-            }.throughBuckets(bucketPointer + bytesPerBucket);
-        }
-    }
-
-    boolean _add(long key, int pointer, LeafWorker worker) {
-        if (pointer + bytesPerKeyRest + 4 > getMemoryUsageInBytes(0))
-            throw new IllegalStateException("pointer " + pointer + " "
-                    + getMemoryUsageInBytes(0) + " " + bytesPerKeyRest);
-
-        return worker.doWork(key, getValue(pointer + bytesPerKeyRest));
-    }
-
-    private void getNeighbours(BBox nodeBB, Shape searchRect, int depth, long key, LeafWorker worker, boolean contained) {
-        if (contained) {
-            // check if searchRect is entirely consumed from nodeBB => we could simply iterate from smallest to highest bucketIndex
-            
-            // return;
-        }
-
-        // instead of nodeBB we could use rectangle: top-left (xxx1010...), top-right (xxx1111...), bottom-left (xxx0000...), bottom-right (xxx0101...) created from key
-
-        if (depth >= bucketIndexBits * 2 + skipKeyBeginningBits - unusedBits) {
-            int bucketIndex = getBucketIndex(key << skipKeyEndBits);
-            // worker.setCheckContained(contained);
-            // avoid processing duplicate bucket indexes (due to "x XOR y")
-            if (!worker.markDone(bucketIndex))
-                getNodes(worker, bucketIndex);
-            // worker.setCheckContained(true);
-            return;
-        }
-
-        double lat12 = (nodeBB.maxLat + nodeBB.minLat) / 2;
-        double lon12 = (nodeBB.minLon + nodeBB.maxLon) / 2;
-        depth += 2;
-        key <<= 2;
-        // see SpatialKeyAlgo that latitude goes from bottom to top and is 1 if on top
-        // 10 11
-        // 00 01    
-        // top-left    
-        BBox nodeRect10 = new BBox(nodeBB.minLon, lon12, lat12, nodeBB.maxLat);
-        boolean res = searchRect.intersect(nodeRect10);
-        if (res)
-            getNeighbours(nodeRect10, searchRect, depth, key | 0x2L, worker, false);
-
-        // top-right        
-        BBox nodeRect11 = new BBox(lon12, nodeBB.maxLon, lat12, nodeBB.maxLat);
-        res = searchRect.intersect(nodeRect11);
-        if (res)
-            getNeighbours(nodeRect11, searchRect, depth, key | 0x3L, worker, false);
-
-        // bottom-left
-        BBox nodeRect00 = new BBox(nodeBB.minLon, lon12, nodeBB.minLat, lat12);
-        res = searchRect.intersect(nodeRect00);
-        if (res)
-            getNeighbours(nodeRect00, searchRect, depth, key, worker, false);
-
-        // bottom-right
-        BBox nodeRect01 = new BBox(lon12, nodeBB.maxLon, nodeBB.minLat, lat12);
-        res = searchRect.intersect(nodeRect01);
-        if (res)
-            getNeighbours(nodeRect01, searchRect, depth, key | 0x1L, worker, false);
-    }
-
-    private static abstract class LeafWorker {
-
-        OpenBitSet bitSet;
-
-        public LeafWorker(int size) {
-            bitSet = new OpenBitSet(size);
-        }
-
-        boolean markDone(int bucketIndex) {
-            return bitSet.getAndSet(bucketIndex);
-        }
-
-        abstract boolean doWork(long key, long value);
-    }
-
     @Override
-    public Collection<CoordTrig<Long>> getNodes(final Shape boundingBox) {
+    public Collection<CoordTrig<Long>> getNodes(final Shape searchArea) {
         final List<CoordTrig<Long>> result = new ArrayList<CoordTrig<Long>>();
-
-        LeafWorker worker = new LeafWorker(maxBuckets) {
+        LeafWorker worker = new LeafWorker() {
 
             @Override public boolean doWork(long key, long value) {
                 CoordTrigLongEntry coord = new CoordTrigLongEntry();
                 algo.decode(key, coord);
-                if (boundingBox.contains(coord.lat, coord.lon)) {
+                if (searchArea.contains(coord.lat, coord.lon)) {
                     result.add(coord);
                     coord.setValue(value);
                     return true;
@@ -759,7 +635,7 @@ public class SpatialHashtable implements QuadTree<Long> {
 //            getNodes(worker, bi);            
 //        }        
         // quadtree:
-        getNeighbours(BBox.createEarthMax(), boundingBox, 0, 0L, worker, false);
+        getNeighbours(BBox.createEarthMax(), searchArea, 0, 0L, worker, false);
         return result;
     }
 
@@ -773,7 +649,7 @@ public class SpatialHashtable implements QuadTree<Long> {
             final Long v) {
         final List<CoordTrig<Long>> nodes = new ArrayList<CoordTrig<Long>>(1);
         final long requestKey = algo.encode(lat, lon);
-        LeafWorker worker = new LeafWorker(maxBuckets) {
+        LeafWorker worker = new LeafWorker() {
 
             @Override public boolean doWork(long key, long value) {
                 if (v == null || v == value) {
@@ -792,6 +668,135 @@ public class SpatialHashtable implements QuadTree<Long> {
         getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err),
                 0, 0L, worker, false);
         return nodes;
+    }
+
+    List<CoordTrig<Long>> getNodes(final long requestedKey) {
+        int bucketIndex = getBucketIndex(requestedKey);
+        final List<CoordTrig<Long>> res = new ArrayList<CoordTrig<Long>>();
+        getNodes(new LeafWorker() {
+
+            @Override public boolean doWork(long key, long value) {
+                if (key == requestedKey) {
+                    CoordTrig<Long> coord = new CoordTrigLongEntry();
+                    algo.decode(key, coord);
+                    coord.setValue(value);
+                    res.add(coord);
+                    return true;
+                }
+                return false;
+            }
+        }, bucketIndex, requestedKey);
+        return res;
+    }
+
+    /**
+     * allows the worker to process nodes of the specified bucketIndex
+     */
+    private void getNodes(final LeafWorker worker, final int bucketIndex, final Long requestedKey) {
+        int bucketPointer = bucketIndex * bytesPerBucket;
+        byte no = getNoOfEntries(bucketPointer);
+        int max = bucketPointer + no * bytesPerEntry + 1;
+        for (int pointer = bucketPointer + 1; pointer < max; pointer += bytesPerEntry) {
+            _add(worker, getKey(pointer, bucketIndex), pointer, requestedKey);
+        }
+
+        if (isBucketFull(bucketPointer)) {
+            // iterate through overflow entries (with identical key) of the next buckets until stopbit found
+            new BucketOverflowLoop() {
+
+                @Override
+                boolean doWork() {
+                    if (_add(worker, getKey(overflowPointer + 1, bucketIndex), overflowPointer + 1, requestedKey)) {
+                        // stopbit
+                        if ((lastOffset & 0x1) == 1)
+                            return true;
+                    }
+                    return false;
+                }
+            }.throughBuckets(bucketPointer + bytesPerBucket);
+        }
+    }
+
+    boolean _add(LeafWorker worker, long key, int pointer, Long requestedKey) {
+        if (pointer + bytesPerKeyRest + 4 > getMemoryUsageInBytes(0))
+            throw new IllegalStateException("pointer " + pointer + " "
+                    + getMemoryUsageInBytes(0) + " " + bytesPerKeyRest);
+
+        // do expensive encoding contains check only if beginning bits of key are identical!
+        if (requestedKey != null && (requestedKey >> skipKeyEndBits + bucketIndexBits) != (key >> skipKeyEndBits + bucketIndexBits)) {
+//            System.out.println("rkey " + BitUtil.toBitString(requestedKey));
+//            System.out.println(" key " + BitUtil.toBitString(key));
+            return false;
+        }
+
+        return worker.doWork(key, getValue(pointer + bytesPerKeyRest));
+    }
+
+    private void getNeighbours(BBox nodeBB, Shape searchArea, int depth, long key, LeafWorker worker, boolean contained) {
+        if (contained) {
+            // check if searchRect is entirely consumed from nodeBB 
+            // => we could simply iterate from smallest to highest bucketIndex
+            // worker.setCheckContained(false);
+            // do iteration
+            // worker.setCheckContained(true);
+            // return;
+        }
+
+        // instead of nodeBB we could use rectangle: top-left (xxx1010...), top-right (xxx1111...), bottom-left (xxx0000...), bottom-right (xxx0101...) created from key
+
+        if (depth >= bucketIndexBits * 2 + skipKeyBeginningBits - unusedBits) {
+            // key includes: | skippedBeginning | x | y | so we need skipEndBits:
+            key <<= skipKeyEndBits;
+            int bucketIndex = getBucketIndex(key);
+            // worker.setCheckContained(contained);
+
+            // avoid processing duplicate bucket indexes (due to "x XOR y")
+            // if (!worker.markDone(bucketIndex)) -> not necessary as it is done via beginning of requestKey vs. key
+
+            getNodes(worker, bucketIndex, key);
+
+            // worker.setCheckContained(true);
+            return;
+        }
+
+        double lat12 = (nodeBB.maxLat + nodeBB.minLat) / 2;
+        double lon12 = (nodeBB.minLon + nodeBB.maxLon) / 2;
+        depth += 2;
+        key <<= 2;
+        // see SpatialKeyAlgo that latitude goes from bottom to top and is 1 if on top
+        // 10 11
+        // 00 01    
+        // top-left    
+        BBox nodeRect10 = new BBox(nodeBB.minLon, lon12, lat12, nodeBB.maxLat);
+        boolean res = searchArea.intersect(nodeRect10);
+        if (res)
+            getNeighbours(nodeRect10, searchArea, depth, key | 0x2L, worker, false);
+
+        // top-right        
+        BBox nodeRect11 = new BBox(lon12, nodeBB.maxLon, lat12, nodeBB.maxLat);
+        res = searchArea.intersect(nodeRect11);
+        if (res)
+            getNeighbours(nodeRect11, searchArea, depth, key | 0x3L, worker, false);
+
+        // bottom-left
+        BBox nodeRect00 = new BBox(nodeBB.minLon, lon12, nodeBB.minLat, lat12);
+        res = searchArea.intersect(nodeRect00);
+        if (res)
+            getNeighbours(nodeRect00, searchArea, depth, key, worker, false);
+
+        // bottom-right
+        BBox nodeRect01 = new BBox(lon12, nodeBB.maxLon, nodeBB.minLat, lat12);
+        res = searchArea.intersect(nodeRect01);
+        if (res)
+            getNeighbours(nodeRect01, searchArea, depth, key | 0x1L, worker, false);
+    }
+
+    private static abstract class LeafWorker {
+
+        public LeafWorker() {
+        }
+
+        abstract boolean doWork(long key, long value);
     }
 
     @Override
@@ -854,16 +859,16 @@ public class SpatialHashtable implements QuadTree<Long> {
         XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
         for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
             final List<CoordTrig<Long>> res = new ArrayList<CoordTrig<Long>>();
-            getNodes(new LeafWorker(maxBuckets) {
+            getNodes(new LeafWorker() {
 
-                @Override public boolean doWork(long storedKey, long value) {
+                @Override public boolean doWork(long key, long value) {
                     CoordTrig<Long> coord = new CoordTrigLongEntry();
-                    algo.decode(storedKey, coord);
+                    algo.decode(key, coord);
                     coord.setValue(value);
                     res.add(coord);
                     return true;
                 }
-            }, bucketIndex);
+            }, bucketIndex, null);
             xy.add(bucketIndex, res.size());
         }
         xy.setTitle(title);
