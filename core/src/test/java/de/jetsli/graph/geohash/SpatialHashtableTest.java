@@ -131,7 +131,7 @@ public class SpatialHashtableTest extends QuadTreeTester {
 
     @Test
     public void testArrayIsACircle2() {
-        SpatialHashtable tree = new SpatialHashtable(0, 1).setCompressKey(false).init(12);
+        SpatialHashtable tree = new SpatialHashtable(0, 1).setCompressKey(false).setFindOverflowFactor(1).init(12);
         assertEquals(3, tree.getEntriesPerBucket());
         int bpb = tree.getBytesPerBucket();
         int bpo = tree.getBytesPerEntry() + 1;
@@ -299,7 +299,7 @@ public class SpatialHashtableTest extends QuadTreeTester {
     public void testKeyDuplicatesForceOverflow() {
         // 0 => force that it is a bad hash creation algo
         // false => do not compress key
-        SpatialHashtable tree = createStorage(0, false);
+        SpatialHashtable tree = createStorage(0, false).setFindOverflowFactor(1);
         assertEquals(3, tree.getEntriesPerBucket());
         int max = 6;
         int bytesPerBucket = tree.getBytesPerBucket();

@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -194,6 +195,7 @@ public class SpatialHashtable implements QuadTree<Long> {
     private int spatialKeyBits;
     private int bucketIndexBits;
     private long rightMask;
+    private int findOverflowFactor = 4;
 
     public SpatialHashtable() {
         this(8, 3);
@@ -210,6 +212,11 @@ public class SpatialHashtable implements QuadTree<Long> {
 
     public SpatialHashtable setCompressKey(boolean compressKey) {
         this.compressKey = compressKey;
+        return this;
+    }
+
+    SpatialHashtable setFindOverflowFactor(int factor) {
+        this.findOverflowFactor = factor;
         return this;
     }
 
@@ -491,7 +498,8 @@ public class SpatialHashtable implements QuadTree<Long> {
         no >>>= 1;
         if (no > maxEntriesPerBucket)
             throw new IllegalStateException("Entries shouldn't exceed maxEntriesPerBucket! Was "
-                    + no + " vs. " + maxEntriesPerBucket + " at " + bucketPointer);
+                    + no + " vs. " + maxEntriesPerBucket + " at " + bucketPointer
+                    + " problematic bp? " + bucketPointer % bytesPerBucket);
         return no;
     }
 
@@ -572,6 +580,9 @@ public class SpatialHashtable implements QuadTree<Long> {
     }
 
     final byte get(int pointer) {
+        // unsufficient error message from ByteBuffer!
+        if (pointer < 0)
+            throw new IllegalStateException("negative pointer! " + pointer);
         return storage.get(pointer);
     }
 
@@ -954,26 +965,34 @@ public class SpatialHashtable implements QuadTree<Long> {
          */
         int throughBuckets(int bucketPointer) {
             startBucketIndex = bucketPointer / bytesPerBucket;
+            long tmp = bucketPointer;
             int i = -1;
+            if (findOverflowFactor <= 0)
+                findOverflowFactor = 2000;
+            double factor = findOverflowFactor;
             MAIN:
             for (; i < maxBuckets; i++) {
                 newOffset++;
                 // byte area is connected like a ring
-                if (bucketPointer >= getMemoryUsageInBytes(0))
-                    bucketPointer = 0;
+                while (tmp >= getMemoryUsageInBytes(0)) {
+                    tmp -= getMemoryUsageInBytes(0);
+                }
 
-                if (throughOverflowEntries(bucketPointer))
+                if (throughOverflowEntries((int) tmp))
                     break;
 
-                if (newOffset > 200)
+                if (newOffset > 200000 || tmp < 0)
                     throw new IllegalStateException("no empty overflow place found - too full or bad hash distribution? "
-                            + "TODO rehash if too small. Now at:" + bucketPointer + " offset:" + newOffset + " size:" + size);
-                bucketPointer += bytesPerBucket;
+                            + "TODO rehash if too small. Now at:" + tmp + " offset:" + newOffset + " size:" + size
+                            + " requested bucketIndex " + startBucketIndex);
+                tmp += factor * bytesPerBucket;
+                // searches are 10% faster with this:
+                // factor++;
             }
             if (i >= maxBuckets)
                 throw new IllegalStateException("maxBuckets is too small => TODO rehash!");
 
-            return bucketPointer;
+            return (int) tmp;
         }
 
         /**

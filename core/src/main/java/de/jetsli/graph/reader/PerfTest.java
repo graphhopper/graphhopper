@@ -71,9 +71,9 @@ public class PerfTest {
 
     public void start() {
         System.out.println("locations:" + g.getLocations());
-        int maxDist = 6;
+        int maxDist = 20;
         int maxEntriesPerL = 30;
-        int minBits = 10;
+        int minBits = 4;
         System.out.println(new Date() + "# maxDist:" + maxDist + ", maxEntries/leaf:" + maxEntriesPerL + ", minBits:" + minBits);
 
 //        measureFill(minBits, maxEntriesPerL);
@@ -109,12 +109,13 @@ public class PerfTest {
 
     private void measureSearch(int minBits, int maxDist, int maxEPerL) {
         for (int bits = minBits; bits <= 30; bits += 2) {
-            for (int distance = 1; distance < maxDist; distance *= 2) {
-                int entriesPerLeaf = 3;
+            int entriesPerLeaf = 3;
+            final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getLocations());
+                fillQuadTree(quadTree, g);
+            for (int distance = 5; distance < maxDist; distance *= 2) {
 //                for (; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
                 //final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
-                final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getLocations());
-                fillQuadTree(quadTree, g);
+                
                 System.gc();
                 System.gc();
                 float mem = (float) quadTree.getMemoryUsageInBytes(1) / Helper.MB;
