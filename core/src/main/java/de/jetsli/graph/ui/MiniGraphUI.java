@@ -15,12 +15,14 @@
  */
 package de.jetsli.graph.ui;
 
-import de.jetsli.graph.geohash.SpatialHashtable;
+import de.jetsli.graph.dijkstra.DijkstraBidirection;
+import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.QuadTree;
+import de.jetsli.graph.trees.QuadTreeSimple;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.MyIteratorable;
 import de.jetsli.graph.util.StopWatch;
@@ -29,6 +31,8 @@ import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.util.Collection;
 import javax.swing.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Peter Karich
@@ -43,8 +47,10 @@ public class MiniGraphUI {
         Graph g = OSMReaderTrials.defaultRead(osmFile, "/tmp/mmap-graph");
         new MiniGraphUI(g).visualize();
     }
+    private Logger logger = LoggerFactory.getLogger(getClass());
     private final QuadTree<Long> quadTree;
     private Collection<CoordTrig<Long>> quadTreeNodes;
+    private DijkstraPath path;
     private final Graph graph;
     private double scaleX = 0.001f;
     private double scaleY = 0.001f;
@@ -63,11 +69,11 @@ public class MiniGraphUI {
     public MiniGraphUI(Graph g) {
         this.graph = g;
 
-//        this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
-        this.quadTree = new SpatialHashtable(10, 3).init(graph.getLocations());
+        this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
+//        this.quadTree = new SpatialHashtable(2, 3).init(graph.getLocations());
 
         PerfTest.fillQuadTree(quadTree, graph);
-        System.out.println("read " + quadTree.size() + " entries");
+        logger.info("read " + quadTree.size() + " entries");
 
         infoPanel = new JPanel() {
 
@@ -124,16 +130,34 @@ public class MiniGraphUI {
                         float lat2 = graph.getLatitude(de.node);
                         float lon2 = graph.getLongitude(de.node);
                         if (lat2 <= 0 || lon2 <= 0)
-                            System.out.println("ERROR " + de.node + " " + de.distance + " " + lat2 + "," + lon2);
+                            logger.info("ERROR " + de.node + " " + de.distance + " " + lat2 + "," + lon2);
                         plotEdge(g, lat, lon, lat2, lon2);
                     }
                 }
-                System.out.println("frame took " + sw.stop().getSeconds() + "sec");
+                logger.info("frame took " + sw.stop().getSeconds() + "sec");
 
                 if (quadTreeNodes != null) {
-                    System.out.println("found neighbors:" + quadTreeNodes.size());
+                    logger.info("found neighbors:" + quadTreeNodes.size());
                     for (CoordTrig<Long> coord : quadTreeNodes) {
                         plot(g, coord.lat, coord.lon, 1, 1);
+                    }
+                }
+
+                if (path != null) {
+                    logger.info("found path:" + path);
+                    g.setColor(Color.MAGENTA);
+                    int tmpLocs = path.locations();
+                    float prevLat = -1;
+                    float prevLon = -1;
+                    for (int i = 0; i < tmpLocs; i++) {
+                        int id = path.location(i);
+                        float lat = graph.getLatitude(id);
+                        float lon = graph.getLongitude(id);
+                        if (prevLat >= 0)
+                            plotEdge(g, prevLat, prevLon, lat, lon, 3);
+
+                        prevLat = lat;
+                        prevLon = lon;
                     }
                 }
 
@@ -142,8 +166,13 @@ public class MiniGraphUI {
         };
     }
 
-    private void plotEdge(Graphics g, double lat, double lon, double lat2, double lon2) {
+    private void plotEdge(Graphics g, double lat, double lon, double lat2, double lon2, int width) {
+        ((Graphics2D) g).setStroke(new BasicStroke(width));
         g.drawLine((int) getX(lon), (int) getY(lat), (int) getX(lon2), (int) getY(lat2));
+    }
+
+    private void plotEdge(Graphics g, double lat, double lon, double lat2, double lon2) {
+        plotEdge(g, lat, lon, lat2, lon2, 1);
     }
 
     private double getX(double lon) {
@@ -168,7 +197,7 @@ public class MiniGraphUI {
 
         Color color;
 
-        // System.out.println(i + " y:" + y + " lat:" + lat + "," + lon + " count:" + count);
+        // logger.info(i + " y:" + y + " lat:" + lat + "," + lon + " count:" + count);
         if (count == 1)
             color = Color.RED;
         else if (count == 2)
@@ -225,9 +254,37 @@ public class MiniGraphUI {
                         }
                     });
 
-                    // important: calculate x/y for mouse event relative to mainPanel not frame!
-                    // move graph via dragging and do something on click
                     MouseAdapter ml = new MouseAdapter() {
+
+                        double fromLat, fromLon;
+                        boolean fromDone = false;
+
+                        @Override public void mouseClicked(MouseEvent e) {
+                            if (!fromDone) {
+                                fromLat = getLat(e.getY());
+                                fromLon = getLon(e.getX());
+                            } else {
+                                double toLat = getLat(e.getY());
+                                double toLon = getLon(e.getX());
+                                StopWatch sw = new StopWatch().start();
+                                logger.info("start searching from " + fromLat + "," + fromLon
+                                        + " to " + toLat + "," + toLon);
+                                // get from and to node id
+                                int from = graph.getNodeId((float) fromLat, (float) fromLon, 2);
+                                int to = graph.getNodeId((float) toLat, (float) toLon, 2);
+                                logger.info("found ids " + from + " -> " + to + " in " + sw.stop().getSeconds() + "s");
+                                sw = new StopWatch().start();
+                                path = new DijkstraBidirection(graph).calcShortestPath(from, to);
+                                logger.info("found path in " + sw.stop().getSeconds() + "s " + path);
+                                mainPanel.repaint();
+                            }
+
+                            fromDone = !fromDone;
+                        }
+                    };
+                    // important: calculate x/y for mouse event relative to mainPanel not frame!
+                    // move graph via dragging and do something on click                    
+                    MouseAdapter mouseAdapterQuadTree = new MouseAdapter() {
 
                         int currentPosX;
                         int currentPosY;
@@ -250,7 +307,7 @@ public class MiniGraphUI {
 
                             StopWatch sw = new StopWatch().start();
                             quadTreeNodes = quadTree.getNodes(lat, lon, 10);
-                            System.out.println("search at " + lat + "," + lon + " took " + sw.stop().getSeconds());
+                            logger.info("search at " + lat + "," + lon + " took " + sw.stop().getSeconds());
 
                             // open browser
 //                            try {
@@ -284,14 +341,6 @@ public class MiniGraphUI {
                             offsetY += (e.getY() - currentPosY) * scaleY;
                             mainPanel.repaint();
                         }
-
-                        double getLon(int x) {
-                            return x * scaleX - offsetX;
-                        }
-
-                        double getLat(int y) {
-                            return 90 - (y * scaleY - offsetY);
-                        }
                     };
                     mainPanel.addMouseListener(ml);
                     mainPanel.addMouseMotionListener(ml);
@@ -305,12 +354,12 @@ public class MiniGraphUI {
                             for (CoordTrig<Long> coord : quadTreeNodes) {
                                 int ret = quadTree.remove(coord.lat, coord.lon);
                                 if (ret < 1) {
-//                                    System.out.println("cannot remove " + coord + " " + ret);
+//                                    logger.info("cannot remove " + coord + " " + ret);
 //                                    ret = quadTree.remove(coord.getLatitude(), coord.getLongitude());
                                 } else
                                     counter += ret;
                             }
-                            System.out.println("Deleted " + counter + " of " + quadTreeNodes.size() + " nodes");
+                            logger.info("Deleted " + counter + " of " + quadTreeNodes.size() + " nodes");
                         }
                     });
 
@@ -322,5 +371,13 @@ public class MiniGraphUI {
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    double getLon(int x) {
+        return x * scaleX - offsetX;
+    }
+
+    double getLat(int y) {
+        return 90 - (y * scaleY - offsetY);
     }
 }

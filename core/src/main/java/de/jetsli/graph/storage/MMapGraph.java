@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.reader.CalcDistance;
 import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.MyIteratorable;
@@ -28,6 +29,7 @@ import java.nio.channels.FileChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static de.jetsli.graph.util.MyIteratorable.*;
+import de.jetsli.graph.util.shapes.Circle;
 import gnu.trove.impl.hash.TIntFloatHash;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import java.io.File;
@@ -487,6 +489,29 @@ public class MMapGraph implements Graph, java.io.Closeable {
 
     private void clean(MappedByteBuffer mapping) {
         Helper.cleanMappedByteBuffer(mapping);
+    }
+
+    @Override
+    public int getNodeId(float lat, float lon, int minEdges) {
+        float locs = getLocations();
+        int id = -1;
+        CalcDistance calc = new CalcDistance();
+        Circle circle = null;
+        for (int i = 0; i < locs; i++) {
+            float tmpLat = getLatitude(i);
+            float tmpLon = getLongitude(i);
+
+            if (circle == null)
+                circle = new Circle(lat, lon, calc.calcDistKm(tmpLat, tmpLon, lat, lon), calc);
+            else if (circle.contains(tmpLat, tmpLon)) {
+                int cnt = MyIteratorable.count(getEdges(i));
+                if (cnt >= minEdges) {
+                    id = i;
+                    circle = new Circle(lat, lon, calc.calcDistKm(tmpLat, tmpLon, lat, lon), calc);
+                }
+            }
+        }
+        return id;
     }
 
     public void stats() {

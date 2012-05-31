@@ -97,4 +97,9 @@ public class GraphWrapper implements Graph {
     public void ensureCapacity(int cap) {
         g.ensureCapacity(cap);
     }
+
+    @Override
+    public int getNodeId(float lat, float lon, int minEdges) {
+        return g.getNodeId(lat, lon, minEdges);
+    }        
 }
