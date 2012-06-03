@@ -93,7 +93,7 @@ public class SpatialKeyAlgo {
 
         iterations = allBits / 2;
         initialBits = 1L << (allBits - 1);
-        setInitialBounds();
+        setWorldBounds();
     }
 
     public long getBits() {
@@ -116,7 +116,7 @@ public class SpatialKeyAlgo {
         return this;
     }
 
-    protected void setInitialBounds() {
+    protected void setWorldBounds() {
         setInitialBounds(-180, 180, -90, 90);
     }
 
@@ -178,12 +178,11 @@ public class SpatialKeyAlgo {
         // precalculated values from arrays and for 'bits' a precalculated array is even slightly slower!
 
         // Use the value in the middle => start from "min" use "max" as initial step-size
-        double midLat = maxLatI;
-        double midLon = maxLonI;
-
-        long bits = initialBits;
+        double midLat = (maxLatI - minLatI) / 2;
+        double midLon = (maxLonI - minLonI) / 2;
         double lat = minLatI;
         double lon = minLonI;
+        long bits = initialBits;
         while (true) {
             if ((spatialKey & bits) != 0)
                 lat += midLat;
