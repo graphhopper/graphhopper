@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.util;
 
-import de.jetsli.graph.storage.GeoGraph;
+import de.jetsli.graph.storage.MemoryGraph;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +48,7 @@ public class XFirstSearchTest {
             }
         };
 
-        GeoGraph g = new GeoGraph();
+        MemoryGraph g = new MemoryGraph();
         g.edge(0, 1, 85, true);
         g.edge(0, 2, 217, true);
         g.edge(0, 3, 173, true);

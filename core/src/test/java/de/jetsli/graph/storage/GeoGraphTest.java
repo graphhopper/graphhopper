@@ -26,11 +26,11 @@ public class GeoGraphTest extends AbstractGraphTester {
 
     @Override
     Graph createGraph(int size) {
-        return new GeoGraph(size);
+        return new MemoryGraph(size);
     }
 
     @Test public void testExceptions() {
-        GeoGraph graph = new GeoGraph(1);
+        MemoryGraph graph = new MemoryGraph(1);
         try {
             assertNull(graph.createGeoLocation(1));
             assertFalse("Cannot access unadded location", true);

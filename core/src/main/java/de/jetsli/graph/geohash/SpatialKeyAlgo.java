@@ -96,6 +96,10 @@ public class SpatialKeyAlgo {
         setInitialBounds();
     }
 
+    public long getBits() {
+        return initialBits;
+    }
+
     public int getExactPrecision() {
         // 360 / 2^(allBits/2) = 1/precision
         int p = (int) (Math.pow(2, iterations) / 360);
@@ -104,12 +108,16 @@ public class SpatialKeyAlgo {
         return (int) Math.log10(p);
     }
 
+    public SpatialKeyAlgo setInitialBounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit) {
+        minLonI = minLonInit;
+        maxLonI = maxLonInit;
+        minLatI = minLatInit;
+        maxLatI = maxLatInit;
+        return this;
+    }
+
     protected void setInitialBounds() {
-        // this.factorForPrecision = factorForPrecision;
-        minLatI = -90;
-        maxLatI = 90;
-        minLonI = -180;
-        maxLonI = 180;
+        setInitialBounds(-180, 180, -90, 90);
     }
 
     public long encode(CoordTrig coord) {

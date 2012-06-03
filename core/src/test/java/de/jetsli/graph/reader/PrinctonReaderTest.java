@@ -16,7 +16,7 @@
 package de.jetsli.graph.reader;
 
 import static de.jetsli.graph.util.MyIteratorable.*;
-import de.jetsli.graph.storage.GeoGraph;
+import de.jetsli.graph.storage.MemoryGraph;
 import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 import org.junit.Test;
@@ -30,7 +30,7 @@ public class PrinctonReaderTest {
 
     @Test
     public void testRead() {
-        GeoGraph graph = new GeoGraph();
+        MemoryGraph graph = new MemoryGraph();
         new PrinctonReader(graph).setStream(PrinctonReader.class.getResourceAsStream("tinyEWD.txt")).read();
         assertEquals(8, graph.getLocations());
         assertEquals(2, count(graph.getOutgoing(0)));
@@ -39,7 +39,7 @@ public class PrinctonReaderTest {
     
     @Test
     public void testMediumRead() throws IOException {
-        GeoGraph graph = new GeoGraph();
+        MemoryGraph graph = new MemoryGraph();
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
         assertEquals(250, graph.getLocations());
         assertEquals(13, count(graph.getOutgoing(244)));

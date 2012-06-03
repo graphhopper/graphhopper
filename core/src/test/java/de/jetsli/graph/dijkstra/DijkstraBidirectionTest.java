@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.dijkstra;
 
-import de.jetsli.graph.storage.GeoGraph;
+import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -45,7 +45,7 @@ public class DijkstraBidirectionTest extends AbstractDijkstraTester {
     
     @Test
     public void testCannotCalculateSP2() {
-        Graph g = new GeoGraph();
+        Graph g = new MemoryGraph();
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
                

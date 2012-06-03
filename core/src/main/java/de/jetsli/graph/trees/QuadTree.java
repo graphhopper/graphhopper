@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.trees;
 
+import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.shapes.Shape;
 import java.util.Collection;
@@ -69,4 +70,16 @@ public interface QuadTree<V> {
      * Good for memory estimation
      */
     long getEmptyEntries(boolean onlyBranches);
+
+    class Util {
+
+        public static void fill(QuadTree<Long> quadTree, Graph graph) {
+            int locs = graph.getLocations();
+            for (int i = 0; i < locs; i++) {
+                float lat = graph.getLatitude(i);
+                float lon = graph.getLongitude(i);
+                quadTree.add(lat, lon, 1L);
+            }
+        }
+    }
 }

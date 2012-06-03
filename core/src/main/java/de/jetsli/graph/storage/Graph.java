@@ -24,15 +24,31 @@ import de.jetsli.graph.util.MyIteratorable;
 public interface Graph {
 
     void ensureCapacity(int cap);
-    
+
+    /**
+     * @return current number of locations
+     */
     int getLocations();
-    
+
+    /**
+     * Creates a new location with the returned id. If you do not have lat,lon you should create
+     * edges only via edge(int,int,distance,bool) - e.g. in the case for none-real world graphs.
+     *
+     * @return id of new location
+     */
     int addLocation(float lat, float lon);
 
     float getLatitude(int index);
 
     float getLongitude(int index);
 
+    /**
+     * @param a
+     * @param b
+     * @param distance necessary if no addLocation is called - e.g. if the graph is not a real world
+     * geo-graph
+     * @param bothDirections
+     */
     void edge(int a, int b, float distance, boolean bothDirections);
 
     MyIteratorable<DistEntry> getEdges(int index);
@@ -40,9 +56,9 @@ public interface Graph {
     MyIteratorable<DistEntry> getIncoming(int index);
 
     MyIteratorable<DistEntry> getOutgoing(int index);
-    
+
     Graph clone();
-    
+
     /**
      * @return the id of the closest node to the specified parameters.
      */

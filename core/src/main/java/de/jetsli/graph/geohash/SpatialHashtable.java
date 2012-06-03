@@ -20,7 +20,6 @@ import de.genvlin.gui.plot.GPlotPanel;
 import de.jetsli.graph.geohash.SpatialHashtable.BucketOverflowLoop;
 import de.jetsli.graph.reader.CalcDistance;
 import de.jetsli.graph.reader.OSMReaderTrials;
-import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;
 import de.jetsli.graph.util.CoordTrig;
@@ -35,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -137,7 +135,7 @@ public class SpatialHashtable implements QuadTree<Long> {
                 String title = "skipLeft:" + skipLeft + " entries/buck:" + epb;
                 log(title);
                 try {
-                    PerfTest.fillQuadTree(qt, g);
+                    QuadTree.Util.fill(qt, g);
                 } catch (Exception ex) {
 //                    ex.printStackTrace();
                     log(ex.getMessage());

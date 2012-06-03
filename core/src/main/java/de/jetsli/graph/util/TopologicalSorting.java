@@ -18,11 +18,11 @@ package de.jetsli.graph.util;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.DistEntry;
-import de.jetsli.graph.storage.GeoGraph;
+import de.jetsli.graph.storage.MemoryGraph;
+import de.jetsli.graph.storage.Graph;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
-import gnu.trove.stack.array.TIntArrayStack;
 
 /**
  *
@@ -33,7 +33,7 @@ public class TopologicalSorting {
     /**
      * conditions: acyclicGraph and all reachable from 0
      */
-    public TIntArrayList sort(GeoGraph g) {
+    public TIntArrayList sort(MemoryGraph g) {
         final TIntArrayList list = new TIntArrayList();
         if (g.getLocations() == 0)
             return list;
@@ -50,7 +50,7 @@ public class TopologicalSorting {
         new XFirstSearch() {
 
             @Override
-            protected Iterable<DistEntry> getEdges(GeoGraph g, int current) {
+            protected Iterable<DistEntry> getEdges(Graph g, int current) {
                 if (!g.getIncoming(current).iterator().hasNext())
                     noIncomingEdges.add(current);
 

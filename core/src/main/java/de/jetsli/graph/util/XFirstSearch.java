@@ -18,11 +18,11 @@ package de.jetsli.graph.util;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.DistEntry;
-import de.jetsli.graph.storage.GeoGraph;
+import de.jetsli.graph.storage.Graph;
 import gnu.trove.stack.array.TIntArrayStack;
 
 /**
- * BFS or DFS
+ * breadth first search (BFS) or depth first search (DFS)
  *
  * @author Peter Karich, info@jetsli.de
  */
@@ -37,7 +37,7 @@ public class XFirstSearch {
         void push(int v);
     }
 
-    public void start(GeoGraph g, int node, boolean depthFirst) {
+    public void start(Graph g, int node, boolean depthFirst) {
         HelperColl coll;
         if (depthFirst)
             coll = new MyIntStack();
@@ -63,11 +63,11 @@ public class XFirstSearch {
         }
     }
     
-    protected Iterable<DistEntry> getEdges(GeoGraph g, int current) {
+    protected Iterable<DistEntry> getEdges(Graph g, int current) {
         return g.getOutgoing(current);
     }
 
-    protected boolean goFurther(int v) {
+    protected boolean goFurther(int nodeId) {
         return true;
     }
 

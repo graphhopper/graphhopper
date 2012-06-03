@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.dijkstra;
 
-import de.jetsli.graph.storage.GeoGraph;
+import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -26,7 +26,7 @@ import static org.junit.Assert.*;
  */
 public class DijkstraShortestOf2ToPubTest {
 
-    public Dijkstra createDijkstra(GeoGraph g) {
+    public Dijkstra createDijkstra(MemoryGraph g) {
         return new DijkstraWhichToOne(g);
     }
 

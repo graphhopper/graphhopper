@@ -16,7 +16,7 @@
 package de.jetsli.graph.dijkstra;
 
 import de.jetsli.graph.reader.PrinctonReader;
-import de.jetsli.graph.storage.GeoGraph;
+import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.StopWatch;
 import java.io.IOException;
@@ -57,7 +57,7 @@ public abstract class AbstractDijkstraTester {
     // a-b--c-d
     //
     protected Graph createGraph() {
-        Graph graph = new GeoGraph(8);
+        Graph graph = new MemoryGraph(8);
         from = 0;
         to = 7;
 
@@ -106,7 +106,7 @@ public abstract class AbstractDijkstraTester {
     }
 
     protected Graph createWikipediaGraph() {
-        Graph graph = new GeoGraph(6);
+        Graph graph = new MemoryGraph(6);
 
         graph.edge(0, 1, 7, true);
         graph.edge(0, 2, 9, true);
@@ -140,7 +140,7 @@ public abstract class AbstractDijkstraTester {
     // \   /   /
     //  8-7-6-/
     @Test public void testBidirectional() {
-        Graph graph = new GeoGraph(6);
+        Graph graph = new MemoryGraph(6);
         from = 0;
         to = 4;
 
@@ -166,7 +166,7 @@ public abstract class AbstractDijkstraTester {
     // \   /   /
     //  8-7-6-/
     @Test public void testBidirectional2() {
-        Graph graph = new GeoGraph(6);
+        Graph graph = new MemoryGraph(6);
         from = 0;
         to = 4;
 
@@ -200,7 +200,7 @@ public abstract class AbstractDijkstraTester {
 
     @Test
     public void testCannotCalculateSP() {
-        Graph g = new GeoGraph();
+        Graph g = new MemoryGraph();
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
 
@@ -210,7 +210,7 @@ public abstract class AbstractDijkstraTester {
 
     @Test
     public void testDirectedGraphBug1() {
-        Graph g = new GeoGraph(5);
+        Graph g = new MemoryGraph(5);
         g.edge(0, 1, 3, false);
         g.edge(1, 2, 3, false);
 
@@ -228,7 +228,7 @@ public abstract class AbstractDijkstraTester {
 
         String name = getClass().getSimpleName();
         Random rand = new Random(0);
-        Graph graph = new GeoGraph();
+        Graph graph = new MemoryGraph();
 
         String bigFile = "10000EWD.txt.gz";
 //        String bigFile = "largeEWD.txt.gz";
@@ -253,7 +253,7 @@ public abstract class AbstractDijkstraTester {
     private static Graph createMatrixAlikeGraph() {
         int WIDTH = 10;
         int HEIGHT = 15;
-        Graph tmp = new GeoGraph(WIDTH * HEIGHT);
+        Graph tmp = new MemoryGraph(WIDTH * HEIGHT);
         int[][] matrix = new int[WIDTH][HEIGHT];
         int counter = 0;
         Random rand = new Random(12);

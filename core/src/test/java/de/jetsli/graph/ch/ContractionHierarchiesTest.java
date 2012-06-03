@@ -17,7 +17,7 @@ package de.jetsli.graph.ch;
 
 import static de.jetsli.graph.util.MyIteratorable.*;
 import de.jetsli.graph.storage.DistEntry;
-import de.jetsli.graph.storage.GeoGraph;
+import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
@@ -38,7 +38,7 @@ public class ContractionHierarchiesTest {
     
     @Test
     public void testSuperSimpleContract() {
-        Graph g = new GeoGraph(3);
+        Graph g = new MemoryGraph(3);
 
         g.edge(0, 1, 3, false);
         g.edge(1, 2, 4, false);
@@ -62,7 +62,7 @@ public class ContractionHierarchiesTest {
     
     @Test
     public void testIntroduceShortcut0_2() {
-        Graph g = new GeoGraph(5);
+        Graph g = new MemoryGraph(5);
         g.edge(0, 3, 2, false);
         g.edge(3, 4, 3, false);
         g.edge(4, 2, 1, false);
@@ -80,7 +80,7 @@ public class ContractionHierarchiesTest {
 
     //@Test
     public void DoNotIntroduceShortCut0_2() {
-        Graph g = new GeoGraph(5);        
+        Graph g = new MemoryGraph(5);        
         g.edge(0, 1, 3, false);
         g.edge(1, 2, 4, false);
 

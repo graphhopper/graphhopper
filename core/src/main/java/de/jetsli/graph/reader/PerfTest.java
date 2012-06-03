@@ -86,7 +86,7 @@ public class PerfTest {
 //            for (; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
             //final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
             final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getLocations());
-            fillQuadTree(quadTree, g);
+            QuadTree.Util.fill(quadTree, g);
             System.gc();
             System.gc();
             float mem = (float) quadTree.getMemoryUsageInBytes(1) / Helper.MB;
@@ -99,7 +99,7 @@ public class PerfTest {
                 @Override public long doCalc(int run) {
                     //QuadTree<Long> quadTree = new QuadTreeSimple<Long>(epl, b);
                     QuadTree<Long> quadTree = new SpatialHashtable(b, epl).init(g.getLocations());
-                    fillQuadTree(quadTree, g);
+                    QuadTree.Util.fill(quadTree, g);
                     return quadTree.size();
                 }
             }.setMax(20).start();
@@ -111,7 +111,7 @@ public class PerfTest {
         for (int bits = minBits; bits <= 30; bits += 2) {
             int entriesPerLeaf = 3;
             final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getLocations());
-                fillQuadTree(quadTree, g);
+                QuadTree.Util.fill(quadTree, g);
             for (int distance = 5; distance < maxDist; distance *= 2) {
 //                for (; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
                 //final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
@@ -134,15 +134,6 @@ public class PerfTest {
                 }.setMax(10).setShowProgress(true).setSeed(0).start();
 //                }
             }
-        }
-    }
-
-    public static void fillQuadTree(QuadTree<Long> quadTree, Graph graph) {
-        int locs = graph.getLocations();
-        for (int i = 0; i < locs; i++) {
-            float lat = graph.getLatitude(i);
-            float lon = graph.getLongitude(i);
-            quadTree.add(lat, lon, 1L);
         }
     }
 }

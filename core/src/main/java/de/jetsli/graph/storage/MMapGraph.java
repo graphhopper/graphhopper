@@ -493,25 +493,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
 
     @Override
     public int getNodeId(float lat, float lon, int minEdges) {
-        float locs = getLocations();
-        int id = -1;
-        CalcDistance calc = new CalcDistance();
-        Circle circle = null;
-        for (int i = 0; i < locs; i++) {
-            float tmpLat = getLatitude(i);
-            float tmpLon = getLongitude(i);
-
-            if (circle == null)
-                circle = new Circle(lat, lon, calc.calcDistKm(tmpLat, tmpLon, lat, lon), calc);
-            else if (circle.contains(tmpLat, tmpLon)) {
-                int cnt = MyIteratorable.count(getEdges(i));
-                if (cnt >= minEdges) {
-                    id = i;
-                    circle = new Circle(lat, lon, calc.calcDistKm(tmpLat, tmpLon, lat, lon), calc);
-                }
-            }
-        }
-        return id;
+        return -1;
     }
 
     public void stats() {

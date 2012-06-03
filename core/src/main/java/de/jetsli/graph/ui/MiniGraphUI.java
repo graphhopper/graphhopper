@@ -72,7 +72,7 @@ public class MiniGraphUI {
         this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
 //        this.quadTree = new SpatialHashtable(2, 3).init(graph.getLocations());
 
-        PerfTest.fillQuadTree(quadTree, graph);
+        QuadTree.Util.fill(quadTree, graph);
         logger.info("read " + quadTree.size() + " entries");
 
         infoPanel = new JPanel() {

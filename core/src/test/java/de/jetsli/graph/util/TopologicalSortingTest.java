@@ -16,7 +16,7 @@
 package de.jetsli.graph.util;
 
 import de.jetsli.graph.storage.DistEntry;
-import de.jetsli.graph.storage.GeoGraph;
+import de.jetsli.graph.storage.MemoryGraph;
 import gnu.trove.list.array.TIntArrayList;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -29,7 +29,7 @@ public class TopologicalSortingTest {
     
     @Test
     public void testSort() {       
-        GeoGraph g = new GeoGraph();                
+        MemoryGraph g = new MemoryGraph();                
         g.edge(7, 11, 1, false);
         g.edge(7, 8, 1, false);
         g.edge(5, 11, 1, false);
@@ -53,7 +53,7 @@ public class TopologicalSortingTest {
     
     @Test
     public void testSort2() {
-        GeoGraph g = new GeoGraph();        
+        MemoryGraph g = new MemoryGraph();        
         g.edge(1, 2, 1, false);
         g.edge(7, 2, 1, false);
         g.edge(2, 0, 1, false);
@@ -80,7 +80,7 @@ public class TopologicalSortingTest {
     
     @Test
     public void testSortWithCycle() {
-        GeoGraph g = new GeoGraph();
+        MemoryGraph g = new MemoryGraph();
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
         g.edge(2, 0, 1, false);
@@ -93,7 +93,7 @@ public class TopologicalSortingTest {
         }
     }
 
-    private void checkOrder(GeoGraph g, final TIntArrayList res, final int i) {
+    private void checkOrder(MemoryGraph g, final TIntArrayList res, final int i) {
         final int prev = res.get(i - 1);
         final int curr = res.get(i);
         XFirstSearch search = new XFirstSearch() {

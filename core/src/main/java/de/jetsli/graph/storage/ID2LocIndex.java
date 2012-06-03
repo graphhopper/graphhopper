@@ -13,25 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
-
-import de.jetsli.graph.storage.MemoryGraph;
+package de.jetsli.graph.storage;
 
 /**
- *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich
  */
-public class DijkstraMultipleAtOnce {
+public interface ID2LocIndex {
 
-    private MemoryGraph graph;
+    ID2LocIndex prepareIndex(int capacity);
 
-    public DijkstraMultipleAtOnce(MemoryGraph graph) {
-        this.graph = graph;
-    }
-
-    public void calcShortestPaths() {
-    }
-
-    public void addDetermineShortestPath(int id, int m1) {
-    }
+    int findID(final double lat, final double lon);
 }

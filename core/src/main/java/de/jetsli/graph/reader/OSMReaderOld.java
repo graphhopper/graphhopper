@@ -16,7 +16,7 @@
 package de.jetsli.graph.reader;
 
 import de.jetsli.graph.dijkstra.DijkstraBidirection;
-import de.jetsli.graph.storage.GeoGraph;
+import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.GeoLocation;
 import de.jetsli.graph.storage.GeoLocationSimple;
 import de.jetsli.graph.util.BufferedSimpleInputStream;
@@ -61,7 +61,7 @@ public class OSMReaderOld implements OSMReader {
 
         logger.info("Start parsing " + file);
         writeOsm2Binary(new FileInputStream(file));
-        GeoGraph g = readGraph();
+        MemoryGraph g = readGraph();
         System.out.println("path:" + new DijkstraBidirection(g).calcShortestPath(123, 140).toString());
     }
     private static final int MB = 1 << 20;
@@ -214,7 +214,7 @@ public class OSMReaderOld implements OSMReader {
         }
     }
 
-    public GeoGraph readGraph() {
+    public MemoryGraph readGraph() {
         if (getTmpEdgesFilename() == null || getTmpLocationsFilename() == null)
             throw new IllegalStateException("please specify filenames if you don't write from OSM file before!");
 
@@ -225,12 +225,12 @@ public class OSMReaderOld implements OSMReader {
      * Retrieves the in-memory graph created from the previously written binary files
      * Later: open those files here again and close them in writeOsm2Binary!
      */
-    public GeoGraph readGraph(File edgesFilename, File locationsFilename) {
+    public MemoryGraph readGraph(File edgesFilename, File locationsFilename) {
         try {
             printMemInfo();
             openFiles(locationsFilename, edgesFilename, true);
             logger.info("Reading graph with " + nextLocationIndex + " nodes ...");
-            GeoGraph graph = createGraphInstance(nextLocationIndex);
+            MemoryGraph graph = createGraphInstance(nextLocationIndex);
             for (int pointer = 0; pointer < nextLocationIndex; pointer++) {
                 if (pointer % 1000000 == 0)
                     logger.info(pointer + " progress ..."+ ", totalMB:" + Runtime.getRuntime().totalMemory() / MB
@@ -281,8 +281,8 @@ public class OSMReaderOld implements OSMReader {
         return new TIntIntHashMap(maxLocs, 0.9f, -1, -1);
     }
 
-    protected GeoGraph createGraphInstance(int no) {
-        return new GeoGraph(no);
+    protected MemoryGraph createGraphInstance(int no) {
+        return new MemoryGraph(no);
     }
 
     public OSMReaderOld setMaxLocations(int maxLocs) {

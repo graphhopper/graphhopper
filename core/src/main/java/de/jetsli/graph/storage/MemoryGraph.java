@@ -25,7 +25,7 @@ import java.util.Arrays;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class GeoGraph implements Graph {
+public class MemoryGraph implements Graph {
 
     private float[] lons;
     private float[] lats;
@@ -33,11 +33,11 @@ public class GeoGraph implements Graph {
     private int maxRecognizedNodeIndex = -1;
     private LinkedDistEntryWithFlags[] edges;
 
-    public GeoGraph() {
+    public MemoryGraph() {
         this(1000);
     }
 
-    public GeoGraph(int capacity) {
+    public MemoryGraph(int capacity) {
         lons = new float[capacity];
         lats = new float[capacity];
         edges = new LinkedDistEntryWithFlags[capacity];
@@ -182,6 +182,11 @@ public class GeoGraph implements Graph {
         };
     }
 
+    @Override
+    public int getNodeId(float lat, float lon, int minEdges) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
     private static class EdgesIteratorable extends MyIteratorable<DistEntry> {
 
         LinkedDistEntryWithFlags curr;
@@ -271,8 +276,8 @@ public class GeoGraph implements Graph {
     }
 
     @Override
-    public GeoGraph clone() {
-        GeoGraph ret = new GeoGraph(0);
+    public MemoryGraph clone() {
+        MemoryGraph ret = new MemoryGraph(0);
         ret.lons = Arrays.copyOf(lons, lons.length);
         ret.lats = Arrays.copyOf(lats, lats.length);
         ret.lonLatSize = lonLatSize;
