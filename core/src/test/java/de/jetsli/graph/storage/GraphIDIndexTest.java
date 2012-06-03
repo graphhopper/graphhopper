@@ -30,7 +30,7 @@ public class GraphIDIndexTest {
     public void testSinglePoints() {
         Graph g = createSampleGraph();
         ID2LocIndex idx = new GraphIDIndex(g).prepareIndex(8);
-        assertEquals(5, idx.findID(1.637, 2.23));
+        assertEquals(1, idx.findID(1.637, 2.23));
     }
 
     @Test
@@ -46,7 +46,8 @@ public class GraphIDIndexTest {
             double lon = g.getLongitude(i);
             //System.out.println(key + " " + BitUtil.toBitString(key) + " " + lat + "," + lon);
             //System.out.println(i + " -> " + (float) lat + "\t," + (float) lon);
-            assertEquals("id:" + i + " " + lat + "," + lon, i, memoryEfficientIndex.findID(lat, lon));
+            assertEquals("id:" + i + " " + (float) lat + "," + (float) lon,
+                    i, memoryEfficientIndex.findID(lat, lon));
         }
 
         // hit random lat,lon and compare result to full index
@@ -56,8 +57,7 @@ public class GraphIDIndexTest {
         for (int i = 0; i < 1000; i++) {
             double lat = rand.nextDouble() * 5;
             double lon = rand.nextDouble() * 5;
-
-            int fullId = fullIndex.findID(lat, lon);
+            int fullId = fullIndex.findID(lat, lon);            
             float fullLat = g.getLatitude(fullId);
             float fullLon = g.getLongitude(fullId);
             float fullDist = (float) dist.calcDistKm(lat, lon, fullLat, fullLon);
@@ -70,6 +70,12 @@ public class GraphIDIndexTest {
                     + " new:" + newLat + "," + newLon + " dist:" + newDist,
                     Math.abs(fullDist - newDist) < 50);
         }
+    }
+
+    @Test
+    public void testFullIndex() {
+        ID2LocIndex idx = new GraphIDIndex(createSampleGraph()).createFullIndex();
+        assertEquals(10, idx.findID(3.65, 1.38));
     }
 
     private Graph createSampleGraph() {

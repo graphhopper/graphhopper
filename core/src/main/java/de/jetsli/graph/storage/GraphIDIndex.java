@@ -22,7 +22,6 @@ import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeSimple;
 import de.jetsli.graph.util.BooleanRef;
 import de.jetsli.graph.util.CoordTrig;
-import de.jetsli.graph.util.IntegerRef;
 import de.jetsli.graph.util.XFirstSearch;
 import de.jetsli.graph.util.shapes.Circle;
 import java.nio.ByteBuffer;
@@ -96,49 +95,52 @@ public class GraphIDIndex implements ID2LocIndex {
 
         long key = algo.encode(lat, lon);
         int id = quadtree.get((int) key);
-        final IntegerRef integ = new IntegerRef(id);
+        float mainLat = g.getLatitude(id);
+        float mainLon = g.getLongitude(id);
+        final DistEntry closestNode = new DistEntry(id,
+                (float) calc.calcDistKm(lat, lon, mainLat, mainLon));
         new XFirstSearch() {
 
-            @Override
-            protected boolean goFurther(int nodeId) {
+            @Override protected boolean goFurther(int nodeId) {
                 double currLat = g.getLatitude(nodeId);
                 double currLon = g.getLongitude(nodeId);
-                if (Math.abs(currLat - lat) < 0.0001 && Math.abs(currLon - lon) < 0.0001) {
-                    integ.value = nodeId;
-                    return false;
+                float d = (float) calc.calcDistKm(currLat, currLon, lat, lon);
+                if (d < closestNode.distance) {
+                    closestNode.distance = d;
+                    closestNode.node = nodeId;
+                    return true;
                 }
 
-                if (calc.calcDistKm(currLat, currLon, lat, lon) > 2 * maxRasterWidthKm)
-                    return false;
-                return true;
+                return d < 2 * maxRasterWidthKm;
             }
         }.start(g, id, false);
-        return integ.value;
+        return closestNode.node;
     }
 
+    /**
+     * @return an implementation which returns the closest point and iterates through all points of
+     * the graph
+     */
     public ID2LocIndex createFullIndex() {
         return new ID2LocIndex() {
 
-            @Override
-            public ID2LocIndex prepareIndex(int capacity) {
+            @Override public ID2LocIndex prepareIndex(int capacity) {
                 return this;
             }
 
-            @Override
-            public int findID(double lat, double lon) {
+            @Override public int findID(double lat, double lon) {
                 float locs = g.getLocations();
                 int id = -1;
-
                 Circle circle = null;
                 for (int i = 0; i < locs; i++) {
                     float tmpLat = g.getLatitude(i);
                     float tmpLon = g.getLongitude(i);
-
-                    if (circle == null)
-                        circle = new Circle(lat, lon, calc.calcDistKm(tmpLat, tmpLon, lat, lon), calc);
-                    else if (circle.contains(tmpLat, tmpLon)) {
+                    if (circle == null) {
                         id = i;
                         circle = new Circle(lat, lon, calc.calcDistKm(tmpLat, tmpLon, lat, lon), calc);
+                    } else if (circle.contains(tmpLat, tmpLon)) {
+                        circle = new Circle(lat, lon, calc.calcDistKm(tmpLat, tmpLon, lat, lon), calc);
+                        id = i;
                     }
                 }
                 return id;
@@ -199,7 +201,8 @@ public class GraphIDIndex implements ID2LocIndex {
                 minLon = lon;
         }
         algo = new SpatialKeyAlgo(bits).setInitialBounds(minLon, maxLon, minLat, maxLat);
-        maxRasterWidthKm = calc.calcDistKm(minLat, minLon, minLat, maxLon);
+        maxRasterWidthKm = Math.max(calc.calcDistKm(minLat, minLon, minLat, maxLon),
+                calc.calcDistKm(minLat, minLon, maxLat, minLon));
     }
 
     private MyOpenBitSet fillQuadtree(int size) {
@@ -235,7 +238,7 @@ public class GraphIDIndex implements ID2LocIndex {
         int locs = g.getLocations();
         int maxSearch = 10;
         List<DistEntry> list = new ArrayList<DistEntry>();
-        for (int nodeId = 0; nodeId < locs; nodeId++) {            
+        for (int nodeId = 0; nodeId < locs; nodeId++) {
             final CoordTrig mainCoord = new CoordTrig();
             algo.decode(nodeId, mainCoord);
             int mainKey = nodeId >>> 32 - algo.getBits();
@@ -271,7 +274,7 @@ public class GraphIDIndex implements ID2LocIndex {
             });
 
             // choose the best we have so far
-            final DistEntry foundClosestNode = list.get(0);
+            final DistEntry closestNode = list.get(0);
             // now explore the graph
             for (final DistEntry de : list) {
                 final BooleanRef onlyOneDepth = new BooleanRef();
@@ -281,9 +284,9 @@ public class GraphIDIndex implements ID2LocIndex {
                         double currLat = g.getLatitude(nodeId);
                         double currLon = g.getLongitude(nodeId);
                         float d = (float) calc.calcDistKm(currLat, currLon, mainCoord.lat, mainCoord.lon);
-                        if (d < foundClosestNode.distance) {
-                            foundClosestNode.distance = d;
-                            foundClosestNode.node = nodeId;
+                        if (d < closestNode.distance) {
+                            closestNode.distance = d;
+                            closestNode.node = nodeId;
                         }
 
                         if (onlyOneDepth.value) {
@@ -295,7 +298,7 @@ public class GraphIDIndex implements ID2LocIndex {
                 }.start(g, de.node, false);
             }
 
-            quadtree.put(nodeId, foundClosestNode.node);
+            quadtree.put(nodeId, closestNode.node);
         }
     }
 }
