@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.reader.CalcDistance;
 import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.MyIteratorable;
@@ -29,8 +28,6 @@ import java.nio.channels.FileChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static de.jetsli.graph.util.MyIteratorable.*;
-import de.jetsli.graph.util.shapes.Circle;
-import gnu.trove.impl.hash.TIntFloatHash;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import java.io.File;
 
@@ -82,7 +79,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
     private ByteBuffer edges;
     private String fileName;
     private int distEntryFlagsPos = distEntrySize - 1;
-    private int bytesDistEntrySize = distEntryEmbedded * distEntrySize + 4;
+    private int bytesDistEntrySize = distEntryEmbedded * distEntrySize + 4;    
 
     /**
      * Creates an in-memory graph suitable for test
@@ -490,12 +487,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
     private void clean(MappedByteBuffer mapping) {
         Helper.cleanMappedByteBuffer(mapping);
     }
-
-    @Override
-    public int getNodeId(float lat, float lon, int minEdges) {
-        return -1;
-    }
-
+    
     public void stats() {
         float locs = getLocations();
         int edgesNo = 0;

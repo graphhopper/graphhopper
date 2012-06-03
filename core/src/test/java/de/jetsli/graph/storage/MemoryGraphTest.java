@@ -22,20 +22,10 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class GeoGraphTest extends AbstractGraphTester {
+public class MemoryGraphTest extends AbstractGraphTester {
 
     @Override
     Graph createGraph(int size) {
         return new MemoryGraph(size);
-    }
-
-    @Test public void testExceptions() {
-        MemoryGraph graph = new MemoryGraph(1);
-        try {
-            assertNull(graph.createGeoLocation(1));
-            assertFalse("Cannot access unadded location", true);
-        } catch (Exception ex) {
-            assertTrue(true);
-        }
     }
 }

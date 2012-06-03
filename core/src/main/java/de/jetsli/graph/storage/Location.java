@@ -19,7 +19,7 @@ package de.jetsli.graph.storage;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public interface GeoLocation {
+public interface Location {
 
     int id();
 

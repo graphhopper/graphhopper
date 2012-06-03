@@ -18,9 +18,10 @@ package de.jetsli.graph.ui;
 import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.reader.OSMReaderTrials;
-import de.jetsli.graph.reader.PerfTest;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.GraphIDIndex;
+import de.jetsli.graph.storage.ID2LocIndex;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeSimple;
 import de.jetsli.graph.util.CoordTrig;
@@ -52,6 +53,7 @@ public class MiniGraphUI {
     private Collection<CoordTrig<Long>> quadTreeNodes;
     private DijkstraPath path;
     private final Graph graph;
+    private final ID2LocIndex index;
     private double scaleX = 0.001f;
     private double scaleY = 0.001f;
     // initial position to center unterfranken
@@ -68,7 +70,7 @@ public class MiniGraphUI {
 
     public MiniGraphUI(Graph g) {
         this.graph = g;
-
+        this.index = new GraphIDIndex(g).prepareIndex(2000);
         this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
 //        this.quadTree = new SpatialHashtable(2, 3).init(graph.getLocations());
 
@@ -270,8 +272,8 @@ public class MiniGraphUI {
                                 logger.info("start searching from " + fromLat + "," + fromLon
                                         + " to " + toLat + "," + toLon);
                                 // get from and to node id
-                                int from = graph.getNodeId((float) fromLat, (float) fromLon, 2);
-                                int to = graph.getNodeId((float) toLat, (float) toLon, 2);
+                                int from = index.findID((float) fromLat, (float) fromLon);
+                                int to = index.findID((float) toLat, (float) toLon);
                                 logger.info("found ids " + from + " -> " + to + " in " + sw.stop().getSeconds() + "s");
                                 sw = new StopWatch().start();
                                 path = new DijkstraBidirection(graph).calcShortestPath(from, to);

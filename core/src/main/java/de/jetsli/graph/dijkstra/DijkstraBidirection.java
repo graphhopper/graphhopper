@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.dijkstra;
 
-import de.jetsli.graph.storage.GeoPathWrapper;
+import de.jetsli.graph.storage.PathWrapper;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
@@ -38,7 +38,7 @@ public class DijkstraBidirection implements Dijkstra {
     private Graph graph;
     protected LinkedDistEntry currFrom;
     protected LinkedDistEntry currTo;
-    protected GeoPathWrapper shortest;    
+    protected PathWrapper shortest;    
     protected TIntObjectMap<LinkedDistEntry> shortestDistMapOther;
     private MyBitSet visitedFrom;
     private PriorityQueue<LinkedDistEntry> prioQueueFrom;
@@ -58,7 +58,7 @@ public class DijkstraBidirection implements Dijkstra {
         prioQueueTo = new PriorityQueue<LinkedDistEntry>();
         shortestDistMapTo = new TIntObjectHashMap<LinkedDistEntry>();
 
-        shortest = new GeoPathWrapper();
+        shortest = new PathWrapper();
         shortest.distance = Float.MAX_VALUE;
     }
     

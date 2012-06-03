@@ -39,9 +39,6 @@ public abstract class OSMReaderTester {
         assertEquals(3, count(graph.getOutgoing(1)));
         assertEquals(1, count(graph.getOutgoing(2)));
 
-        // get second added location => 1
-//        GeoLocation loc = graph.getGeoLocation(1);
-//        assertEquals(1, loc.id());
         Iterator<DistEntry> iter = graph.getOutgoing(1).iterator();
         DistEntry locNextEntry = iter.next();
         assertEquals(0, locNextEntry.node);

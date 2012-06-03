@@ -17,8 +17,8 @@ package de.jetsli.graph.reader;
 
 import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.storage.MemoryGraph;
-import de.jetsli.graph.storage.GeoLocation;
-import de.jetsli.graph.storage.GeoLocationSimple;
+import de.jetsli.graph.storage.Location;
+import de.jetsli.graph.storage.LocationSimple;
 import de.jetsli.graph.util.BufferedSimpleInputStream;
 import de.jetsli.graph.util.BufferedSimpleOutputStream;
 import gnu.trove.list.array.TIntArrayList;
@@ -196,11 +196,11 @@ public class OSMReaderOld implements OSMReader {
         }
 
         if (tmpLocs.size() > 1) {
-            GeoLocation prev = getLocation(tmpLocs.get(0));
+            Location prev = getLocation(tmpLocs.get(0));
             try {
                 for (int index = 1; index < tmpLocs.size(); index++) {
                     // Later: save the name, type, estimated timeDistance too!
-                    GeoLocation curr = getLocation(index);
+                    Location curr = getLocation(index);
                     edgesOutFile.writeInt(prev.id());
                     edgesOutFile.writeInt(curr.id());
                     edgesOutFile.writeFloat(calcDistKm(prev, curr));
@@ -270,8 +270,8 @@ public class OSMReaderOld implements OSMReader {
         }
     }
 
-    GeoLocation getLocation(int pointer) {
-        GeoLocation loc = new GeoLocationSimple(pointer, null);
+    Location getLocation(int pointer) {
+        Location loc = new LocationSimple(pointer, null);
         loc.lat(lats[pointer]);
         loc.lon(lons[pointer]);
         return loc;
@@ -297,7 +297,7 @@ public class OSMReaderOld implements OSMReader {
      * c = 2.atan2(√a, √(1−a))
      * d = R.c
      */
-    public static float calcDistKm(GeoLocation from, GeoLocation to) {
+    public static float calcDistKm(Location from, Location to) {
         float flat = from.lat();
         float tlat = to.lat();
         double dLat = Math.toRadians(tlat - flat);
@@ -308,7 +308,7 @@ public class OSMReaderOld implements OSMReader {
         return (float) (R * 2 * Math.asin(Math.sqrt(a)));
     }
 
-    public static double fasterCalcDist(GeoLocation from, GeoLocation to) {
+    public static double fasterCalcDist(Location from, Location to) {
         float flat = from.lat();
         float tlat = to.lat();
         return Math.acos(Math.sin(flat) * Math.sin(tlat)

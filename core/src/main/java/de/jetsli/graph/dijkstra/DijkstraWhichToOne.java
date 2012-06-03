@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.dijkstra;
 
-import de.jetsli.graph.storage.GeoPathWrapper;
+import de.jetsli.graph.storage.PathWrapper;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
@@ -27,7 +27,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 /**
- * Public transport represents a collection of GeoLocations. Now it is the aim to find the shortest
+ * Public transport represents a collection of Locations. Now it is the aim to find the shortest
  * path of a path ('the public transport') to the destination. In contrast to manyToOne this class
  * only find one shortest path and not all, but it it more memory efficient (ie. the
  * shortest-path-trees do not overlap here)
@@ -81,7 +81,7 @@ public class DijkstraWhichToOne implements Dijkstra {
         TIntObjectMap<LinkedDistEntry> shortestDistMapTo = new TIntObjectHashMap<LinkedDistEntry>();
         shortestDistMapTo.put(destination, entryTo);
 
-        GeoPathWrapper shortest = new GeoPathWrapper();
+        PathWrapper shortest = new PathWrapper();
         shortest.distance = Float.MAX_VALUE;
 
         // create several starting points
@@ -132,7 +132,7 @@ public class DijkstraWhichToOne implements Dijkstra {
         return g;
     }
 
-    public void fillEdges(GeoPathWrapper shortest, LinkedDistEntry curr, MyBitSet visitedMain,
+    public void fillEdges(PathWrapper shortest, LinkedDistEntry curr, MyBitSet visitedMain,
             PriorityQueue<LinkedDistEntry> prioQueue,
             TIntObjectMap<LinkedDistEntry> shortestDistMap, TIntObjectMap<LinkedDistEntry> shortestDistMapOther) {
 

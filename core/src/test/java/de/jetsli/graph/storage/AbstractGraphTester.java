@@ -256,18 +256,16 @@ public abstract class AbstractGraphTester {
         assertEquals(1, count(g.getEdges(1)));
     }
     
-    @Test
-    public void testGetNodeId() {
-        Graph g = createGraph(11);
-        assertEquals(0, g.addLocation(12, 23));
-        assertEquals(1, g.addLocation(38.33f, 235.3f));
-        assertEquals(2, g.addLocation(3, 3));
-        assertEquals(3, g.addLocation(78, 89));
-        assertEquals(4, g.addLocation(2, 1));
-        assertEquals(5, g.addLocation(2.5f, 1));
-        
-        assertEquals(2, g.getNodeId(6, 2, 0));
-        assertEquals(5, g.getNodeId(2.4f, 1, 0));
-        assertEquals(-1, g.getNodeId(2.4f, 1, 1));
-    }
+    // TODO
+//    @Test
+//    public void testDeleteNode() {
+//        Graph g = createGraph(11);
+//        assertEquals(0, g.addLocation(12, 23));
+//        assertEquals(1, g.addLocation(38.33f, 235.3f));
+//        assertEquals(2, g.addLocation(3, 3));
+//        assertEquals(3, g.addLocation(78, 89));
+//        assertEquals(4, g.addLocation(2, 1));
+//        assertEquals(5, g.addLocation(2.5f, 1));
+//        
+//    }
 }

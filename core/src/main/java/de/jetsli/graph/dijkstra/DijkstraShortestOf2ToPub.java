@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.dijkstra;
 
-import de.jetsli.graph.storage.GeoPathWrapper;
+import de.jetsli.graph.storage.PathWrapper;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
@@ -27,7 +27,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 /**
- * Public transport represents a collection of GeoLocations. Then there are two points P1 and P1 and
+ * Public transport represents a collection of Locations. Then there are two points P1 and P1 and
  * it is the aim to find the shortest path from P1 to one of the public transport points (M) and to
  * P2.
  *
@@ -45,7 +45,7 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
     private int toP2;
     private LinkedDistEntry currTo;
     private LinkedDistEntry currFrom;
-    private GeoPathWrapper shortest;
+    private PathWrapper shortest;
     private TIntObjectMap<LinkedDistEntry> shortestDistMapOther;
 
     public DijkstraShortestOf2ToPub(Graph graph) {
@@ -89,7 +89,7 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
         PriorityQueue<LinkedDistEntry> prioQueueTo = new PriorityQueue<LinkedDistEntry>();
         TIntObjectMap<LinkedDistEntry> shortestDistMapTo = new TIntObjectHashMap<LinkedDistEntry>();
 
-        shortest = new GeoPathWrapper();
+        shortest = new PathWrapper();
         shortest.distance = Float.MAX_VALUE;
 
         // create several starting points

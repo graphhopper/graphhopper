@@ -25,6 +25,9 @@ import de.jetsli.graph.util.CoordTrig;
  *
  * lat0 lon0 | lat1 lon1 | lat2 lon2
  *
+ * Detailed information is available in this blog post:
+ * http://karussell.wordpress.com/2012/05/23/spatial-keys-memory-efficient-geohashes/
+ *
  * The bits are usable as key for hash tables like our SpatialKeyHashtable or for a spatial tree
  * like QuadTreeSimple. Also the binary form makes it relative simple for implementations using this
  * encoding scheme to expand to arbitrary dimension (e.g. shifting n-times if n would be the

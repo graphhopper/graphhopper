@@ -18,11 +18,11 @@ package de.jetsli.graph.storage;
 import de.jetsli.graph.util.EmptyIterable;
 
 /**
- * <b>DistEntry</b> is used as most simplistic return type for outgoing edges in GeoGraph although
+ * <b>DistEntry</b> is used as most simplistic return type for outgoing edges in Graph although
  * edges are stored as LinkedDistEntryWithFlags.<br/>
  *
  * <b>LinkedDistEntry</b> is used as simple linked list entry for the shortest path tree used in
- * Dijkstra algorithms and GeoPathWrapper
+ * Dijkstra algorithms and PathWrapper
  *
  * @author Peter Karich, info@jetsli.de
  */

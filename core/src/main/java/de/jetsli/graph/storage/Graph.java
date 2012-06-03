@@ -58,9 +58,4 @@ public interface Graph {
     MyIteratorable<DistEntry> getOutgoing(int index);
 
     Graph clone();
-
-    /**
-     * @return the id of the closest node to the specified parameters.
-     */
-    int getNodeId(float lat, float lon, int minEdges);
 }

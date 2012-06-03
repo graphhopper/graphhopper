@@ -22,13 +22,13 @@ import de.jetsli.graph.dijkstra.DijkstraPath;
  * 
  * @author Peter Karich, info@jetsli.de
  */
-public class GeoPathWrapper {
+public class PathWrapper {
 
     public LinkedDistEntry entryFrom;
     public LinkedDistEntry entryTo;
     public float distance;
 
-    public GeoPathWrapper() {
+    public PathWrapper() {
     }
 
     /**

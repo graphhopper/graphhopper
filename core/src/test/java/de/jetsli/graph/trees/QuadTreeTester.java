@@ -36,16 +36,6 @@ public abstract class QuadTreeTester {
         assertEquals(0, instance.size());
     }
 
-//    @Test
-//    public void testPrint() {
-//        int maxbits = 62;
-//        GeoHashAlgo algo = new GeoHashAlgo().init(maxbits);
-//        System.out.println("12,10:" + BitUtil.toBitString(algo.encode(12, 10), maxbits));
-//        System.out.println("12,12:" + BitUtil.toBitString(algo.encode(12, 12), maxbits));
-//        System.out.println("10,10:" + BitUtil.toBitString(algo.encode(10, 10), maxbits));
-//        System.out.println("10,12:" + BitUtil.toBitString(algo.encode(10, 12), maxbits));
-//        System.out.println("12,0.:" + BitUtil.toBitString(algo.encode(12.0001f, 12.0001f), maxbits));
-//    }
     @Test
     public void testPutAndGet() {
         QuadTree<Long> instance = createQuadTree(100);

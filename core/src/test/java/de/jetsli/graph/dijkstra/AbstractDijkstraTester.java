@@ -130,7 +130,7 @@ public abstract class AbstractDijkstraTester {
 //        from = graph.addLocation(100, null);
 //        to = graph.addLocation(200, null);
 //        graph.edge(from, to, 20, true);
-//        GeoPath p = createDijkstra(graph).calcShortestPath(from, to);
+//        Path p = createDijkstra(graph).calcShortestPath(from, to);
 //        assertEquals(p.toString(), 20, p.distance(), 1e-6);
 //        assertEquals(p.toString(), 2, p.locations());
 //    }

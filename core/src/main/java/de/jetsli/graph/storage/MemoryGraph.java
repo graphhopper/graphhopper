@@ -181,12 +181,7 @@ public class MemoryGraph implements Graph {
             }
         };
     }
-
-    @Override
-    public int getNodeId(float lat, float lon, int minEdges) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
+    
     private static class EdgesIteratorable extends MyIteratorable<DistEntry> {
 
         LinkedDistEntryWithFlags curr;
@@ -223,19 +218,6 @@ public class MemoryGraph implements Graph {
         return lats[index];
     }
 
-    /**
-     * @deprecated use getLongitude or getLatitude instead
-     */
-    @Deprecated
-    public GeoLocation createGeoLocation(int index) {
-        if (index >= lonLatSize)
-            throw new RuntimeException("index too high. A node index needs to be registered either via addLocation or via edge");
-
-        GeoLocation loc = new GeoLocationSimple(index, null);
-        loc.lat(lats[index]);
-        loc.lon(lons[index]);
-        return loc;
-    }
     private static final Field sizeField;
 
     static {

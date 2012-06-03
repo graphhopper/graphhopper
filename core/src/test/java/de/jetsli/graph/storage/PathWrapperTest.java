@@ -23,7 +23,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class GeoPathWrapperTest {
+public class PathWrapperTest {
 
     @Test public void testExtract() {
         //
@@ -44,7 +44,7 @@ public class GeoPathWrapperTest {
         LinkedDistEntry entryE = entryD.prevEntry = new LinkedDistEntry(-1, 2.5f);
         LinkedDistEntry entryF = entryE.prevEntry = new LinkedDistEntry(-1, 0);
 
-        GeoPathWrapper wrapper = new GeoPathWrapper();
+        PathWrapper wrapper = new PathWrapper();
         wrapper.entryFrom = entryC;
         wrapper.entryTo = entryD;
 

@@ -19,7 +19,7 @@ package de.jetsli.graph.storage;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class GeoLocationSimple implements GeoLocation {
+public class LocationSimple implements Location {
 
     // do not let change id after construction!
     private final int id;
@@ -27,7 +27,7 @@ public class GeoLocationSimple implements GeoLocation {
     private float lon;
     private float lat;
 
-    public GeoLocationSimple(int id, String name) {
+    public LocationSimple(int id, String name) {
         this.id = id;
         this.name = name;
     }
@@ -40,7 +40,7 @@ public class GeoLocationSimple implements GeoLocation {
         if (obj == null || getClass() != obj.getClass())
             return false;
 
-        return this.id == ((GeoLocationSimple) obj).id;
+        return this.id == ((LocationSimple) obj).id;
     }
 
     @Override public int hashCode() {
