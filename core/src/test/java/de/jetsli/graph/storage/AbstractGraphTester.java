@@ -16,6 +16,7 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.reader.CalcDistance;
+import de.jetsli.graph.util.MyIteratorable;
 import java.util.Iterator;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -256,7 +257,6 @@ public abstract class AbstractGraphTester {
         assertEquals(1, count(g.getEdges(1)));
     }
     
-    // TODO
 //    @Test
 //    public void testDeleteNode() {
 //        Graph g = createGraph(11);
@@ -267,5 +267,17 @@ public abstract class AbstractGraphTester {
 //        assertEquals(4, g.addLocation(2, 1));
 //        assertEquals(5, g.addLocation(2.5f, 1));
 //        
+//        g.edge(0, 1, 10, true);
+//        g.edge(0, 3, 20, false);
+//        g.edge(1, 5, 20, false);
+//        
+//        // move 5 onto 0
+//        g.remove(0);
+//        assertEquals(0, MyIteratorable.count(g.getEdges(0)));
+//        
+//        // move 4 onto 3
+//        g.remove(3);
+//        // remove
+//        g.remove(5);
 //    }
 }

@@ -41,7 +41,7 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class GraphIDIndex implements ID2LocIndex {
+public class ID2LocationQT implements ID2LocationIndex {
 
     private SpatialKeyAlgo algo;
     private CalcDistance calc = new CalcDistance();
@@ -50,7 +50,7 @@ public class GraphIDIndex implements ID2LocIndex {
     private int size;
     private Graph g;
 
-    public GraphIDIndex(Graph g) {
+    public ID2LocationQT(Graph g) {
         this.g = g;
     }
 
@@ -68,7 +68,7 @@ public class GraphIDIndex implements ID2LocIndex {
      * memory usage
      */
     @Override
-    public ID2LocIndex prepareIndex(int _size) {
+    public ID2LocationIndex prepareIndex(int _size) {
         int bits = initBuffer(_size);
         initAlgo(bits);
         MyOpenBitSet filledIndices = fillQuadtree(size);
@@ -124,10 +124,10 @@ public class GraphIDIndex implements ID2LocIndex {
      * @return an implementation which returns the closest point and iterates through all points of
      * the graph
      */
-    public ID2LocIndex createFullIndex() {
-        return new ID2LocIndex() {
+    public ID2LocationIndex createFullIndex() {
+        return new ID2LocationIndex() {
 
-            @Override public ID2LocIndex prepareIndex(int capacity) {
+            @Override public ID2LocationIndex prepareIndex(int capacity) {
                 return this;
             }
 
@@ -147,27 +147,6 @@ public class GraphIDIndex implements ID2LocIndex {
                     }
                 }
                 return id;
-            }
-        };
-    }
-
-    public ID2LocIndex createQuadtreeIndex() {
-        final QuadTreeSimple<Long> qt = new QuadTreeSimple<Long>(2);
-        QuadTree.Util.fill(qt, g);
-        return new ID2LocIndex() {
-
-            @Override
-            public ID2LocIndex prepareIndex(int capacity) {
-                return this;
-            }
-
-            @Override
-            public int findID(double lat, double lon) {
-                Collection<CoordTrig<Long>> coll = qt.getNodes(lat, lon, 0.001);
-                if (coll.isEmpty())
-                    throw new IllegalStateException("cannot find node for " + lat + "," + lon);
-
-                return ((Number) coll.iterator().next().getValue()).intValue();
             }
         };
     }

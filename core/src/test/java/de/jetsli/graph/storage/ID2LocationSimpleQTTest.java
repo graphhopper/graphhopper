@@ -15,12 +15,18 @@
  */
 package de.jetsli.graph.storage;
 
+import org.junit.*;
+import static org.junit.Assert.*;
+
 /**
+ *
  * @author Peter Karich
  */
-public interface ID2LocIndex {
+public class ID2LocationSimpleQTTest {
 
-    ID2LocIndex prepareIndex(int capacity);
-
-    int findID(final double lat, final double lon);
+    @Test
+    public void testFullIndex() {
+        ID2LocationIndex idx = new ID2LocationSimpleQT(ID2LocationQTTest.createSampleGraph());
+        assertEquals(10, idx.findID(3.65, 1.38));
+    }
 }

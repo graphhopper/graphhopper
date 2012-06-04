@@ -24,12 +24,12 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class GraphIDIndexTest {
+public class ID2LocationQTTest {
 
     @Test
     public void testSinglePoints() {
         Graph g = createSampleGraph();
-        ID2LocIndex idx = new GraphIDIndex(g).prepareIndex(8);
+        ID2LocationIndex idx = new ID2LocationQT(g).prepareIndex(8);
         assertEquals(1, idx.findID(1.637, 2.23));
     }
 
@@ -38,7 +38,7 @@ public class GraphIDIndexTest {
         Graph g = createSampleGraph();
         int locs = g.getLocations();
 
-        GraphIDIndex memoryEfficientIndex = new GraphIDIndex(g);
+        ID2LocationQT memoryEfficientIndex = new ID2LocationQT(g);
         memoryEfficientIndex.prepareIndex(8);
         // go through every point of the graph if all points are reachable
         for (int i = 0; i < locs; i++) {
@@ -52,7 +52,7 @@ public class GraphIDIndexTest {
 
         // hit random lat,lon and compare result to full index
         Random rand = new Random(12);
-        ID2LocIndex fullIndex = memoryEfficientIndex.createFullIndex();
+        ID2LocationIndex fullIndex = memoryEfficientIndex.createFullIndex();
         CalcDistance dist = new CalcDistance();
         for (int i = 0; i < 1000; i++) {
             double lat = rand.nextDouble() * 5;
@@ -71,14 +71,8 @@ public class GraphIDIndexTest {
                     Math.abs(fullDist - newDist) < 50);
         }
     }
-
-    @Test
-    public void testFullIndex() {
-        ID2LocIndex idx = new GraphIDIndex(createSampleGraph()).createFullIndex();
-        assertEquals(10, idx.findID(3.65, 1.38));
-    }
-
-    private Graph createSampleGraph() {
+    
+    public static Graph createSampleGraph() {
         MMapGraph graph = new MMapGraph(100).init(false);
         // length does not matter here but lat,lon and outgoing edges do!
         // 0
