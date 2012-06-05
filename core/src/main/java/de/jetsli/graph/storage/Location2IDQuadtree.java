@@ -18,16 +18,12 @@ package de.jetsli.graph.storage;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
 import de.jetsli.graph.reader.CalcDistance;
-import de.jetsli.graph.trees.QuadTree;
-import de.jetsli.graph.trees.QuadTreeSimple;
 import de.jetsli.graph.util.BooleanRef;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.XFirstSearch;
-import de.jetsli.graph.util.shapes.Circle;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -41,7 +37,7 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class ID2LocationQT implements ID2LocationIndex {
+public class Location2IDQuadtree implements ID2LocationIndex {
 
     private SpatialKeyAlgo algo;
     private CalcDistance calc = new CalcDistance();
@@ -50,7 +46,7 @@ public class ID2LocationQT implements ID2LocationIndex {
     private int size;
     private Graph g;
 
-    public ID2LocationQT(Graph g) {
+    public Location2IDQuadtree(Graph g) {
         this.g = g;
     }
 

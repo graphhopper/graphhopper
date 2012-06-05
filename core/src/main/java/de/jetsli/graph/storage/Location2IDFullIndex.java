@@ -21,12 +21,12 @@ import de.jetsli.graph.util.shapes.Circle;
 /**
  * @author Peter Karich
  */
-public class ID2LocationFullIndex implements ID2LocationIndex {
+public class Location2IDFullIndex implements ID2LocationIndex {
 
     private CalcDistance calc = new CalcDistance();
     private Graph g;
 
-    public ID2LocationFullIndex(Graph g) {
+    public Location2IDFullIndex(Graph g) {
         this.g = g;
     }
 

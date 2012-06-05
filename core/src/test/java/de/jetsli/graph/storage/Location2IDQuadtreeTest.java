@@ -24,12 +24,12 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class ID2LocationQTTest {
+public class Location2IDQuadtreeTest {
 
     @Test
     public void testSinglePoints() {
         Graph g = createSampleGraph();
-        ID2LocationIndex idx = new ID2LocationQT(g).prepareIndex(8);
+        ID2LocationIndex idx = new Location2IDQuadtree(g).prepareIndex(8);
         assertEquals(1, idx.findID(1.637, 2.23));
     }
 
@@ -38,7 +38,7 @@ public class ID2LocationQTTest {
         Graph g = createSampleGraph();
         int locs = g.getLocations();
 
-        ID2LocationQT memoryEfficientIndex = new ID2LocationQT(g);
+        Location2IDQuadtree memoryEfficientIndex = new Location2IDQuadtree(g);
         memoryEfficientIndex.prepareIndex(8);
         // go through every point of the graph if all points are reachable
         for (int i = 0; i < locs; i++) {
@@ -52,7 +52,7 @@ public class ID2LocationQTTest {
 
         // hit random lat,lon and compare result to full index
         Random rand = new Random(12);
-        ID2LocationIndex fullIndex = new ID2LocationFullIndex(g);
+        ID2LocationIndex fullIndex = new Location2IDFullIndex(g);
         CalcDistance dist = new CalcDistance();
         for (int i = 0; i < 1000; i++) {
             double lat = rand.nextDouble() * 5;

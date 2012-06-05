@@ -20,7 +20,7 @@ import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.ID2LocationQT;
+import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.ID2LocationIndex;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeSimple;
@@ -70,7 +70,7 @@ public class MiniGraphUI {
 
     public MiniGraphUI(Graph g) {
         this.graph = g;
-        this.index = new ID2LocationQT(g).prepareIndex(2000);
+        this.index = new Location2IDQuadtree(g).prepareIndex(2000);
         this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
 //        this.quadTree = new SpatialHashtable(2, 3).init(graph.getLocations());
 
