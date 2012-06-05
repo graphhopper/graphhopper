@@ -21,7 +21,7 @@ import de.jetsli.graph.reader.OSMReaderTrials;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
-import de.jetsli.graph.storage.ID2LocationIndex;
+import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeSimple;
 import de.jetsli.graph.util.CoordTrig;
@@ -53,7 +53,7 @@ public class MiniGraphUI {
     private Collection<CoordTrig<Long>> quadTreeNodes;
     private DijkstraPath path;
     private final Graph graph;
-    private final ID2LocationIndex index;
+    private final Location2IDIndex index;
     private double scaleX = 0.001f;
     private double scaleY = 0.001f;
     // initial position to center unterfranken

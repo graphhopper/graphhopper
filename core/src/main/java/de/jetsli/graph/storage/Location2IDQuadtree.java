@@ -37,7 +37,7 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class Location2IDQuadtree implements ID2LocationIndex {
+public class Location2IDQuadtree implements Location2IDIndex {
 
     private SpatialKeyAlgo algo;
     private CalcDistance calc = new CalcDistance();
@@ -64,7 +64,7 @@ public class Location2IDQuadtree implements ID2LocationIndex {
      * memory usage
      */
     @Override
-    public ID2LocationIndex prepareIndex(int _size) {
+    public Location2IDIndex prepareIndex(int _size) {
         int bits = initBuffer(_size);
         initAlgo(bits);
         MyOpenBitSet filledIndices = fillQuadtree(size);

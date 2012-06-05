@@ -29,7 +29,7 @@ public class Location2IDQuadtreeTest {
     @Test
     public void testSinglePoints() {
         Graph g = createSampleGraph();
-        ID2LocationIndex idx = new Location2IDQuadtree(g).prepareIndex(8);
+        Location2IDIndex idx = new Location2IDQuadtree(g).prepareIndex(8);
         assertEquals(1, idx.findID(1.637, 2.23));
     }
 
@@ -52,7 +52,7 @@ public class Location2IDQuadtreeTest {
 
         // hit random lat,lon and compare result to full index
         Random rand = new Random(12);
-        ID2LocationIndex fullIndex = new Location2IDFullIndex(g);
+        Location2IDIndex fullIndex = new Location2IDFullIndex(g);
         CalcDistance dist = new CalcDistance();
         for (int i = 0; i < 1000; i++) {
             double lat = rand.nextDouble() * 5;

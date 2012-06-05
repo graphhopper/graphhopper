@@ -18,9 +18,9 @@ package de.jetsli.graph.storage;
 /**
  * @author Peter Karich
  */
-public interface ID2LocationIndex {
+public interface Location2IDIndex {
 
-    ID2LocationIndex prepareIndex(int capacity);
+    Location2IDIndex prepareIndex(int capacity);
 
     int findID(final double lat, final double lon);
 }

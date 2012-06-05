@@ -21,7 +21,7 @@ import de.jetsli.graph.util.shapes.Circle;
 /**
  * @author Peter Karich
  */
-public class Location2IDFullIndex implements ID2LocationIndex {
+public class Location2IDFullIndex implements Location2IDIndex {
 
     private CalcDistance calc = new CalcDistance();
     private Graph g;
@@ -31,7 +31,7 @@ public class Location2IDFullIndex implements ID2LocationIndex {
     }
 
     @Override
-    public ID2LocationIndex prepareIndex(int capacity) {
+    public Location2IDIndex prepareIndex(int capacity) {
         return this;
     }
 
