@@ -16,6 +16,7 @@
 package de.jetsli.graph.reader;
 
 /**
+ * To use different storage systems like our mmgraph, lucene or neo4j or OSM import.
  *
  * @author Peter Karich, info@jetsli.de
  */

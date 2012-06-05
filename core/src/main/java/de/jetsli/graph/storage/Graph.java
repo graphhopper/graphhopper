@@ -18,6 +18,8 @@ package de.jetsli.graph.storage;
 import de.jetsli.graph.util.MyIteratorable;
 
 /**
+ * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
+ * ids as well as lat,lon
  *
  * @author Peter Karich, info@jetsli.de
  */
@@ -37,7 +39,7 @@ public interface Graph {
      * @return id of new location
      */
     int addLocation(float lat, float lon);
-    
+
     void removeLocation(int index);
 
     float getLatitude(int index);

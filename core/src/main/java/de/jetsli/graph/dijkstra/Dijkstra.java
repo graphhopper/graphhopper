@@ -16,6 +16,8 @@
 package de.jetsli.graph.dijkstra;
 
 /**
+ * Calculates the shortest path from to specified node ids.
+ *
  * @author Peter Karich, info@jetsli.de
  */
 public interface Dijkstra {

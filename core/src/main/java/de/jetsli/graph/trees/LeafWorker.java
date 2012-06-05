@@ -16,6 +16,8 @@
 package de.jetsli.graph.trees;
 
 /**
+ * specify work on the leaf nodes of a quadtree
+ * 
  * @author Peter Karich
  */
 interface LeafWorker<T> {

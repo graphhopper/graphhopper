@@ -28,6 +28,9 @@ import gnu.trove.stack.array.TIntArrayStack;
  */
 public class XFirstSearch {
 
+    /**
+     * interface to use a queue (FILO) OR a stack (FIFO)
+     */
     interface HelperColl {
 
         boolean isEmpty();
@@ -62,7 +65,7 @@ public class XFirstSearch {
             }
         }
     }
-    
+
     protected Iterable<DistEntry> getEdges(Graph g, int current) {
         return g.getOutgoing(current);
     }
@@ -79,6 +82,6 @@ public class XFirstSearch {
         }
     }
 
-    class MyHelperIntQueue extends MyIntDeque implements HelperColl {       
+    class MyHelperIntQueue extends MyIntDeque implements HelperColl {
     }
 }

@@ -16,6 +16,7 @@
 package de.jetsli.graph.coll;
 
 /**
+ * Wrapper interface for different implementations like OpenBitset, BitSet,...
  *
  * @author Peter Karich, info@jetsli.de
  */
@@ -24,6 +25,6 @@ public interface MyBitSet {
     boolean contains(int index);
 
     void add(int index);
-    
+
     long cardinality();
 }

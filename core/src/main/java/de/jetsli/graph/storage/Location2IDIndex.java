@@ -16,6 +16,9 @@
 package de.jetsli.graph.storage;
 
 /**
+ * Provides a way to map realword data "lat,lon" to internal ids/indices of a memory efficient graph
+ * - often just implemented as an array.
+ *
  * @author Peter Karich
  */
 public interface Location2IDIndex {
