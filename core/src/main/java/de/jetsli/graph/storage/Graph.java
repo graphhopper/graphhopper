@@ -37,6 +37,8 @@ public interface Graph {
      * @return id of new location
      */
     int addLocation(float lat, float lon);
+    
+    void removeLocation(int index);
 
     float getLatitude(int index);
 

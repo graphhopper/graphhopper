@@ -120,37 +120,6 @@ public class ID2LocationQT implements ID2LocationIndex {
         return closestNode.node;
     }
 
-    /**
-     * @return an implementation which returns the closest point and iterates through all points of
-     * the graph
-     */
-    public ID2LocationIndex createFullIndex() {
-        return new ID2LocationIndex() {
-
-            @Override public ID2LocationIndex prepareIndex(int capacity) {
-                return this;
-            }
-
-            @Override public int findID(double lat, double lon) {
-                float locs = g.getLocations();
-                int id = -1;
-                Circle circle = null;
-                for (int i = 0; i < locs; i++) {
-                    float tmpLat = g.getLatitude(i);
-                    float tmpLon = g.getLongitude(i);
-                    if (circle == null) {
-                        id = i;
-                        circle = new Circle(lat, lon, calc.calcDistKm(tmpLat, tmpLon, lat, lon), calc);
-                    } else if (circle.contains(tmpLat, tmpLon)) {
-                        circle = new Circle(lat, lon, calc.calcDistKm(tmpLat, tmpLon, lat, lon), calc);
-                        id = i;
-                    }
-                }
-                return id;
-            }
-        };
-    }
-
     private int initBuffer(int _size) {
         size = _size;
         int bits = (int) (Math.log(size) / Math.log(2)) + 1;

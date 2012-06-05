@@ -181,6 +181,12 @@ public class MemoryGraph implements Graph {
             }
         };
     }
+
+    @Override
+    public void removeLocation(int index) {
+        // TODO see MMapGraph
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
     
     private static class EdgesIteratorable extends MyIteratorable<DistEntry> {
 

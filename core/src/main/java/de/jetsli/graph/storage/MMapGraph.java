@@ -238,6 +238,13 @@ public class MMapGraph implements Graph, java.io.Closeable {
         return new EdgesIteratorableFlags(bytes, (byte) 2);
     }
 
+    @Override
+    public void removeLocation(int index) {
+        // TODO move last location to index
+        // update node id in edges
+        // update locations count
+    }
+
     private class EdgesIteratorableFlags extends EdgesIteratorable {
 
         byte flags;

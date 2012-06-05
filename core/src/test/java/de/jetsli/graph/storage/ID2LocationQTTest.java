@@ -52,12 +52,12 @@ public class ID2LocationQTTest {
 
         // hit random lat,lon and compare result to full index
         Random rand = new Random(12);
-        ID2LocationIndex fullIndex = memoryEfficientIndex.createFullIndex();
+        ID2LocationIndex fullIndex = new ID2LocationFullIndex(g);
         CalcDistance dist = new CalcDistance();
         for (int i = 0; i < 1000; i++) {
             double lat = rand.nextDouble() * 5;
             double lon = rand.nextDouble() * 5;
-            int fullId = fullIndex.findID(lat, lon);            
+            int fullId = fullIndex.findID(lat, lon);
             float fullLat = g.getLatitude(fullId);
             float fullLon = g.getLongitude(fullId);
             float fullDist = (float) dist.calcDistKm(lat, lon, fullLat, fullLon);
@@ -71,7 +71,7 @@ public class ID2LocationQTTest {
                     Math.abs(fullDist - newDist) < 50);
         }
     }
-    
+
     public static Graph createSampleGraph() {
         MMapGraph graph = new MMapGraph(100).init(false);
         // length does not matter here but lat,lon and outgoing edges do!

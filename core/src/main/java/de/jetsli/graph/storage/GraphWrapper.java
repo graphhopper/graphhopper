@@ -96,5 +96,10 @@ public class GraphWrapper implements Graph {
     @Override
     public void ensureCapacity(int cap) {
         g.ensureCapacity(cap);
-    }        
+    }
+
+    @Override
+    public void removeLocation(int index) {
+        g.removeLocation(index);
+    }
 }

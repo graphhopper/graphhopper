@@ -22,11 +22,12 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class ID2LocationSimpleQTTest {
+public class ID2LocationFullIndexTest {
 
     @Test
     public void testFullIndex() {
-        ID2LocationIndex idx = new ID2LocationSimpleQT(ID2LocationQTTest.createSampleGraph());
-        assertEquals(10, idx.findID(3.65, 1.38));
+        ID2LocationIndex idx = new ID2LocationFullIndex(ID2LocationQTTest.createSampleGraph());
+        assertEquals(10, idx.findID(4, 1));
+        assertEquals(10, idx.findID(3.6, 1.4));
     }
 }

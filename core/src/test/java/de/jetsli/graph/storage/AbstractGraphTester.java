@@ -256,7 +256,7 @@ public abstract class AbstractGraphTester {
         g.edge(0, 1, 12, true);
         assertEquals(1, count(g.getEdges(1)));
     }
-    
+
 //    @Test
 //    public void testDeleteNode() {
 //        Graph g = createGraph(11);
@@ -266,18 +266,35 @@ public abstract class AbstractGraphTester {
 //        assertEquals(3, g.addLocation(78, 89));
 //        assertEquals(4, g.addLocation(2, 1));
 //        assertEquals(5, g.addLocation(2.5f, 1));
-//        
+//
 //        g.edge(0, 1, 10, true);
 //        g.edge(0, 3, 20, false);
+//        g.edge(3, 5, 20, true);
 //        g.edge(1, 5, 20, false);
-//        
+//
 //        // move 5 onto 0
-//        g.remove(0);
-//        assertEquals(0, MyIteratorable.count(g.getEdges(0)));
+//        g.removeLocation(0);
+//        assertEquals(2.5, g.getLatitude(0), 1e-5);
+//        assertEquals(5, g.getLocations());
+//        assertFalse(MyIteratorable.contains(g.getEdges(0), 3));
+//        assertTrue(MyIteratorable.contains(g.getEdges(0), 1));
+//        assertFalse(MyIteratorable.contains(g.getOutgoing(0), 1));
+//        assertTrue(MyIteratorable.contains(g.getEdges(1), 5));
 //        
 //        // move 4 onto 3
-//        g.remove(3);
+//        g.removeLocation(3);
+//        assertEquals(2, g.getLatitude(3), 1e-5);
+//        assertEquals(4, g.getLocations());
+//        assertFalse(MyIteratorable.contains(g.getEdges(3), 4));
+//        assertTrue(MyIteratorable.contains(g.getEdges(3), 1));
+//
 //        // remove
-//        g.remove(5);
+//        g.removeLocation(3);
+//        assertEquals(3, g.getLocations());
+//        try {
+//            g.getLatitude(3);
+//            assertFalse(true);
+//        } catch (Exception exc) {
+//        }
 //    }
 }
