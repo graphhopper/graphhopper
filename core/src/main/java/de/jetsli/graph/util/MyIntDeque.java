@@ -18,7 +18,7 @@ package de.jetsli.graph.util;
 import java.util.Arrays;
 
 /**
- * push to end, from from beginning
+ * push to end, pop from beginning
  *
  * @author Peter Karich, info@jetsli.de
  */
@@ -36,7 +36,7 @@ public class MyIntDeque {
     public MyIntDeque(int initSize) {
         this(initSize, 2);
     }
-    
+
     public MyIntDeque(int initSize, float factor) {
         if ((int) (initSize * factor) <= initSize)
             throw new RuntimeException("initial size or increasing factor too low!");
@@ -65,7 +65,8 @@ public class MyIntDeque {
         int smallerSize = (int) (arr.length / factor);
         if (frontIndex > smallerSize) {
             endIndexPlusOne = size();
-            int[] newArr = new int[endIndexPlusOne];
+            // ensure that there are at least 10 entries
+            int[] newArr = new int[endIndexPlusOne + 10];
             System.arraycopy(arr, frontIndex, newArr, 0, endIndexPlusOne);
             arr = newArr;
             frontIndex = 0;
@@ -90,10 +91,10 @@ public class MyIntDeque {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (int i = frontIndex; i < endIndexPlusOne; i++) {
-            if(i > frontIndex)
+            if (i > frontIndex)
                 sb.append(", ");
             sb.append(arr[i]);
         }
         return sb.toString();
-    }        
+    }
 }
