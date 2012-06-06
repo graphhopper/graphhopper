@@ -26,7 +26,7 @@ import de.jetsli.graph.storage.Graph;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public abstract class OSMReaderTester {
+public abstract class AbstractOSMReaderTester {
     
     protected abstract OSMReader createOSM();
     

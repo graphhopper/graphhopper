@@ -17,7 +17,7 @@ package de.jetsli.graph.ui;
 
 import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.dijkstra.DijkstraPath;
-import de.jetsli.graph.reader.OSMReaderTrials;
+import de.jetsli.graph.reader.OSMReaderRouting;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
@@ -45,7 +45,7 @@ public class MiniGraphUI {
             throw new IllegalArgumentException("Osm file missing");
 
         String osmFile = args[0];
-        Graph g = OSMReaderTrials.defaultRead(osmFile, "/tmp/mmap-graph");
+        Graph g = OSMReaderRouting.defaultRead(osmFile, "/tmp/mmap-graph");
         new MiniGraphUI(g).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());

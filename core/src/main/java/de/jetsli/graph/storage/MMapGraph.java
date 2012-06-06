@@ -240,8 +240,13 @@ public class MMapGraph implements Graph, java.io.Closeable {
 
     @Override
     public void removeLocation(int index) {
-        // TODO move last location to index
+        MyIteratorable iter = getEdges(index);
+        // remove edges
+        
+        // move last location to index
+        
         // update node id in edges
+        
         // update locations count
     }
 

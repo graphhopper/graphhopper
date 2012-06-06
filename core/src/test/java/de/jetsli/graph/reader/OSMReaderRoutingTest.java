@@ -23,13 +23,13 @@ import org.junit.After;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class OSMReaderTrialsTest extends OSMReaderTester {
+public class OSMReaderRoutingTest extends AbstractOSMReaderTester {
 
     private String dir = "/tmp/OSMReaderTrialsTest";
     private OSMReader reader;
 
     public static void main(String[] args) {
-        new OSMReaderTrialsTest().testMain();
+        new OSMReaderRoutingTest().testMain();
     }
 
     @Override
@@ -37,7 +37,7 @@ public class OSMReaderTrialsTest extends OSMReaderTester {
         Helper.deleteDir(new File(dir));
         new File(dir).mkdirs();
 
-        OSMReaderTrials osm = new OSMReaderTrials(dir + "/test-db", 1000);
+        OSMReaderRouting osm = new OSMReaderRouting(dir + "/test-db", 1000);
         osm.init(true);
         return reader = osm;
     }

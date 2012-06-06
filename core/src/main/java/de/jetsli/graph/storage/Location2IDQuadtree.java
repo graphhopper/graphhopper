@@ -118,7 +118,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
     private int initBuffer(int _size) {
         size = _size;
-        int bits = (int) (Math.log(size) / Math.log(2)) + 1;
+        int bits = (int) (Math.log(size) / Math.log(2)) + 1;        
         size = (int) Math.pow(2, bits);
         int x = (int) Math.sqrt(size);
         int y = x;

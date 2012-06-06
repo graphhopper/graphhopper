@@ -181,15 +181,20 @@ public class SpatialKeyAlgoTest {
     }
 
     @Test
+    public void testOddBits() {
+        assertEquals(2, new SpatialKeyAlgo(7).encode(1.2, 1.3));
+    }
+
+    @Test
     public void testDifferentInitialBounds() {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(8).setInitialBounds(0, 5, 0, 5);
         assertEquals(1, algo.encode(0, 0.5));
         assertEquals(5, algo.encode(0, 1));
-        
+
         CoordTrig coord = new CoordTrig();
         algo.decode(5, coord);
         assertEquals(5, algo.encode(coord));
-        
+
         algo.decode(1, coord);
         assertEquals(1, algo.encode(coord));
     }

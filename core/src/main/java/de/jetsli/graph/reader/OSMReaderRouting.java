@@ -18,7 +18,6 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.ui.MiniGraphUI;
 import de.jetsli.graph.util.Helper;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.File;
@@ -41,10 +40,10 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class OSMReaderTrials implements OSMReader {
+public class OSMReaderRouting implements OSMReader {
 
     public static void main(String[] args) throws Exception {
-        new OSMReaderTrials("/tmp/mmap-graph", 10 * 1000 * 1000) {
+        new OSMReaderRouting("/tmp/mmap-graph", 10 * 1000 * 1000) {
 
             @Override
             public boolean isInBounds(float lat, float lon) {
@@ -73,7 +72,6 @@ public class OSMReaderTrials implements OSMReader {
             }
         }.read(args);
     }
-    
     private int maxLocs;
     private Logger logger = LoggerFactory.getLogger(getClass());
     private int locations = 0;
@@ -86,9 +84,9 @@ public class OSMReaderTrials implements OSMReader {
     private CalcDistance callback = new CalcDistance();
     private HashMap<String, Integer> countMap = new HashMap<String, Integer>(1000);
     private HashMap<String, Integer> highwayMap = new HashMap<String, Integer>(100000);
-    
+
     public static Graph defaultRead(String osmFile, String mmapFile) throws FileNotFoundException {
-        OSMReaderTrials osm = new OSMReaderTrials(mmapFile, 5 * 1000 * 1000);
+        OSMReaderRouting osm = new OSMReaderRouting(mmapFile, 5 * 1000 * 1000);
         // use existing OR create new and overwrite old
         boolean createNew = false;
         boolean alreadyFilled = osm.init(createNew);
@@ -99,7 +97,7 @@ public class OSMReaderTrials implements OSMReader {
         }
         return osm.readGraph();
     }
-            
+
     public void read(String[] args) throws Exception {
         // get osm file via wget -O muenchen.osm "http://api.openstreetmap.org/api/0.6/map?bbox=11.54,48.14,11.543,48.145"
         // or if that does not work for you get them here
@@ -149,17 +147,18 @@ public class OSMReaderTrials implements OSMReader {
         }
         close();
     }
-    public OSMReaderTrials(String file, int size) {
+
+    public OSMReaderRouting(String file, int size) {
         this.file = file;
         maxLocs = size;
     }
 
-    /** 
+    /**
      * @return the number of already existing nodes
      */
     public boolean init(boolean forceCreateNew) {
         String pre = "";
-        if(forceCreateNew)
+        if (forceCreateNew)
             pre = "CREATE NEW - ";
         else
             pre = "USE EXISTING - ";
@@ -230,7 +229,7 @@ public class OSMReaderTrials implements OSMReader {
             logger.error("cannot get id from xml node:" + sReader.getAttributeValue(null, "id"), ex);
             return;
         }
-
+        
         try {
             float lat = Float.parseFloat(sReader.getAttributeValue(null, "lat"));
             float lon = Float.parseFloat(sReader.getAttributeValue(null, "lon"));
@@ -305,7 +304,7 @@ public class OSMReaderTrials implements OSMReader {
         }
     }
 
-    public OSMReaderTrials setMaxLocations(int maxLocs) {
+    public OSMReaderRouting setMaxLocations(int maxLocs) {
         this.maxLocs = maxLocs;
         return this;
     }
@@ -332,7 +331,7 @@ public class OSMReaderTrials implements OSMReader {
 
 //        printSorted(countMap.entrySet());
 //        printSorted(highwayMap.entrySet());
-        storage.stats();        
+        storage.stats();
     }
 
     private void printSorted(Set<Entry<String, Integer>> entrySet) {

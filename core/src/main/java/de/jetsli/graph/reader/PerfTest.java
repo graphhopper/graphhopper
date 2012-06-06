@@ -40,7 +40,7 @@ public class PerfTest {
             throw new IllegalArgumentException("Osm file missing");
 
         String osmFile = args[0];
-        Graph g = OSMReaderTrials.defaultRead(osmFile, "/tmp/mmap-graph");
+        Graph g = OSMReaderRouting.defaultRead(osmFile, "/tmp/mmap-graph");
         new PerfTest(g).start();
     }
     Graph g;

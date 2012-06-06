@@ -2,7 +2,7 @@ package de.jetsli.quadtreecomparison;
 
 import de.jetsli.graph.geohash.SpatialHashtable;
 import de.jetsli.graph.reader.MiniPerfTest;
-import de.jetsli.graph.reader.OSMReaderTrials;
+import de.jetsli.graph.reader.OSMReaderRouting;
 import de.jetsli.graph.storage.Graph;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -25,7 +25,7 @@ public class App {
     }
 
     public void start(String osmFile) throws FileNotFoundException {
-        Graph g = OSMReaderTrials.defaultRead(osmFile, "/tmp/mmap-graph");
+        Graph g = OSMReaderRouting.defaultRead(osmFile, "/tmp/mmap-graph");
         System.out.println("graph contains " + g.getLocations() + " nodes");
 
 //        for (int i = 0; i < 32; i++) {
