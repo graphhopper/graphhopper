@@ -272,8 +272,8 @@ public class MiniGraphUI {
                                 logger.info("start searching from " + fromLat + "," + fromLon
                                         + " to " + toLat + "," + toLon);
                                 // get from and to node id
-                                int from = index.findID((float) fromLat, (float) fromLon);
-                                int to = index.findID((float) toLat, (float) toLon);
+                                int from = index.findID(fromLat, fromLon);
+                                int to = index.findID(toLat, toLon);
                                 logger.info("found ids " + from + " -> " + to + " in " + sw.stop().getSeconds() + "s");
                                 sw = new StopWatch().start();
                                 path = new DijkstraBidirection(graph).calcShortestPath(from, to);

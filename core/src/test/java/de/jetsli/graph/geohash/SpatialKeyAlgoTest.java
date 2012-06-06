@@ -182,7 +182,21 @@ public class SpatialKeyAlgoTest {
 
     @Test
     public void testOddBits() {
-        assertEquals(2, new SpatialKeyAlgo(7).encode(1.2, 1.3));
+        CoordTrig coord = new CoordTrig();
+        SpatialKeyAlgo algo = new SpatialKeyAlgo(8);
+        long key = algo.encode(5, 30);
+        assertEquals("0000000000000000000000000000000000000000000000000000000011000001",
+                BitUtil.toBitString(key));
+        algo.decode(key, coord);
+        assertEquals(2.81, coord.lat, 1e-2);
+        assertEquals(28.13, coord.lon, 1e-2);
+
+        algo = new SpatialKeyAlgo(7);
+        key = algo.encode(11.11, 40.66);
+        assertEquals("0000000000000000000000000000000000000000000000000000000001100000",
+                BitUtil.toBitString(key));
+        assertEquals(2.81, coord.lat, 1e-2);
+        assertEquals(28.13, coord.lon, 1e-2);
     }
 
     @Test

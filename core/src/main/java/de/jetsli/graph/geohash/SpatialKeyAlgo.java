@@ -77,7 +77,7 @@ public class SpatialKeyAlgo {
     private double minLatI;
     // normally +90 degree (south to nord)
     private double maxLatI;
-    private int iterations;
+    private int allBits;
     private long initialBits;
 
     public SpatialKeyAlgo(int allBits) {
@@ -91,10 +91,10 @@ public class SpatialKeyAlgo {
         if (allBits <= 0)
             throw new IllegalStateException("allBits must be positive");
 
-        if ((allBits & 0x1) == 1)
-            throw new IllegalStateException("allBits needs to be even to use the same amount for lat and lon");
+//        if ((allBits & 0x1) == 1)
+//            throw new IllegalStateException("allBits needs to be even to use the same amount for lat and lon");
 
-        iterations = allBits / 2;
+        this.allBits = allBits;
         initialBits = 1L << (allBits - 1);
         setWorldBounds();
     }
@@ -105,7 +105,7 @@ public class SpatialKeyAlgo {
 
     public int getExactPrecision() {
         // 360 / 2^(allBits/2) = 1/precision
-        int p = (int) (Math.pow(2, iterations) / 360);
+        int p = (int) (Math.pow(2, allBits) / 360);
         // no rounding error
         p++;
         return (int) Math.log10(p);
@@ -151,8 +151,13 @@ public class SpatialKeyAlgo {
                 } else
                     maxLat = midLat;
             }
+            i++;
+            if (i < allBits)
+                hash <<= 1;
+            // if allBits is an odd number
+            else
+                break;
 
-            hash <<= 1;
             if (minLon < maxLon) {
                 double midLon = (minLon + maxLon) / 2;
                 if (lon > midLon) {
@@ -161,9 +166,8 @@ public class SpatialKeyAlgo {
                 } else
                     maxLon = midLon;
             }
-
             i++;
-            if (i < iterations)
+            if (i < allBits)
                 hash <<= 1;
             else
                 break;

@@ -72,6 +72,18 @@ public class Location2IDQuadtreeTest {
         }
     }
 
+    @Test
+    public void testNoErrorOnEdgeCase_lastIndex() {
+        int locs = 10000;
+        Graph g = new MMapGraph(locs).init(false);
+        Random rand = new Random(12);
+        for (int i = 0; i < locs; i++) {
+            g.addLocation((float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
+        }
+        Location2IDIndex idx = new Location2IDQuadtree(g);
+        idx.prepareIndex(200);
+    }
+
     public static Graph createSampleGraph() {
         MMapGraph graph = new MMapGraph(100).init(false);
         // length does not matter here but lat,lon and outgoing edges do!
