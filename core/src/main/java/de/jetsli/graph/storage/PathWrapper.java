@@ -26,7 +26,7 @@ public class PathWrapper {
 
     public LinkedDistEntry entryFrom;
     public LinkedDistEntry entryTo;
-    public float distance;
+    public double distance;
 
     public PathWrapper() {
     }
@@ -49,8 +49,8 @@ public class PathWrapper {
         }
         path.reverseOrder();
 
-        float fromDistance = path.distance();
-        float toDistance = entryTo.distance;
+        double fromDistance = path.distance();
+        double toDistance = entryTo.distance;
         curr = entryTo.prevEntry;
         while (curr != null) {
             path.add(curr);

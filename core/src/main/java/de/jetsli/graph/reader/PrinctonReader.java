@@ -55,7 +55,7 @@ public class PrinctonReader {
                 String args[] = line.split(" ");
                 int from = -1;
                 int to = -1;
-                float dist = -1;
+                double dist = -1;
                 int counter = 0;
                 for (int j = 0; j < args.length; j++) {
                     if (args[j].isEmpty())
@@ -66,7 +66,7 @@ public class PrinctonReader {
                     else if (counter == 1)
                         to = Integer.parseInt(args[j]);
                     else
-                        dist = Float.parseFloat(args[j]);
+                        dist = Double.parseDouble(args[j]);
 
                     counter++;
                     continue;

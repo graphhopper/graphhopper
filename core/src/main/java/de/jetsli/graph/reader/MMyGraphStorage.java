@@ -17,7 +17,6 @@ package de.jetsli.graph.reader;
 
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MMapGraph;
-import de.jetsli.graph.util.MyIteratorable;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +47,7 @@ public class MMyGraphStorage implements Storage {
     }
 
     @Override
-    public boolean addNode(int osmId, float lat, float lon) {
+    public boolean addNode(int osmId, double lat, double lon) {
         int internalId = g.addLocation(lat, lon);
 //        if (internalId > 9936 && internalId < 9946)
 //            System.out.println("id:" + internalId + " osm:" + osmId);
@@ -65,11 +64,11 @@ public class MMyGraphStorage implements Storage {
             return false;
 
         try {
-            float laf = g.getLatitude(fromIndex);
-            float lof = g.getLongitude(fromIndex);
-            float lat = g.getLatitude(toIndex);
-            float lot = g.getLongitude(toIndex);
-            float dist = (float) callback.calcDistKm(laf, lof, lat, lot);
+            double laf = g.getLatitude(fromIndex);
+            double lof = g.getLongitude(fromIndex);
+            double lat = g.getLatitude(toIndex);
+            double lot = g.getLongitude(toIndex);
+            double dist = callback.calcDistKm(laf, lof, lat, lot);
             if (dist <= 0) {
                 counter++;
                 if (counter % 10000 == 0)

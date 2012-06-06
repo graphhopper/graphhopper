@@ -46,7 +46,7 @@ public class OSMReaderRouting implements OSMReader {
         new OSMReaderRouting("/tmp/mmap-graph", 10 * 1000 * 1000) {
 
             @Override
-            public boolean isInBounds(float lat, float lon) {
+            public boolean isInBounds(double lat, double lon) {
                 // regardless of bounds it takes ~7min (nodes) and 5min (edges) for MMyGraphStorage and other fast storages
                 return true;
 
@@ -231,8 +231,8 @@ public class OSMReaderRouting implements OSMReader {
         }
         
         try {
-            float lat = Float.parseFloat(sReader.getAttributeValue(null, "lat"));
-            float lon = Float.parseFloat(sReader.getAttributeValue(null, "lon"));
+            double lat = Double.parseDouble(sReader.getAttributeValue(null, "lat"));
+            double lon = Double.parseDouble(sReader.getAttributeValue(null, "lon"));
             if (isInBounds(lat, lon)) {
                 // quadTree.put(lat, lon, osmId);
                 storage.addNode(osmId, lat, lon);
@@ -244,7 +244,7 @@ public class OSMReaderRouting implements OSMReader {
         }
     }
 
-    public boolean isInBounds(float lat, float lon) {
+    public boolean isInBounds(double lat, double lon) {
         return true;
     }
 

@@ -51,17 +51,17 @@ public class MemoryGraph implements Graph {
     }
 
     @Override
-    public int addLocation(float lat, float lon) {
+    public int addLocation(double lat, double lon) {
         int tmp = lonLatSize++;
         lons = growArray(lons, lonLatSize);
         lats = growArray(lats, lonLatSize);
-        lons[tmp] = lon;
-        lats[tmp] = lat;
+        lons[tmp] = (float) lon;
+        lats[tmp] = (float) lat;
         return tmp;
     }
 
     @Override
-    public void edge(int a, int b, float distance, boolean bothDirections) {
+    public void edge(int a, int b, double distance, boolean bothDirections) {
         if (distance < 0)
             throw new UnsupportedOperationException("negative distance not supported");
 
@@ -75,18 +75,18 @@ public class MemoryGraph implements Graph {
 
         LinkedDistEntryWithFlags currentEdges = edges[a];
         if (currentEdges == null)
-            edges[a] = new LinkedDistEntryWithFlags(distance, b, dirFlag);
+            edges[a] = new LinkedDistEntryWithFlags(b, distance, dirFlag);
         else
-            addIfAbsent(currentEdges, b, distance, dirFlag);
+            addIfAbsent(currentEdges, b, (float) distance, dirFlag);
 
         if (!bothDirections)
             dirFlag = 2;
 
         currentEdges = edges[b];
         if (currentEdges == null)
-            edges[b] = new LinkedDistEntryWithFlags(distance, a, dirFlag);
+            edges[b] = new LinkedDistEntryWithFlags(a, distance, dirFlag);
         else
-            addIfAbsent(currentEdges, a, distance, dirFlag);
+            addIfAbsent(currentEdges, a, (float) distance, dirFlag);
     }
 
     /**
@@ -116,7 +116,7 @@ public class MemoryGraph implements Graph {
         }
 
         if (de == null) {
-            de = new LinkedDistEntryWithFlags(distance, index, dirFlag);
+            de = new LinkedDistEntryWithFlags(index, distance, dirFlag);
             currEntry.prevEntry = de;
         } else {
             de.distance = distance;
@@ -187,7 +187,7 @@ public class MemoryGraph implements Graph {
         // TODO see MMapGraph
         throw new UnsupportedOperationException("Not supported yet.");
     }
-    
+
     private static class EdgesIteratorable extends MyIteratorable<DistEntry> {
 
         LinkedDistEntryWithFlags curr;
@@ -215,15 +215,14 @@ public class MemoryGraph implements Graph {
     }
 
     @Override
-    public float getLongitude(int index) {
+    public double getLongitude(int index) {
         return lons[index];
     }
 
     @Override
-    public float getLatitude(int index) {
+    public double getLatitude(int index) {
         return lats[index];
     }
-
     private static final Field sizeField;
 
     static {

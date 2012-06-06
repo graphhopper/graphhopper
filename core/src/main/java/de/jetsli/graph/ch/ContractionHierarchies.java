@@ -76,7 +76,7 @@ public class ContractionHierarchies {
                 if (alreadyContracted.contains(inDE.node))
                     continue;
 
-                float maxOutDist = 0;
+                double maxOutDist = 0;
                 for (DistEntry outDE : gWrapper.getOutgoing(curr.node)) {
                     if (inDE.node == outDE.node)
                         continue;
@@ -90,13 +90,13 @@ public class ContractionHierarchies {
                         continue;
 
                     // calc shortest path from inDE.loc to outDE.loc without curr.loc
-                    final float maxDist = inDE.distance + maxOutDist;
+                    final double maxDist = inDE.distance + maxOutDist;
                     // TODO ignore alreadyContracted
                     DijkstraBidirection db = new DijkstraBidirection(gWrapper) {
 
                         @Override
                         public boolean checkFinishCondition() {
-                            float min = Math.min(shortest.distance, maxDist);
+                            double min = Math.min(shortest.distance, maxDist);
                             if (currFrom == null)
                                 return currTo.distance >= min;
                             else if (currTo == null)
@@ -106,7 +106,7 @@ public class ContractionHierarchies {
                     };
                     db.addSkipNode(curr.node);
                     DijkstraPath witnessPath = db.calcShortestPath(inDE.node, outDE.node);
-                    float dist = inDE.distance + outDE.distance;
+                    double dist = inDE.distance + outDE.distance;
                     // add the shortcut <in,curr,out> only if the found witness path is longer or not existent
                     if (witnessPath == null || witnessPath.distance() > 0 && witnessPath.distance() > dist) {
                         alreadyContracted.add(curr.node);

@@ -29,7 +29,7 @@ public class DijkstraTwoDrivers {
     private int meetingPoint;
     private int fromA, toA;
     private int fromB, toB;
-    private float overallDistance = Float.MAX_VALUE;
+    private double overallDistance = Double.MAX_VALUE;
 
     public DijkstraTwoDrivers(Graph graph) {
         this.graph = graph;
@@ -141,9 +141,9 @@ public class DijkstraTwoDrivers {
                 return;
 
             // update μ
-            float shortestOther = fromOther.distance + toOther.distance;
-            float shortestCurrent = shortestDE.distance + entryOther.distance;
-            float newShortest = shortestCurrent + shortestOther;
+            double shortestOther = fromOther.distance + toOther.distance;
+            double shortestCurrent = shortestDE.distance + entryOther.distance;
+            double newShortest = shortestCurrent + shortestOther;
             if (newShortest < overallDistance) {
                 // TODO: minimize not only the sum but also the difference => multi modal search!
                 overallDistance = newShortest;

@@ -44,12 +44,12 @@ public class Location2IDFullIndex implements Location2IDIndex {
 //        return ((Number) coll.iterator().next().getValue()).intValue();
 //    }
     @Override public int findID(double lat, double lon) {
-        float locs = g.getLocations();
+        int locs = g.getLocations();
         int id = -1;
         Circle circle = null;
         for (int i = 0; i < locs; i++) {
-            float tmpLat = g.getLatitude(i);
-            float tmpLon = g.getLongitude(i);
+            double tmpLat = g.getLatitude(i);
+            double tmpLon = g.getLongitude(i);
             if (circle == null || circle.contains(tmpLat, tmpLon)) {
                 id = i;
                 double dist = calc.calcDistKm(tmpLat, tmpLon, lat, lon);

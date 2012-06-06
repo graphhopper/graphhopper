@@ -69,22 +69,22 @@ public class GraphWrapper implements Graph {
     }
 
     @Override
-    public int addLocation(float lat, float lon) {
+    public int addLocation(double lat, double lon) {
         return g.addLocation(lat, lon);
     }
 
     @Override
-    public float getLatitude(int index) {
+    public double getLatitude(int index) {
         return g.getLatitude(index);
     }
 
     @Override
-    public float getLongitude(int index) {
+    public double getLongitude(int index) {
         return g.getLongitude(index);
     }
 
     @Override
-    public void edge(int a, int b, float distance, boolean bothDirections) {
+    public void edge(int a, int b, double distance, boolean bothDirections) {
         g.edge(a, b, distance, bothDirections);
     }
 

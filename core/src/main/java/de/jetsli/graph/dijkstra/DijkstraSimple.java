@@ -48,7 +48,7 @@ public class DijkstraSimple implements Dijkstra {
                 if (visited.contains(tmpV))
                     continue;
 
-                float tmp = entry.distance + curr.distance;
+                double tmp = entry.distance + curr.distance;
                 LinkedDistEntry de = map.get(tmpV);
                 if (de == null) {
                     de = new LinkedDistEntry(tmpV, tmp);

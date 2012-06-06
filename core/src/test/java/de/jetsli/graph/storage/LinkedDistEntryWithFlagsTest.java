@@ -28,17 +28,17 @@ public class LinkedDistEntryWithFlagsTest {
 
     @Test
     public void testFlags() {
-        LinkedDistEntryWithFlags de = new LinkedDistEntryWithFlags(12, 1, (byte) 1);
+        LinkedDistEntryWithFlags de = new LinkedDistEntryWithFlags(1, 12, (byte) 1);
         de.directionFlag |= 1;
         assertEquals(1, de.directionFlag);
         de.directionFlag |= 2;
         assertEquals(3, de.directionFlag);
 
-        de = new LinkedDistEntryWithFlags(12, 1, (byte) 1);
+        de = new LinkedDistEntryWithFlags(1, 12, (byte) 1);
         de.directionFlag |= 2;
         assertEquals(3, de.directionFlag);
 
-        de = new LinkedDistEntryWithFlags(12, 1, (byte) 2);
+        de = new LinkedDistEntryWithFlags(1, 12, (byte) 2);
         de.directionFlag |= 1;
         assertEquals(3, de.directionFlag);
     }

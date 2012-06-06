@@ -90,7 +90,7 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
         TIntObjectMap<LinkedDistEntry> shortestDistMapTo = new TIntObjectHashMap<LinkedDistEntry>();
 
         shortest = new PathWrapper();
-        shortest.distance = Float.MAX_VALUE;
+        shortest.distance = Double.MAX_VALUE;
 
         // create several starting points
         if (pubTransport.isEmpty())
@@ -128,7 +128,7 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
 
         DijkstraPath g = shortest.extract();
         if (!pubTransport.contains(g.getFromLoc())) {
-            float tmpDist = g.distance();
+            double tmpDist = g.distance();
             g.reverseOrder();
             g.setDistance(tmpDist);
         }
@@ -165,7 +165,7 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
             if (visitedMain.contains(tmpV))
                 continue;
 
-            float tmp = entry.distance + curr.distance;
+            double tmp = entry.distance + curr.distance;
             LinkedDistEntry de = shortestDistMap.get(tmpV);
             if (de == null) {
                 de = new LinkedDistEntry(tmpV, tmp);
@@ -190,7 +190,7 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
             LinkedDistEntry entryOther = shortestDistMapOther.get(currLoc);
             if (entryOther != null) {
                 // update μ
-                float newShortest = shortestDE.distance + entryOther.distance;
+                double newShortest = shortestDE.distance + entryOther.distance;
                 if (newShortest < shortest.distance) {
                     shortest.entryFrom = shortestDE;
                     shortest.entryTo = entryOther;

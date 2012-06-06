@@ -79,7 +79,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
     private ByteBuffer edges;
     private String fileName;
     private int distEntryFlagsPos = distEntrySize - 1;
-    private int bytesDistEntrySize = distEntryEmbedded * distEntrySize + 4;    
+    private int bytesDistEntrySize = distEntryEmbedded * distEntrySize + 4;
 
     /**
      * Creates an in-memory graph suitable for test
@@ -165,30 +165,30 @@ public class MMapGraph implements Graph, java.io.Closeable {
     }
 
     @Override
-    public int addLocation(float lat, float lon) {
+    public int addLocation(double lat, double lon) {
         if (currentNodeSize > maxNodes)
             throw new IllegalStateException("Maximum number of node reached. see ensureCapacity");
 
         nodes.position(currentNodeSize * nodeSize);
-        nodes.putFloat(lat);
-        nodes.putFloat(lon);
+        nodes.putFloat((float) lat);
+        nodes.putFloat((float) lon);
         int tmp = currentNodeSize;
         currentNodeSize++;
         return tmp;
     }
 
     @Override
-    public float getLatitude(int index) {
+    public double getLatitude(int index) {
         return nodes.getFloat(index * nodeSize);
     }
 
     @Override
-    public float getLongitude(int index) {
+    public double getLongitude(int index) {
         return nodes.getFloat(index * nodeSize + 4);
     }
 
     @Override
-    public void edge(int a, int b, float distance, boolean bothDirections) {
+    public void edge(int a, int b, double distance, boolean bothDirections) {
         if (distance <= 0)
             throw new UnsupportedOperationException("negative or zero distances are not supported:"
                     + a + " -> " + b + ": " + distance + ", bothDirections:" + bothDirections);
@@ -198,11 +198,11 @@ public class MMapGraph implements Graph, java.io.Closeable {
         if (!bothDirections)
             dirFlag = 1;
 
-        addIfAbsent(a * nodeSize + nodeCoreSize, b, distance, dirFlag);
+        addIfAbsent(a * nodeSize + nodeCoreSize, b, (float) distance, dirFlag);
         if (!bothDirections)
             dirFlag = 2;
 
-        addIfAbsent(b * nodeSize + nodeCoreSize, a, distance, dirFlag);
+        addIfAbsent(b * nodeSize + nodeCoreSize, a, (float) distance, dirFlag);
     }
 
     @Override
@@ -242,11 +242,11 @@ public class MMapGraph implements Graph, java.io.Closeable {
     public void removeLocation(int index) {
         MyIteratorable iter = getEdges(index);
         // remove edges
-        
+
         // move last location to index
-        
+
         // update node id in edges
-        
+
         // update locations count
     }
 
@@ -316,10 +316,10 @@ public class MMapGraph implements Graph, java.io.Closeable {
             if (!hasNext())
                 throw new IllegalStateException("No next element");
 
+            float fl = BitUtil.toFloat(bytes, position);
+            int integ = BitUtil.toInt(bytes, position += 4);            
             LinkedDistEntryWithFlags lde = new LinkedDistEntryWithFlags(
-                    BitUtil.toFloat(bytes, position),
-                    BitUtil.toInt(bytes, position += 4),
-                    bytes[position += 4]);
+                    integ, fl, bytes[position += 4]);
             position++;
             // TODO lde.prevEntry = 
             return lde;
@@ -499,7 +499,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
     private void clean(MappedByteBuffer mapping) {
         Helper.cleanMappedByteBuffer(mapping);
     }
-    
+
     public void stats() {
         float locs = getLocations();
         int edgesNo = 0;

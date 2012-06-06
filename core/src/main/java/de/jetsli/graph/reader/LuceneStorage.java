@@ -68,12 +68,12 @@ public class LuceneStorage implements Storage {
         return this;
     }
 
-    @Override public boolean addNode(int osmId, float lat, float lon) {
+    @Override public boolean addNode(int osmId, double lat, double lon) {
         try {
             Document doc = new Document();
             doc.add(new NumericField("_id", Field.Store.NO, true).setIntValue(osmId));
-            doc.add(new NumericField("lat", Field.Store.YES, false).setFloatValue(lat));
-            doc.add(new NumericField("lon", Field.Store.YES, false).setFloatValue(lon));
+            doc.add(new NumericField("lat", Field.Store.YES, false).setDoubleValue(lat));
+            doc.add(new NumericField("lon", Field.Store.YES, false).setDoubleValue(lon));
             writer.addDocument(doc);
             return true;
         } catch (Exception ex) {

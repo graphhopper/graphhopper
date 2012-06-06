@@ -94,8 +94,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
         long key = algo.encode(lat, lon);
         int id = spatialKey2Id.get((int) key);
-        float mainLat = g.getLatitude(id);
-        float mainLon = g.getLongitude(id);
+        double mainLat = g.getLatitude(id);
+        double mainLon = g.getLongitude(id);
         final DistEntry closestNode = new DistEntry(id,
                 (float) calc.calcDistKm(lat, lon, mainLat, mainLon));
         new XFirstSearch() {
@@ -156,16 +156,16 @@ public class Location2IDQuadtree implements Location2IDIndex {
         MyOpenBitSet filledIndices = new MyOpenBitSet(size);
         CoordTrig coord = new CoordTrig();
         for (int nodeId = 0; nodeId < locs; nodeId++) {
-            float lat = g.getLatitude(nodeId);
-            float lon = g.getLongitude(nodeId);
+            double lat = g.getLatitude(nodeId);
+            double lon = g.getLongitude(nodeId);
             int key = (int) algo.encode(lat, lon);
             if (filledIndices.contains(key)) {
                 int oldNodeId = spatialKey2Id.get(key);
                 algo.decode(key, coord);
                 // decide which one is closer to 'key'
                 double distNew = calc.calcDistKm(coord.lat, coord.lon, lat, lon);
-                float oldLat = g.getLatitude(oldNodeId);
-                float oldLon = g.getLongitude(oldNodeId);
+                double oldLat = g.getLatitude(oldNodeId);
+                double oldLon = g.getLongitude(oldNodeId);
                 double distOld = calc.calcDistKm(coord.lat, coord.lon, oldLat, oldLon);
                 // new point is closer to quad tree point (key) so overwrite old
                 if (distNew < distOld)

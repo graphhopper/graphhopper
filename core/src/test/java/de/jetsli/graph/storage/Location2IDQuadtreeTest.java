@@ -58,12 +58,12 @@ public class Location2IDQuadtreeTest {
             double lat = rand.nextDouble() * 5;
             double lon = rand.nextDouble() * 5;
             int fullId = fullIndex.findID(lat, lon);
-            float fullLat = g.getLatitude(fullId);
-            float fullLon = g.getLongitude(fullId);
+            double fullLat = g.getLatitude(fullId);
+            double fullLon = g.getLongitude(fullId);
             float fullDist = (float) dist.calcDistKm(lat, lon, fullLat, fullLon);
             int newId = memoryEfficientIndex.findID(lat, lon);
-            float newLat = g.getLatitude(newId);
-            float newLon = g.getLongitude(newId);
+            double newLat = g.getLatitude(newId);
+            double newLon = g.getLongitude(newId);
             float newDist = (float) dist.calcDistKm(lat, lon, newLat, newLon);
             assertTrue(i + " orig:" + (float) lat + "," + (float) lon
                     + " full:" + fullLat + "," + fullLon + " dist:" + fullDist

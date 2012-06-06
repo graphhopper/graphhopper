@@ -67,14 +67,14 @@ public class BerkeleyDBStorage implements Storage {
     IntegerBinding iBinding = new IntegerBinding();
 
     @Override
-    public boolean addNode(int osmId, float lat, float lon) {
+    public boolean addNode(int osmId, double lat, double lon) {
         //PackedInteger.writeInt(integ, 0, osmId);   
         DatabaseEntry de = new DatabaseEntry();
         iBinding.objectToEntry(osmId, de);
 
         TupleOutput t = new TupleOutput();
-        t.writeFloat(lat);
-        t.writeFloat(lon);
+        t.writeDouble(lat);
+        t.writeDouble(lon);
         db.put(null, de, new DatabaseEntry(t.getBufferBytes()));
         return true;
     }

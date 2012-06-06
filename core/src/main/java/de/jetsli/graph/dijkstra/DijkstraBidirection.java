@@ -59,7 +59,7 @@ public class DijkstraBidirection implements Dijkstra {
         shortestDistMapTo = new TIntObjectHashMap<LinkedDistEntry>();
 
         shortest = new PathWrapper();
-        shortest.distance = Float.MAX_VALUE;
+        shortest.distance = Double.MAX_VALUE;
     }
     
     public void addSkipNode(int node) {
@@ -114,7 +114,7 @@ public class DijkstraBidirection implements Dijkstra {
         
         if (g.getFromLoc() != from) {
             // move distance adjustment to reverseOrder?
-            float tmpDist = g.distance();
+            double tmpDist = g.distance();
             g.reverseOrder();
             g.setDistance(tmpDist);
         }
@@ -143,7 +143,7 @@ public class DijkstraBidirection implements Dijkstra {
             if (visitedMain.contains(tmpV))
                 continue;
 
-            float tmp = entry.distance + curr.distance;
+            double tmp = entry.distance + curr.distance;
             LinkedDistEntry de = shortestDistMap.get(tmpV);
             if (de == null) {
                 de = new LinkedDistEntry(tmpV, tmp);
@@ -169,7 +169,7 @@ public class DijkstraBidirection implements Dijkstra {
             return;
         
         // update μ
-        float newShortest = shortestDE.distance + entryOther.distance;
+        double newShortest = shortestDE.distance + entryOther.distance;
         if (newShortest < shortest.distance) {
             shortest.entryFrom = shortestDE;
             shortest.entryTo = entryOther;

@@ -124,13 +124,13 @@ public class MiniGraphUI {
                 StopWatch sw = new StopWatch().start();
                 for (int i = 0; i < locs; i++) {
                     int count = MyIteratorable.count(graph.getEdges(i));
-                    float lat = graph.getLatitude(i);
-                    float lon = graph.getLongitude(i);
+                    double lat = graph.getLatitude(i);
+                    double lon = graph.getLongitude(i);
                     plot(g2, lat, lon, count, size);
 
                     for (DistEntry de : graph.getOutgoing(i)) {
-                        float lat2 = graph.getLatitude(de.node);
-                        float lon2 = graph.getLongitude(de.node);
+                        double lat2 = graph.getLatitude(de.node);
+                        double lon2 = graph.getLongitude(de.node);
                         if (lat2 <= 0 || lon2 <= 0)
                             logger.info("ERROR " + de.node + " " + de.distance + " " + lat2 + "," + lon2);
                         plotEdge(g, lat, lon, lat2, lon2);
@@ -149,12 +149,12 @@ public class MiniGraphUI {
                     logger.info("found path:" + path);
                     g.setColor(Color.MAGENTA);
                     int tmpLocs = path.locations();
-                    float prevLat = -1;
-                    float prevLon = -1;
+                    double prevLat = -1;
+                    double prevLon = -1;
                     for (int i = 0; i < tmpLocs; i++) {
                         int id = path.location(i);
-                        float lat = graph.getLatitude(id);
-                        float lon = graph.getLongitude(id);
+                        double lat = graph.getLatitude(id);
+                        double lon = graph.getLongitude(id);
                         if (prevLat >= 0)
                             plotEdge(g, prevLat, prevLon, lat, lon, 3);
 

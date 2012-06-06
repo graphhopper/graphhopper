@@ -27,7 +27,7 @@ public interface Storage {
      */
     Storage init(boolean forceCreate) throws Exception;
 
-    boolean addNode(int osmId, float lat, float lon);
+    boolean addNode(int osmId, double lat, double lon);
 
     boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback);
 

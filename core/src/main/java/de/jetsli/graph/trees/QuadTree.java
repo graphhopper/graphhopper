@@ -76,8 +76,8 @@ public interface QuadTree<V> {
         public static void fill(QuadTree<Long> quadTree, Graph graph) {
             int locs = graph.getLocations();
             for (int i = 0; i < locs; i++) {
-                float lat = graph.getLatitude(i);
-                float lon = graph.getLongitude(i);
+                double lat = graph.getLatitude(i);
+                double lon = graph.getLongitude(i);
                 quadTree.add(lat, lon, 1L);
             }
         }

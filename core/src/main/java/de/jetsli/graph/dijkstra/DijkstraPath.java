@@ -61,11 +61,11 @@ public class DijkstraPath {
         return distEntries.get(index).node;
     }
 
-    public float distance() {
+    public double distance() {
         return distEntries.get(distEntries.size() - 1).distance;
     }
 
-    public void setDistance(float d) {
+    public void setDistance(double d) {
         distEntries.get(distEntries.size() - 1).distance = d;
     }
 

@@ -38,13 +38,13 @@ public interface Graph {
      *
      * @return id of new location
      */
-    int addLocation(float lat, float lon);
+    int addLocation(double lat, double lon);
 
     void removeLocation(int index);
 
-    float getLatitude(int index);
+    double getLatitude(int index);
 
-    float getLongitude(int index);
+    double getLongitude(int index);
 
     /**
      * @param a
@@ -53,7 +53,7 @@ public interface Graph {
      * geo-graph
      * @param bothDirections
      */
-    void edge(int a, int b, float distance, boolean bothDirections);
+    void edge(int a, int b, double distance, boolean bothDirections);
 
     MyIteratorable<DistEntry> getEdges(int index);
 

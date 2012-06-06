@@ -23,7 +23,7 @@ public class LinkedDistEntry extends DistEntry {
 
     public LinkedDistEntry prevEntry;
 
-    public LinkedDistEntry(int loc, float distance) {
+    public LinkedDistEntry(int loc, double distance) {
         super(loc, distance);
     }
 

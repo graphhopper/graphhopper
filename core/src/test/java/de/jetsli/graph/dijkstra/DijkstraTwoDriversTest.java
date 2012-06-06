@@ -34,10 +34,10 @@ public class DijkstraTwoDriversTest {
         d.setDriverB(30, 45);
         d.calcShortestPath();
         
-        float shortest = Float.MAX_VALUE;
+        double shortest = Double.MAX_VALUE;
         TIntHashSet set = new TIntHashSet();
         for (int pointI = 10; pointI < 50; pointI++) {            
-            float sum = new DijkstraBidirection(g).calcShortestPath(12, pointI).distance();
+            double sum = new DijkstraBidirection(g).calcShortestPath(12, pointI).distance();
             sum += new DijkstraBidirection(g).calcShortestPath(pointI, 36).distance();
             
             sum += new DijkstraBidirection(g).calcShortestPath(30, pointI).distance();

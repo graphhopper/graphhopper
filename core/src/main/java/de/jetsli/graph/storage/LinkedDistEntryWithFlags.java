@@ -31,14 +31,14 @@ public class LinkedDistEntryWithFlags extends LinkedDistEntry {
     /**
      * @param directionFlag 1 means: only forward direction. 2 means: only backward and 3 means: both directions
      */
-    public LinkedDistEntryWithFlags(float distance, int loc, byte directionFlag) {
+    public LinkedDistEntryWithFlags(int loc, double distance, byte directionFlag) {
         super(loc, distance);
         this.directionFlag = directionFlag;
     }
 
     @Override
     public LinkedDistEntry clone() {
-        return new LinkedDistEntryWithFlags(distance, node, directionFlag);
+        return new LinkedDistEntryWithFlags(node, distance, directionFlag);
     }
 
     @Override

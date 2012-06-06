@@ -82,7 +82,7 @@ public class DijkstraWhichToOne implements Dijkstra {
         shortestDistMapTo.put(destination, entryTo);
 
         PathWrapper shortest = new PathWrapper();
-        shortest.distance = Float.MAX_VALUE;
+        shortest.distance = Double.MAX_VALUE;
 
         // create several starting points
         if (pubTransport.isEmpty())
@@ -124,7 +124,7 @@ public class DijkstraWhichToOne implements Dijkstra {
             return null;
         
         if (!pubTransport.contains(g.getFromLoc())) {
-            float tmpDist = g.distance();
+            double tmpDist = g.distance();
             g.reverseOrder();
             g.setDistance(tmpDist);
         }
@@ -142,7 +142,7 @@ public class DijkstraWhichToOne implements Dijkstra {
             if (visitedMain.contains(tmpV))
                 continue;
 
-            float tmp = entry.distance + curr.distance;
+            double tmp = entry.distance + curr.distance;
             LinkedDistEntry de = shortestDistMap.get(tmpV);
             if (de == null) {
                 de = new LinkedDistEntry(tmpV, tmp);
@@ -163,7 +163,7 @@ public class DijkstraWhichToOne implements Dijkstra {
                 continue;
 
             // update μ
-            float newShortest = de.distance + entryOther.distance;
+            double newShortest = de.distance + entryOther.distance;
             if (newShortest < shortest.distance) {
                 shortest.entryFrom = de;
                 shortest.entryTo = entryOther;

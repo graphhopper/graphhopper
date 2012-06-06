@@ -24,7 +24,6 @@ import java.util.Random;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
-import org.neo4j.tooling.GlobalGraphOperations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +83,7 @@ public class Neo4JStorage implements Storage {
     Transaction ta;
 
     @Override
-    public boolean addNode(int osmId, float lat, float lon) {
+    public boolean addNode(int osmId, double lat, double lon) {
         ensureTA();
 
         Node n = graphDb.createNode();
@@ -104,9 +103,9 @@ public class Neo4JStorage implements Storage {
         Node from = locIndex.get(ID, nodeIdFrom).getSingle();
         Node to = locIndex.get(ID, nodeIdTo).getSingle();
         Relationship r = from.createRelationshipTo(to, MyRelations.WAY);
-        r.setProperty(DISTANCE, callback.calcDistKm((Float) from.getProperty("lat"), (Float) from.getProperty("lon"),
-                (Float) to.getProperty("lat"), (Float) to.getProperty("lon")));
-
+        r.setProperty(DISTANCE, callback.calcDistKm(
+                (Double) from.getProperty("lat"), (Double) from.getProperty("lon"),
+                (Double) to.getProperty("lat"), (Double) to.getProperty("lon")));
         return true;
     }
 
@@ -114,7 +113,7 @@ public class Neo4JStorage implements Storage {
         Node n = locIndex.get(ID, node).getSingle();
         ArrayList<DistEntry> list = new ArrayList<DistEntry>(2);
         for (Relationship rs : n.getRelationships(MyRelations.WAY)) {
-            list.add(new DistEntry((Integer) rs.getEndNode().getProperty(ID), (Float) rs.getProperty(DISTANCE)));
+            list.add(new DistEntry((Integer) rs.getEndNode().getProperty(ID), (Double) rs.getProperty(DISTANCE)));
         }
 
         return list;
@@ -143,7 +142,7 @@ public class Neo4JStorage implements Storage {
 
     @Override public void flush() {
     }
-       
+
     @Override public int getNodes() {
         throw new RuntimeException("not implemented");
     }

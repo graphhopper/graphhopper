@@ -15,9 +15,6 @@
  */
 package de.jetsli.graph.storage;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
-
 /**
  *
  * @author Peter Karich, info@jetsli.de

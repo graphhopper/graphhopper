@@ -30,15 +30,15 @@ public class DistEntry implements Comparable<DistEntry> {
 
     public final static EmptyIterable<DistEntry> EMPTY_ITER = new EmptyIterable<DistEntry>();
     public int node;
-    public float distance;
+    public double distance;
 
-    public DistEntry(int loc, float distance) {
+    public DistEntry(int loc, double distance) {
         this.node = loc;
         this.distance = distance;
     }
 
     @Override public int compareTo(DistEntry o) {
-        return Float.compare(distance, o.distance);
+        return Double.compare(distance, o.distance);
     }
 
     @Override public String toString() {
