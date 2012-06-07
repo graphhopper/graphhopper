@@ -27,11 +27,6 @@
             <artifactId>neo4j</artifactId>
             <version>1.6</version>
         </dependency> 
-        <dependency>
-            <groupId>com.sleepycat</groupId>
-            <artifactId>je</artifactId>
-            <version>4.0.92</version>
-        </dependency>
         
         <!-- trove 3 is in no other maven repo? -->
         <dependency>

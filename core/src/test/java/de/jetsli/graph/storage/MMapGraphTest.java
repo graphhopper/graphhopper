@@ -37,7 +37,7 @@ public class MMapGraphTest extends AbstractGraphTester {
     Graph createGraph(int size) {
         Helper.deleteDir(new File(dir));
         new File(dir).mkdirs();
-        return g = new MMapGraph(dir + "/testgraph", size).init(true);
+        return g = new MMapGraph(dir + "/testgraph", size).createNew();
     }
 
     @After
@@ -77,7 +77,7 @@ public class MMapGraphTest extends AbstractGraphTester {
     @Test
     public void testSave() throws IOException {
         String file = "/tmp/test-persist-graph";
-        MMapGraph mmgraph = new MMapGraph(file, 1000).init(true);
+        MMapGraph mmgraph = new MMapGraph(file, 1000).createNew();
         mmgraph.addLocation(10, 10);
         mmgraph.addLocation(11, 20);
         mmgraph.addLocation(12, 12);
@@ -90,7 +90,8 @@ public class MMapGraphTest extends AbstractGraphTester {
         mmgraph.flush();
         mmgraph.close();
 
-        mmgraph = new MMapGraph(file, 1000).init(false);
+        mmgraph = new MMapGraph(file, 1000);
+        assertTrue(mmgraph.loadExisting());
         checkGraph(mmgraph);
     }
 

@@ -40,6 +40,26 @@ public class Neo4JStorage implements Storage {
     private static final String DISTANCE = "distance";
     private static final Logger logger = LoggerFactory.getLogger(Neo4JStorage.class);
 
+    @Override
+    public void setHasEdges(int osmId) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasEdges(int osmId) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean loadExisting() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void createNew() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
     enum MyRelations implements RelationshipType {
 
         WAY
@@ -59,7 +79,6 @@ public class Neo4JStorage implements Storage {
         this.storeDir = storeDir;
     }
 
-    @Override
     public Neo4JStorage init(boolean forceCreate) throws Exception {
         graphDb = new EmbeddedGraphDatabase(storeDir);
         locIndex = graphDb.index().forNodes("locations");

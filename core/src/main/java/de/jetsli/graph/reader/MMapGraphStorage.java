@@ -25,32 +25,39 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class MMyGraphStorage implements Storage {
+public class MMapGraphStorage implements Storage {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private MMapGraph g;
     private TIntIntHashMap osmIdToIndexMap;
+    private final int size;
+    private final String file;
 
-    public MMyGraphStorage(int size) {
+    public MMapGraphStorage(int size) {
         this(null, size);
     }
 
-    public MMyGraphStorage(String file, int size) {
-        g = new MMapGraph(file, size);
-        osmIdToIndexMap = new TIntIntHashMap(Math.round(size * 1.4f), 1.5f, -1, -1);
+    public MMapGraphStorage(String file, int size) {
+        this.size = size;
+        this.file = file;
+        osmIdToIndexMap = new TIntIntHashMap(size, 1.5f, -1, -1);
     }
-
+    
     @Override
-    public Storage init(boolean forceCreate) throws Exception {
-        g.init(forceCreate);
-        return this;
+    public boolean loadExisting() {
+        g = new MMapGraph(file, -1);
+        return g.loadExisting();
+    }
+    
+    @Override
+    public void createNew() {
+        g = new MMapGraph(file, osmIdToIndexMap.size());
+        g.createNew();
     }
 
     @Override
     public boolean addNode(int osmId, double lat, double lon) {
         int internalId = g.addLocation(lat, lon);
-//        if (internalId > 9936 && internalId < 9946)
-//            System.out.println("id:" + internalId + " osm:" + osmId);
         osmIdToIndexMap.put(osmId, internalId);
         return true;
     }
@@ -87,7 +94,6 @@ public class MMyGraphStorage implements Storage {
     @Override
     public void close() throws Exception {
         g.flush();
-        // g.close();
     }
 
     Graph getGraph() {
@@ -106,5 +112,15 @@ public class MMyGraphStorage implements Storage {
     @Override
     public int getNodes() {
         return g.getLocations();
+    }
+
+    @Override
+    public void setHasEdges(int osmId) {
+        osmIdToIndexMap.put(osmId, -10);
+    }
+
+    @Override
+    public boolean hasEdges(int osmId) {
+        return osmIdToIndexMap.get(osmId) == -10;
     }
 }

@@ -37,7 +37,6 @@ public class LuceneStorage implements Storage {
     private Logger logger = LoggerFactory.getLogger(getClass());
     private IndexWriter writer;
 
-    @Override
     public LuceneStorage init(boolean forceCreate) throws Exception {
         File file = new File("/tmp/osm.lucene.test");
         if(forceCreate)
@@ -105,6 +104,26 @@ public class LuceneStorage implements Storage {
 
     @Override
     public int getNodes() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void setHasEdges(int osmId) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasEdges(int osmId) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean loadExisting() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void createNew() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

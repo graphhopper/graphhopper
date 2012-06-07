@@ -75,7 +75,7 @@ public class Location2IDQuadtreeTest {
     @Test
     public void testNoErrorOnEdgeCase_lastIndex() {
         int locs = 10000;
-        Graph g = new MMapGraph(locs).init(false);
+        Graph g = new MMapGraph(locs).createNew();
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++) {
             g.addLocation((float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
@@ -85,7 +85,7 @@ public class Location2IDQuadtreeTest {
     }
 
     public static Graph createSampleGraph() {
-        MMapGraph graph = new MMapGraph(100).init(false);
+        MMapGraph graph = new MMapGraph(100).createNew();
         // length does not matter here but lat,lon and outgoing edges do!
         // 0
         int a = graph.addLocation(0, 1.0001f);

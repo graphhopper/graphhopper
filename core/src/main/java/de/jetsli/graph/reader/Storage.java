@@ -22,10 +22,9 @@ package de.jetsli.graph.reader;
  */
 public interface Storage {
 
-    /**
-     * @param forceCreate is true if an possible old storage will be not used and overwritten
-     */
-    Storage init(boolean forceCreate) throws Exception;
+    boolean loadExisting();
+    
+    void createNew();
 
     boolean addNode(int osmId, double lat, double lon);
 
@@ -38,4 +37,8 @@ public interface Storage {
     void flush();
 
     public void stats();
+
+    public void setHasEdges(int osmId);
+
+    public boolean hasEdges(int osmId);
 }

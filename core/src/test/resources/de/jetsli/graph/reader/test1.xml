@@ -11,8 +11,19 @@
     <node id="30" lat="51.2" lon="9.4" uid="24855">
         <tag k="name" v="Dresden" />
     </node>
+    
+    <node id="35" lat="115.2" lon="123.431" uid="3212487">
+        <tag k="name" v="Unused1" />
+    </node>
+
     <node id="40" lat="51.25" lon="9.43" uid="24856">
         <tag k="name" v="Cottbus" />
+    </node>
+    <node id="41" lat="151.2" lon="1239.43" uid="3214857">
+        <tag k="name" v="Unused2" />
+    </node>
+    <node id="45" lat="1151.2" lon="1239.431" uid="32124857">
+        <tag k="name" v="Unused3" />
     </node>
     <node id="50" lat="51.2" lon="9.431" uid="24857">
         <tag k="name" v="Tester" />

@@ -30,14 +30,13 @@ import org.slf4j.LoggerFactory;
 import static de.jetsli.graph.util.MyIteratorable.*;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import java.io.File;
+import java.util.logging.Level;
 
 /**
  * A graph represenation which can be stored directly on disc when using the memory mapped
  * constructor.
  *
- * TODO byteBuffer access is not thread safe at the moment! so use
- * http://kdgcommons.svn.sourceforge.net/viewvc/kdgcommons/trunk/src/main/java/net/sf/kdgcommons/buffer/MappedFileBufferThreadLocal.java?revision=HEAD&view=markup
- * and raf.getChannel().lock(index, index, true);
+ * TODO thread safety
  *
  * @author Peter Karich, info@jetsli.de
  */
@@ -46,7 +45,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int EMPTY_DIST = 0;
     /**
-     * Memory layout of one node: lat, lon, 3 * DistEntry(distance, node, flags) +
+     * Memory layout of one node: lat, lon, 2 * DistEntry(distance, node, flags) +
      * refToNextDistEntryBlock <br/>
      *
      * Note: <ul> <li> If refToNextDistEntryBlock is EMPTY_DIST => no further block referenced.
@@ -96,20 +95,36 @@ public class MMapGraph implements Graph, java.io.Closeable {
         this.fileName = name;
     }
 
-    public MMapGraph init(boolean forceCreate) {
-        if (forceCreate && fileName != null)
-            Helper.deleteFilesStartingWith(fileName);
-
+    public boolean loadExisting() {
         if (!loadSettings())
-            nodeSize = nodeCoreSize + distEntryEmbedded * distEntrySize + 4;
+            return false;
 
         logger.info("maxNodes:" + maxNodes + " distEntryEmbedded:" + distEntryEmbedded
                 + " distEntrySize:" + distEntrySize + " nodeCoreSize:" + nodeCoreSize
                 + " nodeSize:" + nodeSize + " currentNodeSize:" + currentNodeSize
                 + " maxRecognizedNodeIndex:" + maxRecognizedNodeIndex + " nextEdgePosition:" + nextEdgePosition
                 + " distEntryFlagsPos:" + distEntryFlagsPos + " bytesDistEntrySize:" + bytesDistEntrySize);
+        init();
+        return true;
+    }
 
-        int tmp = this.maxNodes * nodeSize;
+    public MMapGraph createNew() {
+        try {
+            close();
+        } catch (IOException ex) {
+            logger.error("Couldn't close underlying memory mapped files", ex);
+        }
+
+        if (fileName != null)
+            Helper.deleteFilesStartingWith(fileName);
+
+        nodeSize = nodeCoreSize + distEntryEmbedded * distEntrySize + 4;
+        return init();
+
+    }
+
+    private MMapGraph init() {
+        int tmpCapacity = this.maxNodes * nodeSize;
 
         // the more edges we inline the less memory we need to reserve => " / distEntryEmbedded"
         // if we provide too few memory => BufferUnderflowException
@@ -117,7 +132,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
         int tmpEdge = this.maxNodes / distEntryEmbedded * (distEntryEmbedded * distEntrySize + 4);
 
         if (fileName == null) {
-            nodes = ByteBuffer.allocate(tmp);
+            nodes = ByteBuffer.allocate(tmpCapacity);
             // ByteOrder.nativeOrder() would make it compatible with CPP but then we
             // would need case dependent util calls to ByteUtil            
             nodes.order(ByteOrder.BIG_ENDIAN);
@@ -126,9 +141,9 @@ public class MMapGraph implements Graph, java.io.Closeable {
             edges.order(ByteOrder.BIG_ENDIAN);
         } else {
             try {
-                logger.info("Mapping node file (" + (float) tmp / (1 << 20) + " MB) ...");
+                logger.info("Mapping node file (" + (float) tmpCapacity / (1 << 20) + " MB) ...");
                 nodeFile = new RandomAccessFile(fileName + "-nodes", "rw");
-                nodes = nodeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, tmp);
+                nodes = nodeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, tmpCapacity);
                 nodes.order(ByteOrder.BIG_ENDIAN);
                 logger.info("Mapping edge file (" + (float) tmpEdge / (1 << 20) + " MB)...");
                 edgeFile = new RandomAccessFile(fileName + "-egdes", "rw");
@@ -317,7 +332,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
                 throw new IllegalStateException("No next element");
 
             float fl = BitUtil.toFloat(bytes, position);
-            int integ = BitUtil.toInt(bytes, position += 4);            
+            int integ = BitUtil.toInt(bytes, position += 4);
             LinkedDistEntryWithFlags lde = new LinkedDistEntryWithFlags(
                     integ, fl, bytes[position += 4]);
             position++;
