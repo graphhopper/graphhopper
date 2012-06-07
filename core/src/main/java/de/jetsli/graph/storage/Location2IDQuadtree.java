@@ -72,50 +72,6 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return this;
     }
 
-    /**
-     * @return the node id (corresponding to a coordinate) closest to the specified lat,lon.
-     */
-    @Override
-    public int findID(final double lat, final double lon) {
-        // The following cases (e.g. dead ends or motorways crossing a normal way) could be problematic:
-        // |     |
-        // |  P  | 
-        // |  |  |< --- raster limit reached
-        // \-----/
-        /*
-         * TODO use additionally the 8 surrounding quadrants: There an error due to the raster
-         * width. Because this index does not cover 100% of the graph you'll need to traverse the
-         * graph until you find the real matching point or if you reach the raster width limit. And
-         * there is a problem when using the raster limit as 'not found' indication and if you have
-         * arbitrary requests e.g. from other systems (where points do not match exactly): Although
-         * P is the closest point to the request one it could be that the raster limit is too short
-         * to reach it via graph traversal:
-         */
-
-        long key = algo.encode(lat, lon);
-        int id = spatialKey2Id.get((int) key);
-        double mainLat = g.getLatitude(id);
-        double mainLon = g.getLongitude(id);
-        final DistEntry closestNode = new DistEntry(id,
-                (float) calc.calcDistKm(lat, lon, mainLat, mainLon));
-        new XFirstSearch() {
-
-            @Override protected boolean goFurther(int nodeId) {
-                double currLat = g.getLatitude(nodeId);
-                double currLon = g.getLongitude(nodeId);
-                float d = (float) calc.calcDistKm(currLat, currLon, lat, lon);
-                if (d < closestNode.distance) {
-                    closestNode.distance = d;
-                    closestNode.node = nodeId;
-                    return true;
-                }
-
-                return d < 2 * maxRasterWidthKm;
-            }
-        }.start(g, id, false);
-        return closestNode.node;
-    }
-
     private int initBuffer(int _size) {
         size = _size;
         int bits = (int) (Math.log(size) / Math.log(2)) + 1;
@@ -180,7 +136,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
     private void fillEmptyIndices(MyOpenBitSet filledIndices) {
         // 3. fill empty indices with points close to them to return correct id's for find()!        
-        CoordTrig coord = new CoordTrig();        
+        CoordTrig coord = new CoordTrig();
         int maxSearch = 10;
         List<DistEntry> list = new ArrayList<DistEntry>();
         for (int nodeId = 0; nodeId < size; nodeId++) {
@@ -202,8 +158,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
                     if (filledIndices.contains(tmpIndex)) {
                         int key = spatialKey2Id.get(tmpIndex);
                         algo.decode(key, coord);
-                        float dist = (float) calc.calcDistKm(mainCoord.lat, mainCoord.lon,
-                                coord.lat, coord.lon);
+                        double dist = calc.calcDistKm(mainCoord.lat, mainCoord.lon, coord.lat, coord.lon);
                         list.add(new DistEntry(tmpIndex, dist));
                     }
                 }
@@ -229,7 +184,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
                     @Override protected boolean goFurther(int nodeId) {
                         double currLat = g.getLatitude(nodeId);
                         double currLon = g.getLongitude(nodeId);
-                        float d = (float) calc.calcDistKm(currLat, currLon, mainCoord.lat, mainCoord.lon);
+                        double d = calc.calcDistKm(currLat, currLon, mainCoord.lat, mainCoord.lon);
                         if (d < closestNode.distance) {
                             closestNode.distance = d;
                             closestNode.node = nodeId;
@@ -248,5 +203,48 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 throw new IllegalStateException("Problem with mainKey:" + mainKey + " " + mainCoord + " size:" + size);
             spatialKey2Id.put(mainKey, closestNode.node);
         }
+    }
+
+    /**
+     * @return the node id (corresponding to a coordinate) closest to the specified lat,lon.
+     */
+    @Override
+    public int findID(final double lat, final double lon) {
+        // The following cases (e.g. dead ends or motorways crossing a normal way) could be problematic:
+        // |     |
+        // |  P  | 
+        // |  |  |< --- raster limit reached
+        // \-----/
+        /*
+         * TODO use additionally the 8 surrounding quadrants: There an error due to the raster
+         * width. Because this index does not cover 100% of the graph you'll need to traverse the
+         * graph until you find the real matching point or if you reach the raster width limit. And
+         * there is a problem when using the raster limit as 'not found' indication and if you have
+         * arbitrary requests e.g. from other systems (where points do not match exactly): Although
+         * P is the closest point to the request one it could be that the raster limit is too short
+         * to reach it via graph traversal:
+         */
+
+        long key = algo.encode(lat, lon);
+        int id = spatialKey2Id.get((int) key);
+        double mainLat = g.getLatitude(id);
+        double mainLon = g.getLongitude(id);
+        final DistEntry closestNode = new DistEntry(id, calc.calcDistKm(lat, lon, mainLat, mainLon));
+        new XFirstSearch() {
+
+            @Override protected boolean goFurther(int nodeId) {
+                double currLat = g.getLatitude(nodeId);
+                double currLon = g.getLongitude(nodeId);
+                double d = calc.calcDistKm(currLat, currLon, lat, lon);
+                if (d < closestNode.distance) {
+                    closestNode.distance = d;
+                    closestNode.node = nodeId;
+                    return true;
+                }
+
+                return d < 1.5 * maxRasterWidthKm;
+            }
+        }.start(g, id, false);
+        return closestNode.node;
     }
 }
