@@ -29,7 +29,7 @@ import gnu.trove.stack.array.TIntArrayStack;
 public class XFirstSearch {
 
     /**
-     * interface to use a queue (FILO) OR a stack (FIFO)
+     * interface to use a queue (FIFO) OR a stack (LIFO)
      */
     interface HelperColl {
 
