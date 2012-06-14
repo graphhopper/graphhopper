@@ -15,18 +15,19 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
-import de.jetsli.graph.reader.CalcDistance;
-import de.jetsli.graph.util.BooleanRef;
-import de.jetsli.graph.util.CoordTrig;
-import de.jetsli.graph.util.XFirstSearch;
+import de.jetsli.graph.util.*;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class is an index mapping lat,lon coordinates to one node id or index of a routing graph.
@@ -39,10 +40,11 @@ import java.util.List;
  */
 public class Location2IDQuadtree implements Location2IDIndex {
 
+    private Logger logger = LoggerFactory.getLogger(getClass());
     private SpatialKeyAlgo algo;
     private CalcDistance calc = new CalcDistance();
     private IntBuffer spatialKey2Id;
-    private double maxRasterWidthKm;
+    private double maxNormRasterWidthKm;
     private int size;
     private Graph g;
 
@@ -67,6 +69,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     public Location2IDIndex prepareIndex(int _size) {
         int bits = initBuffer(_size);
         initAlgo(bits);
+        logger.info("now fill internal qt - size is " + size);
         MyOpenBitSet filledIndices = fillQuadtree(size);
         fillEmptyIndices(filledIndices);
         return this;
@@ -103,8 +106,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 minLon = lon;
         }
         algo = new SpatialKeyAlgo(bits).setInitialBounds(minLon, maxLon, minLat, maxLat);
-        maxRasterWidthKm = Math.max(calc.calcDistKm(minLat, minLon, minLat, maxLon),
-                calc.calcDistKm(minLat, minLon, maxLat, minLon));
+        maxNormRasterWidthKm = calc.normalizeDist(1.5 * Math.max(calc.calcDistKm(minLat, minLon, minLat, maxLon),
+                calc.calcDistKm(minLat, minLon, maxLat, minLon)));
     }
 
     private MyOpenBitSet fillQuadtree(int size) {
@@ -119,10 +122,10 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 int oldNodeId = spatialKey2Id.get(key);
                 algo.decode(key, coord);
                 // decide which one is closer to 'key'
-                double distNew = calc.calcDistKm(coord.lat, coord.lon, lat, lon);
+                double distNew = calc.calcNormalizedDist(coord.lat, coord.lon, lat, lon);
                 double oldLat = g.getLatitude(oldNodeId);
                 double oldLon = g.getLongitude(oldNodeId);
-                double distOld = calc.calcDistKm(coord.lat, coord.lon, oldLat, oldLon);
+                double distOld = calc.calcNormalizedDist(coord.lat, coord.lon, oldLat, oldLon);
                 // new point is closer to quad tree point (key) so overwrite old
                 if (distNew < distOld)
                     spatialKey2Id.put(key, nodeId);
@@ -137,9 +140,12 @@ public class Location2IDQuadtree implements Location2IDIndex {
     private void fillEmptyIndices(MyOpenBitSet filledIndices) {
         // 3. fill empty indices with points close to them to return correct id's for find()!        
         CoordTrig coord = new CoordTrig();
-        int maxSearch = 10;
+        final int maxSearch = 10;
         List<DistEntry> list = new ArrayList<DistEntry>();
         for (int nodeId = 0; nodeId < size; nodeId++) {
+            if (nodeId % 100000 == 0)
+                logger.info("id:" + nodeId);
+
             final CoordTrig mainCoord = new CoordTrig();
             algo.decode(nodeId, mainCoord);
             int mainKey = nodeId >>> 32 - algo.getBits();
@@ -147,25 +153,26 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 continue;
 
             list.clear();
-
             // check the quadtree
-            for (int testIdx = 0; list.size() < maxSearch; testIdx++) {
+            for (int testIdx = 0; testIdx < maxSearch || list.isEmpty(); testIdx++) {
                 // search forward and backwards
                 for (int i = -1; i < 2; i += 2) {
                     int tmpIndex = mainKey + i * testIdx;
                     if (tmpIndex < 0 || tmpIndex >= size)
                         continue;
-                    if (filledIndices.contains(tmpIndex)) {
+                    
+                    boolean ret = filledIndices.contains(tmpIndex);                    
+                    if (ret) {
                         int key = spatialKey2Id.get(tmpIndex);
                         algo.decode(key, coord);
-                        double dist = calc.calcDistKm(mainCoord.lat, mainCoord.lon, coord.lat, coord.lon);
+                        double dist = calc.calcNormalizedDist(mainCoord.lat, mainCoord.lon, coord.lat, coord.lon);
                         list.add(new DistEntry(tmpIndex, dist));
                     }
                 }
             }
 
             if (list.isEmpty())
-                throw new IllegalStateException("no close nodes found in quadtree for id "
+                throw new IllegalStateException("no node found in quadtree which is close to id "
                         + nodeId + " " + mainCoord + " size:" + size);
             Collections.sort(list, new Comparator<DistEntry>() {
 
@@ -181,10 +188,14 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 final BooleanRef onlyOneDepth = new BooleanRef();
                 new XFirstSearch() {
 
+                    @Override protected MyBitSet createBitSet(int size) {
+                        return new MyTBitSet(maxSearch * 4);
+                    }
+
                     @Override protected boolean goFurther(int nodeId) {
                         double currLat = g.getLatitude(nodeId);
                         double currLon = g.getLongitude(nodeId);
-                        double d = calc.calcDistKm(currLat, currLon, mainCoord.lat, mainCoord.lon);
+                        double d = calc.calcNormalizedDist(currLat, currLon, mainCoord.lat, mainCoord.lon);
                         if (d < closestNode.distance) {
                             closestNode.distance = d;
                             closestNode.node = nodeId;
@@ -229,20 +240,24 @@ public class Location2IDQuadtree implements Location2IDIndex {
         int id = spatialKey2Id.get((int) key);
         double mainLat = g.getLatitude(id);
         double mainLon = g.getLongitude(id);
-        final DistEntry closestNode = new DistEntry(id, calc.calcDistKm(lat, lon, mainLat, mainLon));
+        final DistEntry closestNode = new DistEntry(id, calc.calcNormalizedDist(lat, lon, mainLat, mainLon));
         new XFirstSearch() {
+
+            @Override protected MyBitSet createBitSet(int size) {
+                return new MyTBitSet(10);
+            }
 
             @Override protected boolean goFurther(int nodeId) {
                 double currLat = g.getLatitude(nodeId);
                 double currLon = g.getLongitude(nodeId);
-                double d = calc.calcDistKm(currLat, currLon, lat, lon);
+                double d = calc.calcNormalizedDist(currLat, currLon, lat, lon);
                 if (d < closestNode.distance) {
                     closestNode.distance = d;
                     closestNode.node = nodeId;
                     return true;
                 }
 
-                return d < 1.5 * maxRasterWidthKm;
+                return d < maxNormRasterWidthKm;
             }
         }.start(g, id, false);
         return closestNode.node;

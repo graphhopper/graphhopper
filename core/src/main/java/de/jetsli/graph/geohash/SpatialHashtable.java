@@ -18,7 +18,7 @@ package de.jetsli.graph.geohash;
 import de.genvlin.core.data.*;
 import de.genvlin.gui.plot.GPlotPanel;
 import de.jetsli.graph.geohash.SpatialHashtable.BucketOverflowLoop;
-import de.jetsli.graph.reader.CalcDistance;
+import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.reader.OSMReaderRouting;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;

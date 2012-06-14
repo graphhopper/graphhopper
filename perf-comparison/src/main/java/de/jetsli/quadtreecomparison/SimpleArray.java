@@ -16,7 +16,7 @@
 
 package de.jetsli.quadtreecomparison;
 
-import de.jetsli.graph.reader.CalcDistance;
+import de.jetsli.graph.util.CalcDistance;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.sis.core.LatLon;

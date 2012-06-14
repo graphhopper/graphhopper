@@ -25,7 +25,7 @@
     <node id="45" lat="1151.2" lon="1239.431" uid="32124857">
         <tag k="name" v="Unused3" />
     </node>
-    <node id="50" lat="51.2" lon="9.431" uid="24857">
+    <node id="50" lat="49" lon="8" uid="24857">
         <tag k="name" v="Tester" />
     </node>
     

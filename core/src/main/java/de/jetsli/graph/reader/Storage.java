@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.reader;
 
+import de.jetsli.graph.util.CalcDistance;
+
 /**
  * To use different storage systems like our mmgraph, lucene or neo4j or OSM import.
  *
@@ -38,7 +40,7 @@ public interface Storage {
 
     public void stats();
 
-    public void setHasEdges(int osmId);
+    public void setHasHighways(int osmId, boolean isHighway);
 
-    public boolean hasEdges(int osmId);
+    public boolean hasHighways(int osmId);
 }

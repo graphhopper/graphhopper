@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.geohash;
 
-import de.jetsli.graph.reader.CalcDistance;
+import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.CoordTrig;
 import org.junit.Test;

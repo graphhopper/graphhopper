@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.util.shapes;
 
-import de.jetsli.graph.reader.CalcDistance;
+import de.jetsli.graph.util.CalcDistance;
 
 /**
  * @author Peter Karich

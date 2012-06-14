@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.reader;
+package de.jetsli.graph.util;
 
 import de.jetsli.graph.util.shapes.BBox;
 import java.util.Arrays;

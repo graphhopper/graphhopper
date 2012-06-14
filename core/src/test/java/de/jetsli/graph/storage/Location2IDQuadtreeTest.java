@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.reader.CalcDistance;
+import de.jetsli.graph.util.CalcDistance;
 import java.util.Random;
 import org.junit.*;
 import static org.junit.Assert.*;

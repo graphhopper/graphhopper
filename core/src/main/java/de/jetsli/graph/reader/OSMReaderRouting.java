@@ -15,10 +15,12 @@
  */
 package de.jetsli.graph.reader;
 
+import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.Helper;
+import de.jetsli.graph.util.StopWatch;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,22 +45,22 @@ import org.slf4j.LoggerFactory;
 public class OSMReaderRouting {
 
     public static void main(String[] args) throws Exception {
-        new OSMReaderRouting("/tmp/mmap-graph", 10 * 1000 * 1000) {
+        new OSMReaderRouting("/tmp/mmap-graph", 50 * 1000 * 1000) {
 
             @Override
             public boolean isInBounds(double lat, double lon) {
                 // regardless of bounds it takes ~7min (nodes) and 5min (edges) for MMyGraphStorage and other fast storages
-                return true;
+//                return true;
 
                 // ~germany
-                // 90  mio nodes
+                // 90  mio nodes, but only 33 mio involved in routing
                 // 100 mio edges
                 // return true;
                 //
                 // ~bavaria
                 // ? mio nodes
                 // ? mio edges
-                // return lat > 47.1 && lat < 50.5 && lon > 9 && lon < 13.5;
+//                return lat > 47.1 && lat < 50.5 && lon > 9 && lon < 13.5;
 
                 //
                 // ~bayreuth+bamberg+erlangen+nueremberg
@@ -68,7 +70,7 @@ public class OSMReaderRouting {
                 // number of edges per node:
                 // 1        2       3       4       5       6       7       8
                 // 52206    35005   2232056 267471  32157   1345    164     25
-                //return lat > 49.3 && lat < 50 && lon > 10.8 && lon < 11.6;
+                return lat > 49.3 && lat < 50 && lon > 10.8 && lon < 11.6;
             }
         }.read(args);
     }
@@ -140,13 +142,9 @@ public class OSMReaderRouting {
 
     public OSMReaderRouting(String file, int size) {
         maxLocs = size;
-
 //            storage = new LuceneStorage().init();
-//            storage = new Neo4JStorage(file).init();
-        if (file == null)
-            storage = new MMapGraphStorage(maxLocs);
-        else
-            storage = new MMapGraphStorage(file, maxLocs);
+//            storage = new Neo4JStorage(file).init();        
+        storage = new MMapGraphStorage(file, maxLocs);
     }
 
     /**
@@ -157,15 +155,25 @@ public class OSMReaderRouting {
         return storage.loadExisting();
     }
 
+    /**
+     * Preprocessing of OSM file to select nodes which are used for highways. This allows a more
+     * compact graph data structure.
+     */
     public void acceptHighwaysOnly(InputStream is) {
         if (is == null)
             throw new IllegalStateException("Stream cannot be empty");
+
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         try {
             sReader = factory.createXMLStreamReader(is, "UTF-8");
+            int counter = 0;
             for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
                     event = sReader.next()) {
+                if (++counter % 5000000 == 0) {
+                    logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
+                            + " (" + skippedEdges + "), " + Helper.getMemInfo());
+                }
                 switch (event) {
                     case XMLStreamConstants.START_ELEMENT:
                         if ("way".equals(sReader.getLocalName())) {
@@ -173,7 +181,7 @@ public class OSMReaderRouting {
                             if (isHighway && tmpLocs.size() > 1) {
                                 int s = tmpLocs.size();
                                 for (int index = 0; index < s; index++) {
-                                    storage.setHasEdges(tmpLocs.get(index));
+                                    storage.setHasHighways(tmpLocs.get(index), true);
                                 }
                             }
                         }
@@ -198,8 +206,9 @@ public class OSMReaderRouting {
     public void writeOsm2Binary(InputStream is) {
         if (is == null)
             throw new IllegalStateException("Stream cannot be empty");
-
+        logger.info("now init storage with " + storage.getNodes() + " nodes");
         storage.createNew();
+        logger.info("now starting 2nd parsing");
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         try {
@@ -207,17 +216,23 @@ public class OSMReaderRouting {
             int counter = 0;
             for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
                     event = sReader.next()) {
-                if (++counter % 1000000 == 0) {
-                    logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
-                            + " (" + skippedEdges + "), " + Helper.getMemInfo());
-                }
 
                 switch (event) {
                     case XMLStreamConstants.START_ELEMENT:
-                        if ("node".equals(sReader.getLocalName()))
+                        if ("node".equals(sReader.getLocalName())) {
                             processNode(sReader);
-                        else if ("way".equals(sReader.getLocalName()))
-                            processWay(sReader);
+                            if (++counter % 5000000 == 0) {
+                                logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
+                                        + " (" + skippedEdges + "), " + Helper.getMemInfo());
+                            }
+                        } else if ("way".equals(sReader.getLocalName())) {
+                            processHighway(sReader);
+                            if (++counter % 10000 == 0) {
+                                logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
+                                        + " (" + skippedEdges + "), " + Helper.getMemInfo()
+                                        + " e:" + addEdgeSW.toString());
+                            }
+                        }
 
                         break;
                 }
@@ -236,11 +251,11 @@ public class OSMReaderRouting {
     }
 
     public void processNode(XMLStreamReader sReader) throws XMLStreamException {
-        int osmId = -1;
+        int osmId;
+        boolean hasHighways;
         try {
             osmId = Integer.parseInt(sReader.getAttributeValue(null, "id"));
-            if (!storage.hasEdges(osmId))
-                return;
+            hasHighways = storage.hasHighways(osmId);
         } catch (Exception ex) {
             logger.error("cannot get id from xml node:" + sReader.getAttributeValue(null, "id"), ex);
             return;
@@ -250,13 +265,21 @@ public class OSMReaderRouting {
             double lat = Double.parseDouble(sReader.getAttributeValue(null, "lat"));
             double lon = Double.parseDouble(sReader.getAttributeValue(null, "lon"));
             if (isInBounds(lat, lon)) {
-                // quadTree.put(lat, lon, osmId);
-                storage.addNode(osmId, lat, lon);
-                locations++;
-            } else
+                if (hasHighways) {
+                    // quadTree.put(lat, lon, osmId);
+                    storage.addNode(osmId, lat, lon);
+                    locations++;
+                }
+            } else {
+                // remove the osmId, to force the method storage.addEdge returns false in processHighway !!
+                if (hasHighways)
+                    storage.setHasHighways(osmId, false);
+
                 skippedLocations++;
+            }
         } catch (Exception ex) {
-            logger.error("cannot get handle lon/lat of node:" + sReader.getAttributeValue(null, "lon") + " " + sReader.getAttributeValue(null, "lat"), ex);
+            logger.error("cannot handle lon/lat of node " + osmId + ": "
+                    + sReader.getAttributeValue(null, "lon") + " " + sReader.getAttributeValue(null, "lat"), ex);
         }
     }
 
@@ -293,19 +316,25 @@ public class OSMReaderRouting {
         } // for
         return isHighway;
     }
+    StopWatch addEdgeSW = new StopWatch();
 
-    public void processWay(XMLStreamReader sReader) throws XMLStreamException {
+    public void processHighway(XMLStreamReader sReader) throws XMLStreamException {
         boolean isHighway = isHighway(sReader);
         if (isHighway && tmpLocs.size() > 1) {
-            int prev = tmpLocs.get(0);
+
+            int prevOsmId = tmpLocs.get(0);
             try {
-                for (int index = 1; index < tmpLocs.size(); index++) {
-                    int curr = tmpLocs.get(index);
-                    if (storage.addEdge(prev, curr, true, callback))
+                int l = tmpLocs.size();
+                for (int index = 1; index < l; index++) {
+                    int currOsmId = tmpLocs.get(index);
+                    addEdgeSW.start();
+                    boolean ret = storage.addEdge(prevOsmId, currOsmId, true, callback);
+                    addEdgeSW.stop();
+                    if (ret)
                         nextEdgeIndex++;
                     else
                         skippedEdges++;
-                    prev = curr;
+                    prevOsmId = currOsmId;
                 }
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -355,7 +384,7 @@ public class OSMReaderRouting {
         }
         logger.info("---");
     }
-    
+
     public void createNewFromOSM(File osmFile) throws FileNotFoundException {
         acceptHighwaysOnly(new FileInputStream(osmFile));
         writeOsm2Binary(new FileInputStream(osmFile));

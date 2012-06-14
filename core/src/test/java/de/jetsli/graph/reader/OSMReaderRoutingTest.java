@@ -24,6 +24,7 @@ import java.util.Iterator;
 import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Before;
 
 /**
  *
@@ -31,15 +32,12 @@ import static org.junit.Assert.*;
  */
 public class OSMReaderRoutingTest {
 
-    private String dir = "/tmp/OSMReaderTrialsTest";
+    private String dir = "/tmp/OSMReaderTrialsTest/test-db";       
     private OSMReaderRouting reader;
-
-    protected OSMReaderRouting createOSM() {
-        Helper.deleteDir(new File(dir));
+    
+    @Before
+    public void setUp() {
         new File(dir).mkdirs();
-
-        OSMReaderRouting osm = new OSMReaderRouting(dir + "/test-db", 1000);
-        return reader = osm;
     }
 
     @After
@@ -49,13 +47,43 @@ public class OSMReaderRoutingTest {
     }
 
     @Test public void testMain() {
-        OSMReaderRouting o = createOSM();
-        o.acceptHighwaysOnly(getClass().getResourceAsStream("test1.xml"));
-        o.writeOsm2Binary(getClass().getResourceAsStream("test1.xml"));
-        Graph graph = o.readGraph();
+        reader = new OSMReaderRouting(dir, 1000);
+        reader.acceptHighwaysOnly(getClass().getResourceAsStream("test1.xml"));
+        reader.writeOsm2Binary(getClass().getResourceAsStream("test1.xml"));
+        Graph graph = reader.readGraph();
         assertEquals(4, graph.getLocations());
         assertEquals(1, MyIteratorable.count(graph.getOutgoing(0)));
         assertEquals(3, MyIteratorable.count(graph.getOutgoing(1)));
+        assertEquals(1, MyIteratorable.count(graph.getOutgoing(2)));
+
+        Iterator<DistEntry> iter = graph.getOutgoing(1).iterator();
+        DistEntry locNextEntry = iter.next();
+        assertEquals(0, locNextEntry.node);
+        assertEquals(88.643, locNextEntry.distance, 1e-3);
+        locNextEntry = iter.next();
+        assertEquals(2, locNextEntry.node);
+        assertEquals(93.146888, locNextEntry.distance, 1e-3);
+
+        // get third added location => 2
+        iter = graph.getOutgoing(2).iterator();
+        locNextEntry = iter.next();
+        assertEquals(1, locNextEntry.node);
+        assertEquals(93.146888, locNextEntry.distance, 1e-3);
+    }
+    
+    @Test public void testWithBounds() {
+        reader = new OSMReaderRouting(dir, 1000) {
+
+            @Override public boolean isInBounds(double lat, double lon) {
+                return lat > 49 && lon > 8;
+            }            
+        };
+        reader.acceptHighwaysOnly(getClass().getResourceAsStream("test1.xml"));
+        reader.writeOsm2Binary(getClass().getResourceAsStream("test1.xml"));
+        Graph graph = reader.readGraph();
+        assertEquals(3, graph.getLocations());
+        assertEquals(1, MyIteratorable.count(graph.getOutgoing(0)));
+        assertEquals(2, MyIteratorable.count(graph.getOutgoing(1)));
         assertEquals(1, MyIteratorable.count(graph.getOutgoing(2)));
 
         Iterator<DistEntry> iter = graph.getOutgoing(1).iterator();

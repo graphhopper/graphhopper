@@ -40,6 +40,10 @@ public class XFirstSearch {
         void push(int v);
     }
 
+    protected MyBitSet createBitSet(int size) {
+        return new MyOpenBitSet(size);
+    }
+
     public void start(Graph g, int node, boolean depthFirst) {
         HelperColl coll;
         if (depthFirst)
@@ -47,7 +51,7 @@ public class XFirstSearch {
         else
             coll = new MyHelperIntQueue();
 
-        MyBitSet visited = new MyOpenBitSet(g.getLocations());
+        MyBitSet visited = createBitSet(g.getLocations());
         visited.add(node);
         coll.push(node);
         int current;

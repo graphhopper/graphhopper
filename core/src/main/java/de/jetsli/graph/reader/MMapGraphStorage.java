@@ -15,8 +15,10 @@
  */
 package de.jetsli.graph.reader;
 
+import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MMapGraph;
+import de.jetsli.graph.util.StopWatch;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,25 +32,19 @@ public class MMapGraphStorage implements Storage {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private MMapGraph g;
     private TIntIntHashMap osmIdToIndexMap;
-    private final int size;
     private final String file;
 
-    public MMapGraphStorage(int size) {
-        this(null, size);
+    public MMapGraphStorage(String file, int size) {
+        this.file = file;
+        osmIdToIndexMap = new TIntIntHashMap(size, 1.4f, -1, -1);
     }
 
-    public MMapGraphStorage(String file, int size) {
-        this.size = size;
-        this.file = file;
-        osmIdToIndexMap = new TIntIntHashMap(size, 1.5f, -1, -1);
-    }
-    
     @Override
     public boolean loadExisting() {
         g = new MMapGraph(file, -1);
         return g.loadExisting();
     }
-    
+
     @Override
     public void createNew() {
         g = new MMapGraph(file, osmIdToIndexMap.size());
@@ -62,28 +58,46 @@ public class MMapGraphStorage implements Storage {
         return true;
     }
     int counter = 0;
+    StopWatch sw1 = new StopWatch();
+    StopWatch sw2 = new StopWatch();
 
     @Override
     public boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback) {
         int fromIndex = osmIdToIndexMap.get(nodeIdFrom);
+        if (fromIndex == -10) {
+            logger.warn("fromIndex is unresolved:" + nodeIdFrom + " to was:" + nodeIdTo);
+            return false;
+        }
         int toIndex = osmIdToIndexMap.get(nodeIdTo);
+        if (toIndex == -10) {
+            logger.warn("toIndex is unresolved:" + nodeIdTo + " from was:" + nodeIdFrom);
+            return false;
+        }
+
         if (fromIndex == osmIdToIndexMap.getNoEntryValue() || toIndex == osmIdToIndexMap.getNoEntryValue())
             return false;
 
         try {
+            sw2.start();
             double laf = g.getLatitude(fromIndex);
             double lof = g.getLongitude(fromIndex);
             double lat = g.getLatitude(toIndex);
             double lot = g.getLongitude(toIndex);
+            sw2.stop();
+
+            sw1.start();
             double dist = callback.calcDistKm(laf, lof, lat, lot);
+            sw1.stop();
             if (dist <= 0) {
-                counter++;
-                if (counter % 10000 == 0)
-                    logger.info(counter + " - distances negative or zero. E.g. " + fromIndex + " (" + laf + ", " + lof + ")->"
-                            + toIndex + "(" + lat + ", " + lot + ") :" + dist);
+                logger.info(counter + " - distances negative or zero. " + fromIndex + " (" + laf + ", " + lof + ")->"
+                        + toIndex + "(" + lat + ", " + lot + ") :" + dist);
                 return false;
             }
+
             g.edge(fromIndex, toIndex, dist, reverse);
+            counter++;
+            if (counter % 10000 == 0)
+                logger.info(counter + " g.edge:" + sw1.toString() + " sw2:" + sw2.toString());
             return true;
         } catch (Exception ex) {
             logger.error("Problem with " + fromIndex + "->" + toIndex + " osm:" + nodeIdFrom + "->" + nodeIdTo, ex);
@@ -111,16 +125,19 @@ public class MMapGraphStorage implements Storage {
 
     @Override
     public int getNodes() {
-        return g.getLocations();
+        return osmIdToIndexMap.size();
     }
 
     @Override
-    public void setHasEdges(int osmId) {
-        osmIdToIndexMap.put(osmId, -10);
+    public void setHasHighways(int osmId, boolean isHighway) {
+        if (isHighway)
+            osmIdToIndexMap.put(osmId, -10);
+        else
+            osmIdToIndexMap.remove(osmId);
     }
 
     @Override
-    public boolean hasEdges(int osmId) {
+    public boolean hasHighways(int osmId) {
         return osmIdToIndexMap.get(osmId) == -10;
     }
 }

@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.reader;
 
+import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.util.Helper;
 import java.io.File;
@@ -41,12 +42,12 @@ public class Neo4JStorage implements Storage {
     private static final Logger logger = LoggerFactory.getLogger(Neo4JStorage.class);
 
     @Override
-    public void setHasEdges(int osmId) {
+    public void setHasHighways(int osmId, boolean isHighway) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public boolean hasEdges(int osmId) {
+    public boolean hasHighways(int osmId) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

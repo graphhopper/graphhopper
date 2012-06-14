@@ -49,11 +49,11 @@ public class MiniGraphUI {
         new MiniGraphUI(g).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private final QuadTree<Long> quadTree;
+    private QuadTree<Long> quadTree;
     private Collection<CoordTrig<Long>> quadTreeNodes;
     private DijkstraPath path;
     private final Graph graph;
-    private final Location2IDIndex index;
+    private Location2IDIndex index;
     private double scaleX = 0.001f;
     private double scaleY = 0.001f;
     // initial position to center unterfranken
@@ -70,12 +70,16 @@ public class MiniGraphUI {
 
     public MiniGraphUI(Graph g) {
         this.graph = g;
-        this.index = new Location2IDQuadtree(g).prepareIndex(2000);
-        this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
+        
+        logger.info("locations:" + g.getLocations());
+        
+        // prepare location quadtree as enter point
+        this.index = new Location2IDQuadtree(g).prepareIndex(2000000);
+//        this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
 //        this.quadTree = new SpatialHashtable(2, 3).init(graph.getLocations());
 
-        QuadTree.Util.fill(quadTree, graph);
-        logger.info("read " + quadTree.size() + " entries");
+//        QuadTree.Util.fill(quadTree, graph);
+//        logger.info("read " + quadTree.size() + " entries");
 
         infoPanel = new JPanel() {
 
@@ -111,8 +115,8 @@ public class MiniGraphUI {
                 minY = Integer.MAX_VALUE;
                 maxX = 0;
                 maxY = 0;
-                g.setColor(Color.RED);
-                g.drawOval((int) MiniGraphUI.this.getX(49.990532), (int) MiniGraphUI.this.getY(9.020827), 10, 10);
+//                g.setColor(Color.RED);
+//                g.drawOval((int) MiniGraphUI.this.getX(49.990532), (int) MiniGraphUI.this.getY(9.020827), 10, 10);
 
                 int size;
                 if (scaleX < 3e-5)
@@ -258,6 +262,10 @@ public class MiniGraphUI {
 
                     MouseAdapter ml = new MouseAdapter() {
 
+                        // for moving
+                        int currentPosX;
+                        int currentPosY;
+                        // for routing:
                         double fromLat, fromLon;
                         boolean fromDone = false;
 
@@ -283,13 +291,30 @@ public class MiniGraphUI {
 
                             fromDone = !fromDone;
                         }
+
+                        @Override public void mouseDragged(MouseEvent e) {
+                            update(e);
+                        }
+
+                        @Override public void mouseMoved(MouseEvent e) {
+                            updateLatLon(e);
+                            infoPanel.repaint();
+                        }
+
+                        @Override public void mousePressed(MouseEvent e) {
+                            currentPosX = e.getX();
+                            currentPosY = e.getY();
+                        }
+
+                        public void update(MouseEvent e) {
+                            offsetX += (e.getX() - currentPosX) * scaleX;
+                            offsetY += (e.getY() - currentPosY) * scaleY;
+                            mainPanel.repaint();
+                        }
                     };
                     // important: calculate x/y for mouse event relative to mainPanel not frame!
                     // move graph via dragging and do something on click                    
                     MouseAdapter mouseAdapterQuadTree = new MouseAdapter() {
-
-                        int currentPosX;
-                        int currentPosY;
 
                         @Override public void mouseClicked(MouseEvent e) {
                             updateLatLon(e);
@@ -317,30 +342,6 @@ public class MiniGraphUI {
 //                            } catch (Exception ex) {
 //                                ex.printStackTrace();
 //                            }
-                            mainPanel.repaint();
-                        }
-
-                        @Override public void mouseDragged(MouseEvent e) {
-                            update(e);
-                        }
-
-                        @Override public void mouseMoved(MouseEvent e) {
-                            updateLatLon(e);
-                            infoPanel.repaint();
-                        }
-
-                        private void updateLatLon(MouseEvent e) {
-                            latLon = getLat(e.getY()) + "," + getLon(e.getX());
-                        }
-
-                        @Override public void mousePressed(MouseEvent e) {
-                            currentPosX = e.getX();
-                            currentPosY = e.getY();
-                        }
-
-                        public void update(MouseEvent e) {
-                            offsetX += (e.getX() - currentPosX) * scaleX;
-                            offsetY += (e.getY() - currentPosY) * scaleY;
                             mainPanel.repaint();
                         }
                     };
@@ -373,6 +374,10 @@ public class MiniGraphUI {
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    void updateLatLon(MouseEvent e) {
+        latLon = getLat(e.getY()) + "," + getLon(e.getX());
     }
 
     double getLon(int x) {

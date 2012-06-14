@@ -17,7 +17,7 @@ package de.jetsli.graph.trees;
 
 import de.jetsli.graph.util.shapes.BBox;
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
-import de.jetsli.graph.reader.CalcDistance;
+import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.util.*;
 import de.jetsli.graph.util.shapes.Circle;
 import de.jetsli.graph.util.shapes.Shape;
