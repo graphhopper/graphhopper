@@ -48,16 +48,20 @@ public class CalcDistance {
     public double calcDistKm(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = Math.toRadians(toLat - fromLat);
         double dLon = Math.toRadians(toLon - fromLon);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+        double normedDist = Math.sin(dLat / 2) * Math.sin(dLat / 2)
                 + Math.cos(Math.toRadians(fromLat)) * Math.cos(Math.toRadians(toLat)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        return R * 2 * Math.asin(Math.sqrt(a));
+        return R * 2 * Math.asin(Math.sqrt(normedDist));
+    }
+
+    public double denormalizeDist(double normedDist) {
+        return R * 2 * Math.asin(Math.sqrt(normedDist));
     }
 
     public double normalizeDist(double dist) {
         double tmp = Math.sin(dist / 2 / R);
         return tmp * tmp;
     }
-
+    
     public final double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = Math.toRadians(toLat - fromLat);
         double dLon = Math.toRadians(toLon - fromLon);

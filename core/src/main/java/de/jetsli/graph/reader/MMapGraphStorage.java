@@ -18,8 +18,8 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MMapGraph;
-import de.jetsli.graph.util.StopWatch;
 import gnu.trove.map.hash.TIntIntHashMap;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,8 +58,6 @@ public class MMapGraphStorage implements Storage {
         return true;
     }
     int counter = 0;
-    StopWatch sw1 = new StopWatch();
-    StopWatch sw2 = new StopWatch();
 
     @Override
     public boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback) {
@@ -78,16 +76,11 @@ public class MMapGraphStorage implements Storage {
             return false;
 
         try {
-            sw2.start();
             double laf = g.getLatitude(fromIndex);
             double lof = g.getLongitude(fromIndex);
             double lat = g.getLatitude(toIndex);
             double lot = g.getLongitude(toIndex);
-            sw2.stop();
-
-            sw1.start();
             double dist = callback.calcDistKm(laf, lof, lat, lot);
-            sw1.stop();
             if (dist <= 0) {
                 logger.info(counter + " - distances negative or zero. " + fromIndex + " (" + laf + ", " + lof + ")->"
                         + toIndex + "(" + lat + ", " + lot + ") :" + dist);
@@ -96,12 +89,9 @@ public class MMapGraphStorage implements Storage {
 
             g.edge(fromIndex, toIndex, dist, reverse);
             counter++;
-            if (counter % 10000 == 0)
-                logger.info(counter + " g.edge:" + sw1.toString() + " sw2:" + sw2.toString());
             return true;
         } catch (Exception ex) {
-            logger.error("Problem with " + fromIndex + "->" + toIndex + " osm:" + nodeIdFrom + "->" + nodeIdTo, ex);
-            return false;
+            throw new RuntimeException("Problem to add edge! with node " + fromIndex + "->" + toIndex + " osm:" + nodeIdFrom + "->" + nodeIdTo, ex);
         }
     }
 

@@ -100,7 +100,7 @@ public class SpatialKeyAlgo {
     }
 
     public long getBits() {
-        return initialBits;
+        return allBits;
     }
 
     public int getExactPrecision() {

@@ -82,7 +82,7 @@ public class PrinctonReader {
             try {
                 reader.close();
             } catch (Exception ex) {
-                throw new RuntimeException(ex);
+                throw new RuntimeException("Cannot close reader", ex);
             }
         }
     }

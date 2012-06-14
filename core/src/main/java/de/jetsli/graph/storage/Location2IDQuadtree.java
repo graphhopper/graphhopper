@@ -69,7 +69,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     public Location2IDIndex prepareIndex(int _size) {
         int bits = initBuffer(_size);
         initAlgo(bits);
-        logger.info("now fill internal qt - size is " + size);
+        logger.info("now fill internal (quadtree) array. size is " + size);
         MyOpenBitSet filledIndices = fillQuadtree(size);
         fillEmptyIndices(filledIndices);
         return this;
@@ -106,12 +106,19 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 minLon = lon;
         }
         algo = new SpatialKeyAlgo(bits).setInitialBounds(minLon, maxLon, minLat, maxLat);
-        maxNormRasterWidthKm = calc.normalizeDist(1.5 * Math.max(calc.calcDistKm(minLat, minLon, minLat, maxLon),
-                calc.calcDistKm(minLat, minLon, maxLat, minLon)));
+        maxNormRasterWidthKm = calc.normalizeDist(Math.max(calc.calcDistKm(minLat, minLon, minLat, maxLon),
+                calc.calcDistKm(minLat, minLon, maxLat, minLon)) / Math.sqrt(size));
+    }
+
+    double getMaxRasterWidthKm() {
+        return calc.denormalizeDist(maxNormRasterWidthKm);
     }
 
     private MyOpenBitSet fillQuadtree(int size) {
         int locs = g.getLocations();
+        if (locs <= 0)
+            throw new IllegalStateException("check your graph - it is empty!");
+
         MyOpenBitSet filledIndices = new MyOpenBitSet(size);
         CoordTrig coord = new CoordTrig();
         for (int nodeId = 0; nodeId < locs; nodeId++) {
@@ -158,10 +165,14 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 // search forward and backwards
                 for (int i = -1; i < 2; i += 2) {
                     int tmpIndex = mainKey + i * testIdx;
-                    if (tmpIndex < 0 || tmpIndex >= size)
+                    if (tmpIndex < 0 || tmpIndex >= size) {
+                        if (testIdx >= size)
+                            throw new IllegalStateException("couldn't find any node!? " + tmpIndex + " " + testIdx + " " + size);
+
                         continue;
-                    
-                    boolean ret = filledIndices.contains(tmpIndex);                    
+                    }
+
+                    boolean ret = filledIndices.contains(tmpIndex);
                     if (ret) {
                         int key = spatialKey2Id.get(tmpIndex);
                         algo.decode(key, coord);

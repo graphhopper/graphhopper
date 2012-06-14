@@ -16,7 +16,6 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.Helper;
-
 import java.io.File;
 import java.io.IOException;
 import org.junit.After;
@@ -61,11 +60,11 @@ public class MMapGraphTest extends AbstractGraphTester {
         g = createGraph(2);
         g.addLocation(0, 1);
         g.addLocation(1, 1);
-        try {
-            g.addLocation(2, 1);
-            assertFalse(true);
-        } catch (Exception ex) {
-        }
+        assertEquals(2, g.getLocations());
+        
+        // automatically expand nodes
+        g.addLocation(2, 1);
+        assertEquals(3, g.getLocations());
     }
 
     @Test
@@ -75,8 +74,32 @@ public class MMapGraphTest extends AbstractGraphTester {
     }
 
     @Test
+    public void testIncreaseSize() throws IOException {
+        MMapGraph graph = (MMapGraph) createGraph(10);
+        for (int i = 0; i < 10; i++) {
+            graph.addLocation(1, i);
+        }
+        
+        graph.ensureCapacity(20);
+        assertEquals(20, graph.getNodesCapacity());
+        
+        for (int i = 10; i < 20; i++) {
+            graph.addLocation(1, i);
+        }
+
+        for (int i = 0; i < 20; i++) {
+            assertEquals(i, graph.getLongitude(i), 1e-4);
+        }
+        
+        graph.addLocation(2, 2);
+        assertEquals(26, graph.getNodesCapacity());
+    }
+
+    @Test
     public void testSave() throws IOException {
-        String file = "/tmp/test-persist-graph";
+        String file = dir + "/test-persist-graph";
+        Helper.deleteDir(new File(dir));
+        new File(dir).mkdirs();
         MMapGraph mmgraph = new MMapGraph(file, 1000).createNew();
         mmgraph.addLocation(10, 10);
         mmgraph.addLocation(11, 20);

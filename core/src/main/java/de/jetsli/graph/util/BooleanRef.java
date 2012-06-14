@@ -25,8 +25,12 @@ public class BooleanRef {
 
     public BooleanRef() {
     }
-    
+
     public BooleanRef(boolean value) {
         this.value = value;
+    }
+
+    @Override public String toString() {
+        return Boolean.toString(value);
     }
 }

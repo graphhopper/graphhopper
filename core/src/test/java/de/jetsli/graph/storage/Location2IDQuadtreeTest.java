@@ -29,7 +29,10 @@ public class Location2IDQuadtreeTest {
     @Test
     public void testSinglePoints() {
         Graph g = createSampleGraph();
-        Location2IDIndex idx = new Location2IDQuadtree(g).prepareIndex(8);
+        Location2IDQuadtree idx = new Location2IDQuadtree(g);
+        idx.prepareIndex(8);
+        // maxWidth is ~555km and with size==8 it will be exanded to 4*4 array => maxRasterWidth==555/4
+        assertTrue(idx.getMaxRasterWidthKm() + "", idx.getMaxRasterWidthKm() < 140);
         assertEquals(1, idx.findID(1.637, 2.23));
     }
 

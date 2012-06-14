@@ -182,12 +182,6 @@ public class MemoryGraph implements Graph {
         };
     }
 
-    @Override
-    public void removeLocation(int index) {
-        // TODO see MMapGraph
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
     private static class EdgesIteratorable extends MyIteratorable<DistEntry> {
 
         LinkedDistEntryWithFlags curr;
@@ -230,7 +224,7 @@ public class MemoryGraph implements Graph {
             sizeField = ArrayList.class.getDeclaredField("size");
             sizeField.setAccessible(true);
         } catch (Exception ex) {
-            throw new RuntimeException(ex);
+            throw new RuntimeException("Couldn't make field 'size' accessible", ex);
         }
     }
 
@@ -243,7 +237,7 @@ public class MemoryGraph implements Graph {
         try {
             sizeField.setInt(list, maxSize);
         } catch (Exception ex) {
-            throw new RuntimeException("Problem while setting private size field of ArrayList", ex);
+            throw new RuntimeException("Problem while setting private field 'size' of ArrayList", ex);
         }
         return list;
     }

@@ -45,7 +45,7 @@ public class MiniGraphUI {
             throw new IllegalArgumentException("Osm file missing");
 
         String osmFile = args[0];
-        Graph g = OSMReaderRouting.defaultRead(osmFile, "/tmp/mmap-graph");
+        Graph g = OSMReaderRouting.defaultRead(osmFile, "/tmp/mmap2-graph");
         new MiniGraphUI(g).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
@@ -74,7 +74,7 @@ public class MiniGraphUI {
         logger.info("locations:" + g.getLocations());
         
         // prepare location quadtree as enter point
-        this.index = new Location2IDQuadtree(g).prepareIndex(2000000);
+        this.index = new Location2IDQuadtree(g).prepareIndex(200000);
 //        this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
 //        this.quadTree = new SpatialHashtable(2, 3).init(graph.getLocations());
 

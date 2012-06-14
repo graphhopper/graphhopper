@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import static de.jetsli.graph.util.MyIteratorable.*;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import java.io.File;
-import java.util.logging.Level;
 
 /**
  * A graph represenation which can be stored directly on disc when using the memory mapped
@@ -72,6 +71,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
     private int currentNodeSize = 0;
     private int maxRecognizedNodeIndex = -1;
     private int nextEdgePosition = 1;
+    private double increaseFactor = 1.3;
     private RandomAccessFile nodeFile = null;
     private RandomAccessFile edgeFile = null;
     private ByteBuffer nodes;
@@ -104,7 +104,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
                 + " distEntrySize:" + distEntrySize + " nodeCoreSize:" + nodeCoreSize
                 + " nodeSize:" + nodeSize + " nextEdgePosition:" + nextEdgePosition
                 + " distEntryFlagsPos:" + distEntryFlagsPos + " bytesDistEntrySize:" + bytesDistEntrySize);
-        init();
+        ensureCapacity(maxNodes);
         return true;
     }
 
@@ -118,49 +118,8 @@ public class MMapGraph implements Graph, java.io.Closeable {
         if (fileName != null)
             Helper.deleteFilesStartingWith(fileName);
 
-        nodeSize = nodeCoreSize + distEntryEmbedded * distEntrySize + 4;
-        return init();
-
-    }
-
-    private MMapGraph init() {
-        int tmpCapacity = this.maxNodes * nodeSize;
-
-        // the more edges we inline the less memory we need to reserve => " / distEntryEmbedded"
-        // if we provide too few memory => BufferUnderflowException
-        // and yeah, I know, distEntryEmbedded / distEntryEmbedded == 1 ... just to make it more clear
-        int tmpEdgeCapacity = this.maxNodes / distEntryEmbedded * (distEntryEmbedded * distEntrySize + 4) / 2;
-
-        if (fileName == null) {
-            nodes = ByteBuffer.allocate(tmpCapacity);
-            // ByteOrder.nativeOrder() would make it compatible with CPP but then we
-            // would need case dependent util calls to ByteUtil            
-            nodes.order(ByteOrder.BIG_ENDIAN);
-
-            edges = ByteBuffer.allocate(tmpEdgeCapacity);
-            edges.order(ByteOrder.BIG_ENDIAN);
-        } else {
-            String str = "node file with " + (float) tmpCapacity / (1 << 20) + " MB and "
-                    + "edge file with " + (float) tmpEdgeCapacity / (1 << 20) + " MB";
-            try {
-                nodeFile = new RandomAccessFile(fileName + "-nodes", "rw");
-                nodes = nodeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, tmpCapacity);
-                nodes.order(ByteOrder.BIG_ENDIAN);
-
-                edgeFile = new RandomAccessFile(fileName + "-egdes", "rw");
-                edges = edgeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, tmpEdgeCapacity);
-                edges.order(ByteOrder.BIG_ENDIAN);
-                logger.info("Mapped " + str);
-            } catch (Exception ex) {
-                logger.info("Failed to map " + str);
-                try {
-                    close();
-                } catch (Exception ex2) {
-                    throw new RuntimeException(ex2.getCause());
-                }
-                throw new RuntimeException(ex.getCause());
-            }
-        }
+        nodeSize = nodeCoreSize + bytesDistEntrySize;
+        ensureCapacity(maxNodes);
         return this;
     }
 
@@ -171,10 +130,85 @@ public class MMapGraph implements Graph, java.io.Closeable {
         this.distEntryEmbedded = distEntryEmbedded;
     }
 
+    int getNodesCapacity() {
+        return nodes.capacity() / nodeSize;
+    }
+
     @Override
-    public void ensureCapacity(int cap) {
-        // TODO increase memory allocation or memory mapping
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void ensureCapacity(int nodes) {
+        int newEdgeNo = calculateEdges(nodes);
+        String str = "node file with " + (float) (nodes * nodeSize) / (1 << 20) + " MB and "
+                + "edge file with " + (float) (newEdgeNo * bytesDistEntrySize) / (1 << 20) + " MB";
+
+        try {
+            ensureNodesCapacity(nodes);
+            ensureEdgesCapacity(newEdgeNo);
+            logger.info("Mapped " + str);
+        } catch (IOException ex) {
+            try {
+                close();
+                throw new RuntimeException("Failed to map " + str, ex);
+            } catch (Exception ex2) {
+                throw new RuntimeException("Failed to map " + str + ". And failed to close " + ex2.getMessage(), ex);
+            }
+        }
+    }
+
+    protected boolean ensureNodesCapacity(int newNumberOfNodes) throws IOException {
+        int newBytes = newNumberOfNodes * nodeSize;
+        if (nodes != null) {
+            if (newBytes < nodes.capacity())
+                return false;
+            newNumberOfNodes = (int) Math.max(newNumberOfNodes, increaseFactor * nodes.capacity() / nodeSize);
+            newBytes = newNumberOfNodes * nodeSize;
+        }
+        maxNodes = newNumberOfNodes;
+        if (fileName != null) {
+            if (nodeFile == null)
+                nodeFile = new RandomAccessFile(fileName + "-nodes", "rw");
+            else {
+                // necessary? clean((MappedByteBuffer) nodes);
+                nodeFile.setLength(newBytes);
+                logger.info("remapped nodes to " + newBytes);
+            }
+            nodes = nodeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, newBytes);
+        } else
+            nodes = copy(nodes, ByteBuffer.allocate(newBytes));
+
+        nodes.order(ByteOrder.BIG_ENDIAN);
+        return true;
+    }
+
+    /**
+     * @return the minimum number of edges to be used in edge buffer
+     */
+    protected int calculateEdges(int maxNodes) {
+        // the more edges we inline the less memory we need to reserve => " / distEntryEmbedded"
+        // if we provide too few memory => BufferUnderflowException will be thrown without calling ensureEdgesCapacity
+        return Math.max(nextEdgePosition, maxNodes / distEntryEmbedded / 4);
+    }
+
+    protected boolean ensureEdgesCapacity(int newNumberOfEdges) throws IOException {
+        int newBytes = newNumberOfEdges * bytesDistEntrySize;
+        if (edges != null) {
+            if (newBytes < edges.capacity())
+                return false;
+            newBytes = (int) Math.max(newBytes, 1.3 * edges.capacity());
+        }
+        if (fileName != null) {
+            if (edgeFile == null)
+                edgeFile = new RandomAccessFile(fileName + "-egdes", "rw");
+            else {
+                // necessary? clean((MappedByteBuffer) edges);
+                edgeFile.setLength(newBytes);
+                logger.info("remapped edges to " + newBytes);
+            }
+            edges = edgeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, newBytes);
+        } else
+            edges = copy(edges, ByteBuffer.allocate(newBytes));
+
+        edges.order(ByteOrder.BIG_ENDIAN);
+        return true;
     }
 
     @Override
@@ -185,8 +219,13 @@ public class MMapGraph implements Graph, java.io.Closeable {
 
     @Override
     public int addLocation(double lat, double lon) {
-        if (currentNodeSize > maxNodes)
-            throw new IllegalStateException("Maximum number of node reached. see ensureCapacity");
+        if (currentNodeSize + 1 >= maxNodes) {
+            try {
+                ensureNodesCapacity(currentNodeSize + 1);
+            } catch (IOException ex) {
+                throw new RuntimeException("Couldn't expand nodes to " + currentNodeSize, ex);
+            }
+        }
 
         nodes.position(currentNodeSize * nodeSize);
         nodes.putFloat((float) lat);
@@ -213,6 +252,12 @@ public class MMapGraph implements Graph, java.io.Closeable {
         if (distance <= 0)
             throw new UnsupportedOperationException("negative or zero distances are not supported:"
                     + a + " -> " + b + ": " + distance + ", bothDirections:" + bothDirections);
+
+        try {
+            ensureEdgesCapacity(nextEdgePosition / bytesDistEntrySize + 2);
+        } catch (IOException ex) {
+            throw new RuntimeException("Cannot ensure edge capacity!? edges capacity:" + edges.capacity() + " vs. " + nextEdgePosition, ex);
+        }
 
         maxRecognizedNodeIndex = Math.max(maxRecognizedNodeIndex, Math.max(a, b));
         byte dirFlag = 3;
@@ -257,18 +302,6 @@ public class MMapGraph implements Graph, java.io.Closeable {
         byte[] bytes = new byte[bytesDistEntrySize];
         nodes.get(bytes);
         return new EdgesIteratorableFlags(bytes, (byte) 2);
-    }
-
-    @Override
-    public void removeLocation(int index) {
-        MyIteratorable iter = getEdges(index);
-        // remove edges
-
-        // move last location to index
-
-        // update node id in edges
-
-        // update locations count
     }
 
     private class EdgesIteratorableFlags extends EdgesIteratorable {
@@ -356,9 +389,9 @@ public class MMapGraph implements Graph, java.io.Closeable {
      * append
      */
     void addIfAbsent(int nodePointer, int nodeIndex, float distance, byte dirFlag) {
-        // move to node a its edges
+        // move to the node its edges
         nodes.position(nodePointer);
-        byte[] byteArray = new byte[distEntryEmbedded * distEntrySize + 4];
+        byte[] byteArray = new byte[bytesDistEntrySize];
         nodes.get(byteArray);
         nodes.position(nodePointer);
 
@@ -414,14 +447,14 @@ public class MMapGraph implements Graph, java.io.Closeable {
 
     private int getNextFreeEdgeBlock() {
         int tmp = nextEdgePosition;
-        nextEdgePosition += distEntrySize * distEntryEmbedded + 4;
+        nextEdgePosition += bytesDistEntrySize;
         return tmp;
     }
 
     @Override
     public Graph clone() {
         if (fileName != null)
-            logger.warn("Cloned graph will be in-memory only!");
+            logger.error("Cloned graph will be in-memory only!");
 
         MMapGraph graphCloned = new MMapGraph(maxNodes);
         graphCloned.nodes = clone(nodes);
@@ -439,26 +472,31 @@ public class MMapGraph implements Graph, java.io.Closeable {
     }
 
     public static ByteBuffer clone(ByteBuffer original) {
-        ByteBuffer clone = ByteBuffer.allocate(original.capacity());
+        return copy(original, ByteBuffer.allocate(original.capacity()));
+    }
+
+    public static ByteBuffer copy(ByteBuffer original, ByteBuffer copy) {
+        if (original == null)
+            return copy;
+
         original.rewind();
-        clone.put(original);
+        copy.put(original);
         original.rewind();
-        clone.flip();
-        return clone;
+        copy.flip();
+        return copy;
     }
 
     public void flush() {
-        if (nodes instanceof MappedByteBuffer)
-            ((MappedByteBuffer) nodes).force();
-
-        if (edges instanceof MappedByteBuffer)
-            ((MappedByteBuffer) edges).force();
-
-        // store settings
         if (fileName != null) {
+            if (nodes instanceof MappedByteBuffer)
+                ((MappedByteBuffer) nodes).force();
+
+            if (edges instanceof MappedByteBuffer)
+                ((MappedByteBuffer) edges).force();
+
+            // store settings
             try {
                 String sFile = fileName + "-settings";
-
                 RandomAccessFile settingsFile = new RandomAccessFile(sFile, "rw");
                 settingsFile.writeInt(maxNodes);
                 settingsFile.writeInt(distEntryEmbedded);
@@ -485,7 +523,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
             if (!new File(sFile).exists())
                 return false;
 
-            RandomAccessFile settingsFile = new RandomAccessFile(sFile, "rw");
+            RandomAccessFile settingsFile = new RandomAccessFile(sFile, "r");
             maxNodes = settingsFile.readInt();
             distEntryEmbedded = settingsFile.readInt();
             distEntrySize = settingsFile.readInt();
@@ -504,16 +542,18 @@ public class MMapGraph implements Graph, java.io.Closeable {
     }
 
     @Override public void close() throws IOException {
-        flush();
-        if (nodes instanceof MappedByteBuffer) {
-            clean((MappedByteBuffer) nodes);
-            if (nodeFile != null)
-                nodeFile.close();
-        }
-        if (edges instanceof MappedByteBuffer) {
-            clean((MappedByteBuffer) edges);
-            if (edgeFile != null)
-                edgeFile.close();
+        if (fileName != null) {
+            flush();
+            if (nodes instanceof MappedByteBuffer) {
+                clean((MappedByteBuffer) nodes);
+                if (nodeFile != null)
+                    nodeFile.close();
+            }
+            if (edges instanceof MappedByteBuffer) {
+                clean((MappedByteBuffer) edges);
+                if (edgeFile != null)
+                    edgeFile.close();
+            }
         }
     }
 

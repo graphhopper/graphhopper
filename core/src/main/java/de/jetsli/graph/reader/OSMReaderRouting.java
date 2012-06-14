@@ -19,13 +19,12 @@ import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.Location2IDIndex;
+import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.StopWatch;
 import gnu.trove.list.array.TIntArrayList;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
@@ -45,12 +44,12 @@ import org.slf4j.LoggerFactory;
 public class OSMReaderRouting {
 
     public static void main(String[] args) throws Exception {
-        new OSMReaderRouting("/tmp/mmap-graph", 50 * 1000 * 1000) {
+        new OSMReaderRouting("/tmp/mmap2-graph", 50 * 1000 * 1000) {
 
             @Override
             public boolean isInBounds(double lat, double lon) {
                 // regardless of bounds it takes ~7min (nodes) and 5min (edges) for MMyGraphStorage and other fast storages
-//                return true;
+                return true;
 
                 // ~germany
                 // 90  mio nodes, but only 33 mio involved in routing
@@ -70,7 +69,7 @@ public class OSMReaderRouting {
                 // number of edges per node:
                 // 1        2       3       4       5       6       7       8
                 // 52206    35005   2232056 267471  32157   1345    164     25
-                return lat > 49.3 && lat < 50 && lon > 10.8 && lon < 11.6;
+//                return lat > 49.3 && lat < 50 && lon > 10.8 && lon < 11.6;
             }
         }.read(args);
     }
@@ -96,7 +95,7 @@ public class OSMReaderRouting {
         // get osm file via wget -O muenchen.osm "http://api.openstreetmap.org/api/0.6/map?bbox=11.54,48.14,11.543,48.145"
         // or if that does not work for you get them here
         // http://download.geofabrik.de/osm/europe/germany/bayern/
-        if (args.length != 1)
+        if (args.length < 1)
             throw new IllegalStateException(".osm file missing");
 
         // I'm having the osm on an external usb drive serving the osm async to our binary file
@@ -109,32 +108,43 @@ public class OSMReaderRouting {
             createNewFromOSM(osmFile);
         }
 
+        // 2 time:0.615 from (231131)50.12328715186286, 10.751714243483567 to (698045)50.25819959971576, 10.62887384412318
+        // 2012-06-14 09:11:37,514 [main] WARN  de.jetsli.graph.reader.OSMReaderRouting$1 - nothing found for 2 !?
+
 //        boolean dijkstraSearchTest = storage instanceof MMyGraphStorage;
-        boolean dijkstraSearchTest = false;
+        boolean dijkstraSearchTest = true;
         if (dijkstraSearchTest) {
             Graph g = ((MMapGraphStorage) storage).getGraph();
-            int locs = g.getLocations() - 1;
-            Random ran = new Random();
-            for (int i = 0; i < 1000; i++) {
-                int from = Math.abs(ran.nextInt(locs));
-                int to = Math.abs(ran.nextInt(locs));
-                if (from == to)
-                    continue;
+            Location2IDIndex index = new Location2IDQuadtree(g).prepareIndex(20000);
 
-//            E45, 91056 Erlangen, Germany (49.571453, 10.936175)
-//            E45, 90475 Brunn,    Germany (49.44403,  11.229972)
-//            path:distance:27.990238 <=> confirmed via google
-                logger.info(i + " from " + g.getLatitude(from) + ", " + g.getLongitude(from));
-                logger.info(i + " to " + g.getLatitude(to) + ", " + g.getLongitude(to));
-                DijkstraPath p = new DijkstraBidirection(g).calcShortestPath(from, to);
-                if (p == null)
+            double minLat = 49.484186, minLon = 8.974228;
+            double maxLat = 50.541363, maxLon = 10.880356;
+            Random rand = new Random(123);
+            StopWatch sw = new StopWatch();
+            for (int i = 0; i < 1000; i++) {
+                double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
+                double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
+                int from = index.findID(fromLat, fromLon);
+                double toLat = rand.nextDouble() * (maxLat - minLat) + minLat;
+                double toLon = rand.nextDouble() * (maxLon - minLon) + minLon;
+                int to = index.findID(toLat, toLon);
+//                logger.info(i + " " + sw + " from (" + from + ")" + fromLat + ", " + fromLon + " to (" + to + ")" + toLat + ", " + toLon);
+                if (from == to) {
+                    logger.warn("skipping i " + i + " from==to " + from);
                     continue;
-                logger.info(i + " path:" + p.toString());
-                for (int loc = 0; loc < p.locations(); loc++) {
-                    int node = p.location(loc);
-                    System.out.print(g.getLatitude(node) + ", " + g.getLongitude(node) + "->");
                 }
-                System.out.println("\n");
+
+                sw.start();
+                DijkstraPath p = new DijkstraBidirection(g).calcShortestPath(from, to);
+                sw.stop();
+                if (p == null) {
+                    logger.warn("nothing found for " + i + " !? "
+                            + "from " + g.getLatitude(from) + ", " + g.getLongitude(from)
+                            + " to " + g.getLatitude(to) + ", " + g.getLongitude(to));
+                    continue;
+                }
+                if (i % 100 == 0)
+                    logger.info(i + " " + sw.getSeconds() / (i + 1) + " path:" + p.locations() + " " + p.toString());
             }
         }
         close();
@@ -188,14 +198,14 @@ public class OSMReaderRouting {
                         break;
                 }
             }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
+        } catch (XMLStreamException ex) {
+            throw new RuntimeException("Problem while parsing file", ex);
         } finally {
             try {
                 if (sReader != null)
                     sReader.close();
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
+            } catch (XMLStreamException ex) {
+                throw new RuntimeException("Couldn't close file", ex);
             }
         }
     }
@@ -227,10 +237,9 @@ public class OSMReaderRouting {
                             }
                         } else if ("way".equals(sReader.getLocalName())) {
                             processHighway(sReader);
-                            if (++counter % 10000 == 0) {
+                            if (++counter % 100000 == 0) {
                                 logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
-                                        + " (" + skippedEdges + "), " + Helper.getMemInfo()
-                                        + " e:" + addEdgeSW.toString());
+                                        + " (" + skippedEdges + "), " + Helper.getMemInfo());
                             }
                         }
 
@@ -238,14 +247,14 @@ public class OSMReaderRouting {
                 }
             }
             storage.flush();
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
+        } catch (XMLStreamException ex) {
+            throw new RuntimeException("Couldn't process file", ex);
         } finally {
             try {
                 if (sReader != null)
                     sReader.close();
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
+            } catch (XMLStreamException ex) {
+                throw new RuntimeException("Couldn't close file", ex);
             }
         }
     }
@@ -316,28 +325,20 @@ public class OSMReaderRouting {
         } // for
         return isHighway;
     }
-    StopWatch addEdgeSW = new StopWatch();
 
     public void processHighway(XMLStreamReader sReader) throws XMLStreamException {
         boolean isHighway = isHighway(sReader);
         if (isHighway && tmpLocs.size() > 1) {
-
             int prevOsmId = tmpLocs.get(0);
-            try {
-                int l = tmpLocs.size();
-                for (int index = 1; index < l; index++) {
-                    int currOsmId = tmpLocs.get(index);
-                    addEdgeSW.start();
-                    boolean ret = storage.addEdge(prevOsmId, currOsmId, true, callback);
-                    addEdgeSW.stop();
-                    if (ret)
-                        nextEdgeIndex++;
-                    else
-                        skippedEdges++;
-                    prevOsmId = currOsmId;
-                }
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
+            int l = tmpLocs.size();
+            for (int index = 1; index < l; index++) {
+                int currOsmId = tmpLocs.get(index);
+                boolean ret = storage.addEdge(prevOsmId, currOsmId, true, callback);
+                if (ret)
+                    nextEdgeIndex++;
+                else
+                    skippedEdges++;
+                prevOsmId = currOsmId;
             }
         }
     }
@@ -358,7 +359,7 @@ public class OSMReaderRouting {
         try {
             storage.close();
         } catch (Exception ex) {
-            throw new RuntimeException(ex);
+            throw new RuntimeException("Cannot close storage", ex);
         }
     }
 
