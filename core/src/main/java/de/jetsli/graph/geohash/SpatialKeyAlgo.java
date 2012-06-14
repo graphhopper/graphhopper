@@ -200,7 +200,7 @@ public class SpatialKeyAlgo {
                 lon += midLon;
 
             midLon /= 2;
-            if (bits != 0)
+            if (bits > 1)
                 bits >>>= 1;
             else
                 break;

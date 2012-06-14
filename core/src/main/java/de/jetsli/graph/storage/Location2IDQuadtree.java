@@ -108,6 +108,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
         algo = new SpatialKeyAlgo(bits).setInitialBounds(minLon, maxLon, minLat, maxLat);
         maxNormRasterWidthKm = calc.normalizeDist(Math.max(calc.calcDistKm(minLat, minLon, minLat, maxLon),
                 calc.calcDistKm(minLat, minLon, maxLat, minLon)) / Math.sqrt(size));
+
+        // as long as we have "dist < PI*R/2" it is save to compare the normalized distances instead of the real
+        // distances. because sin(x) is only monotonic increasing for x <= PI/2 (and positive for x >= 0)
     }
 
     double getMaxRasterWidthKm() {
@@ -145,46 +148,45 @@ public class Location2IDQuadtree implements Location2IDIndex {
     }
 
     private void fillEmptyIndices(MyOpenBitSet filledIndices) {
-        // 3. fill empty indices with points close to them to return correct id's for find()!        
-        CoordTrig coord = new CoordTrig();
+        // 3. fill empty indices with points close to them to return correct id's for find()!
         final int maxSearch = 10;
         List<DistEntry> list = new ArrayList<DistEntry>();
-        for (int nodeId = 0; nodeId < size; nodeId++) {
-            if (nodeId % 100000 == 0)
-                logger.info("id:" + nodeId);
+        for (int mainKey = 0; mainKey < size; mainKey++) {
+            if (mainKey % 100000 == 0)
+                logger.info("mainKey:" + mainKey);
 
             final CoordTrig mainCoord = new CoordTrig();
-            algo.decode(nodeId, mainCoord);
-            int mainKey = nodeId >>> 32 - algo.getBits();
+            algo.decode(mainKey, mainCoord);
             if (filledIndices.contains(mainKey))
                 continue;
 
             list.clear();
             // check the quadtree
-            for (int testIdx = 0; testIdx < maxSearch || list.isEmpty(); testIdx++) {
+            for (int keyOffset = 1; keyOffset < maxSearch || list.isEmpty(); keyOffset++) {
                 // search forward and backwards
                 for (int i = -1; i < 2; i += 2) {
-                    int tmpIndex = mainKey + i * testIdx;
-                    if (tmpIndex < 0 || tmpIndex >= size) {
-                        if (testIdx >= size)
-                            throw new IllegalStateException("couldn't find any node!? " + tmpIndex + " " + testIdx + " " + size);
+                    int tmpKey = mainKey + i * keyOffset;
+                    if (tmpKey < 0 || tmpKey >= size) {
+                        if (keyOffset >= size)
+                            throw new IllegalStateException("couldn't find any node!? " + tmpKey + " " + keyOffset + " " + size);
 
                         continue;
                     }
 
-                    boolean ret = filledIndices.contains(tmpIndex);
+                    boolean ret = filledIndices.contains(tmpKey);
                     if (ret) {
-                        int key = spatialKey2Id.get(tmpIndex);
-                        algo.decode(key, coord);
-                        double dist = calc.calcNormalizedDist(mainCoord.lat, mainCoord.lon, coord.lat, coord.lon);
-                        list.add(new DistEntry(tmpIndex, dist));
+                        int tmpId = spatialKey2Id.get(tmpKey);
+                        double lat = g.getLatitude(tmpId);
+                        double lon = g.getLongitude(tmpId);
+                        double dist = calc.calcNormalizedDist(mainCoord.lat, mainCoord.lon, lat, lon);
+                        list.add(new DistEntry(tmpId, dist));
                     }
                 }
             }
 
             if (list.isEmpty())
                 throw new IllegalStateException("no node found in quadtree which is close to id "
-                        + nodeId + " " + mainCoord + " size:" + size);
+                        + mainKey + " " + mainCoord + " size:" + size);
             Collections.sort(list, new Comparator<DistEntry>() {
 
                 @Override public int compare(DistEntry o1, DistEntry o2) {
@@ -194,16 +196,21 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
             // choose the best we have so far
             final DistEntry closestNode = list.get(0);
+            // use only one bitset for the all iterations so we do not check the same nodes again
+            final MyBitSet bitset = new MyTBitSet(maxSearch * 4);
             // now explore the graph
             for (final DistEntry de : list) {
                 final BooleanRef onlyOneDepth = new BooleanRef();
                 new XFirstSearch() {
 
                     @Override protected MyBitSet createBitSet(int size) {
-                        return new MyTBitSet(maxSearch * 4);
+                        return bitset;
                     }
 
                     @Override protected boolean goFurther(int nodeId) {
+                        if (nodeId == de.node)
+                            return true;
+
                         double currLat = g.getLatitude(nodeId);
                         double currLon = g.getLongitude(nodeId);
                         double d = calc.calcNormalizedDist(currLat, currLon, mainCoord.lat, mainCoord.lon);
@@ -248,7 +255,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
          */
 
         long key = algo.encode(lat, lon);
-        int id = spatialKey2Id.get((int) key);
+        final int id = spatialKey2Id.get((int) key);
         double mainLat = g.getLatitude(id);
         double mainLon = g.getLongitude(id);
         final DistEntry closestNode = new DistEntry(id, calc.calcNormalizedDist(lat, lon, mainLat, mainLon));
@@ -259,6 +266,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
             }
 
             @Override protected boolean goFurther(int nodeId) {
+                if (nodeId == id)
+                    return true;
+
                 double currLat = g.getLatitude(nodeId);
                 double currLon = g.getLongitude(nodeId);
                 double d = calc.calcNormalizedDist(currLat, currLon, lat, lon);
