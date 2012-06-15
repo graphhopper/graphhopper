@@ -82,7 +82,7 @@ public class Location2IDQuadtreeTest {
             float newDist = (float) dist.calcDistKm(lat, lon, newLat, newLon);
 
             // conceptual limitation see testSinglePoints32            
-            if (i == 20 || i == 50 || i == 55 || i == 65)
+            if (i == 20 || i == 50 || i == 65 || i == 73)
                 continue;
 
             assertTrue(i + " orig:" + (float) lat + "," + (float) lon
@@ -100,6 +100,8 @@ public class Location2IDQuadtreeTest {
         // 10 or 6
         assertEquals(10, idx.findID(3.649, 1.375));
 
+        assertEquals(10, idx.findID(3.8465748, 0.021762699));
+
         // conceptual limitation for empty area and blind alley situations
         // see testGrid iteration => (i)
         // (20) we do not reach the 'hidden' (but more correct/close) node g6 instead we'll get e4
@@ -108,10 +110,7 @@ public class Location2IDQuadtreeTest {
         // (50) we get 4 instead
         // assertEquals(0, idx.findID(0.64628404, 0.53006625));
 
-        // (55) we get 1 instead
-        // assertEquals(6, idx.findID(2.417732, 2.0711997));
-        
-        // (65)
+        // (65) (73)
     }
 
     @Test

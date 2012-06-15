@@ -150,6 +150,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     private void fillEmptyIndices(MyOpenBitSet filledIndices) {
         // 3. fill empty indices with points close to them to return correct id's for find()!
         final int maxSearch = 10;
+        int counter = 0;
         List<DistEntry> list = new ArrayList<DistEntry>();
         for (int mainKey = 0; mainKey < size; mainKey++) {
             if (mainKey % 100000 == 0)
@@ -160,6 +161,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
             if (filledIndices.contains(mainKey))
                 continue;
 
+            counter++;
             list.clear();
             // check the quadtree
             for (int keyOffset = 1; keyOffset < maxSearch || list.isEmpty(); keyOffset++) {
@@ -184,18 +186,24 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 }
             }
 
-            if (list.isEmpty())
-                throw new IllegalStateException("no node found in quadtree which is close to id "
-                        + mainKey + " " + mainCoord + " size:" + size);
-            Collections.sort(list, new Comparator<DistEntry>() {
+//            if (list.isEmpty())
+//                throw new IllegalStateException("no node found in quadtree which is close to id "
+//                        + mainKey + " " + mainCoord + " size:" + size);
+//            Collections.sort(list, new Comparator<DistEntry>() {
+//
+//                @Override public int compare(DistEntry o1, DistEntry o2) {
+//                    return Double.compare(o1.distance, o2.distance);
+//                }
+//            });
 
-                @Override public int compare(DistEntry o1, DistEntry o2) {
-                    return Double.compare(o1.distance, o2.distance);
-                }
-            });
+            // choose the best we have so far - no need to sort - just select
+            DistEntry tmp = list.get(0);
+            for (int i = 1; i < list.size(); i++) {
+                if (tmp.distance > list.get(i).distance)
+                    tmp = list.get(i);
+            }
+            final DistEntry closestNode = tmp;
 
-            // choose the best we have so far
-            final DistEntry closestNode = list.get(0);
             // use only one bitset for the all iterations so we do not check the same nodes again
             final MyBitSet bitset = new MyTBitSet(maxSearch * 4);
             // now explore the graph
@@ -230,8 +238,13 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
             if (mainKey < 0 || mainKey >= size)
                 throw new IllegalStateException("Problem with mainKey:" + mainKey + " " + mainCoord + " size:" + size);
+
             spatialKey2Id.put(mainKey, closestNode.node);
+            // do not forget this to speed up inner loop
+            filledIndices.add(mainKey);
         }
+
+        logger.info("filled empty " + counter);
     }
 
     /**

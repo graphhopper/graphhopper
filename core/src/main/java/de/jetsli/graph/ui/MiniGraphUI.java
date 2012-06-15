@@ -23,7 +23,6 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.trees.QuadTree;
-import de.jetsli.graph.trees.QuadTreeSimple;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.MyIteratorable;
 import de.jetsli.graph.util.StopWatch;
@@ -45,7 +44,7 @@ public class MiniGraphUI {
             throw new IllegalArgumentException("Osm file missing");
 
         String osmFile = args[0];
-        Graph g = OSMReaderRouting.defaultRead(osmFile, "/tmp/mmap2-graph");
+        Graph g = OSMReaderRouting.defaultRead(osmFile, "/tmp/mmap-graph");
         new MiniGraphUI(g).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
@@ -70,11 +69,9 @@ public class MiniGraphUI {
 
     public MiniGraphUI(Graph g) {
         this.graph = g;
-        
         logger.info("locations:" + g.getLocations());
-        
-        // prepare location quadtree as enter point
-        this.index = new Location2IDQuadtree(g).prepareIndex(200000);
+        // prepare location quadtree to 'enter' the graph. create a 313*313 grid => <3km
+        this.index = new Location2IDQuadtree(g).prepareIndex(100000);
 //        this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
 //        this.quadTree = new SpatialHashtable(2, 3).init(graph.getLocations());
 
@@ -94,8 +91,8 @@ public class MiniGraphUI {
             }
         };
 
-        // TODO PERFORMANCE draw graph on an offscreen image and translate + scale that one!
-        // but then we have a memory problem and less resolution!
+        // TODO PERFORMANCE draw graph on an offscreen image for faster translation and use 
+        // different layer for routing! redraw only on scaling =>but then memory problems for bigger zooms!?
         // final BufferedImage offscreenImage = new BufferedImage(11000, 11000, BufferedImage.TYPE_INT_ARGB);
         // final Graphics2D g2 = offscreenImage.createGraphics();
 
