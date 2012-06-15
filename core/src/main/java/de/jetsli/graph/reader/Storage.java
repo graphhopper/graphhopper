@@ -32,9 +32,15 @@ public interface Storage {
 
     boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback);
 
+    int getNodes();
+
     void close() throws Exception;
 
     void flush();
 
     public void stats();
+
+    public void setHasHighways(int osmId, boolean isHighway);
+
+    public boolean hasHighways(int osmId);
 }

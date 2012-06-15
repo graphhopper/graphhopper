@@ -19,9 +19,7 @@ import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MMapGraph;
 import gnu.trove.map.hash.TIntIntHashMap;
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,18 +29,14 @@ import org.slf4j.LoggerFactory;
  */
 public class MMapGraphStorage implements Storage {
 
-    private Logger logger = LoggerFactory.getLogger(getClass());
-    private File tmp;
-    private RandomAccessFile tmpRA;
-    private TIntIntHashMap osm2idMap;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private MMapGraph g;
-    private int size;
+    private TIntIntHashMap osmIdToIndexMap;
     private final String file;
-    private int counter = 0;
 
     public MMapGraphStorage(String file, int size) {
         this.file = file;
-        this.size = size;
+        osmIdToIndexMap = new TIntIntHashMap(size, 1.4f, -1, -1);
     }
 
     @Override
@@ -53,98 +47,56 @@ public class MMapGraphStorage implements Storage {
 
     @Override
     public void createNew() {
-        g = new MMapGraph(file, size);
+        g = new MMapGraph(file, osmIdToIndexMap.size());
         g.createNew();
-
-        // contains mapping from OSM-ID to negative file position pointers OR positive graph node id!
-        osm2idMap = new TIntIntHashMap(size, 1.4f, -1, -1);
-
-        // store lat,lon for later usage in processWay into a separate file to avoid reparsing
-        // or storing this in an in-memory structure
-        // => it is a good idea to put this file on a different disc than the OSM file or mmap file!
-        try {
-            tmp = File.createTempFile("graph", "osmimport");
-            logger.info("using temp file " + tmp);
-            tmpRA = new RandomAccessFile(tmp, "rw");
-            // write dummy int so that a filepointer of 0-3 won't happen => reserve >0 for "node ids" and -1 for "not a value"
-            tmpRA.writeInt(0);
-        } catch (IOException ex) {
-            throw new RuntimeException("Cannot create temp file " + tmp, ex);
-        }
     }
 
     @Override
     public boolean addNode(int osmId, double lat, double lon) {
-        try {
-            int line = (int) tmpRA.getFilePointer();
-            tmpRA.writeFloat((float) lat);
-            tmpRA.writeFloat((float) lon);
-            osm2idMap.put(osmId, -line);
-            return true;
-        } catch (IOException ex) {
-            throw new RuntimeException("Couldn't write lat,lon " + osmId + " " + lat + "," + lon, ex);
-        }
+        int internalId = g.addLocation(lat, lon);
+        osmIdToIndexMap.put(osmId, internalId);
+        return true;
     }
+    int counter = 0;
 
     @Override
-    public boolean addEdge(int osmIdFrom, int osmIdTo, boolean reverse, CalcDistance callback) {
-        double latFrom;
-        double lonFrom;
-        double latTo;
-        double lonTo;
-        int idFrom;
-        int idTo;
-        try {
-            idFrom = osm2idMap.get(osmIdFrom);
-            if (idFrom == osm2idMap.getNoEntryValue())
-                return false;
-
-            if (idFrom < 0) {
-                tmpRA.seek(-idFrom);
-                latFrom = tmpRA.readFloat();
-                lonFrom = tmpRA.readFloat();
-                idFrom = g.addLocation(latFrom, lonFrom);
-                osm2idMap.put(osmIdFrom, idFrom);
-            } else {
-                latFrom = g.getLatitude(idFrom);
-                lonFrom = g.getLongitude(idFrom);
-            }
-
-            idTo = osm2idMap.get(osmIdTo);
-            if (idTo == osm2idMap.getNoEntryValue())
-                return false;
-
-            if (idTo < 0) {
-                tmpRA.seek(-idTo);
-                latTo = tmpRA.readFloat();
-                lonTo = tmpRA.readFloat();
-                idTo = g.addLocation(latTo, lonTo);
-                osm2idMap.put(osmIdTo, idTo);
-            } else {
-                latTo = g.getLatitude(idTo);
-                lonTo = g.getLongitude(idTo);
-            }
-        } catch (IOException ex) {
-            throw new RuntimeException("Cannot read point " + osmIdFrom + " " + osmIdTo, ex);
-        }
-
-        double dist = callback.calcDistKm(latFrom, lonFrom, latTo, lonTo);
-        if (dist <= 0) {
-            logger.info(counter + " - distances negative or zero. " + osmIdFrom + " (" + latFrom + ", " + lonFrom + ")->"
-                    + osmIdTo + "(" + latTo + ", " + lonTo + ") :" + dist);
+    public boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback) {
+        int fromIndex = osmIdToIndexMap.get(nodeIdFrom);
+        if (fromIndex == -10) {
+            logger.warn("fromIndex is unresolved:" + nodeIdFrom + " to was:" + nodeIdTo);
             return false;
         }
-        g.edge(idFrom, idTo, dist, reverse);
-        counter++;
-        return true;
+        int toIndex = osmIdToIndexMap.get(nodeIdTo);
+        if (toIndex == -10) {
+            logger.warn("toIndex is unresolved:" + nodeIdTo + " from was:" + nodeIdFrom);
+            return false;
+        }
+
+        if (fromIndex == osmIdToIndexMap.getNoEntryValue() || toIndex == osmIdToIndexMap.getNoEntryValue())
+            return false;
+
+        try {
+            double laf = g.getLatitude(fromIndex);
+            double lof = g.getLongitude(fromIndex);
+            double lat = g.getLatitude(toIndex);
+            double lot = g.getLongitude(toIndex);
+            double dist = callback.calcDistKm(laf, lof, lat, lot);
+            if (dist <= 0) {
+                logger.info(counter + " - distances negative or zero. " + fromIndex + " (" + laf + ", " + lof + ")->"
+                        + toIndex + "(" + lat + ", " + lot + ") :" + dist);
+                return false;
+            }
+
+            g.edge(fromIndex, toIndex, dist, reverse);
+            counter++;
+            return true;
+        } catch (Exception ex) {
+            throw new RuntimeException("Problem to add edge! with node " + fromIndex + "->" + toIndex + " osm:" + nodeIdFrom + "->" + nodeIdTo, ex);
+        }
     }
 
     @Override
     public void close() throws Exception {
-        if (tmp != null) {
-            tmpRA.close();
-            tmp.delete();
-        }
         g.flush();
     }
 
@@ -159,5 +111,23 @@ public class MMapGraphStorage implements Storage {
     @Override
     public void flush() {
         g.flush();
+    }
+
+    @Override
+    public int getNodes() {
+        return osmIdToIndexMap.size();
+    }
+
+    @Override
+    public void setHasHighways(int osmId, boolean isHighway) {
+        if (isHighway)
+            osmIdToIndexMap.put(osmId, -10);
+        else
+            osmIdToIndexMap.remove(osmId);
+    }
+
+    @Override
+    public boolean hasHighways(int osmId) {
+        return osmIdToIndexMap.get(osmId) == -10;
     }
 }
