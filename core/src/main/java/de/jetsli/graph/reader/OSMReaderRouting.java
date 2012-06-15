@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class OSMReaderRouting {
 
     public static void main(String[] args) throws Exception {
-        new OSMReaderRouting("/tmp/mmap-graph", 50 * 1000 * 1000) {
+        new OSMReaderRouting("/tmp/mmap-graph", 40 * 1000 * 1000) {
 
             @Override
             public boolean isInBounds(double lat, double lon) {
@@ -165,48 +165,11 @@ public class OSMReaderRouting {
         return storage.loadExisting();
     }
 
-    /**
-     * Preprocessing of OSM file to select nodes which are used for highways. This allows a more
-     * compact graph data structure.
-     */
-    public void acceptHighwaysOnly(InputStream is) {
-        if (is == null)
-            throw new IllegalStateException("Stream cannot be empty");
-
-        XMLInputFactory factory = XMLInputFactory.newInstance();
-        XMLStreamReader sReader = null;
+    public void createNewFromOSM(File osmFile) {
         try {
-            sReader = factory.createXMLStreamReader(is, "UTF-8");
-            int counter = 0;
-            for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
-                    event = sReader.next()) {
-                if (++counter % 5000000 == 0) {
-                    logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
-                            + " (" + skippedEdges + "), " + Helper.getMemInfo());
-                }
-                switch (event) {
-                    case XMLStreamConstants.START_ELEMENT:
-                        if ("way".equals(sReader.getLocalName())) {
-                            boolean isHighway = isHighway(sReader);
-                            if (isHighway && tmpLocs.size() > 1) {
-                                int s = tmpLocs.size();
-                                for (int index = 0; index < s; index++) {
-                                    storage.setHasHighways(tmpLocs.get(index), true);
-                                }
-                            }
-                        }
-                        break;
-                }
-            }
-        } catch (XMLStreamException ex) {
-            throw new RuntimeException("Problem while parsing file", ex);
-        } finally {
-            try {
-                if (sReader != null)
-                    sReader.close();
-            } catch (XMLStreamException ex) {
-                throw new RuntimeException("Couldn't close file", ex);
-            }
+            writeOsm2Binary(new FileInputStream(osmFile));
+        } catch (FileNotFoundException ex) {
+            throw new RuntimeException("cannot find " + osmFile, ex);
         }
     }
 
@@ -216,33 +179,27 @@ public class OSMReaderRouting {
     public void writeOsm2Binary(InputStream is) {
         if (is == null)
             throw new IllegalStateException("Stream cannot be empty");
-        logger.info("now init storage with " + storage.getNodes() + " nodes");
-        storage.createNew();
-        logger.info("now starting 2nd parsing");
+
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         try {
+            logger.info("now init storage with " + maxLocs + " nodes");
+            storage.createNew();
             sReader = factory.createXMLStreamReader(is, "UTF-8");
             int counter = 0;
             for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
                     event = sReader.next()) {
-
+                if (++counter % 1000000 == 0) {
+                    logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
+                            + " (" + skippedEdges + "), " + Helper.getMemInfo());
+                }
                 switch (event) {
                     case XMLStreamConstants.START_ELEMENT:
                         if ("node".equals(sReader.getLocalName())) {
                             processNode(sReader);
-                            if (++counter % 5000000 == 0) {
-                                logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
-                                        + " (" + skippedEdges + "), " + Helper.getMemInfo());
-                            }
                         } else if ("way".equals(sReader.getLocalName())) {
                             processHighway(sReader);
-                            if (++counter % 100000 == 0) {
-                                logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
-                                        + " (" + skippedEdges + "), " + Helper.getMemInfo());
-                            }
                         }
-
                         break;
                 }
             }
@@ -259,12 +216,10 @@ public class OSMReaderRouting {
         }
     }
 
-    public void processNode(XMLStreamReader sReader) throws XMLStreamException {
+    void processNode(XMLStreamReader sReader) throws XMLStreamException {
         int osmId;
-        boolean hasHighways;
         try {
             osmId = Integer.parseInt(sReader.getAttributeValue(null, "id"));
-            hasHighways = storage.hasHighways(osmId);
         } catch (Exception ex) {
             logger.error("cannot get id from xml node:" + sReader.getAttributeValue(null, "id"), ex);
             return;
@@ -274,16 +229,9 @@ public class OSMReaderRouting {
             double lat = Double.parseDouble(sReader.getAttributeValue(null, "lat"));
             double lon = Double.parseDouble(sReader.getAttributeValue(null, "lon"));
             if (isInBounds(lat, lon)) {
-                if (hasHighways) {
-                    // quadTree.put(lat, lon, osmId);
-                    storage.addNode(osmId, lat, lon);
-                    locations++;
-                }
+                storage.addNode(osmId, (float) lat, (float) lon);
+                locations++;
             } else {
-                // remove the osmId, to force the method storage.addEdge returns false in processHighway !!
-                if (hasHighways)
-                    storage.setHasHighways(osmId, false);
-
                 skippedLocations++;
             }
         } catch (Exception ex) {
@@ -326,7 +274,7 @@ public class OSMReaderRouting {
         return isHighway;
     }
 
-    public void processHighway(XMLStreamReader sReader) throws XMLStreamException {
+    void processHighway(XMLStreamReader sReader) throws XMLStreamException {
         boolean isHighway = isHighway(sReader);
         if (isHighway && tmpLocs.size() > 1) {
             int prevOsmId = tmpLocs.get(0);
@@ -384,11 +332,6 @@ public class OSMReaderRouting {
             logger.info(e.getKey() + "\t -> " + e.getValue());
         }
         logger.info("---");
-    }
-
-    public void createNewFromOSM(File osmFile) throws FileNotFoundException {
-        acceptHighwaysOnly(new FileInputStream(osmFile));
-        writeOsm2Binary(new FileInputStream(osmFile));
     }
 
     // used from http://wiki.openstreetmap.org/wiki/OpenRouteService#Used_OSM_Tags_for_Routing

@@ -48,7 +48,6 @@ public class OSMReaderRoutingTest {
 
     @Test public void testMain() {
         reader = new OSMReaderRouting(dir, 1000);
-        reader.acceptHighwaysOnly(getClass().getResourceAsStream("test1.xml"));
         reader.writeOsm2Binary(getClass().getResourceAsStream("test1.xml"));
         Graph graph = reader.readGraph();
         assertEquals(4, graph.getLocations());
@@ -78,7 +77,7 @@ public class OSMReaderRoutingTest {
                 return lat > 49 && lon > 8;
             }            
         };
-        reader.acceptHighwaysOnly(getClass().getResourceAsStream("test1.xml"));
+        
         reader.writeOsm2Binary(getClass().getResourceAsStream("test1.xml"));
         Graph graph = reader.readGraph();
         assertEquals(3, graph.getLocations());
