@@ -18,8 +18,8 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MMapGraph;
+import de.jetsli.graph.util.StopWatch;
 import gnu.trove.map.hash.TIntIntHashMap;
-import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MMapGraphStorage implements Storage {
 
+    private static final int FILLED = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private MMapGraph g;
     private TIntIntHashMap osmIdToIndexMap;
@@ -58,16 +59,17 @@ public class MMapGraphStorage implements Storage {
         return true;
     }
     int counter = 0;
+    StopWatch sw = new StopWatch();
 
     @Override
     public boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback) {
         int fromIndex = osmIdToIndexMap.get(nodeIdFrom);
-        if (fromIndex == -10) {
+        if (fromIndex == FILLED) {
             logger.warn("fromIndex is unresolved:" + nodeIdFrom + " to was:" + nodeIdTo);
             return false;
         }
         int toIndex = osmIdToIndexMap.get(nodeIdTo);
-        if (toIndex == -10) {
+        if (toIndex == FILLED) {
             logger.warn("toIndex is unresolved:" + nodeIdTo + " from was:" + nodeIdFrom);
             return false;
         }
@@ -76,19 +78,26 @@ public class MMapGraphStorage implements Storage {
             return false;
 
         try {
+            sw.start();
             double laf = g.getLatitude(fromIndex);
             double lof = g.getLongitude(fromIndex);
             double lat = g.getLatitude(toIndex);
             double lot = g.getLongitude(toIndex);
+            sw.stop();
             double dist = callback.calcDistKm(laf, lof, lat, lot);
-            if (dist <= 0) {
-                logger.info(counter + " - distances negative or zero. " + fromIndex + " (" + laf + ", " + lof + ")->"
+            if (dist == 0)
+                return false;
+            else if (dist < 0) {
+                logger.info(counter + " - distances negative. " + fromIndex + " (" + laf + ", " + lof + ")->"
                         + toIndex + "(" + lat + ", " + lot + ") :" + dist);
                 return false;
             }
 
             g.edge(fromIndex, toIndex, dist, reverse);
             counter++;
+            if (counter % 100000 == 0) {
+                logger.info(counter + ". time to get lat,lon:" + sw.getSeconds() + " sec");
+            }
             return true;
         } catch (Exception ex) {
             throw new RuntimeException("Problem to add edge! with node " + fromIndex + "->" + toIndex + " osm:" + nodeIdFrom + "->" + nodeIdTo, ex);
@@ -121,13 +130,13 @@ public class MMapGraphStorage implements Storage {
     @Override
     public void setHasHighways(int osmId, boolean isHighway) {
         if (isHighway)
-            osmIdToIndexMap.put(osmId, -10);
+            osmIdToIndexMap.put(osmId, FILLED);
         else
             osmIdToIndexMap.remove(osmId);
     }
 
     @Override
     public boolean hasHighways(int osmId) {
-        return osmIdToIndexMap.get(osmId) == -10;
+        return osmIdToIndexMap.get(osmId) == FILLED;
     }
 }

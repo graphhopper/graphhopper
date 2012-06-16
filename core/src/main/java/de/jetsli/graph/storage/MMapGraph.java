@@ -35,7 +35,18 @@ import java.io.File;
  * A graph represenation which can be stored directly on disc when using the memory mapped
  * constructor.
  *
- * TODO thread safety
+ * TODO rewrite with:
+ *
+ * 1. better method encapsulation
+ *
+ * 2. allow edge distances of 0
+ *
+ * 3. store size in one variable do not use two: maxRecognizedNodeIndex and currentNodeSize
+ *
+ * 4. instead edge iterator => use collection. we'll have only a small number of edges => iterator
+ * makes no sense and won't grab the information in one bulk operation
+ *
+ * (read+write thread safety)
  *
  * @author Peter Karich, info@jetsli.de
  */
@@ -91,7 +102,9 @@ public class MMapGraph implements Graph, java.io.Closeable {
      * Creates a memory-mapped graph
      */
     public MMapGraph(String name, int maxNodes) {
-        this.maxNodes = maxNodes;
+        // increase size a bit to avoid capacity increase only for the last nodes if user specified
+        // the exact maxNode number
+        this.maxNodes = maxNodes + 10;
         this.fileName = name;
     }
 
@@ -154,6 +167,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
         }
     }
 
+// Exception in thread "main" java.lang.RuntimeException: Problem to add edge! with node 777388->777487 osm:1210420413->1210420778
     protected boolean ensureNodesCapacity(int newNumberOfNodes) throws IOException {
         int newBytes = newNumberOfNodes * nodeSize;
         if (nodes != null) {
@@ -169,7 +183,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
             else {
                 // necessary? clean((MappedByteBuffer) nodes);
                 nodeFile.setLength(newBytes);
-                logger.info("remapped nodes to " + newBytes);
+                logger.info("remap node file to " + (float) newBytes / nodeSize);
             }
             nodes = nodeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, newBytes);
         } else
@@ -223,7 +237,7 @@ public class MMapGraph implements Graph, java.io.Closeable {
             try {
                 ensureNodesCapacity(currentNodeSize + 1);
             } catch (IOException ex) {
-                throw new RuntimeException("Couldn't expand nodes to " + currentNodeSize, ex);
+                throw new RuntimeException("Couldn't expand nodes from " + currentNodeSize, ex);
             }
         }
 
@@ -416,6 +430,9 @@ public class MMapGraph implements Graph, java.io.Closeable {
 
             if (byteArrayPos == distEntrySize * distEntryEmbedded) {
                 tmp = BitUtil.toInt(byteArray, byteArrayPos);
+                if (tmp < 0)
+                    throw new IllegalStateException("Pointer to edges was negative!?");
+
                 if (tmp == EMPTY_DIST) {
                     tmp = getNextFreeEdgeBlock();
 
@@ -482,7 +499,9 @@ public class MMapGraph implements Graph, java.io.Closeable {
         original.rewind();
         copy.put(original);
         original.rewind();
-        copy.flip();
+        // do not set the limit to original capacity - why should we?
+        // http://stackoverflow.com/a/4074089/194609
+        //copy.flip();
         return copy;
     }
 

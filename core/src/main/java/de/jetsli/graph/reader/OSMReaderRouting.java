@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class OSMReaderRouting {
 
     public static void main(String[] args) throws Exception {
-        new OSMReaderRouting("/tmp/mmap-graph", 50 * 1000 * 1000) {
+        new OSMReaderRouting(null, 40 * 1000 * 1000) {
 
             @Override
             public boolean isInBounds(double lat, double lon) {
@@ -98,20 +98,18 @@ public class OSMReaderRouting {
         if (args.length < 1)
             throw new IllegalStateException(".osm file missing");
 
-        // I'm having the osm on an external usb drive serving the osm async to our binary file
+        // I'm having the osm on an external usb drive
         File osmFile = new File(args[0]);
         if (!osmFile.exists())
             throw new IllegalStateException("File does not exist:" + args[0]);
 
         if (!loadExisting()) {
-            logger.info("Start creating graph from " + osmFile);
+            logger.info("size for osm2id-map is " + maxLocs + " - start creating graph from " + osmFile
+                    + "\n\n WARNING: be sure you have enough RAM so that the mmap file does not swap. "
+                    + "check this with the script ./check-swap-usage.sh | grep java");
             createNewFromOSM(osmFile);
         }
 
-        // 2 time:0.615 from (231131)50.12328715186286, 10.751714243483567 to (698045)50.25819959971576, 10.62887384412318
-        // 2012-06-14 09:11:37,514 [main] WARN  de.jetsli.graph.reader.OSMReaderRouting$1 - nothing found for 2 !?
-
-//        boolean dijkstraSearchTest = storage instanceof MMyGraphStorage;
         boolean dijkstraSearchTest = true;
         if (dijkstraSearchTest) {
             Graph g = ((MMapGraphStorage) storage).getGraph();
@@ -138,9 +136,9 @@ public class OSMReaderRouting {
                 DijkstraPath p = new DijkstraBidirection(g).calcShortestPath(from, to);
                 sw.stop();
                 if (p == null) {
-                    logger.warn("nothing found for " + i + " !? "
-                            + "from " + g.getLatitude(from) + ", " + g.getLongitude(from)
-                            + " to " + g.getLatitude(to) + ", " + g.getLongitude(to));
+                    logger.warn("no route found for i=" + i + " !?"
+                            + " graph-from " + (float) g.getLatitude(from) + ", " + (float) g.getLongitude(from)
+                            + " graph-to " + (float) g.getLatitude(to) + ", " + (float) g.getLongitude(to));
                     continue;
                 }
                 if (i % 100 == 0)
@@ -152,17 +150,17 @@ public class OSMReaderRouting {
 
     public OSMReaderRouting(String file, int size) {
         maxLocs = size;
-//            storage = new LuceneStorage().init();
-//            storage = new Neo4JStorage(file).init();        
         storage = new MMapGraphStorage(file, maxLocs);
     }
 
-    /**
-     * @return the number of already existing nodes
-     */
     public boolean loadExisting() {
         logger.info("starting with " + Helper.getBeanMemInfo());
         return storage.loadExisting();
+    }
+
+    public void createNewFromOSM(File osmFile) throws FileNotFoundException {
+        acceptHighwaysOnly(new FileInputStream(osmFile));
+        writeOsm2Binary(new FileInputStream(osmFile));
     }
 
     /**
@@ -180,7 +178,7 @@ public class OSMReaderRouting {
             int counter = 0;
             for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
                     event = sReader.next()) {
-                if (++counter % 5000000 == 0) {
+                if (++counter % 10000000 == 0) {
                     logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
                             + " (" + skippedEdges + "), " + Helper.getMemInfo());
                 }
@@ -216,11 +214,13 @@ public class OSMReaderRouting {
     public void writeOsm2Binary(InputStream is) {
         if (is == null)
             throw new IllegalStateException("Stream cannot be empty");
-        logger.info("now init storage with " + storage.getNodes() + " nodes");
+        logger.info("init storage with " + storage.getNodes() + " nodes");
         storage.createNew();
-        logger.info("now starting 2nd parsing");
+        logger.info("starting 2nd parsing");
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
+        int wayStart = -1;
+        StopWatch sw = new StopWatch();
         try {
             sReader = factory.createXMLStreamReader(is, "UTF-8");
             int counter = 0;
@@ -231,13 +231,22 @@ public class OSMReaderRouting {
                     case XMLStreamConstants.START_ELEMENT:
                         if ("node".equals(sReader.getLocalName())) {
                             processNode(sReader);
-                            if (++counter % 5000000 == 0) {
+                            if (++counter % 10000000 == 0) {
                                 logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
                                         + " (" + skippedEdges + "), " + Helper.getMemInfo());
                             }
                         } else if ("way".equals(sReader.getLocalName())) {
+                            if (wayStart < 0) {
+                                logger.info("parsing ways");
+                                wayStart = counter;
+                                sw.start();
+                            }
                             processHighway(sReader);
-                            if (++counter % 100000 == 0) {
+                            if (counter - wayStart == 10000 && sw.stop().getSeconds() > 1) {
+                                logger.warn("Something is wrong! Processing ways takes too long! "
+                                        + sw.getSeconds() + "sec for only " + (counter - wayStart) + " docs");
+                            }
+                            if (counter++ % 10000 == 0) {
                                 logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
                                         + " (" + skippedEdges + "), " + Helper.getMemInfo());
                             }
@@ -270,25 +279,25 @@ public class OSMReaderRouting {
             return;
         }
 
+        double lat = -1;
+        double lon = -1;
         try {
-            double lat = Double.parseDouble(sReader.getAttributeValue(null, "lat"));
-            double lon = Double.parseDouble(sReader.getAttributeValue(null, "lon"));
+            lat = Double.parseDouble(sReader.getAttributeValue(null, "lat"));
+            lon = Double.parseDouble(sReader.getAttributeValue(null, "lon"));
             if (isInBounds(lat, lon)) {
                 if (hasHighways) {
-                    // quadTree.put(lat, lon, osmId);
                     storage.addNode(osmId, lat, lon);
                     locations++;
                 }
             } else {
-                // remove the osmId, to force the method storage.addEdge returns false in processHighway !!
+                // remove the osmId if not in bounds to avoid trouble when processing the highway
                 if (hasHighways)
                     storage.setHasHighways(osmId, false);
 
                 skippedLocations++;
             }
         } catch (Exception ex) {
-            logger.error("cannot handle lon/lat of node " + osmId + ": "
-                    + sReader.getAttributeValue(null, "lon") + " " + sReader.getAttributeValue(null, "lat"), ex);
+            throw new RuntimeException("cannot handle lon/lat of node " + osmId + ": " + lat + "," + lon, ex);
         }
     }
 
@@ -343,11 +352,6 @@ public class OSMReaderRouting {
         }
     }
 
-    public OSMReaderRouting setMaxLocations(int maxLocs) {
-        this.maxLocs = maxLocs;
-        return this;
-    }
-
     public Graph readGraph() {
         if (storage instanceof MMapGraphStorage)
             return ((MMapGraphStorage) storage).getGraph();
@@ -384,11 +388,6 @@ public class OSMReaderRouting {
             logger.info(e.getKey() + "\t -> " + e.getValue());
         }
         logger.info("---");
-    }
-
-    public void createNewFromOSM(File osmFile) throws FileNotFoundException {
-        acceptHighwaysOnly(new FileInputStream(osmFile));
-        writeOsm2Binary(new FileInputStream(osmFile));
     }
 
     // used from http://wiki.openstreetmap.org/wiki/OpenRouteService#Used_OSM_Tags_for_Routing

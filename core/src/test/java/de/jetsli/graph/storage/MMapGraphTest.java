@@ -30,7 +30,7 @@ import static org.junit.Assert.*;
 public class MMapGraphTest extends AbstractGraphTester {
 
     private String dir = "/tmp/MMapGraphTest";
-    private MMapGraph g;
+    protected MMapGraph g;
 
     @Override
     Graph createGraph(int size) {
@@ -48,26 +48,6 @@ public class MMapGraphTest extends AbstractGraphTester {
     }
 
     @Test
-    public void testCheckLimits() {
-        Graph g = createGraph(2);
-        g.edge(0, 1, 12, true);
-        try {
-            g.edge(1, 2, 12, true);
-            assertFalse(true);
-        } catch (Exception ex) {
-        }
-
-        g = createGraph(2);
-        g.addLocation(0, 1);
-        g.addLocation(1, 1);
-        assertEquals(2, g.getLocations());
-        
-        // automatically expand nodes
-        g.addLocation(2, 1);
-        assertEquals(3, g.getLocations());
-    }
-
-    @Test
     public void testStats() {
         super.testDozendEdges();
         g.stats();
@@ -79,10 +59,10 @@ public class MMapGraphTest extends AbstractGraphTester {
         for (int i = 0; i < 10; i++) {
             graph.addLocation(1, i);
         }
-        
+
         graph.ensureCapacity(20);
-        assertEquals(20, graph.getNodesCapacity());
-        
+        assertEquals(26, graph.getNodesCapacity());
+
         for (int i = 10; i < 20; i++) {
             graph.addLocation(1, i);
         }
@@ -90,9 +70,11 @@ public class MMapGraphTest extends AbstractGraphTester {
         for (int i = 0; i < 20; i++) {
             assertEquals(i, graph.getLongitude(i), 1e-4);
         }
-        
-        graph.addLocation(2, 2);
-        assertEquals(26, graph.getNodesCapacity());
+
+        for (int i = 0; i < 6; i++) {
+            graph.addLocation(2, 2);
+        }
+        assertEquals(33, graph.getNodesCapacity());
     }
 
     @Test

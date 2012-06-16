@@ -44,7 +44,10 @@ public class MiniGraphUI {
             throw new IllegalArgumentException("Osm file missing");
 
         String osmFile = args[0];
-        Graph g = OSMReaderRouting.defaultRead(osmFile, "/tmp/mmap-graph");
+        Graph g = OSMReaderRouting.defaultRead(osmFile, null);            
+        // using mmap is unreliable slow for large osm files
+        //Graph g = OSMReaderRouting.defaultRead(osmFile, "/tmp/mmap-graph");
+                
         new MiniGraphUI(g).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
