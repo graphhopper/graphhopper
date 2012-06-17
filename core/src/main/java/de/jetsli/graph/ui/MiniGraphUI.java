@@ -147,7 +147,7 @@ public class MiniGraphUI {
                 }
 
                 if (path != null) {
-                    logger.info("found path:" + path);
+                    logger.info("found path with " + path.locations() + " nodes: " + path);
                     g.setColor(Color.MAGENTA);
                     int tmpLocs = path.locations();
                     double prevLat = -1;
@@ -282,7 +282,7 @@ public class MiniGraphUI {
                                 logger.info("found ids " + from + " -> " + to + " in " + sw.stop().getSeconds() + "s");
                                 sw = new StopWatch().start();
                                 path = new DijkstraBidirection(graph).calcShortestPath(from, to);
-                                logger.info("found path in " + sw.stop().getSeconds() + "s " + path);
+                                logger.info("found path in " + sw.stop().getSeconds() + "s");
                                 mainPanel.repaint();
                             }
 
