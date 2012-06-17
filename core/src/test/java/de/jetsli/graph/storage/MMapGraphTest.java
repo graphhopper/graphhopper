@@ -21,7 +21,11 @@ import java.io.IOException;
 import org.junit.After;
 import org.junit.Test;
 import static de.jetsli.graph.util.MyIteratorable.*;
+import java.io.FileNotFoundException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import static org.junit.Assert.*;
 
 /**
@@ -88,19 +92,29 @@ public class MMapGraphTest extends AbstractGraphTester {
         Helper.deleteDir(new File(dir));
         new File(dir).mkdirs();
         MMapGraph mmgraph = new MMapGraph(file, 10).createNew(true);
-        assertFalse(mmgraph.getEdges() instanceof MappedByteBuffer);
+        assertFalse(MMapGraph.isFileMapped(mmgraph.getEdges()));
         mmgraph.addLocation(10, 10);
         mmgraph.addLocation(11, 20);
         mmgraph.addLocation(12, 12);
-                
+
         mmgraph.edge(0, 2, 200, true);
         mmgraph.edge(1, 2, 120, false);
         mmgraph.edge(0, 1, 100, true);
 
-        checkGraph(mmgraph);        
+        checkGraph(mmgraph);
         mmgraph.close();
         assertTrue(mmgraph.loadExisting());
         checkGraph(mmgraph);
+    }
+
+    @Test
+    public void testMapped() throws Exception {
+        assertTrue(ByteBuffer.allocateDirect(12) instanceof MappedByteBuffer);
+        assertFalse(MMapGraph.isFileMapped(ByteBuffer.allocateDirect(12)));
+        FileChannel fc = new RandomAccessFile(File.createTempFile("mmap", "test"), "rw").getChannel();
+        ByteBuffer bb = fc.map(FileChannel.MapMode.READ_WRITE, 0, 10);
+        assertTrue(MMapGraph.isFileMapped(bb));
+        fc.close();
     }
 
     @Test
@@ -108,14 +122,14 @@ public class MMapGraphTest extends AbstractGraphTester {
         String file = dir + "/test-persist-graph";
         deleteTestGraphs();
         MMapGraph mmgraph = new MMapGraph(file, 3).createNew();
-        assertTrue(mmgraph.getEdges() instanceof MappedByteBuffer);
+        assertTrue(MMapGraph.isFileMapped(mmgraph.getEdges()));
         mmgraph.addLocation(10, 10);
         mmgraph.addLocation(11, 20);
         mmgraph.addLocation(12, 12);
-        
+
         mmgraph.edge(0, 1, 100, true);
         mmgraph.edge(0, 2, 200, true);
-        mmgraph.edge(1, 2, 120, false);        
+        mmgraph.edge(1, 2, 120, false);
 
         checkGraph(mmgraph);
         mmgraph.close();

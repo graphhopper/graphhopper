@@ -1,12 +1,12 @@
 /*
  *  Copyright 2012 Peter Karich info@jetsli.de
- * 
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -165,7 +165,6 @@ public class MMapGraph implements Graph {
         }
     }
 
-// Exception in thread "main" java.lang.RuntimeException: Problem to add edge! with node 777388->777487 osm:1210420413->1210420778
     protected boolean ensureNodesCapacity(int newNumberOfNodes) throws IOException {
         int newBytes = newNumberOfNodes * nodeSize;
         if (nodes != null) {
@@ -185,7 +184,7 @@ public class MMapGraph implements Graph {
             }
             nodes = nodeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, newBytes);
         } else
-            nodes = copy(nodes, ByteBuffer.allocate(newBytes));
+            nodes = copy(nodes, ByteBuffer.allocateDirect(newBytes));
 
         nodes.order(ByteOrder.BIG_ENDIAN);
         return true;
@@ -223,7 +222,7 @@ public class MMapGraph implements Graph {
             }
             edges = edgeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, newBytes);
         } else
-            edges = copy(edges, ByteBuffer.allocate(newBytes));
+            edges = copy(edges, ByteBuffer.allocateDirect(newBytes));
 
         edges.order(ByteOrder.BIG_ENDIAN);
         return true;
@@ -505,7 +504,7 @@ public class MMapGraph implements Graph {
     }
 
     public static ByteBuffer clone(ByteBuffer original) {
-        return copy(original, ByteBuffer.allocate(original.capacity()));
+        return copy(original, ByteBuffer.allocateDirect(original.capacity()));
     }
 
     public static ByteBuffer copy(ByteBuffer original, ByteBuffer copy) {
@@ -514,10 +513,6 @@ public class MMapGraph implements Graph {
 
         original.rewind();
         copy.put(original);
-        original.rewind();
-        // do not set the limit to original capacity - why should we?
-        // http://stackoverflow.com/a/4074089/194609
-        //copy.flip();
         return copy;
     }
 
@@ -530,8 +525,10 @@ public class MMapGraph implements Graph {
         }
 
         try {
+            // TODO if ByteBuffer is not direct we should use a temporary buffer
+            // otherwise we'll get https://gist.github.com/2944942
             // make sure we copy from 0 to capacity (== limit)!
-            buf.clear();
+            buf.rewind();
             while (buf.hasRemaining()) {
                 channel.write(buf);
             }
@@ -542,19 +539,26 @@ public class MMapGraph implements Graph {
         }
     }
 
+    static boolean isFileMapped(ByteBuffer bb) {
+        if (bb instanceof MappedByteBuffer) {
+            try {
+                ((MappedByteBuffer) bb).isLoaded();
+                return true;
+            } catch (UnsupportedOperationException ex) {
+            }
+        }
+        return false;
+    }
+
     public void flush() {
         if (fileName != null) {
             if (saveOnFlushOnly) {
-                if (nodes instanceof MappedByteBuffer || edges instanceof MappedByteBuffer)
-                    throw new IllegalStateException("nodes and edges should be in-memory for saveOnFlush");
-
                 writeToDisc(getNodesFileName(), nodes);
                 writeToDisc(getEdgesFileName(), edges);
             } else {
-                if (nodes instanceof MappedByteBuffer)
+                if (nodes != null)
                     ((MappedByteBuffer) nodes).force();
-
-                if (edges instanceof MappedByteBuffer)
+                if (edges != null)
                     ((MappedByteBuffer) edges).force();
             }
 
@@ -615,16 +619,13 @@ public class MMapGraph implements Graph {
     public void close() {
         if (fileName != null) {
             flush();
-            if (nodes instanceof MappedByteBuffer) {
-                Helper.cleanMappedByteBuffer((MappedByteBuffer) nodes);
-                if (nodeFile != null)
-                    Helper.close(nodeFile);
-            }
-            if (edges instanceof MappedByteBuffer) {
-                Helper.cleanMappedByteBuffer((MappedByteBuffer) edges);
-                if (edgeFile != null)
-                    Helper.close(edgeFile);
-            }
+            Helper.cleanMappedByteBuffer((MappedByteBuffer) nodes);
+            if (nodeFile != null)
+                Helper.close(nodeFile);
+
+            Helper.cleanMappedByteBuffer((MappedByteBuffer) edges);
+            if (edgeFile != null)
+                Helper.close(edgeFile);
         }
     }
 
