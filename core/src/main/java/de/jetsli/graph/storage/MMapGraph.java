@@ -87,7 +87,7 @@ public class MMapGraph implements Graph {
     private RandomAccessFile edgeFile = null;
     private ByteBuffer nodes;
     private ByteBuffer edges;
-    private String fileName;
+    private File dirName;
     private boolean saveOnFlushOnly = false;
     private int edgeFlagsPos = edgeSize - 1;
     private int bytesEdgeSize = edgeEmbedded * edgeSize + 4;
@@ -106,7 +106,8 @@ public class MMapGraph implements Graph {
         // increase size a bit to avoid capacity increase only for the last nodes if user specified
         // the exact maxNode number
         this.maxNodes = maxNodes + 10;
-        this.fileName = name;
+        if (name != null)
+            this.dirName = new File(name);
     }
 
     public boolean loadExisting() {
@@ -131,10 +132,13 @@ public class MMapGraph implements Graph {
     }
 
     public MMapGraph createNew(boolean saveOnFlushOnly) {
-        close();
+        if(nodes != null)
+            throw new IllegalStateException("You cannot use one instance multiple times");
 
-        if (fileName != null)
-            Helper.deleteFilesStartingWith(fileName);
+        if (dirName != null) {
+            Helper.deleteDir(dirName);
+            dirName.mkdirs();
+        }
 
         this.saveOnFlushOnly = saveOnFlushOnly;
         nodeSize = nodeCoreSize + bytesEdgeSize;
@@ -174,9 +178,9 @@ public class MMapGraph implements Graph {
             newBytes = newNumberOfNodes * nodeSize;
         }
         maxNodes = newNumberOfNodes;
-        if (fileName != null && !saveOnFlushOnly) {
+        if (dirName != null && !saveOnFlushOnly) {
             if (nodeFile == null)
-                nodeFile = new RandomAccessFile(getNodesFileName(), "rw");
+                nodeFile = new RandomAccessFile(getNodesFile(), "rw");
             else {
                 // necessary? clean((MappedByteBuffer) nodes);
                 nodeFile.setLength(newBytes);
@@ -188,12 +192,6 @@ public class MMapGraph implements Graph {
 
         nodes.order(ByteOrder.BIG_ENDIAN);
         return true;
-    }
-
-    private String getNodesFileName() {
-        if (fileName == null)
-            throw new IllegalStateException("fileName was null although required to store data");
-        return fileName + "-nodes";
     }
 
     /**
@@ -212,13 +210,13 @@ public class MMapGraph implements Graph {
                 return false;
             newBytes = (int) Math.max(newBytes, 1.3 * edges.capacity());
         }
-        if (fileName != null && !saveOnFlushOnly) {
+        if (dirName != null && !saveOnFlushOnly) {
             if (edgeFile == null)
-                edgeFile = new RandomAccessFile(getEdgesFileName(), "rw");
+                edgeFile = new RandomAccessFile(getEdgesFile(), "rw");
             else {
                 // necessary? clean((MappedByteBuffer) edges);
                 edgeFile.setLength(newBytes);
-                logger.info("remapped edges to " + newBytes);
+                // logger.info("remapped edges to " + newBytes);
             }
             edges = edgeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, newBytes);
         } else
@@ -232,10 +230,22 @@ public class MMapGraph implements Graph {
         return edges;
     }
 
-    private String getEdgesFileName() {
-        if (fileName == null)
-            throw new IllegalStateException("fileName was null although required to store data");
-        return fileName + "-egdes";
+    private File getSettingsFile() {
+        if (dirName == null)
+            throw new IllegalStateException("dirName was null although required to store data");
+        return new File(dirName, "settings");
+    }
+
+    private File getNodesFile() {
+        if (dirName == null)
+            throw new IllegalStateException("dirName was null although required to store data");
+        return new File(dirName, "nodes");
+    }
+
+    private File getEdgesFile() {
+        if (dirName == null)
+            throw new IllegalStateException("dirName was null although required to store data");
+        return new File(dirName, "egdes");
     }
 
     @Override
@@ -483,7 +493,7 @@ public class MMapGraph implements Graph {
 
     @Override
     public Graph clone() {
-        if (fileName != null) {
+        if (dirName != null) {
             // TODO with saveOnFlush we can easily clone the graph in-memory and flush to disc
             logger.error("Cloned graph will be in-memory only!");
         }
@@ -516,12 +526,12 @@ public class MMapGraph implements Graph {
         return copy;
     }
 
-    void writeToDisc(String fileName, ByteBuffer buf) {
+    void writeToDisc(File dirName, ByteBuffer buf) {
         FileChannel channel;
         try {
-            channel = new RandomAccessFile(fileName, "rw").getChannel();
+            channel = new RandomAccessFile(dirName, "rw").getChannel();
         } catch (FileNotFoundException ex) {
-            throw new RuntimeException("Cannot find " + fileName, ex);
+            throw new RuntimeException("Cannot find " + dirName, ex);
         }
 
         try {
@@ -551,10 +561,10 @@ public class MMapGraph implements Graph {
     }
 
     public void flush() {
-        if (fileName != null) {
+        if (dirName != null) {
             if (saveOnFlushOnly) {
-                writeToDisc(getNodesFileName(), nodes);
-                writeToDisc(getEdgesFileName(), edges);
+                writeToDisc(getNodesFile(), nodes);
+                writeToDisc(getEdgesFile(), edges);
             } else {
                 if (nodes != null)
                     ((MappedByteBuffer) nodes).force();
@@ -564,8 +574,7 @@ public class MMapGraph implements Graph {
 
             // store settings
             try {
-                String sFile = fileName + "-settings";
-                RandomAccessFile settingsFile = new RandomAccessFile(sFile, "rw");
+                RandomAccessFile settingsFile = new RandomAccessFile(getSettingsFile(), "rw");
                 settingsFile.writeInt(maxNodes);
                 settingsFile.writeInt(currentNodeSize);
                 settingsFile.writeInt(maxRecognizedNodeIndex);
@@ -586,12 +595,12 @@ public class MMapGraph implements Graph {
     }
 
     public boolean loadSettings() {
-        if (fileName == null)
+        if (dirName == null)
             return false;
 
         try {
-            String sFile = fileName + "-settings";
-            if (!new File(sFile).exists())
+            File sFile = getSettingsFile();
+            if (!sFile.exists())
                 return false;
 
             RandomAccessFile settingsFile = new RandomAccessFile(sFile, "r");
@@ -617,7 +626,7 @@ public class MMapGraph implements Graph {
     }
 
     public void close() {
-        if (fileName != null) {
+        if (dirName != null) {
             flush();
             Helper.cleanMappedByteBuffer((MappedByteBuffer) nodes);
             if (nodeFile != null)

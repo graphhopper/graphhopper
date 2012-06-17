@@ -21,7 +21,6 @@ import java.io.IOException;
 import org.junit.After;
 import org.junit.Test;
 import static de.jetsli.graph.util.MyIteratorable.*;
-import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -36,16 +35,10 @@ public class MMapGraphTest extends AbstractGraphTester {
 
     private String dir = "/tmp/MMapGraphTest";
     protected MMapGraph g;
-
-    public void deleteTestGraphs() {
-        Helper.deleteDir(new File(dir));
-        new File(dir).mkdirs();
-    }
-
+    
     @Override
     Graph createGraph(int size) {
-        deleteTestGraphs();
-        return g = new MMapGraph(dir + "/testgraph", size).createNew();
+        return g = new MMapGraph(dir, size).createNew();
     }
 
     @After
@@ -87,11 +80,19 @@ public class MMapGraphTest extends AbstractGraphTester {
     }
 
     @Test
+    public void testMapped() throws Exception {
+        assertTrue(ByteBuffer.allocateDirect(12) instanceof MappedByteBuffer);
+        assertFalse(MMapGraph.isFileMapped(ByteBuffer.allocateDirect(12)));
+        FileChannel fc = new RandomAccessFile(File.createTempFile("mmap", "test"), "rw").getChannel();
+        ByteBuffer bb = fc.map(FileChannel.MapMode.READ_WRITE, 0, 10);
+        assertTrue(MMapGraph.isFileMapped(bb));
+        fc.close();
+    }
+
+    @Test
     public void testSaveOnFlushOnly() throws IOException {
-        String file = dir + "/test-persist-graph";
-        Helper.deleteDir(new File(dir));
-        new File(dir).mkdirs();
-        MMapGraph mmgraph = new MMapGraph(file, 10).createNew(true);
+        String tmpDir = dir + "/test-persist-graph";
+        MMapGraph mmgraph = new MMapGraph(tmpDir, 3).createNew(true);
         assertFalse(MMapGraph.isFileMapped(mmgraph.getEdges()));
         mmgraph.addLocation(10, 10);
         mmgraph.addLocation(11, 20);
@@ -103,25 +104,16 @@ public class MMapGraphTest extends AbstractGraphTester {
 
         checkGraph(mmgraph);
         mmgraph.close();
+
+        mmgraph = new MMapGraph(tmpDir, 3);
         assertTrue(mmgraph.loadExisting());
         checkGraph(mmgraph);
     }
 
     @Test
-    public void testMapped() throws Exception {
-        assertTrue(ByteBuffer.allocateDirect(12) instanceof MappedByteBuffer);
-        assertFalse(MMapGraph.isFileMapped(ByteBuffer.allocateDirect(12)));
-        FileChannel fc = new RandomAccessFile(File.createTempFile("mmap", "test"), "rw").getChannel();
-        ByteBuffer bb = fc.map(FileChannel.MapMode.READ_WRITE, 0, 10);
-        assertTrue(MMapGraph.isFileMapped(bb));
-        fc.close();
-    }
-
-    @Test
     public void testSave() throws IOException {
-        String file = dir + "/test-persist-graph";
-        deleteTestGraphs();
-        MMapGraph mmgraph = new MMapGraph(file, 3).createNew();
+        String tmpDir = dir + "/test-persist-graph";
+        MMapGraph mmgraph = new MMapGraph(tmpDir, 3).createNew();
         assertTrue(MMapGraph.isFileMapped(mmgraph.getEdges()));
         mmgraph.addLocation(10, 10);
         mmgraph.addLocation(11, 20);
@@ -134,7 +126,7 @@ public class MMapGraphTest extends AbstractGraphTester {
         checkGraph(mmgraph);
         mmgraph.close();
 
-        mmgraph = new MMapGraph(file, 1000);
+        mmgraph = new MMapGraph(tmpDir, 1000);
         assertTrue(mmgraph.loadExisting());
         assertEquals(13, mmgraph.getNodesCapacity());
         checkGraph(mmgraph);
