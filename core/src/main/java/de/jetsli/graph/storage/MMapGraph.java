@@ -132,7 +132,7 @@ public class MMapGraph implements Graph {
     }
 
     public MMapGraph createNew(boolean saveOnFlushOnly) {
-        if(nodes != null)
+        if (nodes != null)
             throw new IllegalStateException("You cannot use one instance multiple times");
 
         if (dirName != null) {
@@ -188,19 +188,25 @@ public class MMapGraph implements Graph {
             }
             nodes = nodeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, newBytes);
         } else
-            nodes = copy(nodes, ByteBuffer.allocateDirect(newBytes));
+            nodes = copy(nodes, allocate(newBytes));
 
         nodes.order(ByteOrder.BIG_ENDIAN);
         return true;
     }
 
+    static ByteBuffer allocate(int capacity) {
+        // direct memory is a bit unpredictably for OSM import on a normal wordstation (<3GB)
+        // return ByteBuffer.allocateDirect(capacity);
+        return ByteBuffer.allocate(capacity);
+    }
+
     /**
      * @return the minimum number of edges to be used in edge buffer
      */
-    protected int calculateEdges(int maxNodes) {
+    int calculateEdges(int maxNodes) {
         // the more edges we inline the less memory we need to reserve => " / edgeEmbedded"
         // if we provide too few memory => BufferUnderflowException will be thrown without calling ensureEdgesCapacity
-        return Math.max(nextEdgePosition, maxNodes / edgeEmbedded / 4);
+        return Math.max(nextEdgePosition / bytesEdgeSize + 2, maxNodes / edgeEmbedded / 4);
     }
 
     protected boolean ensureEdgesCapacity(int newNumberOfEdges) throws IOException {
@@ -220,7 +226,7 @@ public class MMapGraph implements Graph {
             }
             edges = edgeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, newBytes);
         } else
-            edges = copy(edges, ByteBuffer.allocateDirect(newBytes));
+            edges = copy(edges, allocate(newBytes));
 
         edges.order(ByteOrder.BIG_ENDIAN);
         return true;
@@ -485,7 +491,7 @@ public class MMapGraph implements Graph {
             edges.put(byteArray);
     }
 
-    private int getNextFreeEdgeBlock() {
+    protected int getNextFreeEdgeBlock() {
         int tmp = nextEdgePosition;
         nextEdgePosition += bytesEdgeSize;
         return tmp;
@@ -514,7 +520,7 @@ public class MMapGraph implements Graph {
     }
 
     public static ByteBuffer clone(ByteBuffer original) {
-        return copy(original, ByteBuffer.allocateDirect(original.capacity()));
+        return copy(original, allocate(original.capacity()));
     }
 
     public static ByteBuffer copy(ByteBuffer original, ByteBuffer copy) {
@@ -526,6 +532,10 @@ public class MMapGraph implements Graph {
         return copy;
     }
 
+    /**
+     * In case of saveOnFlushOnly we write the bytebuffer to disc. If it is direct its simple, if
+     * not we need to copy chunks
+     */
     void writeToDisc(File dirName, ByteBuffer buf) {
         FileChannel channel;
         try {
@@ -535,12 +545,29 @@ public class MMapGraph implements Graph {
         }
 
         try {
-            // TODO if ByteBuffer is not direct we should use a temporary buffer
-            // otherwise we'll get https://gist.github.com/2944942
             // make sure we copy from 0 to capacity (== limit)!
             buf.rewind();
-            while (buf.hasRemaining()) {
-                channel.write(buf);
+            if (buf.isDirect()) {
+                while (buf.hasRemaining()) {
+                    channel.write(buf);
+                }
+            } else {
+                // if ByteBuffer is not direct we should use a temporary buffer
+                // otherwise we'll get memory a big problem https://gist.github.com/2944942
+                int c = buf.capacity();
+                int BULK = 256 * 1024;
+                int i = BULK;
+                while (true) {
+                    if (i >= c) {
+                        buf.limit(c);
+                        channel.write(buf);
+                        break;
+                    }
+
+                    buf.limit(i);
+                    channel.write(buf);
+                    i += BULK;
+                }
             }
         } catch (Exception ex) {
             throw new RuntimeException("Couldn't write data", ex);
@@ -628,16 +655,18 @@ public class MMapGraph implements Graph {
     public void close() {
         if (dirName != null) {
             flush();
-            Helper.cleanMappedByteBuffer((MappedByteBuffer) nodes);
+            if (nodes instanceof MappedByteBuffer)
+                Helper.cleanMappedByteBuffer((MappedByteBuffer) nodes);
             if (nodeFile != null)
                 Helper.close(nodeFile);
 
-            Helper.cleanMappedByteBuffer((MappedByteBuffer) edges);
+            if (edges instanceof MappedByteBuffer)
+                Helper.cleanMappedByteBuffer((MappedByteBuffer) edges);
             if (edgeFile != null)
                 Helper.close(edgeFile);
         }
     }
-
+    
     public void stats() {
         float locs = getLocations();
         int edgesNo = 0;

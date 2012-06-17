@@ -35,7 +35,7 @@ public class MMapGraphTest extends AbstractGraphTester {
 
     private String dir = "/tmp/MMapGraphTest";
     protected MMapGraph g;
-    
+
     @Override
     Graph createGraph(int size) {
         return g = new MMapGraph(dir, size).createNew();
@@ -87,6 +87,22 @@ public class MMapGraphTest extends AbstractGraphTester {
         ByteBuffer bb = fc.map(FileChannel.MapMode.READ_WRITE, 0, 10);
         assertTrue(MMapGraph.isFileMapped(bb));
         fc.close();
+    }
+
+    @Test
+    public void testCalcEdgeSize() {
+        MMapGraph mm = new MMapGraph(1);
+        assertTrue(mm.calculateEdges(100) > 10);
+        assertTrue(mm.calculateEdges(100) < 30);
+        mm = new MMapGraph(1) {
+
+            {
+                getNextFreeEdgeBlock();
+                getNextFreeEdgeBlock();
+                getNextFreeEdgeBlock();
+            }
+        };
+        assertEquals(5, mm.calculateEdges(1));
     }
 
     @Test
