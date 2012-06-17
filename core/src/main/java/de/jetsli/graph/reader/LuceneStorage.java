@@ -39,10 +39,10 @@ public class LuceneStorage implements Storage {
     private IndexWriter writer;
 
     public LuceneStorage init(boolean forceCreate) throws Exception {
-        File file = new File("/tmp/osm.lucene.test");
-        if(forceCreate)
+        File file = new File("osm.lucene.test");
+        if (forceCreate)
             Helper.deleteDir(file);
-        
+
         // germany.osm => 3.6 GB on disc for nodes only, 1.5 GB memory usage at the end of the nodes
         Directory dir = FSDirectory.open(file);
         IndexWriterConfig cfg = new IndexWriterConfig(Version.LUCENE_35, new KeywordAnalyzer());
@@ -83,19 +83,19 @@ public class LuceneStorage implements Storage {
     }
 
     @Override
-    public void close() throws Exception {
-        writer.close(true);
+    public void close() {
+        Helper.close(writer);
     }
 
     @Override
     public boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-    
+
     @Override public void stats() {
     }
-        
-    @Override public void flush() {        
+
+    @Override public void flush() {
         try {
             writer.commit();
         } catch (Exception ex) {

@@ -15,18 +15,7 @@
  */
 package de.jetsli.graph.util;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +23,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 /**
  *
@@ -61,13 +52,16 @@ public class Helper {
 
     public static List<String> readFile(Reader simpleReader) throws IOException {
         BufferedReader reader = new BufferedReader(simpleReader);
-        List<String> res = new ArrayList();
-        String line = null;
-        while ((line = reader.readLine()) != null) {
-            res.add(line);
+        try {
+            List<String> res = new ArrayList();
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                res.add(line);
+            }
+            return res;
+        } finally {
+            reader.close();
         }
-        reader.close();
-        return res;
     }
 
     /**
@@ -128,9 +122,12 @@ public class Helper {
 
     public static void deleteFilesStartingWith(String string) {
         File specificFile = new File(string);
-        for (File f : specificFile.getParentFile().listFiles()) {
-            if (f.getName().startsWith(specificFile.getName()))
-                f.delete();
+        File pFile = specificFile.getParentFile();
+        if (pFile != null) {
+            for (File f : pFile.listFiles()) {
+                if (f.getName().startsWith(specificFile.getName()))
+                    f.delete();
+            }
         }
     }
 
@@ -170,5 +167,23 @@ public class Helper {
         sun.misc.Cleaner cleaner = ((sun.nio.ch.DirectBuffer) mapping).cleaner();
         if (cleaner != null)
             cleaner.clean();
+    }
+
+    public static void close(XMLStreamReader r) {
+        try {
+            if (r != null)
+                r.close();
+        } catch (XMLStreamException ex) {
+            throw new RuntimeException("Couldn't close xml reader", ex);
+        }
+    }
+
+    public static void close(Closeable cl) {
+        try {
+            if (cl != null)
+                cl.close();
+        } catch (IOException ex) {
+            throw new RuntimeException("Couldn't close resource", ex);
+        }
     }
 }

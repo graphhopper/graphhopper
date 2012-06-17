@@ -72,7 +72,7 @@ public class Neo4JStorage implements Storage {
 
     public Neo4JStorage() {
         temporary = true;
-        this.storeDir = "/tmp/neo4j." + new Random().nextLong() + ".db";
+        this.storeDir = "neo4j." + new Random().nextLong() + ".db";
     }
 
     public Neo4JStorage(String storeDir) {
@@ -140,7 +140,7 @@ public class Neo4JStorage implements Storage {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         graphDb.shutdown();
         if (temporary)
             Helper.deleteDir(new File(storeDir));

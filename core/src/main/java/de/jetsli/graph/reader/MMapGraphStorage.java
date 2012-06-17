@@ -49,7 +49,8 @@ public class MMapGraphStorage implements Storage {
     @Override
     public void createNew() {
         g = new MMapGraph(file, osmIdToIndexMap.size());
-        g.createNew();
+        // now a workaround to avoid slow down for mmap files (and RAM bottlenecks), but still write to disc!
+        g.createNew(true);
     }
 
     @Override
@@ -59,7 +60,7 @@ public class MMapGraphStorage implements Storage {
         return true;
     }
     int counter = 0;
-    StopWatch sw = new StopWatch();
+//    StopWatch sw = new StopWatch();
 
     @Override
     public boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback) {
@@ -78,12 +79,12 @@ public class MMapGraphStorage implements Storage {
             return false;
 
         try {
-            sw.start();
+//            sw.start();
             double laf = g.getLatitude(fromIndex);
             double lof = g.getLongitude(fromIndex);
             double lat = g.getLatitude(toIndex);
             double lot = g.getLongitude(toIndex);
-            sw.stop();
+//            sw.stop();
             double dist = callback.calcDistKm(laf, lof, lat, lot);
             if (dist == 0)
                 return false;
@@ -94,10 +95,10 @@ public class MMapGraphStorage implements Storage {
             }
 
             g.edge(fromIndex, toIndex, dist, reverse);
-            counter++;
-            if (counter % 100000 == 0) {
-                logger.info(counter + ". time to get lat,lon:" + sw.getSeconds() + " sec");
-            }
+//            counter++;
+//            if (counter % 100000 == 0) {
+//                logger.info(counter + ". time to get lat,lon:" + sw.getSeconds() + " sec");
+//            }
             return true;
         } catch (Exception ex) {
             throw new RuntimeException("Problem to add edge! with node " + fromIndex + "->" + toIndex + " osm:" + nodeIdFrom + "->" + nodeIdTo, ex);
@@ -105,7 +106,7 @@ public class MMapGraphStorage implements Storage {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         g.flush();
     }
 

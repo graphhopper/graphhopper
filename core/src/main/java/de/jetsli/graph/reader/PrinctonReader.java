@@ -16,6 +16,7 @@
 package de.jetsli.graph.reader;
 
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.util.Helper;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -79,11 +80,7 @@ public class PrinctonReader {
         } catch (Exception ex) {
             throw new RuntimeException("Problem in line " + lineNo, ex);
         } finally {
-            try {
-                reader.close();
-            } catch (Exception ex) {
-                throw new RuntimeException("Cannot close reader", ex);
-            }
+            Helper.close(reader);
         }
     }
 }

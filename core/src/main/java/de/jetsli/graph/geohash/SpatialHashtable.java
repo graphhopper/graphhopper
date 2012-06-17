@@ -91,7 +91,7 @@ import javax.swing.SwingUtilities;
 public class SpatialHashtable implements QuadTree<Long> {
 
     public static void main(String[] args) throws Exception {
-        final Graph g = OSMReaderRouting.defaultRead(args[0], "/tmp/mmap-graph");
+        final Graph g = OSMReaderRouting.defaultRead(args[0], "mmap-graph");
         final int locs = g.getLocations();
         System.out.println("graph contains " + locs + " nodes");
 

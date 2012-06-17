@@ -16,13 +16,14 @@
 package de.jetsli.graph.reader;
 
 import de.jetsli.graph.util.CalcDistance;
+import java.io.Closeable;
 
 /**
  * To use different storage systems like our mmgraph, lucene or neo4j or OSM import.
  *
  * @author Peter Karich, info@jetsli.de
  */
-public interface Storage {
+public interface Storage extends Closeable {
 
     boolean loadExisting();
     
@@ -34,7 +35,7 @@ public interface Storage {
 
     int getNodes();
 
-    void close() throws Exception;
+    void close();
 
     void flush();
 

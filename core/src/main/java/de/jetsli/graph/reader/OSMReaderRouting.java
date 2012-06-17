@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class OSMReaderRouting {
 
     public static void main(String[] args) throws Exception {
-        new OSMReaderRouting(null, 40 * 1000 * 1000) {
+        new OSMReaderRouting("mmap-graph", 40 * 1000 * 1000) {
 
             @Override
             public boolean isInBounds(double lat, double lon) {
@@ -199,12 +199,7 @@ public class OSMReaderRouting {
         } catch (XMLStreamException ex) {
             throw new RuntimeException("Problem while parsing file", ex);
         } finally {
-            try {
-                if (sReader != null)
-                    sReader.close();
-            } catch (XMLStreamException ex) {
-                throw new RuntimeException("Couldn't close file", ex);
-            }
+            Helper.close(sReader);
         }
     }
 
@@ -246,7 +241,7 @@ public class OSMReaderRouting {
                                 logger.warn("Something is wrong! Processing ways takes too long! "
                                         + sw.getSeconds() + "sec for only " + (counter - wayStart) + " docs");
                             }
-                            if (counter++ % 10000 == 0) {
+                            if (counter++ % 1000000 == 0) {
                                 logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
                                         + " (" + skippedEdges + "), " + Helper.getMemInfo());
                             }
@@ -259,12 +254,7 @@ public class OSMReaderRouting {
         } catch (XMLStreamException ex) {
             throw new RuntimeException("Couldn't process file", ex);
         } finally {
-            try {
-                if (sReader != null)
-                    sReader.close();
-            } catch (XMLStreamException ex) {
-                throw new RuntimeException("Couldn't close file", ex);
-            }
+            Helper.close(sReader);
         }
     }
 
@@ -360,11 +350,7 @@ public class OSMReaderRouting {
     }
 
     public void close() {
-        try {
-            storage.close();
-        } catch (Exception ex) {
-            throw new RuntimeException("Cannot close storage", ex);
-        }
+        Helper.close(storage);
     }
 
     private void stats() {

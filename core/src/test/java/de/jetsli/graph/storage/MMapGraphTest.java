@@ -21,6 +21,7 @@ import java.io.IOException;
 import org.junit.After;
 import org.junit.Test;
 import static de.jetsli.graph.util.MyIteratorable.*;
+import java.nio.MappedByteBuffer;
 import static org.junit.Assert.*;
 
 /**
@@ -32,10 +33,14 @@ public class MMapGraphTest extends AbstractGraphTester {
     private String dir = "/tmp/MMapGraphTest";
     protected MMapGraph g;
 
-    @Override
-    Graph createGraph(int size) {
+    public void deleteTestGraphs() {
         Helper.deleteDir(new File(dir));
         new File(dir).mkdirs();
+    }
+
+    @Override
+    Graph createGraph(int size) {
+        deleteTestGraphs();
         return g = new MMapGraph(dir + "/testgraph", size).createNew();
     }
 
@@ -78,25 +83,46 @@ public class MMapGraphTest extends AbstractGraphTester {
     }
 
     @Test
-    public void testSave() throws IOException {
+    public void testSaveOnFlushOnly() throws IOException {
         String file = dir + "/test-persist-graph";
         Helper.deleteDir(new File(dir));
         new File(dir).mkdirs();
-        MMapGraph mmgraph = new MMapGraph(file, 1000).createNew();
+        MMapGraph mmgraph = new MMapGraph(file, 10).createNew(true);
+        assertFalse(mmgraph.getEdges() instanceof MappedByteBuffer);
         mmgraph.addLocation(10, 10);
         mmgraph.addLocation(11, 20);
         mmgraph.addLocation(12, 12);
-
-        mmgraph.edge(0, 1, 100, true);
+                
         mmgraph.edge(0, 2, 200, true);
         mmgraph.edge(1, 2, 120, false);
+        mmgraph.edge(0, 1, 100, true);
+
+        checkGraph(mmgraph);        
+        mmgraph.close();
+        assertTrue(mmgraph.loadExisting());
+        checkGraph(mmgraph);
+    }
+
+    @Test
+    public void testSave() throws IOException {
+        String file = dir + "/test-persist-graph";
+        deleteTestGraphs();
+        MMapGraph mmgraph = new MMapGraph(file, 3).createNew();
+        assertTrue(mmgraph.getEdges() instanceof MappedByteBuffer);
+        mmgraph.addLocation(10, 10);
+        mmgraph.addLocation(11, 20);
+        mmgraph.addLocation(12, 12);
+        
+        mmgraph.edge(0, 1, 100, true);
+        mmgraph.edge(0, 2, 200, true);
+        mmgraph.edge(1, 2, 120, false);        
 
         checkGraph(mmgraph);
-        mmgraph.flush();
         mmgraph.close();
 
         mmgraph = new MMapGraph(file, 1000);
         assertTrue(mmgraph.loadExisting());
+        assertEquals(13, mmgraph.getNodesCapacity());
         checkGraph(mmgraph);
     }
 

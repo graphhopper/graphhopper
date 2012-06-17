@@ -17,6 +17,7 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.Helper;
 import java.io.Closeable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
@@ -27,7 +28,7 @@ import java.util.List;
 
 /**
  * Testing a memory mapped buffer with nearly unlimited storage capabilities on 64bit systems.
- * 
+ *
  * @author Peter Karich, info@jetsli.de
  */
 public class FatBuffer implements Closeable {
@@ -41,20 +42,20 @@ public class FatBuffer implements Closeable {
         this(filename, size, 4);
     }
 
-    public FatBuffer(String filename, int size, int itemSize) throws IOException {
+    public FatBuffer(String filename, int size, int itemSize) throws FileNotFoundException {
         this.itemSize = itemSize;
         this.raf = new RandomAccessFile(filename, "rw");
         try {
             for (long offset = 0; offset < size; offset += MAPPING_SIZE) {
-                long size2 = Math.min(size - offset, MAPPING_SIZE);                
+                long size2 = Math.min(size - offset, MAPPING_SIZE);
                 MappedByteBuffer mbb = raf.getChannel().map(FileChannel.MapMode.READ_WRITE, offset, size2);
                 // ByteOrder.nativeOrder()
                 mbb.order(ByteOrder.BIG_ENDIAN);
                 mappings.add(mbb);
             }
-        } catch (IOException e) {
-            raf.close();
-            throw e;
+        } catch (Exception e) {
+            Helper.close(raf);
+            throw new RuntimeException("Cannot create memory mapping for " + filename, e);
         }
     }
 
@@ -68,8 +69,8 @@ public class FatBuffer implements Closeable {
     }
 
     public void put(long index, byte[] bytes) {
-        index *= itemSize;        
-        MappedByteBuffer mbb = mappings.get((int) (index / MAPPING_SIZE));        
+        index *= itemSize;
+        MappedByteBuffer mbb = mappings.get((int) (index / MAPPING_SIZE));
         mbb.position((int) (index % MAPPING_SIZE));
         mbb.put(bytes);
     }
@@ -80,15 +81,15 @@ public class FatBuffer implements Closeable {
         }
     }
 
-    @Override public void close() throws IOException {
+    @Override public void close() {
         for (MappedByteBuffer mbb : mappings) {
             // necessary? mbb.force();
             clean(mbb);
         }
-        raf.close();
+        Helper.close(raf.getChannel());
     }
 
     private void clean(MappedByteBuffer mapping) {
-        Helper.cleanMappedByteBuffer(mapping);        
+        Helper.cleanMappedByteBuffer(mapping);
     }
 }
