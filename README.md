@@ -22,7 +22,7 @@ You can download the OSM [here](http://download.geofabrik.de/osm/)
  1. at the moment all operations require redrawing the graph which takes quite some time!
   so don't click or drag too much ;)
  2. when executing the command again the osm won't be parsed again.
-  Then you need to lower the Xmx and Xms value to 700m
+  Then you need to lower the Xmx and Xms value to 700m in order to increase the off-heap memory
 
 Further examples
 -----------------
