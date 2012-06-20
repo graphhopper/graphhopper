@@ -44,21 +44,26 @@ public class MyOpenBitSet implements MyBitSet {
 
     @Override public String toString() {
         try {
-            StringBuilder sb = new StringBuilder();            
-            for(DocIdSetIterator iter = bitSet.iterator(); iter.nextDoc() !=  DocIdSetIterator.NO_MORE_DOCS; ) {
-                if(sb.length() != 0)
+            StringBuilder sb = new StringBuilder();
+            for (DocIdSetIterator iter = bitSet.iterator(); iter.nextDoc() != DocIdSetIterator.NO_MORE_DOCS;) {
+                if (sb.length() != 0)
                     sb.append(", ");
-                
+
                 sb.append(iter.docID());
             }
             return sb.toString();
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             return "error constructing bitset string representation";
         }
     }
 
     @Override
-    public long cardinality() {
-        return bitSet.cardinality();
+    public int getCardinality() {
+        return (int) bitSet.cardinality();
     }
+
+    @Override
+    public void clear() {
+        bitSet.clear(0, bitSet.length());
+    }        
 }

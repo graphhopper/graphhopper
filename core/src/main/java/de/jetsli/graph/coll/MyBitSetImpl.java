@@ -15,13 +15,32 @@
  */
 package de.jetsli.graph.coll;
 
+import java.util.BitSet;
+
 /**
  * @author Peter Karich
  */
-public class MyOpenBitSetTest extends AbstractMyBitSetTest {
+public class MyBitSetImpl extends BitSet implements MyBitSet {
+
+    public MyBitSetImpl() {
+    }
+
+    public MyBitSetImpl(int nbits) {
+        super(nbits);
+    }
 
     @Override
-    public MyBitSet createBitSet(int no) {
-        return new MyOpenBitSet(no);
+    public boolean contains(int index) {
+        return super.get(index);
     }
+
+    @Override
+    public void add(int index) {
+        super.set(index);
+    }
+
+    @Override
+    public int getCardinality() {
+        return super.cardinality();
+    }        
 }

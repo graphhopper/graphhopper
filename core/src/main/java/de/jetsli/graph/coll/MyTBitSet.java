@@ -46,7 +46,12 @@ public class MyTBitSet implements MyBitSet {
     }
 
     @Override
-    public long cardinality() {
+    public int getCardinality() {
         return tHash.size();
+    }
+
+    @Override
+    public void clear() {
+        tHash.clear();
     }        
 }

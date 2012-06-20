@@ -34,7 +34,7 @@ public class GraphWrapper implements Graph {
 
     public void setIgnoreNodes(MyBitSet bitSet) {
         ignoreNodes = bitSet;
-        ignoreNodesSize = (int) bitSet.cardinality();
+        ignoreNodesSize = (int) bitSet.getCardinality();
     }
 
     @Override

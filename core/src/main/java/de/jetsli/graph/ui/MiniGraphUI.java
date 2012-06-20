@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.ui;
 
+import de.jetsli.graph.coll.MyBitSet;
+import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.reader.OSMReaderRouting;
@@ -44,7 +46,7 @@ public class MiniGraphUI {
             throw new IllegalArgumentException("Osm file missing");
 
         String osmFile = args[0];
-        Graph g = OSMReaderRouting.defaultRead(osmFile, "mmap-graph");
+        Graph g = OSMReaderRouting.defaultRead(osmFile, "mmap-graph-unterfranken");
         new MiniGraphUI(g).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
@@ -67,11 +69,11 @@ public class MiniGraphUI {
     private JPanel infoPanel;
     private JPanel mainPanel;
 
-    public MiniGraphUI(Graph g) {
-        this.graph = g;
-        logger.info("locations:" + g.getLocations());
+    public MiniGraphUI(Graph tmpG) {
+        this.graph = tmpG;
+        logger.info("locations:" + tmpG.getLocations());
         // prepare location quadtree to 'enter' the graph. create a 313*313 grid => <3km
-        this.index = new Location2IDQuadtree(g).prepareIndex(100000);
+        this.index = new Location2IDQuadtree(tmpG).prepareIndex(100000);
 //        this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
 //        this.quadTree = new SpatialHashtable(2, 3).init(graph.getLocations());
 
@@ -94,8 +96,8 @@ public class MiniGraphUI {
         // TODO PERFORMANCE draw graph on an offscreen image for faster translation and use 
         // different layer for routing! redraw only on scaling =>but then memory problems for bigger zooms!?
         // final BufferedImage offscreenImage = new BufferedImage(11000, 11000, BufferedImage.TYPE_INT_ARGB);
-        // final Graphics2D g2 = offscreenImage.createGraphics();
-
+        // final Graphics2D g2 = offscreenImage.createGraphics();        
+        final MyBitSet bitset = new MyTBitSet(graph.getLocations());
         mainPanel = new JPanel() {
 
             @Override protected void paintComponent(Graphics g) {
@@ -112,9 +114,6 @@ public class MiniGraphUI {
                 minY = Integer.MAX_VALUE;
                 maxX = 0;
                 maxY = 0;
-//                g.setColor(Color.RED);
-//                g.drawOval((int) MiniGraphUI.this.getX(49.990532), (int) MiniGraphUI.this.getY(9.020827), 10, 10);
-
                 int size;
                 if (scaleX < 3e-5)
                     size = 2;
@@ -122,14 +121,28 @@ public class MiniGraphUI {
                     size = 1;
                 else
                     size = 0;
-                StopWatch sw = new StopWatch().start();
-                for (int i = 0; i < locs; i++) {
-                    int count = MyIteratorable.count(graph.getEdges(i));
-                    double lat = graph.getLatitude(i);
-                    double lon = graph.getLongitude(i);
-                    plot(g2, lat, lon, count, size);
 
-                    for (DistEntry de : graph.getOutgoing(i)) {
+                Dimension d = getSize();
+                double maxLat = getLat(0);
+                double minLat = getLat(d.height);
+                double minLon = getLon(0);
+                double maxLon = getLon(d.width);
+                bitset.clear();
+                StopWatch sw = new StopWatch().start();
+                for (int nodeIndex = 0; nodeIndex < locs; nodeIndex++) {
+                    double lat = graph.getLatitude(nodeIndex);
+                    double lon = graph.getLongitude(nodeIndex);
+                    if (lat < minLat || lat > maxLat || lon < minLon || lon > maxLon)
+                        continue;
+
+//                    int count = MyIteratorable.count(graph.getEdges(nodeIndex));
+//                    plot(g2, lat, lon, count, size);                    
+
+                    for (DistEntry de : graph.getOutgoing(nodeIndex)) {
+                        int sum = nodeIndex + de.node;
+                        if (bitset.contains(sum))
+                            continue;
+                        bitset.add(sum);
                         double lat2 = graph.getLatitude(de.node);
                         double lon2 = graph.getLongitude(de.node);
                         if (lat2 <= 0 || lon2 <= 0)
@@ -178,12 +191,20 @@ public class MiniGraphUI {
         plotEdge(g, lat, lon, lat2, lon2, 1);
     }
 
-    private double getX(double lon) {
+    double getX(double lon) {
         return (lon + offsetX) / scaleX;
     }
 
-    private double getY(double lat) {
+    double getY(double lat) {
         return (90 - lat + offsetY) / scaleY;
+    }
+
+    double getLon(int x) {
+        return x * scaleX - offsetX;
+    }
+
+    double getLat(int y) {
+        return 90 - (y * scaleY - offsetY);
     }
 
     private void plot(Graphics g, double lat, double lon, int count, int width) {
@@ -251,17 +272,15 @@ public class MiniGraphUI {
                                 scaleY = resY;
 
                             // TODO respect mouse x,y when scaling
-                            offsetX -= offsetX * scaleX;
-                            offsetY -= offsetY * scaleY;
+                            offsetX -= offsetX * scaleX - currentPosX;
+                            offsetY -= offsetY * scaleY - currentPosY;
+                            logger.info("mouse wheel moved => repaint");
                             mainPanel.repaint();
                         }
                     });
 
                     MouseAdapter ml = new MouseAdapter() {
 
-                        // for moving
-                        int currentPosX;
-                        int currentPosY;
                         // for routing:
                         double fromLat, fromLon;
                         boolean fromDone = false;
@@ -291,22 +310,21 @@ public class MiniGraphUI {
 
                         @Override public void mouseDragged(MouseEvent e) {
                             update(e);
-                        }
-
-                        @Override public void mouseMoved(MouseEvent e) {
                             updateLatLon(e);
-                            infoPanel.repaint();
-                        }
-
-                        @Override public void mousePressed(MouseEvent e) {
-                            currentPosX = e.getX();
-                            currentPosY = e.getY();
                         }
 
                         public void update(MouseEvent e) {
                             offsetX += (e.getX() - currentPosX) * scaleX;
                             offsetY += (e.getY() - currentPosY) * scaleY;
                             mainPanel.repaint();
+                        }
+
+                        @Override public void mouseMoved(MouseEvent e) {
+                            updateLatLon(e);
+                        }
+
+                        @Override public void mousePressed(MouseEvent e) {
+                            updateLatLon(e);
                         }
                     };
                     // important: calculate x/y for mouse event relative to mainPanel not frame!
@@ -372,16 +390,14 @@ public class MiniGraphUI {
             throw new RuntimeException(ex);
         }
     }
+    // for moving
+    int currentPosX;
+    int currentPosY;
 
     void updateLatLon(MouseEvent e) {
         latLon = getLat(e.getY()) + "," + getLon(e.getX());
-    }
-
-    double getLon(int x) {
-        return x * scaleX - offsetX;
-    }
-
-    double getLat(int y) {
-        return 90 - (y * scaleY - offsetY);
+        infoPanel.repaint();
+        currentPosX = e.getX();
+        currentPosY = e.getY();
     }
 }

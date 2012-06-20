@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class OSMReaderRouting {
 
     public static void main(String[] args) throws Exception {
-        new OSMReaderRouting("mmap-graph", 40 * 1000 * 1000) {
+        new OSMReaderRouting("mmap-graph-unterfranken", 40 * 1000 * 1000) {
 
             @Override
             public boolean isInBounds(double lat, double lon) {
@@ -92,18 +92,17 @@ public class OSMReaderRouting {
     }
 
     public void read(String[] args) throws Exception {
-        // get osm file via wget -O muenchen.osm "http://api.openstreetmap.org/api/0.6/map?bbox=11.54,48.14,11.543,48.145"
-        // or if that does not work for you get them here
-        // http://download.geofabrik.de/osm/europe/germany/bayern/
-        if (args.length < 1)
-            throw new IllegalStateException(".osm file missing");
-
-        // I'm having the osm on an external usb drive
-        File osmFile = new File(args[0]);
-        if (!osmFile.exists())
-            throw new IllegalStateException("File does not exist:" + args[0]);
-
         if (!loadExisting()) {
+            // get osm file via wget -O muenchen.osm "http://api.openstreetmap.org/api/0.6/map?bbox=11.54,48.14,11.543,48.145"
+            // or if that does not work for you get them here
+            // http://download.geofabrik.de/osm/europe/germany/bayern/
+            if (args.length < 1)
+                throw new IllegalStateException(".osm file missing");
+
+            // I'm having the osm on an external usb drive which should boost import time
+            File osmFile = new File(args[0]);
+            if (!osmFile.exists())
+                throw new IllegalStateException("File does not exist:" + args[0]);
             logger.info("size for osm2id-map is " + maxLocs + " - start creating graph from " + osmFile
                     + "\n\n WARNING: be sure you have enough RAM so that the mmap file does not swap. "
                     + "check this with the script ./check-swap-usage.sh | grep java");
@@ -159,6 +158,7 @@ public class OSMReaderRouting {
     }
 
     public void createNewFromOSM(File osmFile) throws FileNotFoundException {
+        // or could we use new PushbackInputStream(new FileInputStream(osmFile)); ???
         acceptHighwaysOnly(new FileInputStream(osmFile));
         writeOsm2Binary(new FileInputStream(osmFile));
     }
