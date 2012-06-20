@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.ui;
 
+import de.jetsli.graph.coll.MyBitSet;
+import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.reader.OSMReader;
@@ -30,6 +32,7 @@ import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.util.Collection;
+import java.util.Random;
 import javax.swing.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +66,10 @@ public class MiniGraphUI {
     private double maxX;
     private double maxY;
     private JPanel infoPanel;
-    private JPanel mainPanel;
+    private MyLayerPanel mainPanel;
+    private MapLayer pathLayer;
+    private MapLayer roadsLayer;
+    private boolean fastPaint = false;
 
     public MiniGraphUI(Graph tmpG, boolean debug) {
         this.graph = tmpG;
@@ -79,7 +85,9 @@ public class MiniGraphUI {
         infoPanel = new JPanel() {
 
             @Override protected void paintComponent(Graphics g) {
-                g.clearRect(0, 0, 10000, 10000);
+                g.setColor(Color.WHITE);
+                Rectangle b = infoPanel.getBounds();
+                g.fillRect(0, 0, b.width, b.height);
 
                 g.setColor(Color.BLUE);
                 g.drawString(latLon, 40, 20);
@@ -89,23 +97,16 @@ public class MiniGraphUI {
             }
         };
 
-        // TODO PERFORMANCE draw graph on an offscreen image for faster translation and use 
-        // different layer for routing! redraw only on scaling =>but then memory problems for bigger zooms!?
-        // final BufferedImage offscreenImage = new BufferedImage(11000, 11000, BufferedImage.TYPE_INT_ARGB);
-        // final Graphics2D g2 = offscreenImage.createGraphics();        
-//        final MyBitSet bitset = new MyTBitSet(graph.getLocations());
+        mainPanel = new MyLayerPanel();
 
-        mainPanel = new JPanel() {
+        // TODO make it correct with bitset too as it is faster!
+        final MyBitSet bitset = new MyTBitSet(graph.getLocations());
+        mainPanel.addLayer(roadsLayer = new DefaultMapLayer() {
 
-            @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g;
-                g2.clearRect(0, 0, 10000, 10000);
+            Random rand = new Random();
 
-//                AffineTransform at = AffineTransform.getScaleInstance(scaleX, scaleY);
-//                at.concatenate(AffineTransform.getTranslateInstance(offsetX, offsetY));
-//                AffineTransformOp op = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
-//                g2.drawImage(offscreenImage, op, 0, 0);
-
+            @Override public void paintComponent(Graphics2D g2) {
+                MyLayerPanel.clearGraphics(g2, getBounds());
                 int locs = graph.getLocations();
                 minX = Integer.MAX_VALUE;
                 minY = Integer.MAX_VALUE;
@@ -119,14 +120,20 @@ public class MiniGraphUI {
                 else
                     size = 0;
 
-                Dimension d = getSize();
+                Rectangle d = getBounds();
                 double maxLat = getLat(0);
                 double minLat = getLat(d.height);
                 double minLon = getLon(0);
                 double maxLon = getLon(d.width);
-//                bitset.clear();
-                StopWatch sw = new StopWatch().start();
+
+                if (fastPaint) {
+                    rand.setSeed(0);
+                    bitset.clear();
+                }
+
                 for (int nodeIndex = 0; nodeIndex < locs; nodeIndex++) {
+                    if (fastPaint && rand.nextInt(30) > 1)
+                        continue;
                     double lat = graph.getLatitude(nodeIndex);
                     double lon = graph.getLongitude(nodeIndex);
                     if (lat < minLat || lat > maxLat || lon < minLon || lon > maxLon)
@@ -137,51 +144,57 @@ public class MiniGraphUI {
 
                     for (DistEntry de : graph.getOutgoing(nodeIndex)) {
                         int sum = nodeIndex + de.node;
-//                        if (bitset.contains(sum))
-//                            continue;
-//                        bitset.add(sum);
+                        if (fastPaint) {
+                            if (bitset.contains(sum))
+                                continue;
+                            bitset.add(sum);
+                        }
                         double lat2 = graph.getLatitude(de.node);
                         double lon2 = graph.getLongitude(de.node);
                         if (lat2 <= 0 || lon2 <= 0)
                             logger.info("ERROR " + de.node + " " + de.distance + " " + lat2 + "," + lon2);
-                        plotEdge(g, lat, lon, lat2, lon2);
+                        plotEdge(g2, lat, lon, lat2, lon2);
                     }
                 }
-                logger.info("frame took " + sw.stop().getSeconds() + "sec");
 
                 if (quadTreeNodes != null) {
                     logger.info("found neighbors:" + quadTreeNodes.size());
                     for (CoordTrig<Long> coord : quadTreeNodes) {
-                        plot(g, coord.lat, coord.lon, 1, 1);
+                        plot(g2, coord.lat, coord.lon, 1, 1);
                     }
                 }
-
-                if (path != null) {
-                    logger.info("found path with " + path.locations() + " nodes: " + path);
-                    g.setColor(Color.MAGENTA);
-                    int tmpLocs = path.locations();
-                    double prevLat = -1;
-                    double prevLon = -1;
-                    for (int i = 0; i < tmpLocs; i++) {
-                        int id = path.location(i);
-                        double lat = graph.getLatitude(id);
-                        double lon = graph.getLongitude(id);
-                        if (prevLat >= 0)
-                            plotEdge(g, prevLat, prevLon, lat, lon, 3);
-
-                        prevLat = lat;
-                        prevLon = lon;
-                    }
-                }
-
-                infoPanel.repaint();
             }
-        };
+        });
+        mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
+
+            @Override public void paintComponent(Graphics2D g2) {
+                if (path == null)
+                    return;
+
+                MyLayerPanel.makeGraphicsTransparent(g2, getBounds());
+                logger.info("found path with " + path.locations() + " nodes: " + path);
+                g2.setColor(Color.BLUE.brighter().brighter());
+                int tmpLocs = path.locations();
+                double prevLat = -1;
+                double prevLon = -1;
+                for (int i = 0; i < tmpLocs; i++) {
+                    int id = path.location(i);
+                    double lat = graph.getLatitude(id);
+                    double lon = graph.getLongitude(id);
+                    if (prevLat >= 0)
+                        plotEdge(g2, prevLat, prevLon, lat, lon, 3);
+
+                    prevLat = lat;
+                    prevLon = lon;
+                }
+            }
+        });
 
         if (debug) {
             // disable double buffering for debugging drawing - nice! when do we need DebugGraphics then?
             RepaintManager repaintManager = RepaintManager.currentManager(mainPanel);
             repaintManager.setDoubleBufferingEnabled(false);
+            mainPanel.setBuffering(false);
         }
     }
 
@@ -288,7 +301,7 @@ public class MiniGraphUI {
 
                             logger.info("mouse wheel moved => repaint " + e.getWheelRotation() + " "
                                     + offsetX + "," + offsetY + " " + scaleX + "," + scaleY);
-                            mainPanel.repaint();
+                            repaintRoads();
                         }
                     });
 
@@ -315,21 +328,33 @@ public class MiniGraphUI {
                                 sw = new StopWatch().start();
                                 path = new DijkstraBidirection(graph).calcShortestPath(from, to);
                                 logger.info("found path in " + sw.stop().getSeconds() + "s");
-                                mainPanel.repaint();
+                                repaintPaths();
                             }
 
                             fromDone = !fromDone;
                         }
+                        boolean dragging = false;
 
                         @Override public void mouseDragged(MouseEvent e) {
+                            dragging = true;
+                            fastPaint = true;
                             update(e);
                             updateLatLon(e);
+                        }
+
+                        @Override public void mouseReleased(MouseEvent e) {
+                            if (dragging) {
+                                // update only if mouse release comes from dragging! (at the moment equal to fastPaint)
+                                dragging = false;
+                                fastPaint = false;
+                                update(e);
+                            }
                         }
 
                         public void update(MouseEvent e) {
                             offsetX += (e.getX() - currentPosX) * scaleX;
                             offsetY += (e.getY() - currentPosY) * scaleY;
-                            mainPanel.repaint();
+                            repaintRoads();
                         }
 
                         @Override public void mouseMoved(MouseEvent e) {
@@ -370,7 +395,7 @@ public class MiniGraphUI {
 //                            } catch (Exception ex) {
 //                                ex.printStackTrace();
 //                            }
-                            mainPanel.repaint();
+//                            repaintRoads();
                         }
                     };
                     mainPanel.addMouseListener(ml);
@@ -412,5 +437,31 @@ public class MiniGraphUI {
         infoPanel.repaint();
         currentPosX = e.getX();
         currentPosY = e.getY();
+    }
+
+    void repaintPaths() {
+        pathLayer.repaint();
+        mainPanel.repaint();
+    }
+    Thread painterThread = new Thread();
+
+    void repaintRoads() {
+//        if (painterThread.isAlive())
+//            return null;
+//
+//        painterThread = new Thread() {
+//
+//            @Override
+//            public void run() {
+        StopWatch sw = new StopWatch().start();
+        pathLayer.repaint();
+        roadsLayer.repaint();        
+        mainPanel.repaint();
+        logger.info("roads painting took " + sw.stop().getSeconds() + " sec");
+        
+//            }
+//        };
+//        painterThread.start();
+//        return painterThread;
     }
 }
