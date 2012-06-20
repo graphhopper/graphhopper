@@ -15,18 +15,16 @@
  */
 package de.jetsli.graph.ui;
 
-import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.dijkstra.DijkstraPath;
-import de.jetsli.graph.reader.OSMReaderRouting;
+import de.jetsli.graph.reader.OSMReader;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.util.CoordTrig;
-import de.jetsli.graph.util.MyIteratorable;
+import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.StopWatch;
 import java.awt.*;
 import java.awt.datatransfer.*;
@@ -41,13 +39,11 @@ import org.slf4j.LoggerFactory;
  */
 public class MiniGraphUI {
 
-    public static void main(String[] args) throws Exception {
-        if (args.length < 1)
-            throw new IllegalArgumentException("Osm file missing");
-
-        String osmFile = args[0];
-        Graph g = OSMReaderRouting.defaultRead(osmFile, "mmap-graph-unterfranken");
-        new MiniGraphUI(g).visualize();
+    public static void main(String[] strs) throws Exception {
+        Helper.CmdArgs args = Helper.readCmdArgs(strs);
+        Graph g = OSMReader.osm2Graph(args);
+        boolean debug = args.getBool("debug", false);
+        new MiniGraphUI(g, debug).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
     private QuadTree<Long> quadTree;
@@ -69,11 +65,11 @@ public class MiniGraphUI {
     private JPanel infoPanel;
     private JPanel mainPanel;
 
-    public MiniGraphUI(Graph tmpG) {
+    public MiniGraphUI(Graph tmpG, boolean debug) {
         this.graph = tmpG;
         logger.info("locations:" + tmpG.getLocations());
         // prepare location quadtree to 'enter' the graph. create a 313*313 grid => <3km
-        this.index = new Location2IDQuadtree(tmpG).prepareIndex(100000);
+        this.index = new Location2IDQuadtree(tmpG).prepareIndex(1000);
 //        this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
 //        this.quadTree = new SpatialHashtable(2, 3).init(graph.getLocations());
 
@@ -97,7 +93,8 @@ public class MiniGraphUI {
         // different layer for routing! redraw only on scaling =>but then memory problems for bigger zooms!?
         // final BufferedImage offscreenImage = new BufferedImage(11000, 11000, BufferedImage.TYPE_INT_ARGB);
         // final Graphics2D g2 = offscreenImage.createGraphics();        
-        final MyBitSet bitset = new MyTBitSet(graph.getLocations());
+//        final MyBitSet bitset = new MyTBitSet(graph.getLocations());
+
         mainPanel = new JPanel() {
 
             @Override protected void paintComponent(Graphics g) {
@@ -127,7 +124,7 @@ public class MiniGraphUI {
                 double minLat = getLat(d.height);
                 double minLon = getLon(0);
                 double maxLon = getLon(d.width);
-                bitset.clear();
+//                bitset.clear();
                 StopWatch sw = new StopWatch().start();
                 for (int nodeIndex = 0; nodeIndex < locs; nodeIndex++) {
                     double lat = graph.getLatitude(nodeIndex);
@@ -140,9 +137,9 @@ public class MiniGraphUI {
 
                     for (DistEntry de : graph.getOutgoing(nodeIndex)) {
                         int sum = nodeIndex + de.node;
-                        if (bitset.contains(sum))
-                            continue;
-                        bitset.add(sum);
+//                        if (bitset.contains(sum))
+//                            continue;
+//                        bitset.add(sum);
                         double lat2 = graph.getLatitude(de.node);
                         double lon2 = graph.getLongitude(de.node);
                         if (lat2 <= 0 || lon2 <= 0)
@@ -180,6 +177,12 @@ public class MiniGraphUI {
                 infoPanel.repaint();
             }
         };
+
+        if (debug) {
+            // disable double buffering for debugging drawing - nice! when do we need DebugGraphics then?
+            RepaintManager repaintManager = RepaintManager.currentManager(mainPanel);
+            repaintManager.setDoubleBufferingEnabled(false);
+        }
     }
 
     private void plotEdge(Graphics g, double lat, double lon, double lat2, double lon2, int width) {

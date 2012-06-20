@@ -7,3 +7,4 @@ docs/
 osm.lucene.test*
 mmap-graph*
 neo4j.*.db
+*.osm

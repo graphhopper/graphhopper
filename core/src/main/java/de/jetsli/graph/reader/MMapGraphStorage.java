@@ -35,9 +35,9 @@ public class MMapGraphStorage implements Storage {
     private TIntIntHashMap osmIdToIndexMap;
     private final String file;
 
-    public MMapGraphStorage(String file, int size) {
+    public MMapGraphStorage(String file, int expectedNodes) {
         this.file = file;
-        osmIdToIndexMap = new TIntIntHashMap(size, 1.4f, -1, -1);
+        osmIdToIndexMap = new TIntIntHashMap(expectedNodes, 1.4f, -1, -1);
     }
 
     @Override

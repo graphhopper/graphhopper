@@ -36,11 +36,7 @@ import java.util.Date;
 public class PerfTest {
 
     public static void main(String[] args) throws Exception {
-        if (args.length < 1)
-            throw new IllegalArgumentException("Osm file missing");
-
-        String osmFile = args[0];
-        Graph g = OSMReaderRouting.defaultRead(osmFile, "/tmp/mmap-graph");
+        Graph g = OSMReader.osm2Graph(Helper.readCmdArgs(args));
         new PerfTest(g).start();
     }
     Graph g;
@@ -111,11 +107,11 @@ public class PerfTest {
         for (int bits = minBits; bits <= 30; bits += 2) {
             int entriesPerLeaf = 3;
             final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getLocations());
-                QuadTree.Util.fill(quadTree, g);
+            QuadTree.Util.fill(quadTree, g);
             for (int distance = 5; distance < maxDist; distance *= 2) {
 //                for (; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
                 //final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
-                
+
                 System.gc();
                 System.gc();
                 float mem = (float) quadTree.getMemoryUsageInBytes(1) / Helper.MB;

@@ -17,11 +17,7 @@ package de.jetsli.graph.util;
 
 import java.io.*;
 import java.nio.MappedByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -185,5 +181,79 @@ public class Helper {
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't close resource", ex);
         }
+    }
+
+    public static CmdArgs readCmdArgs(String[] args) {
+        Map<String, String> map = new LinkedHashMap<String, String>();
+        for (String arg : args) {
+            String strs[] = arg.split("\\=");
+            if (strs.length != 2)
+                continue;
+
+            String key = strs[0];
+            if (key.startsWith("-")) {
+                key = key.substring(1);
+            }
+            if (key.startsWith("-")) {
+                key = key.substring(1);
+            }
+            String value = strs[1];
+            map.put(key, value);
+        }
+
+        return new CmdArgs(map);
+    }
+
+    public static class CmdArgs {
+
+        private final Map<String, String> map;
+
+        private CmdArgs(Map<String, String> map) {
+            this.map = map;
+        }
+
+        public long getLong(String key, long _default) {
+            String str = map.get(key);
+            if (!Helper.isEmpty(str)) {
+                try {
+                    return Long.parseLong(str);
+                } catch (Exception ex) {
+                }
+            }
+            return _default;
+        }
+
+        public boolean getBool(String key, boolean _default) {
+            String str = map.get(key);
+            if (!Helper.isEmpty(str)) {
+                try {
+                    return Boolean.parseBoolean(str);
+                } catch (Exception ex) {
+                }
+            }
+            return _default;
+        }
+
+        public double getDouble(String key, double _default) {
+            String str = map.get(key);
+            if (!Helper.isEmpty(str)) {
+                try {
+                    return Double.parseDouble(str);
+                } catch (Exception ex) {
+                }
+            }
+            return _default;
+        }
+
+        public String get(String key, String _default) {
+            String str = map.get(key);
+            if (Helper.isEmpty(str))
+                return _default;
+            return str;
+        }
+    }
+
+    public static boolean isEmpty(String strOsm) {
+        return strOsm == null || strOsm.trim().isEmpty();
     }
 }

@@ -30,10 +30,10 @@ import org.junit.Before;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class OSMReaderRoutingTest {
+public class OSMReaderTest {
 
     private String dir = "/tmp/OSMReaderTrialsTest/test-db";       
-    private OSMReaderRouting reader;
+    private OSMReader reader;
     
     @Before
     public void setUp() {
@@ -42,15 +42,14 @@ public class OSMReaderRoutingTest {
 
     @After
     public void tearDown() {
-        reader.close();
         Helper.deleteDir(new File(dir));
     }
 
     @Test public void testMain() {
-        reader = new OSMReaderRouting(dir, 1000);
-        reader.acceptHighwaysOnly(getClass().getResourceAsStream("test1.xml"));
-        reader.writeOsm2Binary(getClass().getResourceAsStream("test1.xml"));
-        Graph graph = reader.readGraph();
+        reader = new OSMReader(dir, 1000);
+        reader.preprocessAcceptHighwaysOnly(getClass().getResourceAsStream("test1.xml"));
+        reader.writeOsm2Graph(getClass().getResourceAsStream("test1.xml"));
+        Graph graph = reader.getGraph();
         assertEquals(4, graph.getLocations());
         assertEquals(1, MyIteratorable.count(graph.getOutgoing(0)));
         assertEquals(3, MyIteratorable.count(graph.getOutgoing(1)));
@@ -72,15 +71,15 @@ public class OSMReaderRoutingTest {
     }
     
     @Test public void testWithBounds() {
-        reader = new OSMReaderRouting(dir, 1000) {
+        reader = new OSMReader(dir, 1000) {
 
             @Override public boolean isInBounds(double lat, double lon) {
                 return lat > 49 && lon > 8;
             }            
         };
-        reader.acceptHighwaysOnly(getClass().getResourceAsStream("test1.xml"));
-        reader.writeOsm2Binary(getClass().getResourceAsStream("test1.xml"));
-        Graph graph = reader.readGraph();
+        reader.preprocessAcceptHighwaysOnly(getClass().getResourceAsStream("test1.xml"));
+        reader.writeOsm2Graph(getClass().getResourceAsStream("test1.xml"));
+        Graph graph = reader.getGraph();
         assertEquals(3, graph.getLocations());
         assertEquals(1, MyIteratorable.count(graph.getOutgoing(0)));
         assertEquals(2, MyIteratorable.count(graph.getOutgoing(1)));

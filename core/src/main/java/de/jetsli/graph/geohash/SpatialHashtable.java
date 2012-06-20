@@ -19,11 +19,12 @@ import de.genvlin.core.data.*;
 import de.genvlin.gui.plot.GPlotPanel;
 import de.jetsli.graph.geohash.SpatialHashtable.BucketOverflowLoop;
 import de.jetsli.graph.util.CalcDistance;
-import de.jetsli.graph.reader.OSMReaderRouting;
+import de.jetsli.graph.reader.OSMReader;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.CoordTrigLongEntry;
+import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.shapes.BBox;
 import de.jetsli.graph.util.shapes.Circle;
 import de.jetsli.graph.util.shapes.Shape;
@@ -91,7 +92,7 @@ import javax.swing.SwingUtilities;
 public class SpatialHashtable implements QuadTree<Long> {
 
     public static void main(String[] args) throws Exception {
-        final Graph g = OSMReaderRouting.defaultRead(args[0], "mmap-graph");
+        final Graph g = OSMReader.osm2Graph(Helper.readCmdArgs(args));
         final int locs = g.getLocations();
         System.out.println("graph contains " + locs + " nodes");
 

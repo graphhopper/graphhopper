@@ -36,45 +36,40 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * $ ulimit -v unlimited $ export JAVA_OPTS="-Xmx1000m" mvn -o -e exec:java
- * -Dexec.mainClass="de.jetsli.graph.dijkstra.OSM" -Dexec.args="/media/SAMSUNG/germany.osm"
+ * See run-ui.sh
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class OSMReaderRouting {
+public class OSMReader {
 
-    public static void main(String[] args) throws Exception {
-        new OSMReaderRouting("mmap-graph-unterfranken", 40 * 1000 * 1000) {
+    public static void main(String[] strs) throws Exception {
+        Helper.CmdArgs args = Helper.readCmdArgs(strs);
+        int size = (int) args.getLong("size", 5 * 1000 * 1000);
+        String graphFolder = args.get("graph", "graph-storage");
+        if (Helper.isEmpty(graphFolder))
+            throw new IllegalArgumentException("Please specify a folder where to store the graph");
+        
+        OSMReader osmReader = new OSMReader(graphFolder, size) {
 
-            @Override
-            public boolean isInBounds(double lat, double lon) {
+            @Override public boolean isInBounds(double lat, double lon) {
                 // regardless of bounds it takes ~7min (nodes) and 5min (edges) for MMyGraphStorage and other fast storages
-                return true;
-
                 // ~germany
                 // 90  mio nodes, but only 33 mio involved in routing
                 // 100 mio edges
-                // return true;
-                //
-                // ~bavaria
-                // ? mio nodes
-                // ? mio edges
-//                return lat > 47.1 && lat < 50.5 && lon > 9 && lon < 13.5;
+                return true;
 
-                //
                 // ~bayreuth+bamberg+erlangen+nueremberg
                 // 2.7 mio nodes
                 // 2.9 mio edges
-                // mean edges/node: 2.0752556
-                // number of edges per node:
-                // 1        2       3       4       5       6       7       8
-                // 52206    35005   2232056 267471  32157   1345    164     25
 //                return lat > 49.3 && lat < 50 && lon > 10.8 && lon < 11.6;
             }
-        }.read(args);
+        };
+        osm2Graph(osmReader, args);
+        if (args.getBool("dijkstra", false))
+            osmReader.doDijkstra(1000);
     }
-    private int maxLocs;
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private int expectedLocs;
+    private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
     private int locations = 0;
     private int skippedLocations = 0;
     private int nextEdgeIndex = 0;
@@ -83,73 +78,71 @@ public class OSMReaderRouting {
     private TIntArrayList tmpLocs = new TIntArrayList(10);
     private CalcDistance callback = new CalcDistance();
 
-    public static Graph defaultRead(String osmFile, String mmapFile) throws FileNotFoundException {
-        OSMReaderRouting osm = new OSMReaderRouting(mmapFile, 5 * 1000 * 1000);
-        if (!osm.loadExisting())
-            osm.createNewFromOSM(new File(osmFile));
+    public static Graph osm2Graph(Helper.CmdArgs args) throws FileNotFoundException {
+        String graphFolder = args.get("graph", "graph-storage");
+        if (Helper.isEmpty(graphFolder))
+            throw new IllegalArgumentException("Please specify a folder where to store the graph");
 
-        return osm.readGraph();
+        int size = (int) args.getLong("size", 5 * 1000 * 1000);
+        return osm2Graph(new OSMReader(graphFolder, size), args);
     }
 
-    public void read(String[] args) throws Exception {
-        if (!loadExisting()) {
-            // get osm file via wget -O muenchen.osm "http://api.openstreetmap.org/api/0.6/map?bbox=11.54,48.14,11.543,48.145"
-            // or if that does not work for you get them here
-            // http://download.geofabrik.de/osm/europe/germany/bayern/
-            if (args.length < 1)
-                throw new IllegalStateException(".osm file missing");
+    public static Graph osm2Graph(OSMReader osmReader, Helper.CmdArgs args) throws FileNotFoundException {
+        if (!osmReader.loadExisting()) {
+            String strOsm = args.get("osm", "");
+            if (Helper.isEmpty(strOsm))
+                throw new IllegalArgumentException("Graph not found - please specify the OSM xml file (.osm) to create the graph");
 
-            // I'm having the osm on an external usb drive which should boost import time
-            File osmFile = new File(args[0]);
-            if (!osmFile.exists())
-                throw new IllegalStateException("File does not exist:" + args[0]);
-            logger.info("size for osm2id-map is " + maxLocs + " - start creating graph from " + osmFile
-                    + "\n\n WARNING: be sure you have enough RAM so that the mmap file does not swap. "
-                    + "check this with the script ./check-swap-usage.sh | grep java");
-            createNewFromOSM(osmFile);
+            File osmXmlFile = new File(strOsm);
+            if (!osmXmlFile.exists())
+                throw new IllegalStateException("Your specified OSM file does not exist:" + strOsm);
+            logger.info("size for osm2id-map is " + osmReader.getMaxLocs() + " - start creating graph from " + osmXmlFile);
+            osmReader.osm2Graph(osmXmlFile);
         }
 
-        boolean dijkstraSearchTest = true;
-        if (dijkstraSearchTest) {
-            Graph g = ((MMapGraphStorage) storage).getGraph();
-            Location2IDIndex index = new Location2IDQuadtree(g).prepareIndex(20000);
+        return osmReader.getGraph();
+    }
 
-            double minLat = 49.484186, minLon = 8.974228;
-            double maxLat = 50.541363, maxLon = 10.880356;
-            Random rand = new Random(123);
-            StopWatch sw = new StopWatch();
-            for (int i = 0; i < 1000; i++) {
-                double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
-                double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
-                int from = index.findID(fromLat, fromLon);
-                double toLat = rand.nextDouble() * (maxLat - minLat) + minLat;
-                double toLon = rand.nextDouble() * (maxLon - minLon) + minLon;
-                int to = index.findID(toLat, toLon);
+    private int getMaxLocs() {
+        return expectedLocs;
+    }
+
+    public void doDijkstra(int runs) throws Exception {
+        Graph g = ((MMapGraphStorage) storage).getGraph();
+        Location2IDIndex index = new Location2IDQuadtree(g).prepareIndex(20000);
+        double minLat = 49.484186, minLon = 8.974228;
+        double maxLat = 50.541363, maxLon = 10.880356;
+        Random rand = new Random(123);
+        StopWatch sw = new StopWatch();
+        for (int i = 0; i < runs; i++) {
+            double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
+            double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
+            int from = index.findID(fromLat, fromLon);
+            double toLat = rand.nextDouble() * (maxLat - minLat) + minLat;
+            double toLon = rand.nextDouble() * (maxLon - minLon) + minLon;
+            int to = index.findID(toLat, toLon);
 //                logger.info(i + " " + sw + " from (" + from + ")" + fromLat + ", " + fromLon + " to (" + to + ")" + toLat + ", " + toLon);
-                if (from == to) {
-                    logger.warn("skipping i " + i + " from==to " + from);
-                    continue;
-                }
-
-                sw.start();
-                DijkstraPath p = new DijkstraBidirection(g).calcShortestPath(from, to);
-                sw.stop();
-                if (p == null) {
-                    logger.warn("no route found for i=" + i + " !?"
-                            + " graph-from " + (float) g.getLatitude(from) + ", " + (float) g.getLongitude(from)
-                            + " graph-to " + (float) g.getLatitude(to) + ", " + (float) g.getLongitude(to));
-                    continue;
-                }
-                if (i % 100 == 0)
-                    logger.info(i + " " + sw.getSeconds() / (i + 1) + " path:" + p.locations() + " " + p.toString());
+            if (from == to) {
+                logger.warn("skipping i " + i + " from==to " + from);
+                continue;
             }
+
+            sw.start();
+            DijkstraPath p = new DijkstraBidirection(g).calcShortestPath(from, to);
+            sw.stop();
+            if (p == null) {
+                logger.warn("no route found for i=" + i + " !?"
+                        + " graph-from " + (float) g.getLatitude(from) + ", " + (float) g.getLongitude(from)
+                        + " graph-to " + (float) g.getLatitude(to) + ", " + (float) g.getLongitude(to));
+                continue;
+            }
+            if (i % 100 == 0)
+                logger.info(i + " " + sw.getSeconds() / (i + 1) + " path:" + p.locations() + " " + p.toString());
         }
-        close();
     }
 
-    public OSMReaderRouting(String file, int size) {
-        maxLocs = size;
-        storage = new MMapGraphStorage(file, maxLocs);
+    public OSMReader(String file, int size) {
+        storage = new MMapGraphStorage(file, expectedLocs = size);
     }
 
     public boolean loadExisting() {
@@ -157,24 +150,26 @@ public class OSMReaderRouting {
         return storage.loadExisting();
     }
 
-    public void createNewFromOSM(File osmFile) throws FileNotFoundException {
-        // or could we use new PushbackInputStream(new FileInputStream(osmFile)); ???
-        acceptHighwaysOnly(new FileInputStream(osmFile));
-        writeOsm2Binary(new FileInputStream(osmFile));
+    public void osm2Graph(File osmXmlFile) throws FileNotFoundException {
+        // TODO instead of creating several input stream:
+        // could we use PushbackInputStream(new FileInputStream(osmFile)); ???
+        preprocessAcceptHighwaysOnly(new FileInputStream(osmXmlFile));
+        writeOsm2Graph(new FileInputStream(osmXmlFile));
+        storage.flush();
     }
 
     /**
      * Preprocessing of OSM file to select nodes which are used for highways. This allows a more
      * compact graph data structure.
      */
-    public void acceptHighwaysOnly(InputStream is) {
-        if (is == null)
+    public void preprocessAcceptHighwaysOnly(InputStream osmXml) {
+        if (osmXml == null)
             throw new IllegalStateException("Stream cannot be empty");
 
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         try {
-            sReader = factory.createXMLStreamReader(is, "UTF-8");
+            sReader = factory.createXMLStreamReader(osmXml, "UTF-8");
             int counter = 0;
             for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
                     event = sReader.next()) {
@@ -204,9 +199,9 @@ public class OSMReaderRouting {
     }
 
     /**
-     * Writes two files from the inputstream which is the standard osm xml file.
+     * Creates the edges and nodes files from the specified inputstream (osm xml file).
      */
-    public void writeOsm2Binary(InputStream is) {
+    public void writeOsm2Graph(InputStream is) {
         if (is == null)
             throw new IllegalStateException("Stream cannot be empty");
         logger.info("init storage with " + storage.getNodes() + " nodes");
@@ -342,15 +337,11 @@ public class OSMReaderRouting {
         }
     }
 
-    public Graph readGraph() {
+    public Graph getGraph() {
         if (storage instanceof MMapGraphStorage)
             return ((MMapGraphStorage) storage).getGraph();
 
         throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public void close() {
-        Helper.close(storage);
     }
 
     private void stats() {
