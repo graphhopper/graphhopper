@@ -263,6 +263,8 @@ public class MiniGraphUI {
                             if (e.getWheelRotation() > 0)
                                 tmpFactor = 2;
 
+                            double oldScaleX = scaleX;
+                            double oldScaleY = scaleY;
                             double resX = scaleX * tmpFactor;
                             if (resX > 0)
                                 scaleX = resX;
@@ -271,10 +273,18 @@ public class MiniGraphUI {
                             if (resY > 0)
                                 scaleY = resY;
 
-                            // TODO respect mouse x,y when scaling
-                            offsetX -= offsetX * scaleX - currentPosX;
-                            offsetY -= offsetY * scaleY - currentPosY;
-                            logger.info("mouse wheel moved => repaint");
+                            // respect mouse x,y when scaling
+                            // TODO minor bug: compute difference of lat,lon position for mouse before and after scaling
+                            if (e.getWheelRotation() < 0) {
+                                offsetX -= (offsetX + e.getX()) * scaleX;
+                                offsetY -= (offsetY + e.getY()) * scaleY;
+                            } else {
+                                offsetX += e.getX() * oldScaleX;
+                                offsetY += e.getY() * oldScaleY;
+                            }
+
+                            logger.info("mouse wheel moved => repaint " + e.getWheelRotation() + " "
+                                    + offsetX + "," + offsetY + " " + scaleX + "," + scaleY);
                             mainPanel.repaint();
                         }
                     });
