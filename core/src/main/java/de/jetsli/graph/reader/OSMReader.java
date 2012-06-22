@@ -67,7 +67,7 @@ public class OSMReader {
         };
         osm2Graph(osmReader, args);
         if (args.getBool("dijkstra", false))
-            osmReader.doDijkstra(1000);
+            osmReader.doDijkstra(500);
     }
     private int expectedLocs;
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
@@ -137,8 +137,8 @@ public class OSMReader {
                         + " graph-to " + (float) g.getLatitude(to) + ", " + (float) g.getLongitude(to));
                 continue;
             }
-            if (i % 100 == 0)
-                logger.info(i + " " + sw.getSeconds() / (i + 1) + " path:" + p.locations() + " " + p.toString());
+            if (i % 50 == 0)
+                logger.info(i + " " + sw.getSeconds() / (i + 1) + " path:" + p.locations());// + " " + p.toString());
         }
     }
 

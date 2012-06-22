@@ -4,16 +4,16 @@ Memory efficient data structures & algorithms on (geo) graphs
 
 Download OSM file and build graph hopper and run it:
 
-> cd core; ./run-ui.sh
+> cd core; ./run.sh unterfranken
 
 when executing the command again the osm won't be parsed again.
 
 Hints
 ------------------
 
-If you want to import the Germany OSM. run:
+If you want to import a bigger OSM (Germany) then run:
 
-> cd core; ./run-ui.sh false
+> cd core; ./run.sh germany
 
  * It takes approx 25 min for import and roughly 1 minute for the ugly&slow UI to pop up.
  * After the UI popped up you can drag to move the map or scroll to zoom like in ordinary maps apps

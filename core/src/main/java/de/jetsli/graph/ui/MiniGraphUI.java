@@ -59,7 +59,7 @@ public class MiniGraphUI {
     private double scaleY = 0.001f;
     // initial position to center unterfranken
     // 49.50381,9.953613 -> south unterfranken
-    private double offsetX = -8.8f;
+    private double offsetX = -9f;
     private double offsetY = -39.7f;
     private String latLon = "";
     private double minX;

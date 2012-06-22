@@ -317,7 +317,7 @@ public class MMapGraph implements Graph {
     @Override
     public MyIteratorable<DistEntry> getEdges(int index) {
         if (index >= maxNodes)
-            return DistEntry.EMPTY_ITER;
+            throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
         nodes.position(index * nodeSize + nodeCoreSize);
         byte[] bytes = new byte[bytesEdgeSize];
@@ -328,7 +328,7 @@ public class MMapGraph implements Graph {
     @Override
     public MyIteratorable<DistEntry> getOutgoing(int index) {
         if (index >= maxNodes)
-            return DistEntry.EMPTY_ITER;
+            throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
         nodes.position(index * nodeSize + nodeCoreSize);
         byte[] bytes = new byte[bytesEdgeSize];
@@ -339,7 +339,7 @@ public class MMapGraph implements Graph {
     @Override
     public MyIteratorable<DistEntry> getIncoming(int index) {
         if (index >= maxNodes)
-            return DistEntry.EMPTY_ITER;
+            throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
         nodes.position(index * nodeSize + nodeCoreSize);
         byte[] bytes = new byte[bytesEdgeSize];
