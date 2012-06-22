@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.reader;
+package de.jetsli.misc;
 
+import de.jetsli.misc.Neo4JStorage;
 import de.jetsli.graph.storage.DistEntry;
 import java.util.List;
 import org.junit.After;

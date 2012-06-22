@@ -21,6 +21,7 @@ import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
+import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.StopWatch;
 import gnu.trove.list.array.TIntArrayList;
@@ -43,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class OSMReader {
 
     public static void main(String[] strs) throws Exception {
-        Helper.CmdArgs args = Helper.readCmdArgs(strs);
+        CmdArgs args = Helper.readCmdArgs(strs);
         int size = (int) args.getLong("size", 5 * 1000 * 1000);
         String graphFolder = args.get("graph", "graph-storage");
         if (Helper.isEmpty(graphFolder))
@@ -78,7 +79,7 @@ public class OSMReader {
     private TIntArrayList tmpLocs = new TIntArrayList(10);
     private CalcDistance callback = new CalcDistance();
 
-    public static Graph osm2Graph(Helper.CmdArgs args) throws FileNotFoundException {
+    public static Graph osm2Graph(CmdArgs args) throws FileNotFoundException {
         String graphFolder = args.get("graph", "graph-storage");
         if (Helper.isEmpty(graphFolder))
             throw new IllegalArgumentException("Please specify a folder where to store the graph");
@@ -87,7 +88,7 @@ public class OSMReader {
         return osm2Graph(new OSMReader(graphFolder, size), args);
     }
 
-    public static Graph osm2Graph(OSMReader osmReader, Helper.CmdArgs args) throws FileNotFoundException {
+    public static Graph osm2Graph(OSMReader osmReader, CmdArgs args) throws FileNotFoundException {
         if (!osmReader.loadExisting()) {
             String strOsm = args.get("osm", "");
             if (Helper.isEmpty(strOsm))

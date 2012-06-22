@@ -39,7 +39,7 @@ public class GHSpatialTree implements SimplisticQuadTree {
     public void init(int size) {
         qt = new SpatialHashtable(skipLeftBits) {
 
-            @Override protected int getEntriesPerBucket() {
+            @Override public int getEntriesPerBucket() {
                 return entriesPerBucket;
             }
         }.init(size);

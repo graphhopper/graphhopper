@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.reader;
+package de.jetsli.misc;
 
+import de.jetsli.graph.reader.Storage;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.util.Helper;
 import java.io.File;

@@ -15,29 +15,20 @@
  */
 package de.jetsli.graph.geohash;
 
-import de.genvlin.core.data.*;
-import de.genvlin.gui.plot.GPlotPanel;
 import de.jetsli.graph.geohash.SpatialHashtable.BucketOverflowLoop;
 import de.jetsli.graph.util.CalcDistance;
-import de.jetsli.graph.reader.OSMReader;
-import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.*;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.CoordTrigLongEntry;
-import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.shapes.BBox;
 import de.jetsli.graph.util.shapes.Circle;
 import de.jetsli.graph.util.shapes.Shape;
 import gnu.trove.map.hash.TIntIntHashMap;
 import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
 
 /**
  * This class maps latitude and longitude through there spatial key to values like osm ids, geo IPs,
@@ -91,101 +82,19 @@ import javax.swing.SwingUtilities;
  */
 public class SpatialHashtable implements QuadTree<Long> {
 
-    public static void main(String[] args) throws Exception {
-        final Graph g = OSMReader.osm2Graph(Helper.readCmdArgs(args));
-        final int locs = g.getLocations();
-        System.out.println("graph contains " + locs + " nodes");
-
-        // make sure getBucketIndex is okayish fast
-//        new MiniPerfTest("test") {
-//
-//            @Override
-//            public long doCalc(int run) {
-//                try {
-//                    SpatialKeyTree qt = new SpatialKeyTree(10, 4).init(locs);
-//                    PerfTest.fillQuadTree(qt, g);
-//                    return qt.size();
-//                } catch (Exception ex) {
-//                    ex.printStackTrace();
-//                    return -1;
-//                }
-//            }
-//        }.setMax(50).start();
-
-        final GPlotPanel panel = new GPlotPanel();
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override public void run() {
-                int frameHeight = 800;
-                int frameWidth = 1200;
-                JFrame frame = new JFrame("UI - Fast&Ugly");
-                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.setSize(frameWidth, frameHeight);
-                frame.add(panel.getComponent());
-                frame.setVisible(true);
-            }
-        });
-
-        try {
-            for (int skipLeft = 8; skipLeft < 40; skipLeft += 2) {
-                int entriesPerBuck = 3;
-//                for (; entriesPerBuck < 20; entriesPerBuck += 8) {
-                log("\n");
-                SpatialHashtable qt = new SpatialHashtable(skipLeft, entriesPerBuck).init(locs);
-                int epb = qt.getEntriesPerBucket();
-                String title = "skipLeft:" + skipLeft + " entries/buck:" + epb;
-                log(title);
-                try {
-                    QuadTree.Util.fill(qt, g);
-                } catch (Exception ex) {
-//                    ex.printStackTrace();
-                    log(ex.getMessage());
-                    continue;
-                }
-
-                XYVectorInterface entries = qt.getEntries("Entr " + title);
-                panel.addData(entries);
-                HistogrammInterface hist = (HistogrammInterface) entries.getY();
-                log("entries: [" + hist.getMin() + "," + hist.getMax() + "] mean:" + (float) hist.getMean() + " rms:" + (float) hist.getRMSError());
-
-                XYVectorInterface overflow = qt.getOverflowEntries("Ovrfl " + title);
-                panel.addData(overflow);
-                hist = (HistogrammInterface) overflow.getY();
-                log("ovrflow: [" + hist.getMin() + "," + hist.getMax() + "] mean:" + (float) hist.getMean() + " rms:" + (float) hist.getRMSError());
-
-//                XYVectorInterface overflowOff = qt.getOverflowOffset("Off " + title);
-//                panel.addData(overflowOff);
-//                hist = (HistogrammInterface) overflowOff.getY();
-//                log("offsets: [" + hist.getMin() + "," + hist.getMax() + "] mean:" + (float)hist.getMean() + " rms:" + (float)hist.getRMSError());
-
-                XYVectorInterface dataHist = qt.getSum("Unuse " + title);
-                hist = (HistogrammInterface) dataHist.getY();
-                log("unused:  [" + hist.getMin() + "," + hist.getMax() + "] mean:" + (float) hist.getMean() + " rms:" + (float) hist.getRMSError());
-                panel.addData(dataHist);
-                panel.repaint();
-//                }
-            }
-        } catch (Exception ex) {
-            // do not crash the UI if 'overflow'
-            ex.printStackTrace();
-        }
-    }
-
-    public static void log(Object o) {
-        System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()) + "# " + o);
-    }
-    private int size;
-    private int maxBuckets;
-    private CalcDistance calc = new CalcDistance();
-    private SpatialKeyAlgo algo;
-    private boolean compressKey = true;
     // bits & byte stuff
     private static final int BITS8 = 8;
+    protected int size;
+    protected int maxBuckets;
+    protected CalcDistance calc = new CalcDistance();
+    protected SpatialKeyAlgo algo;
+    private boolean compressKey = true;
+    
     private ByteBuffer storage;
-    private int bytesPerBucket;
-    private int bytesPerEntry;
-    private int bytesPerValue;
-    private int bytesPerOverflowEntry;
+    protected int bytesPerBucket;
+    protected int bytesPerEntry;
+    protected int bytesPerValue;
+    protected int bytesPerOverflowEntry;
     private int maxEntriesPerBucket;
     // key compression
     private int unusedBits = BITS8;
@@ -347,7 +256,7 @@ public class SpatialHashtable implements QuadTree<Long> {
         return algo;
     }
 
-    protected int getEntriesPerBucket() {
+    public int getEntriesPerBucket() {
         return maxEntriesPerBucket;
     }
 
@@ -491,7 +400,7 @@ public class SpatialHashtable implements QuadTree<Long> {
         return (get(bucketPointer) & 0x1) == 1;
     }
 
-    byte getNoOfEntries(int bucketPointer) {
+    protected byte getNoOfEntries(int bucketPointer) {
         byte no = get(bucketPointer);
         // skip overflowed bit
         no >>>= 1;
@@ -534,7 +443,7 @@ public class SpatialHashtable implements QuadTree<Long> {
     /**
      * @return count the number of used overflow bytes
      */
-    int getNoOfOverflowEntries(int buckerPointer) {
+    protected int getNoOfOverflowEntries(int buckerPointer) {
         int no = getNoOfEntries(buckerPointer);
         return getNoOfOverflowEntries(buckerPointer, no);
     }
@@ -702,7 +611,7 @@ public class SpatialHashtable implements QuadTree<Long> {
     /**
      * allows the worker to process nodes of the specified bucketIndex
      */
-    private void getNodes(final LeafWorker worker, final int bucketIndex, final Long requestedKey) {
+    protected void getNodes(final LeafWorker worker, final int bucketIndex, final Long requestedKey) {
         int bucketPointer = bucketIndex * bytesPerBucket;
         byte no = getNoOfEntries(bucketPointer);
         int max = bucketPointer + no * bytesPerEntry + 1;
@@ -801,12 +710,12 @@ public class SpatialHashtable implements QuadTree<Long> {
             getNeighbours(nodeRect01, searchArea, depth, key | 0x1L, worker, false);
     }
 
-    private static abstract class LeafWorker {
+    protected static abstract class LeafWorker {
 
         public LeafWorker() {
         }
 
-        abstract boolean doWork(long key, long value);
+        protected abstract boolean doWork(long key, long value);
     }
 
     @Override
@@ -815,21 +724,8 @@ public class SpatialHashtable implements QuadTree<Long> {
         initBuffers();
     }
 
-    public XYVectorInterface getUnusedBytes(String title) {
-        MainPool pool = MainPool.getDefault();
-        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
-        for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
-            int entryBytes = getNoOfEntries(bucketIndex * bytesPerBucket) * bytesPerEntry;
-            int ovflBytes = getNoOfOverflowEntries(bucketIndex * bytesPerBucket) * bytesPerOverflowEntry;
-            int unusedBytes = bytesPerBucket - 1 - (entryBytes + ovflBytes);
-            xy.add(bucketIndex, unusedBytes);
-        }
-        xy.setTitle(title);
-        return xy;
-    }
-
     // for tests: get the offset of the overflow entry before we found an empty place
-    int getLastOffset(int bucketIndex) {
+    public int getLastOffset(int bucketIndex) {
         final AtomicInteger integ = new AtomicInteger(-1);
         BucketOverflowLoop loop = new BucketOverflowLoop() {
 
@@ -842,60 +738,6 @@ public class SpatialHashtable implements QuadTree<Long> {
         int bucketPointer = bucketIndex * bytesPerBucket;
         loop.throughOverflowEntries(bucketPointer);
         return integ.get();
-    }
-
-    XYVectorInterface getOverflowOffset(String title) {
-        MainPool pool = MainPool.getDefault();
-        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
-        for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
-            xy.add(bucketIndex, getLastOffset(bucketIndex));
-        }
-        xy.setTitle(title);
-        return xy;
-    }
-
-    XYVectorInterface getOverflowEntries(String title) {
-        MainPool pool = MainPool.getDefault();
-        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
-        for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
-            xy.add(bucketIndex, getNoOfOverflowEntries(bucketIndex * bytesPerBucket));
-        }
-        xy.setTitle(title);
-        return xy;
-    }
-
-    XYVectorInterface getEntries(String title) {
-        MainPool pool = MainPool.getDefault();
-        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
-        for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
-            final List<CoordTrig<Long>> res = new ArrayList<CoordTrig<Long>>();
-            getNodes(new LeafWorker() {
-
-                @Override public boolean doWork(long key, long value) {
-                    CoordTrig<Long> coord = new CoordTrigLongEntry();
-                    algo.decode(key, coord);
-                    coord.setValue(value);
-                    res.add(coord);
-                    return true;
-                }
-            }, bucketIndex, null);
-            xy.add(bucketIndex, res.size());
-        }
-        xy.setTitle(title);
-        return xy;
-    }
-
-    XYVectorInterface getSum(String title) {
-        MainPool pool = MainPool.getDefault();
-        XYVectorInterface xy = pool.createXYVector(DoubleVectorInterface.class, HistogrammInterface.class);
-        for (int bucketIndex = 0; bucketIndex < maxBuckets; bucketIndex++) {
-            int overflBytes = getNoOfOverflowEntries(bucketIndex * bytesPerBucket) * bytesPerOverflowEntry;
-            int entryBytes = getNoOfEntries(bucketIndex * bytesPerBucket) * bytesPerEntry;
-            int unusedBytes = bytesPerBucket - 1 - (entryBytes + overflBytes);
-            xy.add(bucketIndex, (double) unusedBytes / bytesPerEntry);
-        }
-        xy.setTitle(title);
-        return xy;
     }
 
     public TIntIntHashMap getStats(int max) {

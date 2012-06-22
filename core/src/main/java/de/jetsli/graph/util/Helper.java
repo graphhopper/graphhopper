@@ -204,55 +204,6 @@ public class Helper {
         return new CmdArgs(map);
     }
 
-    public static class CmdArgs {
-
-        private final Map<String, String> map;
-
-        private CmdArgs(Map<String, String> map) {
-            this.map = map;
-        }
-
-        public long getLong(String key, long _default) {
-            String str = map.get(key);
-            if (!Helper.isEmpty(str)) {
-                try {
-                    return Long.parseLong(str);
-                } catch (Exception ex) {
-                }
-            }
-            return _default;
-        }
-
-        public boolean getBool(String key, boolean _default) {
-            String str = map.get(key);
-            if (!Helper.isEmpty(str)) {
-                try {
-                    return Boolean.parseBoolean(str);
-                } catch (Exception ex) {
-                }
-            }
-            return _default;
-        }
-
-        public double getDouble(String key, double _default) {
-            String str = map.get(key);
-            if (!Helper.isEmpty(str)) {
-                try {
-                    return Double.parseDouble(str);
-                } catch (Exception ex) {
-                }
-            }
-            return _default;
-        }
-
-        public String get(String key, String _default) {
-            String str = map.get(key);
-            if (Helper.isEmpty(str))
-                return _default;
-            return str;
-        }
-    }
-
     public static boolean isEmpty(String strOsm) {
         return strOsm == null || strOsm.trim().isEmpty();
     }

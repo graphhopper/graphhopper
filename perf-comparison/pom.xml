@@ -22,6 +22,24 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
         
+          <!-- just for some minor stats. released at https://github.com/karussell/plotter -->
+         <dependency>
+            <groupId>de.genvlin</groupId>
+            <artifactId>plotter</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+                
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>3.6.0</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j</artifactId>
+            <version>1.6</version>
+        </dependency> 
         <dependency>
             <groupId>org.apache.sis</groupId>
             <artifactId>sis-core</artifactId>
@@ -34,7 +52,7 @@
             <version>4.0-SNAPSHOT</version>
         </dependency>
         
-         <dependency>
+        <dependency>
             <groupId>com.vividsolutions</groupId>
             <artifactId>jts</artifactId>
             <version>1.8</version>

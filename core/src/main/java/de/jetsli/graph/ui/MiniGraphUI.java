@@ -25,6 +25,7 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.trees.QuadTree;
+import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.StopWatch;
@@ -43,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class MiniGraphUI {
 
     public static void main(String[] strs) throws Exception {
-        Helper.CmdArgs args = Helper.readCmdArgs(strs);
+        CmdArgs args = Helper.readCmdArgs(strs);
         Graph g = OSMReader.osm2Graph(args);
         boolean debug = args.getBool("debug", false);
         new MiniGraphUI(g, debug).visualize();

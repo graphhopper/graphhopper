@@ -23,6 +23,7 @@ fi
 DEBUG=false
 DIJKSTRA=false
 GRAPH=graph-$OSM
+JAR=target/graphhopper-1.0-SNAPSHOT-jar-with-dependencies.jar
 
 if [ ! -f "$OSM" ]; then
   echo "WARNING: Running this will use ~500MB on disc: 450MB for the OSM file (only 40MB for the download of the compressed one) and 30MB for the graph"
@@ -48,13 +49,13 @@ fi
 if [ ! -d "$GRAPH" ]; then
   echo "## create graph $GRAPH (folder) from $OSM (file)"
   echo "## HINT: put the osm on an external usb drive which should speed up import time"
-  java $JAVA_OPTS_IMPORT -cp target/graphhopper-1.0-SNAPSHOT-jar-with-dependencies.jar de.jetsli.graph.reader.OSMReader graph=$GRAPH osm=$OSM size=$SIZE dijkstra=$DIJKSTRA
+  java $JAVA_OPTS_IMPORT -cp $JAR de.jetsli.graph.reader.OSMReader graph=$GRAPH osm=$OSM size=$SIZE dijkstra=$DIJKSTRA
 else
   echo "## using existing graph at $GRAPH"
 fi
 
 if [ -d "$GRAPH" ]; then
-  java $JAVA_OPTS -cp target/graphhopper-1.0-SNAPSHOT-jar-with-dependencies.jar de.jetsli.graph.ui.MiniGraphUI graph=$GRAPH debug=$DEBUG
+  java $JAVA_OPTS -cp $JAR de.jetsli.graph.ui.MiniGraphUI graph=$GRAPH debug=$DEBUG
 else
   echo "## creating graph failed"
 fi

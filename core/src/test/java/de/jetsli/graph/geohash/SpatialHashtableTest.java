@@ -102,18 +102,6 @@ public class SpatialHashtableTest extends QuadTreeTester {
     }
 
     @Test
-    public void testStatsNoError() {
-        SpatialHashtable tree = new SpatialHashtable(10, 2).init(10000);
-        Random rand = new Random(12);
-        for (int i = 0; i < 10000; i++) {
-            tree.add(Math.abs(rand.nextDouble()), Math.abs(rand.nextDouble()), (long) i * 100);
-        }
-        tree.getEntries("e");
-        tree.getOverflowEntries("o");
-        tree.getOverflowOffset("oo");
-    }
-
-    @Test
     public void testArrayIsACircle() {
         SpatialHashtable tree = new SpatialHashtable(0, 1).setCompressKey(false).init(2);
         assertEquals(2, tree.getEntriesPerBucket());
