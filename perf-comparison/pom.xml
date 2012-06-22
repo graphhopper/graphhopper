@@ -4,11 +4,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>de.jetsli</groupId>
-    <artifactId>quad-tree-comparison</artifactId>
+    <artifactId>perf-comparison</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>quad-tree-comparison</name>
+    <name>perf-comparison</name>
     <url>http://maven.apache.org</url>
 
     <properties>
