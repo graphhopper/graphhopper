@@ -23,7 +23,7 @@
         </dependency>
         
           <!-- just for some minor stats. released at https://github.com/karussell/plotter -->
-         <dependency>
+        <dependency>
             <groupId>de.genvlin</groupId>
             <artifactId>plotter</artifactId>
             <version>1.0-SNAPSHOT</version>
@@ -74,12 +74,41 @@
             </snapshots>
         </repository>
         
-        <!-- already in graph hopper
+        <!-- for de.genvlin -->
+        <repository>            
+            <id>karussell_snapshot</id>
+            <name>karussell snapshots</name>
+            <url>https://github.com/karussell/mvnrepo/raw/master/snapshots</url>
+        </repository>
+        
+        
+        <!--
         <repository>
-            <id>elasticsearch</id>
-            <name>ElasticSearch Repo for trove</name>
-            <url>http://elasticsearch.googlecode.com/svn/maven</url>
+            <id>tinkerpop-repository</id>
+            <name>TinkerPop Maven2 Repository</name>
+            <url>http://tinkerpop.com/maven2</url>
         </repository>
         -->
+        
+        <!--
+        <repository>
+            <id>orientechnologies-repository</id>
+            <name>Orient Technologies Maven2 Repository</name>
+            <url>http://www.orientechnologies.com/listing/m2</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository> 
+        -->
+        
+        <!-- not existent?
+        <repository>
+            <id>oracleReleases</id>
+            <name>Oracle Released Java Packages</name>
+            <url>http://download.oracle.com/maven</url>
+            <layout>default</layout>
+        </repository> -->
+        
     </repositories>
 </project>

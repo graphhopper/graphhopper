@@ -22,11 +22,12 @@
             <version>3.6.0</version>
         </dependency>
         
-        <!-- trove 3 is in no other maven repo? -->
+        <!-- trove is lgpl and a slightly big (>2MB)
+        -->
         <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>es-trove</artifactId>
-            <version>3.0.0</version>
+            <groupId>net.sf.trove4j</groupId>
+            <artifactId>trove4j</artifactId>
+            <version>3.0.3</version>
         </dependency>
               
         <dependency>
@@ -50,6 +51,7 @@
             <version>1.2.14</version>
             <scope>compile</scope>
         </dependency>
+        
         <dependency>
             <groupId>junit</groupId>
             <!-- do not include hamcrest -->
@@ -101,44 +103,5 @@
     
     <repositories>
         
-        <repository>
-            <name>ElasticSearch Google</name>    
-            <id>ElasticSearch Google</id>
-            <url>http://elasticsearch.googlecode.com/svn/maven</url>        
-        </repository>
-        <!--
-        <repository>
-            <id>tinkerpop-repository</id>
-            <name>TinkerPop Maven2 Repository</name>
-            <url>http://tinkerpop.com/maven2</url>
-        </repository>
-        -->
-        
-        <!--
-        <repository>
-            <id>orientechnologies-repository</id>
-            <name>Orient Technologies Maven2 Repository</name>
-            <url>http://www.orientechnologies.com/listing/m2</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository> 
-        -->
-        
-        <!-- not existent?
-        <repository>
-            <id>oracleReleases</id>
-            <name>Oracle Released Java Packages</name>
-            <url>http://download.oracle.com/maven</url>
-            <layout>default</layout>
-        </repository> -->
-        
-        <!-- for de.genvlin -->
-        <repository>            
-            <id>karussell_snapshot</id>
-            <name>karussell snapshots</name>
-            <url>https://github.com/karussell/mvnrepo/raw/master/snapshots</url>
-        </repository>
     </repositories>    
 </project>
