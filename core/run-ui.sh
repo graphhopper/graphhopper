@@ -16,7 +16,7 @@ else
  # For import we need a lot more memory but for executing we need to reduce it
  # in order to use off-heap memory
  JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx2700m -Xms2700m"
- JAVA_OPTS="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx300m -Xms300m"
+ JAVA_OPTS="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx700m -Xms700m"
  SIZE=35000000
 fi
 

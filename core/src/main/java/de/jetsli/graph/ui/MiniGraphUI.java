@@ -75,7 +75,7 @@ public class MiniGraphUI {
         this.graph = tmpG;
         logger.info("locations:" + tmpG.getLocations());
         // prepare location quadtree to 'enter' the graph. create a 313*313 grid => <3km
-        this.index = new Location2IDQuadtree(tmpG).prepareIndex(1000);
+        this.index = new Location2IDQuadtree(tmpG).prepareIndex(90000);
 //        this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
 //        this.quadTree = new SpatialHashtable(2, 3).init(graph.getLocations());
 
