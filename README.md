@@ -7,8 +7,8 @@ License
 
 This software stands under Apache License 2
 
-Usage
-------------------
+Routing Usage
+---------------
 
 Download OSM file (40MB compressed, then 450MB uncompressed), build graph hopper and run it:
 
@@ -24,3 +24,14 @@ If you want to import a bigger OSM (Germany) then run:
  * Then a route should pop up like in this image ![from twitter](https://p.twimg.com/AvidlNPCMAA5e_n.png:medium)
  * For Germany it takes approx 25 minutes for the import and roughly 1 minute for the ugly&slow UI to pop up. Probably you'll need to tune the memory settings - send me a mail if this fails!
  * At the moment all operations require redrawing the graph which takes quite some time! So don't click or drag too much ;)
+
+QuadTree Usage
+---------------
+
+See the performacen comparison subproject and the articles:
+
+http://karussell.wordpress.com/2012/06/17/failed-experiment-memory-efficient-spatial-hashtable/
+
+http://karussell.wordpress.com/2012/05/29/tricks-to-speed-up-neighbor-searches-of-quadtrees-geo-spatial-java/
+
+http://karussell.wordpress.com/2012/05/23/spatial-keys-memory-efficient-geohashes/
