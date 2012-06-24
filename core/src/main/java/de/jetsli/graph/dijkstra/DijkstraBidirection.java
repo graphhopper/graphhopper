@@ -38,30 +38,45 @@ public class DijkstraBidirection implements Dijkstra {
     private Graph graph;
     protected LinkedDistEntry currFrom;
     protected LinkedDistEntry currTo;
-    protected PathWrapper shortest;    
+    protected PathWrapper shortest;
     protected TIntObjectMap<LinkedDistEntry> shortestDistMapOther;
     private MyBitSet visitedFrom;
     private PriorityQueue<LinkedDistEntry> prioQueueFrom;
-    private TIntObjectMap<LinkedDistEntry> shortestDistMapFrom;   
+    private TIntObjectMap<LinkedDistEntry> shortestDistMapFrom;
     private MyBitSet visitedTo;
     private PriorityQueue<LinkedDistEntry> prioQueueTo;
     private TIntObjectMap<LinkedDistEntry> shortestDistMapTo;
     private boolean alreadyRun;
-    
-    public DijkstraBidirection(Graph graph) {
-        this.graph = graph;        
-        visitedFrom = new MyOpenBitSet(graph.getLocations());
-        prioQueueFrom = new PriorityQueue<LinkedDistEntry>();
-        shortestDistMapFrom = new TIntObjectHashMap<LinkedDistEntry>();
 
-        visitedTo = new MyOpenBitSet(graph.getLocations());
-        prioQueueTo = new PriorityQueue<LinkedDistEntry>();
-        shortestDistMapTo = new TIntObjectHashMap<LinkedDistEntry>();
+    public DijkstraBidirection(Graph graph) {
+        this.graph = graph;
+        int locs = Math.max(20, graph.getLocations());
+        visitedFrom = new MyOpenBitSet(locs);
+        prioQueueFrom = new PriorityQueue<LinkedDistEntry>(locs / 10);
+        shortestDistMapFrom = new TIntObjectHashMap<LinkedDistEntry>(locs / 10);
+
+        visitedTo = new MyOpenBitSet(locs);
+        prioQueueTo = new PriorityQueue<LinkedDistEntry>(locs / 10);
+        shortestDistMapTo = new TIntObjectHashMap<LinkedDistEntry>(locs / 10);
+
+        clear();
+    }
+
+    public Dijkstra clear() {
+        alreadyRun = false;
+        visitedFrom.clear();
+        prioQueueFrom.clear();
+        shortestDistMapFrom.clear();
+
+        visitedTo.clear();
+        prioQueueTo.clear();
+        shortestDistMapTo.clear();
 
         shortest = new PathWrapper();
         shortest.distance = Double.MAX_VALUE;
+        return this;
     }
-    
+
     public void addSkipNode(int node) {
         visitedFrom.add(node);
         visitedTo.add(node);
@@ -82,9 +97,9 @@ public class DijkstraBidirection implements Dijkstra {
     }
 
     @Override public DijkstraPath calcShortestPath(int from, int to) {
-        if(alreadyRun)
+        if (alreadyRun)
             throw new IllegalStateException("Do not reuse DijkstraBidirection");
-        
+
         alreadyRun = true;
         initFrom(from);
         initTo(to);
@@ -94,24 +109,26 @@ public class DijkstraBidirection implements Dijkstra {
         if (p != null)
             return p;
 
+        int counter = 0;
         int finish = 0;
         while (finish < 2) {
+            counter ++;
             finish = 0;
             if (!fillEdgesFrom())
-                finish ++;
+                finish++;
 
             if (!fillEdgesTo())
-                finish ++;
+                finish++;
         }
-
+        
         return getShortest();
     }
 
     public DijkstraPath getShortest() {
         DijkstraPath g = shortest.extract();
-        if(g == null)
+        if (g == null)
             return null;
-        
+
         if (g.getFromLoc() != from) {
             // move distance adjustment to reverseOrder?
             double tmpDist = g.distance();
@@ -165,9 +182,9 @@ public class DijkstraBidirection implements Dijkstra {
 
     public void updateShortest(LinkedDistEntry shortestDE, int currLoc) {
         LinkedDistEntry entryOther = shortestDistMapOther.get(currLoc);
-        if(entryOther == null)
+        if (entryOther == null)
             return;
-        
+
         // update μ
         double newShortest = shortestDE.distance + entryOther.distance;
         if (newShortest < shortest.distance) {
@@ -178,17 +195,17 @@ public class DijkstraBidirection implements Dijkstra {
     }
 
     public boolean fillEdgesFrom() {
-        if (currFrom != null) {            
+        if (currFrom != null) {
             shortestDistMapOther = shortestDistMapTo;
             fillEdges(currFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom);
-            if(prioQueueFrom.isEmpty())
+            if (prioQueueFrom.isEmpty())
                 return false;
-            
+
             currFrom = prioQueueFrom.poll();
             if (checkFinishCondition())
                 return false;
             visitedFrom.add(currFrom.node);
-            
+
         } else if (currTo == null)
             throw new IllegalStateException("Shortest Path not found? " + from + " " + to);
 
@@ -199,9 +216,9 @@ public class DijkstraBidirection implements Dijkstra {
         if (currTo != null) {
             shortestDistMapOther = shortestDistMapFrom;
             fillEdges(currTo, visitedTo, prioQueueTo, shortestDistMapTo);
-            if(prioQueueTo.isEmpty())
+            if (prioQueueTo.isEmpty())
                 return false;
-            
+
             currTo = prioQueueTo.poll();
             if (checkFinishCondition())
                 return false;
@@ -223,7 +240,7 @@ public class DijkstraBidirection implements Dijkstra {
     public LinkedDistEntry getShortestDistFrom(int index) {
         return shortestDistMapFrom.get(index);
     }
-    
+
     public LinkedDistEntry getShortestDistTo(int index) {
         return shortestDistMapTo.get(index);
     }

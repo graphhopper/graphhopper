@@ -53,6 +53,7 @@ public class MiniGraphUI {
     private QuadTree<Long> quadTree;
     private Collection<CoordTrig<Long>> quadTreeNodes;
     private DijkstraPath path;
+    private DijkstraBidirection dijkstra;
     private final Graph graph;
     private Location2IDIndex index;
     private double scaleX = 0.001f;
@@ -77,6 +78,8 @@ public class MiniGraphUI {
         logger.info("locations:" + tmpG.getLocations());
         // prepare location quadtree to 'enter' the graph. create a 313*313 grid => <3km
         this.index = new Location2IDQuadtree(tmpG).prepareIndex(90000);
+        this.dijkstra = new DijkstraBidirection(graph);
+        
 //        this.quadTree = new QuadTreeSimple<Long>(8, 7 * 8);
 //        this.quadTree = new SpatialHashtable(2, 3).init(graph.getLocations());
 
@@ -327,7 +330,7 @@ public class MiniGraphUI {
                                 int to = index.findID(toLat, toLon);
                                 logger.info("found ids " + from + " -> " + to + " in " + sw.stop().getSeconds() + "s");
                                 sw = new StopWatch().start();
-                                path = new DijkstraBidirection(graph).calcShortestPath(from, to);
+                                path = dijkstra.clear().calcShortestPath(from, to);
                                 logger.info("found path in " + sw.stop().getSeconds() + "s");
                                 repaintPaths();
                             }

@@ -15,20 +15,21 @@
  */
 package de.jetsli.graph.reader;
 
+import de.jetsli.graph.coll.MyBitSet;
+import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
-import de.jetsli.graph.util.CmdArgs;
-import de.jetsli.graph.util.Helper;
-import de.jetsli.graph.util.StopWatch;
+import de.jetsli.graph.util.*;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.*;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -49,7 +50,7 @@ public class OSMReader {
         String graphFolder = args.get("graph", "graph-storage");
         if (Helper.isEmpty(graphFolder))
             throw new IllegalArgumentException("Please specify a folder where to store the graph");
-        
+
         OSMReader osmReader = new OSMReader(graphFolder, size) {
 
             @Override public boolean isInBounds(double lat, double lon) {
@@ -79,6 +80,12 @@ public class OSMReader {
     private TIntArrayList tmpLocs = new TIntArrayList(10);
     private CalcDistance callback = new CalcDistance();
 
+    /**
+     * Opens or creates a graph. The specified args need a property 'graph' (a folder) and if no
+     * such folder exist it'll create a graph from the provided osm file (property 'osm'). A
+     * property 'size' is used to preinstantiate a datastructure/graph to avoid over-memory
+     * allocation or reallocation (default is 5mio)
+     */
     public static Graph osm2Graph(CmdArgs args) throws FileNotFoundException {
         String graphFolder = args.get("graph", "graph-storage");
         if (Helper.isEmpty(graphFolder))
@@ -113,8 +120,40 @@ public class OSMReader {
         Location2IDIndex index = new Location2IDQuadtree(g).prepareIndex(20000);
         double minLat = 49.484186, minLon = 8.974228;
         double maxLat = 50.541363, maxLon = 10.880356;
+        DijkstraBidirection dijkstra = new DijkstraBidirection(g);
         Random rand = new Random(123);
         StopWatch sw = new StopWatch();
+        final AtomicInteger integ = new AtomicInteger(0);
+        int locs = g.getLocations();
+        final MyBitSet differentNetwork = new MyOpenBitSet(locs);
+        final MyBitSet bs = new MyOpenBitSet(locs);
+        for (int i = 0; i < locs; i++) {
+            if (bs.contains(i))
+                continue;
+
+            final int tmp = i;
+            new XFirstSearch() {
+
+                @Override protected MyBitSet createBitSet(int size) {
+                    return bs;
+                }
+
+                @Override protected boolean goFurther(int nodeId) {
+                    boolean ret = super.goFurther(nodeId);
+                    if (ret) {
+                        integ.incrementAndGet();
+                        if (tmp > 0)
+                            differentNetwork.add(nodeId);
+                    }
+
+                    return ret;
+                }
+            }.start(g, i, true);
+
+            System.out.println("start:" + i + " count:" + integ.get());
+            integ.set(0);
+        }
+
         for (int i = 0; i < runs; i++) {
             double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
             double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
@@ -129,15 +168,15 @@ public class OSMReader {
             }
 
             sw.start();
-            DijkstraPath p = new DijkstraBidirection(g).calcShortestPath(from, to);
+            DijkstraPath p = dijkstra.clear().calcShortestPath(from, to);
             sw.stop();
             if (p == null) {
                 logger.warn("no route found for i=" + i + " !?"
-                        + " graph-from " + (float) g.getLatitude(from) + ", " + (float) g.getLongitude(from)
-                        + " graph-to " + (float) g.getLatitude(to) + ", " + (float) g.getLongitude(to));
+                        + " graph-from " + from + " " + differentNetwork.contains(from)
+                        + ", graph-to " + to + " " + differentNetwork.contains(to));
                 continue;
             }
-            if (i % 50 == 0)
+            if (i % 20 == 0)
                 logger.info(i + " " + sw.getSeconds() / (i + 1) + " path:" + p.locations());// + " " + p.toString());
         }
     }

@@ -49,7 +49,8 @@ public class MMapGraphStorage implements Storage {
     @Override
     public void createNew() {
         g = new MMapGraph(file, osmIdToIndexMap.size());
-        // now a workaround to avoid slow down for mmap files (and RAM bottlenecks), but still write to disc!
+        // createNew(*true*) to avoid slow down for mmap files (and RAM bottlenecks)
+        // but still write to disc at the end!
         g.createNew(true);
     }
 
@@ -60,7 +61,6 @@ public class MMapGraphStorage implements Storage {
         return true;
     }
     int counter = 0;
-//    StopWatch sw = new StopWatch();
 
     @Override
     public boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback) {
@@ -84,21 +84,17 @@ public class MMapGraphStorage implements Storage {
             double lof = g.getLongitude(fromIndex);
             double lat = g.getLatitude(toIndex);
             double lot = g.getLongitude(toIndex);
-//            sw.stop();
             double dist = callback.calcDistKm(laf, lof, lat, lot);
-            if (dist == 0)
+            if (dist == 0) {
+                //  dist = 0.001;
                 return false;
-            else if (dist < 0) {
+            } else if (dist < 0) {
                 logger.info(counter + " - distances negative. " + fromIndex + " (" + laf + ", " + lof + ")->"
                         + toIndex + "(" + lat + ", " + lot + ") :" + dist);
                 return false;
             }
 
             g.edge(fromIndex, toIndex, dist, reverse);
-//            counter++;
-//            if (counter % 100000 == 0) {
-//                logger.info(counter + ". time to get lat,lon:" + sw.getSeconds() + " sec");
-//            }
             return true;
         } catch (Exception ex) {
             throw new RuntimeException("Problem to add edge! with node " + fromIndex + "->" + toIndex + " osm:" + nodeIdFrom + "->" + nodeIdTo, ex);
@@ -107,7 +103,7 @@ public class MMapGraphStorage implements Storage {
 
     @Override
     public void close() {
-        g.flush();
+        flush();
     }
 
     Graph getGraph() {
@@ -121,6 +117,7 @@ public class MMapGraphStorage implements Storage {
     @Override
     public void flush() {
         g.flush();
+        osmIdToIndexMap = null;
     }
 
     @Override
