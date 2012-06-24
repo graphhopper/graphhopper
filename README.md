@@ -19,7 +19,7 @@ If you want to import a bigger OSM (Germany) then run:
  * when executing the command again the OSM won't be parsed again, so the UI should pop up within 1 or 2 seconds.
  * After the UI popped up you can drag to move the map or scroll to zoom like in ordinary maps apps
  * Click once to select a departure and another click to select the destination
- * Then a route should pop up like in this image ![from twitter](http://karussell.files.wordpress.com/2012/06/graphhopper.png)
+ * Then a route should pop up like in this SHINY ;) image ![from twitter](http://karussell.files.wordpress.com/2012/06/graphhopper.png)
 
 > cd core; ./run.sh germany
 
