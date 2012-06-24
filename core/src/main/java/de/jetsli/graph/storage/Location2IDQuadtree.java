@@ -23,8 +23,6 @@ import de.jetsli.graph.util.*;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -153,9 +151,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
         int counter = 0;
         List<DistEntry> list = new ArrayList<DistEntry>();
         for (int mainKey = 0; mainKey < size; mainKey++) {
-            if (mainKey % 100000 == 0)
-                logger.info("mainKey:" + mainKey);
-
+//            if (mainKey % 100000 == 0)
+//                logger.info("mainKey:" + mainKey);
             final CoordTrig mainCoord = new CoordTrig();
             algo.decode(mainKey, mainCoord);
             if (filledIndices.contains(mainKey))

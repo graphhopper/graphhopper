@@ -15,10 +15,7 @@
  */
 package de.jetsli.graph.ui;
 
-import java.awt.AlphaComposite;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
 
@@ -57,6 +54,25 @@ public abstract class DefaultMapLayer implements MapLayer {
 
     @Override public Rectangle getBounds() {
         return bounds;
+    }
+
+    public void makeTransparent(Graphics2D g2) {
+        Color col = g2.getColor();
+        Composite comp = null;
+        // force transparence of this layer only. If no buffering we would clear layers below
+        if (buffering) {
+            comp = g2.getComposite();
+            g2.setComposite(AlphaComposite.Clear);
+        }
+        g2.setColor(new Color(0, 0, 0, 0));
+        g2.fillRect(0, 0, bounds.width, bounds.height);
+        g2.setColor(col);
+        if (comp != null)
+            g2.setComposite(comp);
+    }
+
+    public void clearGraphics(Graphics2D g2) {
+        g2.clearRect(0, 0, bounds.width, bounds.height);        
     }
 
     @Override public void setBounds(Rectangle bounds) {

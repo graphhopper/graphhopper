@@ -94,6 +94,10 @@ public class BBox implements Shape {
         return minLon + "," + maxLon + "," + minLat + "," + maxLat;
     }
 
+    public String toLessPrecisionString() {
+        return (float) minLon + "," + (float) maxLon + "," + (float) minLat + "," + (float) maxLat;
+    }
+
     @Override
     public BBox getBBox() {
         return this;

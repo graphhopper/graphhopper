@@ -60,27 +60,13 @@ public class MyLayerPanel extends JPanel {
         layers.add(ml);
     }
 
-    public static void makeGraphicsTransparent(Graphics2D g2, Rectangle bounds) {
-        Color col = g2.getColor();
-        Composite comp = g2.getComposite();
-        g2.setComposite(AlphaComposite.Clear);
-        g2.setColor(new Color(0, 0, 0, 0));
-        g2.fillRect(0, 0, bounds.width, bounds.height);
-        g2.setColor(col);
-        g2.setComposite(comp);
-    }
-
-    public static void clearGraphics(Graphics2D g2, Rectangle bounds) {
-        Color c = g2.getColor();
-        g2.clearRect(0, 0, bounds.width, bounds.height);
-        g2.setColor(c);
-    }
-
     @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 //        StopWatch sw = new StopWatch();
-        clearGraphics(g2, getBounds());
+        
+        g2.clearRect(0, 0, getBounds().width, getBounds().height);
+        
 //        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 //        g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
 //        int counter = 0;
