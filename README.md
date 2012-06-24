@@ -16,12 +16,13 @@ Download OSM file (40MB compressed, then 450MB uncompressed), build graph hopper
 
 If you want to import a bigger OSM (Germany) then run:
 
-> cd core; ./run.sh germany
-
  * when executing the command again the OSM won't be parsed again, so the UI should pop up within 1 or 2 seconds.
  * After the UI popped up you can drag to move the map or scroll to zoom like in ordinary maps apps
  * Click once to select a departure and another click to select the destination
- * Then a route should pop up like in this image ![from twitter](https://p.twimg.com/AvidlNPCMAA5e_n.png:medium)
+ * Then a route should pop up like in this image ![from twitter](http://karussell.files.wordpress.com/2012/06/graphhopper.png)
+
+> cd core; ./run.sh germany
+
  * For Germany it takes approx 25 minutes for the import and roughly 1 minute for the ugly&slow UI to pop up. Probably you'll need to tune the memory settings - send me a mail if this fails!
  * At the moment all operations require redrawing the graph which takes quite some time! So don't click or drag too much ;)
 

@@ -58,15 +58,13 @@ public class XFirstSearch {
 
         while (!coll.isEmpty()) {
             current = coll.pop();
-            if (!goFurther(current))
-                break;
-
-            for (DistEntry de : getEdges(g, current)) {
-                if (!visited.contains(de.node)) {
-                    visited.add(de.node);
-                    coll.push(de.node);
+            if (goFurther(current))
+                for (DistEntry de : getEdges(g, current)) {
+                    if (!visited.contains(de.node)) {
+                        visited.add(de.node);
+                        coll.push(de.node);
+                    }
                 }
-            }
         }
     }
 

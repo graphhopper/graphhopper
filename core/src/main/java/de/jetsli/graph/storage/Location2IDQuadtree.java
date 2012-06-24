@@ -40,7 +40,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private SpatialKeyAlgo algo;
-    private CalcDistance calc = new CalcDistance();
+    protected CalcDistance calc = new CalcDistance();
     private IntBuffer spatialKey2Id;
     private double maxNormRasterWidthKm;
     private int size;
@@ -111,7 +111,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         // distances. because sin(x) is only monotonic increasing for x <= PI/2 (and positive for x >= 0)
     }
 
-    double getMaxRasterWidthKm() {
+    protected double getMaxRasterWidthKm() {
         return calc.denormalizeDist(maxNormRasterWidthKm);
     }
 
@@ -269,6 +269,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         double mainLat = g.getLatitude(id);
         double mainLon = g.getLongitude(id);
         final DistEntry closestNode = new DistEntry(id, calc.calcNormalizedDist(lat, lon, mainLat, mainLon));
+        goFurtherHook(id);
         new XFirstSearch() {
 
             @Override protected MyBitSet createBitSet(int size) {
@@ -279,6 +280,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 if (nodeId == id)
                     return true;
 
+                goFurtherHook(nodeId);
                 double currLat = g.getLatitude(nodeId);
                 double currLon = g.getLongitude(nodeId);
                 double d = calc.calcNormalizedDist(currLat, currLon, lat, lon);
@@ -288,9 +290,12 @@ public class Location2IDQuadtree implements Location2IDIndex {
                     return true;
                 }
 
-                return d < maxNormRasterWidthKm;
+                return d < maxNormRasterWidthKm * 2;
             }
         }.start(g, id, false);
         return closestNode.node;
+    }
+    
+    public void goFurtherHook(int n) {
     }
 }

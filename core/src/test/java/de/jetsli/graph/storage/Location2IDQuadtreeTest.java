@@ -33,13 +33,6 @@ public class Location2IDQuadtreeTest {
         idx.prepareIndex(8);
         // maxWidth is ~555km and with size==8 it will be exanded to 4*4 array => maxRasterWidth==555/4
         assertTrue(idx.getMaxRasterWidthKm() + "", idx.getMaxRasterWidthKm() < 140);
-
-//        // 6
-//        double dist1 = new CalcDistance().calcNormalizedDist(3.125, 1.875, 3, 1.5);
-//        // 9
-//        double dist2 = new CalcDistance().calcNormalizedDist(3.125, 1.875, 3.3, 2.2);
-//        assertEquals(dist1, dist2, 1e-10);
-
         assertEquals(1, idx.findID(1.637, 2.23));
         assertEquals(9, idx.findID(3.649, 1.375));
         assertEquals(9, idx.findID(3.3, 2.2));
@@ -82,7 +75,7 @@ public class Location2IDQuadtreeTest {
             float newDist = (float) dist.calcDistKm(lat, lon, newLat, newLon);
 
             // conceptual limitation see testSinglePoints32            
-            if (i == 20 || i == 50 || i == 65 || i == 73)
+            if (i == 20 || i == 50)
                 continue;
 
             assertTrue(i + " orig:" + (float) lat + "," + (float) lon
@@ -109,8 +102,6 @@ public class Location2IDQuadtreeTest {
 
         // (50) we get 4 instead
         // assertEquals(0, idx.findID(0.64628404, 0.53006625));
-
-        // (65) (73)
     }
 
     @Test

@@ -54,21 +54,25 @@ public class MiniGraphUI {
     private DijkstraPath path;
     private DebugDijkstraBidirection dijkstra;
     private final Graph graph;
-    private Location2IDIndex index;
+    private DebugLocation2IDQuadtree index;
     private String latLon = "";
     private MyGraphics mg;
     private JPanel infoPanel;
     private MyLayerPanel mainPanel;
-    private MapLayer pathLayer;
     private MapLayer roadsLayer;
+    private MapLayer pathLayer;
+    private MapLayer findIdLayer;
     private boolean fastPaint = false;
 
-    public MiniGraphUI(Graph tmpG, boolean debug) {
-        this.graph = tmpG;
-        logger.info("locations:" + tmpG.getLocations());
+    public MiniGraphUI(Graph roadGraph, boolean debug) {
+        this.graph = roadGraph;
+        logger.info("locations:" + roadGraph.getLocations());
+        mg = new MyGraphics(roadGraph);
+
         // prepare location quadtree to 'enter' the graph. create a 313*313 grid => <3km
-        this.index = new Location2IDQuadtree(tmpG).prepareIndex(90000);
-        mg = new MyGraphics(tmpG);
+        this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
+        // this.index = new Location2IDQuadtree(roadGraph);
+        index.prepareIndex(90000);
         this.dijkstra = new DebugDijkstraBidirection(graph, mg);
         infoPanel = new JPanel() {
 
@@ -138,6 +142,20 @@ public class MiniGraphUI {
                 }
             }
         });
+        mainPanel.addLayer(findIdLayer = new DefaultMapLayer() {
+
+            @Override protected void paintComponent(Graphics2D g2) {
+                if (findIDLat == null || findIDLon == null)
+                    return;
+
+                makeTransparent(g2);
+                StopWatch sw = new StopWatch().start();
+                index.setGraphics(g2);
+                int id = index.findID(findIDLat, findIDLon);
+                logger.info("found " + id + " for " + findIDLat + "," + findIDLon + " in " + sw.stop().getSeconds() + "s");
+            }
+        });
+
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
 
             @Override public void paintComponent(Graphics2D g2) {
@@ -183,6 +201,7 @@ public class MiniGraphUI {
             mainPanel.setBuffering(false);
         }
     }
+    Double findIDLat = null, findIDLon = null;
     int dijkstraFromId = -1;
     int dijkstraToId = -1;
 
@@ -211,50 +230,11 @@ public class MiniGraphUI {
 
                     MouseAdapter ml = new MouseAdapter() {
 
-                        // for routing:
-                        double fromLat, fromLon;
-                        boolean fromDone = false;
-
                         @Override public void mouseClicked(MouseEvent e) {
-                            if (!fromDone) {
-                                fromLat = mg.getLat(e.getY());
-                                fromLon = mg.getLon(e.getX());
-                            } else {
-                                double toLat = mg.getLat(e.getY());
-                                double toLon = mg.getLon(e.getX());
-                                StopWatch sw = new StopWatch().start();
-                                logger.info("start searching from " + fromLat + "," + fromLon
-                                        + " to " + toLat + "," + toLon);
-                                // get from and to node id
-                                dijkstraFromId = index.findID(fromLat, fromLon);
-                                dijkstraToId = index.findID(toLat, toLon);
-                                logger.info("found ids " + dijkstraFromId + " -> " + dijkstraToId + " in " + sw.stop().getSeconds() + "s");
-                                repaintPaths();
-                            }
-
-                            fromDone = !fromDone;
-                        }
-                        boolean dragging = false;
-
-                        @Override public void mouseDragged(MouseEvent e) {
-                            dragging = true;
-                            fastPaint = true;
-                            update(e);
-                            updateLatLon(e);
-                        }
-
-                        @Override public void mouseReleased(MouseEvent e) {
-                            if (dragging) {
-                                // update only if mouse release comes from dragging! (at the moment equal to fastPaint)
-                                dragging = false;
-                                fastPaint = false;
-                                update(e);
-                            }
-                        }
-
-                        public void update(MouseEvent e) {
-                            mg.setNewOffset(e.getX() - currentPosX, e.getY() - currentPosY);
-                            repaintRoads();
+                            findIDLat = mg.getLat(e.getY());
+                            findIDLon = mg.getLon(e.getX());
+                            findIdLayer.repaint();
+                            mainPanel.repaint();
                         }
 
                         @Override public void mouseMoved(MouseEvent e) {
@@ -265,6 +245,62 @@ public class MiniGraphUI {
                             updateLatLon(e);
                         }
                     };
+//                    MouseAdapter ml = new MouseAdapter() {
+//
+//                        // for routing:
+//                        double fromLat, fromLon;
+//                        boolean fromDone = false;
+//
+//                        @Override public void mouseClicked(MouseEvent e) {
+//                            if (!fromDone) {
+//                                fromLat = mg.getLat(e.getY());
+//                                fromLon = mg.getLon(e.getX());
+//                            } else {
+//                                double toLat = mg.getLat(e.getY());
+//                                double toLon = mg.getLon(e.getX());
+//                                StopWatch sw = new StopWatch().start();
+//                                logger.info("start searching from " + fromLat + "," + fromLon
+//                                        + " to " + toLat + "," + toLon);
+//                                // get from and to node id
+//                                dijkstraFromId = index.findID(fromLat, fromLon);
+//                                dijkstraToId = index.findID(toLat, toLon);
+//                                logger.info("found ids " + dijkstraFromId + " -> " + dijkstraToId + " in " + sw.stop().getSeconds() + "s");
+//                                repaintPaths();
+//                            }
+//
+//                            fromDone = !fromDone;
+//                        }
+//                        boolean dragging = false;
+//
+//                        @Override public void mouseDragged(MouseEvent e) {
+//                            dragging = true;
+//                            fastPaint = true;
+//                            update(e);
+//                            updateLatLon(e);
+//                        }
+//
+//                        @Override public void mouseReleased(MouseEvent e) {
+//                            if (dragging) {
+//                                // update only if mouse release comes from dragging! (at the moment equal to fastPaint)
+//                                dragging = false;
+//                                fastPaint = false;
+//                                update(e);
+//                            }
+//                        }
+//
+//                        public void update(MouseEvent e) {
+//                            mg.setNewOffset(e.getX() - currentPosX, e.getY() - currentPosY);
+//                            repaintRoads();
+//                        }
+//
+//                        @Override public void mouseMoved(MouseEvent e) {
+//                            updateLatLon(e);
+//                        }
+//
+//                        @Override public void mousePressed(MouseEvent e) {
+//                            updateLatLon(e);
+//                        }
+//                    };
                     mainPanel.addMouseListener(ml);
                     mainPanel.addMouseMotionListener(ml);
 

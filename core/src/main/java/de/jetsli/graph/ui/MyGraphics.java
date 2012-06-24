@@ -82,8 +82,8 @@ public class MyGraphics {
         return 90 - (y * scaleY - offsetY);
     }
 
-    public void plotNode(Graphics2D g2, int loc) {
-        g2.setColor(Color.YELLOW);
+    public void plotNode(Graphics2D g2, int loc, Color c) {
+        g2.setColor(c);
         double lat = g.getLatitude(loc);
         double lon = g.getLongitude(loc);
         if (lat < bounds.minLat || lat > bounds.maxLat || lon < bounds.minLon || lon > bounds.maxLon)
