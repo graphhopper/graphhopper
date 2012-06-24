@@ -17,12 +17,12 @@ package de.jetsli.graph.ui;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
+import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.reader.OSMReader;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
-import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.CoordTrig;
@@ -52,16 +52,16 @@ public class MiniGraphUI {
     private QuadTree<Long> quadTree;
     private Collection<CoordTrig<Long>> quadTreeNodes;
     private DijkstraPath path;
-    private DebugDijkstraBidirection dijkstra;
+    private DijkstraBidirection dijkstra;
     private final Graph graph;
-    private DebugLocation2IDQuadtree index;
+    private Location2IDQuadtree index;
     private String latLon = "";
     private MyGraphics mg;
     private JPanel infoPanel;
     private MyLayerPanel mainPanel;
     private MapLayer roadsLayer;
     private MapLayer pathLayer;
-    private MapLayer findIdLayer;
+    // private MapLayer findIdLayer;
     private boolean fastPaint = false;
 
     public MiniGraphUI(Graph roadGraph, boolean debug) {
@@ -70,10 +70,11 @@ public class MiniGraphUI {
         mg = new MyGraphics(roadGraph);
 
         // prepare location quadtree to 'enter' the graph. create a 313*313 grid => <3km
-        this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
-        // this.index = new Location2IDQuadtree(roadGraph);
+        // this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
+        this.index = new Location2IDQuadtree(roadGraph);
         index.prepareIndex(90000);
-        this.dijkstra = new DebugDijkstraBidirection(graph, mg);
+        // this.dijkstra = new DebugDijkstraBidirection(graph, mg);
+        this.dijkstra = new DijkstraBidirection(graph);
         infoPanel = new JPanel() {
 
             @Override protected void paintComponent(Graphics g) {
@@ -142,41 +143,32 @@ public class MiniGraphUI {
                 }
             }
         });
-        mainPanel.addLayer(findIdLayer = new DefaultMapLayer() {
-
-            @Override protected void paintComponent(Graphics2D g2) {
-                if (findIDLat == null || findIDLon == null)
-                    return;
-
-                makeTransparent(g2);
-                StopWatch sw = new StopWatch().start();
-                index.setGraphics(g2);
-                int id = index.findID(findIDLat, findIDLon);
-                logger.info("found " + id + " for " + findIDLat + "," + findIDLon + " in " + sw.stop().getSeconds() + "s");
-            }
-        });
+//        mainPanel.addLayer(findIdLayer = new DefaultMapLayer() {
+//
+//            @Override protected void paintComponent(Graphics2D g2) {
+//                if (findIDLat == null || findIDLon == null)
+//                    return;
+//
+//                makeTransparent(g2);
+//                StopWatch sw = new StopWatch().start();
+//                index.setGraphics(g2);
+//                int id = index.findID(findIDLat, findIDLon);
+//                logger.info("found " + id + " for " + findIDLat + "," + findIDLon + " in " + sw.stop().getSeconds() + "s");
+//            }
+//        });
 
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
 
             @Override public void paintComponent(Graphics2D g2) {
-                if (dijkstraFromId < 0 || dijkstraToId < 0)
-                    return;
-
                 makeTransparent(g2);
-                StopWatch sw = new StopWatch().start();
-                dijkstra.setGraphics2D(g2);
-                logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId);
-                path = dijkstra.clear().calcShortestPath(dijkstraFromId, dijkstraToId);
-                sw.stop();
+                
+                // for debugging dijkstra we need to move the call here and execute before:
+//                dijkstra.setGraphics2D(g2);
 
                 // TODO remove subnetworks to avoid failing
-                if (path == null) {
-                    // force clear dijkstra full filling stuff? makeTransparent(g2);
-                    logger.info("no path found. time=" + sw.getSeconds() + "s");
+                if (path == null)
                     return;
-                }
 
-                logger.info("found path in " + sw.getSeconds() + "s with " + path.locations() + " nodes: " + path);
                 g2.setColor(Color.BLUE.brighter().brighter());
                 int tmpLocs = path.locations();
                 double prevLat = -1;
@@ -200,10 +192,7 @@ public class MiniGraphUI {
             repaintManager.setDoubleBufferingEnabled(false);
             mainPanel.setBuffering(false);
         }
-    }
-    Double findIDLat = null, findIDLon = null;
-    int dijkstraFromId = -1;
-    int dijkstraToId = -1;
+    }    
 
     public void visualize() {
         try {
@@ -228,69 +217,14 @@ public class MiniGraphUI {
                         }
                     });
 
-                    MouseAdapter ml = new MouseAdapter() {
-
-                        @Override public void mouseClicked(MouseEvent e) {
-                            findIDLat = mg.getLat(e.getY());
-                            findIDLon = mg.getLon(e.getX());
-                            findIdLayer.repaint();
-                            mainPanel.repaint();
-                        }
-
-                        @Override public void mouseMoved(MouseEvent e) {
-                            updateLatLon(e);
-                        }
-
-                        @Override public void mousePressed(MouseEvent e) {
-                            updateLatLon(e);
-                        }
-                    };
+                    // listener to investigate findID behavior
 //                    MouseAdapter ml = new MouseAdapter() {
 //
-//                        // for routing:
-//                        double fromLat, fromLon;
-//                        boolean fromDone = false;
-//
 //                        @Override public void mouseClicked(MouseEvent e) {
-//                            if (!fromDone) {
-//                                fromLat = mg.getLat(e.getY());
-//                                fromLon = mg.getLon(e.getX());
-//                            } else {
-//                                double toLat = mg.getLat(e.getY());
-//                                double toLon = mg.getLon(e.getX());
-//                                StopWatch sw = new StopWatch().start();
-//                                logger.info("start searching from " + fromLat + "," + fromLon
-//                                        + " to " + toLat + "," + toLon);
-//                                // get from and to node id
-//                                dijkstraFromId = index.findID(fromLat, fromLon);
-//                                dijkstraToId = index.findID(toLat, toLon);
-//                                logger.info("found ids " + dijkstraFromId + " -> " + dijkstraToId + " in " + sw.stop().getSeconds() + "s");
-//                                repaintPaths();
-//                            }
-//
-//                            fromDone = !fromDone;
-//                        }
-//                        boolean dragging = false;
-//
-//                        @Override public void mouseDragged(MouseEvent e) {
-//                            dragging = true;
-//                            fastPaint = true;
-//                            update(e);
-//                            updateLatLon(e);
-//                        }
-//
-//                        @Override public void mouseReleased(MouseEvent e) {
-//                            if (dragging) {
-//                                // update only if mouse release comes from dragging! (at the moment equal to fastPaint)
-//                                dragging = false;
-//                                fastPaint = false;
-//                                update(e);
-//                            }
-//                        }
-//
-//                        public void update(MouseEvent e) {
-//                            mg.setNewOffset(e.getX() - currentPosX, e.getY() - currentPosY);
-//                            repaintRoads();
+//                            findIDLat = mg.getLat(e.getY());
+//                            findIDLon = mg.getLon(e.getX());
+//                            findIdLayer.repaint();
+//                            mainPanel.repaint();
 //                        }
 //
 //                        @Override public void mouseMoved(MouseEvent e) {
@@ -301,6 +235,68 @@ public class MiniGraphUI {
 //                            updateLatLon(e);
 //                        }
 //                    };
+                    MouseAdapter ml = new MouseAdapter() {
+
+                        // for routing:
+                        double fromLat, fromLon;
+                        boolean fromDone = false;
+
+                        @Override public void mouseClicked(MouseEvent e) {
+                            if (!fromDone) {
+                                fromLat = mg.getLat(e.getY());
+                                fromLon = mg.getLon(e.getX());
+                            } else {
+                                double toLat = mg.getLat(e.getY());
+                                double toLon = mg.getLon(e.getX());
+                                StopWatch sw = new StopWatch().start();
+                                logger.info("start searching from " + fromLat + "," + fromLon
+                                        + " to " + toLat + "," + toLon);
+                                // get from and to node id
+                                int dijkstraFromId = index.findID(fromLat, fromLon);
+                                int dijkstraToId = index.findID(toLat, toLon);
+                                logger.info("found ids " + dijkstraFromId + " -> " + dijkstraToId + " in " + sw.stop().getSeconds() + "s");
+
+                                sw = new StopWatch().start();
+                                logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId);
+                                path = dijkstra.clear().calcShortestPath(dijkstraFromId, dijkstraToId);
+                                sw.stop();
+                                logger.info("found path in " + sw.getSeconds() + "s with " + path.locations() + " nodes: " + path);
+                                repaintPaths();
+                            }
+
+                            fromDone = !fromDone;
+                        }
+                        boolean dragging = false;
+
+                        @Override public void mouseDragged(MouseEvent e) {
+                            dragging = true;
+                            fastPaint = true;
+                            update(e);
+                            updateLatLon(e);
+                        }
+
+                        @Override public void mouseReleased(MouseEvent e) {
+                            if (dragging) {
+                                // update only if mouse release comes from dragging! (at the moment equal to fastPaint)
+                                dragging = false;
+                                fastPaint = false;
+                                update(e);
+                            }
+                        }
+
+                        public void update(MouseEvent e) {
+                            mg.setNewOffset(e.getX() - currentPosX, e.getY() - currentPosY);
+                            repaintRoads();
+                        }
+
+                        @Override public void mouseMoved(MouseEvent e) {
+                            updateLatLon(e);
+                        }
+
+                        @Override public void mousePressed(MouseEvent e) {
+                            updateLatLon(e);
+                        }
+                    };
                     mainPanel.addMouseListener(ml);
                     mainPanel.addMouseMotionListener(ml);
 
