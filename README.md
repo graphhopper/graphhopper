@@ -14,6 +14,8 @@ Download OSM file (40MB compressed, then 450MB uncompressed), build graph hopper
 
 > cd core; ./run.sh unterfranken
 
+the resulting file will be around 30MB (still ways to improve it)
+
 If you want to import a bigger OSM (Germany) then run:
 
  * when executing the command again the OSM won't be parsed again, so the UI should pop up within 1 or 2 seconds.

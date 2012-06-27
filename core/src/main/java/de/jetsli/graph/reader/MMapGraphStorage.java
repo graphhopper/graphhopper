@@ -61,6 +61,7 @@ public class MMapGraphStorage implements Storage {
         return true;
     }
     int counter = 0;
+    int zeroCounter = 0;
 
     @Override
     public boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback) {
@@ -86,8 +87,14 @@ public class MMapGraphStorage implements Storage {
             double lot = g.getLongitude(toIndex);
             double dist = callback.calcDistKm(laf, lof, lat, lot);
             if (dist == 0) {
-                //  dist = 0.001;
-                return false;
+                // As investigation shows often two paths should have crossed via one identical point 
+                // but end up in two very close points. add here here and later this will be 
+                // removed/fixed while removing short edges where one node is of degree 2
+                zeroCounter++;
+                if (zeroCounter % 10 == 0)
+                    logger.info(zeroCounter + " zero distances, from:" + nodeIdFrom + " to:" + nodeIdTo
+                            + " (" + laf + ", " + lof + ")");
+                dist = 0.0001;
             } else if (dist < 0) {
                 logger.info(counter + " - distances negative. " + fromIndex + " (" + laf + ", " + lof + ")->"
                         + toIndex + "(" + lat + ", " + lot + ") :" + dist);
