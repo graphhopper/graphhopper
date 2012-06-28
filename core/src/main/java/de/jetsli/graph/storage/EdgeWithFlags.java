@@ -15,34 +15,38 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.util.EmptyIterable;
+
 /**
  * directionFlag is necessary to store forward, backward or both directions.
- * 
+ *
  * @see DistEntry
  * @author Peter Karich, info@jetsli.de
  */
-public class LinkedDistEntryWithFlags extends LinkedDistEntry {
+public class EdgeWithFlags extends Edge {
 
+    public final static EmptyIterable<EdgeWithFlags> EMPTY_ITER = new EmptyIterable<EdgeWithFlags>();
     /**
      * 1 means: only forward direction. 2 means: only backward and 3 means: both directions
      */
-    public byte directionFlag;
+    public byte flags;
 
     /**
-     * @param directionFlag 1 means: only forward direction. 2 means: only backward and 3 means: both directions
+     * @param directionFlag 1 means: only forward direction. 2 means: only backward and 3 means:
+     * both directions
      */
-    public LinkedDistEntryWithFlags(int loc, double distance, byte directionFlag) {
+    public EdgeWithFlags(int loc, double distance, byte directionFlag) {
         super(loc, distance);
-        this.directionFlag = directionFlag;
+        this.flags = directionFlag;
     }
 
     @Override
-    public LinkedDistEntry clone() {
-        return new LinkedDistEntryWithFlags(node, distance, directionFlag);
+    public Edge clone() {
+        return new EdgeWithFlags(node, distance, flags);
     }
 
     @Override
-    public LinkedDistEntryWithFlags cloneFull() {
-        return (LinkedDistEntryWithFlags) super.cloneFull();
+    public EdgeWithFlags cloneFull() {
+        return (EdgeWithFlags) super.cloneFull();
     }
 }

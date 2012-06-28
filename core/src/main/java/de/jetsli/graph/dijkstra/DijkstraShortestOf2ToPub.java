@@ -20,7 +20,7 @@ import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.LinkedDistEntry;
+import de.jetsli.graph.storage.Edge;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -43,10 +43,10 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
     private TIntArrayList pubTransport = new TIntArrayList();
     private int fromP1;
     private int toP2;
-    private LinkedDistEntry currTo;
-    private LinkedDistEntry currFrom;
+    private Edge currTo;
+    private Edge currFrom;
     private PathWrapper shortest;
-    private TIntObjectMap<LinkedDistEntry> shortestDistMapOther;
+    private TIntObjectMap<Edge> shortestDistMapOther;
 
     public DijkstraShortestOf2ToPub(Graph graph) {
         this.graph = graph;
@@ -80,14 +80,14 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
             return new DijkstraBidirection(graph).calcShortestPath(fromP1, toP2);
 
         MyBitSet visitedFrom = new MyOpenBitSet(graph.getLocations());
-        PriorityQueue<LinkedDistEntry> prioQueueFrom = new PriorityQueue<LinkedDistEntry>();
-        TIntObjectMap<LinkedDistEntry> shortestDistMapFrom = new TIntObjectHashMap<LinkedDistEntry>();
+        PriorityQueue<Edge> prioQueueFrom = new PriorityQueue<Edge>();
+        TIntObjectMap<Edge> shortestDistMapFrom = new TIntObjectHashMap<Edge>();
 
-        LinkedDistEntry entryTo = new LinkedDistEntry(toP2, 0);
+        Edge entryTo = new Edge(toP2, 0);
         currTo = entryTo;
         MyBitSet visitedTo = new MyOpenBitSet(graph.getLocations());
-        PriorityQueue<LinkedDistEntry> prioQueueTo = new PriorityQueue<LinkedDistEntry>();
-        TIntObjectMap<LinkedDistEntry> shortestDistMapTo = new TIntObjectHashMap<LinkedDistEntry>();
+        PriorityQueue<Edge> prioQueueTo = new PriorityQueue<Edge>();
+        TIntObjectMap<Edge> shortestDistMapTo = new TIntObjectHashMap<Edge>();
 
         shortest = new PathWrapper();
         shortest.distance = Double.MAX_VALUE;
@@ -96,7 +96,7 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
         if (pubTransport.isEmpty())
             throw new IllegalStateException("You'll need at least one starting point. Set it via addPubTransportPoint");
 
-        currFrom = new LinkedDistEntry(fromP1, 0);
+        currFrom = new Edge(fromP1, 0);
         // in the birectional case we maintain the shortest path via:
         // currFrom.distance + currTo.distance >= shortest.distance
         // Now we simply need to check bevor updating if the newly discovered point is from pub tranport
@@ -156,8 +156,8 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
             return Math.min(currFrom.distance, currTo.distance) >= shortest.distance;
     }
 
-    public void fillEdges(LinkedDistEntry curr, MyBitSet visitedMain, 
-            PriorityQueue<LinkedDistEntry> prioQueue, TIntObjectMap<LinkedDistEntry> shortestDistMap) {
+    public void fillEdges(Edge curr, MyBitSet visitedMain, 
+            PriorityQueue<Edge> prioQueue, TIntObjectMap<Edge> shortestDistMap) {
 
         int currVertexFrom = curr.node;
         for (DistEntry entry : graph.getOutgoing(currVertexFrom)) {
@@ -166,9 +166,9 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
                 continue;
 
             double tmp = entry.distance + curr.distance;
-            LinkedDistEntry de = shortestDistMap.get(tmpV);
+            Edge de = shortestDistMap.get(tmpV);
             if (de == null) {
-                de = new LinkedDistEntry(tmpV, tmp);
+                de = new Edge(tmpV, tmp);
                 de.prevEntry = curr;
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
@@ -185,9 +185,9 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
         } // for
     }
 
-    public void updateShortest(LinkedDistEntry shortestDE, int currLoc) {
+    public void updateShortest(Edge shortestDE, int currLoc) {
         if (pubTransport.contains(currLoc)) {
-            LinkedDistEntry entryOther = shortestDistMapOther.get(currLoc);
+            Edge entryOther = shortestDistMapOther.get(currLoc);
             if (entryOther != null) {
                 // update μ
                 double newShortest = shortestDE.distance + entryOther.distance;

@@ -39,7 +39,7 @@ public interface Graph {
      * @return id of new location
      */
     int addLocation(double lat, double lon);
-    
+
     double getLatitude(int index);
 
     double getLongitude(int index);
@@ -53,11 +53,21 @@ public interface Graph {
      */
     void edge(int a, int b, double distance, boolean bothDirections);
 
-    MyIteratorable<DistEntry> getEdges(int index);
+    MyIteratorable<EdgeWithFlags> getEdges(int index);
 
-    MyIteratorable<DistEntry> getIncoming(int index);
+    MyIteratorable<EdgeWithFlags> getIncoming(int index);
 
-    MyIteratorable<DistEntry> getOutgoing(int index);
+    MyIteratorable<EdgeWithFlags> getOutgoing(int index);
 
     Graph clone();
+
+    /**
+     * Schedule the deletion of the specified node until an optimize() call happens
+     */
+    boolean markDeleted(int index);
+
+    /**
+     * Performs optimization routines like deletion or node rearrangements.
+     */
+    void optimize();
 }

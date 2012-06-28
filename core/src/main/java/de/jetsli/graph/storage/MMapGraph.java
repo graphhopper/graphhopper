@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.coll.MyBitSet;
+import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.MyIteratorable;
@@ -53,45 +55,51 @@ import java.io.*;
 public class MMapGraph implements Graph {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final int EMPTY_DIST = 0;
+    private static final int EMPTY_DIST = 0;
+    private static final int FIRST_EDGE_POS = 1;
+    private static final int FIRST_MAX_REC_ID = -1;
     /**
-     * Memory layout of one node: lat, lon, 2 * DistEntry(distance, node, flags) +
-     * refToNextDistEntryBlock <br/>
+     * Memory layout of one node: lat, lon, 2 * EdgeWithFlags(distance, node, flags) +
+     * nextEdgePosition <br/>
      *
-     * Note: <ul> <li> If refToNextDistEntryBlock is EMPTY_DIST => no further block referenced.
-     * </li> <li>If the distance is EMPTY_DIST (read as int) then the distEntry is assumed to be
-     * empty thatswhy we don't support null length edges. This saves us from the ugly
-     * preinitialization and we can use node 0 too </li> <li> nextEdgePosition starts at 1 to avoid
-     * that hassle. Should we allow this for nodes too < - problematic for existing tests </li>
+     * Note: <ul> <li> If nextEdgePosition is EMPTY_DIST => no further block referenced. </li>
+     * <li>If the distance is EMPTY_DIST (read as int) then the edge is assumed to be empty thatswhy
+     * we don't support null length edges. This saves us from the ugly preinitialization and we can
+     * use node 0 too </li> <li> nextEdgePosition starts at 1 to avoid that hassle. Should we allow
+     * this for nodes too? < - problematic for existing tests </li>
      */
     private int maxNodes;
     /**
-     * how many distEntry should be embedded directly in the node. This saves memory as we don't
-     * need pointers to the next distEntry
+     * How many edges should be embedded directly in the node. This saves memory as we don't need
+     * pointers to the next edge
      */
-    private int edgeEmbedded = 2;
+    private int edgeNumEmbedded = 2;
     /**
-     * Memory layout of one LinkedDistEntryWithFlags: distance, node, flags
+     * Memory layout of one EdgeWithFlags: distance, node, flags
      */
-    private int edgeSize = 4 + 4 + 1;
+    private int bytesEdge = 4 + 4 + 1;
+    /**
+     * embedded edges plus link to next edge in "edges" if any
+     */
+    private int bytesEdgeSize = edgeNumEmbedded * bytesEdge + 4;
+    private int edgeFlagsPos = bytesEdge - 1;
+    private int nextEdgePos = FIRST_EDGE_POS;
     /**
      * Storing latitude and longitude directly in the node
      */
-    private int nodeCoreSize = 4 + 4;
-    private int nodeSize;
+    private int bytesNodeCore = 4 + 4;
+    private int bytesNode;
     private int currentNodeSize = 0;
-    private int maxRecognizedNodeIndex = -1;
-    private int nextEdgePosition = 1;
+    private int maxRecognizedNodeId = FIRST_MAX_REC_ID;
     private double increaseFactor = 1.3;
+    private MyBitSet deletedNodes;
     private RandomAccessFile nodeFile = null;
     private RandomAccessFile edgeFile = null;
     private ByteBuffer nodes;
     private ByteBuffer edges;
     private File dirName;
     private boolean saveOnFlushOnly = false;
-    private int edgeFlagsPos = edgeSize - 1;
-    private int bytesEdgeSize = edgeEmbedded * edgeSize + 4;
-
+    
     /**
      * Creates an in-memory graph suitable for test
      */
@@ -103,8 +111,8 @@ public class MMapGraph implements Graph {
      * Creates a memory-mapped graph
      */
     public MMapGraph(String name, int maxNodes) {
-        // increase size a bit to avoid capacity increase only for the last nodes if user specified
-        // the exact maxNode number
+        // increase size a bit to avoid capacity increase only because the last nodes reaches the
+        // users' exact specified exact value
         this.maxNodes = maxNodes + 10;
         if (name != null)
             this.dirName = new File(name);
@@ -115,9 +123,9 @@ public class MMapGraph implements Graph {
             return false;
 
         logger.info("load existing graph with maxNodes:" + maxNodes + " currentNodeSize:" + currentNodeSize
-                + " maxRecognizedNodeIndex:" + maxRecognizedNodeIndex + " edgeEmbedded:" + edgeEmbedded
-                + " edgeSize:" + edgeSize + " nodeCoreSize:" + nodeCoreSize
-                + " nodeSize:" + nodeSize + " nextEdgePosition:" + nextEdgePosition
+                + " maxRecognizedNodeIndex:" + maxRecognizedNodeId + " edgeEmbedded:" + edgeNumEmbedded
+                + " edgeSize:" + bytesEdge + " nodeCoreSize:" + bytesNodeCore
+                + " nodeSize:" + bytesNode + " nextEdgePosition:" + nextEdgePos
                 + " edgeFlagsPos:" + edgeFlagsPos + " bytesEdgeSize:" + bytesEdgeSize);
         ensureCapacity(maxNodes);
         return true;
@@ -141,7 +149,7 @@ public class MMapGraph implements Graph {
         }
 
         this.saveOnFlushOnly = saveOnFlushOnly;
-        nodeSize = nodeCoreSize + bytesEdgeSize;
+        bytesNode = bytesNodeCore + bytesEdgeSize;
         ensureCapacity(maxNodes);
         return this;
     }
@@ -150,13 +158,13 @@ public class MMapGraph implements Graph {
      * Calling this method after init() has no effect
      */
     public void setDistEntryEmbedded(int edgeEmbeddedSize) {
-        this.edgeEmbedded = edgeEmbeddedSize;
+        this.edgeNumEmbedded = edgeEmbeddedSize;
     }
 
     @Override
     public void ensureCapacity(int nodes) {
         int newEdgeNo = calculateEdges(nodes);
-        String str = "node file with " + (float) (nodes * nodeSize) / (1 << 20) + " MB and "
+        String str = "node file with " + (float) (nodes * bytesNode) / (1 << 20) + " MB and "
                 + "edge file with " + (float) (newEdgeNo * bytesEdgeSize) / (1 << 20) + " MB";
 
         try {
@@ -170,12 +178,12 @@ public class MMapGraph implements Graph {
     }
 
     protected boolean ensureNodesCapacity(int newNumberOfNodes) throws IOException {
-        int newBytes = newNumberOfNodes * nodeSize;
+        int newBytes = newNumberOfNodes * bytesNode;
         if (nodes != null) {
             if (newBytes < nodes.capacity())
                 return false;
-            newNumberOfNodes = (int) Math.max(newNumberOfNodes, increaseFactor * nodes.capacity() / nodeSize);
-            newBytes = newNumberOfNodes * nodeSize;
+            newNumberOfNodes = (int) Math.max(newNumberOfNodes, increaseFactor * nodes.capacity() / bytesNode);
+            newBytes = newNumberOfNodes * bytesNode;
         }
         maxNodes = newNumberOfNodes;
         if (dirName != null && !saveOnFlushOnly) {
@@ -184,7 +192,7 @@ public class MMapGraph implements Graph {
             else {
                 // necessary? clean((MappedByteBuffer) nodes);
                 nodeFile.setLength(newBytes);
-                logger.info("remap node file to " + (float) newBytes / nodeSize);
+                logger.info("remap node file to " + (float) newBytes / bytesNode);
             }
             nodes = nodeFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, newBytes);
         } else
@@ -206,7 +214,16 @@ public class MMapGraph implements Graph {
     int calculateEdges(int maxNodes) {
         // the more edges we inline the less memory we need to reserve => " / edgeEmbedded"
         // if we provide too few memory => BufferUnderflowException will be thrown without calling ensureEdgesCapacity
-        return Math.max(nextEdgePosition / bytesEdgeSize + 2, maxNodes / edgeEmbedded / 4);
+        return Math.max(nextEdgePos / bytesEdgeSize + 2, maxNodes / edgeNumEmbedded / 4);
+    }
+
+    protected void ensureEdgesCapacity() {
+        try {
+            ensureEdgesCapacity(nextEdgePos / bytesEdgeSize + 2);
+        } catch (IOException ex) {
+            throw new RuntimeException("Cannot ensure edge capacity!? edges capacity:" + edges.capacity()
+                    + " vs. " + nextEdgePos, ex);
+        }
     }
 
     protected boolean ensureEdgesCapacity(int newNumberOfEdges) throws IOException {
@@ -256,7 +273,7 @@ public class MMapGraph implements Graph {
 
     @Override
     public int getLocations() {
-        return Math.max(currentNodeSize, maxRecognizedNodeIndex + 1);
+        return Math.max(currentNodeSize, maxRecognizedNodeId + 1);
     }
 
     @Override
@@ -269,7 +286,7 @@ public class MMapGraph implements Graph {
             }
         }
 
-        nodes.position(currentNodeSize * nodeSize);
+        nodes.position(currentNodeSize * bytesNode);
         nodes.putFloat((float) lat);
         nodes.putFloat((float) lon);
         int tmp = currentNodeSize;
@@ -279,13 +296,13 @@ public class MMapGraph implements Graph {
 
     @Override
     public final double getLatitude(int index) {
-        float fl = nodes.getFloat(index * nodeSize);
+        float fl = nodes.getFloat(index * bytesNode);
         return (double) fl;
     }
 
     @Override
     public final double getLongitude(int index) {
-        float fl = nodes.getFloat(index * nodeSize + 4);
+        float fl = nodes.getFloat(index * bytesNode + 4);
         return (double) fl;
     }
 
@@ -295,56 +312,48 @@ public class MMapGraph implements Graph {
             throw new UnsupportedOperationException("negative or zero distances are not supported:"
                     + a + " -> " + b + ": " + distance + ", bothDirections:" + bothDirections);
 
-        try {
-            ensureEdgesCapacity(nextEdgePosition / bytesEdgeSize + 2);
-        } catch (IOException ex) {
-            throw new RuntimeException("Cannot ensure edge capacity!? edges capacity:" + edges.capacity()
-                    + " vs. " + nextEdgePosition, ex);
-        }
-
-        maxRecognizedNodeIndex = Math.max(maxRecognizedNodeIndex, Math.max(a, b));
+        ensureEdgesCapacity();
+        maxRecognizedNodeId = Math.max(maxRecognizedNodeId, Math.max(a, b));
         byte dirFlag = 3;
         if (!bothDirections)
             dirFlag = 1;
 
-        addIfAbsent(a * nodeSize + nodeCoreSize, b, (float) distance, dirFlag);
+        addIfAbsent(a * bytesNode + bytesNodeCore, b, (float) distance, dirFlag);
         if (!bothDirections)
             dirFlag = 2;
 
-        addIfAbsent(b * nodeSize + nodeCoreSize, a, (float) distance, dirFlag);
+        addIfAbsent(b * bytesNode + bytesNodeCore, a, (float) distance, dirFlag);
+    }
+
+    private byte[] getBytesFromNodes(int pos, int len) {
+        nodes.position(pos);
+        byte[] bytes = new byte[len];
+        nodes.get(bytes);
+        return bytes;
     }
 
     @Override
-    public MyIteratorable<DistEntry> getEdges(int index) {
+    public MyIteratorable<EdgeWithFlags> getEdges(int index) {
         if (index >= maxNodes)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
-        nodes.position(index * nodeSize + nodeCoreSize);
-        byte[] bytes = new byte[bytesEdgeSize];
-        nodes.get(bytes);
-        return new EdgesIteratorable(bytes);
+        return new EdgesIteratorable(getBytesFromNodes(index * bytesNode + bytesNodeCore, bytesEdgeSize));
     }
 
     @Override
-    public MyIteratorable<DistEntry> getOutgoing(int index) {
+    public MyIteratorable<EdgeWithFlags> getOutgoing(int index) {
         if (index >= maxNodes)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
-        nodes.position(index * nodeSize + nodeCoreSize);
-        byte[] bytes = new byte[bytesEdgeSize];
-        nodes.get(bytes);
-        return new EdgesIteratorableFlags(bytes, (byte) 1);
+        return new EdgesIteratorableFlags(getBytesFromNodes(index * bytesNode + bytesNodeCore, bytesEdgeSize), (byte) 1);
     }
 
     @Override
-    public MyIteratorable<DistEntry> getIncoming(int index) {
+    public MyIteratorable<EdgeWithFlags> getIncoming(int index) {
         if (index >= maxNodes)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
-        nodes.position(index * nodeSize + nodeCoreSize);
-        byte[] bytes = new byte[bytesEdgeSize];
-        nodes.get(bytes);
-        return new EdgesIteratorableFlags(bytes, (byte) 2);
+        return new EdgesIteratorableFlags(getBytesFromNodes(index * bytesNode + bytesNodeCore, bytesEdgeSize), (byte) 2);
     }
 
     private class EdgesIteratorableFlags extends EdgesIteratorable {
@@ -369,7 +378,7 @@ public class MMapGraph implements Graph {
                 if ((bytes[tmpPos + edgeFlagsPos] & flags) != 0)
                     break;
 
-                tmpPos += edgeSize;
+                tmpPos += bytesEdge;
                 if (tmpPos >= bytes.length)
                     break;
 
@@ -379,7 +388,7 @@ public class MMapGraph implements Graph {
         }
     }
 
-    private class EdgesIteratorable extends MyIteratorable<DistEntry> {
+    private class EdgesIteratorable extends MyIteratorable<EdgeWithFlags> {
 
         byte[] bytes;
         int position = 0;
@@ -389,8 +398,8 @@ public class MMapGraph implements Graph {
         }
 
         boolean checkFlags() {
-            assert position <= edgeSize * edgeEmbedded;
-            if (position == edgeSize * edgeEmbedded) {
+            assert position <= bytesEdge * edgeNumEmbedded;
+            if (position == bytesEdge * edgeNumEmbedded) {
                 int tmp = BitUtil.toInt(bytes, position);
                 if (tmp == EMPTY_DIST)
                     return false;
@@ -409,13 +418,13 @@ public class MMapGraph implements Graph {
             return BitUtil.toInt(bytes, position) > EMPTY_DIST;
         }
 
-        @Override public DistEntry next() {
+        @Override public EdgeWithFlags next() {
             if (!hasNext())
                 throw new IllegalStateException("No next element");
 
             float fl = BitUtil.toFloat(bytes, position);
             int integ = BitUtil.toInt(bytes, position += 4);
-            LinkedDistEntryWithFlags lde = new LinkedDistEntryWithFlags(
+            EdgeWithFlags lde = new EdgeWithFlags(
                     integ, fl, bytes[position += 4]);
             position++;
             // TODO lde.prevEntry = 
@@ -433,11 +442,8 @@ public class MMapGraph implements Graph {
      */
     void addIfAbsent(int nodePointer, int nodeIndex, float distance, byte dirFlag) {
         // move to the node its edges
+        byte[] byteArray = getBytesFromNodes(nodePointer, bytesEdgeSize);
         nodes.position(nodePointer);
-        byte[] byteArray = new byte[bytesEdgeSize];
-        nodes.get(byteArray);
-        nodes.position(nodePointer);
-
         boolean usingNodesBuffer = true;
         // find free position or the identical nodeIndex where we need to update distance and flags        
         int byteArrayPos = 0;
@@ -446,7 +452,7 @@ public class MMapGraph implements Graph {
             int tmp = BitUtil.toInt(byteArray, byteArrayPos);
             if (tmp == EMPTY_DIST) {
                 // mark 'NO' next entry => no need as EMPTY_DIST is 0 
-                // ByteUtil.fromInt(byteArray, EMPTY_DIST, byteArrayPos + distEntrySize);
+                // ByteUtil.fromInt(byteArray, EMPTY_DIST, byteArrayPos + edgeEmbedded);
                 break;
             }
 
@@ -454,10 +460,10 @@ public class MMapGraph implements Graph {
             if (tmp == nodeIndex)
                 break;
 
-            byteArrayPos += edgeSize;
-            assert byteArrayPos <= edgeSize * edgeEmbedded;
+            byteArrayPos += bytesEdge;
+            assert byteArrayPos <= bytesEdge * edgeNumEmbedded;
 
-            if (byteArrayPos == edgeSize * edgeEmbedded) {
+            if (byteArrayPos == bytesEdge * edgeNumEmbedded) {
                 tmp = BitUtil.toInt(byteArray, byteArrayPos);
                 if (tmp < 0)
                     throw new IllegalStateException("Pointer to edges was negative!?");
@@ -492,30 +498,38 @@ public class MMapGraph implements Graph {
     }
 
     protected int getNextFreeEdgeBlock() {
-        int tmp = nextEdgePosition;
-        nextEdgePosition += bytesEdgeSize;
+        int tmp = nextEdgePos;
+        nextEdgePos += bytesEdgeSize;
+        if (nextEdgePos > edges.capacity())
+            throw new IllegalStateException("You need to ensure capacity of edges before creating new ones");
         return tmp;
+    }
+
+    public static void copy(MMapGraph from, MMapGraph to) {
+        copy(from.nodes, to.nodes);
+        copy(from.edges, to.edges);
+        to.edgeNumEmbedded = from.edgeNumEmbedded;
+        to.bytesEdge = from.bytesEdge;
+        to.bytesNodeCore = from.bytesNodeCore;
+        to.bytesNode = from.bytesNode;
+        to.currentNodeSize = from.currentNodeSize;
+        to.maxRecognizedNodeId = from.maxRecognizedNodeId;
+        to.nextEdgePos = from.nextEdgePos;
+        to.edgeFlagsPos = from.edgeFlagsPos;
+        to.bytesEdgeSize = from.bytesEdgeSize;
     }
 
     @Override
     public Graph clone() {
         if (dirName != null) {
-            // TODO with saveOnFlush we can easily clone the graph in-memory and flush to disc
+            // TODO how we should clone a graph on disc? should we name it cloned-graph or how?
             logger.error("Cloned graph will be in-memory only!");
         }
 
         MMapGraph graphCloned = new MMapGraph(maxNodes);
-        graphCloned.nodes = clone(nodes);
-        graphCloned.edges = clone(edges);
-        graphCloned.edgeEmbedded = edgeEmbedded;
-        graphCloned.edgeSize = edgeSize;
-        graphCloned.nodeCoreSize = nodeCoreSize;
-        graphCloned.nodeSize = nodeSize;
-        graphCloned.currentNodeSize = currentNodeSize;
-        graphCloned.maxRecognizedNodeIndex = maxRecognizedNodeIndex;
-        graphCloned.nextEdgePosition = nextEdgePosition;
-        graphCloned.edgeFlagsPos = edgeFlagsPos;
-        graphCloned.bytesEdgeSize = bytesEdgeSize;
+        graphCloned.nodes = allocate(nodes.capacity());
+        graphCloned.edges = allocate(edges.capacity());
+        copy(this, graphCloned);
         return graphCloned;
     }
 
@@ -604,14 +618,14 @@ public class MMapGraph implements Graph {
                 RandomAccessFile settingsFile = new RandomAccessFile(getSettingsFile(), "rw");
                 settingsFile.writeInt(maxNodes);
                 settingsFile.writeInt(currentNodeSize);
-                settingsFile.writeInt(maxRecognizedNodeIndex);
+                settingsFile.writeInt(maxRecognizedNodeId);
 
-                settingsFile.writeInt(nextEdgePosition);
+                settingsFile.writeInt(nextEdgePos);
 
-                settingsFile.writeInt(edgeEmbedded);
-                settingsFile.writeInt(edgeSize);
-                settingsFile.writeInt(nodeCoreSize);
-                settingsFile.writeInt(nodeSize);
+                settingsFile.writeInt(edgeNumEmbedded);
+                settingsFile.writeInt(bytesEdge);
+                settingsFile.writeInt(bytesNodeCore);
+                settingsFile.writeInt(bytesNode);
 
                 settingsFile.writeInt(edgeFlagsPos);
                 settingsFile.writeInt(bytesEdgeSize);
@@ -633,14 +647,14 @@ public class MMapGraph implements Graph {
             RandomAccessFile settingsFile = new RandomAccessFile(sFile, "r");
             maxNodes = settingsFile.readInt();
             currentNodeSize = settingsFile.readInt();
-            maxRecognizedNodeIndex = settingsFile.readInt();
+            maxRecognizedNodeId = settingsFile.readInt();
 
-            nextEdgePosition = settingsFile.readInt();
+            nextEdgePos = settingsFile.readInt();
 
-            edgeEmbedded = settingsFile.readInt();
-            edgeSize = settingsFile.readInt();
-            nodeCoreSize = settingsFile.readInt();
-            nodeSize = settingsFile.readInt();
+            edgeNumEmbedded = settingsFile.readInt();
+            bytesEdge = settingsFile.readInt();
+            bytesNodeCore = settingsFile.readInt();
+            bytesNode = settingsFile.readInt();
 
             edgeFlagsPos = settingsFile.readInt();
             bytesEdgeSize = settingsFile.readInt();
@@ -666,7 +680,7 @@ public class MMapGraph implements Graph {
                 Helper.close(edgeFile);
         }
     }
-    
+
     public void stats() {
         float locs = getLocations();
         int edgesNo = 0;
@@ -735,7 +749,78 @@ public class MMapGraph implements Graph {
         System.out.println("edges - out:" + outEdgesNo + "\t" + ((float) outEdgesNo / locs));
         System.out.println("edges - in :" + inEdgesNo + "\t" + ((float) inEdgesNo / locs));
         System.out.println("currentNodeSize:" + currentNodeSize);
-        System.out.println("maxRecognizedNodeIndex:" + maxRecognizedNodeIndex);
-        System.out.println("nextEdgePosition:" + nextEdgePosition);
+        System.out.println("maxRecognizedNodeIndex:" + maxRecognizedNodeId);
+        System.out.println("nextEdgePosition:" + nextEdgePos);
+    }
+
+    private MyBitSet getDeletedNodes() {
+        if (deletedNodes == null)
+            deletedNodes = new MyOpenBitSet(maxNodes);
+        return deletedNodes;
+    }
+
+    // TODO deletions are NOT persistent
+    @Override public boolean markDeleted(int index) {
+        getDeletedNodes().add(index);
+        return true;
+    }
+
+    public void clear() {
+        //nodes.clear();
+        //edges.clear();
+        // properly close all files if any
+        close();
+        nodes = null;
+        edges = null;
+        nodeFile = null;
+        edgeFile = null;
+        deletedNodes = null;
+        currentNodeSize = 0;
+        maxRecognizedNodeId = FIRST_MAX_REC_ID;
+        nextEdgePos = FIRST_EDGE_POS;
+        createNew(saveOnFlushOnly);
+    }
+
+    @Override
+    public void optimize() {
+        MMapGraph inMemGraph = new MMapGraph(getLocations() - getDeletedNodes().getCardinality());
+        inMemGraph.createNew();
+        /**
+         * This methods creates a new in-memory graph without the specified deleted nodes. see
+         * MemoryGraph for a near duplicate
+         */
+        int locs = this.getLocations();
+        int newNodeId = 0;
+        int[] old2NewMap = new int[locs];
+        for (int oldNodeId = 0; oldNodeId < locs; oldNodeId++) {
+            if (deletedNodes.contains(oldNodeId))
+                continue;
+
+            old2NewMap[oldNodeId] = newNodeId;
+            newNodeId++;
+        }
+
+        newNodeId = 0;
+        for (int oldNodeId = 0; oldNodeId < locs; oldNodeId++) {
+            if (deletedNodes.contains(oldNodeId))
+                continue;
+            double lat = this.getLatitude(oldNodeId);
+            double lon = this.getLongitude(oldNodeId);
+            inMemGraph.addLocation(lat, lon);
+            for (EdgeWithFlags de : this.getEdges(oldNodeId)) {
+                if (deletedNodes.contains(de.node))
+                    continue;
+
+                inMemGraph.ensureEdgesCapacity();
+                inMemGraph.addIfAbsent(newNodeId * bytesNode + bytesNodeCore, old2NewMap[de.node], (float) de.distance, de.flags);
+            }
+            newNodeId++;
+        }
+
+        // reduce nodes to new size
+        this.maxNodes = inMemGraph.maxNodes + 10;
+        // clear the data
+        clear();
+        copy(inMemGraph, this);
     }
 }

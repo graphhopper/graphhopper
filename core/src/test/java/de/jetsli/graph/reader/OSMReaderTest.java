@@ -55,7 +55,7 @@ public class OSMReaderTest {
         assertEquals(3, MyIteratorable.count(graph.getOutgoing(1)));
         assertEquals(1, MyIteratorable.count(graph.getOutgoing(2)));
 
-        Iterator<DistEntry> iter = graph.getOutgoing(1).iterator();
+        Iterator<? extends DistEntry> iter = graph.getOutgoing(1).iterator();
         DistEntry locNextEntry = iter.next();
         assertEquals(0, locNextEntry.node);
         assertEquals(88.643, locNextEntry.distance, 1e-3);
@@ -85,7 +85,7 @@ public class OSMReaderTest {
         assertEquals(2, MyIteratorable.count(graph.getOutgoing(1)));
         assertEquals(1, MyIteratorable.count(graph.getOutgoing(2)));
 
-        Iterator<DistEntry> iter = graph.getOutgoing(1).iterator();
+        Iterator<? extends DistEntry> iter = graph.getOutgoing(1).iterator();
         DistEntry locNextEntry = iter.next();
         assertEquals(0, locNextEntry.node);
         assertEquals(88.643, locNextEntry.distance, 1e-3);

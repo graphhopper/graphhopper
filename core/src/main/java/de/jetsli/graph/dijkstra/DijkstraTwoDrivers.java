@@ -16,7 +16,7 @@
 package de.jetsli.graph.dijkstra;
 
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.LinkedDistEntry;
+import de.jetsli.graph.storage.Edge;
 
 /**
  * @author Peter Karich, info@jetsli.de
@@ -133,10 +133,10 @@ public class DijkstraTwoDrivers {
             return Math.min(currFrom.distance, currTo.distance) >= shortest.distance;
         }
 
-        @Override public void updateShortest(LinkedDistEntry shortestDE, int currLoc) {
-            LinkedDistEntry fromOther = getOtherDriver().getShortestDistFrom(currLoc);
-            LinkedDistEntry toOther = getOtherDriver().getShortestDistTo(currLoc);
-            LinkedDistEntry entryOther = shortestDistMapOther.get(currLoc);
+        @Override public void updateShortest(Edge shortestDE, int currLoc) {
+            Edge fromOther = getOtherDriver().getShortestDistFrom(currLoc);
+            Edge toOther = getOtherDriver().getShortestDistTo(currLoc);
+            Edge entryOther = shortestDistMapOther.get(currLoc);
             if (fromOther == null || toOther == null || entryOther == null)
                 return;
 

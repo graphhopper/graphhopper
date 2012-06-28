@@ -36,13 +36,13 @@ public class PathWrapperTest {
         // keep in mind:
         // c == d
         //                
-        LinkedDistEntry entryC = new LinkedDistEntry(-1, 1.5f);
-        LinkedDistEntry entryB = entryC.prevEntry = new LinkedDistEntry(-1, 0.5f);
-        LinkedDistEntry entryA = entryB.prevEntry = new LinkedDistEntry(-1, 0);
+        Edge entryC = new Edge(-1, 1.5f);
+        Edge entryB = entryC.prevEntry = new Edge(-1, 0.5f);
+        Edge entryA = entryB.prevEntry = new Edge(-1, 0);
 
-        LinkedDistEntry entryD = new LinkedDistEntry(-1, 2.7f);
-        LinkedDistEntry entryE = entryD.prevEntry = new LinkedDistEntry(-1, 2.5f);
-        LinkedDistEntry entryF = entryE.prevEntry = new LinkedDistEntry(-1, 0);
+        Edge entryD = new Edge(-1, 2.7f);
+        Edge entryE = entryD.prevEntry = new Edge(-1, 2.5f);
+        Edge entryF = entryE.prevEntry = new Edge(-1, 0);
 
         PathWrapper wrapper = new PathWrapper();
         wrapper.entryFrom = entryC;

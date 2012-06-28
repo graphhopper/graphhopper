@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.coll.MyBitSet;
+import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.util.MyIteratorable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -31,7 +33,8 @@ public class MemoryGraph implements Graph {
     private float[] lats;
     private int lonLatSize = 0;
     private int maxRecognizedNodeIndex = -1;
-    private LinkedDistEntryWithFlags[] edges;
+    private EdgeWithFlags[] edges;
+    private MyBitSet deletedNodes;
 
     public MemoryGraph() {
         this(1000);
@@ -40,7 +43,13 @@ public class MemoryGraph implements Graph {
     public MemoryGraph(int capacity) {
         lons = new float[capacity];
         lats = new float[capacity];
-        edges = new LinkedDistEntryWithFlags[capacity];
+        edges = new EdgeWithFlags[capacity];
+    }
+
+    private MyBitSet getDeletedNodes() {
+        if (deletedNodes == null)
+            deletedNodes = new MyOpenBitSet(lons.length);
+        return deletedNodes;
     }
 
     @Override
@@ -73,20 +82,12 @@ public class MemoryGraph implements Graph {
         if (!bothDirections)
             dirFlag = 1;
 
-        LinkedDistEntryWithFlags currentEdges = edges[a];
-        if (currentEdges == null)
-            edges[a] = new LinkedDistEntryWithFlags(b, distance, dirFlag);
-        else
-            addIfAbsent(currentEdges, b, (float) distance, dirFlag);
+        addIfAbsent(a, b, (float) distance, dirFlag);
 
         if (!bothDirections)
             dirFlag = 2;
 
-        currentEdges = edges[b];
-        if (currentEdges == null)
-            edges[b] = new LinkedDistEntryWithFlags(a, distance, dirFlag);
-        else
-            addIfAbsent(currentEdges, a, (float) distance, dirFlag);
+        addIfAbsent(b, a, (float) distance, dirFlag);
     }
 
     /**
@@ -103,55 +104,61 @@ public class MemoryGraph implements Graph {
      * if distance entry with location already exists => overwrite distance. if it does not exist =>
      * append
      */
-    private void addIfAbsent(LinkedDistEntryWithFlags currEntry, int index, float distance, byte dirFlag) {
-        LinkedDistEntryWithFlags de = null;
+    private void addIfAbsent(int from, int to, float distance, byte dirFlag) {
+        EdgeWithFlags currEntry = edges[from];
+        if (currEntry == null) {
+            edges[from] = new EdgeWithFlags(to, distance, dirFlag);
+            return;
+        }
+
+        EdgeWithFlags de = null;
         while (true) {
-            if (currEntry.node == index) {
+            if (currEntry.node == to) {
                 de = currEntry;
                 break;
             }
             if (currEntry.prevEntry == null)
                 break;
-            currEntry = (LinkedDistEntryWithFlags) currEntry.prevEntry;
+            currEntry = (EdgeWithFlags) currEntry.prevEntry;
         }
 
         if (de == null) {
-            de = new LinkedDistEntryWithFlags(index, distance, dirFlag);
+            de = new EdgeWithFlags(to, distance, dirFlag);
             currEntry.prevEntry = de;
         } else {
             de.distance = distance;
-            de.directionFlag |= dirFlag;
+            de.flags |= dirFlag;
         }
     }
 
     @Override
-    public MyIteratorable<DistEntry> getEdges(int index) {
+    public MyIteratorable<EdgeWithFlags> getEdges(int index) {
         if (index >= edges.length)
-            return DistEntry.EMPTY_ITER;
+            throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
-        final LinkedDistEntryWithFlags d = edges[index];
+        final EdgeWithFlags d = edges[index];
         if (d == null)
-            return DistEntry.EMPTY_ITER;
+            return EdgeWithFlags.EMPTY_ITER;
 
         return new EdgesIteratorable(d);
     }
 
     @Override
-    public MyIteratorable<DistEntry> getOutgoing(int index) {
+    public MyIteratorable<EdgeWithFlags> getOutgoing(int index) {
         if (index >= edges.length)
-            return DistEntry.EMPTY_ITER;
+            throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
-        final LinkedDistEntryWithFlags d = edges[index];
+        final EdgeWithFlags d = edges[index];
         if (d == null)
-            return DistEntry.EMPTY_ITER;
+            return EdgeWithFlags.EMPTY_ITER;
 
         return new EdgesIteratorable(d) {
 
             @Override public boolean hasNext() {
                 for (;;) {
-                    if (curr == null || (curr.directionFlag & 1) != 0)
+                    if (curr == null || (curr.flags & 1) != 0)
                         break;
-                    curr = (LinkedDistEntryWithFlags) curr.prevEntry;
+                    curr = (EdgeWithFlags) curr.prevEntry;
                 }
 
                 return curr != null;
@@ -160,21 +167,21 @@ public class MemoryGraph implements Graph {
     }
 
     @Override
-    public MyIteratorable<DistEntry> getIncoming(int index) {
+    public MyIteratorable<EdgeWithFlags> getIncoming(int index) {
         if (index >= edges.length)
-            return DistEntry.EMPTY_ITER;
+            throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
-        final LinkedDistEntryWithFlags d = edges[index];
+        final EdgeWithFlags d = edges[index];
         if (d == null)
-            return DistEntry.EMPTY_ITER;
+            return EdgeWithFlags.EMPTY_ITER;
 
         return new EdgesIteratorable(d) {
 
             @Override public boolean hasNext() {
                 for (;;) {
-                    if (curr == null || (curr.directionFlag & 2) != 0)
+                    if (curr == null || (curr.flags & 2) != 0)
                         break;
-                    curr = (LinkedDistEntryWithFlags) curr.prevEntry;
+                    curr = (EdgeWithFlags) curr.prevEntry;
                 }
 
                 return curr != null;
@@ -182,11 +189,59 @@ public class MemoryGraph implements Graph {
         };
     }
 
-    private static class EdgesIteratorable extends MyIteratorable<DistEntry> {
+    @Override
+    public boolean markDeleted(int index) {
+        getDeletedNodes().add(index);
+        return true;
+    }
 
-        LinkedDistEntryWithFlags curr;
+    @Override
+    public void optimize() {
+        MemoryGraph inMemGraph = new MemoryGraph(getLocations() - getDeletedNodes().getCardinality());
 
-        EdgesIteratorable(LinkedDistEntryWithFlags lde) {
+        /**
+         * This methods creates a new in-memory graph without the specified deleted nodes.
+         * see MMapGraph for a near duplicate
+         */
+        int locs = this.getLocations();
+        int newNodeId = 0;
+        int[] old2NewMap = new int[locs];
+        for (int oldNodeId = 0; oldNodeId < locs; oldNodeId++) {
+            if (deletedNodes.contains(oldNodeId))
+                continue;
+
+            old2NewMap[oldNodeId] = newNodeId;
+            newNodeId++;
+        }
+
+        newNodeId = 0;
+        for (int oldNodeId = 0; oldNodeId < locs; oldNodeId++) {
+            if (deletedNodes.contains(oldNodeId))
+                continue;
+            double lat = this.getLatitude(oldNodeId);
+            double lon = this.getLongitude(oldNodeId);
+            inMemGraph.addLocation(lat, lon);
+            for (EdgeWithFlags de : this.getEdges(oldNodeId)) {
+                if (deletedNodes.contains(de.node))
+                    continue;
+                
+                inMemGraph.addIfAbsent(newNodeId, old2NewMap[de.node], (float) de.distance, de.flags);
+            }
+            newNodeId++;
+        }
+        lats = inMemGraph.lats;
+        lons = inMemGraph.lons;
+        edges = inMemGraph.edges;
+        lonLatSize = inMemGraph.lonLatSize;
+        maxRecognizedNodeIndex = inMemGraph.maxRecognizedNodeIndex;
+        deletedNodes = null;
+    }
+
+    private static class EdgesIteratorable extends MyIteratorable<EdgeWithFlags> {
+
+        EdgeWithFlags curr;
+
+        EdgesIteratorable(EdgeWithFlags lde) {
             curr = lde;
         }
 
@@ -194,12 +249,12 @@ public class MemoryGraph implements Graph {
             return curr != null;
         }
 
-        @Override public DistEntry next() {
+        @Override public EdgeWithFlags next() {
             if (!hasNext())
                 throw new IllegalStateException("No next element");
 
-            DistEntry tmp = curr;
-            curr = (LinkedDistEntryWithFlags) curr.prevEntry;
+            EdgeWithFlags tmp = curr;
+            curr = (EdgeWithFlags) curr.prevEntry;
             return tmp;
         }
 

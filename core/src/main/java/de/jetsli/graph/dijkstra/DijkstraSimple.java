@@ -17,7 +17,7 @@ package de.jetsli.graph.dijkstra;
 
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.LinkedDistEntry;
+import de.jetsli.graph.storage.Edge;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -35,11 +35,11 @@ public class DijkstraSimple implements Dijkstra {
     }
 
     @Override public DijkstraPath calcShortestPath(int from, int to) {
-        LinkedDistEntry fromEntry = new LinkedDistEntry(from, 0);
-        LinkedDistEntry curr = fromEntry;
+        Edge fromEntry = new Edge(from, 0);
+        Edge curr = fromEntry;
         TIntHashSet visited = new TIntHashSet();
-        TIntObjectMap<LinkedDistEntry> map = new TIntObjectHashMap<LinkedDistEntry>();
-        PriorityQueue<LinkedDistEntry> heap = new PriorityQueue<LinkedDistEntry>();
+        TIntObjectMap<Edge> map = new TIntObjectHashMap<Edge>();
+        PriorityQueue<Edge> heap = new PriorityQueue<Edge>();
 
         while (true) {
             int currVertex = curr.node;
@@ -49,9 +49,9 @@ public class DijkstraSimple implements Dijkstra {
                     continue;
 
                 double tmp = entry.distance + curr.distance;
-                LinkedDistEntry de = map.get(tmpV);
+                Edge de = map.get(tmpV);
                 if (de == null) {
-                    de = new LinkedDistEntry(tmpV, tmp);
+                    de = new Edge(tmpV, tmp);
                     de.prevEntry = curr;
                     map.put(tmpV, de);
                     heap.add(de);

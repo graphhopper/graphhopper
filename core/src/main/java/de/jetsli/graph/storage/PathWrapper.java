@@ -24,8 +24,8 @@ import de.jetsli.graph.dijkstra.DijkstraPath;
  */
 public class PathWrapper {
 
-    public LinkedDistEntry entryFrom;
-    public LinkedDistEntry entryTo;
+    public Edge entryFrom;
+    public Edge entryTo;
     public double distance;
 
     public PathWrapper() {
@@ -42,7 +42,7 @@ public class PathWrapper {
             throw new IllegalStateException("Locations of 'to' and 'from' DistEntries has to be the same." + toString());        
 
         DijkstraPath path = new DijkstraPath();
-        LinkedDistEntry curr = entryFrom;
+        Edge curr = entryFrom;
         while (curr != null) {
             path.add(curr);
             curr = curr.prevEntry;

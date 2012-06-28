@@ -20,7 +20,7 @@ import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.LinkedDistEntry;
+import de.jetsli.graph.storage.Edge;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
@@ -36,28 +36,28 @@ public class DijkstraBidirection implements Dijkstra {
 
     private int from, to;
     private Graph graph;
-    protected LinkedDistEntry currFrom;
-    protected LinkedDistEntry currTo;
+    protected Edge currFrom;
+    protected Edge currTo;
     protected PathWrapper shortest;
-    protected TIntObjectMap<LinkedDistEntry> shortestDistMapOther;
+    protected TIntObjectMap<Edge> shortestDistMapOther;
     private MyBitSet visitedFrom;
-    private PriorityQueue<LinkedDistEntry> prioQueueFrom;
-    private TIntObjectMap<LinkedDistEntry> shortestDistMapFrom;
+    private PriorityQueue<Edge> prioQueueFrom;
+    private TIntObjectMap<Edge> shortestDistMapFrom;
     private MyBitSet visitedTo;
-    private PriorityQueue<LinkedDistEntry> prioQueueTo;
-    private TIntObjectMap<LinkedDistEntry> shortestDistMapTo;
+    private PriorityQueue<Edge> prioQueueTo;
+    private TIntObjectMap<Edge> shortestDistMapTo;
     private boolean alreadyRun;
 
     public DijkstraBidirection(Graph graph) {
         this.graph = graph;
         int locs = Math.max(20, graph.getLocations());
         visitedFrom = new MyOpenBitSet(locs);
-        prioQueueFrom = new PriorityQueue<LinkedDistEntry>(locs / 10);
-        shortestDistMapFrom = new TIntObjectHashMap<LinkedDistEntry>(locs / 10);
+        prioQueueFrom = new PriorityQueue<Edge>(locs / 10);
+        shortestDistMapFrom = new TIntObjectHashMap<Edge>(locs / 10);
 
         visitedTo = new MyOpenBitSet(locs);
-        prioQueueTo = new PriorityQueue<LinkedDistEntry>(locs / 10);
-        shortestDistMapTo = new TIntObjectHashMap<LinkedDistEntry>(locs / 10);
+        prioQueueTo = new PriorityQueue<Edge>(locs / 10);
+        shortestDistMapTo = new TIntObjectHashMap<Edge>(locs / 10);
 
         clear();
     }
@@ -84,14 +84,14 @@ public class DijkstraBidirection implements Dijkstra {
 
     public DijkstraBidirection initFrom(int from) {
         this.from = from;
-        currFrom = new LinkedDistEntry(from, 0);
+        currFrom = new Edge(from, 0);
         shortestDistMapFrom.put(from, currFrom);
         return this;
     }
 
     public DijkstraBidirection initTo(int to) {
         this.to = to;
-        currTo = new LinkedDistEntry(to, 0);
+        currTo = new Edge(to, 0);
         shortestDistMapTo.put(to, currTo);
         return this;
     }
@@ -151,8 +151,8 @@ public class DijkstraBidirection implements Dijkstra {
         return currFrom.distance + currTo.distance >= shortest.distance;
     }
 
-    public void fillEdges(LinkedDistEntry curr, MyBitSet visitedMain, PriorityQueue<LinkedDistEntry> prioQueue,
-            TIntObjectMap<LinkedDistEntry> shortestDistMap) {
+    public void fillEdges(Edge curr, MyBitSet visitedMain, PriorityQueue<Edge> prioQueue,
+            TIntObjectMap<Edge> shortestDistMap) {
 
         int currVertexFrom = curr.node;
         for (DistEntry entry : graph.getOutgoing(currVertexFrom)) {
@@ -161,9 +161,9 @@ public class DijkstraBidirection implements Dijkstra {
                 continue;
 
             double tmp = entry.distance + curr.distance;
-            LinkedDistEntry de = shortestDistMap.get(tmpV);
+            Edge de = shortestDistMap.get(tmpV);
             if (de == null) {
-                de = new LinkedDistEntry(tmpV, tmp);
+                de = new Edge(tmpV, tmp);
                 de.prevEntry = curr;
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
@@ -180,8 +180,8 @@ public class DijkstraBidirection implements Dijkstra {
         } // for
     }
 
-    public void updateShortest(LinkedDistEntry shortestDE, int currLoc) {
-        LinkedDistEntry entryOther = shortestDistMapOther.get(currLoc);
+    public void updateShortest(Edge shortestDE, int currLoc) {
+        Edge entryOther = shortestDistMapOther.get(currLoc);
         if (entryOther == null)
             return;
 
@@ -237,11 +237,11 @@ public class DijkstraBidirection implements Dijkstra {
         return null;
     }
 
-    public LinkedDistEntry getShortestDistFrom(int index) {
+    public Edge getShortestDistFrom(int index) {
         return shortestDistMapFrom.get(index);
     }
 
-    public LinkedDistEntry getShortestDistTo(int index) {
+    public Edge getShortestDistTo(int index) {
         return shortestDistMapTo.get(index);
     }
 }

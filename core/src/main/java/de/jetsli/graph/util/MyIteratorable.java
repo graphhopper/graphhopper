@@ -38,8 +38,8 @@ public abstract class MyIteratorable<T> implements Iterator<T>, Iterable<T> {
         return counter;
     }
 
-    public static boolean contains(Iterable<DistEntry> iter, int... locs) {
-        Iterator<DistEntry> i = iter.iterator();
+    public static boolean contains(Iterable<? extends DistEntry> iter, int... locs) {
+        Iterator<? extends DistEntry> i = iter.iterator();
         TIntHashSet set = new TIntHashSet();
         while (i.hasNext()) {
             set.add(i.next().node);

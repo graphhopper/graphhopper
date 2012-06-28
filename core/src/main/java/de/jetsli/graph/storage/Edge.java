@@ -15,31 +15,32 @@
  */
 package de.jetsli.graph.storage;
 
-import org.junit.AfterClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import org.junit.BeforeClass;
-
 /**
- *
+ * @see DistEntry
  * @author Peter Karich, info@jetsli.de
  */
-public class LinkedDistEntryWithFlagsTest {
+public class Edge extends DistEntry {
 
-    @Test
-    public void testFlags() {
-        LinkedDistEntryWithFlags de = new LinkedDistEntryWithFlags(1, 12, (byte) 1);
-        de.directionFlag |= 1;
-        assertEquals(1, de.directionFlag);
-        de.directionFlag |= 2;
-        assertEquals(3, de.directionFlag);
+    public Edge prevEntry;
 
-        de = new LinkedDistEntryWithFlags(1, 12, (byte) 1);
-        de.directionFlag |= 2;
-        assertEquals(3, de.directionFlag);
+    public Edge(int loc, double distance) {
+        super(loc, distance);
+    }
 
-        de = new LinkedDistEntryWithFlags(1, 12, (byte) 2);
-        de.directionFlag |= 1;
-        assertEquals(3, de.directionFlag);
+    @Override
+    public Edge clone() {
+        return new Edge(node, distance);
+    }
+
+    public Edge cloneFull() {
+        Edge de = clone();
+        Edge tmpPrev = prevEntry;
+        Edge cl = de;
+        while (tmpPrev != null) {
+            cl.prevEntry = tmpPrev.clone();
+            cl = cl.prevEntry;
+            tmpPrev = tmpPrev.prevEntry;
+        }
+        return de;
     }
 }

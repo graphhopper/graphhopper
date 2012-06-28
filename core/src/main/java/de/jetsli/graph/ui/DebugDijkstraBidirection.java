@@ -17,7 +17,7 @@ package de.jetsli.graph.ui;
 
 import de.jetsli.graph.dijkstra.DijkstraBidirection;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.LinkedDistEntry;
+import de.jetsli.graph.storage.Edge;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
@@ -38,7 +38,7 @@ public class DebugDijkstraBidirection extends DijkstraBidirection {
         this.g2 = g2;
     }
 
-    @Override public void updateShortest(LinkedDistEntry shortestDE, int currLoc) {
+    @Override public void updateShortest(Edge shortestDE, int currLoc) {
         if (g2 != null)
             mg.plotNode(g2, currLoc, Color.YELLOW);
         super.updateShortest(shortestDE, currLoc);

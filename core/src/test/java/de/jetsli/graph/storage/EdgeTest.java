@@ -15,27 +15,24 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.storage.DistEntry;
-import org.junit.AfterClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.BeforeClass;
 
 /**
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class LinkedDistEntryTest {
+public class EdgeTest {
 
     @Test
     public void testCloneFull() {
-        LinkedDistEntry de = new LinkedDistEntry(1, 10);
-        LinkedDistEntry de2 = de.prevEntry = new LinkedDistEntry(2, 20);
-        LinkedDistEntry de3 = de2.prevEntry = new LinkedDistEntry(3, 30);
+        Edge de = new Edge(1, 10);
+        Edge de2 = de.prevEntry = new Edge(2, 20);
+        Edge de3 = de2.prevEntry = new Edge(3, 30);
 
-        LinkedDistEntry cloning = de.cloneFull();
-        LinkedDistEntry tmp1 = de;
-        LinkedDistEntry tmp2 = cloning;
+        Edge cloning = de.cloneFull();
+        Edge tmp1 = de;
+        Edge tmp2 = cloning;
 
         assertNotNull(tmp1);
         while (tmp1 != null) {

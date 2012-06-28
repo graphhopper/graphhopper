@@ -97,6 +97,10 @@ public class MMapGraphTest extends AbstractGraphTester {
         mm = new MMapGraph(1) {
 
             {
+                try {
+                    ensureEdgesCapacity(10);
+                } catch (Exception ex) {
+                }
                 getNextFreeEdgeBlock();
                 getNextFreeEdgeBlock();
                 getNextFreeEdgeBlock();

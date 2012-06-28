@@ -30,7 +30,7 @@ public class GraphWrapper implements Graph {
 
     public GraphWrapper(Graph g) {
         this.g = g;
-    }        
+    }
 
     public void setIgnoreNodes(MyBitSet bitSet) {
         ignoreNodes = bitSet;
@@ -43,28 +43,28 @@ public class GraphWrapper implements Graph {
         assert tmp >= 0;
         return tmp;
     }
-    
+
     @Override
-    public MyIteratorable<DistEntry> getEdges(int index) {
-        if(ignoreNodes.contains(index))
-            return DistEntry.EMPTY_ITER;
-        
+    public MyIteratorable<EdgeWithFlags> getEdges(int index) {
+        if (ignoreNodes.contains(index))
+            return EdgeWithFlags.EMPTY_ITER;
+
         return g.getEdges(index);
     }
 
     @Override
-    public MyIteratorable<DistEntry> getOutgoing(int index) {
-        if(ignoreNodes.contains(index))
-            return DistEntry.EMPTY_ITER;
-        
+    public MyIteratorable<EdgeWithFlags> getOutgoing(int index) {
+        if (ignoreNodes.contains(index))
+            return EdgeWithFlags.EMPTY_ITER;
+
         return g.getOutgoing(index);
     }
 
     @Override
-    public MyIteratorable<DistEntry> getIncoming(int index) {
-        if(ignoreNodes.contains(index))
-            return DistEntry.EMPTY_ITER;
-        
+    public MyIteratorable<EdgeWithFlags> getIncoming(int index) {
+        if (ignoreNodes.contains(index))
+            return EdgeWithFlags.EMPTY_ITER;
+
         return g.getIncoming(index);
     }
 
@@ -96,5 +96,15 @@ public class GraphWrapper implements Graph {
     @Override
     public void ensureCapacity(int cap) {
         g.ensureCapacity(cap);
+    }
+
+    @Override
+    public boolean markDeleted(int index) {
+        return g.markDeleted(index);
+    }
+
+    @Override
+    public void optimize() {
+        g.optimize();
     }
 }

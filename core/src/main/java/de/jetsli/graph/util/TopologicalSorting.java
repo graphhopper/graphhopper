@@ -20,6 +20,7 @@ import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.EdgeWithFlags;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
@@ -50,7 +51,7 @@ public class TopologicalSorting {
         new XFirstSearch() {
 
             @Override
-            protected Iterable<DistEntry> getEdges(Graph g, int current) {
+            protected Iterable<EdgeWithFlags> getEdges(Graph g, int current) {
                 if (!g.getIncoming(current).iterator().hasNext())
                     noIncomingEdges.add(current);
 
@@ -58,9 +59,9 @@ public class TopologicalSorting {
             }
         }.start(g, startingNode, true);
 
-        if(noIncomingEdges.size() == 0)
+        if (noIncomingEdges.size() == 0)
             throw new IllegalStateException("No beginning nodes found! Only acyclic graphs are allowed");
-        
+
         MyBitSet visited = new MyOpenBitSet(g.getLocations());
         final MyIntDeque noIncomingDeque = new MyIntDeque(noIncomingEdges.size());
         for (TIntIterator iter = noIncomingEdges.iterator(); iter.hasNext();) {

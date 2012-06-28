@@ -20,7 +20,7 @@ import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.LinkedDistEntry;
+import de.jetsli.graph.storage.Edge;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -71,14 +71,14 @@ public class DijkstraWhichToOne implements Dijkstra {
         }
         
         MyBitSet visitedFrom = new MyOpenBitSet(graph.getLocations());
-        PriorityQueue<LinkedDistEntry> prioQueueFrom = new PriorityQueue<LinkedDistEntry>();
-        TIntObjectMap<LinkedDistEntry> shortestDistMapFrom = new TIntObjectHashMap<LinkedDistEntry>();
+        PriorityQueue<Edge> prioQueueFrom = new PriorityQueue<Edge>();
+        TIntObjectMap<Edge> shortestDistMapFrom = new TIntObjectHashMap<Edge>();
 
-        LinkedDistEntry entryTo = new LinkedDistEntry(destination, 0);        
-        LinkedDistEntry currTo = entryTo;
+        Edge entryTo = new Edge(destination, 0);        
+        Edge currTo = entryTo;
         MyBitSet visitedTo = new MyOpenBitSet(graph.getLocations());
-        PriorityQueue<LinkedDistEntry> prioQueueTo = new PriorityQueue<LinkedDistEntry>();
-        TIntObjectMap<LinkedDistEntry> shortestDistMapTo = new TIntObjectHashMap<LinkedDistEntry>();
+        PriorityQueue<Edge> prioQueueTo = new PriorityQueue<Edge>();
+        TIntObjectMap<Edge> shortestDistMapTo = new TIntObjectHashMap<Edge>();
         shortestDistMapTo.put(destination, entryTo);
 
         PathWrapper shortest = new PathWrapper();
@@ -88,9 +88,9 @@ public class DijkstraWhichToOne implements Dijkstra {
         if (pubTransport.isEmpty())
             throw new IllegalStateException("You'll need at least one starting point. Set it via addPubTransportPoint");
 
-        LinkedDistEntry currFrom = null;
+        Edge currFrom = null;
         for (int i = 0; i < pubTransport.size(); i++) {
-            LinkedDistEntry tmpFrom = new LinkedDistEntry(pubTransport.get(i), 0);
+            Edge tmpFrom = new Edge(pubTransport.get(i), 0);
             if (i == 0)
                 currFrom = tmpFrom;
             fillEdges(shortest, tmpFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom, shortestDistMapTo);
@@ -132,9 +132,9 @@ public class DijkstraWhichToOne implements Dijkstra {
         return g;
     }
 
-    public void fillEdges(PathWrapper shortest, LinkedDistEntry curr, MyBitSet visitedMain,
-            PriorityQueue<LinkedDistEntry> prioQueue,
-            TIntObjectMap<LinkedDistEntry> shortestDistMap, TIntObjectMap<LinkedDistEntry> shortestDistMapOther) {
+    public void fillEdges(PathWrapper shortest, Edge curr, MyBitSet visitedMain,
+            PriorityQueue<Edge> prioQueue,
+            TIntObjectMap<Edge> shortestDistMap, TIntObjectMap<Edge> shortestDistMapOther) {
 
         int currVertexFrom = curr.node;
         for (DistEntry entry : graph.getOutgoing(currVertexFrom)) {
@@ -143,9 +143,9 @@ public class DijkstraWhichToOne implements Dijkstra {
                 continue;
 
             double tmp = entry.distance + curr.distance;
-            LinkedDistEntry de = shortestDistMap.get(tmpV);
+            Edge de = shortestDistMap.get(tmpV);
             if (de == null) {
-                de = new LinkedDistEntry(tmpV, tmp);
+                de = new Edge(tmpV, tmp);
                 de.prevEntry = curr;
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
@@ -158,7 +158,7 @@ public class DijkstraWhichToOne implements Dijkstra {
                 prioQueue.add(de);
             }
 
-            LinkedDistEntry entryOther = shortestDistMapOther.get(tmpV);
+            Edge entryOther = shortestDistMapOther.get(tmpV);
             if (entryOther == null)
                 continue;
 
