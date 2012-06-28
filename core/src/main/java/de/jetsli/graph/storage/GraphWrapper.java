@@ -103,6 +103,10 @@ public class GraphWrapper implements Graph {
         return g.markDeleted(index);
     }
 
+    @Override public boolean isDeleted(int index) {
+        return g.isDeleted(index);
+    }
+
     @Override
     public void optimize() {
         g.optimize();

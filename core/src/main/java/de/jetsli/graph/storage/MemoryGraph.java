@@ -195,13 +195,17 @@ public class MemoryGraph implements Graph {
         return true;
     }
 
+    @Override public boolean isDeleted(int index) {
+        return getDeletedNodes().contains(index);
+    }
+
     @Override
     public void optimize() {
         MemoryGraph inMemGraph = new MemoryGraph(getLocations() - getDeletedNodes().getCardinality());
 
         /**
-         * This methods creates a new in-memory graph without the specified deleted nodes.
-         * see MMapGraph for a near duplicate
+         * This methods creates a new in-memory graph without the specified deleted nodes. see
+         * MMapGraph for a near duplicate
          */
         int locs = this.getLocations();
         int newNodeId = 0;
@@ -224,7 +228,7 @@ public class MemoryGraph implements Graph {
             for (EdgeWithFlags de : this.getEdges(oldNodeId)) {
                 if (deletedNodes.contains(de.node))
                     continue;
-                
+
                 inMemGraph.addIfAbsent(newNodeId, old2NewMap[de.node], (float) de.distance, de.flags);
             }
             newNodeId++;

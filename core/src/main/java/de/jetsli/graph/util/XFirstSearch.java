@@ -77,7 +77,7 @@ public class XFirstSearch {
         return true;
     }
 
-    class MyIntStack extends TIntArrayStack implements HelperColl {
+    static class MyIntStack extends TIntArrayStack implements HelperColl {
 
         @Override
         public boolean isEmpty() {
@@ -85,6 +85,6 @@ public class XFirstSearch {
         }
     }
 
-    class MyHelperIntQueue extends MyIntDeque implements HelperColl {
+    static class MyHelperIntQueue extends MyIntDeque implements HelperColl {
     }
 }

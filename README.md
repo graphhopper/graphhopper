@@ -26,7 +26,7 @@ If you want to import a bigger OSM (Germany) then run:
 > cd core; ./run.sh germany
 
  * For Germany it takes approx 25 minutes for the import and roughly 1 minute for the ugly&slow UI to pop up. Probably you'll need to tune the memory settings - send me a mail if this fails!
- * At the moment all operations require redrawing the graph which takes quite some time! So don't click or drag too much ;)
+ * At the moment the UI is a bit rough and simple so, don't click or drag too much ;)
 
 QuadTree Usage
 ---------------

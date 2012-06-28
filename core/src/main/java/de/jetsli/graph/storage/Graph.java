@@ -65,6 +65,8 @@ public interface Graph {
      * Schedule the deletion of the specified node until an optimize() call happens
      */
     boolean markDeleted(int index);
+    
+    boolean isDeleted(int index);
 
     /**
      * Performs optimization routines like deletion or node rearrangements.

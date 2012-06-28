@@ -123,37 +123,6 @@ public class OSMReader {
         DijkstraBidirection dijkstra = new DijkstraBidirection(g);
         Random rand = new Random(123);
         StopWatch sw = new StopWatch();
-        final AtomicInteger integ = new AtomicInteger(0);
-        int locs = g.getLocations();
-        final MyBitSet differentNetwork = new MyOpenBitSet(locs);
-        final MyBitSet bs = new MyOpenBitSet(locs);
-        for (int i = 0; i < locs; i++) {
-            if (bs.contains(i))
-                continue;
-
-            final int tmp = i;
-            new XFirstSearch() {
-
-                @Override protected MyBitSet createBitSet(int size) {
-                    return bs;
-                }
-
-                @Override protected boolean goFurther(int nodeId) {
-                    boolean ret = super.goFurther(nodeId);
-                    if (ret) {
-                        integ.incrementAndGet();
-                        if (tmp > 0)
-                            differentNetwork.add(nodeId);
-                    }
-
-                    return ret;
-                }
-            }.start(g, i, true);
-
-            System.out.println("start:" + i + " count:" + integ.get());
-            integ.set(0);
-        }
-
         for (int i = 0; i < runs; i++) {
             double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
             double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
@@ -171,9 +140,7 @@ public class OSMReader {
             DijkstraPath p = dijkstra.clear().calcShortestPath(from, to);
             sw.stop();
             if (p == null) {
-                logger.warn("no route found for i=" + i + " !?"
-                        + " graph-from " + from + " " + differentNetwork.contains(from)
-                        + ", graph-to " + to + " " + differentNetwork.contains(to));
+                logger.warn("no route found for i=" + i + " !?" + " graph-from " + from + ", graph-to " + to);
                 continue;
             }
             if (i % 20 == 0)
