@@ -13,8 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
+import de.jetsli.graph.routing.DijkstraBidirection;
+import de.jetsli.graph.routing.RoutingAlgorithm;
+import de.jetsli.graph.routing.DijkstraWhichToOne;
+import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.storage.Graph;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -27,7 +31,7 @@ public class DijkstraWhichToOneTest extends AbstractDijkstraTester {
 
     public static int[] pubTransportPath = new int[]{20, 21, 31, 41, 51, 52, 42, 43, 53, 63, 62, 72, 73, 74, 75};
 
-    @Override public Dijkstra createDijkstra(Graph g) {
+    @Override public RoutingAlgorithm createDijkstra(Graph g) {
         return new DijkstraWhichToOne(g);
     }
 
@@ -36,7 +40,7 @@ public class DijkstraWhichToOneTest extends AbstractDijkstraTester {
         d.addPubTransportPoints(pubTransportPath);
         int dest = 51;
         d.setDestination(dest);
-        DijkstraPath path = d.calcShortestPath();
+        Path path = d.calcShortestPath();
 
         assertWithBiDijkstra(pubTransportPath, path, dest);
     }
@@ -46,7 +50,7 @@ public class DijkstraWhichToOneTest extends AbstractDijkstraTester {
         d.addPubTransportPoints(pubTransportPath);
         int dest = 49;
         d.setDestination(dest);
-        DijkstraPath path = d.calcShortestPath();
+        Path path = d.calcShortestPath();
 
         assertWithBiDijkstra(pubTransportPath, path, dest);
     }
@@ -57,15 +61,15 @@ public class DijkstraWhichToOneTest extends AbstractDijkstraTester {
         d.addPubTransportPoints(pubT);
         int dest = 49;
         d.setDestination(dest);
-        DijkstraPath path = d.calcShortestPath();
+        Path path = d.calcShortestPath();
 
         assertWithBiDijkstra(pubT, path, dest);
     }
 
-    private void assertWithBiDijkstra(int[] points, DijkstraPath path, int dest) {
-        DijkstraPath bestManualPath = null;        
+    private void assertWithBiDijkstra(int[] points, Path path, int dest) {
+        Path bestManualPath = null;        
         for (int i = 0; i < points.length; i++) {
-            DijkstraPath manualPath = new DijkstraBidirection(matrixGraph).calcShortestPath(points[i], dest);
+            Path manualPath = new DijkstraBidirection(matrixGraph).calcShortestPath(points[i], dest);
             if (bestManualPath == null || manualPath.distance() < bestManualPath.distance())
                 bestManualPath = manualPath;
         }

@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Edge;
@@ -104,11 +104,11 @@ public class DijkstraTwoDrivers {
         }
     }
 
-    public DijkstraPath getBestForA() {
+    public Path getBestForA() {
         return driverA.getShortest();
     }
 
-    public DijkstraPath getBestForB() {
+    public Path getBestForB() {
         return driverB.getShortest();
     }
 

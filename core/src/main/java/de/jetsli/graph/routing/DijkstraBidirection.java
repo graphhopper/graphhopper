@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
 import de.jetsli.graph.storage.PathWrapper;
 import de.jetsli.graph.storage.DistEntry;
@@ -32,7 +32,7 @@ import java.util.PriorityQueue;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraBidirection implements Dijkstra {
+public class DijkstraBidirection implements RoutingAlgorithm {
 
     private int from, to;
     private Graph graph;
@@ -62,7 +62,7 @@ public class DijkstraBidirection implements Dijkstra {
         clear();
     }
 
-    public Dijkstra clear() {
+    public RoutingAlgorithm clear() {
         alreadyRun = false;
         visitedFrom.clear();
         prioQueueFrom.clear();
@@ -96,7 +96,7 @@ public class DijkstraBidirection implements Dijkstra {
         return this;
     }
 
-    @Override public DijkstraPath calcShortestPath(int from, int to) {
+    @Override public Path calcShortestPath(int from, int to) {
         if (alreadyRun)
             throw new IllegalStateException("Do not reuse DijkstraBidirection");
 
@@ -105,7 +105,7 @@ public class DijkstraBidirection implements Dijkstra {
         initTo(to);
 
         // identical
-        DijkstraPath p = checkIndenticalFromAndTo();
+        Path p = checkIndenticalFromAndTo();
         if (p != null)
             return p;
 
@@ -124,8 +124,8 @@ public class DijkstraBidirection implements Dijkstra {
         return getShortest();
     }
 
-    public DijkstraPath getShortest() {
-        DijkstraPath g = shortest.extract();
+    public Path getShortest() {
+        Path g = shortest.extract();
         if (g == null)
             return null;
 
@@ -228,9 +228,9 @@ public class DijkstraBidirection implements Dijkstra {
         return true;
     }
 
-    private DijkstraPath checkIndenticalFromAndTo() {
+    private Path checkIndenticalFromAndTo() {
         if (from == to) {
-            DijkstraPath p = new DijkstraPath();
+            Path p = new Path();
             p.add(new DistEntry(from, 0));
             return p;
         }

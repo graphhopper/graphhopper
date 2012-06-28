@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.ui;
 
-import de.jetsli.graph.dijkstra.DijkstraBidirection;
+import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Edge;
 import java.awt.Color;

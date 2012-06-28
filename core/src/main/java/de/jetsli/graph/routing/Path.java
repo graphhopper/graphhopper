@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
 import de.jetsli.graph.storage.DistEntry;
 import gnu.trove.set.TIntSet;
@@ -27,7 +27,7 @@ import java.util.List;
  * 
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraPath {
+public class Path {
 
     // we cannot avoid this storage and e.g. use a linked list via distEntry.prevEntry = previousEntry; ...
     // as the prevEntry reference is already used for the shortest-path-tree back reference
@@ -80,7 +80,7 @@ public class DijkstraPath {
         return "distance:" + distance() + ", " + str;
     }
 
-    public TIntSet and(DijkstraPath p2) {
+    public TIntSet and(Path p2) {
         TIntHashSet thisSet = new TIntHashSet();
         TIntHashSet retSet = new TIntHashSet();
         for (DistEntry de : distEntries) {

@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.dijkstra.DijkstraPath;
+import de.jetsli.graph.routing.Path;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -48,7 +48,7 @@ public class PathWrapperTest {
         wrapper.entryFrom = entryC;
         wrapper.entryTo = entryD;
 
-        DijkstraPath path = wrapper.extract();        
+        Path path = wrapper.extract();        
         assertEquals(4.2, path.distance(), 1e-5);
         assertEquals(5, path.locations());
     }

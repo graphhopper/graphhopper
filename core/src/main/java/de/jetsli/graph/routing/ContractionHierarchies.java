@@ -13,12 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.ch;
+package de.jetsli.graph.routing;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.dijkstra.DijkstraBidirection;
-import de.jetsli.graph.dijkstra.DijkstraPath;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.GraphWrapper;
 import de.jetsli.graph.storage.Graph;
@@ -105,7 +103,7 @@ public class ContractionHierarchies {
                         }
                     };
                     db.addSkipNode(curr.node);
-                    DijkstraPath witnessPath = db.calcShortestPath(inDE.node, outDE.node);
+                    Path witnessPath = db.calcShortestPath(inDE.node, outDE.node);
                     double dist = inDE.distance + outDE.distance;
                     // add the shortcut <in,curr,out> only if the found witness path is longer or not existent
                     if (witnessPath == null || witnessPath.distance() > 0 && witnessPath.distance() > dist) {

@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
 import de.jetsli.graph.storage.PathWrapper;
 import de.jetsli.graph.storage.DistEntry;
@@ -37,7 +37,7 @@ import java.util.PriorityQueue;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraShortestOf2ToPub implements Dijkstra {
+public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
 
     private Graph graph;
     private TIntArrayList pubTransport = new TIntArrayList();
@@ -74,7 +74,7 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
         toP2 = to;
     }
 
-    public DijkstraPath calcShortestPath() {
+    public Path calcShortestPath() {
         // identical
         if (pubTransport.contains(fromP1) || pubTransport.contains(toP2))
             return new DijkstraBidirection(graph).calcShortestPath(fromP1, toP2);
@@ -126,7 +126,7 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
                 throw new IllegalStateException("Shortest Path not found? " + fromP1 + " " + toP2);
         }
 
-        DijkstraPath g = shortest.extract();
+        Path g = shortest.extract();
         if (!pubTransport.contains(g.getFromLoc())) {
             double tmpDist = g.distance();
             g.reverseOrder();
@@ -200,7 +200,7 @@ public class DijkstraShortestOf2ToPub implements Dijkstra {
         }
     }
 
-    @Override public DijkstraPath calcShortestPath(int from, int to) {
+    @Override public Path calcShortestPath(int from, int to) {
         addPubTransportPoint(from);
         setFrom(from);
         setTo(to);

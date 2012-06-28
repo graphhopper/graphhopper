@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
@@ -26,7 +26,7 @@ import java.util.PriorityQueue;
 /**
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraSimple implements Dijkstra {
+public class DijkstraSimple implements RoutingAlgorithm {
 
     private Graph graph;
 
@@ -34,7 +34,7 @@ public class DijkstraSimple implements Dijkstra {
         this.graph = graph;
     }
 
-    @Override public DijkstraPath calcShortestPath(int from, int to) {
+    @Override public Path calcShortestPath(int from, int to) {
         Edge fromEntry = new Edge(from, 0);
         Edge curr = fromEntry;
         TIntHashSet visited = new TIntHashSet();
@@ -74,7 +74,7 @@ public class DijkstraSimple implements Dijkstra {
         }
 
         // extract path from shortest-path-tree
-        DijkstraPath path = new DijkstraPath();
+        Path path = new Path();
         while (curr.node != from) {
             path.add(curr);
             curr = curr.prevEntry;

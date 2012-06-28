@@ -18,8 +18,8 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.util.CalcDistance;
-import de.jetsli.graph.dijkstra.DijkstraBidirection;
-import de.jetsli.graph.dijkstra.DijkstraPath;
+import de.jetsli.graph.routing.DijkstraBidirection;
+import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
@@ -137,7 +137,7 @@ public class OSMReader {
             }
 
             sw.start();
-            DijkstraPath p = dijkstra.clear().calcShortestPath(from, to);
+            Path p = dijkstra.clear().calcShortestPath(from, to);
             sw.stop();
             if (p == null) {
                 logger.warn("no route found for i=" + i + " !?" + " graph-from " + from + ", graph-to " + to);

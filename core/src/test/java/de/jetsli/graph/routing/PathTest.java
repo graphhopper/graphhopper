@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
+import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.storage.DistEntry;
 import gnu.trove.set.TIntSet;
 import org.junit.Test;
@@ -24,10 +25,10 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraPathTest {
+public class PathTest {
 
     @Test public void testAdd() {
-        DijkstraPath p = new DijkstraPath();
+        Path p = new Path();
         p.add(new DistEntry(1, 12));
         p.add(new DistEntry(1, 13));
         // Hmmh according to Dijkstra this is correct but according to intuition this is none sense.
@@ -35,7 +36,7 @@ public class DijkstraPathTest {
     }
 
     @Test public void testReverseOrder() {
-        DijkstraPath p = new DijkstraPath();
+        Path p = new Path();
         DistEntry from = new DistEntry(1, 11);
         DistEntry to = new DistEntry(3, 12);
         p.add(from);
@@ -51,13 +52,13 @@ public class DijkstraPathTest {
     }
     
     @Test public void testAnd() {
-        DijkstraPath p1 = new DijkstraPath();
+        Path p1 = new Path();
         p1.add(new DistEntry(1, 12));
         p1.add(new DistEntry(2, 12));
         p1.add(new DistEntry(3, 12));
         p1.add(new DistEntry(4, 12));
         
-        DijkstraPath p2 = new DijkstraPath();
+        Path p2 = new Path();
         p2.add(new DistEntry(7, 12));
         p2.add(new DistEntry(2, 12));
         p2.add(new DistEntry(3, 12));
@@ -75,7 +76,7 @@ public class DijkstraPathTest {
     }
     
     @Test public void testContains() {
-        DijkstraPath p1 = new DijkstraPath();
+        Path p1 = new Path();
         p1.add(new DistEntry(1, 12));
         p1.add(new DistEntry(2, 12));
         

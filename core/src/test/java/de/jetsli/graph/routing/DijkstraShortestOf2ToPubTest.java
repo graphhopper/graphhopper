@@ -13,8 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
+import de.jetsli.graph.routing.DijkstraShortestOf2ToPub;
+import de.jetsli.graph.routing.DijkstraBidirection;
+import de.jetsli.graph.routing.RoutingAlgorithm;
+import de.jetsli.graph.routing.DijkstraWhichToOne;
+import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
 import org.junit.Test;
@@ -26,7 +31,7 @@ import static org.junit.Assert.*;
  */
 public class DijkstraShortestOf2ToPubTest {
 
-    public Dijkstra createDijkstra(MemoryGraph g) {
+    public RoutingAlgorithm createDijkstra(MemoryGraph g) {
         return new DijkstraWhichToOne(g);
     }
 
@@ -39,7 +44,7 @@ public class DijkstraShortestOf2ToPubTest {
         int dest = 65;
         d.setFrom(from);
         d.setTo(dest);
-        DijkstraPath path = d.calcShortestPath();
+        Path path = d.calcShortestPath();
         assertWithBiDijkstra(DijkstraWhichToOneTest.pubTransportPath, path, from, dest, g);
     }
 
@@ -53,7 +58,7 @@ public class DijkstraShortestOf2ToPubTest {
         d.setFrom(from);
         d.setTo(dest);
 
-        DijkstraPath path = d.calcShortestPath();
+        Path path = d.calcShortestPath();
         assertWithBiDijkstra(DijkstraWhichToOneTest.pubTransportPath, path, from, dest, g);
     }
     
@@ -71,17 +76,17 @@ public class DijkstraShortestOf2ToPubTest {
         int dest = 53;
         d.setFrom(from);
         d.setTo(dest);
-        DijkstraPath path = d.calcShortestPath();
+        Path path = d.calcShortestPath();
         
         assertWithBiDijkstra(pubTransport, path, from, dest, g);
     }
 
-    private void assertWithBiDijkstra(int[] points, DijkstraPath path, int from, int to, Graph g) {
-        DijkstraPath bestManualPathFrom = null;
-        DijkstraPath bestManualPathTo = null;        
+    private void assertWithBiDijkstra(int[] points, Path path, int from, int to, Graph g) {
+        Path bestManualPathFrom = null;
+        Path bestManualPathTo = null;        
         for (int i = 0; i < points.length; i++) {
-            DijkstraPath manualFrom = new DijkstraBidirection(g).calcShortestPath(points[i], from);
-            DijkstraPath manualTo = new DijkstraBidirection(g).calcShortestPath(points[i], to);
+            Path manualFrom = new DijkstraBidirection(g).calcShortestPath(points[i], from);
+            Path manualTo = new DijkstraBidirection(g).calcShortestPath(points[i], to);
             if (bestManualPathFrom == null
                     || manualFrom.distance() + manualTo.distance()
                     < bestManualPathFrom.distance() + bestManualPathTo.distance()) {

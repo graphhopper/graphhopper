@@ -13,14 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
 /**
  * Calculates the shortest path from to specified node ids.
  *
  * @author Peter Karich, info@jetsli.de
  */
-public interface Dijkstra {
+public interface RoutingAlgorithm {
 
-    DijkstraPath calcShortestPath(int from, int to);
+    Path calcShortestPath(int from, int to);
 }

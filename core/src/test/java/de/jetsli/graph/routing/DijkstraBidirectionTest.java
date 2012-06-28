@@ -13,8 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
+import de.jetsli.graph.routing.DijkstraBidirection;
+import de.jetsli.graph.routing.RoutingAlgorithm;
+import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
 import org.junit.Test;
@@ -26,14 +29,14 @@ import static org.junit.Assert.*;
  */
 public class DijkstraBidirectionTest extends AbstractDijkstraTester {
 
-    @Override public Dijkstra createDijkstra(Graph g) {        
+    @Override public RoutingAlgorithm createDijkstra(Graph g) {        
         return new DijkstraBidirection(g);
     }
     
     @Test
     public void testAddSkipNodes() {
         Graph g = createWikipediaGraph();
-        DijkstraPath p = new DijkstraBidirection(g).calcShortestPath(0, 4);
+        Path p = new DijkstraBidirection(g).calcShortestPath(0, 4);
         assertEquals(p.toString(), 20, p.distance(), 1e-6);
         assertTrue(p.toString(), p.contains(5));
         
@@ -51,7 +54,7 @@ public class DijkstraBidirectionTest extends AbstractDijkstraTester {
                
         DijkstraBidirection db = new DijkstraBidirection(g);
         db.addSkipNode(1);
-        DijkstraPath p = db.calcShortestPath(0, 2);
+        Path p = db.calcShortestPath(0, 2);
         assertNull(p);
     }
 }

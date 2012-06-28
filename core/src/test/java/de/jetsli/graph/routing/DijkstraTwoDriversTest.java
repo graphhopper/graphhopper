@@ -13,8 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
+import de.jetsli.graph.routing.DijkstraBidirection;
+import de.jetsli.graph.routing.DijkstraTwoDrivers;
+import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.storage.Graph;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -62,8 +65,8 @@ public class DijkstraTwoDriversTest {
         d.setDriverB(30, 15);
         d.calcShortestPath();
         
-        DijkstraPath pA = new DijkstraBidirection(g).calcShortestPath(12, 36);
-        DijkstraPath pB = new DijkstraBidirection(g).calcShortestPath(30, 15);        
+        Path pA = new DijkstraBidirection(g).calcShortestPath(12, 36);
+        Path pB = new DijkstraBidirection(g).calcShortestPath(30, 15);        
         TIntSet set = pA.and(pB);
         assertTrue(set.toString(), set.contains(d.getMeetingPoint()));
         assertEquals(pA.distance(), d.getBestForA().distance(), 1e-5);        

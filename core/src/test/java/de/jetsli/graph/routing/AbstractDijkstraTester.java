@@ -13,8 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
+import de.jetsli.graph.routing.RoutingAlgorithm;
+import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.reader.PrinctonReader;
 import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
@@ -39,11 +41,11 @@ public abstract class AbstractDijkstraTester {
     int from;
     int to;
 
-    public abstract Dijkstra createDijkstra(Graph g);
+    public abstract RoutingAlgorithm createDijkstra(Graph g);
 
     @Test public void testCalcShortestPath() {
         Graph graph = createGraph();
-        DijkstraPath p = createDijkstra(graph).calcShortestPath(from, to);
+        Path p = createDijkstra(graph).calcShortestPath(from, to);
         assertEquals(p.toString(), 13, p.distance(), 1e-6);
         assertEquals(p.toString(), 5, p.locations());
     }
@@ -86,21 +88,21 @@ public abstract class AbstractDijkstraTester {
 
     @Test public void testWikipediaShortestPath() {
         Graph graph = createWikipediaGraph();
-        DijkstraPath p = createDijkstra(graph).calcShortestPath(0, 4);
+        Path p = createDijkstra(graph).calcShortestPath(0, 4);
         assertEquals(p.toString(), 20, p.distance(), 1e-6);
         assertEquals(p.toString(), 4, p.locations());
     }
 
     @Test public void testCalcIfNoWay() {
         Graph graph = createGraph();
-        DijkstraPath p = createDijkstra(graph).calcShortestPath(0, 0);
+        Path p = createDijkstra(graph).calcShortestPath(0, 0);
         assertEquals(p.toString(), 0, p.distance(), 1e-6);
         assertEquals(p.toString(), 1, p.locations());
     }
 
     @Test public void testCalcIf1EdgeAway() {
         Graph graph = createGraph();
-        DijkstraPath p = createDijkstra(graph).calcShortestPath(1, 2);
+        Path p = createDijkstra(graph).calcShortestPath(1, 2);
         assertEquals(p.toString(), 2, p.distance(), 1e-6);
         assertEquals(p.toString(), 2, p.locations());
     }
@@ -155,7 +157,7 @@ public abstract class AbstractDijkstraTester {
         graph.edge(3, 8, 20, true);
         graph.edge(8, 6, 20, true);
 
-        DijkstraPath p = createDijkstra(graph).calcShortestPath(from, to);
+        Path p = createDijkstra(graph).calcShortestPath(from, to);
         assertEquals(p.toString(), 51, p.distance(), 1e-6);
         assertEquals(p.toString(), 6, p.locations());
     }
@@ -181,14 +183,14 @@ public abstract class AbstractDijkstraTester {
         graph.edge(3, 8, 20, true);
         graph.edge(8, 6, 20, true);
 
-        DijkstraPath p = createDijkstra(graph).calcShortestPath(from, to);
+        Path p = createDijkstra(graph).calcShortestPath(from, to);
         assertEquals(p.toString(), 40, p.distance(), 1e-6);
         assertEquals(p.toString(), 5, p.locations());
     }
 
     @Test public void testRekeyBugOfIntBinHeap() {
         // using DijkstraSimple + IntBinHeap then rekey loops endlessly
-        DijkstraPath p = createDijkstra(matrixGraph).calcShortestPath(36, 91);
+        Path p = createDijkstra(matrixGraph).calcShortestPath(36, 91);
         assertEquals(12, p.locations());
         assertEquals(66f, p.distance(), 1e-3);
     }
@@ -204,7 +206,7 @@ public abstract class AbstractDijkstraTester {
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
 
-        DijkstraPath p = createDijkstra(g).calcShortestPath(0, 2);
+        Path p = createDijkstra(g).calcShortestPath(0, 2);
         assertEquals(p.toString(), 3, p.locations());
     }
 
@@ -218,7 +220,7 @@ public abstract class AbstractDijkstraTester {
         g.edge(3, 4, 3, false);
         g.edge(4, 2, 1, false);
 
-        DijkstraPath p = createDijkstra(g).calcShortestPath(0, 2);
+        Path p = createDijkstra(g).calcShortestPath(0, 2);
         assertEquals(p.toString(), 3, p.locations());
     }
 
@@ -238,11 +240,11 @@ public abstract class AbstractDijkstraTester {
             int index1 = Math.abs(rand.nextInt(graph.getLocations()));
             int index2 = Math.abs(rand.nextInt(graph.getLocations()));
             // constructing the graph could be expensive like for CH
-            Dijkstra d = createDijkstra(graph);
+            RoutingAlgorithm d = createDijkstra(graph);
 
             if (i >= noJvmWarming)
                 sw.start();
-            DijkstraPath p = d.calcShortestPath(index1, index2);
+            Path p = d.calcShortestPath(index1, index2);
             if (i >= noJvmWarming)
                 sw.stop();
             System.out.println("#" + i + " " + name + ":" + sw.getSeconds());

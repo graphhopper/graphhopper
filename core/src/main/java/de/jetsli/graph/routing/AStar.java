@@ -13,18 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
 
-import de.jetsli.graph.storage.Graph;
+package de.jetsli.graph.routing;
 
 /**
- *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich
  */
-public class DijkstraSimpleTest extends AbstractDijkstraTester {
-
-    @Override public Dijkstra createDijkstra(Graph g) {
-        return new DijkstraSimple(g);
-    }
+public class AStar {
 
 }

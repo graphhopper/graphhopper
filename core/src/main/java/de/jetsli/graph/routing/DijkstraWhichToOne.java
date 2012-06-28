@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.dijkstra;
+package de.jetsli.graph.routing;
 
 import de.jetsli.graph.storage.PathWrapper;
 import de.jetsli.graph.storage.DistEntry;
@@ -34,7 +34,7 @@ import java.util.PriorityQueue;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraWhichToOne implements Dijkstra {
+public class DijkstraWhichToOne implements RoutingAlgorithm {
 
     private Graph graph;
     private TIntArrayList pubTransport = new TIntArrayList();
@@ -62,10 +62,10 @@ public class DijkstraWhichToOne implements Dijkstra {
         destination = index;
     }
 
-    public DijkstraPath calcShortestPath() {
+    public Path calcShortestPath() {
         // identical
         if (pubTransport.contains(destination)) {
-            DijkstraPath p = new DijkstraPath();
+            Path p = new Path();
             p.add(new DistEntry(destination, 0));
             return p;
         }
@@ -119,7 +119,7 @@ public class DijkstraWhichToOne implements Dijkstra {
                 finish++;           
         }
 
-        DijkstraPath g = shortest.extract();
+        Path g = shortest.extract();
         if(g == null)
             return null;
         
@@ -172,7 +172,7 @@ public class DijkstraWhichToOne implements Dijkstra {
         } // for
     }
 
-    @Override public DijkstraPath calcShortestPath(int from, int to) {
+    @Override public Path calcShortestPath(int from, int to) {
         addPubTransportPoint(from);
         setDestination(to);
         return calcShortestPath();

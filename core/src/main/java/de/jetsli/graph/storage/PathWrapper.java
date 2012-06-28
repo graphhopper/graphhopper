@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.dijkstra.DijkstraPath;
+import de.jetsli.graph.routing.Path;
 
 /**
  * This class creates a DijkstraPath from two DistEntry's resulting from a BidirectionalDijkstra
@@ -34,14 +34,14 @@ public class PathWrapper {
     /**
      * Extracts path from two shortest-path-tree
      */
-    public DijkstraPath extract() {
+    public Path extract() {
         if (entryFrom == null || entryTo == null)
             return null;
         
         if (entryFrom.node != entryTo.node)
             throw new IllegalStateException("Locations of 'to' and 'from' DistEntries has to be the same." + toString());        
 
-        DijkstraPath path = new DijkstraPath();
+        Path path = new Path();
         Edge curr = entryFrom;
         while (curr != null) {
             path.add(curr);

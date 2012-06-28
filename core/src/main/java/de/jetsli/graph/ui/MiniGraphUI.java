@@ -17,8 +17,8 @@ package de.jetsli.graph.ui;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
-import de.jetsli.graph.dijkstra.DijkstraBidirection;
-import de.jetsli.graph.dijkstra.DijkstraPath;
+import de.jetsli.graph.routing.DijkstraBidirection;
+import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.reader.OSMReader;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
@@ -51,7 +51,7 @@ public class MiniGraphUI {
     private Logger logger = LoggerFactory.getLogger(getClass());
     private QuadTree<Long> quadTree;
     private Collection<CoordTrig<Long>> quadTreeNodes;
-    private DijkstraPath path;
+    private Path path;
     private DijkstraBidirection dijkstra;
     private final Graph graph;
     private Location2IDQuadtree index;
