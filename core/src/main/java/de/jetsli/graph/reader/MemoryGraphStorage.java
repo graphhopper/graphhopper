@@ -21,8 +21,6 @@ import de.jetsli.graph.storage.MemoryGraph;
  * @author Peter Karich, info@jetsli.de
  */
 public class MemoryGraphStorage extends MMapGraphStorage {
-
-    MemoryGraph g;
     
     public MemoryGraphStorage(int expectedNodes) {        
         super(null, expectedNodes);

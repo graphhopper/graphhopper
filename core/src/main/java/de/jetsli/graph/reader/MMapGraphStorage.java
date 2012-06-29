@@ -18,7 +18,6 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MMapGraph;
-import de.jetsli.graph.storage.MemoryGraph;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +27,11 @@ import org.slf4j.LoggerFactory;
  */
 public class MMapGraphStorage implements Storage {
 
-    protected static final int FILLED = -2;
+    protected static final int FILLED = -2;    
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private MMapGraph g;
-    protected TIntIntHashMap osmIdToIndexMap;
-    private final String file;
+    private final String file;    
+    protected Graph g;
+    protected TIntIntHashMap osmIdToIndexMap;    
 
     public MMapGraphStorage(String file, int expectedNodes) {
         this.file = file;
@@ -42,17 +41,21 @@ public class MMapGraphStorage implements Storage {
     @Override
     public boolean loadExisting() {
         g = new MMapGraph(file, -1);
-        return g.loadExisting();
+        return getMMapGraph().loadExisting();
+    }
+    
+    private MMapGraph getMMapGraph() {
+        return (MMapGraph) g;
     }
 
     @Override
     public void createNew() {
         if (g != null)
-            g.close();
+            getMMapGraph().close();
         g = new MMapGraph(null, osmIdToIndexMap.size());
         // createNew(*true*) to avoid slow down for mmap files (and RAM bottlenecks)
         // but still write to disc at the end!
-        g.createNew(true);
+        getMMapGraph().createNew(true);
     }
 
     @Override
@@ -119,12 +122,12 @@ public class MMapGraphStorage implements Storage {
     }
 
     @Override public void stats() {
-        g.stats();
+        getMMapGraph().stats();
     }
 
     @Override
     public void flush() {
-        g.flush();
+        getMMapGraph().flush();
         osmIdToIndexMap = null;
     }
 
