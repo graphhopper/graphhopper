@@ -17,6 +17,7 @@ package de.jetsli.compare.neo4j;
 
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.MyIteratorable;
+import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -26,11 +27,17 @@ import static org.junit.Assert.*;
  */
 public class Neo4JGraphImplTest extends AbstractGraphTester {
 
+    Neo4JGraphImpl g;
     @Override
     Graph createGraph(int size) {
-        Neo4JGraphImpl g = new Neo4JGraphImpl(null).setBulkSize(1);
+        g = new Neo4JGraphImpl(null).setBulkSize(1);
         g.init(true);
         return g;
+    }
+    
+    @After
+    public void tearDown() {
+        g.close();
     }
 
     @Test

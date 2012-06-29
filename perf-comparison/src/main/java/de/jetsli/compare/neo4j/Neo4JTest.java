@@ -21,7 +21,8 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.MyIteratorable;
-import java.io.FileNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Peter Karich
@@ -31,19 +32,20 @@ public class Neo4JTest {
     public static void main(String[] args) throws Exception {
         new Neo4JTest().start(Helper.readCmdArgs(args));
     }
+    private Logger logger = LoggerFactory.getLogger(getClass());
 
     public void start(CmdArgs readCmdArgs) throws Exception {
-        final Neo4JStorage s = new Neo4JStorage(readCmdArgs.get("neo4j", "neo4j"),
-                readCmdArgs.getInt("size", 5000000));
-        OSMReader reader = new OSMReader(null, -1) {
+        int initSize = readCmdArgs.getInt("size", 5000000);
+        final Neo4JStorage s = new Neo4JStorage(readCmdArgs.get("neo4j", "neo4j.db"), initSize);
+        OSMReader reader = new OSMReader(null, initSize) {
 
             @Override protected Storage createStorage(String storageLocation, int size) {
                 return s;
             }
         };
         Graph g = OSMReader.osm2Graph(reader, readCmdArgs);
-        System.out.println("locs " + g.getLocations());
-        System.out.println("edges of 0 " + MyIteratorable.count(g.getEdges(0)));
+        logger.info("locs " + g.getLocations());
+        logger.info("edges of 0 " + MyIteratorable.count(g.getEdges(0)));
         reader.doDijkstra(1000);
     }
 }

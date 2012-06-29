@@ -49,8 +49,8 @@ public class Neo4JGraphImpl implements Graph {
     private File storeDir;
     private Index<Node> idIndex;
     private int locCounter = 0;
-    private int bulkSize = 20000;
-    // TODO uh this is complicated (they should code it like lumeo!) ... but we need to use bulk mode for lucene as well:
+    private int bulkSize = 10000;
+    // TODO uh this is complicated (they should code it like lumeo!) ... so, we need to use bulk mode for lucene as well:
     // https://github.com/neo4j/community/blob/master/lucene-index/src/test/java/examples/ImdbExampleTest.java#L601
     //
 
@@ -108,6 +108,7 @@ public class Neo4JGraphImpl implements Graph {
         ta.forceEnd();
     }
 
+    // TODO should be static and graph should then be a weak ref
     class BulkTA {
 
         int index;
@@ -130,9 +131,11 @@ public class Neo4JGraphImpl implements Graph {
 
         public BulkTA forceEnd() {
             index = 0;
-            ta.success();
-            ta.finish();
-            ta = null;
+            if (ta != null) {
+                ta.success();
+                ta.finish();
+                ta = null;
+            }
             return this;
         }
     }
