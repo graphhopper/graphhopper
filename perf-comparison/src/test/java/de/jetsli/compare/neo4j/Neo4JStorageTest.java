@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.compare.routing;
+package de.jetsli.compare.neo4j;
 
+import de.jetsli.compare.neo4j.Neo4JStorage;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.util.CalcDistance;
 import java.util.List;

@@ -13,15 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.compare.routing;
+package de.jetsli.compare.neo4j;
 
 import de.jetsli.graph.storage.DefaultStorage;
-import de.jetsli.graph.util.CalcDistance;
-import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.util.Helper;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import org.neo4j.graphdb.*;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
@@ -47,7 +43,7 @@ public class Neo4JStorage extends DefaultStorage {
     }
     private boolean temporary;
     private GraphDatabaseService graphDb;
-    private String storeDir;
+    private File storeDir;
     int index;
     Transaction ta;
 
@@ -59,10 +55,10 @@ public class Neo4JStorage extends DefaultStorage {
         super(size);
         if (storeDir != null) {
             temporary = false;
-            this.storeDir = storeDir;
+            this.storeDir = new File(storeDir);
         } else {
             temporary = true;
-            this.storeDir = "neo4j." + new Random().nextLong() + ".db";
+            this.storeDir = new File("neo4j." + new Random().nextLong() + ".db");
         }
     }
 
@@ -77,8 +73,11 @@ public class Neo4JStorage extends DefaultStorage {
     }
 
     public boolean init(boolean forceCreate) {
+        if (!storeDir.exists())
+            return false;
+
         try {
-            graphDb = new EmbeddedGraphDatabase(storeDir);
+            graphDb = new EmbeddedGraphDatabase(storeDir.getAbsolutePath());
             if (!temporary)
                 Runtime.getRuntime().addShutdownHook(new Thread() {
 
@@ -136,7 +135,7 @@ public class Neo4JStorage extends DefaultStorage {
     public void close() {
         graphDb.shutdown();
         if (temporary)
-            Helper.deleteDir(new File(storeDir));
+            Helper.deleteDir(storeDir);
     }
 
     private void ensureTA() {

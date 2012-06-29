@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.compare.routing;
+package de.jetsli.compare.misc;
 
 import de.jetsli.graph.storage.DefaultStorage;
 import de.jetsli.graph.util.Helper;
