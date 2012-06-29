@@ -15,7 +15,7 @@
  */
 package de.jetsli.compare.routing;
 
-import de.jetsli.graph.reader.Storage;
+import de.jetsli.graph.storage.DefaultStorage;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.util.Helper;
@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import org.neo4j.graphdb.*;
-import org.neo4j.graphdb.index.Index;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,31 +35,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class Neo4JStorage implements Storage {
+public class Neo4JStorage extends DefaultStorage {
 
     private static final String ID = "_id";
     private static final String DISTANCE = "distance";
     private static final Logger logger = LoggerFactory.getLogger(Neo4JStorage.class);
-
-    @Override
-    public void setHasHighways(int osmId, boolean isHighway) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public boolean hasHighways(int osmId) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public boolean loadExisting() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public void createNew() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     enum MyRelations implements RelationshipType {
 
@@ -68,78 +47,91 @@ public class Neo4JStorage implements Storage {
     }
     private boolean temporary;
     private GraphDatabaseService graphDb;
-    private Index<Node> locIndex;
     private String storeDir;
-
-    public Neo4JStorage() {
-        temporary = true;
-        this.storeDir = "neo4j." + new Random().nextLong() + ".db";
-    }
-
-    public Neo4JStorage(String storeDir) {
-        temporary = false;
-        this.storeDir = storeDir;
-    }
-
-    public Neo4JStorage init(boolean forceCreate) throws Exception {
-        graphDb = new EmbeddedGraphDatabase(storeDir);
-        locIndex = graphDb.index().forNodes("locations");
-
-        if (!temporary)
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-
-                @Override
-                public void run() {
-                    try {
-                        close();
-                    } catch (Exception ex) {
-                        logger.error("problem while closing neo4j graph db", ex);
-                    }
-                }
-            });
-
-        return this;
-    }
     int index;
     Transaction ta;
 
-    @Override
-    public boolean addNode(int osmId, double lat, double lon) {
-        ensureTA();
-
-        Node n = graphDb.createNode();
-        // id necessary when grabbing relation info
-        n.setProperty(ID, osmId);
-        n.setProperty("lat", lat);
-        n.setProperty("lon", lon);
-
-        // id also necessary when doing look up
-//        locIndex.add(n, ID, osmId);
-        return true;
+    public Neo4JStorage() {
+        this(null, 5000000);
     }
 
-    @Override
-    public boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback) {
-        ensureTA();
-        Node from = locIndex.get(ID, nodeIdFrom).getSingle();
-        Node to = locIndex.get(ID, nodeIdTo).getSingle();
-        Relationship r = from.createRelationshipTo(to, MyRelations.WAY);
-        r.setProperty(DISTANCE, callback.calcDistKm(
-                (Double) from.getProperty("lat"), (Double) from.getProperty("lon"),
-                (Double) to.getProperty("lat"), (Double) to.getProperty("lon")));
-        return true;
-    }
-
-    public List<DistEntry> getOutgoing(int node) {
-        Node n = locIndex.get(ID, node).getSingle();
-        ArrayList<DistEntry> list = new ArrayList<DistEntry>(2);
-        for (Relationship rs : n.getRelationships(MyRelations.WAY)) {
-            list.add(new DistEntry((Integer) rs.getEndNode().getProperty(ID), (Double) rs.getProperty(DISTANCE)));
+    public Neo4JStorage(String storeDir, int size) {
+        super(size);
+        if (storeDir != null) {
+            temporary = false;
+            this.storeDir = storeDir;
+        } else {
+            temporary = true;
+            this.storeDir = "neo4j." + new Random().nextLong() + ".db";
         }
-
-        return list;
     }
 
+    @Override
+    public boolean loadExisting() {
+        return init(false);
+    }
+
+    @Override
+    public void createNew() {
+        init(true);
+    }
+
+    public boolean init(boolean forceCreate) {
+        try {
+            graphDb = new EmbeddedGraphDatabase(storeDir);
+            if (!temporary)
+                Runtime.getRuntime().addShutdownHook(new Thread() {
+
+                    @Override
+                    public void run() {
+                        try {
+                            close();
+                        } catch (Exception ex) {
+                            logger.error("problem while closing neo4j graph db", ex);
+                        }
+                    }
+                });
+            return true;
+        } catch (Exception ex) {
+            logger.error("problem while initialization", ex);
+            return false;
+        }
+    }
+
+//    @Override
+//    public boolean addNode(int osmId, double lat, double lon) {
+//        ensureTA();
+//
+//        Node n = graphDb.createNode();
+//        // id necessary when grabbing relation info
+//        n.setProperty(ID, osmId);
+//        n.setProperty("lat", lat);
+//        n.setProperty("lon", lon);
+//
+//        // id also necessary when doing look up
+////        locIndex.add(n, ID, osmId);
+//        return true;
+//    }
+//    @Override
+//    public boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback) {
+//        ensureTA();
+//        Node from = locIndex.get(ID, nodeIdFrom).getSingle();
+//        Node to = locIndex.get(ID, nodeIdTo).getSingle();
+//        Relationship r = from.createRelationshipTo(to, MyRelations.WAY);
+//        r.setProperty(DISTANCE, callback.calcDistKm(
+//                (Double) from.getProperty("lat"), (Double) from.getProperty("lon"),
+//                (Double) to.getProperty("lat"), (Double) to.getProperty("lon")));
+//        return true;
+//    }
+//    public List<DistEntry> getOutgoing(int node) {
+//        Node n = locIndex.get(ID, node).getSingle();
+//        ArrayList<DistEntry> list = new ArrayList<DistEntry>(2);
+//        for (Relationship rs : n.getRelationships(MyRelations.WAY)) {
+//            list.add(new DistEntry((Integer) rs.getEndNode().getProperty(ID), (Double) rs.getProperty(DISTANCE)));
+//        }
+//
+//        return list;
+//    }
     @Override
     public void close() {
         graphDb.shutdown();
@@ -156,15 +148,5 @@ public class Neo4JStorage implements Storage {
 
             ta = graphDb.beginTx();
         }
-    }
-
-    @Override public void stats() {
-    }
-
-    @Override public void flush() {
-    }
-
-    @Override public int getNodes() {
-        throw new RuntimeException("not implemented");
     }
 }

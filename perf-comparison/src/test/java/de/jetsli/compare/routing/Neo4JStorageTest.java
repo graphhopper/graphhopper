@@ -16,6 +16,7 @@
 package de.jetsli.compare.routing;
 
 import de.jetsli.graph.storage.DistEntry;
+import de.jetsli.graph.util.CalcDistance;
 import java.util.List;
 import org.junit.After;
 import org.junit.Before;
@@ -26,15 +27,16 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class Neo4JStorageTest {    
-    
+public class Neo4JStorageTest {
+
     Neo4JStorage storage;
-    
+
     @Before
     public void setup() throws Exception {
-        storage = new Neo4JStorage().init(true);
+        storage = new Neo4JStorage();
+        storage.createNew();
     }
-    
+
     @After
     public void shutdown() throws Exception {
         storage.close();
@@ -42,10 +44,10 @@ public class Neo4JStorageTest {
 
     @Test
     public void testAddNode() {
-//        storage.addNode(0, 13, 21);
-//        storage.addNode(1, 13.1f, 21);
-//        storage.addEdge(0, 1, true, new CalcDistance());
-//        
+        storage.addNode(0, 13, 21);
+        storage.addNode(1, 13.1f, 21);
+        storage.addEdge(0, 1, true, new CalcDistance());
+        
 //        List<DistEntry> list = storage.getOutgoing(0);
 //        assertEquals(1, list.size());
 //        assertEquals(11.11953, list.get(0).distance, 1e-5);

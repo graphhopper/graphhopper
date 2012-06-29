@@ -15,6 +15,9 @@
  */
 package de.jetsli.graph.reader;
 
+import de.jetsli.graph.storage.MMapGraphStorage;
+import de.jetsli.graph.storage.Storage;
+import de.jetsli.graph.storage.MemoryGraphStorage;
 import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.routing.Path;
@@ -44,7 +47,7 @@ public class OSMReader {
 
     public static void main(String[] strs) throws Exception {
         CmdArgs args = Helper.readCmdArgs(strs);
-        int size = (int) args.getLong("size", 5 * 1000 * 1000);
+        int size = args.getInt("size", 5 * 1000 * 1000);
         String graphFolder = args.get("graph", "graph-storage");
         if (Helper.isEmpty(graphFolder))
             throw new IllegalArgumentException("Please specify a folder where to store the graph");
@@ -85,12 +88,12 @@ public class OSMReader {
      * allocation or reallocation (default is 5mio)
      */
     public static Graph osm2Graph(CmdArgs args) throws FileNotFoundException {
-        String graphFolder = args.get("graph", "graph-storage");
-        if (Helper.isEmpty(graphFolder))
+        String storageFolder = args.get("graph", "graph-storage");
+        if (Helper.isEmpty(storageFolder))
             throw new IllegalArgumentException("Please specify a folder where to store the graph");
 
         int size = (int) args.getLong("size", 5 * 1000 * 1000);
-        return osm2Graph(new OSMReader(graphFolder, size), args);
+        return osm2Graph(new OSMReader(storageFolder, size), args);
     }
 
     public static Graph osm2Graph(OSMReader osmReader, CmdArgs args) throws FileNotFoundException {
@@ -114,7 +117,7 @@ public class OSMReader {
     }
 
     public void doDijkstra(int runs) throws Exception {
-        Graph g = ((MMapGraphStorage) storage).getGraph();
+        Graph g = storage.getGraph();
         Location2IDIndex index = new Location2IDQuadtree(g).prepareIndex(20000);
         double minLat = 49.484186, minLon = 8.974228;
         double maxLat = 50.541363, maxLon = 10.880356;
@@ -149,9 +152,13 @@ public class OSMReader {
         }
     }
 
-    public OSMReader(String file, int size) {
-        // storage = new MMapGraphStorage(file, expectedLocs = size);
-        storage = new MemoryGraphStorage(expectedLocs = size);
+    public OSMReader(String storageLocation, int size) {
+        storage = createStorage(storageLocation, expectedLocs = size);
+    }
+
+    protected Storage createStorage(String storageLocation, int size) {
+        // return new MMapGraphStorage(storageLocation, size);
+        return new MemoryGraphStorage(size);
     }
 
     public boolean loadExisting() {
@@ -347,10 +354,7 @@ public class OSMReader {
     }
 
     public Graph getGraph() {
-        if (storage instanceof MMapGraphStorage)
-            return ((MMapGraphStorage) storage).getGraph();
-
-        throw new UnsupportedOperationException("Not supported yet.");
+        return storage.getGraph();
     }
 
     private void stats() {

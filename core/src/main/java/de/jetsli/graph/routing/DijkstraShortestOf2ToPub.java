@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.PathWrapper;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;

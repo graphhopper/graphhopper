@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.reader;
+package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.CalcDistance;
 import java.io.Closeable;
@@ -25,6 +25,8 @@ import java.io.Closeable;
  */
 public interface Storage extends Closeable {
 
+    Graph getGraph();
+    
     boolean loadExisting();
     
     void createNew();
@@ -34,8 +36,6 @@ public interface Storage extends Closeable {
     boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback);
 
     int getNodes();
-
-    void close();
 
     void flush();
 

@@ -49,6 +49,17 @@ public class CmdArgs {
         return _default;
     }
 
+    public int getInt(String key, int _default) {
+        String str = map.get(key);
+        if (!Helper.isEmpty(str)) {
+            try {
+                return Integer.parseInt(str);
+            } catch (Exception ex) {
+            }
+        }
+        return _default;
+    }
+
     public boolean getBool(String key, boolean _default) {
         String str = map.get(key);
         if (!Helper.isEmpty(str)) {

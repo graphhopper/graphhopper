@@ -13,34 +13,47 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.reader;
-
-import de.jetsli.graph.storage.MemoryGraph;
+package de.jetsli.graph.storage;
 
 /**
  * @author Peter Karich, info@jetsli.de
  */
-public class MemoryGraphStorage extends MMapGraphStorage {
-    
-    public MemoryGraphStorage(int expectedNodes) {        
-        super(null, expectedNodes);
+public class MMapGraphStorage extends DefaultStorage {
+
+    private final String file;
+
+    public MMapGraphStorage(String file, int expectedNodes) {
+        super(expectedNodes);
+        this.file = file;
     }
 
     @Override
     public boolean loadExisting() {
-        return false;
+        g = new MMapGraph(file, -1);
+        return getMMapGraph().loadExisting();
+    }
+    
+    private MMapGraph getMMapGraph() {
+        return (MMapGraph) g;
     }
 
     @Override
     public void createNew() {
-        g = new MemoryGraph(osmIdToIndexMap.size());
+        if (g != null)
+            getMMapGraph().close();
+        g = new MMapGraph(null, osmIdToIndexMap.size());
+        // createNew(*true*) to avoid slow down for mmap files (and RAM bottlenecks)
+        // but still write to disc at the end!
+        getMMapGraph().createNew(true);
     }
-
+    
     @Override public void stats() {
+        getMMapGraph().stats();
     }
 
     @Override
     public void flush() {
-        osmIdToIndexMap = null;
+        getMMapGraph().flush();
+        super.flush();
     }
 }

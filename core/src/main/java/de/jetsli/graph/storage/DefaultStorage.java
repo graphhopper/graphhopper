@@ -13,49 +13,36 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.reader;
+
+package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.CalcDistance;
-import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.MMapGraph;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich
  */
-public class MMapGraphStorage implements Storage {
+public class DefaultStorage implements Storage {
 
     protected static final int FILLED = -2;    
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final String file;    
+    
     protected Graph g;
     protected TIntIntHashMap osmIdToIndexMap;    
 
-    public MMapGraphStorage(String file, int expectedNodes) {
-        this.file = file;
+    public DefaultStorage(int expectedNodes) {
         osmIdToIndexMap = new TIntIntHashMap(expectedNodes, 1.4f, -1, -1);
     }
 
     @Override
     public boolean loadExisting() {
-        g = new MMapGraph(file, -1);
-        return getMMapGraph().loadExisting();
-    }
-    
-    private MMapGraph getMMapGraph() {
-        return (MMapGraph) g;
-    }
+        return false;
+    }    
 
     @Override
     public void createNew() {
-        if (g != null)
-            getMMapGraph().close();
-        g = new MMapGraph(null, osmIdToIndexMap.size());
-        // createNew(*true*) to avoid slow down for mmap files (and RAM bottlenecks)
-        // but still write to disc at the end!
-        getMMapGraph().createNew(true);
     }
 
     @Override
@@ -117,17 +104,15 @@ public class MMapGraphStorage implements Storage {
         flush();
     }
 
-    Graph getGraph() {
+    @Override public Graph getGraph() {
         return g;
     }
 
-    @Override public void stats() {
-        getMMapGraph().stats();
+    @Override public void stats() {        
     }
 
     @Override
     public void flush() {
-        getMMapGraph().flush();
         osmIdToIndexMap = null;
     }
 

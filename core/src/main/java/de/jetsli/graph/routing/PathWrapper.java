@@ -13,9 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.storage;
+package de.jetsli.graph.routing;
 
 import de.jetsli.graph.routing.Path;
+import de.jetsli.graph.storage.Edge;
 
 /**
  * This class creates a DijkstraPath from two DistEntry's resulting from a BidirectionalDijkstra
