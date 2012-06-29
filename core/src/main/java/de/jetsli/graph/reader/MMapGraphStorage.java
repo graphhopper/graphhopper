@@ -18,21 +18,20 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MMapGraph;
-import de.jetsli.graph.util.StopWatch;
+import de.jetsli.graph.storage.MemoryGraph;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author Peter Karich, info@jetsli.de
  */
 public class MMapGraphStorage implements Storage {
 
-    private static final int FILLED = -2;
+    protected static final int FILLED = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private MMapGraph g;
-    private TIntIntHashMap osmIdToIndexMap;
+    protected TIntIntHashMap osmIdToIndexMap;
     private final String file;
 
     public MMapGraphStorage(String file, int expectedNodes) {
@@ -48,7 +47,9 @@ public class MMapGraphStorage implements Storage {
 
     @Override
     public void createNew() {
-        g = new MMapGraph(file, osmIdToIndexMap.size());
+        if (g != null)
+            g.close();
+        g = new MMapGraph(null, osmIdToIndexMap.size());
         // createNew(*true*) to avoid slow down for mmap files (and RAM bottlenecks)
         // but still write to disc at the end!
         g.createNew(true);

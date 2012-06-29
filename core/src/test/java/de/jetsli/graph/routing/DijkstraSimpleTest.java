@@ -23,9 +23,9 @@ import de.jetsli.graph.storage.Graph;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraSimpleTest extends AbstractDijkstraTester {
+public class DijkstraSimpleTest extends AbstractRoutingAlgorithmTester {
 
-    @Override public RoutingAlgorithm createDijkstra(Graph g) {
+    @Override public RoutingAlgorithm createAlgo(Graph g) {
         return new DijkstraSimple(g);
     }
 

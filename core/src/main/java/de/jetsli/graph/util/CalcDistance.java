@@ -53,6 +53,14 @@ public class CalcDistance {
         return R * 2 * Math.asin(Math.sqrt(normedDist));
     }
 
+    public double approxDistKm(double fromLat, double fromLon, double toLat, double toLon) {
+        double dLat = Math.toRadians(toLat - fromLat);
+        double dLon = Math.toRadians(toLon - fromLon);
+        double left = Math.cos(Math.toRadians((fromLat + toLat) / 2)) * dLon;
+        double d = dLat * dLat + left * left;
+        return R * Math.sqrt(d);
+    }
+
     public double denormalizeDist(double normedDist) {
         return R * 2 * Math.asin(Math.sqrt(normedDist));
     }
@@ -61,7 +69,7 @@ public class CalcDistance {
         double tmp = Math.sin(dist / 2 / R);
         return tmp * tmp;
     }
-    
+
     public final double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = Math.toRadians(toLat - fromLat);
         double dLon = Math.toRadians(toLon - fromLon);

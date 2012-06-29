@@ -27,11 +27,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraWhichToOneTest extends AbstractDijkstraTester {
+public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
 
     public static int[] pubTransportPath = new int[]{20, 21, 31, 41, 51, 52, 42, 43, 53, 63, 62, 72, 73, 74, 75};
 
-    @Override public RoutingAlgorithm createDijkstra(Graph g) {
+    @Override public RoutingAlgorithm createAlgo(Graph g) {
         return new DijkstraWhichToOne(g);
     }
 

@@ -177,4 +177,9 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
         setDestination(to);
         return calcShortestPath();
     }
+
+    @Override
+    public RoutingAlgorithm clear() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

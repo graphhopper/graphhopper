@@ -37,7 +37,7 @@ public class MemoryGraph implements Graph {
     private MyBitSet deletedNodes;
 
     public MemoryGraph() {
-        this(1000);
+        this(100);
     }
 
     public MemoryGraph(int capacity) {

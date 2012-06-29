@@ -15,8 +15,6 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.routing.RoutingAlgorithm;
-import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.reader.PrinctonReader;
 import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
@@ -31,7 +29,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public abstract class AbstractDijkstraTester {
+public abstract class AbstractRoutingAlgorithmTester {
 
     static Graph matrixGraph;
 
@@ -40,12 +38,12 @@ public abstract class AbstractDijkstraTester {
     }
     int from;
     int to;
-
-    public abstract RoutingAlgorithm createDijkstra(Graph g);
+    
+    public abstract RoutingAlgorithm createAlgo(Graph g);
 
     @Test public void testCalcShortestPath() {
-        Graph graph = createGraph();
-        Path p = createDijkstra(graph).calcShortestPath(from, to);
+        Graph graph = createTestGraph();
+        Path p = createAlgo(graph).calcShortestPath(from, to);
         assertEquals(p.toString(), 13, p.distance(), 1e-6);
         assertEquals(p.toString(), 5, p.locations());
     }
@@ -58,8 +56,8 @@ public abstract class AbstractDijkstraTester {
     // |\/ \ \|
     // a-b--c-d
     //
-    protected Graph createGraph() {
-        Graph graph = new MemoryGraph(8);
+    protected Graph createTestGraph() {
+        Graph graph = createGraph(8);
         from = 0;
         to = 7;
 
@@ -87,28 +85,28 @@ public abstract class AbstractDijkstraTester {
     }
 
     @Test public void testWikipediaShortestPath() {
-        Graph graph = createWikipediaGraph();
-        Path p = createDijkstra(graph).calcShortestPath(0, 4);
+        Graph graph = createWikipediaTestGraph();
+        Path p = createAlgo(graph).calcShortestPath(0, 4);
         assertEquals(p.toString(), 20, p.distance(), 1e-6);
         assertEquals(p.toString(), 4, p.locations());
     }
 
     @Test public void testCalcIfNoWay() {
-        Graph graph = createGraph();
-        Path p = createDijkstra(graph).calcShortestPath(0, 0);
+        Graph graph = createTestGraph();
+        Path p = createAlgo(graph).calcShortestPath(0, 0);
         assertEquals(p.toString(), 0, p.distance(), 1e-6);
         assertEquals(p.toString(), 1, p.locations());
     }
 
     @Test public void testCalcIf1EdgeAway() {
-        Graph graph = createGraph();
-        Path p = createDijkstra(graph).calcShortestPath(1, 2);
+        Graph graph = createTestGraph();
+        Path p = createAlgo(graph).calcShortestPath(1, 2);
         assertEquals(p.toString(), 2, p.distance(), 1e-6);
         assertEquals(p.toString(), 2, p.locations());
     }
 
-    protected Graph createWikipediaGraph() {
-        Graph graph = new MemoryGraph(6);
+    protected Graph createWikipediaTestGraph() {
+        Graph graph = createGraph(6);
 
         graph.edge(0, 1, 7, true);
         graph.edge(0, 2, 9, true);
@@ -142,7 +140,7 @@ public abstract class AbstractDijkstraTester {
     // \   /   /
     //  8-7-6-/
     @Test public void testBidirectional() {
-        Graph graph = new MemoryGraph(6);
+        Graph graph = createGraph(6);
         from = 0;
         to = 4;
 
@@ -157,7 +155,7 @@ public abstract class AbstractDijkstraTester {
         graph.edge(3, 8, 20, true);
         graph.edge(8, 6, 20, true);
 
-        Path p = createDijkstra(graph).calcShortestPath(from, to);
+        Path p = createAlgo(graph).calcShortestPath(from, to);
         assertEquals(p.toString(), 51, p.distance(), 1e-6);
         assertEquals(p.toString(), 6, p.locations());
     }
@@ -168,7 +166,7 @@ public abstract class AbstractDijkstraTester {
     // \   /   /
     //  8-7-6-/
     @Test public void testBidirectional2() {
-        Graph graph = new MemoryGraph(6);
+        Graph graph = createGraph(6);
         from = 0;
         to = 4;
 
@@ -183,36 +181,36 @@ public abstract class AbstractDijkstraTester {
         graph.edge(3, 8, 20, true);
         graph.edge(8, 6, 20, true);
 
-        Path p = createDijkstra(graph).calcShortestPath(from, to);
+        Path p = createAlgo(graph).calcShortestPath(from, to);
         assertEquals(p.toString(), 40, p.distance(), 1e-6);
         assertEquals(p.toString(), 5, p.locations());
     }
 
     @Test public void testRekeyBugOfIntBinHeap() {
         // using DijkstraSimple + IntBinHeap then rekey loops endlessly
-        Path p = createDijkstra(matrixGraph).calcShortestPath(36, 91);
+        Path p = createAlgo(matrixGraph).calcShortestPath(36, 91);
         assertEquals(12, p.locations());
         assertEquals(66f, p.distance(), 1e-3);
     }
 
     @Test
     public void testBug1() {
-        assertEquals(17, createDijkstra(matrixGraph).calcShortestPath(34, 36).distance(), 1e-5);
+        assertEquals(17, createAlgo(matrixGraph).calcShortestPath(34, 36).distance(), 1e-5);
     }
 
     @Test
     public void testCannotCalculateSP() {
-        Graph g = new MemoryGraph();
+        Graph g = createGraph(10);
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
 
-        Path p = createDijkstra(g).calcShortestPath(0, 2);
+        Path p = createAlgo(g).calcShortestPath(0, 2);
         assertEquals(p.toString(), 3, p.locations());
     }
 
     @Test
     public void testDirectedGraphBug1() {
-        Graph g = new MemoryGraph(5);
+        Graph g = createGraph(5);
         g.edge(0, 1, 3, false);
         g.edge(1, 2, 3, false);
 
@@ -220,7 +218,7 @@ public abstract class AbstractDijkstraTester {
         g.edge(3, 4, 3, false);
         g.edge(4, 2, 1, false);
 
-        Path p = createDijkstra(g).calcShortestPath(0, 2);
+        Path p = createAlgo(g).calcShortestPath(0, 2);
         assertEquals(p.toString(), 3, p.locations());
     }
 
@@ -230,7 +228,7 @@ public abstract class AbstractDijkstraTester {
 
         String name = getClass().getSimpleName();
         Random rand = new Random(0);
-        Graph graph = new MemoryGraph();
+        Graph graph = createGraph(0);
 
         String bigFile = "10000EWD.txt.gz";
 //        String bigFile = "largeEWD.txt.gz";
@@ -240,7 +238,7 @@ public abstract class AbstractDijkstraTester {
             int index1 = Math.abs(rand.nextInt(graph.getLocations()));
             int index2 = Math.abs(rand.nextInt(graph.getLocations()));
             // constructing the graph could be expensive like for CH
-            RoutingAlgorithm d = createDijkstra(graph);
+            RoutingAlgorithm d = createAlgo(graph);
 
             if (i >= noJvmWarming)
                 sw.start();
@@ -294,5 +292,9 @@ public abstract class AbstractDijkstraTester {
         }
 
         return tmp;
+    }
+    
+    Graph createGraph(int size) {
+        return new MemoryGraph(size);
     }
 }

@@ -62,6 +62,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
         clear();
     }
 
+    @Override
     public RoutingAlgorithm clear() {
         alreadyRun = false;
         visitedFrom.clear();
@@ -104,7 +105,6 @@ public class DijkstraBidirection implements RoutingAlgorithm {
         initFrom(from);
         initTo(to);
 
-        // identical
         Path p = checkIndenticalFromAndTo();
         if (p != null)
             return p;
@@ -125,18 +125,18 @@ public class DijkstraBidirection implements RoutingAlgorithm {
     }
 
     public Path getShortest() {
-        Path g = shortest.extract();
-        if (g == null)
+        Path p = shortest.extract();
+        if (p == null)
             return null;
 
-        if (g.getFromLoc() != from) {
+        if (p.getFromLoc() != from) {
             // move distance adjustment to reverseOrder?
-            double tmpDist = g.distance();
-            g.reverseOrder();
-            g.setDistance(tmpDist);
+            double tmpDist = p.distance();
+            p.reverseOrder();
+            p.setDistance(tmpDist);
         }
 
-        return g;
+        return p;
     }
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
@@ -156,16 +156,16 @@ public class DijkstraBidirection implements RoutingAlgorithm {
 
         int currVertexFrom = curr.node;
         for (DistEntry entry : graph.getOutgoing(currVertexFrom)) {
-            int tmpV = entry.node;
-            if (visitedMain.contains(tmpV))
+            int currentLinkedNode = entry.node;
+            if (visitedMain.contains(currentLinkedNode))
                 continue;
 
             double tmp = entry.distance + curr.distance;
-            Edge de = shortestDistMap.get(tmpV);
+            Edge de = shortestDistMap.get(currentLinkedNode);
             if (de == null) {
-                de = new Edge(tmpV, tmp);
+                de = new Edge(currentLinkedNode, tmp);
                 de.prevEntry = curr;
-                shortestDistMap.put(tmpV, de);
+                shortestDistMap.put(currentLinkedNode, de);
                 prioQueue.add(de);
             } else if (de.distance > tmp) {
                 // use fibonacci? see http://stackoverflow.com/q/6273833/194609
@@ -176,7 +176,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
                 prioQueue.add(de);
             }
 
-            updateShortest(de, tmpV);
+            updateShortest(de, currentLinkedNode);
         } // for
     }
 

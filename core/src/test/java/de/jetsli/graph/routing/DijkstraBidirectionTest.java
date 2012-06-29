@@ -15,9 +15,6 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.routing.DijkstraBidirection;
-import de.jetsli.graph.routing.RoutingAlgorithm;
-import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
 import org.junit.Test;
@@ -27,15 +24,15 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraBidirectionTest extends AbstractDijkstraTester {
+public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
 
-    @Override public RoutingAlgorithm createDijkstra(Graph g) {        
+    @Override public RoutingAlgorithm createAlgo(Graph g) {        
         return new DijkstraBidirection(g);
     }
     
     @Test
     public void testAddSkipNodes() {
-        Graph g = createWikipediaGraph();
+        Graph g = createWikipediaTestGraph();
         Path p = new DijkstraBidirection(g).calcShortestPath(0, 4);
         assertEquals(p.toString(), 20, p.distance(), 1e-6);
         assertTrue(p.toString(), p.contains(5));

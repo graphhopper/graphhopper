@@ -13,16 +13,36 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.routing;
+package de.jetsli.graph.reader;
+
+import de.jetsli.graph.storage.MemoryGraph;
 
 /**
- * Calculates the shortest path from to specified node ids.
- *
  * @author Peter Karich, info@jetsli.de
  */
-public interface RoutingAlgorithm {
+public class MemoryGraphStorage extends MMapGraphStorage {
 
-    Path calcShortestPath(int from, int to);
+    MemoryGraph g;
     
-    RoutingAlgorithm clear();
+    public MemoryGraphStorage(int expectedNodes) {        
+        super(null, expectedNodes);
+    }
+
+    @Override
+    public boolean loadExisting() {
+        return false;
+    }
+
+    @Override
+    public void createNew() {
+        g = new MemoryGraph(osmIdToIndexMap.size());
+    }
+
+    @Override public void stats() {
+    }
+
+    @Override
+    public void flush() {
+        osmIdToIndexMap = null;
+    }
 }

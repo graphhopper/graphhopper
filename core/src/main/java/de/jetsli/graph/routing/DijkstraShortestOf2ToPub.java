@@ -27,9 +27,8 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 /**
- * Public transport represents a collection of Locations. Then there are two points P1 and P1 and
- * it is the aim to find the shortest path from P1 to one of the public transport points (M) and to
- * P2.
+ * Public transport represents a collection of Locations. Then there are two points P1 and P1 and it
+ * is the aim to find the shortest path from P1 to one of the public transport points (M) and to P2.
  *
  * <br/> Usage: A driver can carry the passenger from P1 to a public transport point (M) and going
  * back to his own destination P2 and comparing this with the detour of taking the passenger
@@ -156,7 +155,7 @@ public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
             return Math.min(currFrom.distance, currTo.distance) >= shortest.distance;
     }
 
-    public void fillEdges(Edge curr, MyBitSet visitedMain, 
+    public void fillEdges(Edge curr, MyBitSet visitedMain,
             PriorityQueue<Edge> prioQueue, TIntObjectMap<Edge> shortestDistMap) {
 
         int currVertexFrom = curr.node;
@@ -205,5 +204,10 @@ public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
         setFrom(from);
         setTo(to);
         return calcShortestPath();
+    }
+
+    @Override
+    public RoutingAlgorithm clear() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

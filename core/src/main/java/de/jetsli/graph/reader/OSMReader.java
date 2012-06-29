@@ -15,11 +15,10 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.util.CalcDistance;
-import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.Path;
+import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
@@ -29,7 +28,6 @@ import java.io.*;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -120,7 +118,9 @@ public class OSMReader {
         Location2IDIndex index = new Location2IDQuadtree(g).prepareIndex(20000);
         double minLat = 49.484186, minLon = 8.974228;
         double maxLat = 50.541363, maxLon = 10.880356;
-        DijkstraBidirection dijkstra = new DijkstraBidirection(g);
+//        RoutingAlgorithm algo = new DijkstraBidirection(g);
+//        RoutingAlgorithm algo = new DijkstraSimple(g);
+        RoutingAlgorithm algo = new AStar(g);
         Random rand = new Random(123);
         StopWatch sw = new StopWatch();
         for (int i = 0; i < runs; i++) {
@@ -136,8 +136,9 @@ public class OSMReader {
                 continue;
             }
 
+            algo.clear();
             sw.start();
-            Path p = dijkstra.clear().calcShortestPath(from, to);
+            Path p = algo.calcShortestPath(from, to);
             sw.stop();
             if (p == null) {
                 logger.warn("no route found for i=" + i + " !?" + " graph-from " + from + ", graph-to " + to);
@@ -149,7 +150,8 @@ public class OSMReader {
     }
 
     public OSMReader(String file, int size) {
-        storage = new MMapGraphStorage(file, expectedLocs = size);
+        // storage = new MMapGraphStorage(file, expectedLocs = size);
+        storage = new MemoryGraphStorage(expectedLocs = size);
     }
 
     public boolean loadExisting() {

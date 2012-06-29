@@ -70,7 +70,7 @@ public class DijkstraSimple implements RoutingAlgorithm {
             visited.add(currVertex);
             curr = heap.poll();
             if (curr == null)
-                throw new IllegalStateException("No path found");
+                return null;
         }
 
         // extract path from shortest-path-tree
@@ -82,5 +82,9 @@ public class DijkstraSimple implements RoutingAlgorithm {
         path.add(fromEntry);
         path.reverseOrder();
         return path;
+    }
+
+    @Override public RoutingAlgorithm clear() {        
+        return this;
     }
 }
