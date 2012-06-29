@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.misc;
+package de.jetsli.compare.routing;
 
 import de.jetsli.graph.reader.Storage;
 import de.jetsli.graph.util.CalcDistance;

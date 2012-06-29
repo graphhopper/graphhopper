@@ -1,4 +1,4 @@
-package de.jetsli.quadtreecomparison;
+package de.jetsli.compare.quadtree;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

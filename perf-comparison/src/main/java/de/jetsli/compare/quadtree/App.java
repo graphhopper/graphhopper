@@ -1,4 +1,4 @@
-package de.jetsli.quadtreecomparison;
+package de.jetsli.compare.quadtree;
 
 import de.jetsli.graph.reader.MiniPerfTest;
 import de.jetsli.graph.reader.OSMReader;

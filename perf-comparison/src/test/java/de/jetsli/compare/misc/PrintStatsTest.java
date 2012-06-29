@@ -13,22 +13,29 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.quadtreecomparison;
+package de.jetsli.compare.misc;
+
+import de.jetsli.graph.geohash.SpatialHashtable;
+import java.util.Random;
+import org.junit.*;
+import static org.junit.Assert.*;
 
 /**
  *
  * @author Peter Karich
  */
-interface SimplisticQuadTree {
+public class PrintStatsTest {
 
-    void put(double lat, double lon);
-
-    int countNodes(double lat, double lon, double radiusInKm);
-
-    int size();
-
-    void init(int size);
-
-    public long getEmptyEntries(boolean b);
-    
+    @Test
+    public void testStatsNoError() {
+        PrintStats.TmpHashtable tree = new PrintStats.TmpHashtable(10, 2);
+        tree.init(10000);
+        Random rand = new Random(12);
+        for (int i = 0; i < 10000; i++) {
+            tree.add(Math.abs(rand.nextDouble()), Math.abs(rand.nextDouble()), (long) i * 100);
+        }
+        tree.getEntries("e");
+        tree.getOverflowEntries("o");
+        tree.getOverflowOffset("oo");
+    }
 }

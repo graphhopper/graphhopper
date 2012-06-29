@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package de.jetsli.quadtreecomparison;
+package de.jetsli.compare.quadtree;
 
 import de.jetsli.graph.util.CalcDistance;
 import java.util.ArrayList;
