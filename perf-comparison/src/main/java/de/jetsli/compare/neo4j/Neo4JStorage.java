@@ -16,13 +16,6 @@
 package de.jetsli.compare.neo4j;
 
 import de.jetsli.graph.storage.DefaultStorage;
-import de.jetsli.graph.util.Helper;
-import java.io.File;
-import java.util.Random;
-import org.neo4j.graphdb.*;
-import org.neo4j.kernel.EmbeddedGraphDatabase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Neo4j is great and uses very few RAM when importing. It is also fast (2 mio nodes / min)
@@ -33,33 +26,13 @@ import org.slf4j.LoggerFactory;
  */
 public class Neo4JStorage extends DefaultStorage {
 
-    private static final String ID = "_id";
-    private static final String DISTANCE = "distance";
-    private static final Logger logger = LoggerFactory.getLogger(Neo4JStorage.class);
-
-    enum MyRelations implements RelationshipType {
-
-        WAY
-    }
-    private boolean temporary;
-    private GraphDatabaseService graphDb;
-    private File storeDir;
-    int index;
-    Transaction ta;
-
     public Neo4JStorage() {
         this(null, 5000000);
     }
 
     public Neo4JStorage(String storeDir, int size) {
         super(size);
-        if (storeDir != null) {
-            temporary = false;
-            this.storeDir = new File(storeDir);
-        } else {
-            temporary = true;
-            this.storeDir = new File("neo4j." + new Random().nextLong() + ".db");
-        }
+        g = new Neo4JGraphImpl(storeDir);
     }
 
     @Override
@@ -73,79 +46,17 @@ public class Neo4JStorage extends DefaultStorage {
     }
 
     public boolean init(boolean forceCreate) {
-        if (!storeDir.exists())
-            return false;
-
-        try {
-            graphDb = new EmbeddedGraphDatabase(storeDir.getAbsolutePath());
-            if (!temporary)
-                Runtime.getRuntime().addShutdownHook(new Thread() {
-
-                    @Override
-                    public void run() {
-                        try {
-                            close();
-                        } catch (Exception ex) {
-                            logger.error("problem while closing neo4j graph db", ex);
-                        }
-                    }
-                });
-            return true;
-        } catch (Exception ex) {
-            logger.error("problem while initialization", ex);
-            return false;
-        }
+        return ((Neo4JGraphImpl) g).init(forceCreate);
     }
 
-//    @Override
-//    public boolean addNode(int osmId, double lat, double lon) {
-//        ensureTA();
-//
-//        Node n = graphDb.createNode();
-//        // id necessary when grabbing relation info
-//        n.setProperty(ID, osmId);
-//        n.setProperty("lat", lat);
-//        n.setProperty("lon", lon);
-//
-//        // id also necessary when doing look up
-////        locIndex.add(n, ID, osmId);
-//        return true;
-//    }
-//    @Override
-//    public boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback) {
-//        ensureTA();
-//        Node from = locIndex.get(ID, nodeIdFrom).getSingle();
-//        Node to = locIndex.get(ID, nodeIdTo).getSingle();
-//        Relationship r = from.createRelationshipTo(to, MyRelations.WAY);
-//        r.setProperty(DISTANCE, callback.calcDistKm(
-//                (Double) from.getProperty("lat"), (Double) from.getProperty("lon"),
-//                (Double) to.getProperty("lat"), (Double) to.getProperty("lon")));
-//        return true;
-//    }
-//    public List<DistEntry> getOutgoing(int node) {
-//        Node n = locIndex.get(ID, node).getSingle();
-//        ArrayList<DistEntry> list = new ArrayList<DistEntry>(2);
-//        for (Relationship rs : n.getRelationships(MyRelations.WAY)) {
-//            list.add(new DistEntry((Integer) rs.getEndNode().getProperty(ID), (Double) rs.getProperty(DISTANCE)));
-//        }
-//
-//        return list;
-//    }
     @Override
     public void close() {
-        graphDb.shutdown();
-        if (temporary)
-            Helper.deleteDir(storeDir);
+        ((Neo4JGraphImpl) g).close();
+        super.close();
     }
 
-    private void ensureTA() {
-        if (index++ % 20000 == 0) {
-            if (ta != null) {
-                ta.success();
-                ta.finish();
-            }
-
-            ta = graphDb.beginTx();
-        }
+    @Override
+    public void flush() {
+        ((Neo4JGraphImpl) g).flush();
     }
 }
