@@ -16,10 +16,7 @@
 package de.jetsli.compare.neo4j;
 
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.MyIteratorable;
 import org.junit.After;
-import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -39,18 +36,5 @@ public class Neo4JGraphImplTest extends AbstractGraphTester {
     @After
     public void tearDown() {
         g.close();
-    }
-
-    @Test
-    public void testSimpleGet() {
-        Graph g = createGraph(10);
-        int id = g.addLocation(10, 20);
-        assertEquals(0, id);
-        assertEquals(0, MyIteratorable.count(g.getEdges(0)));
-        assertEquals(10, g.getLatitude(0), 1e-5);
-
-        g.edge(0, 1, 10, true);
-        assertEquals(1, MyIteratorable.count(g.getEdges(0)));
-        assertEquals(1, MyIteratorable.count(g.getEdges(1)));
     }
 }

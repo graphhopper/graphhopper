@@ -23,7 +23,6 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.Random;
 import org.neo4j.graphdb.*;
-import org.neo4j.graphdb.index.IndexManager;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +67,6 @@ public class Neo4JGraphImpl implements Graph {
 
         try {
             graphDb = new EmbeddedGraphDatabase(storeDir.getAbsolutePath());
-            IndexManager index = graphDb.index();
             if (!temporary)
                 Runtime.getRuntime().addShutdownHook(new Thread() {
 
