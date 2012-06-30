@@ -58,7 +58,7 @@ public class Neo4JTest {
             }
         }.start(g, 0, true);
 
-        logger.info(integ.get() + " <- all nodes");
+        logger.info(integ.get() + " <- all reachable nodes");
         reader.doDijkstra(1000);
     }
 }

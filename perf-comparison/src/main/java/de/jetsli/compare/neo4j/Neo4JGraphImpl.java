@@ -253,8 +253,13 @@ public class Neo4JGraphImpl implements Graph {
         }
 
         public EdgeWithFlags next() {
-            Relationship r = iter.next();
-            Node other = r.getOtherNode(node);
+            Relationship r = iter.next();                        
+            // this is a hack and probably relies on the fact that we don't delete anything
+            // but it gives us some speed improvements as inbuilt getOtherNode is using a concurrenthashmap (!?)
+            // so dont do Node other = r.getOtherNode(node); and do this:
+            Node other = r.getStartNode();
+            if(other.getId() == node.getId())
+                other = r.getEndNode();            
             int id = getOurId(other);
             double dist = (Double) r.getProperty(DISTANCE);
             return new EdgeWithFlags(id, dist, (byte) 3);
