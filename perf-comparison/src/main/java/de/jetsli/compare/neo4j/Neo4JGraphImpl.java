@@ -22,12 +22,7 @@ import de.jetsli.graph.util.MyIteratorable;
 import java.io.File;
 import java.util.Iterator;
 import java.util.Random;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.index.Index;
+import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.index.IndexManager;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
 import org.slf4j.Logger;
@@ -38,17 +33,15 @@ import org.slf4j.LoggerFactory;
  */
 public class Neo4JGraphImpl implements Graph {
 
-    private static final String ID = "_id";
     private static final String LAT = "_lat";
     private static final String LON = "_lon";
     private static final String DISTANCE = "distance";
+    private static final String NODES = "nodeCount";
     private static final Logger logger = LoggerFactory.getLogger(Neo4JStorage.class);
     private final BulkTA ta = new BulkTA();
     private GraphDatabaseService graphDb;
     private boolean temporary;
     private File storeDir;
-    private Index<Node> idIndex;
-    private int locCounter = 0;
     private int bulkSize = 10000;
     // TODO uh this is complicated (they should code it like lumeo!) ... so, we need to use bulk mode for lucene as well:
     // https://github.com/neo4j/community/blob/master/lucene-index/src/test/java/examples/ImdbExampleTest.java#L601
@@ -76,7 +69,6 @@ public class Neo4JGraphImpl implements Graph {
         try {
             graphDb = new EmbeddedGraphDatabase(storeDir.getAbsolutePath());
             IndexManager index = graphDb.index();
-            idIndex = index.forNodes(ID);
             if (!temporary)
                 Runtime.getRuntime().addShutdownHook(new Thread() {
 
@@ -149,17 +141,24 @@ public class Neo4JGraphImpl implements Graph {
     }
 
     public int getLocations() {
-        return locCounter;
+        if (!graphDb.getReferenceNode().hasProperty(NODES))
+            return 0;
+
+        Integer integ = (Integer) graphDb.getReferenceNode().getProperty(NODES);
+        return integ;
+    }
+
+    private static int getOurId(Node n) {
+        return (int) n.getId() - 1;
     }
 
     public int addLocation(double lat, double lon) {
         ta.ensureStart();
         try {
-            int tmp = locCounter;
-            Node n = createNode(locCounter);
+            Node n = createNode();
             n.setProperty(LAT, lat);
             n.setProperty(LON, lon);
-            return tmp;
+            return getOurId(n);
         } finally {
             ta.ensureEnd();
         }
@@ -184,20 +183,23 @@ public class Neo4JGraphImpl implements Graph {
     }
 
     private Node ensureExistence(int ghId) {
-        Node n = getNode(ghId);
-        if (n == null)
-            return createNode(ghId);
-        return n;
+        try {
+            return getNode(ghId);
+        } catch (NotFoundException ex) {
+            int delta = ghId - getLocations() + 1;
+            if(delta == 0)
+                throw new IllegalStateException("Couldn't found node with id " + ghId);
+            Node lastN = null;
+            for (int i = 0; i < delta; i++) {                
+                lastN = createNode();
+            }
+            return lastN;
+        }
     }
 
-    private Node createNode(int id) {
+    private Node createNode() {
         Node n = graphDb.createNode();
-        n.setProperty(ID, id);
-        // internal ID via getId is different to our locCounter! 
-        // actually it is: internalId - 1 == locCounter
-        idIndex.add(n, ID, id);
-        if (id >= locCounter)
-            locCounter = id + 1;
+        graphDb.getReferenceNode().setProperty(NODES, getLocations() + 1);
         return n;
     }
 
@@ -239,7 +241,7 @@ public class Neo4JGraphImpl implements Graph {
 
         public EdgeWithFlags next() {
             Relationship r = iter.next();
-            int id = (Integer) r.getEndNode().getProperty(ID);
+            int id = getOurId(r.getEndNode());
             double dist = (Double) r.getProperty(DISTANCE);
             return new EdgeWithFlags(id, dist, (byte) 3);
         }
@@ -262,7 +264,7 @@ public class Neo4JGraphImpl implements Graph {
     }
 
     protected Node getNode(int ghId) {
-        return idIndex.get(ID, ghId).getSingle();
+        return graphDb.getNodeById(ghId + 1);
     }
 
     public Graph clone() {

@@ -21,6 +21,8 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.MyIteratorable;
+import de.jetsli.graph.util.XFirstSearch;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +46,18 @@ public class Neo4JTest {
             }
         };
         Graph g = OSMReader.osm2Graph(reader, readCmdArgs);
-        logger.info("locs " + g.getLocations());
-        logger.info("edges of 0 " + MyIteratorable.count(g.getEdges(0)));
+        logger.info("finished with locations:" + g.getLocations());
+        final AtomicInteger integ = new AtomicInteger(0);
+        new XFirstSearch() {
+
+            @Override
+            protected boolean goFurther(int nodeId) {
+                integ.incrementAndGet();
+                return super.goFurther(nodeId);
+            }
+        }.start(g, 0, true);
+
+        logger.info(integ.get() + " <- all nodes");
         reader.doDijkstra(1000);
     }
 }

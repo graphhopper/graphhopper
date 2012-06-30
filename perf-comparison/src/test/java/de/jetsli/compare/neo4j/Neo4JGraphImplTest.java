@@ -43,7 +43,8 @@ public class Neo4JGraphImplTest extends AbstractGraphTester {
     @Test
     public void testSimpleGet() {
         Graph g = createGraph(10);
-        g.addLocation(10, 20);
+        int id = g.addLocation(10, 20);
+        assertEquals(0, id);
         assertEquals(0, MyIteratorable.count(g.getEdges(0)));
         assertEquals(10, g.getLatitude(0), 1e-5);
 
