@@ -13,29 +13,28 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.compare.neo4j;
+package de.jetsli.compare.tinkergraph;
 
 import de.jetsli.compare.misc.AbstractGraphTester;
 import de.jetsli.graph.storage.Graph;
-import org.junit.After;
+import org.junit.*;
 
 /**
  *
  * @author Peter Karich
  */
-public class Neo4JGraphImplTest extends AbstractGraphTester {
+public class TinkerGraphImplTest extends AbstractGraphTester {
 
-    private Neo4JGraphImpl g;
-    
+    private TinkerGraphImpl g;
+
     @Override
     protected Graph createGraph(int size) {
-        g = new Neo4JGraphImpl(null).setBulkSize(1);
-        g.init(true);
+        g = new TinkerGraphImpl(null);
         return g;
-    }
-    
+    }       
+
     @After
     public void tearDown() {
-        g.close();
+        // g.close();
     }
 }

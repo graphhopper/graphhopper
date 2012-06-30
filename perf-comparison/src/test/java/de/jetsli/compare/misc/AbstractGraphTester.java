@@ -13,22 +13,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.compare.neo4j;
+package de.jetsli.compare.misc;
 
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.MyIteratorable;
-import java.util.Iterator;
 import org.junit.Test;
 import static de.jetsli.graph.util.MyIteratorable.*;
 import static org.junit.Assert.*;
 
 /**
- * just copied on 29.6 from graphhopper core to avoid dependency or moving it to sources
+ * just copied on 29.6.2012 from graphhopper core to avoid dependency or moving it to sources
  */
 public abstract class AbstractGraphTester {
 
-    abstract Graph createGraph(int size);
+    protected abstract Graph createGraph(int size);
 
     @Test
     public void testSimpleGet() {

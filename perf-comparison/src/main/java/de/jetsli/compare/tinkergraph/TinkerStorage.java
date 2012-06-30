@@ -13,29 +13,39 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.compare.neo4j;
+package de.jetsli.compare.tinkergraph;
 
-import de.jetsli.compare.misc.AbstractGraphTester;
-import de.jetsli.graph.storage.Graph;
-import org.junit.After;
+import de.jetsli.graph.storage.DefaultStorage;
+import de.jetsli.graph.util.Helper;
+import java.io.File;
 
 /**
- *
  * @author Peter Karich
  */
-public class Neo4JGraphImplTest extends AbstractGraphTester {
+public class TinkerStorage extends DefaultStorage {
 
-    private Neo4JGraphImpl g;
-    
-    @Override
-    protected Graph createGraph(int size) {
-        g = new Neo4JGraphImpl(null).setBulkSize(1);
-        g.init(true);
-        return g;
+    String dir;
+
+    public TinkerStorage(String storeDir, int expectedNodes) {
+        super(expectedNodes);
+        dir = storeDir;
+        g = new TinkerGraphImpl(storeDir);
     }
-    
-    @After
-    public void tearDown() {
-        g.close();
+
+    @Override
+    public boolean loadExisting() {
+        return g.getLocations() > 0;
+    }
+
+    @Override
+    public void createNew() {
+        Helper.deleteDir(new File(dir));
+        g = new TinkerGraphImpl(dir);
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        ((TinkerGraphImpl) g).close();
     }
 }

@@ -67,6 +67,13 @@ public class Neo4JGraphImpl implements Graph {
 
         try {
             graphDb = new EmbeddedGraphDatabase(storeDir.getAbsolutePath());
+            ta.ensureStart();
+            try {
+                if (!graphDb.getReferenceNode().hasProperty(NODES))
+                    graphDb.getReferenceNode().setProperty(NODES, 0);
+            } finally {
+                ta.ensureEnd();
+            }
             if (!temporary)
                 Runtime.getRuntime().addShutdownHook(new Thread() {
 
@@ -139,11 +146,7 @@ public class Neo4JGraphImpl implements Graph {
     }
 
     public int getLocations() {
-        if (!graphDb.getReferenceNode().hasProperty(NODES))
-            return 0;
-
-        Integer integ = (Integer) graphDb.getReferenceNode().getProperty(NODES);
-        return integ;
+        return (Integer) graphDb.getReferenceNode().getProperty(NODES);
     }
 
     private static int getOurId(Node n) {
@@ -180,7 +183,7 @@ public class Neo4JGraphImpl implements Graph {
         }
     }
 
-    private Node ensureExistence(int ghId) {
+    private Node ensureNodeWithId(int ghId) {
         try {
             return getNode(ghId);
         } catch (NotFoundException ex) {
@@ -204,8 +207,8 @@ public class Neo4JGraphImpl implements Graph {
     public void edge(int a, int b, double distance, boolean ignore_bothDirections) {
         ta.ensureStart();
         try {
-            Node from = ensureExistence(a);
-            Node to = ensureExistence(b);
+            Node from = ensureNodeWithId(a);
+            Node to = ensureNodeWithId(b);
             Iterator<Relationship> iter = from.getRelationships(MyRelations.WAY).iterator();
             Relationship r = null;
             while (iter.hasNext()) {
@@ -251,13 +254,13 @@ public class Neo4JGraphImpl implements Graph {
         }
 
         public EdgeWithFlags next() {
-            Relationship r = iter.next();                        
+            Relationship r = iter.next();
             // this is a hack and probably relies on the fact that we don't delete anything
             // but it gives us some speed improvements as inbuilt getOtherNode is using a concurrenthashmap (!?)
             // so dont do Node other = r.getOtherNode(node); and do this:
             Node other = r.getStartNode();
-            if(other.getId() == node.getId())
-                other = r.getEndNode();            
+            if (other.getId() == node.getId())
+                other = r.getEndNode();
             int id = getOurId(other);
             double dist = (Double) r.getProperty(DISTANCE);
             return new EdgeWithFlags(id, dist, (byte) 3);
