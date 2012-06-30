@@ -15,10 +15,9 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.storage.MMapGraphStorage;
+import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.storage.MemoryGraphStorage;
-import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.RoutingAlgorithm;
@@ -121,9 +120,9 @@ public class OSMReader {
         Location2IDIndex index = new Location2IDQuadtree(g).prepareIndex(20000);
         double minLat = 49.484186, minLon = 8.974228;
         double maxLat = 50.541363, maxLon = 10.880356;
-//        RoutingAlgorithm algo = new DijkstraBidirection(g);
+        RoutingAlgorithm algo = new DijkstraBidirection(g);
 //        RoutingAlgorithm algo = new DijkstraSimple(g);
-        RoutingAlgorithm algo = new AStar(g);
+//        RoutingAlgorithm algo = new AStar(g);
         Random rand = new Random(123);
         StopWatch sw = new StopWatch();
         for (int i = 0; i < runs; i++) {
@@ -167,11 +166,14 @@ public class OSMReader {
     }
 
     public void osm2Graph(File osmXmlFile) throws FileNotFoundException {
-        // TODO instead of creating several input stream:
+        // TODO instead of creating two separate input streams,
         // could we use PushbackInputStream(new FileInputStream(osmFile)); ???
         preprocessAcceptHighwaysOnly(new FileInputStream(osmXmlFile));
         writeOsm2Graph(new FileInputStream(osmXmlFile));
         storage.flush();
+        
+        Map subnetworks = new PrepareRouting(storage.getGraph()).findSubnetworks();
+        logger.info("subnetworks:" + subnetworks.size() + " content:" + subnetworks);
     }
 
     /**

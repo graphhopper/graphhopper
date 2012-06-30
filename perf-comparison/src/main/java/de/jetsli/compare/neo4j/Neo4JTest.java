@@ -16,12 +16,13 @@
 package de.jetsli.compare.neo4j;
 
 import de.jetsli.graph.reader.OSMReader;
+import de.jetsli.graph.reader.PrepareRouting;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.Helper;
-import de.jetsli.graph.util.MyIteratorable;
 import de.jetsli.graph.util.XFirstSearch;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

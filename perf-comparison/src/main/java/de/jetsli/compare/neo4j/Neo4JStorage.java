@@ -46,17 +46,21 @@ public class Neo4JStorage extends DefaultStorage {
     }
 
     public boolean init(boolean forceCreate) {
-        return ((Neo4JGraphImpl) g).init(forceCreate);
+        return getNeoGraph().init(forceCreate);
+    }
+    
+    private Neo4JGraphImpl getNeoGraph() {
+        return (Neo4JGraphImpl)g;
     }
 
     @Override
     public void close() {
-        ((Neo4JGraphImpl) g).close();
+        getNeoGraph().close();
         super.close();
     }
 
     @Override
     public void flush() {
-        ((Neo4JGraphImpl) g).flush();
+        getNeoGraph().flush();
     }
 }

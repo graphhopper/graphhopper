@@ -187,10 +187,10 @@ public class Neo4JGraphImpl implements Graph {
             return getNode(ghId);
         } catch (NotFoundException ex) {
             int delta = ghId - getLocations() + 1;
-            if(delta == 0)
+            if (delta == 0)
                 throw new IllegalStateException("Couldn't found node with id " + ghId);
             Node lastN = null;
-            for (int i = 0; i < delta; i++) {                
+            for (int i = 0; i < delta; i++) {
                 lastN = createNode();
             }
             return lastN;
@@ -208,7 +208,17 @@ public class Neo4JGraphImpl implements Graph {
         try {
             Node from = ensureExistence(a);
             Node to = ensureExistence(b);
-            Relationship r = from.createRelationshipTo(to, MyRelations.WAY);
+            Iterator<Relationship> iter = from.getRelationships(MyRelations.WAY).iterator();
+            Relationship r = null;
+            while (iter.hasNext()) {
+                r = iter.next();
+                if (to.equals(r.getOtherNode(from)))
+                    break;
+
+                r = null;
+            }
+            if (r == null)
+                r = from.createRelationshipTo(to, MyRelations.WAY);
             r.setProperty(DISTANCE, distance);
         } finally {
             ta.ensureEnd();
@@ -220,10 +230,13 @@ public class Neo4JGraphImpl implements Graph {
         private Iterator<Relationship> iter;
         // TODO should be a weak reference!
         private BulkTA ta;
+        private Node node;
 
         public MyNeoIterable(BulkTA ta, Node n) {
             if (n == null)
                 throw new IllegalArgumentException("Node does not exist");
+
+            node = n;
             this.ta = ta;
             this.ta.ensureStart();
             iter = n.getRelationships(MyRelations.WAY).iterator();
@@ -234,14 +247,15 @@ public class Neo4JGraphImpl implements Graph {
             if (ret)
                 return true;
 
-            // uh this is ugly ...
+            // uh this is ugly ... but how else? lucene has an iterable with close
             ta.ensureEnd();
             return false;
         }
 
         public EdgeWithFlags next() {
             Relationship r = iter.next();
-            int id = getOurId(r.getEndNode());
+            Node other = r.getOtherNode(node);
+            int id = getOurId(other);
             double dist = (Double) r.getProperty(DISTANCE);
             return new EdgeWithFlags(id, dist, (byte) 3);
         }

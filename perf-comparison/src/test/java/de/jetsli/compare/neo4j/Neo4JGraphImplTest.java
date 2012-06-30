@@ -27,7 +27,8 @@ import static org.junit.Assert.*;
  */
 public class Neo4JGraphImplTest extends AbstractGraphTester {
 
-    Neo4JGraphImpl g;
+    private Neo4JGraphImpl g;
+    
     @Override
     Graph createGraph(int size) {
         g = new Neo4JGraphImpl(null).setBulkSize(1);
