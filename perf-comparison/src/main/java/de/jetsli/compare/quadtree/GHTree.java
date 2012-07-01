@@ -17,6 +17,7 @@ package de.jetsli.compare.quadtree;
 
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeSimple;
+import de.jetsli.graph.util.ApproxCalcDistance;
 
 /**
  * GraphHopper implementation
@@ -26,7 +27,7 @@ import de.jetsli.graph.trees.QuadTreeSimple;
 public class GHTree implements SimplisticQuadTree {
 
     Integer integ = new Integer(0);
-    QuadTree qt = new QuadTreeSimple(16, 56);
+    QuadTree qt = new QuadTreeSimple(16, 56).setCalcDistance(new ApproxCalcDistance());
 
     public GHTree() {
     }

@@ -71,7 +71,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     private final long globalMaxBit;
     private final SpatialKeyAlgo algo;
     private final int entriesPerLeaf;
-    private final CalcDistance calc = new CalcDistance();
+    private CalcDistance calc = new CalcDistance();
     private int size;
     private QTNode<T> root;
 
@@ -88,6 +88,11 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         entriesPerLeaf = entriesPerLeafNode;
         globalMaxBit = 1L << (bitsForLatLon - 1);
         algo = new SpatialKeyAlgo(bitsForLatLon);
+    }
+
+    public QuadTreeSimple setCalcDistance(CalcDistance dist) {
+        this.calc = dist;
+        return this;
     }
 
     @Override
@@ -201,7 +206,6 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         final long spatialKey = algo.encode(lat, lon);
         final AtomicInteger removedWrapper = new AtomicInteger(0);
         LeafWorker<T> worker = new LeafWorker<T>() {
-
             @Override
             public void doWork(QTDataNode<T> entry, int i) {
                 int removed = entry.remove(spatialKey);
@@ -229,7 +233,6 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         final long spatialKey = algo.encode(lat, lon);
         final List<CoordTrig<T>> nodes = new ArrayList<CoordTrig<T>>(1);
         LeafWorker<T> worker = new LeafWorker<T>() {
-
             @Override public void doWork(QTDataNode<T> dataNode, int i) {
                 if (value != null && !value.equals(dataNode.values[i]))
                     return;
@@ -246,7 +249,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err), root, worker);
         return nodes;
     }
-    
+
     @Override
     public Collection<CoordTrig<T>> getNodes(double lat, double lon, double distanceInKm) {
         return getNodes(new Circle(lat, lon, distanceInKm, calc));
@@ -258,7 +261,6 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             return Collections.EMPTY_LIST;
 
         Acceptor<T> worker = new Acceptor<T>(algo) {
-            
             @Override public boolean accept(CoordTrig<T> entry) {
                 return boundingBox.contains(entry.lat, entry.lon);
             }

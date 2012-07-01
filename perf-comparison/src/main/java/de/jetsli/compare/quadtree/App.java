@@ -3,7 +3,9 @@ package de.jetsli.compare.quadtree;
 import de.jetsli.graph.reader.MiniPerfTest;
 import de.jetsli.graph.reader.OSMReader;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.util.CmdArgs;
+import de.jetsli.graph.util.Helper;
 import java.io.FileNotFoundException;
 
 /**
@@ -14,17 +16,14 @@ public class App {
     // lucene/spatial4j -> we would need lucene
     // class LuceneTree implements SimplisticQuadTree {..}
     //
-    public static void main(String[] args) throws Exception {
-        if (args.length < 1)
-            throw new IllegalStateException("Please specify a filename to the OSM file");
-
+    public static void main(String[] args) throws Exception {        
         // OSM file - e.g:
         // http://download.geofabrik.de/osm/europe/germany/bayern/unterfranken.osm.bz2        
-        new App().start(args[0]);
+        new App().start(Helper.readCmdArgs(args));
     }
 
-    public void start(String osmFile) throws FileNotFoundException {
-        Graph g = OSMReader.osm2Graph(new CmdArgs().put("osm", osmFile).put("graph", "/tmp/mmap-graph"));
+    public void start(CmdArgs args) throws FileNotFoundException {
+        Graph g = OSMReader.osm2Graph(args);
         System.out.println("graph contains " + g.getLocations() + " nodes");
 
 //        for (int i = 0; i < 32; i++) {
@@ -37,9 +36,9 @@ public class App {
 //            }
 //        }
 
-        runBenchmark(GHSpatialTree.class, g);
+//        runBenchmark(GHSpatialTree.class, g);
 //         runBenchmark(SimpleArray.class, g);
-//        runBenchmark(GHTree.class, g);
+        runBenchmark(GHTree.class, g);
 //        runBenchmark(SISTree.class, g);
 //        runBenchmark(JTSTree.class, g);
     }
@@ -75,8 +74,8 @@ public class App {
         // long emptyEntries = quadTree.getEmptyEntries(true);
         // long emptyAllEntries = quadTree.getEmptyEntries(false);
         // + " empty all entries:" + emptyAllEntries + " empty entries:" + emptyEntries
-        for (int i = 10; i < 50; i *= 2) {
-            final double dist = i;
+        for (int iterDist = 10; iterDist < 50; iterDist *= 2) {
+            final double dist = iterDist;
             new MiniPerfTest("query " + dist + "km " + qtClass.getSimpleName()) {
 
                 @Override public long doCalc(int run) {
@@ -84,11 +83,12 @@ public class App {
                     float lon = (random.nextInt(lonMax - lonMin) + lonMin) / 10000.0f;
                     return quadTree.countNodes(lat, lon, dist);
                 }
-            }.setMax(50).setSeed(0).start();
+            }.setMax(100).setSeed(0).start();
         }
     }
 
     void fillQuadTree(final SimplisticQuadTree qt, final Graph graph) {
+        // this method is similar to: QuadTree.Util.fill(qt, graph);
         int locs = graph.getLocations();
         qt.init(locs);
         for (int i = 0; i < locs; i++) {
