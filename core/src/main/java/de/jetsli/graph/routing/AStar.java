@@ -18,6 +18,7 @@ package de.jetsli.graph.routing;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Edge;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.util.ApproxCalcDistance;
 import de.jetsli.graph.util.CalcDistance;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -30,7 +31,7 @@ import java.util.PriorityQueue;
 public class AStar implements RoutingAlgorithm {
 
     private Graph graph;
-    private CalcDistance dist = new CalcDistance();
+    private CalcDistance approxDist = new ApproxCalcDistance();
 
     public AStar(Graph g) {
         this.graph = g;
@@ -43,7 +44,7 @@ public class AStar implements RoutingAlgorithm {
         TIntObjectMap<Edge> map = new TIntObjectHashMap<Edge>();
         PriorityQueue<Edge> heap = new PriorityQueue<Edge>();
 
-        
+
         while (true) {
             int currVertex = curr.node;
             double lat = graph.getLatitude(currVertex);
@@ -61,7 +62,7 @@ public class AStar implements RoutingAlgorithm {
                 // (e.g. normed dist ... hmh but then entry.distance of edges needs to be normed too!)
                 double tmpLat = graph.getLatitude(tmpV);
                 double tmpLon = graph.getLongitude(tmpV);
-                double distToGoal = dist.approxDistKm(lat, lon, tmpLat, tmpLon);
+                double distToGoal = approxDist.calcDistKm(lat, lon, tmpLat, tmpLon);
                 double latestDist = entry.distance + curr.distance + distToGoal;
                 Edge de = map.get(tmpV);
                 if (de == null) {
@@ -96,7 +97,7 @@ public class AStar implements RoutingAlgorithm {
         return path;
     }
 
-    @Override public RoutingAlgorithm clear() {        
+    @Override public RoutingAlgorithm clear() {
         return this;
     }
 }

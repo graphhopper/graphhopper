@@ -61,35 +61,36 @@ public class CalcDistanceTest {
     public void testDistance() {
         float lat = 24.235f;
         float lon = 47.234f;
+        CalcDistance approxDist = new ApproxCalcDistance();
         CalcDistance dist = new CalcDistance();
         double res = 15.051;
         assertEquals(res, dist.calcDistKm(lat, lon, lat - 0.1, lon + 0.1), 1e-3);
         assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 0.1, lon + 0.1), 1e-3);
-        assertEquals(res, dist.approxDistKm(lat, lon, lat - 0.1, lon + 0.1), 1e-3);
+        assertEquals(res, approxDist.calcDistKm(lat, lon, lat - 0.1, lon + 0.1), 1e-3);
         
         res = 15.046;
         assertEquals(res, dist.calcDistKm(lat, lon, lat + 0.1, lon - 0.1), 1e-3);
         assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 0.1, lon - 0.1), 1e-3);
-        assertEquals(res, dist.approxDistKm(lat, lon, lat + 0.1, lon - 0.1), 1e-3);
+        assertEquals(res, approxDist.calcDistKm(lat, lon, lat + 0.1, lon - 0.1), 1e-3);
                 
         res = 150.748;
         assertEquals(res, dist.calcDistKm(lat, lon, lat - 1, lon + 1), 1e-3);
         assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 1, lon + 1), 1e-3);
-        assertEquals(res, dist.approxDistKm(lat, lon, lat - 1, lon + 1), 1e-2);
+        assertEquals(res, approxDist.calcDistKm(lat, lon, lat - 1, lon + 1), 1e-2);
         
         res = 150.211;
         assertEquals(res, dist.calcDistKm(lat, lon, lat + 1, lon - 1), 1e-3);
         assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 1, lon - 1), 1e-3);
-        assertEquals(res, dist.approxDistKm(lat, lon, lat + 1, lon - 1), 1e-2);
+        assertEquals(res, approxDist.calcDistKm(lat, lon, lat + 1, lon - 1), 1e-2);
                 
         res = 1527.919;
         assertEquals(res, dist.calcDistKm(lat, lon, lat - 10, lon + 10), 1e-3);
         assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 10, lon + 10), 1e-3);
-        assertEquals(res, dist.approxDistKm(lat, lon, lat - 10, lon + 10), 10);
+        assertEquals(res, approxDist.calcDistKm(lat, lon, lat - 10, lon + 10), 10);
         
         res = 1474.016;
         assertEquals(res, dist.calcDistKm(lat, lon, lat + 10, lon - 10), 1e-3);
         assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 10, lon - 10), 1e-3);
-        assertEquals(res, dist.approxDistKm(lat, lon, lat + 10, lon - 10), 10);
+        assertEquals(res, approxDist.calcDistKm(lat, lon, lat + 10, lon - 10), 10);
     }
 }

@@ -635,7 +635,7 @@ public class MMapGraph implements Graph {
                 settingsFile.writeInt(edgeFlagsPos);
                 settingsFile.writeInt(bytesEdges);
             } catch (Exception ex) {
-                logger.error("Problem while reading from settings file", ex);
+                logger.error("Problem while writing to settings file", ex);
             }
         }
     }

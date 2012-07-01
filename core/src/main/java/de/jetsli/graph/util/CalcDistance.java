@@ -21,9 +21,6 @@ import java.util.Arrays;
 /**
  * Calculates the distance of two points on earth.
  *
- * BTW: euclidean distance could be faster:
- * http://www.flipcode.com/archives/Fast_Approximate_Distance_Functions.shtml
- *
  * @author Peter Karich, info@jetsli.de
  */
 public class CalcDistance {
@@ -53,14 +50,6 @@ public class CalcDistance {
         return R * 2 * Math.asin(Math.sqrt(normedDist));
     }
 
-    public double approxDistKm(double fromLat, double fromLon, double toLat, double toLon) {
-        double dLat = Math.toRadians(toLat - fromLat);
-        double dLon = Math.toRadians(toLon - fromLon);
-        double left = Math.cos(Math.toRadians((fromLat + toLat) / 2)) * dLon;
-        double d = dLat * dLat + left * left;
-        return R * Math.sqrt(d);
-    }
-
     public double denormalizeDist(double normedDist) {
         return R * 2 * Math.asin(Math.sqrt(normedDist));
     }
@@ -70,7 +59,7 @@ public class CalcDistance {
         return tmp * tmp;
     }
 
-    public final double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
+    public double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = Math.toRadians(toLat - fromLat);
         double dLon = Math.toRadians(toLon - fromLon);
         return Math.sin(dLat / 2) * Math.sin(dLat / 2)

@@ -17,13 +17,13 @@ package de.jetsli.graph.reader;
 
 import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.storage.Storage;
-import de.jetsli.graph.storage.MemoryGraphStorage;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
+import de.jetsli.graph.storage.MMapGraphStorage;
 import de.jetsli.graph.util.*;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.*;
@@ -52,7 +52,6 @@ public class OSMReader {
             throw new IllegalArgumentException("Please specify a folder where to store the graph");
 
         OSMReader osmReader = new OSMReader(graphFolder, size) {
-
             @Override public boolean isInBounds(double lat, double lon) {
                 // regardless of bounds it takes ~7min (nodes) and 5min (edges) for MMyGraphStorage and other fast storages
                 // ~germany
@@ -156,8 +155,8 @@ public class OSMReader {
     }
 
     protected Storage createStorage(String storageLocation, int size) {
-        // return new MMapGraphStorage(storageLocation, size);
-        return new MemoryGraphStorage(size);
+        return new MMapGraphStorage(storageLocation, size);
+//        return new MemoryGraphStorage(size);
     }
 
     public boolean loadExisting() {
@@ -171,7 +170,7 @@ public class OSMReader {
         preprocessAcceptHighwaysOnly(new FileInputStream(osmXmlFile));
         writeOsm2Graph(new FileInputStream(osmXmlFile));
         storage.flush();
-        
+
         Map subnetworks = new PrepareRouting(storage.getGraph()).findSubnetworks();
         logger.info("subnetworks:" + subnetworks.size() + " content:" + subnetworks);
     }
@@ -370,7 +369,6 @@ public class OSMReader {
     private void printSorted(Set<Entry<String, Integer>> entrySet) {
         List<Entry<String, Integer>> list = new ArrayList<Entry<String, Integer>>(entrySet);
         Collections.sort(list, new Comparator<Entry<String, Integer>>() {
-
             @Override
             public int compare(Entry<String, Integer> o1, Entry<String, Integer> o2) {
                 return o1.getValue() - o2.getValue();

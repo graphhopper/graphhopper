@@ -41,7 +41,7 @@ public class MMapGraphStorage extends DefaultStorage {
     public void createNew() {
         if (g != null)
             getMMapGraph().close();
-        g = new MMapGraph(null, osmIdToIndexMap.size());
+        g = new MMapGraph(file, osmIdToIndexMap.size());
         // createNew(*true*) to avoid slow down for mmap files (and RAM bottlenecks)
         // but still write to disc at the end!
         getMMapGraph().createNew(true);
