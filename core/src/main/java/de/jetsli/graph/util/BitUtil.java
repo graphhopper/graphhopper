@@ -23,6 +23,28 @@ import java.util.Arrays;
  */
 public class BitUtil {
 
+    public static double toDouble(byte[] bytes) {
+        return toDouble(bytes, 0);
+    }
+
+    public static double toDouble(byte[] bytes, int offset) {
+        return Double.longBitsToDouble(toLong(bytes, offset));
+    }
+
+    public static byte[] fromDouble(double value) {
+        byte[] bytes = new byte[8];
+        fromDouble(bytes, value, 0);
+        return bytes;
+    }
+
+    public static void fromDouble(byte[] bytes, double value) {
+        fromDouble(bytes, value, 0);
+    }
+
+    public static void fromDouble(byte[] bytes, double value, int offset) {
+        fromLong(bytes, Double.doubleToRawLongBits(value), offset);
+    }
+
     public static float toFloat(byte[] bytes) {
         return toFloat(bytes, 0);
     }
@@ -75,7 +97,11 @@ public class BitUtil {
     }
 
     public static long toLong(byte[] b) {
-        return ((long) toInt(b, 0) << 32) | (toInt(b, 4) & 0xFFFFFFFFL);
+        return toLong(b, 0);
+    }
+
+    public static long toLong(byte[] b, int offset) {
+        return ((long) toInt(b, offset) << 32) | (toInt(b, offset + 4) & 0xFFFFFFFFL);
     }
 
     public static byte[] fromLong(long value) {
