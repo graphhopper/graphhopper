@@ -173,12 +173,22 @@ public class MemoryGraphSafe implements SaveableGraph {
 
     @Override
     public double getLatitude(int index) {
-        return lats[index];
+        readLock.lock();
+        try {
+            return lats[index];
+        } finally {
+            readLock.unlock();
+        }
     }
 
     @Override
     public double getLongitude(int index) {
-        return lons[index];
+        readLock.lock();
+        try {
+            return lons[index];
+        } finally {
+            readLock.unlock();
+        }
     }
 
     @Override
@@ -247,12 +257,12 @@ public class MemoryGraphSafe implements SaveableGraph {
         // edgePointer += LEN_LINK;
     }
 
-    public int nextEdgePointer() {
+    private int nextEdgePointer() {
         nextEdgePointer += LEN_EDGE;
         return nextEdgePointer;
     }
 
-    public TIntArrayList readAllEdges(int edgePointer) {
+    private TIntArrayList readAllEdges(int edgePointer) {
         TIntArrayList list = new TIntArrayList(5);
         int i = 0;
         for (; i < 1000; i++) {
@@ -305,16 +315,16 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
 
         EdgeWithFlags readNext() {
+            if (pointer < 0)
+                return null;
+
+            int origPointer = pointer;
+            // skip node priority for now
+            // int priority = edgesArea[pointer];
+            pointer += LEN_PRIO;
+
             readLock.lock();
             try {
-                if (pointer < 0)
-                    return null;
-
-                int origPointer = pointer;
-                // skip node priority for now
-                // int priority = edgesArea[pointer];
-                pointer += LEN_PRIO;
-
                 byte flags = (byte) edgesArea[pointer];
                 if (!in && (flags & 1) == 0 || !out && (flags & 2) == 0) {
                     pointer = edgesArea[getLink(origPointer)];
@@ -358,13 +368,18 @@ public class MemoryGraphSafe implements SaveableGraph {
 
     @Override
     public Graph clone() {
-        MemoryGraphSafe g = new MemoryGraphSafe(null, refToEdges.length, edgesArea.length / LEN_EDGE);
-        System.arraycopy(lats, 0, g.lats, 0, lats.length);
-        System.arraycopy(lons, 0, g.lons, 0, lons.length);
-        System.arraycopy(refToEdges, 0, g.refToEdges, 0, refToEdges.length);
-        System.arraycopy(edgesArea, 0, g.edgesArea, 0, edgesArea.length);
-        g.size = size;
-        return g;
+        readLock.lock();
+        try {
+            MemoryGraphSafe g = new MemoryGraphSafe(null, refToEdges.length, edgesArea.length / LEN_EDGE);
+            System.arraycopy(lats, 0, g.lats, 0, lats.length);
+            System.arraycopy(lons, 0, g.lons, 0, lons.length);
+            System.arraycopy(refToEdges, 0, g.refToEdges, 0, refToEdges.length);
+            System.arraycopy(edgesArea, 0, g.edgesArea, 0, edgesArea.length);
+            g.size = size;
+            return g;
+        } finally {
+            readLock.unlock();
+        }
     }
 
     @Override
@@ -372,10 +387,10 @@ public class MemoryGraphSafe implements SaveableGraph {
         writeLock.lock();
         try {
             deletedNodes.add(index);
+            return true;
         } finally {
             writeLock.unlock();
         }
-        return true;
     }
 
     @Override

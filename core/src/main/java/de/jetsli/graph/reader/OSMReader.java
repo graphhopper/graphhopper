@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.reader;
 
+import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.CalcDistance;
