@@ -14,14 +14,15 @@ Download OSM file (40MB compressed, then 450MB uncompressed), build graph hopper
 
 > cd core; ./run.sh unterfranken
 
-the resulting file will be around 30MB (still ways to improve it)
+the resulting GraphHopper file will be around 30MB
 
-If you want to import a bigger OSM (Germany) then run:
-
- * when executing the command again the OSM won't be parsed again, so the UI should pop up within 1 or 2 seconds.
+ * when executing the command again, then the OSM won't be parsed again, so the UI should pop up fast within 2 seconds.
  * After the UI popped up you can drag to move the map or scroll to zoom like in ordinary maps apps
  * Click once to select a departure and another click to select the destination
+ * You want to get an impression of how bidirectional Dijkstra is working? [Click this image](http://karussell.files.wordpress.com/2012/06/bidijkstra.gif)
  * Then a route should pop up like in this SHINY ;) image ![from twitter](http://karussell.files.wordpress.com/2012/06/graphhopper.png)
+
+If you want to import a bigger OSM (Germany) then run:
 
 > cd core; ./run.sh germany
 
