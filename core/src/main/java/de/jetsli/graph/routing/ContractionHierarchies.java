@@ -47,7 +47,7 @@ public class ContractionHierarchies {
      */
     public Graph contract(Graph g) {
         PriorityQueue<DistEntry> heap = new PriorityQueue<DistEntry>();
-        int locations = g.getLocations();
+        int locations = g.getNodes();
 
         // TODO calculate edge difference => yet another dikstra necessary!?
         for (int i = 0; i < locations; i++) {

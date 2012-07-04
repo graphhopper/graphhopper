@@ -38,8 +38,8 @@ public class GraphWrapper implements Graph {
     }
 
     @Override
-    public int getLocations() {
-        int tmp = g.getLocations() - ignoreNodesSize;
+    public int getNodes() {
+        int tmp = g.getNodes() - ignoreNodesSize;
         assert tmp >= 0;
         return tmp;
     }
@@ -69,8 +69,8 @@ public class GraphWrapper implements Graph {
     }
 
     @Override
-    public int addLocation(double lat, double lon) {
-        return g.addLocation(lat, lon);
+    public int addNode(double lat, double lon) {
+        return g.addNode(lat, lon);
     }
 
     @Override
@@ -99,8 +99,8 @@ public class GraphWrapper implements Graph {
     }
 
     @Override
-    public boolean markDeleted(int index) {
-        return g.markDeleted(index);
+    public boolean markNodeDeleted(int index) {
+        return g.markNodeDeleted(index);
     }
 
     @Override public boolean isDeleted(int index) {

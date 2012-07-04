@@ -57,7 +57,7 @@ public class TinkerGraphImpl implements Graph {
     public void ensureCapacity(int cap) {
     }
 
-    public int getLocations() {
+    public int getNodes() {
         return (Integer) refNode.getProperty(NODES);
     }
     int locCounter = 0;
@@ -65,11 +65,11 @@ public class TinkerGraphImpl implements Graph {
     Vertex createNode() {
         Vertex v = g.addVertex(locCounter);
         locCounter++;
-        refNode.setProperty(NODES, getLocations() + 1);
+        refNode.setProperty(NODES, getNodes() + 1);
         return v;
     }
 
-    public int addLocation(double lat, double lon) {
+    public int addNode(double lat, double lon) {
         int tmp = locCounter;
         Vertex v = createNode();
         v.setProperty(LAT, lat);
@@ -155,7 +155,7 @@ public class TinkerGraphImpl implements Graph {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public boolean markDeleted(int index) {
+    public boolean markNodeDeleted(int index) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -169,7 +169,7 @@ public class TinkerGraphImpl implements Graph {
     private Vertex ensureNode(int a) {
         Vertex v = g.getVertex(a);
         if (v == null) {
-            int delta = a - getLocations() + 1;
+            int delta = a - getNodes() + 1;
             if (delta == 0)
                 throw new IllegalStateException("Couldn't found node with id " + a);
 

@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.coll.MyBitSet;
+import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.MyIteratorable;
 import gnu.trove.list.array.TIntArrayList;
@@ -57,6 +59,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     private Lock writeLock;
     private Lock readLock;
     private String storageLocation;
+    private MyBitSet deletedNodes;
 
     public MemoryGraphSafe() {
         this(10);
@@ -87,7 +90,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
     }
 
-    @Override public int getLocations() {
+    @Override public int getNodes() {
         readLock.lock();
         try {
             return size;
@@ -96,17 +99,16 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
     }
 
-    @Deprecated
-    public int addLocation(double lat, double lon) {
+    public int addNode(double lat, double lon) {
         int tmp = size;
         size++;
-        setLocation(tmp, lat, lon);
+        setNode(tmp, lat, lon);
         return tmp;
     }
     //
     // TODO @Override
 
-    public void setLocation(int index, double lat, double lon) {
+    public void setNode(int index, double lat, double lon) {
         writeLock.lock();
         try {
             ensureNodeIndex(index);
@@ -117,11 +119,11 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
     }
 
-     // Use ONLY within a writer lock area
+    // Use ONLY within a writer lock area
     private void ensureEdgePointer(int pointer) {
         if (edgesArea != null && pointer < edgesArea.length)
             return;
-        
+
         pointer = Math.max(10 * LEN_EDGE, Math.round(pointer * 1.5f));
         if (edgesArea == null) {
             edgesArea = new int[pointer];
@@ -134,7 +136,8 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
     }
     // Use ONLY within a writer lock area
-    private void ensureEdgesCapacity(int cap) {        
+
+    private void ensureEdgesCapacity(int cap) {
         ensureEdgePointer(cap * LEN_EDGE);
     }
 
@@ -143,7 +146,6 @@ public class MemoryGraphSafe implements SaveableGraph {
         size = index + 1;
         ensureNodesCapacity(size);
     }
-    
 
     private void ensureNodesCapacity(int cap) {
         if (refToEdges != null && cap < refToEdges.length)
@@ -156,7 +158,9 @@ public class MemoryGraphSafe implements SaveableGraph {
             refToEdges = new int[cap];
             // TODO we can easily avoid filling with -1 -> ensure that edgePointer always starts from 1
             Arrays.fill(refToEdges, -1);
+            deletedNodes = new MyTBitSet();
         } else {
+            // TODO deletedNodes = copy(deletedNodes, cap);
             lats = Arrays.copyOf(lats, cap);
             lons = Arrays.copyOf(lons, cap);
             int oldLen = refToEdges.length;
@@ -362,10 +366,10 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     @Override
-    public boolean markDeleted(int index) {
+    public boolean markNodeDeleted(int index) {
         writeLock.lock();
         try {
-            refToEdges[index] = -1;
+            deletedNodes.add(index);
         } finally {
             writeLock.unlock();
         }
@@ -374,12 +378,12 @@ public class MemoryGraphSafe implements SaveableGraph {
 
     @Override
     public boolean isDeleted(int index) {
-        return refToEdges[index] == -1;
-    }
-
-    @Override
-    public void optimize() {
-        // TODO defragmentate
+        readLock.lock();
+        try {
+            return deletedNodes.contains(index);
+        } finally {
+            readLock.unlock();
+        }
     }
 
     /**
@@ -387,9 +391,34 @@ public class MemoryGraphSafe implements SaveableGraph {
      */
     @Override
     public void flush() {
-        // we should avoid storing the defragmentation bitset => defragmentate before saving!
-        optimize();
-        save();
+        readLock.lock();
+        try {
+            // we can avoid storing the deletedNodes bitset but we need to defragmentate before saving!
+            optimize();
+            save();
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    @Override
+    public void optimize() {
+        writeLock.lock();
+        try {
+            // TODO defragmentate edges
+            int deleted = 0;
+            for (int nodeId = 0; nodeId < size; nodeId++) {
+                if (deletedNodes.contains(nodeId)) {
+                    deleted++;
+                    for (EdgeWithFlags e : getEdges(nodeId)) {
+                        // TODO
+                    }
+                }
+            }
+            size -= deleted;
+        } finally {
+            writeLock.unlock();
+        }
     }
 
     public void save() {

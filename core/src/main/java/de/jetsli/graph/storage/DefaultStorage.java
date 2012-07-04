@@ -47,7 +47,7 @@ public class DefaultStorage implements Storage {
 
     @Override
     public boolean addNode(int osmId, double lat, double lon) {
-        int internalId = g.addLocation(lat, lon);
+        int internalId = g.addNode(lat, lon);
         osmIdToIndexMap.put(osmId, internalId);
         return true;
     }

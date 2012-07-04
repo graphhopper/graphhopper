@@ -276,12 +276,12 @@ public class MMapGraph implements SaveableGraph {
     }
 
     @Override
-    public int getLocations() {
+    public int getNodes() {
         return Math.max(currentNodeSize, maxRecognizedNodeId + 1);
     }
 
     @Override
-    public int addLocation(double lat, double lon) {
+    public int addNode(double lat, double lon) {
         if (currentNodeSize + 1 >= maxNodes) {
             try {
                 ensureNodesCapacity(currentNodeSize + 1);
@@ -691,7 +691,7 @@ public class MMapGraph implements SaveableGraph {
     }
 
     public void stats() {
-        float locs = getLocations();
+        float locs = getNodes();
         int edgesNo = 0;
         int outEdgesNo = 0;
         int inEdgesNo = 0;
@@ -769,7 +769,7 @@ public class MMapGraph implements SaveableGraph {
     }
 
     // TODO deletions are NOT persistent
-    @Override public boolean markDeleted(int index) {
+    @Override public boolean markNodeDeleted(int index) {
         getDeletedNodes().add(index);
         return true;
     }
@@ -796,13 +796,13 @@ public class MMapGraph implements SaveableGraph {
 
     @Override
     public void optimize() {
-        MMapGraph inMemGraph = new MMapGraph(getLocations() - getDeletedNodes().getCardinality());
+        MMapGraph inMemGraph = new MMapGraph(getNodes() - getDeletedNodes().getCardinality());
         inMemGraph.createNew();
         /**
          * This methods creates a new in-memory graph without the specified deleted nodes. see
          * MemoryGraph for a near duplicate
          */
-        int locs = this.getLocations();
+        int locs = this.getNodes();
         int newNodeId = 0;
         int[] old2NewMap = new int[locs];
         for (int oldNodeId = 0; oldNodeId < locs; oldNodeId++) {
@@ -819,7 +819,7 @@ public class MMapGraph implements SaveableGraph {
                 continue;
             double lat = this.getLatitude(oldNodeId);
             double lon = this.getLongitude(oldNodeId);
-            inMemGraph.addLocation(lat, lon);
+            inMemGraph.addNode(lat, lon);
             for (EdgeWithFlags de : this.getEdges(oldNodeId)) {
                 if (deletedNodes.contains(de.node))
                     continue;

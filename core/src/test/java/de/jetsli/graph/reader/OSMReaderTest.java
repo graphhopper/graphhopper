@@ -50,7 +50,7 @@ public class OSMReaderTest {
         reader.preprocessAcceptHighwaysOnly(getClass().getResourceAsStream("test1.xml"));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test1.xml"));
         Graph graph = reader.getGraph();
-        assertEquals(4, graph.getLocations());
+        assertEquals(4, graph.getNodes());
         assertEquals(1, MyIteratorable.count(graph.getOutgoing(0)));
         assertEquals(3, MyIteratorable.count(graph.getOutgoing(1)));
         assertEquals(1, MyIteratorable.count(graph.getOutgoing(2)));
@@ -80,7 +80,7 @@ public class OSMReaderTest {
         reader.preprocessAcceptHighwaysOnly(getClass().getResourceAsStream("test1.xml"));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test1.xml"));
         Graph graph = reader.getGraph();
-        assertEquals(3, graph.getLocations());
+        assertEquals(3, graph.getNodes());
         assertEquals(1, MyIteratorable.count(graph.getOutgoing(0)));
         assertEquals(2, MyIteratorable.count(graph.getOutgoing(1)));
         assertEquals(1, MyIteratorable.count(graph.getOutgoing(2)));

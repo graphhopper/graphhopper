@@ -30,14 +30,26 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
     Graph createGraph(int size) {
         return new MemoryGraphSafe(size);
     }
+    
+    @Test
+    public void testCreateDuplicateEdges() {
+        Graph graph = createGraph(10);
+        graph.edge(2, 1, 12, true);
+        graph.edge(2, 3, 12, true);
+        graph.edge(2, 3, 12, true);
+        assertEquals(3, count(graph.getOutgoing(2)));
+
+        graph.edge(3, 2, 12, true);
+        assertEquals(4, count(graph.getOutgoing(2)));
+    }
 
     @Test
     public void testSave() throws IOException {
         String tmpDir = "/tmp/memory-graph-safe";
         SaveableGraph mmgraph = new MemoryGraphSafe(tmpDir, 3, 3);
-        mmgraph.addLocation(10, 10);
-        mmgraph.addLocation(11, 20);
-        mmgraph.addLocation(12, 12);
+        mmgraph.addNode(10, 10);
+        mmgraph.addNode(11, 20);
+        mmgraph.addNode(12, 12);
 
         mmgraph.edge(0, 1, 100, true);
         mmgraph.edge(0, 2, 200, true);
@@ -48,12 +60,12 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
 
         mmgraph = new MemoryGraphSafe(tmpDir, 1003, 103);
         // no need here assertTrue(mmgraph.loadExisting());
-        assertEquals(3, mmgraph.getLocations());
+        assertEquals(3, mmgraph.getNodes());
         checkGraph(mmgraph);
     }
 
     protected void checkGraph(Graph g) {
-        assertEquals(3, g.getLocations());
+        assertEquals(3, g.getNodes());
         assertEquals(10, g.getLatitude(0), 1e-2);
         assertEquals(10, g.getLongitude(0), 1e-2);
         assertEquals(2, count(g.getOutgoing(0)));

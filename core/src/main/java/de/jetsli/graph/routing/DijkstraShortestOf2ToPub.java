@@ -77,13 +77,13 @@ public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
         if (pubTransport.contains(fromP1) || pubTransport.contains(toP2))
             return new DijkstraBidirection(graph).calcShortestPath(fromP1, toP2);
 
-        MyBitSet visitedFrom = new MyOpenBitSet(graph.getLocations());
+        MyBitSet visitedFrom = new MyOpenBitSet(graph.getNodes());
         PriorityQueue<Edge> prioQueueFrom = new PriorityQueue<Edge>();
         TIntObjectMap<Edge> shortestDistMapFrom = new TIntObjectHashMap<Edge>();
 
         Edge entryTo = new Edge(toP2, 0);
         currTo = entryTo;
-        MyBitSet visitedTo = new MyOpenBitSet(graph.getLocations());
+        MyBitSet visitedTo = new MyOpenBitSet(graph.getNodes());
         PriorityQueue<Edge> prioQueueTo = new PriorityQueue<Edge>();
         TIntObjectMap<Edge> shortestDistMapTo = new TIntObjectHashMap<Edge>();
 

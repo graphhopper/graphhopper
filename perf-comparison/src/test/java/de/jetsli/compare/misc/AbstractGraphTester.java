@@ -32,7 +32,7 @@ public abstract class AbstractGraphTester {
     @Test
     public void testSimpleGet() {
         Graph g = createGraph(10);
-        int id = g.addLocation(10, 20);
+        int id = g.addNode(10, 20);
         assertEquals(0, id);
         assertEquals(0, MyIteratorable.count(g.getEdges(0)));
         assertEquals(10, g.getLatitude(0), 1e-5);
@@ -99,29 +99,29 @@ public abstract class AbstractGraphTester {
     @Test
     public void testGetLocations() {
         Graph g = createGraph(11);
-        g.addLocation(12, 23);
-        g.addLocation(22, 23);
-        assertEquals(2, g.getLocations());
+        g.addNode(12, 23);
+        g.addNode(22, 23);
+        assertEquals(2, g.getNodes());
 
         g.edge(0, 1, 10, true);
-        assertEquals(2, g.getLocations());
+        assertEquals(2, g.getNodes());
 
         g.edge(0, 2, 10, true);
-        assertEquals(3, g.getLocations());
+        assertEquals(3, g.getNodes());
 
         g = createGraph(11);
-        assertEquals(0, g.getLocations());
+        assertEquals(0, g.getNodes());
     }
 
     @Test
     public void testAddLocation() {
         Graph g = createGraph(11);
-        assertEquals(0, g.addLocation(12, 23));
-        assertEquals(1, g.addLocation(38.33f, 235.3f));
-        assertEquals(2, g.addLocation(6, 2339));
-        assertEquals(3, g.addLocation(78, 89));
-        assertEquals(4, g.addLocation(2, 1));
-        assertEquals(5, g.addLocation(7, 5));
+        assertEquals(0, g.addNode(12, 23));
+        assertEquals(1, g.addNode(38.33f, 235.3f));
+        assertEquals(2, g.addNode(6, 2339));
+        assertEquals(3, g.addNode(78, 89));
+        assertEquals(4, g.addNode(2, 1));
+        assertEquals(5, g.addNode(7, 5));
         g.edge(0, 1, 12, true);
         g.edge(0, 2, 212, true);
         g.edge(0, 3, 212, true);

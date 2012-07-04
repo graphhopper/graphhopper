@@ -71,7 +71,7 @@ public class TopologicalSortingTest {
         
         TopologicalSorting ts = new TopologicalSorting();
         TIntArrayList list = ts.sort(g);
-        assertEquals(g.getLocations(), list.size());
+        assertEquals(g.getNodes(), list.size());
                 
         for (int i = 1; i < list.size(); i++) {            
             checkOrder(g, list, i);        

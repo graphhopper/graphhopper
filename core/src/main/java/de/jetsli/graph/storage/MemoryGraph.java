@@ -60,7 +60,7 @@ public class MemoryGraph implements Graph {
     }
 
     @Override
-    public int addLocation(double lat, double lon) {
+    public int addNode(double lat, double lon) {
         int tmp = lonLatSize++;
         lons = growArray(lons, lonLatSize);
         lats = growArray(lats, lonLatSize);
@@ -96,7 +96,7 @@ public class MemoryGraph implements Graph {
      * edge-method(s).
      */
     @Override
-    public int getLocations() {
+    public int getNodes() {
         return Math.max(lonLatSize, maxRecognizedNodeIndex + 1);
     }
 
@@ -190,7 +190,7 @@ public class MemoryGraph implements Graph {
     }
 
     @Override
-    public boolean markDeleted(int index) {
+    public boolean markNodeDeleted(int index) {
         getDeletedNodes().add(index);
         return true;
     }
@@ -201,13 +201,13 @@ public class MemoryGraph implements Graph {
 
     @Override
     public void optimize() {
-        MemoryGraph inMemGraph = new MemoryGraph(getLocations() - getDeletedNodes().getCardinality());
+        MemoryGraph inMemGraph = new MemoryGraph(getNodes() - getDeletedNodes().getCardinality());
 
         /**
          * This methods creates a new in-memory graph without the specified deleted nodes. see
          * MMapGraph for a near duplicate
          */
-        int locs = this.getLocations();
+        int locs = this.getNodes();
         int newNodeId = 0;
         int[] old2NewMap = new int[locs];
         for (int oldNodeId = 0; oldNodeId < locs; oldNodeId++) {
@@ -224,7 +224,7 @@ public class MemoryGraph implements Graph {
                 continue;
             double lat = this.getLatitude(oldNodeId);
             double lon = this.getLongitude(oldNodeId);
-            inMemGraph.addLocation(lat, lon);
+            inMemGraph.addNode(lat, lon);
             for (EdgeWithFlags de : this.getEdges(oldNodeId)) {
                 if (deletedNodes.contains(de.node))
                     continue;

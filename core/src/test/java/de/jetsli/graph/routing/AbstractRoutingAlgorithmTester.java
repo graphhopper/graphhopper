@@ -235,8 +235,8 @@ public abstract class AbstractRoutingAlgorithmTester {
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
         StopWatch sw = new StopWatch();
         for (int i = 0; i < N; i++) {
-            int index1 = Math.abs(rand.nextInt(graph.getLocations()));
-            int index2 = Math.abs(rand.nextInt(graph.getLocations()));
+            int index1 = Math.abs(rand.nextInt(graph.getNodes()));
+            int index2 = Math.abs(rand.nextInt(graph.getNodes()));
             // constructing the graph could be expensive like for CH
             RoutingAlgorithm d = createAlgo(graph);
 

@@ -47,7 +47,7 @@ public class PrepareRouting {
     public Map<Integer, Integer> findSubnetworks() {
         Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         final AtomicInteger integ = new AtomicInteger(0);
-        int locs = g.getLocations();
+        int locs = g.getNodes();
         final MyBitSet bs = new MyOpenBitSet(locs);
         for (int start = 0; start < locs; start++) {
             if (bs.contains(start))
@@ -120,7 +120,7 @@ public class PrepareRouting {
             }
 
             @Override protected boolean goFurther(int nodeId) {
-                g.markDeleted(nodeId);
+                g.markNodeDeleted(nodeId);
                 return super.goFurther(nodeId);
             }
         }.start(g, start, true);
@@ -131,7 +131,7 @@ public class PrepareRouting {
         new XFirstSearch() {
 
             @Override protected MyBitSet createBitSet(int size) {
-                return new MyOpenBitSet(g.getLocations());
+                return new MyOpenBitSet(g.getNodes());
             }
 
             @Override protected boolean goFurther(int nodeId) {

@@ -52,7 +52,7 @@ public class XFirstSearch {
         else
             coll = new MyHelperIntQueue();
 
-        MyBitSet visited = createBitSet(g.getLocations());
+        MyBitSet visited = createBitSet(g.getNodes());
         visited.add(node);
         coll.push(node);
         int current;

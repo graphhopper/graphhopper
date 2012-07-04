@@ -69,7 +69,7 @@ public class PerfTest {
     }
 
     public void start() {
-        System.out.println("locations:" + g.getLocations());
+        System.out.println("locations:" + g.getNodes());
         int maxDist = 20;
         int maxEntriesPerL = 30;
         int minBits = 4;
@@ -84,7 +84,7 @@ public class PerfTest {
             int entriesPerLeaf = 3;
 //            for (; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {
             //final QuadTree<Long> quadTree = new QuadTreeSimple<Long>(entriesPerLeaf, bits);
-            final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getLocations());
+            final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getNodes());
             QuadTree.Util.fill(quadTree, g);
             System.gc();
             System.gc();
@@ -97,7 +97,7 @@ public class PerfTest {
 
                 @Override public long doCalc(int run) {
                     //QuadTree<Long> quadTree = new QuadTreeSimple<Long>(epl, b);
-                    QuadTree<Long> quadTree = new SpatialHashtable(b, epl).init(g.getLocations());
+                    QuadTree<Long> quadTree = new SpatialHashtable(b, epl).init(g.getNodes());
                     QuadTree.Util.fill(quadTree, g);
                     return quadTree.size();
                 }
@@ -109,7 +109,7 @@ public class PerfTest {
     private void measureSearch(int minBits, int maxDist, int maxEPerL) {
         for (int bits = minBits; bits <= 30; bits += 2) {
             int entriesPerLeaf = 3;
-            final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getLocations());
+            final QuadTree<Long> quadTree = new SpatialHashtable(bits, entriesPerLeaf).init(g.getNodes());
             QuadTree.Util.fill(quadTree, g);
             for (int distance = 5; distance < maxDist; distance *= 2) {
 //                for (; entriesPerLeaf < maxEPerL; entriesPerLeaf *= 2) {

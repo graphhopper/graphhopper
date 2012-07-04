@@ -66,7 +66,7 @@ public class MiniGraphUI {
 
     public MiniGraphUI(Graph roadGraph, boolean debug) {
         this.graph = roadGraph;
-        logger.info("locations:" + roadGraph.getLocations());
+        logger.info("locations:" + roadGraph.getNodes());
         mg = new MyGraphics(roadGraph);
 
         // prepare location quadtree to 'enter' the graph. create a 313*313 grid => <3km
@@ -94,14 +94,14 @@ public class MiniGraphUI {
         mainPanel = new MyLayerPanel();
 
         // TODO make it correct with bitset-skipping too
-        final MyBitSet bitset = new MyTBitSet(graph.getLocations());
+        final MyBitSet bitset = new MyTBitSet(graph.getNodes());
         mainPanel.addLayer(roadsLayer = new DefaultMapLayer() {
 
             Random rand = new Random();
 
             @Override public void paintComponent(Graphics2D g2) {
                 clearGraphics(g2);
-                int locs = graph.getLocations();
+                int locs = graph.getNodes();
                 Rectangle d = getBounds();
                 BBox b = mg.setBounds(0, d.width, 0, d.height);
                 if (fastPaint) {

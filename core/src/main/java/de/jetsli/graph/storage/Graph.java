@@ -30,15 +30,18 @@ public interface Graph {
     /**
      * @return current number of locations
      */
-    int getLocations();
+    int getNodes();
 
     /**
      * Creates a new location with the returned id. If you do not have lat,lon you should create
      * edges only via edge(int,int,distance,bool) - e.g. in the case for none-real world graphs.
      *
      * @return id of new location
-     */
-    int addLocation(double lat, double lon);
+     */    
+    @Deprecated
+    int addNode(double lat, double lon);
+    
+    // TODO void setNode(int index, double lat, double lon);
 
     double getLatitude(int index);
 
@@ -64,7 +67,7 @@ public interface Graph {
     /**
      * Schedule the deletion of the specified node until an optimize() call happens
      */
-    boolean markDeleted(int index);
+    boolean markNodeDeleted(int index);
     
     boolean isDeleted(int index);
 

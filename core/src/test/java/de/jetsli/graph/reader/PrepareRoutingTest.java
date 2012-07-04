@@ -126,7 +126,7 @@ public class PrepareRoutingTest {
         // 2-(1)         |
         // \--(1)---------
         //
-        assertEquals(5, g.getLocations());
+        assertEquals(5, g.getNodes());
 
         final AtomicInteger edgesCounter = new AtomicInteger(0);
         new XFirstSearch() {

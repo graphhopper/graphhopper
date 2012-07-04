@@ -36,9 +36,9 @@ public class TopologicalSorting {
      */
     public TIntArrayList sort(MemoryGraph g) {
         final TIntArrayList list = new TIntArrayList();
-        if (g.getLocations() == 0)
+        if (g.getNodes() == 0)
             return list;
-        else if (g.getLocations() == 1) {
+        else if (g.getNodes() == 1) {
             list.add(0);
             return list;
         }
@@ -62,7 +62,7 @@ public class TopologicalSorting {
         if (noIncomingEdges.size() == 0)
             throw new IllegalStateException("No beginning nodes found! Only acyclic graphs are allowed");
 
-        MyBitSet visited = new MyOpenBitSet(g.getLocations());
+        MyBitSet visited = new MyOpenBitSet(g.getNodes());
         final MyIntDeque noIncomingDeque = new MyIntDeque(noIncomingEdges.size());
         for (TIntIterator iter = noIncomingEdges.iterator(); iter.hasNext();) {
             int tmp = iter.next();

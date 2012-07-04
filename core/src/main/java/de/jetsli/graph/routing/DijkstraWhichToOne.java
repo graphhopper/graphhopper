@@ -69,13 +69,13 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
             return p;
         }
         
-        MyBitSet visitedFrom = new MyOpenBitSet(graph.getLocations());
+        MyBitSet visitedFrom = new MyOpenBitSet(graph.getNodes());
         PriorityQueue<Edge> prioQueueFrom = new PriorityQueue<Edge>();
         TIntObjectMap<Edge> shortestDistMapFrom = new TIntObjectHashMap<Edge>();
 
         Edge entryTo = new Edge(destination, 0);        
         Edge currTo = entryTo;
-        MyBitSet visitedTo = new MyOpenBitSet(graph.getLocations());
+        MyBitSet visitedTo = new MyOpenBitSet(graph.getNodes());
         PriorityQueue<Edge> prioQueueTo = new PriorityQueue<Edge>();
         TIntObjectMap<Edge> shortestDistMapTo = new TIntObjectHashMap<Edge>();
         shortestDistMapTo.put(destination, entryTo);

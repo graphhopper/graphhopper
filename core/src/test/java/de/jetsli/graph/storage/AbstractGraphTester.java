@@ -45,43 +45,12 @@ public abstract class AbstractGraphTester {
         assertEquals(1, count(graph.getOutgoing(2)));
 
         graph.edge(2, 3, 12, true);
-        assertEquals(2, count(graph.getOutgoing(2)));
-
-        graph.edge(2, 3, 12, true);
-        assertEquals(2, count(graph.getOutgoing(2)));
-
-        graph.edge(3, 2, 12, true);
-        assertEquals(2, count(graph.getOutgoing(2)));
+        assertEquals(2, count(graph.getOutgoing(2)));        
 
 //        assertEquals(0, count(graph.getOutgoing(a1.id())));        
         assertEquals(1, count(graph.getOutgoing(1)));
         assertEquals(2, count(graph.getOutgoing(2)));
         assertEquals(1, count(graph.getOutgoing(3)));
-    }
-
-    // assume the following behaviour which allows the graph to stored bidirections more efficient
-    @Test public void testOverwriteWillResultInSymetricUpdateOfEdgeWeight() {
-        Graph g = createGraph(3);
-
-        g.edge(1, 2, 12, true);
-        DistEntry de = g.getOutgoing(2).iterator().next();
-        assertEquals(12, de.distance, 1e-7);
-        de = g.getOutgoing(1).iterator().next();
-        assertEquals(12, de.distance, 1e-7);
-        g.edge(1, 2, 11, false);
-        de = g.getOutgoing(2).iterator().next();
-        assertEquals(1, de.node);
-        assertEquals(11, de.distance, 1e-7);
-        de = g.getOutgoing(1).iterator().next();
-        assertEquals(2, de.node);
-        assertEquals(11, de.distance, 1e-7);
-        g.edge(1, 2, 13, true);
-        de = g.getOutgoing(2).iterator().next();
-        assertEquals(1, de.node);
-        assertEquals(13, de.distance, 1e-7);
-        de = g.getOutgoing(1).iterator().next();
-        assertEquals(2, de.node);
-        assertEquals(13, de.distance, 1e-7);
     }
 
     @Test public void testUnidirectional() {
@@ -130,38 +99,38 @@ public abstract class AbstractGraphTester {
     public void testClone() {
         Graph g = createGraph(11);
         g.edge(1, 2, 10, true);
-        g.addLocation(12, 23);
+        g.addNode(12, 23);
         Graph clone = g.clone();
-        assertEquals(g.getLocations(), clone.getLocations());
+        assertEquals(g.getNodes(), clone.getNodes());
         assertEquals(count(g.getOutgoing(1)), count(clone.getOutgoing(1)));
     }
 
     @Test
     public void testGetLocations() {
         Graph g = createGraph(11);
-        g.addLocation(12, 23);
-        g.addLocation(22, 23);
-        assertEquals(2, g.getLocations());
+        g.addNode(12, 23);
+        g.addNode(22, 23);
+        assertEquals(2, g.getNodes());
 
         g.edge(0, 1, 10, true);
-        assertEquals(2, g.getLocations());
+        assertEquals(2, g.getNodes());
 
         g.edge(0, 2, 10, true);
-        assertEquals(3, g.getLocations());
+        assertEquals(3, g.getNodes());
 
         g = createGraph(11);
-        assertEquals(0, g.getLocations());
+        assertEquals(0, g.getNodes());
     }
 
     @Test
     public void testAddLocation() {
         Graph g = createGraph(11);
-        assertEquals(0, g.addLocation(12, 23));
-        assertEquals(1, g.addLocation(38.33f, 235.3f));
-        assertEquals(2, g.addLocation(6, 2339));
-        assertEquals(3, g.addLocation(78, 89));
-        assertEquals(4, g.addLocation(2, 1));
-        assertEquals(5, g.addLocation(7, 5));
+        assertEquals(0, g.addNode(12, 23));
+        assertEquals(1, g.addNode(38.33f, 235.3f));
+        assertEquals(2, g.addNode(6, 2339));
+        assertEquals(3, g.addNode(78, 89));
+        assertEquals(4, g.addNode(2, 1));
+        assertEquals(5, g.addNode(7, 5));
         g.edge(0, 1, 12, true);
         g.edge(0, 2, 212, true);
         g.edge(0, 3, 212, true);
@@ -260,26 +229,26 @@ public abstract class AbstractGraphTester {
     @Test
     public void testDeleteNode() {
         Graph g = createGraph(11);
-        assertEquals(0, g.addLocation(12, 23));
-        assertEquals(1, g.addLocation(38.33f, 235.3f));
-        assertEquals(2, g.addLocation(3, 3));
-        assertEquals(3, g.addLocation(78, 89));
-        assertEquals(4, g.addLocation(2, 1));
-        assertEquals(5, g.addLocation(2.5f, 1));
+        assertEquals(0, g.addNode(12, 23));
+        assertEquals(1, g.addNode(38.33f, 235.3f));
+        assertEquals(2, g.addNode(3, 3));
+        assertEquals(3, g.addNode(78, 89));
+        assertEquals(4, g.addNode(2, 1));
+        assertEquals(5, g.addNode(2.5f, 1));
 
         g.edge(0, 1, 10, true);
         g.edge(0, 3, 20, false);
         g.edge(3, 5, 20, true);
         g.edge(1, 5, 20, false);
 
-        g.markDeleted(0);
-        g.markDeleted(2);
+        g.markNodeDeleted(0);
+        g.markNodeDeleted(2);
         // no deletion happend
-        assertEquals(6, g.getLocations());
+        assertEquals(6, g.getNodes());
 
         // now actually perform deletion
         g.optimize();
-        assertEquals(4, g.getLocations());
+        assertEquals(4, g.getNodes());
         assertEquals(38.33f, g.getLatitude(0), 1e-4);
         assertEquals(78, g.getLatitude(1), 1e-4);
         assertTrue(MyIteratorable.contains(g.getEdges(0), 3));

@@ -56,17 +56,54 @@ public class MMapGraphTest extends AbstractGraphTester {
     }
 
     @Test
+    public void testNoDuplicateEdges() {
+        Graph graph = createGraph(10);
+        graph.edge(2, 1, 12, true);
+        graph.edge(2, 3, 12, true);
+        graph.edge(2, 3, 12, true);
+        assertEquals(2, count(graph.getOutgoing(2)));
+
+        graph.edge(3, 2, 12, true);
+        assertEquals(2, count(graph.getOutgoing(2)));
+    }
+
+    // assume the following behaviour which allows the graph to stored bidirections more efficient
+    @Test public void testOverwriteWillResultInSymetricUpdateOfEdgeWeight() {
+        Graph g = createGraph(3);
+
+        g.edge(1, 2, 12, true);
+        DistEntry de = g.getOutgoing(2).iterator().next();
+        assertEquals(12, de.distance, 1e-7);
+        de = g.getOutgoing(1).iterator().next();
+        assertEquals(12, de.distance, 1e-7);
+        g.edge(1, 2, 11, false);
+        de = g.getOutgoing(2).iterator().next();
+        assertEquals(1, de.node);
+        assertEquals(11, de.distance, 1e-7);
+        de = g.getOutgoing(1).iterator().next();
+        assertEquals(2, de.node);
+        assertEquals(11, de.distance, 1e-7);
+        g.edge(1, 2, 13, true);
+        de = g.getOutgoing(2).iterator().next();
+        assertEquals(1, de.node);
+        assertEquals(13, de.distance, 1e-7);
+        de = g.getOutgoing(1).iterator().next();
+        assertEquals(2, de.node);
+        assertEquals(13, de.distance, 1e-7);
+    }
+
+    @Test
     public void testIncreaseSize() throws IOException {
         MMapGraph graph = (MMapGraph) createGraph(10);
         for (int i = 0; i < 10; i++) {
-            graph.addLocation(1, i);
+            graph.addNode(1, i);
         }
 
         graph.ensureCapacity(20);
         assertEquals(26, graph.getNodesCapacity());
 
         for (int i = 10; i < 20; i++) {
-            graph.addLocation(1, i);
+            graph.addNode(1, i);
         }
 
         for (int i = 0; i < 20; i++) {
@@ -74,7 +111,7 @@ public class MMapGraphTest extends AbstractGraphTester {
         }
 
         for (int i = 0; i < 6; i++) {
-            graph.addLocation(2, 2);
+            graph.addNode(2, 2);
         }
         assertEquals(33, graph.getNodesCapacity());
     }
@@ -113,9 +150,9 @@ public class MMapGraphTest extends AbstractGraphTester {
         String tmpDir = dir + "/test-persist-graph";
         MMapGraph mmgraph = new MMapGraph(tmpDir, 3).createNew(true);
         assertFalse(MMapGraph.isFileMapped(mmgraph.getEdges()));
-        mmgraph.addLocation(10, 10);
-        mmgraph.addLocation(11, 20);
-        mmgraph.addLocation(12, 12);
+        mmgraph.addNode(10, 10);
+        mmgraph.addNode(11, 20);
+        mmgraph.addNode(12, 12);
 
         mmgraph.edge(0, 2, 200, true);
         mmgraph.edge(1, 2, 120, false);
@@ -134,9 +171,9 @@ public class MMapGraphTest extends AbstractGraphTester {
         String tmpDir = dir + "/test-persist-graph";
         MMapGraph mmgraph = new MMapGraph(tmpDir, 3).createNew();
         assertTrue(MMapGraph.isFileMapped(mmgraph.getEdges()));
-        mmgraph.addLocation(10, 10);
-        mmgraph.addLocation(11, 20);
-        mmgraph.addLocation(12, 12);
+        mmgraph.addNode(10, 10);
+        mmgraph.addNode(11, 20);
+        mmgraph.addNode(12, 12);
 
         mmgraph.edge(0, 1, 100, true);
         mmgraph.edge(0, 2, 200, true);
@@ -152,7 +189,7 @@ public class MMapGraphTest extends AbstractGraphTester {
     }
 
     protected void checkGraph(Graph g) {
-        assertEquals(3, g.getLocations());
+        assertEquals(3, g.getNodes());
         assertEquals(10, g.getLatitude(0), 1e-2);
         assertEquals(10, g.getLongitude(0), 1e-2);
         assertEquals(2, count(g.getOutgoing(0)));

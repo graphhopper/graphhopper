@@ -44,7 +44,7 @@ public class Location2IDFullIndex implements Location2IDIndex {
 //        return ((Number) coll.iterator().next().getValue()).intValue();
 //    }
     @Override public int findID(double lat, double lon) {
-        int locs = g.getLocations();
+        int locs = g.getNodes();
         int id = -1;
         Circle circle = null;
         for (int i = 0; i < locs; i++) {

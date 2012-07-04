@@ -49,7 +49,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
 
     public DijkstraBidirection(Graph graph) {
         this.graph = graph;
-        int locs = Math.max(20, graph.getLocations());
+        int locs = Math.max(20, graph.getNodes());
         visitedFrom = new MyOpenBitSet(locs);
         prioQueueFrom = new PriorityQueue<Edge>(locs / 10);
         shortestDistMapFrom = new TIntObjectHashMap<Edge>(locs / 10);

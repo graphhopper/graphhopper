@@ -89,7 +89,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
     private void initAlgo(int bits) {
         double minLon = Double.MAX_VALUE, maxLon = Double.MIN_VALUE, minLat = Double.MAX_VALUE, maxLat = Double.MIN_VALUE;
-        int locs = g.getLocations();
+        int locs = g.getNodes();
         for (int nodeId = 0; nodeId < locs; nodeId++) {
             double lat = g.getLatitude(nodeId);
             double lon = g.getLongitude(nodeId);
@@ -116,7 +116,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     }
 
     private MyOpenBitSet fillQuadtree(int size) {
-        int locs = g.getLocations();
+        int locs = g.getNodes();
         if (locs <= 0)
             throw new IllegalStateException("check your graph - it is empty!");
 
