@@ -66,7 +66,6 @@ public class Helper {
     public static <T> List<Entry<T, Integer>> sort(Collection<Entry<T, Integer>> entrySet) {
         List<Entry<T, Integer>> sorted = new ArrayList<Entry<T, Integer>>(entrySet);
         Collections.sort(sorted, new Comparator<Entry<T, Integer>>() {
-
             @Override
             public int compare(Entry<T, Integer> o1, Entry<T, Integer> o2) {
                 int i1 = o1.getValue();
@@ -89,7 +88,6 @@ public class Helper {
     public static <T> List<Entry<T, Long>> sortLong(Collection<Entry<T, Long>> entrySet) {
         List<Entry<T, Long>> sorted = new ArrayList<Entry<T, Long>>(entrySet);
         Collections.sort(sorted, new Comparator<Entry<T, Long>>() {
-
             @Override
             public int compare(Entry<T, Long> o1, Entry<T, Long> o2) {
                 long i1 = o1.getValue();
@@ -206,5 +204,134 @@ public class Helper {
 
     public static boolean isEmpty(String strOsm) {
         return strOsm == null || strOsm.trim().isEmpty();
+    }
+
+    public static void writeSettings(String file, Object... objs) throws IOException {
+        DataOutputStream out = new DataOutputStream(new BufferedOutputStream(
+                new FileOutputStream(file), 1024));
+        try {
+            out.writeInt(objs.length);
+            for (Object obj : objs) {
+                char cl;
+                if (obj instanceof Byte)
+                    cl = 'Y';
+                else
+                    cl = obj.getClass().getSimpleName().charAt(0);
+
+                out.writeChar(cl);
+                if (obj instanceof String)
+                    out.writeUTF((String) obj);
+                else if (obj instanceof Float)
+                    out.writeFloat((Float) obj);
+                else if (obj instanceof Double)
+                    out.writeDouble((Double) obj);
+                else if (obj instanceof Integer)
+                    out.writeInt((Integer) obj);
+                else if (obj instanceof Long)
+                    out.writeLong((Long) obj);
+                else if (obj instanceof Boolean)
+                    out.writeBoolean((Boolean) obj);
+                else
+                    throw new IllegalStateException("Unsupported type");
+            }
+        } finally {
+            out.close();
+        }
+    }
+
+    public static Object[] readSettings(String file) throws IOException {
+        DataInputStream in = new DataInputStream(new FileInputStream(file));
+        try {
+            Object[] res = new Object[in.readInt()];
+            for (int i = 0; i < res.length; i++) {
+                char cl = in.readChar();
+                switch (cl) {
+                    case 'S':
+                        res[i] = in.readUTF();
+                        break;
+                    case 'F':
+                        res[i] = in.readFloat();
+                        break;
+                    case 'D':
+                        res[i] = in.readDouble();
+                        break;
+                    case 'I':
+                        res[i] = in.readInt();
+                        break;
+                    case 'L':
+                        res[i] = in.readLong();
+                        break;
+                    case 'B':
+                        res[i] = in.readBoolean();
+                        break;
+                    case 'Y':
+                        res[i] = in.readByte();
+                        break;
+                    default:
+                        throw new IllegalStateException("cannot read type " + cl + " from " + file);
+                }
+            }
+            return res;
+        } finally {
+            in.close();
+        }
+    }
+
+    public static void writeInts(String file, int[] ints) throws IOException {
+        DataOutputStream out = new DataOutputStream(new BufferedOutputStream(
+                new FileOutputStream(file), 4 * 1024));
+        try {
+            int len = ints.length;
+            out.writeInt(len);
+            for (int i = 0; i < len; i++) {
+                out.writeInt(ints[i]);
+            }
+        } finally {
+            out.close();
+        }
+    }
+
+    public static void writeFloats(String file, float[] floats) throws IOException {
+        DataOutputStream out = new DataOutputStream(new BufferedOutputStream(
+                new FileOutputStream(file), 4 * 1024));
+        try {
+            int len = floats.length;
+            out.writeInt(len);
+            for (int i = 0; i < len; i++) {
+                out.writeFloat(floats[i]);
+            }
+        } finally {
+            out.close();
+        }
+    }
+
+    public static int[] readInts(String file) throws IOException {
+        DataInputStream in = new DataInputStream(new BufferedInputStream(
+                new FileInputStream(file), 4 * 1024));
+        try {
+            int len = in.readInt();
+            int[] ints = new int[len];
+            for (int i = 0; i < len; i++) {
+                ints[i] = in.readInt();
+            }
+            return ints;
+        } finally {
+            in.close();
+        }
+    }
+
+    public static float[] readFloats(String file) throws IOException {
+        DataInputStream in = new DataInputStream(new BufferedInputStream(
+                new FileInputStream(file), 4 * 1024));
+        try {
+            int len = in.readInt();
+            float[] floats = new float[len];
+            for (int i = 0; i < len; i++) {
+                floats[i] = in.readFloat();
+            }
+            return floats;
+        } finally {
+            in.close();
+        }
     }
 }

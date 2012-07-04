@@ -20,12 +20,12 @@ import java.io.File;
 import java.io.IOException;
 import org.junit.After;
 import org.junit.Test;
-import static de.jetsli.graph.util.MyIteratorable.*;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import static org.junit.Assert.*;
+import static de.jetsli.graph.util.MyIteratorable.*;
 
 /**
  *
@@ -33,13 +33,8 @@ import static org.junit.Assert.*;
  */
 public class MMapGraphTest extends AbstractGraphTester {
 
-    private String dir = "/tmp/MMapGraphTest";
-    protected MMapGraph g;
-
-    @Override
-    Graph createGraph(int size) {
-        return g = new MMapGraph(dir, size).createNew();
-    }
+    protected String dir = "/tmp/GraphTest";
+    protected SaveableGraph g;
 
     @After
     public void tearDown() throws IOException {
@@ -49,10 +44,15 @@ public class MMapGraphTest extends AbstractGraphTester {
         Helper.deleteDir(new File(dir));
     }
 
+    @Override
+    Graph createGraph(int size) {
+        return g = new MMapGraph(dir, size).createNew();
+    }
+
     @Test
     public void testStats() {
         super.testDozendEdges();
-        g.stats();
+        ((MMapGraph) g).stats();
     }
 
     @Test
@@ -95,7 +95,6 @@ public class MMapGraphTest extends AbstractGraphTester {
         assertTrue(mm.calculateEdges(100) > 10);
         assertTrue(mm.calculateEdges(100) < 30);
         mm = new MMapGraph(1) {
-
             {
                 try {
                     ensureEdgesCapacity(10);
@@ -152,7 +151,7 @@ public class MMapGraphTest extends AbstractGraphTester {
         checkGraph(mmgraph);
     }
 
-    private void checkGraph(Graph g) {
+    protected void checkGraph(Graph g) {
         assertEquals(3, g.getLocations());
         assertEquals(10, g.getLatitude(0), 1e-2);
         assertEquals(10, g.getLongitude(0), 1e-2);

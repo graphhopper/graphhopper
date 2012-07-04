@@ -52,7 +52,7 @@ import java.io.*;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class MMapGraph implements Graph {
+public class MMapGraph implements SaveableGraph {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final int EMPTY_DIST = 0;
@@ -116,6 +116,10 @@ public class MMapGraph implements Graph {
         this.maxNodes = maxNodes + 10;
         if (name != null)
             this.dirName = new File(name);
+    }
+
+    public String getStorageLocation() {
+        return dirName.getAbsolutePath();
     }
 
     public boolean loadExisting() {

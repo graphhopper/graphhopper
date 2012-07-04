@@ -32,8 +32,9 @@ public abstract class AbstractGraphTester {
     @Test public void testCreateLocation() {
         Graph graph = createGraph(4);
         graph.edge(3, 1, 50, true);
+        assertEquals(1, count(graph.getOutgoing(1)));
+        
         graph.edge(1, 2, 100, true);
-
         assertEquals(2, count(graph.getOutgoing(1)));
     }
 
