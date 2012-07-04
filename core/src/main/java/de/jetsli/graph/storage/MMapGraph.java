@@ -610,6 +610,7 @@ public class MMapGraph implements SaveableGraph {
         return false;
     }
 
+    @Override
     public void flush() {
         if (dirName != null) {
             if (saveOnFlushOnly) {
@@ -838,6 +839,7 @@ public class MMapGraph implements SaveableGraph {
         try {
             this.ensureEdgesCapacity(inMemGraph.edges.capacity() / inMemGraph.bytesEdges + 2);
         } catch (Exception ex) {
+            logger.error("problem while increasing edge capacity", ex);
         }
         copy(inMemGraph, this);
     }

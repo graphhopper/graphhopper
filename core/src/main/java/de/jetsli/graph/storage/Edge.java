@@ -19,7 +19,7 @@ package de.jetsli.graph.storage;
  * @see DistEntry
  * @author Peter Karich, info@jetsli.de
  */
-public class Edge extends DistEntry {
+public class Edge extends DistEntry implements Cloneable {
 
     public Edge prevEntry;
 

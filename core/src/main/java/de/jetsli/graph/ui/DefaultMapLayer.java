@@ -76,7 +76,7 @@ public abstract class DefaultMapLayer implements MapLayer {
     }
 
     @Override public void setBounds(Rectangle bounds) {
-        if (image == null || image.getHeight() != bounds.height || image.getWidth() != bounds.getWidth()) {
+        if (image == null || image.getHeight() != bounds.height || image.getWidth() != bounds.width) {
             image = new BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB);
             tmpG = image.createGraphics();
             tmpG.setColor(Color.BLACK);

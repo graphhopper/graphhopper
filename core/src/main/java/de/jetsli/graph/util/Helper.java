@@ -50,7 +50,7 @@ public class Helper {
         BufferedReader reader = new BufferedReader(simpleReader);
         try {
             List<String> res = new ArrayList();
-            String line = null;
+            String line;
             while ((line = reader.readLine()) != null) {
                 res.add(line);
             }

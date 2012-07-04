@@ -19,7 +19,7 @@ import java.util.Arrays;
  */
 public class IntBinHeap {
 
-    public static int notAnElement = Integer.MIN_VALUE;
+    public static final int notAnElement = Integer.MIN_VALUE;
     private static final double GROW_FACTOR = 2.0;
     private float[] prio;
     private int[] elem;

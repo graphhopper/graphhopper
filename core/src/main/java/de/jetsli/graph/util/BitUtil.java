@@ -15,8 +15,6 @@
  */
 package de.jetsli.graph.util;
 
-import java.util.Arrays;
-
 /**
  *
  * @author Peter Karich, info@jetsli.de

@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.ui;
 
-import de.jetsli.graph.util.StopWatch;
 import java.awt.*;
 import java.util.Collection;
 import java.awt.event.ComponentAdapter;

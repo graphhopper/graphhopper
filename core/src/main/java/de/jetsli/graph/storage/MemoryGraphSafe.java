@@ -455,8 +455,9 @@ public class MemoryGraphSafe implements SaveableGraph {
         readLock.lock();
         try {
             File tmp = new File(storageLocation);
-            if (!tmp.exists())
+            if (!tmp.exists()) {
                 tmp.mkdirs();
+            }
 
             Helper.writeFloats(storageLocation + "/lats", lats);
             Helper.writeFloats(storageLocation + "/lons", lons);

@@ -53,7 +53,7 @@ public class MyOpenBitSet implements MyBitSet {
             }
             return sb.toString();
         } catch (Exception ex) {
-            return "error constructing bitset string representation";
+            throw new RuntimeException("error constructing bitset string representation", ex);
         }
     }
 

@@ -179,7 +179,7 @@ public class SpatialHashtable implements QuadTree<Long> {
 
         // now adjust maxBuckets and maxEntriesPerBucket to avoid memory waste and fit a power of 2
         maxBuckets = (int) Math.pow(2, bucketIndexBits);
-        maxEntriesPerBucket = (int) Math.round(correctDivide(maxEntries, maxBuckets));
+        maxEntriesPerBucket = correctDivide(maxEntries, maxBuckets);
 
         // introduce hash overflow area
         if (maxEntriesPerBucket < 5)
@@ -653,6 +653,7 @@ public class SpatialHashtable implements QuadTree<Long> {
 
     private void getNeighbours(BBox nodeBB, Shape searchArea, int depth, long key, LeafWorker worker, boolean contained) {
         if (contained) {
+            // TODO
             // check if searchRect is entirely consumed from nodeBB 
             // => we could simply iterate from smallest to highest bucketIndex
             // worker.setCheckContained(false);

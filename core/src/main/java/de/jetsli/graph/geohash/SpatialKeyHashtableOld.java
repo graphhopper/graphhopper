@@ -112,7 +112,7 @@ public class SpatialKeyHashtableOld {
         maxEntries = 1 << (bytesForSpatialKeyRest * BITS8 - 1);
         double factor = 1.1;
         if (maxEntries < 0)
-            maxEntries = (int) (Integer.MAX_VALUE / bytesPerEntry / factor);
+            maxEntries = (int) ((double) Integer.MAX_VALUE / bytesPerEntry / factor);
 
         // store a link as last 3 bytes of every bucket for an overflow bucket
         bytesForOverflowLink = bytesForBucketIndex;
@@ -240,7 +240,7 @@ public class SpatialKeyHashtableOld {
         int overflowLink = 0;
         for (int i = bytesForOverflowLink - 1; i >= 0; i--) {
             overflowLink <<= BITS8;
-            overflowLink |= bucketBytes.get(byteBucketIndex + i);
+            overflowLink |= bucketBytes.get(byteBucketIndex + i) & 0xff;
         }
 
         boolean isIdentical = false;
@@ -264,7 +264,7 @@ public class SpatialKeyHashtableOld {
                     }
                     if (i >= bytesForOverflowEntry) {
                         tmpOverflowLink <<= BITS8;
-                        tmpOverflowLink |= b;
+                        tmpOverflowLink |= b & 0xff;
                     }
                 }
 

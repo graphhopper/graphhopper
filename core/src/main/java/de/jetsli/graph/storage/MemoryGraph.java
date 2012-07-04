@@ -27,7 +27,7 @@ import java.util.Arrays;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class MemoryGraph implements Graph {
+public class MemoryGraph implements Graph, Cloneable {
 
     private float[] lons;
     private float[] lats;

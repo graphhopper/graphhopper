@@ -127,6 +127,7 @@ public class PrepareRouting {
     }
 
     public void addEdgesToSkip2DegreeNodes() {
+        // TODO
         final List<EdgeWithFlags> list = new ArrayList<EdgeWithFlags>(2);
         new XFirstSearch() {
 

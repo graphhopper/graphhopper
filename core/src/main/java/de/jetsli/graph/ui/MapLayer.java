@@ -17,11 +17,12 @@ package de.jetsli.graph.ui;
 
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.io.Serializable;
 
 /**
  * @author Peter Karich
  */
-public interface MapLayer {
+public interface MapLayer extends Serializable {
     
     void setBounds(Rectangle r);
     Rectangle getBounds();
