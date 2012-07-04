@@ -19,6 +19,8 @@ import java.io.IOException;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static de.jetsli.graph.util.MyIteratorable.*;
+import de.jetsli.graph.util.*;
+import java.io.File;
 
 /**
  *
@@ -30,7 +32,7 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
     Graph createGraph(int size) {
         return new MemoryGraphSafe(size);
     }
-    
+
     @Test
     public void testCreateDuplicateEdges() {
         Graph graph = createGraph(10);
@@ -46,6 +48,7 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
     @Test
     public void testSave() throws IOException {
         String tmpDir = "/tmp/memory-graph-safe";
+        Helper.deleteDir(new File(tmpDir));
         SaveableGraph mmgraph = new MemoryGraphSafe(tmpDir, 3, 3);
         mmgraph.addNode(10, 10);
         mmgraph.addNode(11, 20);

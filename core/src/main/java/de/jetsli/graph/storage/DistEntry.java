@@ -30,8 +30,8 @@ public class DistEntry implements Comparable<DistEntry> {
 
     public final static EmptyIterable<DistEntry> EMPTY_ITER = new EmptyIterable<DistEntry>();
     public int node;
-    public double distance;
-
+    public double distance; 
+    
     public DistEntry(int loc, double distance) {
         this.node = loc;
         this.distance = distance;

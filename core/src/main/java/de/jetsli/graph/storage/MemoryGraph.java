@@ -153,7 +153,6 @@ public class MemoryGraph implements Graph {
             return EdgeWithFlags.EMPTY_ITER;
 
         return new EdgesIteratorable(d) {
-
             @Override public boolean hasNext() {
                 for (;;) {
                     if (curr == null || (curr.flags & 1) != 0)
@@ -176,7 +175,6 @@ public class MemoryGraph implements Graph {
             return EdgeWithFlags.EMPTY_ITER;
 
         return new EdgesIteratorable(d) {
-
             @Override public boolean hasNext() {
                 for (;;) {
                     if (curr == null || (curr.flags & 2) != 0)
@@ -201,7 +199,10 @@ public class MemoryGraph implements Graph {
 
     @Override
     public void optimize() {
-        MemoryGraph inMemGraph = new MemoryGraph(getNodes() - getDeletedNodes().getCardinality());
+        int deleted = deletedNodes.getCardinality();
+        if (deleted == 0)
+            return;
+        MemoryGraph inMemGraph = new MemoryGraph(getNodes() - deleted);
 
         /**
          * This methods creates a new in-memory graph without the specified deleted nodes. see

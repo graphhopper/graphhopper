@@ -22,10 +22,7 @@ import de.jetsli.graph.util.MyIteratorable;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -56,8 +53,9 @@ public class MemoryGraphSafe implements SaveableGraph {
     // TODO use a bitset to memorize fragmented edges-area!
     private int[] edgesArea;
     private int nextEdgePointer;
-    private Lock writeLock;
-    private Lock readLock;
+    private final ReadWriteLock lock;
+    private final Lock writeLock;
+    private final Lock readLock;
     private String storageLocation;
     private MyBitSet deletedNodes;
 
@@ -71,7 +69,7 @@ public class MemoryGraphSafe implements SaveableGraph {
 
     public MemoryGraphSafe(String storageDir, int cap, int capEdge) {
         this.storageLocation = storageDir;
-        ReadWriteLock lock = new ReentrantReadWriteLock();
+        lock = new ReentrantReadWriteLock();
         writeLock = lock.writeLock();
         readLock = lock.readLock();
         if (!loadExisting(storageDir)) {
@@ -99,7 +97,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
     }
 
-    public int addNode(double lat, double lon) {
+    @Override public int addNode(double lat, double lon) {
         int tmp = size;
         size++;
         setNode(tmp, lat, lon);
@@ -158,7 +156,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             refToEdges = new int[cap];
             // TODO we can easily avoid filling with -1 -> ensure that edgePointer always starts from 1
             Arrays.fill(refToEdges, -1);
-            deletedNodes = new MyTBitSet();
+            deletedNodes = new MyTBitSet(cap);
         } else {
             // TODO deletedNodes = copy(deletedNodes, cap);
             lats = Arrays.copyOf(lats, cap);
@@ -391,13 +389,13 @@ public class MemoryGraphSafe implements SaveableGraph {
      */
     @Override
     public void flush() {
-        readLock.lock();
+        // we can avoid storing the deletedNodes bitset but we need to defragmentate before saving!
+        writeLock.lock();
         try {
-            // we can avoid storing the deletedNodes bitset but we need to defragmentate before saving!
             optimize();
             save();
         } finally {
-            readLock.unlock();
+            writeLock.unlock();
         }
     }
 
@@ -405,17 +403,47 @@ public class MemoryGraphSafe implements SaveableGraph {
     public void optimize() {
         writeLock.lock();
         try {
-            // TODO defragmentate edges
-            int deleted = 0;
-            for (int nodeId = 0; nodeId < size; nodeId++) {
-                if (deletedNodes.contains(nodeId)) {
-                    deleted++;
-                    for (EdgeWithFlags e : getEdges(nodeId)) {
-                        // TODO
-                    }
-                }
+            int deleted = deletedNodes.getCardinality();
+            if (deleted == 0)
+                return;
+            MemoryGraphSafe inMemGraph = new MemoryGraphSafe(null, getNodes() - deleted, edgesArea.length / LEN_EDGE);
+
+            /**
+             * This methods creates a new in-memory graph without the specified deleted nodes. see
+             * MMapGraph for a near duplicate
+             */
+            int locs = this.getNodes();
+            int newNodeId = 0;
+            int[] old2NewMap = new int[locs];
+            for (int oldNodeId = 0; oldNodeId < locs; oldNodeId++) {
+                if (deletedNodes.contains(oldNodeId))
+                    continue;
+
+                old2NewMap[oldNodeId] = newNodeId;
+                newNodeId++;
             }
-            size -= deleted;
+
+            newNodeId = 0;
+            for (int oldNodeId = 0; oldNodeId < locs; oldNodeId++) {
+                if (deletedNodes.contains(oldNodeId))
+                    continue;
+                double lat = this.getLatitude(oldNodeId);
+                double lon = this.getLongitude(oldNodeId);
+                inMemGraph.addNode(lat, lon);
+                for (EdgeWithFlags de : this.getEdges(oldNodeId)) {
+                    if (deletedNodes.contains(de.node))
+                        continue;
+
+                    inMemGraph.internalAdd(newNodeId, old2NewMap[de.node], (float) de.distance, de.flags);
+                }
+                newNodeId++;
+            }
+            lats = inMemGraph.lats;
+            lons = inMemGraph.lons;
+            refToEdges = inMemGraph.refToEdges;
+            edgesArea = inMemGraph.edgesArea;
+            size = inMemGraph.size;
+            deletedNodes = null;
         } finally {
             writeLock.unlock();
         }
@@ -432,8 +460,8 @@ public class MemoryGraphSafe implements SaveableGraph {
 
             Helper.writeFloats(storageLocation + "/lats", lats);
             Helper.writeFloats(storageLocation + "/lons", lons);
-            Helper.writeInts(storageLocation + "/edges", edgesArea);
             Helper.writeInts(storageLocation + "/refs", refToEdges);
+            Helper.writeInts(storageLocation + "/edges", edgesArea);
             Helper.writeSettings(storageLocation + "/settings", size, creationTime);
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't write data to storage. location was " + storageLocation, ex);
@@ -450,11 +478,12 @@ public class MemoryGraphSafe implements SaveableGraph {
         try {
             lats = Helper.readFloats(storageLocation + "/lats");
             lons = Helper.readFloats(storageLocation + "/lons");
-            edgesArea = Helper.readInts(storageLocation + "/edges");
             refToEdges = Helper.readInts(storageLocation + "/refs");
+            edgesArea = Helper.readInts(storageLocation + "/edges");
             Object[] ob = Helper.readSettings(storageLocation + "/settings");
             size = (Integer) ob[0];
             creationTime = (Long) ob[1];
+            deletedNodes = new MyTBitSet(lats.length);
             return true;
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't load data to storage. location=" + storageLocation, ex);
