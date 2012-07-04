@@ -21,6 +21,8 @@ import de.jetsli.graph.util.MyIteratorable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A simple in-memory graph represenation
@@ -29,6 +31,7 @@ import java.util.Arrays;
  */
 public class MemoryGraph implements Graph, Cloneable {
 
+    private Logger logger = LoggerFactory.getLogger(getClass());
     private float[] lons;
     private float[] lats;
     private int lonLatSize = 0;
@@ -75,6 +78,8 @@ public class MemoryGraph implements Graph, Cloneable {
             throw new UnsupportedOperationException("negative distance not supported");
 
         maxRecognizedNodeIndex = Math.max(maxRecognizedNodeIndex, Math.max(a, b));
+        if (maxRecognizedNodeIndex + 1 <= edges.length)
+            logger.info("ensure edges to " + (float) maxRecognizedNodeIndex * 29 / (1 << 20) + " MB");
         // required only: edges = growArrayList(edges, Math.max(a, b) + 1);
         edges = growArray(edges, maxRecognizedNodeIndex + 1);
 

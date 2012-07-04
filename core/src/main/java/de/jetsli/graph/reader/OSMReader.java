@@ -158,8 +158,8 @@ public class OSMReader {
     }
 
     protected Storage createStorage(String storageLocation, int size) {
-        return new MMapGraphStorage(storageLocation, size);
-//        return new MemoryGraphStorage(size);
+//        return new MMapGraphStorage(storageLocation, size);
+        return new MemoryGraphStorage(size);
 //        return new MemoryGraphSafeStorage(storageLocation, size);
     }
 

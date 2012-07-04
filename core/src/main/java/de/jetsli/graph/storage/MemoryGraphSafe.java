@@ -23,9 +23,8 @@ import gnu.trove.list.array.TIntArrayList;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This graph implementation is memory efficient and fast (in that order), and thread safe. Also it
@@ -37,17 +36,18 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class MemoryGraphSafe implements SaveableGraph {
 
+    private Logger logger = LoggerFactory.getLogger(getClass());
     // keep in mind that we address integers here - not bytes!
-//    private static final int LEN_DIST = 1;
+    private static final float FACTOR = 1.5f;
+    private static final int LEN_DIST = 1;
     private static final int LEN_NODEID = 1;
     private static final int LEN_FLAGS = 1;
     private static final int LEN_PRIO = 1;
     private static final int LEN_LINK = 1;
-    private static final int LEN_EDGE = LEN_PRIO + LEN_FLAGS + LEN_NODEID + LEN_LINK;
+    private static final int LEN_EDGE = LEN_PRIO + LEN_FLAGS + LEN_DIST + LEN_NODEID + LEN_LINK;
     // or should we use int and a factor? private static double MICRO = 1000000;
     private float[] lats;
     private float[] lons;
-    private float[] distances;
     private long creationTime = System.currentTimeMillis();
     private int size;
     private int[] refToEdges;
@@ -69,7 +69,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     public MemoryGraphSafe(String storageDir, int cap) {
-        this(storageDir, cap, cap / 4);
+        this(storageDir, cap, cap);
     }
 
     public MemoryGraphSafe(String storageDir, int cap, int capEdge) {
@@ -83,7 +83,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     @Override public void ensureCapacity(int cap) {
         // writeLock.lock();
         ensureNodesCapacity(cap);
-        ensureEdgesCapacity(cap / 4);
+        ensureEdgesCapacity(cap);
     }
 
     @Override public int getNodes() {
@@ -110,9 +110,13 @@ public class MemoryGraphSafe implements SaveableGraph {
 
     private void initEdges(int cap) {
         cap *= LEN_EDGE;
-        distances = new float[cap];
         edgesArea = new int[cap];
         Arrays.fill(edgesArea, -1);
+    }
+
+    // Use ONLY within a writer lock area
+    private void ensureEdgesCapacity(int cap) {
+        ensureEdgePointer(cap * LEN_EDGE);
     }
 
     // Use ONLY within a writer lock area
@@ -120,17 +124,12 @@ public class MemoryGraphSafe implements SaveableGraph {
         if (pointer + LEN_EDGE < edgesArea.length)
             return;
 
-        pointer = Math.max(10 * LEN_EDGE, Math.round(pointer * 1.3f));
+        pointer = Math.max(10 * LEN_EDGE, Math.round(pointer * FACTOR));
+        logger.info("ensure edges to " + (float) 4 * pointer / (1 << 20) + " MB");
         int oldLen = edgesArea.length;
         int newLen = pointer;
-        distances = Arrays.copyOf(distances, newLen);
         edgesArea = Arrays.copyOf(edgesArea, newLen);
         Arrays.fill(edgesArea, oldLen, newLen, -1);
-    }
-    // Use ONLY within a writer lock area
-
-    private void ensureEdgesCapacity(int cap) {
-        ensureEdgePointer(cap * LEN_EDGE);
     }
 
     // Use ONLY within a writer lock area
@@ -152,7 +151,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         if (cap < refToEdges.length)
             return;
 
-        cap = Math.max(10, Math.round(cap * 1.3f));
+        cap = Math.max(10, Math.round(cap * FACTOR));
         // TODO deletedNodes = copy(deletedNodes, cap);
         lats = Arrays.copyOf(lats, cap);
         lons = Arrays.copyOf(lons, cap);
@@ -219,13 +218,15 @@ public class MemoryGraphSafe implements SaveableGraph {
     private void writeEdge(int edgePointer, int nodePrio, int flags, float dist, int toNodeId, int nextEdgePointer) {
         ensureEdgePointer(edgePointer);
 
-        distances[edgePointer] = dist;
         // write node priority
         edgesArea[edgePointer] = nodePrio;
         edgePointer += LEN_PRIO;
 
         edgesArea[edgePointer] = flags;
         edgePointer += LEN_FLAGS;
+
+        edgesArea[edgePointer] = Float.floatToIntBits(dist);
+        edgePointer += LEN_DIST;
 
         edgesArea[edgePointer] = toNodeId;
         edgePointer += LEN_NODEID;
@@ -295,8 +296,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             if (pointer < 0)
                 return null;
 
-            // readLock.lock();
-            float dist = distances[pointer];
+            // readLock.lock();            
             int origPointer = pointer;
             // skip node priority for now
             // int priority = edgesArea[pointer];
@@ -308,6 +308,9 @@ public class MemoryGraphSafe implements SaveableGraph {
                 return null;
             }
             pointer += LEN_FLAGS;
+
+            float dist = Float.intBitsToFloat(edgesArea[pointer]);
+            pointer += LEN_DIST;
 
             int nodeId = edgesArea[pointer];
             pointer += LEN_NODEID;
@@ -434,7 +437,6 @@ public class MemoryGraphSafe implements SaveableGraph {
             Helper.writeFloats(storageLocation + "/lons", lons);
             Helper.writeInts(storageLocation + "/refs", refToEdges);
             Helper.writeInts(storageLocation + "/edges", edgesArea);
-            Helper.writeFloats(storageLocation + "/distances", distances);
             Helper.writeSettings(storageLocation + "/settings", size, creationTime);
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't write data to storage. location was " + storageLocation, ex);
@@ -451,7 +453,6 @@ public class MemoryGraphSafe implements SaveableGraph {
             lons = Helper.readFloats(storageLocation + "/lons");
             refToEdges = Helper.readInts(storageLocation + "/refs");
             edgesArea = Helper.readInts(storageLocation + "/edges");
-            distances = Helper.readFloats(storageLocation + "/distances");
             Object[] ob = Helper.readSettings(storageLocation + "/settings");
             size = (Integer) ob[0];
             creationTime = (Long) ob[1];
