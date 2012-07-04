@@ -23,7 +23,7 @@ import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
-import de.jetsli.graph.storage.MMapGraphStorage;
+import de.jetsli.graph.storage.MemoryGraphSafeStorage;
 import de.jetsli.graph.util.*;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.*;
@@ -155,8 +155,9 @@ public class OSMReader {
     }
 
     protected Storage createStorage(String storageLocation, int size) {
-        return new MMapGraphStorage(storageLocation, size);
+//        return new MMapGraphStorage(storageLocation, size);
 //        return new MemoryGraphStorage(size);
+        return new MemoryGraphSafeStorage(storageLocation, size);
     }
 
     public boolean loadExisting() {

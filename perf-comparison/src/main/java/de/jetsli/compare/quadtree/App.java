@@ -24,7 +24,7 @@ public class App {
 
     public void start(CmdArgs args) throws FileNotFoundException {
         Graph g = OSMReader.osm2Graph(args);
-        System.out.println("graph contains " + g.getLocations() + " nodes");
+        System.out.println("graph contains " + g.getNodes() + " nodes");
 
 //        for (int i = 0; i < 32; i++) {
 //            System.out.println("\n\n #### skipLeft:" + i);
@@ -89,7 +89,7 @@ public class App {
 
     void fillQuadTree(final SimplisticQuadTree qt, final Graph graph) {
         // this method is similar to: QuadTree.Util.fill(qt, graph);
-        int locs = graph.getLocations();
+        int locs = graph.getNodes();
         qt.init(locs);
         for (int i = 0; i < locs; i++) {
             qt.put(graph.getLatitude(i), graph.getLongitude(i));

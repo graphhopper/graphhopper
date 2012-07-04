@@ -676,6 +676,7 @@ public class MMapGraph implements SaveableGraph {
         }
     }
 
+    @Override
     public void close() {
         if (dirName != null) {
             flush();

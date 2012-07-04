@@ -18,40 +18,29 @@ package de.jetsli.graph.storage;
 /**
  * @author Peter Karich, info@jetsli.de
  */
-public class MMapGraphStorage extends DefaultStorage {
+public class MemoryGraphSafeStorage extends DefaultStorage {
 
     private final String file;
 
-    public MMapGraphStorage(String file, int expectedNodes) {
+    public MemoryGraphSafeStorage(String file, int expectedNodes) {
         super(expectedNodes);
         this.file = file;
     }
 
     @Override
-    public boolean loadExisting() {
-        g = new MMapGraph(file, -1);
-        return getMMapGraph().loadExisting();
-    }
-    
-    private MMapGraph getMMapGraph() {
-        return (MMapGraph) g;
+    public void createNew() {
+        g = new MemoryGraphSafe(file, osmIdToIndexMap.size());
     }
 
     @Override
-    public void createNew() {
-        g = new MMapGraph(file, osmIdToIndexMap.size());
-        // createNew(*true*) to avoid slow down for mmap files (and RAM bottlenecks)
-        // but still write to disc at the end!
-        getMMapGraph().createNew(true);
-    }
-    
-    @Override public void stats() {
-        getMMapGraph().stats();
+    public boolean loadExisting() {
+        createNew();
+        return g.getNodes() > 0;
     }
 
     @Override
     public void flush() {
-        getMMapGraph().flush();
+        ((MemoryGraphSafe) g).flush();
         super.flush();
     }
 }

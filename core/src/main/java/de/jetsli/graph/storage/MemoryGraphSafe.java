@@ -64,7 +64,11 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     public MemoryGraphSafe(int cap) {
-        this(null, cap, cap / 4);
+        this(null, cap);
+    }
+
+    public MemoryGraphSafe(String storageDir, int cap) {
+        this(storageDir, cap, cap / 4);
     }
 
     public MemoryGraphSafe(String storageDir, int cap, int capEdge) {
@@ -119,7 +123,7 @@ public class MemoryGraphSafe implements SaveableGraph {
 
     // Use ONLY within a writer lock area
     private void ensureEdgePointer(int pointer) {
-        if (edgesArea != null && pointer < edgesArea.length)
+        if (edgesArea != null && pointer + LEN_EDGE < edgesArea.length)
             return;
 
         pointer = Math.max(10 * LEN_EDGE, Math.round(pointer * 1.5f));
