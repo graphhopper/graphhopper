@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.CalcDistance;
@@ -24,7 +23,9 @@ import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
+import de.jetsli.graph.storage.MMapGraphStorage;
 import de.jetsli.graph.storage.MemoryGraphSafeStorage;
+import de.jetsli.graph.storage.MemoryGraphStorage;
 import de.jetsli.graph.util.*;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.*;
@@ -153,12 +154,13 @@ public class OSMReader {
 
     public OSMReader(String storageLocation, int size) {
         storage = createStorage(storageLocation, expectedLocs = size);
+        logger.info("using " + storage.getClass().getSimpleName());
     }
 
     protected Storage createStorage(String storageLocation, int size) {
-//        return new MMapGraphStorage(storageLocation, size);
+        return new MMapGraphStorage(storageLocation, size);
 //        return new MemoryGraphStorage(size);
-        return new MemoryGraphSafeStorage(storageLocation, size);
+//        return new MemoryGraphSafeStorage(storageLocation, size);
     }
 
     public boolean loadExisting() {

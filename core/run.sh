@@ -21,7 +21,7 @@ JAR=target/graphhopper-1.0-SNAPSHOT-jar-with-dependencies.jar
 
 if [ "$FILE" = "unterfranken" ]; then
  LINK="http://download.geofabrik.de/osm/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx200m -Xms200m"
+ JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx240m -Xms240m"
  JAVA_OPTS=$JAVA_OPTS_IMPORT
  SIZE=5000000
 elif [ "$FILE" = "germany" ]; then
@@ -59,7 +59,7 @@ else
 fi
 
 if [ ! -d "$GRAPH" ]; then
-  echo "## now creating graph $GRAPH (folder) from $OSM (file)"
+  echo "## now creating graph $GRAPH (folder) from $OSM (file). java opts=$JAVA_OPTS_IMPORT"
   echo "## HINT: put the osm on an external usb drive which should speed up import time"
   java $JAVA_OPTS_IMPORT -cp $JAR de.jetsli.graph.reader.OSMReader graph=$GRAPH osm=$OSM size=$SIZE
 else
@@ -67,7 +67,7 @@ else
 fi
 
 if [ -d "$GRAPH" ]; then
-  echo "## now running $CLASS"
+  echo "## now running $CLASS. java opts=$JAVA_OPTS_IMPORT"
   java $JAVA_OPTS -cp $JAR $CLASS graph=$GRAPH debug=$DEBUG dijkstra=$DIJKSTRA
 else
   echo "## creating graph failed"
