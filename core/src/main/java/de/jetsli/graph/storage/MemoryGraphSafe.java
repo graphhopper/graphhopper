@@ -60,9 +60,9 @@ public class MemoryGraphSafe implements SaveableGraph {
     private String storageLocation;
     private MyBitSet deletedNodes;
 
-    public MemoryGraphSafe() {
-        this(10);
-    }
+//    public MemoryGraphSafe() {
+//        this(10);
+//    }
 
     public MemoryGraphSafe(int cap) {
         this(null, cap);

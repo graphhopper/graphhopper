@@ -57,16 +57,16 @@ public class MemoryGraph implements Graph, Cloneable {
 
     @Override
     public void ensureCapacity(int numberOfLocation) {
-        edges = growArray(edges, numberOfLocation);
-        lons = growArray(lons, numberOfLocation);
-        lats = growArray(lats, numberOfLocation);
+        edges = growArray(edges, numberOfLocation, 1);
+        lons = growArray(lons, numberOfLocation, 1);
+        lats = growArray(lats, numberOfLocation, 1);
     }
 
     @Override
     public int addNode(double lat, double lon) {
         int tmp = lonLatSize++;
-        lons = growArray(lons, lonLatSize);
-        lats = growArray(lats, lonLatSize);
+        lons = growArray(lons, lonLatSize, 1.5f);
+        lats = growArray(lats, lonLatSize, 1.5f);
         lons[tmp] = (float) lon;
         lats[tmp] = (float) lat;
         return tmp;
@@ -78,10 +78,10 @@ public class MemoryGraph implements Graph, Cloneable {
             throw new UnsupportedOperationException("negative distance not supported");
 
         maxRecognizedNodeIndex = Math.max(maxRecognizedNodeIndex, Math.max(a, b));
-        if (maxRecognizedNodeIndex + 1 <= edges.length)
+        if (maxRecognizedNodeIndex + 1 > edges.length)
             logger.info("ensure edges to " + (float) maxRecognizedNodeIndex * 29 / (1 << 20) + " MB");
         // required only: edges = growArrayList(edges, Math.max(a, b) + 1);
-        edges = growArray(edges, maxRecognizedNodeIndex + 1);
+        edges = growArray(edges, maxRecognizedNodeIndex + 1, 1.5f);
 
         byte dirFlag = 3;
         if (!bothDirections)
@@ -307,18 +307,18 @@ public class MemoryGraph implements Graph, Cloneable {
         return list;
     }
 
-    public static <T> T[] growArray(final T[] arr, final int maxSize) {
+    public static <T> T[] growArray(final T[] arr, final int maxSize, float factor) {
         if (maxSize <= arr.length)
             return arr;
 
-        return Arrays.copyOf(arr, maxSize);
+        return Arrays.copyOf(arr, (int) (maxSize * factor));
     }
 
-    public static float[] growArray(final float[] arr, final int maxSize) {
+    public static float[] growArray(final float[] arr, final int maxSize, float factor) {
         if (maxSize <= arr.length)
             return arr;
 
-        return Arrays.copyOf(arr, maxSize);
+        return Arrays.copyOf(arr, (int) (maxSize * factor));
     }
 
     @Override

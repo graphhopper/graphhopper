@@ -16,8 +16,10 @@
 package de.jetsli.graph.util;
 
 import java.io.File;
+import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Before;
 
 /**
  *
@@ -25,9 +27,18 @@ import static org.junit.Assert.*;
  */
 public class HelperTest {
 
+    @Before
+    public void setUp() {
+        Helper.deleteDir(new File("test"));
+    }
+
+    @After
+    public void tearDown() {
+        Helper.deleteDir(new File("test"));
+    }
+
     @Test
     public void testStoreFloats() throws Exception {
-        Helper.deleteDir(new File("test"));
         float[] floats = new float[]{1.2f, 1.7f, -129f};
         Helper.writeFloats("test", floats);
 
@@ -37,7 +48,6 @@ public class HelperTest {
 
     @Test
     public void testStoreInt() throws Exception {
-        Helper.deleteDir(new File("test"));
         int[] ints = new int[]{12, 17, -129};
         Helper.writeInts("test", ints);
 
@@ -47,7 +57,6 @@ public class HelperTest {
 
     @Test
     public void testStoreSettings() throws Exception {
-        Helper.deleteDir(new File("test"));
         Object[] settings = new Object[]{12, "test", true};
         Helper.writeSettings("test", settings);
 
