@@ -29,10 +29,10 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Peter Karich
  */
-public class TryOutNeo4JEtc {
+public class StartWithExternalStorage {
 
     public static void main(String[] args) throws Exception {
-        new TryOutNeo4JEtc().start(Helper.readCmdArgs(args));
+        new StartWithExternalStorage().start(Helper.readCmdArgs(args));
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
 
