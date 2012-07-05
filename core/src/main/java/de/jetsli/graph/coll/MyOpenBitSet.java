@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.coll;
 
-import de.jetsli.graph.util.IdIterator;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.util.OpenBitSet;
 
