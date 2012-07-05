@@ -15,12 +15,11 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.MyIteratorable;
 import java.io.File;
-import java.util.Iterator;
 import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -55,19 +54,19 @@ public class OSMReaderTest {
         assertEquals(3, MyIteratorable.count(graph.getOutgoing(1)));
         assertEquals(1, MyIteratorable.count(graph.getOutgoing(2)));
 
-        Iterator<? extends DistEntry> iter = graph.getOutgoing(1).iterator();
-        DistEntry locNextEntry = iter.next();
-        assertEquals(0, locNextEntry.node);
-        assertEquals(88.643, locNextEntry.distance, 1e-3);
-        locNextEntry = iter.next();
-        assertEquals(2, locNextEntry.node);
-        assertEquals(93.146888, locNextEntry.distance, 1e-3);
+        EdgeIdIterator iter = graph.getOutgoing(1);
+        assertTrue(iter.next());
+        assertEquals(0, iter.nodeId());
+        assertEquals(88.643, iter.distance(), 1e-3);
+        assertTrue(iter.next());
+        assertEquals(2, iter.nodeId());
+        assertEquals(93.146888, iter.distance(), 1e-3);
 
         // get third added location => 2
-        iter = graph.getOutgoing(2).iterator();
-        locNextEntry = iter.next();
-        assertEquals(1, locNextEntry.node);
-        assertEquals(93.146888, locNextEntry.distance, 1e-3);
+        iter = graph.getOutgoing(2);
+        assertTrue(iter.next());
+        assertEquals(1, iter.nodeId());
+        assertEquals(93.146888, iter.distance(), 1e-3);
     }
     
     @Test public void testWithBounds() {
@@ -85,18 +84,18 @@ public class OSMReaderTest {
         assertEquals(2, MyIteratorable.count(graph.getOutgoing(1)));
         assertEquals(1, MyIteratorable.count(graph.getOutgoing(2)));
 
-        Iterator<? extends DistEntry> iter = graph.getOutgoing(1).iterator();
-        DistEntry locNextEntry = iter.next();
-        assertEquals(0, locNextEntry.node);
-        assertEquals(88.643, locNextEntry.distance, 1e-3);
-        locNextEntry = iter.next();
-        assertEquals(2, locNextEntry.node);
-        assertEquals(93.146888, locNextEntry.distance, 1e-3);
+        EdgeIdIterator iter = graph.getOutgoing(1);
+        assertTrue(iter.next());
+        assertEquals(0, iter.nodeId());
+        assertEquals(88.643, iter.distance(), 1e-3);
+        assertTrue(iter.next());
+        assertEquals(2, iter.nodeId());
+        assertEquals(93.146888, iter.distance(), 1e-3);
 
         // get third added location => 2
-        iter = graph.getOutgoing(2).iterator();
-        locNextEntry = iter.next();
-        assertEquals(1, locNextEntry.node);
-        assertEquals(93.146888, locNextEntry.distance, 1e-3);
+        iter = graph.getOutgoing(2);
+        assertTrue(iter.next());
+        assertEquals(1, iter.nodeId());
+        assertEquals(93.146888, iter.distance(), 1e-3);
     }
 }

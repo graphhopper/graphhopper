@@ -18,6 +18,7 @@ package de.jetsli.graph.routing;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Edge;
+import de.jetsli.graph.util.EdgeIdIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -43,12 +44,13 @@ public class DijkstraSimple implements RoutingAlgorithm {
 
         while (true) {
             int currVertex = curr.node;
-            for (DistEntry entry : graph.getOutgoing(currVertex)) {
-                int tmpV = entry.node;
+            EdgeIdIterator iter = graph.getOutgoing(currVertex);
+            while(iter.next()) {
+                int tmpV = iter.nodeId();
                 if (visited.contains(tmpV))
                     continue;
 
-                double tmp = entry.distance + curr.distance;
+                double tmp = iter.distance() + curr.distance;
                 Edge de = map.get(tmpV);
                 if (de == null) {
                     de = new Edge(tmpV, tmp);

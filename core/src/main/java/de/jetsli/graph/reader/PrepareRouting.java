@@ -20,6 +20,7 @@ import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.EdgeWithFlags;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.XFirstSearch;
 import java.util.*;
 import java.util.Map.Entry;
@@ -60,7 +61,7 @@ public class PrepareRouting {
                 }
 
                 @Override
-                protected Iterable<EdgeWithFlags> getEdges(Graph g, int current) {
+                protected EdgeIdIterator getEdges(Graph g, int current) {
                     return g.getEdges(current);
                 }
 
@@ -114,8 +115,7 @@ public class PrepareRouting {
                 return new MyTBitSet(size);
             }
 
-            @Override
-            protected Iterable<EdgeWithFlags> getEdges(Graph g, int current) {
+            @Override protected EdgeIdIterator getEdges(Graph g, int current) {
                 return g.getEdges(current);
             }
 
@@ -137,8 +137,9 @@ public class PrepareRouting {
 
             @Override protected boolean goFurther(int nodeId) {
                 int counter = 0;
-                for (EdgeWithFlags e : g.getEdges(nodeId)) {
-                    list.set(counter, e);
+                EdgeIdIterator iter = g.getEdges(nodeId);
+                while(iter.next()) {
+                    // TODO list.set(counter, e);
                     counter++;
                 }
                 if (counter == 2) {

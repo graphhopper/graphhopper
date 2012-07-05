@@ -18,8 +18,8 @@ package de.jetsli.graph.storage;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.util.BitUtil;
+import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
-import de.jetsli.graph.util.MyIteratorable;
 import gnu.trove.map.hash.TIntIntHashMap;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -337,7 +337,7 @@ public class MMapGraph implements SaveableGraph {
     }
 
     @Override
-    public MyIteratorable<EdgeWithFlags> getEdges(int index) {
+    public EdgeIdIterator getEdges(int index) {
         if (index >= maxNodes)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
@@ -345,7 +345,7 @@ public class MMapGraph implements SaveableGraph {
     }
 
     @Override
-    public MyIteratorable<EdgeWithFlags> getOutgoing(int index) {
+    public EdgeIdIterator getOutgoing(int index) {
         if (index >= maxNodes)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
@@ -353,7 +353,7 @@ public class MMapGraph implements SaveableGraph {
     }
 
     @Override
-    public MyIteratorable<EdgeWithFlags> getIncoming(int index) {
+    public EdgeIdIterator getIncoming(int index) {
         if (index >= maxNodes)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
@@ -392,10 +392,13 @@ public class MMapGraph implements SaveableGraph {
         }
     }
 
-    private class EdgesIteratorable extends MyIteratorable<EdgeWithFlags> {
+    private class EdgesIteratorable implements EdgeIdIterator {
 
         byte[] bytes;
         int position = 0;
+        int nodeId;
+        float dist;
+        byte flags;
 
         EdgesIteratorable(byte[] bytes) {
             this.bytes = bytes;
@@ -416,27 +419,33 @@ public class MMapGraph implements SaveableGraph {
             return false;
         }
 
-        @Override public boolean hasNext() {
+        public boolean hasNext() {
             checkFlags();
             assert position < bytes.length;
             return BitUtil.toInt(bytes, position) > EMPTY_DIST;
         }
 
-        @Override public EdgeWithFlags next() {
+        @Override public boolean next() {
             if (!hasNext())
-                throw new IllegalStateException("No next element");
+                return false;
 
-            float fl = BitUtil.toFloat(bytes, position);
-            int integ = BitUtil.toInt(bytes, position += 4);
-            EdgeWithFlags lde = new EdgeWithFlags(
-                    integ, fl, bytes[position += 4]);
+            dist = BitUtil.toFloat(bytes, position);
+            nodeId = BitUtil.toInt(bytes, position += 4);
+            flags = bytes[position += 4];
             position++;
-            // TODO lde.prevEntry = 
-            return lde;
+            return true;
         }
 
-        @Override public void remove() {
-            throw new UnsupportedOperationException("Not supported. We would bi-linked nextEntries or O(n) processing");
+        @Override public double distance() {
+            return dist;
+        }
+
+        @Override public int nodeId() {
+            return nodeId;
+        }
+
+        @Override public int flags() {
+            return flags;
         }
     }
 
@@ -712,8 +721,9 @@ public class MMapGraph implements SaveableGraph {
 
         for (int i = 0; i < locs; i++) {
             float meanDist = 0;
-            for (DistEntry de : getEdges(i)) {
-                meanDist += de.distance;
+            EdgeIdIterator iter = getEdges(i);
+            while (iter.next()) {
+                meanDist += iter.distance();
             }
 
             int tmpEdges = count(getEdges(i));
@@ -822,13 +832,14 @@ public class MMapGraph implements SaveableGraph {
             double lat = this.getLatitude(oldNodeId);
             double lon = this.getLongitude(oldNodeId);
             inMemGraph.addNode(lat, lon);
-            for (EdgeWithFlags de : this.getEdges(oldNodeId)) {
-                if (deletedNodes.contains(de.node))
+            EdgeIdIterator iter = this.getEdges(oldNodeId);
+            while (iter.next()) {
+                if (deletedNodes.contains(iter.nodeId()))
                     continue;
 
                 inMemGraph.ensureEdgesCapacity();
-                inMemGraph.addIfAbsent(newNodeId * bytesNode + bytesNodeCore, old2NewMap[de.node],
-                        (float) de.distance, de.flags);
+                inMemGraph.addIfAbsent(newNodeId * bytesNode + bytesNodeCore, old2NewMap[iter.nodeId()],
+                        (float) iter.distance(), (byte) iter.flags());
             }
             newNodeId++;
         }

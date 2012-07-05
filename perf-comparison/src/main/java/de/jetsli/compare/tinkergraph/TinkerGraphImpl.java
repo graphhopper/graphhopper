@@ -19,11 +19,8 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
-import de.jetsli.graph.storage.EdgeWithFlags;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.MyIteratorable;
-import java.io.File;
-import java.io.FileNotFoundException;
+import de.jetsli.graph.util.EdgeIdIterator;
 import java.util.Iterator;
 
 /**
@@ -103,22 +100,26 @@ public class TinkerGraphImpl implements Graph {
         e.setProperty(DISTANCE, distance);
     }
 
-    public MyIteratorable<EdgeWithFlags> getEdges(int index) {
+    public EdgeIdIterator getEdges(int index) {
         return new MyTinkerIterable(g.getVertex(index));
     }
 
-    public MyIteratorable<EdgeWithFlags> getIncoming(int index) {
+    public EdgeIdIterator getIncoming(int index) {
         return new MyTinkerIterable(g.getVertex(index));
     }
 
-    public MyIteratorable<EdgeWithFlags> getOutgoing(int index) {
+    public EdgeIdIterator getOutgoing(int index) {
         return new MyTinkerIterable(g.getVertex(index));
     }
 
-    static class MyTinkerIterable extends MyIteratorable<EdgeWithFlags> {
+    static class MyTinkerIterable implements EdgeIdIterator {
 
         private Iterator<Edge> iter;
         private Vertex node;
+        //
+        int id;
+        double dist;
+        int flags = 3;
 
         public MyTinkerIterable(Vertex n) {
             if (n == null)
@@ -132,15 +133,27 @@ public class TinkerGraphImpl implements Graph {
             return iter.hasNext();
         }
 
-        public EdgeWithFlags next() {
+        public boolean next() {
+            if (!hasNext())
+                return false;
+
             Edge e = iter.next();
             Vertex other = getOtherNode(e, node);
-            double dist = (Double) e.getProperty(DISTANCE);
-            return new EdgeWithFlags(Integer.parseInt((String) other.getId()), dist, (byte) 3);
+            dist = (Double) e.getProperty(DISTANCE);
+            id = Integer.parseInt((String) other.getId());
+            return true;
         }
 
-        public void remove() {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public int nodeId() {
+            return id;
+        }
+
+        public double distance() {
+            return dist;
+        }
+
+        public int flags() {
+            return flags;
         }
     }
 

@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
 import java.io.File;
 import java.io.IOException;
@@ -72,24 +73,30 @@ public class MMapGraphTest extends AbstractGraphTester {
         Graph g = createGraph(3);
 
         g.edge(1, 2, 12, true);
-        DistEntry de = g.getOutgoing(2).iterator().next();
-        assertEquals(12, de.distance, 1e-7);
-        de = g.getOutgoing(1).iterator().next();
-        assertEquals(12, de.distance, 1e-7);
+        EdgeIdIterator iter = g.getOutgoing(2);
+        assertTrue(iter.next());
+        assertEquals(12, iter.distance(), 1e-7);
+        iter = g.getOutgoing(1);
+        assertTrue(iter.next());
+        assertEquals(12, iter.distance(), 1e-7);
         g.edge(1, 2, 11, false);
-        de = g.getOutgoing(2).iterator().next();
-        assertEquals(1, de.node);
-        assertEquals(11, de.distance, 1e-7);
-        de = g.getOutgoing(1).iterator().next();
-        assertEquals(2, de.node);
-        assertEquals(11, de.distance, 1e-7);
+        iter = g.getOutgoing(2);
+        assertTrue(iter.next());
+        assertEquals(1, iter.nodeId());
+        assertEquals(11, iter.distance(), 1e-7);
+        iter = g.getOutgoing(1);
+        assertTrue(iter.next());
+        assertEquals(2, iter.nodeId());
+        assertEquals(11, iter.distance(), 1e-7);
         g.edge(1, 2, 13, true);
-        de = g.getOutgoing(2).iterator().next();
-        assertEquals(1, de.node);
-        assertEquals(13, de.distance, 1e-7);
-        de = g.getOutgoing(1).iterator().next();
-        assertEquals(2, de.node);
-        assertEquals(13, de.distance, 1e-7);
+        iter = g.getOutgoing(2);
+        assertTrue(iter.next());
+        assertEquals(1, iter.nodeId());
+        assertEquals(13, iter.distance(), 1e-7);
+        iter = g.getOutgoing(1);
+        assertTrue(iter.next());
+        assertEquals(2, iter.nodeId());
+        assertEquals(13, iter.distance(), 1e-7);
     }
 
     @Test

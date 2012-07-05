@@ -15,21 +15,25 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.util.Helper;
+import java.io.File;
+
 /**
  * @author Peter Karich, info@jetsli.de
  */
 public class MemoryGraphSafeStorage extends DefaultStorage {
 
-    private final String file;
+    private final String folder;
 
     public MemoryGraphSafeStorage(String file, int expectedNodes) {
         super(expectedNodes);
-        this.file = file;
+        this.folder = file;
     }
 
     @Override
     public void createNew() {
-        g = new MemoryGraphSafe(file, osmIdToIndexMap.size());
+        Helper.deleteDir(new File(folder));
+        g = new MemoryGraphSafe(folder, osmIdToIndexMap.size());
     }
 
     @Override

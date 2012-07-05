@@ -15,8 +15,6 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.EmptyIterable;
-
 /**
  * <b>DistEntry</b> is used as most simplistic return type for outgoing edges in Graph although
  * edges are stored as LinkedDistEntryWithFlags.<br/>
@@ -28,7 +26,6 @@ import de.jetsli.graph.util.EmptyIterable;
  */
 public class DistEntry implements Comparable<DistEntry> {
 
-    public final static EmptyIterable<DistEntry> EMPTY_ITER = new EmptyIterable<DistEntry>();
     public int node;
     public double distance; 
     

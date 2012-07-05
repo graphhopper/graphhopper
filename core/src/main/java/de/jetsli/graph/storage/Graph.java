@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.MyIteratorable;
 
 /**
@@ -56,11 +57,11 @@ public interface Graph {
      */
     void edge(int a, int b, double distance, boolean bothDirections);
 
-    MyIteratorable<EdgeWithFlags> getEdges(int index);
+    EdgeIdIterator getEdges(int index);
 
-    MyIteratorable<EdgeWithFlags> getIncoming(int index);
+    EdgeIdIterator getIncoming(int index);
 
-    MyIteratorable<EdgeWithFlags> getOutgoing(int index);
+    EdgeIdIterator getOutgoing(int index);
 
     Graph clone();
 

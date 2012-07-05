@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.MyIteratorable;
 import java.util.Iterator;
 import org.junit.Test;
@@ -33,7 +34,7 @@ public abstract class AbstractGraphTester {
         Graph graph = createGraph(4);
         graph.edge(3, 1, 50, true);
         assertEquals(1, count(graph.getOutgoing(1)));
-        
+
         graph.edge(1, 2, 100, true);
         assertEquals(2, count(graph.getOutgoing(1)));
     }
@@ -45,7 +46,7 @@ public abstract class AbstractGraphTester {
         assertEquals(1, count(graph.getOutgoing(2)));
 
         graph.edge(2, 3, 12, true);
-        assertEquals(2, count(graph.getOutgoing(2)));        
+        assertEquals(2, count(graph.getOutgoing(2)));
 
 //        assertEquals(0, count(graph.getOutgoing(a1.id())));        
         assertEquals(1, count(graph.getOutgoing(1)));
@@ -61,18 +62,22 @@ public abstract class AbstractGraphTester {
         g.edge(11, 1, 12, false);
         g.edge(1, 12, 12, false);
         g.edge(3, 2, 112, false);
-        Iterator<? extends DistEntry> i = g.getOutgoing(2).iterator();
-        assertFalse(i.hasNext());
+        EdgeIdIterator i = g.getOutgoing(2);
+        assertFalse(i.next());
 
-        i = g.getOutgoing(3).iterator();
-        assertEquals(2, i.next().node);
-        assertFalse(i.hasNext());
+        i = g.getOutgoing(3);
+        i.next();
+        assertEquals(2, i.nodeId());
+        assertFalse(i.next());
 
-        i = g.getOutgoing(1).iterator();
-        assertEquals(2, i.next().node);
-        assertEquals(11, i.next().node);
-        assertEquals(12, i.next().node);
-        assertFalse(i.hasNext());
+        i = g.getOutgoing(1);
+        i.next();
+        assertEquals(2, i.nodeId());
+        i.next();
+        assertEquals(11, i.nodeId());
+        i.next();
+        assertEquals(12, i.nodeId());
+        assertFalse(i.next());
     }
 
     @Test public void testUpdateUnidirectional() {
@@ -80,19 +85,21 @@ public abstract class AbstractGraphTester {
 
         g.edge(1, 2, 12, false);
         g.edge(3, 2, 112, false);
-        Iterator<? extends DistEntry> i = g.getOutgoing(2).iterator();
-        assertFalse(i.hasNext());
-        i = g.getOutgoing(3).iterator();
-        assertEquals(2, i.next().node);
-        assertFalse(i.hasNext());
+        EdgeIdIterator i = g.getOutgoing(2);
+        assertFalse(i.next());
+        i = g.getOutgoing(3);
+        i.next();
+        assertEquals(2, i.nodeId());
+        assertFalse(i.next());
 
         g.edge(2, 3, 112, false);
-        i = g.getOutgoing(2).iterator();
-        assertTrue(i.hasNext());
-        assertEquals(3, i.next().node);
-        i = g.getOutgoing(3).iterator();
-        assertEquals(2, i.next().node);
-        assertFalse(i.hasNext());
+        i = g.getOutgoing(2);
+        assertTrue(i.next());
+        assertEquals(3, i.nodeId());
+        i = g.getOutgoing(3);
+        i.next();
+        assertEquals(2, i.nodeId());
+        assertFalse(i.next());
     }
 
     @Test

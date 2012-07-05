@@ -17,9 +17,8 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.coll.MyTBitSet;
+import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
-import de.jetsli.graph.util.MyIteratorable;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.File;
 import java.io.IOException;
@@ -64,7 +63,6 @@ public class MemoryGraphSafe implements SaveableGraph {
 //    public MemoryGraphSafe() {
 //        this(10);
 //    }
-
     public MemoryGraphSafe(int cap) {
         this(null, cap);
     }
@@ -181,7 +179,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         ensureNodeIndex(a);
         ensureNodeIndex(b);
 
-        byte dirFlag = 3;
+        int dirFlag = 3;
         if (!bothDirections)
             dirFlag = 1;
         internalAdd(a, b, (float) distance, dirFlag);
@@ -191,7 +189,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         internalAdd(b, a, (float) distance, dirFlag);
     }
 
-    private void internalAdd(int fromNodeId, int toNodeId, float dist, byte flags) {
+    private void internalAdd(int fromNodeId, int toNodeId, float dist, int flags) {
         int edgePointer = refToEdges[fromNodeId];
         int newPos = nextEdgePointer();
         if (edgePointer > 0) {
@@ -254,17 +252,17 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     @Override
-    public MyIteratorable<EdgeWithFlags> getEdges(int nodeId) {
+    public EdgeIdIterator getEdges(int nodeId) {
         return new EdgeIterable(nodeId, true, true);
     }
 
     @Override
-    public MyIteratorable<EdgeWithFlags> getIncoming(int nodeId) {
+    public EdgeIdIterator getIncoming(int nodeId) {
         return new EdgeIterable(nodeId, true, false);
     }
 
     @Override
-    public MyIteratorable<EdgeWithFlags> getOutgoing(int nodeId) {
+    public EdgeIdIterator getOutgoing(int nodeId) {
         return new EdgeIterable(nodeId, false, true);
     }
 
@@ -273,68 +271,71 @@ public class MemoryGraphSafe implements SaveableGraph {
         flush();
     }
 
-    private class EdgeIterable extends MyIteratorable<EdgeWithFlags> {
+    private class EdgeIterable implements EdgeIdIterator {
 
         private int pointer;
         private boolean in;
         private boolean out;
-        private EdgeWithFlags next;
+        private boolean foundNext;
+        // edge properties        
+        private int flags;
+        private float dist;
+        private int nodeId;
 
         public EdgeIterable(int node, boolean in, boolean out) {
             this.pointer = refToEdges[node];
             this.in = in;
             this.out = out;
-            next();
         }
 
-        @Override public boolean hasNext() {
-            return next != null;
-        }
-
-        EdgeWithFlags readNext() {
-            if (pointer <= 0)
-                return null;
-
-            // readLock.lock();            
-            int origPointer = pointer;
-            // skip node priority for now
-            // int priority = priorities[pointer];            
-
-            byte flags = (byte) edgesArea[pointer];
+        void readNext() {
+            // readLock.lock();
+            flags = edgesArea[pointer];
             if (!in && (flags & 1) == 0 || !out && (flags & 2) == 0) {
-                pointer = edgesArea[getLink(origPointer)];
-                return null;
+                pointer = edgesArea[getLink(pointer)];
+                return;
             }
             pointer += LEN_FLAGS;
 
-            float dist = Float.intBitsToFloat(edgesArea[pointer]);
+            dist = Float.intBitsToFloat(edgesArea[pointer]);
             pointer += LEN_DIST;
 
-            int nodeId = edgesArea[pointer];
+            nodeId = edgesArea[pointer];
             pointer += LEN_NODEID;
             // next edge
             pointer = edgesArea[pointer];
-            return new EdgeWithFlags(nodeId, (double) dist, flags);
+            foundNext = true;
         }
 
-        @Override public EdgeWithFlags next() {
-            EdgeWithFlags tmp = next;
+        @Override
+        public boolean next() {
             int i = 0;
-            next = null;
+            foundNext = false;
             for (; i < 1000; i++) {
-                next = readNext();
-                if (next != null || pointer < 0)
+                if (pointer <= 0)
+                    break;
+                readNext();
+                if (foundNext)
                     break;
             }
             if (i > 1000)
                 throw new IllegalStateException("something went wrong: no end of edge-list found");
-
-            return tmp;
+            return foundNext;
         }
 
-        @Override public void remove() {
-            // markDeleted(firstPointer);
-            throw new IllegalStateException("not implemented yet");
+        @Override
+        public int nodeId() {
+            return nodeId;
+        }
+
+        @Override
+        public double distance() {
+            return dist;
+        }
+
+        @Override
+        public int flags() {
+            return flags;
         }
     }
 
@@ -405,11 +406,12 @@ public class MemoryGraphSafe implements SaveableGraph {
             double lat = this.getLatitude(oldNodeId);
             double lon = this.getLongitude(oldNodeId);
             inMemGraph.addNode(lat, lon);
-            for (EdgeWithFlags de : this.getEdges(oldNodeId)) {
-                if (deletedNodes.contains(de.node))
+            EdgeIdIterator iter = this.getEdges(oldNodeId);
+            while (iter.next()) {
+                if (deletedNodes.contains(iter.nodeId()))
                     continue;
 
-                inMemGraph.internalAdd(newNodeId, old2NewMap[de.node], (float) de.distance, de.flags);
+                inMemGraph.internalAdd(newNodeId, old2NewMap[iter.nodeId()], (float) iter.distance(), iter.flags());
             }
             newNodeId++;
         }

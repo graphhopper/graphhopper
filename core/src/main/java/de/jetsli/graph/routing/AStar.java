@@ -20,6 +20,7 @@ import de.jetsli.graph.storage.Edge;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.ApproxCalcDistance;
 import de.jetsli.graph.util.CalcDistance;
+import de.jetsli.graph.util.EdgeIdIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -50,8 +51,9 @@ public class AStar implements RoutingAlgorithm {
             double lat = graph.getLatitude(currVertex);
             double lon = graph.getLongitude(currVertex);
 
-            for (DistEntry entry : graph.getOutgoing(currVertex)) {
-                int tmpV = entry.node;
+            EdgeIdIterator iter = graph.getOutgoing(currVertex);
+            while(iter.next()) {
+                int tmpV = iter.nodeId();
                 if (visited.contains(tmpV))
                     continue;
 
@@ -63,7 +65,7 @@ public class AStar implements RoutingAlgorithm {
                 double tmpLat = graph.getLatitude(tmpV);
                 double tmpLon = graph.getLongitude(tmpV);
                 double distToGoal = approxDist.calcDistKm(lat, lon, tmpLat, tmpLon);
-                double latestDist = entry.distance + curr.distance + distToGoal;
+                double latestDist = iter.distance() + curr.distance + distToGoal;
                 Edge de = map.get(tmpV);
                 if (de == null) {
                     de = new Edge(tmpV, latestDist);

@@ -20,6 +20,7 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Edge;
+import de.jetsli.graph.util.EdgeIdIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -136,12 +137,13 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
             TIntObjectMap<Edge> shortestDistMap, TIntObjectMap<Edge> shortestDistMapOther) {
 
         int currVertexFrom = curr.node;
-        for (DistEntry entry : graph.getOutgoing(currVertexFrom)) {
-            int tmpV = entry.node;
+        EdgeIdIterator iter = graph.getOutgoing(currVertexFrom);
+        while(iter.next()) {
+            int tmpV = iter.nodeId();
             if (visitedMain.contains(tmpV))
                 continue;
 
-            double tmp = entry.distance + curr.distance;
+            double tmp = iter.distance() + curr.distance;
             Edge de = shortestDistMap.get(tmpV);
             if (de == null) {
                 de = new Edge(tmpV, tmp);

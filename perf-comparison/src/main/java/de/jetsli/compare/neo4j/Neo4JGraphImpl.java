@@ -15,10 +15,9 @@
  */
 package de.jetsli.compare.neo4j;
 
-import de.jetsli.graph.storage.EdgeWithFlags;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
-import de.jetsli.graph.util.MyIteratorable;
 import java.io.File;
 import java.util.Iterator;
 import java.util.Random;
@@ -76,7 +75,6 @@ public class Neo4JGraphImpl implements Graph {
             }
             if (!temporary)
                 Runtime.getRuntime().addShutdownHook(new Thread() {
-
                     @Override
                     public void run() {
                         try {
@@ -226,12 +224,16 @@ public class Neo4JGraphImpl implements Graph {
         }
     }
 
-    static class MyNeoIterable extends MyIteratorable<EdgeWithFlags> {
+    static class MyNeoIterable implements EdgeIdIterator {
 
         private Iterator<Relationship> iter;
         // TODO should be a weak reference!
         private BulkTA ta;
         private Node node;
+        //
+        int id;
+        double dist;
+        int flags = 3;
 
         public MyNeoIterable(BulkTA ta, Node n) {
             if (n == null)
@@ -248,12 +250,15 @@ public class Neo4JGraphImpl implements Graph {
             if (ret)
                 return true;
 
-            // uh this is ugly ... but how else? lucene has an iterable with close
+            // TODO use one TA per 'next' request
             ta.ensureEnd();
             return false;
         }
 
-        public EdgeWithFlags next() {
+        public boolean next() {
+            if (!hasNext())
+                return false;
+
             Relationship r = iter.next();
             // this is a hack and probably relies on the fact that we don't delete anything
             // but it gives us some speed improvements as inbuilt getOtherNode is using a concurrenthashmap (!?)
@@ -261,25 +266,33 @@ public class Neo4JGraphImpl implements Graph {
             Node other = r.getStartNode();
             if (other.getId() == node.getId())
                 other = r.getEndNode();
-            int id = getOurId(other);
-            double dist = (Double) r.getProperty(DISTANCE);
-            return new EdgeWithFlags(id, dist, (byte) 3);
+            id = getOurId(other);
+            dist = (Double) r.getProperty(DISTANCE);
+            return true;
         }
 
-        public void remove() {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public int nodeId() {
+            return id;
+        }
+
+        public double distance() {
+            return dist;
+        }
+
+        public int flags() {
+            return flags;
         }
     }
 
-    public MyIteratorable<EdgeWithFlags> getEdges(int ghId) {
+    public EdgeIdIterator getEdges(int ghId) {
         return new MyNeoIterable(ta, getNode(ghId));
     }
 
-    public MyIteratorable<EdgeWithFlags> getIncoming(int ghId) {
+    public EdgeIdIterator getIncoming(int ghId) {
         return new MyNeoIterable(ta, getNode(ghId));
     }
 
-    public MyIteratorable<EdgeWithFlags> getOutgoing(int ghId) {
+    public EdgeIdIterator getOutgoing(int ghId) {
         return new MyNeoIterable(ta, getNode(ghId));
     }
 

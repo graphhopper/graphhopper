@@ -20,6 +20,7 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Edge;
+import de.jetsli.graph.util.EdgeIdIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
@@ -154,12 +155,13 @@ public class DijkstraBidirection implements RoutingAlgorithm {
             TIntObjectMap<Edge> shortestDistMap) {
 
         int currVertexFrom = curr.node;
-        for (DistEntry entry : graph.getOutgoing(currVertexFrom)) {
-            int currentLinkedNode = entry.node;
+        EdgeIdIterator iter = graph.getOutgoing(currVertexFrom);
+        while(iter.next()) {
+            int currentLinkedNode = iter.nodeId();
             if (visitedMain.contains(currentLinkedNode))
                 continue;
 
-            double tmp = entry.distance + curr.distance;
+            double tmp = iter.distance() + curr.distance;
             Edge de = shortestDistMap.get(currentLinkedNode);
             if (de == null) {
                 de = new Edge(currentLinkedNode, tmp);

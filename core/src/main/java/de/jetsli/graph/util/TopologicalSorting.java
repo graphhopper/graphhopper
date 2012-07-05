@@ -51,8 +51,8 @@ public class TopologicalSorting {
         new XFirstSearch() {
 
             @Override
-            protected Iterable<EdgeWithFlags> getEdges(Graph g, int current) {
-                if (!g.getIncoming(current).iterator().hasNext())
+            protected EdgeIdIterator getEdges(Graph g, int current) {
+                if (!g.getIncoming(current).next())
                     noIncomingEdges.add(current);
 
                 return g.getEdges(current);
@@ -74,10 +74,12 @@ public class TopologicalSorting {
         while (noIncomingDeque.size() > 0) {
             current = noIncomingDeque.pop();
             list.add(current);
-            for (DistEntry de : g.getOutgoing(current)) {
-                if (!visited.contains(de.node)) {
-                    visited.add(de.node);
-                    noIncomingDeque.push(de.node);
+            EdgeIdIterator iter = g.getOutgoing(current);
+            while(iter.next()) {
+                int nodeId = iter.nodeId();
+                if (!visited.contains(nodeId)) {
+                    visited.add(nodeId);
+                    noIncomingDeque.push(nodeId);
                 }
             }
         }

@@ -15,8 +15,6 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.EmptyIterable;
-
 /**
  * directionFlag is necessary to store forward, backward or both directions.
  *
@@ -25,7 +23,6 @@ import de.jetsli.graph.util.EmptyIterable;
  */
 public class EdgeWithFlags extends Edge {
 
-    public final static EmptyIterable<EdgeWithFlags> EMPTY_ITER = new EmptyIterable<EdgeWithFlags>();
     /**
      * 1 means: only forward direction. 2 means: only backward and 3 means: both directions
      */

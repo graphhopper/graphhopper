@@ -23,11 +23,14 @@ import java.util.Iterator;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public abstract class MyIteratorable<T> implements Iterator<T>, Iterable<T> {
+public class MyIteratorable<T> {
 
-    @Override
-    public Iterator<T> iterator() {
-        return this;
+    public static int count(EdgeIdIterator iter) {
+        int counter = 0;
+        while(iter.next()) {
+            ++counter;
+        }
+        return counter;
     }
 
     public static int count(Iterable<?> iter) {
@@ -38,6 +41,18 @@ public abstract class MyIteratorable<T> implements Iterator<T>, Iterable<T> {
         return counter;
     }
 
+    public static boolean contains(EdgeIdIterator iter, int... locs) {
+        TIntHashSet set = new TIntHashSet();
+        
+        while(iter.next()) {
+            set.add(iter.nodeId());
+        }
+        for (int l : locs) {
+            if (!set.contains(l))
+                return false;
+        }
+        return true;
+    }
     public static boolean contains(Iterable<? extends DistEntry> iter, int... locs) {
         Iterator<? extends DistEntry> i = iter.iterator();
         TIntHashSet set = new TIntHashSet();

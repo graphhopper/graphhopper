@@ -59,17 +59,20 @@ public class XFirstSearch {
 
         while (!coll.isEmpty()) {
             current = coll.pop();
-            if (goFurther(current))
-                for (DistEntry de : getEdges(g, current)) {
-                    if (!visited.contains(de.node)) {
-                        visited.add(de.node);
-                        coll.push(de.node);
+            if (goFurther(current)) {
+                EdgeIdIterator iter = getEdges(g, current);
+                while (iter.next()) {
+                    int nodeId = iter.nodeId();
+                    if (!visited.contains(nodeId)) {
+                        visited.add(nodeId);
+                        coll.push(nodeId);
                     }
                 }
+            }
         }
     }
 
-    protected Iterable<EdgeWithFlags> getEdges(Graph g, int current) {
+    protected EdgeIdIterator getEdges(Graph g, int current) {
         return g.getOutgoing(current);
     }
 

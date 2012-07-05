@@ -17,6 +17,7 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.MyIteratorable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -137,57 +138,57 @@ public class MemoryGraph implements Graph, Cloneable {
     }
 
     @Override
-    public MyIteratorable<EdgeWithFlags> getEdges(int index) {
+    public EdgeIdIterator getEdges(int index) {
         if (index >= edges.length)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
         final EdgeWithFlags d = edges[index];
         if (d == null)
-            return EdgeWithFlags.EMPTY_ITER;
+            return EdgeIdIterator.EMPTY;
 
         return new EdgesIteratorable(d);
     }
 
     @Override
-    public MyIteratorable<EdgeWithFlags> getOutgoing(int index) {
+    public EdgeIdIterator getOutgoing(int index) {
         if (index >= edges.length)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
         final EdgeWithFlags d = edges[index];
         if (d == null)
-            return EdgeWithFlags.EMPTY_ITER;
+            return EdgeIdIterator.EMPTY;
 
         return new EdgesIteratorable(d) {
-            @Override public boolean hasNext() {
+            @Override public boolean next() {
                 for (;;) {
-                    if (curr == null || (curr.flags & 1) != 0)
-                        break;
-                    curr = (EdgeWithFlags) curr.prevEntry;
-                }
+                    if (!super.next())
+                        return false;
 
-                return curr != null;
+                    if ((curr.flags & 1) != 0)
+                        return true;
+                }
             }
         };
     }
 
     @Override
-    public MyIteratorable<EdgeWithFlags> getIncoming(int index) {
+    public EdgeIdIterator getIncoming(int index) {
         if (index >= edges.length)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
         final EdgeWithFlags d = edges[index];
         if (d == null)
-            return EdgeWithFlags.EMPTY_ITER;
+            return EdgeIdIterator.EMPTY;
 
         return new EdgesIteratorable(d) {
-            @Override public boolean hasNext() {
+            @Override public boolean next() {
                 for (;;) {
-                    if (curr == null || (curr.flags & 2) != 0)
-                        break;
-                    curr = (EdgeWithFlags) curr.prevEntry;
-                }
+                    if (!super.next())
+                        return false;
 
-                return curr != null;
+                    if ((curr.flags & 2) != 0)
+                        return true;
+                }
             }
         };
     }
@@ -231,11 +232,13 @@ public class MemoryGraph implements Graph, Cloneable {
             double lat = this.getLatitude(oldNodeId);
             double lon = this.getLongitude(oldNodeId);
             inMemGraph.addNode(lat, lon);
-            for (EdgeWithFlags de : this.getEdges(oldNodeId)) {
-                if (deletedNodes.contains(de.node))
+            EdgeIdIterator iter = this.getEdges(oldNodeId);
+            while (iter.next()) {
+                if (deletedNodes.contains(iter.nodeId()))
                     continue;
 
-                inMemGraph.addIfAbsent(newNodeId, old2NewMap[de.node], (float) de.distance, de.flags);
+                inMemGraph.addIfAbsent(newNodeId, old2NewMap[iter.nodeId()],
+                        (float) iter.distance(), (byte) iter.flags());
             }
             newNodeId++;
         }
@@ -247,29 +250,34 @@ public class MemoryGraph implements Graph, Cloneable {
         deletedNodes = null;
     }
 
-    private static class EdgesIteratorable extends MyIteratorable<EdgeWithFlags> {
+    private static class EdgesIteratorable implements EdgeIdIterator {
 
+        EdgeWithFlags first;
         EdgeWithFlags curr;
 
         EdgesIteratorable(EdgeWithFlags lde) {
-            curr = lde;
+            first = lde;
         }
 
-        @Override public boolean hasNext() {
+        @Override public boolean next() {
+            if (curr == null) {
+                curr = first;
+                first = null;
+            } else
+                curr = (EdgeWithFlags) curr.prevEntry;
             return curr != null;
         }
 
-        @Override public EdgeWithFlags next() {
-            if (!hasNext())
-                throw new IllegalStateException("No next element");
-
-            EdgeWithFlags tmp = curr;
-            curr = (EdgeWithFlags) curr.prevEntry;
-            return tmp;
+        @Override public int nodeId() {
+            return curr.node;
         }
 
-        @Override public void remove() {
-            throw new UnsupportedOperationException("Not supported. We would bi-linked nextEntries or O(n) processing");
+        @Override public double distance() {
+            return curr.distance;
+        }
+
+        @Override public int flags() {
+            return curr.flags;
         }
     }
 

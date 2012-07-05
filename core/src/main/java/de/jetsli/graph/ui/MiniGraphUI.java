@@ -20,12 +20,12 @@ import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.reader.OSMReader;
-import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.StopWatch;
 import de.jetsli.graph.util.shapes.BBox;
@@ -120,17 +120,19 @@ public class MiniGraphUI {
 //                    int count = MyIteratorable.count(graph.getEdges(nodeIndex));
 //                    plot(g2, lat, lon, count, size);                    
 
-                    for (DistEntry de : graph.getOutgoing(nodeIndex)) {
-                        int sum = nodeIndex + de.node;
+                    EdgeIdIterator iter = graph.getOutgoing(nodeIndex);
+                    while(iter.next()) {
+                        int nodeId = iter.nodeId();
+                        int sum = nodeIndex + nodeId;
                         if (fastPaint) {
                             if (bitset.contains(sum))
                                 continue;
                             bitset.add(sum);
                         }
-                        double lat2 = graph.getLatitude(de.node);
-                        double lon2 = graph.getLongitude(de.node);
+                        double lat2 = graph.getLatitude(nodeId);
+                        double lon2 = graph.getLongitude(nodeId);
                         if (lat2 <= 0 || lon2 <= 0)
-                            logger.info("ERROR " + de.node + " " + de.distance + " " + lat2 + "," + lon2);
+                            logger.info("ERROR " + nodeId + " " + iter.distance() + " " + lat2 + "," + lon2);
                         mg.plotEdge(g2, lat, lon, lat2, lon2);
                     }
                 }
