@@ -16,7 +16,6 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.EdgeIdIterator;
-import de.jetsli.graph.util.MyIteratorable;
 
 /**
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via

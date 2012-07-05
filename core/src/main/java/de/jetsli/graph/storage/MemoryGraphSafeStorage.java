@@ -38,7 +38,7 @@ public class MemoryGraphSafeStorage extends DefaultStorage {
 
     @Override
     public boolean loadExisting() {
-        createNew();
+        g = new MemoryGraphSafe(folder, 0);
         return g.getNodes() > 0;
     }
 
