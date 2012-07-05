@@ -21,7 +21,7 @@ JAR=target/graphhopper-1.0-SNAPSHOT-jar-with-dependencies.jar
 
 if [ "$FILE" = "unterfranken" ]; then
  LINK="http://download.geofabrik.de/osm/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx140m -Xms140m"
+ JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx260m -Xms260m"
  JAVA_OPTS=$JAVA_OPTS_IMPORT
  SIZE=5000000
 elif [ "$FILE" = "germany" ]; then

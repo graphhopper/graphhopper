@@ -68,10 +68,8 @@ public class OSMReader {
             }
         };
         osm2Graph(osmReader, args);
-        if (args.getBool("dijkstra", false)) {
-            Thread.sleep(60000 * 1000);
+        if (args.getBool("dijkstra", false))
             osmReader.doDijkstra(500);
-        }
     }
     private int expectedLocs;
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
