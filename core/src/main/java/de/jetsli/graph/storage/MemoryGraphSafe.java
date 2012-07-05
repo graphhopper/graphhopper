@@ -16,6 +16,7 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
+import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.MyIteratorable;
@@ -42,12 +43,12 @@ public class MemoryGraphSafe implements SaveableGraph {
     private static final int LEN_DIST = 1;
     private static final int LEN_NODEID = 1;
     private static final int LEN_FLAGS = 1;
-    private static final int LEN_PRIO = 1;
     private static final int LEN_LINK = 1;
-    private static final int LEN_EDGE = LEN_PRIO + LEN_FLAGS + LEN_DIST + LEN_NODEID + LEN_LINK;
+    private static final int LEN_EDGE = LEN_FLAGS + LEN_DIST + LEN_NODEID + LEN_LINK;
     // or should we use int and a factor? private static double MICRO = 1000000;
     private float[] lats;
     private float[] lons;
+    // private int[] priorities;
     private long creationTime = System.currentTimeMillis();
     private int size;
     private int[] refToEdges;
@@ -142,9 +143,10 @@ public class MemoryGraphSafe implements SaveableGraph {
         lats = new float[cap];
         lons = new float[cap];
         refToEdges = new int[cap];
-        // TODO we can easily avoid filling with -1 -> ensure that edgePointer always starts from 1
-        Arrays.fill(refToEdges, -1);
-        deletedNodes = new MyTBitSet(cap);
+        // priorities = new int[cap];
+        // we ensure that edgePointer always starts from 1 => no need to fill with -1
+        // Arrays.fill(refToEdges, -1);
+        deletedNodes = new MyOpenBitSet(cap);
     }
 
     private void ensureNodesCapacity(int cap) {
@@ -155,9 +157,10 @@ public class MemoryGraphSafe implements SaveableGraph {
         // TODO deletedNodes = copy(deletedNodes, cap);
         lats = Arrays.copyOf(lats, cap);
         lons = Arrays.copyOf(lons, cap);
-        int oldLen = refToEdges.length;
+        // priorities = Arrays.copyOf(priorities, cap);
+        // int oldLen = refToEdges.length;
         refToEdges = Arrays.copyOf(refToEdges, cap);
-        Arrays.fill(refToEdges, oldLen, cap, -1);
+        // Arrays.fill(refToEdges, oldLen, cap, -1);
     }
 
     @Override
@@ -191,7 +194,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     private void internalAdd(int fromNodeId, int toNodeId, float dist, byte flags) {
         int edgePointer = refToEdges[fromNodeId];
         int newPos = nextEdgePointer();
-        if (edgePointer >= 0) {
+        if (edgePointer > 0) {
             TIntArrayList list = readAllEdges(edgePointer);
             // TODO sort by priority but include the latest entry too!
             // Collections.sort(list, listPrioSorter);
@@ -208,19 +211,15 @@ public class MemoryGraphSafe implements SaveableGraph {
         } else
             refToEdges[fromNodeId] = newPos;
 
-        writeEdge(newPos, 0, flags, dist, toNodeId, -1);
+        writeEdge(newPos, flags, dist, toNodeId, -1);
     }
 
     private int getLink(int edgePointer) {
         return edgePointer + LEN_EDGE - LEN_LINK;
     }
 
-    private void writeEdge(int edgePointer, int nodePrio, int flags, float dist, int toNodeId, int nextEdgePointer) {
+    private void writeEdge(int edgePointer, int flags, float dist, int toNodeId, int nextEdgePointer) {
         ensureEdgePointer(edgePointer);
-
-        // write node priority
-        edgesArea[edgePointer] = nodePrio;
-        edgePointer += LEN_PRIO;
 
         edgesArea[edgePointer] = flags;
         edgePointer += LEN_FLAGS;
@@ -293,14 +292,13 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
 
         EdgeWithFlags readNext() {
-            if (pointer < 0)
+            if (pointer <= 0)
                 return null;
 
             // readLock.lock();            
             int origPointer = pointer;
             // skip node priority for now
-            // int priority = edgesArea[pointer];
-            pointer += LEN_PRIO;
+            // int priority = priorities[pointer];            
 
             byte flags = (byte) edgesArea[pointer];
             if (!in && (flags & 1) == 0 || !out && (flags & 2) == 0) {
@@ -437,6 +435,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             Helper.writeFloats(storageLocation + "/lons", lons);
             Helper.writeInts(storageLocation + "/refs", refToEdges);
             Helper.writeInts(storageLocation + "/edges", edgesArea);
+            // Helper.writeInts(storageLocation + "/priorities", priorities);
             Helper.writeSettings(storageLocation + "/settings", size, creationTime);
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't write data to storage. location was " + storageLocation, ex);
@@ -453,10 +452,11 @@ public class MemoryGraphSafe implements SaveableGraph {
             lons = Helper.readFloats(storageLocation + "/lons");
             refToEdges = Helper.readInts(storageLocation + "/refs");
             edgesArea = Helper.readInts(storageLocation + "/edges");
+            // priorities = Helper.readInts(storageLocation + "/priorities");
             Object[] ob = Helper.readSettings(storageLocation + "/settings");
             size = (Integer) ob[0];
             creationTime = (Long) ob[1];
-            deletedNodes = new MyTBitSet(lats.length);
+            deletedNodes = new MyOpenBitSet(lats.length);
             return true;
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't load data to storage. location=" + storageLocation, ex);

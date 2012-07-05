@@ -68,8 +68,10 @@ public class OSMReader {
             }
         };
         osm2Graph(osmReader, args);
-        if (args.getBool("dijkstra", false))
+        if (args.getBool("dijkstra", false)) {
+            Thread.sleep(60000 * 1000);
             osmReader.doDijkstra(500);
+        }
     }
     private int expectedLocs;
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
@@ -159,8 +161,8 @@ public class OSMReader {
 
     protected Storage createStorage(String storageLocation, int size) {
 //        return new MMapGraphStorage(storageLocation, size);
-        return new MemoryGraphStorage(size);
-//        return new MemoryGraphSafeStorage(storageLocation, size);
+//        return new MemoryGraphStorage(size);
+        return new MemoryGraphSafeStorage(storageLocation, size);
     }
 
     public boolean loadExisting() {
