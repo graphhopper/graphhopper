@@ -41,7 +41,7 @@ public class PrintStats {
 
     public static void main(String[] args) throws Exception {
         final Graph g = OSMReader.osm2Graph(Helper.readCmdArgs(args));
-        final int locs = g.getLocations();
+        final int locs = g.getNodes();
         System.out.println("graph contains " + locs + " nodes");
 
         // make sure getBucketIndex is okayish fast

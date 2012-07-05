@@ -145,7 +145,7 @@ public class Neo4JGraphImpl implements Graph {
     public void ensureCapacity(int cap) {
     }
 
-    public int getLocations() {
+    public int getNodes() {
         return (Integer) graphDb.getReferenceNode().getProperty(NODES);
     }
 
@@ -153,7 +153,7 @@ public class Neo4JGraphImpl implements Graph {
         return (int) n.getId() - 1;
     }
 
-    public int addLocation(double lat, double lon) {
+    public int addNode(double lat, double lon) {
         ta.ensureStart();
         try {
             Node n = createNode();
@@ -187,7 +187,7 @@ public class Neo4JGraphImpl implements Graph {
         try {
             return getNode(ghId);
         } catch (NotFoundException ex) {
-            int delta = ghId - getLocations() + 1;
+            int delta = ghId - getNodes() + 1;
             if (delta == 0)
                 throw new IllegalStateException("Couldn't found node with id " + ghId);
             Node lastN = null;
@@ -200,7 +200,7 @@ public class Neo4JGraphImpl implements Graph {
 
     private Node createNode() {
         Node n = graphDb.createNode();
-        graphDb.getReferenceNode().setProperty(NODES, getLocations() + 1);
+        graphDb.getReferenceNode().setProperty(NODES, getNodes() + 1);
         return n;
     }
 
@@ -291,7 +291,7 @@ public class Neo4JGraphImpl implements Graph {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public boolean markDeleted(int index) {
+    public boolean markNodeDeleted(int index) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

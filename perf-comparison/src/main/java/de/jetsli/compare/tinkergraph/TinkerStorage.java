@@ -34,7 +34,7 @@ public class TinkerStorage extends DefaultStorage {
 
     @Override
     public boolean loadExisting() {
-        return g.getLocations() > 0;
+        return g.getNodes() > 0;
     }
 
     @Override

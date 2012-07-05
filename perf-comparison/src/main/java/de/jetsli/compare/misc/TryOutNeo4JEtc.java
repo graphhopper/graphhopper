@@ -47,7 +47,7 @@ public class TryOutNeo4JEtc {
             }
         };
         Graph g = OSMReader.osm2Graph(reader, readCmdArgs);
-        logger.info("finished with locations:" + g.getLocations());
+        logger.info("finished with locations:" + g.getNodes());
         final AtomicInteger integ = new AtomicInteger(0);
         new XFirstSearch() {
 
