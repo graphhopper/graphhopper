@@ -15,7 +15,10 @@
  */
 package de.jetsli.graph.reader;
 
+import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.routing.DijkstraBidirection;
+import de.jetsli.graph.routing.DijkstraBidirectionRef;
+import de.jetsli.graph.routing.DijkstraSimple;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.routing.Path;
@@ -23,9 +26,7 @@ import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
-import de.jetsli.graph.storage.MMapGraphStorage;
 import de.jetsli.graph.storage.MemoryGraphSafeStorage;
-import de.jetsli.graph.storage.MemoryGraphStorage;
 import de.jetsli.graph.util.*;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.*;
@@ -68,8 +69,11 @@ public class OSMReader {
             }
         };
         osm2Graph(osmReader, args);
-        if (args.getBool("dijkstra", false))
+        if (args.getBool("dijkstra", false)) {
+            //warmup
+            //osmReader.doDijkstra(50);            
             osmReader.doDijkstra(500);
+        }
     }
     private int expectedLocs;
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
@@ -121,6 +125,7 @@ public class OSMReader {
         Location2IDIndex index = new Location2IDQuadtree(g).prepareIndex(20000);
         double minLat = 49.484186, minLon = 8.974228;
         double maxLat = 50.541363, maxLon = 10.880356;
+//        RoutingAlgorithm algo = new DijkstraBidirectionRef(g);
         RoutingAlgorithm algo = new DijkstraBidirection(g);
 //        RoutingAlgorithm algo = new DijkstraSimple(g);
 //        RoutingAlgorithm algo = new AStar(g);

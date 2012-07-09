@@ -25,7 +25,7 @@ import java.util.Arrays;
  */
 public class EdgeWrapper {
 
-    private static final float FACTOR = 2;
+    private static final float FACTOR = 1.5f;
     private int edgeCounter;
     private int[] nodes;
     private int[] links;

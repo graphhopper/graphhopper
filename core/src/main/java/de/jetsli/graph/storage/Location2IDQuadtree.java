@@ -67,9 +67,13 @@ public class Location2IDQuadtree implements Location2IDIndex {
     public Location2IDIndex prepareIndex(int _size) {
         int bits = initBuffer(_size);
         initAlgo(bits);
-        logger.info("now fill internal (quadtree) array. size is " + size);
+        StopWatch sw = new StopWatch().start();
         MyOpenBitSet filledIndices = fillQuadtree(size);
-        fillEmptyIndices(filledIndices);
+        float res1 = sw.stop().getSeconds();
+        sw = new StopWatch().start();
+        int counter = fillEmptyIndices(filledIndices);
+        logger.info("fill quadtree index array in " + res1 + "s. size is " + size
+                + ". filled empty " + counter + " in " + sw.stop().getSeconds() + "s");
         return this;
     }
 
@@ -145,7 +149,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return filledIndices;
     }
 
-    private void fillEmptyIndices(MyOpenBitSet filledIndices) {
+    private int fillEmptyIndices(MyOpenBitSet filledIndices) {
         // 3. fill empty indices with points close to them to return correct id's for find()!
         final int maxSearch = 10;
         int counter = 0;
@@ -207,7 +211,6 @@ public class Location2IDQuadtree implements Location2IDIndex {
             for (final DistEntry de : list) {
                 final BooleanRef onlyOneDepth = new BooleanRef();
                 new XFirstSearch() {
-
                     @Override protected MyBitSet createBitSet(int size) {
                         return bitset;
                     }
@@ -241,7 +244,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
             filledIndices.add(mainKey);
         }
 
-        logger.info("filled empty " + counter);
+        return counter;
     }
 
     /**
@@ -271,7 +274,6 @@ public class Location2IDQuadtree implements Location2IDIndex {
         final DistEntry closestNode = new DistEntry(id, calc.calcNormalizedDist(lat, lon, mainLat, mainLon));
         goFurtherHook(id);
         new XFirstSearch() {
-
             @Override protected MyBitSet createBitSet(int size) {
                 return new MyTBitSet(10);
             }
@@ -295,7 +297,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         }.start(g, id, false);
         return closestNode.node;
     }
-    
+
     public void goFurtherHook(int n) {
     }
 }

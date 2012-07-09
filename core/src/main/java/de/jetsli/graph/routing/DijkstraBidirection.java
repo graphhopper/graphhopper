@@ -24,7 +24,9 @@ import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.EdgeWrapper;
 
 /**
- * Calculates shortest path in bidirectional way.
+ * Calculates shortest path in bidirectional way. Compared to DijkstraBidirectionRef this class
+ * is more memory efficient as it does not go the normal Java way via references. In first tests
+ * this class saves 30% memory, but as you can see it is a bit more complicated.
  *
  * TODO: use only one EdgeWrapper to save memory. This is not easy if we want it to be as fast as
  * the current solution. But we need to try it out if a forwardSearchBitset.contains(edgeId) is that

@@ -47,18 +47,11 @@ public class StartWithExternalStorage {
             }
         };
         Graph g = OSMReader.osm2Graph(reader, readCmdArgs);
-        logger.info("finished with locations:" + g.getNodes());
-        final AtomicInteger integ = new AtomicInteger(0);
-        new XFirstSearch() {
-
-            @Override
-            protected boolean goFurther(int nodeId) {
-                integ.incrementAndGet();
-                return super.goFurther(nodeId);
-            }
-        }.start(g, 0, true);
-
-        logger.info(integ.get() + " <- all reachable nodes");
+        logger.info("finished with locations:" + g.getNodes() + " now warm up ...");
+        // warm up caches:
+        reader.doDijkstra(50);
+        
+        logger.info(".. and go!");
         reader.doDijkstra(1000);
     }
 }
