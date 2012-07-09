@@ -24,8 +24,8 @@ import de.jetsli.graph.storage.Edge;
 public class DijkstraTwoDrivers {
 
     private Graph graph;
-    private DijkstraBidirection driverA;
-    private DijkstraBidirection driverB;
+    private DijkstraBidirectionRef driverA;
+    private DijkstraBidirectionRef driverB;
     private int meetingPoint;
     private int fromA, toA;
     private int fromB, toB;
@@ -80,17 +80,15 @@ public class DijkstraTwoDrivers {
         // -> hmmh should this be lower to make it faster? because it is min(currA1, currA2) and not currA1+currA2
 
         driverA = new DijkstraBidirectionCombined(graph) {
-
-             @Override public DijkstraBidirection getOtherDriver() {
+            @Override public DijkstraBidirectionRef getOtherDriver() {
                 return driverB;
-            }   
+            }
         }.initFrom(fromA).initTo(toA);
 
         driverB = new DijkstraBidirectionCombined(graph) {
-
-            @Override public DijkstraBidirection getOtherDriver() {
+            @Override public DijkstraBidirectionRef getOtherDriver() {
                 return driverA;
-            }            
+            }
         }.initFrom(fromB).initTo(toB);
 
         while (true) {
@@ -116,14 +114,14 @@ public class DijkstraTwoDrivers {
         return meetingPoint;
     }
 
-    private abstract class DijkstraBidirectionCombined extends DijkstraBidirection {
+    private abstract class DijkstraBidirectionCombined extends DijkstraBidirectionRef {
 
         public DijkstraBidirectionCombined(Graph graph) {
             super(graph);
         }
 
-        public abstract DijkstraBidirection getOtherDriver();
-        
+        public abstract DijkstraBidirectionRef getOtherDriver();
+
         @Override public boolean checkFinishCondition() {
             if (currFrom == null)
                 return currTo.distance >= shortest.distance;
@@ -148,14 +146,14 @@ public class DijkstraTwoDrivers {
                 // TODO: minimize not only the sum but also the difference => multi modal search!
                 overallDistance = newShortest;
                 meetingPoint = currLoc;
-                        
+
                 getOtherDriver().shortest.entryFrom = fromOther;
                 getOtherDriver().shortest.entryTo = toOther;
                 getOtherDriver().shortest.distance = shortestOther;
 
                 shortest.entryFrom = shortestDE;
                 shortest.entryTo = entryOther;
-                shortest.distance = shortestCurrent;                                
+                shortest.distance = shortestCurrent;
             }
         }
     }

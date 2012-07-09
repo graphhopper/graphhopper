@@ -15,11 +15,10 @@ package de.jetsli.graph.coll;
 import java.util.Arrays;
 
 /**
- * taken from opentripplanner
+ * taken from opentripplanner. Note: LGPL 3 is compatible with Apache, where as LGPL 2 was not!
  */
 public class IntBinHeap {
 
-    public static final int notAnElement = Integer.MIN_VALUE;
     private static final double GROW_FACTOR = 2.0;
     private float[] prio;
     private int[] elem;
@@ -36,41 +35,45 @@ public class IntBinHeap {
         this.capacity = capacity;
         size = 0;
         elem = new int[capacity + 1];
-        elem[0] = notAnElement;
-        prio = new float[capacity + 1];    // 1-based indexing
-        prio[0] = Float.NEGATIVE_INFINITY; // set sentinel
+        // 1-based indexing
+        prio = new float[capacity + 1];
+        // set sentinel
+        prio[0] = Float.NEGATIVE_INFINITY;
     }
 
     public int size() {
         return size;
+    }
+    
+    public boolean isEmpty() {
+        return size == 0;
     }
 
     public boolean empty() {
         return size <= 0;
     }
 
-    public float peekMinKey() {
+    public double peekMinPriority() {
         if (size > 0)
             return prio[1];
         else
             throw new IllegalStateException("An empty queue does not have a minimum key.");
     }
 
-    public int rawPeekMin() {
+    public int peekMinElement() {
         if (size > 0)
             return elem[1];
         else
-            return notAnElement;
+            throw new IllegalStateException("An empty queue does not have a minimum value.");
     }
 
-    public void rekey(int e, float p) {        
+    public void rekey(int e, double p) {
         // Perform "inefficient" but straightforward linear search 
         // for an element then change its key by sifting up or down
-        int i = 0;
-        for (int t : elem) {
-            if (t == e)
+        int i;
+        for (i = 1; i <= size; i++) {
+            if (elem[i] == e)
                 break;
-            i++;
         }
         if (i > size) {
             //System.out.printf("did not find element %s\n", e);
@@ -91,7 +94,7 @@ public class IntBinHeap {
                     break;
             }
             elem[i] = e;
-            prio[i] = p;
+            prio[i] = (float) p;
         } else {
             // sift down (as in insert)
             while (prio[i / 2] > p) {
@@ -100,7 +103,7 @@ public class IntBinHeap {
                 i /= 2;
             }
             elem[i] = e;
-            prio[i] = p;
+            prio[i] = (float) p;
         }
     }
 
@@ -117,7 +120,7 @@ public class IntBinHeap {
         size = 0;
     }
 
-    public void insert(int e, float p) {
+    public void insert(int e, double p) {
         int i;
         size += 1;
         if (size > capacity)
@@ -127,18 +130,16 @@ public class IntBinHeap {
             prio[i] = prio[i / 2];
         }
         elem[i] = e;
-        prio[i] = p;
+        prio[i] = (float) p;
     }
 
     public int extractMin() {
-        if(size <= 0)
-            return notAnElement;
         int i, child;
         int minElem = elem[1];
         int lastElem = elem[size];
-        float lastPrio = prio[size];
+        double lastPrio = prio[size];
         if (size <= 0)
-            return Integer.MIN_VALUE;
+            throw new IllegalStateException("An empty queue does not have a minimum value.");
         size -= 1;
         for (i = 1; i * 2 <= size; i = child) {
             child = i * 2;
@@ -151,7 +152,7 @@ public class IntBinHeap {
                 break;
         }
         elem[i] = lastElem;
-        prio[i] = lastPrio;
+        prio[i] = (float) lastPrio;
         return minElem;
     }
 
@@ -162,5 +163,11 @@ public class IntBinHeap {
         this.capacity = capacity;
         prio = Arrays.copyOf(prio, capacity + 1);
         elem = Arrays.copyOf(elem, capacity + 1);
+    }
+    
+    public void clear() {
+        this.size = 0;
+        Arrays.fill(prio, 0f);
+        Arrays.fill(elem, 0);
     }
 }

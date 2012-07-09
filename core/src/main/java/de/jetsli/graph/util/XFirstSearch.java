@@ -17,9 +17,7 @@ package de.jetsli.graph.util;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.EdgeWithFlags;
 import gnu.trove.stack.array.TIntArrayStack;
 
 /**

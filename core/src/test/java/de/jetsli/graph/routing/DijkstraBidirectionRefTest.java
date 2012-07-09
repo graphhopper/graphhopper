@@ -24,10 +24,10 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
+public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
 
     @Override public RoutingAlgorithm createAlgo(Graph g) {        
-        return new DijkstraBidirection(g);
+        return new DijkstraBidirectionRef(g);
     }
     
     @Test
@@ -37,9 +37,9 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), 20, p.distance(), 1e-6);
         assertTrue(p.toString(), p.contains(5));
         
-        DijkstraBidirection algo = new DijkstraBidirection(g);
-        algo.addSkipNode(5);
-        p = algo.calcShortestPath(0, 4);        
+        DijkstraBidirectionRef db = new DijkstraBidirectionRef(g);
+        db.addSkipNode(5);
+        p = db.calcShortestPath(0, 4);        
         assertFalse(p.toString(), p.contains(5));
     }
     
@@ -49,9 +49,9 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
                
-        DijkstraBidirection algo = new DijkstraBidirection(g);
-        algo.addSkipNode(1);
-        Path p = algo.calcShortestPath(0, 2);
+        DijkstraBidirectionRef db = new DijkstraBidirectionRef(g);
+        db.addSkipNode(1);
+        Path p = db.calcShortestPath(0, 2);
         assertNull(p);
     }
 }

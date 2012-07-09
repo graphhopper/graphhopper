@@ -44,8 +44,6 @@ public class AStar implements RoutingAlgorithm {
         TIntHashSet visited = new TIntHashSet();
         TIntObjectMap<Edge> map = new TIntObjectHashMap<Edge>();
         PriorityQueue<Edge> heap = new PriorityQueue<Edge>();
-
-
         while (true) {
             int currVertex = curr.node;
             double lat = graph.getLatitude(currVertex);

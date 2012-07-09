@@ -81,7 +81,7 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
         TIntObjectMap<Edge> shortestDistMapTo = new TIntObjectHashMap<Edge>();
         shortestDistMapTo.put(destination, entryTo);
 
-        PathWrapper shortest = new PathWrapper();
+        PathWrapperRef shortest = new PathWrapperRef();
         shortest.distance = Double.MAX_VALUE;
 
         // create several starting points
@@ -132,7 +132,7 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
         return g;
     }
 
-    public void fillEdges(PathWrapper shortest, Edge curr, MyBitSet visitedMain,
+    public void fillEdges(PathWrapperRef shortest, Edge curr, MyBitSet visitedMain,
             PriorityQueue<Edge> prioQueue,
             TIntObjectMap<Edge> shortestDistMap, TIntObjectMap<Edge> shortestDistMapOther) {
 

@@ -45,7 +45,7 @@ public class PathWrapperTest {
         Edge entryE = entryD.prevEntry = new Edge(-1, 2.5f);
         Edge entryF = entryE.prevEntry = new Edge(-1, 0);
 
-        PathWrapper wrapper = new PathWrapper();
+        PathWrapperRef wrapper = new PathWrapperRef();
         wrapper.entryFrom = entryC;
         wrapper.entryTo = entryD;
 

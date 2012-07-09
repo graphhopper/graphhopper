@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
@@ -44,7 +43,7 @@ public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
     private int toP2;
     private Edge currTo;
     private Edge currFrom;
-    private PathWrapper shortest;
+    private PathWrapperRef shortest;
     private TIntObjectMap<Edge> shortestDistMapOther;
 
     public DijkstraShortestOf2ToPub(Graph graph) {
@@ -88,7 +87,7 @@ public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
         PriorityQueue<Edge> prioQueueTo = new PriorityQueue<Edge>();
         TIntObjectMap<Edge> shortestDistMapTo = new TIntObjectHashMap<Edge>();
 
-        shortest = new PathWrapper();
+        shortest = new PathWrapperRef();
         shortest.distance = Double.MAX_VALUE;
 
         // create several starting points

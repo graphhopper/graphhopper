@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.util;
 
-import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.MemoryGraph;
 import gnu.trove.list.array.TIntArrayList;
 import org.junit.Test;

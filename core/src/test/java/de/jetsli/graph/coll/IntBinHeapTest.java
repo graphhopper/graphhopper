@@ -31,12 +31,54 @@ public class IntBinHeapTest {
     public void test0() {
         IntBinHeap binHeap = new IntBinHeap(100);
         binHeap.insert(0, 123);
-        assertEquals(123, binHeap.peekMinKey(), 1e-4);
+        assertEquals(123, binHeap.peekMinPriority(), 1e-4);
         assertEquals(1, binHeap.size());
 
         binHeap.rekey(0, 12);
-        assertEquals(12, binHeap.peekMinKey(), 1e-4);
+        assertEquals(12, binHeap.peekMinPriority(), 1e-4);
         assertEquals(1, binHeap.size());
+    }
+
+    @Test
+    public void testBasic() {
+        IntBinHeap binHeap = new IntBinHeap(100);
+        binHeap.insert(1, 20);
+        binHeap.insert(2, 123);
+        binHeap.insert(3, 120);
+        binHeap.insert(4, 130);
+
+        assertEquals(1, binHeap.extractMin());
+        assertEquals(3, binHeap.extractMin());
+        assertEquals(2, binHeap.extractMin());
+        assertEquals(1, binHeap.size());
+    }
+
+    @Test
+    public void testClear() {
+        IntBinHeap binHeap = new IntBinHeap(100);
+        binHeap.insert(1, 20);
+        binHeap.insert(2, 123);        
+        assertEquals(2, binHeap.size());        
+        binHeap.clear();
+        
+        assertEquals(0, binHeap.size());
+        binHeap.insert(2, 123); 
+        assertEquals(1, binHeap.size());  
+        assertEquals(2, binHeap.extractMin());
+    }
+
+    @Test
+    public void testRekey() {
+        IntBinHeap binHeap = new IntBinHeap(100);
+        binHeap.insert(1, 20);
+        binHeap.insert(2, 123);
+        binHeap.rekey(2, 100);
+        binHeap.insert(3, 120);
+        binHeap.insert(4, 130);
+
+        assertEquals(1, binHeap.extractMin());
+        assertEquals(2, binHeap.extractMin());
+        assertEquals(2, binHeap.size());
     }
 
     @Test

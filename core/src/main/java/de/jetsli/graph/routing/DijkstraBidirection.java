@@ -15,20 +15,20 @@
  */
 package de.jetsli.graph.routing;
 
+import de.jetsli.graph.coll.IntBinHeap;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.Edge;
 import de.jetsli.graph.util.EdgeIdIterator;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import java.util.PriorityQueue;
+import de.jetsli.graph.util.EdgeWrapper;
 
 /**
  * Calculates shortest path in bidirectional way.
  *
- * Warning: class saves state and cannot be reused.
+ * TODO: use only one EdgeWrapper to save memory. This is not easy if we want it to be as fast as
+ * the current solution. But we need to try it out if a forwardSearchBitset.contains(edgeId) is that
+ * expensive
  *
  * @author Peter Karich, info@jetsli.de
  */
@@ -36,28 +36,32 @@ public class DijkstraBidirection implements RoutingAlgorithm {
 
     private int from, to;
     private Graph graph;
-    protected Edge currFrom;
-    protected Edge currTo;
+    protected int currFrom;
+    protected double currFromDist;
+    protected int currFromEdgeId;
+    protected int currTo;
+    protected double currToDist;
+    protected int currToEdgeId;
     protected PathWrapper shortest;
-    protected TIntObjectMap<Edge> shortestDistMapOther;
+    protected EdgeWrapper wrapperOther;
     private MyBitSet visitedFrom;
-    private PriorityQueue<Edge> prioQueueFrom;
-    private TIntObjectMap<Edge> shortestDistMapFrom;
+    private IntBinHeap prioQueueFrom;
+    private EdgeWrapper wrapperFrom;
     private MyBitSet visitedTo;
-    private PriorityQueue<Edge> prioQueueTo;
-    private TIntObjectMap<Edge> shortestDistMapTo;
+    private IntBinHeap prioQueueTo;
+    private EdgeWrapper wrapperTo;
     private boolean alreadyRun;
 
     public DijkstraBidirection(Graph graph) {
         this.graph = graph;
         int locs = Math.max(20, graph.getNodes());
         visitedFrom = new MyOpenBitSet(locs);
-        prioQueueFrom = new PriorityQueue<Edge>(locs / 10);
-        shortestDistMapFrom = new TIntObjectHashMap<Edge>(locs / 10);
+        prioQueueFrom = new IntBinHeap(locs / 10);
+        wrapperFrom = new EdgeWrapper(locs / 10);
 
         visitedTo = new MyOpenBitSet(locs);
-        prioQueueTo = new PriorityQueue<Edge>(locs / 10);
-        shortestDistMapTo = new TIntObjectHashMap<Edge>(locs / 10);
+        prioQueueTo = new IntBinHeap(locs / 10);
+        wrapperTo = new EdgeWrapper(locs / 10);
 
         clear();
     }
@@ -67,13 +71,13 @@ public class DijkstraBidirection implements RoutingAlgorithm {
         alreadyRun = false;
         visitedFrom.clear();
         prioQueueFrom.clear();
-        shortestDistMapFrom.clear();
+        wrapperFrom.clear();
 
         visitedTo.clear();
         prioQueueTo.clear();
-        shortestDistMapTo.clear();
+        wrapperTo.clear();
 
-        shortest = new PathWrapper();
+        shortest = new PathWrapper(wrapperFrom, wrapperTo);
         shortest.distance = Double.MAX_VALUE;
         return this;
     }
@@ -85,15 +89,17 @@ public class DijkstraBidirection implements RoutingAlgorithm {
 
     public DijkstraBidirection initFrom(int from) {
         this.from = from;
-        currFrom = new Edge(from, 0);
-        shortestDistMapFrom.put(from, currFrom);
+        currFrom = from;
+        currFromDist = 0;
+        currFromEdgeId = wrapperFrom.add(from, 0);
         return this;
     }
 
     public DijkstraBidirection initTo(int to) {
         this.to = to;
-        currTo = new Edge(to, 0);
-        shortestDistMapTo.put(to, currTo);
+        currTo = to;
+        currToDist = 0;
+        currToEdgeId = wrapperTo.add(to, 0);
         return this;
     }
 
@@ -112,7 +118,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
         int counter = 0;
         int finish = 0;
         while (finish < 2) {
-            counter ++;
+            counter++;
             finish = 0;
             if (!fillEdgesFrom())
                 finish++;
@@ -120,7 +126,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
             if (!fillEdgesTo())
                 finish++;
         }
-        
+
         return getShortest();
     }
 
@@ -144,88 +150,82 @@ public class DijkstraBidirection implements RoutingAlgorithm {
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverse 
     //    search, update shortest = μ if df (v) + (v, w) + dr (w) < μ            
     public boolean checkFinishCondition() {
-        if (currFrom == null)
-            return currTo.distance >= shortest.distance;
-        else if (currTo == null)
-            return currFrom.distance >= shortest.distance;
-        return currFrom.distance + currTo.distance >= shortest.distance;
+        return currFromDist + currToDist >= shortest.distance;
     }
 
-    public void fillEdges(Edge curr, MyBitSet visitedMain, PriorityQueue<Edge> prioQueue,
-            TIntObjectMap<Edge> shortestDistMap) {
+    public void fillEdges(int currNodeFrom, double currDist, int currEdgeId, MyBitSet visitedMain, IntBinHeap prioQueue,
+            EdgeWrapper wrapper) {
 
-        int currVertexFrom = curr.node;
-        EdgeIdIterator iter = graph.getOutgoing(currVertexFrom);
-        while(iter.next()) {
+        EdgeIdIterator iter = graph.getOutgoing(currNodeFrom);
+        while (iter.next()) {
             int currentLinkedNode = iter.nodeId();
             if (visitedMain.contains(currentLinkedNode))
                 continue;
 
-            double tmp = iter.distance() + curr.distance;
-            Edge de = shortestDistMap.get(currentLinkedNode);
-            if (de == null) {
-                de = new Edge(currentLinkedNode, tmp);
-                de.prevEntry = curr;
-                shortestDistMap.put(currentLinkedNode, de);
-                prioQueue.add(de);
-            } else if (de.distance > tmp) {
-                // use fibonacci? see http://stackoverflow.com/q/6273833/194609
-                // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry
-                prioQueue.remove(de);
-                de.distance = tmp;
-                de.prevEntry = curr;
-                prioQueue.add(de);
+            double tmpDist = iter.distance() + currDist;
+            int newEdgeId = wrapper.getEdgeId(currentLinkedNode);
+            if (newEdgeId < 0) {
+                newEdgeId = wrapper.add(currentLinkedNode, tmpDist);
+                wrapper.putLink(newEdgeId, currEdgeId);
+                prioQueue.insert(newEdgeId, tmpDist);
+            } else {
+                double dist = wrapper.getDistance(newEdgeId);
+                if (dist > tmpDist) {
+                    // use fibonacci? see http://stackoverflow.com/q/6273833/194609
+                    // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry                    
+                    wrapper.putDistance(newEdgeId, tmpDist);
+                    wrapper.putLink(newEdgeId, currEdgeId);
+                    prioQueue.rekey(newEdgeId, tmpDist);
+                }
             }
 
-            updateShortest(de, currentLinkedNode);
-        } // for
+            // TODO optimize: call only if necessary
+            updateShortest(currentLinkedNode, newEdgeId, tmpDist);
+        }
     }
 
-    public void updateShortest(Edge shortestDE, int currLoc) {
-        Edge entryOther = shortestDistMapOther.get(currLoc);
-        if (entryOther == null)
+    public void updateShortest(int nodeId, int edgeId, double dist) {
+        int otherEdgeId = wrapperOther.getEdgeId(nodeId);
+        if (otherEdgeId < 0)
             return;
 
         // update μ
-        double newShortest = shortestDE.distance + entryOther.distance;
+        double newShortest = dist + wrapperOther.getDistance(otherEdgeId);
         if (newShortest < shortest.distance) {
-            shortest.entryFrom = shortestDE;
-            shortest.entryTo = entryOther;
+            shortest.switchWrapper = wrapperFrom == wrapperOther;
+            shortest.fromEdgeId = edgeId;
+            shortest.toEdgeId = otherEdgeId;
             shortest.distance = newShortest;
         }
     }
 
     public boolean fillEdgesFrom() {
-        if (currFrom != null) {
-            shortestDistMapOther = shortestDistMapTo;
-            fillEdges(currFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom);
-            if (prioQueueFrom.isEmpty())
-                return false;
+        wrapperOther = wrapperTo;
+        fillEdges(currFrom, currFromDist, currFromEdgeId, visitedFrom, prioQueueFrom, wrapperFrom);
+        if (prioQueueFrom.isEmpty())
+            return false;
 
-            currFrom = prioQueueFrom.poll();
-            if (checkFinishCondition())
-                return false;
-            visitedFrom.add(currFrom.node);
-
-        } else if (currTo == null)
-            throw new IllegalStateException("Shortest Path not found? " + from + " " + to);
-
+        currFromEdgeId = prioQueueFrom.extractMin();
+        currFrom = wrapperFrom.getNode(currFromEdgeId);
+        currFromDist = wrapperFrom.getDistance(currFromEdgeId);
+        if (checkFinishCondition())
+            return false;
+        visitedFrom.add(currFrom);
         return true;
     }
 
     public boolean fillEdgesTo() {
-        if (currTo != null) {
-            shortestDistMapOther = shortestDistMapFrom;
-            fillEdges(currTo, visitedTo, prioQueueTo, shortestDistMapTo);
-            if (prioQueueTo.isEmpty())
-                return false;
+        wrapperOther = wrapperFrom;
+        fillEdges(currTo, currToDist, currToEdgeId, visitedTo, prioQueueTo, wrapperTo);
+        if (prioQueueTo.isEmpty())
+            return false;
 
-            currTo = prioQueueTo.poll();
-            if (checkFinishCondition())
-                return false;
-            visitedTo.add(currTo.node);
-        } else if (currFrom == null)
-            throw new IllegalStateException("Shortest Path not found? " + from + " " + to);
+        currToEdgeId = prioQueueTo.extractMin();
+        currTo = wrapperTo.getNode(currToEdgeId);
+        currToDist = wrapperTo.getDistance(currToEdgeId);
+        if (checkFinishCondition())
+            return false;
+        visitedTo.add(currTo);
         return true;
     }
 
@@ -238,11 +238,11 @@ public class DijkstraBidirection implements RoutingAlgorithm {
         return null;
     }
 
-    public Edge getShortestDistFrom(int index) {
-        return shortestDistMapFrom.get(index);
+    public double getShortestDistFrom(int nodeId) {
+        return wrapperFrom.getDistance(nodeId);
     }
 
-    public Edge getShortestDistTo(int index) {
-        return shortestDistMapTo.get(index);
+    public double getShortestDistTo(int nodeId) {
+        return wrapperTo.getDistance(nodeId);
     }
 }

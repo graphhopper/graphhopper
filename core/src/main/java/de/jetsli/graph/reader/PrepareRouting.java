@@ -18,7 +18,6 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
-import de.jetsli.graph.storage.EdgeWithFlags;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.XFirstSearch;
@@ -127,8 +126,7 @@ public class PrepareRouting {
     }
 
     public void addEdgesToSkip2DegreeNodes() {
-        // TODO
-        final List<EdgeWithFlags> list = new ArrayList<EdgeWithFlags>(2);
+        // TODO        
         new XFirstSearch() {
 
             @Override protected MyBitSet createBitSet(int size) {

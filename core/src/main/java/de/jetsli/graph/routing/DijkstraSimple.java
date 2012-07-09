@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Edge;
 import de.jetsli.graph.util.EdgeIdIterator;

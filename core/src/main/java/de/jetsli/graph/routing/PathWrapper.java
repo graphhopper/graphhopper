@@ -16,45 +16,63 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.storage.Edge;
+import de.jetsli.graph.util.EdgeWrapper;
 
 /**
  * This class creates a DijkstraPath from two DistEntry's resulting from a BidirectionalDijkstra
- * 
+ *
  * @author Peter Karich, info@jetsli.de
  */
 public class PathWrapper {
 
-    public Edge entryFrom;
-    public Edge entryTo;
+    public boolean switchWrapper = false;
+    public int fromEdgeId = -1;
+    public int toEdgeId = -1;
     public double distance;
+    private EdgeWrapper edgesFrom;
+    private EdgeWrapper edgesTo;
 
-    public PathWrapper() {
+    public PathWrapper(EdgeWrapper edgesFrom, EdgeWrapper edgesTo) {
+        this.edgesFrom = edgesFrom;
+        this.edgesTo = edgesTo;
     }
 
     /**
      * Extracts path from two shortest-path-tree
      */
     public Path extract() {
-        if (entryFrom == null || entryTo == null)
+        if (fromEdgeId < 0 || toEdgeId < 0)
             return null;
-        
-        if (entryFrom.node != entryTo.node)
-            throw new IllegalStateException("Locations of 'to' and 'from' DistEntries has to be the same." + toString());        
+
+        if (switchWrapper) {
+            EdgeWrapper tmp = edgesFrom;
+            edgesFrom = edgesTo;
+            edgesTo = tmp;
+        }
+
+        int nodeFrom = edgesFrom.getNode(fromEdgeId);
+        int nodeTo = edgesTo.getNode(toEdgeId);
+        if (nodeFrom != nodeTo)
+            throw new IllegalStateException("Locations of 'to' and 'from' DistEntries has to be the same." + toString());
 
         Path path = new Path();
-        Edge curr = entryFrom;
-        while (curr != null) {
-            path.add(curr);
-            curr = curr.prevEntry;
+        int currEdgeId = fromEdgeId;
+        while (currEdgeId > 0) {
+            int tmpNode = edgesFrom.getNode(currEdgeId);
+            double dist = edgesFrom.getDistance(currEdgeId);
+            path.add(new Edge(tmpNode, dist));
+            currEdgeId = edgesFrom.getLink(currEdgeId);
         }
         path.reverseOrder();
 
         double fromDistance = path.distance();
-        double toDistance = entryTo.distance;
-        curr = entryTo.prevEntry;
-        while (curr != null) {
-            path.add(curr);
-            curr = curr.prevEntry;
+        double toDistance = edgesTo.getDistance(toEdgeId);
+        currEdgeId = edgesTo.getLink(toEdgeId);
+        while (currEdgeId > 0) {
+            int tmpNode = edgesTo.getNode(currEdgeId);
+            double dist = edgesTo.getDistance(currEdgeId);
+            path.add(new Edge(tmpNode, dist));
+            currEdgeId = edgesTo.getLink(currEdgeId);
         }
         // we didn't correct the distances of the other to-DistEntry for performance reasons
         path.setDistance(fromDistance + toDistance);
@@ -62,6 +80,6 @@ public class PathWrapper {
     }
 
     @Override public String toString() {
-        return "distance:" + distance + ", from:" + entryFrom + ", to:" + entryTo;
+        return "distance:" + distance + ", from:" + edgesFrom.getNode(fromEdgeId) + ", to:" + edgesTo.getNode(toEdgeId);
     }
 }
