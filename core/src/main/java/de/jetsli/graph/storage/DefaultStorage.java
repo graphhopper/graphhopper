@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.CalcDistance;
@@ -26,11 +25,10 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultStorage implements Storage {
 
-    protected static final int FILLED = -2;    
+    protected static final int FILLED = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    
     protected Graph g;
-    protected TIntIntHashMap osmIdToIndexMap;    
+    protected TIntIntHashMap osmIdToIndexMap;
 
     public DefaultStorage(int expectedNodes) {
         osmIdToIndexMap = new TIntIntHashMap(expectedNodes, 1.4f, -1, -1);
@@ -39,7 +37,7 @@ public class DefaultStorage implements Storage {
     @Override
     public boolean loadExisting() {
         return false;
-    }    
+    }
 
     @Override
     public void createNew() {
@@ -82,9 +80,6 @@ public class DefaultStorage implements Storage {
                 // but end up in two very close points. add here here and later this will be 
                 // removed/fixed while removing short edges where one node is of degree 2
                 zeroCounter++;
-                if (zeroCounter % 10 == 0)
-                    logger.info(zeroCounter + " zero distances, from:" + nodeIdFrom + " to:" + nodeIdTo
-                            + " (" + laf + ", " + lof + ")");
                 dist = 0.0001;
             } else if (dist < 0) {
                 logger.info(counter + " - distances negative. " + fromIndex + " (" + laf + ", " + lof + ")->"
@@ -108,11 +103,12 @@ public class DefaultStorage implements Storage {
         return g;
     }
 
-    @Override public void stats() {        
+    @Override public void stats() {
     }
 
     @Override
     public void flush() {
+        logger.info("Found " + zeroCounter + " zero and " + counter + " negative distances.");
         osmIdToIndexMap = null;
     }
 

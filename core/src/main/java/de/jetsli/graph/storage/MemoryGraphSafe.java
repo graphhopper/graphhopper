@@ -28,17 +28,16 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This graph implementation is memory efficient and fast (in that order), and thread safe. Also it
- * is easier to maintain compared to the MMapGraph. It allows direct deletes (without optimize),
- * storage via flush and loads from storage if existing. Allow duplicate edges if flags (highway and
- * bothDir flags) are identical
+ * is easier to maintain compared to the MMapGraph. It allows storage via flush and loads from
+ * storage if existing. It allows duplicate edges if flags (highway and bothDir flags) are identical
  *
  * @author Peter Karich
  */
 public class MemoryGraphSafe implements SaveableGraph {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
-    // keep in mind that we address integers here - not bytes!
     private static final float FACTOR = 1.5f;
+    // keep in mind that we address integers here - not bytes!
     private static final int LEN_DIST = 1;
     private static final int LEN_NODEID = 1;
     private static final int LEN_FLAGS = 1;
@@ -68,7 +67,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     public MemoryGraphSafe(String storageDir, int cap) {
-        this(storageDir, cap, cap);
+        this(storageDir, cap, 2 * cap);
     }
 
     public MemoryGraphSafe(String storageDir, int cap, int capEdge) {
@@ -123,8 +122,11 @@ public class MemoryGraphSafe implements SaveableGraph {
         if (pointer + LEN_EDGE < edgesArea.length)
             return;
 
+        // TODO instead of reallocation (memory waste, time to copy), create multiple segments for 
+        // edges and use the highest bits (any number 2^x) as the segment number.
+        // Choose 2^x as segment number so we can use bit operations and avoid modulo for edgeId lookup!
         pointer = Math.max(10 * LEN_EDGE, Math.round(pointer * FACTOR));
-        logger.info("ensure edges to " + (float) 4 * pointer / (1 << 20) + " MB");
+        logger.info("ensure space to " + (int) (pointer / LEN_EDGE) + " edges (" + (float) 4 * pointer / (1 << 20) + " MB)");
         int oldLen = edgesArea.length;
         int newLen = pointer;
         edgesArea = Arrays.copyOf(edgesArea, newLen);
@@ -459,6 +461,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             size = (Integer) ob[0];
             creationTime = (Long) ob[1];
             deletedNodes = new MyOpenBitSet(lats.length);
+            logger.info("loaded graph with " + size + " locations and " + lats.length + " capacity (" + lons.length + ")");
             return true;
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't load data to storage. location=" + storageLocation, ex);

@@ -71,7 +71,8 @@ public class OSMReader {
         osm2Graph(osmReader, args);
         if (args.getBool("dijkstra", false)) {
             //warmup
-            //osmReader.doDijkstra(50);            
+            osmReader.doDijkstra(50);
+            
             osmReader.doDijkstra(500);
         }
     }
@@ -129,6 +130,8 @@ public class OSMReader {
         RoutingAlgorithm algo = new DijkstraBidirection(g);
 //        RoutingAlgorithm algo = new DijkstraSimple(g);
 //        RoutingAlgorithm algo = new AStar(g);
+        
+        logger.info("running dijkstra with " + algo.getClass().getSimpleName());
         Random rand = new Random(123);
         StopWatch sw = new StopWatch();
         for (int i = 0; i < runs; i++) {
@@ -153,7 +156,8 @@ public class OSMReader {
                 continue;
             }
             if (i % 20 == 0)
-                logger.info(i + " " + sw.getSeconds() / (i + 1) + " path:" + p.locations());// + " " + p.toString());
+                logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run (path length:" + p.locations());
+                // + " " + p.toString());
         }
     }
 

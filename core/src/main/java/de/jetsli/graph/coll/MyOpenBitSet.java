@@ -15,8 +15,8 @@
  */
 package de.jetsli.graph.coll;
 
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.util.OpenBitSet;
+import de.jetsli.lucene.DocIdSetIterator;
+import de.jetsli.lucene.OpenBitSet;
 
 /**
  *
@@ -65,5 +65,5 @@ public class MyOpenBitSet implements MyBitSet {
     @Override
     public void clear() {
         bitSet.clear(0, bitSet.length());
-    }        
+    }
 }

@@ -72,7 +72,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         float res1 = sw.stop().getSeconds();
         sw = new StopWatch().start();
         int counter = fillEmptyIndices(filledIndices);
-        logger.info("fill quadtree index array in " + res1 + "s. size is " + size
+        logger.info("filled quadtree index array in " + res1 + "s. size is " + size
                 + ". filled empty " + counter + " in " + sw.stop().getSeconds() + "s");
         return this;
     }

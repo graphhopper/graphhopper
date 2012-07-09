@@ -18,6 +18,7 @@ package de.jetsli.graph.routing;
 import de.jetsli.graph.coll.IntBinHeap;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.coll.MyBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIdIterator;

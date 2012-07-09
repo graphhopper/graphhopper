@@ -27,10 +27,9 @@ if [ "$FILE" = "unterfranken" ]; then
 elif [ "$FILE" = "germany" ]; then
  LINK=http://download.geofabrik.de/osm/europe/germany.osm.bz2
 
- # For import we need a lot more memory but for executing we need to reduce it
- # in order to use off-heap memory. But not too much as dijkstra needs also mem
+ # For import we need a lot more memory. For the mmap storage you need to lower this in order to use off-heap memory.
  JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx2700m -Xms2700m"
- JAVA_OPTS="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx1200m -Xms1200m"
+ JAVA_OPTS="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx2700m -Xms2700m"
  SIZE=35000000
 else
  echo "Sorry, your input $FILE was not found ... exiting"
@@ -51,7 +50,7 @@ else
 fi
 
 if [ ! -f "$JAR" ]; then
-  echo "## now building graphhopper"
+  echo "## now building graphhopper jar: $JAR"
   #mvn clean
   mvn -DskipTests=true assembly:assembly > /dev/null
 else

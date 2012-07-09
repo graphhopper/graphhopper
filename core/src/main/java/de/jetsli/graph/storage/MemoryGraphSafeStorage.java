@@ -33,7 +33,8 @@ public class MemoryGraphSafeStorage extends DefaultStorage {
     @Override
     public void createNew() {
         Helper.deleteDir(new File(folder));
-        g = new MemoryGraphSafe(folder, osmIdToIndexMap.size());
+        // in order to avoid reallocation, allocate enough memory for the edges
+        g = new MemoryGraphSafe(folder, osmIdToIndexMap.size(), Math.round(2.2f * osmIdToIndexMap.size()));
     }
 
     @Override

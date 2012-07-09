@@ -11,16 +11,18 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <slf4j.version>1.6.4</slf4j.version>
-        <lucene.version>3.4.0</lucene.version>
+        <lucene.version>3.6.0</lucene.version>
         <orientdb.version>1.0rc6-SNAPSHOT</orientdb.version>
     </properties>
 
     <dependencies>
+        <!--
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
             <version>3.6.0</version>
         </dependency>
+        -->
         
         <!-- trove is lgpl and a slightly big (>2MB)
         -->
@@ -59,6 +61,7 @@
             <version>4.10</version>
             <scope>test</scope>
         </dependency>
+        <!--
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
@@ -70,7 +73,8 @@
             <artifactId>hamcrest-library</artifactId>
             <version>1.3.RC2</version>
             <scope>test</scope>
-        </dependency>        
+        </dependency>           
+             -->     
     </dependencies>
         
     <build>
