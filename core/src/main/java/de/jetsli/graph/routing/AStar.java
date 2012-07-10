@@ -50,9 +50,9 @@ public class AStar implements RoutingAlgorithm {
             double lon = graph.getLongitude(currVertex);
 
             EdgeIdIterator iter = graph.getOutgoing(currVertex);
-            while(iter.next()) {
-                int tmpV = iter.nodeId();
-                if (visited.contains(tmpV))
+            while (iter.next()) {
+                int currentLinkedNode = iter.nodeId();
+                if (visited.contains(currentLinkedNode))
                     continue;
 
                 // possibilities: 
@@ -60,15 +60,15 @@ public class AStar implements RoutingAlgorithm {
                 // which satisfies the h(x) requirement instead of this expensive real calculation
                 // 2. use less expensive calc distance 
                 // (e.g. normed dist ... hmh but then entry.distance of edges needs to be normed too!)
-                double tmpLat = graph.getLatitude(tmpV);
-                double tmpLon = graph.getLongitude(tmpV);
+                double tmpLat = graph.getLatitude(currentLinkedNode);
+                double tmpLon = graph.getLongitude(currentLinkedNode);
                 double distToGoal = approxDist.calcDistKm(lat, lon, tmpLat, tmpLon);
                 double latestDist = iter.distance() + curr.distance + distToGoal;
-                Edge de = map.get(tmpV);
+                Edge de = map.get(currentLinkedNode);
                 if (de == null) {
-                    de = new Edge(tmpV, latestDist);
+                    de = new Edge(currentLinkedNode, latestDist);
                     de.prevEntry = curr;
-                    map.put(tmpV, de);
+                    map.put(currentLinkedNode, de);
                     heap.add(de);
                 } else if (de.distance > latestDist) {
                     heap.remove(de);
@@ -76,6 +76,8 @@ public class AStar implements RoutingAlgorithm {
                     de.prevEntry = curr;
                     heap.add(de);
                 }
+
+                updateShortest(de, currentLinkedNode);
             }
             if (to == currVertex)
                 break;
@@ -95,6 +97,9 @@ public class AStar implements RoutingAlgorithm {
         path.add(fromEntry);
         path.reverseOrder();
         return path;
+    }
+
+    public void updateShortest(Edge shortestDE, int currLoc) {
     }
 
     @Override public RoutingAlgorithm clear() {

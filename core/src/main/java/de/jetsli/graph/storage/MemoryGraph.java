@@ -56,17 +56,22 @@ public class MemoryGraph implements Graph, Cloneable {
         return deletedNodes;
     }
 
-    public void ensureCapacity(int numberOfLocation) {
-        refToEdges = growArray(refToEdges, numberOfLocation, 1);
-        lons = growArray(lons, numberOfLocation, 1);
-        lats = growArray(lats, numberOfLocation, 1);
+    private void ensureNodeIndex(int index) {
+        if (index < size)
+            return;
+
+        size = index + 1;
+        if (size <= lons.length)
+            return;
+
+        refToEdges = growArray(refToEdges, size, FACTOR);
+        lons = growArray(lons, size, FACTOR);
+        lats = growArray(lats, size, FACTOR);
     }
 
     @Override
     public void setNode(int index, double lat, double lon) {
-        size = Math.max(index + 1, size);
-        lons = growArray(lons, index + 1, FACTOR);
-        lats = growArray(lats, index + 1, FACTOR);
+        ensureNodeIndex(index);
         lons[index] = (float) lon;
         lats[index] = (float) lat;
     }
@@ -275,11 +280,13 @@ public class MemoryGraph implements Graph, Cloneable {
 
     @Override
     public double getLongitude(int index) {
+        ensureNodeIndex(index);
         return lons[index];
     }
 
     @Override
     public double getLatitude(int index) {
+        ensureNodeIndex(index);
         return lats[index];
     }
     private static final Field sizeField;

@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.ui;
 
-import de.jetsli.graph.routing.DijkstraBidirectionRef;
+import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Edge;
 import java.awt.Color;
@@ -24,12 +24,12 @@ import java.awt.Graphics2D;
 /**
  * @author Peter Karich
  */
-public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements DebugAlgo {
+public class DebugAStar extends AStar implements DebugAlgo {
 
     private MyGraphics mg;
     private Graphics2D g2;
 
-    public DebugDijkstraBidirection(Graph graph, MyGraphics mg) {
+    public DebugAStar(Graph graph, MyGraphics mg) {
         super(graph);
         this.mg = mg;
     }

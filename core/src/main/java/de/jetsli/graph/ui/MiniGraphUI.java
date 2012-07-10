@@ -19,7 +19,6 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.reader.OSMReader;
-import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
@@ -67,18 +66,17 @@ public class MiniGraphUI {
 
     public MiniGraphUI(Graph roadGraph, boolean debug) {
         this.graph = roadGraph;
-        logger.info("locations:" + roadGraph.getNodes());
+        logger.info("locations:" + roadGraph.getNodes() + ", debug:" + debug);
         mg = new MyGraphics(roadGraph);
 
         // prepare location quadtree to 'enter' the graph. create a 313*313 grid => <3km
-        // this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
+//         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
         this.index = new Location2IDQuadtree(roadGraph);
         index.prepareIndex(90000);
-        // this.dijkstra = new DebugDijkstraBidirection(graph, mg);
+//        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
-        this.algo = new AStar(graph);
+        this.algo = new DebugAStar(graph, mg);
         infoPanel = new JPanel() {
-
             @Override protected void paintComponent(Graphics g) {
                 g.setColor(Color.WHITE);
                 Rectangle b = infoPanel.getBounds();
@@ -98,7 +96,6 @@ public class MiniGraphUI {
         // TODO make it correct with bitset-skipping too
         final MyBitSet bitset = new MyTBitSet(graph.getNodes());
         mainPanel.addLayer(roadsLayer = new DefaultMapLayer() {
-
             Random rand = new Random();
 
             @Override public void paintComponent(Graphics2D g2) {
@@ -123,7 +120,7 @@ public class MiniGraphUI {
 //                    plot(g2, lat, lon, count, size);                    
 
                     EdgeIdIterator iter = graph.getOutgoing(nodeIndex);
-                    while(iter.next()) {
+                    while (iter.next()) {
                         int nodeId = iter.nodeId();
                         int sum = nodeIndex + nodeId;
                         if (fastPaint) {
@@ -162,16 +159,24 @@ public class MiniGraphUI {
 //        });
 
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
-
             @Override public void paintComponent(Graphics2D g2) {
+                if(dijkstraFromId < 0 || dijkstraToId < 0)
+                    return;
                 makeTransparent(g2);
-                
-                // for debugging dijkstra we need to move the call here and execute before:
-//                dijkstra.setGraphics2D(g2);
 
+                if (algo instanceof DebugAlgo)
+                    ((DebugAlgo) algo).setGraphics2D(g2);
+                
+                StopWatch sw = new StopWatch().start();
+                logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId);
+                path = algo.clear().calcShortestPath(dijkstraFromId, dijkstraToId);
+                sw.stop();
+                
                 // TODO remove subnetworks to avoid failing
                 if (path == null)
                     return;
+
+                logger.info("found path in " + sw.getSeconds() + "s with " + path.locations() + " nodes: " + path);
 
                 g2.setColor(Color.BLUE.brighter().brighter());
                 int tmpLocs = path.locations();
@@ -196,12 +201,13 @@ public class MiniGraphUI {
             repaintManager.setDoubleBufferingEnabled(false);
             mainPanel.setBuffering(false);
         }
-    }    
+    }
+    private int dijkstraFromId = -1;
+    private int dijkstraToId = -1;
 
     public void visualize() {
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
-
                 @Override public void run() {
                     int frameHeight = 800;
                     int frameWidth = 1200;
@@ -214,7 +220,6 @@ public class MiniGraphUI {
 
                     // scale
                     mainPanel.addMouseWheelListener(new MouseWheelListener() {
-
                         @Override public void mouseWheelMoved(MouseWheelEvent e) {
                             mg.scale(e.getX(), e.getY(), e.getWheelRotation() < 0);
                             repaintRoads();
@@ -240,7 +245,6 @@ public class MiniGraphUI {
 //                        }
 //                    };
                     MouseAdapter ml = new MouseAdapter() {
-
                         // for routing:
                         double fromLat, fromLon;
                         boolean fromDone = false;
@@ -256,15 +260,10 @@ public class MiniGraphUI {
                                 logger.info("start searching from " + fromLat + "," + fromLon
                                         + " to " + toLat + "," + toLon);
                                 // get from and to node id
-                                int dijkstraFromId = index.findID(fromLat, fromLon);
-                                int dijkstraToId = index.findID(toLat, toLon);
+                                dijkstraFromId = index.findID(fromLat, fromLon);
+                                dijkstraToId = index.findID(toLat, toLon);
                                 logger.info("found ids " + dijkstraFromId + " -> " + dijkstraToId + " in " + sw.stop().getSeconds() + "s");
 
-                                sw = new StopWatch().start();
-                                logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId);
-                                path = algo.clear().calcShortestPath(dijkstraFromId, dijkstraToId);
-                                sw.stop();
-                                logger.info("found path in " + sw.getSeconds() + "s with " + path.locations() + " nodes: " + path);
                                 repaintPaths();
                             }
 
@@ -307,7 +306,6 @@ public class MiniGraphUI {
                     // just for fun
                     mainPanel.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), "deleteNodes");
                     mainPanel.getActionMap().put("deleteNodes", new AbstractAction() {
-
                         @Override public void actionPerformed(ActionEvent e) {
                             int counter = 0;
                             for (CoordTrig<Long> coord : quadTreeNodes) {

@@ -15,33 +15,12 @@
  */
 package de.jetsli.graph.ui;
 
-import de.jetsli.graph.routing.DijkstraBidirectionRef;
-import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.Edge;
-import java.awt.Color;
 import java.awt.Graphics2D;
 
 /**
  * @author Peter Karich
  */
-public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements DebugAlgo {
+public interface DebugAlgo {
 
-    private MyGraphics mg;
-    private Graphics2D g2;
-
-    public DebugDijkstraBidirection(Graph graph, MyGraphics mg) {
-        super(graph);
-        this.mg = mg;
-    }
-
-    @Override
-    public void setGraphics2D(Graphics2D g2) {
-        this.g2 = g2;
-    }
-
-    @Override public void updateShortest(Edge shortestDE, int currLoc) {
-        if (g2 != null)
-            mg.plotNode(g2, currLoc, Color.YELLOW);
-        super.updateShortest(shortestDE, currLoc);
-    }
+    void setGraphics2D(Graphics2D g2);
 }
