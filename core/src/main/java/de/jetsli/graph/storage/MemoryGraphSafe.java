@@ -110,7 +110,6 @@ public class MemoryGraphSafe implements SaveableGraph {
     private void initEdges(int cap) {
         cap *= LEN_EDGE;
         edgesArea = new int[cap];
-        Arrays.fill(edgesArea, -1);
     }
 
     // Use ONLY within a writer lock area
@@ -131,7 +130,6 @@ public class MemoryGraphSafe implements SaveableGraph {
         int oldLen = edgesArea.length;
         int newLen = pointer;
         edgesArea = Arrays.copyOf(edgesArea, newLen);
-        Arrays.fill(edgesArea, oldLen, newLen, -1);
     }
 
     // Use ONLY within a writer lock area
@@ -441,7 +439,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             Helper.writeInts(storageLocation + "/refs", refToEdges);
             Helper.writeInts(storageLocation + "/edges", edgesArea);
             // Helper.writeInts(storageLocation + "/priorities", priorities);
-            Helper.writeSettings(storageLocation + "/settings", size, creationTime);
+            Helper.writeSettings(storageLocation + "/settings", size, creationTime, nextEdgePointer);
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't write data to storage. location was " + storageLocation, ex);
         }
@@ -461,6 +459,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             Object[] ob = Helper.readSettings(storageLocation + "/settings");
             size = (Integer) ob[0];
             creationTime = (Long) ob[1];
+            nextEdgePointer = (Integer) ob[2];
             deletedNodes = new MyOpenBitSet(lats.length);
             logger.info("loaded graph with " + size + " locations and " + lats.length + " capacity (" + lons.length + ")");
             return true;
