@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MemoryGraphSafe implements SaveableGraph {
 
+    private static final int EMPTY_LINK = 0;
     private static final float DIST_UNIT = 10000f;
     private Logger logger = LoggerFactory.getLogger(getClass());
     private static final float FACTOR = 1.5f;
@@ -88,7 +89,10 @@ public class MemoryGraphSafe implements SaveableGraph {
     @Override public int getNodes() {
         // readLock.lock();
         return size;
+    }
 
+    public int getMaxEdges() {
+        return edgesArea.length / LEN_EDGE;
     }
 
     @Override public int addNode(double lat, double lon) {
@@ -127,7 +131,6 @@ public class MemoryGraphSafe implements SaveableGraph {
         // Choose 2^x as segment number so we can use bit operations and avoid modulo for edgeId lookup!
         pointer = Math.max(10 * LEN_EDGE, Math.round(pointer * FACTOR));
         logger.info("ensure space to " + (int) (pointer / LEN_EDGE) + " edges (" + (float) 4 * pointer / (1 << 20) + " MB)");
-        int oldLen = edgesArea.length;
         int newLen = pointer;
         edgesArea = Arrays.copyOf(edgesArea, newLen);
     }
@@ -210,7 +213,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         } else
             refToEdges[fromNodeId] = newPos;
 
-        writeEdge(newPos, flags, dist, toNodeId, -1);
+        writeEdge(newPos, flags, dist, toNodeId, EMPTY_LINK);
     }
 
     private int getLink(int edgePointer) {
@@ -244,7 +247,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         for (; i < 1000; i++) {
             list.add(edgePointer);
             edgePointer = edgesArea[getLink(edgePointer)];
-            if (edgePointer < 0)
+            if (edgePointer == EMPTY_LINK)
                 break;
         }
         if (i >= 1000)
@@ -313,7 +316,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             int i = 0;
             foundNext = false;
             for (; i < 1000; i++) {
-                if (pointer <= 0)
+                if (pointer == EMPTY_LINK)
                     break;
                 readNext();
                 if (foundNext)
@@ -343,14 +346,13 @@ public class MemoryGraphSafe implements SaveableGraph {
     @Override
     public Graph clone() {
         // readLock.lock();
-        MemoryGraphSafe g = new MemoryGraphSafe(null, refToEdges.length, edgesArea.length / LEN_EDGE);
+        MemoryGraphSafe g = new MemoryGraphSafe(null, refToEdges.length, getMaxEdges());
         System.arraycopy(lats, 0, g.lats, 0, lats.length);
         System.arraycopy(lons, 0, g.lons, 0, lons.length);
         System.arraycopy(refToEdges, 0, g.refToEdges, 0, refToEdges.length);
         System.arraycopy(edgesArea, 0, g.edgesArea, 0, edgesArea.length);
         g.size = size;
         return g;
-
     }
 
     @Override
@@ -383,7 +385,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         int deleted = deletedNodes.getCardinality();
         if (deleted == 0)
             return;
-        MemoryGraphSafe inMemGraph = new MemoryGraphSafe(null, getNodes() - deleted, edgesArea.length / LEN_EDGE);
+        MemoryGraphSafe inMemGraph = new MemoryGraphSafe(null, getNodes() - deleted, getMaxEdges());
 
         /**
          * This methods creates a new in-memory graph without the specified deleted nodes. see
