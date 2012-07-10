@@ -237,15 +237,13 @@ public abstract class AbstractRoutingAlgorithmTester {
         for (int i = 0; i < N; i++) {
             int index1 = Math.abs(rand.nextInt(graph.getNodes()));
             int index2 = Math.abs(rand.nextInt(graph.getNodes()));
-            // constructing the graph could be expensive like for CH
             RoutingAlgorithm d = createAlgo(graph);
-
             if (i >= noJvmWarming)
                 sw.start();
             Path p = d.calcShortestPath(index1, index2);
             if (i >= noJvmWarming)
                 sw.stop();
-            System.out.println("#" + i + " " + name + ":" + sw.getSeconds());
+            System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.locations());
         }
         System.out.println("# " + name + ":" + sw.stop().getSeconds() + ", per run:" + sw.stop().getSeconds() / ((float) (N - noJvmWarming)));
     }

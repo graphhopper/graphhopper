@@ -81,12 +81,8 @@ public class MemoryGraph implements Graph, Cloneable {
         if (distance < 0)
             throw new UnsupportedOperationException("negative distance not supported");
 
-        size = Math.max(size, Math.max(a, b) + 1);
-        if (size > refToEdges.length)
-            logger.info("ensure edges to " + (float) size * 29 / (1 << 20) + " MB");
-        // required only: edges = growArrayList(edges, Math.max(a, b) + 1);
-        refToEdges = growArray(refToEdges, size, FACTOR);
-
+        ensureNodeIndex(a);
+        ensureNodeIndex(b);
         byte dirFlag = 3;
         if (!bothDirections)
             dirFlag = 1;
@@ -280,13 +276,15 @@ public class MemoryGraph implements Graph, Cloneable {
 
     @Override
     public double getLongitude(int index) {
-        ensureNodeIndex(index);
+        if (index >= lats.length)
+            throw new IllegalStateException("location with index " + index + " was not yet added");
         return lons[index];
     }
 
     @Override
     public double getLatitude(int index) {
-        ensureNodeIndex(index);
+        if (index >= lats.length)
+            throw new IllegalStateException("location with index " + index + " was not yet added");
         return lats[index];
     }
     private static final Field sizeField;

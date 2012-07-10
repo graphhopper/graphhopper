@@ -127,9 +127,9 @@ public class OSMReader {
         double minLat = 49.484186, minLon = 8.974228;
         double maxLat = 50.541363, maxLon = 10.880356;
 //        RoutingAlgorithm algo = new DijkstraBidirectionRef(g);
-        RoutingAlgorithm algo = new DijkstraBidirection(g);
+//        RoutingAlgorithm algo = new DijkstraBidirection(g);
 //        RoutingAlgorithm algo = new DijkstraSimple(g);
-//        RoutingAlgorithm algo = new AStar(g);
+        RoutingAlgorithm algo = new AStar(g);
         
         logger.info("running dijkstra with " + algo.getClass().getSimpleName());
         Random rand = new Random(123);
