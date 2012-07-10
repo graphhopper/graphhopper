@@ -56,7 +56,6 @@ public class MemoryGraph implements Graph, Cloneable {
         return deletedNodes;
     }
 
-    @Override
     public void ensureCapacity(int numberOfLocation) {
         refToEdges = growArray(refToEdges, numberOfLocation, 1);
         lons = growArray(lons, numberOfLocation, 1);

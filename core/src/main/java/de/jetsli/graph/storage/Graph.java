@@ -25,8 +25,6 @@ import de.jetsli.graph.util.EdgeIdIterator;
  */
 public interface Graph {
 
-    void ensureCapacity(int cap);
-
     /**
      * @return the number of indirectly created locations. E.g. via setNode() or edge()
      */

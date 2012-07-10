@@ -163,7 +163,6 @@ public class MMapGraph implements SaveableGraph {
         this.edgeNumEmbedded = edgeEmbeddedSize;
     }
 
-    @Override
     public void ensureCapacity(int nodes) {
         int newEdgeNo = calculateEdges(nodes);
         String str = "node file with " + (float) (nodes * bytesNode) / (1 << 20) + " MB and "

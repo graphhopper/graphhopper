@@ -156,7 +156,7 @@ public class OSMReader {
                 continue;
             }
             if (i % 20 == 0)
-                logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run (path length:" + p.locations());
+                logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run (path length:" + p.locations() + ")");
                 // + " " + p.toString());
         }
     }

@@ -17,9 +17,10 @@ package de.jetsli.graph.ui;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
-import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.reader.OSMReader;
+import de.jetsli.graph.routing.AStar;
+import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.trees.QuadTree;
@@ -52,7 +53,7 @@ public class MiniGraphUI {
     private QuadTree<Long> quadTree;
     private Collection<CoordTrig<Long>> quadTreeNodes;
     private Path path;
-    private DijkstraBidirection dijkstra;
+    private RoutingAlgorithm algo;
     private final Graph graph;
     private Location2IDQuadtree index;
     private String latLon = "";
@@ -74,7 +75,8 @@ public class MiniGraphUI {
         this.index = new Location2IDQuadtree(roadGraph);
         index.prepareIndex(90000);
         // this.dijkstra = new DebugDijkstraBidirection(graph, mg);
-        this.dijkstra = new DijkstraBidirection(graph);
+        // this.algo = new DijkstraBidirection(graph);
+        this.algo = new AStar(graph);
         infoPanel = new JPanel() {
 
             @Override protected void paintComponent(Graphics g) {
@@ -260,7 +262,7 @@ public class MiniGraphUI {
 
                                 sw = new StopWatch().start();
                                 logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId);
-                                path = dijkstra.clear().calcShortestPath(dijkstraFromId, dijkstraToId);
+                                path = algo.clear().calcShortestPath(dijkstraFromId, dijkstraToId);
                                 sw.stop();
                                 logger.info("found path in " + sw.getSeconds() + "s with " + path.locations() + " nodes: " + path);
                                 repaintPaths();

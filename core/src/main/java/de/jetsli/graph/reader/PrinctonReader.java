@@ -47,7 +47,6 @@ public class PrinctonReader {
         try {
             lineNo++;
             int nodes = Integer.parseInt(reader.readLine());
-            g.ensureCapacity(nodes);
             lineNo++;
             int edges = Integer.parseInt(reader.readLine());
             for (int i = 0; i < edges; i++) {

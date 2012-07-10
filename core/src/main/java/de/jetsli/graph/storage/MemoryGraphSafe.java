@@ -23,6 +23,7 @@ import gnu.trove.list.array.TIntArrayList;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,13 +79,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             initNodes(cap);
             initEdges(capEdge);
         }
-    }
-
-    @Override public void ensureCapacity(int cap) {
-        // writeLock.lock();
-        ensureNodesCapacity(cap);
-        ensureEdgesCapacity(cap);
-    }
+    }    
 
     @Override public int getNodes() {
         // readLock.lock();
@@ -377,6 +372,8 @@ public class MemoryGraphSafe implements SaveableGraph {
         int deleted = deletedNodes.getCardinality();
         if (deleted == 0)
             return;
+        
+        logger.info("lengthy operation: optimizing graph");
         MemoryGraphSafe inMemGraph = new MemoryGraphSafe(null, getNodes() - deleted, getMaxEdges());
 
         /**
@@ -424,16 +421,15 @@ public class MemoryGraphSafe implements SaveableGraph {
         // readLock.lock();
         try {
             File tmp = new File(storageLocation);
-            if (!tmp.exists()) {
+            if (!tmp.exists())
                 tmp.mkdirs();
-            }
 
             Helper.writeFloats(storageLocation + "/lats", lats);
             Helper.writeFloats(storageLocation + "/lons", lons);
             Helper.writeInts(storageLocation + "/refs", refToEdges);
             Helper.writeInts(storageLocation + "/edges", edgesArea);
             // Helper.writeInts(storageLocation + "/priorities", priorities);
-            Helper.writeSettings(storageLocation + "/settings", size, creationTime, nextEdgePointer, storageLocation);
+            Helper.writeSettings(storageLocation + "/settings", size, creationTime, nextEdgePointer);
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't write data to storage. location was " + storageLocation, ex);
         }
@@ -445,18 +441,22 @@ public class MemoryGraphSafe implements SaveableGraph {
 
         //writeLock.lock();
         try {
+            Object[] ob = Helper.readSettings(storageLocation + "/settings");
+            if (ob.length < 3)
+                throw new IllegalStateException("invalid file format");
+
+            size = (Integer) ob[0];
+            creationTime = (Long) ob[1];
+            nextEdgePointer = (Integer) ob[2];
+            logger.info("found graph " + storageLocation + " with size:" + size
+                    + ", edges:" + nextEdgePointer / LEN_EDGE + ", created-at:" + new Date(creationTime));
+
             lats = Helper.readFloats(storageLocation + "/lats");
             lons = Helper.readFloats(storageLocation + "/lons");
             refToEdges = Helper.readInts(storageLocation + "/refs");
             edgesArea = Helper.readInts(storageLocation + "/edges");
             // priorities = Helper.readInts(storageLocation + "/priorities");
-            Object[] ob = Helper.readSettings(storageLocation + "/settings");
-            size = (Integer) ob[0];
-            creationTime = (Long) ob[1];
-            nextEdgePointer = (Integer) ob[2];
-            storageLocation = (String) ob[3];
             deletedNodes = new MyOpenBitSet(lats.length);
-            logger.info("loaded graph with " + size + " locations and " + lats.length + " capacity (" + lons.length + ")");
             return true;
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't load data to storage. location=" + storageLocation, ex);
