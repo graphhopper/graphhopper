@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MemoryGraphSafe implements SaveableGraph {
 
+    private static final float DIST_UNIT = 10000f;
     private Logger logger = LoggerFactory.getLogger(getClass());
     private static final float FACTOR = 1.5f;
     // keep in mind that we address integers here - not bytes!
@@ -184,14 +185,14 @@ public class MemoryGraphSafe implements SaveableGraph {
         int dirFlag = 3;
         if (!bothDirections)
             dirFlag = 1;
-        internalAdd(a, b, (float) distance, dirFlag);
+        internalAdd(a, b, distance, dirFlag);
 
         if (!bothDirections)
             dirFlag = 2;
-        internalAdd(b, a, (float) distance, dirFlag);
+        internalAdd(b, a, distance, dirFlag);
     }
 
-    private void internalAdd(int fromNodeId, int toNodeId, float dist, int flags) {
+    private void internalAdd(int fromNodeId, int toNodeId, double dist, int flags) {
         int edgePointer = refToEdges[fromNodeId];
         int newPos = nextEdgePointer();
         if (edgePointer > 0) {
@@ -218,13 +219,13 @@ public class MemoryGraphSafe implements SaveableGraph {
         return edgePointer + LEN_EDGE - LEN_LINK;
     }
 
-    private void writeEdge(int edgePointer, int flags, float dist, int toNodeId, int nextEdgePointer) {
+    private void writeEdge(int edgePointer, int flags, double dist, int toNodeId, int nextEdgePointer) {
         ensureEdgePointer(edgePointer);
 
         edgesArea[edgePointer] = flags;
         edgePointer += LEN_FLAGS;
 
-        edgesArea[edgePointer] = Float.floatToIntBits(dist);
+        edgesArea[edgePointer] = (int) (dist * DIST_UNIT);
         edgePointer += LEN_DIST;
 
         edgesArea[edgePointer] = toNodeId;
@@ -299,7 +300,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             }
             pointer += LEN_FLAGS;
 
-            dist = Float.intBitsToFloat(edgesArea[pointer]);
+            dist = edgesArea[pointer] / DIST_UNIT;
             pointer += LEN_DIST;
 
             nodeId = edgesArea[pointer];
@@ -413,7 +414,7 @@ public class MemoryGraphSafe implements SaveableGraph {
                 if (deletedNodes.contains(iter.nodeId()))
                     continue;
 
-                inMemGraph.internalAdd(newNodeId, old2NewMap[iter.nodeId()], (float) iter.distance(), iter.flags());
+                inMemGraph.internalAdd(newNodeId, old2NewMap[iter.nodeId()], iter.distance(), iter.flags());
             }
             newNodeId++;
         }

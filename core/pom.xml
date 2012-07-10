@@ -11,20 +11,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <slf4j.version>1.6.4</slf4j.version>
-        <lucene.version>3.6.0</lucene.version>
-        <orientdb.version>1.0rc6-SNAPSHOT</orientdb.version>
     </properties>
 
     <dependencies>
-        <!--
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
-            <version>3.6.0</version>
-        </dependency>
-        -->
         
-        <!-- trove is lgpl and a slightly big (>2MB)
+        <!-- Trove is LGPL (we can use LGPL 3 which is compatible with Apache) and slightly big (>2MB)
         -->
         <dependency>
             <groupId>net.sf.trove4j</groupId>
