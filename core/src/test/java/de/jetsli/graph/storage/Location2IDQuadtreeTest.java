@@ -110,14 +110,14 @@ public class Location2IDQuadtreeTest {
         Graph g = new MMapGraph(locs).createNew();
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++) {
-            g.addNode((float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
+            g.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
         }
         Location2IDIndex idx = new Location2IDQuadtree(g);
         idx.prepareIndex(200);
     }
 
     public static Graph createSampleGraph() {
-        MMapGraph graph = new MMapGraph(100).createNew();
+        Graph graph = new MMapGraph(100).createNew();
         // length does not matter here but lat,lon and outgoing edges do!
 
 //        
@@ -136,23 +136,40 @@ public class Location2IDQuadtreeTest {
 //        
 //   lon: 0   1   2   3   4   5
 
-        int a0 = graph.addNode(0, 1.0001f);
-        int b1 = graph.addNode(1, 2);
-        int c2 = graph.addNode(0.5f, 4.5f);
-        int d3 = graph.addNode(1.5f, 3.8f);
-        int e4 = graph.addNode(2.01f, 0.5f);
-        int f5 = graph.addNode(2, 3);
-        int g6 = graph.addNode(3, 1.5f);
-        int h7 = graph.addNode(2.99f, 3.01f);
-        int i8 = graph.addNode(3, 4);
-        int j9 = graph.addNode(3.3f, 2.2f);
-        int k10 = graph.addNode(4, 1);
-        int l11 = graph.addNode(4.1f, 3);
-        int m12 = graph.addNode(4, 4.5f);
-        int n13 = graph.addNode(4.5f, 4.1f);
-        int o14 = graph.addNode(5, 0);
-        int p15 = graph.addNode(4.9f, 2.5f);
-        int q16 = graph.addNode(5, 5);
+        int a0 = 0;
+        graph.setNode(0, 0, 1.0001f);
+        int b1 = 1;
+        graph.setNode(1, 1, 2);
+        int c2 = 2;
+        graph.setNode(2, 0.5f, 4.5f);
+        int d3 = 3;
+        graph.setNode(3, 1.5f, 3.8f);
+        int e4 = 4;
+        graph.setNode(4, 2.01f, 0.5f);
+        int f5 = 5;
+        graph.setNode(5, 2, 3);
+        int g6 = 6;
+        graph.setNode(6, 3, 1.5f);
+        int h7 = 7;
+        graph.setNode(7, 2.99f, 3.01f);
+        int i8 = 8;
+        graph.setNode(8, 3, 4);
+        int j9 = 9;
+        graph.setNode(9, 3.3f, 2.2f);
+        int k10 = 10;
+        graph.setNode(10, 4, 1);
+        int l11 = 11;
+        graph.setNode(11, 4.1f, 3);
+        int m12 = 12;
+        graph.setNode(12, 4, 4.5f);
+        int n13 = 13;
+        graph.setNode(13, 4.5f, 4.1f);
+        int o14 = 14;
+        graph.setNode(14, 5, 0);
+        int p15 = 15;
+        graph.setNode(15, 4.9f, 2.5f);
+        int q16 = 16;
+        graph.setNode(16, 5, 5);
         // => 17 locations
 
         graph.edge(a0, b1, 1, true);

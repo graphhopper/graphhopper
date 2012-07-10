@@ -57,7 +57,6 @@ public class MMapGraph implements SaveableGraph {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final int EMPTY_DIST = 0;
     private static final int FIRST_EDGE_POS = 1;
-    private static final int FIRST_MAX_REC_ID = -1;
     /**
      * Memory layout of one node: lat, lon, 2 * EdgeWithFlags(distance, node, flags) +
      * nextEdgePosition <br/>
@@ -89,8 +88,7 @@ public class MMapGraph implements SaveableGraph {
      */
     private int bytesNodeCore = 4 + 4;
     private int bytesNode;
-    private int currentNodeSize = 0;
-    private int maxRecognizedNodeId = FIRST_MAX_REC_ID;
+    private int size = 0;
     private double increaseFactor = 1.3;
     private MyBitSet deletedNodes;
     private RandomAccessFile nodeFile = null;
@@ -126,11 +124,11 @@ public class MMapGraph implements SaveableGraph {
         if (!loadSettings())
             return false;
 
-        logger.info("load existing graph with maxNodes:" + maxNodes + " currentNodeSize:" + currentNodeSize
-                + " maxRecognizedNodeIndex:" + maxRecognizedNodeId + " edgeEmbedded:" + edgeNumEmbedded
-                + " edgeSize:" + bytesOneEdge + " nodeCoreSize:" + bytesNodeCore
-                + " nodeSize:" + bytesNode + " nextEdgePosition:" + nextEdgePos
-                + " edgeFlagsPos:" + edgeFlagsPos + " bytesEdgeSize:" + bytesEdges);
+        logger.info("load existing graph with maxNodes:" + maxNodes + " size:" + size
+                + " edgeEmbedded:" + edgeNumEmbedded + " edgeSize:" + bytesOneEdge
+                + " nodeCoreSize:" + bytesNodeCore + " nodeSize:" + bytesNode
+                + " nextEdgePosition:" + nextEdgePos + " edgeFlagsPos:" + edgeFlagsPos
+                + " bytesEdgeSize:" + bytesEdges);
         ensureCapacity(maxNodes);
         return true;
     }
@@ -277,25 +275,23 @@ public class MMapGraph implements SaveableGraph {
 
     @Override
     public int getNodes() {
-        return Math.max(currentNodeSize, maxRecognizedNodeId + 1);
+        return size;
     }
 
     @Override
-    public int addNode(double lat, double lon) {
-        if (currentNodeSize + 1 >= maxNodes) {
+    public void setNode(int index, double lat, double lon) {
+        if (index + 1 >= maxNodes) {
             try {
-                ensureNodesCapacity(currentNodeSize + 1);
+                ensureNodesCapacity(index + 1);
             } catch (IOException ex) {
-                throw new RuntimeException("Couldn't expand nodes from " + currentNodeSize, ex);
-            }
+                throw new RuntimeException("Couldn't expand nodes from " + index, ex);
+            }        
         }
-
-        nodes.position(currentNodeSize * bytesNode);
+        
+        size = Math.max(size, index + 1);
+        nodes.position(index * bytesNode);
         nodes.putFloat((float) lat);
         nodes.putFloat((float) lon);
-        int tmp = currentNodeSize;
-        currentNodeSize++;
-        return tmp;
     }
 
     @Override
@@ -317,7 +313,7 @@ public class MMapGraph implements SaveableGraph {
                     + a + " -> " + b + ": " + distance + ", bothDirections:" + bothDirections);
 
         ensureEdgesCapacity();
-        maxRecognizedNodeId = Math.max(maxRecognizedNodeId, Math.max(a, b));
+        size = Math.max(size, Math.max(a, b) + 1);
         byte dirFlag = 3;
         if (!bothDirections)
             dirFlag = 1;
@@ -531,8 +527,7 @@ public class MMapGraph implements SaveableGraph {
 
         to.bytesNodeCore = from.bytesNodeCore;
         to.bytesNode = from.bytesNode;
-        to.currentNodeSize = from.currentNodeSize;
-        to.maxRecognizedNodeId = from.maxRecognizedNodeId;
+        to.size = from.size;
     }
 
     @Override
@@ -636,8 +631,7 @@ public class MMapGraph implements SaveableGraph {
             try {
                 RandomAccessFile settingsFile = new RandomAccessFile(getSettingsFile(), "rw");
                 settingsFile.writeInt(maxNodes);
-                settingsFile.writeInt(currentNodeSize);
-                settingsFile.writeInt(maxRecognizedNodeId);
+                settingsFile.writeInt(size);
 
                 settingsFile.writeInt(nextEdgePos);
 
@@ -665,8 +659,7 @@ public class MMapGraph implements SaveableGraph {
 
             RandomAccessFile settingsFile = new RandomAccessFile(sFile, "r");
             maxNodes = settingsFile.readInt();
-            currentNodeSize = settingsFile.readInt();
-            maxRecognizedNodeId = settingsFile.readInt();
+            size = settingsFile.readInt();
 
             nextEdgePos = settingsFile.readInt();
 
@@ -769,8 +762,7 @@ public class MMapGraph implements SaveableGraph {
         System.out.println("edges      :" + edgesNo + "\t" + ((float) edgesNo / locs));
         System.out.println("edges - out:" + outEdgesNo + "\t" + ((float) outEdgesNo / locs));
         System.out.println("edges - in :" + inEdgesNo + "\t" + ((float) inEdgesNo / locs));
-        System.out.println("currentNodeSize:" + currentNodeSize);
-        System.out.println("maxRecognizedNodeIndex:" + maxRecognizedNodeId);
+        System.out.println("maxRecognizedNodeIndex:" + size);
         System.out.println("nextEdgePosition:" + nextEdgePos);
     }
 
@@ -800,8 +792,7 @@ public class MMapGraph implements SaveableGraph {
         nodeFile = null;
         edgeFile = null;
         deletedNodes = null;
-        currentNodeSize = 0;
-        maxRecognizedNodeId = FIRST_MAX_REC_ID;
+        size = 0;
         nextEdgePos = FIRST_EDGE_POS;
         createNew(saveOnFlushOnly);
     }
@@ -831,7 +822,7 @@ public class MMapGraph implements SaveableGraph {
                 continue;
             double lat = this.getLatitude(oldNodeId);
             double lon = this.getLongitude(oldNodeId);
-            inMemGraph.addNode(lat, lon);
+            inMemGraph.setNode(newNodeId, lat, lon);
             EdgeIdIterator iter = this.getEdges(oldNodeId);
             while (iter.next()) {
                 if (deletedNodes.contains(iter.nodeId()))

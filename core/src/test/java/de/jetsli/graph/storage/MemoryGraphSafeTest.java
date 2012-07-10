@@ -50,9 +50,9 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
         String tmpDir = "/tmp/memory-graph-safe";
         Helper.deleteDir(new File(tmpDir));
         SaveableGraph graph = new MemoryGraphSafe(tmpDir, 3, 3);
-        graph.addNode(10, 10);
-        graph.addNode(11, 20);
-        graph.addNode(12, 12);
+        graph.setNode(0, 10, 10);
+        graph.setNode(1, 11, 20);
+        graph.setNode(2, 12, 12);
 
         graph.edge(0, 1, 100, true);
         graph.edge(0, 2, 200, true);

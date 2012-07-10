@@ -32,12 +32,12 @@ import org.slf4j.LoggerFactory;
  */
 public class MemoryGraph implements Graph, Cloneable {
 
+    private static final float FACTOR = 1.5f;
     private Logger logger = LoggerFactory.getLogger(getClass());
     private float[] lons;
     private float[] lats;
-    private int lonLatSize = 0;
-    private int maxRecognizedNodeIndex = -1;
-    private EdgeWithFlags[] edges;
+    private int size = 0;
+    private EdgeWithFlags[] refToEdges;
     private MyBitSet deletedNodes;
 
     public MemoryGraph() {
@@ -47,7 +47,7 @@ public class MemoryGraph implements Graph, Cloneable {
     public MemoryGraph(int capacity) {
         lons = new float[capacity];
         lats = new float[capacity];
-        edges = new EdgeWithFlags[capacity];
+        refToEdges = new EdgeWithFlags[capacity];
     }
 
     private MyBitSet getDeletedNodes() {
@@ -58,19 +58,18 @@ public class MemoryGraph implements Graph, Cloneable {
 
     @Override
     public void ensureCapacity(int numberOfLocation) {
-        edges = growArray(edges, numberOfLocation, 1);
+        refToEdges = growArray(refToEdges, numberOfLocation, 1);
         lons = growArray(lons, numberOfLocation, 1);
         lats = growArray(lats, numberOfLocation, 1);
     }
 
     @Override
-    public int addNode(double lat, double lon) {
-        int tmp = lonLatSize++;
-        lons = growArray(lons, lonLatSize, 1.5f);
-        lats = growArray(lats, lonLatSize, 1.5f);
-        lons[tmp] = (float) lon;
-        lats[tmp] = (float) lat;
-        return tmp;
+    public void setNode(int index, double lat, double lon) {
+        size = Math.max(index + 1, size);
+        lons = growArray(lons, index + 1, FACTOR);
+        lats = growArray(lats, index + 1, FACTOR);
+        lons[index] = (float) lon;
+        lats[index] = (float) lat;
     }
 
     @Override
@@ -78,11 +77,11 @@ public class MemoryGraph implements Graph, Cloneable {
         if (distance < 0)
             throw new UnsupportedOperationException("negative distance not supported");
 
-        maxRecognizedNodeIndex = Math.max(maxRecognizedNodeIndex, Math.max(a, b));
-        if (maxRecognizedNodeIndex + 1 > edges.length)
-            logger.info("ensure edges to " + (float) maxRecognizedNodeIndex * 29 / (1 << 20) + " MB");
+        size = Math.max(size, Math.max(a, b) + 1);
+        if (size > refToEdges.length)
+            logger.info("ensure edges to " + (float) size * 29 / (1 << 20) + " MB");
         // required only: edges = growArrayList(edges, Math.max(a, b) + 1);
-        edges = growArray(edges, maxRecognizedNodeIndex + 1, 1.5f);
+        refToEdges = growArray(refToEdges, size, FACTOR);
 
         byte dirFlag = 3;
         if (!bothDirections)
@@ -96,14 +95,9 @@ public class MemoryGraph implements Graph, Cloneable {
         addIfAbsent(b, a, (float) distance, dirFlag);
     }
 
-    /**
-     * @return either the number of added locations. Or if the addLocation-method(s) was unused to
-     * save memory, this method will return the maximum index plus 1 beeing specified via the
-     * edge-method(s).
-     */
     @Override
     public int getNodes() {
-        return Math.max(lonLatSize, maxRecognizedNodeIndex + 1);
+        return size;
     }
 
     /**
@@ -111,9 +105,9 @@ public class MemoryGraph implements Graph, Cloneable {
      * append
      */
     private void addIfAbsent(int from, int to, float distance, byte dirFlag) {
-        EdgeWithFlags currEntry = edges[from];
+        EdgeWithFlags currEntry = refToEdges[from];
         if (currEntry == null) {
-            edges[from] = new EdgeWithFlags(to, distance, dirFlag);
+            refToEdges[from] = new EdgeWithFlags(to, distance, dirFlag);
             return;
         }
 
@@ -139,10 +133,10 @@ public class MemoryGraph implements Graph, Cloneable {
 
     @Override
     public EdgeIdIterator getEdges(int index) {
-        if (index >= edges.length)
+        if (index >= refToEdges.length)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
-        final EdgeWithFlags d = edges[index];
+        final EdgeWithFlags d = refToEdges[index];
         if (d == null)
             return EdgeIdIterator.EMPTY;
 
@@ -151,10 +145,10 @@ public class MemoryGraph implements Graph, Cloneable {
 
     @Override
     public EdgeIdIterator getOutgoing(int index) {
-        if (index >= edges.length)
+        if (index >= refToEdges.length)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
-        final EdgeWithFlags d = edges[index];
+        final EdgeWithFlags d = refToEdges[index];
         if (d == null)
             return EdgeIdIterator.EMPTY;
 
@@ -173,10 +167,10 @@ public class MemoryGraph implements Graph, Cloneable {
 
     @Override
     public EdgeIdIterator getIncoming(int index) {
-        if (index >= edges.length)
+        if (index >= refToEdges.length)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
-        final EdgeWithFlags d = edges[index];
+        final EdgeWithFlags d = refToEdges[index];
         if (d == null)
             return EdgeIdIterator.EMPTY;
 
@@ -231,7 +225,7 @@ public class MemoryGraph implements Graph, Cloneable {
                 continue;
             double lat = this.getLatitude(oldNodeId);
             double lon = this.getLongitude(oldNodeId);
-            inMemGraph.addNode(lat, lon);
+            inMemGraph.setNode(newNodeId, lat, lon);
             EdgeIdIterator iter = this.getEdges(oldNodeId);
             while (iter.next()) {
                 if (deletedNodes.contains(iter.nodeId()))
@@ -244,9 +238,8 @@ public class MemoryGraph implements Graph, Cloneable {
         }
         lats = inMemGraph.lats;
         lons = inMemGraph.lons;
-        edges = inMemGraph.edges;
-        lonLatSize = inMemGraph.lonLatSize;
-        maxRecognizedNodeIndex = inMemGraph.maxRecognizedNodeIndex;
+        refToEdges = inMemGraph.refToEdges;
+        size = inMemGraph.size;
         deletedNodes = null;
     }
 
@@ -334,12 +327,11 @@ public class MemoryGraph implements Graph, Cloneable {
         MemoryGraph ret = new MemoryGraph(0);
         ret.lons = Arrays.copyOf(lons, lons.length);
         ret.lats = Arrays.copyOf(lats, lats.length);
-        ret.lonLatSize = lonLatSize;
-        ret.maxRecognizedNodeIndex = maxRecognizedNodeIndex;
-        ret.edges = Arrays.copyOf(edges, edges.length);
-        for (int i = 0; i < edges.length; i++) {
-            if (edges[i] != null)
-                ret.edges[i] = edges[i].cloneFull();
+        ret.size = size;
+        ret.refToEdges = Arrays.copyOf(refToEdges, refToEdges.length);
+        for (int i = 0; i < refToEdges.length; i++) {
+            if (refToEdges[i] != null)
+                ret.refToEdges[i] = refToEdges[i].cloneFull();
         }
         return ret;
     }

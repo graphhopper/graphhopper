@@ -106,7 +106,7 @@ public abstract class AbstractGraphTester {
     public void testClone() {
         Graph g = createGraph(11);
         g.edge(1, 2, 10, true);
-        g.addNode(12, 23);
+        g.setNode(0, 12, 23);
         Graph clone = g.clone();
         assertEquals(g.getNodes(), clone.getNodes());
         assertEquals(count(g.getOutgoing(1)), count(clone.getOutgoing(1)));
@@ -115,8 +115,8 @@ public abstract class AbstractGraphTester {
     @Test
     public void testGetLocations() {
         Graph g = createGraph(11);
-        g.addNode(12, 23);
-        g.addNode(22, 23);
+        g.setNode(0, 12, 23);
+        g.setNode(1, 22, 23);
         assertEquals(2, g.getNodes());
 
         g.edge(0, 1, 10, true);
@@ -132,12 +132,12 @@ public abstract class AbstractGraphTester {
     @Test
     public void testAddLocation() {
         Graph g = createGraph(11);
-        assertEquals(0, g.addNode(12, 23));
-        assertEquals(1, g.addNode(38.33f, 235.3f));
-        assertEquals(2, g.addNode(6, 2339));
-        assertEquals(3, g.addNode(78, 89));
-        assertEquals(4, g.addNode(2, 1));
-        assertEquals(5, g.addNode(7, 5));
+        g.setNode(0, 12, 23);
+        g.setNode(1, 38.33f, 235.3f);
+        g.setNode(2, 6, 2339);
+        g.setNode(3, 78, 89);
+        g.setNode(4, 2, 1);
+        g.setNode(5, 7, 5);
         g.edge(0, 1, 12, true);
         g.edge(0, 2, 212, true);
         g.edge(0, 3, 212, true);
@@ -236,12 +236,12 @@ public abstract class AbstractGraphTester {
     @Test
     public void testDeleteNode() {
         Graph g = createGraph(11);
-        assertEquals(0, g.addNode(12, 23));
-        assertEquals(1, g.addNode(38.33f, 235.3f));
-        assertEquals(2, g.addNode(3, 3));
-        assertEquals(3, g.addNode(78, 89));
-        assertEquals(4, g.addNode(2, 1));
-        assertEquals(5, g.addNode(2.5f, 1));
+        g.setNode(0, 12, 23);
+        g.setNode(1, 38.33f, 235.3f);
+        g.setNode(2, 3, 3);
+        g.setNode(3, 78, 89);
+        g.setNode(4, 2, 1);
+        g.setNode(5, 2.5f, 1);
 
         g.edge(0, 1, 10, true);
         g.edge(0, 3, 20, false);

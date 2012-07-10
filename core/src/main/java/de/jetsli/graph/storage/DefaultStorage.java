@@ -29,6 +29,7 @@ public class DefaultStorage implements Storage {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     protected Graph g;
     protected TIntIntHashMap osmIdToIndexMap;
+    private int internalId = 0;
 
     public DefaultStorage(int expectedNodes) {
         osmIdToIndexMap = new TIntIntHashMap(expectedNodes, 1.4f, -1, -1);
@@ -45,8 +46,9 @@ public class DefaultStorage implements Storage {
 
     @Override
     public boolean addNode(int osmId, double lat, double lon) {
-        int internalId = g.addNode(lat, lon);
+        g.setNode(internalId, lat, lon);
         osmIdToIndexMap.put(osmId, internalId);
+        internalId++;
         return true;
     }
     int counter = 0;

@@ -57,21 +57,19 @@ public class TinkerGraphImpl implements Graph {
     public int getNodes() {
         return (Integer) refNode.getProperty(NODES);
     }
-    int locCounter = 0;
+    private int size = 0;
 
-    Vertex createNode() {
-        Vertex v = g.addVertex(locCounter);
-        locCounter++;
+    Vertex createNode(int id) {
+        Vertex v = g.addVertex(id);
+        size = Math.max(id + 1, size);
         refNode.setProperty(NODES, getNodes() + 1);
         return v;
     }
 
-    public int addNode(double lat, double lon) {
-        int tmp = locCounter;
-        Vertex v = createNode();
+    public void setNode(int index, double lat, double lon) {
+        Vertex v = createNode(index);
         v.setProperty(LAT, lat);
         v.setProperty(LON, lon);
-        return tmp;
     }
 
     public double getLatitude(int index) {
@@ -186,10 +184,12 @@ public class TinkerGraphImpl implements Graph {
             if (delta == 0)
                 throw new IllegalStateException("Couldn't found node with id " + a);
 
+            int tmp = size;
             for (int i = 0; i < delta; i++) {
-                v = createNode();
+                v = createNode(tmp + i);
             }
         }
+        assert v != null;
         return v;
     }
 }

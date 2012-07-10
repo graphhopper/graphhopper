@@ -103,22 +103,22 @@ public class MMapGraphTest extends AbstractGraphTester {
     public void testIncreaseSize() throws IOException {
         MMapGraph graph = (MMapGraph) createGraph(10);
         for (int i = 0; i < 10; i++) {
-            graph.addNode(1, i);
+            graph.setNode(i, 1, i);
         }
 
         graph.ensureCapacity(20);
         assertEquals(26, graph.getNodesCapacity());
 
         for (int i = 10; i < 20; i++) {
-            graph.addNode(1, i);
+            graph.setNode(i, 1, i);
         }
 
         for (int i = 0; i < 20; i++) {
             assertEquals(i, graph.getLongitude(i), 1e-4);
         }
 
-        for (int i = 0; i < 6; i++) {
-            graph.addNode(2, 2);
+        for (int i = 20; i < 26; i++) {
+            graph.setNode(i, 2, 2);
         }
         assertEquals(33, graph.getNodesCapacity());
     }
@@ -157,9 +157,9 @@ public class MMapGraphTest extends AbstractGraphTester {
         String tmpDir = dir + "/test-persist-graph";
         MMapGraph mmgraph = new MMapGraph(tmpDir, 3).createNew(true);
         assertFalse(MMapGraph.isFileMapped(mmgraph.getEdges()));
-        mmgraph.addNode(10, 10);
-        mmgraph.addNode(11, 20);
-        mmgraph.addNode(12, 12);
+        mmgraph.setNode(0, 10, 10);
+        mmgraph.setNode(1, 11, 20);
+        mmgraph.setNode(2, 12, 12);
 
         mmgraph.edge(0, 2, 200, true);
         mmgraph.edge(1, 2, 120, false);
@@ -178,9 +178,9 @@ public class MMapGraphTest extends AbstractGraphTester {
         String tmpDir = dir + "/test-persist-graph";
         MMapGraph mmgraph = new MMapGraph(tmpDir, 3).createNew();
         assertTrue(MMapGraph.isFileMapped(mmgraph.getEdges()));
-        mmgraph.addNode(10, 10);
-        mmgraph.addNode(11, 20);
-        mmgraph.addNode(12, 12);
+        mmgraph.setNode(0, 10, 10);
+        mmgraph.setNode(1, 11, 20);
+        mmgraph.setNode(2, 12, 12);
 
         mmgraph.edge(0, 1, 100, true);
         mmgraph.edge(0, 2, 200, true);

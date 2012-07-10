@@ -28,20 +28,15 @@ public interface Graph {
     void ensureCapacity(int cap);
 
     /**
-     * @return current number of locations
+     * @return the number of indirectly created locations. E.g. via setNode() or edge()
      */
     int getNodes();
 
     /**
-     * Creates a new location with the returned id. If you do not have lat,lon you should create
-     * edges only via edge(int,int,distance,bool) - e.g. in the case for none-real world graphs.
-     *
-     * @return id of new location
-     */    
-    @Deprecated
-    int addNode(double lat, double lon);
-    
-    // TODO void setNode(int index, double lat, double lon);
+     * This method ensures that the node with the specified index exists and sets the lat+lon to the
+     * specified values. The index goes from 0 (inclusive) to getNodes() (exclusive)
+     */
+    void setNode(int index, double lat, double lon);
 
     double getLatitude(int index);
 
@@ -68,7 +63,7 @@ public interface Graph {
      * Schedule the deletion of the specified node until an optimize() call happens
      */
     boolean markNodeDeleted(int index);
-    
+
     boolean isDeleted(int index);
 
     /**

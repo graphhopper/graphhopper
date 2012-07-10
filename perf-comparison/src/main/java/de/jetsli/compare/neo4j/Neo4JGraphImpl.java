@@ -151,13 +151,12 @@ public class Neo4JGraphImpl implements Graph {
         return (int) n.getId() - 1;
     }
 
-    public int addNode(double lat, double lon) {
+    public void setNode(int index, double lat, double lon) {
         ta.ensureStart();
         try {
             Node n = createNode();
             n.setProperty(LAT, lat);
             n.setProperty(LON, lon);
-            return getOurId(n);
         } finally {
             ta.ensureEnd();
         }

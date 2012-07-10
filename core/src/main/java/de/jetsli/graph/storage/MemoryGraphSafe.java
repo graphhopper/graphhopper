@@ -95,15 +95,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         return edgesArea.length / LEN_EDGE;
     }
 
-    @Override public int addNode(double lat, double lon) {
-        int tmp = size;
-        size++;
-        setNode(tmp, lat, lon);
-        return tmp;
-    }
-    //
-    // TODO @Override
-
+    @Override
     public void setNode(int index, double lat, double lon) {
         // writeLock.lock();
         ensureNodeIndex(index);
@@ -408,7 +400,7 @@ public class MemoryGraphSafe implements SaveableGraph {
                 continue;
             double lat = this.getLatitude(oldNodeId);
             double lon = this.getLongitude(oldNodeId);
-            inMemGraph.addNode(lat, lon);
+            inMemGraph.setNode(newNodeId, lat, lon);
             EdgeIdIterator iter = this.getEdges(oldNodeId);
             while (iter.next()) {
                 if (deletedNodes.contains(iter.nodeId()))
