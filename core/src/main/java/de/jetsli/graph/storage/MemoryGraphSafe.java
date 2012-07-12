@@ -124,8 +124,18 @@ public class MemoryGraphSafe implements SaveableGraph {
 
     // Use ONLY within a writer lock area
     private void ensureNodeIndex(int index) {
+        if(index < size)
+            return;
         size = index + 1;
-        ensureNodesCapacity(size);
+        
+        int cap = Math.max(10, Math.round(size * FACTOR));
+        // TODO deletedNodes = copy(deletedNodes, cap);
+        lats = Arrays.copyOf(lats, cap);
+        lons = Arrays.copyOf(lons, cap);
+        // priorities = Arrays.copyOf(priorities, cap);
+        // int oldLen = refToEdges.length;
+        refToEdges = Arrays.copyOf(refToEdges, cap);
+        // Arrays.fill(refToEdges, oldLen, cap, -1);
     }
 
     private void initNodes(int cap) {
@@ -136,20 +146,6 @@ public class MemoryGraphSafe implements SaveableGraph {
         // we ensure that edgePointer always starts from 1 => no need to fill with -1
         // Arrays.fill(refToEdges, -1);
         deletedNodes = new MyOpenBitSet(cap);
-    }
-
-    private void ensureNodesCapacity(int cap) {
-        if (cap < refToEdges.length)
-            return;
-
-        cap = Math.max(10, Math.round(cap * FACTOR));
-        // TODO deletedNodes = copy(deletedNodes, cap);
-        lats = Arrays.copyOf(lats, cap);
-        lons = Arrays.copyOf(lons, cap);
-        // priorities = Arrays.copyOf(priorities, cap);
-        // int oldLen = refToEdges.length;
-        refToEdges = Arrays.copyOf(refToEdges, cap);
-        // Arrays.fill(refToEdges, oldLen, cap, -1);
     }
 
     @Override

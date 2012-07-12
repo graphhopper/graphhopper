@@ -15,10 +15,7 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.routing.AStar;
-import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.DijkstraBidirectionRef;
-import de.jetsli.graph.routing.DijkstraSimple;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.routing.Path;
@@ -33,6 +30,8 @@ import java.io.*;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipInputStream;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -69,10 +68,13 @@ public class OSMReader {
             }
         };
         osm2Graph(osmReader, args);
-        if (args.getBool("dijkstra", false)) {
+        if (args.getBool("test", false)) {
+            new RoutingAlgorithmIntegrationTests(osmReader.getGraph()).start();
+        } else if (args.getBool("dijkstra", false)) {
+            // TODO move dijkstra runner into test class too!
             //warmup
             osmReader.doDijkstra(50);
-            
+
             osmReader.doDijkstra(500);
         }
     }
@@ -92,7 +94,7 @@ public class OSMReader {
      * property 'size' is used to preinstantiate a datastructure/graph to avoid over-memory
      * allocation or reallocation (default is 5mio)
      */
-    public static Graph osm2Graph(CmdArgs args) throws FileNotFoundException {
+    public static Graph osm2Graph(CmdArgs args) throws IOException {
         String storageFolder = args.get("graph", "graph-storage");
         if (Helper.isEmpty(storageFolder))
             throw new IllegalArgumentException("Please specify a folder where to store the graph");
@@ -101,7 +103,7 @@ public class OSMReader {
         return osm2Graph(new OSMReader(storageFolder, size), args);
     }
 
-    public static Graph osm2Graph(OSMReader osmReader, CmdArgs args) throws FileNotFoundException {
+    public static Graph osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
         if (!osmReader.loadExisting()) {
             String strOsm = args.get("osm", "");
             if (Helper.isEmpty(strOsm))
@@ -126,11 +128,11 @@ public class OSMReader {
         Location2IDIndex index = new Location2IDQuadtree(g).prepareIndex(20000);
         double minLat = 49.484186, minLon = 8.974228;
         double maxLat = 50.541363, maxLon = 10.880356;
-//        RoutingAlgorithm algo = new DijkstraBidirectionRef(g);
+        RoutingAlgorithm algo = new DijkstraBidirectionRef(g);
 //        RoutingAlgorithm algo = new DijkstraBidirection(g);
 //        RoutingAlgorithm algo = new DijkstraSimple(g);
-        RoutingAlgorithm algo = new AStar(g);
-        
+//        RoutingAlgorithm algo = new AStar(g);
+
         logger.info("running dijkstra with " + algo.getClass().getSimpleName());
         Random rand = new Random(123);
         StopWatch sw = new StopWatch();
@@ -156,8 +158,8 @@ public class OSMReader {
                 continue;
             }
             if (i % 20 == 0)
-                logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run (path length:" + p.locations() + ")");
-                // + " " + p.toString());
+                logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run (distance:"
+                        + p.distance() + ",length:" + p.locations() + ")");
         }
     }
 
@@ -177,12 +179,22 @@ public class OSMReader {
         return storage.loadExisting();
     }
 
-    public void osm2Graph(File osmXmlFile) throws FileNotFoundException {
+    private InputStream createInputStream(File file) throws IOException {
+        FileInputStream fi = new FileInputStream(file);
+        if (file.getAbsolutePath().endsWith(".gz"))
+            return new GZIPInputStream(fi);
+        else if (file.getAbsolutePath().endsWith(".zip"))
+            return new ZipInputStream(fi);
+
+        return fi;
+    }
+
+    public void osm2Graph(File osmXmlFile) throws IOException {
         // TODO instead of creating two separate input streams,
         // could we use PushbackInputStream(new FileInputStream(osmFile)); ???
-        preprocessAcceptHighwaysOnly(new FileInputStream(osmXmlFile));
-        writeOsm2Graph(new FileInputStream(osmXmlFile));
-        storage.flush();
+
+        preprocessAcceptHighwaysOnly(createInputStream(osmXmlFile));
+        writeOsm2Graph(createInputStream(osmXmlFile));
 
         Map subnetworks = new PrepareRouting(storage.getGraph()).findSubnetworks();
         logger.info("subnetworks:" + subnetworks.size() + " content:" + subnetworks);
@@ -275,6 +287,7 @@ public class OSMReader {
                         break;
                 }
             }
+            logger.info(storage.getNodes() + " vs. " + storage.getGraph().getNodes());
             storage.flush();
         } catch (XMLStreamException ex) {
             throw new RuntimeException("Couldn't process file", ex);

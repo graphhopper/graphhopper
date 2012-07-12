@@ -41,10 +41,10 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
     protected PathWrapperRef shortest;
     protected TIntObjectMap<Edge> shortestDistMapOther;
     private MyBitSet visitedFrom;
-    private PriorityQueue<Edge> prioQueueFrom;
+    private PriorityQueue<Edge> openSetFrom;
     private TIntObjectMap<Edge> shortestDistMapFrom;
     private MyBitSet visitedTo;
-    private PriorityQueue<Edge> prioQueueTo;
+    private PriorityQueue<Edge> openSetTo;
     private TIntObjectMap<Edge> shortestDistMapTo;
     private boolean alreadyRun;
 
@@ -52,11 +52,11 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
         this.graph = graph;
         int locs = Math.max(20, graph.getNodes());
         visitedFrom = new MyOpenBitSet(locs);
-        prioQueueFrom = new PriorityQueue<Edge>(locs / 10);
+        openSetFrom = new PriorityQueue<Edge>(locs / 10);
         shortestDistMapFrom = new TIntObjectHashMap<Edge>(locs / 10);
 
         visitedTo = new MyOpenBitSet(locs);
-        prioQueueTo = new PriorityQueue<Edge>(locs / 10);
+        openSetTo = new PriorityQueue<Edge>(locs / 10);
         shortestDistMapTo = new TIntObjectHashMap<Edge>(locs / 10);
 
         clear();
@@ -66,11 +66,11 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
     public RoutingAlgorithm clear() {
         alreadyRun = false;
         visitedFrom.clear();
-        prioQueueFrom.clear();
+        openSetFrom.clear();
         shortestDistMapFrom.clear();
 
         visitedTo.clear();
-        prioQueueTo.clear();
+        openSetTo.clear();
         shortestDistMapTo.clear();
 
         shortest = new PathWrapperRef();
@@ -157,16 +157,16 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
         int currVertexFrom = curr.node;
         EdgeIdIterator iter = graph.getOutgoing(currVertexFrom);
         while (iter.next()) {
-            int currentLinkedNode = iter.nodeId();
-            if (visitedMain.contains(currentLinkedNode))
+            int neighborNode = iter.nodeId();
+            if (visitedMain.contains(neighborNode))
                 continue;
 
             double tmpDist = iter.distance() + curr.distance;
-            Edge de = shortestDistMap.get(currentLinkedNode);
+            Edge de = shortestDistMap.get(neighborNode);
             if (de == null) {
-                de = new Edge(currentLinkedNode, tmpDist);
+                de = new Edge(neighborNode, tmpDist);
                 de.prevEntry = curr;
-                shortestDistMap.put(currentLinkedNode, de);
+                shortestDistMap.put(neighborNode, de);
                 prioQueue.add(de);
             } else if (de.distance > tmpDist) {
                 // use fibonacci? see http://stackoverflow.com/q/6273833/194609
@@ -178,7 +178,7 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
             }            
             
             // TODO optimize: call only if necessary
-            updateShortest(de, currentLinkedNode);
+            updateShortest(de, neighborNode);
         } // for
     }
 
@@ -199,11 +199,11 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
     public boolean fillEdgesFrom() {
         if (currFrom != null) {
             shortestDistMapOther = shortestDistMapTo;
-            fillEdges(currFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom);
-            if (prioQueueFrom.isEmpty())
+            fillEdges(currFrom, visitedFrom, openSetFrom, shortestDistMapFrom);
+            if (openSetFrom.isEmpty())
                 return false;
 
-            currFrom = prioQueueFrom.poll();
+            currFrom = openSetFrom.poll();
             if (checkFinishCondition())
                 return false;
             visitedFrom.add(currFrom.node);
@@ -215,11 +215,11 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
     public boolean fillEdgesTo() {
         if (currTo != null) {
             shortestDistMapOther = shortestDistMapFrom;
-            fillEdges(currTo, visitedTo, prioQueueTo, shortestDistMapTo);
-            if (prioQueueTo.isEmpty())
+            fillEdges(currTo, visitedTo, openSetTo, shortestDistMapTo);
+            if (openSetTo.isEmpty())
                 return false;
 
-            currTo = prioQueueTo.poll();
+            currTo = openSetTo.poll();
             if (checkFinishCondition())
                 return false;
             visitedTo.add(currTo.node);

@@ -48,10 +48,10 @@ public class DijkstraBidirection implements RoutingAlgorithm {
     protected PathWrapper shortest;
     protected EdgeWrapper wrapperOther;
     private MyBitSet visitedFrom;
-    private IntBinHeap prioQueueFrom;
+    private IntBinHeap openSetFrom;
     private EdgeWrapper wrapperFrom;
     private MyBitSet visitedTo;
-    private IntBinHeap prioQueueTo;
+    private IntBinHeap openSetTo;
     private EdgeWrapper wrapperTo;
     private boolean alreadyRun;
 
@@ -59,11 +59,11 @@ public class DijkstraBidirection implements RoutingAlgorithm {
         this.graph = graph;
         int locs = Math.max(20, graph.getNodes());
         visitedFrom = new MyOpenBitSet(locs);
-        prioQueueFrom = new IntBinHeap(locs / 10);
+        openSetFrom = new IntBinHeap(locs / 10);
         wrapperFrom = new EdgeWrapper(locs / 10);
 
         visitedTo = new MyOpenBitSet(locs);
-        prioQueueTo = new IntBinHeap(locs / 10);
+        openSetTo = new IntBinHeap(locs / 10);
         wrapperTo = new EdgeWrapper(locs / 10);
 
         clear();
@@ -73,11 +73,11 @@ public class DijkstraBidirection implements RoutingAlgorithm {
     public RoutingAlgorithm clear() {
         alreadyRun = false;
         visitedFrom.clear();
-        prioQueueFrom.clear();
+        openSetFrom.clear();
         wrapperFrom.clear();
 
         visitedTo.clear();
-        prioQueueTo.clear();
+        openSetTo.clear();
         wrapperTo.clear();
 
         shortest = new PathWrapper(wrapperFrom, wrapperTo);
@@ -161,14 +161,14 @@ public class DijkstraBidirection implements RoutingAlgorithm {
 
         EdgeIdIterator iter = graph.getOutgoing(currNodeFrom);
         while (iter.next()) {
-            int currentLinkedNode = iter.nodeId();
-            if (visitedMain.contains(currentLinkedNode))
+            int neighborNode = iter.nodeId();
+            if (visitedMain.contains(neighborNode))
                 continue;
 
             double tmpDist = iter.distance() + currDist;
-            int newEdgeId = wrapper.getEdgeId(currentLinkedNode);
+            int newEdgeId = wrapper.getEdgeId(neighborNode);
             if (newEdgeId < 0) {
-                newEdgeId = wrapper.add(currentLinkedNode, tmpDist);
+                newEdgeId = wrapper.add(neighborNode, tmpDist);
                 wrapper.putLink(newEdgeId, currEdgeId);
                 prioQueue.insert(newEdgeId, tmpDist);
             } else {
@@ -183,7 +183,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
             }
 
             // TODO optimize: call only if necessary
-            updateShortest(currentLinkedNode, newEdgeId, tmpDist);
+            updateShortest(neighborNode, newEdgeId, tmpDist);
         }
     }
 
@@ -204,11 +204,11 @@ public class DijkstraBidirection implements RoutingAlgorithm {
 
     public boolean fillEdgesFrom() {
         wrapperOther = wrapperTo;
-        fillEdges(currFrom, currFromDist, currFromEdgeId, visitedFrom, prioQueueFrom, wrapperFrom);
-        if (prioQueueFrom.isEmpty())
+        fillEdges(currFrom, currFromDist, currFromEdgeId, visitedFrom, openSetFrom, wrapperFrom);
+        if (openSetFrom.isEmpty())
             return false;
 
-        currFromEdgeId = prioQueueFrom.extractMin();
+        currFromEdgeId = openSetFrom.extractMin();
         currFrom = wrapperFrom.getNode(currFromEdgeId);
         currFromDist = wrapperFrom.getDistance(currFromEdgeId);
         if (checkFinishCondition())
@@ -219,11 +219,11 @@ public class DijkstraBidirection implements RoutingAlgorithm {
 
     public boolean fillEdgesTo() {
         wrapperOther = wrapperFrom;
-        fillEdges(currTo, currToDist, currToEdgeId, visitedTo, prioQueueTo, wrapperTo);
-        if (prioQueueTo.isEmpty())
+        fillEdges(currTo, currToDist, currToEdgeId, visitedTo, openSetTo, wrapperTo);
+        if (openSetTo.isEmpty())
             return false;
 
-        currToEdgeId = prioQueueTo.extractMin();
+        currToEdgeId = openSetTo.extractMin();
         currTo = wrapperTo.getNode(currToEdgeId);
         currToDist = wrapperTo.getDistance(currToEdgeId);
         if (checkFinishCondition())

@@ -15,10 +15,16 @@
  */
 package de.jetsli.graph.routing;
 
+import de.jetsli.graph.reader.OSMReader;
 import de.jetsli.graph.reader.PrinctonReader;
 import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.Location2IDIndex;
+import de.jetsli.graph.storage.Location2IDQuadtree;
+import de.jetsli.graph.util.CmdArgs;
+import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.StopWatch;
+import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
@@ -38,7 +44,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
     int from;
     int to;
-    
+
     public abstract RoutingAlgorithm createAlgo(Graph g);
 
     @Test public void testCalcShortestPath() {
@@ -125,15 +131,6 @@ public abstract class AbstractRoutingAlgorithmTester {
         return graph;
     }
 
-//    @Test public void testCustomIds() {
-//        Graph graph = new Graph(6);
-//        from = graph.addLocation(100, null);
-//        to = graph.addLocation(200, null);
-//        graph.edge(from, to, 20, true);
-//        Path p = createDijkstra(graph).calcShortestPath(from, to);
-//        assertEquals(p.toString(), 20, p.distance(), 1e-6);
-//        assertEquals(p.toString(), 2, p.locations());
-//    }
     // 1-2-3-4-5
     // |     / |
     // |    9  |
@@ -186,7 +183,8 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), 5, p.locations());
     }
 
-    @Test public void testRekeyBugOfIntBinHeap() {
+    @Test
+    public void testRekeyBugOfIntBinHeap() {
         // using DijkstraSimple + IntBinHeap then rekey loops endlessly
         Path p = createAlgo(matrixGraph).calcShortestPath(36, 91);
         assertEquals(12, p.locations());
@@ -291,7 +289,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         return tmp;
     }
-    
+
     Graph createGraph(int size) {
         return new MemoryGraph(size);
     }

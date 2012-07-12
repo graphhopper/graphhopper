@@ -162,12 +162,17 @@ public class MiniGraphUI {
             @Override public void paintComponent(Graphics2D g2) {
                 if(dijkstraFromId < 0 || dijkstraToId < 0)
                     return;
+                
                 makeTransparent(g2);
+                
+                dijkstraFromId = 628;
+                dijkstraToId = 1641;
 
                 if (algo instanceof DebugAlgo)
                     ((DebugAlgo) algo).setGraphics2D(g2);
                 
                 StopWatch sw = new StopWatch().start();
+                
                 logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId);
                 path = algo.clear().calcShortestPath(dijkstraFromId, dijkstraToId);
                 sw.stop();

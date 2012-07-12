@@ -24,16 +24,6 @@ import de.jetsli.graph.storage.Graph;
 public class AStarTest extends AbstractRoutingAlgorithmTester {
 
     @Override
-    public void testBidirectional() {
-        // TODO add lat+lon to test case
-    }
-
-    @Override
-    public void testBidirectional2() {
-        // TODO add lat+lon to test case
-    }
-
-    @Override
     public RoutingAlgorithm createAlgo(Graph g) {
         return new AStar(g);
     }
