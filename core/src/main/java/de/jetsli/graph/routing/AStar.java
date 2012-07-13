@@ -47,7 +47,7 @@ public class AStar implements RoutingAlgorithm {
         double tmpLon = graph.getLongitude(from);
         double distToGoal = approxDist.calcDistKm(lat, lon, tmpLat, tmpLon);
         double fDistComplete = 0 + distToGoal;
-        AStarEdge fromEntry = new AStarEdge(from, 0, fDistComplete);
+        AStarEdge fromEntry = new AStarEdge(from, fDistComplete, 0);
         AStarEdge curr = fromEntry;
         while (true) {
             int currVertex = curr.node;
@@ -62,7 +62,7 @@ public class AStar implements RoutingAlgorithm {
                 // which satisfies the h(x) requirement instead of this expensive real calculation
                 // 2. use less expensive calc distance 
                 // (e.g. normed dist ... hmh but then entry.distance of edges needs to be normed too!)                
-                double gDist = iter.distance() + curr.distToCompare;
+                float gDist = (float) iter.distance() + curr.distToCompare;
                 AStarEdge de = map.get(neighborNode);
                 if (de == null) {
                     // dup code
@@ -72,7 +72,7 @@ public class AStar implements RoutingAlgorithm {
                     fDistComplete = gDist + distToGoal;
                     // --
 
-                    de = new AStarEdge(neighborNode, gDist, fDistComplete);
+                    de = new AStarEdge(neighborNode, fDistComplete, gDist);
                     de.prevEntry = curr;
                     map.put(neighborNode, de);
                     openSet.add(de);
@@ -121,11 +121,12 @@ public class AStar implements RoutingAlgorithm {
 
         // the variable 'distance' is used to let heap select smallest *full* distance.
         // but to compare distance we need it only from start:
-        double distToCompare;
+        float distToCompare;
 
-        public AStarEdge(int loc, double distToCompare, double distForHeap) {
+        public AStarEdge(int loc, double distForHeap, float distToCompare) {
             super(loc, distForHeap);
-            this.distToCompare = distToCompare;
+            // round makes distance smaller => heuristic should underestimate the distance!
+            this.distToCompare = (float) distToCompare;
         }
     }
 

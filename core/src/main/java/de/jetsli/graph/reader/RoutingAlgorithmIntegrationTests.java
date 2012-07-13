@@ -45,7 +45,7 @@ public class RoutingAlgorithmIntegrationTests {
     public void start() {
         Collector testCollector = new Collector();
 
-        //
+        //  
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.727687, 7.418737, 43.730729, 7.421288, 1.532, 88));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3.448, 136));
