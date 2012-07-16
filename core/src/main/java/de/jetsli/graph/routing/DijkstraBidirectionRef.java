@@ -33,13 +33,9 @@ import java.util.PriorityQueue;
  * @author Peter Karich, info@jetsli.de
  */
 public class DijkstraBidirectionRef implements RoutingAlgorithm {
-
+    
     private int from, to;
-    private Graph graph;
-    protected Edge currFrom;
-    protected Edge currTo;
-    protected PathWrapperRef shortest;
-    protected TIntObjectMap<Edge> shortestDistMapOther;
+    private Graph graph;    
     private MyBitSet visitedFrom;
     private PriorityQueue<Edge> openSetFrom;
     private TIntObjectMap<Edge> shortestDistMapFrom;
@@ -47,6 +43,10 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
     private PriorityQueue<Edge> openSetTo;
     private TIntObjectMap<Edge> shortestDistMapTo;
     private boolean alreadyRun;
+    protected Edge currFrom;
+    protected Edge currTo;    
+    protected TIntObjectMap<Edge> shortestDistMapOther;
+    public PathWrapperRef shortest;
 
     public DijkstraBidirectionRef(Graph graph) {
         this.graph = graph;

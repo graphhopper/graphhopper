@@ -13,13 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.routing;
+package de.jetsli.graph.routing.rideshare;
 
-import de.jetsli.graph.routing.DijkstraShortestOf2ToPub;
 import de.jetsli.graph.routing.DijkstraBidirection;
-import de.jetsli.graph.routing.RoutingAlgorithm;
-import de.jetsli.graph.routing.DijkstraWhichToOne;
 import de.jetsli.graph.routing.Path;
+import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
 import org.junit.Test;

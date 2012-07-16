@@ -37,7 +37,7 @@ import static org.junit.Assert.*;
  */
 public abstract class AbstractRoutingAlgorithmTester {
 
-    static Graph matrixGraph;
+    public static Graph matrixGraph;
 
     static {
         matrixGraph = createMatrixAlikeGraph();

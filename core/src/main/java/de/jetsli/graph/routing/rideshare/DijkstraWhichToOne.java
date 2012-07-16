@@ -13,11 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.routing;
+package de.jetsli.graph.routing.rideshare;
 
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.routing.Path;
+import de.jetsli.graph.routing.PathWrapperRef;
+import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Edge;
 import de.jetsli.graph.util.EdgeIdIterator;
