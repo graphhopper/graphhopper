@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.util;
 
+import static java.lang.Math.*;
+//import static org.apache.commons.math3.util.FastMath.*;
 import de.jetsli.graph.util.shapes.BBox;
 import java.util.Arrays;
 
@@ -36,63 +38,63 @@ public class CalcDistance {
     /**
      * Circumference of the earth
      */
-    public final static double C = 2 * Math.PI * R;
+    public final static double C = 2 * PI * R;
 
     /**
      * http://en.wikipedia.org/wiki/Haversine_formula a = sin²(Δlat/2) +
      * cos(lat1).cos(lat2).sin²(Δlong/2) c = 2.atan2(√a, √(1−a)) d = R.c
      */
     public double calcDistKm(double fromLat, double fromLon, double toLat, double toLon) {
-        double dLat = Math.toRadians(toLat - fromLat);
-        double dLon = Math.toRadians(toLon - fromLon);
-        double normedDist = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(Math.toRadians(fromLat)) * Math.cos(Math.toRadians(toLat)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        return R * 2 * Math.asin(Math.sqrt(normedDist));
+        double dLat = toRadians(toLat - fromLat);
+        double dLon = toRadians(toLon - fromLon);
+        double normedDist = sin(dLat / 2) * sin(dLat / 2)
+                + cos(toRadians(fromLat)) * cos(toRadians(toLat)) * sin(dLon / 2) * sin(dLon / 2);
+        return R * 2 * asin(sqrt(normedDist));
     }
 
     public double denormalizeDist(double normedDist) {
-        return R * 2 * Math.asin(Math.sqrt(normedDist));
+        return R * 2 * asin(sqrt(normedDist));
     }
 
     public double normalizeDist(double dist) {
-        double tmp = Math.sin(dist / 2 / R);
+        double tmp = sin(dist / 2 / R);
         return tmp * tmp;
     }
 
     public double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
-        double dLat = Math.toRadians(toLat - fromLat);
-        double dLon = Math.toRadians(toLon - fromLon);
-        return Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(Math.toRadians(fromLat)) * Math.cos(Math.toRadians(toLat)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double dLat = toRadians(toLat - fromLat);
+        double dLon = toRadians(toLon - fromLon);
+        return sin(dLat / 2) * sin(dLat / 2)
+                + cos(toRadians(fromLat)) * cos(toRadians(toLat)) * sin(dLon / 2) * sin(dLon / 2);
     }
 
     /**
      * @deprecated hmmh seems to be lot slower than calcDistKm
      */
     public double calcCartesianDist(double fromLat, double fromLon, double toLat, double toLon) {
-        fromLat = Math.toRadians(fromLat);
-        fromLon = Math.toRadians(fromLon);
+        fromLat = toRadians(fromLat);
+        fromLon = toRadians(fromLon);
 
-        double tmp = Math.cos(fromLat);
-        double x1 = tmp * Math.cos(fromLon);
-        double y1 = tmp * Math.sin(fromLon);
-        double z1 = Math.sin(fromLat);
+        double tmp = cos(fromLat);
+        double x1 = tmp * cos(fromLon);
+        double y1 = tmp * sin(fromLon);
+        double z1 = sin(fromLat);
 
-        toLat = Math.toRadians(toLat);
-        toLon = Math.toRadians(toLon);
-        tmp = Math.cos(toLat);
-        double x2 = tmp * Math.cos(toLon);
-        double y2 = tmp * Math.sin(toLon);
-        double z2 = Math.sin(toLat);
+        toLat = toRadians(toLat);
+        toLon = toRadians(toLon);
+        tmp = cos(toLat);
+        double x2 = tmp * cos(toLon);
+        double y2 = tmp * sin(toLon);
+        double z2 = sin(toLat);
 
         double dx = x1 - x2;
         double dy = y1 - y2;
         double dz = z1 - z2;
-        return R * Math.sqrt(dx * dx + dy * dy + dz * dz);
+        return R * sqrt(dx * dx + dy * dy + dz * dz);
         // now make quadratic stuff faster:
-//        dx = Math.abs(dx);
-//        dy = Math.abs(dy);
-//        int mn = (int) Math.min(dx, dy);
+//        dx = abs(dx);
+//        dy = abs(dy);
+//        int mn = (int) min(dx, dy);
 //        return dx + dy - (mn >> 1) - (mn >> 2) + (mn >> 4);
     }
 
@@ -104,7 +106,7 @@ public class CalcDistance {
      * Circumference of the earth at different latitudes (breitengrad)
      */
     public double calcCircumference(double lat) {
-        return 2 * Math.PI * R * Math.cos(Math.toRadians(lat));
+        return 2 * PI * R * cos(toRadians(lat));
     }
 
     public double calcSpatialKeyMaxDist(int bit) {
@@ -120,7 +122,7 @@ public class CalcDistance {
     static {
         // sort ascending distances
         int i = arr.length - 1;
-        arr[i] = (int) (Math.round(C * MAX_DIST) / 2);
+        arr[i] = (int) (round(C * MAX_DIST) / 2);
         for (; i > 0; i--) {
             arr[i - 1] = arr[i] / 2;
         }
@@ -139,7 +141,7 @@ public class CalcDistance {
         if (dist < 0)
             return -1;
 
-        int distInt = ((int) Math.round(dist * MAX_DIST));
+        int distInt = ((int) round(dist * MAX_DIST));
         int bitPos = Arrays.binarySearch(arr, distInt);
 
         // negative if located between two distances
@@ -151,13 +153,13 @@ public class CalcDistance {
     }
 
 //    public void toCart(double lat, double lon, FloatCart2D result) {
-//        lat = Math.toRadians(lat);
-//        lon = Math.toRadians(lon);
-//        result.x = (float) (R * Math.cos(lat) * Math.cos(lon));
-//        result.y = (float) (R * Math.cos(lat) * Math.sin(lon));
+//        lat = toRadians(lat);
+//        lon = toRadians(lon);
+//        result.x = (float) (R * cos(lat) * cos(lon));
+//        result.y = (float) (R * cos(lat) * sin(lon));
 //    }
     public boolean isDateLineCrossOver(double lon1, double lon2) {
-        return Math.abs(lon1 - lon2) > 180.0;
+        return abs(lon1 - lon2) > 180.0;
     }
 
     public BBox createBBox(double lat, double lon, double radiusInKm) {

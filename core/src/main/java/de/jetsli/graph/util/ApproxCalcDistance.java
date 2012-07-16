@@ -15,6 +15,9 @@
  */
 package de.jetsli.graph.util;
 
+import static java.lang.Math.*;
+//import static org.apache.commons.math3.util.FastMath.*;
+
 /**
  * Calculates the approximative distance of two points on earth.
  *
@@ -24,16 +27,16 @@ public class ApproxCalcDistance extends CalcDistance {
 
     @Override
     public double calcDistKm(double fromLat, double fromLon, double toLat, double toLon) {
-         double dLat = Math.toRadians(toLat - fromLat);
-        double dLon = Math.toRadians(toLon - fromLon);
-        double left = Math.cos(Math.toRadians((fromLat + toLat) / 2)) * dLon;
+        double dLat = toRadians(toLat - fromLat);
+        double dLon = toRadians(toLon - fromLon);
+        double left = cos(toRadians((fromLat + toLat) / 2)) * dLon;
         double normedDist = dLat * dLat + left * left;
-        return R * Math.sqrt(normedDist);
+        return R * sqrt(normedDist);
     }
 
     @Override
     public double denormalizeDist(double normedDist) {
-        return R * Math.sqrt(normedDist);
+        return R * sqrt(normedDist);
     }
 
     @Override
@@ -44,9 +47,9 @@ public class ApproxCalcDistance extends CalcDistance {
 
     @Override
     public double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
-        double dLat = Math.toRadians(toLat - fromLat);
-        double dLon = Math.toRadians(toLon - fromLon);
-        double left = Math.cos(Math.toRadians((fromLat + toLat) / 2)) * dLon;
+        double dLat = toRadians(toLat - fromLat);
+        double dLon = toRadians(toLon - fromLon);
+        double left = cos(toRadians((fromLat + toLat) / 2)) * dLon;
         return dLat * dLat + left * left;
     }
 }
