@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.routing.DijkstraBidirectionRef;
+import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.routing.Path;
@@ -128,8 +128,8 @@ public class OSMReader {
         Location2IDIndex index = new Location2IDQuadtree(g).prepareIndex(20000);
         double minLat = 49.484186, minLon = 8.974228;
         double maxLat = 50.541363, maxLon = 10.880356;
-        RoutingAlgorithm algo = new DijkstraBidirectionRef(g);
-//        RoutingAlgorithm algo = new DijkstraBidirection(g);
+//        RoutingAlgorithm algo = new DijkstraBidirectionRef(g);
+        RoutingAlgorithm algo = new DijkstraBidirection(g);
 //        RoutingAlgorithm algo = new DijkstraSimple(g);
 //        RoutingAlgorithm algo = new AStar(g);
 

@@ -126,8 +126,11 @@ public class MemoryGraphSafe implements SaveableGraph {
     private void ensureNodeIndex(int index) {
         if(index < size)
             return;
+                
         size = index + 1;
-        
+        if(size <= lats.length)
+            return;
+                
         int cap = Math.max(10, Math.round(size * FACTOR));
         // TODO deletedNodes = copy(deletedNodes, cap);
         lats = Arrays.copyOf(lats, cap);
