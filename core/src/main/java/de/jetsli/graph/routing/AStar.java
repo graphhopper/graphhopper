@@ -31,10 +31,18 @@ import java.util.PriorityQueue;
 public class AStar implements RoutingAlgorithm {
 
     private Graph graph;
-    private CalcDistance approxDist = new CalcDistance();
+    private CalcDistance dist = new ApproxCalcDistance();
 
     public AStar(Graph g) {
         this.graph = g;
+    }
+
+    public AStar setFast(boolean fast) {
+        if (fast)
+            dist = new ApproxCalcDistance();
+        else
+            dist = new CalcDistance();
+        return this;
     }
 
     @Override public Path calcShortestPath(int from, int to) {
@@ -45,7 +53,7 @@ public class AStar implements RoutingAlgorithm {
         double lon = graph.getLongitude(to);
         double tmpLat = graph.getLatitude(from);
         double tmpLon = graph.getLongitude(from);
-        double distToGoal = approxDist.calcDistKm(lat, lon, tmpLat, tmpLon);
+        double distToGoal = dist.calcDistKm(lat, lon, tmpLat, tmpLon);
         double fDistComplete = 0 + distToGoal;
         AStarEdge fromEntry = new AStarEdge(from, fDistComplete, 0);
         AStarEdge curr = fromEntry;
@@ -68,7 +76,7 @@ public class AStar implements RoutingAlgorithm {
                     // dup code
                     tmpLat = graph.getLatitude(neighborNode);
                     tmpLon = graph.getLongitude(neighborNode);
-                    distToGoal = approxDist.calcDistKm(lat, lon, tmpLat, tmpLon);
+                    distToGoal = dist.calcDistKm(lat, lon, tmpLat, tmpLon);
                     fDistComplete = gDist + distToGoal;
                     // --
 
@@ -80,7 +88,7 @@ public class AStar implements RoutingAlgorithm {
                     // dup code
                     tmpLat = graph.getLatitude(neighborNode);
                     tmpLon = graph.getLongitude(neighborNode);
-                    distToGoal = approxDist.calcDistKm(lat, lon, tmpLat, tmpLon);
+                    distToGoal = dist.calcDistKm(lat, lon, tmpLat, tmpLon);
                     fDistComplete = gDist + distToGoal;
                     // --
 

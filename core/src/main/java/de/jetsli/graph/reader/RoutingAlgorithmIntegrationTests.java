@@ -25,7 +25,7 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.util.CmdArgs;
-import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
 import java.io.File;
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class RoutingAlgorithmIntegrationTests {
         list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 16.3845, 636));
         list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 12.4408, 397));
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list);
-        
+
         //
         testUnterfranken(testCollector);
 
@@ -77,16 +77,16 @@ public class RoutingAlgorithmIntegrationTests {
             testCollector.assertNull(algo, 773352, 858026);
             testCollector.assertNull(algo, 696295, 773352);
 
-            testCollector.assertDistance(algo, 424236, 794975, 115.4, 2094);
-            testCollector.assertDistance(algo, 331738, 111807, 121.4, 2328);
-            testCollector.assertDistance(algo, 501620, 155552, 78.0, 1126);
-            testCollector.assertDistance(algo, 399826, 269920, 53.1, 1041);
-            testCollector.assertDistance(algo, 665211, 246823, 35.4, 710);
-            testCollector.assertDistance(algo, 783718, 696695, 66.3, 1283);
-            testCollector.assertDistance(algo, 811865, 641256, 113.3, 1729);
-            testCollector.assertDistance(algo, 513676, 22669, 168.4, 2817);
-            testCollector.assertDistance(algo, 896965, 769132, 6.0, 131);
-            testCollector.assertDistance(algo, 115253, 430074, 56.6, 967);
+            testCollector.assertDistance(algo, 424236, 794975, 115.438, 2094);
+            testCollector.assertDistance(algo, 331738, 111807, 121.364, 2328);
+            testCollector.assertDistance(algo, 501620, 155552, 78.042, 1126);
+            testCollector.assertDistance(algo, 399826, 269920, 53.053, 1041);
+            testCollector.assertDistance(algo, 665211, 246823, 35.36, 710);
+            testCollector.assertDistance(algo, 783718, 696695, 66.330, 1283);
+            testCollector.assertDistance(algo, 811865, 641256, 113.343, 1729);
+            testCollector.assertDistance(algo, 513676, 22669, 168.442, 2817);
+            testCollector.assertDistance(algo, 896965, 769132, 5.983, 131);
+            testCollector.assertDistance(algo, 115253, 430074, 56.564, 967);
             System.out.println("unterfranken " + algo.getClass().getSimpleName()
                     + ": " + (testCollector.list.size() - failed) + " failed");
         }
@@ -114,12 +114,15 @@ public class RoutingAlgorithmIntegrationTests {
             if (p == null)
                 list.add(algo.getClass().getSimpleName() + " returns no path for "
                         + "from:" + from + ", to:" + to);
-            else if (Math.abs(p.distance() - distance) > 1e-1)
+            else if (Math.abs(p.distance() - distance) > 1e-3)
                 list.add(algo.getClass().getSimpleName() + " returns path not matching the expected "
                         + "distance of " + distance + "\t Returned was " + p.distance()
                         + "\t (expected locations " + locations + ", was " + p.locations() + ") "
                         + "from:" + from + ", to:" + to);
-            else if (p.locations() != locations)
+
+            // Yes, there are indeed real world instances where A-B-C is identical to A-C (in meter precision).
+            // And for from:501620, to:155552 the location difference of astar to bi-dijkstra gets even bigger (7!).            
+            if (Math.abs(p.locations() - locations) > 7)
                 list.add(algo.getClass().getSimpleName() + " returns path not matching the expected "
                         + "locations of " + locations + "\t Returned was " + p.locations()
                         + "\t (expected distance " + distance + ", was " + p.distance() + ") "

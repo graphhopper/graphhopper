@@ -83,6 +83,7 @@ public class MyGraphics {
     }
 
     public void plotNode(Graphics2D g2, int loc, Color c) {
+        Color old = g2.getColor();
         g2.setColor(c);
         double lat = g.getLatitude(loc);
         double lon = g.getLongitude(loc);
@@ -90,6 +91,7 @@ public class MyGraphics {
             return;
 
         plot(g2, lat, lon, 4);
+        g2.setColor(old);
     }
 
     public void plot(Graphics2D g2, double lat, double lon, int width) {
