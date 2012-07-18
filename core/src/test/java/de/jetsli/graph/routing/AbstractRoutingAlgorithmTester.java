@@ -15,16 +15,11 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.reader.OSMReader;
 import de.jetsli.graph.reader.PrinctonReader;
-import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.Location2IDIndex;
-import de.jetsli.graph.storage.Location2IDQuadtree;
-import de.jetsli.graph.util.CmdArgs;
-import de.jetsli.graph.util.Helper;
+import de.jetsli.graph.storage.MemoryGraph;
+import de.jetsli.graph.storage.MemoryGraphSafe;
 import de.jetsli.graph.util.StopWatch;
-import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
@@ -249,7 +244,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     private static Graph createMatrixAlikeGraph() {
         int WIDTH = 10;
         int HEIGHT = 15;
-        Graph tmp = new MemoryGraph(WIDTH * HEIGHT);
+        Graph tmp = new MemoryGraphSafe(WIDTH * HEIGHT);
         int[][] matrix = new int[WIDTH][HEIGHT];
         int counter = 0;
         Random rand = new Random(12);
@@ -291,6 +286,6 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
 
     Graph createGraph(int size) {
-        return new MemoryGraph(size);
+        return new MemoryGraphSafe(size);
     }
 }

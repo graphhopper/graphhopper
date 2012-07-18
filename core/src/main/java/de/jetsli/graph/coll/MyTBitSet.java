@@ -54,4 +54,13 @@ public class MyTBitSet implements MyBitSet {
     public void clear() {
         tHash.clear();
     }        
+
+    @Override
+    public void ensureCapacity(int size) {        
+    }
+
+    @Override
+    public int next(int index) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

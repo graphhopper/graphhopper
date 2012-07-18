@@ -24,10 +24,22 @@ import de.jetsli.lucene.OpenBitSet;
  */
 public class MyOpenBitSet implements MyBitSet {
 
-    private final OpenBitSet bitSet;
+    private final ProtectedHack bitSet;
 
     public MyOpenBitSet(int no) {
-        bitSet = new OpenBitSet(no);
+        bitSet = new ProtectedHack(no);
+    }
+
+    static class ProtectedHack extends OpenBitSet {
+
+        public ProtectedHack(long numBits) {
+            super(numBits);
+        }
+
+        @Override
+        public int expandingWordNum(long index) {
+            return super.expandingWordNum(index);
+        }
     }
 
     public MyOpenBitSet() {
@@ -45,12 +57,14 @@ public class MyOpenBitSet implements MyBitSet {
     @Override public String toString() {
         try {
             StringBuilder sb = new StringBuilder();
+            sb.append("{");
             for (DocIdSetIterator iter = bitSet.iterator(); iter.nextDoc() != DocIdSetIterator.NO_MORE_DOCS;) {
-                if (sb.length() != 0)
+                if (sb.length() > 1)
                     sb.append(", ");
 
                 sb.append(iter.docID());
             }
+            sb.append("}");
             return sb.toString();
         } catch (Exception ex) {
             throw new RuntimeException("error constructing bitset string representation", ex);
@@ -65,5 +79,17 @@ public class MyOpenBitSet implements MyBitSet {
     @Override
     public void clear() {
         bitSet.clear(0, bitSet.length());
+    }
+
+    @Override
+    public void ensureCapacity(int size) {
+        bitSet.expandingWordNum(size);
+        // this does not update the numBits variable and failse if assertationen are on!
+        // bitSet.ensureCapacity((size);
+    }
+
+    @Override
+    public int next(int index) {
+        return bitSet.nextSetBit(index);
     }
 }

@@ -18,7 +18,6 @@ package de.jetsli.graph.routing.rideshare;
 import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.RoutingAlgorithm;
-import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -29,7 +28,7 @@ import static org.junit.Assert.*;
  */
 public class DijkstraShortestOf2ToPubTest {
 
-    public RoutingAlgorithm createDijkstra(MemoryGraph g) {
+    public RoutingAlgorithm createDijkstra(Graph g) {
         return new DijkstraWhichToOne(g);
     }
 

@@ -17,7 +17,7 @@ package de.jetsli.graph.coll;
 
 /**
  * Wrapper interface for different implementations like OpenBitset, BitSet, ...
- * 
+ *
  * Supports only integer value indices.
  *
  * @author Peter Karich, info@jetsli.de
@@ -29,6 +29,10 @@ public interface MyBitSet {
     void add(int index);
 
     int getCardinality();
-    
+
     void clear();
+
+    void ensureCapacity(int size);
+
+    int next(int index);
 }

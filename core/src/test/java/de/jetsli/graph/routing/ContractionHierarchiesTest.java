@@ -15,12 +15,9 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.routing.ContractionHierarchies;
 import static de.jetsli.graph.util.MyIteratorable.*;
-import de.jetsli.graph.storage.DistEntry;
-import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
-import gnu.trove.set.hash.TIntHashSet;
+import de.jetsli.graph.storage.MemoryGraphSafe;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -39,7 +36,7 @@ public class ContractionHierarchiesTest {
     
     @Test
     public void testSuperSimpleContract() {
-        Graph g = new MemoryGraph(3);
+        Graph g = new MemoryGraphSafe(3);
 
         g.edge(0, 1, 3, false);
         g.edge(1, 2, 4, false);
@@ -63,7 +60,7 @@ public class ContractionHierarchiesTest {
     
     @Test
     public void testIntroduceShortcut0_2() {
-        Graph g = new MemoryGraph(5);
+        Graph g = new MemoryGraphSafe(5);
         g.edge(0, 3, 2, false);
         g.edge(3, 4, 3, false);
         g.edge(4, 2, 1, false);
@@ -81,7 +78,7 @@ public class ContractionHierarchiesTest {
 
     //@Test
     public void DoNotIntroduceShortCut0_2() {
-        Graph g = new MemoryGraph(5);        
+        Graph g = new MemoryGraphSafe(5);        
         g.edge(0, 1, 3, false);
         g.edge(1, 2, 4, false);
 

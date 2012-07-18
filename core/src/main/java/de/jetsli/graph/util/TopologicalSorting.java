@@ -17,7 +17,6 @@ package de.jetsli.graph.util;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
@@ -32,7 +31,7 @@ public class TopologicalSorting {
     /**
      * conditions: acyclicGraph and all reachable from 0
      */
-    public TIntArrayList sort(MemoryGraph g) {
+    public TIntArrayList sort(Graph g) {
         final TIntArrayList list = new TIntArrayList();
         if (g.getNodes() == 0)
             return list;

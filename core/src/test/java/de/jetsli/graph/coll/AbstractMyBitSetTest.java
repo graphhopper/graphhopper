@@ -31,9 +31,37 @@ public abstract class AbstractMyBitSetTest {
         MyBitSet bs = createBitSet(100);
         bs.add(12);
         bs.add(1);
-        assertEquals("1, 12", bs.toString());
+        assertEquals("{1, 12}", bs.toString());
     }
-    
+
+    @Test
+    public void testNext() {
+        MyBitSet bs = createBitSet(100);
+        bs.add(7);
+        bs.add(90);
+        assertEquals(7, bs.next(0));
+        assertEquals(7, bs.next(7));
+        assertEquals(90, bs.next(8));
+        assertEquals(-1, bs.next(91));
+    }
+
+    @Test
+    public void testEnsureCapacity() {
+        MyBitSet bs = createBitSet(8);
+        bs.add(7);
+        try {
+            bs.add(8);
+            assertTrue(false);
+        } catch (Throwable ex) {
+        }
+        bs.ensureCapacity(16);
+        bs.add(8);
+        bs.add(9);
+        assertFalse(bs.contains(6));
+        assertTrue(bs.contains(7));
+        assertTrue(bs.contains(8));
+    }
+
     @Test
     public void testClear() {
         MyBitSet bs = createBitSet(100);

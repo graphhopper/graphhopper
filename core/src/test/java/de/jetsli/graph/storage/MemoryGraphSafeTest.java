@@ -66,7 +66,7 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
         assertEquals(3, graph.getNodes());
         assertEquals(3, graph.getNodes());
         checkGraph(graph);
-        
+
         graph.edge(3, 4, 123, true);
         checkGraph(graph);
     }

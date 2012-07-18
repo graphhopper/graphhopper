@@ -16,8 +16,6 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.EdgeIdIterator;
-import de.jetsli.graph.util.MyIteratorable;
-import java.util.Iterator;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static de.jetsli.graph.util.MyIteratorable.*;
@@ -107,9 +105,12 @@ public abstract class AbstractGraphTester {
         Graph g = createGraph(11);
         g.edge(1, 2, 10, true);
         g.setNode(0, 12, 23);
+        g.edge(1, 3, 10, true);        
         Graph clone = g.clone();
         assertEquals(g.getNodes(), clone.getNodes());
         assertEquals(count(g.getOutgoing(1)), count(clone.getOutgoing(1)));
+        clone.edge(1, 4, 10, true);
+        assertEquals(3, count(clone.getOutgoing(1)));
     }
 
     @Test
@@ -235,6 +236,11 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testDeleteNode() {
+        testDeleteNodes(20);
+        testDeleteNodes(6);
+    }
+
+    public void testDeleteNodes(int fillToSize) {
         Graph g = createGraph(11);
         g.setNode(0, 12, 23);
         g.setNode(1, 38.33f, 235.3f);
@@ -242,6 +248,18 @@ public abstract class AbstractGraphTester {
         g.setNode(3, 78, 89);
         g.setNode(4, 2, 1);
         g.setNode(5, 2.5f, 1);
+
+        int deleted = 2;
+        for (int i = 6; i < fillToSize; i++) {
+            g.setNode(i, i * 1.5, i * 1.6);
+            if (i % 3 == 0) {
+                g.markNodeDeleted(i);
+                deleted ++;
+            } else {
+                g.edge(i, 0, 10 * i, true);
+                g.edge(i, fillToSize - 1, 10 * i, true);
+            }
+        }
 
         g.edge(0, 1, 10, true);
         g.edge(0, 3, 20, false);
@@ -251,14 +269,37 @@ public abstract class AbstractGraphTester {
         g.markNodeDeleted(0);
         g.markNodeDeleted(2);
         // no deletion happend
-        assertEquals(6, g.getNodes());
+        assertEquals(fillToSize, g.getNodes());
 
         // now actually perform deletion
         g.optimize();
-        assertEquals(4, g.getNodes());
-        assertEquals(38.33f, g.getLatitude(0), 1e-4);
-        assertEquals(78, g.getLatitude(1), 1e-4);
-        assertTrue(MyIteratorable.contains(g.getEdges(0), 3));
-        assertFalse(MyIteratorable.contains(g.getEdges(0), 1));
+
+        assertEquals(fillToSize - deleted, g.getNodes());
+        int id1 = getIdOf(g, 38.33f);
+        assertEquals(235.3f, g.getLongitude(id1), 1e-4);
+        assertTrue(containsLatitude(g, g.getEdges(id1), 2.5));
+        assertFalse(containsLatitude(g, g.getEdges(id1), 12));
+        
+        int id3 = getIdOf(g, 78);
+        assertEquals(89, g.getLongitude(id3), 1e-4);
+        assertTrue(containsLatitude(g, g.getEdges(id3), 2.5));
+        assertFalse(containsLatitude(g, g.getEdges(id3), 12));
+    }
+
+    public boolean containsLatitude(Graph g, EdgeIdIterator iter, double latitude) {
+        while (iter.next()) {
+            if (Math.abs(g.getLatitude(iter.nodeId()) - latitude) < 1e-4)
+                return true;
+        }
+        return false;
+    }
+
+    public int getIdOf(Graph g, double latitude) {
+        int s = g.getNodes();
+        for (int i = 0; i < s; i++) {
+            if (Math.abs(g.getLatitude(i) - latitude) < 1e-4)
+                return i;
+        }
+        return -1;
     }
 }

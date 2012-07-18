@@ -15,7 +15,8 @@
  */
 package de.jetsli.graph.util;
 
-import de.jetsli.graph.storage.MemoryGraph;
+import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.MemoryGraphSafe;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +49,7 @@ public class XFirstSearchTest {
             }
         };
 
-        MemoryGraph g = new MemoryGraph();
+        Graph g = new MemoryGraphSafe(20);
         g.edge(0, 1, 85, true);
         g.edge(0, 2, 217, true);
         g.edge(0, 3, 173, true);

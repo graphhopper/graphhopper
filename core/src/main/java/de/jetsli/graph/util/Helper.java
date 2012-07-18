@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.util;
 
+import de.jetsli.graph.coll.MyBitSet;
 import java.io.*;
 import java.nio.MappedByteBuffer;
 import java.util.*;

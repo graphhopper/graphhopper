@@ -15,8 +15,8 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.MemoryGraphSafe;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -45,7 +45,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
     
     @Test
     public void testCannotCalculateSP2() {
-        Graph g = new MemoryGraph();
+        Graph g = new MemoryGraphSafe(10);
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
                

@@ -20,6 +20,7 @@ import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.hash.TIntIntHashMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -79,7 +80,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             initNodes(cap);
             initEdges(capEdge);
         }
-    }    
+    }
 
     @Override public int getNodes() {
         // readLock.lock();
@@ -124,15 +125,15 @@ public class MemoryGraphSafe implements SaveableGraph {
 
     // Use ONLY within a writer lock area
     private void ensureNodeIndex(int index) {
-        if(index < size)
+        if (index < size)
             return;
-                
+
         size = index + 1;
-        if(size <= lats.length)
+        if (size <= lats.length)
             return;
-                
+
         int cap = Math.max(10, Math.round(size * FACTOR));
-        // TODO deletedNodes = copy(deletedNodes, cap);
+        deletedNodes.ensureCapacity(cap);
         lats = Arrays.copyOf(lats, cap);
         lons = Arrays.copyOf(lons, cap);
         // priorities = Arrays.copyOf(priorities, cap);
@@ -337,6 +338,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         System.arraycopy(lons, 0, g.lons, 0, lons.length);
         System.arraycopy(refToEdges, 0, g.refToEdges, 0, refToEdges.length);
         System.arraycopy(edgesArea, 0, g.edgesArea, 0, edgesArea.length);
+        g.nextEdgePointer = nextEdgePointer;
         g.size = size;
         return g;
     }
@@ -371,14 +373,106 @@ public class MemoryGraphSafe implements SaveableGraph {
         int deleted = deletedNodes.getCardinality();
         if (deleted == 0)
             return;
-        
-        logger.info("lengthy operation: optimizing graph");
+
+
+        if (deleted < size / 5)
+            optimizeIfFewDeletes(deleted);
+        else
+            optimizeIfLotsOfDeletes(deleted);
+    }
+
+    /**
+     * This methods moves the last nodes into the deleted nodes, which is much more memory friendly
+     * but probably slower than optimizeIfLotsOfDeletes for many deletes.
+     */
+    void optimizeIfFewDeletes(int deleted) {
+        // Alternative to this method: use smaller segments for nodes and not one big fat java array?
+        //
+        // Prepare edge-update of nodes which are connected to deleted nodes and 
+        // create old- to new-index map.
+        int index = getNodes();
+        int counter = 0;
+        int newIndices[] = new int[deleted];
+        int oldIndices[] = new int[deleted];
+        TIntIntHashMap markedMap = new TIntIntHashMap(deleted, 1.5f, -1, -1);
+        for (int del = deletedNodes.next(0); del >= 0; del = deletedNodes.next(del + 1)) {
+            EdgeIdIterator delEdgesIter = getEdges(del);
+            while (delEdgesIter.next()) {
+                int currNode = delEdgesIter.nodeId();
+                if (deletedNodes.contains(currNode))
+                    continue;
+
+                // remove all edges to the deleted nodes
+                EdgeIdIterator nodesConnectedToDelIter = getEdges(currNode);
+                boolean firstNext = nodesConnectedToDelIter.next();
+                if (firstNext) {
+                    // this forces new edges to be created => TODO only update the edges. do not create new entries
+                    refToEdges[currNode] = -1;
+                    do {
+                        if (!deletedNodes.contains(nodesConnectedToDelIter.nodeId()))
+                            internalAdd(currNode, nodesConnectedToDelIter.nodeId(),
+                                    nodesConnectedToDelIter.distance(), nodesConnectedToDelIter.flags());
+                    } while (nodesConnectedToDelIter.next());
+                }
+            }
+
+            index--;
+            for (; index >= 0; index--) {
+                if (!deletedNodes.contains(index))
+                    break;
+            }
+
+            newIndices[counter] = del;
+            oldIndices[counter] = index;
+            markedMap.put(index, del);
+            counter++;
+        }
+
+        // now move marked nodes into deleted nodes
+        for (int i = 0; i < oldIndices.length; i++) {
+            int oldI = oldIndices[i];
+            int newI = newIndices[i];
+
+            EdgeIdIterator toMoveEdgeIter = getEdges(oldI);
+            while (toMoveEdgeIter.next()) {
+                int movedNewIndex = markedMap.get(toMoveEdgeIter.nodeId());
+                // if node not moved at all (<0) or node is not yet moved use the old index
+                if (movedNewIndex < 0 || movedNewIndex >= newI) {
+                    movedNewIndex = toMoveEdgeIter.nodeId();
+                }
+
+                // update edges of r to use newI instead of oldI
+                EdgeIdIterator updateIter = getEdges(movedNewIndex);
+                boolean firstNext = updateIter.next();
+                if (firstNext) {
+                    // this forces new edges to be created => TODO only update the edges. do not create new entries
+                    refToEdges[movedNewIndex] = -1;
+                    do {
+                        int connNode;
+                        if (updateIter.nodeId() == oldI)
+                            connNode = newI;
+                        else
+                            connNode = updateIter.nodeId();
+                        internalAdd(movedNewIndex, connNode, updateIter.distance(), updateIter.flags());
+                    } while (updateIter.next());
+                }
+            }
+            refToEdges[newI] = refToEdges[oldI];
+            lats[newI] = lats[oldI];
+            lons[newI] = lons[oldI];
+        }
+
+        deletedNodes = null;
+        size -= deleted;
+    }
+
+    /**
+     * This methods creates a new in-memory graph without the specified deleted nodes.
+     */
+    void optimizeIfLotsOfDeletes(int deleted) {
         MemoryGraphSafe inMemGraph = new MemoryGraphSafe(null, getNodes() - deleted, getMaxEdges());
 
-        /**
-         * This methods creates a new in-memory graph without the specified deleted nodes. see
-         * MMapGraph for a near duplicate
-         */
+        // see MMapGraph for a near duplicate         
         int locs = this.getNodes();
         int newNodeId = 0;
         int[] old2NewMap = new int[locs];

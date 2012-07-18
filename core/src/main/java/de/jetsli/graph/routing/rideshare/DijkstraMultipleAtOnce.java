@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing.rideshare;
 
-import de.jetsli.graph.storage.MemoryGraph;
+import de.jetsli.graph.storage.Graph;
 
 /**
  *
@@ -23,9 +23,9 @@ import de.jetsli.graph.storage.MemoryGraph;
  */
 public class DijkstraMultipleAtOnce {
 
-    private MemoryGraph graph;
+    private Graph graph;
 
-    public DijkstraMultipleAtOnce(MemoryGraph graph) {
+    public DijkstraMultipleAtOnce(Graph graph) {
         this.graph = graph;
     }
 
