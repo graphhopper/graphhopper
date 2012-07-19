@@ -35,23 +35,13 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
-        </dependency>
+        </dependency>        
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>slf4j-simple</artifactId>
             <version>${slf4j.version}</version>
             <scope>runtime</scope>
-        </dependency>
-        
-        <!-- use 1.2.14 instead of 1.2.16 because of
-        java.lang.NullPointerException         at org.apache.log4j.helpers.ISO8601DateFormat.format(ISO8601DateFormat.java:70)
-        -->
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.14</version>
-            <scope>compile</scope>
-        </dependency>
+        </dependency>        
         
         <dependency>
             <groupId>junit</groupId>
@@ -60,20 +50,7 @@
             <version>4.10</version>
             <scope>test</scope>
         </dependency>
-        <!--
-   <dependency>
-       <groupId>org.hamcrest</groupId>
-       <artifactId>hamcrest-core</artifactId>
-       <version>1.3.RC2</version>
-       <scope>test</scope>
-   </dependency>
-   <dependency>
-       <groupId>org.hamcrest</groupId>
-       <artifactId>hamcrest-library</artifactId>
-       <version>1.3.RC2</version>
-       <scope>test</scope>
-   </dependency>           
-        -->     
+        
     </dependencies>
         
     <build>

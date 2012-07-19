@@ -87,4 +87,24 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
         assertEquals(1, count(g.getOutgoing(2)));
         assertTrue(contains(g.getOutgoing(2), 0));
     }
+
+    @Test
+    public void testEdgesSegments() throws IOException {
+        MemoryGraphSafe g = new MemoryGraphSafe(1000);
+        assertEquals(1, g.getSegments());
+        assertEquals(1 << 13, g.getSegmentSize());
+        // minus one because we create a node "i+1"
+        int NEW_SEGS = 10;
+        int max = 1024 * NEW_SEGS - 1;
+        for (int i = 0; i < max; i++) {
+            g.edge(i, i + 1, i * 10, true);
+        }
+
+        assertEquals(1, GraphUtility.count(g.getEdges(0)));
+        assertEquals(2, GraphUtility.count(g.getEdges(1)));
+        assertEquals(2, GraphUtility.count(g.getEdges(10238)));
+        assertEquals(1, GraphUtility.count(g.getEdges(10239)));
+        assertEquals(1 << 13, g.getSegmentSize());
+        assertEquals(NEW_SEGS, g.getSegments());
+    }
 }

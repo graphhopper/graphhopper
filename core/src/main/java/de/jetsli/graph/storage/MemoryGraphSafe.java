@@ -41,6 +41,8 @@ public class MemoryGraphSafe implements SaveableGraph {
     private static final int EMPTY_LINK = 0;
     private static final float DIST_UNIT = 10000f;
     private Logger logger = LoggerFactory.getLogger(getClass());
+    // number of integers not edges
+    private static final int MIN_SEGMENT_SIZE = 1 << 13;
     private static final float FACTOR = 1.5f;
     // keep in mind that we address integers here - not bytes!
     private static final int LEN_DIST = 1;
@@ -48,25 +50,18 @@ public class MemoryGraphSafe implements SaveableGraph {
     private static final int LEN_FLAGS = 1;
     private static final int LEN_LINK = 1;
     private static final int LEN_EDGE = LEN_FLAGS + LEN_DIST + LEN_NODEID + LEN_LINK;
-    // or should we use int and a factor? private static double MICRO = 1000000;
     private float[] lats;
     private float[] lons;
-    // private int[] priorities;
     private long creationTime = System.currentTimeMillis();
     private int size;
     private int[] refToEdges;
-    // TODO use a bitset to memorize fragmented edges-area!
-    private int[] edgesArea;
-    private int nextEdgePointer;
-//    private final ReadWriteLock lock;
-//    private final Lock writeLock;
-//    private final Lock readLock;
+    private int[][] edgesSegments;
+    private int edgesSegmentSize;
+    private int edgeCurrentSegment;
+    private int edgeNextGlobalPointer;
     private String storageLocation;
     private MyBitSet deletedNodes;
 
-//    public MemoryGraphSafe() {
-//        this(10);
-//    }
     public MemoryGraphSafe(int cap) {
         this(null, cap);
     }
@@ -83,13 +78,21 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
     }
 
+    int getSegmentSize() {
+        return edgesSegmentSize;
+    }
+
+    int getSegments() {
+        return edgesSegments.length;
+    }
+
     @Override public int getNodes() {
         // readLock.lock();
         return size;
     }
 
-    public int getMaxEdges() {
-        return edgesArea.length / LEN_EDGE;
+    private int getMaxEdges() {
+        return edgesSegments.length * edgesSegmentSize / LEN_EDGE;
     }
 
     @Override
@@ -101,27 +104,25 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     private void initEdges(int cap) {
-        cap *= LEN_EDGE;
-        edgesArea = new int[cap];
-    }
-
-    // Use ONLY within a writer lock area
-    private void ensureEdgesCapacity(int cap) {
-        ensureEdgePointer(cap * LEN_EDGE);
+        int tmp = (int) (Math.log(cap) / Math.log(2));
+        edgesSegmentSize = Math.max((int) Math.pow(2, tmp), MIN_SEGMENT_SIZE);
+        edgesSegments = new int[1][edgesSegmentSize];
     }
 
     // Use ONLY within a writer lock area
     private void ensureEdgePointer(int pointer) {
-        if (pointer + LEN_EDGE < edgesArea.length)
+        if (pointer + LEN_EDGE < edgesSegmentSize * getSegments())
             return;
 
-        // TODO instead of reallocation (memory waste, time to copy), create multiple segments for 
-        // edges and use the highest bits (any number 2^x) as the segment number.
-        // Choose 2^x as segment number so we can use bit operations and avoid modulo for edgeId lookup!
-        pointer = Math.max(10 * LEN_EDGE, Math.round(pointer * FACTOR));
-        logger.info("ensure space to " + (int) (pointer / LEN_EDGE) + " edges (" + (float) 4 * pointer / (1 << 20) + " MB)");
-        int newLen = pointer;
-        edgesArea = Arrays.copyOf(edgesArea, newLen);
+        // create a new segment
+        edgeCurrentSegment++;
+        int[][] tmp = new int[edgeCurrentSegment + 1][];
+        for (int i = 0; i < edgesSegments.length; i++) {
+            tmp[i] = edgesSegments[i];
+        }
+        tmp[edgeCurrentSegment] = new int[edgesSegmentSize];
+        edgesSegments = tmp;
+        // nextEdgePointer = 0;
     }
 
     // Use ONLY within a writer lock area
@@ -181,6 +182,20 @@ public class MemoryGraphSafe implements SaveableGraph {
         internalAdd(b, a, distance, dirFlag);
     }
 
+    private void saveToEdgeArea(int pointer, int data) {
+        // TODO improve speed via bit operations!
+        int segNumber = pointer / edgesSegmentSize;
+        int segPointer = pointer % edgesSegmentSize;
+        edgesSegments[segNumber][segPointer] = data;
+    }
+
+    private int getFromEdgeArea(int pointer) {
+        // TODO improve speed via bit operations!
+        int segNumber = pointer / edgesSegmentSize;
+        int segPointer = pointer % edgesSegmentSize;
+        return edgesSegments[segNumber][segPointer];
+    }
+
     private void internalAdd(int fromNodeId, int toNodeId, double dist, int flags) {
         int edgePointer = refToEdges[fromNodeId];
         int newPos = nextEdgePointer();
@@ -197,7 +212,7 @@ public class MemoryGraphSafe implements SaveableGraph {
                 throw new IllegalStateException("list cannot be empty for positive edgePointer " + edgePointer + " node:" + fromNodeId);
 
             int linkPointer = getLink(list.get(list.size() - 1));
-            edgesArea[linkPointer] = newPos;
+            saveToEdgeArea(linkPointer, newPos);
         } else
             refToEdges[fromNodeId] = newPos;
 
@@ -211,22 +226,22 @@ public class MemoryGraphSafe implements SaveableGraph {
     private void writeEdge(int edgePointer, int flags, double dist, int toNodeId, int nextEdgePointer) {
         ensureEdgePointer(edgePointer);
 
-        edgesArea[edgePointer] = flags;
+        saveToEdgeArea(edgePointer, flags);
         edgePointer += LEN_FLAGS;
 
-        edgesArea[edgePointer] = (int) (dist * DIST_UNIT);
+        saveToEdgeArea(edgePointer, (int) (dist * DIST_UNIT));
         edgePointer += LEN_DIST;
 
-        edgesArea[edgePointer] = toNodeId;
+        saveToEdgeArea(edgePointer, toNodeId);
         edgePointer += LEN_NODEID;
 
-        edgesArea[edgePointer] = nextEdgePointer;
+        saveToEdgeArea(edgePointer, nextEdgePointer);
         // edgePointer += LEN_LINK;
     }
 
     private int nextEdgePointer() {
-        nextEdgePointer += LEN_EDGE;
-        return nextEdgePointer;
+        edgeNextGlobalPointer += LEN_EDGE;
+        return edgeNextGlobalPointer;
     }
 
     private TIntArrayList readAllEdges(int edgePointer) {
@@ -234,7 +249,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         int i = 0;
         for (; i < 1000; i++) {
             list.add(edgePointer);
-            edgePointer = edgesArea[getLink(edgePointer)];
+            edgePointer = getFromEdgeArea(getLink(edgePointer));
             if (edgePointer == EMPTY_LINK)
                 break;
         }
@@ -282,20 +297,20 @@ public class MemoryGraphSafe implements SaveableGraph {
 
         void readNext() {
             // readLock.lock();
-            flags = edgesArea[pointer];
+            flags = getFromEdgeArea(pointer);
             if (!in && (flags & 1) == 0 || !out && (flags & 2) == 0) {
-                pointer = edgesArea[getLink(pointer)];
+                pointer = getFromEdgeArea(getLink(pointer));
                 return;
             }
             pointer += LEN_FLAGS;
 
-            dist = edgesArea[pointer] / DIST_UNIT;
+            dist = getFromEdgeArea(pointer) / DIST_UNIT;
             pointer += LEN_DIST;
 
-            nodeId = edgesArea[pointer];
+            nodeId = getFromEdgeArea(pointer);
             pointer += LEN_NODEID;
             // next edge
-            pointer = edgesArea[pointer];
+            pointer = getFromEdgeArea(pointer);
             foundNext = true;
         }
 
@@ -334,14 +349,25 @@ public class MemoryGraphSafe implements SaveableGraph {
     @Override
     public Graph clone() {
         // readLock.lock();
-        MemoryGraphSafe g = new MemoryGraphSafe(null, refToEdges.length, getMaxEdges());
-        System.arraycopy(lats, 0, g.lats, 0, lats.length);
-        System.arraycopy(lons, 0, g.lons, 0, lons.length);
-        System.arraycopy(refToEdges, 0, g.refToEdges, 0, refToEdges.length);
-        System.arraycopy(edgesArea, 0, g.edgesArea, 0, edgesArea.length);
-        g.nextEdgePointer = nextEdgePointer;
-        g.size = size;
-        return g;
+        MemoryGraphSafe clonedGraph = new MemoryGraphSafe(null, refToEdges.length, getMaxEdges());
+
+        System.arraycopy(lats, 0, clonedGraph.lats, 0, lats.length);
+        System.arraycopy(lons, 0, clonedGraph.lons, 0, lons.length);
+        System.arraycopy(refToEdges, 0, clonedGraph.refToEdges, 0, refToEdges.length);
+
+        clonedGraph.edgesSegments = new int[edgeCurrentSegment + 1][];
+        for (int i = 0; i < clonedGraph.edgesSegments.length; i++) {
+            clonedGraph.edgesSegments[i] = new int[edgesSegmentSize];
+        }
+
+        for (int i = 0; i < edgesSegments.length; i++) {
+            System.arraycopy(edgesSegments[i], 0, clonedGraph.edgesSegments[i], 0, edgesSegmentSize);
+        }
+        clonedGraph.edgeCurrentSegment = edgeCurrentSegment;
+        clonedGraph.edgesSegmentSize = edgesSegmentSize;
+        clonedGraph.edgeNextGlobalPointer = edgeNextGlobalPointer;
+        clonedGraph.size = size;
+        return clonedGraph;
     }
 
     private MyBitSet getDeletedNodes() {
@@ -380,7 +406,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         if (deleted == 0)
             return;
 
-//        if (deleted < size / 5) {
+//        if (deleted < size / 4) {
         inPlaceDelete(deleted);
 //        } else
 //            optimizeIfLotsOfDeletes(deleted);
@@ -524,7 +550,10 @@ public class MemoryGraphSafe implements SaveableGraph {
         lats = inMemGraph.lats;
         lons = inMemGraph.lons;
         refToEdges = inMemGraph.refToEdges;
-        edgesArea = inMemGraph.edgesArea;
+        for (int i = 0; i < edgesSegments.length; i++) {
+            edgesSegments[i] = inMemGraph.edgesSegments[i];
+        }
+
         size = inMemGraph.size;
         deletedNodes = null;
     }
@@ -541,9 +570,10 @@ public class MemoryGraphSafe implements SaveableGraph {
             Helper.writeFloats(storageLocation + "/lats", lats);
             Helper.writeFloats(storageLocation + "/lons", lons);
             Helper.writeInts(storageLocation + "/refs", refToEdges);
-            Helper.writeInts(storageLocation + "/edges", edgesArea);
-            // Helper.writeInts(storageLocation + "/priorities", priorities);
-            Helper.writeSettings(storageLocation + "/settings", size, creationTime, nextEdgePointer);
+            for (int i = 0; i < edgesSegments.length; i++) {
+                Helper.writeInts(storageLocation + "/edges" + i, edgesSegments[i]);
+            }
+            Helper.writeSettings(storageLocation + "/settings", size, creationTime, edgeNextGlobalPointer, edgeCurrentSegment, edgesSegmentSize);
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't write data to storage. location was " + storageLocation, ex);
         }
@@ -561,15 +591,22 @@ public class MemoryGraphSafe implements SaveableGraph {
 
             size = (Integer) ob[0];
             creationTime = (Long) ob[1];
-            nextEdgePointer = (Integer) ob[2];
-            logger.info("found graph " + storageLocation + " with size:" + size
-                    + ", edges:" + nextEdgePointer / LEN_EDGE + ", created-at:" + new Date(creationTime));
+            edgeNextGlobalPointer = (Integer) ob[2];
+            edgeCurrentSegment = (Integer) ob[3];
+            edgesSegmentSize = (Integer) ob[4];
+            logger.info("found graph " + storageLocation + " with nodes:" + size
+                    + ", edges:" + edgeNextGlobalPointer / LEN_EDGE
+                    + ", edges segments:" + (edgeCurrentSegment + 1)
+                    + ", edges segmentSize:" + edgesSegmentSize
+                    + ", created-at:" + new Date(creationTime));
 
             lats = Helper.readFloats(storageLocation + "/lats");
             lons = Helper.readFloats(storageLocation + "/lons");
             refToEdges = Helper.readInts(storageLocation + "/refs");
-            edgesArea = Helper.readInts(storageLocation + "/edges");
-            // priorities = Helper.readInts(storageLocation + "/priorities");
+            edgesSegments = new int[edgeCurrentSegment + 1][];
+            for (int i = 0; i <= edgeCurrentSegment; i++) {
+                edgesSegments[i] = Helper.readInts(storageLocation + "/edges" + i);
+            }
             deletedNodes = new MyOpenBitSet(lats.length);
             return true;
         } catch (IOException ex) {
