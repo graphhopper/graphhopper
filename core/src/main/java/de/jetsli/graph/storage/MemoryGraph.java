@@ -200,7 +200,7 @@ public class MemoryGraph implements Graph, Cloneable {
 
     @Override
     public void optimize() {
-        int deleted = deletedNodes.getCardinality();
+        int deleted = getDeletedNodes().getCardinality();
         if (deleted == 0)
             return;
         MemoryGraph inMemGraph = new MemoryGraph(getNodes() - deleted);

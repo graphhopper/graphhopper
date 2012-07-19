@@ -196,9 +196,24 @@ public class OSMReader {
 
         preprocessAcceptHighwaysOnly(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
+        cleanUp();
+        flush();
+    }
 
-        Map subnetworks = new PrepareRouting(storage.getGraph()).findSubnetworks();
-        logger.info("subnetworks:" + subnetworks.size() + " content:" + subnetworks);
+    public void cleanUp() {
+        Graph g = storage.getGraph();
+        int prev = g.getNodes();
+        PrepareRouting preparation = new PrepareRouting(g);
+        Map subnetworks = preparation.findSubnetworks();
+        preparation.keepLargestNetwork(subnetworks);
+        g.optimize();
+        int n = g.getNodes();
+        logger.info("nodes " + n + ", subnetworks:" + subnetworks.size() + ", removed them => " + (prev - n) + " less nodes");
+    }
+    
+    
+    public void flush() {
+        storage.flush();
     }
 
     /**
@@ -288,8 +303,7 @@ public class OSMReader {
                         break;
                 }
             }
-            logger.info(storage.getNodes() + " vs. " + storage.getGraph().getNodes());
-            storage.flush();
+            logger.info("storage nodes:" + storage.getNodes() + " vs. graph nodes:" + storage.getGraph().getNodes());
         } catch (XMLStreamException ex) {
             throw new RuntimeException("Couldn't process file", ex);
         } finally {

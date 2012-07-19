@@ -45,7 +45,7 @@ public class RoutingAlgorithmIntegrationTests {
     public void start() {
         Collector testCollector = new Collector();
 
-        //  
+        //
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.727687, 7.418737, 43.730729, 7.421288, 1.532, 88));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3.448, 136));
@@ -53,8 +53,8 @@ public class RoutingAlgorithmIntegrationTests {
 
         //
         list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 16.3845, 636));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 12.4408, 397));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 16.378, 636));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 12.429, 397));
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list);
 
         //
@@ -74,9 +74,6 @@ public class RoutingAlgorithmIntegrationTests {
         RoutingAlgorithm[] algos = createAlgos(unterfrankenGraph);
         for (RoutingAlgorithm algo : algos) {
             int failed = testCollector.list.size();
-            testCollector.assertNull(algo, 773352, 858026);
-            testCollector.assertNull(algo, 696295, 773352);
-
             testCollector.assertDistance(algo, 424236, 794975, 115.438, 2094);
             testCollector.assertDistance(algo, 331738, 111807, 121.364, 2328);
             testCollector.assertDistance(algo, 501620, 155552, 78.042, 1126);
@@ -87,6 +84,11 @@ public class RoutingAlgorithmIntegrationTests {
             testCollector.assertDistance(algo, 513676, 22669, 168.442, 2817);
             testCollector.assertDistance(algo, 896965, 769132, 5.983, 131);
             testCollector.assertDistance(algo, 115253, 430074, 56.564, 967);
+
+            // without deleting subnetwork the following would produce empty paths!
+            testCollector.assertDistance(algo, 773352, 858026, 47.936, 696);
+            testCollector.assertDistance(algo, 696295, 773352, 69.520, 1288);
+
             System.out.println("unterfranken " + algo.getClass().getSimpleName()
                     + ": " + (testCollector.list.size() - failed) + " failed");
         }
@@ -111,10 +113,11 @@ public class RoutingAlgorithmIntegrationTests {
 
         public Collector assertDistance(RoutingAlgorithm algo, int from, int to, double distance, int locations) {
             Path p = algo.clear().calcShortestPath(from, to);
-            if (p == null)
+            if (p == null) {
                 list.add(algo.getClass().getSimpleName() + " returns no path for "
                         + "from:" + from + ", to:" + to);
-            else if (Math.abs(p.distance() - distance) > 1e-3)
+                return this;
+            } else if (Math.abs(p.distance() - distance) > 1e-2)
                 list.add(algo.getClass().getSimpleName() + " returns path not matching the expected "
                         + "distance of " + distance + "\t Returned was " + p.distance()
                         + "\t (expected locations " + locations + ", was " + p.locations() + ") "

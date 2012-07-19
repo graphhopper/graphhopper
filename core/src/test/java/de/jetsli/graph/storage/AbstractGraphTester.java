@@ -334,7 +334,11 @@ public abstract class AbstractGraphTester {
 
         // now actually perform deletion
         g.optimize();
-
+        
+        assertEquals(4, g.getNodes());
+        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+        // shouldn't change anything
+        g.optimize();
         assertEquals(4, g.getNodes());
         assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
     }

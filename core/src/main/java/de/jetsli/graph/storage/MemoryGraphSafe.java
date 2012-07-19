@@ -18,7 +18,6 @@ package de.jetsli.graph.storage;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
 import gnu.trove.list.array.TIntArrayList;
@@ -27,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
-import javax.management.RuntimeErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,7 +134,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             return;
 
         int cap = Math.max(10, Math.round(size * FACTOR));
-        deletedNodes.ensureCapacity(cap);
+        getDeletedNodes().ensureCapacity(cap);
         lats = Arrays.copyOf(lats, cap);
         lons = Arrays.copyOf(lons, cap);
         // priorities = Arrays.copyOf(priorities, cap);
@@ -346,17 +344,23 @@ public class MemoryGraphSafe implements SaveableGraph {
         return g;
     }
 
+    private MyBitSet getDeletedNodes() {
+        if (deletedNodes == null)
+            deletedNodes = new MyOpenBitSet(size);
+        return deletedNodes;
+    }
+
     @Override
     public boolean markNodeDeleted(int index) {
         // writeLock.lock();
-        deletedNodes.add(index);
+        getDeletedNodes().add(index);
         return true;
     }
 
     @Override
     public boolean isDeleted(int index) {
         // readLock.lock();
-        return deletedNodes.contains(index);
+        return getDeletedNodes().contains(index);
     }
 
     /**
@@ -373,10 +377,9 @@ public class MemoryGraphSafe implements SaveableGraph {
     @Override
     public void optimize() {
         // writeLock.lock();
-        int deleted = deletedNodes.getCardinality();
+        int deleted = getDeletedNodes().getCardinality();
         if (deleted == 0)
             return;
-
 
 //        if (deleted < size / 5) {
         inPlaceDelete(deleted);
@@ -481,8 +484,8 @@ public class MemoryGraphSafe implements SaveableGraph {
             lons[newI] = lons[oldI];
         }
 
-        deletedNodes = null;
         size -= deleted;
+        deletedNodes = null;
     }
 
     /**
