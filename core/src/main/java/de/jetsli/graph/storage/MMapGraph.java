@@ -29,7 +29,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static de.jetsli.graph.util.MyIteratorable.*;
+import static de.jetsli.graph.util.GraphUtility.*;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import java.io.*;
 

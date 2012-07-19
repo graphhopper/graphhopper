@@ -16,7 +16,9 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
 import gnu.trove.list.array.TIntArrayList;
@@ -25,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
+import javax.management.RuntimeErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -375,88 +378,104 @@ public class MemoryGraphSafe implements SaveableGraph {
             return;
 
 
-        if (deleted < size / 5)
-            optimizeIfFewDeletes(deleted);
-        else
-            optimizeIfLotsOfDeletes(deleted);
+//        if (deleted < size / 5) {
+        inPlaceDelete(deleted);
+//        } else
+//            optimizeIfLotsOfDeletes(deleted);
     }
 
     /**
      * This methods moves the last nodes into the deleted nodes, which is much more memory friendly
-     * but probably slower than optimizeIfLotsOfDeletes for many deletes.
+     * for only a few deletes but probably not for many deletes.
      */
-    void optimizeIfFewDeletes(int deleted) {
+    void inPlaceDelete(int deleted) {
         // Alternative to this method: use smaller segments for nodes and not one big fat java array?
         //
-        // Prepare edge-update of nodes which are connected to deleted nodes and 
-        // create old- to new-index map.
-        int index = getNodes();
-        int counter = 0;
-        int newIndices[] = new int[deleted];
-        int oldIndices[] = new int[deleted];
-        TIntIntHashMap markedMap = new TIntIntHashMap(deleted, 1.5f, -1, -1);
-        for (int del = deletedNodes.next(0); del >= 0; del = deletedNodes.next(del + 1)) {
-            EdgeIdIterator delEdgesIter = getEdges(del);
+        // Prepare edge-update of nodes which are connected to deleted nodes        
+        int toMoveNode = getNodes();
+        int itemsToMove = 0;
+        int maxMoves = Math.min(deleted, Math.max(0, toMoveNode - deleted));
+        int newIndices[] = new int[maxMoves];
+        int oldIndices[] = new int[maxMoves];
+
+        TIntIntHashMap oldToNewIndexMap = new TIntIntHashMap(deleted, 1.5f, -1, -1);
+        MyBitSetImpl toUpdate = new MyBitSetImpl(deleted * 3);
+        for (int delNode = deletedNodes.next(0); delNode >= 0; delNode = deletedNodes.next(delNode + 1)) {
+            EdgeIdIterator delEdgesIter = getEdges(delNode);
             while (delEdgesIter.next()) {
                 int currNode = delEdgesIter.nodeId();
                 if (deletedNodes.contains(currNode))
                     continue;
 
-                // remove all edges to the deleted nodes
-                EdgeIdIterator nodesConnectedToDelIter = getEdges(currNode);
-                boolean firstNext = nodesConnectedToDelIter.next();
-                if (firstNext) {
-                    // this forces new edges to be created => TODO only update the edges. do not create new entries
-                    refToEdges[currNode] = -1;
-                    do {
-                        if (!deletedNodes.contains(nodesConnectedToDelIter.nodeId()))
-                            internalAdd(currNode, nodesConnectedToDelIter.nodeId(),
-                                    nodesConnectedToDelIter.distance(), nodesConnectedToDelIter.flags());
-                    } while (nodesConnectedToDelIter.next());
-                }
+                toUpdate.add(currNode);
             }
 
-            index--;
-            for (; index >= 0; index--) {
-                if (!deletedNodes.contains(index))
+            toMoveNode--;
+            for (; toMoveNode >= 0; toMoveNode--) {
+                if (!deletedNodes.contains(toMoveNode))
                     break;
             }
 
-            newIndices[counter] = del;
-            oldIndices[counter] = index;
-            markedMap.put(index, del);
-            counter++;
+            if (toMoveNode < delNode)
+                break;
+
+            // create sorted old- to new-index map
+            newIndices[itemsToMove] = delNode;
+            oldIndices[itemsToMove] = toMoveNode;
+            oldToNewIndexMap.put(toMoveNode, delNode);
+            itemsToMove++;
         }
 
-        // now move marked nodes into deleted nodes
-        for (int i = 0; i < oldIndices.length; i++) {
+        // all deleted nodes could be connected to existing. remove the connections
+        for (int toUpdateNode = toUpdate.next(0); toUpdateNode >= 0; toUpdateNode = toUpdate.next(toUpdateNode + 1)) {
+            // remove all edges to the deleted nodes
+            EdgeIdIterator nodesConnectedToDelIter = getEdges(toUpdateNode);
+            // hack to remove edges ref afterwards
+            boolean firstNext = nodesConnectedToDelIter.next();
+            if (firstNext) {
+                // this forces new edges to be created => TODO only update the edges. do not create new entries
+                refToEdges[toUpdateNode] = EMPTY_LINK;
+                do {
+                    if (!deletedNodes.contains(nodesConnectedToDelIter.nodeId()))
+                        internalAdd(toUpdateNode, nodesConnectedToDelIter.nodeId(),
+                                nodesConnectedToDelIter.distance(), nodesConnectedToDelIter.flags());
+                } while (nodesConnectedToDelIter.next());
+            }
+        }
+        toUpdate.clear();
+
+        // marks connected nodes to rewrite the edges
+        for (int i = 0; i < itemsToMove; i++) {
+            int oldI = oldIndices[i];
+            EdgeIdIterator movedEdgeIter = getEdges(oldI);
+            while (movedEdgeIter.next()) {
+                if (deletedNodes.contains(movedEdgeIter.nodeId()))
+                    throw new IllegalStateException("shouldn't happen the edge to the node " + movedEdgeIter.nodeId() + " should be already deleted. " + oldI);
+
+                toUpdate.add(movedEdgeIter.nodeId());
+            }
+        }
+
+        // rewrite the edges of nodes connected to moved nodes
+        for (int toUpdateNode = toUpdate.next(0); toUpdateNode >= 0; toUpdateNode = toUpdate.next(toUpdateNode + 1)) {
+            EdgeIdIterator connectedToMovedIter = getEdges(toUpdateNode);
+            boolean firstNext = connectedToMovedIter.next();
+            if (firstNext) {
+                refToEdges[toUpdateNode] = EMPTY_LINK;
+                do {
+                    int currNode = connectedToMovedIter.nodeId();
+                    int other = oldToNewIndexMap.get(currNode);
+                    if (other < 0)
+                        other = currNode;
+                    internalAdd(toUpdateNode, other, connectedToMovedIter.distance(), connectedToMovedIter.flags());
+                } while (connectedToMovedIter.next());
+            }
+        }
+
+        // move nodes into deleted nodes
+        for (int i = 0; i < itemsToMove; i++) {
             int oldI = oldIndices[i];
             int newI = newIndices[i];
-
-            EdgeIdIterator toMoveEdgeIter = getEdges(oldI);
-            while (toMoveEdgeIter.next()) {
-                int movedNewIndex = markedMap.get(toMoveEdgeIter.nodeId());
-                // if node not moved at all (<0) or node is not yet moved use the old index
-                if (movedNewIndex < 0 || movedNewIndex >= newI) {
-                    movedNewIndex = toMoveEdgeIter.nodeId();
-                }
-
-                // update edges of r to use newI instead of oldI
-                EdgeIdIterator updateIter = getEdges(movedNewIndex);
-                boolean firstNext = updateIter.next();
-                if (firstNext) {
-                    // this forces new edges to be created => TODO only update the edges. do not create new entries
-                    refToEdges[movedNewIndex] = -1;
-                    do {
-                        int connNode;
-                        if (updateIter.nodeId() == oldI)
-                            connNode = newI;
-                        else
-                            connNode = updateIter.nodeId();
-                        internalAdd(movedNewIndex, connNode, updateIter.distance(), updateIter.flags());
-                    } while (updateIter.next());
-                }
-            }
             refToEdges[newI] = refToEdges[oldI];
             lats[newI] = lats[oldI];
             lons[newI] = lons[oldI];
@@ -469,7 +488,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     /**
      * This methods creates a new in-memory graph without the specified deleted nodes.
      */
-    void optimizeIfLotsOfDeletes(int deleted) {
+    void replacingDelete(int deleted) {
         MemoryGraphSafe inMemGraph = new MemoryGraphSafe(null, getNodes() - deleted, getMaxEdges());
 
         // see MMapGraph for a near duplicate         

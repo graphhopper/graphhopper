@@ -18,7 +18,7 @@ package de.jetsli.graph.storage;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.util.EdgeIdIterator;
-import de.jetsli.graph.util.MyIteratorable;
+import de.jetsli.graph.util.GraphUtility;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;

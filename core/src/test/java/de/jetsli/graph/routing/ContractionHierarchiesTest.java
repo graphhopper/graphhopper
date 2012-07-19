@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import static de.jetsli.graph.util.MyIteratorable.*;
+import static de.jetsli.graph.util.GraphUtility.*;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
 import org.junit.Test;

@@ -19,7 +19,7 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.MyIteratorable;
+import de.jetsli.graph.util.GraphUtility;
 import java.util.Date;
 import java.util.PriorityQueue;
 
@@ -50,7 +50,7 @@ public class ContractionHierarchies {
 
         // TODO calculate edge difference => yet another dikstra necessary!?
         for (int i = 0; i < locations; i++) {
-            heap.add(new DistEntry(i, MyIteratorable.count(g.getOutgoing(i))));
+            heap.add(new DistEntry(i, GraphUtility.count(g.getOutgoing(i))));
         }
         DistEntry curr;
         MyBitSet alreadyContracted = new MyOpenBitSet(locations);

@@ -16,9 +16,11 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.GraphUtility;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import static de.jetsli.graph.util.MyIteratorable.*;
+import static de.jetsli.graph.util.GraphUtility.*;
+import java.util.Arrays;
 
 /**
  *
@@ -105,7 +107,7 @@ public abstract class AbstractGraphTester {
         Graph g = createGraph(11);
         g.edge(1, 2, 10, true);
         g.setNode(0, 12, 23);
-        g.edge(1, 3, 10, true);        
+        g.edge(1, 3, 10, true);
         Graph clone = g.clone();
         assertEquals(g.getNodes(), clone.getNodes());
         assertEquals(count(g.getOutgoing(1)), count(clone.getOutgoing(1)));
@@ -236,14 +238,14 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testDeleteNode() {
-        testDeleteNodes(20);
+        testDeleteNodes(21);
         testDeleteNodes(6);
     }
 
     public void testDeleteNodes(int fillToSize) {
         Graph g = createGraph(11);
         g.setNode(0, 12, 23);
-        g.setNode(1, 38.33f, 235.3f);
+        g.setNode(1, 38.33f, 135.3f);
         g.setNode(2, 3, 3);
         g.setNode(3, 78, 89);
         g.setNode(4, 2, 1);
@@ -254,9 +256,14 @@ public abstract class AbstractGraphTester {
             g.setNode(i, i * 1.5, i * 1.6);
             if (i % 3 == 0) {
                 g.markNodeDeleted(i);
-                deleted ++;
+                deleted++;
             } else {
+                // connect to
+                // ... a deleted node
                 g.edge(i, 0, 10 * i, true);
+                // ... a non-deleted and non-moved node
+                g.edge(i, 2, 10 * i, true);
+                // ... a moved node
                 g.edge(i, fillToSize - 1, 10 * i, true);
             }
         }
@@ -271,15 +278,19 @@ public abstract class AbstractGraphTester {
         // no deletion happend
         assertEquals(fillToSize, g.getNodes());
 
+        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+
         // now actually perform deletion
         g.optimize();
 
+        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+
         assertEquals(fillToSize - deleted, g.getNodes());
         int id1 = getIdOf(g, 38.33f);
-        assertEquals(235.3f, g.getLongitude(id1), 1e-4);
+        assertEquals(135.3f, g.getLongitude(id1), 1e-4);
         assertTrue(containsLatitude(g, g.getEdges(id1), 2.5));
         assertFalse(containsLatitude(g, g.getEdges(id1), 12));
-        
+
         int id3 = getIdOf(g, 78);
         assertEquals(89, g.getLongitude(id3), 1e-4);
         assertTrue(containsLatitude(g, g.getEdges(id3), 2.5));
@@ -301,5 +312,30 @@ public abstract class AbstractGraphTester {
                 return i;
         }
         return -1;
+    }
+
+    @Test
+    public void testTestDelete2() {
+        Graph g = createGraph(11);
+        g.setNode(0, 12, 23);
+        g.setNode(1, 38.33f, 135.3f);
+        g.setNode(2, 3, 3);
+        g.setNode(3, 78, 89);
+
+        g.edge(3, 0, 20, true);
+        g.edge(5, 0, 20, true);
+        g.edge(5, 3, 20, true);
+
+        g.markNodeDeleted(0);
+        g.markNodeDeleted(3);
+
+        assertEquals(6, g.getNodes());
+        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+
+        // now actually perform deletion
+        g.optimize();
+
+        assertEquals(4, g.getNodes());
+        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
     }
 }

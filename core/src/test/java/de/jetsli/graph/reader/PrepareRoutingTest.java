@@ -19,8 +19,10 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MMapGraph;
-import de.jetsli.graph.util.MyIteratorable;
+import de.jetsli.graph.storage.MemoryGraphSafe;
+import de.jetsli.graph.util.GraphUtility;
 import de.jetsli.graph.util.XFirstSearch;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.*;
@@ -32,8 +34,12 @@ import static org.junit.Assert.*;
  */
 public class PrepareRoutingTest {
 
+    Graph createGraph(int size) {
+        return new MemoryGraphSafe(size);
+    }
+
     Graph createSubnetworkTestGraph() {
-        Graph g = new MMapGraph(20).createNew();
+        Graph g = createGraph(20);
         // big network
         g.edge(1, 2, 1, true);
         g.edge(1, 4, 1, false);
@@ -80,6 +86,7 @@ public class PrepareRoutingTest {
         instance.keepLargestNetwork(map);
         g.optimize();
 
+        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
         map = instance.findSubnetworks();
         assertEquals(1, map.size());
         assertEquals(7, (int) map.get(0));
@@ -87,7 +94,7 @@ public class PrepareRoutingTest {
 
     // TODO @Test
     public void testAddEdgeToSkip2DegreeNodes() {
-        final Graph g = new MMapGraph(20);
+        final Graph g = createGraph(20);
         g.edge(0, 1, 1, true);
         g.edge(0, 2, 1, true);
         g.edge(1, 2, 1, true);
@@ -130,13 +137,12 @@ public class PrepareRoutingTest {
 
         final AtomicInteger edgesCounter = new AtomicInteger(0);
         new XFirstSearch() {
-
             @Override protected MyBitSet createBitSet(int size) {
                 return new MyTBitSet(size);
             }
 
             @Override protected boolean goFurther(int nodeId) {
-                if (MyIteratorable.count(g.getEdges(nodeId)) == 2)
+                if (GraphUtility.count(g.getEdges(nodeId)) == 2)
                     throw new RuntimeException("should not happen");
 
 

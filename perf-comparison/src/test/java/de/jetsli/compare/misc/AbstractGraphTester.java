@@ -18,9 +18,9 @@ package de.jetsli.compare.misc;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIdIterator;
-import de.jetsli.graph.util.MyIteratorable;
+import de.jetsli.graph.util.GraphUtility;
 import org.junit.Test;
-import static de.jetsli.graph.util.MyIteratorable.*;
+import static de.jetsli.graph.util.GraphUtility.*;
 import static org.junit.Assert.*;
 
 /**
@@ -34,12 +34,12 @@ public abstract class AbstractGraphTester {
     public void testSimpleGet() {
         Graph g = createGraph(10);
         g.setNode(0, 10, 20);
-        assertEquals(0, MyIteratorable.count(g.getEdges(0)));
+        assertEquals(0, GraphUtility.count(g.getEdges(0)));
         assertEquals(10, g.getLatitude(0), 1e-5);
 
         g.edge(0, 1, 10, true);
-        assertEquals(1, MyIteratorable.count(g.getEdges(0)));
-        assertEquals(1, MyIteratorable.count(g.getEdges(1)));
+        assertEquals(1, GraphUtility.count(g.getEdges(0)));
+        assertEquals(1, GraphUtility.count(g.getEdges(1)));
     }
 
     @Test public void testCreateLocation() {

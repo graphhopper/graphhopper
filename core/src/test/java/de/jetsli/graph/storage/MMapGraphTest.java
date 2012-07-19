@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import static org.junit.Assert.*;
-import static de.jetsli.graph.util.MyIteratorable.*;
+import static de.jetsli.graph.util.GraphUtility.*;
 
 /**
  *

@@ -18,7 +18,7 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
-import de.jetsli.graph.util.MyIteratorable;
+import de.jetsli.graph.util.GraphUtility;
 import java.io.File;
 import org.junit.After;
 import org.junit.Test;
@@ -50,9 +50,9 @@ public class OSMReaderTest {
         reader.writeOsm2Graph(getClass().getResourceAsStream("test1.xml"));
         Graph graph = reader.getGraph();
         assertEquals(4, graph.getNodes());
-        assertEquals(1, MyIteratorable.count(graph.getOutgoing(0)));
-        assertEquals(3, MyIteratorable.count(graph.getOutgoing(1)));
-        assertEquals(1, MyIteratorable.count(graph.getOutgoing(2)));
+        assertEquals(1, GraphUtility.count(graph.getOutgoing(0)));
+        assertEquals(3, GraphUtility.count(graph.getOutgoing(1)));
+        assertEquals(1, GraphUtility.count(graph.getOutgoing(2)));
 
         EdgeIdIterator iter = graph.getOutgoing(1);
         assertTrue(iter.next());
@@ -80,9 +80,9 @@ public class OSMReaderTest {
         reader.writeOsm2Graph(getClass().getResourceAsStream("test1.xml"));
         Graph graph = reader.getGraph();
         assertEquals(3, graph.getNodes());
-        assertEquals(1, MyIteratorable.count(graph.getOutgoing(0)));
-        assertEquals(2, MyIteratorable.count(graph.getOutgoing(1)));
-        assertEquals(1, MyIteratorable.count(graph.getOutgoing(2)));
+        assertEquals(1, GraphUtility.count(graph.getOutgoing(0)));
+        assertEquals(2, GraphUtility.count(graph.getOutgoing(1)));
+        assertEquals(1, GraphUtility.count(graph.getOutgoing(2)));
 
         EdgeIdIterator iter = graph.getOutgoing(1);
         assertTrue(iter.next());
