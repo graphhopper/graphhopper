@@ -25,11 +25,14 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.util.CmdArgs;
-import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
+import de.jetsli.graph.util.StopWatch;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Peter Karich
@@ -175,6 +178,52 @@ public class RoutingAlgorithmIntegrationTests {
             throw new RuntimeException("cannot handle osm file " + osmFile, ex);
         } finally {
             Helper.deleteDir(new File(graphFile));
+        }
+    }
+    private Logger logger = LoggerFactory.getLogger(getClass());
+
+    public void runShortestPathPerf(int runs, String algoStr) throws Exception {
+        Location2IDIndex index = new Location2IDQuadtree(unterfrankenGraph).prepareIndex(20000);
+        double minLat = 49.484186, minLon = 8.974228;
+        double maxLat = 50.541363, maxLon = 10.880356;
+        RoutingAlgorithm algo;
+
+        if ("dijkstraref".equalsIgnoreCase(algoStr))
+            algo = new DijkstraBidirectionRef(unterfrankenGraph);
+        else if ("dijkstrabi".equalsIgnoreCase(algoStr))
+            algo = new DijkstraBidirection(unterfrankenGraph);
+        else if ("dijkstra".equalsIgnoreCase(algoStr))
+            algo = new DijkstraSimple(unterfrankenGraph);
+        else
+            algo = new AStar(unterfrankenGraph);
+
+        logger.info("running shortest path with " + algo.getClass().getSimpleName());
+        Random rand = new Random(123);
+        StopWatch sw = new StopWatch();
+        for (int i = 0; i < runs; i++) {
+            double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
+            double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
+            int from = index.findID(fromLat, fromLon);
+            double toLat = rand.nextDouble() * (maxLat - minLat) + minLat;
+            double toLon = rand.nextDouble() * (maxLon - minLon) + minLon;
+            int to = index.findID(toLat, toLon);
+//                logger.info(i + " " + sw + " from (" + from + ")" + fromLat + ", " + fromLon + " to (" + to + ")" + toLat + ", " + toLon);
+            if (from == to) {
+                logger.warn("skipping i " + i + " from==to " + from);
+                continue;
+            }
+
+            algo.clear();
+            sw.start();
+            Path p = algo.calcShortestPath(from, to);
+            sw.stop();
+            if (p == null) {
+                logger.warn("no route found for i=" + i + " !?" + " graph-from " + from + ", graph-to " + to);
+                continue;
+            }
+            if (i % 20 == 0)
+                logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run (distance:"
+                        + p.distance() + ",length:" + p.locations() + ")");
         }
     }
 }

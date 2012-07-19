@@ -17,6 +17,8 @@ package de.jetsli.graph.reader;
 
 import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.routing.DijkstraBidirection;
+import de.jetsli.graph.routing.DijkstraBidirectionRef;
+import de.jetsli.graph.routing.DijkstraSimple;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.routing.Path;
@@ -69,14 +71,14 @@ public class OSMReader {
             }
         };
         osm2Graph(osmReader, args);
+        RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(osmReader.getGraph());
         if (args.getBool("test", false)) {
-            new RoutingAlgorithmIntegrationTests(osmReader.getGraph()).start();
+            tests.start();
         } else if (args.getBool("dijkstra", false)) {
-            // TODO move dijkstra runner into test class too!
+            String algo = args.get("algo", "dijkstra");
             //warmup
-            osmReader.doDijkstra(50);
-
-            osmReader.doDijkstra(500);
+            tests.runShortestPathPerf(50, algo);
+            tests.runShortestPathPerf(500, algo);
         }
     }
     private int expectedLocs;
@@ -122,46 +124,6 @@ public class OSMReader {
 
     private int getMaxLocs() {
         return expectedLocs;
-    }
-
-    public void doDijkstra(int runs) throws Exception {
-        Graph g = storage.getGraph();
-        Location2IDIndex index = new Location2IDQuadtree(g).prepareIndex(20000);
-        double minLat = 49.484186, minLon = 8.974228;
-        double maxLat = 50.541363, maxLon = 10.880356;
-//        RoutingAlgorithm algo = new DijkstraBidirectionRef(g);
-//        RoutingAlgorithm algo = new DijkstraBidirection(g);
-//        RoutingAlgorithm algo = new DijkstraSimple(g);
-        RoutingAlgorithm algo = new AStar(g);
-
-        logger.info("running dijkstra with " + algo.getClass().getSimpleName());
-        Random rand = new Random(123);
-        StopWatch sw = new StopWatch();
-        for (int i = 0; i < runs; i++) {
-            double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
-            double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
-            int from = index.findID(fromLat, fromLon);
-            double toLat = rand.nextDouble() * (maxLat - minLat) + minLat;
-            double toLon = rand.nextDouble() * (maxLon - minLon) + minLon;
-            int to = index.findID(toLat, toLon);
-//                logger.info(i + " " + sw + " from (" + from + ")" + fromLat + ", " + fromLon + " to (" + to + ")" + toLat + ", " + toLon);
-            if (from == to) {
-                logger.warn("skipping i " + i + " from==to " + from);
-                continue;
-            }
-
-            algo.clear();
-            sw.start();
-            Path p = algo.calcShortestPath(from, to);
-            sw.stop();
-            if (p == null) {
-                logger.warn("no route found for i=" + i + " !?" + " graph-from " + from + ", graph-to " + to);
-                continue;
-            }
-            if (i % 20 == 0)
-                logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run (distance:"
-                        + p.distance() + ",length:" + p.locations() + ")");
-        }
     }
 
     public OSMReader(String storageLocation, int size) {
@@ -210,8 +172,7 @@ public class OSMReader {
         int n = g.getNodes();
         logger.info("nodes " + n + ", subnetworks:" + subnetworks.size() + ", removed them => " + (prev - n) + " less nodes");
     }
-    
-    
+
     public void flush() {
         storage.flush();
     }
