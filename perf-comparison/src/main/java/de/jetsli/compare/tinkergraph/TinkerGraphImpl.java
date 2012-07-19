@@ -166,7 +166,7 @@ public class TinkerGraphImpl implements Graph {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public boolean markNodeDeleted(int index) {
+    public void markNodeDeleted(int index) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

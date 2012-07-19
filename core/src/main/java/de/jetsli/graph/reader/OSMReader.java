@@ -15,17 +15,9 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.routing.AStar;
-import de.jetsli.graph.routing.DijkstraBidirection;
-import de.jetsli.graph.routing.DijkstraBidirectionRef;
-import de.jetsli.graph.routing.DijkstraSimple;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.CalcDistance;
-import de.jetsli.graph.routing.Path;
-import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.Location2IDIndex;
-import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.MemoryGraphSafeStorage;
 import de.jetsli.graph.util.*;
 import gnu.trove.list.array.TIntArrayList;
@@ -74,7 +66,7 @@ public class OSMReader {
         RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(osmReader.getGraph());
         if (args.getBool("test", false)) {
             tests.start();
-        } else if (args.getBool("dijkstra", false)) {
+        } else if (args.getBool("shortestpath", false)) {
             String algo = args.get("algo", "dijkstra");
             //warmup
             tests.runShortestPathPerf(50, algo);

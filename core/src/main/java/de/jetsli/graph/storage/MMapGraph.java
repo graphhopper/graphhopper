@@ -772,9 +772,8 @@ public class MMapGraph implements SaveableGraph {
     }
 
     // TODO deletions are NOT persistent
-    @Override public boolean markNodeDeleted(int index) {
+    @Override public void markNodeDeleted(int index) {
         getDeletedNodes().add(index);
-        return true;
     }
 
     @Override public boolean isDeleted(int index) {

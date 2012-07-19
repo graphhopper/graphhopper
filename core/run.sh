@@ -1,12 +1,19 @@
 #!/bin/bash
 
+vers=`$JAVA_HOME/bin/java -version 2>&1 | grep "java version" | awk '{print $3}' | tr -d \"`
+echo "using java $vers from $JAVA_HOME"
+
 FILE=$1
 CLASS=$2
-
+ALGO=$3
 
 if [ "x$CLASS" = "x" ]; then
 # CLASS=de.jetsli.graph.ui.MiniGraphUI
  CLASS=de.jetsli.graph.reader.OSMReader
+fi
+
+if [ "x$ALGO" = "x" ]; then
+ ALGO=astar
 fi
 
 if [ "x$FILE" = "x" ]; then
@@ -14,8 +21,14 @@ if [ "x$FILE" = "x" ]; then
 fi
 
 OSM=$FILE.osm
+
+# for perf tests
+TEST=false
+SPATH=true
+
+# for UI
 DEBUG=false
-DIJKSTRA=true
+
 GRAPH=graph-$OSM
 JAR=target/graphhopper-1.0-SNAPSHOT-jar-with-dependencies.jar
 
@@ -60,14 +73,14 @@ fi
 if [ ! -d "$GRAPH" ]; then
   echo "## now creating graph $GRAPH (folder) from $OSM (file). java opts=$JAVA_OPTS_IMPORT"
   echo "## HINT: put the osm on an external usb drive which should speed up import time"
-  java $JAVA_OPTS_IMPORT -cp $JAR de.jetsli.graph.reader.OSMReader graph=$GRAPH osm=$OSM size=$SIZE
+  $JAVA_HOME/bin/java $JAVA_OPTS_IMPORT -cp $JAR de.jetsli.graph.reader.OSMReader graph=$GRAPH osm=$OSM size=$SIZE
 else
   echo "## using existing graph at $GRAPH"
 fi
 
 if [ -d "$GRAPH" ]; then
   echo "## now running $CLASS. java opts=$JAVA_OPTS_IMPORT"
-  java $JAVA_OPTS -cp $JAR $CLASS graph=$GRAPH debug=$DEBUG dijkstra=$DIJKSTRA
+  $JAVA_HOME/bin/java $JAVA_OPTS -cp $JAR $CLASS graph=$GRAPH debug=$DEBUG test=$TEST shortestpath=$SPATH algo=$ALGO
 else
   echo "## creating graph failed"
 fi

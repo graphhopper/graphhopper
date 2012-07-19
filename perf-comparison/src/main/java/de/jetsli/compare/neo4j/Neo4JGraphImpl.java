@@ -303,12 +303,11 @@ public class Neo4JGraphImpl implements Graph {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public boolean markNodeDeleted(int index) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void markNodeDeleted(int index) {
     }
 
     public boolean isDeleted(int index) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return true;
     }
 
     public void optimize() {

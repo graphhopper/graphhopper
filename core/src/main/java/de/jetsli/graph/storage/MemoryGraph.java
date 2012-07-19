@@ -189,9 +189,8 @@ public class MemoryGraph implements Graph, Cloneable {
     }
 
     @Override
-    public boolean markNodeDeleted(int index) {
+    public void markNodeDeleted(int index) {
         getDeletedNodes().add(index);
-        return true;
     }
 
     @Override public boolean isDeleted(int index) {

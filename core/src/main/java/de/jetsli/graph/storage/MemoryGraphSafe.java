@@ -351,10 +351,9 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     @Override
-    public boolean markNodeDeleted(int index) {
+    public void markNodeDeleted(int index) {
         // writeLock.lock();
         getDeletedNodes().add(index);
-        return true;
     }
 
     @Override

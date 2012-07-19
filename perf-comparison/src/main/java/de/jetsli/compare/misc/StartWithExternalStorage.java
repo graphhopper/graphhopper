@@ -17,12 +17,11 @@ package de.jetsli.compare.misc;
 
 import de.jetsli.compare.neo4j.Neo4JStorage;
 import de.jetsli.graph.reader.OSMReader;
+import de.jetsli.graph.reader.RoutingAlgorithmIntegrationTests;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.Helper;
-import de.jetsli.graph.util.XFirstSearch;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,22 +35,25 @@ public class StartWithExternalStorage {
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
 
-    public void start(CmdArgs readCmdArgs) throws Exception {
-        int initSize = readCmdArgs.getInt("size", 5000000);
-         final Storage s = new Neo4JStorage(readCmdArgs.get("storage", "neo4j.db"), initSize);
+    public void start(CmdArgs args) throws Exception {
+        int initSize = args.getInt("size", 5000000);
+        // TODO subnetworks are not deleted and so for 5 routing queries all nodes are traversed
+        // (but could be even good to warm caches ;))
+        final Storage s = new Neo4JStorage(args.get("storage", "neo4j.db"), initSize);
 //        final Storage s = new TinkerStorage(readCmdArgs.get("storage", "tinker.db"), initSize);
         OSMReader reader = new OSMReader(null, initSize) {
-
             @Override protected Storage createStorage(String storageLocation, int size) {
                 return s;
             }
         };
-        Graph g = OSMReader.osm2Graph(reader, readCmdArgs);
+        Graph g = OSMReader.osm2Graph(reader, args);
         logger.info("finished with locations:" + g.getNodes() + " now warm up ...");
         // warm up caches:
-        reader.doDijkstra(50);
-        
+        RoutingAlgorithmIntegrationTests tester = new RoutingAlgorithmIntegrationTests(g);
+        String algo = args.get("algo", "dijkstra");
+        tester.runShortestPathPerf(50, algo);
+
         logger.info(".. and go!");
-        reader.doDijkstra(1000);
+        tester.runShortestPathPerf(200, algo);
     }
 }

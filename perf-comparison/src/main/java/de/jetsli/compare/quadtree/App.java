@@ -3,10 +3,8 @@ package de.jetsli.compare.quadtree;
 import de.jetsli.graph.reader.MiniPerfTest;
 import de.jetsli.graph.reader.OSMReader;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.Helper;
-import java.io.FileNotFoundException;
 
 /**
  * Performance comparison of quadtree implementations
@@ -22,7 +20,7 @@ public class App {
         new App().start(Helper.readCmdArgs(args));
     }
 
-    public void start(CmdArgs args) throws FileNotFoundException {
+    public void start(CmdArgs args) throws Exception {
         Graph g = OSMReader.osm2Graph(args);
         System.out.println("graph contains " + g.getNodes() + " nodes");
 

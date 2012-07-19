@@ -60,7 +60,7 @@ public interface Graph {
     /**
      * Schedule the deletion of the specified node until an optimize() call happens
      */
-    boolean markNodeDeleted(int index);
+    void markNodeDeleted(int index);
 
     boolean isDeleted(int index);
 
