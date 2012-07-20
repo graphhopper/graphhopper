@@ -53,8 +53,7 @@ public class PrepareRouting {
         Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         final AtomicInteger integ = new AtomicInteger(0);
         int locs = g.getNodes();
-        final MyBitSet bs = new MyOpenBitSet(locs);
-        logger.info("created bitset");
+        final MyBitSet bs = new MyOpenBitSet(locs);        
         for (int start = 0; start < locs; start++) {
             if (bs.contains(start))
                 continue;
@@ -77,8 +76,6 @@ public class PrepareRouting {
                 }
             }.start(g, start, true);
 
-            if (map.size() % 1000 == 0)
-                logger.info("subnetworks:" + map.size());
             map.put(start, integ.get());
             integ.set(0);
         }
@@ -116,7 +113,6 @@ public class PrepareRouting {
      * Deletes the complete subnetwork reachable through start
      */
     public void deleteNetwork(int start, int entries, final MyBitSet bs) {
-        logger.info("delete subnetwork " + start + " with " + entries + " entries");
         new XFirstSearch() {
             @Override protected MyBitSet createBitSet(int size) {
                 return bs;
