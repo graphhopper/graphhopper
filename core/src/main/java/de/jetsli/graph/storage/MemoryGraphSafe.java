@@ -114,7 +114,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         if (pointer + LEN_EDGE < edgesSegmentSize * getSegments())
             return;
 
-        // create a new segment
+        logger.info("Creating new segment");
         edgeCurrentSegment++;
         int[][] tmp = new int[edgeCurrentSegment + 1][];
         for (int i = 0; i < edgesSegments.length; i++) {

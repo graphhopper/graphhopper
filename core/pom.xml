@@ -38,14 +38,18 @@
         </dependency>        
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
+            <artifactId>slf4j-log4j12</artifactId>
             <version>${slf4j.version}</version>
             <scope>runtime</scope>
-        </dependency>        
-        
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+            <scope>runtime</scope>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
-            <!-- do not include hamcrest -->
             <artifactId>junit-dep</artifactId>
             <version>4.10</version>
             <scope>test</scope>
