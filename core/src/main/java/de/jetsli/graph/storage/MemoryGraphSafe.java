@@ -39,8 +39,7 @@ import org.slf4j.LoggerFactory;
 public class MemoryGraphSafe implements SaveableGraph {
 
     private static final int EMPTY_LINK = 0;
-    private static final float DIST_UNIT = 10000f;
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private static final float DIST_UNIT = 10000f;    
     // number of integers not edges
     private static final int MIN_SEGMENT_SIZE = 1 << 13;
     private static final float FACTOR = 1.5f;
@@ -50,15 +49,19 @@ public class MemoryGraphSafe implements SaveableGraph {
     private static final int LEN_FLAGS = 1;
     private static final int LEN_LINK = 1;
     private static final int LEN_EDGE = LEN_FLAGS + LEN_DIST + LEN_NODEID + LEN_LINK;
+    protected Logger logger = LoggerFactory.getLogger(getClass());
+    // nodes
     private float[] lats;
     private float[] lons;
-    private long creationTime = System.currentTimeMillis();
-    private int size;
     private int[] refToEdges;
+    // edges
     private int[][] edgesSegments;
     private int edgesSegmentSize;
     private int edgeCurrentSegment;
     private int edgeNextGlobalPointer;
+    // some properties
+    private long creationTime = System.currentTimeMillis();
+    private int size;
     private String storageLocation;
     private MyBitSet deletedNodes;
 
@@ -126,31 +129,27 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     // Use ONLY within a writer lock area
-    private void ensureNodeIndex(int index) {
+    protected int ensureNodeIndex(int index) {
         if (index < size)
-            return;
+            return -1;
 
         size = index + 1;
         if (size <= lats.length)
-            return;
+            return -1;
 
         int cap = Math.max(10, Math.round(size * FACTOR));
         getDeletedNodes().ensureCapacity(cap);
         lats = Arrays.copyOf(lats, cap);
         lons = Arrays.copyOf(lons, cap);
-        // priorities = Arrays.copyOf(priorities, cap);
-        // int oldLen = refToEdges.length;
         refToEdges = Arrays.copyOf(refToEdges, cap);
-        // Arrays.fill(refToEdges, oldLen, cap, -1);
+        return cap;
     }
 
-    private void initNodes(int cap) {
+    protected void initNodes(int cap) {
         lats = new float[cap];
         lons = new float[cap];
-        refToEdges = new int[cap];
-        // priorities = new int[cap];
         // we ensure that edgePointer always starts from 1 => no need to fill with -1
-        // Arrays.fill(refToEdges, -1);
+        refToEdges = new int[cap];
         deletedNodes = new MyOpenBitSet(cap);
     }
 
@@ -196,18 +195,11 @@ public class MemoryGraphSafe implements SaveableGraph {
         return edgesSegments[segNumber][segPointer];
     }
 
-    private void internalAdd(int fromNodeId, int toNodeId, double dist, int flags) {
+    protected void internalAdd(int fromNodeId, int toNodeId, double dist, int flags) {
         int edgePointer = refToEdges[fromNodeId];
         int newPos = nextEdgePointer();
         if (edgePointer > 0) {
             TIntArrayList list = readAllEdges(edgePointer);
-            // TODO sort by priority but include the latest entry too!
-            // Collections.sort(list, listPrioSorter);
-            // int len = list.size();
-            // for (int i = 0; i < len; i++) {
-            //    int pointer = list.get(i);
-            //    copyEdge();
-            // }
             if (list.isEmpty())
                 throw new IllegalStateException("list cannot be empty for positive edgePointer " + edgePointer + " node:" + fromNodeId);
 
@@ -346,10 +338,14 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
     }
 
+    protected MemoryGraphSafe creatThis(String storage, int nodes, int edges) {
+        return new MemoryGraphSafe(storage, nodes, edges);
+    }
+
     @Override
     public Graph clone() {
         // readLock.lock();
-        MemoryGraphSafe clonedGraph = new MemoryGraphSafe(null, refToEdges.length, getMaxEdges());
+        MemoryGraphSafe clonedGraph = creatThis(null, refToEdges.length, getMaxEdges());
 
         System.arraycopy(lats, 0, clonedGraph.lats, 0, lats.length);
         System.arraycopy(lons, 0, clonedGraph.lons, 0, lons.length);
@@ -558,9 +554,9 @@ public class MemoryGraphSafe implements SaveableGraph {
         deletedNodes = null;
     }
 
-    public void save() {
+    public boolean save() {
         if (storageLocation == null)
-            return;
+            return false;
         // readLock.lock();
         try {
             File tmp = new File(storageLocation);
@@ -574,8 +570,9 @@ public class MemoryGraphSafe implements SaveableGraph {
                 Helper.writeInts(storageLocation + "/edges" + i, edgesSegments[i]);
             }
             Helper.writeSettings(storageLocation + "/settings", size, creationTime, edgeNextGlobalPointer, edgeCurrentSegment, edgesSegmentSize);
+            return true;
         } catch (IOException ex) {
-            throw new RuntimeException("Couldn't write data to storage. location was " + storageLocation, ex);
+            throw new RuntimeException("Couldn't write data to disc. location=" + storageLocation, ex);
         }
     }
 
@@ -602,7 +599,7 @@ public class MemoryGraphSafe implements SaveableGraph {
 
             lats = Helper.readFloats(storageLocation + "/lats");
             lons = Helper.readFloats(storageLocation + "/lons");
-            refToEdges = Helper.readInts(storageLocation + "/refs");
+            refToEdges = Helper.readInts(storageLocation + "/refs");            
             edgesSegments = new int[edgeCurrentSegment + 1][];
             for (int i = 0; i <= edgeCurrentSegment; i++) {
                 edgesSegments[i] = Helper.readInts(storageLocation + "/edges" + i);
@@ -610,7 +607,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             deletedNodes = new MyOpenBitSet(lats.length);
             return true;
         } catch (IOException ex) {
-            throw new RuntimeException("Couldn't load data to storage. location=" + storageLocation, ex);
+            throw new RuntimeException("Couldn't load data from disc. location=" + storageLocation, ex);
         }
     }
 

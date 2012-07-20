@@ -101,7 +101,6 @@ public class PrepareRoutingTest {
         g.edge(2, 3, 1, true);
         g.edge(1, 4, 1, true);
         g.edge(2, 9, 1, true);
-        g.edge(2, 3, 1, true);
         g.edge(9, 3, 1, true);
         g.edge(10, 3, 1, true);
         g.edge(4, 5, 1, true);
