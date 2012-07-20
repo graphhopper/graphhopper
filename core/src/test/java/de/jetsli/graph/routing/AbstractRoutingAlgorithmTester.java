@@ -58,7 +58,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     // a-b--c-d
     //
     protected Graph createTestGraph() {
-        Graph graph = createGraph(8);
+        Graph graph = createGraph(20);
         from = 0;
         to = 7;
 
@@ -158,7 +158,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     // \   /   /
     //  8-7-6-/
     @Test public void testBidirectional2() {
-        Graph graph = createGraph(6);
+        Graph graph = createGraph(20);
         from = 0;
         to = 4;
 
@@ -203,7 +203,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     @Test
     public void testDirectedGraphBug1() {
-        Graph g = createGraph(5);
+        Graph g = createGraph(10);
         g.edge(0, 1, 3, false);
         g.edge(1, 2, 3, false);
 
@@ -221,9 +221,10 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         String name = getClass().getSimpleName();
         Random rand = new Random(0);
-        Graph graph = createGraph(0);
+        Graph graph = createGraph(10000);
 
         String bigFile = "10000EWD.txt.gz";
+
 //        String bigFile = "largeEWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
         StopWatch sw = new StopWatch();
@@ -236,9 +237,13 @@ public abstract class AbstractRoutingAlgorithmTester {
             Path p = d.calcShortestPath(index1, index2);
             if (i >= noJvmWarming)
                 sw.stop();
+
             System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.locations());
         }
-        System.out.println("# " + name + ":" + sw.stop().getSeconds() + ", per run:" + sw.stop().getSeconds() / ((float) (N - noJvmWarming)));
+
+        float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
+        System.out.println("# " + name + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
+        assertTrue("speed to low!? " + perRun + " per run", perRun < 0.05);
     }
 
     private static Graph createMatrixAlikeGraph() {
@@ -248,23 +253,9 @@ public abstract class AbstractRoutingAlgorithmTester {
         int[][] matrix = new int[WIDTH][HEIGHT];
         int counter = 0;
         Random rand = new Random(12);
+        boolean print = false;
         for (int h = 0; h < HEIGHT; h++) {
-            for (int w = 0; w < WIDTH; w++) {
-                System.out.print(" |\t           ");
-            }
-            System.out.println();
-
-            for (int w = 0; w < WIDTH; w++) {
-                matrix[w][h] = counter++;
-
-                if (h > 0) {
-                    float dist = 5 + Math.abs(rand.nextInt(5));
-                    System.out.print(" " + (int) dist + "\t           ");
-                    tmp.edge(matrix[w][h], matrix[w][h - 1], dist, true);
-                }
-            }
-            System.out.println();
-            if (h > 0) {
+            if (print) {
                 for (int w = 0; w < WIDTH; w++) {
                     System.out.print(" |\t           ");
                 }
@@ -272,20 +263,43 @@ public abstract class AbstractRoutingAlgorithmTester {
             }
 
             for (int w = 0; w < WIDTH; w++) {
+                matrix[w][h] = counter++;
+
+                if (h > 0) {
+                    float dist = 5 + Math.abs(rand.nextInt(5));
+                    if (print)
+                        System.out.print(" " + (int) dist + "\t           ");
+                    tmp.edge(matrix[w][h], matrix[w][h - 1], dist, true);
+                }
+            }
+            if (print) {
+                System.out.println();
+                if (h > 0) {
+                    for (int w = 0; w < WIDTH; w++) {
+                        System.out.print(" |\t           ");
+                    }
+                    System.out.println();
+                }
+            }
+
+            for (int w = 0; w < WIDTH; w++) {
                 if (w > 0) {
                     float dist = 5 + Math.abs(rand.nextInt(5));
-                    System.out.print("-- " + (int) dist + "\t-- ");
+                    if (print)
+                        System.out.print("-- " + (int) dist + "\t-- ");
                     tmp.edge(matrix[w][h], matrix[w - 1][h], dist, true);
                 }
-                System.out.print("(" + matrix[w][h] + ")\t");
+                if (print)
+                    System.out.print("(" + matrix[w][h] + ")\t");
             }
-            System.out.println();
+            if (print)
+                System.out.println();
         }
 
         return tmp;
     }
 
     Graph createGraph(int size) {
-        return new MemoryGraphSafe(size);
+        return new MemoryGraphSafe(null, size, 4 * size);
     }
 }

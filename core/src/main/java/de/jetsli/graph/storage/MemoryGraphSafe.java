@@ -104,7 +104,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     private void initEdges(int cap) {
-        int tmp = (int) (Math.log(cap) / Math.log(2));
+        int tmp = (int) (Math.log(cap * LEN_EDGE) / Math.log(2));
         edgesSegmentSize = Math.max((int) Math.pow(2, tmp), MIN_SEGMENT_SIZE);
         edgesSegments = new int[1][edgesSegmentSize];
     }
@@ -114,7 +114,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         if (pointer + LEN_EDGE < edgesSegmentSize * getSegments())
             return;
 
-        logger.info("Creating new segment");
+        logger.info("Creating new edge segment " + edgesSegmentSize * 4f / (1 << 20) + " MB");
         edgeCurrentSegment++;
         int[][] tmp = new int[edgeCurrentSegment + 1][];
         for (int i = 0; i < edgesSegments.length; i++) {

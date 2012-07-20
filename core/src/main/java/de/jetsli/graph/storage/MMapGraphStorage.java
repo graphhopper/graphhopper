@@ -46,7 +46,7 @@ public class MMapGraphStorage extends DefaultStorage {
     }
     
     @Override public void stats() {
-        getMMapGraph().stats();
+        getMMapGraph().stats(true);
     }
 
     @Override

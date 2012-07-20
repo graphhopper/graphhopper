@@ -53,7 +53,7 @@ public class MMapGraphTest extends AbstractGraphTester {
     @Test
     public void testStats() {
         super.testDozendEdges();
-        ((MMapGraph) g).stats();
+        ((MMapGraph) g).stats(false);
     }
 
     @Test

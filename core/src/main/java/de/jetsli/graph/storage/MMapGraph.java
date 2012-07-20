@@ -284,9 +284,9 @@ public class MMapGraph implements SaveableGraph {
                 ensureNodesCapacity(index + 1);
             } catch (IOException ex) {
                 throw new RuntimeException("Couldn't expand nodes from " + index, ex);
-            }        
+            }
         }
-        
+
         size = Math.max(size, index + 1);
         nodes.position(index * bytesNode);
         nodes.putFloat((float) lat);
@@ -693,7 +693,7 @@ public class MMapGraph implements SaveableGraph {
         }
     }
 
-    public void stats() {
+    public void stats(boolean print) {
         float locs = getNodes();
         int edgesNo = 0;
         int outEdgesNo = 0;
@@ -738,6 +738,9 @@ public class MMapGraph implements SaveableGraph {
             edgeLengthStats.put(tmpEdges, meanDist);
         }
 
+        if (!print)
+            return;
+        
         for (int i = 0; i < max; i++) {
             System.out.print(i + "\t");
         }

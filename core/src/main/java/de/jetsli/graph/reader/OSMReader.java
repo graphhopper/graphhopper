@@ -158,14 +158,14 @@ public class OSMReader {
         Graph g = storage.getGraph();
         int prev = g.getNodes();
         PrepareRouting preparation = new PrepareRouting(g);
-        Map subnetworks = preparation.findSubnetworks();
-        preparation.keepLargestNetwork(subnetworks);
-        g.optimize();
+        logger.info("start finding subnetworks");
+        int subnetworks = preparation.doWork();
         int n = g.getNodes();
-        logger.info("nodes " + n + ", subnetworks:" + subnetworks.size() + ", removed them => " + (prev - n) + " less nodes");
+        logger.info("nodes " + n + ", subnetworks:" + subnetworks + ", removed them => " + (prev - n) + " less nodes");
     }
 
     public void flush() {
+        logger.info("flushing ...");
         storage.flush();
     }
 

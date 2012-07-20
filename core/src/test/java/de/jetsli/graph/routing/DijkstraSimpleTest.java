@@ -15,8 +15,6 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.routing.DijkstraSimple;
-import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 
 /**

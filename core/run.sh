@@ -50,7 +50,7 @@ else
 fi
 
 if [ ! -f "$OSM" ]; then
-  echo "WARNING: Running this will use ~500MB on disc: 450MB for $OSM (only 40MB for the download of the compressed one) and 30MB for the graph"
+  echo "WARNING: Running this will use lots of space on disc and download several MB"
   read -e  
   BZ=$OSM.bz2
   rm $BZ

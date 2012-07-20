@@ -24,24 +24,29 @@ import de.jetsli.graph.util.XFirstSearch;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Peter Karich
  */
 public class PrepareRouting {
 
+    private Logger logger = LoggerFactory.getLogger(getClass());
     private final Graph g;
 
     public PrepareRouting(Graph g) {
         this.g = g;
     }
 
-    public void doWork() {
+    public int doWork() {
         Map<Integer, Integer> map = findSubnetworks();
         keepLargestNetwork(map);
 
-        // not working at the moment addEdgesToSkip2DegreeNodes();
+        // not working at the moment: addEdgesToSkip2DegreeNodes();
+        logger.info("optimize...");
         g.optimize();
+        return map.size();
     }
 
     public Map<Integer, Integer> findSubnetworks() {
@@ -49,12 +54,12 @@ public class PrepareRouting {
         final AtomicInteger integ = new AtomicInteger(0);
         int locs = g.getNodes();
         final MyBitSet bs = new MyOpenBitSet(locs);
+        logger.info("created bitset");
         for (int start = 0; start < locs; start++) {
             if (bs.contains(start))
                 continue;
 
             new XFirstSearch() {
-
                 @Override protected MyBitSet createBitSet(int size) {
                     return bs;
                 }
@@ -72,6 +77,8 @@ public class PrepareRouting {
                 }
             }.start(g, start, true);
 
+            if (map.size() % 1000 == 0)
+                logger.info("subnetworks:" + map.size());
             map.put(start, integ.get());
             integ.set(0);
         }
@@ -87,6 +94,7 @@ public class PrepareRouting {
 
         int biggestStart = -1;
         int count = -1;
+        MyTBitSet bs = new MyTBitSet(g.getNodes());
         for (Entry<Integer, Integer> e : map.entrySet()) {
             if (biggestStart < 0) {
                 biggestStart = e.getKey();
@@ -95,23 +103,23 @@ public class PrepareRouting {
             }
 
             if (count < e.getValue()) {
-                deleteNetwork(biggestStart);
+                deleteNetwork(biggestStart, e.getValue(), bs);
 
                 biggestStart = e.getKey();
                 count = e.getValue();
             } else
-                deleteNetwork(e.getKey());
+                deleteNetwork(e.getKey(), e.getValue(), bs);
         }
     }
 
     /**
      * Deletes the complete subnetwork reachable through start
      */
-    public void deleteNetwork(int start) {
+    public void deleteNetwork(int start, int entries, final MyBitSet bs) {
+        logger.info("delete subnetwork " + start + " with " + entries + " entries");
         new XFirstSearch() {
-
             @Override protected MyBitSet createBitSet(int size) {
-                return new MyTBitSet(size);
+                return bs;
             }
 
             @Override protected EdgeIdIterator getEdges(Graph g, int current) {
@@ -128,7 +136,6 @@ public class PrepareRouting {
     public void addEdgesToSkip2DegreeNodes() {
         // TODO        
         new XFirstSearch() {
-
             @Override protected MyBitSet createBitSet(int size) {
                 return new MyOpenBitSet(g.getNodes());
             }
@@ -136,7 +143,7 @@ public class PrepareRouting {
             @Override protected boolean goFurther(int nodeId) {
                 int counter = 0;
                 EdgeIdIterator iter = g.getEdges(nodeId);
-                while(iter.next()) {
+                while (iter.next()) {
                     // TODO list.set(counter, e);
                     counter++;
                 }
