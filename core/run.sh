@@ -50,7 +50,7 @@ else
 fi
 
 if [ ! -f "$OSM" ]; then
-  echo "WARNING: Running this will use lots of space on disc and download several MB"
+  echo "No OSM file found. Grabbing it from internet. Press CTRL+C if you do not have enough disc space or you don't want to download several MB"
   read -e  
   BZ=$OSM.bz2
   rm $BZ

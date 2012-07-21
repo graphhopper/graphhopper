@@ -58,7 +58,7 @@ public class MemoryGraphExt extends MemoryGraphSafe {
     protected void internalAdd(int fromNodeId, int toNodeId, double dist, int flags) {
         super.internalAdd(fromNodeId, toNodeId, dist, flags);
 
-        // TODO sort by priority but include the latest entry too!
+        // TODO sort by priority but include the latest entry too!        
         // Collections.sort(list, listPrioSorter);
         // int len = list.size();
         // for (int i = 0; i < len; i++) {

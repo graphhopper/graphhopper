@@ -182,14 +182,14 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     private void saveToEdgeArea(int pointer, int data) {
-        // TODO improve speed via bit operations!
+        // uh, speed won't be improved via bit operations!
         int segNumber = pointer / edgesSegmentSize;
         int segPointer = pointer % edgesSegmentSize;
         edgesSegments[segNumber][segPointer] = data;
     }
 
     private int getFromEdgeArea(int pointer) {
-        // TODO improve speed via bit operations!
+        // uh, speed won't be improved via bit operations!
         int segNumber = pointer / edgesSegmentSize;
         int segPointer = pointer % edgesSegmentSize;
         return edgesSegments[segNumber][segPointer];
