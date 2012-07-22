@@ -46,11 +46,8 @@ public abstract class AbstractGraphTester {
         assertEquals(1, count(graph.getOutgoing(2)));
 
         graph.edge(2, 3, 12, true);
-        assertEquals(2, count(graph.getOutgoing(2)));
-
-//        assertEquals(0, count(graph.getOutgoing(a1.id())));        
         assertEquals(1, count(graph.getOutgoing(1)));
-        assertEquals(2, count(graph.getOutgoing(2)));
+        assertEquals(2, count(graph.getOutgoing(2)));        
         assertEquals(1, count(graph.getOutgoing(3)));
     }
 
@@ -66,16 +63,16 @@ public abstract class AbstractGraphTester {
         assertFalse(i.next());
 
         i = g.getOutgoing(3);
-        i.next();
+        assertTrue(i.next());
         assertEquals(2, i.nodeId());
         assertFalse(i.next());
 
         i = g.getOutgoing(1);
-        i.next();
+        assertTrue(i.next());
         assertEquals(2, i.nodeId());
-        i.next();
+        assertTrue(i.next());
         assertEquals(11, i.nodeId());
-        i.next();
+        assertTrue(i.next());
         assertEquals(12, i.nodeId());
         assertFalse(i.next());
     }
@@ -88,7 +85,7 @@ public abstract class AbstractGraphTester {
         EdgeIdIterator i = g.getOutgoing(2);
         assertFalse(i.next());
         i = g.getOutgoing(3);
-        i.next();
+        assertTrue(i.next());
         assertEquals(2, i.nodeId());
         assertFalse(i.next());
 

@@ -93,9 +93,8 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
         MemoryGraphSafe g = new MemoryGraphSafe(1000);
         assertEquals(1, g.getSegments());
         assertEquals(1 << 13, g.getSegmentSize());
-        // minus one because we create a node "i+1"
-        int NEW_SEGS = 10;
-        int max = 1024 * NEW_SEGS - 1;
+        // minus one because we create a node "i+1"        
+        int max = 1024 * 10 - 1;
         for (int i = 0; i < max; i++) {
             g.edge(i, i + 1, i * 10, true);
         }
@@ -105,6 +104,6 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
         assertEquals(2, GraphUtility.count(g.getEdges(10238)));
         assertEquals(1, GraphUtility.count(g.getEdges(10239)));
         assertEquals(1 << 13, g.getSegmentSize());
-        assertEquals(NEW_SEGS, g.getSegments());
+        assertEquals(8, g.getSegments());
     }
 }

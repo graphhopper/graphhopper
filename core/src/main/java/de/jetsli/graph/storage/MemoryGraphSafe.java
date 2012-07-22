@@ -39,16 +39,19 @@ import org.slf4j.LoggerFactory;
 public class MemoryGraphSafe implements SaveableGraph {
 
     private static final int EMPTY_LINK = 0;
-    private static final float DIST_UNIT = 10000f;    
+    private static final float DIST_UNIT = 10000f;
     // number of integers not edges
     private static final int MIN_SEGMENT_SIZE = 1 << 13;
     private static final float FACTOR = 1.5f;
-    // keep in mind that we address integers here - not bytes!
+    // EDGES LAYOUT - keep in mind that we address integers here - not bytes!
+    // one edge is referenced by two nodes A and B, where it is id(A) < id(B). flags are relative to A
     private static final int LEN_DIST = 1;
-    private static final int LEN_NODEID = 1;
+    private static final int LEN_NODEA_ID = 1;
+    private static final int LEN_NODEB_ID = 1;
     private static final int LEN_FLAGS = 1;
-    private static final int LEN_LINK = 1;
-    private static final int LEN_EDGE = LEN_FLAGS + LEN_DIST + LEN_NODEID + LEN_LINK;
+    private static final int LEN_LINKA = 1;
+    private static final int LEN_LINKB = 1;
+    private static final int LEN_EDGE = LEN_NODEA_ID + LEN_NODEB_ID + LEN_LINKA + LEN_LINKB + LEN_FLAGS + LEN_DIST;
     protected Logger logger = LoggerFactory.getLogger(getClass());
     // nodes
     private float[] lats;
@@ -171,14 +174,10 @@ public class MemoryGraphSafe implements SaveableGraph {
         ensureNodeIndex(a);
         ensureNodeIndex(b);
 
-        int dirFlag = 3;
-        if (!bothDirections)
-            dirFlag = 1;
-        internalAdd(a, b, distance, dirFlag);
-
-        if (!bothDirections)
-            dirFlag = 2;
-        internalAdd(b, a, distance, dirFlag);
+        if (bothDirections)
+            internalAdd(a, b, distance, 3);
+        else
+            internalAdd(a, b, distance, 1);
     }
 
     private void saveToEdgeArea(int pointer, int data) {
@@ -195,40 +194,81 @@ public class MemoryGraphSafe implements SaveableGraph {
         return edgesSegments[segNumber][segPointer];
     }
 
+    private int getOtherNode(int nodeThis, int edgePointer) {
+        int nodeA = getFromEdgeArea(edgePointer);
+        if (nodeA == nodeThis)
+            // return b
+            return getFromEdgeArea(edgePointer + LEN_NODEA_ID);
+        // return a
+        return nodeA;
+    }
+
+    private int getLink(int nodeThis, int nodeOther, int edgePointer) {
+        if (nodeThis < nodeOther)
+            // get link to next a
+            return edgePointer + LEN_NODEA_ID + LEN_NODEB_ID;
+
+        // b
+        return edgePointer + LEN_NODEA_ID + LEN_NODEB_ID + LEN_LINKA;
+    }
+
     protected void internalAdd(int fromNodeId, int toNodeId, double dist, int flags) {
+        int newOrExistingEdgePointer = nextEdgePointer();
+        connectNewEdge(fromNodeId, newOrExistingEdgePointer);
+        connectNewEdge(toNodeId, newOrExistingEdgePointer);
+        writeEdge(newOrExistingEdgePointer, flags, dist, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK);
+    }
+
+    private void connectNewEdge(int fromNodeId, int newOrExistingEdgePointer) {
         int edgePointer = refToEdges[fromNodeId];
-        int newPos = nextEdgePointer();
         if (edgePointer > 0) {
-            TIntArrayList list = readAllEdges(edgePointer);
-            if (list.isEmpty())
-                throw new IllegalStateException("list cannot be empty for positive edgePointer " + edgePointer + " node:" + fromNodeId);
-
-            int linkPointer = getLink(list.get(list.size() - 1));
-            saveToEdgeArea(linkPointer, newPos);
-        } else
-            refToEdges[fromNodeId] = newPos;
-
-        writeEdge(newPos, flags, dist, toNodeId, EMPTY_LINK);
+            // append edge and overwrite EMPTY_LINK
+            int lastEdgePointer = getLastEdgePointer(fromNodeId, edgePointer);
+            saveToEdgeArea(lastEdgePointer, newOrExistingEdgePointer);
+        } else {
+            refToEdges[fromNodeId] = newOrExistingEdgePointer;
+        }
     }
 
-    private int getLink(int edgePointer) {
-        return edgePointer + LEN_EDGE - LEN_LINK;
-    }
-
-    private void writeEdge(int edgePointer, int flags, double dist, int toNodeId, int nextEdgePointer) {
+    // writes distance, flags, nodeThis, *nodeOther* and nextEdgePointer
+    private void writeEdge(int edgePointer, int flags, double dist, int nodeThis, int nodeOther,
+            int nextEdgePointer, int nextEdgeOtherPointer) {
         ensureEdgePointer(edgePointer);
+
+        if (nodeThis > nodeOther) {
+            int tmp = nodeThis;
+            nodeThis = nodeOther;
+            nodeOther = tmp;
+
+            tmp = nextEdgePointer;
+            nextEdgePointer = nextEdgeOtherPointer;
+            nextEdgeOtherPointer = tmp;
+
+            // switch direction flag
+            if ((flags & 0x3) == 1)
+                flags = 2;
+        }
+
+        saveToEdgeArea(edgePointer, nodeThis);
+        edgePointer += LEN_NODEA_ID;
+
+        saveToEdgeArea(edgePointer, nodeOther);
+        edgePointer += LEN_NODEB_ID;
+
+        saveToEdgeArea(edgePointer, nextEdgePointer);
+        edgePointer += LEN_LINKA;
+
+        saveToEdgeArea(edgePointer, nextEdgeOtherPointer);
+        edgePointer += LEN_LINKB;
 
         saveToEdgeArea(edgePointer, flags);
         edgePointer += LEN_FLAGS;
 
         saveToEdgeArea(edgePointer, (int) (dist * DIST_UNIT));
-        edgePointer += LEN_DIST;
+        //edgePointer += LEN_DIST;
+    }
 
-        saveToEdgeArea(edgePointer, toNodeId);
-        edgePointer += LEN_NODEID;
-
-        saveToEdgeArea(edgePointer, nextEdgePointer);
-        // edgePointer += LEN_LINK;
+    private void updateEdgeB(int edgePointer, int flags, double dist, int nodeB, int nextEdgePointerB) {
     }
 
     private int nextEdgePointer() {
@@ -236,18 +276,21 @@ public class MemoryGraphSafe implements SaveableGraph {
         return edgeNextGlobalPointer;
     }
 
-    private TIntArrayList readAllEdges(int edgePointer) {
-        TIntArrayList list = new TIntArrayList(5);
+    private int getLastEdgePointer(int nodeThis, int edgePointer) {
+        int lastLink = -1;
         int i = 0;
+        int otherNode;
         for (; i < 1000; i++) {
-            list.add(edgePointer);
-            edgePointer = getFromEdgeArea(getLink(edgePointer));
+            otherNode = getOtherNode(nodeThis, edgePointer);
+            lastLink = getLink(nodeThis, otherNode, edgePointer);
+            edgePointer = getFromEdgeArea(lastLink);
             if (edgePointer == EMPTY_LINK)
                 break;
         }
+
         if (i >= 1000)
             throw new IllegalStateException("endless loop? edge count is probably not higher than " + i);
-        return list;
+        return lastLink;
     }
 
     @Override
@@ -272,38 +315,61 @@ public class MemoryGraphSafe implements SaveableGraph {
 
     private class EdgeIterable implements EdgeIdIterator {
 
-        private int pointer;
+        private int lastPointer;
         private boolean in;
         private boolean out;
         private boolean foundNext;
         // edge properties        
         private int flags;
-        private float dist;
+        private float distance;
         private int nodeId;
+        private int fromNode;
+        private int nextEdgePointer;
 
         public EdgeIterable(int node, boolean in, boolean out) {
-            this.pointer = refToEdges[node];
+            this.fromNode = node;
+            this.nextEdgePointer = refToEdges[node];
             this.in = in;
             this.out = out;
         }
 
         void readNext() {
             // readLock.lock();
+            int pointer = lastPointer = nextEdgePointer;
+            nodeId = getOtherNode(fromNode, pointer);
+
+            // position to next edge
+            nextEdgePointer = getFromEdgeArea(getLink(fromNode, nodeId, pointer));
+
+            // position to flags
+            pointer += LEN_EDGE - LEN_FLAGS - LEN_DIST;
             flags = getFromEdgeArea(pointer);
+
+            // switch direction flags if necessary
+            if (fromNode > nodeId && (flags & 0x3) < 3)
+                flags = ~(flags & 0x3);
+
             if (!in && (flags & 1) == 0 || !out && (flags & 2) == 0) {
-                pointer = getFromEdgeArea(getLink(pointer));
-                return;
+                // skip this edge as it does not fit to defined filter
+            } else {
+                // position to distance
+                pointer += LEN_FLAGS;
+                distance = getFromEdgeArea(pointer) / DIST_UNIT;
+                foundNext = true;
             }
-            pointer += LEN_FLAGS;
+        }
 
-            dist = getFromEdgeArea(pointer) / DIST_UNIT;
-            pointer += LEN_DIST;
-
-            nodeId = getFromEdgeArea(pointer);
-            pointer += LEN_NODEID;
-            // next edge
-            pointer = getFromEdgeArea(pointer);
-            foundNext = true;
+        public void remove() {
+            // TODO not only the reference for fromNode needs to be removed!
+            // we need a counter part to internalAdd!
+            
+            if (true) {
+                // only one edge:
+                // refToEdges[node] = EMPTY_LINK;
+            } else {
+                // get pointer within the last edge => previousLink
+                // saveToEdgeArea(previousLink, lastPointer);
+            }
         }
 
         @Override
@@ -311,7 +377,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             int i = 0;
             foundNext = false;
             for (; i < 1000; i++) {
-                if (pointer == EMPTY_LINK)
+                if (nextEdgePointer == EMPTY_LINK)
                     break;
                 readNext();
                 if (foundNext)
@@ -329,7 +395,7 @@ public class MemoryGraphSafe implements SaveableGraph {
 
         @Override
         public double distance() {
-            return dist;
+            return distance;
         }
 
         @Override
@@ -599,7 +665,7 @@ public class MemoryGraphSafe implements SaveableGraph {
 
             lats = Helper.readFloats(storageLocation + "/lats");
             lons = Helper.readFloats(storageLocation + "/lons");
-            refToEdges = Helper.readInts(storageLocation + "/refs");            
+            refToEdges = Helper.readInts(storageLocation + "/refs");
             edgesSegments = new int[edgeCurrentSegment + 1][];
             for (int i = 0; i <= edgeCurrentSegment; i++) {
                 edgesSegments[i] = Helper.readInts(storageLocation + "/edges" + i);
