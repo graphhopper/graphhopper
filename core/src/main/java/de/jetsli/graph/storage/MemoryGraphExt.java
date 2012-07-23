@@ -55,8 +55,8 @@ public class MemoryGraphExt extends MemoryGraphSafe {
     }
 
     @Override
-    protected void internalAdd(int fromNodeId, int toNodeId, double dist, int flags) {
-        super.internalAdd(fromNodeId, toNodeId, dist, flags);
+    protected void internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags) {
+        super.internalEdgeAdd(fromNodeId, toNodeId, dist, flags);
 
         // TODO sort by priority but include the latest entry too!        
         // Collections.sort(list, listPrioSorter);

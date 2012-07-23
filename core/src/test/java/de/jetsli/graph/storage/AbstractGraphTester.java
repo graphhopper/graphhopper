@@ -47,7 +47,7 @@ public abstract class AbstractGraphTester {
 
         graph.edge(2, 3, 12, true);
         assertEquals(1, count(graph.getOutgoing(1)));
-        assertEquals(2, count(graph.getOutgoing(2)));        
+        assertEquals(2, count(graph.getOutgoing(2)));
         assertEquals(1, count(graph.getOutgoing(3)));
     }
 
@@ -234,6 +234,18 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
+    public void testIdenticalNodes() {
+        Graph g = createGraph(2);
+        g.edge(0, 0, 100, true);
+        assertEquals(1, GraphUtility.count(g.getEdges(0)));
+
+        g = createGraph(2);
+        g.edge(0, 0, 100, false);
+        g.edge(0, 0, 100, false);
+        assertEquals(2, GraphUtility.count(g.getEdges(0)));
+    }
+
+    @Test
     public void testDeleteNode() {
         testDeleteNodes(21);
         testDeleteNodes(6);
@@ -312,7 +324,7 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testTestDelete2() {
+    public void testTestSimpleDelete() {
         Graph g = createGraph(11);
         g.setNode(0, 12, 23);
         g.setNode(1, 38.33f, 135.3f);
@@ -331,7 +343,7 @@ public abstract class AbstractGraphTester {
 
         // now actually perform deletion
         g.optimize();
-        
+
         assertEquals(4, g.getNodes());
         assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
         // shouldn't change anything
