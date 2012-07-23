@@ -62,10 +62,16 @@ public abstract class AbstractGraphTester {
         EdgeIdIterator i = g.getOutgoing(2);
         assertFalse(i.next());
 
+        assertEquals(1, GraphUtility.count(g.getIncoming(1)));
+        assertEquals(2, GraphUtility.count(g.getIncoming(2)));
+        assertEquals(0, GraphUtility.count(g.getIncoming(3)));
+
+        assertEquals(3, GraphUtility.count(g.getOutgoing(1)));
+        assertEquals(0, GraphUtility.count(g.getOutgoing(2)));
+        assertEquals(1, GraphUtility.count(g.getOutgoing(3)));
         i = g.getOutgoing(3);
-        assertTrue(i.next());
+        i.next();
         assertEquals(2, i.nodeId());
-        assertFalse(i.next());
 
         i = g.getOutgoing(1);
         assertTrue(i.next());
@@ -231,6 +237,37 @@ public abstract class AbstractGraphTester {
         assertEquals(0, count(g.getEdges(1)));
         g.edge(0, 1, 12, true);
         assertEquals(1, count(g.getEdges(1)));
+    }
+
+    @Test
+    public void testDeleteNodeForUnidir() {
+        Graph g = createGraph(11);
+        g.setNode(10, 10, 1);
+        g.setNode(6, 6, 1);
+        g.setNode(20, 20, 1);
+        g.setNode(21, 21, 1);
+
+        g.edge(10, 20, 10, false);
+        g.edge(21, 6, 10, false);
+
+        g.markNodeDeleted(0);
+        g.markNodeDeleted(7);
+        assertEquals(22, g.getNodes());
+        g.optimize();
+        assertEquals(20, g.getNodes());
+        
+        assertEquals(1, GraphUtility.count(g.getIncoming(getIdOf(g, 20))));
+        assertEquals(0, GraphUtility.count(g.getOutgoing(getIdOf(g, 20))));
+
+        assertEquals(1, GraphUtility.count(g.getOutgoing(getIdOf(g, 10))));
+        assertEquals(0, GraphUtility.count(g.getIncoming(getIdOf(g, 10))));
+                
+        // TODO
+        //assertEquals(1, GraphUtility.count(g.getIncoming(getIdOf(g, 6))));
+        //assertEquals(0, GraphUtility.count(g.getOutgoing(getIdOf(g, 6))));
+
+        //assertEquals(1, GraphUtility.count(g.getOutgoing(getIdOf(g, 21))));
+        //assertEquals(0, GraphUtility.count(g.getIncoming(getIdOf(g, 21))));
     }
 
     @Test

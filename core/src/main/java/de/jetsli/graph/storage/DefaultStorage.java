@@ -71,7 +71,6 @@ public class DefaultStorage implements Storage {
             return false;
 
         try {
-//            sw.start();
             double laf = g.getLatitude(fromIndex);
             double lof = g.getLongitude(fromIndex);
             double lat = g.getLatitude(toIndex);
@@ -79,8 +78,8 @@ public class DefaultStorage implements Storage {
             double dist = callback.calcDistKm(laf, lof, lat, lot);
             if (dist == 0) {
                 // As investigation shows often two paths should have crossed via one identical point 
-                // but end up in two very close points. add here here and later this will be 
-                // removed/fixed while removing short edges where one node is of degree 2
+                // but end up in two very close points. later this will be removed/fixed while 
+                // removing short edges where one node is of degree 2
                 zeroCounter++;
                 dist = 0.0001;
             } else if (dist < 0) {

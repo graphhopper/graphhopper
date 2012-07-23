@@ -161,7 +161,8 @@ public class OSMReader {
         logger.info("start finding subnetworks");
         int subnetworks = preparation.doWork();
         int n = g.getNodes();
-        logger.info("nodes " + n + ", subnetworks:" + subnetworks + ", removed them => " + (prev - n) + " less nodes");
+        logger.info("nodes " + n + ", there were " + subnetworks + " subnetworks. removed them => " + (prev - n) 
+                + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
     }
 
     public void flush() {

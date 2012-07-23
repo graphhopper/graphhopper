@@ -21,6 +21,7 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.ApproxCalcDistance;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.GraphUtility;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
@@ -144,7 +145,10 @@ public class AStar implements RoutingAlgorithm {
             if (iter.nodeId() == to)
                 return iter.distance();
         }
-        throw new IllegalStateException("couldn't extract path. distance for " + from + " to " + to + " not found!?");
+        throw new IllegalStateException("couldn't extract path. distance for " + from + " to " + to
+                + " not found!? edges of " + from + " contains node " + to + ":"
+                + GraphUtility.contains(graph.getEdges(from), to)
+                + ", otherway around:" + GraphUtility.contains(graph.getEdges(to), from));
     }
 
     public void updateShortest(Edge shortestDE, int currLoc) {

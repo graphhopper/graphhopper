@@ -64,7 +64,7 @@ public class MemoryGraph implements Graph, Cloneable {
         if (size <= lons.length)
             return;
 
-        deletedNodes.ensureCapacity(size);
+        getDeletedNodes().ensureCapacity(size);
         refToEdges = growArray(refToEdges, size, FACTOR);
         lons = growArray(lons, size, FACTOR);
         lats = growArray(lats, size, FACTOR);

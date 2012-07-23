@@ -215,7 +215,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         int newOrExistingEdgePointer = nextEdgePointer();
         connectNewEdge(fromNodeId, newOrExistingEdgePointer);
         connectNewEdge(toNodeId, newOrExistingEdgePointer);
-        writeEdge(newOrExistingEdgePointer, flags, dist, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK);
+        writeEdge(newOrExistingEdgePointer, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, flags, dist);
     }
 
     private void connectNewEdge(int fromNodeId, int newOrExistingEdgePointer) {
@@ -230,8 +230,8 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     // writes distance, flags, nodeThis, *nodeOther* and nextEdgePointer
-    private void writeEdge(int edgePointer, int flags, double dist, int nodeThis, int nodeOther,
-            int nextEdgePointer, int nextEdgeOtherPointer) {
+    private void writeEdge(int edgePointer, int nodeThis, int nodeOther,
+            int nextEdgePointer, int nextEdgeOtherPointer, int flags, double dist) {
         ensureEdgePointer(edgePointer);
 
         if (nodeThis > nodeOther) {
@@ -244,8 +244,8 @@ public class MemoryGraphSafe implements SaveableGraph {
             nextEdgeOtherPointer = tmp;
 
             // switch direction flag
-            if ((flags & 0x3) == 1)
-                flags = 2;
+            if ((flags & 0x3) != 3)
+                flags = ~flags;
         }
 
         writeA(edgePointer, nodeThis);
@@ -273,19 +273,6 @@ public class MemoryGraphSafe implements SaveableGraph {
         saveToEdgeArea(edgePointer + LEN_NODEA_ID, node);
     }
 
-//    void internalEdgeRemove(int refToEdgePointer, int node, int otherNode) {
-//        EdgeIterable iter = (EdgeIterable) getEdges(node);
-//        int prev = -1;
-//        while (iter.next()) {
-//            if (iter.nodeId() == otherNode) {
-//                internalEdgeRemove(refToEdgePointer, node, prev, iter.edgePointer());
-//                return;
-//            }
-//
-//            prev = iter.edgePointer();
-//        }
-//        throw new IllegalStateException("edge to be removed not found node:" + node + ", otherNode:" + otherNode);
-//    }
     /**
      * @param edgeToUpdatePointer if it is negative then it will be saved to refToEdges
      */
@@ -596,8 +583,8 @@ public class MemoryGraphSafe implements SaveableGraph {
                 int edgePointer = connectedToMovedIter.edgePointer();
                 int linkCurr = connectedToMovedIter.nextEdgePointer();
                 int linkNewUpt = getFromEdgeArea(getLinkPosInEdgeArea(toUpdateNode, currNode, edgePointer));
-                writeEdge(edgePointer, connectedToMovedIter.flags(), connectedToMovedIter.distance(),
-                        newUpdateIndex, newCurrIndex, linkNewUpt, linkCurr);
+                writeEdge(edgePointer, newUpdateIndex, newCurrIndex, linkNewUpt,
+                        linkCurr, connectedToMovedIter.flags(), connectedToMovedIter.distance());
             }
         }
 
