@@ -234,18 +234,6 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testIdenticalNodes() {
-        Graph g = createGraph(2);
-        g.edge(0, 0, 100, true);
-        assertEquals(1, GraphUtility.count(g.getEdges(0)));
-
-        g = createGraph(2);
-        g.edge(0, 0, 100, false);
-        g.edge(0, 0, 100, false);
-        assertEquals(2, GraphUtility.count(g.getEdges(0)));
-    }
-
-    @Test
     public void testDeleteNode() {
         testDeleteNodes(21);
         testDeleteNodes(6);

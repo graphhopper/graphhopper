@@ -18,7 +18,6 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.MMapGraph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
 import de.jetsli.graph.util.GraphUtility;
 import de.jetsli.graph.util.XFirstSearch;
@@ -86,6 +85,7 @@ public class PrepareRoutingTest {
         instance.keepLargestNetwork(map);
         g.optimize();
 
+        assertEquals(7, g.getNodes());
         assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
         map = instance.findSubnetworks();
         assertEquals(1, map.size());

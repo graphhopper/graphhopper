@@ -52,12 +52,14 @@ public class GraphUtility {
             while (iter.next()) {
                 if (iter.nodeId() >= nodes)
                     problems.add("edge of " + i + " has a node " + iter.nodeId() + " greater or equal to getNodes");
+                if (iter.nodeId() < 0)
+                    problems.add("edge of " + i + " has a negative node " + iter.nodeId());
             }
         }
 
-        for (int i = 0; i < nodes; i++) {
-            new XFirstSearch().start(g, i, false);
-        }
+//        for (int i = 0; i < nodes; i++) {
+//            new XFirstSearch().start(g, i, false);
+//        }
 
         return problems;
     }

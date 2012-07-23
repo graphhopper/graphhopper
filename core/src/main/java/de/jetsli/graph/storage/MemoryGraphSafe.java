@@ -20,7 +20,6 @@ import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
-import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import java.io.File;
 import java.io.IOException;
@@ -204,7 +203,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     private int getLinkPosInEdgeArea(int nodeThis, int nodeOther, int edgePointer) {
-        if (nodeThis < nodeOther)
+        if (nodeThis <= nodeOther)
             // get link to next a
             return edgePointer + LEN_NODEA_ID + LEN_NODEB_ID;
 
@@ -274,24 +273,23 @@ public class MemoryGraphSafe implements SaveableGraph {
         saveToEdgeArea(edgePointer + LEN_NODEA_ID, node);
     }
 
-    void internalEdgeRemove(int node, int otherNode) {
-        EdgeIterable iter = (EdgeIterable) getEdges(node);
-        int prev = -1;
-        while (iter.next()) {
-            if (iter.nodeId() == otherNode) {
-                internalEdgeRemove(node, prev, iter.edgePointer());
-                return;
-            }
-
-            prev = iter.edgePointer();
-        }
-        throw new IllegalStateException("edge to be removed not found node:" + node + ", otherNode:" + otherNode);
-    }
-
+//    void internalEdgeRemove(int refToEdgePointer, int node, int otherNode) {
+//        EdgeIterable iter = (EdgeIterable) getEdges(node);
+//        int prev = -1;
+//        while (iter.next()) {
+//            if (iter.nodeId() == otherNode) {
+//                internalEdgeRemove(refToEdgePointer, node, prev, iter.edgePointer());
+//                return;
+//            }
+//
+//            prev = iter.edgePointer();
+//        }
+//        throw new IllegalStateException("edge to be removed not found node:" + node + ", otherNode:" + otherNode);
+//    }
     /**
      * @param edgeToUpdatePointer if it is negative then it will be saved to refToEdges
      */
-    void internalEdgeRemove(int node, int edgeToUpdatePointer, int edgeToDeletePointer) {
+    void internalEdgeRemove(int edgeToDeletePointer, int edgeToUpdatePointer, int node) {
         // an edge is shared across the two node even if the edge is not in both directions
         // so we need to know two edge-pointers pointing to the edge before edgeToDeletePointer
         int otherNode = getOtherNode(node, edgeToDeletePointer);
@@ -395,6 +393,10 @@ public class MemoryGraphSafe implements SaveableGraph {
 
         int edgePointer() {
             return lastEdgePointer;
+        }
+
+        int nextEdgePointer() {
+            return nextEdgePointer;
         }
 
         @Override
@@ -549,7 +551,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             while (nodesConnectedToDelIter.next()) {
                 int nodeId = nodesConnectedToDelIter.nodeId();
                 if (deletedNodes.contains(nodeId))
-                    internalEdgeRemove(toUpdateNode, prev, nodesConnectedToDelIter.edgePointer());
+                    internalEdgeRemove(nodesConnectedToDelIter.edgePointer(), prev, toUpdateNode);
                 else
                     prev = nodesConnectedToDelIter.edgePointer();
             }
@@ -568,30 +570,6 @@ public class MemoryGraphSafe implements SaveableGraph {
             }
         }
 
-        // rewrite the edges of nodes connected to moved nodes
-        for (int toUpdateNode = toUpdated.next(0); toUpdateNode >= 0; toUpdateNode = toUpdated.next(toUpdateNode + 1)) {
-            EdgeIterable connectedToMovedIter = (EdgeIterable) getEdges(toUpdateNode);
-            int prev = -1;
-            while (connectedToMovedIter.next()) {
-                int currNode = connectedToMovedIter.nodeId();
-                int edgePointer = connectedToMovedIter.edgePointer();
-                // node order could have changed, so we need to remove the edge from the nodes.
-                internalEdgeRemove(toUpdateNode, prev, edgePointer);
-                if (currNode != toUpdateNode)
-                    internalEdgeRemove(currNode, toUpdateNode);
-                prev = edgePointer;
-
-                // now edge with new node ids
-                int otherNodeNewIndex = oldToNewIndexMap.get(currNode);
-                if (otherNodeNewIndex < 0)
-                    otherNodeNewIndex = currNode;
-                int newToUpdateIndex = oldToNewIndexMap.get(toUpdateNode);
-                if (newToUpdateIndex < 0)
-                    newToUpdateIndex = toUpdateNode;
-                internalEdgeAdd(newToUpdateIndex, otherNodeNewIndex, connectedToMovedIter.distance(), connectedToMovedIter.flags());
-            }
-        }
-
         // move nodes into deleted nodes
         for (int i = 0; i < itemsToMove; i++) {
             int oldI = oldIndices[i];
@@ -599,6 +577,28 @@ public class MemoryGraphSafe implements SaveableGraph {
             refToEdges[newI] = refToEdges[oldI];
             lats[newI] = lats[oldI];
             lons[newI] = lons[oldI];
+        }
+
+        // rewrite the edges of nodes connected to moved nodes
+        for (int toUpdateNode = toUpdated.next(0); toUpdateNode >= 0; toUpdateNode = toUpdated.next(toUpdateNode + 1)) {
+            int newUpdateIndex = oldToNewIndexMap.get(toUpdateNode);
+            if (newUpdateIndex < 0)
+                newUpdateIndex = toUpdateNode;
+            EdgeIterable connectedToMovedIter = (EdgeIterable) getEdges(newUpdateIndex);
+            while (connectedToMovedIter.next()) {
+                int currNode = connectedToMovedIter.nodeId();
+                // now overwrite exiting edge with new node ids 
+                // also flags and links could have changed due to different node order
+                int newCurrIndex = oldToNewIndexMap.get(currNode);
+                if (newCurrIndex < 0)
+                    newCurrIndex = currNode;
+
+                int edgePointer = connectedToMovedIter.edgePointer();
+                int linkCurr = connectedToMovedIter.nextEdgePointer();
+                int linkNewUpt = getFromEdgeArea(getLinkPosInEdgeArea(toUpdateNode, currNode, edgePointer));
+                writeEdge(edgePointer, connectedToMovedIter.flags(), connectedToMovedIter.distance(),
+                        newUpdateIndex, newCurrIndex, linkNewUpt, linkCurr);
+            }
         }
 
         size -= deleted;

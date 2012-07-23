@@ -46,6 +46,18 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
     }
 
     @Test
+    public void testIdenticalNodes() {
+        Graph g = createGraph(2);
+        g.edge(0, 0, 100, true);
+        assertEquals(1, GraphUtility.count(g.getEdges(0)));
+
+        g = createGraph(2);
+        g.edge(0, 0, 100, false);
+        g.edge(0, 0, 100, false);
+        assertEquals(2, GraphUtility.count(g.getEdges(0)));
+    }
+
+    @Test
     public void testSave() throws IOException {
         String tmpDir = "/tmp/memory-graph-safe";
         Helper.deleteDir(new File(tmpDir));
