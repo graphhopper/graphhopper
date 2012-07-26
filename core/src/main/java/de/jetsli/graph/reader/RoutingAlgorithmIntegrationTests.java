@@ -24,10 +24,7 @@ import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
-import de.jetsli.graph.util.CmdArgs;
-import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.StopWatch;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -46,34 +43,7 @@ public class RoutingAlgorithmIntegrationTests {
     }
 
     public void start() {
-        Collector testCollector = new Collector();
-
-        //
-        List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.727687, 7.418737, 43.730729, 7.421288, 1.532, 88));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3.448, 136));
-        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco", list);
-
-        //
-        list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 16.378, 636));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 12.429, 397));
-        runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list);
-
-        //
-        testUnterfranken(testCollector);
-
-        if (testCollector.list.size() > 0) {
-            System.out.println("\n-------------------------------\n");
-            System.out.println("FOUND " + testCollector.list.size() + " ERRORS");
-            for (String s : testCollector.list) {
-                System.out.println(s);
-            }
-        } else
-            System.out.println("SUCCESS!");
-    }
-
-    private void testUnterfranken(Collector testCollector) {
+        TestAlgoCollector testCollector = new TestAlgoCollector();
         RoutingAlgorithm[] algos = createAlgos(unterfrankenGraph);
         for (RoutingAlgorithm algo : algos) {
             int failed = testCollector.list.size();
@@ -95,18 +65,24 @@ public class RoutingAlgorithmIntegrationTests {
             System.out.println("unterfranken " + algo.getClass().getSimpleName()
                     + ": " + (testCollector.list.size() - failed) + " failed");
         }
+
+        if (testCollector.list.size() > 0) {
+            System.out.println("\n-------------------------------\n");
+            System.out.println(testCollector);
+        } else
+            System.out.println("SUCCESS!");
     }
 
-    RoutingAlgorithm[] createAlgos(Graph g) {
+    public static RoutingAlgorithm[] createAlgos(Graph g) {
         return new RoutingAlgorithm[]{new AStar(g), new DijkstraBidirectionRef(g),
                     new DijkstraBidirection(g), new DijkstraSimple(g)};
     }
 
-    public static class Collector {
+    public static class TestAlgoCollector {
 
-        List<String> list = new ArrayList<String>();
+        public List<String> list = new ArrayList<String>();
 
-        public Collector assertNull(RoutingAlgorithm algo, int from, int to) {
+        public TestAlgoCollector assertNull(RoutingAlgorithm algo, int from, int to) {
             Path p = algo.clear().calcShortestPath(from, to);
             if (p != null)
                 list.add(algo.getClass().getSimpleName() + " returns value where null is expected. "
@@ -114,7 +90,7 @@ public class RoutingAlgorithmIntegrationTests {
             return this;
         }
 
-        public Collector assertDistance(RoutingAlgorithm algo, int from, int to, double distance, int locations) {
+        public TestAlgoCollector assertDistance(RoutingAlgorithm algo, int from, int to, double distance, int locations) {
             Path p = algo.clear().calcShortestPath(from, to);
             if (p == null) {
                 list.add(algo.getClass().getSimpleName() + " returns no path for "
@@ -135,49 +111,15 @@ public class RoutingAlgorithmIntegrationTests {
                         + "from:" + from + ", to:" + to);
             return this;
         }
-    }
 
-    class OneRun {
-
-        double fromLat, fromLon;
-        double toLat, toLon;
-        double dist;
-        int locs;
-
-        public OneRun(double fromLat, double fromLon, double toLat, double toLon, double dist, int locs) {
-            this.fromLat = fromLat;
-            this.fromLon = fromLon;
-            this.toLat = toLat;
-            this.toLon = toLon;
-            this.dist = dist;
-            this.locs = locs;
-        }
-    }
-
-    void runAlgo(Collector testCollector, String osmFile, String graphFile, List<OneRun> forEveryAlgo) {
-        try {
-            // make sure we are using the latest file format
-            Helper.deleteDir(new File(graphFile));
-            Graph g = OSMReader.osm2Graph(new CmdArgs().put("osm", osmFile).put("graph", graphFile));
-            System.out.println(osmFile + " - all locations " + g.getNodes());
-            Location2IDIndex idx = new Location2IDQuadtree(g).prepareIndex(2000);
-            RoutingAlgorithm[] algos = createAlgos(g);
-            for (RoutingAlgorithm algo : algos) {
-                int failed = testCollector.list.size();
-
-                for (OneRun or : forEveryAlgo) {
-                    int from = idx.findID(or.fromLat, or.fromLon);
-                    int to = idx.findID(or.toLat, or.toLon);
-                    testCollector.assertDistance(algo, from, to, or.dist, or.locs);
-                }
-
-                System.out.println(osmFile + " " + algo.getClass().getSimpleName()
-                        + ": " + (testCollector.list.size() - failed) + " failed");
+        @Override
+        public String toString() {
+            String str = "";
+            str += "FOUND " + list.size() + " ERRORS\n";
+            for (String s : list) {
+                str += s + "\n";
             }
-        } catch (Exception ex) {
-            throw new RuntimeException("cannot handle osm file " + osmFile, ex);
-        } finally {
-            Helper.deleteDir(new File(graphFile));
+            return str;
         }
     }
     private Logger logger = LoggerFactory.getLogger(getClass());

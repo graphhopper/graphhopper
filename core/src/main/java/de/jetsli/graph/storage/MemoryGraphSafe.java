@@ -20,7 +20,9 @@ import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
+import gnu.trove.impl.hash.TIntHash;
 import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.set.hash.TIntHashSet;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -580,7 +582,8 @@ public class MemoryGraphSafe implements SaveableGraph {
         // rewrite the edges of nodes connected to moved nodes
         // go through all edges and pick the necessary ... <- this is easier to implement then
         // a more efficient breadth-first search
-        int maxEdges = getMaxEdges();
+        int maxEdges = getMaxEdges() * LEN_EDGE;
+        TIntHashSet hash = new TIntHashSet();
         for (int edgePointer = 0; edgePointer < maxEdges;) {
             edgePointer += LEN_EDGE;
             // nodeId could be wrong - see tests            
@@ -589,6 +592,8 @@ public class MemoryGraphSafe implements SaveableGraph {
             if (!toUpdatedSet.contains(nodeA) && !toUpdatedSet.contains(nodeB))
                 continue;
 
+            hash.add(nodeA);
+            hash.add(nodeB);
             // now overwrite exiting edge with new node ids 
             // also flags and links could have changed due to different node order
             int updatedA = oldToNewIndexMap.get(nodeA);
