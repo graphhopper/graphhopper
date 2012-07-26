@@ -334,16 +334,16 @@ public class MemoryGraphSafe implements SaveableGraph {
 
     private class EdgeIterable implements EdgeIdIterator {
 
-        private int lastEdgePointer;
-        private boolean in;
-        private boolean out;
-        private boolean foundNext;
+        int lastEdgePointer;
+        boolean in;
+        boolean out;
+        boolean foundNext;
         // edge properties        
-        private int flags;
-        private float distance;
-        private int nodeId;
-        private int fromNode;
-        private int nextEdgePointer;
+        int flags;
+        float distance;
+        int nodeId;
+        int fromNode;
+        int nextEdgePointer;
 
         public EdgeIterable(int node, boolean in, boolean out) {
             this.fromNode = node;
@@ -356,6 +356,9 @@ public class MemoryGraphSafe implements SaveableGraph {
             // readLock.lock();
             int pointer = lastEdgePointer = nextEdgePointer;
             nodeId = getOtherNode(fromNode, pointer);
+            if (fromNode != getOtherNode(nodeId, pointer))
+                throw new IllegalStateException("requested node " + fromNode + " not stored in edge. "
+                        + "was:" + nodeId + "," + getOtherNode(nodeId, pointer));
 
             // position to next edge
             nextEdgePointer = getFromEdgeArea(getLinkPosInEdgeArea(fromNode, nodeId, pointer));
@@ -373,7 +376,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             } else {
                 // position to distance
                 pointer += LEN_FLAGS;
-                distance = getFromEdgeArea(pointer) / DIST_UNIT;
+                distance = intToDist(getFromEdgeArea(pointer));
                 foundNext = true;
             }
         }
@@ -416,6 +419,14 @@ public class MemoryGraphSafe implements SaveableGraph {
         public int flags() {
             return flags;
         }
+    }
+
+    private float intToDist(int integ) {
+        return integ / DIST_UNIT;
+    }
+
+    private int getFlags(int pointer) {
+        return getFromEdgeArea(pointer + LEN_EDGE - LEN_DIST - LEN_FLAGS);
     }
 
     protected MemoryGraphSafe creatThis(String storage, int nodes, int edges) {
@@ -485,7 +496,7 @@ public class MemoryGraphSafe implements SaveableGraph {
 //        if (deleted < size / 4) {
         inPlaceDelete(deleted);
 //        } else
-//            optimizeIfLotsOfDeletes(deleted);
+//            replacingDelete(deleted);
     }
 
     /**
@@ -502,8 +513,8 @@ public class MemoryGraphSafe implements SaveableGraph {
         int newIndices[] = new int[maxMoves];
         int oldIndices[] = new int[maxMoves];
 
-        TIntIntHashMap oldToNewIndexMap = new TIntIntHashMap(deleted, 1.5f, -1, -1);
-        MyBitSetImpl toUpdated = new MyBitSetImpl(deleted * 3);
+        final TIntIntHashMap oldToNewIndexMap = new TIntIntHashMap(deleted, 1.5f, -1, -1);
+        MyBitSetImpl toUpdatedSet = new MyBitSetImpl(deleted * 3);
         for (int delNode = deletedNodes.next(0); delNode >= 0; delNode = deletedNodes.next(delNode + 1)) {
             EdgeIdIterator delEdgesIter = getEdges(delNode);
             while (delEdgesIter.next()) {
@@ -511,7 +522,7 @@ public class MemoryGraphSafe implements SaveableGraph {
                 if (deletedNodes.contains(currNode))
                     continue;
 
-                toUpdated.add(currNode);
+                toUpdatedSet.add(currNode);
             }
 
             toMoveNode--;
@@ -531,7 +542,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
 
         // all deleted nodes could be connected to existing. remove the connections
-        for (int toUpdateNode = toUpdated.next(0); toUpdateNode >= 0; toUpdateNode = toUpdated.next(toUpdateNode + 1)) {
+        for (int toUpdateNode = toUpdatedSet.next(0); toUpdateNode >= 0; toUpdateNode = toUpdatedSet.next(toUpdateNode + 1)) {
             // remove all edges connected to the deleted nodes
             EdgeIterable nodesConnectedToDelIter = (EdgeIterable) getEdges(toUpdateNode);
             int prev = -1;
@@ -543,7 +554,7 @@ public class MemoryGraphSafe implements SaveableGraph {
                     prev = nodesConnectedToDelIter.edgePointer();
             }
         }
-        toUpdated.clear();
+        toUpdatedSet.clear();
 
         // marks connected nodes to rewrite the edges
         for (int i = 0; i < itemsToMove; i++) {
@@ -553,7 +564,7 @@ public class MemoryGraphSafe implements SaveableGraph {
                 if (deletedNodes.contains(movedEdgeIter.nodeId()))
                     throw new IllegalStateException("shouldn't happen the edge to the node " + movedEdgeIter.nodeId() + " should be already deleted. " + oldI);
 
-                toUpdated.add(movedEdgeIter.nodeId());
+                toUpdatedSet.add(movedEdgeIter.nodeId());
             }
         }
 
@@ -567,25 +578,32 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
 
         // rewrite the edges of nodes connected to moved nodes
-        for (int toUpdateNode = toUpdated.next(0); toUpdateNode >= 0; toUpdateNode = toUpdated.next(toUpdateNode + 1)) {
-            int newUpdateIndex = oldToNewIndexMap.get(toUpdateNode);
-            if (newUpdateIndex < 0)
-                newUpdateIndex = toUpdateNode;
-            EdgeIterable connectedToMovedIter = (EdgeIterable) getEdges(newUpdateIndex);
-            while (connectedToMovedIter.next()) {
-                int currNode = connectedToMovedIter.nodeId();
-                // now overwrite exiting edge with new node ids 
-                // also flags and links could have changed due to different node order
-                int newCurrIndex = oldToNewIndexMap.get(currNode);
-                if (newCurrIndex < 0)
-                    newCurrIndex = currNode;
+        // go through all edges and pick the necessary ... <- this is easier to implement then
+        // a more efficient breadth-first search
+        int maxEdges = getMaxEdges();
+        for (int edgePointer = 0; edgePointer < maxEdges;) {
+            edgePointer += LEN_EDGE;
+            // nodeId could be wrong - see tests            
+            int nodeA = getFromEdgeArea(edgePointer);
+            int nodeB = getFromEdgeArea(edgePointer + LEN_NODEA_ID);
+            if (!toUpdatedSet.contains(nodeA) && !toUpdatedSet.contains(nodeB))
+                continue;
 
-                int edgePointer = connectedToMovedIter.edgePointer();
-                int linkCurr = connectedToMovedIter.nextEdgePointer();
-                int linkNewUpt = getFromEdgeArea(getLinkPosInEdgeArea(toUpdateNode, currNode, edgePointer));
-                writeEdge(edgePointer, newUpdateIndex, newCurrIndex, linkNewUpt,
-                        linkCurr, connectedToMovedIter.flags(), connectedToMovedIter.distance());
-            }
+            // now overwrite exiting edge with new node ids 
+            // also flags and links could have changed due to different node order
+            int updatedA = oldToNewIndexMap.get(nodeA);
+            if (updatedA < 0)
+                updatedA = nodeA;
+
+            int updatedB = oldToNewIndexMap.get(nodeB);
+            if (updatedB < 0)
+                updatedB = nodeB;
+
+            int linkA = getFromEdgeArea(getLinkPosInEdgeArea(nodeA, nodeB, edgePointer));
+            int linkB = getFromEdgeArea(getLinkPosInEdgeArea(nodeB, nodeA, edgePointer));
+            int flags = getFlags(edgePointer);
+            float distance = intToDist(getFromEdgeArea(edgePointer + LEN_EDGE - LEN_DIST));
+            writeEdge(edgePointer, updatedA, updatedB, linkA, linkB, flags, distance);
         }
 
         size -= deleted;
@@ -623,6 +641,7 @@ public class MemoryGraphSafe implements SaveableGraph {
                 if (deletedNodes.contains(iter.nodeId()))
                     continue;
 
+                // TODO duplicate edges will be created!
                 inMemGraph.internalEdgeAdd(newNodeId, old2NewMap[iter.nodeId()], iter.distance(), iter.flags());
             }
             newNodeId++;

@@ -255,19 +255,18 @@ public abstract class AbstractGraphTester {
         assertEquals(22, g.getNodes());
         g.optimize();
         assertEquals(20, g.getNodes());
-        
+
         assertEquals(1, GraphUtility.count(g.getIncoming(getIdOf(g, 20))));
         assertEquals(0, GraphUtility.count(g.getOutgoing(getIdOf(g, 20))));
 
         assertEquals(1, GraphUtility.count(g.getOutgoing(getIdOf(g, 10))));
         assertEquals(0, GraphUtility.count(g.getIncoming(getIdOf(g, 10))));
-                
-        // TODO
-        //assertEquals(1, GraphUtility.count(g.getIncoming(getIdOf(g, 6))));
-        //assertEquals(0, GraphUtility.count(g.getOutgoing(getIdOf(g, 6))));
 
-        //assertEquals(1, GraphUtility.count(g.getOutgoing(getIdOf(g, 21))));
-        //assertEquals(0, GraphUtility.count(g.getIncoming(getIdOf(g, 21))));
+        assertEquals(1, GraphUtility.count(g.getIncoming(getIdOf(g, 6))));
+        assertEquals(0, GraphUtility.count(g.getOutgoing(getIdOf(g, 6))));
+
+        assertEquals(1, GraphUtility.count(g.getOutgoing(getIdOf(g, 21))));
+        assertEquals(0, GraphUtility.count(g.getIncoming(getIdOf(g, 21))));
     }
 
     @Test
@@ -349,7 +348,7 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testTestSimpleDelete() {
+    public void testSimpleDelete() {
         Graph g = createGraph(11);
         g.setNode(0, 12, 23);
         g.setNode(1, 38.33f, 135.3f);
@@ -375,5 +374,63 @@ public abstract class AbstractGraphTester {
         g.optimize();
         assertEquals(4, g.getNodes());
         assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+    }
+
+    @Test
+    public void testSimpleDelete2() {
+        Graph g = createGraph(11);
+        g.setNode(9, 9, 1);
+        g.setNode(11, 11, 1);
+        g.setNode(12, 12, 1);
+
+        // mini subnetwork which gets completely removed:
+        g.edge(5, 10, 510, true);
+        g.markNodeDeleted(5);
+        g.markNodeDeleted(10);
+
+        g.edge(9, 11, 911, true);
+        g.edge(9, 12, 912, true);
+
+        assertEquals(13, g.getNodes());
+        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+
+        // perform deletion
+        g.optimize();
+
+        assertEquals(11, g.getNodes());
+        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+        assertEquals(2, GraphUtility.count(g.getEdges(getIdOf(g, 9))));
+        assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 11))));
+        assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 12))));
+    }
+
+    @Test
+    public void testSimpleDelete3() {
+        Graph g = createGraph(11);
+        g.setNode(7, 7, 1);
+        g.setNode(8, 8, 1);
+        g.setNode(9, 9, 1);
+        g.setNode(11, 11, 1);
+
+        // mini subnetwork which gets completely removed:
+        g.edge(5, 10, 510, true);
+        g.markNodeDeleted(3);
+        g.markNodeDeleted(4);
+        g.markNodeDeleted(5);
+        g.markNodeDeleted(10);
+
+        g.edge(9, 11, 911, true);
+        g.edge(7, 9, 78, true);
+        g.edge(8, 9, 89, true);
+
+        // perform deletion
+        g.optimize();
+
+        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+
+        assertEquals(3, GraphUtility.count(g.getEdges(getIdOf(g, 9))));
+        assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 7))));
+        assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 8))));
+        assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 11))));
     }
 }
