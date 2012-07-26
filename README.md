@@ -32,6 +32,7 @@ If you want to import a bigger OSM (Germany) then run:
 
 Further Links
 ---------------
+ * [Simple Routing - full Germany](http://karussell.wordpress.com/2012/07/16/running-shortest-path-algorithms-on-the-german-road-network-within-a-1-5gb-jvm/)
  * [Spatial Key](http://karussell.wordpress.com/2012/05/23/spatial-keys-memory-efficient-geohashes/)
  * [Speed up your Quad-tree](http://karussell.wordpress.com/2012/05/29/tricks-to-speed-up-neighbor-searches-of-quadtrees-geo-spatial-java/)
  * [Spatial Hashtable](http://karussell.wordpress.com/2012/06/17/failed-experiment-memory-efficient-spatial-hashtable/)
