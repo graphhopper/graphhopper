@@ -161,7 +161,7 @@ public class OSMReader {
         logger.info("start finding subnetworks");
         int subnetworks = preparation.doWork();
         int n = g.getNodes();
-        logger.info("nodes " + n + ", there were " + subnetworks + " subnetworks. removed them => " + (prev - n) 
+        logger.info("nodes " + n + ", there were " + subnetworks + " subnetworks. removed them => " + (prev - n)
                 + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
     }
 
@@ -333,13 +333,14 @@ public class OSMReader {
     }
 
     public void processHighway(XMLStreamReader sReader) throws XMLStreamException {
+        boolean bothWays = !"yes".equals(sReader.getAttributeValue(null, "oneway"));
         boolean isHighway = isHighway(sReader);
         if (isHighway && tmpLocs.size() > 1) {
             int prevOsmId = tmpLocs.get(0);
             int l = tmpLocs.size();
             for (int index = 1; index < l; index++) {
                 int currOsmId = tmpLocs.get(index);
-                boolean ret = storage.addEdge(prevOsmId, currOsmId, true, callback);
+                boolean ret = storage.addEdge(prevOsmId, currOsmId, bothWays, callback);
                 if (ret)
                     nextEdgeIndex++;
                 else

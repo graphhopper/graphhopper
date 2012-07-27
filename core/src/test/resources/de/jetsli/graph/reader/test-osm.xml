@@ -42,6 +42,6 @@
         <nd ref="20"/>        
         <nd ref="50"/>        
         <tag k="highway" v="service" />
-    </way> 
+    </way>
 
 </osm>
