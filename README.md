@@ -22,7 +22,10 @@ When executing the command again, then the existing graphhopper road-files and j
 After the UI popped up you can drag to move the map or scroll to zoom like in ordinary maps apps.
 Click once to select a departure and another click to select the destination.
 Then a route should pop up like in this SHINY ;) image ![from twitter](http://karussell.files.wordpress.com/2012/06/graphhopper.png)
-You want to get an impression of how bidirectional Dijkstra is working? [Click this image](http://karussell.files.wordpress.com/2012/06/bidijkstra.gif)
+
+Visualization of
+ * [a bidirectional Dijkstra](http://karussell.files.wordpress.com/2012/06/bidijkstra.gif)
+ * [A*](http://karussell.files.wordpress.com/2012/07/astar.gif)
 
 If you want to import full Germany do:
 
