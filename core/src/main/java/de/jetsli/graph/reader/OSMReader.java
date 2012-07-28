@@ -326,14 +326,19 @@ public class OSMReader {
                             Integer integ = CarFlags.CAR_SPEED.get(val);
                             if (integ != null)
                                 properties.put("car", integ);
-                            else if ("footway".equals(val) || "path".equals(val) || "steps".equals(val)
-                                    || "pedestrian".equals(val))
-                                properties.put("foot", "yes");
-                            // bridleway = reitweg
-                            else if ("bridleway".equals(val) || "construction".equals(val))
-                                val = val;
-                            else
-                                logger.warn("unknown highway type:" + val);
+//                            else if ("footway".equals(val) || "path".equals(val) || "steps".equals(val)
+//                                    || "pedestrian".equals(val))
+//                                properties.put("foot", "yes");
+//                            else if ("cycleway".equals(val))
+//                                properties.put("bike", "yes");                            
+//                            // bridleway = reitweg
+//                            else if ("proposed".equals(val) || "preproposed".equals(val) 
+//                                    || "platform".equals(val) || "raceway".equals(val) 
+//                                    || "bus_stop".equals(val)  || "bridleway".equals(val) 
+//                                    || "construction".equals(val) || "no".equals(val) || "centre_line".equals(val))
+//                                val = val;
+//                            else
+//                                logger.warn("unknown highway type:" + val);
                         } else if ("cycleway".equals(key)) {
                             // add bike support later
                             // http://wiki.openstreetmap.org/wiki/Cycleway

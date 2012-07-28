@@ -165,9 +165,6 @@ public class MiniGraphUI {
 
                 makeTransparent(g2);
 
-                dijkstraFromId = 628;
-                dijkstraToId = 1641;
-
                 if (algo instanceof DebugAlgo)
                     ((DebugAlgo) algo).setGraphics2D(g2);
 
