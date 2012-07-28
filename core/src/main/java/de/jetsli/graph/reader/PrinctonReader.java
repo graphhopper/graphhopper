@@ -74,7 +74,7 @@ public class PrinctonReader {
                 if (counter != 3)
                     throw new RuntimeException("incorrect read!? from:" + from + ", to:" + to + ", dist:" + dist);
 
-                g.edge(from, to, dist, false);
+                g.edge(from, to, dist, CarFlags.FORWARD);
             }
         } catch (Exception ex) {
             throw new RuntimeException("Problem in line " + lineNo, ex);

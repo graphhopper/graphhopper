@@ -115,9 +115,9 @@ public class RoutingAlgorithmIntegrationTests {
         @Override
         public String toString() {
             String str = "";
-            str += "FOUND " + list.size() + " ERRORS\n";
+            str += "FOUND " + list.size() + " ERRORS.\n";
             for (String s : list) {
-                str += s + "\n";
+                str += s + ".\n";
             }
             return str;
         }

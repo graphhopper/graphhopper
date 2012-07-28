@@ -33,9 +33,9 @@ import java.util.PriorityQueue;
  * @author Peter Karich, info@jetsli.de
  */
 public class DijkstraBidirectionRef implements RoutingAlgorithm {
-    
+
     private int from, to;
-    private Graph graph;    
+    private Graph graph;
     private MyBitSet visitedFrom;
     private PriorityQueue<Edge> openSetFrom;
     private TIntObjectMap<Edge> shortestDistMapFrom;
@@ -44,7 +44,7 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
     private TIntObjectMap<Edge> shortestDistMapTo;
     private boolean alreadyRun;
     protected Edge currFrom;
-    protected Edge currTo;    
+    protected Edge currTo;
     protected TIntObjectMap<Edge> shortestDistMapOther;
     public PathWrapperRef shortest;
 
@@ -152,10 +152,15 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
     }
 
     public void fillEdges(Edge curr, MyBitSet visitedMain, PriorityQueue<Edge> prioQueue,
-            TIntObjectMap<Edge> shortestDistMap) {
+            TIntObjectMap<Edge> shortestDistMap, boolean out) {
 
         int currVertexFrom = curr.node;
-        EdgeIdIterator iter = graph.getOutgoing(currVertexFrom);
+        EdgeIdIterator iter;
+        if (out)
+            iter = graph.getOutgoing(currVertexFrom);
+        else
+            iter = graph.getIncoming(currVertexFrom);
+        
         while (iter.next()) {
             int neighborNode = iter.nodeId();
             if (visitedMain.contains(neighborNode))
@@ -175,8 +180,8 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
                 de.distance = tmpDist;
                 de.prevEntry = curr;
                 prioQueue.add(de);
-            }            
-            
+            }
+
             // TODO optimize: call only if necessary
             updateShortest(de, neighborNode);
         } // for
@@ -199,7 +204,7 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
     public boolean fillEdgesFrom() {
         if (currFrom != null) {
             shortestDistMapOther = shortestDistMapTo;
-            fillEdges(currFrom, visitedFrom, openSetFrom, shortestDistMapFrom);
+            fillEdges(currFrom, visitedFrom, openSetFrom, shortestDistMapFrom, true);
             if (openSetFrom.isEmpty())
                 return false;
 
@@ -215,7 +220,7 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
     public boolean fillEdgesTo() {
         if (currTo != null) {
             shortestDistMapOther = shortestDistMapFrom;
-            fillEdges(currTo, visitedTo, openSetTo, shortestDistMapTo);
+            fillEdges(currTo, visitedTo, openSetTo, shortestDistMapTo, false);
             if (openSetTo.isEmpty())
                 return false;
 

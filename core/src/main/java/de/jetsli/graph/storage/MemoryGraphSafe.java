@@ -18,9 +18,9 @@ package de.jetsli.graph.storage;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
-import gnu.trove.impl.hash.TIntHash;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 import java.io.File;
@@ -171,14 +171,16 @@ public class MemoryGraphSafe implements SaveableGraph {
 
     @Override
     public void edge(int a, int b, double distance, boolean bothDirections) {
+        edge(a, b, distance, CarFlags.create(bothDirections));
+    }
+        
+    @Override
+    public void edge(int a, int b, double distance, int flags) {
         // writeLock.lock();
         ensureNodeIndex(a);
         ensureNodeIndex(b);
 
-        if (bothDirections)
-            internalEdgeAdd(a, b, distance, 3);
-        else
-            internalEdgeAdd(a, b, distance, 1);
+        internalEdgeAdd(a, b, distance, flags);
     }
 
     private void saveToEdgeArea(int pointer, int data) {
@@ -245,9 +247,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             nextEdgePointer = nextEdgeOtherPointer;
             nextEdgeOtherPointer = tmp;
 
-            // switch direction flag
-            if ((flags & 0x3) != 3)
-                flags = ~flags;
+            flags = CarFlags.swapDirection(flags);
         }
 
         writeA(edgePointer, nodeThis);
@@ -370,10 +370,10 @@ public class MemoryGraphSafe implements SaveableGraph {
             flags = getFromEdgeArea(pointer);
 
             // switch direction flags if necessary
-            if (fromNode > nodeId && (flags & 0x3) < 3)
-                flags = ~(flags & 0x3);
+            if (fromNode > nodeId)
+                flags = CarFlags.swapDirection(flags);
 
-            if (!in && (flags & 1) == 0 || !out && (flags & 2) == 0) {
+            if (!in && !CarFlags.isForward(flags) || !out && !CarFlags.isBackward(flags)) {
                 // skip this edge as it does not fit to defined filter
             } else {
                 // position to distance
@@ -584,8 +584,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         // a more efficient breadth-first search
         int maxEdges = getMaxEdges() * LEN_EDGE;
         TIntHashSet hash = new TIntHashSet();
-        for (int edgePointer = 0; edgePointer < maxEdges;) {
-            edgePointer += LEN_EDGE;
+        for (int edgePointer = LEN_EDGE; edgePointer < maxEdges; edgePointer += LEN_EDGE) {            
             // nodeId could be wrong - see tests            
             int nodeA = getFromEdgeArea(edgePointer);
             int nodeB = getFromEdgeArea(edgePointer + LEN_NODEA_ID);

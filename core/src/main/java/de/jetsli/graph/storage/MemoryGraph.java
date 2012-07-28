@@ -17,8 +17,8 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.util.EdgeIdIterator;
-import de.jetsli.graph.util.GraphUtility;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,21 +79,20 @@ public class MemoryGraph implements Graph, Cloneable {
 
     @Override
     public void edge(int a, int b, double distance, boolean bothDirections) {
+        edge(a, b, distance, CarFlags.create(bothDirections));
+    }
+
+    @Override
+    public void edge(int a, int b, double distance, int flags) {
         if (distance < 0)
             throw new UnsupportedOperationException("negative distance not supported");
 
         ensureNodeIndex(a);
         ensureNodeIndex(b);
-        byte dirFlag = 3;
-        if (!bothDirections)
-            dirFlag = 1;
+        addIfAbsent(a, b, (float) distance, (byte) flags);
 
-        addIfAbsent(a, b, (float) distance, dirFlag);
-
-        if (!bothDirections)
-            dirFlag = 2;
-
-        addIfAbsent(b, a, (float) distance, dirFlag);
+        flags = CarFlags.swapDirection(flags);
+        addIfAbsent(b, a, (float) distance, (byte) flags);
     }
 
     @Override

@@ -17,6 +17,7 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
@@ -307,21 +308,21 @@ public class MMapGraph implements SaveableGraph {
 
     @Override
     public void edge(int a, int b, double distance, boolean bothDirections) {
+        edge(a, b, distance, CarFlags.create(bothDirections));
+    }
+
+    @Override
+    public void edge(int a, int b, double distance, int flags) {
         if (distance <= 0)
             throw new UnsupportedOperationException("negative or zero distances are not supported:"
-                    + a + " -> " + b + ": " + distance + ", bothDirections:" + bothDirections);
+                    + a + " -> " + b + ": " + distance + ", bothDirections:" + BitUtil.toBitString(flags, 16));
 
         ensureEdgesCapacity();
         size = Math.max(size, Math.max(a, b) + 1);
-        byte dirFlag = 3;
-        if (!bothDirections)
-            dirFlag = 1;
+        addIfAbsent(a * bytesNode + bytesNodeCore, b, (float) distance, (byte) flags);
 
-        addIfAbsent(a * bytesNode + bytesNodeCore, b, (float) distance, dirFlag);
-        if (!bothDirections)
-            dirFlag = 2;
-
-        addIfAbsent(b * bytesNode + bytesNodeCore, a, (float) distance, dirFlag);
+        flags = CarFlags.swapDirection(flags);
+        addIfAbsent(b * bytesNode + bytesNodeCore, a, (float) distance, (byte) flags);
     }
 
     private byte[] getBytesFromNodes(int pos, int len) {
@@ -740,7 +741,7 @@ public class MMapGraph implements SaveableGraph {
 
         if (!print)
             return;
-        
+
         for (int i = 0; i < max; i++) {
             System.out.print(i + "\t");
         }

@@ -45,8 +45,11 @@ public interface Graph {
      * @param b
      * @param distance necessary if no addLocation is called - e.g. if the graph is not a real world
      * geo-graph
-     * @param bothDirections
-     */
+     * @param flags see CarFlags
+     */    
+    void edge(int a, int b, double distance, int flags);
+    
+    @Deprecated
     void edge(int a, int b, double distance, boolean bothDirections);
 
     EdgeIdIterator getEdges(int index);

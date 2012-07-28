@@ -214,6 +214,19 @@ public abstract class AbstractRoutingAlgorithmTester {
         Path p = createAlgo(g).calcShortestPath(0, 2);
         assertEquals(p.toString(), 3, p.locations());
     }
+    
+    @Test
+    public void testDirectedGraphBug2() {
+        Graph g = createGraph(10);
+        g.edge(0, 1, 1, false);
+        g.edge(1, 2, 1, false);
+        g.edge(2, 3, 1, false);
+
+        g.edge(3, 1, 3, true);
+
+        Path p = createAlgo(g).calcShortestPath(0, 3);
+        assertEquals(p.toString(), 4, p.locations());
+    }
 
     @Test public void testPerformance() throws IOException {
         int N = 10;
@@ -243,7 +256,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
         System.out.println("# " + name + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
-        assertTrue("speed to low!? " + perRun + " per run", perRun < 0.05);
+        assertTrue("speed to low!? " + perRun + " per run", perRun < 0.07);
     }
 
     private static Graph createMatrixAlikeGraph() {

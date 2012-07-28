@@ -31,9 +31,9 @@ import org.junit.Before;
  */
 public class OSMReaderTest {
 
-    private String dir = "/tmp/OSMReaderTrialsTest/test-db";       
+    private String dir = "/tmp/OSMReaderTrialsTest/test-db";
     private OSMReader reader;
-    
+
     @Before
     public void setUp() {
         new File(dir).mkdirs();
@@ -62,20 +62,28 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(2, iter.nodeId());
         assertEquals(93.146888, iter.distance(), 1e-3);
-
-        // get third added location => 2
+        CarFlags flags = new CarFlags(iter.flags());
+        assertTrue(flags.isMotorway());
+        assertTrue(flags.isForward());
+        assertTrue(flags.isBackward());
+        assertTrue(iter.next());
+        flags = new CarFlags(iter.flags());
+        assertTrue(flags.isService());
+        assertTrue(flags.isForward());
+        assertTrue(flags.isBackward());
+        
+        // get third added location id=30
         iter = graph.getOutgoing(2);
         assertTrue(iter.next());
         assertEquals(1, iter.nodeId());
         assertEquals(93.146888, iter.distance(), 1e-3);
     }
-    
+
     @Test public void testWithBounds() {
         reader = new OSMReader(dir, 1000) {
-
             @Override public boolean isInBounds(double lat, double lon) {
                 return lat > 49 && lon > 8;
-            }            
+            }
         };
         reader.preprocessAcceptHighwaysOnly(getClass().getResourceAsStream("test-osm.xml"));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
@@ -100,14 +108,14 @@ public class OSMReaderTest {
         assertEquals(1, iter.nodeId());
         assertEquals(93.146888, iter.distance(), 1e-3);
     }
-    
+
     @Test public void testOneWay() {
         reader = new OSMReader(dir, 1000);
         reader.preprocessAcceptHighwaysOnly(getClass().getResourceAsStream("test-osm2.xml"));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm2.xml"));
         reader.flush();
         Graph graph = reader.getGraph();
-        
+
         assertEquals(1, GraphUtility.count(graph.getOutgoing(0)));
         assertEquals(1, GraphUtility.count(graph.getOutgoing(1)));
         assertEquals(0, GraphUtility.count(graph.getOutgoing(2)));
@@ -115,6 +123,18 @@ public class OSMReaderTest {
         EdgeIdIterator iter = graph.getOutgoing(1);
         assertTrue(iter.next());
         assertEquals(2, iter.nodeId());
+
+        iter = graph.getEdges(1);
+        assertTrue(iter.next());
+        CarFlags flags = new CarFlags(iter.flags());
+        assertTrue(flags.isMotorway());
+        assertFalse(flags.isForward());
+        assertTrue(flags.isBackward());
+        
+        assertTrue(iter.next());
+        flags = new CarFlags(iter.flags());
+        assertTrue(flags.isMotorway());
+        assertTrue(flags.isForward());
+        assertFalse(flags.isBackward());
     }
-    
 }

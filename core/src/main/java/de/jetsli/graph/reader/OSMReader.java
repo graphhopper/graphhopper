@@ -81,6 +81,7 @@ public class OSMReader {
     private int skippedEdges = 0;
     private Storage storage;
     private TIntArrayList tmpLocs = new TIntArrayList(10);
+    private Map<String, Object> properties = new HashMap<String, Object>();
     private CalcDistance callback = new CalcDistance();
 
     /**
@@ -302,9 +303,11 @@ public class OSMReader {
         return true;
     }
 
-    boolean isHighway(XMLStreamReader sReader) throws XMLStreamException {
+    void parseWay(TIntArrayList tmpLocs, Map<String, Object> properties, XMLStreamReader sReader)
+            throws XMLStreamException {
+
         tmpLocs.clear();
-        boolean isHighway = false;
+        properties.clear();
         for (int tmpE = sReader.nextTag(); tmpE != XMLStreamConstants.END_ELEMENT;
                 tmpE = sReader.nextTag()) {
             if (tmpE == XMLStreamConstants.START_ELEMENT) {
@@ -315,32 +318,56 @@ public class OSMReader {
                     } catch (Exception ex) {
                         logger.error("cannot get ref from way. ref:" + ref, ex);
                     }
-                } //                else if ("tag".equals(sReader.getLocalName())
-                //                        && "name".equals(sReader.getAttributeValue(null, "k")))
-                //                    roadName = sReader.getAttributeValue(null, "v");
-                else if ("tag".equals(sReader.getLocalName())) {
-                    String someKey = sReader.getAttributeValue(null, "k");
-                    if (someKey != null && !someKey.isEmpty()) {
-                        if ("highway".equals(someKey))
-                            isHighway = true;
+                } else if ("tag".equals(sReader.getLocalName())) {
+                    String key = sReader.getAttributeValue(null, "k");
+                    if (key != null && !key.isEmpty()) {
+                        String val = sReader.getAttributeValue(null, "v");
+                        if ("highway".equals(key)) {
+                            Integer integ = CarFlags.CAR_SPEED.get(val);
+                            if (integ != null)
+                                properties.put("car", integ);
+                            else if ("footway".equals(val) || "path".equals(val) || "steps".equals(val)
+                                    || "pedestrian".equals(val))
+                                properties.put("foot", "yes");
+                            // bridleway = reitweg
+                            else if ("bridleway".equals(val) || "construction".equals(val))
+                                val = val;
+                            else
+                                logger.warn("unknown highway type:" + val);
+                        } else if ("cycleway".equals(key)) {
+                            // add bike support later
+                            // http://wiki.openstreetmap.org/wiki/Cycleway
+                            // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway
+                            // https://github.com/Tristramg/osm4routing/blob/master/parameters.cc
+                        } else if ("oneway".equals(key)) {
+                            if ("yes".equals(val) || "true".equals(val) || "1".equals(val))
+                                properties.put("oneway", "yes");
+                        } else if ("junction".equals(key)) {
+                            // abzweigung
+                            if ("roundabout".equals(val))
+                                properties.put("oneway", "yes");
+                        }
                     }
                 }
 
                 sReader.next();
             }
-        } // for
-        return isHighway;
+        }
+    }
+
+    public boolean isHighway(XMLStreamReader sReader) throws XMLStreamException {
+        parseWay(tmpLocs, properties, sReader);
+        return properties.get("car") != null;
     }
 
     public void processHighway(XMLStreamReader sReader) throws XMLStreamException {
-        boolean bothWays = !"yes".equals(sReader.getAttributeValue(null, "oneway"));
-        boolean isHighway = isHighway(sReader);
-        if (isHighway && tmpLocs.size() > 1) {
+        if (isHighway(sReader) && tmpLocs.size() > 1) {
             int prevOsmId = tmpLocs.get(0);
             int l = tmpLocs.size();
+            int flags = CarFlags.create(properties);
             for (int index = 1; index < l; index++) {
                 int currOsmId = tmpLocs.get(index);
-                boolean ret = storage.addEdge(prevOsmId, currOsmId, bothWays, callback);
+                boolean ret = storage.addEdge(prevOsmId, currOsmId, flags, callback);
                 if (ret)
                     nextEdgeIndex++;
                 else
@@ -374,32 +401,5 @@ public class OSMReader {
             logger.info(e.getKey() + "\t -> " + e.getValue());
         }
         logger.info("---");
-    }
-
-    // used from http://wiki.openstreetmap.org/wiki/OpenRouteService#Used_OSM_Tags_for_Routing
-    // http://wiki.openstreetmap.org/wiki/Map_Features#Highway
-    public static class CarSpeed {
-
-        int defaultSpeed = 50;
-        // autobahn
-        int motorway = 110;
-        int motorway_link = 90;
-        // bundesstraße
-        int trunk = 90;
-        int trunk_link;
-        // linking bigger town
-        int primary = 70;
-        int primary_link = 60;
-        // linking smaller towns + villages
-        int secondary = 60;
-        int secondary_link = 50;
-        // streets without middle line separation (too small)
-        int tertiary = 55;
-        int tertiary_link = 45;
-        int unclassified = 50;
-        int residential = 40;
-        // spielstraße
-        int living_street = 10;
-        int service = 30;
     }
 }

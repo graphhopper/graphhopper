@@ -44,8 +44,12 @@ public class RoutingAlgorithmRealTest {
     @Test
     public void testMonaco() {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(43.727687, 7.418737, 43.730729, 7.421288, 1.532, 88));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3.448, 136));
+        
+        // it is not possible to cross the place du palais and there is a oneway directive:
+        // list.add(new OneRun(43.727687, 7.418737, 43.730729, 7.421288, 1.532, 88));
+        // but the other way (where no crossing is necessary) is possible:
+        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2.536, 107));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3.594, 179));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco", list);
         
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
@@ -55,8 +59,8 @@ public class RoutingAlgorithmRealTest {
     public void testAndorra() {
         List<OneRun> list = new ArrayList<OneRun>();
         list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 16.378, 636));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 12.429, 397));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 19.199, 814));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16.42, 603));
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list);
         
         assertEquals(testCollector.toString(), 0, testCollector.list.size());

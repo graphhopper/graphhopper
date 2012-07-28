@@ -33,7 +33,7 @@ public interface Storage extends Closeable {
 
     boolean addNode(int osmId, double lat, double lon);
 
-    boolean addEdge(int nodeIdFrom, int nodeIdTo, boolean reverse, CalcDistance callback);
+    boolean addEdge(int nodeIdFrom, int nodeIdTo, int flags, CalcDistance callback);
 
     int getNodes();
 

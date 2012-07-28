@@ -12,12 +12,12 @@
         <tag k="name" v="Dresden" />
     </node>    
     
-    <way id="10" uid="85761" oneway="yes">
+    <way id="10" uid="85761">
         <!-- 0-1, 1-2 -->
         <nd ref="10"/>
         <nd ref="20"/>        
         <nd ref="30"/>
+        <tag k="oneway" v="true" />
         <tag k="highway" v="motorway" />
-    </way> 
-    
+    </way>    
 </osm>

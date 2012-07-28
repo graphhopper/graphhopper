@@ -18,16 +18,15 @@ package de.jetsli.graph.routing;
 import de.jetsli.graph.coll.IntBinHeap;
 import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.EdgeWrapper;
 
 /**
- * Calculates shortest path in bidirectional way. Compared to DijkstraBidirectionRef this class
- * is more memory efficient as it does not go the normal Java way via references. In first tests
- * this class saves 30% memory, but as you can see it is a bit more complicated.
+ * Calculates shortest path in bidirectional way. Compared to DijkstraBidirectionRef this class is
+ * more memory efficient as it does not go the normal Java way via references. In first tests this
+ * class saves 30% memory, but as you can see it is a bit more complicated.
  *
  * TODO: use only one EdgeWrapper to save memory. This is not easy if we want it to be as fast as
  * the current solution. But we need to try it out if a forwardSearchBitset.contains(edgeId) is that
@@ -157,9 +156,13 @@ public class DijkstraBidirection implements RoutingAlgorithm {
     }
 
     public void fillEdges(int currNodeFrom, double currDist, int currEdgeId, MyBitSet visitedMain, IntBinHeap prioQueue,
-            EdgeWrapper wrapper) {
+            EdgeWrapper wrapper, boolean out) {
 
-        EdgeIdIterator iter = graph.getOutgoing(currNodeFrom);
+        EdgeIdIterator iter;
+        if (out)
+            iter = graph.getOutgoing(currNodeFrom);
+        else
+            iter = graph.getIncoming(currNodeFrom);
         while (iter.next()) {
             int neighborNode = iter.nodeId();
             if (visitedMain.contains(neighborNode))
@@ -204,7 +207,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
 
     public boolean fillEdgesFrom() {
         wrapperOther = wrapperTo;
-        fillEdges(currFrom, currFromDist, currFromEdgeId, visitedFrom, openSetFrom, wrapperFrom);
+        fillEdges(currFrom, currFromDist, currFromEdgeId, visitedFrom, openSetFrom, wrapperFrom, true);
         if (openSetFrom.isEmpty())
             return false;
 
@@ -219,7 +222,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
 
     public boolean fillEdgesTo() {
         wrapperOther = wrapperFrom;
-        fillEdges(currTo, currToDist, currToEdgeId, visitedTo, openSetTo, wrapperTo);
+        fillEdges(currTo, currToDist, currToEdgeId, visitedTo, openSetTo, wrapperTo, false);
         if (openSetTo.isEmpty())
             return false;
 
