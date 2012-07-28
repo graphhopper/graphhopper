@@ -10,24 +10,25 @@ This software stands under Apache License 2
 Routing Usage
 ---------------
 
-Download OSM file (40MB compressed, then 450MB uncompressed), build graph hopper and run it:
+The following command will make a part of Germany routable:
+  1. it downloads 40MB, unzips it to 450MB and creates road-files for graphhopper (40MB)
+  2. it builds graphhopper
+  3. and runs some shortest path queries on it
 
 > cd core; ./run.sh unterfranken
 
-the resulting GraphHopper file will be around 30MB
-
- * when executing the command again, then the OSM won't be parsed again, so the UI should pop up fast within 2 seconds.
+ * when executing the command again, then the existing graphhopper road-files and jars will be used. So, the UI should pop up fast (~2 seconds)
  * After the UI popped up you can drag to move the map or scroll to zoom like in ordinary maps apps
  * Click once to select a departure and another click to select the destination
- * You want to get an impression of how bidirectional Dijkstra is working? [Click this image](http://karussell.files.wordpress.com/2012/06/bidijkstra.gif)
  * Then a route should pop up like in this SHINY ;) image ![from twitter](http://karussell.files.wordpress.com/2012/06/graphhopper.png)
+ * You want to get an impression of how bidirectional Dijkstra is working? [Click this image](http://karussell.files.wordpress.com/2012/06/bidijkstra.gif)
 
-If you want to import a bigger OSM (Germany) then run:
+If you want to import full Germany then run:
 
 > cd core; ./run.sh germany
 
- * For Germany it takes approx 25 minutes for the import and roughly 1 minute for the ugly&slow UI to pop up. Probably you'll need to tune the memory settings - send me a mail if this fails!
- * At the moment the UI is a bit rough and simple so, don't click or drag too much ;)
+ * For Germany it takes approx 25 minutes for the import and roughly 1 minute for the ugly&slow UI to pop up.
+ * At the moment the UI is a bit rough and simple so, don't click or drag too much as it takes some time for this large road network
 
 
 Further Links
