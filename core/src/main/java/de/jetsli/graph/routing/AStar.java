@@ -95,7 +95,7 @@ public class AStar implements RoutingAlgorithm {
 
                     openSet.remove(de);
                     de.distToCompare = gDist;
-                    de.distance = fDistComplete;
+                    de.weight = fDistComplete;
                     de.prevEntry = curr;
                     openSet.add(de);
                 }

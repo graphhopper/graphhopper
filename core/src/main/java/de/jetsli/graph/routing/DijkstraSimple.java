@@ -49,18 +49,18 @@ public class DijkstraSimple implements RoutingAlgorithm {
                 if (visited.contains(tmpV))
                     continue;
 
-                double tmp = iter.distance() + curr.distance;
+                double tmp = iter.distance() + curr.weight;
                 Edge de = map.get(tmpV);
                 if (de == null) {
                     de = new Edge(tmpV, tmp);
                     de.prevEntry = curr;
                     map.put(tmpV, de);
                     heap.add(de);
-                } else if (de.distance > tmp) {
+                } else if (de.weight > tmp) {
                     // use fibonacci? see http://stackoverflow.com/q/6273833/194609
                     // in fibonacci heaps there is decreaseKey                    
                     heap.remove(de);
-                    de.distance = tmp;
+                    de.weight = tmp;
                     de.prevEntry = curr;
                     heap.add(de);
                 }

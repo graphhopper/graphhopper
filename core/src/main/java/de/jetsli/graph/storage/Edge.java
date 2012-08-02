@@ -19,7 +19,7 @@ package de.jetsli.graph.storage;
  * @see DistEntry
  * @author Peter Karich, info@jetsli.de
  */
-public class Edge extends DistEntry implements Cloneable {
+public class Edge extends WeightedEntry implements Cloneable {
 
     public Edge prevEntry;
 
@@ -29,7 +29,7 @@ public class Edge extends DistEntry implements Cloneable {
 
     @Override
     public Edge clone() {
-        return new Edge(node, distance);
+        return new Edge(node, weight);
     }
 
     public Edge cloneFull() {

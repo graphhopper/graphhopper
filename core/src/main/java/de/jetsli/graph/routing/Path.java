@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.DistEntry;
+import de.jetsli.graph.storage.WeightedEntry;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import java.util.ArrayList;
@@ -29,16 +29,14 @@ import java.util.List;
  */
 public class Path {
 
-    // we cannot avoid this storage and e.g. use a linked list via distEntry.prevEntry = previousEntry; ...
-    // as the prevEntry reference is already used for the shortest-path-tree back reference
-    private List<DistEntry> distEntries = new ArrayList<DistEntry>();
+    private List<WeightedEntry> distEntries = new ArrayList<WeightedEntry>();
 
-    public void add(DistEntry distEntry) {
+    public void add(WeightedEntry distEntry) {
         distEntries.add(distEntry);
     }
     
     public boolean contains(int node) {
-        for(DistEntry de : distEntries) {
+        for(WeightedEntry de : distEntries) {
             if(de.node == node)
                 return true;
         }
@@ -62,11 +60,11 @@ public class Path {
     }
 
     public double distance() {
-        return distEntries.get(distEntries.size() - 1).distance;
+        return distEntries.get(distEntries.size() - 1).weight;
     }
 
     public void setDistance(double d) {
-        distEntries.get(distEntries.size() - 1).distance = d;
+        distEntries.get(distEntries.size() - 1).weight = d;
     }
 
     @Override public String toString() {
@@ -83,11 +81,11 @@ public class Path {
     public TIntSet and(Path p2) {
         TIntHashSet thisSet = new TIntHashSet();
         TIntHashSet retSet = new TIntHashSet();
-        for (DistEntry de : distEntries) {
+        for (WeightedEntry de : distEntries) {
             thisSet.add(de.node);
         }
         
-        for (DistEntry de : p2.distEntries) {
+        for (WeightedEntry de : p2.distEntries) {
             if(thisSet.contains(de.node))
                 retSet.add(de.node);
         }

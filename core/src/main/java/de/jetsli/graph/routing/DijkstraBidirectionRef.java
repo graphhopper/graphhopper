@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.DistEntry;
+import de.jetsli.graph.storage.WeightedEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
@@ -145,10 +145,10 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
     //    search, update shortest = μ if df (v) + (v, w) + dr (w) < μ            
     public boolean checkFinishCondition() {
         if (currFrom == null)
-            return currTo.distance >= shortest.distance;
+            return currTo.weight >= shortest.distance;
         else if (currTo == null)
-            return currFrom.distance >= shortest.distance;
-        return currFrom.distance + currTo.distance >= shortest.distance;
+            return currFrom.weight >= shortest.distance;
+        return currFrom.weight + currTo.weight >= shortest.distance;
     }
 
     public void fillEdges(Edge curr, MyBitSet visitedMain, PriorityQueue<Edge> prioQueue,
@@ -166,18 +166,18 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
             if (visitedMain.contains(neighborNode))
                 continue;
 
-            double tmpDist = iter.distance() + curr.distance;
+            double tmpDist = iter.distance() + curr.weight;
             Edge de = shortestDistMap.get(neighborNode);
             if (de == null) {
                 de = new Edge(neighborNode, tmpDist);
                 de.prevEntry = curr;
                 shortestDistMap.put(neighborNode, de);
                 prioQueue.add(de);
-            } else if (de.distance > tmpDist) {
+            } else if (de.weight > tmpDist) {
                 // use fibonacci? see http://stackoverflow.com/q/6273833/194609
                 // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry
                 prioQueue.remove(de);
-                de.distance = tmpDist;
+                de.weight = tmpDist;
                 de.prevEntry = curr;
                 prioQueue.add(de);
             }
@@ -193,10 +193,10 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
             return;
 
         // update μ
-        double newShortest = shortestDE.distance + entryOther.distance;
+        double newShortest = shortestDE.weight + entryOther.weight;
         if (newShortest < shortest.distance) {
-            shortest.entryFrom = shortestDE;
-            shortest.entryTo = entryOther;
+            shortest.edgeFrom = shortestDE;
+            shortest.edgeTo = entryOther;
             shortest.distance = newShortest;
         }
     }
@@ -236,7 +236,7 @@ public class DijkstraBidirectionRef implements RoutingAlgorithm {
     private Path checkIndenticalFromAndTo() {
         if (from == to) {
             Path p = new Path();
-            p.add(new DistEntry(from, 0));
+            p.add(new WeightedEntry(from, 0));
             return p;
         }
         return null;

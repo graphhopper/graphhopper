@@ -153,7 +153,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         // 3. fill empty indices with points close to them to return correct id's for find()!
         final int maxSearch = 10;
         int counter = 0;
-        List<DistEntry> list = new ArrayList<DistEntry>();
+        List<WeightedEntry> list = new ArrayList<WeightedEntry>();
         for (int mainKey = 0; mainKey < size; mainKey++) {
 //            if (mainKey % 100000 == 0)
 //                logger.info("mainKey:" + mainKey);
@@ -182,7 +182,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
                         double lat = g.getLatitude(tmpId);
                         double lon = g.getLongitude(tmpId);
                         double dist = calc.calcNormalizedDist(mainCoord.lat, mainCoord.lon, lat, lon);
-                        list.add(new DistEntry(tmpId, dist));
+                        list.add(new WeightedEntry(tmpId, dist));
                     }
                 }
             }
@@ -198,17 +198,17 @@ public class Location2IDQuadtree implements Location2IDIndex {
 //            });
 
             // choose the best we have so far - no need to sort - just select
-            DistEntry tmp = list.get(0);
+            WeightedEntry tmp = list.get(0);
             for (int i = 1; i < list.size(); i++) {
-                if (tmp.distance > list.get(i).distance)
+                if (tmp.weight > list.get(i).weight)
                     tmp = list.get(i);
             }
-            final DistEntry closestNode = tmp;
+            final WeightedEntry closestNode = tmp;
 
             // use only one bitset for the all iterations so we do not check the same nodes again
             final MyBitSet bitset = new MyTBitSet(maxSearch * 4);
             // now explore the graph
-            for (final DistEntry de : list) {
+            for (final WeightedEntry de : list) {
                 final BooleanRef onlyOneDepth = new BooleanRef();
                 new XFirstSearch() {
                     @Override protected MyBitSet createBitSet(int size) {
@@ -222,8 +222,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
                         double currLat = g.getLatitude(nodeId);
                         double currLon = g.getLongitude(nodeId);
                         double d = calc.calcNormalizedDist(currLat, currLon, mainCoord.lat, mainCoord.lon);
-                        if (d < closestNode.distance) {
-                            closestNode.distance = d;
+                        if (d < closestNode.weight) {
+                            closestNode.weight = d;
                             closestNode.node = nodeId;
                         }
 
@@ -271,7 +271,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         final int id = spatialKey2Id.get((int) key);
         double mainLat = g.getLatitude(id);
         double mainLon = g.getLongitude(id);
-        final DistEntry closestNode = new DistEntry(id, calc.calcNormalizedDist(lat, lon, mainLat, mainLon));
+        final WeightedEntry closestNode = new WeightedEntry(id, calc.calcNormalizedDist(lat, lon, mainLat, mainLon));
         goFurtherHook(id);
         new XFirstSearch() {
             @Override protected MyBitSet createBitSet(int size) {
@@ -286,8 +286,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 double currLat = g.getLatitude(nodeId);
                 double currLon = g.getLongitude(nodeId);
                 double d = calc.calcNormalizedDist(currLat, currLon, lat, lon);
-                if (d < closestNode.distance) {
-                    closestNode.distance = d;
+                if (d < closestNode.weight) {
+                    closestNode.weight = d;
                     closestNode.node = nodeId;
                     return true;
                 }

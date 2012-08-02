@@ -18,14 +18,14 @@ package de.jetsli.graph.routing;
 import de.jetsli.graph.storage.Edge;
 
 /**
- * This class creates a DijkstraPath from two DistEntry's resulting from a BidirectionalDijkstra
+ * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
  * 
  * @author Peter Karich, info@jetsli.de
  */
 public class PathWrapperRef {
 
-    public Edge entryFrom;
-    public Edge entryTo;
+    public Edge edgeFrom;
+    public Edge edgeTo;
     public double distance;
 
     public PathWrapperRef() {
@@ -35,14 +35,14 @@ public class PathWrapperRef {
      * Extracts path from two shortest-path-tree
      */
     public Path extract() {
-        if (entryFrom == null || entryTo == null)
+        if (edgeFrom == null || edgeTo == null)
             return null;
         
-        if (entryFrom.node != entryTo.node)
-            throw new IllegalStateException("Locations of 'to' and 'from' DistEntries has to be the same." + toString());        
+        if (edgeFrom.node != edgeTo.node)
+            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());        
 
         Path path = new Path();
-        Edge curr = entryFrom;
+        Edge curr = edgeFrom;
         while (curr != null) {
             path.add(curr);
             curr = curr.prevEntry;
@@ -50,18 +50,18 @@ public class PathWrapperRef {
         path.reverseOrder();
 
         double fromDistance = path.distance();
-        double toDistance = entryTo.distance;
-        curr = entryTo.prevEntry;
+        double toDistance = edgeTo.weight;
+        curr = edgeTo.prevEntry;
         while (curr != null) {
             path.add(curr);
             curr = curr.prevEntry;
         }
-        // we didn't correct the distances of the other to-DistEntry for performance reasons
+        // we didn't correct the distances of the other to-Edge for performance reasons
         path.setDistance(fromDistance + toDistance);
         return path;
     }
 
     @Override public String toString() {
-        return "distance:" + distance + ", from:" + entryFrom + ", to:" + entryTo;
+        return "distance:" + distance + ", from:" + edgeFrom + ", to:" + edgeTo;
     }
 }

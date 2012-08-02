@@ -39,7 +39,7 @@ public class EdgeWithFlags extends Edge {
 
     @Override
     public Edge clone() {
-        return new EdgeWithFlags(node, distance, flags);
+        return new EdgeWithFlags(node, weight, flags);
     }
 
     @Override

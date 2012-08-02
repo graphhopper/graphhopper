@@ -16,29 +16,28 @@
 package de.jetsli.graph.storage;
 
 /**
- * <b>DistEntry</b> is used as most simplistic return type for outgoing edges in Graph although
- * edges are stored as LinkedDistEntryWithFlags.<br/>
+ * <b>DistEntry</b> is used in Path.<br/>
  *
  * <b>LinkedDistEntry</b> is used as simple linked list entry for the shortest path tree used in
  * Dijkstra algorithms and PathWrapper
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class DistEntry implements Comparable<DistEntry> {
+public class WeightedEntry implements Comparable<WeightedEntry> {
 
     public int node;
-    public double distance; 
+    public double weight; 
     
-    public DistEntry(int loc, double distance) {
+    public WeightedEntry(int loc, double distance) {
         this.node = loc;
-        this.distance = distance;
+        this.weight = distance;
     }
 
-    @Override public int compareTo(DistEntry o) {
-        return Double.compare(distance, o.distance);
+    @Override public int compareTo(WeightedEntry o) {
+        return Double.compare(weight, o.weight);
     }
 
     @Override public String toString() {
-        return "distance to " + node + " is " + distance;
+        return "distance to " + node + " is " + weight;
     }
 }

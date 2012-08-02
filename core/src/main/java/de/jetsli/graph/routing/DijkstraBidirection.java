@@ -16,7 +16,7 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.coll.IntBinHeap;
-import de.jetsli.graph.storage.DistEntry;
+import de.jetsli.graph.storage.WeightedEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
@@ -238,7 +238,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
     private Path checkIndenticalFromAndTo() {
         if (from == to) {
             Path p = new Path();
-            p.add(new DistEntry(from, 0));
+            p.add(new WeightedEntry(from, 0));
             return p;
         }
         return null;

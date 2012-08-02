@@ -151,11 +151,11 @@ public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
             if (currTo == null)
                 throw new IllegalStateException("no shortest path!?");
 
-            return currTo.distance >= shortest.distance;
+            return currTo.weight >= shortest.distance;
         } else if (currTo == null)
-            return currFrom.distance >= shortest.distance;
+            return currFrom.weight >= shortest.distance;
         else
-            return Math.min(currFrom.distance, currTo.distance) >= shortest.distance;
+            return Math.min(currFrom.weight, currTo.weight) >= shortest.distance;
     }
 
     public void fillEdges(Edge curr, MyBitSet visitedMain,
@@ -168,18 +168,18 @@ public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
             if (visitedMain.contains(tmpV))
                 continue;
 
-            double tmp = iter.distance() + curr.distance;
+            double tmp = iter.distance() + curr.weight;
             Edge de = shortestDistMap.get(tmpV);
             if (de == null) {
                 de = new Edge(tmpV, tmp);
                 de.prevEntry = curr;
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
-            } else if (de.distance > tmp) {
+            } else if (de.weight > tmp) {
                 // use fibonacci? see http://stackoverflow.com/q/6273833/194609
                 // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry
                 prioQueue.remove(de);
-                de.distance = tmp;
+                de.weight = tmp;
                 de.prevEntry = curr;
                 prioQueue.add(de);
             }
@@ -193,10 +193,10 @@ public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
             Edge entryOther = shortestDistMapOther.get(currLoc);
             if (entryOther != null) {
                 // update μ
-                double newShortest = shortestDE.distance + entryOther.distance;
+                double newShortest = shortestDE.weight + entryOther.weight;
                 if (newShortest < shortest.distance) {
-                    shortest.entryFrom = shortestDE;
-                    shortest.entryTo = entryOther;
+                    shortest.edgeFrom = shortestDE;
+                    shortest.edgeTo = entryOther;
                     shortest.distance = newShortest;
                 }
             }

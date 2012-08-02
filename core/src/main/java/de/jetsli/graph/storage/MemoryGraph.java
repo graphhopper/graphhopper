@@ -126,7 +126,7 @@ public class MemoryGraph implements Graph, Cloneable {
             de = new EdgeWithFlags(to, distance, dirFlag);
             currEntry.prevEntry = de;
         } else {
-            de.distance = distance;
+            de.weight = distance;
             de.flags |= dirFlag;
         }
     }
@@ -265,7 +265,7 @@ public class MemoryGraph implements Graph, Cloneable {
         }
 
         @Override public double distance() {
-            return curr.distance;
+            return curr.weight;
         }
 
         @Override public int flags() {

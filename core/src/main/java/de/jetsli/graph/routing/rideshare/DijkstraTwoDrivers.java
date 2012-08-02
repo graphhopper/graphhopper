@@ -126,11 +126,11 @@ public class DijkstraTwoDrivers {
 
         @Override public boolean checkFinishCondition() {
             if (currFrom == null)
-                return currTo.distance >= shortest.distance;
+                return currTo.weight >= shortest.distance;
             else if (currTo == null)
-                return currFrom.distance >= shortest.distance;
+                return currFrom.weight >= shortest.distance;
 
-            return Math.min(currFrom.distance, currTo.distance) >= shortest.distance;
+            return Math.min(currFrom.weight, currTo.weight) >= shortest.distance;
         }
 
         @Override public void updateShortest(Edge shortestDE, int currLoc) {
@@ -141,20 +141,20 @@ public class DijkstraTwoDrivers {
                 return;
 
             // update μ
-            double shortestOther = fromOther.distance + toOther.distance;
-            double shortestCurrent = shortestDE.distance + entryOther.distance;
+            double shortestOther = fromOther.weight + toOther.weight;
+            double shortestCurrent = shortestDE.weight + entryOther.weight;
             double newShortest = shortestCurrent + shortestOther;
             if (newShortest < overallDistance) {
                 // TODO: minimize not only the sum but also the difference => multi modal search!
                 overallDistance = newShortest;
                 meetingPoint = currLoc;
 
-                getOtherDriver().shortest.entryFrom = fromOther;
-                getOtherDriver().shortest.entryTo = toOther;
+                getOtherDriver().shortest.edgeFrom = fromOther;
+                getOtherDriver().shortest.edgeTo = toOther;
                 getOtherDriver().shortest.distance = shortestOther;
 
-                shortest.entryFrom = shortestDE;
-                shortest.entryTo = entryOther;
+                shortest.edgeFrom = shortestDE;
+                shortest.edgeTo = entryOther;
                 shortest.distance = shortestCurrent;
             }
         }

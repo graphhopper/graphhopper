@@ -19,7 +19,7 @@ import de.jetsli.graph.util.EdgeIdIterator;
 
 /**
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
- * ids as well as lat,lon
+ * ids. Querying via lat,lon can be done via with a Location2IDIndex implementation
  *
  * @author Peter Karich, info@jetsli.de
  */

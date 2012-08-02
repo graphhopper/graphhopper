@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing.rideshare;
 
-import de.jetsli.graph.storage.DistEntry;
+import de.jetsli.graph.storage.WeightedEntry;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.routing.Path;
@@ -69,7 +69,7 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
         // identical
         if (pubTransport.contains(destination)) {
             Path p = new Path();
-            p.add(new DistEntry(destination, 0));
+            p.add(new WeightedEntry(destination, 0));
             return p;
         }
 
@@ -100,7 +100,7 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
         }
 
         int finish = 0;
-        while (finish < 2 && currFrom.distance + currTo.distance < shortest.distance) {
+        while (finish < 2 && currFrom.weight + currTo.weight < shortest.distance) {
             // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
             // a node from overlap may not be on the shortest path!!
             // => when scanning an arc (v, w) in the forward search and w is scanned in the reverse 
@@ -150,18 +150,18 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
             if (visitedMain.contains(tmpV))
                 continue;
 
-            double tmp = iter.distance() + curr.distance;
+            double tmp = iter.distance() + curr.weight;
             Edge de = shortestDistMap.get(tmpV);
             if (de == null) {
                 de = new Edge(tmpV, tmp);
                 de.prevEntry = curr;
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
-            } else if (de.distance > tmp) {
+            } else if (de.weight > tmp) {
                 // use fibonacci? see http://stackoverflow.com/q/6273833/194609
                 // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry
                 prioQueue.remove(de);
-                de.distance = tmp;
+                de.weight = tmp;
                 de.prevEntry = curr;
                 prioQueue.add(de);
             }
@@ -171,10 +171,10 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
                 continue;
 
             // update μ
-            double newShortest = de.distance + entryOther.distance;
+            double newShortest = de.weight + entryOther.weight;
             if (newShortest < shortest.distance) {
-                shortest.entryFrom = de;
-                shortest.entryTo = entryOther;
+                shortest.edgeFrom = de;
+                shortest.edgeTo = entryOther;
                 shortest.distance = newShortest;
             }
         } // for

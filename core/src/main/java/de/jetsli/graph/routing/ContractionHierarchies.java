@@ -17,7 +17,7 @@ package de.jetsli.graph.routing;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.storage.DistEntry;
+import de.jetsli.graph.storage.WeightedEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.GraphUtility;
 import java.util.Date;
@@ -45,14 +45,14 @@ public class ContractionHierarchies {
      * TODO specified Graph != contracted Graph as BiDijkstra should use (or even prefer?) shortcuts
      */
     public Graph contract(Graph g) {
-        PriorityQueue<DistEntry> heap = new PriorityQueue<DistEntry>();
+        PriorityQueue<WeightedEntry> heap = new PriorityQueue<WeightedEntry>();
         int locations = g.getNodes();
 
         // TODO calculate edge difference => yet another dikstra necessary!?
         for (int i = 0; i < locations; i++) {
-            heap.add(new DistEntry(i, GraphUtility.count(g.getOutgoing(i))));
+            heap.add(new WeightedEntry(i, GraphUtility.count(g.getOutgoing(i))));
         }
-        DistEntry curr;
+        WeightedEntry curr;
         MyBitSet alreadyContracted = new MyOpenBitSet(locations);
         int counter = 0;
         int newEdges = 0;
