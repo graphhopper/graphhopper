@@ -18,7 +18,6 @@ package de.jetsli.graph.routing;
 import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.reader.PrinctonReader;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.MemoryGraph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
 import de.jetsli.graph.util.StopWatch;
 import java.io.IOException;
@@ -48,6 +47,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), 5, p.locations());
     }
 
+    // see calc-fastest-graph.svg
     @Test public void testCalcFastestPath() {
         Graph graph = createGraph(20);
         graph.edge(0, 1, 7, CarFlags.create(10, false));
@@ -70,16 +70,18 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(7, 5, 5, CarFlags.create(20, false));
 
         graph.edge(6, 7, 5, CarFlags.create(20, true));
-        Path p = createAlgo(graph).setType(AlgoType.SHORTEST).calcPath(0, 3);
-        assertEquals(p.toString(), 24, p.distance(), 1e-6);
-        assertEquals(p.toString(), 5, p.locations());
+        Path p1 = createAlgo(graph).setType(AlgoType.SHORTEST).calcPath(0, 3);
+        assertEquals(p1.toString(), 24, p1.distance(), 1e-6);
+        assertEquals(p1.toString(), 5, p1.locations());
 
-        p = createAlgo(graph).setType(AlgoType.FASTEST).calcPath(0, 3);
-        // assertEquals(p.toString(), 24, p.weight(), 1e-6);
-        assertEquals(p.toString(), 6, p.locations());
+        Path p2 = createAlgo(graph).setType(AlgoType.FASTEST).calcPath(0, 3);
+        assertTrue("time of fastest path needs to be lower! " + p1.timeInSec() + ">" + p2.timeInSec(),
+                p1.timeInSec() > p2.timeInSec());
+        assertEquals(p2.toString(), 31, p2.distance(), 1e-6);
+        assertEquals(p2.toString(), 6, p2.locations());
     }
 
-    // see test-graph.png !
+    // see test-graph.svg !
     protected Graph createTestGraph() {
         Graph graph = createGraph(20);
 

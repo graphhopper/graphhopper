@@ -36,7 +36,7 @@ public class Path {
         this.timeInSec = timeInSec;
     }
 
-    public double getTimeInSec() {
+    public double timeInSec() {
         return timeInSec;
     }
 
@@ -101,7 +101,7 @@ public class Path {
         while (iter.next()) {
             if (iter.nodeId() == to) {
                 setDistance(distance() + iter.distance());
-                setTimeInSec(getTimeInSec() + iter.distance() / CarFlags.getSpeed(iter.flags()) * 3600);
+                setTimeInSec(timeInSec() + iter.distance() / CarFlags.getSpeed(iter.flags()) * 3600);
                 return;
             }
         }

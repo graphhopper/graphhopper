@@ -57,9 +57,10 @@ public class AStar extends AbstractRoutingAlgorithm {
         double toLon = graph.getLongitude(to);
         double tmpLat = graph.getLatitude(from);
         double tmpLon = graph.getLongitude(from);
-        double currDistToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
-        double fDistComplete = 0 + currDistToGoal;
-        AStarEdge fromEntry = new AStarEdge(from, fDistComplete, 0);
+        double currWeightToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
+        currWeightToGoal = applyWeight(currWeightToGoal);
+        double distEstimation = 0 + currWeightToGoal;
+        AStarEdge fromEntry = new AStarEdge(from, distEstimation, 0);
         AStarEdge currEdge = fromEntry;
         while (true) {
             int currVertex = currEdge.node;
@@ -69,23 +70,24 @@ public class AStar extends AbstractRoutingAlgorithm {
                 if (closedSet.contains(neighborNode))
                     continue;
 
-                float alreadyVisitedDist = (float) iter.distance() + currEdge.weightToCompare;
+                float alreadyVisitedWeight = (float) getWeight(iter) + currEdge.weightToCompare;
                 AStarEdge nEdge = map.get(neighborNode);
-                if (nEdge == null || nEdge.weightToCompare > alreadyVisitedDist) {
+                if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight) {
                     tmpLat = graph.getLatitude(neighborNode);
                     tmpLon = graph.getLongitude(neighborNode);
-                    currDistToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
-                    fDistComplete = alreadyVisitedDist + currDistToGoal;
+                    currWeightToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
+                    currWeightToGoal = applyWeight(currWeightToGoal);
+                    distEstimation = alreadyVisitedWeight + currWeightToGoal;
 
                     if (nEdge == null) {
-                        nEdge = new AStarEdge(neighborNode, fDistComplete, alreadyVisitedDist);
+                        nEdge = new AStarEdge(neighborNode, distEstimation, alreadyVisitedWeight);
                         map.put(neighborNode, nEdge);
                     } else {
                         prioQueueOpenSet.remove(nEdge);
-                        nEdge.weightToCompare = alreadyVisitedDist;
-                        nEdge.weight = fDistComplete;
+                        nEdge.weightToCompare = alreadyVisitedWeight;
+                        nEdge.weight = distEstimation;
                     }
-                    nEdge.prevEntry = nEdge;
+                    nEdge.prevEntry = currEdge;
                     prioQueueOpenSet.add(nEdge);
                 }
 
@@ -102,7 +104,7 @@ public class AStar extends AbstractRoutingAlgorithm {
 
         // extract path from shortest-path-tree
         Path path = new Path();
-        while (currEdge.node != from) {
+        while (currEdge.prevEntry != null) {
             int tmpFrom = currEdge.node;
             path.add(tmpFrom);
             currEdge = (AStarEdge) currEdge.prevEntry;
@@ -111,6 +113,12 @@ public class AStar extends AbstractRoutingAlgorithm {
         path.add(fromEntry.node);
         path.reverseOrder();
         return path;
+    }
+
+    private double applyWeight(double currDistToGoal) {
+        if (AlgoType.FASTEST.equals(type))
+            return currDistToGoal / CarFlags.MAX_SPEED;
+        return currDistToGoal;
     }
 
     private static class AStarEdge extends EdgeEntry {
@@ -124,5 +132,5 @@ public class AStar extends AbstractRoutingAlgorithm {
             // round makes distance smaller => heuristic should underestimate the distance!
             this.weightToCompare = (float) weightToCompare;
         }
-    }    
+    }
 }

@@ -15,7 +15,6 @@
  */
 package de.jetsli.compare.misc;
 
-import de.jetsli.graph.storage.DistEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.GraphUtility;

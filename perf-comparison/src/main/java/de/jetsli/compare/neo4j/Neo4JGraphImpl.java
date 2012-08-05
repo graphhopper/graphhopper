@@ -15,6 +15,7 @@
  */
 package de.jetsli.compare.neo4j;
 
+import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.Helper;
@@ -202,6 +203,10 @@ public class Neo4JGraphImpl implements Graph {
     }
 
     public void edge(int a, int b, double distance, boolean ignore_bothDirections) {
+        edge(a, b, distance, CarFlags.create(ignore_bothDirections));
+    }
+
+    public void edge(int a, int b, double distance, int flags) {
         ta.ensureStart();
         try {
             Node from = ensureNodeWithId(a);

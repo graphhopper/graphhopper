@@ -25,7 +25,7 @@ public class CarFlags {
 
     static final CarSpeed CAR_SPEED = new CarSpeed();
     static final int DEFAULT_SPEED = CAR_SPEED.get("secondary");
-    static final int MAX_SPEED = CAR_SPEED.get("motorway");
+    public static final int MAX_SPEED = CAR_SPEED.get("motorway");
     public static final int FORWARD = 1;
     public static final int BACKWARD = 2;
     private int flags;

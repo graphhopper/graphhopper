@@ -19,6 +19,7 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
+import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIdIterator;
 import java.util.Iterator;
@@ -81,6 +82,10 @@ public class TinkerGraphImpl implements Graph {
     }
 
     public void edge(int a, int b, double distance, boolean bothDirections) {
+        edge(a, b, distance, CarFlags.create(bothDirections));
+    }
+
+    public void edge(int a, int b, double distance, int flags) {
         Vertex from = ensureNode(a);
         Vertex to = ensureNode(b);
         Iterator<Edge> iter = from.getEdges(Direction.BOTH, WAY).iterator();

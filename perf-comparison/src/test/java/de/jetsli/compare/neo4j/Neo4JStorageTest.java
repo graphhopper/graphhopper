@@ -15,14 +15,11 @@
  */
 package de.jetsli.compare.neo4j;
 
-import de.jetsli.compare.neo4j.Neo4JStorage;
-import de.jetsli.graph.storage.DistEntry;
+import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.util.CalcDistance;
-import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -47,7 +44,7 @@ public class Neo4JStorageTest {
     public void testAddNode() {
         storage.addNode(0, 13, 21);
         storage.addNode(1, 13.1f, 21);
-        storage.addEdge(0, 1, true, new CalcDistance());
+        storage.addEdge(0, 1, CarFlags.create(true), new CalcDistance());
         
 //        List<DistEntry> list = storage.getOutgoing(0);
 //        assertEquals(1, list.size());
