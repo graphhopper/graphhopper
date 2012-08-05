@@ -15,15 +15,10 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.Graph;
-
 /**
- *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich
  */
-public class DijkstraSimpleTest extends AbstractRoutingAlgorithmTester {
-
-    @Override public RoutingAlgorithm createAlgo(Graph g) {
-        return new DijkstraSimple(g);
-    }
+public enum AlgoType {
+    FASTEST, SHORTEST
+    
 }

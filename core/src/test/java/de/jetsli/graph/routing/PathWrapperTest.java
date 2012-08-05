@@ -16,7 +16,7 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.routing.Path;
-import de.jetsli.graph.storage.Edge;
+import de.jetsli.graph.storage.EdgeEntry;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -37,13 +37,13 @@ public class PathWrapperTest {
         // keep in mind:
         // c == d
         //                
-        Edge entryC = new Edge(-1, 1.5f);
-        Edge entryB = entryC.prevEntry = new Edge(-1, 0.5f);
-        Edge entryA = entryB.prevEntry = new Edge(-1, 0);
+        EdgeEntry entryC = new EdgeEntry(-1, 1.5f);
+        EdgeEntry entryB = entryC.prevEntry = new EdgeEntry(-1, 0.5f);
+        EdgeEntry entryA = entryB.prevEntry = new EdgeEntry(-1, 0);
 
-        Edge entryD = new Edge(-1, 2.7f);
-        Edge entryE = entryD.prevEntry = new Edge(-1, 2.5f);
-        Edge entryF = entryE.prevEntry = new Edge(-1, 0);
+        EdgeEntry entryD = new EdgeEntry(-1, 2.7f);
+        EdgeEntry entryE = entryD.prevEntry = new EdgeEntry(-1, 2.5f);
+        EdgeEntry entryF = entryE.prevEntry = new EdgeEntry(-1, 0);
 
         PathWrapperRef wrapper = new PathWrapperRef();
         wrapper.edgeFrom = entryC;

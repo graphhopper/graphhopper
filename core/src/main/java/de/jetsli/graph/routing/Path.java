@@ -15,65 +15,70 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.WeightedEntry;
+import de.jetsli.graph.reader.CarFlags;
+import de.jetsli.graph.util.EdgeIdIterator;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Efficiently stores the entries for Dijkstra algorithm
- * 
+ *
  * @author Peter Karich, info@jetsli.de
  */
 public class Path {
 
-    private List<WeightedEntry> distEntries = new ArrayList<WeightedEntry>();
+    private double timeInSec;
+    private double distance;
+    private TIntArrayList locations = new TIntArrayList();
 
-    public void add(WeightedEntry distEntry) {
-        distEntries.add(distEntry);
+    public void setTimeInSec(double timeInSec) {
+        this.timeInSec = timeInSec;
     }
-    
+
+    public double getTimeInSec() {
+        return timeInSec;
+    }
+
+    public void add(int node) {
+        locations.add(node);
+    }
+
     public boolean contains(int node) {
-        for(WeightedEntry de : distEntries) {
-            if(de.node == node)
-                return true;
-        }
-        return false;
+        return locations.contains(node);
     }
 
     public void reverseOrder() {
-        Collections.reverse(distEntries);
+        locations.reverse();
     }
 
     public int getFromLoc() {
-        return distEntries.get(0).node;
+        return locations.get(0);
     }
 
     public int locations() {
-        return distEntries.size();
+        return locations.size();
     }
-    
+
     public int location(int index) {
-        return distEntries.get(index).node;
+        return locations.get(index);
     }
 
     public double distance() {
-        return distEntries.get(distEntries.size() - 1).weight;
+        return distance;
     }
 
     public void setDistance(double d) {
-        distEntries.get(distEntries.size() - 1).weight = d;
+        distance = d;
     }
 
     @Override public String toString() {
         String str = "";
-        for (int i = 0; i < distEntries.size(); i++) {
+        for (int i = 0; i < locations.size(); i++) {
             if (i > 0)
                 str += "->";
 
-            str += distEntries.get(i).node;
+            str += locations.get(i);
         }
         return "distance:" + distance() + ", " + str;
     }
@@ -81,14 +86,26 @@ public class Path {
     public TIntSet and(Path p2) {
         TIntHashSet thisSet = new TIntHashSet();
         TIntHashSet retSet = new TIntHashSet();
-        for (WeightedEntry de : distEntries) {
-            thisSet.add(de.node);
+        for (int i = 0; i < locations.size(); i++) {
+            thisSet.add(locations.get(i));
         }
-        
-        for (WeightedEntry de : p2.distEntries) {
-            if(thisSet.contains(de.node))
-                retSet.add(de.node);
+
+        for (int i = 0; i < p2.locations.size(); i++) {
+            if (thisSet.contains(p2.locations.get(i)))
+                retSet.add(p2.locations.get(i));
         }
         return retSet;
+    }
+
+    public void change(EdgeIdIterator iter, int to) {
+        while (iter.next()) {
+            if (iter.nodeId() == to) {
+                setDistance(distance() + iter.distance());
+                setTimeInSec(getTimeInSec() + iter.distance() / CarFlags.getSpeed(iter.flags()) * 3600);
+                return;
+            }
+        }
+        throw new IllegalStateException("couldn't extract path. distance for " + iter.nodeId() + " to " + to
+                + " not found!? edges of " + iter.nodeId() + " contains node " + to);
     }
 }

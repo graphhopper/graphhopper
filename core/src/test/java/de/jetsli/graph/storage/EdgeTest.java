@@ -26,13 +26,13 @@ public class EdgeTest {
 
     @Test
     public void testCloneFull() {
-        Edge de = new Edge(1, 10);
-        Edge de2 = de.prevEntry = new Edge(2, 20);
-        Edge de3 = de2.prevEntry = new Edge(3, 30);
+        EdgeEntry de = new EdgeEntry(1, 10);
+        EdgeEntry de2 = de.prevEntry = new EdgeEntry(2, 20);
+        EdgeEntry de3 = de2.prevEntry = new EdgeEntry(3, 30);
 
-        Edge cloning = de.cloneFull();
-        Edge tmp1 = de;
-        Edge tmp2 = cloning;
+        EdgeEntry cloning = de.cloneFull();
+        EdgeEntry tmp1 = de;
+        EdgeEntry tmp2 = cloning;
 
         assertNotNull(tmp1);
         while (tmp1 != null) {

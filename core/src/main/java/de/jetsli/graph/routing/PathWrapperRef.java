@@ -15,20 +15,27 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.Edge;
+import de.jetsli.graph.reader.CarFlags;
+import de.jetsli.graph.storage.EdgeEntry;
+import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.GraphUtility;
 
 /**
  * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
- * 
+ *
  * @author Peter Karich, info@jetsli.de
  */
 public class PathWrapperRef {
 
-    public Edge edgeFrom;
-    public Edge edgeTo;
+    public EdgeEntry edgeFrom;
+    public EdgeEntry edgeTo;
     public double distance;
+    public boolean switchWrapper = false;
+    private Graph g;
 
-    public PathWrapperRef() {
+    public PathWrapperRef(Graph g) {
+        this.g = g;
     }
 
     /**
@@ -37,27 +44,35 @@ public class PathWrapperRef {
     public Path extract() {
         if (edgeFrom == null || edgeTo == null)
             return null;
-        
-        if (edgeFrom.node != edgeTo.node)
-            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());        
 
-        Path path = new Path();
-        Edge curr = edgeFrom;
-        while (curr != null) {
-            path.add(curr);
-            curr = curr.prevEntry;
+        if (edgeFrom.node != edgeTo.node)
+            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());
+
+        if (switchWrapper) {
+            EdgeEntry ee = edgeFrom;
+            edgeFrom = edgeTo;
+            edgeTo = ee;
         }
+        
+        Path path = new Path();
+        EdgeEntry currEdge = edgeFrom;
+        while (currEdge.prevEntry != null) {
+            int tmpFrom = currEdge.node;
+            path.add(tmpFrom);
+            currEdge = currEdge.prevEntry;
+            path.change(g.getIncoming(tmpFrom), currEdge.node);
+        }
+        path.add(currEdge.node);
         path.reverseOrder();
 
-        double fromDistance = path.distance();
-        double toDistance = edgeTo.weight;
-        curr = edgeTo.prevEntry;
-        while (curr != null) {
-            path.add(curr);
-            curr = curr.prevEntry;
+        currEdge = edgeTo;
+        while (currEdge.prevEntry != null) {
+            int tmpTo = currEdge.node;
+            currEdge = currEdge.prevEntry;
+            path.add(currEdge.node);
+            path.change(g.getIncoming(currEdge.node), tmpTo);
         }
-        // we didn't correct the distances of the other to-Edge for performance reasons
-        path.setDistance(fromDistance + toDistance);
+
         return path;
     }
 

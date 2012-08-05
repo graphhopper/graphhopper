@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.Edge;
+import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeWrapper;
 
 /**
@@ -31,8 +31,10 @@ public class PathWrapper {
     public double distance;
     private EdgeWrapper edgeFrom;
     private EdgeWrapper edgeTo;
-
-    public PathWrapper(EdgeWrapper edgesFrom, EdgeWrapper edgesTo) {
+    private Graph g;
+    
+    public PathWrapper(Graph g, EdgeWrapper edgesFrom, EdgeWrapper edgesTo) {
+        this.g = g;
         this.edgeFrom = edgesFrom;
         this.edgeTo = edgesTo;
     }
@@ -58,24 +60,20 @@ public class PathWrapper {
         Path path = new Path();
         int currEdgeId = fromEdgeId;
         while (currEdgeId > 0) {
-            int tmpNode = edgeFrom.getNode(currEdgeId);
-            double dist = edgeFrom.getDistance(currEdgeId);
-            path.add(new Edge(tmpNode, dist));
+            int tmpFrom = edgeFrom.getNode(currEdgeId);
+            path.add(tmpFrom);
             currEdgeId = edgeFrom.getLink(currEdgeId);
+            path.change(g.getIncoming(tmpFrom), tmpFrom);
         }
         path.reverseOrder();
 
-        double fromDistance = path.distance();
-        double toDistance = edgeTo.getDistance(toEdgeId);
         currEdgeId = edgeTo.getLink(toEdgeId);
         while (currEdgeId > 0) {
-            int tmpNode = edgeTo.getNode(currEdgeId);
-            double dist = edgeTo.getDistance(currEdgeId);
-            path.add(new Edge(tmpNode, dist));
+            int tmpTo = edgeTo.getNode(currEdgeId);
+            path.add(tmpTo);
+            path.change(g.getIncoming(tmpTo), tmpTo);
             currEdgeId = edgeTo.getLink(currEdgeId);
         }
-        // we didn't correct the distances of the other to-DistEntry for performance reasons
-        path.setDistance(fromDistance + toDistance);
         return path;
     }
 

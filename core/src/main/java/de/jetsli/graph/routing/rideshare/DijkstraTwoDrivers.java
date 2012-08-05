@@ -18,7 +18,7 @@ package de.jetsli.graph.routing.rideshare;
 import de.jetsli.graph.routing.DijkstraBidirectionRef;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.Edge;
+import de.jetsli.graph.storage.EdgeEntry;
 
 /**
  * @author Peter Karich, info@jetsli.de
@@ -133,10 +133,10 @@ public class DijkstraTwoDrivers {
             return Math.min(currFrom.weight, currTo.weight) >= shortest.distance;
         }
 
-        @Override public void updateShortest(Edge shortestDE, int currLoc) {
-            Edge fromOther = getOtherDriver().getShortestDistFrom(currLoc);
-            Edge toOther = getOtherDriver().getShortestDistTo(currLoc);
-            Edge entryOther = shortestDistMapOther.get(currLoc);
+        @Override public void updateShortest(EdgeEntry shortestDE, int currLoc) {
+            EdgeEntry fromOther = getOtherDriver().getShortestDistFrom(currLoc);
+            EdgeEntry toOther = getOtherDriver().getShortestDistTo(currLoc);
+            EdgeEntry entryOther = shortestDistMapOther.get(currLoc);
             if (fromOther == null || toOther == null || entryOther == null)
                 return;
 

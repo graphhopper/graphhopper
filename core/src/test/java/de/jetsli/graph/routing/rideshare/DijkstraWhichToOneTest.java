@@ -69,7 +69,7 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
     private void assertWithBiDijkstra(int[] points, Path path, int dest) {
         Path bestManualPath = null;        
         for (int i = 0; i < points.length; i++) {
-            Path manualPath = new DijkstraBidirection(matrixGraph).calcShortestPath(points[i], dest);
+            Path manualPath = new DijkstraBidirection(matrixGraph).calcPath(points[i], dest);
             if (bestManualPath == null || manualPath.distance() < bestManualPath.distance())
                 bestManualPath = manualPath;
         }

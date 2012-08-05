@@ -49,7 +49,6 @@ public interface Graph {
      */    
     void edge(int a, int b, double distance, int flags);
     
-    @Deprecated
     void edge(int a, int b, double distance, boolean bothDirections);
 
     EdgeIdIterator getEdges(int index);

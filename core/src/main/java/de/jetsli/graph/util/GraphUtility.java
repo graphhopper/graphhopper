@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.util;
 
-import de.jetsli.graph.storage.WeightedEntry;
+import de.jetsli.graph.storage.Edge;
 import de.jetsli.graph.storage.Graph;
 import gnu.trove.set.hash.TIntHashSet;
 import java.util.ArrayList;
@@ -108,8 +108,8 @@ public class GraphUtility {
         return true;
     }
 
-    public static boolean contains(Iterable<? extends WeightedEntry> iter, int... locs) {
-        Iterator<? extends WeightedEntry> i = iter.iterator();
+    public static boolean contains(Iterable<? extends Edge> iter, int... locs) {
+        Iterator<? extends Edge> i = iter.iterator();
         TIntHashSet set = new TIntHashSet();
         while (i.hasNext()) {
             set.add(i.next().node);

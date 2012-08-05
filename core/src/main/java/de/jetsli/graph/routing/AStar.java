@@ -16,7 +16,8 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.storage.Edge;
+import de.jetsli.graph.reader.CarFlags;
+import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.ApproxCalcDistance;
 import de.jetsli.graph.util.CalcDistance;
@@ -29,15 +30,17 @@ import java.util.PriorityQueue;
 /**
  * @author Peter Karich
  */
-public class AStar implements RoutingAlgorithm {
+public class AStar extends AbstractRoutingAlgorithm {
 
-    private Graph graph;
     private CalcDistance dist = new ApproxCalcDistance();
 
     public AStar(Graph g) {
-        this.graph = g;
+        super(g);
     }
 
+    /**
+     * @param fast if true it enables approximative distance calculation from lat,lon values
+     */
     public AStar setFast(boolean fast) {
         if (fast)
             dist = new ApproxCalcDistance();
@@ -46,115 +49,80 @@ public class AStar implements RoutingAlgorithm {
         return this;
     }
 
-    @Override public Path calcShortestPath(int from, int to) {
+    @Override public Path calcPath(int from, int to) {
         MyOpenBitSet closedSet = new MyOpenBitSet(graph.getNodes());
         TIntObjectMap<AStarEdge> map = new TIntObjectHashMap<AStarEdge>();
-        PriorityQueue<AStarEdge> openSet = new PriorityQueue<AStarEdge>();
-        double lat = graph.getLatitude(to);
-        double lon = graph.getLongitude(to);
+        PriorityQueue<AStarEdge> prioQueueOpenSet = new PriorityQueue<AStarEdge>();
+        double toLat = graph.getLatitude(to);
+        double toLon = graph.getLongitude(to);
         double tmpLat = graph.getLatitude(from);
         double tmpLon = graph.getLongitude(from);
-        double distToGoal = dist.calcDistKm(lat, lon, tmpLat, tmpLon);
-        double fDistComplete = 0 + distToGoal;
+        double currDistToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
+        double fDistComplete = 0 + currDistToGoal;
         AStarEdge fromEntry = new AStarEdge(from, fDistComplete, 0);
-        AStarEdge curr = fromEntry;
+        AStarEdge currEdge = fromEntry;
         while (true) {
-            int currVertex = curr.node;
+            int currVertex = currEdge.node;
             EdgeIdIterator iter = graph.getOutgoing(currVertex);
             while (iter.next()) {
                 int neighborNode = iter.nodeId();
                 if (closedSet.contains(neighborNode))
                     continue;
 
-                // possibilities: 
-                // 1. we could use landmarks and less expensive triangular formular
-                // which satisfies the h(x) requirement instead of this expensive real calculation
-                // 2. use less expensive calc distance 
-                // (e.g. normed dist ... hmh but then entry.distance of edges needs to be normed too!)                
-                float gDist = (float) iter.distance() + curr.distToCompare;
-                AStarEdge de = map.get(neighborNode);
-                if (de == null) {
-                    // dup code
+                float alreadyVisitedDist = (float) iter.distance() + currEdge.weightToCompare;
+                AStarEdge nEdge = map.get(neighborNode);
+                if (nEdge == null || nEdge.weightToCompare > alreadyVisitedDist) {
                     tmpLat = graph.getLatitude(neighborNode);
                     tmpLon = graph.getLongitude(neighborNode);
-                    distToGoal = dist.calcDistKm(lat, lon, tmpLat, tmpLon);
-                    fDistComplete = gDist + distToGoal;
-                    // --
+                    currDistToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
+                    fDistComplete = alreadyVisitedDist + currDistToGoal;
 
-                    de = new AStarEdge(neighborNode, fDistComplete, gDist);
-                    de.prevEntry = curr;
-                    map.put(neighborNode, de);
-                    openSet.add(de);
-                } else if (de.distToCompare > gDist) {
-                    // dup code
-                    tmpLat = graph.getLatitude(neighborNode);
-                    tmpLon = graph.getLongitude(neighborNode);
-                    distToGoal = dist.calcDistKm(lat, lon, tmpLat, tmpLon);
-                    fDistComplete = gDist + distToGoal;
-                    // --
-
-                    openSet.remove(de);
-                    de.distToCompare = gDist;
-                    de.weight = fDistComplete;
-                    de.prevEntry = curr;
-                    openSet.add(de);
+                    if (nEdge == null) {
+                        nEdge = new AStarEdge(neighborNode, fDistComplete, alreadyVisitedDist);
+                        map.put(neighborNode, nEdge);
+                    } else {
+                        prioQueueOpenSet.remove(nEdge);
+                        nEdge.weightToCompare = alreadyVisitedDist;
+                        nEdge.weight = fDistComplete;
+                    }
+                    nEdge.prevEntry = nEdge;
+                    prioQueueOpenSet.add(nEdge);
                 }
 
-                updateShortest(de, neighborNode);
+                updateShortest(nEdge, neighborNode);
             }
             if (to == currVertex)
                 break;
 
             closedSet.add(currVertex);
-            curr = openSet.poll();
-            if (curr == null)
+            currEdge = prioQueueOpenSet.poll();
+            if (currEdge == null)
                 return null;
         }
 
         // extract path from shortest-path-tree
         Path path = new Path();
-        double distance = 0;
-        while (curr.node != from) {
-            int tmpFrom = curr.node;
-            path.add(curr);
-            curr = (AStarEdge) curr.prevEntry;
-            distance += getDistance(tmpFrom, curr.node);
+        while (currEdge.node != from) {
+            int tmpFrom = currEdge.node;
+            path.add(tmpFrom);
+            currEdge = (AStarEdge) currEdge.prevEntry;
+            path.change(graph.getIncoming(tmpFrom), currEdge.node);
         }
-        path.add(fromEntry);
+        path.add(fromEntry.node);
         path.reverseOrder();
-        path.setDistance(distance);
         return path;
     }
 
-    private static class AStarEdge extends Edge {
+    private static class AStarEdge extends EdgeEntry {
 
-        // the variable 'distance' is used to let heap select smallest *full* distance.
+        // the variable 'weight' is used to let heap select smallest *full* distance.
         // but to compare distance we need it only from start:
-        float distToCompare;
+        float weightToCompare;
 
-        public AStarEdge(int loc, double distForHeap, float distToCompare) {
-            super(loc, distForHeap);
+        public AStarEdge(int loc, double weightForHeap, float weightToCompare) {
+            super(loc, weightForHeap);
             // round makes distance smaller => heuristic should underestimate the distance!
-            this.distToCompare = (float) distToCompare;
+            this.weightToCompare = (float) weightToCompare;
         }
-    }
-
-    public double getDistance(int from, int to) {
-        EdgeIdIterator iter = graph.getIncoming(from);
-        while (iter.next()) {
-            if (iter.nodeId() == to)
-                return iter.distance();
-        }
-        throw new IllegalStateException("couldn't extract path. distance for " + from + " to " + to
-                + " not found!? edges of " + from + " contains node " + to + ":"
-                + GraphUtility.contains(graph.getEdges(from), to)
-                + ", otherway around:" + GraphUtility.contains(graph.getEdges(to), from));
-    }
-
-    public void updateShortest(Edge shortestDE, int currLoc) {
-    }
-
-    @Override public RoutingAlgorithm clear() {
-        return this;
-    }
+    }    
 }

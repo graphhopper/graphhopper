@@ -16,7 +16,7 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.coll.IntBinHeap;
-import de.jetsli.graph.storage.WeightedEntry;
+import de.jetsli.graph.storage.Edge;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
@@ -34,10 +34,9 @@ import de.jetsli.graph.util.EdgeWrapper;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraBidirection implements RoutingAlgorithm {
+public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
     private int from, to;
-    private Graph graph;
     protected int currFrom;
     protected double currFromDist;
     protected int currFromEdgeId;
@@ -55,7 +54,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
     private boolean alreadyRun;
 
     public DijkstraBidirection(Graph graph) {
-        this.graph = graph;
+        super(graph);
         int locs = Math.max(20, graph.getNodes());
         visitedFrom = new MyOpenBitSet(locs);
         openSetFrom = new IntBinHeap(locs / 10);
@@ -79,7 +78,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
         openSetTo.clear();
         wrapperTo.clear();
 
-        shortest = new PathWrapper(wrapperFrom, wrapperTo);
+        shortest = new PathWrapper(graph, wrapperFrom, wrapperTo);
         shortest.distance = Double.MAX_VALUE;
         return this;
     }
@@ -105,7 +104,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
         return this;
     }
 
-    @Override public Path calcShortestPath(int from, int to) {
+    @Override public Path calcPath(int from, int to) {
         if (alreadyRun)
             throw new IllegalStateException("Do not reuse DijkstraBidirection");
 
@@ -168,25 +167,25 @@ public class DijkstraBidirection implements RoutingAlgorithm {
             if (visitedMain.contains(neighborNode))
                 continue;
 
-            double tmpDist = iter.distance() + currDist;
+            double tmpWeight = getWeight(iter) + currDist;
             int newEdgeId = wrapper.getEdgeId(neighborNode);
             if (newEdgeId < 0) {
-                newEdgeId = wrapper.add(neighborNode, tmpDist);
+                newEdgeId = wrapper.add(neighborNode, tmpWeight);
                 wrapper.putLink(newEdgeId, currEdgeId);
-                prioQueue.insert(newEdgeId, tmpDist);
+                prioQueue.insert(newEdgeId, tmpWeight);
             } else {
                 double dist = wrapper.getDistance(newEdgeId);
-                if (dist > tmpDist) {
+                if (dist > tmpWeight) {
                     // use fibonacci? see http://stackoverflow.com/q/6273833/194609
                     // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry                    
-                    wrapper.putDistance(newEdgeId, tmpDist);
+                    wrapper.putDistance(newEdgeId, tmpWeight);
                     wrapper.putLink(newEdgeId, currEdgeId);
-                    prioQueue.rekey(newEdgeId, tmpDist);
+                    prioQueue.rekey(newEdgeId, tmpWeight);
                 }
             }
 
             // TODO optimize: call only if necessary
-            updateShortest(neighborNode, newEdgeId, tmpDist);
+            updateShortest(neighborNode, newEdgeId, tmpWeight);
         }
     }
 
@@ -238,7 +237,7 @@ public class DijkstraBidirection implements RoutingAlgorithm {
     private Path checkIndenticalFromAndTo() {
         if (from == to) {
             Path p = new Path();
-            p.add(new WeightedEntry(from, 0));
+            p.add(from);
             return p;
         }
         return null;
@@ -250,5 +249,5 @@ public class DijkstraBidirection implements RoutingAlgorithm {
 
     public double getShortestDistTo(int nodeId) {
         return wrapperTo.getDistance(nodeId);
-    }
+    }    
 }

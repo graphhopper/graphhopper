@@ -21,7 +21,7 @@ package de.jetsli.graph.storage;
  * @see DistEntry
  * @author Peter Karich, info@jetsli.de
  */
-public class EdgeWithFlags extends Edge {
+public class EdgeWithFlags extends EdgeEntry {
 
     /**
      * 1 means: only forward direction. 2 means: only backward and 3 means: both directions
@@ -38,7 +38,7 @@ public class EdgeWithFlags extends Edge {
     }
 
     @Override
-    public Edge clone() {
+    public EdgeEntry clone() {
         return new EdgeWithFlags(node, weight, flags);
     }
 

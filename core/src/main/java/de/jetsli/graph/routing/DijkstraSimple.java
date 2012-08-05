@@ -15,8 +15,9 @@
  */
 package de.jetsli.graph.routing;
 
+import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.Edge;
+import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.util.EdgeIdIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -26,66 +27,64 @@ import java.util.PriorityQueue;
 /**
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraSimple implements RoutingAlgorithm {
-
-    private Graph graph;
+public class DijkstraSimple extends AbstractRoutingAlgorithm {
 
     public DijkstraSimple(Graph graph) {
-        this.graph = graph;
+        super(graph);
     }
 
-    @Override public Path calcShortestPath(int from, int to) {
-        Edge fromEntry = new Edge(from, 0);
-        Edge curr = fromEntry;
+    @Override public Path calcPath(int from, int to) {
+        EdgeEntry fromEntry = new EdgeEntry(from, 0);
+        EdgeEntry currEdge = fromEntry;
         TIntHashSet visited = new TIntHashSet();
-        TIntObjectMap<Edge> map = new TIntObjectHashMap<Edge>();
-        PriorityQueue<Edge> heap = new PriorityQueue<Edge>();
+        TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
+        PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
 
         while (true) {
-            int currVertex = curr.node;
-            EdgeIdIterator iter = graph.getOutgoing(currVertex);
-            while(iter.next()) {
+            int neighborNode = currEdge.node;
+            EdgeIdIterator iter = graph.getOutgoing(neighborNode);
+            while (iter.next()) {
                 int tmpV = iter.nodeId();
                 if (visited.contains(tmpV))
                     continue;
 
-                double tmp = iter.distance() + curr.weight;
-                Edge de = map.get(tmpV);
-                if (de == null) {
-                    de = new Edge(tmpV, tmp);
-                    de.prevEntry = curr;
-                    map.put(tmpV, de);
-                    heap.add(de);
-                } else if (de.weight > tmp) {
+                double tmpWeight = getWeight(iter) + currEdge.weight;
+                EdgeEntry nEdge = map.get(tmpV);
+                if (nEdge == null) {
+                    nEdge = new EdgeEntry(tmpV, tmpWeight);
+                    nEdge.prevEntry = currEdge;
+                    map.put(tmpV, nEdge);
+                    heap.add(nEdge);
+                } else if (nEdge.weight > tmpWeight) {
                     // use fibonacci? see http://stackoverflow.com/q/6273833/194609
                     // in fibonacci heaps there is decreaseKey                    
-                    heap.remove(de);
-                    de.weight = tmp;
-                    de.prevEntry = curr;
-                    heap.add(de);
+                    heap.remove(nEdge);
+                    nEdge.weight = tmpWeight;
+                    nEdge.prevEntry = currEdge;
+                    heap.add(nEdge);
                 }
             }
-            if (to == currVertex)
+            if (to == neighborNode)
                 break;
 
-            visited.add(currVertex);
-            curr = heap.poll();
-            if (curr == null)
+            visited.add(neighborNode);
+            currEdge = heap.poll();
+            if (currEdge == null)
                 return null;
+
+            updateShortest(currEdge, neighborNode);
         }
 
         // extract path from shortest-path-tree
         Path path = new Path();
-        while (curr.node != from) {
-            path.add(curr);
-            curr = curr.prevEntry;
+        while (currEdge.node != from) {
+            int tmpFrom = currEdge.node;            
+            path.add(tmpFrom);
+            currEdge = currEdge.prevEntry;
+            path.change(graph.getIncoming(tmpFrom), currEdge.node);
         }
-        path.add(fromEntry);
+        path.add(fromEntry.node);
         path.reverseOrder();
         return path;
-    }
-
-    @Override public RoutingAlgorithm clear() {        
-        return this;
     }
 }

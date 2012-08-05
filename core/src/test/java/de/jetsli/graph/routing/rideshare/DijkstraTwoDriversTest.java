@@ -40,11 +40,11 @@ public class DijkstraTwoDriversTest {
         double shortest = Double.MAX_VALUE;
         TIntHashSet set = new TIntHashSet();
         for (int pointI = 10; pointI < 50; pointI++) {            
-            double sum = new DijkstraBidirection(g).calcShortestPath(12, pointI).distance();
-            sum += new DijkstraBidirection(g).calcShortestPath(pointI, 36).distance();
+            double sum = new DijkstraBidirection(g).calcPath(12, pointI).distance();
+            sum += new DijkstraBidirection(g).calcPath(pointI, 36).distance();
             
-            sum += new DijkstraBidirection(g).calcShortestPath(30, pointI).distance();
-            sum += new DijkstraBidirection(g).calcShortestPath(pointI, 45).distance();            
+            sum += new DijkstraBidirection(g).calcPath(30, pointI).distance();
+            sum += new DijkstraBidirection(g).calcPath(pointI, 45).distance();            
             if(sum < shortest) {
                 shortest = sum;
                 set.clear();
@@ -65,8 +65,8 @@ public class DijkstraTwoDriversTest {
         d.setDriverB(30, 15);
         d.calcShortestPath();
         
-        Path pA = new DijkstraBidirection(g).calcShortestPath(12, 36);
-        Path pB = new DijkstraBidirection(g).calcShortestPath(30, 15);        
+        Path pA = new DijkstraBidirection(g).calcPath(12, 36);
+        Path pB = new DijkstraBidirection(g).calcPath(30, 15);        
         TIntSet set = pA.and(pB);
         assertTrue(set.toString(), set.contains(d.getMeetingPoint()));
         assertEquals(pA.distance(), d.getBestForA().distance(), 1e-5);        

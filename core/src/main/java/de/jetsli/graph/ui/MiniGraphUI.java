@@ -19,6 +19,8 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.reader.OSMReader;
+import de.jetsli.graph.routing.AStar;
+import de.jetsli.graph.routing.AlgoType;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
@@ -75,7 +77,10 @@ public class MiniGraphUI {
         index.prepareIndex(90000);
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
-        this.algo = new DebugAStar(graph, mg);
+//        this.algo = new DebugAStar(graph, mg);
+        this.algo = new AStar(graph);
+//        this.algo = new DijkstraSimple(graph);
+//        this.algo = new DebugDijkstraSimple(graph, mg);
         infoPanel = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 g.setColor(Color.WHITE);
@@ -159,6 +164,8 @@ public class MiniGraphUI {
 //        });
 
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
+            AlgoType type = AlgoType.FASTEST;
+
             @Override public void paintComponent(Graphics2D g2) {
                 if (dijkstraFromId < 0 || dijkstraToId < 0)
                     return;
@@ -170,8 +177,15 @@ public class MiniGraphUI {
 
                 StopWatch sw = new StopWatch().start();
 
-                logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId);
-                path = algo.clear().calcShortestPath(dijkstraFromId, dijkstraToId);
+                if (type.equals(AlgoType.FASTEST))
+                    type = AlgoType.SHORTEST;
+                else
+                    type = AlgoType.FASTEST;
+
+                logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + type);
+
+                path = algo.clear().setType(type).calcPath(dijkstraFromId, dijkstraToId);
+
                 sw.stop();
 
                 // TODO remove subnetworks to avoid failing

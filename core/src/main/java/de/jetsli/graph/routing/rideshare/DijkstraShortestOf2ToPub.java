@@ -17,12 +17,13 @@ package de.jetsli.graph.routing.rideshare;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.routing.AbstractRoutingAlgorithm;
 import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.PathWrapperRef;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.Edge;
+import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.util.EdgeIdIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
@@ -39,19 +40,20 @@ import java.util.PriorityQueue;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
+public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
 
-    private Graph graph;
     private TIntArrayList pubTransport = new TIntArrayList();
     private int fromP1;
     private int toP2;
-    private Edge currTo;
-    private Edge currFrom;
+    private EdgeEntry currTo;
+    private EdgeEntry currFrom;
     private PathWrapperRef shortest;
-    private TIntObjectMap<Edge> shortestDistMapOther;
+    private TIntObjectMap<EdgeEntry> shortestDistMapOther;
+    private TIntObjectMap<EdgeEntry> shortestDistMapFrom;
+    private TIntObjectMap<EdgeEntry> shortestDistMapTo;
 
     public DijkstraShortestOf2ToPub(Graph graph) {
-        this.graph = graph;
+        super(graph);
     }
 
     public void addPubTransportPoints(int... indices) {
@@ -79,26 +81,26 @@ public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
     public Path calcShortestPath() {
         // identical
         if (pubTransport.contains(fromP1) || pubTransport.contains(toP2))
-            return new DijkstraBidirection(graph).calcShortestPath(fromP1, toP2);
+            return new DijkstraBidirection(graph).calcPath(fromP1, toP2);
 
         MyBitSet visitedFrom = new MyOpenBitSet(graph.getNodes());
-        PriorityQueue<Edge> prioQueueFrom = new PriorityQueue<Edge>();
-        TIntObjectMap<Edge> shortestDistMapFrom = new TIntObjectHashMap<Edge>();
+        PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
+        shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
-        Edge entryTo = new Edge(toP2, 0);
+        EdgeEntry entryTo = new EdgeEntry(toP2, 0);
         currTo = entryTo;
         MyBitSet visitedTo = new MyOpenBitSet(graph.getNodes());
-        PriorityQueue<Edge> prioQueueTo = new PriorityQueue<Edge>();
-        TIntObjectMap<Edge> shortestDistMapTo = new TIntObjectHashMap<Edge>();
+        PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
+        shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
 
-        shortest = new PathWrapperRef();
+        shortest = new PathWrapperRef(graph);
         shortest.distance = Double.MAX_VALUE;
 
         // create several starting points
         if (pubTransport.isEmpty())
             throw new IllegalStateException("You'll need at least one starting point. Set it via addPubTransportPoint");
 
-        currFrom = new Edge(fromP1, 0);
+        currFrom = new EdgeEntry(fromP1, 0);
         // in the birectional case we maintain the shortest path via:
         // currFrom.distance + currTo.distance >= shortest.distance
         // Now we simply need to check bevor updating if the newly discovered point is from pub tranport
@@ -158,20 +160,20 @@ public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
             return Math.min(currFrom.weight, currTo.weight) >= shortest.distance;
     }
 
-    public void fillEdges(Edge curr, MyBitSet visitedMain,
-            PriorityQueue<Edge> prioQueue, TIntObjectMap<Edge> shortestDistMap) {
+    public void fillEdges(EdgeEntry curr, MyBitSet visitedMain,
+            PriorityQueue<EdgeEntry> prioQueue, TIntObjectMap<EdgeEntry> shortestDistMap) {
 
         int currVertexFrom = curr.node;
         EdgeIdIterator iter = graph.getOutgoing(currVertexFrom);
-        while(iter.next()) {
+        while (iter.next()) {
             int tmpV = iter.nodeId();
             if (visitedMain.contains(tmpV))
                 continue;
 
             double tmp = iter.distance() + curr.weight;
-            Edge de = shortestDistMap.get(tmpV);
+            EdgeEntry de = shortestDistMap.get(tmpV);
             if (de == null) {
-                de = new Edge(tmpV, tmp);
+                de = new EdgeEntry(tmpV, tmp);
                 de.prevEntry = curr;
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
@@ -185,16 +187,18 @@ public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
             }
 
             updateShortest(de, tmpV);
-        } // for
+        }
     }
 
-    public void updateShortest(Edge shortestDE, int currLoc) {
+    @Override
+    public void updateShortest(EdgeEntry shortestDE, int currLoc) {
         if (pubTransport.contains(currLoc)) {
-            Edge entryOther = shortestDistMapOther.get(currLoc);
+            EdgeEntry entryOther = shortestDistMapOther.get(currLoc);
             if (entryOther != null) {
                 // update μ
                 double newShortest = shortestDE.weight + entryOther.weight;
                 if (newShortest < shortest.distance) {
+                    shortest.switchWrapper = shortestDistMapFrom == shortestDistMapOther;
                     shortest.edgeFrom = shortestDE;
                     shortest.edgeTo = entryOther;
                     shortest.distance = newShortest;
@@ -203,7 +207,7 @@ public class DijkstraShortestOf2ToPub implements RoutingAlgorithm {
         }
     }
 
-    @Override public Path calcShortestPath(int from, int to) {
+    @Override public Path calcPath(int from, int to) {
         addPubTransportPoint(from);
         setFrom(from);
         setTo(to);

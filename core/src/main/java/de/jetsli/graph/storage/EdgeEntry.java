@@ -16,28 +16,31 @@
 package de.jetsli.graph.storage;
 
 /**
- * <b>DistEntry</b> is used in Path.<br/>
- *
- * <b>LinkedDistEntry</b> is used as simple linked list entry for the shortest path tree used in
- * Dijkstra algorithms and PathWrapper
- *
+ * @see DistEntry
  * @author Peter Karich, info@jetsli.de
  */
-public class WeightedEntry implements Comparable<WeightedEntry> {
+public class EdgeEntry extends Edge implements Cloneable {
 
-    public int node;
-    public double weight; 
-    
-    public WeightedEntry(int loc, double distance) {
-        this.node = loc;
-        this.weight = distance;
+    public EdgeEntry prevEntry;
+
+    public EdgeEntry(int loc, double distance) {
+        super(loc, distance);
     }
 
-    @Override public int compareTo(WeightedEntry o) {
-        return Double.compare(weight, o.weight);
+    @Override
+    public EdgeEntry clone() {
+        return new EdgeEntry(node, weight);
     }
 
-    @Override public String toString() {
-        return "distance to " + node + " is " + weight;
+    public EdgeEntry cloneFull() {
+        EdgeEntry de = clone();
+        EdgeEntry tmpPrev = prevEntry;
+        EdgeEntry cl = de;
+        while (tmpPrev != null) {
+            cl.prevEntry = tmpPrev.clone();
+            cl = cl.prevEntry;
+            tmpPrev = tmpPrev.prevEntry;
+        }
+        return de;
     }
 }

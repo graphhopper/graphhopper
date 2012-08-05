@@ -23,11 +23,12 @@ import java.util.Map;
  */
 public class CarFlags {
 
-    public static final int FORWARD = 1;
-    public static final int BACKWARD = 2;
     static final CarSpeed CAR_SPEED = new CarSpeed();
     static final int DEFAULT_SPEED = CAR_SPEED.get("secondary");
-    int flags;
+    static final int MAX_SPEED = CAR_SPEED.get("motorway");
+    public static final int FORWARD = 1;
+    public static final int BACKWARD = 2;
+    private int flags;
 
     /**
      * for debugging and testing purposes
@@ -53,7 +54,7 @@ public class CarFlags {
     }
 
     public int getSpeedPart() {
-        return flags >>> 2;
+        return getSpeedPart(flags);
     }
 
     public int getSpeed() {
@@ -64,7 +65,7 @@ public class CarFlags {
         return flags;
     }
 
-    public static int create(boolean bothDirections) {        
+    public static int create(boolean bothDirections) {
         if (bothDirections)
             return DEFAULT_SPEED << 2 | BACKWARD | FORWARD;
         return DEFAULT_SPEED << 2 | FORWARD;
@@ -73,11 +74,11 @@ public class CarFlags {
     public static boolean isForward(int flags) {
         return (flags & 1) == FORWARD;
     }
-    
+
     public static boolean isBackward(int flags) {
         return (flags & 2) == BACKWARD;
     }
-    
+
     /**
      * returns the flags with an opposite direction if not both ways
      */
@@ -89,17 +90,36 @@ public class CarFlags {
         return (speed << 2) | (~flags) & 3;
     }
 
+    public static int getSpeedPart(int flags) {
+        int v = flags >>> 2;
+        if (v == 0)
+            v = DEFAULT_SPEED;
+        return v;
+    }
+    
+    public static int getSpeed(int flags) {
+        return getSpeedPart(flags) * 10;
+    }
+
+    public static int create(int speed, boolean bothDir) {
+        int flags = speed / 10;
+        flags <<= 2;
+        flags |= FORWARD;
+        if (bothDir)
+            flags |= BACKWARD;
+        return flags;
+    }
+
     public static int create(Map<String, Object> properties) {
-        int flags = 0;
         Integer integ = (Integer) properties.get("car");
         if (integ != null) {
-            flags = integ;
-            flags <<= 2;
-            flags |= FORWARD;
+            integ *= 10;
             if (!"yes".equals(properties.get("oneway")))
-                flags |= BACKWARD;
+                return create(integ, true);
+            else
+                return create(integ, false);
         }
-        return flags;
+        return 0;
     }
 
     @Override
@@ -111,7 +131,8 @@ public class CarFlags {
     // http://wiki.openstreetmap.org/wiki/Map_Features#Highway
 
     /**
-     * Put the speed profile into 1 byte
+     * A map which associates string to integer. With this integer one can put the speed profile
+     * into 1 byte
      */
     static class CarSpeed extends HashMap<String, Integer> {
 
@@ -139,7 +160,7 @@ public class CarFlags {
             // unknown road
             put("road", 3);
             // forestry stuff
-            put("track", 1);
+            put("track", 2);
         }
     }
 }

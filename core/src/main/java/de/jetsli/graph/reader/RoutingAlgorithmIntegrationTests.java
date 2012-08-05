@@ -83,7 +83,7 @@ public class RoutingAlgorithmIntegrationTests {
         public List<String> list = new ArrayList<String>();
 
         public TestAlgoCollector assertNull(RoutingAlgorithm algo, int from, int to) {
-            Path p = algo.clear().calcShortestPath(from, to);
+            Path p = algo.clear().calcPath(from, to);
             if (p != null)
                 list.add(algo.getClass().getSimpleName() + " returns value where null is expected. "
                         + "from:" + from + ", to:" + to);
@@ -91,7 +91,7 @@ public class RoutingAlgorithmIntegrationTests {
         }
 
         public TestAlgoCollector assertDistance(RoutingAlgorithm algo, int from, int to, double distance, int locations) {
-            Path p = algo.clear().calcShortestPath(from, to);
+            Path p = algo.clear().calcPath(from, to);
             if (p == null) {
                 list.add(algo.getClass().getSimpleName() + " returns no path for "
                         + "from:" + from + ", to:" + to);
@@ -157,7 +157,7 @@ public class RoutingAlgorithmIntegrationTests {
 
             algo.clear();
             sw.start();
-            Path p = algo.calcShortestPath(from, to);
+            Path p = algo.calcPath(from, to);
             sw.stop();
             if (p == null) {
                 logger.warn("no route found for i=" + i + " !?" + " graph-from " + from + ", graph-to " + to);

@@ -16,13 +16,18 @@
 package de.jetsli.graph.routing;
 
 /**
- * Calculates the shortest path from to specified node ids.
+ * Calculates the shortest path from the specified node ids.
  *
  * @author Peter Karich, info@jetsli.de
  */
 public interface RoutingAlgorithm {
 
-    Path calcShortestPath(int from, int to);
-    
+    /**
+     * Calculates the fastest or shortest path
+     */
+    Path calcPath(int from, int to);
+
+    RoutingAlgorithm setType(AlgoType type);
+
     RoutingAlgorithm clear();
 }

@@ -15,14 +15,15 @@
  */
 package de.jetsli.graph.routing.rideshare;
 
-import de.jetsli.graph.storage.WeightedEntry;
+import de.jetsli.graph.storage.Edge;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.routing.AbstractRoutingAlgorithm;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.PathWrapperRef;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.Edge;
+import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.util.EdgeIdIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
@@ -37,14 +38,17 @@ import java.util.PriorityQueue;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class DijkstraWhichToOne implements RoutingAlgorithm {
+public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
 
-    private Graph graph;
+    private PathWrapperRef shortest;
+    private TIntObjectMap<EdgeEntry> shortestDistMapOther;
+    private TIntObjectMap<EdgeEntry> shortestDistMapFrom;
+    private TIntObjectMap<EdgeEntry> shortestDistMapTo;
     private TIntArrayList pubTransport = new TIntArrayList();
     private int destination;
 
     public DijkstraWhichToOne(Graph graph) {
-        this.graph = graph;
+        super(graph);
     }
 
     public void addPubTransportPoints(int... indices) {
@@ -69,34 +73,36 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
         // identical
         if (pubTransport.contains(destination)) {
             Path p = new Path();
-            p.add(new WeightedEntry(destination, 0));
+            p.add(destination);
             return p;
         }
 
         MyBitSet visitedFrom = new MyOpenBitSet(graph.getNodes());
-        PriorityQueue<Edge> prioQueueFrom = new PriorityQueue<Edge>();
-        TIntObjectMap<Edge> shortestDistMapFrom = new TIntObjectHashMap<Edge>();
+        PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
+        shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
-        Edge entryTo = new Edge(destination, 0);
-        Edge currTo = entryTo;
+        EdgeEntry entryTo = new EdgeEntry(destination, 0);
+        EdgeEntry currTo = entryTo;
         MyBitSet visitedTo = new MyOpenBitSet(graph.getNodes());
-        PriorityQueue<Edge> prioQueueTo = new PriorityQueue<Edge>();
-        TIntObjectMap<Edge> shortestDistMapTo = new TIntObjectHashMap<Edge>();
+        PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
+        shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
         shortestDistMapTo.put(destination, entryTo);
 
-        PathWrapperRef shortest = new PathWrapperRef();
+        shortest = new PathWrapperRef(graph);
         shortest.distance = Double.MAX_VALUE;
 
         // create several starting points
         if (pubTransport.isEmpty())
             throw new IllegalStateException("You'll need at least one starting point. Set it via addPubTransportPoint");
 
-        Edge currFrom = null;
+        EdgeEntry currFrom = null;
         for (int i = 0; i < pubTransport.size(); i++) {
-            Edge tmpFrom = new Edge(pubTransport.get(i), 0);
+            EdgeEntry tmpFrom = new EdgeEntry(pubTransport.get(i), 0);
             if (i == 0)
                 currFrom = tmpFrom;
-            fillEdges(shortest, tmpFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom, shortestDistMapTo, true);
+
+            shortestDistMapOther = shortestDistMapTo;
+            fillEdges(shortest, tmpFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom, true);
         }
 
         int finish = 0;
@@ -107,14 +113,16 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
             //    search, update shortest = μ if df (v) + (v, w) + dr (w) < μ            
 
             finish = 0;
-            fillEdges(shortest, currFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom, shortestDistMapTo, true);
+            shortestDistMapOther = shortestDistMapTo;
+            fillEdges(shortest, currFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom, true);
             if (!prioQueueFrom.isEmpty()) {
                 currFrom = prioQueueFrom.poll();
                 visitedFrom.add(currFrom.node);
             } else
                 finish++;
 
-            fillEdges(shortest, currTo, visitedTo, prioQueueTo, shortestDistMapTo, shortestDistMapFrom, false);
+            shortestDistMapOther = shortestDistMapFrom;
+            fillEdges(shortest, currTo, visitedTo, prioQueueTo, shortestDistMapTo, false);
             if (!prioQueueTo.isEmpty()) {
                 currTo = prioQueueTo.poll();
                 visitedTo.add(currTo.node);
@@ -135,9 +143,9 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
         return g;
     }
 
-    public void fillEdges(PathWrapperRef shortest, Edge curr, MyBitSet visitedMain,
-            PriorityQueue<Edge> prioQueue,
-            TIntObjectMap<Edge> shortestDistMap, TIntObjectMap<Edge> shortestDistMapOther, boolean out) {
+    public void fillEdges(PathWrapperRef shortest, EdgeEntry curr, MyBitSet visitedMain,
+            PriorityQueue<EdgeEntry> prioQueue,
+            TIntObjectMap<EdgeEntry> shortestDistMap, boolean out) {
 
         int currVertexFrom = curr.node;
         EdgeIdIterator iter;
@@ -151,9 +159,9 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
                 continue;
 
             double tmp = iter.distance() + curr.weight;
-            Edge de = shortestDistMap.get(tmpV);
+            EdgeEntry de = shortestDistMap.get(tmpV);
             if (de == null) {
-                de = new Edge(tmpV, tmp);
+                de = new EdgeEntry(tmpV, tmp);
                 de.prevEntry = curr;
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
@@ -166,21 +174,26 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
                 prioQueue.add(de);
             }
 
-            Edge entryOther = shortestDistMapOther.get(tmpV);
-            if (entryOther == null)
-                continue;
+            updateShortest(de, tmpV);
+        }
+    }
 
+    @Override
+    public void updateShortest(EdgeEntry de, int currLoc) {
+        EdgeEntry entryOther = shortestDistMapOther.get(currLoc);
+        if (entryOther != null) {
             // update μ
             double newShortest = de.weight + entryOther.weight;
             if (newShortest < shortest.distance) {
+                shortest.switchWrapper = shortestDistMapFrom == shortestDistMapOther;
                 shortest.edgeFrom = de;
                 shortest.edgeTo = entryOther;
                 shortest.distance = newShortest;
             }
-        } // for
+        }
     }
 
-    @Override public Path calcShortestPath(int from, int to) {
+    @Override public Path calcPath(int from, int to) {
         addPubTransportPoint(from);
         setDestination(to);
         return calcShortestPath();
@@ -189,5 +202,6 @@ public class DijkstraWhichToOne implements RoutingAlgorithm {
     @Override
     public RoutingAlgorithm clear() {
         throw new UnsupportedOperationException("Not supported yet.");
+        // shortest = new PathWrapperRef();
     }
 }

@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.WeightedEntry;
+import de.jetsli.graph.storage.Edge;
 import gnu.trove.set.TIntSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -26,42 +26,29 @@ import static org.junit.Assert.*;
  */
 public class PathTest {
 
-    @Test public void testAdd() {
-        Path p = new Path();
-        p.add(new WeightedEntry(1, 12));
-        p.add(new WeightedEntry(1, 13));
-        // Hmmh according to Dijkstra this is correct but according to intuition this is none sense.
-        assertEquals(13, p.distance(), 1e-3);
-    }
-
     @Test public void testReverseOrder() {
         Path p = new Path();
-        WeightedEntry from = new WeightedEntry(1, 11);
-        WeightedEntry to = new WeightedEntry(3, 12);
-        p.add(from);
-        p.add(new WeightedEntry(2, 2));
-        p.add(to);
-        // Hmmh see above comment
-        assertEquals(12, p.distance(), 1e-3);
+        p.add(1);
+        p.add(3);
+        p.add(2);       
         assertEquals(1, p.getFromLoc());
 
         p.reverseOrder();
-        assertEquals(11, p.distance(), 1e-3);
-        assertEquals(3, p.getFromLoc());
+        assertEquals(2, p.getFromLoc());
     }
     
     @Test public void testAnd() {
         Path p1 = new Path();
-        p1.add(new WeightedEntry(1, 12));
-        p1.add(new WeightedEntry(2, 12));
-        p1.add(new WeightedEntry(3, 12));
-        p1.add(new WeightedEntry(4, 12));
+        p1.add(1);
+        p1.add(2);
+        p1.add(3);
+        p1.add(4);
         
         Path p2 = new Path();
-        p2.add(new WeightedEntry(7, 12));
-        p2.add(new WeightedEntry(2, 12));
-        p2.add(new WeightedEntry(3, 12));
-        p2.add(new WeightedEntry(11, 12));
+        p2.add(7);
+        p2.add(2);
+        p2.add(3);
+        p2.add(11);
         
         TIntSet set = p1.and(p2);
         assertEquals(2, set.size());
@@ -76,8 +63,8 @@ public class PathTest {
     
     @Test public void testContains() {
         Path p1 = new Path();
-        p1.add(new WeightedEntry(1, 12));
-        p1.add(new WeightedEntry(2, 12));
+        p1.add(1);
+        p1.add(2);
         
         assertFalse(p1.contains(3));
         assertTrue(p1.contains(2));

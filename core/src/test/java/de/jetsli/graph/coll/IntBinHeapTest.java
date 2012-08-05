@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.coll;
 
-import de.jetsli.graph.storage.WeightedEntry;
+import de.jetsli.graph.storage.Edge;
 import java.util.PriorityQueue;
 import java.util.Random;
 import org.junit.Test;
@@ -83,7 +83,7 @@ public class IntBinHeapTest {
 
     @Test
     public void testSize() {
-        PriorityQueue<WeightedEntry> juQueue = new PriorityQueue<WeightedEntry>(100);
+        PriorityQueue<Edge> juQueue = new PriorityQueue<Edge>(100);
         IntBinHeap binHeap = new IntBinHeap(100);
 
         Random rand = new Random(1);
@@ -91,7 +91,7 @@ public class IntBinHeapTest {
         for (int i = 0; i < N; i++) {
             float val = rand.nextFloat();
             binHeap.insert(i, val);
-            juQueue.add(new WeightedEntry(i, val));
+            juQueue.add(new Edge(i, val));
         }
 
         assertEquals(juQueue.size(), binHeap.size());

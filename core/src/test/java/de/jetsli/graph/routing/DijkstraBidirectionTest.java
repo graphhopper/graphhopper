@@ -33,13 +33,13 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
     @Test
     public void testAddSkipNodes() {
         Graph g = createWikipediaTestGraph();
-        Path p = createAlgo(g).calcShortestPath(0, 4);
+        Path p = createAlgo(g).calcPath(0, 4);
         assertEquals(p.toString(), 20, p.distance(), 1e-6);
         assertTrue(p.toString(), p.contains(5));
         
         DijkstraBidirection algo = new DijkstraBidirection(g);
         algo.addSkipNode(5);
-        p = algo.calcShortestPath(0, 4);        
+        p = algo.calcPath(0, 4);        
         assertFalse(p.toString(), p.contains(5));
     }
     
@@ -51,7 +51,7 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
                
         DijkstraBidirection algo = new DijkstraBidirection(g);
         algo.addSkipNode(1);
-        Path p = algo.calcShortestPath(0, 2);
+        Path p = algo.calcPath(0, 2);
         assertNull(p);
     }
 }
