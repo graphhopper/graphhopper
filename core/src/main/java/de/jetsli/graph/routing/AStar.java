@@ -89,10 +89,8 @@ public class AStar extends AbstractRoutingAlgorithm {
                     }
                     nEdge.prevEntry = currEdge;
                     prioQueueOpenSet.add(nEdge);
-                }
-
-                // TODO optimize: call only if necessary
-                updateShortest(nEdge, neighborNode);
+                    updateShortest(nEdge, neighborNode);
+                }                
             }
             if (to == currVertex)
                 break;
