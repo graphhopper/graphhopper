@@ -28,15 +28,15 @@ import gnu.trove.set.hash.TIntHashSet;
  */
 public class Path {
 
-    private double timeInSec;
+    private int timeInSec;
     private double distance;
     private TIntArrayList locations = new TIntArrayList();
 
-    public void setTimeInSec(double timeInSec) {
+    public void setTimeInSec(int timeInSec) {
         this.timeInSec = timeInSec;
     }
 
-    public double timeInSec() {
+    public int timeInSec() {
         return timeInSec;
     }
 
@@ -97,15 +97,15 @@ public class Path {
         return retSet;
     }
 
-    public void change(EdgeIdIterator iter, int to) {
+    public void updateProperties(EdgeIdIterator iter, int to) {
         while (iter.next()) {
             if (iter.nodeId() == to) {
                 setDistance(distance() + iter.distance());
-                setTimeInSec(timeInSec() + iter.distance() / CarFlags.getSpeed(iter.flags()) * 3600);
+                setTimeInSec((int) (timeInSec() + iter.distance() * 3600.0 / CarFlags.getSpeed(iter.flags())));
                 return;
             }
         }
-        throw new IllegalStateException("couldn't extract path. distance for " + iter.nodeId() + " to " + to
-                + " not found!? edges of " + iter.nodeId() + " contains node " + to);
+        throw new IllegalStateException("couldn't extract path. distance for " + iter.nodeId()
+                + " to " + to + " not found!?");
     }
 }

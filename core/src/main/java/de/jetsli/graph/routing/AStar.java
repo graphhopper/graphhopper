@@ -91,6 +91,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                     prioQueueOpenSet.add(nEdge);
                 }
 
+                // TODO optimize: call only if necessary
                 updateShortest(nEdge, neighborNode);
             }
             if (to == currVertex)
@@ -108,7 +109,7 @@ public class AStar extends AbstractRoutingAlgorithm {
             int tmpFrom = currEdge.node;
             path.add(tmpFrom);
             currEdge = (AStarEdge) currEdge.prevEntry;
-            path.change(graph.getIncoming(tmpFrom), currEdge.node);
+            path.updateProperties(graph.getIncoming(tmpFrom), currEdge.node);
         }
         path.add(fromEntry.node);
         path.reverseOrder();

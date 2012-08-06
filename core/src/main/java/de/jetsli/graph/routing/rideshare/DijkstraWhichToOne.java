@@ -89,7 +89,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         shortestDistMapTo.put(destination, entryTo);
 
         shortest = new PathWrapperRef(graph);
-        shortest.distance = Double.MAX_VALUE;
+        shortest.weight = Double.MAX_VALUE;
 
         // create several starting points
         if (pubTransport.isEmpty())
@@ -106,7 +106,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         }
 
         int finish = 0;
-        while (finish < 2 && currFrom.weight + currTo.weight < shortest.distance) {
+        while (finish < 2 && currFrom.weight + currTo.weight < shortest.weight) {
             // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
             // a node from overlap may not be on the shortest path!!
             // => when scanning an arc (v, w) in the forward search and w is scanned in the reverse 
@@ -158,7 +158,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
             if (visitedMain.contains(tmpV))
                 continue;
 
-            double tmp = iter.distance() + curr.weight;
+            double tmp = getWeight(iter) + curr.weight;
             EdgeEntry de = shortestDistMap.get(tmpV);
             if (de == null) {
                 de = new EdgeEntry(tmpV, tmp);
@@ -184,11 +184,11 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         if (entryOther != null) {
             // update μ
             double newShortest = de.weight + entryOther.weight;
-            if (newShortest < shortest.distance) {
+            if (newShortest < shortest.weight) {
                 shortest.switchWrapper = shortestDistMapFrom == shortestDistMapOther;
                 shortest.edgeFrom = de;
                 shortest.edgeTo = entryOther;
-                shortest.distance = newShortest;
+                shortest.weight = newShortest;
             }
         }
     }

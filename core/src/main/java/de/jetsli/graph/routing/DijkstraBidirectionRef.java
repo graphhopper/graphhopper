@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.Edge;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
@@ -37,14 +36,14 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     private int from, to;
     private MyBitSet visitedFrom;
     private PriorityQueue<EdgeEntry> openSetFrom;
-    private TIntObjectMap<EdgeEntry> shortestDistMapFrom;
+    private TIntObjectMap<EdgeEntry> shortestWeightMapFrom;
     private MyBitSet visitedTo;
     private PriorityQueue<EdgeEntry> openSetTo;
-    private TIntObjectMap<EdgeEntry> shortestDistMapTo;
+    private TIntObjectMap<EdgeEntry> shortestWeightMapTo;
     private boolean alreadyRun;
     protected EdgeEntry currFrom;
     protected EdgeEntry currTo;
-    protected TIntObjectMap<EdgeEntry> shortestDistMapOther;
+    protected TIntObjectMap<EdgeEntry> shortestWeightMapOther;
     public PathWrapperRef shortest;
 
     public DijkstraBidirectionRef(Graph graph) {
@@ -52,11 +51,11 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         int locs = Math.max(20, graph.getNodes());
         visitedFrom = new MyOpenBitSet(locs);
         openSetFrom = new PriorityQueue<EdgeEntry>(locs / 10);
-        shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>(locs / 10);
+        shortestWeightMapFrom = new TIntObjectHashMap<EdgeEntry>(locs / 10);
 
         visitedTo = new MyOpenBitSet(locs);
         openSetTo = new PriorityQueue<EdgeEntry>(locs / 10);
-        shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>(locs / 10);
+        shortestWeightMapTo = new TIntObjectHashMap<EdgeEntry>(locs / 10);
 
         clear();
     }
@@ -66,14 +65,14 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         alreadyRun = false;
         visitedFrom.clear();
         openSetFrom.clear();
-        shortestDistMapFrom.clear();
+        shortestWeightMapFrom.clear();
 
         visitedTo.clear();
         openSetTo.clear();
-        shortestDistMapTo.clear();
+        shortestWeightMapTo.clear();
 
         shortest = new PathWrapperRef(graph);
-        shortest.distance = Double.MAX_VALUE;
+        shortest.weight = Double.MAX_VALUE;
         return this;
     }
 
@@ -85,14 +84,14 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     public DijkstraBidirectionRef initFrom(int from) {
         this.from = from;
         currFrom = new EdgeEntry(from, 0);
-        shortestDistMapFrom.put(from, currFrom);
+        shortestWeightMapFrom.put(from, currFrom);
         return this;
     }
 
     public DijkstraBidirectionRef initTo(int to) {
         this.to = to;
         currTo = new EdgeEntry(to, 0);
-        shortestDistMapTo.put(to, currTo);
+        shortestWeightMapTo.put(to, currTo);
         return this;
     }
 
@@ -133,39 +132,39 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     //    search, update shortest = μ if df (v) + (v, w) + dr (w) < μ            
     public boolean checkFinishCondition() {
         if (currFrom == null)
-            return currTo.weight >= shortest.distance;
+            return currTo.weight >= shortest.weight;
         else if (currTo == null)
-            return currFrom.weight >= shortest.distance;
-        return currFrom.weight + currTo.weight >= shortest.distance;
+            return currFrom.weight >= shortest.weight;
+        return currFrom.weight + currTo.weight >= shortest.weight;
     }
 
     public void fillEdges(EdgeEntry curr, MyBitSet visitedMain, PriorityQueue<EdgeEntry> prioQueue,
-            TIntObjectMap<EdgeEntry> shortestDistMap, boolean out) {
+            TIntObjectMap<EdgeEntry> shortestWeightMap, boolean out) {
 
-        int currVertexFrom = curr.node;
+        int currNodeFrom = curr.node;
         EdgeIdIterator iter;
         if (out)
-            iter = graph.getOutgoing(currVertexFrom);
+            iter = graph.getOutgoing(currNodeFrom);
         else
-            iter = graph.getIncoming(currVertexFrom);
+            iter = graph.getIncoming(currNodeFrom);
 
         while (iter.next()) {
             int neighborNode = iter.nodeId();
             if (visitedMain.contains(neighborNode))
                 continue;
 
-            double tmpDist = getWeight(iter) + curr.weight;
-            EdgeEntry de = shortestDistMap.get(neighborNode);
+            double tmpWeight = getWeight(iter) + curr.weight;
+            EdgeEntry de = shortestWeightMap.get(neighborNode);
             if (de == null) {
-                de = new EdgeEntry(neighborNode, tmpDist);
+                de = new EdgeEntry(neighborNode, tmpWeight);
                 de.prevEntry = curr;
-                shortestDistMap.put(neighborNode, de);
+                shortestWeightMap.put(neighborNode, de);
                 prioQueue.add(de);
-            } else if (de.weight > tmpDist) {
+            } else if (de.weight > tmpWeight) {
                 // use fibonacci? see http://stackoverflow.com/q/6273833/194609
                 // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry
                 prioQueue.remove(de);
-                de.weight = tmpDist;
+                de.weight = tmpWeight;
                 de.prevEntry = curr;
                 prioQueue.add(de);
             }
@@ -177,24 +176,24 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     @Override
     public void updateShortest(EdgeEntry shortestDE, int currLoc) {
-        EdgeEntry entryOther = shortestDistMapOther.get(currLoc);
+        EdgeEntry entryOther = shortestWeightMapOther.get(currLoc);
         if (entryOther == null)
             return;
 
         // update μ
         double newShortest = shortestDE.weight + entryOther.weight;
-        if (newShortest < shortest.distance) {
-            shortest.switchWrapper = shortestDistMapFrom == shortestDistMapOther;
+        if (newShortest < shortest.weight) {
+            shortest.switchWrapper = shortestWeightMapFrom == shortestWeightMapOther;
             shortest.edgeFrom = shortestDE;
             shortest.edgeTo = entryOther;
-            shortest.distance = newShortest;
+            shortest.weight = newShortest;
         }
     }
 
     public boolean fillEdgesFrom() {
         if (currFrom != null) {
-            shortestDistMapOther = shortestDistMapTo;
-            fillEdges(currFrom, visitedFrom, openSetFrom, shortestDistMapFrom, true);
+            shortestWeightMapOther = shortestWeightMapTo;
+            fillEdges(currFrom, visitedFrom, openSetFrom, shortestWeightMapFrom, true);
             if (openSetFrom.isEmpty())
                 return false;
 
@@ -209,8 +208,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     public boolean fillEdgesTo() {
         if (currTo != null) {
-            shortestDistMapOther = shortestDistMapFrom;
-            fillEdges(currTo, visitedTo, openSetTo, shortestDistMapTo, false);
+            shortestWeightMapOther = shortestWeightMapFrom;
+            fillEdges(currTo, visitedTo, openSetTo, shortestWeightMapTo, false);
             if (openSetTo.isEmpty())
                 return false;
 
@@ -232,11 +231,11 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         return null;
     }
 
-    public EdgeEntry getShortestDistFrom(int nodeId) {
-        return shortestDistMapFrom.get(nodeId);
+    public EdgeEntry getShortestWeightFrom(int nodeId) {
+        return shortestWeightMapFrom.get(nodeId);
     }
 
-    public EdgeEntry getShortestDistTo(int nodeId) {
-        return shortestDistMapTo.get(nodeId);
+    public EdgeEntry getShortestWeightTo(int nodeId) {
+        return shortestWeightMapTo.get(nodeId);
     }
 }

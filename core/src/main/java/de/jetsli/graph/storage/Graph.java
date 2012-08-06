@@ -41,11 +41,10 @@ public interface Graph {
     double getLongitude(int index);
 
     /**
-     * @param a
-     * @param b
-     * @param distance necessary if no addLocation is called - e.g. if the graph is not a real world
-     * geo-graph
-     * @param flags see CarFlags
+     * @param a index of the starting node of the edge
+     * @param b index of the ending node of the edge
+     * @param distance necessary if no setNode is called - e.g. if the graph is not a geo-graph
+     * @param flags see CarFlags - involves velocity and direction
      */    
     void edge(int a, int b, double distance, int flags);
     

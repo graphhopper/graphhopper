@@ -28,11 +28,11 @@ public class PathWrapper {
     public boolean switchWrapper = false;
     public int fromEdgeId = -1;
     public int toEdgeId = -1;
-    public double distance;
+    public double weight;
     private EdgeWrapper edgeFrom;
     private EdgeWrapper edgeTo;
     private Graph g;
-    
+
     public PathWrapper(Graph g, EdgeWrapper edgesFrom, EdgeWrapper edgesTo) {
         this.g = g;
         this.edgeFrom = edgesFrom;
@@ -45,11 +45,11 @@ public class PathWrapper {
     public Path extract() {
         if (fromEdgeId < 0 || toEdgeId < 0)
             return null;
-        
+
         if (switchWrapper) {
-            EdgeWrapper tmp = edgeFrom;
-            edgeFrom = edgeTo;
-            edgeTo = tmp;
+            int tmp = fromEdgeId;
+            fromEdgeId = toEdgeId;
+            toEdgeId = tmp;
         }
 
         int nodeFrom = edgeFrom.getNode(fromEdgeId);
@@ -59,25 +59,30 @@ public class PathWrapper {
 
         Path path = new Path();
         int currEdgeId = fromEdgeId;
+        path.add(nodeFrom);
+        currEdgeId = edgeFrom.getLink(currEdgeId);
         while (currEdgeId > 0) {
             int tmpFrom = edgeFrom.getNode(currEdgeId);
             path.add(tmpFrom);
+            path.updateProperties(g.getIncoming(nodeFrom), tmpFrom);
             currEdgeId = edgeFrom.getLink(currEdgeId);
-            path.change(g.getIncoming(tmpFrom), tmpFrom);
+            nodeFrom = tmpFrom;
         }
         path.reverseOrder();
 
+        // skip node of toEdgeId (equal to fromEdgeId)
         currEdgeId = edgeTo.getLink(toEdgeId);
         while (currEdgeId > 0) {
             int tmpTo = edgeTo.getNode(currEdgeId);
             path.add(tmpTo);
-            path.change(g.getIncoming(tmpTo), tmpTo);
+            path.updateProperties(g.getIncoming(tmpTo), nodeTo);
             currEdgeId = edgeTo.getLink(currEdgeId);
+            nodeTo = tmpTo;
         }
         return path;
     }
 
     @Override public String toString() {
-        return "distance:" + distance + ", from:" + edgeFrom.getNode(fromEdgeId) + ", to:" + edgeTo.getNode(toEdgeId);
+        return "distance:" + weight + ", from:" + edgeFrom.getNode(fromEdgeId) + ", to:" + edgeTo.getNode(toEdgeId);
     }
 }

@@ -75,6 +75,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p1.toString(), 5, p1.locations());
 
         Path p2 = createAlgo(graph).setType(AlgoType.FASTEST).calcPath(0, 3);
+        assertEquals(5580, p2.timeInSec());
         assertTrue("time of fastest path needs to be lower! " + p1.timeInSec() + ">" + p2.timeInSec(),
                 p1.timeInSec() > p2.timeInSec());
         assertEquals(p2.toString(), 31, p2.distance(), 1e-6);

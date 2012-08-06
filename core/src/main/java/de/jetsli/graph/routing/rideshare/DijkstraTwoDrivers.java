@@ -126,17 +126,17 @@ public class DijkstraTwoDrivers {
 
         @Override public boolean checkFinishCondition() {
             if (currFrom == null)
-                return currTo.weight >= shortest.distance;
+                return currTo.weight >= shortest.weight;
             else if (currTo == null)
-                return currFrom.weight >= shortest.distance;
+                return currFrom.weight >= shortest.weight;
 
-            return Math.min(currFrom.weight, currTo.weight) >= shortest.distance;
+            return Math.min(currFrom.weight, currTo.weight) >= shortest.weight;
         }
 
         @Override public void updateShortest(EdgeEntry shortestDE, int currLoc) {
-            EdgeEntry fromOther = getOtherDriver().getShortestDistFrom(currLoc);
-            EdgeEntry toOther = getOtherDriver().getShortestDistTo(currLoc);
-            EdgeEntry entryOther = shortestDistMapOther.get(currLoc);
+            EdgeEntry fromOther = getOtherDriver().getShortestWeightFrom(currLoc);
+            EdgeEntry toOther = getOtherDriver().getShortestWeightTo(currLoc);
+            EdgeEntry entryOther = shortestWeightMapOther.get(currLoc);
             if (fromOther == null || toOther == null || entryOther == null)
                 return;
 
@@ -151,11 +151,11 @@ public class DijkstraTwoDrivers {
 
                 getOtherDriver().shortest.edgeFrom = fromOther;
                 getOtherDriver().shortest.edgeTo = toOther;
-                getOtherDriver().shortest.distance = shortestOther;
+                getOtherDriver().shortest.weight = shortestOther;
 
                 shortest.edgeFrom = shortestDE;
                 shortest.edgeTo = entryOther;
-                shortest.distance = shortestCurrent;
+                shortest.weight = shortestCurrent;
             }
         }
     }

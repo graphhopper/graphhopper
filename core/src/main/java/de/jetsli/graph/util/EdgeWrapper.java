@@ -29,7 +29,7 @@ public class EdgeWrapper {
     private int edgeCounter;
     private int[] nodes;
     private int[] links;
-    private float[] distances;
+    private float[] weights;
     protected TIntIntHashMap node2edge;
 
     public EdgeWrapper() {
@@ -40,7 +40,7 @@ public class EdgeWrapper {
         edgeCounter = 1;
         nodes = new int[size];
         links = new int[size];
-        distances = new float[size];
+        weights = new float[size];
         node2edge = new TIntIntHashMap(size, FACTOR, -1, -1);
     }
 
@@ -52,16 +52,16 @@ public class EdgeWrapper {
         edgeCounter++;
         node2edge.put(nodeId, tmpEdgeId);        
         ensureCapacity(tmpEdgeId);
-        distances[tmpEdgeId] = (float) distance;
+        weights[tmpEdgeId] = (float) distance;
         nodes[tmpEdgeId] = nodeId;
         links[tmpEdgeId] = -1;
         return tmpEdgeId;
     }
 
-    public void putDistance(int edgeId, double dist) {
+    public void putWeight(int edgeId, double dist) {
         if (edgeId < 1)
             throw new IllegalStateException("You cannot save edge id's with values smaller 1. 0 is reserved");
-        distances[edgeId] = (float) dist;
+        weights[edgeId] = (float) dist;
     }
 
     public void putLink(int edgeId, int link) {
@@ -70,8 +70,8 @@ public class EdgeWrapper {
         links[edgeId] = link;
     }
 
-    public double getDistance(int edgeId) {
-        return distances[edgeId];
+    public double getWeight(int edgeId) {
+        return weights[edgeId];
     }
 
     public int getNode(int edgeId) {
@@ -90,7 +90,7 @@ public class EdgeWrapper {
     }
 
     private void resize(int cap) {
-        distances = Arrays.copyOf(distances, cap);
+        weights = Arrays.copyOf(weights, cap);
         nodes = Arrays.copyOf(nodes, cap);
         links = Arrays.copyOf(links, cap);
         node2edge.ensureCapacity(cap);
@@ -98,7 +98,7 @@ public class EdgeWrapper {
 
     public void clear() {
         edgeCounter = 1;
-        Arrays.fill(distances, 0);
+        Arrays.fill(weights, 0);
         Arrays.fill(nodes, 0);
         Arrays.fill(links, 0);
         node2edge.clear();

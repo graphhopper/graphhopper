@@ -28,7 +28,7 @@ public class EdgeWrapperTest {
     public void testPut() {
         EdgeWrapper instance = new EdgeWrapper(5);
         int edgeId = instance.add(10, 100f);
-        assertEquals(100f, instance.getDistance(edgeId), 1e-4);
+        assertEquals(100f, instance.getWeight(edgeId), 1e-4);
         assertEquals(-1, instance.getLink(edgeId));
         assertEquals(10, instance.getNode(edgeId));
     }

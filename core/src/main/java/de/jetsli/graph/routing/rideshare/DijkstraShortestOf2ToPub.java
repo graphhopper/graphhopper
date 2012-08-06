@@ -94,7 +94,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
 
         shortest = new PathWrapperRef(graph);
-        shortest.distance = Double.MAX_VALUE;
+        shortest.weight = Double.MAX_VALUE;
 
         // create several starting points
         if (pubTransport.isEmpty())
@@ -153,11 +153,11 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
             if (currTo == null)
                 throw new IllegalStateException("no shortest path!?");
 
-            return currTo.weight >= shortest.distance;
+            return currTo.weight >= shortest.weight;
         } else if (currTo == null)
-            return currFrom.weight >= shortest.distance;
+            return currFrom.weight >= shortest.weight;
         else
-            return Math.min(currFrom.weight, currTo.weight) >= shortest.distance;
+            return Math.min(currFrom.weight, currTo.weight) >= shortest.weight;
     }
 
     public void fillEdges(EdgeEntry curr, MyBitSet visitedMain,
@@ -197,11 +197,11 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
             if (entryOther != null) {
                 // update μ
                 double newShortest = shortestDE.weight + entryOther.weight;
-                if (newShortest < shortest.distance) {
+                if (newShortest < shortest.weight) {
                     shortest.switchWrapper = shortestDistMapFrom == shortestDistMapOther;
                     shortest.edgeFrom = shortestDE;
                     shortest.edgeTo = entryOther;
-                    shortest.distance = newShortest;
+                    shortest.weight = newShortest;
                 }
             }
         }

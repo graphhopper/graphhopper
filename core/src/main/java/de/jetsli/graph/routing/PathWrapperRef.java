@@ -15,11 +15,8 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.EdgeIdIterator;
-import de.jetsli.graph.util.GraphUtility;
 
 /**
  * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
@@ -30,7 +27,7 @@ public class PathWrapperRef {
 
     public EdgeEntry edgeFrom;
     public EdgeEntry edgeTo;
-    public double distance;
+    public double weight;
     public boolean switchWrapper = false;
     private Graph g;
 
@@ -60,7 +57,7 @@ public class PathWrapperRef {
             int tmpFrom = currEdge.node;
             path.add(tmpFrom);
             currEdge = currEdge.prevEntry;
-            path.change(g.getIncoming(tmpFrom), currEdge.node);
+            path.updateProperties(g.getIncoming(tmpFrom), currEdge.node);
         }
         path.add(currEdge.node);
         path.reverseOrder();
@@ -70,13 +67,13 @@ public class PathWrapperRef {
             int tmpTo = currEdge.node;
             currEdge = currEdge.prevEntry;
             path.add(currEdge.node);
-            path.change(g.getIncoming(currEdge.node), tmpTo);
+            path.updateProperties(g.getIncoming(currEdge.node), tmpTo);
         }
 
         return path;
     }
 
     @Override public String toString() {
-        return "distance:" + distance + ", from:" + edgeFrom + ", to:" + edgeTo;
+        return "distance:" + weight + ", from:" + edgeFrom + ", to:" + edgeTo;
     }
 }
