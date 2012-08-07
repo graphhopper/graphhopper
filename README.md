@@ -7,6 +7,25 @@ License
 
 This software stands under Apache License 2
 
+Purpose
+---------------
+
+Solving shortest path (related) problems is the main goal. GraphHopper is a routing engine which
+makes implementing arbitrary shortest path problems in Java easier and much more memory efficient than
+a naive implementation.
+GraphHopper is tuned for road networks at the moment but can be useful for public transport problems in
+the future as well.
+
+Features
+---------------
+
+ * 100% Java
+ * 100% Open Source via Apache License (=> business friendly)
+ * Memory efficient (=> suited for big data)
+ * Easy to use and small library with only a few dependencies
+ * Latest algorithms and highly tuned to be very fast
+ * Heavily tested
+
 Routing Usage
 ---------------
 
