@@ -92,8 +92,10 @@ public class PrepareRoutingTest {
         assertEquals(7, (int) map.get(0));
     }
 
-    // TODO @Test
-    public void testAddEdgeToSkip2DegreeNodes() {
+//    @Test
+    public void testIntroduceShortcuts() {
+        // introduce edges only if identical flags
+        // => show how many edges we would miss!
         final Graph g = createGraph(20);
         g.edge(0, 1, 1, true);
         g.edge(0, 2, 1, true);
@@ -119,7 +121,7 @@ public class PrepareRoutingTest {
         g.edge(14, 16, 1, true);
 
         PrepareRouting instance = new PrepareRouting(g);
-        instance.addEdgesToSkip2DegreeNodes();
+        instance.introduceShortcuts();
         g.optimize();
 
         // the resulting graph should have 5 nodes and 8 edges (weights in brackets):

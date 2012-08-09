@@ -20,6 +20,7 @@ import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.GraphUtility;
 import de.jetsli.graph.util.XFirstSearch;
 import java.util.*;
 import java.util.Map.Entry;
@@ -42,8 +43,7 @@ public class PrepareRouting {
     public int doWork() {
         Map<Integer, Integer> map = findSubnetworks();
         keepLargestNetwork(map);
-
-        // not working at the moment: addEdgesToSkip2DegreeNodes();
+//        introduceShortcuts();
         logger.info("optimize...");
         g.optimize();
         return map.size();
@@ -129,8 +129,7 @@ public class PrepareRouting {
         }.start(g, start, true);
     }
 
-    public void addEdgesToSkip2DegreeNodes() {
-        // TODO        
+    public void introduceShortcuts() {
         new XFirstSearch() {
             @Override protected MyBitSet createBitSet(int size) {
                 return new MyOpenBitSet(g.getNodes());
@@ -139,11 +138,18 @@ public class PrepareRouting {
             @Override protected boolean goFurther(int nodeId) {
                 int counter = 0;
                 EdgeIdIterator iter = g.getEdges(nodeId);
+                int oldFlags = 0;
                 while (iter.next()) {
+                    if(oldFlags == 0)
+                        oldFlags = iter.flags();
+                    else
+                        if(oldFlags == iter.flags()) {
+                            // TODO
+                        }
                     // TODO list.set(counter, e);
                     counter++;
                 }
-                if (counter == 2) {
+                if (GraphUtility.count(iter) == 2) {
                     // TODO if edges are both out edges only => report problem to OSM
                     // TODO if edges are both in edges only => do not remove
                     // do not delete - just introduce a new edge
