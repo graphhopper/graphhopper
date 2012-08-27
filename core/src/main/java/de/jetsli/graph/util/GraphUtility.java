@@ -65,13 +65,13 @@ public class GraphUtility {
     }
 
     /**
-     * note/todo: counts edges twice if both directions available
+     * note/todo: this methods counts edges twice if both directions are available
      */
     public static int countEdges(Graph g) {
         int counter = 0;
         int nodes = g.getNodes();
         for (int i = 0; i < nodes; i++) {
-            EdgeIdIterator iter = g.getEdges(i);
+            EdgeIdIterator iter = g.getOutgoing(i);
             while (iter.next()) {
                 counter++;
             }
@@ -119,5 +119,13 @@ public class GraphUtility {
                 return false;
         }
         return true;
+    }
+
+    public static EdgeIdIterator until(EdgeIdIterator edges, int i) {
+        while (edges.next()) {
+            if (edges.nodeId() == i)
+                return edges;
+        }
+        return EdgeIdIterator.EMPTY;
     }
 }

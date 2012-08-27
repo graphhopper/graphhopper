@@ -53,7 +53,7 @@ public class PrepareRouting {
         Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         final AtomicInteger integ = new AtomicInteger(0);
         int locs = g.getNodes();
-        final MyBitSet bs = new MyOpenBitSet(locs);        
+        final MyBitSet bs = new MyOpenBitSet(locs);
         for (int start = 0; start < locs; start++) {
             if (bs.contains(start))
                 continue;
@@ -129,35 +129,94 @@ public class PrepareRouting {
         }.start(g, start, true);
     }
 
-    public void introduceShortcuts() {
-        new XFirstSearch() {
-            @Override protected MyBitSet createBitSet(int size) {
-                return new MyOpenBitSet(g.getNodes());
+    /**
+     * Create short cuts to skip 2 degree nodes and make graph traversal for routing more efficient
+     */
+    public void createShortcuts() {
+        int locs = g.getNodes();
+        MyBitSet bs = new MyTBitSet();
+        for (int l = 0; l < locs; l++) {
+            Res lRes = new Res();
+            Res rRes = new Res();
+            if (bs.contains(l) || !findFirstLeftAndRight(g.getEdges(l), lRes, rRes))
+                continue;
+
+            bs.add(l);
+            int skip = lRes.n;
+            findEnd(bs, lRes, l, rRes.n);
+            findEnd(bs, rRes, l, skip);
+
+            // check if an edge already exists which is shorter than the shortcut
+            EdgeIdIterator iter = g.getEdges(lRes.n);
+            iter = GraphUtility.until(iter, rRes.n);
+            if (iter != EdgeIdIterator.EMPTY && iter.flags() == rRes.flags) {
+                // update the distance?
+                if (iter.distance() > lRes.d + rRes.d) {
+                    logger.info("shorter exists for " + lRes.n + "->" + rRes.n + ": " + (lRes.d + rRes.d));
+                    // TODO iter.distance(lRes.d + rRes.d);
+                }
+            } else
+                // finally create the shortcut
+                g.edge(lRes.n, rRes.n, lRes.d + rRes.d, rRes.flags);
+        }
+    }
+
+    boolean findFirstLeftAndRight(EdgeIdIterator iter, Res lRes, Res rRes) {
+        while (iter.next()) {
+            if (lRes.n < 0) {
+                lRes.n = iter.nodeId();
+                lRes.flags = iter.flags();
+            } else if (rRes.n < 0) {
+                rRes.flags = iter.flags();
+                if (lRes.flags != CarFlags.swapDirection(rRes.flags))
+                    return false;
+
+                rRes.n = iter.nodeId();
+            } else {
+                // more than 2 edges
+                return false;
+            }
+        }
+        // less than 2 nodes
+        if (rRes.n < 0)
+            return false;
+        return true;
+    }
+
+    void findEnd(MyBitSet bs, Res res, int start, int skip) {
+        while (true) {
+            EdgeIdIterator iter = g.getEdges(start);
+            double tmpD = 0;
+            int tmpF = 0;
+            int tmpN = -1;
+            for (int count = 0; iter.next(); count++) {
+                if (count >= 2)
+                    return;
+
+                if (tmpN < 0 && skip != iter.nodeId()) {
+                    // TODO g.setPriority(start, -1);
+                    skip = start;
+                    tmpN = start = iter.nodeId();
+                    tmpD = iter.distance();
+                    tmpF = iter.flags();
+                }
             }
 
-            @Override protected boolean goFurther(int nodeId) {
-                int counter = 0;
-                EdgeIdIterator iter = g.getEdges(nodeId);
-                int oldFlags = 0;
-                while (iter.next()) {
-                    if(oldFlags == 0)
-                        oldFlags = iter.flags();
-                    else
-                        if(oldFlags == iter.flags()) {
-                            // TODO
-                        }
-                    // TODO list.set(counter, e);
-                    counter++;
-                }
-                if (GraphUtility.count(iter) == 2) {
-                    // TODO if edges are both out edges only => report problem to OSM
-                    // TODO if edges are both in edges only => do not remove
-                    // do not delete - just introduce a new edge
-                    // g.markDeleted(nodeId);
-                }
+            if (tmpN < 0 || bs.contains(tmpN))
+                return;
 
-                return super.goFurther(nodeId);
-            }
-        }.start(g, 0, false);
+            if (res.flags != tmpF)
+                return;
+            res.d += tmpD;
+            res.n = tmpN;
+            bs.add(res.n);
+        }
+    }
+
+    class Res {
+
+        int n = -1;
+        double d;
+        int flags;
     }
 }

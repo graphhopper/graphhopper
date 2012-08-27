@@ -19,6 +19,7 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
+import de.jetsli.graph.util.EdgeIdIterator;
 import de.jetsli.graph.util.GraphUtility;
 import de.jetsli.graph.util.XFirstSearch;
 import java.util.Arrays;
@@ -92,10 +93,79 @@ public class PrepareRoutingTest {
         assertEquals(7, (int) map.get(0));
     }
 
-//    @Test
+    @Test
+    public void testSimpleShortcuts() {
+        Graph g = createGraph(20);
+        // 1
+        // 0-2-4-5
+        // 3
+        g.edge(0, 1, 1, true);
+        g.edge(0, 2, 2, true);
+        g.edge(0, 3, 3, true);
+        g.edge(2, 4, 4, true);
+        g.edge(4, 5, 5, true);
+
+        // assert additional 0, 5
+        assertFalse(GraphUtility.contains(g.getEdges(0), 5));
+        assertFalse(GraphUtility.contains(g.getEdges(5), 0));
+        new PrepareRouting(g).createShortcuts();
+        assertTrue(GraphUtility.contains(g.getEdges(0), 5));
+        EdgeIdIterator iter = GraphUtility.until(g.getEdges(0), 5);
+        assertEquals(11, iter.distance(), 1e-5);
+        assertEquals(12, GraphUtility.countEdges(g));
+
+        // 1
+        // 0->2->4->5
+        // 3
+        g = createGraph(20);
+        g.edge(0, 1, 1, false);
+        g.edge(0, 2, 2, false);
+        g.edge(0, 3, 3, false);
+        g.edge(2, 4, 4, false);
+        g.edge(4, 5, 5, false);
+        assertDirected0_5(g);
+        assertEquals(6, GraphUtility.countEdges(g));
+
+        g = createGraph(20);
+        g.edge(0, 1, 1, false);
+        g.edge(0, 2, 2, false);
+        g.edge(0, 3, 3, false);
+        g.edge(2, 4, 4, false);
+        g.edge(4, 5, 5, false);
+        g.edge(6, 5, 6, false);
+        assertDirected0_5(g);
+        assertEquals(7, GraphUtility.countEdges(g));
+    }
+
+    void assertDirected0_5(Graph g) {
+        // assert 0->5 but not 5->0
+        assertFalse(GraphUtility.contains(g.getEdges(0), 5));
+        assertFalse(GraphUtility.contains(g.getEdges(5), 0));
+        new PrepareRouting(g).createShortcuts();
+        assertTrue(GraphUtility.contains(g.getOutgoing(0), 5));
+        assertFalse(GraphUtility.contains(g.getOutgoing(5), 0));
+    }
+
+    // TODO @Test
+    public void testShortcutUnpacking() {
+        // store skipped first node along with the shortcut to unpack short cut!!
+    }
+
+    // TODO @Test
+    public void testChangeExistingShortcut() {
+        //
+        // |     |
+        // 0-1-2-3
+        // |     |
+        // 7-8-9-10
+        // |     |
+        //
+        // => 0-3 shortcut exists => 7-10 reduces existing shortcut 
+    }
+
+    // prepare-routing.svg
+    @Test
     public void testIntroduceShortcuts() {
-        // introduce edges only if identical flags
-        // => show how many edges we would miss!
         final Graph g = createGraph(20);
         g.edge(0, 1, 1, true);
         g.edge(0, 2, 1, true);
@@ -120,37 +190,25 @@ public class PrepareRoutingTest {
         g.edge(15, 16, 2, true);
         g.edge(14, 16, 1, true);
 
-        PrepareRouting instance = new PrepareRouting(g);
-        instance.introduceShortcuts();
+        new PrepareRouting(g).createShortcuts();
         g.optimize();
 
-        // the resulting graph should have 5 nodes and 8 edges (weights in brackets):
-        //
-        // 4-(5)-14-(2)-3
-        // |\     |    / \
-        // | \   (1)  /  |
-        // | (5)-9-(1)   |
-        // |    /        |
-        // 2-(1)         |
-        // \--(1)---------
-        //
-        assertEquals(5, g.getNodes());
+        assertEquals(22 * 2 + 4 * 2, GraphUtility.countEdges(g));
 
-        final AtomicInteger edgesCounter = new AtomicInteger(0);
-        new XFirstSearch() {
-            @Override protected MyBitSet createBitSet(int size) {
-                return new MyTBitSet(size);
-            }
+        assertTrue(GraphUtility.contains(g.getOutgoing(12), 16));
+        EdgeIdIterator iter = GraphUtility.until(g.getOutgoing(12), 16);
+        //TODO assertEquals(2, iter.distance(), 1e-4);
 
-            @Override protected boolean goFurther(int nodeId) {
-                if (GraphUtility.count(g.getEdges(nodeId)) == 2)
-                    throw new RuntimeException("should not happen");
+        assertTrue(GraphUtility.contains(g.getOutgoing(0), 1));
+        iter = GraphUtility.until(g.getOutgoing(0), 1);
+        assertEquals(1, iter.distance(), 1e-4);
 
+        assertTrue(GraphUtility.contains(g.getOutgoing(2), 9));
+        iter = GraphUtility.until(g.getOutgoing(2), 9);
+        assertEquals(1, iter.distance(), 1e-4);
 
-                edgesCounter.incrementAndGet();
-                return super.goFurther(nodeId);
-            }
-        }.start(g, 0, true);
-        assertEquals(8, edgesCounter.get());
+        assertTrue(GraphUtility.contains(g.getOutgoing(4), 9));
+        iter = GraphUtility.until(g.getOutgoing(4), 9);
+        assertEquals(5, iter.distance(), 1e-4);
     }
 }
