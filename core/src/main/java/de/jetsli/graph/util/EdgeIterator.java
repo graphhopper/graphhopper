@@ -30,21 +30,21 @@ package de.jetsli.graph.util;
  *
  * @author Peter Karich
  */
-public interface EdgeIdIterator {
+public interface EdgeIterator {
 
     boolean next();
 
-    int nodeId();
+    int node();
 
     double distance();
 
     int flags();
-    public static final EdgeIdIterator EMPTY = new EdgeIdIterator() {
+    public static final EdgeIterator EMPTY = new EdgeIterator() {
         @Override public boolean next() {
             return false;
         }
 
-        @Override public int nodeId() {
+        @Override public int node() {
             throw new UnsupportedOperationException("Not supported.");
         }
 

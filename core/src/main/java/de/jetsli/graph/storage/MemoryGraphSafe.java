@@ -19,7 +19,7 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.reader.CarFlags;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.Helper;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -315,17 +315,17 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     @Override
-    public EdgeIdIterator getEdges(int nodeId) {
+    public EdgeIterator getEdges(int nodeId) {
         return new EdgeIterable(nodeId, true, true);
     }
 
     @Override
-    public EdgeIdIterator getIncoming(int nodeId) {
+    public EdgeIterator getIncoming(int nodeId) {
         return new EdgeIterable(nodeId, true, false);
     }
 
     @Override
-    public EdgeIdIterator getOutgoing(int nodeId) {
+    public EdgeIterator getOutgoing(int nodeId) {
         return new EdgeIterable(nodeId, false, true);
     }
 
@@ -334,7 +334,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         flush();
     }
 
-    private class EdgeIterable implements EdgeIdIterator {
+    private class EdgeIterable implements EdgeIterator {
 
         int lastEdgePointer;
         boolean in;
@@ -408,7 +408,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
 
         @Override
-        public int nodeId() {
+        public int node() {
             return nodeId;
         }
 
@@ -518,9 +518,9 @@ public class MemoryGraphSafe implements SaveableGraph {
         final TIntIntHashMap oldToNewIndexMap = new TIntIntHashMap(deleted, 1.5f, -1, -1);
         MyBitSetImpl toUpdatedSet = new MyBitSetImpl(deleted * 3);
         for (int delNode = deletedNodes.next(0); delNode >= 0; delNode = deletedNodes.next(delNode + 1)) {
-            EdgeIdIterator delEdgesIter = getEdges(delNode);
+            EdgeIterator delEdgesIter = getEdges(delNode);
             while (delEdgesIter.next()) {
-                int currNode = delEdgesIter.nodeId();
+                int currNode = delEdgesIter.node();
                 if (deletedNodes.contains(currNode))
                     continue;
 
@@ -549,7 +549,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             EdgeIterable nodesConnectedToDelIter = (EdgeIterable) getEdges(toUpdateNode);
             int prev = -1;
             while (nodesConnectedToDelIter.next()) {
-                int nodeId = nodesConnectedToDelIter.nodeId();
+                int nodeId = nodesConnectedToDelIter.node();
                 if (deletedNodes.contains(nodeId))
                     internalEdgeRemove(nodesConnectedToDelIter.edgePointer(), prev, toUpdateNode);
                 else
@@ -561,12 +561,12 @@ public class MemoryGraphSafe implements SaveableGraph {
         // marks connected nodes to rewrite the edges
         for (int i = 0; i < itemsToMove; i++) {
             int oldI = oldIndices[i];
-            EdgeIdIterator movedEdgeIter = getEdges(oldI);
+            EdgeIterator movedEdgeIter = getEdges(oldI);
             while (movedEdgeIter.next()) {
-                if (deletedNodes.contains(movedEdgeIter.nodeId()))
-                    throw new IllegalStateException("shouldn't happen the edge to the node " + movedEdgeIter.nodeId() + " should be already deleted. " + oldI);
+                if (deletedNodes.contains(movedEdgeIter.node()))
+                    throw new IllegalStateException("shouldn't happen the edge to the node " + movedEdgeIter.node() + " should be already deleted. " + oldI);
 
-                toUpdatedSet.add(movedEdgeIter.nodeId());
+                toUpdatedSet.add(movedEdgeIter.node());
             }
         }
 
@@ -640,13 +640,13 @@ public class MemoryGraphSafe implements SaveableGraph {
             double lat = this.getLatitude(oldNodeId);
             double lon = this.getLongitude(oldNodeId);
             inMemGraph.setNode(newNodeId, lat, lon);
-            EdgeIdIterator iter = this.getEdges(oldNodeId);
+            EdgeIterator iter = this.getEdges(oldNodeId);
             while (iter.next()) {
-                if (deletedNodes.contains(iter.nodeId()))
+                if (deletedNodes.contains(iter.node()))
                     continue;
 
                 // TODO duplicate edges will be created!
-                inMemGraph.internalEdgeAdd(newNodeId, old2NewMap[iter.nodeId()], iter.distance(), iter.flags());
+                inMemGraph.internalEdgeAdd(newNodeId, old2NewMap[iter.node()], iter.distance(), iter.flags());
             }
             newNodeId++;
         }

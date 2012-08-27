@@ -48,12 +48,12 @@ public class GraphUtility {
                 problems.add("count incoming or outgoing edges should be maximum "
                         + e + " but were:" + incom + "(in), " + out + "(out)");
 
-            EdgeIdIterator iter = g.getEdges(i);
+            EdgeIterator iter = g.getEdges(i);
             while (iter.next()) {
-                if (iter.nodeId() >= nodes)
-                    problems.add("edge of " + i + " has a node " + iter.nodeId() + " greater or equal to getNodes");
-                if (iter.nodeId() < 0)
-                    problems.add("edge of " + i + " has a negative node " + iter.nodeId());
+                if (iter.node() >= nodes)
+                    problems.add("edge of " + i + " has a node " + iter.node() + " greater or equal to getNodes");
+                if (iter.node() < 0)
+                    problems.add("edge of " + i + " has a negative node " + iter.node());
             }
         }
 
@@ -71,7 +71,7 @@ public class GraphUtility {
         int counter = 0;
         int nodes = g.getNodes();
         for (int i = 0; i < nodes; i++) {
-            EdgeIdIterator iter = g.getOutgoing(i);
+            EdgeIterator iter = g.getOutgoing(i);
             while (iter.next()) {
                 counter++;
             }
@@ -79,7 +79,7 @@ public class GraphUtility {
         return counter;
     }
 
-    public static int count(EdgeIdIterator iter) {
+    public static int count(EdgeIterator iter) {
         int counter = 0;
         while (iter.next()) {
             ++counter;
@@ -95,11 +95,11 @@ public class GraphUtility {
         return counter;
     }
 
-    public static boolean contains(EdgeIdIterator iter, int... locs) {
+    public static boolean contains(EdgeIterator iter, int... locs) {
         TIntHashSet set = new TIntHashSet();
 
         while (iter.next()) {
-            set.add(iter.nodeId());
+            set.add(iter.node());
         }
         for (int l : locs) {
             if (!set.contains(l))
@@ -121,11 +121,11 @@ public class GraphUtility {
         return true;
     }
 
-    public static EdgeIdIterator until(EdgeIdIterator edges, int i) {
+    public static EdgeIterator until(EdgeIterator edges, int i) {
         while (edges.next()) {
-            if (edges.nodeId() == i)
+            if (edges.node() == i)
                 return edges;
         }
-        return EdgeIdIterator.EMPTY;
+        return EdgeIterator.EMPTY;
     }
 }

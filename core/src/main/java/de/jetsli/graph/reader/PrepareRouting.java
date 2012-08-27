@@ -19,7 +19,7 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
 import de.jetsli.graph.util.XFirstSearch;
 import java.util.*;
@@ -64,7 +64,7 @@ public class PrepareRouting {
                 }
 
                 @Override
-                protected EdgeIdIterator getEdges(Graph g, int current) {
+                protected EdgeIterator getEdges(Graph g, int current) {
                     return g.getEdges(current);
                 }
 
@@ -118,7 +118,7 @@ public class PrepareRouting {
                 return bs;
             }
 
-            @Override protected EdgeIdIterator getEdges(Graph g, int current) {
+            @Override protected EdgeIterator getEdges(Graph g, int current) {
                 return g.getEdges(current);
             }
 
@@ -147,9 +147,9 @@ public class PrepareRouting {
             findEnd(bs, rRes, l, skip);
 
             // check if an edge already exists which is shorter than the shortcut
-            EdgeIdIterator iter = g.getEdges(lRes.n);
+            EdgeIterator iter = g.getEdges(lRes.n);
             iter = GraphUtility.until(iter, rRes.n);
-            if (iter != EdgeIdIterator.EMPTY && iter.flags() == rRes.flags) {
+            if (iter != EdgeIterator.EMPTY && iter.flags() == rRes.flags) {
                 // update the distance?
                 if (iter.distance() > lRes.d + rRes.d) {
                     logger.info("shorter exists for " + lRes.n + "->" + rRes.n + ": " + (lRes.d + rRes.d));
@@ -161,17 +161,17 @@ public class PrepareRouting {
         }
     }
 
-    boolean findFirstLeftAndRight(EdgeIdIterator iter, Res lRes, Res rRes) {
+    boolean findFirstLeftAndRight(EdgeIterator iter, Res lRes, Res rRes) {
         while (iter.next()) {
             if (lRes.n < 0) {
-                lRes.n = iter.nodeId();
+                lRes.n = iter.node();
                 lRes.flags = iter.flags();
             } else if (rRes.n < 0) {
                 rRes.flags = iter.flags();
                 if (lRes.flags != CarFlags.swapDirection(rRes.flags))
                     return false;
 
-                rRes.n = iter.nodeId();
+                rRes.n = iter.node();
             } else {
                 // more than 2 edges
                 return false;
@@ -185,7 +185,7 @@ public class PrepareRouting {
 
     void findEnd(MyBitSet bs, Res res, int start, int skip) {
         while (true) {
-            EdgeIdIterator iter = g.getEdges(start);
+            EdgeIterator iter = g.getEdges(start);
             double tmpD = 0;
             int tmpF = 0;
             int tmpN = -1;
@@ -193,10 +193,10 @@ public class PrepareRouting {
                 if (count >= 2)
                     return;
 
-                if (tmpN < 0 && skip != iter.nodeId()) {
+                if (tmpN < 0 && skip != iter.node()) {
                     // TODO g.setPriority(start, -1);
                     skip = start;
-                    tmpN = start = iter.nodeId();
+                    tmpN = start = iter.node();
                     tmpD = iter.distance();
                     tmpF = iter.flags();
                 }

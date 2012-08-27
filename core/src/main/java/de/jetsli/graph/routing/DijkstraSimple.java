@@ -18,7 +18,7 @@ package de.jetsli.graph.routing;
 import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.EdgeEntry;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -42,9 +42,9 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
 
         while (true) {
             int neighborNode = currEdge.node;
-            EdgeIdIterator iter = graph.getOutgoing(neighborNode);
+            EdgeIterator iter = graph.getOutgoing(neighborNode);
             while (iter.next()) {
-                int tmpV = iter.nodeId();
+                int tmpV = iter.node();
                 if (visited.contains(tmpV))
                     continue;
 

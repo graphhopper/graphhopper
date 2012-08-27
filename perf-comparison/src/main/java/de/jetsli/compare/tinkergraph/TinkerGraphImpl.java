@@ -21,7 +21,7 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
 import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import java.util.Iterator;
 
 /**
@@ -103,19 +103,19 @@ public class TinkerGraphImpl implements Graph {
         e.setProperty(DISTANCE, distance);
     }
 
-    public EdgeIdIterator getEdges(int index) {
+    public EdgeIterator getEdges(int index) {
         return new MyTinkerIterable(g.getVertex(index));
     }
 
-    public EdgeIdIterator getIncoming(int index) {
+    public EdgeIterator getIncoming(int index) {
         return new MyTinkerIterable(g.getVertex(index));
     }
 
-    public EdgeIdIterator getOutgoing(int index) {
+    public EdgeIterator getOutgoing(int index) {
         return new MyTinkerIterable(g.getVertex(index));
     }
 
-    static class MyTinkerIterable implements EdgeIdIterator {
+    static class MyTinkerIterable implements EdgeIterator {
 
         private Iterator<Edge> iter;
         private Vertex node;
@@ -147,7 +147,7 @@ public class TinkerGraphImpl implements Graph {
             return true;
         }
 
-        public int nodeId() {
+        public int node() {
             return id;
         }
 

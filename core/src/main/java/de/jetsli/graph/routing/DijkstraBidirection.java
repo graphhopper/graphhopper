@@ -19,7 +19,7 @@ import de.jetsli.graph.coll.IntBinHeap;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeWrapper;
 
 /**
@@ -145,13 +145,13 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     public void fillEdges(int currNode, double currWeight, int currEdgeId, MyBitSet visitedMain,
             IntBinHeap prioQueue, EdgeWrapper wrapper, boolean out) {
 
-        EdgeIdIterator iter;
+        EdgeIterator iter;
         if (out)
             iter = graph.getOutgoing(currNode);
         else
             iter = graph.getIncoming(currNode);
         while (iter.next()) {
-            int neighborNode = iter.nodeId();
+            int neighborNode = iter.node();
             if (visitedMain.contains(neighborNode))
                 continue;
 

@@ -24,7 +24,7 @@ import de.jetsli.graph.routing.PathWrapperRef;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.EdgeEntry;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -148,13 +148,13 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
             TIntObjectMap<EdgeEntry> shortestDistMap, boolean out) {
 
         int currVertexFrom = curr.node;
-        EdgeIdIterator iter;
+        EdgeIterator iter;
         if (out)
             iter = graph.getOutgoing(currVertexFrom);
         else
             iter = graph.getIncoming(currVertexFrom);
         while (iter.next()) {
-            int tmpV = iter.nodeId();
+            int tmpV = iter.node();
             if (visitedMain.contains(tmpV))
                 continue;
 

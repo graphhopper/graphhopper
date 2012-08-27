@@ -24,7 +24,7 @@ import de.jetsli.graph.routing.PathWrapperRef;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.EdgeEntry;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -164,9 +164,9 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
             PriorityQueue<EdgeEntry> prioQueue, TIntObjectMap<EdgeEntry> shortestDistMap) {
 
         int currVertexFrom = curr.node;
-        EdgeIdIterator iter = graph.getOutgoing(currVertexFrom);
+        EdgeIterator iter = graph.getOutgoing(currVertexFrom);
         while (iter.next()) {
-            int tmpV = iter.nodeId();
+            int tmpV = iter.node();
             if (visitedMain.contains(tmpV))
                 continue;
 

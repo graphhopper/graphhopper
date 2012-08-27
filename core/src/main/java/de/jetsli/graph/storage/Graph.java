@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 
 /**
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
@@ -50,11 +50,11 @@ public interface Graph {
     
     void edge(int a, int b, double distance, boolean bothDirections);
 
-    EdgeIdIterator getEdges(int index);
+    EdgeIterator getEdges(int index);
 
-    EdgeIdIterator getIncoming(int index);
+    EdgeIterator getIncoming(int index);
 
-    EdgeIdIterator getOutgoing(int index);
+    EdgeIterator getOutgoing(int index);
 
     Graph clone();
 

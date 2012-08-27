@@ -17,7 +17,7 @@ package de.jetsli.compare.neo4j;
 
 import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.Helper;
 import java.io.File;
 import java.util.Iterator;
@@ -228,7 +228,7 @@ public class Neo4JGraphImpl implements Graph {
         }
     }
 
-    static class MyNeoIterable implements EdgeIdIterator {
+    static class MyNeoIterable implements EdgeIterator {
 
         private Iterator<Relationship> iter;
         // TODO should be a weak reference!
@@ -275,7 +275,7 @@ public class Neo4JGraphImpl implements Graph {
             return true;
         }
 
-        public int nodeId() {
+        public int node() {
             return id;
         }
 
@@ -288,15 +288,15 @@ public class Neo4JGraphImpl implements Graph {
         }
     }
 
-    public EdgeIdIterator getEdges(int ghId) {
+    public EdgeIterator getEdges(int ghId) {
         return new MyNeoIterable(ta, getNode(ghId));
     }
 
-    public EdgeIdIterator getIncoming(int ghId) {
+    public EdgeIterator getIncoming(int ghId) {
         return new MyNeoIterable(ta, getNode(ghId));
     }
 
-    public EdgeIdIterator getOutgoing(int ghId) {
+    public EdgeIterator getOutgoing(int ghId) {
         return new MyNeoIterable(ta, getNode(ghId));
     }
 

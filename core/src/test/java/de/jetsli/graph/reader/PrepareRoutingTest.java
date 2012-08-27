@@ -19,7 +19,7 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
 import de.jetsli.graph.util.XFirstSearch;
 import java.util.Arrays;
@@ -110,7 +110,7 @@ public class PrepareRoutingTest {
         assertFalse(GraphUtility.contains(g.getEdges(5), 0));
         new PrepareRouting(g).createShortcuts();
         assertTrue(GraphUtility.contains(g.getEdges(0), 5));
-        EdgeIdIterator iter = GraphUtility.until(g.getEdges(0), 5);
+        EdgeIterator iter = GraphUtility.until(g.getEdges(0), 5);
         assertEquals(11, iter.distance(), 1e-5);
         assertEquals(12, GraphUtility.countEdges(g));
 
@@ -196,7 +196,7 @@ public class PrepareRoutingTest {
         assertEquals(22 * 2 + 4 * 2, GraphUtility.countEdges(g));
 
         assertTrue(GraphUtility.contains(g.getOutgoing(12), 16));
-        EdgeIdIterator iter = GraphUtility.until(g.getOutgoing(12), 16);
+        EdgeIterator iter = GraphUtility.until(g.getOutgoing(12), 16);
         //TODO assertEquals(2, iter.distance(), 1e-4);
 
         assertTrue(GraphUtility.contains(g.getOutgoing(0), 1));

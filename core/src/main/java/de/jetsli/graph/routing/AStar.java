@@ -21,7 +21,7 @@ import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.ApproxCalcDistance;
 import de.jetsli.graph.util.CalcDistance;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -64,9 +64,9 @@ public class AStar extends AbstractRoutingAlgorithm {
         AStarEdge currEdge = fromEntry;
         while (true) {
             int currVertex = currEdge.node;
-            EdgeIdIterator iter = graph.getOutgoing(currVertex);
+            EdgeIterator iter = graph.getOutgoing(currVertex);
             while (iter.next()) {
-                int neighborNode = iter.nodeId();
+                int neighborNode = iter.node();
                 if (closedSet.contains(neighborNode))
                     continue;
 

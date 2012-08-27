@@ -18,7 +18,7 @@ package de.jetsli.graph.storage;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.reader.CarFlags;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -132,25 +132,25 @@ public class MemoryGraph implements Graph, Cloneable {
     }
 
     @Override
-    public EdgeIdIterator getEdges(int index) {
+    public EdgeIterator getEdges(int index) {
         if (index >= refToEdges.length)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
         final EdgeWithFlags d = refToEdges[index];
         if (d == null)
-            return EdgeIdIterator.EMPTY;
+            return EdgeIterator.EMPTY;
 
         return new EdgesIteratorable(d);
     }
 
     @Override
-    public EdgeIdIterator getOutgoing(int index) {
+    public EdgeIterator getOutgoing(int index) {
         if (index >= refToEdges.length)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
         final EdgeWithFlags d = refToEdges[index];
         if (d == null)
-            return EdgeIdIterator.EMPTY;
+            return EdgeIterator.EMPTY;
 
         return new EdgesIteratorable(d) {
             @Override public boolean next() {
@@ -166,13 +166,13 @@ public class MemoryGraph implements Graph, Cloneable {
     }
 
     @Override
-    public EdgeIdIterator getIncoming(int index) {
+    public EdgeIterator getIncoming(int index) {
         if (index >= refToEdges.length)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
         final EdgeWithFlags d = refToEdges[index];
         if (d == null)
-            return EdgeIdIterator.EMPTY;
+            return EdgeIterator.EMPTY;
 
         return new EdgesIteratorable(d) {
             @Override public boolean next() {
@@ -225,12 +225,12 @@ public class MemoryGraph implements Graph, Cloneable {
             double lat = this.getLatitude(oldNodeId);
             double lon = this.getLongitude(oldNodeId);
             inMemGraph.setNode(newNodeId, lat, lon);
-            EdgeIdIterator iter = this.getEdges(oldNodeId);
+            EdgeIterator iter = this.getEdges(oldNodeId);
             while (iter.next()) {
-                if (deletedNodes.contains(iter.nodeId()))
+                if (deletedNodes.contains(iter.node()))
                     continue;
 
-                inMemGraph.addIfAbsent(newNodeId, old2NewMap[iter.nodeId()],
+                inMemGraph.addIfAbsent(newNodeId, old2NewMap[iter.node()],
                         (float) iter.distance(), (byte) iter.flags());
             }
             newNodeId++;
@@ -242,7 +242,7 @@ public class MemoryGraph implements Graph, Cloneable {
         deletedNodes = null;
     }
 
-    private static class EdgesIteratorable implements EdgeIdIterator {
+    private static class EdgesIteratorable implements EdgeIterator {
 
         EdgeWithFlags first;
         EdgeWithFlags curr;
@@ -260,7 +260,7 @@ public class MemoryGraph implements Graph, Cloneable {
             return curr != null;
         }
 
-        @Override public int nodeId() {
+        @Override public int node() {
             return curr.node;
         }
 

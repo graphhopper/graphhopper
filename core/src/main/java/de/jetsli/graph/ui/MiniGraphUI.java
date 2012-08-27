@@ -27,7 +27,7 @@ import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.CoordTrig;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.StopWatch;
 import de.jetsli.graph.util.shapes.BBox;
@@ -124,9 +124,9 @@ public class MiniGraphUI {
 //                    int count = MyIteratorable.count(graph.getEdges(nodeIndex));
 //                    plot(g2, lat, lon, count, size);                    
 
-                    EdgeIdIterator iter = graph.getOutgoing(nodeIndex);
+                    EdgeIterator iter = graph.getOutgoing(nodeIndex);
                     while (iter.next()) {
-                        int nodeId = iter.nodeId();
+                        int nodeId = iter.node();
                         int sum = nodeIndex + nodeId;
                         if (fastPaint) {
                             if (bitset.contains(sum))

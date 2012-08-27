@@ -58,9 +58,9 @@ public class XFirstSearch {
         while (!coll.isEmpty()) {
             current = coll.pop();
             if (goFurther(current)) {
-                EdgeIdIterator iter = getEdges(g, current);
+                EdgeIterator iter = getEdges(g, current);
                 while (iter.next()) {
-                    int nodeId = iter.nodeId();
+                    int nodeId = iter.node();
                     if (!visited.contains(nodeId)) {
                         visited.add(nodeId);
                         coll.push(nodeId);
@@ -70,7 +70,7 @@ public class XFirstSearch {
         }
     }
 
-    protected EdgeIdIterator getEdges(Graph g, int current) {
+    protected EdgeIterator getEdges(Graph g, int current) {
         return g.getOutgoing(current);
     }
 

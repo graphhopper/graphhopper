@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -59,7 +59,7 @@ public abstract class AbstractGraphTester {
         g.edge(11, 1, 12, false);
         g.edge(1, 12, 12, false);
         g.edge(3, 2, 112, false);
-        EdgeIdIterator i = g.getOutgoing(2);
+        EdgeIterator i = g.getOutgoing(2);
         assertFalse(i.next());
 
         assertEquals(1, GraphUtility.count(g.getIncoming(1)));
@@ -71,15 +71,15 @@ public abstract class AbstractGraphTester {
         assertEquals(1, GraphUtility.count(g.getOutgoing(3)));
         i = g.getOutgoing(3);
         i.next();
-        assertEquals(2, i.nodeId());
+        assertEquals(2, i.node());
 
         i = g.getOutgoing(1);
         assertTrue(i.next());
-        assertEquals(2, i.nodeId());
+        assertEquals(2, i.node());
         assertTrue(i.next());
-        assertEquals(11, i.nodeId());
+        assertEquals(11, i.node());
         assertTrue(i.next());
-        assertEquals(12, i.nodeId());
+        assertEquals(12, i.node());
         assertFalse(i.next());
     }
 
@@ -88,20 +88,20 @@ public abstract class AbstractGraphTester {
 
         g.edge(1, 2, 12, false);
         g.edge(3, 2, 112, false);
-        EdgeIdIterator i = g.getOutgoing(2);
+        EdgeIterator i = g.getOutgoing(2);
         assertFalse(i.next());
         i = g.getOutgoing(3);
         assertTrue(i.next());
-        assertEquals(2, i.nodeId());
+        assertEquals(2, i.node());
         assertFalse(i.next());
 
         g.edge(2, 3, 112, false);
         i = g.getOutgoing(2);
         assertTrue(i.next());
-        assertEquals(3, i.nodeId());
+        assertEquals(3, i.node());
         i = g.getOutgoing(3);
         i.next();
-        assertEquals(2, i.nodeId());
+        assertEquals(2, i.node());
         assertFalse(i.next());
     }
 
@@ -330,9 +330,9 @@ public abstract class AbstractGraphTester {
         assertFalse(containsLatitude(g, g.getEdges(id3), 12));
     }
 
-    public boolean containsLatitude(Graph g, EdgeIdIterator iter, double latitude) {
+    public boolean containsLatitude(Graph g, EdgeIterator iter, double latitude) {
         while (iter.next()) {
-            if (Math.abs(g.getLatitude(iter.nodeId()) - latitude) < 1e-4)
+            if (Math.abs(g.getLatitude(iter.node()) - latitude) < 1e-4)
                 return true;
         }
         return false;

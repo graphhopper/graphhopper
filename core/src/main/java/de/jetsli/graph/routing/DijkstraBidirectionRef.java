@@ -19,7 +19,7 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.EdgeEntry;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
@@ -142,14 +142,14 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
             TIntObjectMap<EdgeEntry> shortestWeightMap, boolean out) {
 
         int currNodeFrom = curr.node;
-        EdgeIdIterator iter;
+        EdgeIterator iter;
         if (out)
             iter = graph.getOutgoing(currNodeFrom);
         else
             iter = graph.getIncoming(currNodeFrom);
 
         while (iter.next()) {
-            int neighborNode = iter.nodeId();
+            int neighborNode = iter.node();
             if (visitedMain.contains(neighborNode))
                 continue;
 

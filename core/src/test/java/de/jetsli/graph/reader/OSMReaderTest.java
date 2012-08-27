@@ -16,7 +16,7 @@
 package de.jetsli.graph.reader;
 
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.GraphUtility;
 import java.io.File;
@@ -55,12 +55,12 @@ public class OSMReaderTest {
         assertEquals(3, GraphUtility.count(graph.getOutgoing(1)));
         assertEquals(1, GraphUtility.count(graph.getOutgoing(2)));
 
-        EdgeIdIterator iter = graph.getOutgoing(1);
+        EdgeIterator iter = graph.getOutgoing(1);
         assertTrue(iter.next());
-        assertEquals(0, iter.nodeId());
+        assertEquals(0, iter.node());
         assertEquals(88.643, iter.distance(), 1e-3);
         assertTrue(iter.next());
-        assertEquals(2, iter.nodeId());
+        assertEquals(2, iter.node());
         assertEquals(93.146888, iter.distance(), 1e-3);
         CarFlags flags = new CarFlags(iter.flags());
         assertTrue(flags.isMotorway());
@@ -75,7 +75,7 @@ public class OSMReaderTest {
         // get third added location id=30
         iter = graph.getOutgoing(2);
         assertTrue(iter.next());
-        assertEquals(1, iter.nodeId());
+        assertEquals(1, iter.node());
         assertEquals(93.146888, iter.distance(), 1e-3);
     }
 
@@ -94,18 +94,18 @@ public class OSMReaderTest {
         assertEquals(2, GraphUtility.count(graph.getOutgoing(1)));
         assertEquals(1, GraphUtility.count(graph.getOutgoing(2)));
 
-        EdgeIdIterator iter = graph.getOutgoing(1);
+        EdgeIterator iter = graph.getOutgoing(1);
         assertTrue(iter.next());
-        assertEquals(0, iter.nodeId());
+        assertEquals(0, iter.node());
         assertEquals(88.643, iter.distance(), 1e-3);
         assertTrue(iter.next());
-        assertEquals(2, iter.nodeId());
+        assertEquals(2, iter.node());
         assertEquals(93.146888, iter.distance(), 1e-3);
 
         // get third added location => 2
         iter = graph.getOutgoing(2);
         assertTrue(iter.next());
-        assertEquals(1, iter.nodeId());
+        assertEquals(1, iter.node());
         assertEquals(93.146888, iter.distance(), 1e-3);
     }
 
@@ -120,9 +120,9 @@ public class OSMReaderTest {
         assertEquals(1, GraphUtility.count(graph.getOutgoing(1)));
         assertEquals(0, GraphUtility.count(graph.getOutgoing(2)));
 
-        EdgeIdIterator iter = graph.getOutgoing(1);
+        EdgeIterator iter = graph.getOutgoing(1);
         assertTrue(iter.next());
-        assertEquals(2, iter.nodeId());
+        assertEquals(2, iter.node());
 
         iter = graph.getEdges(1);
         assertTrue(iter.next());

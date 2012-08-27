@@ -18,7 +18,7 @@ package de.jetsli.graph.routing;
 import de.jetsli.graph.reader.CarFlags;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
 
 /**
@@ -46,7 +46,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         return this;
     }
 
-    protected double getWeight(EdgeIdIterator iter) {
+    protected double getWeight(EdgeIterator iter) {
         if (AlgoType.FASTEST.equals(type)) {
             return iter.distance() / CarFlags.getSpeedPart(iter.flags());
         } else

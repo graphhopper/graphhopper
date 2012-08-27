@@ -16,7 +16,7 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.reader.CarFlags;
-import de.jetsli.graph.util.EdgeIdIterator;
+import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -97,15 +97,15 @@ public class Path {
         return retSet;
     }
 
-    public void updateProperties(EdgeIdIterator iter, int to) {
+    public void updateProperties(EdgeIterator iter, int to) {
         while (iter.next()) {
-            if (iter.nodeId() == to) {
+            if (iter.node() == to) {
                 setDistance(distance() + iter.distance());
                 setTimeInSec((int) (timeInSec() + iter.distance() * 3600.0 / CarFlags.getSpeed(iter.flags())));
                 return;
             }
         }
-        throw new IllegalStateException("couldn't extract path. distance for " + iter.nodeId()
+        throw new IllegalStateException("couldn't extract path. distance for " + iter.node()
                 + " to " + to + " not found!?");
     }
 }
