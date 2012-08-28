@@ -41,7 +41,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     private Logger logger = LoggerFactory.getLogger(getClass());
     private SpatialKeyAlgo algo;
     protected CalcDistance calc = new CalcDistance();
-    private IntBuffer spatialKey2Id;
+    private int[] spatialKey2Id;
     private double maxNormRasterWidthKm;
     private int size;
     private Graph g;
@@ -87,7 +87,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
             size = x * x;
         }
 
-        spatialKey2Id = ByteBuffer.allocateDirect(size * 4).asIntBuffer();
+        spatialKey2Id = new int[size];
         return bits;
     }
 
@@ -131,7 +131,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
             double lon = g.getLongitude(nodeId);
             int key = (int) algo.encode(lat, lon);
             if (filledIndices.contains(key)) {
-                int oldNodeId = spatialKey2Id.get(key);
+                int oldNodeId = spatialKey2Id[key];
                 algo.decode(key, coord);
                 // decide which one is closer to 'key'
                 double distNew = calc.calcNormalizedDist(coord.lat, coord.lon, lat, lon);
@@ -140,9 +140,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 double distOld = calc.calcNormalizedDist(coord.lat, coord.lon, oldLat, oldLon);
                 // new point is closer to quad tree point (key) so overwrite old
                 if (distNew < distOld)
-                    spatialKey2Id.put(key, nodeId);
+                    spatialKey2Id[key] = nodeId;
             } else {
-                spatialKey2Id.put(key, nodeId);
+                spatialKey2Id[key] = nodeId;
                 filledIndices.add(key);
             }
         }
@@ -178,7 +178,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
                     boolean ret = filledIndices.contains(tmpKey);
                     if (ret) {
-                        int tmpId = spatialKey2Id.get(tmpKey);
+                        int tmpId = spatialKey2Id[tmpKey];
                         double lat = g.getLatitude(tmpId);
                         double lon = g.getLongitude(tmpId);
                         double dist = calc.calcNormalizedDist(mainCoord.lat, mainCoord.lon, lat, lon);
@@ -239,7 +239,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
             if (mainKey < 0 || mainKey >= size)
                 throw new IllegalStateException("Problem with mainKey:" + mainKey + " " + mainCoord + " size:" + size);
 
-            spatialKey2Id.put(mainKey, closestNode.node);
+            spatialKey2Id[mainKey] = closestNode.node;
             // do not forget this to speed up inner loop
             filledIndices.add(mainKey);
         }
@@ -268,7 +268,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
          */
 
         long key = algo.encode(lat, lon);
-        final int id = spatialKey2Id.get((int) key);
+        final int id = spatialKey2Id[(int) key];
         double mainLat = g.getLatitude(id);
         double mainLon = g.getLongitude(id);
         final Edge closestNode = new Edge(id, calc.calcNormalizedDist(lat, lon, mainLat, mainLon));

@@ -29,5 +29,8 @@ public interface RoutingAlgorithm {
 
     RoutingAlgorithm setType(AlgoType type);
 
+    /**
+     * Make sure you reuse this instance from the same thread
+     */
     RoutingAlgorithm clear();
 }
