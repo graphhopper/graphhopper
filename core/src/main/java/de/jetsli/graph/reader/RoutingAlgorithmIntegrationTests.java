@@ -25,8 +25,6 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.util.StopWatch;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

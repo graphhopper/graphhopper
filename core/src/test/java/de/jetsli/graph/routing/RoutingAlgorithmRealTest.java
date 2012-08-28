@@ -28,8 +28,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -76,6 +74,7 @@ public class RoutingAlgorithmRealTest {
 
     @Test
     public void testMonacoParallel() throws IOException {
+        System.out.println("testMonacoParallel takes a bit time -> move to a separate integration test");
         String graphFile = "target/graph-monaco";
         Helper.deleteDir(new File(graphFile));
         Graph g = OSMReader.osm2Graph(new CmdArgs().put("osm", "files/monaco.osm.gz").put("graph", graphFile));

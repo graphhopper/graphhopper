@@ -272,7 +272,7 @@ public abstract class AbstractRoutingAlgorithmTester {
             if (i >= noJvmWarming)
                 sw.stop();
 
-            System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.locations());
+            // System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.locations());
         }
 
         float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
