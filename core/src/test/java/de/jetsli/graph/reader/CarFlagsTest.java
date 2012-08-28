@@ -32,34 +32,34 @@ public class CarFlagsTest {
 
     @Test
     public void testBasics() {
-        CarFlags fl = new CarFlags(CarFlags.create(true));
+        EdgeFlags fl = new EdgeFlags(EdgeFlags.create(true));
         assertTrue(fl.isForward());
         assertTrue(fl.isBackward());
 
-        fl = new CarFlags(CarFlags.create(false));
+        fl = new EdgeFlags(EdgeFlags.create(false));
         assertTrue(fl.isForward());
         assertFalse(fl.isBackward());
-        assertEquals(CarFlags.DEFAULT_SPEED, fl.getSpeedPart());
+        assertEquals(EdgeFlags.DEFAULT_SPEED, fl.getSpeedPart());
     }
 
     @Test
     public void testSwapDir() {
-        CarFlags fl = new CarFlags(CarFlags.swapDirection(CarFlags.create(true)));
+        EdgeFlags fl = new EdgeFlags(EdgeFlags.swapDirection(EdgeFlags.create(true)));
         assertTrue(fl.isForward());
         assertTrue(fl.isBackward());
-        assertEquals(CarFlags.DEFAULT_SPEED, fl.getSpeedPart());
+        assertEquals(EdgeFlags.DEFAULT_SPEED, fl.getSpeedPart());
         
-        fl = new CarFlags(CarFlags.swapDirection(CarFlags.create(false)));
+        fl = new EdgeFlags(EdgeFlags.swapDirection(EdgeFlags.create(false)));
         assertFalse(fl.isForward());
         assertTrue(fl.isBackward());
-        assertEquals(CarFlags.DEFAULT_SPEED, fl.getSpeedPart());
+        assertEquals(EdgeFlags.DEFAULT_SPEED, fl.getSpeedPart());
     }
     
     @Test
     public void testService() {
         Map<String, Object> p = new HashMap<String, Object>();
-        p.put("car", CarFlags.CAR_SPEED.get("service"));
-        CarFlags fl = new CarFlags(CarFlags.create(p));
+        p.put("car", EdgeFlags.CAR_SPEED.get("service"));
+        EdgeFlags fl = new EdgeFlags(EdgeFlags.create(p));
         assertTrue(fl.isForward());
         assertTrue(fl.isBackward());
         assertTrue(fl.isService());

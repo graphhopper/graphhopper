@@ -23,6 +23,8 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
+ * This class is introduced as a helper to avoid cluttering the Graph interface with all the common
+ * methods. Most of the methods are useful for unit tests.
  *
  * @author Peter Karich, info@jetsli.de
  */

@@ -16,7 +16,7 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.reader.CarFlags;
+import de.jetsli.graph.reader.EdgeFlags;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.ApproxCalcDistance;
@@ -116,7 +116,7 @@ public class AStar extends AbstractRoutingAlgorithm {
 
     private double applyWeight(double currDistToGoal) {
         if (AlgoType.FASTEST.equals(type))
-            return currDistToGoal / CarFlags.MAX_SPEED;
+            return currDistToGoal / EdgeFlags.MAX_SPEED;
         return currDistToGoal;
     }
 

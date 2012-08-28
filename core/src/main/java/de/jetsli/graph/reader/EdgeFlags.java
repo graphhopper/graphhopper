@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * @author Peter Karich
  */
-public class CarFlags {
+public class EdgeFlags {
 
     static final CarSpeed CAR_SPEED = new CarSpeed();
     static final int DEFAULT_SPEED = CAR_SPEED.get("secondary");
@@ -33,7 +33,7 @@ public class CarFlags {
     /**
      * for debugging and testing purposes
      */
-    public CarFlags(int flags) {
+    public EdgeFlags(int flags) {
         this.flags = flags;
     }
 

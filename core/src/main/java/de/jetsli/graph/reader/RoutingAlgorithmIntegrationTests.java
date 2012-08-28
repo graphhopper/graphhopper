@@ -95,6 +95,7 @@ public class RoutingAlgorithmIntegrationTests {
         logger.info("running shortest path with " + algo.getClass().getSimpleName());
         Random rand = new Random(123);
         StopWatch sw = new StopWatch();
+
         for (int i = 0; i < runs; i++) {
             double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
             double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
@@ -113,7 +114,11 @@ public class RoutingAlgorithmIntegrationTests {
             Path p = algo.calcPath(from, to);
             sw.stop();
             if (p == null) {
-                logger.warn("no route found for i=" + i + " !?" + " graph-from " + from + ", graph-to " + to);
+                // there are still paths not found as this point unterfrankenGraph.getLatitude(798809) + "," + unterfrankenGraph.getLongitude(798809)
+                // is part of a oneway motorway => only routable in one direction
+                logger.warn("no route found for i=" + i + " !? "
+                        + "graph-from " + from + "(" + fromLat + "," + fromLon + "), "
+                        + "graph-to " + to + "(" + toLat + "," + toLon + ")");
                 continue;
             }
             if (i % 20 == 0)

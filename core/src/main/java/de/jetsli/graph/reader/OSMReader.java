@@ -62,7 +62,7 @@ public class OSMReader {
 //                return lat > 49.3 && lat < 50 && lon > 10.8 && lon < 11.6;
             }
         };
-        osm2Graph(osmReader, args);
+        osm2Graph(osmReader, args);        
         RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(osmReader.getGraph());
         if (args.getBool("test", false)) {
             tests.start();
@@ -323,7 +323,7 @@ public class OSMReader {
                     if (key != null && !key.isEmpty()) {
                         String val = sReader.getAttributeValue(null, "v");
                         if ("highway".equals(key)) {
-                            Integer integ = CarFlags.CAR_SPEED.get(val);
+                            Integer integ = EdgeFlags.CAR_SPEED.get(val);
                             if (integ != null)
                                 properties.put("car", integ);
 //                            else if ("footway".equals(val) || "path".equals(val) || "steps".equals(val)
@@ -369,7 +369,7 @@ public class OSMReader {
         if (isHighway(sReader) && tmpLocs.size() > 1) {
             int prevOsmId = tmpLocs.get(0);
             int l = tmpLocs.size();
-            int flags = CarFlags.create(properties);
+            int flags = EdgeFlags.create(properties);
             for (int index = 1; index < l; index++) {
                 int currOsmId = tmpLocs.get(index);
                 boolean ret = storage.addEdge(prevOsmId, currOsmId, flags, callback);

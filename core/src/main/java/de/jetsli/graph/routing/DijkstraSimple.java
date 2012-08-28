@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.reader.CarFlags;
+import de.jetsli.graph.reader.EdgeFlags;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.util.EdgeIterator;

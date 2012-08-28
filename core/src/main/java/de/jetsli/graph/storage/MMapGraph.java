@@ -17,7 +17,7 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.reader.CarFlags;
+import de.jetsli.graph.reader.EdgeFlags;
 import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.Helper;
@@ -308,7 +308,7 @@ public class MMapGraph implements SaveableGraph {
 
     @Override
     public void edge(int a, int b, double distance, boolean bothDirections) {
-        edge(a, b, distance, CarFlags.create(bothDirections));
+        edge(a, b, distance, EdgeFlags.create(bothDirections));
     }
 
     @Override
@@ -321,7 +321,7 @@ public class MMapGraph implements SaveableGraph {
         size = Math.max(size, Math.max(a, b) + 1);
         addIfAbsent(a * bytesNode + bytesNodeCore, b, (float) distance, (byte) flags);
 
-        flags = CarFlags.swapDirection(flags);
+        flags = EdgeFlags.swapDirection(flags);
         addIfAbsent(b * bytesNode + bytesNodeCore, a, (float) distance, (byte) flags);
     }
 

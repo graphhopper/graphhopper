@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.reader.CarFlags;
+import de.jetsli.graph.reader.EdgeFlags;
 import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
@@ -101,7 +101,7 @@ public class Path {
         while (iter.next()) {
             if (iter.node() == to) {
                 setDistance(distance() + iter.distance());
-                setTimeInSec((int) (timeInSec() + iter.distance() * 3600.0 / CarFlags.getSpeed(iter.flags())));
+                setTimeInSec((int) (timeInSec() + iter.distance() * 3600.0 / EdgeFlags.getSpeed(iter.flags())));
                 return;
             }
         }

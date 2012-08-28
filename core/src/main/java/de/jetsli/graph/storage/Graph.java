@@ -50,6 +50,11 @@ public interface Graph {
     
     void edge(int a, int b, double distance, boolean bothDirections);
 
+    /**
+     * Returns an iterator which makes it possible to traverse all edges of the specified node index.
+     * Hint: use GraphUtility to select certain neighbor nodes.
+     * Hint: edges with both directions will returned only once!
+     */
     EdgeIterator getEdges(int index);
 
     EdgeIterator getIncoming(int index);

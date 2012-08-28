@@ -22,9 +22,9 @@ package de.jetsli.graph.util;
  *
  * Usage:
  * <pre>
+ * // calls to iter.node(), distance() without next() will cause undefined behaviour
  * while(iter.next()) {
- *   // be sure to store in temporary variable as access could be expensive
- *   int nodeId = iter.nodeId();
+ *   int nodeId = iter.node();
  *   ...
  * }
  *

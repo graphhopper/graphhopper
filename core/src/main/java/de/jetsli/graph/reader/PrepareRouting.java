@@ -43,7 +43,7 @@ public class PrepareRouting {
     public int doWork() {
         Map<Integer, Integer> map = findSubnetworks();
         keepLargestNetwork(map);
-//        introduceShortcuts();
+        // createShortcuts();
         logger.info("optimize...");
         g.optimize();
         return map.size();
@@ -150,8 +150,9 @@ public class PrepareRouting {
             EdgeIterator iter = g.getEdges(lRes.n);
             iter = GraphUtility.until(iter, rRes.n);
             if (iter != EdgeIterator.EMPTY && iter.flags() == rRes.flags) {
-                // update the distance?
                 if (iter.distance() > lRes.d + rRes.d) {
+                    // update the distance
+                    // TODO distance vs. weight
                     logger.info("shorter exists for " + lRes.n + "->" + rRes.n + ": " + (lRes.d + rRes.d));
                     // TODO iter.distance(lRes.d + rRes.d);
                 }
@@ -168,7 +169,7 @@ public class PrepareRouting {
                 lRes.flags = iter.flags();
             } else if (rRes.n < 0) {
                 rRes.flags = iter.flags();
-                if (lRes.flags != CarFlags.swapDirection(rRes.flags))
+                if (lRes.flags != EdgeFlags.swapDirection(rRes.flags))
                     return false;
 
                 rRes.n = iter.node();
@@ -207,9 +208,9 @@ public class PrepareRouting {
 
             if (res.flags != tmpF)
                 return;
+            bs.add(skip);
             res.d += tmpD;
             res.n = tmpN;
-            bs.add(res.n);
         }
     }
 

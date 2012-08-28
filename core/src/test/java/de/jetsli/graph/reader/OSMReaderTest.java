@@ -62,12 +62,12 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(2, iter.node());
         assertEquals(93.146888, iter.distance(), 1e-3);
-        CarFlags flags = new CarFlags(iter.flags());
+        EdgeFlags flags = new EdgeFlags(iter.flags());
         assertTrue(flags.isMotorway());
         assertTrue(flags.isForward());
         assertTrue(flags.isBackward());
         assertTrue(iter.next());
-        flags = new CarFlags(iter.flags());
+        flags = new EdgeFlags(iter.flags());
         assertTrue(flags.isService());
         assertTrue(flags.isForward());
         assertTrue(flags.isBackward());
@@ -126,13 +126,13 @@ public class OSMReaderTest {
 
         iter = graph.getEdges(1);
         assertTrue(iter.next());
-        CarFlags flags = new CarFlags(iter.flags());
+        EdgeFlags flags = new EdgeFlags(iter.flags());
         assertTrue(flags.isMotorway());
         assertFalse(flags.isForward());
         assertTrue(flags.isBackward());
         
         assertTrue(iter.next());
-        flags = new CarFlags(iter.flags());
+        flags = new EdgeFlags(iter.flags());
         assertTrue(flags.isMotorway());
         assertTrue(flags.isForward());
         assertFalse(flags.isBackward());

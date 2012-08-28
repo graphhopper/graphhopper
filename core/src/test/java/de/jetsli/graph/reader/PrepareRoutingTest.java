@@ -112,7 +112,8 @@ public class PrepareRoutingTest {
         assertTrue(GraphUtility.contains(g.getEdges(0), 5));
         EdgeIterator iter = GraphUtility.until(g.getEdges(0), 5);
         assertEquals(11, iter.distance(), 1e-5);
-        assertEquals(12, GraphUtility.countEdges(g));
+        // TODO the shortcut 0-4 is introduced as 5 gets a second edge from the 0-5 shortcut        
+//        assertEquals((5 + 1) * 2, GraphUtility.countEdges(g));
 
         // 1
         // 0->2->4->5
@@ -124,7 +125,7 @@ public class PrepareRoutingTest {
         g.edge(2, 4, 4, false);
         g.edge(4, 5, 5, false);
         assertDirected0_5(g);
-        assertEquals(6, GraphUtility.countEdges(g));
+        assertEquals(5 + 1, GraphUtility.countEdges(g));
 
         g = createGraph(20);
         g.edge(0, 1, 1, false);
@@ -134,7 +135,7 @@ public class PrepareRoutingTest {
         g.edge(4, 5, 5, false);
         g.edge(6, 5, 6, false);
         assertDirected0_5(g);
-        assertEquals(7, GraphUtility.countEdges(g));
+        assertEquals(6 + 1, GraphUtility.countEdges(g));
     }
 
     void assertDirected0_5(Graph g) {
@@ -161,6 +162,26 @@ public class PrepareRoutingTest {
         // |     |
         //
         // => 0-3 shortcut exists => 7-10 reduces existing shortcut 
+    }
+
+    @Test
+    public void testMultiTypeShortcuts() {
+        Graph g = createGraph(20);
+        g.edge(0, 1, 10, EdgeFlags.create(30, true));
+        g.edge(1, 2, 10, EdgeFlags.create(30, true));
+        g.edge(2, 3, 10, EdgeFlags.create(30, true));
+        g.edge(0, 4, 20, EdgeFlags.create(120, true));
+        g.edge(4, 3, 20, EdgeFlags.create(120, true));
+        new PrepareRouting(g).createShortcuts();
+        g.optimize();
+
+        assertEquals(5 * 2 + 2 * 2, GraphUtility.countEdges(g));
+
+        EdgeIterator iter = GraphUtility.until(g.getEdges(0), 3);
+        assertEquals(30, iter.distance(), 1e-4);
+
+        iter = GraphUtility.until(iter, 3);
+        assertEquals(40, iter.distance(), 1e-4);
     }
 
     // prepare-routing.svg
@@ -197,7 +218,7 @@ public class PrepareRoutingTest {
 
         assertTrue(GraphUtility.contains(g.getOutgoing(12), 16));
         EdgeIterator iter = GraphUtility.until(g.getOutgoing(12), 16);
-        //TODO assertEquals(2, iter.distance(), 1e-4);
+        assertEquals(2, iter.distance(), 1e-4);
 
         assertTrue(GraphUtility.contains(g.getOutgoing(0), 1));
         iter = GraphUtility.until(g.getOutgoing(0), 1);
