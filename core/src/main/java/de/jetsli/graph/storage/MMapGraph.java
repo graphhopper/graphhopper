@@ -172,7 +172,7 @@ public class MMapGraph implements SaveableGraph {
         try {
             ensureNodesCapacity(nodes);
             ensureEdgesCapacity(newEdgeNo);
-            logger.info("Mapped " + str);
+            logger.debug("Mapped {}", str);
         } catch (IOException ex) {
             close();
             throw new RuntimeException("Failed to map " + str, ex);
