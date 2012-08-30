@@ -151,11 +151,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         return graph;
     }
 
-    // 1-2-3-4-5
+    // 0-1-2-3-4
     // |     / |
-    // |    9  |
+    // |    8  |
     // \   /   /
-    //  8-7-6-/
+    //  7-6-5-/
     void initBiGraph(Graph graph) {
         graph.edge(0, 1, 100, true);
         graph.edge(1, 2, 1, true);

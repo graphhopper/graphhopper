@@ -16,6 +16,7 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.EdgeFilter;
+import de.jetsli.graph.util.EdgeUpdateIterator;
 
 /**
  * Extended graph interface which supports storing and retrieving priorities per node.
@@ -29,4 +30,15 @@ public interface PriorityGraph extends Graph {
     int getPriority(int index);
 
     void setEdgeFilter(EdgeFilter edgeFilter);
+    
+    EdgeFilter getEdgeFilter();
+
+    @Override
+    public EdgeUpdateIterator getEdges(int nodeId);
+
+    @Override
+    public EdgeUpdateIterator getIncoming(int nodeId);
+
+    @Override
+    public EdgeUpdateIterator getOutgoing(int nodeId);
 }

@@ -17,6 +17,8 @@ package de.jetsli.graph.routing;
 
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.PriorityGraph;
+import de.jetsli.graph.util.EdgeFilter;
 
 /**
  * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
@@ -39,6 +41,19 @@ public class PathWrapperRef {
      * Extracts path from two shortest-path-tree
      */
     public Path extract() {
+        // TODO not thread safe for priority graph!!
+        EdgeFilter old = null;
+        if (g instanceof PriorityGraph) {
+            old = ((PriorityGraph) g).getEdgeFilter();
+            ((PriorityGraph) g).setEdgeFilter(null);
+        }
+        Path p = internExtract();
+        if (g instanceof PriorityGraph)
+            ((PriorityGraph) g).setEdgeFilter(old);
+        return p;
+    }
+
+    private Path internExtract() {
         if (edgeFrom == null || edgeTo == null)
             return null;
 
@@ -50,7 +65,7 @@ public class PathWrapperRef {
             edgeFrom = edgeTo;
             edgeTo = ee;
         }
-        
+
         Path path = new Path();
         EdgeEntry currEdge = edgeFrom;
         while (currEdge.prevEntry != null) {

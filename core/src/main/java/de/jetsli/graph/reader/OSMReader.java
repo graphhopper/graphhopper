@@ -158,7 +158,7 @@ public class OSMReader {
     public void cleanUp() {
         Graph g = storage.getGraph();
         int prev = g.getNodes();
-        PrepareRouting1 preparation = new PrepareRouting1(g);
+        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(g);
         logger.info("start finding subnetworks");
         preparation.doWork();
         int n = g.getNodes();

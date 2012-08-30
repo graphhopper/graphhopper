@@ -16,7 +16,7 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.EdgeFilter;
-import de.jetsli.graph.util.EdgeIterator;
+import de.jetsli.graph.util.EdgeUpdateIterator;
 import de.jetsli.graph.util.Helper;
 import java.io.IOException;
 import java.util.Arrays;
@@ -49,7 +49,7 @@ public class PriorityGraphImpl extends MemoryGraphSafe implements PriorityGraph 
         if (cap > 0) {
             int oldLen = priorities.length;
             priorities = Arrays.copyOf(priorities, cap);
-            Arrays.fill(priorities, oldLen, priorities.length, Integer.MIN_VALUE);
+            // Arrays.fill(priorities, oldLen, priorities.length, Integer.MIN_VALUE);
         }
         return cap;
     }
@@ -70,7 +70,7 @@ public class PriorityGraphImpl extends MemoryGraphSafe implements PriorityGraph 
     protected void initNodes(int cap) {
         super.initNodes(cap);
         priorities = new int[cap];
-        Arrays.fill(priorities, Integer.MIN_VALUE);
+        // Arrays.fill(priorities, Integer.MIN_VALUE);
     }
 
     @Override
@@ -118,18 +118,23 @@ public class PriorityGraphImpl extends MemoryGraphSafe implements PriorityGraph 
     }
 
     @Override
-    public EdgeIterator getEdges(int nodeId) {
+    public EdgeUpdateIterator getEdges(int nodeId) {
         return new EdgeFilterIterable(nodeId, true, true);
     }
 
     @Override
-    public EdgeIterator getIncoming(int nodeId) {
+    public EdgeUpdateIterator getIncoming(int nodeId) {
         return new EdgeFilterIterable(nodeId, true, false);
     }
 
     @Override
-    public EdgeIterator getOutgoing(int nodeId) {
+    public EdgeUpdateIterator getOutgoing(int nodeId) {
         return new EdgeFilterIterable(nodeId, false, true);
+    }
+
+    @Override
+    public EdgeFilter getEdgeFilter() {
+        return edgeFilter;
     }
 
     @Override
@@ -143,7 +148,7 @@ public class PriorityGraphImpl extends MemoryGraphSafe implements PriorityGraph 
             super(node, in, out);
         }
 
-        @Override public boolean next() {            
+        @Override public boolean next() {
             while (super.next()) {
                 if (edgeFilter != null && !edgeFilter.accept(fromNode, this))
                     continue;

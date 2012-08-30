@@ -45,15 +45,15 @@ public interface EdgeIterator {
         }
 
         @Override public int node() {
-            throw new UnsupportedOperationException("Not supported.");
+            throw new UnsupportedOperationException("Not supported for EMPTY edge.");
         }
 
         @Override public double distance() {
-            throw new UnsupportedOperationException("Not supported.");
+            throw new UnsupportedOperationException("Not supported for EMPTY edge.");
         }
 
         @Override public int flags() {
-            throw new UnsupportedOperationException("Not supported.");
+            throw new UnsupportedOperationException("Not supported for EMPTY edge.");
         }
     };
 }

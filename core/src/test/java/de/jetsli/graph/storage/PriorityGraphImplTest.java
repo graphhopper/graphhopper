@@ -48,7 +48,7 @@ public class PriorityGraphImplTest extends MemoryGraphSafeTest {
     @Test
     public void testPrios() {
         PriorityGraph g = createGraph(20);
-        assertEquals(Integer.MIN_VALUE, g.getPriority(10));
+        assertEquals(0, g.getPriority(10));
 
         g.setPriority(10, 100);
         assertEquals(100, g.getPriority(10));

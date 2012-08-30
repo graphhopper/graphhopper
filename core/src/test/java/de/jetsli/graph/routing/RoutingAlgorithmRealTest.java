@@ -28,11 +28,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
+ * Try algorithms with real data => slowish setup   .
  * @author Peter Karich
  */
 public class RoutingAlgorithmRealTest {
@@ -88,7 +89,7 @@ public class RoutingAlgorithmRealTest {
             for (int i = 0; i < instances.size(); i++) {
                 RoutingAlgorithm[] algos = RoutingAlgorithmIntegrationTests.createAlgos(g);
                 for (final RoutingAlgorithm algo : algos) {
-                    // not thread safe
+                    // not thread safe:
                     // algo.clear();
                     final int tmp = i;
                     Thread t = new Thread() {

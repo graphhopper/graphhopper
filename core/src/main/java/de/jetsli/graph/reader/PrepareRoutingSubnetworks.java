@@ -20,7 +20,6 @@ import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
-import de.jetsli.graph.util.GraphUtility;
 import de.jetsli.graph.util.XFirstSearch;
 import java.util.*;
 import java.util.Map.Entry;
@@ -31,13 +30,13 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Peter Karich
  */
-public class PrepareRouting1 {
+public class PrepareRoutingSubnetworks {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final Graph g;
     private int subNetworks = -1;
 
-    public PrepareRouting1(Graph g) {
+    public PrepareRoutingSubnetworks(Graph g) {
         this.g = g;
     }
 
@@ -46,6 +45,7 @@ public class PrepareRouting1 {
         keepLargestNetwork(map);
         logger.info("optimize to delete...");
         g.optimize();
+        subNetworks = map.size();
     }
 
     public int getSubNetworks() {

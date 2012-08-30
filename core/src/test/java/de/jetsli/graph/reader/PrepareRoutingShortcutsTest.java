@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.reader;
 
+import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.PriorityGraphImpl;
 import de.jetsli.graph.util.EdgeIterator;
@@ -26,7 +27,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class PrepareRouting2Test {
+public class PrepareRoutingShortcutsTest {
 
     PriorityGraph createGraph(int size) {
         return new PriorityGraphImpl(size);
@@ -47,7 +48,7 @@ public class PrepareRouting2Test {
         // assert additional 0, 5
         assertFalse(GraphUtility.contains(g.getEdges(0), 5));
         assertFalse(GraphUtility.contains(g.getEdges(5), 0));
-        new PrepareRouting2(g).createShortcuts();
+        new PrepareRoutingShortcuts(g).doWork();
         assertTrue(GraphUtility.contains(g.getEdges(0), 5));
         EdgeIterator iter = GraphUtility.until(g.getEdges(0), 5);
         assertEquals(11, iter.distance(), 1e-5);
@@ -81,7 +82,7 @@ public class PrepareRouting2Test {
         // assert 0->5 but not 5->0
         assertFalse(GraphUtility.contains(g.getEdges(0), 5));
         assertFalse(GraphUtility.contains(g.getEdges(5), 0));
-        new PrepareRouting2(g).createShortcuts();
+        new PrepareRoutingShortcuts(g).doWork();
         assertTrue(GraphUtility.contains(g.getOutgoing(0), 5));
         assertFalse(GraphUtility.contains(g.getOutgoing(5), 0));
     }
@@ -91,18 +92,36 @@ public class PrepareRouting2Test {
         // store skipped first node along with the shortcut to unpack short cut!!
     }
 
-    // TODO @Test
+
+    @Test
     public void testChangeExistingShortcut() {
-        //
-        // |     |
-        // 0-1-2-3
-        // |     |
-        // 7-8-9-10
-        // |     |
-        //
-        // => 0-3 shortcut exists => 7-10 reduces existing shortcut 
+        PriorityGraph g = createGraph(20);
+        initBiGraph(g);
+        
+        new PrepareRoutingShortcuts(g).doWork();
+        assertEquals(10 * 2 + 1 * 2, GraphUtility.countEdges(g));
+        EdgeIterator iter = GraphUtility.until(g.getEdges(6), 3);
+        assertEquals(40, iter.distance(), 1e-4);
     }
 
+    // 0-1-2-3-4
+    // |     / |
+    // |    8  |
+    // \   /   /
+    //  7-6-5-/
+    void initBiGraph(Graph graph) {
+        graph.edge(0, 1, 100, true);
+        graph.edge(1, 2, 1, true);
+        graph.edge(2, 3, 1, true);
+        graph.edge(3, 4, 1, true);
+        graph.edge(4, 5, 25, true);
+        graph.edge(5, 6, 25, true);
+        graph.edge(6, 7, 5, true);
+        graph.edge(7, 0, 5, true);
+        graph.edge(3, 8, 20, true);
+        graph.edge(8, 6, 20, true);
+    }
+    
     @Test
     public void testMultiTypeShortcuts() {
         PriorityGraph g = createGraph(20);
@@ -111,8 +130,7 @@ public class PrepareRouting2Test {
         g.edge(2, 3, 10, EdgeFlags.create(30, true));
         g.edge(0, 4, 20, EdgeFlags.create(120, true));
         g.edge(4, 3, 20, EdgeFlags.create(120, true));
-        new PrepareRouting2(g).createShortcuts();
-        g.optimize();
+        new PrepareRoutingShortcuts(g).doWork();
 
         assertEquals(5 * 2 + 2 * 2, GraphUtility.countEdges(g));
 
@@ -150,7 +168,7 @@ public class PrepareRouting2Test {
         g.edge(15, 16, 2, true);
         g.edge(14, 16, 1, true);
 
-        new PrepareRouting2(g).createShortcuts();
+        new PrepareRoutingShortcuts(g).doWork();
         assertEquals(22 * 2 + 4 * 2, GraphUtility.countEdges(g));
 
         assertTrue(GraphUtility.contains(g.getOutgoing(12), 16));

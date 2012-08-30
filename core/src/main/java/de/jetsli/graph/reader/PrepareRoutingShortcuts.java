@@ -18,31 +18,33 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.PriorityGraph;
+import de.jetsli.graph.util.EdgeFilter;
 import de.jetsli.graph.util.EdgeIterator;
+import de.jetsli.graph.util.EdgeUpdateIterator;
 import de.jetsli.graph.util.GraphUtility;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Peter Karich
  */
-public class PrepareRouting2 {
+public class PrepareRoutingShortcuts {
 
-    private Logger logger = LoggerFactory.getLogger(getClass());
     private final PriorityGraph g;
 
-    public PrepareRouting2(PriorityGraph g) {
+    public PrepareRoutingShortcuts(PriorityGraph g) {
         this.g = g;
     }
 
     public void doWork() {
+        EdgeFilter old = g.getEdgeFilter();
+        g.setEdgeFilter(null);
         createShortcuts();
+        g.setEdgeFilter(old);
     }
 
     /**
      * Create short cuts to skip 2 degree nodes and make graph traversal for routing more efficient
      */
-    public void createShortcuts() {
+    private void createShortcuts() {
         int locs = g.getNodes();
         MyBitSet bs = new MyTBitSet();
         for (int l = 0; l < locs; l++) {
@@ -57,21 +59,20 @@ public class PrepareRouting2 {
             findEnd(bs, rRes, l, skip);
 
             // check if an edge already exists which is shorter than the shortcut
-            EdgeIterator iter = g.getEdges(lRes.n);
-            iter = GraphUtility.until(iter, rRes.n);
-            if (iter != EdgeIterator.EMPTY && iter.flags() == rRes.flags) {
+            EdgeUpdateIterator iter = g.getEdges(lRes.n);
+            EdgeIterator tmp = GraphUtility.until(iter, rRes.n);
+            if (tmp != EdgeIterator.EMPTY && tmp.flags() == rRes.flags) {
+                iter = (EdgeUpdateIterator) tmp;
+                // TODO distance vs. weight
                 if (iter.distance() > lRes.d + rRes.d) {
+                    // logger.info("shorter exists for " + lRes.n + "->" + rRes.n + ": " + (lRes.d + rRes.d));
                     // update the distance
-                    // TODO distance vs. weight
-                    logger.info("shorter exists for " + lRes.n + "->" + rRes.n + ": " + (lRes.d + rRes.d));
-                    // TODO iter.distance(lRes.d + rRes.d);
+                    iter.distance(lRes.d + rRes.d);
                 }
-            } else
+            } else {
                 // finally create the shortcut
                 g.edge(lRes.n, rRes.n, lRes.d + rRes.d, rRes.flags);
-            
-            g.setPriority(lRes.n, 1);
-            g.setPriority(rRes.n, 1);
+            }
         }
     }
 
@@ -108,7 +109,6 @@ public class PrepareRouting2 {
                     return;
 
                 if (tmpN < 0 && skip != iter.node()) {
-                    // g.setPriority(start, -1);
                     skip = start;
                     tmpN = start = iter.node();
                     tmpD = iter.distance();
@@ -121,6 +121,8 @@ public class PrepareRouting2 {
 
             if (res.flags != tmpF)
                 return;
+
+            g.setPriority(skip, -1);
             bs.add(skip);
             res.d += tmpD;
             res.n = tmpN;

@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.reader.PrepareRouting2;
+import de.jetsli.graph.reader.PrepareRoutingShortcuts;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.PriorityGraphImpl;
@@ -32,34 +32,29 @@ import static org.junit.Assert.*;
 public class AStarWithPrioTest extends AbstractRoutingAlgorithmTester {
 
     @Override
-    public RoutingAlgorithm createAlgo(final Graph g) {
-        if (g instanceof PriorityGraph) {
-            final PriorityGraph prioG = (PriorityGraph) g;
-            EdgeFilter filter = new EdgeFilter() {
-                @Override public boolean accept(int fromNode, EdgeIterator edge) {
-                    return prioG.getPriority(fromNode) >= prioG.getPriority(edge.node());
-                }
-            };
-            prioG.setEdgeFilter(filter);
-        }
-        return new AStar(g);
+    public RoutingAlgorithm createAlgo(Graph g) {
+        return new DijkstraBidirectionRef(g);
+    }
+
+    @Override
+    PriorityGraph createGraph(int size) {
+        final PriorityGraph g = new PriorityGraphImpl(size);
+        EdgeFilter filter = new EdgeFilter() {
+            @Override public boolean accept(int fromNode, EdgeIterator edge) {
+                return g.getPriority(fromNode) <= g.getPriority(edge.node());
+            }
+        };
+        g.setEdgeFilter(filter);
+        return g;
     }
 
     @Test @Override
     public void testBidirectional() {
-        Graph graph = createGraph(6);
-        initBiGraph(graph);
-
-        Path p = createAlgo(graph).calcPath(0, 4);
+        PriorityGraph g2 = createGraph(6);
+        initBiGraph(g2);
+        new PrepareRoutingShortcuts(g2).doWork();
+        Path p = createAlgo(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.distance(), 1e-6);
-        assertEquals(p.toString(), 6, p.locations());
-
-        PriorityGraph g2 = new PriorityGraphImpl(6);
-        initBiGraph(g2);  
-        new PrepareRouting2(g2).doWork();
-
-        p = createAlgo(g2).calcPath(0, 4);
-        assertEquals(p.toString(), 51, p.distance(), 1e-6);
-        assertEquals(p.toString(), 3, p.locations());
+        assertEquals(p.toString(), 5, p.locations());
     }
 }

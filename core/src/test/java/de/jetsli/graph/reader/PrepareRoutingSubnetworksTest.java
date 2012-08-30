@@ -17,7 +17,6 @@ package de.jetsli.graph.reader;
 
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
-import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
 import java.util.Arrays;
 import java.util.Map;
@@ -28,7 +27,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class PrepareRouting1Test {
+public class PrepareRoutingSubnetworksTest {
 
     Graph createGraph(int size) {
         return new MemoryGraphSafe(size);
@@ -63,7 +62,7 @@ public class PrepareRouting1Test {
     @Test
     public void testFindSubnetworks() {
         Graph g = createSubnetworkTestGraph();
-        PrepareRouting1 instance = new PrepareRouting1(g);
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g);
         Map<Integer, Integer> map = instance.findSubnetworks();
 
         assertEquals(3, map.size());
@@ -77,7 +76,7 @@ public class PrepareRouting1Test {
     @Test
     public void testKeepLargestNetworks() {
         Graph g = createSubnetworkTestGraph();
-        PrepareRouting1 instance = new PrepareRouting1(g);
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g);
         Map<Integer, Integer> map = instance.findSubnetworks();
         instance.keepLargestNetwork(map);
         g.optimize();
