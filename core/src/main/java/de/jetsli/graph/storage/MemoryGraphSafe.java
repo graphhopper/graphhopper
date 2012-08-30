@@ -19,6 +19,7 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.reader.EdgeFlags;
+import de.jetsli.graph.util.EdgeFilter;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeUpdateIterator;
 import de.jetsli.graph.util.Helper;
@@ -32,9 +33,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This graph implementation is memory efficient and fast (in that order), and thread safe. Also it
- * is easier to maintain compared to the MMapGraph. It allows storage via flush and loads from
- * storage if existing. It allows duplicate edges if flags (highway and bothDir flags) are identical
+ * This graph implementation is memory efficient and fast (in that order), and read-thread safe.
+ * Also it is easier to maintain compared to the MMapGraph. It allows storage via flush and loads
+ * from storage if it exists. It allows duplicate edges.
  *
  * @author Peter Karich
  */
@@ -68,7 +69,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     private long creationTime = System.currentTimeMillis();
     private int size;
     private String storageLocation;
-    private MyBitSet deletedNodes;
+    private MyBitSet deletedNodes;    
 
     public MemoryGraphSafe(int cap) {
         this(null, cap);
@@ -316,6 +317,11 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     @Override
+    public void close() {
+        flush();
+    }
+    
+    @Override
     public EdgeIterator getEdges(int nodeId) {
         return new EdgeIterable(nodeId, true, true);
     }
@@ -330,12 +336,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         return new EdgeIterable(nodeId, false, true);
     }
 
-    @Override
-    public void close() {
-        flush();
-    }
-
-    private class EdgeIterable implements EdgeUpdateIterator {
+    protected class EdgeIterable implements EdgeUpdateIterator {
 
         int lastEdgePointer;
         boolean in;
@@ -345,7 +346,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         int flags;
         double distance;
         int nodeId;
-        int fromNode;
+        final int fromNode;
         int nextEdgePointer;
 
         public EdgeIterable(int node, boolean in, boolean out) {
@@ -432,7 +433,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             flags = fl;
             write();
         }
-        
+
         void write() {
             int nep = getFromEdgeArea(getLinkPosInEdgeArea(fromNode, nodeId, lastEdgePointer));
             int neop = getFromEdgeArea(getLinkPosInEdgeArea(nodeId, fromNode, lastEdgePointer));
@@ -591,9 +592,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         for (int i = 0; i < itemsToMove; i++) {
             int oldI = oldIndices[i];
             int newI = newIndices[i];
-            refToEdges[newI] = refToEdges[oldI];
-            lats[newI] = lats[oldI];
-            lons[newI] = lons[oldI];
+            inPlaceDeleteNodeHook(oldI, newI);
         }
 
         // rewrite the edges of nodes connected to moved nodes
@@ -629,6 +628,12 @@ public class MemoryGraphSafe implements SaveableGraph {
 
         size -= deleted;
         deletedNodes = null;
+    }
+
+    protected void inPlaceDeleteNodeHook(int oldI, int newI) {
+        refToEdges[newI] = refToEdges[oldI];
+        lats[newI] = lats[oldI];
+        lons[newI] = lons[oldI];
     }
 
     /**

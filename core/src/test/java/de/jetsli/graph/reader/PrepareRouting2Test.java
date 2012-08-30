@@ -15,16 +15,10 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyTBitSet;
-import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.MemoryGraphSafe;
+import de.jetsli.graph.storage.PriorityGraph;
+import de.jetsli.graph.storage.PriorityGraphImpl;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
-import de.jetsli.graph.util.XFirstSearch;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -32,70 +26,15 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class PrepareRoutingTest {
+public class PrepareRouting2Test {
 
-    Graph createGraph(int size) {
-        return new MemoryGraphSafe(size);
-    }
-
-    Graph createSubnetworkTestGraph() {
-        Graph g = createGraph(20);
-        // big network
-        g.edge(1, 2, 1, true);
-        g.edge(1, 4, 1, false);
-        g.edge(1, 8, 1, true);
-        g.edge(2, 4, 1, true);
-        g.edge(8, 4, 1, false);
-        g.edge(8, 11, 1, true);
-        g.edge(12, 11, 1, true);
-        g.edge(9, 12, 1, false);
-
-        // large network
-        g.edge(0, 13, 1, true);
-        g.edge(0, 3, 1, true);
-        g.edge(0, 7, 1, true);
-        g.edge(3, 7, 1, true);
-        g.edge(3, 5, 1, true);
-        g.edge(13, 5, 1, true);
-
-        // small network
-        g.edge(6, 14, 1, true);
-        g.edge(10, 14, 1, true);
-        return g;
-    }
-
-    @Test
-    public void testFindSubnetworks() {
-        Graph g = createSubnetworkTestGraph();
-        PrepareRouting instance = new PrepareRouting(g);
-        Map<Integer, Integer> map = instance.findSubnetworks();
-
-        assertEquals(3, map.size());
-        // start is at 0 => large network
-        assertEquals(5, (int) map.get(0));
-        // next smallest and unvisited node is 1 => big network
-        assertEquals(7, (int) map.get(1));
-        assertEquals(3, (int) map.get(6));
-    }
-
-    @Test
-    public void testKeepLargestNetworks() {
-        Graph g = createSubnetworkTestGraph();
-        PrepareRouting instance = new PrepareRouting(g);
-        Map<Integer, Integer> map = instance.findSubnetworks();
-        instance.keepLargestNetwork(map);
-        g.optimize();
-
-        assertEquals(7, g.getNodes());
-        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
-        map = instance.findSubnetworks();
-        assertEquals(1, map.size());
-        assertEquals(7, (int) map.get(0));
+    PriorityGraph createGraph(int size) {
+        return new PriorityGraphImpl(size);
     }
 
     @Test
     public void testSimpleShortcuts() {
-        Graph g = createGraph(20);
+        PriorityGraph g = createGraph(20);
         // 1
         // 0-2-4-5
         // 3
@@ -108,7 +47,7 @@ public class PrepareRoutingTest {
         // assert additional 0, 5
         assertFalse(GraphUtility.contains(g.getEdges(0), 5));
         assertFalse(GraphUtility.contains(g.getEdges(5), 0));
-        new PrepareRouting(g).createShortcuts();
+        new PrepareRouting2(g).createShortcuts();
         assertTrue(GraphUtility.contains(g.getEdges(0), 5));
         EdgeIterator iter = GraphUtility.until(g.getEdges(0), 5);
         assertEquals(11, iter.distance(), 1e-5);
@@ -138,11 +77,11 @@ public class PrepareRoutingTest {
         assertEquals(6 + 1, GraphUtility.countEdges(g));
     }
 
-    void assertDirected0_5(Graph g) {
+    void assertDirected0_5(PriorityGraph g) {
         // assert 0->5 but not 5->0
         assertFalse(GraphUtility.contains(g.getEdges(0), 5));
         assertFalse(GraphUtility.contains(g.getEdges(5), 0));
-        new PrepareRouting(g).createShortcuts();
+        new PrepareRouting2(g).createShortcuts();
         assertTrue(GraphUtility.contains(g.getOutgoing(0), 5));
         assertFalse(GraphUtility.contains(g.getOutgoing(5), 0));
     }
@@ -166,13 +105,13 @@ public class PrepareRoutingTest {
 
     @Test
     public void testMultiTypeShortcuts() {
-        Graph g = createGraph(20);
+        PriorityGraph g = createGraph(20);
         g.edge(0, 1, 10, EdgeFlags.create(30, true));
         g.edge(1, 2, 10, EdgeFlags.create(30, true));
         g.edge(2, 3, 10, EdgeFlags.create(30, true));
         g.edge(0, 4, 20, EdgeFlags.create(120, true));
         g.edge(4, 3, 20, EdgeFlags.create(120, true));
-        new PrepareRouting(g).createShortcuts();
+        new PrepareRouting2(g).createShortcuts();
         g.optimize();
 
         assertEquals(5 * 2 + 2 * 2, GraphUtility.countEdges(g));
@@ -187,7 +126,7 @@ public class PrepareRoutingTest {
     // prepare-routing.svg
     @Test
     public void testIntroduceShortcuts() {
-        final Graph g = createGraph(20);
+        final PriorityGraph g = createGraph(20);
         g.edge(0, 1, 1, true);
         g.edge(0, 2, 1, true);
         g.edge(1, 2, 1, true);
@@ -211,9 +150,7 @@ public class PrepareRoutingTest {
         g.edge(15, 16, 2, true);
         g.edge(14, 16, 1, true);
 
-        new PrepareRouting(g).createShortcuts();
-        g.optimize();
-
+        new PrepareRouting2(g).createShortcuts();
         assertEquals(22 * 2 + 4 * 2, GraphUtility.countEdges(g));
 
         assertTrue(GraphUtility.contains(g.getOutgoing(12), 16));

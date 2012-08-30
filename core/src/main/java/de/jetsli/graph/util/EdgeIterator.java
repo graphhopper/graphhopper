@@ -31,7 +31,7 @@ package de.jetsli.graph.util;
  * @author Peter Karich
  */
 public interface EdgeIterator {
-
+    
     boolean next();
 
     int node();

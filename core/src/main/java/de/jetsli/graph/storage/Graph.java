@@ -44,7 +44,7 @@ public interface Graph {
      * @param a index of the starting node of the edge
      * @param b index of the ending node of the edge
      * @param distance necessary if no setNode is called - e.g. if the graph is not a geo-graph
-     * @param flags see CarFlags - involves velocity and direction
+     * @param flags see EdgeFlags - involves velocity and direction
      */    
     void edge(int a, int b, double distance, int flags);
     
@@ -52,7 +52,7 @@ public interface Graph {
 
     /**
      * Returns an iterator which makes it possible to traverse all edges of the specified node index.
-     * Hint: use GraphUtility to select certain neighbor nodes.
+     * Hint: use GraphUtility to go straight to certain neighbor nodes.
      * Hint: edges with both directions will returned only once!
      */
     EdgeIterator getEdges(int index);

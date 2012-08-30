@@ -156,9 +156,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     // |    9  |
     // \   /   /
     //  8-7-6-/
-    @Test public void testBidirectional() {
-        Graph graph = createGraph(6);
-
+    void initBiGraph(Graph graph) {
         graph.edge(0, 1, 100, true);
         graph.edge(1, 2, 1, true);
         graph.edge(2, 3, 1, true);
@@ -169,6 +167,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(7, 0, 5, true);
         graph.edge(3, 8, 20, true);
         graph.edge(8, 6, 20, true);
+    }
+
+    @Test public void testBidirectional() {
+        Graph graph = createGraph(6);
+        initBiGraph(graph);
 
         Path p = createAlgo(graph).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.distance(), 1e-6);

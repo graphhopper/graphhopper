@@ -13,18 +13,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.routing;
+package de.jetsli.graph.storage;
 
-import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.util.EdgeFilter;
 
 /**
+ * Extended graph interface which supports storing and retrieving priorities per node.
  *
- * @author Peter Karich
+ * @author Peter Karich, info@jetsli.de
  */
-public class AStarTest extends AbstractRoutingAlgorithmTester {
+public interface PriorityGraph extends Graph {
 
-    @Override
-    public RoutingAlgorithm createAlgo(Graph g) {
-        return new AStar(g);
-    }   
+    void setPriority(int index, int prio);
+
+    int getPriority(int index);
+
+    void setEdgeFilter(EdgeFilter edgeFilter);
 }

@@ -28,6 +28,11 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 /**
+ * This class implements the A* algorithm according to
+ * http://en.wikipedia.org/wiki/A*_search_algorithm
+ *
+ * Different distance calculations can be used via the setFast method.
+ *
  * @author Peter Karich
  */
 public class AStar extends AbstractRoutingAlgorithm {
@@ -90,7 +95,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                     nEdge.prevEntry = currEdge;
                     prioQueueOpenSet.add(nEdge);
                     updateShortest(nEdge, neighborNode);
-                }                
+                }
             }
             if (to == currVertex)
                 break;

@@ -15,72 +15,78 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.util.EdgeFilter;
+import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.Helper;
 import java.io.IOException;
 import java.util.Arrays;
 
 /**
- * Store node priorities to use edge short cut efficiently.
+ * A graph implementation adding node priorities.
  *
  * @author Peter Karich
  */
-public class MemoryGraphExt extends MemoryGraphSafe {
+public class PriorityGraphImpl extends MemoryGraphSafe implements PriorityGraph {
 
     private int[] priorities;
+    private EdgeFilter edgeFilter;
 
-    public MemoryGraphExt(int cap) {
+    public PriorityGraphImpl(int cap) {
         super(cap);
     }
 
-    public MemoryGraphExt(String storageDir, int cap, int capEdge) {
+    public PriorityGraphImpl(String storageDir, int cap) {
+        super(storageDir, cap);
+    }
+
+    public PriorityGraphImpl(String storageDir, int cap, int capEdge) {
         super(storageDir, cap, capEdge);
     }
 
     @Override
     protected int ensureNodeIndex(int index) {
         int cap = super.ensureNodeIndex(index);
-        if (cap > 0)
+        if (cap > 0) {
+            int oldLen = priorities.length;
             priorities = Arrays.copyOf(priorities, cap);
+            Arrays.fill(priorities, oldLen, priorities.length, Integer.MIN_VALUE);
+        }
         return cap;
     }
 
+    @Override
     public int getPriority(int index) {
+        ensureNodeIndex(index);
         return priorities[index];
+    }
+
+    @Override
+    public void setPriority(int index, int prio) {
+        ensureNodeIndex(index);
+        priorities[index] = prio;
     }
 
     @Override
     protected void initNodes(int cap) {
         super.initNodes(cap);
         priorities = new int[cap];
+        Arrays.fill(priorities, Integer.MIN_VALUE);
     }
 
     @Override
-    protected void internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags) {
-        super.internalEdgeAdd(fromNodeId, toNodeId, dist, flags);
-
-        // TODO sort by priority but include the latest entry too!        
-        // Collections.sort(list, listPrioSorter);
-        // int len = list.size();
-        // for (int i = 0; i < len; i++) {
-        //    int pointer = list.get(i);
-        //    copyEdge();
-        // }
-    }
-
-    @Override
-    public void optimize() {
-        super.optimize();
-        // TODO change priorities too!
+    protected void inPlaceDeleteNodeHook(int oldI, int newI) {
+        priorities[newI] = priorities[oldI];
+        super.inPlaceDeleteNodeHook(oldI, newI);
     }
 
     @Override
     protected MemoryGraphSafe creatThis(String storage, int nodes, int edges) {
-        return new MemoryGraphExt(storage, nodes, edges);
+        return new PriorityGraphImpl(storage, nodes, edges);
     }
 
     @Override
     public Graph clone() {
-        MemoryGraphExt clonedGraph = (MemoryGraphExt) super.clone();
+        PriorityGraphImpl clonedGraph = (PriorityGraphImpl) super.clone();
         System.arraycopy(priorities, 0, clonedGraph.priorities, 0, priorities.length);
         return clonedGraph;
     }
@@ -109,5 +115,41 @@ public class MemoryGraphExt extends MemoryGraphSafe {
             }
         }
         return false;
+    }
+
+    @Override
+    public EdgeIterator getEdges(int nodeId) {
+        return new EdgeFilterIterable(nodeId, true, true);
+    }
+
+    @Override
+    public EdgeIterator getIncoming(int nodeId) {
+        return new EdgeFilterIterable(nodeId, true, false);
+    }
+
+    @Override
+    public EdgeIterator getOutgoing(int nodeId) {
+        return new EdgeFilterIterable(nodeId, false, true);
+    }
+
+    @Override
+    public void setEdgeFilter(EdgeFilter edgeFilter) {
+        this.edgeFilter = edgeFilter;
+    }
+
+    protected class EdgeFilterIterable extends EdgeIterable {
+
+        public EdgeFilterIterable(int node, boolean in, boolean out) {
+            super(node, in, out);
+        }
+
+        @Override public boolean next() {            
+            while (super.next()) {
+                if (edgeFilter != null && !edgeFilter.accept(fromNode, this))
+                    continue;
+                return true;
+            }
+            return false;
+        }
     }
 }

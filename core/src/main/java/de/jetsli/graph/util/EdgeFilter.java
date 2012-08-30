@@ -13,16 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.storage;
+package de.jetsli.graph.util;
 
 /**
- *
  * @author Peter Karich
  */
-public class MemoryGraphExtTest extends MemoryGraphSafeTest {
+public interface EdgeFilter {
 
-    @Override
-    Graph createGraph(int size) {
-        return new MemoryGraphExt(size);
-    }
+    boolean accept(int fromNode, EdgeIterator edge);
 }

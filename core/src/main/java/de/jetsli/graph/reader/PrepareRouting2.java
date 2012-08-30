@@ -16,117 +16,27 @@
 package de.jetsli.graph.reader;
 
 import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
-import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
-import de.jetsli.graph.util.XFirstSearch;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * @author Peter Karich
  */
-public class PrepareRouting {
+public class PrepareRouting2 {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private final Graph g;
+    private final PriorityGraph g;
 
-    public PrepareRouting(Graph g) {
+    public PrepareRouting2(PriorityGraph g) {
         this.g = g;
     }
 
-    public int doWork() {
-        Map<Integer, Integer> map = findSubnetworks();
-        keepLargestNetwork(map);
-        // createShortcuts();
-        logger.info("optimize...");
-        g.optimize();
-        return map.size();
-    }
-
-    public Map<Integer, Integer> findSubnetworks() {
-        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
-        final AtomicInteger integ = new AtomicInteger(0);
-        int locs = g.getNodes();
-        final MyBitSet bs = new MyOpenBitSet(locs);
-        for (int start = 0; start < locs; start++) {
-            if (bs.contains(start))
-                continue;
-
-            new XFirstSearch() {
-                @Override protected MyBitSet createBitSet(int size) {
-                    return bs;
-                }
-
-                @Override
-                protected EdgeIterator getEdges(Graph g, int current) {
-                    return g.getEdges(current);
-                }
-
-                @Override protected boolean goFurther(int nodeId) {
-                    boolean ret = super.goFurther(nodeId);
-                    if (ret)
-                        integ.incrementAndGet();
-                    return ret;
-                }
-            }.start(g, start, true);
-
-            map.put(start, integ.get());
-            integ.set(0);
-        }
-        return map;
-    }
-
-    /**
-     * Deletes all but the larges subnetworks.
-     */
-    public void keepLargestNetwork(Map<Integer, Integer> map) {
-        if (map.size() < 2)
-            return;
-
-        int biggestStart = -1;
-        int count = -1;
-        MyTBitSet bs = new MyTBitSet(g.getNodes());
-        for (Entry<Integer, Integer> e : map.entrySet()) {
-            if (biggestStart < 0) {
-                biggestStart = e.getKey();
-                count = e.getValue();
-                continue;
-            }
-
-            if (count < e.getValue()) {
-                deleteNetwork(biggestStart, e.getValue(), bs);
-
-                biggestStart = e.getKey();
-                count = e.getValue();
-            } else
-                deleteNetwork(e.getKey(), e.getValue(), bs);
-        }
-    }
-
-    /**
-     * Deletes the complete subnetwork reachable through start
-     */
-    public void deleteNetwork(int start, int entries, final MyBitSet bs) {
-        new XFirstSearch() {
-            @Override protected MyBitSet createBitSet(int size) {
-                return bs;
-            }
-
-            @Override protected EdgeIterator getEdges(Graph g, int current) {
-                return g.getEdges(current);
-            }
-
-            @Override protected boolean goFurther(int nodeId) {
-                g.markNodeDeleted(nodeId);
-                return super.goFurther(nodeId);
-            }
-        }.start(g, start, true);
+    public void doWork() {
+        createShortcuts();
     }
 
     /**
@@ -159,6 +69,9 @@ public class PrepareRouting {
             } else
                 // finally create the shortcut
                 g.edge(lRes.n, rRes.n, lRes.d + rRes.d, rRes.flags);
+            
+            g.setPriority(lRes.n, 1);
+            g.setPriority(rRes.n, 1);
         }
     }
 
@@ -195,7 +108,7 @@ public class PrepareRouting {
                     return;
 
                 if (tmpN < 0 && skip != iter.node()) {
-                    // TODO g.setPriority(start, -1);
+                    // g.setPriority(start, -1);
                     skip = start;
                     tmpN = start = iter.node();
                     tmpD = iter.distance();
