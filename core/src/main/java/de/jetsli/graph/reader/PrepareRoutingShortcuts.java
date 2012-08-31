@@ -18,7 +18,6 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.PriorityGraph;
-import de.jetsli.graph.util.EdgeFilter;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeUpdateIterator;
 import de.jetsli.graph.util.GraphUtility;

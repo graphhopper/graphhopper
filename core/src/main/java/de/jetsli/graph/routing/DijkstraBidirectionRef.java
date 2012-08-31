@@ -46,7 +46,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     protected EdgeEntry currTo;
     protected TIntObjectMap<EdgeEntry> shortestWeightMapOther;
     public PathWrapperRef shortest;
-    private EdgePrioFilter edgeFilterWrapper;
+    private EdgePrioFilter edgeFilter;
 
     public DijkstraBidirectionRef(Graph graph) {
         super(graph);
@@ -62,8 +62,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         clear();
     }
 
-    public RoutingAlgorithm setEdgeFilterWrapper(EdgePrioFilter edgeFilterWrapper) {
-        this.edgeFilterWrapper = edgeFilterWrapper;
+    public RoutingAlgorithm setEdgeFilter(EdgePrioFilter edgeFilter) {
+        this.edgeFilter = edgeFilter;
         return this;
     }
 
@@ -155,8 +155,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         else
             iter = graph.getIncoming(currNodeFrom);
 
-        if (edgeFilterWrapper != null)
-            iter = edgeFilterWrapper.doFilter(iter);
+        if (edgeFilter != null)
+            iter = edgeFilter.doFilter(iter);
 
         while (iter.next()) {
             int neighborNode = iter.node();

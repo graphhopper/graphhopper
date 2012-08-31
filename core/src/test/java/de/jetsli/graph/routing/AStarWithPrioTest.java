@@ -32,7 +32,7 @@ public class AStarWithPrioTest extends AbstractRoutingAlgorithmTester {
     @Override
     public RoutingAlgorithm createAlgo(Graph g) {
         if (g instanceof PriorityGraph)
-            return new DijkstraBidirectionRef(g).setEdgeFilterWrapper(new EdgePrioFilter((PriorityGraph) g));
+            return new DijkstraBidirectionRef(g).setEdgeFilter(new EdgePrioFilter((PriorityGraph) g));
 
         return new DijkstraBidirectionRef(g);
     }

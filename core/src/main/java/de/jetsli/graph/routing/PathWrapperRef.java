@@ -17,8 +17,6 @@ package de.jetsli.graph.routing;
 
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.PriorityGraph;
-import de.jetsli.graph.util.EdgeFilter;
 
 /**
  * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
