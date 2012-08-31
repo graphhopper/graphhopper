@@ -17,8 +17,9 @@ package de.jetsli.graph.routing;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.EdgeEntry;
+import de.jetsli.graph.storage.EdgePrioFilter;
+import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -45,6 +46,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     protected EdgeEntry currTo;
     protected TIntObjectMap<EdgeEntry> shortestWeightMapOther;
     public PathWrapperRef shortest;
+    private EdgePrioFilter edgeFilterWrapper;
 
     public DijkstraBidirectionRef(Graph graph) {
         super(graph);
@@ -58,6 +60,11 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         shortestWeightMapTo = new TIntObjectHashMap<EdgeEntry>(locs / 10);
 
         clear();
+    }
+
+    public RoutingAlgorithm setEdgeFilterWrapper(EdgePrioFilter edgeFilterWrapper) {
+        this.edgeFilterWrapper = edgeFilterWrapper;
+        return this;
     }
 
     @Override
@@ -148,6 +155,9 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         else
             iter = graph.getIncoming(currNodeFrom);
 
+        if (edgeFilterWrapper != null)
+            iter = edgeFilterWrapper.doFilter(iter);
+
         while (iter.next()) {
             int neighborNode = iter.node();
             if (visitedMain.contains(neighborNode))
@@ -169,7 +179,6 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
                 prioQueue.add(de);
             }
 
-            // TODO optimize: call only if necessary
             updateShortest(de, neighborNode);
         }
     }

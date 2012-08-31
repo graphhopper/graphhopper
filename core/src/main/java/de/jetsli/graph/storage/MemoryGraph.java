@@ -140,7 +140,7 @@ public class MemoryGraph implements Graph, Cloneable {
         if (d == null)
             return EdgeIterator.EMPTY;
 
-        return new EdgesIteratorable(d);
+        return new EdgesIteratorable(index, d);
     }
 
     @Override
@@ -152,7 +152,7 @@ public class MemoryGraph implements Graph, Cloneable {
         if (d == null)
             return EdgeIterator.EMPTY;
 
-        return new EdgesIteratorable(d) {
+        return new EdgesIteratorable(index, d) {
             @Override public boolean next() {
                 for (;;) {
                     if (!super.next())
@@ -174,7 +174,7 @@ public class MemoryGraph implements Graph, Cloneable {
         if (d == null)
             return EdgeIterator.EMPTY;
 
-        return new EdgesIteratorable(d) {
+        return new EdgesIteratorable(index, d) {
             @Override public boolean next() {
                 for (;;) {
                     if (!super.next())
@@ -246,8 +246,10 @@ public class MemoryGraph implements Graph, Cloneable {
 
         EdgeWithFlags first;
         EdgeWithFlags curr;
+        int fromNode;
 
-        EdgesIteratorable(EdgeWithFlags lde) {
+        EdgesIteratorable(int fromNode, EdgeWithFlags lde) {
+            this.fromNode = fromNode;
             first = lde;
         }
 
@@ -270,6 +272,10 @@ public class MemoryGraph implements Graph, Cloneable {
 
         @Override public int flags() {
             return curr.flags;
+        }
+
+        @Override public int fromNode() {
+            return fromNode;
         }
     }
 

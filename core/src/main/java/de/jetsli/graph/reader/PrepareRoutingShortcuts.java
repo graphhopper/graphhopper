@@ -35,10 +35,7 @@ public class PrepareRoutingShortcuts {
     }
 
     public void doWork() {
-        EdgeFilter old = g.getEdgeFilter();
-        g.setEdgeFilter(null);
         createShortcuts();
-        g.setEdgeFilter(old);
     }
 
     /**

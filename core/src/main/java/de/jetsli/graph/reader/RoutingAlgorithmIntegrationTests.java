@@ -21,9 +21,11 @@ import de.jetsli.graph.routing.DijkstraBidirectionRef;
 import de.jetsli.graph.routing.DijkstraSimple;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.RoutingAlgorithm;
+import de.jetsli.graph.storage.EdgePrioFilter;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
+import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.StopWatch;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -91,6 +93,9 @@ public class RoutingAlgorithmIntegrationTests {
             algo = new DijkstraSimple(unterfrankenGraph);
         else
             algo = new AStar(unterfrankenGraph);
+
+        if (unterfrankenGraph instanceof PriorityGraph && algo instanceof DijkstraBidirectionRef)
+            ((DijkstraBidirectionRef) algo).setEdgeFilterWrapper(new EdgePrioFilter((PriorityGraph) unterfrankenGraph));        
 
         logger.info("running shortest path with " + algo.getClass().getSimpleName());
         Random rand = new Random(123);

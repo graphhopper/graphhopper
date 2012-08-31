@@ -31,15 +31,33 @@ package de.jetsli.graph.util;
  * @author Peter Karich
  */
 public interface EdgeIterator {
-    
+
+    /**
+     * To be called to go to the next edge
+     */
     boolean next();
 
+    /**
+     * @return the node id of the origin node. Identical for all edges of this iterator.
+     */
+    int fromNode();
+
+    /**
+     * @return the node id of the destination node for the current edge.
+     */
     int node();
 
+    /**
+     * @return the distance of the current edge edge
+     */
     double distance();
 
     int flags();
     public static final EdgeIterator EMPTY = new EdgeIterator() {
+        @Override public int fromNode() {
+            throw new UnsupportedOperationException("Not supported for EMPTY edge.");
+        }
+
         @Override public boolean next() {
             return false;
         }

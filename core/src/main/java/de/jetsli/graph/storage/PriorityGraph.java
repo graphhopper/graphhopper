@@ -29,10 +29,6 @@ public interface PriorityGraph extends Graph {
 
     int getPriority(int index);
 
-    void setEdgeFilter(EdgeFilter edgeFilter);
-    
-    EdgeFilter getEdgeFilter();
-
     @Override
     public EdgeUpdateIterator getEdges(int nodeId);
 

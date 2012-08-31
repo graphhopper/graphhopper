@@ -35,12 +35,12 @@ public class MemoryGraphSafeStorage extends DefaultStorage {
         Helper.deleteDir(new File(folder));
         // in order to avoid reallocation allocate enough memory. 
         // edges will be incrementally allocated so it is not that important to match the size up front
-        g = new MemoryGraphSafe(folder, osmIdToIndexMap.size(), Math.round(0.8f * osmIdToIndexMap.size()));
+        g = new PriorityGraphImpl(folder, osmIdToIndexMap.size(), Math.round(0.8f * osmIdToIndexMap.size()));
     }
 
     @Override
     public boolean loadExisting() {
-        g = new MemoryGraphSafe(folder, 0);
+        g = new PriorityGraphImpl(folder, 0);
         return g.getNodes() > 0;
     }
 

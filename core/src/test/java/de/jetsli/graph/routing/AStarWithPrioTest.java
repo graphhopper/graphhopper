@@ -16,6 +16,7 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.reader.PrepareRoutingShortcuts;
+import de.jetsli.graph.storage.EdgePrioFilter;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.PriorityGraphImpl;
@@ -33,19 +34,15 @@ public class AStarWithPrioTest extends AbstractRoutingAlgorithmTester {
 
     @Override
     public RoutingAlgorithm createAlgo(Graph g) {
+        if (g instanceof PriorityGraph)
+            return new DijkstraBidirectionRef(g).setEdgeFilterWrapper(new EdgePrioFilter((PriorityGraph) g));
+
         return new DijkstraBidirectionRef(g);
     }
 
     @Override
     PriorityGraph createGraph(int size) {
-        final PriorityGraph g = new PriorityGraphImpl(size);
-        EdgeFilter filter = new EdgeFilter() {
-            @Override public boolean accept(int fromNode, EdgeIterator edge) {
-                return g.getPriority(fromNode) <= g.getPriority(edge.node());
-            }
-        };
-        g.setEdgeFilter(filter);
-        return g;
+        return new PriorityGraphImpl(size);
     }
 
     @Test @Override

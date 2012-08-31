@@ -41,19 +41,6 @@ public class PathWrapperRef {
      * Extracts path from two shortest-path-tree
      */
     public Path extract() {
-        // TODO not thread safe for priority graph!!
-        EdgeFilter old = null;
-        if (g instanceof PriorityGraph) {
-            old = ((PriorityGraph) g).getEdgeFilter();
-            ((PriorityGraph) g).setEdgeFilter(null);
-        }
-        Path p = internExtract();
-        if (g instanceof PriorityGraph)
-            ((PriorityGraph) g).setEdgeFilter(old);
-        return p;
-    }
-
-    private Path internExtract() {
         if (edgeFrom == null || edgeTo == null)
             return null;
 

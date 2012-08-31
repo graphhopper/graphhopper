@@ -19,6 +19,7 @@ import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafeStorage;
+import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.*;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.*;
@@ -62,7 +63,9 @@ public class OSMReader {
 //                return lat > 49.3 && lat < 50 && lon > 10.8 && lon < 11.6;
             }
         };
-        osm2Graph(osmReader, args);        
+        osm2Graph(osmReader, args);   
+        final PriorityGraph pg = (PriorityGraph) osmReader.getGraph();
+        new PrepareRoutingShortcuts(pg).doWork();
         RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(osmReader.getGraph());
         if (args.getBool("test", false)) {
             tests.start();

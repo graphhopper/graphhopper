@@ -19,7 +19,6 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.reader.EdgeFlags;
-import de.jetsli.graph.util.EdgeFilter;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeUpdateIterator;
 import de.jetsli.graph.util.Helper;
@@ -69,7 +68,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     private long creationTime = System.currentTimeMillis();
     private int size;
     private String storageLocation;
-    private MyBitSet deletedNodes;    
+    private MyBitSet deletedNodes;
 
     public MemoryGraphSafe(int cap) {
         this(null, cap);
@@ -320,7 +319,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     public void close() {
         flush();
     }
-    
+
     @Override
     public EdgeIterator getEdges(int nodeId) {
         return new EdgeIterable(nodeId, true, true);
@@ -393,8 +392,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             return nextEdgePointer;
         }
 
-        @Override
-        public boolean next() {
+        @Override public boolean next() {
             int i = 0;
             foundNext = false;
             for (; i < 1000; i++) {
@@ -409,19 +407,20 @@ public class MemoryGraphSafe implements SaveableGraph {
             return foundNext;
         }
 
-        @Override
-        public int node() {
+        @Override public int node() {
             return nodeId;
         }
 
-        @Override
-        public double distance() {
+        @Override public double distance() {
             return distance;
         }
 
-        @Override
-        public int flags() {
+        @Override public int flags() {
             return flags;
+        }
+
+        @Override public int fromNode() {
+            return fromNode;
         }
 
         @Override public void distance(double dist) {

@@ -337,7 +337,7 @@ public class MMapGraph implements SaveableGraph {
         if (index >= maxNodes)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
-        return new EdgesIteratorable(getBytesFromNodes(index * bytesNode + bytesNodeCore, bytesEdges));
+        return new EdgesIteratorable(index, getBytesFromNodes(index * bytesNode + bytesNodeCore, bytesEdges));
     }
 
     @Override
@@ -345,7 +345,7 @@ public class MMapGraph implements SaveableGraph {
         if (index >= maxNodes)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
-        return new EdgesIteratorableFlags(getBytesFromNodes(index * bytesNode + bytesNodeCore, bytesEdges), (byte) 1);
+        return new EdgesIteratorableFlags(index, getBytesFromNodes(index * bytesNode + bytesNodeCore, bytesEdges), (byte) 1);
     }
 
     @Override
@@ -353,16 +353,16 @@ public class MMapGraph implements SaveableGraph {
         if (index >= maxNodes)
             throw new IllegalStateException("Cannot accept indices higher then maxNode");
 
-        return new EdgesIteratorableFlags(getBytesFromNodes(index * bytesNode + bytesNodeCore, bytesEdges), (byte) 2);
+        return new EdgesIteratorableFlags(index, getBytesFromNodes(index * bytesNode + bytesNodeCore, bytesEdges), (byte) 2);
     }
 
     private class EdgesIteratorableFlags extends EdgesIteratorable {
 
-        byte flags;
+        byte requestedFlags;
 
-        EdgesIteratorableFlags(byte[] bytes, byte flags) {
-            super(bytes);
-            this.flags = flags;
+        EdgesIteratorableFlags(int fromNode, byte[] bytes, byte flags) {
+            super(fromNode, bytes);
+            this.requestedFlags = flags;
         }
 
         @Override
@@ -375,7 +375,7 @@ public class MMapGraph implements SaveableGraph {
                 if (tmp == EMPTY_DIST)
                     break;
 
-                if ((bytes[tmpPos + edgeFlagsPos] & flags) != 0)
+                if ((bytes[tmpPos + edgeFlagsPos] & requestedFlags) != 0)
                     break;
 
                 tmpPos += bytesOneEdge;
@@ -395,8 +395,10 @@ public class MMapGraph implements SaveableGraph {
         int nodeId;
         float dist;
         byte flags;
+        int fromNode;
 
-        EdgesIteratorable(byte[] bytes) {
+        EdgesIteratorable(int fromNode, byte[] bytes) {
+            this.fromNode = fromNode;
             this.bytes = bytes;
         }
 
@@ -442,6 +444,10 @@ public class MMapGraph implements SaveableGraph {
 
         @Override public int flags() {
             return flags;
+        }
+
+        @Override public int fromNode() {
+            return fromNode;
         }
     }
 

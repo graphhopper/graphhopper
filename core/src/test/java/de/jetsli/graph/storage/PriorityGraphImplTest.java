@@ -70,12 +70,7 @@ public class PriorityGraphImplTest extends MemoryGraphSafeTest {
         g.setPriority(0, 1);
         g.setPriority(4, 1);
 
-        g.setEdgeFilter(new EdgeFilter() {
-            @Override public boolean accept(int fromNode, EdgeIterator edge) {
-                return g.getPriority(fromNode) <= g.getPriority(edge.node());
-            }
-        });
-        EdgeIterator iter = g.getEdges(0);
+        EdgeIterator iter = new EdgePrioFilter(g).doFilter(g.getEdges(0));
         assertEquals(1, GraphUtility.count(iter));
         iter = g.getEdges(2);
         assertEquals(2, GraphUtility.count(iter));
