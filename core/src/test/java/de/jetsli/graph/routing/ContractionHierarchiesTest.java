@@ -33,7 +33,7 @@ public class ContractionHierarchiesTest {
 //        return new DijkstraBidirection(new ContractionHierarchies().contract(g));
 //        // TODO pathFromCH.locations() <= path.locations()
 //    }    
-    
+
     @Test
     public void testSuperSimpleContract() {
         Graph g = new MemoryGraphSafe(3);
@@ -57,7 +57,7 @@ public class ContractionHierarchiesTest {
 //        }
 //        assertTrue(set.contains(0));
     }
-    
+
     @Test
     public void testIntroduceShortcut0_2() {
         Graph g = new MemoryGraphSafe(5);
@@ -65,7 +65,7 @@ public class ContractionHierarchiesTest {
         g.edge(3, 4, 3, false);
         g.edge(4, 2, 1, false);
 
-        g = new ContractionHierarchies().contract(g);        
+        g = new ContractionHierarchies().contract(g);
 //        assertEquals(3, count(g.getOutgoing(0)));
 //        assertEquals(0, count(g.getIncoming(0)));
 //        assertEquals(1, count(g.getOutgoing(3)));
@@ -78,7 +78,7 @@ public class ContractionHierarchiesTest {
 
     //@Test
     public void DoNotIntroduceShortCut0_2() {
-        Graph g = new MemoryGraphSafe(5);        
+        Graph g = new MemoryGraphSafe(5);
         g.edge(0, 1, 3, false);
         g.edge(1, 2, 4, false);
 

@@ -36,7 +36,6 @@ public class MyLayerPanel extends JPanel {
     public MyLayerPanel(Collection<MapLayer> layer) {
         this.layers = layer;
         this.addComponentListener(new ComponentAdapter() {
-
             @Override public void componentResized(ComponentEvent e) {
                 int w = e.getComponent().getWidth();
                 int h = e.getComponent().getHeight();
@@ -63,9 +62,9 @@ public class MyLayerPanel extends JPanel {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 //        StopWatch sw = new StopWatch();
-        
+
         g2.clearRect(0, 0, getBounds().width, getBounds().height);
-        
+
 //        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 //        g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
 //        int counter = 0;

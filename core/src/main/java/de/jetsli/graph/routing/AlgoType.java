@@ -19,6 +19,6 @@ package de.jetsli.graph.routing;
  * @author Peter Karich
  */
 public enum AlgoType {
+
     FASTEST, SHORTEST
-    
 }

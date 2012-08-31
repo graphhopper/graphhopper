@@ -24,7 +24,7 @@ import java.util.Date;
 /**
  * This class tests SpatialHashtable ... for the performance comparison of different quadtree
  * implementations see the subproject perf-comparison!
- * 
+ *
  * Memory usage calculation according to
  *
  * http://www.ibm.com/developerworks/opensource/library/j-codetoheap/index.html?ca=drs
@@ -94,7 +94,6 @@ public class PerfTest {
             final int epl = entriesPerLeaf;
             final int b = bits;
             new MiniPerfTest("fill") {
-
                 @Override public long doCalc(int run) {
                     //QuadTree<Long> quadTree = new QuadTreeSimple<Long>(epl, b);
                     QuadTree<Long> quadTree = new SpatialHashtable(b, epl).init(g.getNodes());
@@ -124,7 +123,6 @@ public class PerfTest {
                 new MiniPerfTest("neighbour search e/leaf:" + entriesPerLeaf + ", bits:" + bits
                         + ", dist:" + distance + ", mem:" + mem + ", empty entries:" + emptyEntries
                         + ", empty all entries:" + emptyAllEntries) {
-
                     @Override public long doCalc(int run) {
                         float lat = (random.nextInt(latMax - latMin) + latMin) / 10000.0f;
                         float lon = (random.nextInt(lonMax - lonMin) + lonMin) / 10000.0f;

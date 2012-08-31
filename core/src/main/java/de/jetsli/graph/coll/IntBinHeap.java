@@ -44,7 +44,7 @@ public class IntBinHeap {
     public int size() {
         return size;
     }
-    
+
     public boolean isEmpty() {
         return size == 0;
     }
@@ -164,7 +164,7 @@ public class IntBinHeap {
         prio = Arrays.copyOf(prio, capacity + 1);
         elem = Arrays.copyOf(elem, capacity + 1);
     }
-    
+
     public void clear() {
         this.size = 0;
         Arrays.fill(prio, 0f);

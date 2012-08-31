@@ -32,5 +32,5 @@ public class IntegerRef {
 
     @Override public String toString() {
         return Integer.toString(value);
-    }        
+    }
 }

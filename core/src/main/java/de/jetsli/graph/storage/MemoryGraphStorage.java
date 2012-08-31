@@ -19,8 +19,8 @@ package de.jetsli.graph.storage;
  * @author Peter Karich, info@jetsli.de
  */
 public class MemoryGraphStorage extends DefaultStorage {
-    
-    public MemoryGraphStorage(int expectedNodes) {        
+
+    public MemoryGraphStorage(int expectedNodes) {
         super(expectedNodes);
     }
 

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package de.jetsli.graph.ui;
 
 import de.jetsli.graph.storage.Graph;
@@ -25,6 +24,7 @@ import java.awt.Graphics2D;
  * @author Peter Karich
  */
 class DebugLocation2IDQuadtree extends Location2IDQuadtree {
+
     private MyGraphics mg;
     private Graphics2D g2;
 
@@ -66,5 +66,4 @@ class DebugLocation2IDQuadtree extends Location2IDQuadtree {
             mg.plotNode(g2, n, Color.RED);
         }
     }
-
 }

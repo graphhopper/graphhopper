@@ -22,9 +22,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
- * Data taken from here
- * http://algs4.cs.princeton.edu/44sp/
- * 
+ * Data taken from here http://algs4.cs.princeton.edu/44sp/
+ *
  * @author Peter Karich, info@jetsli.de
  */
 public class PrinctonReader {
@@ -41,7 +40,7 @@ public class PrinctonReader {
         return this;
     }
 
-    public void read() {        
+    public void read() {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is), 8 * (1 << 10));
         int lineNo = 0;
         try {

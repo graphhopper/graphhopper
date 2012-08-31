@@ -46,7 +46,6 @@ public class TopologicalSorting {
 
         final TIntHashSet noIncomingEdges = new TIntHashSet();
         new XFirstSearch() {
-
             @Override
             protected EdgeIterator getEdges(Graph g, int current) {
                 if (!g.getIncoming(current).next())
@@ -72,7 +71,7 @@ public class TopologicalSorting {
             current = noIncomingDeque.pop();
             list.add(current);
             EdgeIterator iter = g.getOutgoing(current);
-            while(iter.next()) {
+            while (iter.next()) {
                 int nodeId = iter.node();
                 if (!visited.contains(nodeId)) {
                     visited.add(nodeId);

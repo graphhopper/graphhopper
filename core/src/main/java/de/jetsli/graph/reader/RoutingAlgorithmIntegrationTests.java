@@ -94,8 +94,9 @@ public class RoutingAlgorithmIntegrationTests {
         else
             algo = new AStar(unterfrankenGraph);
 
+        // TODO more algos should support edgepriofilter to skip lengthy paths
         if (unterfrankenGraph instanceof PriorityGraph && algo instanceof DijkstraBidirectionRef)
-            ((DijkstraBidirectionRef) algo).setEdgeFilterWrapper(new EdgePrioFilter((PriorityGraph) unterfrankenGraph));        
+            ((DijkstraBidirectionRef) algo).setEdgeFilterWrapper(new EdgePrioFilter((PriorityGraph) unterfrankenGraph));
 
         logger.info("running shortest path with " + algo.getClass().getSimpleName());
         Random rand = new Random(123);

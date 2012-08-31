@@ -30,42 +30,42 @@ public class PathTest {
         Path p = new Path();
         p.add(1);
         p.add(3);
-        p.add(2);       
+        p.add(2);
         assertEquals(1, p.getFromLoc());
 
         p.reverseOrder();
         assertEquals(2, p.getFromLoc());
     }
-    
+
     @Test public void testAnd() {
         Path p1 = new Path();
         p1.add(1);
         p1.add(2);
         p1.add(3);
         p1.add(4);
-        
+
         Path p2 = new Path();
         p2.add(7);
         p2.add(2);
         p2.add(3);
         p2.add(11);
-        
+
         TIntSet set = p1.and(p2);
         assertEquals(2, set.size());
         assertTrue(set.contains(2));
         assertTrue(set.contains(3));
-        
+
         set = p2.and(p1);
         assertEquals(2, set.size());
         assertTrue(set.contains(2));
         assertTrue(set.contains(3));
     }
-    
+
     @Test public void testContains() {
         Path p1 = new Path();
         p1.add(1);
         p1.add(2);
-        
+
         assertFalse(p1.contains(3));
         assertTrue(p1.contains(2));
     }

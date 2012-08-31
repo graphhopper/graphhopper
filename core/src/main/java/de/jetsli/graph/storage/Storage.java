@@ -26,9 +26,9 @@ import java.io.Closeable;
 public interface Storage extends Closeable {
 
     Graph getGraph();
-    
+
     boolean loadExisting();
-    
+
     void createNew();
 
     boolean addNode(int osmId, double lat, double lon);

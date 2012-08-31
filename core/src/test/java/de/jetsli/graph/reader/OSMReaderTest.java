@@ -71,7 +71,7 @@ public class OSMReaderTest {
         assertTrue(flags.isService());
         assertTrue(flags.isForward());
         assertTrue(flags.isBackward());
-        
+
         // get third added location id=30
         iter = graph.getOutgoing(2);
         assertTrue(iter.next());
@@ -130,7 +130,7 @@ public class OSMReaderTest {
         assertTrue(flags.isMotorway());
         assertFalse(flags.isForward());
         assertTrue(flags.isBackward());
-        
+
         assertTrue(iter.next());
         flags = new EdgeFlags(iter.flags());
         assertTrue(flags.isMotorway());

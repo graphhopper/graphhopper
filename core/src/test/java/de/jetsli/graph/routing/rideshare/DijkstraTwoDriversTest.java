@@ -36,40 +36,40 @@ public class DijkstraTwoDriversTest {
         d.setDriverA(12, 36);
         d.setDriverB(30, 45);
         d.calcShortestPath();
-        
+
         double shortest = Double.MAX_VALUE;
         TIntHashSet set = new TIntHashSet();
-        for (int pointI = 10; pointI < 50; pointI++) {            
+        for (int pointI = 10; pointI < 50; pointI++) {
             double sum = new DijkstraBidirection(g).calcPath(12, pointI).distance();
             sum += new DijkstraBidirection(g).calcPath(pointI, 36).distance();
-            
+
             sum += new DijkstraBidirection(g).calcPath(30, pointI).distance();
-            sum += new DijkstraBidirection(g).calcPath(pointI, 45).distance();            
-            if(sum < shortest) {
+            sum += new DijkstraBidirection(g).calcPath(pointI, 45).distance();
+            if (sum < shortest) {
                 shortest = sum;
                 set.clear();
                 set.add(pointI);
-            } else if(sum == shortest)
+            } else if (sum == shortest)
                 set.add(pointI);
         }
-                
+
         assertEquals(shortest, d.getBestForA().distance() + d.getBestForB().distance(), 1e-5);
-        assertTrue("meeting points " + set.toString() + " do not contain " + d.getMeetingPoint(), 
+        assertTrue("meeting points " + set.toString() + " do not contain " + d.getMeetingPoint(),
                 set.contains(d.getMeetingPoint()));
     }
-    
+
     @Test public void testFindMeetingPointWhenCrossing() {
         Graph g = AbstractRoutingAlgorithmTester.matrixGraph;
         DijkstraTwoDrivers d = new DijkstraTwoDrivers(g);
         d.setDriverA(12, 36);
         d.setDriverB(30, 15);
         d.calcShortestPath();
-        
+
         Path pA = new DijkstraBidirection(g).calcPath(12, 36);
-        Path pB = new DijkstraBidirection(g).calcPath(30, 15);        
+        Path pB = new DijkstraBidirection(g).calcPath(30, 15);
         TIntSet set = pA.and(pB);
         assertTrue(set.toString(), set.contains(d.getMeetingPoint()));
-        assertEquals(pA.distance(), d.getBestForA().distance(), 1e-5);        
-        assertEquals(pB.distance(), d.getBestForB().distance(), 1e-5);        
+        assertEquals(pA.distance(), d.getBestForA().distance(), 1e-5);
+        assertEquals(pB.distance(), d.getBestForB().distance(), 1e-5);
     }
 }

@@ -80,8 +80,7 @@ public final class LBitUtil {
         for (i = wordOffset; i <= n - 8; i += 8) {
             /**
              * * C macro from Hacker's Delight #define CSA(h,l, a,b,c) \ {unsigned u = a ^ b;
-             * unsigned v = c; \ h = (a & b) | (u & v); l = u ^ v;}
-       **
+             * unsigned v = c; \ h = (a & b) | (u & v); l = u ^ v;} *
              */
             long twosA, twosB, foursA, foursB, eights;
 
@@ -327,8 +326,7 @@ public final class LBitUtil {
         for (i = wordOffset; i <= n - 8; i += 8) {
             /**
              * * C macro from Hacker's Delight #define CSA(h,l, a,b,c) \ {unsigned u = a ^ b;
-             * unsigned v = c; \ h = (a & b) | (u & v); l = u ^ v;}
-        **
+             * unsigned v = c; \ h = (a & b) | (u & v); l = u ^ v;} *
              */
             long twosA, twosB, foursA, foursB, eights;
 
@@ -450,8 +448,7 @@ public final class LBitUtil {
         for (i = wordOffset; i <= n - 8; i += 8) {
             /**
              * * C macro from Hacker's Delight #define CSA(h,l, a,b,c) \ {unsigned u = a ^ b;
-             * unsigned v = c; \ h = (a & b) | (u & v); l = u ^ v;}
-       **
+             * unsigned v = c; \ h = (a & b) | (u & v); l = u ^ v;} *
              */
             long twosA, twosB, foursA, foursB, eights;
 
@@ -569,8 +566,7 @@ public final class LBitUtil {
         for (i = wordOffset; i <= n - 8; i += 8) {
             /**
              * * C macro from Hacker's Delight #define CSA(h,l, a,b,c) \ {unsigned u = a ^ b;
-             * unsigned v = c; \ h = (a & b) | (u & v); l = u ^ v;}
-       **
+             * unsigned v = c; \ h = (a & b) | (u & v); l = u ^ v;} *
              */
             long twosA, twosB, foursA, foursB, eights;
 
@@ -868,7 +864,8 @@ public final class LBitUtil {
     }
 
     /**
-     * returns the next highest power of two, or the current value if it's already a power of two or zero
+     * returns the next highest power of two, or the current value if it's already a power of two or
+     * zero
      */
     public static int nextHighestPowerOfTwo(int v) {
         v--;
@@ -882,7 +879,8 @@ public final class LBitUtil {
     }
 
     /**
-     * returns the next highest power of two, or the current value if it's already a power of two or zero
+     * returns the next highest power of two, or the current value if it's already a power of two or
+     * zero
      */
     public static long nextHighestPowerOfTwo(long v) {
         v--;

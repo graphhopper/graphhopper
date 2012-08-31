@@ -32,7 +32,7 @@ public class BitUtilTest {
         bytes = BitUtil.fromFloat(Float.MAX_VALUE / 3);
         assertEquals(Float.MAX_VALUE / 3, BitUtil.toFloat(bytes), 1e-9);
     }
-    
+
     @Test
     public void testToDouble() {
         byte[] bytes = BitUtil.fromDouble(Double.MAX_VALUE);

@@ -17,7 +17,7 @@ package de.jetsli.graph.util.shapes;
 
 /**
  * A shape interface to implement circles or rectangles.
- * 
+ *
  * @author Peter Karich
  */
 public interface Shape {

@@ -26,8 +26,8 @@ package de.jetsli.graph.storage;
 public class Edge implements Comparable<Edge> {
 
     public int node;
-    public double weight; 
-    
+    public double weight;
+
     public Edge(int loc, double distance) {
         this.node = loc;
         this.weight = distance;

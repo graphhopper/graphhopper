@@ -48,13 +48,13 @@ public class CarFlagsTest {
         assertTrue(fl.isForward());
         assertTrue(fl.isBackward());
         assertEquals(EdgeFlags.DEFAULT_SPEED, fl.getSpeedPart());
-        
+
         fl = new EdgeFlags(EdgeFlags.swapDirection(EdgeFlags.create(false)));
         assertFalse(fl.isForward());
         assertTrue(fl.isBackward());
         assertEquals(EdgeFlags.DEFAULT_SPEED, fl.getSpeedPart());
     }
-    
+
     @Test
     public void testService() {
         Map<String, Object> p = new HashMap<String, Object>();

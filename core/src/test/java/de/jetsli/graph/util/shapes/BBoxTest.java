@@ -82,7 +82,6 @@ public class BBoxTest {
     @Test
     public void testBasicJavaOverload() {
         new BBox(2, 4, 0, 1) {
-
             @Override public boolean intersect(Circle c) {
                 assertTrue(true);
                 return super.intersect(c);
@@ -98,7 +97,6 @@ public class BBoxTest {
                 return true;
             }
         }.intersect(new Circle(1, 2, 3) {
-
             @Override public boolean intersect(Circle c) {
                 assertTrue(false);
                 return true;

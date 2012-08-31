@@ -96,7 +96,7 @@ public class EdgeFlags {
             v = DEFAULT_SPEED;
         return v;
     }
-    
+
     public static int getSpeed(int flags) {
         return getSpeedPart(flags) * 10;
     }

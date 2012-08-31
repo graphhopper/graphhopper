@@ -42,7 +42,7 @@ public class MyBitSetImpl extends BitSet implements MyBitSet {
     @Override
     public int getCardinality() {
         return super.cardinality();
-    }        
+    }
 
     @Override
     public void ensureCapacity(int size) {

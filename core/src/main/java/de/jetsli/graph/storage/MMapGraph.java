@@ -20,19 +20,17 @@ import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.reader.EdgeFlags;
 import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.EdgeIterator;
+import static de.jetsli.graph.util.GraphUtility.*;
 import de.jetsli.graph.util.Helper;
+import gnu.trove.map.hash.TIntFloatHashMap;
 import gnu.trove.map.hash.TIntIntHashMap;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static de.jetsli.graph.util.GraphUtility.*;
-import gnu.trove.map.hash.TIntFloatHashMap;
-import java.io.*;
 
 /**
  * A graph represenation which can be stored directly on disc when using the memory mapped

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package de.jetsli.graph.reader;
 
 import de.jetsli.graph.routing.Path;
@@ -25,6 +24,7 @@ import java.util.List;
  * @author Peter Karich
  */
 public class TestAlgoCollector {
+
     public List<String> list = new ArrayList<String>();
 
     public TestAlgoCollector assertNull(RoutingAlgorithm algo, int from, int to) {
@@ -60,5 +60,4 @@ public class TestAlgoCollector {
         }
         return str;
     }
-
 }

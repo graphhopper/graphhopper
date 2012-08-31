@@ -89,7 +89,6 @@ public class SpatialHashtable implements QuadTree<Long> {
     protected CalcDistance calc = new CalcDistance();
     protected SpatialKeyAlgo algo;
     private boolean compressKey = true;
-    
     private ByteBuffer storage;
     protected int bytesPerBucket;
     protected int bytesPerEntry;
@@ -536,7 +535,6 @@ public class SpatialHashtable implements QuadTree<Long> {
     public Collection<CoordTrig<Long>> getNodes(final Shape searchArea) {
         final List<CoordTrig<Long>> result = new ArrayList<CoordTrig<Long>>();
         LeafWorker worker = new LeafWorker() {
-
             @Override public boolean doWork(long key, long value) {
                 CoordTrigLongEntry coord = new CoordTrigLongEntry();
                 algo.decode(key, coord);
@@ -569,7 +567,6 @@ public class SpatialHashtable implements QuadTree<Long> {
         final List<CoordTrig<Long>> nodes = new ArrayList<CoordTrig<Long>>(1);
         final long requestKey = algo.encode(lat, lon);
         LeafWorker worker = new LeafWorker() {
-
             @Override public boolean doWork(long key, long value) {
                 if (v == null || v == value) {
                     CoordTrigLongEntry e = new CoordTrigLongEntry();
@@ -593,7 +590,6 @@ public class SpatialHashtable implements QuadTree<Long> {
         int bucketIndex = getBucketIndex(requestedKey);
         final List<CoordTrig<Long>> res = new ArrayList<CoordTrig<Long>>();
         getNodes(new LeafWorker() {
-
             @Override public boolean doWork(long key, long value) {
                 if (key == requestedKey) {
                     CoordTrig<Long> coord = new CoordTrigLongEntry();
@@ -622,7 +618,6 @@ public class SpatialHashtable implements QuadTree<Long> {
         if (isBucketFull(bucketPointer)) {
             // iterate through overflow entries (with identical key) of the next buckets until stopbit found
             new BucketOverflowLoop() {
-
                 @Override
                 boolean doWork() {
                     if (_add(worker, getKey(overflowPointer + 1, bucketIndex), overflowPointer + 1, requestedKey)) {
@@ -729,7 +724,6 @@ public class SpatialHashtable implements QuadTree<Long> {
     public int getLastOffset(int bucketIndex) {
         final AtomicInteger integ = new AtomicInteger(-1);
         BucketOverflowLoop loop = new BucketOverflowLoop() {
-
             @Override
             boolean doWork() {
                 integ.set(lastOffset >>> 1);

@@ -58,7 +58,7 @@ public class DijkstraShortestOf2ToPubTest {
         Path path = d.calcShortestPath();
         assertWithBiDijkstra(DijkstraWhichToOneTest.pubTransportPath, path, from, dest, g);
     }
-    
+
     @Test
     public void testCalculateShortestPathWithSpecialFinishCondition() {
         int[] pubTransport = new int[]{20, 21, 31, 41, 51, 52, 62, 72};
@@ -74,13 +74,13 @@ public class DijkstraShortestOf2ToPubTest {
         d.setFrom(from);
         d.setTo(dest);
         Path path = d.calcShortestPath();
-        
+
         assertWithBiDijkstra(pubTransport, path, from, dest, g);
     }
 
     private void assertWithBiDijkstra(int[] points, Path path, int from, int to, Graph g) {
         Path bestManualPathFrom = null;
-        Path bestManualPathTo = null;        
+        Path bestManualPathTo = null;
         for (int i = 0; i < points.length; i++) {
             Path manualFrom = new DijkstraBidirection(g).calcPath(points[i], from);
             Path manualTo = new DijkstraBidirection(g).calcPath(points[i], to);

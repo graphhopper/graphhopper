@@ -32,7 +32,7 @@ public class MMapGraphStorage extends DefaultStorage {
         g = new MMapGraph(file, -1);
         return getMMapGraph().loadExisting();
     }
-    
+
     private MMapGraph getMMapGraph() {
         return (MMapGraph) g;
     }
@@ -44,7 +44,7 @@ public class MMapGraphStorage extends DefaultStorage {
         // but still write to disc at the end!
         getMMapGraph().createNew(true);
     }
-    
+
     @Override public void stats() {
         getMMapGraph().stats(true);
     }

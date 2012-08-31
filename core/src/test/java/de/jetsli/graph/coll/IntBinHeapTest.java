@@ -57,13 +57,13 @@ public class IntBinHeapTest {
     public void testClear() {
         IntBinHeap binHeap = new IntBinHeap(100);
         binHeap.insert(1, 20);
-        binHeap.insert(2, 123);        
-        assertEquals(2, binHeap.size());        
+        binHeap.insert(2, 123);
+        assertEquals(2, binHeap.size());
         binHeap.clear();
-        
+
         assertEquals(0, binHeap.size());
-        binHeap.insert(2, 123); 
-        assertEquals(1, binHeap.size());  
+        binHeap.insert(2, 123);
+        assertEquals(1, binHeap.size());
         assertEquals(2, binHeap.extractMin());
     }
 

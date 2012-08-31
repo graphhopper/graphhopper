@@ -30,7 +30,7 @@ public class BufferedSimpleOutputStream extends BufferedOutputStream {
     }
 
     public BufferedSimpleOutputStream(OutputStream out) {
-        super(out);        
+        super(out);
     }
 
     public final void writeFloat(float v) throws IOException {

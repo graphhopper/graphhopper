@@ -50,7 +50,7 @@ public class EdgeWrapper {
     public int add(int nodeId, double distance) {
         int tmpEdgeId = edgeCounter;
         edgeCounter++;
-        node2edge.put(nodeId, tmpEdgeId);        
+        node2edge.put(nodeId, tmpEdgeId);
         ensureCapacity(tmpEdgeId);
         weights[tmpEdgeId] = (float) distance;
         nodes[tmpEdgeId] = nodeId;

@@ -92,12 +92,11 @@ public class PrepareRoutingShortcutsTest {
         // store skipped first node along with the shortcut to unpack short cut!!
     }
 
-
     @Test
     public void testChangeExistingShortcut() {
         PriorityGraph g = createGraph(20);
         initBiGraph(g);
-        
+
         new PrepareRoutingShortcuts(g).doWork();
         assertEquals(10 * 2 + 1 * 2, GraphUtility.countEdges(g));
         EdgeIterator iter = GraphUtility.until(g.getEdges(6), 3);
@@ -121,7 +120,7 @@ public class PrepareRoutingShortcutsTest {
         graph.edge(3, 8, 20, true);
         graph.edge(8, 6, 20, true);
     }
-    
+
     @Test
     public void testMultiTypeShortcuts() {
         PriorityGraph g = createGraph(20);

@@ -37,7 +37,7 @@ public class PrinctonReaderTest {
         assertEquals(2, count(graph.getOutgoing(0)));
         assertEquals(3, count(graph.getOutgoing(6)));
     }
-    
+
     @Test
     public void testMediumRead() throws IOException {
         Graph graph = new MemoryGraphSafe(100);

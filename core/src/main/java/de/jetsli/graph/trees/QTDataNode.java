@@ -25,7 +25,6 @@ import de.jetsli.graph.util.Helper;
 class QTDataNode<V> implements QTNode<V> {
 
     long[] keys;
-    
     /**
      * Use 'null' to mark the end of the array and to avoid an additional capacity int
      */
@@ -48,10 +47,10 @@ class QTDataNode<V> implements QTNode<V> {
     public boolean isFull() {
         return count() == values.length;
     }
-    
+
     public int remove(long key) {
         int removed = 0;
-        for (int i = 0; i < values.length; ) {
+        for (int i = 0; i < values.length;) {
             if (values[i] == null)
                 break;
             if (keys[i] == key) {

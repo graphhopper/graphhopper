@@ -26,5 +26,5 @@ public class AStarTest extends AbstractRoutingAlgorithmTester {
     @Override
     public RoutingAlgorithm createAlgo(Graph g) {
         return new AStar(g);
-    }   
+    }
 }

@@ -45,15 +45,15 @@ public interface Graph {
      * @param b index of the ending node of the edge
      * @param distance necessary if no setNode is called - e.g. if the graph is not a geo-graph
      * @param flags see EdgeFlags - involves velocity and direction
-     */    
+     */
     void edge(int a, int b, double distance, int flags);
-    
+
     void edge(int a, int b, double distance, boolean bothDirections);
 
     /**
-     * Returns an iterator which makes it possible to traverse all edges of the specified node index.
-     * Hint: use GraphUtility to go straight to certain neighbor nodes.
-     * Hint: edges with both directions will returned only once!
+     * Returns an iterator which makes it possible to traverse all edges of the specified node
+     * index. Hint: use GraphUtility to go straight to certain neighbor nodes. Hint: edges with both
+     * directions will returned only once!
      */
     EdgeIterator getEdges(int index);
 

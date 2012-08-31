@@ -23,12 +23,14 @@ import java.io.Serializable;
  * @author Peter Karich
  */
 public interface MapLayer extends Serializable {
-    
+
     void setBounds(Rectangle r);
+
     Rectangle getBounds();
 
     void setBuffering(boolean enable);
+
     void repaint();
-    
+
     void paint(Graphics2D g);
 }

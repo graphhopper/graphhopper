@@ -39,7 +39,6 @@ public class XFirstSearchTest {
     @Test
     public void testBFS() {
         XFirstSearch bfs = new XFirstSearch() {
-
             @Override
             public boolean goFurther(int v) {
                 counter++;

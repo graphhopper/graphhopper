@@ -62,8 +62,7 @@ public class OpenBitSetIterator extends DocIdSetIterator {
      * range(8,0,-1): if val & 0x80: arr = (arr << 4) | shift val = val << 1 return arr
      *
      * def int_table(): tbl = [ hex(bits2int(val)).strip('L') for val in range(256) ] return
-     * ','.join(tbl)
-  *****
+     * ','.join(tbl) ****
      */
     // hmmm, what about an iterator that finds zeros though,
     // or a reverse iterator... should they be separate classes
@@ -110,8 +109,7 @@ public class OpenBitSetIterator extends DocIdSetIterator {
      * wordShift +=8; y>>>=8; } indexArray = bitlist[y & 0xff]; word >>>= (wordShift +1); }
      *
      * private void shift3() { int lower = (int)word; int lowByte = lower & 0xff; if (lowByte != 0)
-     * { indexArray=bitlist[lowByte]; return; } shift(); }
-  *****
+     * { indexArray=bitlist[lowByte]; return; } shift(); } ****
      */
     @Override
     public int nextDoc() {

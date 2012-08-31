@@ -50,5 +50,5 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
             return iter.distance() / EdgeFlags.getSpeedPart(iter.flags());
         } else
             return iter.distance();
-    }    
+    }
 }

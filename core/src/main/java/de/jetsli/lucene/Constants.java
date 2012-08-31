@@ -110,5 +110,5 @@ public final class Constants {
     // see: http://www.javaworld.com/community/node/3400
     private static String ident(final String s) {
         return s.toString();
-    } 
+    }
 }

@@ -20,11 +20,8 @@ import de.jetsli.graph.storage.EdgePrioFilter;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.PriorityGraphImpl;
-import de.jetsli.graph.util.EdgeFilter;
-import de.jetsli.graph.util.EdgeIterator;
-import org.junit.Test;
-
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

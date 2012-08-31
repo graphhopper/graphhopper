@@ -39,7 +39,7 @@ public class SpatialKeyHashtableOldTest {
         writeAndCheck(store, 0, 4);
         writeAndCheck(store, 1, 4);
     }
-    
+
     private void writeAndCheck(SpatialKeyHashtableOld store, long indexPartOfGeoHash, int maxEntries) {
         for (int i = 1; i <= maxEntries; i++) {
             assertEquals("write i:" + i, 0, store.put(indexPartOfGeoHash | i << 8, Integer.MAX_VALUE / i));

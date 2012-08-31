@@ -29,5 +29,5 @@ public class MyBitSetImplTest extends AbstractMyBitSetTest {
     @Override
     public void testEnsureCapacity() {
         // nothing to test
-    }        
+    }
 }

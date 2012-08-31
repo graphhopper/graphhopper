@@ -26,9 +26,9 @@ import static org.junit.Assert.*;
  * @author Peter Karich, info@jetsli.de
  */
 public class TopologicalSortingTest {
-    
+
     @Test
-    public void testSort() {       
+    public void testSort() {
         Graph g = new MemoryGraphSafe(20);
         g.edge(7, 11, 1, false);
         g.edge(7, 8, 1, false);
@@ -40,20 +40,20 @@ public class TopologicalSortingTest {
         g.edge(11, 9, 1, false);
         g.edge(11, 10, 1, false);
         g.edge(8, 9, 1, false);
-        
+
         TopologicalSorting ts = new TopologicalSorting();
         TIntArrayList list = ts.sort(g);
         // 9 nodes, 10 edges
         assertEquals(9, list.size());
-                
-        for (int i = 1; i < list.size(); i++) {            
-            checkOrder(g, list, i);        
+
+        for (int i = 1; i < list.size(); i++) {
+            checkOrder(g, list, i);
         }
     }
-    
+
     @Test
     public void testSort2() {
-        Graph g = new MemoryGraphSafe(20);  
+        Graph g = new MemoryGraphSafe(20);
         g.edge(1, 2, 1, false);
         g.edge(7, 2, 1, false);
         g.edge(2, 0, 1, false);
@@ -67,29 +67,29 @@ public class TopologicalSortingTest {
         g.edge(5, 6, 1, false);
         g.edge(8, 9, 1, false);
         g.edge(9, 6, 1, false);
-        g.edge(6, 4, 1, false);        
-        
+        g.edge(6, 4, 1, false);
+
         TopologicalSorting ts = new TopologicalSorting();
         TIntArrayList list = ts.sort(g);
         assertEquals(g.getNodes(), list.size());
-                
-        for (int i = 1; i < list.size(); i++) {            
-            checkOrder(g, list, i);        
+
+        for (int i = 1; i < list.size(); i++) {
+            checkOrder(g, list, i);
         }
     }
-    
+
     @Test
     public void testSortWithCycle() {
         Graph g = new MemoryGraphSafe(20);
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
         g.edge(2, 0, 1, false);
-        
+
         TopologicalSorting ts = new TopologicalSorting();
         try {
-            ts.sort(g);        
+            ts.sort(g);
             assertFalse(true);
-        } catch(Exception ex) {
+        } catch (Exception ex) {
         }
     }
 
@@ -97,13 +97,12 @@ public class TopologicalSortingTest {
         final int prev = res.get(i - 1);
         final int curr = res.get(i);
         XFirstSearch search = new XFirstSearch() {
-            
             @Override
             public boolean goFurther(int v) {
                 assertNotSame("search starting from " + curr + " should not visit its previous entry " + prev + ", set:" + res, prev, v);
                 return super.goFurther(v);
-            }            
+            }
         };
-        search.start(g, curr, false);                
+        search.start(g, curr, false);
     }
 }

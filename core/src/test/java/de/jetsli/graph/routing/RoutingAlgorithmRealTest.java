@@ -33,7 +33,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Try algorithms with real data => slowish setup   .
+ * Try algorithms with real data => slowish setup .
+ *
  * @author Peter Karich
  */
 public class RoutingAlgorithmRealTest {
@@ -44,7 +45,7 @@ public class RoutingAlgorithmRealTest {
     public void setUp() {
         testCollector = new TestAlgoCollector();
     }
-    
+
     List<OneRun> createMonacoInstances() {
         List<OneRun> list = new ArrayList<OneRun>();
 
@@ -58,7 +59,7 @@ public class RoutingAlgorithmRealTest {
     }
 
     @Test
-    public void testMonaco() {        
+    public void testMonaco() {
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco", createMonacoInstances());
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
     }

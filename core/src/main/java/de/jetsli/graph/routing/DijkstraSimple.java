@@ -78,7 +78,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         // extract path from shortest-path-tree
         Path path = new Path();
         while (currEdge.node != from) {
-            int tmpFrom = currEdge.node;            
+            int tmpFrom = currEdge.node;
             path.add(tmpFrom);
             currEdge = currEdge.prevEntry;
             path.updateProperties(graph.getIncoming(tmpFrom), currEdge.node);

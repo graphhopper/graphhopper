@@ -323,7 +323,6 @@ public class SpatialHashtableTest extends QuadTreeTester {
 
     SpatialHashtable createSKTWithoutBuffer(int i) {
         return new SpatialHashtable(i) {
-
             @Override protected void initBuffers() {
             }
         };

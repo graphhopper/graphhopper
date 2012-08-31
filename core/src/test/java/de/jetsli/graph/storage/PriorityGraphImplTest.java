@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.EdgeFilter;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
 import org.junit.Test;

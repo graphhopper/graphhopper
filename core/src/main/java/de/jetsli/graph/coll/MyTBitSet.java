@@ -53,10 +53,10 @@ public class MyTBitSet implements MyBitSet {
     @Override
     public void clear() {
         tHash.clear();
-    }        
+    }
 
     @Override
-    public void ensureCapacity(int size) {        
+    public void ensureCapacity(int size) {
     }
 
     @Override

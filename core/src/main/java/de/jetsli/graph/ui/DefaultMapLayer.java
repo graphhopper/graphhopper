@@ -72,7 +72,7 @@ public abstract class DefaultMapLayer implements MapLayer {
     }
 
     public void clearGraphics(Graphics2D g2) {
-        g2.clearRect(0, 0, bounds.width, bounds.height);        
+        g2.clearRect(0, 0, bounds.width, bounds.height);
     }
 
     @Override public void setBounds(Rectangle bounds) {
