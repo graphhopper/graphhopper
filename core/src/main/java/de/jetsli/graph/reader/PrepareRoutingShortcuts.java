@@ -19,7 +19,7 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.EdgeIterator;
-import de.jetsli.graph.util.EdgeUpdateIterator;
+import de.jetsli.graph.util.EdgeSkipIterator;
 import de.jetsli.graph.util.GraphUtility;
 
 /**
@@ -52,22 +52,21 @@ public class PrepareRoutingShortcuts {
             bs.add(l);
             int skip = lRes.n;
             findEnd(bs, lRes, l, rRes.n);
-            findEnd(bs, rRes, l, skip);
+            int firstSkippedNode = findEnd(bs, rRes, l, skip);
 
             // check if an edge already exists which is shorter than the shortcut
-            EdgeUpdateIterator iter = g.getEdges(lRes.n);
+            EdgeSkipIterator iter = g.getEdges(lRes.n);
             EdgeIterator tmp = GraphUtility.until(iter, rRes.n);
             if (tmp != EdgeIterator.EMPTY && tmp.flags() == rRes.flags) {
-                iter = (EdgeUpdateIterator) tmp;
-                // TODO distance vs. weight
+                iter = (EdgeSkipIterator) tmp;
                 if (iter.distance() > lRes.d + rRes.d) {
-                    // logger.info("shorter exists for " + lRes.n + "->" + rRes.n + ": " + (lRes.d + rRes.d));
                     // update the distance
                     iter.distance(lRes.d + rRes.d);
+                    iter.skippedNode(firstSkippedNode);
                 }
             } else {
                 // finally create the shortcut
-                g.edge(lRes.n, rRes.n, lRes.d + rRes.d, rRes.flags);
+                g.shortcut(lRes.n, rRes.n, lRes.d + rRes.d, rRes.flags, firstSkippedNode);
             }
         }
     }
@@ -94,34 +93,37 @@ public class PrepareRoutingShortcuts {
         return true;
     }
 
-    void findEnd(MyBitSet bs, Res res, int start, int skip) {
+    int findEnd(MyBitSet bs, Res res, int start, int skip) {
         while (true) {
+//            if (g.getPriority(start) < 0)
+//                return skip;
+
             EdgeIterator iter = g.getEdges(start);
             double tmpD = 0;
             int tmpF = 0;
             int tmpN = -1;
             for (int count = 0; iter.next(); count++) {
                 if (count >= 2)
-                    return;
+                    return skip;
 
                 if (tmpN < 0 && skip != iter.node()) {
-                    skip = start;
-                    tmpN = start = iter.node();
+                    tmpN = iter.node();
                     tmpD = iter.distance();
                     tmpF = iter.flags();
                 }
             }
 
             if (tmpN < 0 || bs.contains(tmpN))
-                return;
+                return skip;
 
             if (res.flags != tmpF)
-                return;
+                return skip;
 
+            skip = start;
             g.setPriority(skip, -1);
             bs.add(skip);
             res.d += tmpD;
-            res.n = tmpN;
+            start = res.n = tmpN;
         }
     }
 

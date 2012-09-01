@@ -18,8 +18,9 @@ package de.jetsli.graph.util;
 import de.jetsli.graph.reader.EdgeFlags;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
-import org.junit.Test;
+import de.jetsli.graph.storage.PriorityGraphImpl;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *
@@ -29,13 +30,13 @@ public class EdgeUpdateIteratorTest {
 
     @Test
     public void testUpdateFlags() {
-        Graph g = new MemoryGraphSafe(20);
+        Graph g = new PriorityGraphImpl(20);
         g.edge(0, 1, 12, EdgeFlags.create(10, true));
         g.edge(0, 2, 13, EdgeFlags.create(20, true));
 
         assertEquals(4, GraphUtility.countEdges(g));
         assertEquals(1, GraphUtility.count(g.getOutgoing(1)));
-        EdgeUpdateIterator iter = (EdgeUpdateIterator) g.getEdges(0);
+        EdgeSkipIterator iter = (EdgeSkipIterator) g.getEdges(0);
         assertTrue(iter.next());
         assertEquals(EdgeFlags.create(10, true), iter.flags());
         iter.flags(EdgeFlags.create(20, false));
@@ -43,7 +44,7 @@ public class EdgeUpdateIteratorTest {
         iter.distance(10);
         assertEquals(10, iter.distance(), 1e-4);
         assertEquals(0, GraphUtility.count(g.getOutgoing(1)));
-        iter = (EdgeUpdateIterator) g.getEdges(0);
+        iter = (EdgeSkipIterator) g.getEdges(0);
         assertTrue(iter.next());
         assertEquals(EdgeFlags.create(20, false), iter.flags());
         assertEquals(10, iter.distance(), 1e-4);

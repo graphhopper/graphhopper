@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.EdgeUpdateIterator;
+import de.jetsli.graph.util.EdgeSkipIterator;
 import de.jetsli.graph.util.Helper;
 import java.io.IOException;
 import java.util.Arrays;
@@ -112,15 +112,78 @@ public class PriorityGraphImpl extends MemoryGraphSafe implements PriorityGraph 
         return false;
     }
 
-    @Override public EdgeUpdateIterator getEdges(int nodeId) {
-        return new EdgeIterable(nodeId, true, true);
+    @Override public void edge(int a, int b, double distance, int flags) {
+        shortcut(a, b, distance, flags, -1);
     }
 
-    @Override public EdgeUpdateIterator getIncoming(int nodeId) {
-        return new EdgeIterable(nodeId, true, false);
+    @Override public void shortcut(int a, int b, double distance, int flags, int shortcutNode) {
+        // writeLock.lock();
+        ensureNodeIndex(a);
+        ensureNodeIndex(b);
+
+        internalEdgeAdd(a, b, distance, flags, shortcutNode);
     }
 
-    @Override public EdgeUpdateIterator getOutgoing(int nodeId) {
-        return new EdgeIterable(nodeId, false, true);
+    protected void internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags, int shortcutNode) {
+        int newOrExistingEdgePointer = nextEdgePointer();
+        connectNewEdge(fromNodeId, newOrExistingEdgePointer);
+        connectNewEdge(toNodeId, newOrExistingEdgePointer);
+        writeEdge(newOrExistingEdgePointer, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, flags, dist, shortcutNode);
+    }
+
+    private int getShortcutNodePos(int pointer) {
+        return pointer + LEN_NODEA_ID + LEN_NODEB_ID + LEN_LINKA + LEN_LINKB + LEN_FLAGS + LEN_DIST;
+    }
+
+    protected int writeEdge(int edgePointer, int nodeThis, int nodeOther, int nextEdgePointer,
+            int nextEdgeOtherPointer, int flags, double dist, int shortcutNode) {
+
+        edgePointer = super.writeEdge(edgePointer, nodeThis, nodeOther, nextEdgePointer,
+                nextEdgeOtherPointer, flags, dist);
+        saveToEdgeArea(edgePointer, shortcutNode);
+        return edgePointer + LEN_SCNODE;
+    }
+
+    @Override public EdgeSkipIterator getEdges(int nodeId) {
+        return new EdgeSkipIteratorImpl(nodeId, true, true);
+    }
+
+    @Override public EdgeSkipIterator getIncoming(int nodeId) {
+        return new EdgeSkipIteratorImpl(nodeId, true, false);
+    }
+
+    @Override public EdgeSkipIterator getOutgoing(int nodeId) {
+        return new EdgeSkipIteratorImpl(nodeId, false, true);
+    }
+
+    public class EdgeSkipIteratorImpl extends EdgeIterable implements EdgeSkipIterator {
+
+        public EdgeSkipIteratorImpl(int node, boolean in, boolean out) {
+            super(node, in, out);
+        }
+
+        @Override public void skippedNode(int node) {
+            saveToEdgeArea(getShortcutNodePos(pointer), node);
+        }
+
+        @Override public int skippedNode() {
+            return getFromEdgeArea(getShortcutNodePos(pointer));
+        }
+
+        @Override public void distance(double dist) {
+            distance = dist;
+            write();
+        }
+
+        @Override public void flags(int fl) {
+            flags = fl;
+            write();
+        }
+
+        void write() {
+            int nep = getFromEdgeArea(getLinkPosInEdgeArea(fromNode, nodeId, pointer));
+            int neop = getFromEdgeArea(getLinkPosInEdgeArea(nodeId, fromNode, pointer));
+            writeEdge(pointer, fromNode, nodeId, nep, neop, flags, distance);
+        }
     }
 }

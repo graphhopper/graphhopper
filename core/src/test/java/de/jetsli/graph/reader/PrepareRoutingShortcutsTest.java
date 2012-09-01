@@ -19,6 +19,7 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.PriorityGraphImpl;
 import de.jetsli.graph.util.EdgeIterator;
+import de.jetsli.graph.util.EdgeSkipIterator;
 import de.jetsli.graph.util.GraphUtility;
 import org.junit.*;
 import static org.junit.Assert.*;
@@ -52,8 +53,8 @@ public class PrepareRoutingShortcutsTest {
         assertTrue(GraphUtility.contains(g.getEdges(0), 5));
         EdgeIterator iter = GraphUtility.until(g.getEdges(0), 5);
         assertEquals(11, iter.distance(), 1e-5);
-        // TODO the shortcut 0-4 is introduced as 5 gets a second edge from the 0-5 shortcut        
-//        assertEquals((5 + 1) * 2, GraphUtility.countEdges(g));
+        // the shortcut 0-4 is introduced as 5 gets a second edge from the 0-5 shortcut        
+        assertEquals((5 + 1) * 2, GraphUtility.countEdges(g));
 
         // 1
         // 0->2->4->5
@@ -87,11 +88,6 @@ public class PrepareRoutingShortcutsTest {
         assertFalse(GraphUtility.contains(g.getOutgoing(5), 0));
     }
 
-    // TODO @Test
-    public void testShortcutUnpacking() {
-        // store skipped first node along with the shortcut to unpack short cut!!
-    }
-
     @Test
     public void testChangeExistingShortcut() {
         PriorityGraph g = createGraph(20);
@@ -99,8 +95,9 @@ public class PrepareRoutingShortcutsTest {
 
         new PrepareRoutingShortcuts(g).doWork();
         assertEquals(10 * 2 + 1 * 2, GraphUtility.countEdges(g));
-        EdgeIterator iter = GraphUtility.until(g.getEdges(6), 3);
+        EdgeSkipIterator iter = (EdgeSkipIterator) GraphUtility.until(g.getEdges(6), 3);
         assertEquals(40, iter.distance(), 1e-4);
+        assertEquals(8, iter.skippedNode());
     }
 
     // 0-1-2-3-4

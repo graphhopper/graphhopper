@@ -104,30 +104,32 @@ public class TinkerGraphImpl implements Graph {
     }
 
     public EdgeIterator getEdges(int index) {
-        return new MyTinkerIterable(g.getVertex(index));
+        return new MyTinkerIterable(index, g.getVertex(index));
     }
 
     public EdgeIterator getIncoming(int index) {
-        return new MyTinkerIterable(g.getVertex(index));
+        return new MyTinkerIterable(index, g.getVertex(index));
     }
 
     public EdgeIterator getOutgoing(int index) {
-        return new MyTinkerIterable(g.getVertex(index));
+        return new MyTinkerIterable(index, g.getVertex(index));
     }
 
     static class MyTinkerIterable implements EdgeIterator {
 
         private Iterator<Edge> iter;
         private Vertex node;
+        private int fromNode;
         //
         int id;
         double dist;
         int flags = 3;
 
-        public MyTinkerIterable(Vertex n) {
+        public MyTinkerIterable(int fromId, Vertex n) {
             if (n == null)
                 throw new IllegalArgumentException("Node does not exist");
 
+            this.fromNode = fromId;
             node = n;
             iter = n.getEdges(Direction.BOTH, WAY).iterator();
         }
@@ -157,6 +159,10 @@ public class TinkerGraphImpl implements Graph {
 
         public int flags() {
             return flags;
+        }
+
+        public int fromNode() {
+            return fromNode;
         }
     }
 

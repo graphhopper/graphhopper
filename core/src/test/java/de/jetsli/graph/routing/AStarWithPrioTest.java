@@ -47,8 +47,21 @@ public class AStarWithPrioTest extends AbstractRoutingAlgorithmTester {
         PriorityGraph g2 = createGraph(6);
         initBiGraph(g2);
         new PrepareRoutingShortcuts(g2).doWork();
+        // TODO avoid unpacking
         Path p = createAlgo(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.distance(), 1e-6);
         assertEquals(p.toString(), 5, p.locations());
+    }
+
+    @Test
+    public void testShortcutUnpacking() {
+        PriorityGraph g2 = createGraph(6);
+        initBiGraph(g2);
+        // store skipped first node along with the shortcut
+        new PrepareRoutingShortcuts(g2).doWork();
+        // use that node to correctly unpack the shortcut
+        Path p = createAlgo(g2).calcPath(0, 4);
+        assertEquals(p.toString(), 51, p.distance(), 1e-6);
+        assertEquals(p.toString(), 6, p.locations());
     }
 }

@@ -20,7 +20,6 @@ import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.reader.EdgeFlags;
 import de.jetsli.graph.util.EdgeIterator;
-import de.jetsli.graph.util.EdgeUpdateIterator;
 import de.jetsli.graph.util.Helper;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -40,20 +39,23 @@ import org.slf4j.LoggerFactory;
  */
 public class MemoryGraphSafe implements SaveableGraph {
 
-    private static final int EMPTY_LINK = 0;
+    protected static final int EMPTY_LINK = 0;
     private static final float DIST_UNIT = 10000f;
     // number of integers not edges
     private static final int MIN_SEGMENT_SIZE = 1 << 13;
     private static final float FACTOR = 1.5f;
     // EDGES LAYOUT - keep in mind that we address integers here - not bytes!
     // one edge is referenced by two nodes A and B, where it is id(A) < id(B). flags are relative to A
-    private static final int LEN_DIST = 1;
-    private static final int LEN_NODEA_ID = 1;
-    private static final int LEN_NODEB_ID = 1;
-    private static final int LEN_FLAGS = 1;
-    private static final int LEN_LINKA = 1;
-    private static final int LEN_LINKB = 1;
-    private static final int LEN_EDGE = LEN_NODEA_ID + LEN_NODEB_ID + LEN_LINKA + LEN_LINKB + LEN_FLAGS + LEN_DIST;
+    protected static final int LEN_NODEA_ID = 1;
+    protected static final int LEN_NODEB_ID = 1;
+    protected static final int LEN_LINKA = 1;
+    protected static final int LEN_LINKB = 1;
+    protected static final int LEN_FLAGS = 1;
+    protected static final int LEN_DIST = 1;
+    // shortcut node
+    protected static final int LEN_SCNODE = 1;
+    private static final int LEN_EDGE = LEN_NODEA_ID + LEN_NODEB_ID + LEN_LINKA + LEN_LINKB
+            + LEN_FLAGS + LEN_DIST + LEN_SCNODE;
     protected Logger logger = LoggerFactory.getLogger(getClass());
     // nodes
     private float[] lats;
@@ -184,14 +186,14 @@ public class MemoryGraphSafe implements SaveableGraph {
         internalEdgeAdd(a, b, distance, flags);
     }
 
-    private void saveToEdgeArea(int pointer, int data) {
+    protected void saveToEdgeArea(int pointer, int data) {
         // uh, speed won't be improved via bit operations!
         int segNumber = pointer / edgesSegmentSize;
         int segPointer = pointer % edgesSegmentSize;
         edgesSegments[segNumber][segPointer] = data;
     }
 
-    private int getFromEdgeArea(int pointer) {
+    protected int getFromEdgeArea(int pointer) {
         // uh, speed won't be improved via bit operations!
         int segNumber = pointer / edgesSegmentSize;
         int segPointer = pointer % edgesSegmentSize;
@@ -207,7 +209,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         return nodeA;
     }
 
-    private int getLinkPosInEdgeArea(int nodeThis, int nodeOther, int edgePointer) {
+    protected int getLinkPosInEdgeArea(int nodeThis, int nodeOther, int edgePointer) {
         if (nodeThis <= nodeOther)
             // get link to next a
             return edgePointer + LEN_NODEA_ID + LEN_NODEB_ID;
@@ -223,7 +225,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         writeEdge(newOrExistingEdgePointer, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, flags, dist);
     }
 
-    private void connectNewEdge(int fromNodeId, int newOrExistingEdgePointer) {
+    protected void connectNewEdge(int fromNodeId, int newOrExistingEdgePointer) {
         int edgePointer = refToEdges[fromNodeId];
         if (edgePointer > 0) {
             // append edge and overwrite EMPTY_LINK
@@ -235,7 +237,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     // writes distance, flags, nodeThis, *nodeOther* and nextEdgePointer
-    private void writeEdge(int edgePointer, int nodeThis, int nodeOther,
+    protected int writeEdge(int edgePointer, int nodeThis, int nodeOther,
             int nextEdgePointer, int nextEdgeOtherPointer, int flags, double dist) {
         ensureEdgePointer(edgePointer);
 
@@ -265,7 +267,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         edgePointer += LEN_FLAGS;
 
         saveToEdgeArea(edgePointer, (int) (dist * DIST_UNIT));
-        //edgePointer += LEN_DIST;
+        return edgePointer + LEN_DIST;
     }
 
     void writeA(int edgePointer, int node) {
@@ -293,7 +295,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         }
     }
 
-    private int nextEdgePointer() {
+    protected int nextEdgePointer() {
         edgeNextGlobalPointer += LEN_EDGE;
         return edgeNextGlobalPointer;
     }
@@ -335,9 +337,9 @@ public class MemoryGraphSafe implements SaveableGraph {
         return new EdgeIterable(nodeId, false, true);
     }
 
-    protected class EdgeIterable implements EdgeUpdateIterator {
+    protected class EdgeIterable implements EdgeIterator {
 
-        int lastEdgePointer;
+        int pointer;
         boolean in;
         boolean out;
         boolean foundNext;
@@ -357,7 +359,7 @@ public class MemoryGraphSafe implements SaveableGraph {
 
         void readNext() {
             // readLock.lock();
-            int pointer = lastEdgePointer = nextEdgePointer;
+            pointer = nextEdgePointer;
             nodeId = getOtherNode(fromNode, pointer);
             if (fromNode != getOtherNode(nodeId, pointer))
                 throw new IllegalStateException("requested node " + fromNode + " not stored in edge. "
@@ -365,10 +367,7 @@ public class MemoryGraphSafe implements SaveableGraph {
 
             // position to next edge
             nextEdgePointer = getFromEdgeArea(getLinkPosInEdgeArea(fromNode, nodeId, pointer));
-
-            // position to flags
-            pointer += LEN_EDGE - LEN_FLAGS - LEN_DIST;
-            flags = getFromEdgeArea(pointer);
+            flags = getFlags(pointer);
 
             // switch direction flags if necessary
             if (fromNode > nodeId)
@@ -377,15 +376,13 @@ public class MemoryGraphSafe implements SaveableGraph {
             if (!in && !EdgeFlags.isForward(flags) || !out && !EdgeFlags.isBackward(flags)) {
                 // skip this edge as it does not fit to defined filter
             } else {
-                // position to distance
-                pointer += LEN_FLAGS;
-                distance = intToDist(getFromEdgeArea(pointer));
+                distance = getDist(pointer);
                 foundNext = true;
             }
         }
 
         int edgePointer() {
-            return lastEdgePointer;
+            return pointer;
         }
 
         int nextEdgePointer() {
@@ -422,22 +419,6 @@ public class MemoryGraphSafe implements SaveableGraph {
         @Override public int fromNode() {
             return fromNode;
         }
-
-        @Override public void distance(double dist) {
-            distance = dist;
-            write();
-        }
-
-        @Override public void flags(int fl) {
-            flags = fl;
-            write();
-        }
-
-        void write() {
-            int nep = getFromEdgeArea(getLinkPosInEdgeArea(fromNode, nodeId, lastEdgePointer));
-            int neop = getFromEdgeArea(getLinkPosInEdgeArea(nodeId, fromNode, lastEdgePointer));
-            writeEdge(lastEdgePointer, fromNode, nodeId, nep, neop, flags, distance);
-        }
     }
 
     private float intToDist(int integ) {
@@ -445,7 +426,11 @@ public class MemoryGraphSafe implements SaveableGraph {
     }
 
     private int getFlags(int pointer) {
-        return getFromEdgeArea(pointer + LEN_EDGE - LEN_DIST - LEN_FLAGS);
+        return getFromEdgeArea(pointer + LEN_NODEA_ID + LEN_NODEB_ID + LEN_LINKA + LEN_LINKB);
+    }
+
+    private float getDist(int pointer) {
+        return intToDist(getFromEdgeArea(pointer + LEN_NODEA_ID + LEN_NODEB_ID + LEN_LINKA + LEN_LINKB + LEN_FLAGS));
     }
 
     protected MemoryGraphSafe creatThis(String storage, int nodes, int edges) {
@@ -621,7 +606,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             int linkA = getFromEdgeArea(getLinkPosInEdgeArea(nodeA, nodeB, edgePointer));
             int linkB = getFromEdgeArea(getLinkPosInEdgeArea(nodeB, nodeA, edgePointer));
             int flags = getFlags(edgePointer);
-            float distance = intToDist(getFromEdgeArea(edgePointer + LEN_EDGE - LEN_DIST));
+            float distance = getDist(edgePointer);
             writeEdge(edgePointer, updatedA, updatedB, linkA, linkB, flags, distance);
         }
 

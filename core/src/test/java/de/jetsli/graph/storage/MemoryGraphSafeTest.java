@@ -15,12 +15,12 @@
  */
 package de.jetsli.graph.storage;
 
-import java.io.IOException;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import static de.jetsli.graph.util.GraphUtility.*;
 import de.jetsli.graph.util.*;
+import static de.jetsli.graph.util.GraphUtility.*;
 import java.io.File;
+import java.io.IOException;
+import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *
@@ -116,6 +116,6 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
         assertEquals(2, GraphUtility.count(g.getEdges(10238)));
         assertEquals(1, GraphUtility.count(g.getEdges(10239)));
         assertEquals(1 << 13, g.getSegmentSize());
-        assertEquals(8, g.getSegments());
+        assertEquals(9, g.getSegments());
     }
 }

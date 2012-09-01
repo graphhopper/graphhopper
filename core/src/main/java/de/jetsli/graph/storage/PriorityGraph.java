@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.EdgeUpdateIterator;
+import de.jetsli.graph.util.EdgeSkipIterator;
 
 /**
  * Extended graph interface which supports storing and retrieving priorities per node.
@@ -28,12 +28,14 @@ public interface PriorityGraph extends Graph {
 
     int getPriority(int index);
 
+    void shortcut(int a, int b, double distance, int flags, int shortcutNode);
+    
     @Override
-    public EdgeUpdateIterator getEdges(int nodeId);
+    public EdgeSkipIterator getEdges(int nodeId);
 
     @Override
-    public EdgeUpdateIterator getIncoming(int nodeId);
+    public EdgeSkipIterator getIncoming(int nodeId);
 
     @Override
-    public EdgeUpdateIterator getOutgoing(int nodeId);
+    public EdgeSkipIterator getOutgoing(int nodeId);
 }

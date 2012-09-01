@@ -234,19 +234,21 @@ public class Neo4JGraphImpl implements Graph {
         // TODO should be a weak reference!
         private BulkTA ta;
         private Node node;
+        private int fromNode;
         //
         int id;
         double dist;
         int flags = 3;
 
-        public MyNeoIterable(BulkTA ta, Node n) {
+        public MyNeoIterable(BulkTA ta, int fromId, Node n) {
             if (n == null)
                 throw new IllegalArgumentException("Node does not exist");
 
-            node = n;
+            this.fromNode = fromId;
+            this.node = n;
             this.ta = ta;
             this.ta.ensureStart();
-            iter = n.getRelationships(MyRelations.WAY).iterator();
+            this.iter = n.getRelationships(MyRelations.WAY).iterator();
         }
 
         public boolean hasNext() {
@@ -286,18 +288,22 @@ public class Neo4JGraphImpl implements Graph {
         public int flags() {
             return flags;
         }
+
+        public int fromNode() {
+            return fromNode;
+        }
     }
 
     public EdgeIterator getEdges(int ghId) {
-        return new MyNeoIterable(ta, getNode(ghId));
+        return new MyNeoIterable(ta, ghId, getNode(ghId));
     }
 
     public EdgeIterator getIncoming(int ghId) {
-        return new MyNeoIterable(ta, getNode(ghId));
+        return new MyNeoIterable(ta, ghId, getNode(ghId));
     }
 
     public EdgeIterator getOutgoing(int ghId) {
-        return new MyNeoIterable(ta, getNode(ghId));
+        return new MyNeoIterable(ta, ghId, getNode(ghId));
     }
 
     protected Node getNode(int ghId) {

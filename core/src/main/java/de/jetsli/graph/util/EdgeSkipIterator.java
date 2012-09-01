@@ -20,8 +20,8 @@ package de.jetsli.graph.util;
  *
  * Current usage
  * <pre>
- * // use a graph with iterator-update support like MemoryGraphSafe
- * EdgeUpdateIterator iter = (EdgeUpdateIterator) graph.getEdges(n);
+ * // use a graph with priority support like MemoryGraphSafe
+ * EdgeSkipIterator iter = (EdgeSkipIterator) graph.getEdges(n);
  * while(iter.next()) {
  *   iter.distance(19.0);
  *   ...
@@ -30,9 +30,14 @@ package de.jetsli.graph.util;
  *
  * @author Peter Karich
  */
-public interface EdgeUpdateIterator extends EdgeIterator {
+public interface EdgeSkipIterator extends EdgeIterator {
 
+    int skippedNode();
+    
+    // update
     void distance(double dist);
 
     void flags(int flags);
+    
+    void skippedNode(int node);
 }
