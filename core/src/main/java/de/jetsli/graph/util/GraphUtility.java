@@ -123,9 +123,17 @@ public class GraphUtility {
         return true;
     }
 
-    public static EdgeIterator until(EdgeIterator edges, int i) {
+    public static EdgeIterator until(EdgeIterator edges, int node, int flags) {
         while (edges.next()) {
-            if (edges.node() == i)
+            if (edges.node() == node && edges.flags() == flags)
+                return edges;
+        }
+        return EdgeIterator.EMPTY;
+    }
+
+    public static EdgeIterator until(EdgeIterator edges, int node) {
+        while (edges.next()) {
+            if (edges.node() == node)
                 return edges;
         }
         return EdgeIterator.EMPTY;

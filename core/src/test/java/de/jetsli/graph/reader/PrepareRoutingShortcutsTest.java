@@ -121,14 +121,16 @@ public class PrepareRoutingShortcutsTest {
     @Test
     public void testMultiTypeShortcuts() {
         PriorityGraph g = createGraph(20);
+        g.edge(0, 10, 1, EdgeFlags.create(30, true));
         g.edge(0, 1, 10, EdgeFlags.create(30, true));
         g.edge(1, 2, 10, EdgeFlags.create(30, true));
         g.edge(2, 3, 10, EdgeFlags.create(30, true));
         g.edge(0, 4, 20, EdgeFlags.create(120, true));
         g.edge(4, 3, 20, EdgeFlags.create(120, true));
+        g.edge(3, 11, 1, EdgeFlags.create(30, true));
+        assertEquals(7 * 2, GraphUtility.countEdges(g));
         new PrepareRoutingShortcuts(g).doWork();
-
-        assertEquals(5 * 2 + 2 * 2, GraphUtility.countEdges(g));
+        assertEquals(7 * 2 + 2 * 2, GraphUtility.countEdges(g));
 
         EdgeIterator iter = GraphUtility.until(g.getEdges(0), 3);
         assertEquals(30, iter.distance(), 1e-4);

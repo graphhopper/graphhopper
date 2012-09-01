@@ -42,17 +42,6 @@ public class AStarWithPrioTest extends AbstractRoutingAlgorithmTester {
         return new PriorityGraphImpl(size);
     }
 
-    @Test @Override
-    public void testBidirectional() {
-        PriorityGraph g2 = createGraph(6);
-        initBiGraph(g2);
-        new PrepareRoutingShortcuts(g2).doWork();
-        // TODO avoid unpacking
-        Path p = createAlgo(g2).calcPath(0, 4);
-        assertEquals(p.toString(), 51, p.distance(), 1e-6);
-        assertEquals(p.toString(), 5, p.locations());
-    }
-
     @Test
     public void testShortcutUnpacking() {
         PriorityGraph g2 = createGraph(6);
@@ -63,5 +52,16 @@ public class AStarWithPrioTest extends AbstractRoutingAlgorithmTester {
         Path p = createAlgo(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.distance(), 1e-6);
         assertEquals(p.toString(), 6, p.locations());
+    }
+
+    @Test
+    public void testShortcutNoUnpacking() {
+        PriorityGraph g2 = createGraph(6);
+        initBiGraph(g2);
+        new PrepareRoutingShortcuts(g2).doWork();
+        // TODO avoid unpacking
+        Path p = createAlgo(g2).calcPath(0, 4);
+        assertEquals(p.toString(), 51, p.distance(), 1e-6);
+        assertEquals(p.toString(), 5, p.locations());
     }
 }

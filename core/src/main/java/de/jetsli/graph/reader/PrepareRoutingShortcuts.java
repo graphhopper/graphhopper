@@ -21,116 +21,95 @@ import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeSkipIterator;
 import de.jetsli.graph.util.GraphUtility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Peter Karich
  */
 public class PrepareRoutingShortcuts {
 
+    private Logger logger = LoggerFactory.getLogger(getClass());
     private final PriorityGraph g;
 
     public PrepareRoutingShortcuts(PriorityGraph g) {
         this.g = g;
     }
 
-    public void doWork() {
-        createShortcuts();
-    }
-
     /**
      * Create short cuts to skip 2 degree nodes and make graph traversal for routing more efficient
      */
-    private void createShortcuts() {
+    public void doWork() {
         int locs = g.getNodes();
-        MyBitSet bs = new MyTBitSet();
-        for (int l = 0; l < locs; l++) {
-            Res lRes = new Res();
-            Res rRes = new Res();
-            if (bs.contains(l) || !findFirstLeftAndRight(g.getEdges(l), lRes, rRes))
+        int newShortcuts = 0;
+        for (int startNode = 0; startNode < locs; startNode++) {
+            if (has2Edges(g.getEdges(startNode)))
                 continue;
 
-            bs.add(l);
-            int skip = lRes.n;
-            findEnd(bs, lRes, l, rRes.n);
-            int firstSkippedNode = findEnd(bs, rRes, l, skip);
+            // now search for possible paths to skip
+            EdgeSkipIterator iter = g.getEdges(startNode);
+            while (iter.next()) {
+                // while iterating new shortcuts could have been introduced. ignore them!
+                if (iter.skippedNode() >= 0)
+                    continue;
 
-            // check if an edge already exists which is shorter than the shortcut
-            EdgeSkipIterator iter = g.getEdges(lRes.n);
-            EdgeIterator tmp = GraphUtility.until(iter, rRes.n);
-            if (tmp != EdgeIterator.EMPTY && tmp.flags() == rRes.flags) {
-                iter = (EdgeSkipIterator) tmp;
-                if (iter.distance() > lRes.d + rRes.d) {
-                    // update the distance
-                    iter.distance(lRes.d + rRes.d);
-                    iter.skippedNode(firstSkippedNode);
+                int firstSkippedNode = iter.node();
+                int flags = iter.flags();
+                int skip = startNode;
+                int currentNode = iter.node();
+                double distance = iter.distance();
+                while (true) {
+                    if (!has2Edges(g.getEdges(currentNode)))
+                        break;
+
+                    EdgeIterator twoDegreeIter = g.getEdges(currentNode);
+                    twoDegreeIter.next();
+                    if (twoDegreeIter.node() == skip)
+                        twoDegreeIter.next();
+
+                    if (flags != twoDegreeIter.flags())
+                        break;
+                    if (g.getPriority(currentNode) < 0)
+                        break;
+                    
+                    g.setPriority(currentNode, -1);
+                    distance += twoDegreeIter.distance();
+                    skip = currentNode;
+                    currentNode = twoDegreeIter.node();
                 }
-            } else {
-                // finally create the shortcut
-                g.shortcut(lRes.n, rRes.n, lRes.d + rRes.d, rRes.flags, firstSkippedNode);
+                if (currentNode == startNode)
+                    continue;
+
+                // found shortcut but check if an edge already exists which is shorter than the shortcut
+                EdgeSkipIterator tmpIter = g.getEdges(startNode);
+                EdgeIterator tmpIter2 = GraphUtility.until(tmpIter, currentNode, flags);
+                if (tmpIter2 != EdgeIterator.EMPTY) {
+                    tmpIter = (EdgeSkipIterator) tmpIter2;
+                    if (tmpIter.distance() > distance) {
+                        // update the distance
+                        tmpIter.distance(distance);
+                        tmpIter.skippedNode(firstSkippedNode);
+                    }
+                } else {
+                    // finally create the shortcut
+                    g.shortcut(startNode, currentNode, distance, flags, firstSkippedNode);
+                    newShortcuts++;
+                }
             }
         }
+        logger.info("introduced " + newShortcuts + " new shortcuts");
     }
 
-    boolean findFirstLeftAndRight(EdgeIterator iter, Res lRes, Res rRes) {
-        while (iter.next()) {
-            if (lRes.n < 0) {
-                lRes.n = iter.node();
-                lRes.flags = iter.flags();
-            } else if (rRes.n < 0) {
-                rRes.flags = iter.flags();
-                if (lRes.flags != EdgeFlags.swapDirection(rRes.flags))
-                    return false;
-
-                rRes.n = iter.node();
-            } else {
-                // more than 2 edges
+    // a bit more efficient than "count edges == 2"
+    static boolean has2Edges(EdgeIterator iter) {
+        int counter = 0;
+        for (; iter.next(); counter++) {
+            if (counter > 2)
                 return false;
-            }
         }
-        // less than 2 nodes
-        if (rRes.n < 0)
-            return false;
-        return true;
-    }
+        if (counter == 2)
+            return true;
 
-    int findEnd(MyBitSet bs, Res res, int start, int skip) {
-        while (true) {
-//            if (g.getPriority(start) < 0)
-//                return skip;
-
-            EdgeIterator iter = g.getEdges(start);
-            double tmpD = 0;
-            int tmpF = 0;
-            int tmpN = -1;
-            for (int count = 0; iter.next(); count++) {
-                if (count >= 2)
-                    return skip;
-
-                if (tmpN < 0 && skip != iter.node()) {
-                    tmpN = iter.node();
-                    tmpD = iter.distance();
-                    tmpF = iter.flags();
-                }
-            }
-
-            if (tmpN < 0 || bs.contains(tmpN))
-                return skip;
-
-            if (res.flags != tmpF)
-                return skip;
-
-            skip = start;
-            g.setPriority(skip, -1);
-            bs.add(skip);
-            res.d += tmpD;
-            start = res.n = tmpN;
-        }
-    }
-
-    class Res {
-
-        int n = -1;
-        double d;
-        int flags;
+        return false;
     }
 }
