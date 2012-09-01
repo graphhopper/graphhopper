@@ -78,7 +78,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         openSetTo.clear();
         shortestWeightMapTo.clear();
 
-        shortest = new PathWrapperRef(graph);
+        shortest = createPathWrapper();
         shortest.weight = Double.MAX_VALUE;
         return this;
     }
@@ -246,5 +246,9 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     public EdgeEntry getShortestWeightTo(int nodeId) {
         return shortestWeightMapTo.get(nodeId);
+    }
+
+    protected PathWrapperRef createPathWrapper() {
+        return new PathWrapperRef(graph);
     }
 }

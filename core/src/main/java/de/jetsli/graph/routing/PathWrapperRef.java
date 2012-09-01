@@ -29,7 +29,7 @@ public class PathWrapperRef {
     public EdgeEntry edgeTo;
     public double weight;
     public boolean switchWrapper = false;
-    private Graph g;
+    protected Graph g;
 
     public PathWrapperRef(Graph g) {
         this.g = g;
@@ -67,7 +67,7 @@ public class PathWrapperRef {
             int tmpTo = currEdge.node;
             currEdge = currEdge.prevEntry;
             path.add(currEdge.node);
-            path.updateProperties(g.getIncoming(currEdge.node), tmpTo);
+            path.updateProperties(g.getOutgoing(tmpTo), currEdge.node);
         }
 
         return path;

@@ -97,7 +97,7 @@ public class PrepareRoutingShortcuts {
                 }
             }
         }
-        logger.info("introduced " + newShortcuts + " new shortcuts");
+        // logger.info("introduced " + newShortcuts + " new shortcuts");
     }
 
     // a bit more efficient than "count edges == 2"

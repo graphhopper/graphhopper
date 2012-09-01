@@ -27,17 +27,20 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class AStarWithPrioTest extends AbstractRoutingAlgorithmTester {
+public class DijkstraBidirectionWithPrioTest {
 
-    @Override
-    public RoutingAlgorithm createAlgo(Graph g) {
-        if (g instanceof PriorityGraph)
-            return new DijkstraBidirectionRef(g).setEdgeFilter(new EdgePrioFilter((PriorityGraph) g));
-
-        return new DijkstraBidirectionRef(g);
+    RoutingAlgorithm createAlgoWithFilter(final PriorityGraph pg) {
+        return new DijkstraBidirectionRef(pg).setEdgeFilter(new EdgePrioFilter(pg));
+    }
+    
+    RoutingAlgorithm createAlgoWithFilterAndPathUnpacking(final PriorityGraph pg) {
+        return new DijkstraBidirectionRef(pg) {
+            @Override protected PathWrapperRef createPathWrapper() {
+                return new PathWrapperPrio(pg);
+            }
+        }.setEdgeFilter(new EdgePrioFilter(pg));
     }
 
-    @Override
     PriorityGraph createGraph(int size) {
         return new PriorityGraphImpl(size);
     }
@@ -45,11 +48,11 @@ public class AStarWithPrioTest extends AbstractRoutingAlgorithmTester {
     @Test
     public void testShortcutUnpacking() {
         PriorityGraph g2 = createGraph(6);
-        initBiGraph(g2);
+        AbstractRoutingAlgorithmTester.initBiGraph(g2);
         // store skipped first node along with the shortcut
         new PrepareRoutingShortcuts(g2).doWork();
         // use that node to correctly unpack the shortcut
-        Path p = createAlgo(g2).calcPath(0, 4);
+        Path p = createAlgoWithFilterAndPathUnpacking(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.distance(), 1e-6);
         assertEquals(p.toString(), 6, p.locations());
     }
@@ -57,10 +60,9 @@ public class AStarWithPrioTest extends AbstractRoutingAlgorithmTester {
     @Test
     public void testShortcutNoUnpacking() {
         PriorityGraph g2 = createGraph(6);
-        initBiGraph(g2);
+        AbstractRoutingAlgorithmTester.initBiGraph(g2);
         new PrepareRoutingShortcuts(g2).doWork();
-        // TODO avoid unpacking
-        Path p = createAlgo(g2).calcPath(0, 4);
+        Path p = createAlgoWithFilter(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.distance(), 1e-6);
         assertEquals(p.toString(), 5, p.locations());
     }
