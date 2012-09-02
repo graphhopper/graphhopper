@@ -185,4 +185,17 @@ public class PrepareRoutingShortcutsTest {
         iter = GraphUtility.until(g.getOutgoing(4), 9);
         assertEquals(5, iter.distance(), 1e-4);
     }
+    
+    @Test
+    public void testDirected() {
+        PriorityGraphImpl g = new PriorityGraphImpl(20);
+        // 3->0->1<-2
+        g.edge(0, 1, 10, false);
+        g.edge(2, 1, 10, false);
+        g.edge(3, 0, 10, false);
+        
+        assertFalse(new PrepareRoutingShortcuts(g).has1InAnd1Out(2));
+        assertTrue(new PrepareRoutingShortcuts(g).has1InAnd1Out(0));
+        assertFalse(new PrepareRoutingShortcuts(g).has1InAnd1Out(1));
+    }
 }

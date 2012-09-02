@@ -15,8 +15,6 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeSkipIterator;
@@ -43,11 +41,11 @@ public class PrepareRoutingShortcuts {
         int locs = g.getNodes();
         int newShortcuts = 0;
         for (int startNode = 0; startNode < locs; startNode++) {
-            if (has2Edges(g.getEdges(startNode)))
+            if (has1InAnd1Out(startNode))
                 continue;
 
             // now search for possible paths to skip
-            EdgeSkipIterator iter = g.getEdges(startNode);
+            EdgeSkipIterator iter = g.getOutgoing(startNode);
             while (iter.next()) {
                 // while iterating new shortcuts could have been introduced. ignore them!
                 if (iter.skippedNode() >= 0)
@@ -59,19 +57,19 @@ public class PrepareRoutingShortcuts {
                 int currentNode = iter.node();
                 double distance = iter.distance();
                 while (true) {
-                    if (!has2Edges(g.getEdges(currentNode)))
+                    if (!has1InAnd1Out(currentNode))
                         break;
 
-                    EdgeIterator twoDegreeIter = g.getEdges(currentNode);
+                    EdgeIterator twoDegreeIter = g.getOutgoing(currentNode);
                     twoDegreeIter.next();
                     if (twoDegreeIter.node() == skip)
                         twoDegreeIter.next();
 
                     if (flags != twoDegreeIter.flags())
                         break;
-                    if (g.getPriority(currentNode) < 0)
+                    else if (g.getPriority(currentNode) < 0)
                         break;
-                    
+
                     g.setPriority(currentNode, -1);
                     distance += twoDegreeIter.distance();
                     skip = currentNode;
@@ -81,7 +79,7 @@ public class PrepareRoutingShortcuts {
                     continue;
 
                 // found shortcut but check if an edge already exists which is shorter than the shortcut
-                EdgeSkipIterator tmpIter = g.getEdges(startNode);
+                EdgeSkipIterator tmpIter = g.getOutgoing(startNode);
                 EdgeIterator tmpIter2 = GraphUtility.until(tmpIter, currentNode, flags);
                 if (tmpIter2 != EdgeIterator.EMPTY) {
                     tmpIter = (EdgeSkipIterator) tmpIter2;
@@ -97,19 +95,30 @@ public class PrepareRoutingShortcuts {
                 }
             }
         }
-        // logger.info("introduced " + newShortcuts + " new shortcuts");
+        logger.info("introduced " + newShortcuts + " new shortcuts");
     }
 
-    // a bit more efficient than "count edges == 2"
-    static boolean has2Edges(EdgeIterator iter) {
+    /**
+     * Make sure there is exactly one outgoing and exactly one incoming edge. The current
+     * implementation uses graph.getEdges() as both edges can be bi-directional and they need to
+     * have different end nodes.
+     */
+    boolean has1InAnd1Out(int index) {
+        EdgeIterator iter = g.getEdges(index);
         int counter = 0;
+        boolean firstForward = false;
         for (; iter.next(); counter++) {
+            if (counter == 0)
+                firstForward = EdgeFlags.isForward(iter.flags());
+            if (counter == 1) {
+                if (firstForward && !EdgeFlags.isBackward(iter.flags()))
+                    return false;
+                else if (!firstForward && !EdgeFlags.isForward(iter.flags()))
+                    return false;
+            }
             if (counter > 2)
                 return false;
         }
-        if (counter == 2)
-            return true;
-
-        return false;
+        return counter == 2;
     }
 }

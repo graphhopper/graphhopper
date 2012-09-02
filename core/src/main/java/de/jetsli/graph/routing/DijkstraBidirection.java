@@ -21,6 +21,7 @@ import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeWrapper;
+import de.jetsli.graph.util.GraphUtility;
 
 /**
  * Calculates shortest path in bidirectional way. Compared to DijkstraBidirectionRef this class is
@@ -145,11 +146,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     public void fillEdges(int currNode, double currWeight, int currEdgeId, MyBitSet visitedMain,
             IntBinHeap prioQueue, EdgeWrapper wrapper, boolean out) {
 
-        EdgeIterator iter;
-        if (out)
-            iter = graph.getOutgoing(currNode);
-        else
-            iter = graph.getIncoming(currNode);
+        EdgeIterator iter = GraphUtility.getEdges(graph, currNode, out);
         while (iter.next()) {
             int neighborNode = iter.node();
             if (visitedMain.contains(neighborNode))

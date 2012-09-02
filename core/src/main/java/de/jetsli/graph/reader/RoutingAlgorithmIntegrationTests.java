@@ -20,6 +20,8 @@ import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.DijkstraBidirectionRef;
 import de.jetsli.graph.routing.DijkstraSimple;
 import de.jetsli.graph.routing.Path;
+import de.jetsli.graph.routing.PathWrapperPrio;
+import de.jetsli.graph.routing.PathWrapperRef;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.EdgePrioFilter;
 import de.jetsli.graph.storage.Graph;
@@ -95,10 +97,19 @@ public class RoutingAlgorithmIntegrationTests {
             algo = new AStar(unterfrankenGraph);
 
         // TODO more algos should support edgepriofilter to skip lengthy paths
-        if (unterfrankenGraph instanceof PriorityGraph && algo instanceof DijkstraBidirectionRef)
-            ((DijkstraBidirectionRef) algo).setEdgeFilter(new EdgePrioFilter((PriorityGraph) unterfrankenGraph));
+        if (unterfrankenGraph instanceof PriorityGraph && algo instanceof DijkstraBidirectionRef) {
+            DijkstraBidirectionRef dijkstraBi = new DijkstraBidirectionRef(unterfrankenGraph) {
+                @Override protected PathWrapperRef createPathWrapper() {
+                    // correctly expand skipped nodes
+                    return new PathWrapperPrio((PriorityGraph) unterfrankenGraph);
+                }
+            };
+            dijkstraBi.setEdgeFilter(new EdgePrioFilter((PriorityGraph) unterfrankenGraph));
+            algo = dijkstraBi;
+            logger.info("[experimental] using shortcuts with bidirectional Dijkstra (ref)");
+        } else
+            logger.info("running shortest path with " + algo.getClass().getSimpleName());
 
-        logger.info("running shortest path with " + algo.getClass().getSimpleName());
         Random rand = new Random(123);
         StopWatch sw = new StopWatch();
 

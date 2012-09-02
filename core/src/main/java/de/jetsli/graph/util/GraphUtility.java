@@ -138,4 +138,14 @@ public class GraphUtility {
         }
         return EdgeIterator.EMPTY;
     }
+
+    /**
+     * Added this helper method to avoid cluttering the graph interface. Good idea?
+     */
+    public static EdgeIterator getEdges(Graph graph, int index, boolean out) {
+        if (out)
+            return graph.getOutgoing(index);
+        else
+            return graph.getIncoming(index);
+    }
 }
