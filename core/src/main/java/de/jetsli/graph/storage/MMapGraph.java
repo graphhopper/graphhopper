@@ -22,6 +22,7 @@ import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.EdgeIterator;
 import static de.jetsli.graph.util.GraphUtility.*;
 import de.jetsli.graph.util.Helper;
+import de.jetsli.graph.util.HelperSun;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import gnu.trove.map.hash.TIntIntHashMap;
 import java.io.*;
@@ -687,12 +688,12 @@ public class MMapGraph implements SaveableGraph {
         if (dirName != null) {
             flush();
             if (nodes instanceof MappedByteBuffer)
-                Helper.cleanMappedByteBuffer((MappedByteBuffer) nodes);
+                HelperSun.cleanMappedByteBuffer((MappedByteBuffer) nodes);
             if (nodeFile != null)
                 Helper.close(nodeFile);
 
             if (edges instanceof MappedByteBuffer)
-                Helper.cleanMappedByteBuffer((MappedByteBuffer) edges);
+                HelperSun.cleanMappedByteBuffer((MappedByteBuffer) edges);
             if (edgeFile != null)
                 Helper.close(edgeFile);
         }

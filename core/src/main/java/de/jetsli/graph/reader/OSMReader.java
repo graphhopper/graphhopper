@@ -134,7 +134,10 @@ public class OSMReader {
     }
 
     public boolean loadExisting() {
-        logger.info("starting with " + Helper.getBeanMemInfo());
+        try {
+            logger.info("starting with " + HelperSun.getBeanMemInfo());
+        } catch (Exception ex) {
+        }
         return storage.loadExisting();
     }
 

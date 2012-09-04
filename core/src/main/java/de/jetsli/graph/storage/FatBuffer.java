@@ -16,6 +16,7 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.Helper;
+import de.jetsli.graph.util.HelperSun;
 import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -90,6 +91,6 @@ public class FatBuffer implements Closeable {
     }
 
     private void clean(MappedByteBuffer mapping) {
-        Helper.cleanMappedByteBuffer(mapping);
+        HelperSun.cleanMappedByteBuffer(mapping);
     }
 }

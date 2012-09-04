@@ -126,14 +126,6 @@ public class Helper {
         }
     }
 
-    public static String getBeanMemInfo() {
-        java.lang.management.OperatingSystemMXBean mxbean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-        com.sun.management.OperatingSystemMXBean sunmxbean = (com.sun.management.OperatingSystemMXBean) mxbean;
-        long freeMemory = sunmxbean.getFreePhysicalMemorySize();
-        long availableMemory = sunmxbean.getTotalPhysicalMemorySize();
-        return "free:" + freeMemory / MB + ", available:" + availableMemory / MB + ", rfree:" + Runtime.getRuntime().freeMemory() / MB;
-    }
-
     public static String getMemInfo() {
         return "totalMB:" + Runtime.getRuntime().totalMemory() / MB
                 + ", usedMB:" + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / MB;
@@ -153,15 +145,6 @@ public class Helper {
         // TODO add 4byte to make a multiple of 8 in some cases
         // TODO compressed oop
         return factor * (4 + 4 + 4 + 4) + 4 * length;
-    }
-
-    public static void cleanMappedByteBuffer(MappedByteBuffer mapping) {
-        if (mapping == null)
-            return;
-
-        sun.misc.Cleaner cleaner = ((sun.nio.ch.DirectBuffer) mapping).cleaner();
-        if (cleaner != null)
-            cleaner.clean();
     }
 
     public static void close(XMLStreamReader r) {
