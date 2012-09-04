@@ -16,13 +16,16 @@
 package de.jetsli.graph.util;
 
 import java.nio.MappedByteBuffer;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 /**
- * Put the usage of proprietary "sun" classes into this class.
+ * Put the usage of proprietary "sun" classes and after jdk6 classes into this class.
+ * To use Helper class under Android as well.
  *
  * @author Peter Karich
  */
-public class HelperSun {
+public class Helper7 {
 
     public static void cleanMappedByteBuffer(MappedByteBuffer mapping) {
         if (mapping == null)
@@ -40,5 +43,14 @@ public class HelperSun {
         long availableMemory = sunmxbean.getTotalPhysicalMemorySize();
         return "free:" + freeMemory / Helper.MB + ", available:" + availableMemory / Helper.MB
                 + ", rfree:" + Runtime.getRuntime().freeMemory() / Helper.MB;
+    }
+    
+    public static void close(XMLStreamReader r) {
+        try {
+            if (r != null)
+                r.close();
+        } catch (XMLStreamException ex) {
+            throw new RuntimeException("Couldn't close xml reader", ex);
+        }
     }
 }

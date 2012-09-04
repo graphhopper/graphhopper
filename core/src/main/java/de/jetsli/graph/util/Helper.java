@@ -15,13 +15,9 @@
  */
 package de.jetsli.graph.util;
 
-import de.jetsli.graph.coll.MyBitSet;
 import java.io.*;
-import java.nio.MappedByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 
 /**
  *
@@ -145,15 +141,6 @@ public class Helper {
         // TODO add 4byte to make a multiple of 8 in some cases
         // TODO compressed oop
         return factor * (4 + 4 + 4 + 4) + 4 * length;
-    }
-
-    public static void close(XMLStreamReader r) {
-        try {
-            if (r != null)
-                r.close();
-        } catch (XMLStreamException ex) {
-            throw new RuntimeException("Couldn't close xml reader", ex);
-        }
     }
 
     public static void close(Closeable cl) {

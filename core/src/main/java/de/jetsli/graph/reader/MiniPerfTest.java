@@ -16,7 +16,7 @@
 package de.jetsli.graph.reader;
 
 import de.jetsli.graph.util.Helper;
-import de.jetsli.graph.util.HelperSun;
+import de.jetsli.graph.util.Helper7;
 import de.jetsli.graph.util.StopWatch;
 import java.util.Date;
 import java.util.Random;
@@ -76,7 +76,7 @@ public class MiniPerfTest {
         }
         System.out.println(new Date() + "# progress 100% in " + sw.stop().getSeconds()
                 + " secs => secs/iter:" + sw.stop().getSeconds() / maxNo + "\n avoid jvm removal:"
-                + res + ", memInfo:" + Helper.getMemInfo() + " " + HelperSun.getBeanMemInfo() + "\n");
+                + res + ", memInfo:" + Helper.getMemInfo() + " " + Helper7.getBeanMemInfo() + "\n");
     }
 
     /**

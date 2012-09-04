@@ -15,16 +15,14 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.storage.Storage;
-import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafeStorage;
 import de.jetsli.graph.storage.PriorityGraph;
+import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.*;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.*;
 import java.util.*;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
@@ -135,7 +133,7 @@ public class OSMReader {
 
     public boolean loadExisting() {
         try {
-            logger.info("starting with " + HelperSun.getBeanMemInfo());
+            logger.info("starting with " + Helper7.getBeanMemInfo());
         } catch (Exception ex) {
         }
         return storage.loadExisting();
@@ -213,7 +211,7 @@ public class OSMReader {
         } catch (XMLStreamException ex) {
             throw new RuntimeException("Problem while parsing file", ex);
         } finally {
-            Helper.close(sReader);
+            Helper7.close(sReader);
         }
     }
 
@@ -268,7 +266,7 @@ public class OSMReader {
         } catch (XMLStreamException ex) {
             throw new RuntimeException("Couldn't process file", ex);
         } finally {
-            Helper.close(sReader);
+            Helper7.close(sReader);
         }
     }
 
