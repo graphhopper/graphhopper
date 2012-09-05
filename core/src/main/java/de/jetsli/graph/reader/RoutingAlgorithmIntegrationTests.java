@@ -28,6 +28,7 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.PriorityGraph;
+import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.StopWatch;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -39,9 +40,11 @@ import org.slf4j.LoggerFactory;
 public class RoutingAlgorithmIntegrationTests {
 
     private final Graph unterfrankenGraph;
+    private final Location2IDIndex idx;
 
     public RoutingAlgorithmIntegrationTests(Graph graph) {
         this.unterfrankenGraph = graph;
+        idx = new Location2IDQuadtree(unterfrankenGraph).prepareIndex(20000);
     }
 
     public void start() {
@@ -49,23 +52,14 @@ public class RoutingAlgorithmIntegrationTests {
         RoutingAlgorithm[] algos = createAlgos(unterfrankenGraph);
         for (RoutingAlgorithm algo : algos) {
             int failed = testCollector.list.size();
-            testCollector.assertDistance(algo, 424236, 794975, 115.438, 2094);
-            testCollector.assertDistance(algo, 331738, 111807, 121.364, 2328);
-            testCollector.assertDistance(algo, 501620, 155552, 78.042, 1126);
-            testCollector.assertDistance(algo, 399826, 269920, 53.053, 1041);
-            testCollector.assertDistance(algo, 665211, 246823, 35.36, 710);
-            testCollector.assertDistance(algo, 783718, 696695, 66.330, 1283);
-            testCollector.assertDistance(algo, 811865, 641256, 113.343, 1729);
-            testCollector.assertDistance(algo, 513676, 22669, 168.442, 2817);
-            testCollector.assertDistance(algo, 896965, 769132, 5.983, 131);
-            testCollector.assertDistance(algo, 115253, 430074, 56.564, 967);
-
-            // without deleting subnetwork the following would produce empty paths!
-            testCollector.assertDistance(algo, 773352, 858026, 47.936, 696);
-            testCollector.assertDistance(algo, 696295, 773352, 69.520, 1288);
-
-            System.out.println("unterfranken " + algo.getClass().getSimpleName()
-                    + ": " + (testCollector.list.size() - failed) + " failed");
+            testCollector.assertDistance(algo, idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 0.5613, 20);
+            testCollector.assertDistance(algo, idx.findID(49.4000, 9.9690), idx.findID(50.2920, 10.4650), 113.7413, 1802);
+            testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 132.0551, 2138);
+            testCollector.assertDistance(algo, idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 95.7919, 1343);
+            testCollector.assertDistance(algo, idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 72.9986, 1229);
+            testCollector.assertDistance(algo, idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77.6807, 1217);
+            testCollector.assertDistance(algo, idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125.4616, 2135);
+            System.out.println("unterfranken " + algo + ": " + (testCollector.list.size() - failed) + " failed");
         }
 
         if (testCollector.list.size() > 0) {
@@ -75,18 +69,36 @@ public class RoutingAlgorithmIntegrationTests {
             System.out.println("SUCCESS!");
     }
 
+    static RoutingAlgorithm createPrioAlgo(Graph g) {
+        g = g.clone();
+        new PrepareRoutingShortcuts((PriorityGraph) g).doWork();
+        DijkstraBidirectionRef dijkstraBi = new DijkstraBidirectionRef(g) {
+            @Override public String toString() {
+                return "DijkstraBidirectionRef|Shortcut|" + type;
+            }
+            //TODO NOW
+//                @Override protected PathWrapperRef createPathWrapper() {
+//                    // expand skipped nodes
+//                    return new PathWrapperPrio((PriorityGraph) unterfrankenGraph);
+//                }
+        };
+        dijkstraBi.setEdgeFilter(new EdgePrioFilter((PriorityGraph) g));
+        return dijkstraBi;
+    }
+
     public static RoutingAlgorithm[] createAlgos(Graph g) {
-        return new RoutingAlgorithm[]{new AStar(g), new DijkstraBidirectionRef(g),
-                    new DijkstraBidirection(g), new DijkstraSimple(g)};
+        return new RoutingAlgorithm[]{
+                    new AStar(g),
+                    new DijkstraBidirectionRef(g), new DijkstraBidirection(g), new DijkstraSimple(g),
+//                    createPrioAlgo(g)
+                };
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     public void runShortestPathPerf(int runs, String algoStr) throws Exception {
-        Location2IDIndex index = new Location2IDQuadtree(unterfrankenGraph).prepareIndex(20000);
         double minLat = 49.484186, minLon = 8.974228;
         double maxLat = 50.541363, maxLon = 10.880356;
         RoutingAlgorithm algo;
-
         if ("dijkstraref".equalsIgnoreCase(algoStr))
             algo = new DijkstraBidirectionRef(unterfrankenGraph);
         else if ("dijkstrabi".equalsIgnoreCase(algoStr))
@@ -98,17 +110,10 @@ public class RoutingAlgorithmIntegrationTests {
 
         // TODO more algos should support edgepriofilter to skip lengthy paths
         if (unterfrankenGraph instanceof PriorityGraph && algo instanceof DijkstraBidirectionRef) {
-            DijkstraBidirectionRef dijkstraBi = new DijkstraBidirectionRef(unterfrankenGraph) {
-                @Override protected PathWrapperRef createPathWrapper() {
-                    // correctly expand skipped nodes
-                    return new PathWrapperPrio((PriorityGraph) unterfrankenGraph);
-                }
-            };
-            dijkstraBi.setEdgeFilter(new EdgePrioFilter((PriorityGraph) unterfrankenGraph));
-            algo = dijkstraBi;
+            algo = createPrioAlgo(unterfrankenGraph);
             logger.info("[experimental] using shortcuts with bidirectional Dijkstra (ref)");
         } else
-            logger.info("running shortest path with " + algo.getClass().getSimpleName());
+            logger.info("running " + algo);
 
         Random rand = new Random(123);
         StopWatch sw = new StopWatch();
@@ -116,10 +121,10 @@ public class RoutingAlgorithmIntegrationTests {
         for (int i = 0; i < runs; i++) {
             double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
             double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
-            int from = index.findID(fromLat, fromLon);
+            int from = idx.findID(fromLat, fromLon);
             double toLat = rand.nextDouble() * (maxLat - minLat) + minLat;
             double toLon = rand.nextDouble() * (maxLon - minLon) + minLon;
-            int to = index.findID(toLat, toLon);
+            int to = idx.findID(toLat, toLon);
 //                logger.info(i + " " + sw + " from (" + from + ")" + fromLat + ", " + fromLon + " to (" + to + ")" + toLat + ", " + toLon);
             if (from == to) {
                 logger.warn("skipping i " + i + " from==to " + from);
@@ -139,8 +144,7 @@ public class RoutingAlgorithmIntegrationTests {
                 continue;
             }
             if (i % 20 == 0)
-                logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run (distance:"
-                        + p.distance() + ",length:" + p.locations() + ")");
+                logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run (" + p + ")");
         }
     }
 }

@@ -16,8 +16,8 @@
 package de.jetsli.graph.ui;
 
 import de.jetsli.graph.routing.DijkstraBidirectionRef;
-import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.EdgeEntry;
+import de.jetsli.graph.storage.Graph;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
@@ -40,8 +40,13 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
     }
 
     @Override public void updateShortest(EdgeEntry shortestDE, int currLoc) {
-        if (g2 != null)
-            mg.plotNode(g2, currLoc, Color.YELLOW);
+        if (g2 != null) {
+            if (getEdgeFilter() == null)
+                mg.plotNode(g2, currLoc, Color.ORANGE);
+            else
+                mg.plotNode(g2, currLoc, Color.BLUE);
+        }
+        System.out.println("new node:" + currLoc);
         super.updateShortest(shortestDE, currLoc);
     }
 }

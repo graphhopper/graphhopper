@@ -17,6 +17,8 @@ package de.jetsli.graph.routing;
 
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
@@ -25,6 +27,7 @@ import de.jetsli.graph.storage.Graph;
  */
 public class PathWrapperRef {
 
+    private Logger logger = LoggerFactory.getLogger(getClass());
     public EdgeEntry edgeFrom;
     public EdgeEntry edgeTo;
     public double weight;
@@ -57,11 +60,10 @@ public class PathWrapperRef {
             int tmpFrom = currEdge.node;
             path.add(tmpFrom);
             currEdge = currEdge.prevEntry;
-            path.updateProperties(g.getIncoming(tmpFrom), currEdge.node);
+            path.updateProperties(g.getOutgoing(currEdge.node), tmpFrom);
         }
         path.add(currEdge.node);
         path.reverseOrder();
-
         currEdge = edgeTo;
         while (currEdge.prevEntry != null) {
             int tmpTo = currEdge.node;

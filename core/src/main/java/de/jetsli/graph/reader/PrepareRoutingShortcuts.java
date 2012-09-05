@@ -19,6 +19,7 @@ import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeSkipIterator;
 import de.jetsli.graph.util.GraphUtility;
+import de.jetsli.graph.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,17 +30,24 @@ public class PrepareRoutingShortcuts {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final PriorityGraph g;
+    private int newShortcuts;
 
     public PrepareRoutingShortcuts(PriorityGraph g) {
         this.g = g;
+    }
+
+    int getShortcuts() {
+        return newShortcuts;
     }
 
     /**
      * Create short cuts to skip 2 degree nodes and make graph traversal for routing more efficient
      */
     public void doWork() {
+        newShortcuts = 0;
         int locs = g.getNodes();
-        int newShortcuts = 0;
+        StopWatch sw = new StopWatch().start();
+        // GraphUtility.printInfo(g);
         for (int startNode = 0; startNode < locs; startNode++) {
             if (has1InAnd1Out(startNode))
                 continue;
@@ -57,17 +65,24 @@ public class PrepareRoutingShortcuts {
                 int currentNode = iter.node();
                 double distance = iter.distance();
                 while (true) {
+                    if (g.getPriority(currentNode) < 0)
+                        break;
                     if (!has1InAnd1Out(currentNode))
                         break;
 
-                    EdgeIterator twoDegreeIter = g.getOutgoing(currentNode);
+                    EdgeIterator twoDegreeIter = g.getEdges(currentNode);
                     twoDegreeIter.next();
+                    if (twoDegreeIter.node() == skip) {
+                        if (!twoDegreeIter.next())
+                            throw new IllegalStateException("there should be an opposite node to "
+                                    + "traverse to but wasn't for " + currentNode);
+                    }
+
                     if (twoDegreeIter.node() == skip)
-                        twoDegreeIter.next();
+                        throw new IllegalStateException("next node shouldn't be identical to skip "
+                                + "(" + skip + ") for " + currentNode + ", startNode=" + startNode);
 
                     if (flags != twoDegreeIter.flags())
-                        break;
-                    else if (g.getPriority(currentNode) < 0)
                         break;
 
                     g.setPriority(currentNode, -1);
@@ -95,7 +110,7 @@ public class PrepareRoutingShortcuts {
                 }
             }
         }
-        logger.info("introduced " + newShortcuts + " new shortcuts");
+        logger.info("introduced " + newShortcuts + " new shortcuts in: " + sw.stop().getSeconds() + "s");
     }
 
     /**
@@ -106,11 +121,15 @@ public class PrepareRoutingShortcuts {
     boolean has1InAnd1Out(int index) {
         EdgeIterator iter = g.getEdges(index);
         int counter = 0;
+        int node = -1;
         boolean firstForward = false;
         for (; iter.next(); counter++) {
-            if (counter == 0)
+            if (counter == 0) {
                 firstForward = EdgeFlags.isForward(iter.flags());
-            if (counter == 1) {
+                node = iter.node();
+            } else if (counter == 1) {
+                if (node == iter.node())
+                    break;
                 if (firstForward && !EdgeFlags.isBackward(iter.flags()))
                     return false;
                 else if (!firstForward && !EdgeFlags.isForward(iter.flags()))

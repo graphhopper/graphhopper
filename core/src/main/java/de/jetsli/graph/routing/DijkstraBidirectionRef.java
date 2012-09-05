@@ -21,6 +21,7 @@ import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.EdgePrioFilter;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
+import de.jetsli.graph.util.GraphUtility;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
@@ -67,6 +68,10 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         return this;
     }
 
+    public EdgePrioFilter getEdgeFilter() {
+        return edgeFilter;
+    }
+
     @Override
     public RoutingAlgorithm clear() {
         alreadyRun = false;
@@ -92,6 +97,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         this.from = from;
         currFrom = new EdgeEntry(from, 0);
         shortestWeightMapFrom.put(from, currFrom);
+        visitedFrom.add(from);
         return this;
     }
 
@@ -99,6 +105,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         this.to = to;
         currTo = new EdgeEntry(to, 0);
         shortestWeightMapTo.put(to, currTo);
+        visitedTo.add(to);
         return this;
     }
 
@@ -149,12 +156,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
             TIntObjectMap<EdgeEntry> shortestWeightMap, boolean out) {
 
         int currNodeFrom = curr.node;
-        EdgeIterator iter;
-        if (out)
-            iter = graph.getOutgoing(currNodeFrom);
-        else
-            iter = graph.getIncoming(currNodeFrom);
-
+        EdgeIterator iter = GraphUtility.getEdges(graph, currNodeFrom, out);
         if (edgeFilter != null)
             iter = edgeFilter.doFilter(iter);
 
@@ -170,6 +172,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
                 de.prevEntry = curr;
                 shortestWeightMap.put(neighborNode, de);
                 prioQueue.add(de);
+//                System.out.println((out ? 1 : 0) + " NEW    " + de);
             } else if (de.weight > tmpWeight) {
                 // use fibonacci? see http://stackoverflow.com/q/6273833/194609
                 // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry
@@ -177,6 +180,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
                 de.weight = tmpWeight;
                 de.prevEntry = curr;
                 prioQueue.add(de);
+//                System.out.println((out ? 1 : 0) + " UPDATE " + de);
             }
 
             updateShortest(de, neighborNode);
@@ -188,10 +192,11 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         EdgeEntry entryOther = shortestWeightMapOther.get(currLoc);
         if (entryOther == null)
             return;
-
+        // shortestWeightMapOther.size();
         // update μ
         double newShortest = shortestDE.weight + entryOther.weight;
         if (newShortest < shortest.weight) {
+//            System.out.println("SHORTEST " + shortestDE);
             shortest.switchWrapper = shortestWeightMapFrom == shortestWeightMapOther;
             shortest.edgeFrom = shortestDE;
             shortest.edgeTo = entryOther;

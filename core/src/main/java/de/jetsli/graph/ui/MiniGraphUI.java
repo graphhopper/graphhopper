@@ -19,11 +19,15 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.reader.OSMReader;
+import de.jetsli.graph.reader.PrepareRoutingShortcuts;
 import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.routing.AlgoType;
+import de.jetsli.graph.routing.DijkstraBidirectionRef;
 import de.jetsli.graph.routing.RoutingAlgorithm;
+import de.jetsli.graph.storage.EdgePrioFilter;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
+import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.CoordTrig;
@@ -122,10 +126,11 @@ public class MiniGraphUI {
                         continue;
 
 //                    int count = MyIteratorable.count(graph.getEdges(nodeIndex));
-//                    plot(g2, lat, lon, count, size);                    
+//                    mg.plotNode(g2, nodeIndex, Color.RED);                    
 
                     EdgeIterator iter = graph.getOutgoing(nodeIndex);
                     while (iter.next()) {
+
                         int nodeId = iter.node();
                         int sum = nodeIndex + nodeId;
                         if (fastPaint) {
@@ -140,6 +145,25 @@ public class MiniGraphUI {
                         mg.plotEdge(g2, lat, lon, lat2, lon2);
                     }
                 }
+
+//                mg.plotNode(g2, 171651, Color.GREEN);
+
+//                g2.setColor(Color.RED);
+//                PriorityGraph clone = (PriorityGraph) graph.clone();
+//                new PrepareRoutingShortcuts(clone).doWork();
+//                DijkstraBidirectionRef dijkstraBi = new DebugDijkstraBidirection(clone, mg);
+//                ((DebugAlgo) dijkstraBi).setGraphics2D(g2);
+//                dijkstraBi.setEdgeFilter(new EdgePrioFilter((PriorityGraph) clone));
+//                plotPath(dijkstraBi, g2, 10);
+//
+//                g2.setColor(Color.GREEN);
+//                dijkstraBi = new DebugDijkstraBidirection(graph, mg);
+//                ((DebugAlgo) dijkstraBi).setGraphics2D(g2);
+//                plotPath(dijkstraBi, g2, 6);
+//
+////                g2.setColor(Color.BLUE);
+////                plotPath(new AStar(graph), g2, 4);
+//                g2.setColor(Color.BLACK);
 
                 if (quadTreeNodes != null) {
                     logger.info("found neighbors:" + quadTreeNodes.size());
@@ -171,21 +195,17 @@ public class MiniGraphUI {
                     return;
 
                 makeTransparent(g2);
-
                 if (algo instanceof DebugAlgo)
                     ((DebugAlgo) algo).setGraphics2D(g2);
 
                 StopWatch sw = new StopWatch().start();
-
                 if (type.equals(AlgoType.FASTEST))
                     type = AlgoType.SHORTEST;
                 else
                     type = AlgoType.FASTEST;
 
                 logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + type);
-
                 path = algo.clear().setType(type).calcPath(dijkstraFromId, dijkstraToId);
-
                 sw.stop();
 
                 // TODO remove subnetworks to avoid failing
@@ -193,7 +213,6 @@ public class MiniGraphUI {
                     return;
 
                 logger.info("found path in " + sw.getSeconds() + "s with " + path.locations() + " nodes: " + path);
-
                 g2.setColor(Color.BLUE.brighter().brighter());
                 int tmpLocs = path.locations();
                 double prevLat = -1;
@@ -217,6 +236,22 @@ public class MiniGraphUI {
             repaintManager.setDoubleBufferingEnabled(false);
             mainPanel.setBuffering(false);
         }
+    }
+
+    public void plotPath(RoutingAlgorithm algo, Graphics2D g2, int w) {
+        // int from = index.findID(50.0315, 10.5105);
+        // int to = index.findID(50.0303, 10.5070);
+        // Path tmpPath = algo.calcPath(171744, 757231);
+        int from = index.findID(50.0315, 10.5105);
+        int to = index.findID(50.0303, 10.5070);
+        Path tmpPath = algo.calcPath(from, to);
+        for (int jj = 0; jj < tmpPath.locations(); jj++) {
+            int loc = tmpPath.location(jj);
+            double lat = graph.getLatitude(loc);
+            double lon = graph.getLongitude(loc);
+            mg.plot(g2, lat, lon, w);
+        }
+        logger.info(tmpPath.toString());
     }
     private int dijkstraFromId = -1;
     private int dijkstraToId = -1;

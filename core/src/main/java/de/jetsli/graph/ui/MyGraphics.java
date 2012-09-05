@@ -83,13 +83,13 @@ public class MyGraphics {
     }
 
     public void plotNode(Graphics2D g2, int loc, Color c) {
-        Color old = g2.getColor();
-        g2.setColor(c);
         double lat = g.getLatitude(loc);
         double lon = g.getLongitude(loc);
         if (lat < bounds.minLat || lat > bounds.maxLat || lon < bounds.minLon || lon > bounds.maxLon)
             return;
 
+        Color old = g2.getColor();
+        g2.setColor(c);
         plot(g2, lat, lon, 4);
         g2.setColor(old);
     }
@@ -106,7 +106,7 @@ public class MyGraphics {
 //        else if (x > maxX)
 //            maxX = x;
 
-        g2.drawOval((int) x, (int) y, width, width);
+        g2.fillOval((int) x, (int) y, width, width);
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
 

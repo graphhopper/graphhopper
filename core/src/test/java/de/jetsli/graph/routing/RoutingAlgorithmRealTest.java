@@ -76,7 +76,7 @@ public class RoutingAlgorithmRealTest {
 
     @Test
     public void testMonacoParallel() throws IOException {
-        System.out.println("testMonacoParallel takes a bit time -> move to a separate integration test");
+        System.out.println("testMonacoParallel takes a bit time (move to a separate integration test?)");
         String graphFile = "target/graph-monaco";
         Helper.deleteDir(new File(graphFile));
         Graph g = OSMReader.osm2Graph(new CmdArgs().put("osm", "files/monaco.osm.gz").put("graph", graphFile));
@@ -84,11 +84,12 @@ public class RoutingAlgorithmRealTest {
         final List<OneRun> instances = createMonacoInstances();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
-        int MAX = 500;
-        int algosLength = RoutingAlgorithmIntegrationTests.createAlgos(g).length;
+        int MAX = 200;
+        int algosLength = -1;
         for (int no = 0; no < MAX; no++) {
             for (int i = 0; i < instances.size(); i++) {
                 RoutingAlgorithm[] algos = RoutingAlgorithmIntegrationTests.createAlgos(g);
+                algosLength = algos.length;
                 for (final RoutingAlgorithm algo : algos) {
                     // not thread safe:
                     // algo.clear();

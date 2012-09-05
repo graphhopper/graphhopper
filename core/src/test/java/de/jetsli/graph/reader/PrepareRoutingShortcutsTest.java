@@ -15,6 +15,10 @@
  */
 package de.jetsli.graph.reader;
 
+import de.jetsli.graph.routing.DijkstraBidirectionRef;
+import de.jetsli.graph.routing.Path;
+import de.jetsli.graph.routing.PathWrapperPrio;
+import de.jetsli.graph.routing.PathWrapperRef;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.PriorityGraphImpl;
@@ -89,12 +93,102 @@ public class PrepareRoutingShortcutsTest {
     }
 
     @Test
+    public void testDirected() {
+        PriorityGraphImpl g = new PriorityGraphImpl(20);
+        // 3->0->1<-2
+        g.edge(0, 1, 10, false);
+        g.edge(2, 1, 10, false);
+        g.edge(3, 0, 10, false);
+
+        assertFalse(new PrepareRoutingShortcuts(g).has1InAnd1Out(2));
+        assertTrue(new PrepareRoutingShortcuts(g).has1InAnd1Out(0));
+        assertFalse(new PrepareRoutingShortcuts(g).has1InAnd1Out(1));
+    }
+
+    @Test
+    public void testDirected2() {
+        final PriorityGraphImpl g = new PriorityGraphImpl(30);
+        // see 49.9052,10.35491
+        // =19-20-21-22=
+
+        g.edge(18, 19, 1, true);
+        g.edge(17, 19, 1, true);
+
+        g.edge(19, 20, 1, false);
+        g.edge(20, 21, 1, false);
+        g.edge(21, 22, 1, false);
+
+        g.edge(22, 23, 1, true);
+        g.edge(22, 24, 1, true);
+
+        PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
+        prepare.doWork();
+        assertEquals(1, prepare.getShortcuts());
+        EdgeSkipIterator iter = (EdgeSkipIterator) GraphUtility.until(g.getEdges(19), 22);
+        assertEquals(20, iter.skippedNode());
+        Path p = new DijkstraBidirectionRef(g) {
+            @Override protected PathWrapperRef createPathWrapper() {
+                // correctly expand skipped nodes
+                return new PathWrapperPrio(g);
+            }
+        }.calcPath(17, 23);
+        assertEquals(6, p.locations());
+    }
+
+    @Test
+    public void testDirectedBug() {
+        final PriorityGraphImpl g = new PriorityGraphImpl(30);
+        //       8
+        //       |
+        //    6->0->1->3->7
+        //    |        |
+        //    |        v
+        //10<-2---4<---5
+        //    9
+        g.edge(0, 8, 1, true);
+        g.edge(0, 1, 1, false);
+        g.edge(1, 3, 1, false);
+        g.edge(3, 7, 1, false);
+        g.edge(3, 5, 1, false);
+        g.edge(5, 4, 1, false);
+        g.edge(4, 2, 1, true);
+        g.edge(2, 9, 1, false);
+        g.edge(2, 10, 1, false);
+        g.edge(2, 6, 1, true);
+        g.edge(6, 0, 1, false);
+
+        PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
+        prepare.doWork();
+        assertEquals(2, prepare.getShortcuts());
+        assertEquals(-1, g.getPriority(5));
+        assertEquals(0, g.getPriority(4));
+        assertEquals(0, g.getPriority(3));
+        assertEquals(0, g.getPriority(2));
+    }
+
+    @Test
+    public void testCircleBug() {
+        final PriorityGraphImpl g = new PriorityGraphImpl(30);
+        //  /--1
+        // -0--/
+        //  |
+        g.edge(0, 1, 10, true);
+        g.edge(0, 1, 4, true);
+        g.edge(0, 2, 10, true);
+        g.edge(0, 3, 10, true);
+        PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
+        prepare.doWork();
+        assertEquals(0, prepare.getShortcuts());
+    }
+
+    @Test
     public void testChangeExistingShortcut() {
         PriorityGraph g = createGraph(20);
         initBiGraph(g);
 
-        new PrepareRoutingShortcuts(g).doWork();
-        assertEquals(10 * 2 + 1 * 2, GraphUtility.countEdges(g));
+        PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
+        prepare.doWork();
+        assertEquals(1, prepare.getShortcuts());
         EdgeSkipIterator iter = (EdgeSkipIterator) GraphUtility.until(g.getEdges(6), 3);
         assertEquals(40, iter.distance(), 1e-4);
         assertEquals(8, iter.skippedNode());
@@ -128,9 +222,10 @@ public class PrepareRoutingShortcutsTest {
         g.edge(0, 4, 20, EdgeFlags.create(120, true));
         g.edge(4, 3, 20, EdgeFlags.create(120, true));
         g.edge(3, 11, 1, EdgeFlags.create(30, true));
-        assertEquals(7 * 2, GraphUtility.countEdges(g));
-        new PrepareRoutingShortcuts(g).doWork();
-        assertEquals(7 * 2 + 2 * 2, GraphUtility.countEdges(g));
+
+        PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
+        prepare.doWork();
+        assertEquals(2, prepare.getShortcuts());
 
         EdgeIterator iter = GraphUtility.until(g.getEdges(0), 3);
         assertEquals(30, iter.distance(), 1e-4);
@@ -166,8 +261,9 @@ public class PrepareRoutingShortcutsTest {
         g.edge(15, 16, 2, true);
         g.edge(14, 16, 1, true);
 
-        new PrepareRoutingShortcuts(g).doWork();
-        assertEquals(22 * 2 + 4 * 2, GraphUtility.countEdges(g));
+        PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
+        prepare.doWork();
+        assertEquals(4, prepare.getShortcuts());
 
         assertTrue(GraphUtility.contains(g.getOutgoing(12), 16));
         EdgeIterator iter = GraphUtility.until(g.getOutgoing(12), 16);
@@ -184,18 +280,5 @@ public class PrepareRoutingShortcutsTest {
         assertTrue(GraphUtility.contains(g.getOutgoing(4), 9));
         iter = GraphUtility.until(g.getOutgoing(4), 9);
         assertEquals(5, iter.distance(), 1e-4);
-    }
-    
-    @Test
-    public void testDirected() {
-        PriorityGraphImpl g = new PriorityGraphImpl(20);
-        // 3->0->1<-2
-        g.edge(0, 1, 10, false);
-        g.edge(2, 1, 10, false);
-        g.edge(3, 0, 10, false);
-        
-        assertFalse(new PrepareRoutingShortcuts(g).has1InAnd1Out(2));
-        assertTrue(new PrepareRoutingShortcuts(g).has1InAnd1Out(0));
-        assertFalse(new PrepareRoutingShortcuts(g).has1InAnd1Out(1));
     }
 }

@@ -16,6 +16,8 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.CalcDistance;
+import de.jetsli.graph.util.EdgeIterator;
+import de.jetsli.graph.util.GraphUtility;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,6 +88,17 @@ public class DefaultStorage implements Storage {
                 logger.info(counter + " - distances negative. " + fromIndex + " (" + laf + ", " + lof + ")->"
                         + toIndex + "(" + lat + ", " + lot + ") :" + dist);
                 return false;
+            }
+
+            EdgeIterator iter = GraphUtility.until(g.getOutgoing(fromIndex), toIndex);
+            if (iter != EdgeIterator.EMPTY) {
+                if (flags == iter.flags() && dist > iter.distance()) {
+                    // silently skip if exactly the same way and the new one would be longer
+//                    return true;
+                }
+//                else logger.warn("longer edge already exists " + fromIndex + "->" + toIndex + "!? "
+//                            + "existing: " + iter.distance() + "|" + BitUtil.toBitString(iter.flags(), 8)
+//                            + " new:" + dist + "|" + BitUtil.toBitString(flags, 8));
             }
 
             g.edge(fromIndex, toIndex, dist, flags);

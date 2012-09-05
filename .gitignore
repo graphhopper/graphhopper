@@ -9,3 +9,4 @@ mmap-graph*
 neo4j*.db
 core/*.osm
 tinker*db
+android-example/

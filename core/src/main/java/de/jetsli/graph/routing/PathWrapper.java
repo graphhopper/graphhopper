@@ -64,7 +64,7 @@ public class PathWrapper {
         while (currEdgeId > 0) {
             int tmpFrom = edgeFrom.getNode(currEdgeId);
             path.add(tmpFrom);
-            path.updateProperties(g.getIncoming(nodeFrom), tmpFrom);
+            path.updateProperties(g.getOutgoing(tmpFrom), nodeFrom);
             currEdgeId = edgeFrom.getLink(currEdgeId);
             nodeFrom = tmpFrom;
         }
@@ -75,7 +75,7 @@ public class PathWrapper {
         while (currEdgeId > 0) {
             int tmpTo = edgeTo.getNode(currEdgeId);
             path.add(tmpTo);
-            path.updateProperties(g.getIncoming(tmpTo), nodeTo);
+            path.updateProperties(g.getOutgoing(nodeTo), tmpTo);
             currEdgeId = edgeTo.getLink(currEdgeId);
             nodeTo = tmpTo;
         }

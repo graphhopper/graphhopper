@@ -73,6 +73,10 @@ public class Path {
     }
 
     @Override public String toString() {
+        return "distance:" + distance() + ", time:" + timeInSec() + ", locations:" + locations.size();
+    }
+
+    public String toDetailsString() {
         String str = "";
         for (int i = 0; i < locations.size(); i++) {
             if (i > 0)
@@ -80,7 +84,7 @@ public class Path {
 
             str += locations.get(i);
         }
-        return "distance:" + distance() + ", " + str;
+        return toString() + ", " + str;
     }
 
     public TIntSet and(Path p2) {

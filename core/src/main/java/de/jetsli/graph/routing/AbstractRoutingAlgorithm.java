@@ -26,7 +26,8 @@ import de.jetsli.graph.util.EdgeIterator;
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
 
     protected AlgoType type = AlgoType.SHORTEST;
-    protected Graph graph;
+    // TODO make protected
+    public Graph graph;
 
     public AbstractRoutingAlgorithm(Graph graph) {
         this.graph = graph;
@@ -50,5 +51,9 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
             return iter.distance() / EdgeFlags.getSpeedPart(iter.flags());
         } else
             return iter.distance();
+    }
+
+    @Override public String toString() {
+        return getClass().getSimpleName() + "|" + type;
     }
 }

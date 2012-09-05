@@ -61,8 +61,8 @@ public class PathWrapperPrio extends PathWrapperRef {
             int tmpFrom = currEdge.node;
             path.add(tmpFrom);
             currEdge = currEdge.prevEntry;
-            EdgeSkipIterator iter = (EdgeSkipIterator) g.getIncoming(tmpFrom);
-            path.updateProperties(iter, currEdge.node);
+            EdgeSkipIterator iter = (EdgeSkipIterator) g.getOutgoing(currEdge.node);
+            path.updateProperties(iter, tmpFrom);
             if (iter.skippedNode() >= 0) {
                 // logger.info("iter(" + tmpFrom + "->" + currEdge.node + ") with skipped node:" + iter.skippedNode());
                 expand(path, currEdge.node, tmpFrom, iter.skippedNode(), iter.flags());
@@ -70,7 +70,6 @@ public class PathWrapperPrio extends PathWrapperRef {
         }
         path.add(currEdge.node);
         path.reverseOrder();
-
         currEdge = edgeTo;
         while (currEdge.prevEntry != null) {
             int tmpTo = currEdge.node;
@@ -80,7 +79,7 @@ public class PathWrapperPrio extends PathWrapperRef {
             path.updateProperties(iter, currEdge.node);
             if (iter.skippedNode() >= 0) {
                 // logger.info("iter(" + currEdge.node + "->" + tmpTo + ") with skipped node:" + iter.skippedNode());
-                expand(path, currEdge.node, tmpTo, iter.skippedNode(), iter.flags());
+                expand(path, tmpTo, currEdge.node, iter.skippedNode(), iter.flags());
             }
         }
 
@@ -89,8 +88,8 @@ public class PathWrapperPrio extends PathWrapperRef {
 
     private void expand(Path path, int from, int to, int skippedNode, int flags) {
         boolean reverse = false;
-        int skip = from;        
-        EdgeIterator tmpIter = GraphUtility.until(g.getIncoming(from), skippedNode, flags);
+        int skip = from;
+        EdgeIterator tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, flags);
         if (tmpIter == EdgeIterator.EMPTY) {
             skip = to;
             int tmp = from;
@@ -98,21 +97,20 @@ public class PathWrapperPrio extends PathWrapperRef {
             to = tmp;
             // search skipped node at the other end of the shortcut!
             reverse = true;
-            tmpIter = GraphUtility.until(g.getIncoming(from), skippedNode, EdgeFlags.swapDirection(flags));
+            tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, EdgeFlags.swapDirection(flags));
             if (tmpIter == EdgeIterator.EMPTY)
-                throw new IllegalStateException("skipped node not found for " + from + "->" + to + "?");
+                throw new IllegalStateException("skipped node " + skippedNode + " not found for " + from + "->" + to + "?");
         }
 
-
-        TIntArrayList tmp = new TIntArrayList();        
+        TIntArrayList tmp = new TIntArrayList();
         while (true) {
             int node = tmpIter.node();
             tmp.add(node);
             tmpIter = g.getEdges(node);
             tmpIter.next();
-            if(tmpIter.node() == skip)
+            if (tmpIter.node() == skip)
                 tmpIter.next();
-            
+
             skip = node;
             if (((PriorityGraph) g).getPriority(tmpIter.node()) >= 0 || tmpIter.node() == to)
                 break;
