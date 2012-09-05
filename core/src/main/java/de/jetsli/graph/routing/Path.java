@@ -15,8 +15,11 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.reader.EdgeFlags;
+import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.WeightCalculation;
+import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
+import de.jetsli.graph.util.GraphUtility;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -28,9 +31,18 @@ import gnu.trove.set.hash.TIntHashSet;
  */
 public class Path {
 
+    private WeightCalculation weightCalculation;
     private int timeInSec;
     private double distance;
     private TIntArrayList locations = new TIntArrayList();
+
+    public Path() {
+        this(WeightCalculation.SHORTEST);
+    }
+
+    public Path(WeightCalculation weightCalculation) {
+        this.weightCalculation = weightCalculation;
+    }
 
     public void setTimeInSec(int timeInSec) {
         this.timeInSec = timeInSec;
@@ -46,6 +58,10 @@ public class Path {
 
     public boolean contains(int node) {
         return locations.contains(node);
+    }
+
+    public int indexOf(int node) {
+        return locations.indexOf(node);
     }
 
     public void reverseOrder() {
@@ -104,6 +120,7 @@ public class Path {
     public void updateProperties(EdgeIterator iter, int to) {
         while (iter.next()) {
             if (iter.node() == to) {
+                // TODO NOW weight vs. distance
                 setDistance(distance() + iter.distance());
                 setTimeInSec((int) (timeInSec() + iter.distance() * 3600.0 / EdgeFlags.getSpeed(iter.flags())));
                 return;
@@ -111,5 +128,36 @@ public class Path {
         }
         throw new IllegalStateException("couldn't extract path. distance for " + iter.node()
                 + " to " + to + " not found!?");
+    }
+
+    public double calcDistance(Graph g) {
+        double dist1 = 0;
+        int l = locations() - 1;
+        for (int i = 0; i < l; i++) {
+            Path p1 = new DijkstraSimple(g).calcPath(location(i), location(i + 1));
+            dist1 += p1.distance();
+        }
+        return dist1;
+    }
+
+    public static void debugDifference(Graph g, Path p1, Path p2) {
+        int l = p1.locations() - 1;
+        for (int i = 0; i < l; i++) {
+            int from = p1.location(i);
+            int to = p1.location(i + 1);
+            Path tmp = new DijkstraSimple(g).calcPath(from, to);
+
+            double dist = 0;
+            int p2From = p2.indexOf(from);
+            int p2To = p2.indexOf(to);
+            for (int j = p2From; j < p2To; j++) {
+                EdgeIterator iter = GraphUtility.until(g.getOutgoing(p2.location(j)), p2.location(j + 1));
+                dist += iter.distance();
+            }
+
+            if (Math.abs(dist - tmp.distance()) > 0.01) {
+                System.out.println("p.dist:" + tmp.distance() + ", dist:" + dist + ", " + from + "->" + to);
+            }
+        }
     }
 }

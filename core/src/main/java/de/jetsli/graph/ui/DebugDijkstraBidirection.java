@@ -46,7 +46,7 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
             else
                 mg.plotNode(g2, currLoc, Color.BLUE);
         }
-        System.out.println("new node:" + currLoc);
+        // System.out.println("new node:" + currLoc);
         super.updateShortest(shortestDE, currLoc);
     }
 }

@@ -15,7 +15,7 @@
  */
 package de.jetsli.compare.neo4j;
 
-import de.jetsli.graph.reader.EdgeFlags;
+import de.jetsli.graph.routing.util.EdgeFlags;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.Helper;

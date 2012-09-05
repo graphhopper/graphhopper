@@ -17,8 +17,8 @@ package de.jetsli.graph.routing;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.routing.util.EdgePrioFilter;
 import de.jetsli.graph.storage.EdgeEntry;
-import de.jetsli.graph.storage.EdgePrioFilter;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
@@ -111,7 +111,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     @Override public Path calcPath(int from, int to) {
         if (alreadyRun)
-            throw new IllegalStateException("Do not reuse DijkstraBidirection");
+            throw new IllegalStateException("Call clear before! But this class is not thread safe!");
 
         alreadyRun = true;
         initFrom(from);
@@ -137,7 +137,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     }
 
     public Path getShortest() {
-        return shortest.extract();
+        return shortest.extract(new Path(weightCalc));
     }
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
@@ -165,7 +165,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
             if (visitedMain.contains(neighborNode))
                 continue;
 
-            double tmpWeight = getWeight(iter) + curr.weight;
+            double tmpWeight = weightCalc.getWeight(iter) + curr.weight;
             EdgeEntry de = shortestWeightMap.get(neighborNode);
             if (de == null) {
                 de = new EdgeEntry(neighborNode, tmpWeight);
@@ -180,7 +180,6 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
                 de.weight = tmpWeight;
                 de.prevEntry = curr;
                 prioQueue.add(de);
-//                System.out.println((out ? 1 : 0) + " UPDATE " + de);
             }
 
             updateShortest(de, neighborNode);
@@ -192,11 +191,10 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         EdgeEntry entryOther = shortestWeightMapOther.get(currLoc);
         if (entryOther == null)
             return;
-        // shortestWeightMapOther.size();
+
         // update μ
         double newShortest = shortestDE.weight + entryOther.weight;
         if (newShortest < shortest.weight) {
-//            System.out.println("SHORTEST " + shortestDE);
             shortest.switchWrapper = shortestWeightMapFrom == shortestWeightMapOther;
             shortest.edgeFrom = shortestDE;
             shortest.edgeTo = entryOther;
@@ -238,7 +236,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     private Path checkIndenticalFromAndTo() {
         if (from == to) {
-            Path p = new Path();
+            Path p = new Path(weightCalc);
             p.add(from);
             return p;
         }

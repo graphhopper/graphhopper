@@ -13,8 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.reader;
+package de.jetsli.graph.routing.util;
 
+import de.jetsli.graph.routing.util.PrepareRoutingShortcuts;
+import de.jetsli.graph.routing.util.EdgeFlags;
 import de.jetsli.graph.routing.DijkstraBidirectionRef;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.PathWrapperPrio;
@@ -103,36 +105,6 @@ public class PrepareRoutingShortcutsTest {
         assertFalse(new PrepareRoutingShortcuts(g).has1InAnd1Out(2));
         assertTrue(new PrepareRoutingShortcuts(g).has1InAnd1Out(0));
         assertFalse(new PrepareRoutingShortcuts(g).has1InAnd1Out(1));
-    }
-
-    @Test
-    public void testDirected2() {
-        final PriorityGraphImpl g = new PriorityGraphImpl(30);
-        // see 49.9052,10.35491
-        // =19-20-21-22=
-
-        g.edge(18, 19, 1, true);
-        g.edge(17, 19, 1, true);
-
-        g.edge(19, 20, 1, false);
-        g.edge(20, 21, 1, false);
-        g.edge(21, 22, 1, false);
-
-        g.edge(22, 23, 1, true);
-        g.edge(22, 24, 1, true);
-
-        PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
-        prepare.doWork();
-        assertEquals(1, prepare.getShortcuts());
-        EdgeSkipIterator iter = (EdgeSkipIterator) GraphUtility.until(g.getEdges(19), 22);
-        assertEquals(20, iter.skippedNode());
-        Path p = new DijkstraBidirectionRef(g) {
-            @Override protected PathWrapperRef createPathWrapper() {
-                // correctly expand skipped nodes
-                return new PathWrapperPrio(g);
-            }
-        }.calcPath(17, 23);
-        assertEquals(6, p.locations());
     }
 
     @Test

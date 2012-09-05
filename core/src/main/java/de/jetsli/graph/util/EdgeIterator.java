@@ -73,5 +73,9 @@ public interface EdgeIterator {
         @Override public int flags() {
             throw new UnsupportedOperationException("Not supported for EMPTY edge.");
         }
+
+        @Override public String toString() {
+            return "EMPTY EdgeIterator";
+        }        
     };
 }

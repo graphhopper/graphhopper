@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.reader;
+package de.jetsli.graph.routing.util;
 
+import de.jetsli.graph.routing.DijkstraSimple;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeSkipIterator;
@@ -36,7 +37,7 @@ public class PrepareRoutingShortcuts {
         this.g = g;
     }
 
-    int getShortcuts() {
+    public int getShortcuts() {
         return newShortcuts;
     }
 
@@ -47,13 +48,20 @@ public class PrepareRoutingShortcuts {
         newShortcuts = 0;
         int locs = g.getNodes();
         StopWatch sw = new StopWatch().start();
-        // GraphUtility.printInfo(g);
+//        System.out.println("309722, 309730:" + new DijkstraSimple(g).calcPath(309722, 309730).distance());
+//        System.out.println(GraphUtility.until(g.getOutgoing(309721), 309722).distance() + "," + GraphUtility.until(g.getOutgoing(309730), 309742).distance());
+//        System.out.println();
+//        System.out.println("314596, 314598:" + new DijkstraSimple(g).calcPath(314596, 314598).distance());
+//        System.out.println(GraphUtility.until(g.getOutgoing(309721), 314596).distance() + "," + GraphUtility.until(g.getOutgoing(314598), 309742).distance());
+//        GraphUtility.printInfo(g, 309721, 100);
+//        for (int startNode = 300000; startNode < locs; startNode++) {
         for (int startNode = 0; startNode < locs; startNode++) {
             if (has1InAnd1Out(startNode))
                 continue;
 
             // now search for possible paths to skip
             EdgeSkipIterator iter = g.getOutgoing(startNode);
+            MAIN:
             while (iter.next()) {
                 // while iterating new shortcuts could have been introduced. ignore them!
                 if (iter.skippedNode() >= 0)
@@ -66,6 +74,7 @@ public class PrepareRoutingShortcuts {
                 double distance = iter.distance();
                 while (true) {
                     if (g.getPriority(currentNode) < 0)
+                        // TODOcontinue MAIN;
                         break;
                     if (!has1InAnd1Out(currentNode))
                         break;

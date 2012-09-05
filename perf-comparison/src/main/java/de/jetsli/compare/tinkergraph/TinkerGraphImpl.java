@@ -19,7 +19,7 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
-import de.jetsli.graph.reader.EdgeFlags;
+import de.jetsli.graph.routing.util.EdgeFlags;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
 import java.util.Iterator;

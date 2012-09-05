@@ -16,8 +16,8 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.reader.OSMReader;
-import de.jetsli.graph.reader.RoutingAlgorithmIntegrationTests;
-import de.jetsli.graph.reader.TestAlgoCollector;
+import de.jetsli.graph.routing.util.RoutingAlgorithmIntegrationTests;
+import de.jetsli.graph.routing.util.TestAlgoCollector;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;

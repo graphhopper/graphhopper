@@ -15,15 +15,14 @@
  */
 package de.jetsli.graph.routing.rideshare;
 
-import de.jetsli.graph.storage.Edge;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.routing.AbstractRoutingAlgorithm;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.PathWrapperRef;
 import de.jetsli.graph.routing.RoutingAlgorithm;
-import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.EdgeEntry;
+import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
@@ -72,7 +71,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     public Path calcShortestPath() {
         // identical
         if (pubTransport.contains(destination)) {
-            Path p = new Path();
+            Path p = new Path(weightCalc);
             p.add(destination);
             return p;
         }
@@ -130,7 +129,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
                 finish++;
         }
 
-        Path g = shortest.extract();
+        Path g = shortest.extract(new Path(weightCalc));
         if (g == null)
             return null;
 
@@ -158,7 +157,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
             if (visitedMain.contains(tmpV))
                 continue;
 
-            double tmp = getWeight(iter) + curr.weight;
+            double tmp = weightCalc.getWeight(iter) + curr.weight;
             EdgeEntry de = shortestDistMap.get(tmpV);
             if (de == null) {
                 de = new EdgeEntry(tmpV, tmp);

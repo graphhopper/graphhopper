@@ -15,11 +15,13 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.reader.PrepareRoutingShortcuts;
-import de.jetsli.graph.storage.EdgePrioFilter;
-import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.PrepareRoutingShortcuts;
+import de.jetsli.graph.routing.util.EdgePrioFilter;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.PriorityGraphImpl;
+import de.jetsli.graph.util.EdgeSkipIterator;
+import de.jetsli.graph.util.GraphUtility;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -32,7 +34,7 @@ public class DijkstraBidirectionWithPrioTest {
     RoutingAlgorithm createAlgoWithFilter(final PriorityGraph pg) {
         return new DijkstraBidirectionRef(pg).setEdgeFilter(new EdgePrioFilter(pg));
     }
-    
+
     RoutingAlgorithm createAlgoWithFilterAndPathUnpacking(final PriorityGraph pg) {
         return new DijkstraBidirectionRef(pg) {
             @Override protected PathWrapperRef createPathWrapper() {
@@ -65,5 +67,70 @@ public class DijkstraBidirectionWithPrioTest {
         Path p = createAlgoWithFilter(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.distance(), 1e-6);
         assertEquals(p.toString(), 5, p.locations());
+    }
+
+    @Test
+    public void testDirected2() {
+        final PriorityGraphImpl g = new PriorityGraphImpl(30);
+        // see 49.9052,10.35491
+        // =19-20-21-22=
+
+        g.edge(18, 19, 1, true);
+        g.edge(17, 19, 1, true);
+
+        g.edge(19, 20, 1, false);
+        g.edge(20, 21, 1, false);
+        g.edge(21, 22, 1, false);
+
+        g.edge(22, 23, 1, true);
+        g.edge(22, 24, 1, true);
+
+        PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
+        prepare.doWork();
+        assertEquals(1, prepare.getShortcuts());
+        EdgeSkipIterator iter = (EdgeSkipIterator) GraphUtility.until(g.getEdges(19), 22);
+        assertEquals(20, iter.skippedNode());
+        Path p = new DijkstraBidirectionRef(g) {
+            @Override protected PathWrapperRef createPathWrapper() {
+                // correctly expand skipped nodes
+                return new PathWrapperPrio(g);
+            }
+        }.calcPath(17, 23);
+        assertEquals(6, p.locations());
+    }
+
+    @Test
+    public void testTwoEdgesWithDifferentSpeed() {
+        final PriorityGraphImpl g = new PriorityGraphImpl(30);
+        // see 49.894653,9.309765
+        //
+        //         10
+        //         |
+        // 0-1-2-3-4-9
+        //   |     |
+        //   5-6-7-8        
+        g.edge(1, 5, 1, EdgeFlags.create(50, true));
+        g.edge(5, 6, 1, EdgeFlags.create(50, true));
+        g.edge(6, 7, 1, EdgeFlags.create(50, true));
+        g.edge(7, 8, 1, EdgeFlags.create(50, true));
+        g.edge(8, 4, 1, EdgeFlags.create(50, true));
+        
+        g.edge(0, 1, 1, EdgeFlags.create(50, true));
+        g.edge(1, 2, 1, EdgeFlags.create(10, true));
+        g.edge(2, 3, 1, EdgeFlags.create(10, true));
+        g.edge(3, 4, 1, EdgeFlags.create(10, true));
+        g.edge(4, 9, 1, EdgeFlags.create(10, true));
+        g.edge(4, 10, 1, EdgeFlags.create(50, true));
+
+        PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
+        prepare.doWork();
+        assertEquals(2, prepare.getShortcuts());
+        Path p = new DijkstraBidirectionRef(g) {
+            @Override protected PathWrapperRef createPathWrapper() {
+                // correctly expand skipped nodes
+                return new PathWrapperPrio(g);
+            }
+        }.calcPath(1, 4);
+        assertEquals(4, p.locations());
     }
 }

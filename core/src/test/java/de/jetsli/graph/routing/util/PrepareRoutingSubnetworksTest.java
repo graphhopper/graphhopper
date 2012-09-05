@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.reader;
+package de.jetsli.graph.routing.util;
 
+import de.jetsli.graph.routing.util.PrepareRoutingSubnetworks;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
 import de.jetsli.graph.util.GraphUtility;

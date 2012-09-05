@@ -17,7 +17,7 @@ package de.jetsli.compare.misc;
 
 import de.jetsli.compare.neo4j.Neo4JStorage;
 import de.jetsli.graph.reader.OSMReader;
-import de.jetsli.graph.reader.RoutingAlgorithmIntegrationTests;
+import de.jetsli.graph.routing.util.RoutingAlgorithmIntegrationTests;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.CmdArgs;

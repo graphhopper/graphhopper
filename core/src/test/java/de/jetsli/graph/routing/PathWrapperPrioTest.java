@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.reader.EdgeFlags;
+import de.jetsli.graph.routing.util.EdgeFlags;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.PriorityGraphImpl;
@@ -43,7 +43,7 @@ public class PathWrapperPrioTest {
         pathWrapper.edgeFrom.prevEntry.prevEntry.prevEntry = new EdgeEntry(0, 0);
         pathWrapper.edgeTo = new EdgeEntry(3, 10);
         pathWrapper.edgeTo.prevEntry = new EdgeEntry(4, 0);
-        Path p = pathWrapper.extract();
+        Path p = pathWrapper.extract(new Path());
         assertEquals(5, p.locations());
     }
 
@@ -63,7 +63,7 @@ public class PathWrapperPrioTest {
         pathWrapper.edgeFrom.prevEntry = new EdgeEntry(0, 0);
         pathWrapper.edgeTo = new EdgeEntry(2, 10);
         pathWrapper.edgeTo.prevEntry = new EdgeEntry(3, 0);
-        Path p = pathWrapper.extract();
+        Path p = pathWrapper.extract(new Path());
         assertEquals(4, p.locations());
     }
 
@@ -84,7 +84,7 @@ public class PathWrapperPrioTest {
         pathWrapper.edgeFrom.prevEntry = new EdgeEntry(0, 0);
         pathWrapper.edgeTo = new EdgeEntry(3, 10);
         pathWrapper.edgeTo.prevEntry = new EdgeEntry(4, 0);
-        Path p = pathWrapper.extract();
+        Path p = pathWrapper.extract(new Path());
         assertEquals(5, p.locations());
     }
 }

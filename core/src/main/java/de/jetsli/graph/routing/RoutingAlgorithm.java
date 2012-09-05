@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.routing;
 
+import de.jetsli.graph.routing.util.WeightCalculation;
+
 /**
  * Calculates the shortest path from the specified node ids.
  *
@@ -27,7 +29,7 @@ public interface RoutingAlgorithm {
      */
     Path calcPath(int from, int to);
 
-    RoutingAlgorithm setType(AlgoType type);
+    RoutingAlgorithm setType(WeightCalculation calc);
 
     /**
      * Make sure you reuse this instance from the same thread

@@ -13,22 +13,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.reader;
+package de.jetsli.graph.routing.util;
 
 import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.DijkstraBidirectionRef;
 import de.jetsli.graph.routing.DijkstraSimple;
 import de.jetsli.graph.routing.Path;
-import de.jetsli.graph.routing.PathWrapperPrio;
-import de.jetsli.graph.routing.PathWrapperRef;
 import de.jetsli.graph.routing.RoutingAlgorithm;
-import de.jetsli.graph.storage.EdgePrioFilter;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.PriorityGraph;
-import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.StopWatch;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -74,7 +70,7 @@ public class RoutingAlgorithmIntegrationTests {
         new PrepareRoutingShortcuts((PriorityGraph) g).doWork();
         DijkstraBidirectionRef dijkstraBi = new DijkstraBidirectionRef(g) {
             @Override public String toString() {
-                return "DijkstraBidirectionRef|Shortcut|" + type;
+                return "DijkstraBidirectionRef|Shortcut|" + weightCalc;
             }
             //TODO NOW
 //                @Override protected PathWrapperRef createPathWrapper() {
@@ -88,9 +84,9 @@ public class RoutingAlgorithmIntegrationTests {
 
     public static RoutingAlgorithm[] createAlgos(Graph g) {
         return new RoutingAlgorithm[]{
-                    new AStar(g),
-                    new DijkstraBidirectionRef(g), new DijkstraBidirection(g), new DijkstraSimple(g),
-//                    createPrioAlgo(g)
+//                    new AStar(g),
+//                    new DijkstraBidirectionRef(g), new DijkstraBidirection(g), new DijkstraSimple(g),
+                    createPrioAlgo(g)
                 };
     }
     private Logger logger = LoggerFactory.getLogger(getClass());

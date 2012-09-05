@@ -106,7 +106,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
     @Override public Path calcPath(int from, int to) {
         if (alreadyRun)
-            throw new IllegalStateException("Do not reuse DijkstraBidirection");
+            throw new IllegalStateException("Call clear before! But this class is not thread safe!");
 
         alreadyRun = true;
         initFrom(from);
@@ -132,7 +132,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     }
 
     public Path getShortest() {
-        return shortest.extract();
+        return shortest.extract(new Path(weightCalc));
     }
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
@@ -152,7 +152,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
             if (visitedMain.contains(neighborNode))
                 continue;
 
-            double tmpWeight = getWeight(iter) + currWeight;
+            double tmpWeight = weightCalc.getWeight(iter) + currWeight;
             int newEdgeId = wrapper.getEdgeId(neighborNode);
             if (newEdgeId <= 0) {
                 newEdgeId = wrapper.add(neighborNode, tmpWeight);
@@ -221,7 +221,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
     private Path checkIndenticalFromAndTo() {
         if (from == to) {
-            Path p = new Path();
+            Path p = new Path(weightCalc);
             p.add(from);
             return p;
         }

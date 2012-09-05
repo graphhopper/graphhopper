@@ -17,7 +17,7 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.reader.EdgeFlags;
+import de.jetsli.graph.routing.util.EdgeFlags;
 import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.EdgeIterator;
 import static de.jetsli.graph.util.GraphUtility.*;

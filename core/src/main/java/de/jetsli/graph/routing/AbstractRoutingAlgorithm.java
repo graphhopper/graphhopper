@@ -15,27 +15,25 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.reader.EdgeFlags;
+import de.jetsli.graph.routing.util.WeightCalculation;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.EdgeIterator;
 
 /**
  * @author Peter Karich
  */
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
 
-    protected AlgoType type = AlgoType.SHORTEST;
-    // TODO make protected
-    public Graph graph;
+    protected Graph graph;
+    protected WeightCalculation weightCalc = new WeightCalculation();
 
     public AbstractRoutingAlgorithm(Graph graph) {
         this.graph = graph;
     }
 
     @Override
-    public RoutingAlgorithm setType(AlgoType type) {
-        this.type = type;
+    public RoutingAlgorithm setType(WeightCalculation wc) {
+        this.weightCalc = wc;
         return this;
     }
 
@@ -46,14 +44,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         return this;
     }
 
-    protected double getWeight(EdgeIterator iter) {
-        if (AlgoType.FASTEST.equals(type)) {
-            return iter.distance() / EdgeFlags.getSpeedPart(iter.flags());
-        } else
-            return iter.distance();
-    }
-
     @Override public String toString() {
-        return getClass().getSimpleName() + "|" + type;
+        return getClass().getSimpleName() + "|" + weightCalc;
     }
 }

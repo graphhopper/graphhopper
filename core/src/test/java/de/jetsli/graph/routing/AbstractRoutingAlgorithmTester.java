@@ -15,8 +15,9 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.reader.EdgeFlags;
+import de.jetsli.graph.routing.util.EdgeFlags;
 import de.jetsli.graph.reader.PrinctonReader;
+import de.jetsli.graph.routing.util.WeightCalculation;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
 import de.jetsli.graph.util.StopWatch;
@@ -70,11 +71,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(7, 5, 5, EdgeFlags.create(20, false));
 
         graph.edge(6, 7, 5, EdgeFlags.create(20, true));
-        Path p1 = createAlgo(graph).setType(AlgoType.SHORTEST).calcPath(0, 3);
+        Path p1 = createAlgo(graph).setType(new WeightCalculation(AlgoType.SHORTEST)).calcPath(0, 3);
         assertEquals(p1.toString(), 24, p1.distance(), 1e-6);
         assertEquals(p1.toString(), 5, p1.locations());
 
-        Path p2 = createAlgo(graph).setType(AlgoType.FASTEST).calcPath(0, 3);
+        Path p2 = createAlgo(graph).setType(new WeightCalculation(AlgoType.FASTEST)).calcPath(0, 3);
         assertEquals(5580, p2.timeInSec());
         assertTrue("time of fastest path needs to be lower! " + p1.timeInSec() + ">" + p2.timeInSec(),
                 p1.timeInSec() > p2.timeInSec());

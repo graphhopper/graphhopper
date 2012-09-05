@@ -130,7 +130,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
                 throw new IllegalStateException("Shortest Path not found? " + fromP1 + " " + toP2);
         }
 
-        Path g = shortest.extract();
+        Path g = shortest.extract(new Path(weightCalc));
         if (!pubTransport.contains(g.getFromLoc())) {
             double tmpDist = g.distance();
             g.reverseOrder();

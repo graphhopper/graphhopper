@@ -15,9 +15,8 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.reader.EdgeFlags;
-import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.EdgeEntry;
+import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -48,7 +47,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
                 if (visited.contains(tmpV))
                     continue;
 
-                double tmpWeight = getWeight(iter) + currEdge.weight;
+                double tmpWeight = weightCalc.getWeight(iter) + currEdge.weight;
                 EdgeEntry nEdge = map.get(tmpV);
                 if (nEdge == null) {
                     nEdge = new EdgeEntry(tmpV, tmpWeight);
@@ -76,7 +75,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         }
 
         // extract path from shortest-path-tree
-        Path path = new Path();
+        Path path = new Path(weightCalc);
         while (currEdge.node != from) {
             int tmpFrom = currEdge.node;
             path.add(tmpFrom);

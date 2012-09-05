@@ -34,7 +34,7 @@ public class PathWrapperRefTest {
         pw.edgeFrom = new EdgeEntry(2, 10);
         pw.edgeFrom.prevEntry = new EdgeEntry(1, 10);
         pw.edgeTo = new EdgeEntry(2, 20);
-        Path p = pw.extract();
+        Path p = pw.extract(new Path());
         assertEquals(2, p.locations());
         assertEquals(10, p.distance(), 1e-4);
     }
@@ -49,7 +49,7 @@ public class PathWrapperRefTest {
         pw.edgeFrom.prevEntry = new EdgeEntry(1, 0);
         pw.edgeTo = new EdgeEntry(2, 20);
         pw.edgeTo.prevEntry = new EdgeEntry(3, 0);
-        Path p = pw.extract();
+        Path p = pw.extract(new Path());
         assertEquals(1, p.location(0));
         assertEquals(3, p.location(2));
         assertEquals(3, p.locations());

@@ -42,7 +42,7 @@ public class PathWrapper {
     /**
      * Extracts path from two shortest-path-tree
      */
-    public Path extract() {
+    public Path extract(Path path) {
         if (fromEdgeId < 0 || toEdgeId < 0)
             return null;
 
@@ -56,8 +56,7 @@ public class PathWrapper {
         int nodeTo = edgeTo.getNode(toEdgeId);
         if (nodeFrom != nodeTo)
             throw new IllegalStateException("Locations of 'to' and 'from' DistEntries has to be the same." + toString());
-
-        Path path = new Path();
+        
         int currEdgeId = fromEdgeId;
         path.add(nodeFrom);
         currEdgeId = edgeFrom.getLink(currEdgeId);

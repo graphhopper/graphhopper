@@ -15,9 +15,8 @@
  */
 package de.jetsli.graph.util;
 
-import static java.lang.Math.*;
-//import static org.apache.commons.math3.util.FastMath.*;
 import de.jetsli.graph.util.shapes.BBox;
+import static java.lang.Math.*;
 import java.util.Arrays;
 
 /**

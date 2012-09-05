@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.util;
 
-import de.jetsli.graph.reader.EdgeFlags;
+import de.jetsli.graph.routing.util.EdgeFlags;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
 import de.jetsli.graph.storage.PriorityGraphImpl;

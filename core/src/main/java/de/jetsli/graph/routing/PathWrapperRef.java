@@ -41,7 +41,7 @@ public class PathWrapperRef {
     /**
      * Extracts path from two shortest-path-tree
      */
-    public Path extract() {
+    public Path extract(Path path) {
         if (edgeFrom == null || edgeTo == null)
             return null;
 
@@ -54,7 +54,6 @@ public class PathWrapperRef {
             edgeTo = ee;
         }
 
-        Path path = new Path();
         EdgeEntry currEdge = edgeFrom;
         while (currEdge.prevEntry != null) {
             int tmpFrom = currEdge.node;

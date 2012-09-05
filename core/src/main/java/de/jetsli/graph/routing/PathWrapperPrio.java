@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.reader.EdgeFlags;
+import de.jetsli.graph.routing.util.EdgeFlags;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.EdgeIterator;
@@ -42,7 +42,7 @@ public class PathWrapperPrio extends PathWrapperRef {
      * Extracts path from two shortest-path-tree
      */
     @Override
-    public Path extract() {
+    public Path extract(Path path) {
         if (edgeFrom == null || edgeTo == null)
             return null;
 
@@ -55,7 +55,6 @@ public class PathWrapperPrio extends PathWrapperRef {
             edgeTo = ee;
         }
 
-        Path path = new Path();
         EdgeEntry currEdge = edgeFrom;
         while (currEdge.prevEntry != null) {
             int tmpFrom = currEdge.node;

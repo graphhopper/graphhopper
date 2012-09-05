@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.reader;
+package de.jetsli.graph.routing.util;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +23,7 @@ import java.util.Map;
  */
 public class EdgeFlags {
 
-    static final CarSpeed CAR_SPEED = new CarSpeed();
+    public static final CarSpeed CAR_SPEED = new CarSpeed();
     static final int DEFAULT_SPEED = CAR_SPEED.get("secondary");
     public static final int MAX_SPEED = CAR_SPEED.get("motorway");
     public static final int FORWARD = 1;
@@ -134,7 +134,7 @@ public class EdgeFlags {
      * A map which associates string to integer. With this integer one can put the speed profile
      * into 1 byte
      */
-    static class CarSpeed extends HashMap<String, Integer> {
+    public static class CarSpeed extends HashMap<String, Integer> {
 
         {
             // autobahn

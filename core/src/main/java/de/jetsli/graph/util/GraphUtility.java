@@ -153,20 +153,25 @@ public class GraphUtility {
             return graph.getIncoming(index);
     }
 
-    public static void printInfo(final Graph g) {
+    public static void printInfo(final Graph g, int startNode, final int counts) {
         new XFirstSearch() {
             int counter = 0;
 
             @Override protected boolean goFurther(int nodeId) {
-                EdgeIterator iter = g.getOutgoing(nodeId);
-                logger.info(nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId));
-                while (iter.next()) {
-                    logger.info("  ->" + iter.node() + "\t" + BitUtil.toBitString(iter.flags(), 2));
-                }
-                if (counter++ > 100)
+                System.out.println(getNodeInfo(g, nodeId));
+                if (counter++ > counts)
                     return false;
                 return true;
             }
-        }.start(g, 82512, false);
+        }.start(g, startNode, false);
+    }
+
+    public static String getNodeInfo(Graph g, int nodeId) {
+        EdgeIterator iter = g.getOutgoing(nodeId);
+        String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
+        while (iter.next()) {
+            str += "  ->" + iter.node() + "\t" + BitUtil.toBitString(iter.flags(), 2) + "\n";
+        }
+        return str;
     }
 }
