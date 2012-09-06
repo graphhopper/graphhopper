@@ -23,6 +23,7 @@ import java.util.Map;
  */
 public class EdgeFlags {
 
+    private static final int F = 2;
     public static final CarSpeed CAR_SPEED = new CarSpeed();
     static final int DEFAULT_SPEED = CAR_SPEED.get("secondary");
     public static final int MAX_SPEED = CAR_SPEED.get("motorway");
@@ -98,11 +99,11 @@ public class EdgeFlags {
     }
 
     public static int getSpeed(int flags) {
-        return getSpeedPart(flags) * 10;
+        return getSpeedPart(flags) * F;
     }
 
     public static int create(int speed, boolean bothDir) {
-        int flags = speed / 10;
+        int flags = speed / F;
         flags <<= 2;
         flags |= FORWARD;
         if (bothDir)
@@ -113,7 +114,7 @@ public class EdgeFlags {
     public static int create(Map<String, Object> properties) {
         Integer integ = (Integer) properties.get("car");
         if (integ != null) {
-            integ *= 10;
+            integ *= F;
             if (!"yes".equals(properties.get("oneway")))
                 return create(integ, true);
             else
@@ -138,29 +139,29 @@ public class EdgeFlags {
 
         {
             // autobahn
-            put("motorway", 11); // 11 * 10 = 110
-            put("motorway_link", 9);
+            put("motorway", 55);
+            put("motorway_link", 45);
             // bundesstraße
-            put("trunk", 9);
-            put("trunk_link", 7);
+            put("trunk", 45);
+            put("trunk_link", 35);
             // linking bigger town
-            put("primary", 7);
-            put("primary_link", 6);
+            put("primary", 35);
+            put("primary_link", 30);
             // linking smaller towns + villages
-            put("secondary", 6);
-            put("secondary_link", 5);
+            put("secondary", 30);
+            put("secondary_link", 25);
             // streets without middle line separation
-            put("tertiary", 5);
-            put("tertiary_link", 4);
-            put("unclassified", 5);
-            put("residential", 4);
+            put("tertiary", 25);
+            put("tertiary_link", 20);
+            put("unclassified", 25);
+            put("residential", 20);
             // spielstraße
-            put("living_street", 1);
-            put("service", 3);
+            put("living_street", 5);
+            put("service", 15);
             // unknown road
-            put("road", 3);
+            put("road", 15);
             // forestry stuff
-            put("track", 2);
+            put("track", 10);
         }
     }
 }

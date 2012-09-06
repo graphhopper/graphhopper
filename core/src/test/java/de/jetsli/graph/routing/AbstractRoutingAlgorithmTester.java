@@ -74,13 +74,15 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(6, 7, 5, EdgeFlags.create(20, true));
         Path p1 = createAlgo(graph).setType(ShortestCalc.DEFAULT).calcPath(0, 3);
         assertEquals(p1.toString(), 24, p1.weight(), 1e-6);
+        assertEquals(p1.toString(), 24, p1.distance(), 1e-6);
         assertEquals(p1.toString(), 5, p1.locations());
 
         Path p2 = createAlgo(graph).setType(FastestCalc.DEFAULT).calcPath(0, 3);
 //        assertEquals(5580, p2.timeInSec());
 //        assertTrue("time of fastest path needs to be lower! " + p1.timeInSec() + ">" + p2.timeInSec(),
 //                p1.timeInSec() > p2.timeInSec());
-        assertEquals(p2.toString(), 15.5, p2.weight(), 1e-6);
+        assertEquals(p2.toString(), 31, p2.distance(), 1e-6);
+        assertEquals(p2.toString(), 3.1, p2.weight(), 1e-6);
         assertEquals(p2.toString(), 6, p2.locations());
     }
 

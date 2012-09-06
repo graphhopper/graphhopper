@@ -17,19 +17,15 @@ package de.jetsli.graph.ui;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
-import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.reader.OSMReader;
-import de.jetsli.graph.routing.util.PrepareRoutingShortcuts;
 import de.jetsli.graph.routing.AStar;
-import de.jetsli.graph.routing.DijkstraBidirectionRef;
+import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.RoutingAlgorithm;
-import de.jetsli.graph.routing.util.EdgePrioFilter;
 import de.jetsli.graph.routing.util.FastestCalc;
 import de.jetsli.graph.routing.util.ShortestCalc;
 import de.jetsli.graph.routing.util.WeightCalculation;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
-import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.CoordTrig;
@@ -46,6 +42,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * A rough graphical user interface for visualizing the OSM graph. Mainly for debugging algorithms
+ * and spatial datastructures.
+ *
  * @author Peter Karich
  */
 public class MiniGraphUI {
@@ -147,27 +146,27 @@ public class MiniGraphUI {
                     }
                 }
 
-                mg.plotNode(g2, 171651, Color.GREEN);
-                g2.setColor(Color.RED);
-                PriorityGraph clone = (PriorityGraph) graph.clone();
-                new PrepareRoutingShortcuts(clone).doWork();
-                DijkstraBidirectionRef dijkstraBi = new DebugDijkstraBidirection(clone, mg);
-                ((DebugAlgo) dijkstraBi).setGraphics2D(g2);
-                dijkstraBi.setEdgeFilter(new EdgePrioFilter((PriorityGraph) clone));
-                plotPath(dijkstraBi, g2, 10);
+//                mg.plotNode(g2, 171651, Color.GREEN);
+//                g2.setColor(Color.RED);
+//                PriorityGraph clone = (PriorityGraph) graph.clone();
+//                new PrepareRoutingShortcuts(clone).doWork();
+//                DijkstraBidirectionRef dijkstraBi = new DebugDijkstraBidirection(clone, mg);
+//                ((DebugAlgo) dijkstraBi).setGraphics2D(g2);
+//                dijkstraBi.setEdgeFilter(new EdgePrioFilter((PriorityGraph) clone));
+//                plotPath(dijkstraBi, g2, 10);
 //                Path p1 = calcPath(dijkstraBi);
 
-                g2.setColor(Color.GREEN);
-                dijkstraBi = new DebugDijkstraBidirection(graph, mg);
-                ((DebugAlgo) dijkstraBi).setGraphics2D(g2);
-                plotPath(dijkstraBi, g2, 6);
+//                g2.setColor(Color.GREEN);
+//                dijkstraBi = new DebugDijkstraBidirection(graph, mg);
+//                ((DebugAlgo) dijkstraBi).setGraphics2D(g2);
+//                plotPath(dijkstraBi, g2, 6);
 
 //                Path p2 = calcPath(dijkstraBi);
 //                Path.debugDifference(clone, p1, p2);
 
 //                g2.setColor(Color.BLUE);
 //                plotPath(new AStar(graph), g2, 4);
-                g2.setColor(Color.BLACK);
+//                g2.setColor(Color.BLACK);
 
                 if (quadTreeNodes != null) {
                     logger.info("found neighbors:" + quadTreeNodes.size());
@@ -179,6 +178,7 @@ public class MiniGraphUI {
         });
 
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
+            // one time use the fastest path, the other time use the shortest (e.g. maximize window to switch)
             WeightCalculation wCalc = FastestCalc.DEFAULT;
 
             @Override public void paintComponent(Graphics2D g2) {
@@ -229,14 +229,15 @@ public class MiniGraphUI {
         }
     }
 
-    public Path calcPath(RoutingAlgorithm algo) {
+    // for debugging
+    private Path calcPath(RoutingAlgorithm algo) {
 //        int from = index.findID(49.8020, 9.2470);
 //        int to = index.findID(50.4940, 10.1970);
 //        return algo.calcPath(from, to);
         return algo.calcPath(309721, 309742);
     }
 
-    public Path plotPath(RoutingAlgorithm algo, Graphics2D g2, int w) {
+    private Path plotPath(RoutingAlgorithm algo, Graphics2D g2, int w) {
         Path tmpPath = calcPath(algo);
         for (int jj = 0; jj < tmpPath.locations(); jj++) {
             int loc = tmpPath.location(jj);

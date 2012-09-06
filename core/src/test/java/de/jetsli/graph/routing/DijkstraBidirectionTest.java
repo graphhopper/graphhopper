@@ -17,8 +17,8 @@ package de.jetsli.graph.routing;
 
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

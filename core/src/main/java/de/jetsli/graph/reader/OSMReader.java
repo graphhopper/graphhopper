@@ -15,8 +15,8 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.routing.util.PrepareRoutingSubnetworks;
 import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.PrepareRoutingSubnetworks;
 import de.jetsli.graph.routing.util.RoutingAlgorithmIntegrationTests;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafeStorage;
