@@ -85,7 +85,7 @@ public class PathBidir extends Path {
         return this;
     }
 
-    @Override public String toString() {
-        return "distance:" + weight + ", from:" + edgeFrom.getNode(fromEdgeId) + ", to:" + edgeTo.getNode(toEdgeId);
-    }
+//    @Override public String toString() {
+//        return "distance:" + weight + ", from:" + edgeFrom.getNode(fromEdgeId) + ", to:" + edgeTo.getNode(toEdgeId);
+//    }
 }

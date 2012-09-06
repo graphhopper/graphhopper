@@ -19,6 +19,7 @@ import de.jetsli.graph.routing.util.EdgeFlags;
 import de.jetsli.graph.routing.util.WeightCalculation;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.PriorityGraph;
+import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeSkipIterator;
 import de.jetsli.graph.util.GraphUtility;
@@ -39,6 +40,7 @@ public class PathPrio extends PathBidirRef {
         double lowestW = -1;
         double dist = -1;
         int skippedNode = -1;
+        int flags = -1;
         EdgeSkipIterator iter = (EdgeSkipIterator) mainIter;
         while (iter.next()) {
             if (iter.node() == to) {
@@ -46,6 +48,7 @@ public class PathPrio extends PathBidirRef {
                 if (lowestW < 0 || lowestW > tmpW) {
                     lowestW = tmpW;
                     dist = iter.distance();
+                    flags = iter.flags();
                     skippedNode = iter.skippedNode();
                 }
             }
@@ -60,7 +63,7 @@ public class PathPrio extends PathBidirRef {
 
         if (skippedNode >= 0) {
             // logger.info("iter(" + currEdge.node + "->" + tmpTo + ") with skipped node:" + iter.skippedNode());
-            expand(iter.fromNode(), to, skippedNode, iter.flags());
+            expand(iter.fromNode(), to, skippedNode, flags);
         }
     }
 
@@ -79,7 +82,7 @@ public class PathPrio extends PathBidirRef {
             reverse = true;
             tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, EdgeFlags.swapDirection(flags));
             if (tmpIter == EdgeIterator.EMPTY)
-                throw new IllegalStateException("skipped node " + skippedNode + " not found for " + from + "->" + to + "?");
+                throw new IllegalStateException("skipped node " + skippedNode + " not found for " + from + "->" + to + "? " + BitUtil.toBitString(flags, 8));
         }
 
         TIntArrayList tmp = new TIntArrayList();

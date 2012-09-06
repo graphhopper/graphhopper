@@ -145,7 +145,7 @@ public class DijkstraTwoDrivers {
             double shortestCurrent = shortestDE.weight + entryOther.weight;
             double newShortest = shortestCurrent + shortestOther;
             if (newShortest < overallDistance) {
-                // TODO: minimize not only the sum but also the difference => multi modal search!
+                // LATER: minimize not only the sum but also the difference => multi modal search!
                 overallDistance = newShortest;
                 meetingPoint = currLoc;
 

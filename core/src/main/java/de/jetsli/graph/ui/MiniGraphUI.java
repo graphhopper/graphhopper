@@ -199,7 +199,7 @@ public class MiniGraphUI {
                 path = algo.clear().setType(wCalc).calcPath(dijkstraFromId, dijkstraToId);
                 sw.stop();
 
-                // TODO remove subnetworks to avoid failing
+                // if directed edges
                 if (path == null)
                     return;
 

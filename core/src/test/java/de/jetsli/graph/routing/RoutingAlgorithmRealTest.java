@@ -22,6 +22,7 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.util.CmdArgs;
+import de.jetsli.graph.util.GraphUtility;
 import de.jetsli.graph.util.Helper;
 import java.io.File;
 import java.io.IOException;
@@ -74,7 +75,7 @@ public class RoutingAlgorithmRealTest {
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
     }
 
-//   TODO NOW @Test
+    @Test
     public void testMonacoParallel() throws IOException {
         System.out.println("testMonacoParallel takes a bit time (move to a separate integration test?)");
         String graphFile = "target/graph-monaco";
@@ -127,6 +128,7 @@ public class RoutingAlgorithmRealTest {
             // make sure we are using the latest file format
             Helper.deleteDir(new File(graphFile));
             Graph g = OSMReader.osm2Graph(new CmdArgs().put("osm", osmFile).put("graph", graphFile));
+            // GraphUtility.printInfo(g, 3606, 1000);
             // System.out.println(osmFile + " - all locations " + g.getNodes());
             Location2IDIndex idx = new Location2IDQuadtree(g).prepareIndex(2000);
             RoutingAlgorithm[] algos = RoutingAlgorithmIntegrationTests.createAlgos(g);

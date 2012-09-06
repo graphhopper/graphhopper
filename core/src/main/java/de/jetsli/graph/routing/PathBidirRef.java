@@ -74,7 +74,7 @@ public class PathBidirRef extends Path {
         return this;
     }
 
-    @Override public String toString() {
-        return "distance:" + weight + ", from:" + edgeFrom + ", to:" + edgeTo;
-    }
+//    @Override public String toString() {
+//        return "distance:" + weight + ", from:" + edgeFrom + ", to:" + edgeTo;
+//    }
 }

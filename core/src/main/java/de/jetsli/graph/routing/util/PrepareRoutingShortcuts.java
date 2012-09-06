@@ -74,8 +74,8 @@ public class PrepareRoutingShortcuts {
                 double distance = iter.distance();
                 while (true) {
                     if (g.getPriority(currentNode) < 0)
-                        // TODOcontinue MAIN;
-                        break;
+                        continue MAIN;
+                    
                     if (!has1InAnd1Out(currentNode))
                         break;
 

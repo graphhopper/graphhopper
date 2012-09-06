@@ -29,7 +29,7 @@ import gnu.trove.set.hash.TIntHashSet;
 public class TopologicalSorting {
 
     /**
-     * conditions: acyclicGraph and all reachable from 0
+     * conditions: acyclic graph and all reachable from 0
      */
     public TIntArrayList sort(Graph g) {
         final TIntArrayList list = new TIntArrayList();
