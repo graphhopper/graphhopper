@@ -21,7 +21,6 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeSkipIterator;
-import de.jetsli.graph.util.EdgeWrapper;
 import de.jetsli.graph.util.GraphUtility;
 import gnu.trove.list.array.TIntArrayList;
 

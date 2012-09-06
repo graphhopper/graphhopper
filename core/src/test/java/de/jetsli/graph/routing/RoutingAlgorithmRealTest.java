@@ -74,7 +74,7 @@ public class RoutingAlgorithmRealTest {
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
     }
 
-    @Test
+//   TODO NOW @Test
     public void testMonacoParallel() throws IOException {
         System.out.println("testMonacoParallel takes a bit time (move to a separate integration test?)");
         String graphFile = "target/graph-monaco";

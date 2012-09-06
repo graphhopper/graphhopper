@@ -20,6 +20,8 @@ import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.DijkstraBidirectionRef;
 import de.jetsli.graph.routing.DijkstraSimple;
 import de.jetsli.graph.routing.Path;
+import de.jetsli.graph.routing.PathBidirRef;
+import de.jetsli.graph.routing.PathPrio;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
@@ -65,6 +67,16 @@ public class RoutingAlgorithmIntegrationTests {
             System.out.println("SUCCESS!");
     }
 
+    public static RoutingAlgorithm[] createAlgos(Graph g) {
+        return new RoutingAlgorithm[]{
+                    new AStar(g),
+                    new DijkstraBidirectionRef(g),
+                    new DijkstraBidirection(g),
+                    new DijkstraSimple(g),
+                    createPrioAlgo(g)
+                };
+    }
+
     static RoutingAlgorithm createPrioAlgo(Graph g) {
         g = g.clone();
         new PrepareRoutingShortcuts((PriorityGraph) g).doWork();
@@ -72,24 +84,14 @@ public class RoutingAlgorithmIntegrationTests {
             @Override public String toString() {
                 return "DijkstraBidirectionRef|Shortcut|" + weightCalc;
             }
-            //TODO NOW
-//                @Override protected PathWrapperRef createPathWrapper() {
-//                    // expand skipped nodes
-//                    return new PathWrapperPrio((PriorityGraph) unterfrankenGraph);
-//                }
+
+            @Override protected PathBidirRef createPath() {
+                // expand skipped nodes
+                return new PathPrio((PriorityGraph) graph, weightCalc);
+            }
         };
         dijkstraBi.setEdgeFilter(new EdgePrioFilter((PriorityGraph) g));
         return dijkstraBi;
-    }
-
-    public static RoutingAlgorithm[] createAlgos(Graph g) {
-        return new RoutingAlgorithm[]{
-                    new AStar(g),
-                    new DijkstraBidirectionRef(g),
-                    new DijkstraBidirection(g),
-                    new DijkstraSimple(g),
-                    //                    createPrioAlgo(g)
-                };
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
 

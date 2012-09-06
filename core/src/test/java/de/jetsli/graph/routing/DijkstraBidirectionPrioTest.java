@@ -29,7 +29,7 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class DijkstraBidirectionWithPrioTest {
+public class DijkstraBidirectionPrioTest {
 
     RoutingAlgorithm createAlgoWithFilter(final PriorityGraph pg) {
         return new DijkstraBidirectionRef(pg).setEdgeFilter(new EdgePrioFilter(pg));
