@@ -80,7 +80,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
             int tmpFrom = currEdge.node;
             path.add(tmpFrom);
             currEdge = currEdge.prevEntry;
-            path.updateProperties(graph.getIncoming(tmpFrom), currEdge.node);
+            path.calcWeight(graph.getIncoming(tmpFrom), currEdge.node);
         }
         path.add(fromEntry.node);
         path.reverseOrder();

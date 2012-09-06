@@ -46,7 +46,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     protected EdgeEntry currFrom;
     protected EdgeEntry currTo;
     protected TIntObjectMap<EdgeEntry> shortestWeightMapOther;
-    public PathWrapperRef shortest;
+    public PathBidirRef shortest;
     private EdgePrioFilter edgeFilter;
 
     public DijkstraBidirectionRef(Graph graph) {
@@ -82,9 +82,6 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         visitedTo.clear();
         openSetTo.clear();
         shortestWeightMapTo.clear();
-
-        shortest = createPathWrapper();
-        shortest.weight = Double.MAX_VALUE;
         return this;
     }
 
@@ -114,6 +111,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
             throw new IllegalStateException("Call clear before! But this class is not thread safe!");
 
         alreadyRun = true;
+        initPath();
         initFrom(from);
         initTo(to);
 
@@ -137,7 +135,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     }
 
     public Path getShortest() {
-        return shortest.extract(new Path(weightCalc));
+        return shortest.extract();
     }
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
@@ -251,7 +249,13 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         return shortestWeightMapTo.get(nodeId);
     }
 
-    protected PathWrapperRef createPathWrapper() {
-        return new PathWrapperRef(graph);
+    protected PathBidirRef createPath() {
+        return new PathBidirRef(graph, weightCalc);
+    }
+
+    public DijkstraBidirectionRef initPath() {
+        shortest = createPath();
+        shortest.weight(Double.MAX_VALUE);
+        return this;
     }
 }

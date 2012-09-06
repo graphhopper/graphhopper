@@ -111,7 +111,7 @@ public class AStar extends AbstractRoutingAlgorithm {
             int tmpFrom = currEdge.node;
             path.add(tmpFrom);
             currEdge = (AStarEdge) currEdge.prevEntry;
-            path.updateProperties(graph.getIncoming(tmpFrom), currEdge.node);
+            path.calcWeight(graph.getIncoming(tmpFrom), currEdge.node);
         }
         path.add(fromEntry.node);
         path.reverseOrder();

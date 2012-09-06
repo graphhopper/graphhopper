@@ -74,7 +74,6 @@ public class DijkstraShortestOf2ToPubTest {
         d.setFrom(from);
         d.setTo(dest);
         Path path = d.calcShortestPath();
-
         assertWithBiDijkstra(pubTransport, path, from, dest, g);
     }
 
@@ -85,14 +84,14 @@ public class DijkstraShortestOf2ToPubTest {
             Path manualFrom = new DijkstraBidirection(g).calcPath(points[i], from);
             Path manualTo = new DijkstraBidirection(g).calcPath(points[i], to);
             if (bestManualPathFrom == null
-                    || manualFrom.distance() + manualTo.distance()
-                    < bestManualPathFrom.distance() + bestManualPathTo.distance()) {
+                    || manualFrom.weight() + manualTo.weight()
+                    < bestManualPathFrom.weight() + bestManualPathTo.weight()) {
                 bestManualPathFrom = manualFrom;
                 bestManualPathTo = manualTo;
             }
         }
 
         assertEquals(bestManualPathFrom.locations() + bestManualPathTo.locations() - 1, path.locations());
-        assertEquals(bestManualPathFrom.distance() + bestManualPathTo.distance(), path.distance(), 1e-3);
+        assertEquals(bestManualPathFrom.weight() + bestManualPathTo.weight(), path.weight(), 1e-3);
     }
 }

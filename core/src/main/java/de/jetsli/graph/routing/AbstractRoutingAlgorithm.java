@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
+import de.jetsli.graph.routing.util.ShortestCalc;
 import de.jetsli.graph.routing.util.WeightCalculation;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
@@ -25,7 +26,7 @@ import de.jetsli.graph.storage.Graph;
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
 
     protected Graph graph;
-    protected WeightCalculation weightCalc = new WeightCalculation();
+    protected WeightCalculation weightCalc = ShortestCalc.DEFAULT;
 
     public AbstractRoutingAlgorithm(Graph graph) {
         this.graph = graph;

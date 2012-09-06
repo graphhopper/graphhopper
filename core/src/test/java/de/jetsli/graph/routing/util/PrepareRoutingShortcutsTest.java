@@ -15,12 +15,6 @@
  */
 package de.jetsli.graph.routing.util;
 
-import de.jetsli.graph.routing.util.PrepareRoutingShortcuts;
-import de.jetsli.graph.routing.util.EdgeFlags;
-import de.jetsli.graph.routing.DijkstraBidirectionRef;
-import de.jetsli.graph.routing.Path;
-import de.jetsli.graph.routing.PathWrapperPrio;
-import de.jetsli.graph.routing.PathWrapperRef;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.PriorityGraphImpl;

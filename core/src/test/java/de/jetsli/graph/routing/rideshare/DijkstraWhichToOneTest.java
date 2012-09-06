@@ -70,11 +70,11 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
         Path bestManualPath = null;
         for (int i = 0; i < points.length; i++) {
             Path manualPath = new DijkstraBidirection(matrixGraph).calcPath(points[i], dest);
-            if (bestManualPath == null || manualPath.distance() < bestManualPath.distance())
+            if (bestManualPath == null || manualPath.weight() < bestManualPath.weight())
                 bestManualPath = manualPath;
         }
 
-        assertEquals(bestManualPath.distance(), path.distance(), 1e-3);
+        assertEquals(bestManualPath.weight(), path.weight(), 1e-3);
         assertEquals(bestManualPath.locations(), path.locations());
     }
 }

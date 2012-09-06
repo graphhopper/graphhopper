@@ -18,15 +18,31 @@ package de.jetsli.graph.routing.util;
 import de.jetsli.graph.util.EdgeIterator;
 
 /**
- * Specifies how the best route is calculated. E.g. the fastest or shortest route.
- *
  * @author Peter Karich
  */
-public interface WeightCalculation {
+public class FastestCalc implements WeightCalculation {
 
-    double getWeight(EdgeIterator iter);
+    public static FastestCalc DEFAULT = new FastestCalc();
 
-    double apply(double currDistToGoal);
+    private FastestCalc() {
+    }
 
-    double apply(double currDistToGoal, int flags);
+    @Override
+    public double getWeight(EdgeIterator iter) {
+        return iter.distance() / EdgeFlags.getSpeedPart(iter.flags());
+    }
+
+    @Override
+    public double apply(double currDistToGoal) {
+        return currDistToGoal / EdgeFlags.MAX_SPEED;
+    }
+
+    @Override
+    public double apply(double currDistToGoal, int flags) {
+        return currDistToGoal / EdgeFlags.getSpeedPart(flags);
+    }
+
+    @Override public String toString() {
+        return "FASTEST";
+    }
 }

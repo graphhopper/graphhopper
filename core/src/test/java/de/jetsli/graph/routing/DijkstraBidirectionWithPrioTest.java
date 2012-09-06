@@ -16,8 +16,8 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.routing.util.EdgeFlags;
-import de.jetsli.graph.routing.util.PrepareRoutingShortcuts;
 import de.jetsli.graph.routing.util.EdgePrioFilter;
+import de.jetsli.graph.routing.util.PrepareRoutingShortcuts;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.PriorityGraphImpl;
 import de.jetsli.graph.util.EdgeSkipIterator;
@@ -37,8 +37,8 @@ public class DijkstraBidirectionWithPrioTest {
 
     RoutingAlgorithm createAlgoWithFilterAndPathUnpacking(final PriorityGraph pg) {
         return new DijkstraBidirectionRef(pg) {
-            @Override protected PathWrapperRef createPathWrapper() {
-                return new PathWrapperPrio(pg);
+            @Override protected PathBidirRef createPath() {
+                return new PathPrio(graph, weightCalc);
             }
         }.setEdgeFilter(new EdgePrioFilter(pg));
     }
@@ -55,7 +55,7 @@ public class DijkstraBidirectionWithPrioTest {
         new PrepareRoutingShortcuts(g2).doWork();
         // use that node to correctly unpack the shortcut
         Path p = createAlgoWithFilterAndPathUnpacking(g2).calcPath(0, 4);
-        assertEquals(p.toString(), 51, p.distance(), 1e-6);
+        assertEquals(p.toString(), 51, p.weight(), 1e-6);
         assertEquals(p.toString(), 6, p.locations());
     }
 
@@ -65,7 +65,7 @@ public class DijkstraBidirectionWithPrioTest {
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
         new PrepareRoutingShortcuts(g2).doWork();
         Path p = createAlgoWithFilter(g2).calcPath(0, 4);
-        assertEquals(p.toString(), 51, p.distance(), 1e-6);
+        assertEquals(p.toString(), 51, p.weight(), 1e-6);
         assertEquals(p.toString(), 5, p.locations());
     }
 
@@ -91,9 +91,8 @@ public class DijkstraBidirectionWithPrioTest {
         EdgeSkipIterator iter = (EdgeSkipIterator) GraphUtility.until(g.getEdges(19), 22);
         assertEquals(20, iter.skippedNode());
         Path p = new DijkstraBidirectionRef(g) {
-            @Override protected PathWrapperRef createPathWrapper() {
-                // correctly expand skipped nodes
-                return new PathWrapperPrio(g);
+            @Override protected PathBidirRef createPath() {
+                return new PathPrio(graph, weightCalc);
             }
         }.calcPath(17, 23);
         assertEquals(6, p.locations());
@@ -114,7 +113,7 @@ public class DijkstraBidirectionWithPrioTest {
         g.edge(6, 7, 1, EdgeFlags.create(50, true));
         g.edge(7, 8, 1, EdgeFlags.create(50, true));
         g.edge(8, 4, 1, EdgeFlags.create(50, true));
-        
+
         g.edge(0, 1, 1, EdgeFlags.create(50, true));
         g.edge(1, 2, 1, EdgeFlags.create(10, true));
         g.edge(2, 3, 1, EdgeFlags.create(10, true));
@@ -126,9 +125,8 @@ public class DijkstraBidirectionWithPrioTest {
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         Path p = new DijkstraBidirectionRef(g) {
-            @Override protected PathWrapperRef createPathWrapper() {
-                // correctly expand skipped nodes
-                return new PathWrapperPrio(g);
+            @Override protected PathBidirRef createPath() {
+                return new PathPrio(graph, weightCalc);
             }
         }.calcPath(1, 4);
         assertEquals(4, p.locations());

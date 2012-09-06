@@ -21,11 +21,11 @@ import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.reader.OSMReader;
 import de.jetsli.graph.routing.util.PrepareRoutingShortcuts;
 import de.jetsli.graph.routing.AStar;
-import de.jetsli.graph.routing.AlgoType;
 import de.jetsli.graph.routing.DijkstraBidirectionRef;
-import de.jetsli.graph.routing.DijkstraSimple;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.routing.util.EdgePrioFilter;
+import de.jetsli.graph.routing.util.FastestCalc;
+import de.jetsli.graph.routing.util.ShortestCalc;
 import de.jetsli.graph.routing.util.WeightCalculation;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
@@ -34,7 +34,6 @@ import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.EdgeIterator;
-import de.jetsli.graph.util.GraphUtility;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.StopWatch;
 import de.jetsli.graph.util.shapes.BBox;
@@ -160,9 +159,9 @@ public class MiniGraphUI {
 
                 g2.setColor(Color.GREEN);
                 dijkstraBi = new DebugDijkstraBidirection(graph, mg);
-                ((DebugAlgo) dijkstraBi).setGraphics2D(g2);                
+                ((DebugAlgo) dijkstraBi).setGraphics2D(g2);
                 plotPath(dijkstraBi, g2, 6);
-                
+
 //                Path p2 = calcPath(dijkstraBi);
 //                Path.debugDifference(clone, p1, p2);
 
@@ -180,7 +179,7 @@ public class MiniGraphUI {
         });
 
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
-            AlgoType type = AlgoType.FASTEST;
+            WeightCalculation wCalc = FastestCalc.DEFAULT;
 
             @Override public void paintComponent(Graphics2D g2) {
                 if (dijkstraFromId < 0 || dijkstraToId < 0)
@@ -191,13 +190,13 @@ public class MiniGraphUI {
                     ((DebugAlgo) algo).setGraphics2D(g2);
 
                 StopWatch sw = new StopWatch().start();
-                if (type.equals(AlgoType.FASTEST))
-                    type = AlgoType.SHORTEST;
+                if (wCalc == FastestCalc.DEFAULT)
+                    wCalc = ShortestCalc.DEFAULT;
                 else
-                    type = AlgoType.FASTEST;
+                    wCalc = FastestCalc.DEFAULT;
 
-                logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + type);
-                path = algo.clear().setType(new WeightCalculation(type)).calcPath(dijkstraFromId, dijkstraToId);
+                logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + wCalc);
+                path = algo.clear().setType(wCalc).calcPath(dijkstraFromId, dijkstraToId);
                 sw.stop();
 
                 // TODO remove subnetworks to avoid failing

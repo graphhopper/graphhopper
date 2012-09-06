@@ -13,12 +13,33 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.routing;
+package de.jetsli.graph.routing.util;
+
+import de.jetsli.graph.util.EdgeIterator;
 
 /**
  * @author Peter Karich
  */
-public enum AlgoType {
+public class ShortestCalc implements WeightCalculation {
 
-    FASTEST, SHORTEST
+    public static ShortestCalc DEFAULT = new ShortestCalc();
+
+    @Override
+    public double getWeight(EdgeIterator iter) {
+        return iter.distance();
+    }
+
+    @Override
+    public double apply(double currDistToGoal) {
+        return currDistToGoal;
+    }
+
+    @Override
+    public double apply(double currDistToGoal, int flags) {
+        return currDistToGoal;
+    }
+
+    @Override public String toString() {
+        return "SHORTEST";
+    }
 }

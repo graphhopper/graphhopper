@@ -84,9 +84,11 @@ public class RoutingAlgorithmIntegrationTests {
 
     public static RoutingAlgorithm[] createAlgos(Graph g) {
         return new RoutingAlgorithm[]{
-//                    new AStar(g),
-//                    new DijkstraBidirectionRef(g), new DijkstraBidirection(g), new DijkstraSimple(g),
-                    createPrioAlgo(g)
+                    new AStar(g),
+                    new DijkstraBidirectionRef(g),
+                    new DijkstraBidirection(g),
+                    new DijkstraSimple(g),
+                    //                    createPrioAlgo(g)
                 };
     }
     private Logger logger = LoggerFactory.getLogger(getClass());

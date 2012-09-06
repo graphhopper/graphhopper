@@ -16,6 +16,7 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.ShortestCalc;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.PriorityGraphImpl;
@@ -26,7 +27,7 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class PathWrapperPrioTest {
+public class PathPrioTest {
 
     @Test
     public void testNoExpand() {
@@ -36,14 +37,14 @@ public class PathWrapperPrioTest {
         g.edge(2, 3, 10, true);
         g.edge(3, 4, 10, true);
 
-        PathWrapperPrio pathWrapper = new PathWrapperPrio(g);
-        pathWrapper.edgeFrom = new EdgeEntry(3, 10);
-        pathWrapper.edgeFrom.prevEntry = new EdgeEntry(2, 10);
-        pathWrapper.edgeFrom.prevEntry.prevEntry = new EdgeEntry(1, 10);
-        pathWrapper.edgeFrom.prevEntry.prevEntry.prevEntry = new EdgeEntry(0, 0);
-        pathWrapper.edgeTo = new EdgeEntry(3, 10);
-        pathWrapper.edgeTo.prevEntry = new EdgeEntry(4, 0);
-        Path p = pathWrapper.extract(new Path());
+        PathPrio path = new PathPrio(g, ShortestCalc.DEFAULT);
+        path.edgeFrom = new EdgeEntry(3, 10);
+        path.edgeFrom.prevEntry = new EdgeEntry(2, 10);
+        path.edgeFrom.prevEntry.prevEntry = new EdgeEntry(1, 10);
+        path.edgeFrom.prevEntry.prevEntry.prevEntry = new EdgeEntry(0, 0);
+        path.edgeTo = new EdgeEntry(3, 10);
+        path.edgeTo.prevEntry = new EdgeEntry(4, 0);
+        Path p = path.extract();
         assertEquals(5, p.locations());
     }
 
@@ -58,12 +59,12 @@ public class PathWrapperPrioTest {
         g.setPriority(2, -1);
         g.shortcut(0, 2, 20, EdgeFlags.create(true), 1);
 
-        PathWrapperPrio pathWrapper = new PathWrapperPrio(g);
-        pathWrapper.edgeFrom = new EdgeEntry(2, 20);
-        pathWrapper.edgeFrom.prevEntry = new EdgeEntry(0, 0);
-        pathWrapper.edgeTo = new EdgeEntry(2, 10);
-        pathWrapper.edgeTo.prevEntry = new EdgeEntry(3, 0);
-        Path p = pathWrapper.extract(new Path());
+        PathPrio path = new PathPrio(g, ShortestCalc.DEFAULT);
+        path.edgeFrom = new EdgeEntry(2, 20);
+        path.edgeFrom.prevEntry = new EdgeEntry(0, 0);
+        path.edgeTo = new EdgeEntry(2, 10);
+        path.edgeTo.prevEntry = new EdgeEntry(3, 0);
+        Path p = path.extract();
         assertEquals(4, p.locations());
     }
 
@@ -79,12 +80,12 @@ public class PathWrapperPrioTest {
         g.setPriority(2, -1);
         g.shortcut(0, 3, 30, EdgeFlags.create(true), 1);
 
-        PathWrapperPrio pathWrapper = new PathWrapperPrio(g);
-        pathWrapper.edgeFrom = new EdgeEntry(3, 30);
-        pathWrapper.edgeFrom.prevEntry = new EdgeEntry(0, 0);
-        pathWrapper.edgeTo = new EdgeEntry(3, 10);
-        pathWrapper.edgeTo.prevEntry = new EdgeEntry(4, 0);
-        Path p = pathWrapper.extract(new Path());
+        PathPrio path = new PathPrio(g, ShortestCalc.DEFAULT);
+        path.edgeFrom = new EdgeEntry(3, 30);
+        path.edgeFrom.prevEntry = new EdgeEntry(0, 0);
+        path.edgeTo = new EdgeEntry(3, 10);
+        path.edgeTo.prevEntry = new EdgeEntry(4, 0);
+        Path p = path.extract();
         assertEquals(5, p.locations());
     }
 }

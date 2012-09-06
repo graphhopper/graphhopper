@@ -43,7 +43,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     protected int currTo;
     protected double currToWeight;
     protected int currToEdgeId;
-    protected PathWrapper shortest;
+    protected PathBidir shortest;
     protected EdgeWrapper wrapperOther;
     private MyBitSet visitedFrom;
     private IntBinHeap openSetFrom;
@@ -63,12 +63,10 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         visitedTo = new MyOpenBitSet(locs);
         openSetTo = new IntBinHeap(locs / 10);
         wrapperTo = new EdgeWrapper(locs / 10);
-
-        clear();
     }
 
     @Override
-    public RoutingAlgorithm clear() {
+    public RoutingAlgorithm clear() {        
         alreadyRun = false;
         visitedFrom.clear();
         openSetFrom.clear();
@@ -77,9 +75,6 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         visitedTo.clear();
         openSetTo.clear();
         wrapperTo.clear();
-
-        shortest = new PathWrapper(graph, wrapperFrom, wrapperTo);
-        shortest.weight = Double.MAX_VALUE;
         return this;
     }
 
@@ -107,8 +102,9 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     @Override public Path calcPath(int from, int to) {
         if (alreadyRun)
             throw new IllegalStateException("Call clear before! But this class is not thread safe!");
-
+        
         alreadyRun = true;
+        initPath();
         initFrom(from);
         initTo(to);
 
@@ -130,9 +126,14 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
         return getShortest();
     }
+    
+    public void initPath() {
+        shortest = new PathBidir(graph, wrapperFrom, wrapperTo, weightCalc);
+        shortest.weight = Double.MAX_VALUE;
+    }
 
     public Path getShortest() {
-        return shortest.extract(new Path(weightCalc));
+        return shortest.extract();
     }
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf

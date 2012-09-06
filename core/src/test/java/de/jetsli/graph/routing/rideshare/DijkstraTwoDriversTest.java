@@ -21,8 +21,8 @@ import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.storage.Graph;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *
@@ -40,11 +40,10 @@ public class DijkstraTwoDriversTest {
         double shortest = Double.MAX_VALUE;
         TIntHashSet set = new TIntHashSet();
         for (int pointI = 10; pointI < 50; pointI++) {
-            double sum = new DijkstraBidirection(g).calcPath(12, pointI).distance();
-            sum += new DijkstraBidirection(g).calcPath(pointI, 36).distance();
-
-            sum += new DijkstraBidirection(g).calcPath(30, pointI).distance();
-            sum += new DijkstraBidirection(g).calcPath(pointI, 45).distance();
+            double sum = new DijkstraBidirection(g).calcPath(12, pointI).weight();
+            sum += new DijkstraBidirection(g).calcPath(pointI, 36).weight();
+            sum += new DijkstraBidirection(g).calcPath(30, pointI).weight();
+            sum += new DijkstraBidirection(g).calcPath(pointI, 45).weight();
             if (sum < shortest) {
                 shortest = sum;
                 set.clear();
@@ -53,7 +52,7 @@ public class DijkstraTwoDriversTest {
                 set.add(pointI);
         }
 
-        assertEquals(shortest, d.getBestForA().distance() + d.getBestForB().distance(), 1e-5);
+        assertEquals(shortest, d.getBestForA().weight() + d.getBestForB().weight(), 1e-5);
         assertTrue("meeting points " + set.toString() + " do not contain " + d.getMeetingPoint(),
                 set.contains(d.getMeetingPoint()));
     }
@@ -69,7 +68,7 @@ public class DijkstraTwoDriversTest {
         Path pB = new DijkstraBidirection(g).calcPath(30, 15);
         TIntSet set = pA.and(pB);
         assertTrue(set.toString(), set.contains(d.getMeetingPoint()));
-        assertEquals(pA.distance(), d.getBestForA().distance(), 1e-5);
-        assertEquals(pB.distance(), d.getBestForB().distance(), 1e-5);
+        assertEquals(pA.weight(), d.getBestForA().weight(), 1e-5);
+        assertEquals(pB.weight(), d.getBestForB().weight(), 1e-5);
     }
 }

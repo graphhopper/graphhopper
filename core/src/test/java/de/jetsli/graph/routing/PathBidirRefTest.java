@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
+import de.jetsli.graph.routing.util.ShortestCalc;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
@@ -24,19 +25,19 @@ import org.junit.Test;
 /**
  * @author Peter Karich
  */
-public class PathWrapperRefTest {
+public class PathBidirRefTest {
 
     @Test
     public void testExtract() {
         Graph g = new MemoryGraphSafe(10);
         g.edge(1, 2, 10, true);
-        PathWrapperRef pw = new PathWrapperRef(g);
+        PathBidirRef pw = new PathBidirRef(g, ShortestCalc.DEFAULT);
         pw.edgeFrom = new EdgeEntry(2, 10);
         pw.edgeFrom.prevEntry = new EdgeEntry(1, 10);
         pw.edgeTo = new EdgeEntry(2, 20);
-        Path p = pw.extract(new Path());
+        Path p = pw.extract();
         assertEquals(2, p.locations());
-        assertEquals(10, p.distance(), 1e-4);
+        assertEquals(10, p.weight(), 1e-4);
     }
 
     @Test
@@ -44,15 +45,15 @@ public class PathWrapperRefTest {
         Graph g = new MemoryGraphSafe(10);
         g.edge(1, 2, 10, true);
         g.edge(2, 3, 20, true);
-        PathWrapperRef pw = new PathWrapperRef(g);
+        PathBidirRef pw = new PathBidirRef(g, ShortestCalc.DEFAULT);
         pw.edgeFrom = new EdgeEntry(2, 10);
         pw.edgeFrom.prevEntry = new EdgeEntry(1, 0);
         pw.edgeTo = new EdgeEntry(2, 20);
         pw.edgeTo.prevEntry = new EdgeEntry(3, 0);
-        Path p = pw.extract(new Path());
+        Path p = pw.extract();
         assertEquals(1, p.location(0));
         assertEquals(3, p.location(2));
         assertEquals(3, p.locations());
-        assertEquals(30, p.distance(), 1e-4);
+        assertEquals(30, p.weight(), 1e-4);
     }
 }

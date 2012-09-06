@@ -16,81 +16,63 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.routing.util.EdgeFlags;
-import de.jetsli.graph.storage.EdgeEntry;
+import de.jetsli.graph.routing.util.WeightCalculation;
+import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeSkipIterator;
+import de.jetsli.graph.util.EdgeWrapper;
 import de.jetsli.graph.util.GraphUtility;
 import gnu.trove.list.array.TIntArrayList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
- *
  * @author Peter Karich, info@jetsli.de
  */
-public class PathWrapperPrio extends PathWrapperRef {
+public class PathPrio extends PathBidirRef {
 
-    private Logger logger = LoggerFactory.getLogger(getClass());
-
-    public PathWrapperPrio(PriorityGraph g) {
-        super(g);
+    public PathPrio(Graph g, WeightCalculation weightCalculation) {
+        super(g, weightCalculation);
     }
 
-    /**
-     * Extracts path from two shortest-path-tree
-     */
+    // TODO remove code duplication!
     @Override
-    public Path extract(Path path) {
-        if (edgeFrom == null || edgeTo == null)
-            return null;
-
-        if (edgeFrom.node != edgeTo.node)
-            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());
-
-        if (switchWrapper) {
-            EdgeEntry ee = edgeFrom;
-            edgeFrom = edgeTo;
-            edgeTo = ee;
-        }
-
-        EdgeEntry currEdge = edgeFrom;
-        while (currEdge.prevEntry != null) {
-            int tmpFrom = currEdge.node;
-            path.add(tmpFrom);
-            currEdge = currEdge.prevEntry;
-            EdgeSkipIterator iter = (EdgeSkipIterator) g.getOutgoing(currEdge.node);
-            path.updateProperties(iter, tmpFrom);
-            if (iter.skippedNode() >= 0) {
-                // logger.info("iter(" + tmpFrom + "->" + currEdge.node + ") with skipped node:" + iter.skippedNode());
-                expand(path, currEdge.node, tmpFrom, iter.skippedNode(), iter.flags());
-            }
-        }
-        path.add(currEdge.node);
-        path.reverseOrder();
-        currEdge = edgeTo;
-        while (currEdge.prevEntry != null) {
-            int tmpTo = currEdge.node;
-            currEdge = currEdge.prevEntry;
-            path.add(currEdge.node);
-            EdgeSkipIterator iter = (EdgeSkipIterator) g.getOutgoing(tmpTo);
-            path.updateProperties(iter, currEdge.node);
-            if (iter.skippedNode() >= 0) {
-                // logger.info("iter(" + currEdge.node + "->" + tmpTo + ") with skipped node:" + iter.skippedNode());
-                expand(path, tmpTo, currEdge.node, iter.skippedNode(), iter.flags());
+    public void calcWeight(EdgeIterator mainIter, int to) {
+        double lowestW = -1;
+        double dist = -1;
+        int skippedNode = -1;
+        EdgeSkipIterator iter = (EdgeSkipIterator) mainIter;
+        while (iter.next()) {
+            if (iter.node() == to) {
+                double tmpW = weightCalculation.getWeight(iter);
+                if (lowestW < 0 || lowestW > tmpW) {
+                    lowestW = tmpW;
+                    dist = iter.distance();
+                    skippedNode = iter.skippedNode();
+                }
             }
         }
 
-        return path;
+        if (lowestW < 0)
+            throw new IllegalStateException("couldn't extract path. distance for " + iter.node()
+                    + " to " + to + " not found!?");
+
+        weight += lowestW;
+        distance += dist;
+
+        if (skippedNode >= 0) {
+            // logger.info("iter(" + currEdge.node + "->" + tmpTo + ") with skipped node:" + iter.skippedNode());
+            expand(iter.fromNode(), to, skippedNode, iter.flags());
+        }
     }
 
-    private void expand(Path path, int from, int to, int skippedNode, int flags) {
+    private void expand(int from, int to, int skippedNode, int flags) {
         boolean reverse = false;
         int skip = from;
         EdgeIterator tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, flags);
         if (tmpIter == EdgeIterator.EMPTY) {
             skip = to;
+
+            // swap
             int tmp = from;
             from = to;
             to = tmp;
@@ -119,7 +101,7 @@ public class PathWrapperPrio extends PathWrapperRef {
             tmp.reverse();
 
         for (int i = 0; i < tmp.size(); i++) {
-            path.add(tmp.get(i));
+            add(tmp.get(i));
         }
     }
 }

@@ -20,10 +20,10 @@ import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.routing.AbstractRoutingAlgorithm;
 import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.Path;
-import de.jetsli.graph.routing.PathWrapperRef;
+import de.jetsli.graph.routing.PathBidirRef;
 import de.jetsli.graph.routing.RoutingAlgorithm;
-import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.EdgeEntry;
+import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
@@ -47,7 +47,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
     private int toP2;
     private EdgeEntry currTo;
     private EdgeEntry currFrom;
-    private PathWrapperRef shortest;
+    private PathBidirRef shortest;
     private TIntObjectMap<EdgeEntry> shortestDistMapOther;
     private TIntObjectMap<EdgeEntry> shortestDistMapFrom;
     private TIntObjectMap<EdgeEntry> shortestDistMapTo;
@@ -93,8 +93,8 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
 
-        shortest = new PathWrapperRef(graph);
-        shortest.weight = Double.MAX_VALUE;
+        shortest = new PathBidirRef(graph, weightCalc);
+        shortest.weight(Double.MAX_VALUE);
 
         // create several starting points
         if (pubTransport.isEmpty())
@@ -130,14 +130,11 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
                 throw new IllegalStateException("Shortest Path not found? " + fromP1 + " " + toP2);
         }
 
-        Path g = shortest.extract(new Path(weightCalc));
-        if (!pubTransport.contains(g.getFromLoc())) {
-            double tmpDist = g.distance();
-            g.reverseOrder();
-            g.setDistance(tmpDist);
-        }
+        Path p = shortest.extract();
+        if (!pubTransport.contains(p.getFromLoc()))
+            p.reverseOrder();
 
-        return g;
+        return p;
     }
 
     // this won't work anymore as the dijkstra heaps are independent and can take a completely 
@@ -153,11 +150,11 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
             if (currTo == null)
                 throw new IllegalStateException("no shortest path!?");
 
-            return currTo.weight >= shortest.weight;
+            return currTo.weight >= shortest.weight();
         } else if (currTo == null)
-            return currFrom.weight >= shortest.weight;
+            return currFrom.weight >= shortest.weight();
         else
-            return Math.min(currFrom.weight, currTo.weight) >= shortest.weight;
+            return Math.min(currFrom.weight, currTo.weight) >= shortest.weight();
     }
 
     public void fillEdges(EdgeEntry curr, MyBitSet visitedMain,
@@ -197,11 +194,11 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
             if (entryOther != null) {
                 // update μ
                 double newShortest = shortestDE.weight + entryOther.weight;
-                if (newShortest < shortest.weight) {
+                if (newShortest < shortest.weight()) {
                     shortest.switchWrapper = shortestDistMapFrom == shortestDistMapOther;
                     shortest.edgeFrom = shortestDE;
                     shortest.edgeTo = entryOther;
-                    shortest.weight = newShortest;
+                    shortest.weight(newShortest);
                 }
             }
         }

@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
+import de.jetsli.graph.routing.util.WeightCalculation;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeWrapper;
 
@@ -23,17 +24,18 @@ import de.jetsli.graph.util.EdgeWrapper;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class PathWrapper {
+public class PathBidir extends Path {
 
     public boolean switchWrapper = false;
     public int fromEdgeId = -1;
     public int toEdgeId = -1;
-    public double weight;
     private EdgeWrapper edgeFrom;
     private EdgeWrapper edgeTo;
-    private Graph g;
+    protected Graph g;
 
-    public PathWrapper(Graph g, EdgeWrapper edgesFrom, EdgeWrapper edgesTo) {
+    public PathBidir(Graph g, EdgeWrapper edgesFrom, EdgeWrapper edgesTo,
+            WeightCalculation weightCalculation) {
+        super(weightCalculation);
         this.g = g;
         this.edgeFrom = edgesFrom;
         this.edgeTo = edgesTo;
@@ -42,7 +44,9 @@ public class PathWrapper {
     /**
      * Extracts path from two shortest-path-tree
      */
-    public Path extract(Path path) {
+    @Override
+    public Path extract() {
+        weight = 0;
         if (fromEdgeId < 0 || toEdgeId < 0)
             return null;
 
@@ -56,29 +60,29 @@ public class PathWrapper {
         int nodeTo = edgeTo.getNode(toEdgeId);
         if (nodeFrom != nodeTo)
             throw new IllegalStateException("Locations of 'to' and 'from' DistEntries has to be the same." + toString());
-        
+
         int currEdgeId = fromEdgeId;
-        path.add(nodeFrom);
+        add(nodeFrom);
         currEdgeId = edgeFrom.getLink(currEdgeId);
         while (currEdgeId > 0) {
             int tmpFrom = edgeFrom.getNode(currEdgeId);
-            path.add(tmpFrom);
-            path.updateProperties(g.getOutgoing(tmpFrom), nodeFrom);
+            add(tmpFrom);
+            calcWeight(g.getOutgoing(tmpFrom), nodeFrom);
             currEdgeId = edgeFrom.getLink(currEdgeId);
             nodeFrom = tmpFrom;
         }
-        path.reverseOrder();
+        reverseOrder();
 
         // skip node of toEdgeId (equal to fromEdgeId)
         currEdgeId = edgeTo.getLink(toEdgeId);
         while (currEdgeId > 0) {
             int tmpTo = edgeTo.getNode(currEdgeId);
-            path.add(tmpTo);
-            path.updateProperties(g.getOutgoing(nodeTo), tmpTo);
+            add(tmpTo);
+            calcWeight(g.getOutgoing(nodeTo), tmpTo);
             currEdgeId = edgeTo.getLink(currEdgeId);
             nodeTo = tmpTo;
         }
-        return path;
+        return this;
     }
 
     @Override public String toString() {
