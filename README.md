@@ -46,7 +46,6 @@ Then a route should pop up like in this SHINY ;) image ![from twitter](http://ka
  * [a bidirectional Dijkstra](http://karussell.files.wordpress.com/2012/06/bidijkstra.gif)
  * [A*](http://karussell.files.wordpress.com/2012/07/astar.gif)
 
-
 If you want to import full Germany do:
 
 > cd core; ./run.sh germany
