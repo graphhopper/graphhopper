@@ -42,9 +42,10 @@ After the UI popped up you can drag to move the map or scroll to zoom like in or
 Click once to select a departure and another click to select the destination.
 Then a route should pop up like in this SHINY ;) image ![from twitter](http://karussell.files.wordpress.com/2012/06/graphhopper.png)
 
-Visualization of
+[Performance comparison table](https://github.com/karussell/GraphHopper/wiki/Performance/) of different algorithms. And visualization of
  * [a bidirectional Dijkstra](http://karussell.files.wordpress.com/2012/06/bidijkstra.gif)
  * [A*](http://karussell.files.wordpress.com/2012/07/astar.gif)
+
 
 If you want to import full Germany do:
 
