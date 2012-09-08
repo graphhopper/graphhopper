@@ -46,6 +46,8 @@ Visualization of
  * [a bidirectional Dijkstra](http://karussell.files.wordpress.com/2012/06/bidijkstra.gif)
  * [A*](http://karussell.files.wordpress.com/2012/07/astar.gif)
 
+[Performance comparison table](https://github.com/karussell/GraphHopper/wiki/Performance/) of different algorithms.
+
 If you want to import full Germany do:
 
 > cd core; ./run.sh germany
