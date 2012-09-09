@@ -15,16 +15,16 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
-import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.GraphUtility;
+import de.jetsli.graph.util.Helper;
 import java.io.File;
 import org.junit.After;
-import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Before;
+import org.junit.Test;
 
 /**
  *
@@ -63,12 +63,12 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(2, iter.node());
         assertEquals(93.146888, iter.distance(), 1e-3);
-        EdgeFlags flags = new EdgeFlags(iter.flags());
+        CarStreetType flags = new CarStreetType(iter.flags());
         assertTrue(flags.isMotorway());
         assertTrue(flags.isForward());
         assertTrue(flags.isBackward());
         assertTrue(iter.next());
-        flags = new EdgeFlags(iter.flags());
+        flags = new CarStreetType(iter.flags());
         assertTrue(flags.isService());
         assertTrue(flags.isForward());
         assertTrue(flags.isBackward());
@@ -127,13 +127,13 @@ public class OSMReaderTest {
 
         iter = graph.getEdges(1);
         assertTrue(iter.next());
-        EdgeFlags flags = new EdgeFlags(iter.flags());
+        CarStreetType flags = new CarStreetType(iter.flags());
         assertTrue(flags.isMotorway());
         assertFalse(flags.isForward());
         assertTrue(flags.isBackward());
 
         assertTrue(iter.next());
-        flags = new EdgeFlags(iter.flags());
+        flags = new CarStreetType(iter.flags());
         assertTrue(flags.isMotorway());
         assertTrue(flags.isForward());
         assertFalse(flags.isBackward());

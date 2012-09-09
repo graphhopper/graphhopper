@@ -21,29 +21,33 @@ import java.util.Map;
 /**
  * @author Peter Karich
  */
-public class EdgeFlags {
+public class CarStreetType {
 
-    private static final int F = 2;
-    public static final CarSpeed CAR_SPEED = new CarSpeed();
-    static final int DEFAULT_SPEED = CAR_SPEED.get("secondary");
-    public static final int MAX_SPEED = CAR_SPEED.get("motorway");
-    public static final int FORWARD = 1;
-    public static final int BACKWARD = 2;
+    public static final Map<String, Integer> SPEED = new CarSpeed();
+    public static final int MAX_SPEED = SPEED.get("motorway");
+    public static final int FACTOR = 2;
+    public static final int DEFAULT_SPEED = SPEED.get("secondary");
+    private static final int FORWARD = 1;
+    private static final int BACKWARD = 2;
     private int flags;
 
     /**
      * for debugging and testing purposes
      */
-    public EdgeFlags(int flags) {
+    public CarStreetType(int flags) {
         this.flags = flags;
     }
 
+    public int getRaw() {
+        return flags;
+    }
+
     public boolean isMotorway() {
-        return getSpeedPart() == CAR_SPEED.get("motorway");
+        return getSpeedPart() == SPEED.get("motorway");
     }
 
     public boolean isService() {
-        return getSpeedPart() == CAR_SPEED.get("service");
+        return getSpeedPart() == SPEED.get("service");
     }
 
     public boolean isForward() {
@@ -62,14 +66,10 @@ public class EdgeFlags {
         return getSpeedPart() * 10;
     }
 
-    public int getRaw() {
-        return flags;
-    }
-
-    public static int create(boolean bothDirections) {
-        if (bothDirections)
-            return DEFAULT_SPEED << 2 | BACKWARD | FORWARD;
-        return DEFAULT_SPEED << 2 | FORWARD;
+    @Override
+    public String toString() {
+        int speed = getSpeed();
+        return "speed:" + speed + ", backwards:" + ((flags & BACKWARD) != 0) + ", forwards:" + ((flags & FORWARD) != 0);
     }
 
     public static boolean isForward(int flags) {
@@ -99,11 +99,17 @@ public class EdgeFlags {
     }
 
     public static int getSpeed(int flags) {
-        return getSpeedPart(flags) * F;
+        return getSpeedPart(flags) * FACTOR;
     }
 
-    public static int create(int speed, boolean bothDir) {
-        int flags = speed / F;
+    public static int flagsDefault(boolean bothDirections) {
+        if (bothDirections)
+            return DEFAULT_SPEED << 2 | BACKWARD | FORWARD;
+        return DEFAULT_SPEED << 2 | FORWARD;
+    }
+
+    public static int flags(int speed, boolean bothDir) {
+        int flags = speed / FACTOR;
         flags <<= 2;
         flags |= FORWARD;
         if (bothDir)
@@ -111,31 +117,11 @@ public class EdgeFlags {
         return flags;
     }
 
-    public static int create(Map<String, Object> properties) {
-        Integer integ = (Integer) properties.get("car");
-        if (integ != null) {
-            integ *= F;
-            if (!"yes".equals(properties.get("oneway")))
-                return create(integ, true);
-            else
-                return create(integ, false);
-        }
-        return 0;
-    }
-
-    @Override
-    public String toString() {
-        int speed = getSpeedPart();
-        return "speed:" + speed + ", backwards:" + ((flags & 1) != 0) + ", forwards:" + ((flags & 2) != 0);
-    }
-    // used from http://wiki.openstreetmap.org/wiki/OpenRouteService#Used_OSM_Tags_for_Routing
-    // http://wiki.openstreetmap.org/wiki/Map_Features#Highway
-
     /**
-     * A map which associates string to integer. With this integer one can put the speed profile
-     * into 1 byte
+     * A map which associates string to speed. The speed is calculated from the integer with FACTOR.
+     * I.e. only 1 byte is necessary.
      */
-    public static class CarSpeed extends HashMap<String, Integer> {
+    private static class CarSpeed extends HashMap<String, Integer> {
 
         {
             // autobahn

@@ -16,7 +16,7 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.reader.PrinctonReader;
-import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.routing.util.FastestCalc;
 import de.jetsli.graph.routing.util.ShortestCalc;
 import de.jetsli.graph.storage.Graph;
@@ -52,26 +52,26 @@ public abstract class AbstractRoutingAlgorithmTester {
     // see calc-fastest-graph.svg
     @Test public void testCalcFastestPath() {
         Graph graph = createGraph(20);
-        graph.edge(0, 1, 7, EdgeFlags.create(10, false));
-        graph.edge(0, 4, 5, EdgeFlags.create(20, false));
+        graph.edge(0, 1, 7, CarStreetType.flags(10, false));
+        graph.edge(0, 4, 5, CarStreetType.flags(20, false));
 
-        graph.edge(1, 4, 7, EdgeFlags.create(10, true));
-        graph.edge(1, 5, 7, EdgeFlags.create(10, true));
-        graph.edge(1, 2, 20, EdgeFlags.create(10, true));
+        graph.edge(1, 4, 7, CarStreetType.flags(10, true));
+        graph.edge(1, 5, 7, CarStreetType.flags(10, true));
+        graph.edge(1, 2, 20, CarStreetType.flags(10, true));
 
-        graph.edge(5, 2, 5, EdgeFlags.create(10, false));
-        graph.edge(2, 3, 5, EdgeFlags.create(10, false));
+        graph.edge(5, 2, 5, CarStreetType.flags(10, false));
+        graph.edge(2, 3, 5, CarStreetType.flags(10, false));
 
-        graph.edge(5, 3, 11, EdgeFlags.create(20, false));
-        graph.edge(3, 7, 7, EdgeFlags.create(10, false));
+        graph.edge(5, 3, 11, CarStreetType.flags(20, false));
+        graph.edge(3, 7, 7, CarStreetType.flags(10, false));
 
-        graph.edge(4, 6, 5, EdgeFlags.create(20, false));
-        graph.edge(5, 4, 7, EdgeFlags.create(10, false));
+        graph.edge(4, 6, 5, CarStreetType.flags(20, false));
+        graph.edge(5, 4, 7, CarStreetType.flags(10, false));
 
-        graph.edge(5, 6, 7, EdgeFlags.create(10, false));
-        graph.edge(7, 5, 5, EdgeFlags.create(20, false));
+        graph.edge(5, 6, 7, CarStreetType.flags(10, false));
+        graph.edge(7, 5, 5, CarStreetType.flags(20, false));
 
-        graph.edge(6, 7, 5, EdgeFlags.create(20, true));
+        graph.edge(6, 7, 5, CarStreetType.flags(20, true));
         Path p1 = createAlgo(graph).setType(ShortestCalc.DEFAULT).calcPath(0, 3);
         assertEquals(p1.toString(), 24, p1.weight(), 1e-6);
         assertEquals(p1.toString(), 24, p1.distance(), 1e-6);

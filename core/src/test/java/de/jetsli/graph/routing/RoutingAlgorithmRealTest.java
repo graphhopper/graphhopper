@@ -22,7 +22,6 @@ import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.util.CmdArgs;
-import de.jetsli.graph.util.GraphUtility;
 import de.jetsli.graph.util.Helper;
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Try algorithms with real data => slowish setup .
+ * Try algorithms with real data => slowish setup
  *
  * @author Peter Karich
  */

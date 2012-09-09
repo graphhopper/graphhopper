@@ -29,17 +29,17 @@ public class FastestCalc implements WeightCalculation {
 
     @Override
     public double getWeight(EdgeIterator iter) {
-        return iter.distance() / EdgeFlags.getSpeedPart(iter.flags());
+        return iter.distance() / CarStreetType.getSpeedPart(iter.flags());
     }
 
     @Override
     public double apply(double currDistToGoal) {
-        return currDistToGoal / EdgeFlags.MAX_SPEED;
+        return currDistToGoal / CarStreetType.MAX_SPEED;
     }
 
     @Override
     public double apply(double currDistToGoal, int flags) {
-        return currDistToGoal / EdgeFlags.getSpeedPart(flags);
+        return currDistToGoal / CarStreetType.getSpeedPart(flags);
     }
 
     @Override public String toString() {

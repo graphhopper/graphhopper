@@ -134,14 +134,14 @@ public class PrepareRoutingShortcuts {
         boolean firstForward = false;
         for (; iter.next(); counter++) {
             if (counter == 0) {
-                firstForward = EdgeFlags.isForward(iter.flags());
+                firstForward = CarStreetType.isForward(iter.flags());
                 node = iter.node();
             } else if (counter == 1) {
                 if (node == iter.node())
                     break;
-                if (firstForward && !EdgeFlags.isBackward(iter.flags()))
+                if (firstForward && !CarStreetType.isBackward(iter.flags()))
                     return false;
-                else if (!firstForward && !EdgeFlags.isForward(iter.flags()))
+                else if (!firstForward && !CarStreetType.isForward(iter.flags()))
                     return false;
             }
             if (counter > 2)

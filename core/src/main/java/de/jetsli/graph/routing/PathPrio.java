@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.routing.util.WeightCalculation;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.PriorityGraph;
@@ -80,7 +80,7 @@ public class PathPrio extends PathBidirRef {
             to = tmp;
             // search skipped node at the other end of the shortcut!
             reverse = true;
-            tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, EdgeFlags.swapDirection(flags));
+            tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, CarStreetType.swapDirection(flags));
             if (tmpIter == EdgeIterator.EMPTY)
                 throw new IllegalStateException("skipped node " + skippedNode + " not found for " + from + "->" + to + "? " + BitUtil.toBitString(flags, 8));
         }

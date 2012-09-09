@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.routing.util.EdgePrioFilter;
 import de.jetsli.graph.routing.util.PrepareRoutingShortcuts;
 import de.jetsli.graph.storage.PriorityGraph;
@@ -108,18 +108,18 @@ public class DijkstraBidirectionPrioTest {
         // 0-1-2-3-4-9
         //   |     |
         //   5-6-7-8        
-        g.edge(1, 5, 1, EdgeFlags.create(50, true));
-        g.edge(5, 6, 1, EdgeFlags.create(50, true));
-        g.edge(6, 7, 1, EdgeFlags.create(50, true));
-        g.edge(7, 8, 1, EdgeFlags.create(50, true));
-        g.edge(8, 4, 1, EdgeFlags.create(50, true));
+        g.edge(1, 5, 1, CarStreetType.flags(50, true));
+        g.edge(5, 6, 1, CarStreetType.flags(50, true));
+        g.edge(6, 7, 1, CarStreetType.flags(50, true));
+        g.edge(7, 8, 1, CarStreetType.flags(50, true));
+        g.edge(8, 4, 1, CarStreetType.flags(50, true));
 
-        g.edge(0, 1, 1, EdgeFlags.create(50, true));
-        g.edge(1, 2, 1, EdgeFlags.create(10, true));
-        g.edge(2, 3, 1, EdgeFlags.create(10, true));
-        g.edge(3, 4, 1, EdgeFlags.create(10, true));
-        g.edge(4, 9, 1, EdgeFlags.create(10, true));
-        g.edge(4, 10, 1, EdgeFlags.create(50, true));
+        g.edge(0, 1, 1, CarStreetType.flags(50, true));
+        g.edge(1, 2, 1, CarStreetType.flags(10, true));
+        g.edge(2, 3, 1, CarStreetType.flags(10, true));
+        g.edge(3, 4, 1, CarStreetType.flags(10, true));
+        g.edge(4, 9, 1, CarStreetType.flags(10, true));
+        g.edge(4, 10, 1, CarStreetType.flags(50, true));
 
         PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
         prepare.doWork();

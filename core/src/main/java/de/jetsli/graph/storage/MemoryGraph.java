@@ -17,7 +17,7 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.util.EdgeIterator;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -79,7 +79,7 @@ public class MemoryGraph implements Graph, Cloneable {
 
     @Override
     public void edge(int a, int b, double distance, boolean bothDirections) {
-        edge(a, b, distance, EdgeFlags.create(bothDirections));
+        edge(a, b, distance, CarStreetType.flagsDefault(bothDirections));
     }
 
     @Override
@@ -91,7 +91,7 @@ public class MemoryGraph implements Graph, Cloneable {
         ensureNodeIndex(b);
         addIfAbsent(a, b, (float) distance, (byte) flags);
 
-        flags = EdgeFlags.swapDirection(flags);
+        flags = CarStreetType.swapDirection(flags);
         addIfAbsent(b, a, (float) distance, (byte) flags);
     }
 

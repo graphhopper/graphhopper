@@ -4,8 +4,8 @@ vers=`$JAVA_HOME/bin/java -version 2>&1 | grep "java version" | awk '{print $3}'
 echo "using java $vers from $JAVA_HOME"
 
 FILE=$1
-CLASS=$2
-ALGO=$3
+ALGO=$2
+CLASS=$3
 
 if [ "x$CLASS" = "x" ]; then
 # CLASS=de.jetsli.graph.ui.MiniGraphUI

@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.AcceptStreet;
 import de.jetsli.graph.routing.util.PrepareRoutingSubnetworks;
 import de.jetsli.graph.routing.util.RoutingAlgorithmIntegrationTests;
 import de.jetsli.graph.storage.Graph;
@@ -84,6 +84,7 @@ public class OSMReader {
     private TIntArrayList tmpLocs = new TIntArrayList(10);
     private Map<String, Object> properties = new HashMap<String, Object>();
     private CalcDistance callback = new CalcDistance();
+    private AcceptStreet acceptStreets = new AcceptStreet(true, false, false, false);
 
     /**
      * Opens or creates a graph. The specified args need a property 'graph' (a folder) and if no
@@ -111,6 +112,10 @@ public class OSMReader {
                 throw new IllegalStateException("Your specified OSM file does not exist:" + strOsm);
             logger.info("size for osm2id-map is " + osmReader.getMaxLocs() + " - start creating graph from " + osmXmlFile);
             osmReader.osm2Graph(osmXmlFile);
+            String type = args.get("type", "CAR");
+            osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
+                    type.contains("PUBLIC_TRANSPORT"),
+                    type.contains("BIKE"), type.contains("FOOT")));
         }
 
         return osmReader.getGraph();
@@ -307,9 +312,10 @@ public class OSMReader {
         return true;
     }
 
-    void parseWay(TIntArrayList tmpLocs, Map<String, Object> properties, XMLStreamReader sReader)
+    boolean parseWay(TIntArrayList tmpLocs, Map<String, Object> properties, XMLStreamReader sReader)
             throws XMLStreamException {
 
+        boolean handled = false;
         tmpLocs.clear();
         properties.clear();
         for (int tmpE = sReader.nextTag(); tmpE != XMLStreamConstants.END_ELEMENT;
@@ -327,27 +333,15 @@ public class OSMReader {
                     if (key != null && !key.isEmpty()) {
                         String val = sReader.getAttributeValue(null, "v");
                         if ("highway".equals(key)) {
-                            Integer integ = EdgeFlags.CAR_SPEED.get(val);
-                            if (integ != null)
-                                properties.put("car", integ);
-//                            else if ("footway".equals(val) || "path".equals(val) || "steps".equals(val)
-//                                    || "pedestrian".equals(val))
-//                                properties.put("foot", "yes");
-//                            else if ("cycleway".equals(val))
-//                                properties.put("bike", "yes");                            
-//                            // bridleway = reitweg
-//                            else if ("proposed".equals(val) || "preproposed".equals(val) 
-//                                    || "platform".equals(val) || "raceway".equals(val) 
-//                                    || "bus_stop".equals(val)  || "bridleway".equals(val) 
+                            handled = acceptStreets.handleWay(properties, val);                            
+//                            if ("proposed".equals(val) || "preproposed".equals(val)
+//                                    || "platform".equals(val) || "raceway".equals(val)
+//                                    || "bus_stop".equals(val) || "bridleway".equals(val)
 //                                    || "construction".equals(val) || "no".equals(val) || "centre_line".equals(val))
+//                                // ignore
 //                                val = val;
 //                            else
 //                                logger.warn("unknown highway type:" + val);
-                        } else if ("cycleway".equals(key)) {
-                            // add bike support later
-                            // http://wiki.openstreetmap.org/wiki/Cycleway
-                            // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway
-                            // https://github.com/Tristramg/osm4routing/blob/master/parameters.cc
                         } else if ("oneway".equals(key)) {
                             if ("yes".equals(val) || "true".equals(val) || "1".equals(val))
                                 properties.put("oneway", "yes");
@@ -362,18 +356,18 @@ public class OSMReader {
                 sReader.next();
             }
         }
+        return handled;
     }
 
     public boolean isHighway(XMLStreamReader sReader) throws XMLStreamException {
-        parseWay(tmpLocs, properties, sReader);
-        return properties.get("car") != null;
+        return parseWay(tmpLocs, properties, sReader);        
     }
 
     public void processHighway(XMLStreamReader sReader) throws XMLStreamException {
         if (isHighway(sReader) && tmpLocs.size() > 1) {
             int prevOsmId = tmpLocs.get(0);
             int l = tmpLocs.size();
-            int flags = EdgeFlags.create(properties);
+            int flags = acceptStreets.toFlags(properties);
             for (int index = 1; index < l; index++) {
                 int currOsmId = tmpLocs.get(index);
                 boolean ret = storage.addEdge(prevOsmId, currOsmId, flags, callback);
@@ -410,5 +404,9 @@ public class OSMReader {
             logger.info(e.getKey() + "\t -> " + e.getValue());
         }
         logger.info("---");
+    }
+
+    public void setAcceptStreet(AcceptStreet acceptStr) {
+        this.acceptStreets = acceptStr;
     }
 }

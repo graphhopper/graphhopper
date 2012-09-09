@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.util;
 
-import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
 import de.jetsli.graph.storage.PriorityGraphImpl;
@@ -31,22 +31,22 @@ public class EdgeUpdateIteratorTest {
     @Test
     public void testUpdateFlags() {
         Graph g = new PriorityGraphImpl(20);
-        g.edge(0, 1, 12, EdgeFlags.create(10, true));
-        g.edge(0, 2, 13, EdgeFlags.create(20, true));
+        g.edge(0, 1, 12, CarStreetType.flags(10, true));
+        g.edge(0, 2, 13, CarStreetType.flags(20, true));
 
         assertEquals(4, GraphUtility.countEdges(g));
         assertEquals(1, GraphUtility.count(g.getOutgoing(1)));
         EdgeSkipIterator iter = (EdgeSkipIterator) g.getEdges(0);
         assertTrue(iter.next());
-        assertEquals(EdgeFlags.create(10, true), iter.flags());
-        iter.flags(EdgeFlags.create(20, false));
+        assertEquals(CarStreetType.flags(10, true), iter.flags());
+        iter.flags(CarStreetType.flags(20, false));
         assertEquals(12, iter.distance(), 1e-4);
         iter.distance(10);
         assertEquals(10, iter.distance(), 1e-4);
         assertEquals(0, GraphUtility.count(g.getOutgoing(1)));
         iter = (EdgeSkipIterator) g.getEdges(0);
         assertTrue(iter.next());
-        assertEquals(EdgeFlags.create(20, false), iter.flags());
+        assertEquals(CarStreetType.flags(20, false), iter.flags());
         assertEquals(10, iter.distance(), 1e-4);
         assertEquals(3, GraphUtility.countEdges(g));
     }

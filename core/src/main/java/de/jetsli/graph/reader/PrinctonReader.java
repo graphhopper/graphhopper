@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.reader;
 
-import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.Helper;
 import java.io.BufferedReader;
@@ -74,7 +74,7 @@ public class PrinctonReader {
                 if (counter != 3)
                     throw new RuntimeException("incorrect read!? from:" + from + ", to:" + to + ", dist:" + dist);
 
-                g.edge(from, to, dist, EdgeFlags.FORWARD);
+                g.edge(from, to, dist, false);
             }
         } catch (Exception ex) {
             throw new RuntimeException("Problem in line " + lineNo, ex);

@@ -40,7 +40,7 @@ public class TestAlgoCollector {
     public TestAlgoCollector assertDistance(RoutingAlgorithm algo, int from, int to, double distance, int locations) {
         Path p = algo.clear().calcPath(from, to);
         if (p == null) {
-            list.add(algo + " returns no path for " + "from:" + from + ", to:" + to);
+            list.add(algo + " returns no path. from:" + from + ", to:" + to);
             return this;
         } else if (Math.abs(p.weight() - distance) > 1e-2)
             list.add(algo + " returns path not matching the expected " + "distance of " + distance + "\t Returned was " + p.weight() + "\t (expected locations " + locations + ", was " + p.locations() + ") " + "from:" + from + ", to:" + to);

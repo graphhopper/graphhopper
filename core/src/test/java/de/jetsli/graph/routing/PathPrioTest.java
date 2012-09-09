@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.routing.util.EdgeFlags;
+import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.routing.util.ShortestCalc;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.PriorityGraph;
@@ -57,7 +57,7 @@ public class PathPrioTest {
 
         g.setPriority(1, -1);
         g.setPriority(2, -1);
-        g.shortcut(0, 2, 20, EdgeFlags.create(true), 1);
+        g.shortcut(0, 2, 20, CarStreetType.flagsDefault(true), 1);
 
         PathPrio path = new PathPrio(g, ShortestCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(2, 20);
@@ -78,7 +78,7 @@ public class PathPrioTest {
 
         g.setPriority(1, -1);
         g.setPriority(2, -1);
-        g.shortcut(0, 3, 30, EdgeFlags.create(true), 1);
+        g.shortcut(0, 3, 30, CarStreetType.flagsDefault(true), 1);
 
         PathPrio path = new PathPrio(g, ShortestCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(3, 30);

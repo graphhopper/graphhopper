@@ -181,13 +181,13 @@ public class PrepareRoutingShortcutsTest {
     @Test
     public void testMultiTypeShortcuts() {
         PriorityGraph g = createGraph(20);
-        g.edge(0, 10, 1, EdgeFlags.create(30, true));
-        g.edge(0, 1, 10, EdgeFlags.create(30, true));
-        g.edge(1, 2, 10, EdgeFlags.create(30, true));
-        g.edge(2, 3, 10, EdgeFlags.create(30, true));
-        g.edge(0, 4, 20, EdgeFlags.create(120, true));
-        g.edge(4, 3, 20, EdgeFlags.create(120, true));
-        g.edge(3, 11, 1, EdgeFlags.create(30, true));
+        g.edge(0, 10, 1, CarStreetType.flags(30, true));
+        g.edge(0, 1, 10, CarStreetType.flags(30, true));
+        g.edge(1, 2, 10, CarStreetType.flags(30, true));
+        g.edge(2, 3, 10, CarStreetType.flags(30, true));
+        g.edge(0, 4, 20, CarStreetType.flags(120, true));
+        g.edge(4, 3, 20, CarStreetType.flags(120, true));
+        g.edge(3, 11, 1, CarStreetType.flags(30, true));
 
         PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
         prepare.doWork();
