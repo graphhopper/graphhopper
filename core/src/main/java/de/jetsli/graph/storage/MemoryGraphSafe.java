@@ -225,6 +225,13 @@ public class MemoryGraphSafe implements SaveableGraph {
         writeEdge(newOrExistingEdgePointer, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, flags, dist);
     }
 
+    protected int nextEdgePointer() {
+        edgeNextGlobalPointer += LEN_EDGE;
+        if (edgeNextGlobalPointer < 0)
+            throw new IllegalStateException("too many edges. new edge pointer would be negative.");
+        return edgeNextGlobalPointer;
+    }
+
     protected void connectNewEdge(int fromNodeId, int newOrExistingEdgePointer) {
         int edgePointer = refToEdges[fromNodeId];
         if (edgePointer > 0) {
@@ -293,11 +300,6 @@ public class MemoryGraphSafe implements SaveableGraph {
             int link = getLinkPosInEdgeArea(node, otherNode, edgeToUpdatePointer);
             saveToEdgeArea(link, nextEdge);
         }
-    }
-
-    protected int nextEdgePointer() {
-        edgeNextGlobalPointer += LEN_EDGE;
-        return edgeNextGlobalPointer;
     }
 
     private int getLastEdgePointer(int nodeThis, int edgePointer) {

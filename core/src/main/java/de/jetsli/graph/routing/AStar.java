@@ -16,7 +16,6 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.coll.MyOpenBitSet;
-import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.ApproxCalcDistance;
