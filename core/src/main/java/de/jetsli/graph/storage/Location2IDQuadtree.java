@@ -20,8 +20,6 @@ import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
 import de.jetsli.graph.util.*;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -123,6 +121,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
         int locs = g.getNodes();
         if (locs <= 0)
             throw new IllegalStateException("check your graph - it is empty!");
+
+        if (spatialKey2Id == null)
+            throw new IllegalStateException("call prepareIndex before");
 
         MyOpenBitSet filledIndices = new MyOpenBitSet(size);
         CoordTrig coord = new CoordTrig();

@@ -44,9 +44,15 @@ elif [ "$FILE" = "germany" ]; then
  JAVA_OPTS_IMPORT="-XX:PermSize=10m -XX:MaxPermSize=10m -Xmx2700m -Xms2700m"
  JAVA_OPTS="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx1900m -Xms1900m"
  SIZE=35000000
+elif [ -f $OSM ]; then
+ GRAPH=graph-$(basename "$OSM")
+ LINK=""
+ JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx300m -Xms300m"
+ JAVA_OPTS=$JAVA_OPTS_IMPORT
+ SIZE=5000000     
 else
- echo "Sorry, your input $FILE was not found ... exiting"
- exit
+ echo "Sorry, your osm file $OSM was not found ... exiting"
+ exit   
 fi
 
 if [ ! -f "$OSM" ]; then
