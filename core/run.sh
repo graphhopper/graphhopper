@@ -20,7 +20,13 @@ if [ "x$FILE" = "x" ]; then
  FILE=unterfranken
 fi
 
-OSM=$FILE.osm
+FEND="${FILE##*.}"
+
+if [ "x$FEND" = "x" ]; then
+  OSM=$FILE.osm
+else
+  OSM=$FILE
+fi
 
 # for perf tests
 TEST=false
