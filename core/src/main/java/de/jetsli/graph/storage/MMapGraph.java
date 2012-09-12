@@ -95,7 +95,7 @@ public class MMapGraph implements SaveableGraph {
     private RandomAccessFile edgeFile = null;
     private ByteBuffer nodes;
     private ByteBuffer edges;
-    private File dirName;
+    private File storageFolder;
     private boolean saveOnFlushOnly = false;
 
     /**
@@ -108,16 +108,16 @@ public class MMapGraph implements SaveableGraph {
     /**
      * Creates a memory-mapped graph
      */
-    public MMapGraph(String name, int maxNodes) {
+    public MMapGraph(String storageLocation, int maxNodes) {
         // increase size a bit to avoid capacity increase only because the last nodes reaches the
         // users' exact specified exact value
         this.maxNodes = maxNodes + 10;
-        if (name != null)
-            this.dirName = new File(name);
+        if (storageLocation != null)
+            this.storageFolder = new File(storageLocation);
     }
 
     public String getStorageLocation() {
-        return dirName.getAbsolutePath();
+        return storageFolder.getAbsolutePath();
     }
 
     public boolean loadExisting() {
@@ -145,9 +145,9 @@ public class MMapGraph implements SaveableGraph {
         if (nodes != null)
             throw new IllegalStateException("You cannot use one instance multiple times");
 
-        if (dirName != null) {
-            Helper.deleteDir(dirName);
-            dirName.mkdirs();
+        if (storageFolder != null) {
+            Helper.deleteDir(storageFolder);
+            storageFolder.mkdirs();
         }
 
         this.saveOnFlushOnly = saveOnFlushOnly;
@@ -187,7 +187,7 @@ public class MMapGraph implements SaveableGraph {
             newBytes = newNumberOfNodes * bytesNode;
         }
         maxNodes = newNumberOfNodes;
-        if (dirName != null && !saveOnFlushOnly) {
+        if (storageFolder != null && !saveOnFlushOnly) {
             if (nodeFile == null)
                 nodeFile = new RandomAccessFile(getNodesFile(), "rw");
             else {
@@ -234,7 +234,7 @@ public class MMapGraph implements SaveableGraph {
                 return false;
             newBytes = (int) Math.max(newBytes, 1.3 * edges.capacity());
         }
-        if (dirName != null && !saveOnFlushOnly) {
+        if (storageFolder != null && !saveOnFlushOnly) {
             if (edgeFile == null)
                 edgeFile = new RandomAccessFile(getEdgesFile(), "rw");
             else {
@@ -255,21 +255,21 @@ public class MMapGraph implements SaveableGraph {
     }
 
     private File getSettingsFile() {
-        if (dirName == null)
+        if (storageFolder == null)
             throw new IllegalStateException("dirName was null although required to store data");
-        return new File(dirName, "settings");
+        return new File(storageFolder, "settings");
     }
 
     private File getNodesFile() {
-        if (dirName == null)
+        if (storageFolder == null)
             throw new IllegalStateException("dirName was null although required to store data");
-        return new File(dirName, "nodes");
+        return new File(storageFolder, "nodes");
     }
 
     private File getEdgesFile() {
-        if (dirName == null)
+        if (storageFolder == null)
             throw new IllegalStateException("dirName was null although required to store data");
-        return new File(dirName, "egdes");
+        return new File(storageFolder, "egdes");
     }
 
     @Override
@@ -537,7 +537,7 @@ public class MMapGraph implements SaveableGraph {
 
     @Override
     public Graph clone() {
-        if (dirName != null) {
+        if (storageFolder != null) {
             // TODO how we should clone a graph on disc? should we name it cloned-graph or how?
             logger.error("Cloned graph will be in-memory only!");
         }
@@ -621,7 +621,7 @@ public class MMapGraph implements SaveableGraph {
 
     @Override
     public void flush() {
-        if (dirName != null) {
+        if (storageFolder != null) {
             if (saveOnFlushOnly) {
                 writeToDisc(getNodesFile(), nodes);
                 writeToDisc(getEdgesFile(), edges);
@@ -654,7 +654,7 @@ public class MMapGraph implements SaveableGraph {
     }
 
     public boolean loadSettings() {
-        if (dirName == null)
+        if (storageFolder == null)
             return false;
 
         try {
@@ -685,7 +685,7 @@ public class MMapGraph implements SaveableGraph {
 
     @Override
     public void close() {
-        if (dirName != null) {
+        if (storageFolder != null) {
             flush();
             if (nodes instanceof MappedByteBuffer)
                 Helper7.cleanMappedByteBuffer((MappedByteBuffer) nodes);
