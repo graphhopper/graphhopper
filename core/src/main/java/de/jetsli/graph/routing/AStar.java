@@ -44,8 +44,8 @@ public class AStar extends AbstractRoutingAlgorithm {
     /**
      * @param fast if true it enables approximative distance calculation from lat,lon values
      */
-    public AStar setFast(boolean fast) {
-        if (fast)
+    public AStar setApproximation(boolean approx) {
+        if (approx)
             dist = new ApproxCalcDistance();
         else
             dist = new CalcDistance();
