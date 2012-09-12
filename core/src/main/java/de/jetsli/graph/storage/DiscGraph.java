@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 /**
+ * Entirely disc based graph, very slow. At the moment you should prefer MMapGraph
+ * 
  * @author Peter Karich
  */
 public class DiscGraph implements SaveableGraph {

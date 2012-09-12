@@ -36,7 +36,9 @@ import org.slf4j.LoggerFactory;
 /**
  * A graph represenation which can be stored directly on disc when using the memory mapped
  * constructor.
- *
+ * 
+ * Also runs under Android.
+ * 
  * TODO rewrite with:
  *
  * 1. better method encapsulation
@@ -46,9 +48,9 @@ import org.slf4j.LoggerFactory;
  * 3. store size in one variable do not use two: maxRecognizedNodeIndex and currentNodeSize
  *
  * 4. instead edge iterator => use collection. we'll have only a small number of edges => iterator
- * makes no sense and won't grab the information in one bulk operation
- *
- * (read+write thread safety)
+ * makes no sense and we are not able to grab the information in one bulk operation.
+ * 
+ * 5. read thread safety
  *
  * @author Peter Karich, info@jetsli.de
  */
