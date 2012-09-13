@@ -1,12 +1,7 @@
 target/
-graphdb/
 *~
 *largeEWD.txt.gz
 TODO.txt
-docs/
-osm.lucene.test*
 mmap-graph*
-neo4j*.db
-core/*.osm
-tinker*db
-android-example/
+*.osm
+docs/
