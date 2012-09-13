@@ -83,7 +83,7 @@ else
 fi
 
 if [ ! -d "$GRAPH" ]; then
-  echo "## now creating graph $GRAPH (folder) from $OSM (file). java opts=$JAVA_OPTS_IMPORT"
+  echo "## now creating graph $GRAPH (folder) from $OSM (file),  java opts=$JAVA_OPTS_IMPORT"
   echo "## HINT: put the osm on an external usb drive which should speed up import time"
   $JAVA_HOME/bin/java $JAVA_OPTS_IMPORT -cp $JAR de.jetsli.graph.reader.OSMReader graph=$GRAPH osm=$OSM size=$SIZE
 else

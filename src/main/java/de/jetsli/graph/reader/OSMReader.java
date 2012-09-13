@@ -19,6 +19,7 @@ import de.jetsli.graph.routing.util.AcceptStreet;
 import de.jetsli.graph.routing.util.PrepareRoutingSubnetworks;
 import de.jetsli.graph.routing.util.RoutingAlgorithmIntegrationTests;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.MMapGraphStorage;
 import de.jetsli.graph.storage.MemoryGraphSafeStorage;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.*;
@@ -43,28 +44,9 @@ import org.slf4j.LoggerFactory;
 public class OSMReader {
 
     public static void main(String[] strs) throws Exception {
-        CmdArgs args = Helper.readCmdArgs(strs);
-        int size = args.getInt("size", 5 * 1000 * 1000);
-        String graphFolder = args.get("graph", "graph-storage");
-        if (Helper.isEmpty(graphFolder))
-            throw new IllegalArgumentException("Please specify a folder where to store the graph");
-
-        OSMReader osmReader = new OSMReader(graphFolder, size) {
-            @Override public boolean isInBounds(double lat, double lon) {
-                // regardless of bounds it takes ~7min (nodes) and 5min (edges) for MMyGraphStorage and other fast storages
-                // ~germany
-                // 90  mio nodes, but only 33 mio involved in routing
-                // 100 mio edges
-                return true;
-
-                // ~bayreuth+bamberg+erlangen+nueremberg
-                // 2.7 mio nodes
-                // 2.9 mio edges
-//                return lat > 49.3 && lat < 50 && lon > 10.8 && lon < 11.6;
-            }
-        };
-        osm2Graph(osmReader, args);
-        RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(osmReader.getGraph());
+        CmdArgs args = Helper.readCmdArgs(strs);        
+        Graph g = osm2Graph(args);
+        RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(g);
         if (args.getBool("test", false)) {
             tests.start();
         } else if (args.getBool("shortestpath", false)) {
@@ -92,13 +74,18 @@ public class OSMReader {
      * property 'size' is used to preinstantiate a datastructure/graph to avoid over-memory
      * allocation or reallocation (default is 5mio)
      */
-    public static Graph osm2Graph(CmdArgs args) throws IOException {
+    public static Graph osm2Graph(final CmdArgs args) throws IOException {
         String storageFolder = args.get("graph", "graph-storage");
         if (Helper.isEmpty(storageFolder))
             throw new IllegalArgumentException("Please specify a folder where to store the graph");
 
         int size = (int) args.getLong("size", 5 * 1000 * 1000);
-        return osm2Graph(new OSMReader(storageFolder, size), args);
+        Storage storage;
+        if ("MMapGraph".equalsIgnoreCase(args.get("graphClass", "MemoryGraphSafe")))
+            storage = new MMapGraphStorage(storageFolder, size);
+        else
+            storage = new MemoryGraphSafeStorage(storageFolder, size);
+        return osm2Graph(new OSMReader(storage, size), args);
     }
 
     public static Graph osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
@@ -126,14 +113,13 @@ public class OSMReader {
     }
 
     public OSMReader(String storageLocation, int size) {
-        storage = createStorage(storageLocation, expectedLocs = size);
-        logger.info("using " + storage.getClass().getSimpleName());
+        this(new MemoryGraphSafeStorage(storageLocation, size), size);
     }
 
-    protected Storage createStorage(String storageLocation, int size) {
-//        return new MMapGraphStorage(storageLocation, size);
-//        return new MemoryGraphStorage(size);
-        return new MemoryGraphSafeStorage(storageLocation, size);
+    public OSMReader(Storage storage, int size) {
+        this.storage = storage;
+        expectedLocs = size;
+        logger.info("using " + storage.getClass().getSimpleName());
     }
 
     public boolean loadExisting() {
@@ -333,7 +319,7 @@ public class OSMReader {
                     if (key != null && !key.isEmpty()) {
                         String val = sReader.getAttributeValue(null, "v");
                         if ("highway".equals(key)) {
-                            handled = acceptStreets.handleWay(properties, val);                            
+                            handled = acceptStreets.handleWay(properties, val);
 //                            if ("proposed".equals(val) || "preproposed".equals(val)
 //                                    || "platform".equals(val) || "raceway".equals(val)
 //                                    || "bus_stop".equals(val) || "bridleway".equals(val)
@@ -360,7 +346,7 @@ public class OSMReader {
     }
 
     public boolean isHighway(XMLStreamReader sReader) throws XMLStreamException {
-        return parseWay(tmpLocs, properties, sReader);        
+        return parseWay(tmpLocs, properties, sReader);
     }
 
     public void processHighway(XMLStreamReader sReader) throws XMLStreamException {
