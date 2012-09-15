@@ -1,6 +1,6 @@
 # GraphHopper [![Build Status](https://secure.travis-ci.org/karussell/GraphHopper.png?branch=master)](http://travis-ci.org/karussell/GraphHopper)
 
-[Memory efficient data structures & algorithms on (geo) graphs](http://karussell.github.com/GraphHopper/)
+Memory efficient data structures & algorithms on graphs
 
 License
 ----------------
@@ -31,7 +31,7 @@ Routing Usage
 
 The following command will make a part of Germany routable:
 
-> cd core; ./run.sh unterfranken
+> ./run.sh unterfranken.osm
 
   1. it downloads 40MB, unzips it to 450MB and creates road-files for graphhopper (40MB)
   2. it builds graphhopper
@@ -42,13 +42,13 @@ After the UI popped up you can drag to move the map or scroll to zoom like in or
 Click once to select a departure and another click to select the destination.
 Then a route should pop up like in this SHINY ;) image ![from twitter](http://karussell.files.wordpress.com/2012/06/graphhopper.png)
 
-[Performance comparison table](https://github.com/karussell/GraphHopper/wiki/Performance/) of different algorithms. And visualization of
+[Performance comparison table](https://github.com/graphhopper/graphhopper/wiki/Performance/) of different algorithms. And visualization of
  * [a bidirectional Dijkstra](http://karussell.files.wordpress.com/2012/06/bidijkstra.gif)
  * [A*](http://karussell.files.wordpress.com/2012/07/astar.gif)
 
 If you want to import full Germany do:
 
-> cd core; ./run.sh germany
+> ./run.sh germany.osm
 
  1. For Germany it takes approx 25 minutes for the import and roughly 1 minute for the ugly&slow UI to pop up.
  2. At the moment the UI is a bit rough and simple so, don't click or drag too much as it takes some time for this large road network
@@ -61,5 +61,3 @@ Further Links
  * [Speed up your Quad-tree](http://karussell.wordpress.com/2012/05/29/tricks-to-speed-up-neighbor-searches-of-quadtrees-geo-spatial-java/)
  * [Spatial Hashtable](http://karussell.wordpress.com/2012/06/17/failed-experiment-memory-efficient-spatial-hashtable/)
  * [Author@Twitter](https://twitter.com/timetabling)
- * [Lumeo - Implementing a Graph API via Lucene](https://github.com/karussell/lumeo)
- * [Cassovary - A production ready (?) in-memory & memory efficient Graph DB](https://github.com/twitter/cassovary)
