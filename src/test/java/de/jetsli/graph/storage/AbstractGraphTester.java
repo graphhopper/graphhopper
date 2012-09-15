@@ -20,6 +20,7 @@ import de.jetsli.graph.util.GraphUtility;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static de.jetsli.graph.util.GraphUtility.*;
+import de.jetsli.graph.util.shapes.BBox;
 import java.util.Arrays;
 
 /**
@@ -116,6 +117,7 @@ public abstract class AbstractGraphTester {
         assertEquals(count(g.getOutgoing(1)), count(clone.getOutgoing(1)));
         clone.edge(1, 4, 10, true);
         assertEquals(3, count(clone.getOutgoing(1)));
+        assertEquals(g.getBounds(), clone.getBounds());
     }
 
     @Test
@@ -432,5 +434,21 @@ public abstract class AbstractGraphTester {
         assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 7))));
         assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 8))));
         assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 11))));
+    }
+
+    @Test public void testBounds() {
+        Graph graph = createGraph(4);
+        BBox b = graph.getBounds();
+        assertEquals(0, b.maxLat, 1e-6);
+        
+        graph.setNode(0, 10, 20);
+        assertEquals(10, b.maxLat, 1e-6);
+        assertEquals(20, b.maxLon, 1e-6);
+        
+        graph.setNode(0, 15, -15);
+        assertEquals(15, b.maxLat, 1e-6);
+        assertEquals(20, b.maxLon, 1e-6);
+        assertEquals(10, b.minLat, 1e-6);
+        assertEquals(-15, b.minLon, 1e-6);
     }
 }

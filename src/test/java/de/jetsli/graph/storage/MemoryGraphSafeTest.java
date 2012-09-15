@@ -17,6 +17,7 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.*;
 import static de.jetsli.graph.util.GraphUtility.*;
+import de.jetsli.graph.util.shapes.BBox;
 import java.io.File;
 import java.io.IOException;
 import static org.junit.Assert.*;
@@ -84,6 +85,7 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
     }
 
     protected void checkGraph(Graph g) {
+        assertEquals(new BBox(10, 20, 10, 12), g.getBounds());
         assertEquals(10, g.getLatitude(0), 1e-2);
         assertEquals(10, g.getLongitude(0), 1e-2);
         assertEquals(2, count(g.getOutgoing(0)));

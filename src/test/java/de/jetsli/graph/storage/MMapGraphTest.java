@@ -27,6 +27,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import static org.junit.Assert.*;
 import static de.jetsli.graph.util.GraphUtility.*;
+import de.jetsli.graph.util.shapes.BBox;
 
 /**
  *
@@ -196,6 +197,7 @@ public class MMapGraphTest extends AbstractGraphTester {
     }
 
     protected void checkGraph(Graph g) {
+        assertEquals(new BBox(10, 20, 10, 12), g.getBounds());
         assertEquals(3, g.getNodes());
         assertEquals(10, g.getLatitude(0), 1e-2);
         assertEquals(10, g.getLongitude(0), 1e-2);

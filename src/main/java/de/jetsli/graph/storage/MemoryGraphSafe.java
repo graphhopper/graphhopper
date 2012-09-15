@@ -21,6 +21,7 @@ import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.Helper;
+import de.jetsli.graph.util.shapes.BBox;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 import java.io.File;
@@ -71,6 +72,7 @@ public class MemoryGraphSafe implements SaveableGraph {
     private int size;
     private String storageLocation;
     private MyBitSet deletedNodes;
+    private BBox bounds;
 
     public MemoryGraphSafe(int cap) {
         this(null, cap);
@@ -82,6 +84,7 @@ public class MemoryGraphSafe implements SaveableGraph {
 
     public MemoryGraphSafe(String storageDir, int cap, int capEdge) {
         this.storageLocation = storageDir;
+        this.bounds = BBox.INVERSE.clone();
         if (!loadExisting(storageDir)) {
             initNodes(cap);
             initEdges(capEdge);
@@ -101,6 +104,11 @@ public class MemoryGraphSafe implements SaveableGraph {
         return size;
     }
 
+    @Override
+    public BBox getBounds() {
+        return bounds;
+    }
+
     private int getMaxEdges() {
         return edgesSegments.length * edgesSegmentSize / LEN_EDGE;
     }
@@ -111,6 +119,14 @@ public class MemoryGraphSafe implements SaveableGraph {
         ensureNodeIndex(index);
         lats[index] = (float) lat;
         lons[index] = (float) lon;
+        if (lat > bounds.maxLat)
+            bounds.maxLat = lat;
+        if (lat < bounds.minLat)
+            bounds.minLat = lat;
+        if (lon > bounds.maxLon)
+            bounds.maxLon = lon;
+        if (lon < bounds.minLon)
+            bounds.minLon = lon;
     }
 
     private void initEdges(int cap) {
@@ -460,6 +476,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         clonedGraph.edgesSegmentSize = edgesSegmentSize;
         clonedGraph.edgeNextGlobalPointer = edgeNextGlobalPointer;
         clonedGraph.size = size;
+        clonedGraph.bounds = bounds;
         return clonedGraph;
     }
 
@@ -499,6 +516,7 @@ public class MemoryGraphSafe implements SaveableGraph {
         if (deleted == 0)
             return;
 
+        // bounds are not changed even if graph could get smaller!
 //        if (deleted < size / 4) {
         inPlaceDelete(deleted);
 //        } else
@@ -684,7 +702,9 @@ public class MemoryGraphSafe implements SaveableGraph {
             for (int i = 0; i < edgesSegments.length; i++) {
                 Helper.writeInts(storageLocation + "/edges" + i, edgesSegments[i]);
             }
-            Helper.writeSettings(storageLocation + "/settings", size, creationTime, edgeNextGlobalPointer, edgeCurrentSegment, edgesSegmentSize);
+            Helper.writeSettings(storageLocation + "/settings", size, creationTime, edgeNextGlobalPointer,
+                    edgeCurrentSegment, edgesSegmentSize,
+                    bounds.minLon, bounds.maxLon, bounds.minLat, bounds.maxLat);
             return true;
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't write data to disc. location=" + storageLocation, ex);
@@ -706,6 +726,7 @@ public class MemoryGraphSafe implements SaveableGraph {
             edgeNextGlobalPointer = (Integer) ob[2];
             edgeCurrentSegment = (Integer) ob[3];
             edgesSegmentSize = (Integer) ob[4];
+            bounds = new BBox((Double) ob[5], (Double) ob[6], (Double) ob[7], (Double) ob[8]);
             logger.info("found graph " + storageLocation + " with nodes:" + size
                     + ", edges:" + edgeNextGlobalPointer / LEN_EDGE
                     + ", edges segments:" + (edgeCurrentSegment + 1)

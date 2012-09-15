@@ -23,6 +23,7 @@ import de.jetsli.graph.util.EdgeIterator;
 import static de.jetsli.graph.util.GraphUtility.*;
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.Helper7;
+import de.jetsli.graph.util.shapes.BBox;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import gnu.trove.map.hash.TIntIntHashMap;
 import java.io.*;
@@ -36,9 +37,9 @@ import org.slf4j.LoggerFactory;
 /**
  * A graph represenation which can be stored directly on disc when using the memory mapped
  * constructor.
- * 
+ *
  * Also runs under Android.
- * 
+ *
  * TODO rewrite with:
  *
  * 1. better method encapsulation
@@ -49,7 +50,7 @@ import org.slf4j.LoggerFactory;
  *
  * 4. instead edge iterator => use collection. we'll have only a small number of edges => iterator
  * makes no sense and we are not able to grab the information in one bulk operation.
- * 
+ *
  * 5. read thread safety
  *
  * @author Peter Karich, info@jetsli.de
@@ -99,6 +100,7 @@ public class MMapGraph implements SaveableGraph {
     private ByteBuffer edges;
     private File storageFolder;
     private boolean saveOnFlushOnly = false;
+    private BBox bounds;
 
     /**
      * Creates an in-memory graph suitable for test
@@ -114,12 +116,18 @@ public class MMapGraph implements SaveableGraph {
         // increase size a bit to avoid capacity increase only because the last nodes reaches the
         // users' exact specified exact value
         this.maxNodes = maxNodes + 10;
+        this.bounds = BBox.INVERSE.clone();
         if (storageLocation != null)
             this.storageFolder = new File(storageLocation);
     }
 
     public String getStorageLocation() {
         return storageFolder.getAbsolutePath();
+    }
+
+    @Override
+    public BBox getBounds() {
+        return bounds;
     }
 
     public boolean loadExisting() {
@@ -293,6 +301,14 @@ public class MMapGraph implements SaveableGraph {
         nodes.position(index * bytesNode);
         nodes.putFloat((float) lat);
         nodes.putFloat((float) lon);
+        if (lat > bounds.maxLat)
+            bounds.maxLat = lat;
+        if (lat < bounds.minLat)
+            bounds.minLat = lat;
+        if (lon > bounds.maxLon)
+            bounds.maxLon = lon;
+        if (lon < bounds.minLon)
+            bounds.minLon = lon;
     }
 
     @Override
@@ -535,6 +551,7 @@ public class MMapGraph implements SaveableGraph {
         to.bytesNodeCore = from.bytesNodeCore;
         to.bytesNode = from.bytesNode;
         to.size = from.size;
+        to.bounds = from.bounds.clone();
     }
 
     @Override
@@ -649,6 +666,11 @@ public class MMapGraph implements SaveableGraph {
 
                 settingsFile.writeInt(edgeFlagsPos);
                 settingsFile.writeInt(bytesEdges);
+
+                settingsFile.writeDouble(bounds.minLon);
+                settingsFile.writeDouble(bounds.maxLon);
+                settingsFile.writeDouble(bounds.minLat);
+                settingsFile.writeDouble(bounds.maxLat);
             } catch (Exception ex) {
                 logger.error("Problem while writing to settings file", ex);
             }
@@ -677,6 +699,9 @@ public class MMapGraph implements SaveableGraph {
 
             edgeFlagsPos = settingsFile.readInt();
             bytesEdges = settingsFile.readInt();
+
+            bounds = new BBox(settingsFile.readDouble(), settingsFile.readDouble(),
+                    settingsFile.readDouble(), settingsFile.readDouble());
             saveOnFlushOnly = false;
             return true;
         } catch (Exception ex) {

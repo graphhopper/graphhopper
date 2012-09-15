@@ -27,23 +27,49 @@ package de.jetsli.graph.util.shapes;
  */
 public class BBox implements Shape {
 
+    public static final BBox INVERSE = new BBox();
+
+    static {
+        INVERSE.minLon = Double.MAX_VALUE;
+        INVERSE.maxLon = Double.MIN_VALUE;
+        INVERSE.minLat = Double.MAX_VALUE;
+        INVERSE.maxLat = Double.MIN_VALUE;
+    }
     // longitude (theta) = x, latitude (phi) = y
-    public final double minLon;
-    public final double maxLon;
-    public final double minLat;
-    public final double maxLat;
+    public double minLon;
+    public double maxLon;
+    public double minLat;
+    public double maxLat;
+
+    private BBox() {
+    }
 
     public BBox(double minLon, double maxLon, double minLat, double maxLat) {
-        assert minLon < maxLon : "second longitude should be bigger than the first";
-        assert minLat < maxLat : "second latitude should be smaller than the first";
         this.maxLat = maxLat;
         this.minLon = minLon;
         this.minLat = minLat;
         this.maxLon = maxLon;
     }
 
+    public boolean check() {
+        // "second longitude should be bigger than the first";
+        if (minLon >= maxLon)
+            return false;
+
+        //"second latitude should be smaller than the first";
+        if (minLat >= maxLat)
+            return false;
+        return true;
+
+    }
+
     public static BBox createEarthMax() {
         return new BBox(-180.0, 180.0, -90.0, 90.0);
+    }
+
+    @Override
+    public BBox clone() {
+        return new BBox(minLon, maxLon, minLat, maxLat);
     }
 
     @Override
@@ -101,5 +127,24 @@ public class BBox implements Shape {
     @Override
     public BBox getBBox() {
         return this;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        BBox b = (BBox) obj;
+        return Double.doubleToLongBits(minLat) == Double.doubleToLongBits(b.minLat)
+                && Double.doubleToLongBits(maxLat) == Double.doubleToLongBits(b.maxLat)
+                && Double.doubleToLongBits(minLon) == Double.doubleToLongBits(b.minLon)
+                && Double.doubleToLongBits(maxLon) == Double.doubleToLongBits(b.maxLon);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 17 * hash + (int) (Double.doubleToLongBits(this.minLon) ^ (Double.doubleToLongBits(this.minLon) >>> 32));
+        hash = 17 * hash + (int) (Double.doubleToLongBits(this.maxLon) ^ (Double.doubleToLongBits(this.maxLon) >>> 32));
+        hash = 17 * hash + (int) (Double.doubleToLongBits(this.minLat) ^ (Double.doubleToLongBits(this.minLat) >>> 32));
+        hash = 17 * hash + (int) (Double.doubleToLongBits(this.maxLat) ^ (Double.doubleToLongBits(this.maxLat) >>> 32));
+        return hash;
     }
 }

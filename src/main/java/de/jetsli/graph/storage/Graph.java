@@ -16,6 +16,7 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.EdgeIterator;
+import de.jetsli.graph.util.shapes.BBox;
 
 /**
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
@@ -39,6 +40,11 @@ public interface Graph {
     double getLatitude(int index);
 
     double getLongitude(int index);
+
+    /**
+     * Returns the implicit bounds of this graph calculated from the lat,lon input of setNode
+     */
+    BBox getBounds();
 
     /**
      * @param a index of the starting node of the edge
