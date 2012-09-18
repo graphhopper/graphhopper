@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class MemoryGraphSafe implements SaveableGraph {
+public class MemoryGraphSafe implements Graph, Saveable {
 
     protected static final int EMPTY_LINK = 0;
     private static final float DIST_UNIT = 10000f;
@@ -601,7 +601,7 @@ public class MemoryGraphSafe implements SaveableGraph {
 
         // rewrite the edges of nodes connected to moved nodes
         // go through all edges and pick the necessary ... <- this is easier to implement then
-        // a more efficient breadth-first search
+        // a more efficient (?) breadth-first search
         int maxEdges = getMaxEdges() * LEN_EDGE;
         TIntHashSet hash = new TIntHashSet();
         for (int edgePointer = LEN_EDGE; edgePointer < maxEdges; edgePointer += LEN_EDGE) {
@@ -632,6 +632,40 @@ public class MemoryGraphSafe implements SaveableGraph {
 
         size -= deleted;
         deletedNodes = null;
+    }
+
+    // Hint: edges with both directions will be returned only once!
+    public EdgeIterator getAllEdges() {
+        return new EdgeIterator() {
+            private int edgePointer = 0;
+            private int maxEdges = edgeNextGlobalPointer + LEN_EDGE;
+
+            @Override
+            public boolean next() {
+                edgePointer += LEN_EDGE;
+                return edgePointer < maxEdges;
+            }
+
+            @Override
+            public int fromNode() {
+                return getFromEdgeArea(edgePointer);
+            }
+
+            @Override
+            public int node() {
+                return getFromEdgeArea(edgePointer + LEN_NODEA_ID);
+            }
+
+            @Override
+            public double distance() {
+                return getDist(edgePointer);
+            }
+
+            @Override
+            public int flags() {
+                return getFlags(edgePointer);
+            }
+        };
     }
 
     protected void inPlaceDeleteNodeHook(int oldI, int newI) {

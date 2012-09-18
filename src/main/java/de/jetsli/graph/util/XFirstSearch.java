@@ -43,7 +43,7 @@ public class XFirstSearch {
         return new MyOpenBitSet(size);
     }
 
-    public void start(Graph g, int node, boolean depthFirst) {
+    public void start(Graph g, int startNode, boolean depthFirst) {
         HelperColl coll;
         if (depthFirst)
             coll = new MyIntStack();
@@ -51,8 +51,8 @@ public class XFirstSearch {
             coll = new MyHelperIntQueue();
 
         MyBitSet visited = createBitSet(g.getNodes());
-        visited.add(node);
-        coll.push(node);
+        visited.add(startNode);
+        coll.push(startNode);
         int current;
 
         while (!coll.isEmpty()) {
@@ -60,10 +60,10 @@ public class XFirstSearch {
             if (goFurther(current)) {
                 EdgeIterator iter = getEdges(g, current);
                 while (iter.next()) {
-                    int nodeId = iter.node();
-                    if (!visited.contains(nodeId)) {
-                        visited.add(nodeId);
-                        coll.push(nodeId);
+                    int connectedId = iter.node();
+                    if (checkConnected(connectedId) && !visited.contains(connectedId)) {
+                        visited.add(connectedId);
+                        coll.push(connectedId);
                     }
                 }
             }
@@ -75,6 +75,10 @@ public class XFirstSearch {
     }
 
     protected boolean goFurther(int nodeId) {
+        return true;
+    }
+    
+    protected boolean checkConnected(int to) {
         return true;
     }
 

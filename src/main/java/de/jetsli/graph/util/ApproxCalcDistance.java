@@ -52,4 +52,9 @@ public class ApproxCalcDistance extends CalcDistance {
         double left = cos(toRadians((fromLat + toLat) / 2)) * dLon;
         return dLat * dLat + left * left;
     }
+
+    @Override
+    public String toString() {
+        return "APPROX";
+    }
 }

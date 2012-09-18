@@ -34,15 +34,7 @@ public class Location2IDFullIndex implements Location2IDIndex {
     public Location2IDIndex prepareIndex(int capacity) {
         return this;
     }
-
-//    @Override
-//    public int findID(double lat, double lon) {
-//        Collection<CoordTrig<Long>> coll = qt.getNodes(lat, lon, 0.001);
-//        if (coll.isEmpty())
-//            throw new IllegalStateException("cannot find node for " + lat + "," + lon);
-//
-//        return ((Number) coll.iterator().next().getValue()).intValue();
-//    }
+    
     @Override public int findID(double lat, double lon) {
         int locs = g.getNodes();
         int id = -1;
@@ -60,5 +52,10 @@ public class Location2IDFullIndex implements Location2IDIndex {
             }
         }
         return id;
+    }
+
+    @Override
+    public float calcMemInMB() {
+        return 0;
     }
 }

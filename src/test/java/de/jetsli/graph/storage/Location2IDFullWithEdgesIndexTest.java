@@ -15,19 +15,21 @@
  */
 package de.jetsli.graph.storage;
 
+import org.junit.Test;
+import static org.junit.Assert.*;
+
 /**
- * Provides a way to map realword data "lat,lon" to internal ids/indices of a memory efficient graph
- * - often just implemented as an array.
- *
- * The implementations needs to be thread safe!
  *
  * @author Peter Karich
  */
-public interface Location2IDIndex {
+public class Location2IDFullWithEdgesIndexTest {
 
-    Location2IDIndex prepareIndex(int capacity);
-
-    int findID(final double lat, final double lon);
-    
-    float calcMemInMB();
+    @Test
+    public void testFullIndex() {
+        Location2IDIndex idx = new Location2IDFullWithEdgesIndex(Location2IDQuadtreeTest.createSampleGraph());
+        assertEquals(5, idx.findID(2, 3));
+        assertEquals(10, idx.findID(4, 1));
+        // 6, 9 or 10
+        assertEquals(10, idx.findID(3.6, 1.4));
+    }
 }

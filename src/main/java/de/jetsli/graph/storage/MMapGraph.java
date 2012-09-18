@@ -55,7 +55,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich, info@jetsli.de
  */
-public class MMapGraph implements SaveableGraph {
+public class MMapGraph implements Graph, Saveable {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final int EMPTY_DIST = 0;

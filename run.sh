@@ -17,16 +17,11 @@ if [ "x$ALGO" = "x" ]; then
 fi
 
 if [ "x$FILE" = "x" ]; then
- FILE=unterfranken
+ FILE=unterfranken.osm
 fi
 
-FEND="${FILE##*.}"
-
-if [ "x$FEND" = "x" ]; then
-  OSM=$FILE.osm
-else
-  OSM=$FILE
-fi
+NAME="${FILE%.*}"
+OSM=$NAME.osm
 
 # for perf tests
 TEST=false
@@ -35,7 +30,7 @@ SPATH=true
 # for UI
 DEBUG=false
 
-GRAPH=graph-$OSM
+GRAPH=$NAME-gh
 JAR=target/graphhopper-1.0-SNAPSHOT-jar-with-dependencies.jar
 
 if [ "$FILE" = "unterfranken" ]; then
@@ -51,7 +46,6 @@ elif [ "$FILE" = "germany" ]; then
  JAVA_OPTS="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx1900m -Xms1900m"
  SIZE=35000000
 elif [ -f $OSM ]; then
- GRAPH=graph-$(basename "$OSM")
  LINK=""
  JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx300m -Xms300m"
  JAVA_OPTS=$JAVA_OPTS_IMPORT

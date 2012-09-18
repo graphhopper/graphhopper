@@ -440,11 +440,11 @@ public abstract class AbstractGraphTester {
         Graph graph = createGraph(4);
         BBox b = graph.getBounds();
         assertEquals(0, b.maxLat, 1e-6);
-        
+
         graph.setNode(0, 10, 20);
         assertEquals(10, b.maxLat, 1e-6);
         assertEquals(20, b.maxLon, 1e-6);
-        
+
         graph.setNode(0, 15, -15);
         assertEquals(15, b.maxLat, 1e-6);
         assertEquals(20, b.maxLon, 1e-6);

@@ -249,8 +249,11 @@ public class Helper {
     }
 
     public static void writeInts(String file, int[] ints) throws IOException {
-        DataOutputStream out = new DataOutputStream(new BufferedOutputStream(
-                new FileOutputStream(file), 4 * 1024));
+        writeInts(new DataOutputStream(new BufferedOutputStream(
+                new FileOutputStream(file), 4 * 1024)), ints);
+    }
+
+    public static void writeInts(DataOutputStream out, int[] ints) throws IOException {
         try {
             int len = ints.length;
             out.writeInt(len);
@@ -277,8 +280,11 @@ public class Helper {
     }
 
     public static int[] readInts(String file) throws IOException {
-        DataInputStream in = new DataInputStream(new BufferedInputStream(
-                new FileInputStream(file), 4 * 1024));
+        return readInts(new DataInputStream(new BufferedInputStream(
+                new FileInputStream(file), 4 * 1024)));
+    }
+
+    public static int[] readInts(DataInputStream in) throws IOException {
         try {
             int len = in.readInt();
             int[] ints = new int[len];

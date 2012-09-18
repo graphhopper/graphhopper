@@ -174,4 +174,71 @@ public class CalcDistance {
         // Now return bounding box in coordinates
         return new BBox(lon - dLon, lon + dLon, lat - dLat, lat + dLat);
     }
+
+    /**
+     * This method calculates the distance from r to edge g = a to b where the crossing point is t
+     */
+    public double calcNormalizedEdgeDistance(double qLat, double qLon,
+            double a_lat, double a_lon,
+            double b_lat, double b_lon) {
+        // x <=> lon
+        // y <=> lat
+        double dY_a = a_lat - b_lat;
+        if (dY_a == 0)
+            // special case: horizontal edge
+            return calcNormalizedDist(a_lat, qLon, qLat, qLon);
+
+        double dX_a = a_lon - b_lon;
+        if (dX_a == 0)
+            // special case: vertical edge
+            return calcNormalizedDist(qLat, a_lon, qLat, qLon);
+
+        double m = dY_a / dX_a;
+        double n = a_lat - m * a_lon;
+        double m_i = 1 / m;
+        double n_s = qLat + m_i * qLon;
+        // g should cross s => t=(t_x,t_y)
+        // m + m_i cannot get 0
+        double t_x = (n_s - n) / (m + m_i);
+        double t_y = m * t_x + n;
+        return calcNormalizedDist(qLat, qLon, t_y, t_x);
+    }
+
+    /**
+     * This method decides if we should use distance(lat, lon to edge) or better
+     * min(distance(lat,lon to a), distance(lat,lon to b)) where edge=a to b
+     */
+    //   r
+    //  . 
+    // a-------b
+    //
+    // both angles need to be <= 90°
+    //
+    // r
+    //  .
+    //    a-------b
+    public boolean validEdgeDistance(double lat, double lon,
+            double a_lat, double a_lon,
+            double b_lat, double b_lon) {
+        double ar_x = lon - a_lon;
+        double ar_y = lat - a_lat;
+        double ab_x = b_lon - a_lon;
+        double ab_y = b_lat - a_lat;
+        double ab_ar = ar_x * ab_x + ar_y * ab_y;
+
+        double rb_x = b_lon - lon;
+        double rb_y = b_lat - lat;
+        double ab_rb = rb_x * ab_x + rb_y * ab_y;
+
+        // calculate the exact degree and it should be <= 90° for BOTH angles!
+        // double ab_ar_norm = Math.sqrt(ar_x * ar_x + ar_y * ar_y) * Math.sqrt(ab_x * ab_x + ab_y * ab_y);
+        // double ab_rb_norm = Math.sqrt(rb_x * rb_x + rb_y * rb_y) * Math.sqrt(ab_x * ab_x + ab_y * ab_y);
+        // return Math.acos(ab_ar / ab_ar_norm) <= Math.PI / 2 && Math.acos(ab_rb / ab_rb_norm) <= Math.PI / 2;
+        return ab_ar > 0 && ab_rb > 0;
+    }
+
+    @Override
+    public String toString() {
+        return "EXACT";
+    }
 }

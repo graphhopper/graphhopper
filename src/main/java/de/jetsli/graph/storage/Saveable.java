@@ -18,7 +18,7 @@ package de.jetsli.graph.storage;
 /**
  * @author Peter Karich
  */
-public interface SaveableGraph extends Graph, Cloneable {
+public interface Saveable {
 
     void flush();
 

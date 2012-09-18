@@ -66,6 +66,8 @@ public interface Graph {
     EdgeIterator getIncoming(int index);
 
     EdgeIterator getOutgoing(int index);
+    
+    // EdgeIterator getAllEdges();
 
     Graph clone();
 

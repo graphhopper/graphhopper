@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.util;
 
+import de.jetsli.graph.storage.Location2IDFastIndex;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -92,5 +93,41 @@ public class CalcDistanceTest {
         assertEquals(res, dist.calcDistKm(lat, lon, lat + 10, lon - 10), 1e-3);
         assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 10, lon - 10), 1e-3);
         assertEquals(res, approxDist.calcDistKm(lat, lon, lat + 10, lon - 10), 10);
+    }
+
+    @Test
+    public void testEdgeDistance() {
+        CalcDistance calc = new CalcDistance();
+        double dist = calc.calcNormalizedEdgeDistance(49.94241, 11.544356,
+                49.937964, 11.541824,
+                49.942272, 11.555643);
+        double expectedDist = calc.calcNormalizedDist(49.94241, 11.544356,
+                49.9394, 11.54681);
+        assertEquals(expectedDist, dist, 1e-4);
+
+        // test identical lats
+        dist = calc.calcNormalizedEdgeDistance(49.936299, 11.543992,
+                49.9357, 11.543047,
+                49.9357, 11.549227);
+        expectedDist = calc.calcNormalizedDist(49.936299, 11.543992,
+                49.9357, 11.543992);
+        assertEquals(expectedDist, dist, 1e-4);
+    }
+
+    @Test
+    public void testValidEdgeDistance() {
+        CalcDistance calc = new CalcDistance();
+        assertTrue(calc.validEdgeDistance(49.94241, 11.544356, 49.937964, 11.541824, 49.942272, 11.555643));
+        assertTrue(calc.validEdgeDistance(49.936624, 11.547636, 49.937964, 11.541824, 49.942272, 11.555643));
+        assertTrue(calc.validEdgeDistance(49.940712, 11.556069, 49.937964, 11.541824, 49.942272, 11.555643));
+
+        // left bottom of the edge
+        assertFalse(calc.validEdgeDistance(49.935119, 11.541649, 49.937964, 11.541824, 49.942272, 11.555643));
+        // left top of the edge
+        assertFalse(calc.validEdgeDistance(49.939317, 11.539675, 49.937964, 11.541824, 49.942272, 11.555643));
+        // right top of the edge
+        assertFalse(calc.validEdgeDistance(49.944482, 11.555446, 49.937964, 11.541824, 49.942272, 11.555643));
+        // right bottom of the edge
+        assertFalse(calc.validEdgeDistance(49.94085, 11.557356, 49.937964, 11.541824, 49.942272, 11.555643));
     }
 }

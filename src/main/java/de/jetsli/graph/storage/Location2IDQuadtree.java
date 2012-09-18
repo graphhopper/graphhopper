@@ -20,6 +20,7 @@ import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
 import de.jetsli.graph.util.*;
+import de.jetsli.graph.util.shapes.BBox;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private SpatialKeyAlgo algo;
+//    protected CalcDistance calc = new ApproxCalcDistance();
     protected CalcDistance calc = new CalcDistance();
     private int[] spatialKey2Id;
     private double maxNormRasterWidthKm;
@@ -67,11 +69,12 @@ public class Location2IDQuadtree implements Location2IDIndex {
         initAlgo(bits);
         StopWatch sw = new StopWatch().start();
         MyOpenBitSet filledIndices = fillQuadtree(size);
+        int fillQT = filledIndices.getCardinality();
         float res1 = sw.stop().getSeconds();
         sw = new StopWatch().start();
         int counter = fillEmptyIndices(filledIndices);
         logger.info("filled quadtree index array in " + res1 + "s. size is " + size
-                + ". filled empty " + counter + " in " + sw.stop().getSeconds() + "s");
+                + " (" + fillQT + "). filled empty " + counter + " in " + sw.stop().getSeconds() + "s");
         return this;
     }
 
@@ -90,24 +93,11 @@ public class Location2IDQuadtree implements Location2IDIndex {
     }
 
     private void initAlgo(int bits) {
-        double minLon = Double.MAX_VALUE, maxLon = Double.MIN_VALUE, minLat = Double.MAX_VALUE, maxLat = Double.MIN_VALUE;
-        int locs = g.getNodes();
-        for (int nodeId = 0; nodeId < locs; nodeId++) {
-            double lat = g.getLatitude(nodeId);
-            double lon = g.getLongitude(nodeId);
-            if (lat > maxLat)
-                maxLat = lat;
-            else if (lat < minLat)
-                minLat = lat;
-
-            if (lon > maxLon)
-                maxLon = lon;
-            else if (lon < minLon)
-                minLon = lon;
-        }
-        algo = new SpatialKeyAlgo(bits).setInitialBounds(minLon, maxLon, minLat, maxLat);
-        maxNormRasterWidthKm = calc.normalizeDist(Math.max(calc.calcDistKm(minLat, minLon, minLat, maxLon),
-                calc.calcDistKm(minLat, minLon, maxLat, minLon)) / Math.sqrt(size));
+        BBox b = g.getBounds();
+        logger.info("bounds:" + b + ", bits:" + bits + ", calc:" + calc.toString());
+        algo = new SpatialKeyAlgo(bits).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
+        maxNormRasterWidthKm = calc.normalizeDist(Math.max(calc.calcDistKm(b.minLat, b.minLon, b.minLat, b.maxLon),
+                calc.calcDistKm(b.minLat, b.minLon, b.maxLat, b.minLon)) / Math.sqrt(size));
 
         // as long as we have "dist < PI*R/2" it is save to compare the normalized distances instead of the real
         // distances. because sin(x) is only monotonic increasing for x <= PI/2 (and positive for x >= 0)
@@ -296,9 +286,16 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 return d < maxNormRasterWidthKm * 2;
             }
         }.start(g, id, false);
+
+//        logger.info("key:" + key + " lat:" + lat + ",lon:" + lon);
         return closestNode.node;
     }
 
     public void goFurtherHook(int n) {
+    }
+
+    @Override
+    public float calcMemInMB() {
+        return (float) (spatialKey2Id.length * 4) / (1 << 20);
     }
 }

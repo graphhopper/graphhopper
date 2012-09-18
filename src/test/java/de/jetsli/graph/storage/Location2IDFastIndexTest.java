@@ -17,21 +17,33 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.CalcDistance;
 import java.util.Random;
-import static org.junit.Assert.*;
 import org.junit.Test;
+import static org.junit.Assert.*;
+import static de.jetsli.graph.storage.Location2IDQuadtreeTest.*;
 
 /**
  *
  * @author Peter Karich
  */
-public class Location2IDQuadtreeTest {
+public class Location2IDFastIndexTest {
 
     public Location2IDIndex createIndex(Graph g, int resolution) {
-        return new Location2IDQuadtree(g).prepareIndex(resolution);
+        return new Location2IDFastIndex(g).prepareIndex(resolution);
     }
 
     @Test
     public void testSimpleGraph() {
+        //  6      4
+        //  5       
+        //          6
+        //  4                5
+        //  3
+        //  2      1  
+        //  1            3
+        //  0      2      
+        // -1   0
+        //
+        //     -2 -1 0 1 2 3 4
         Graph g = createGraph();
         g.setNode(0, -1, -2);
         g.setNode(1, 2, -1);
@@ -43,7 +55,7 @@ public class Location2IDQuadtreeTest {
         g.edge(0, 1, 3.5, true);
         g.edge(0, 2, 2.5, true);
         g.edge(2, 3, 1, true);
-        g.edge(3, 4, 2.2, true);
+        g.edge(3, 4, 3.2, true);
         g.edge(1, 4, 2.4, true);
         g.edge(3, 5, 1.5, true);
 
@@ -52,7 +64,7 @@ public class Location2IDQuadtreeTest {
         assertEquals(3, idx.findID(1.5, 2));
         assertEquals(0, idx.findID(-1, -1));
         // now get the edge 1-4 and not node 6
-        assertEquals(6, idx.findID(4, 0));
+        assertNotSame(6, idx.findID(4, 0));
     }
 
     @Test
@@ -63,9 +75,9 @@ public class Location2IDQuadtreeTest {
         // maxWidth is ~555km and with size==8 it will be exanded to 4*4 array => maxRasterWidth==555/4
         // assertTrue(idx.getMaxRasterWidthKm() + "", idx.getMaxRasterWidthKm() < 140);
         assertEquals(1, idx.findID(1.637, 2.23));
-        assertEquals(9, idx.findID(3.649, 1.375));
+        assertEquals(10, idx.findID(3.649, 1.375));
         assertEquals(9, idx.findID(3.3, 2.2));
-        assertEquals(9, idx.findID(3.0, 1.5));
+        assertEquals(6, idx.findID(3.0, 1.5));
     }
 
     @Test
@@ -88,7 +100,7 @@ public class Location2IDQuadtreeTest {
 
         // hit random lat,lon and compare result to full index
         Random rand = new Random(12);
-        Location2IDIndex fullIndex = new Location2IDFullIndex(g);
+        Location2IDIndex fullIndex = new Location2IDFullWithEdgesIndex(g);
         CalcDistance dist = new CalcDistance();
         for (int i = 0; i < 100; i++) {
             double lat = rand.nextDouble() * 5;
@@ -101,10 +113,6 @@ public class Location2IDQuadtreeTest {
             double newLat = g.getLatitude(newId);
             double newLon = g.getLongitude(newId);
             float newDist = (float) dist.calcDistKm(lat, lon, newLat, newLon);
-
-            // conceptual limitation see testSinglePoints32            
-            if (i == 20 || i == 50)
-                continue;
 
             assertTrue(i + " orig:" + (float) lat + "," + (float) lon
                     + " full:" + fullLat + "," + fullLon + " fullDist:" + fullDist
@@ -141,88 +149,5 @@ public class Location2IDQuadtreeTest {
             g.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
         }
         createIndex(g, 200);
-    }
-
-    public static Graph createGraph() {
-        return new MemoryGraphSafe(200);
-    }
-
-    public static Graph createSampleGraph() {
-        Graph graph = createGraph();
-        // length does not matter here but lat,lon and outgoing edges do!
-
-//        
-//   lat             /--------\
-//    5   o-        p--------\ q
-//          \  /-----\-----n | |
-//    4       k    /--l--    m/                 
-//           / \  j      \   |              
-//    3     |   g  \  h---i  /             
-//          |       \    /  /             
-//    2     e---------f--  /
-//                   /  \-d
-//    1        /--b--      \               
-//            |    \--------c
-//    0       a                  
-//        
-//   lon: 0   1   2   3   4   5
-
-        int a0 = 0;
-        graph.setNode(0, 0, 1.0001f);
-        int b1 = 1;
-        graph.setNode(1, 1, 2);
-        int c2 = 2;
-        graph.setNode(2, 0.5f, 4.5f);
-        int d3 = 3;
-        graph.setNode(3, 1.5f, 3.8f);
-        int e4 = 4;
-        graph.setNode(4, 2.01f, 0.5f);
-        int f5 = 5;
-        graph.setNode(5, 2, 3);
-        int g6 = 6;
-        graph.setNode(6, 3, 1.5f);
-        int h7 = 7;
-        graph.setNode(7, 2.99f, 3.01f);
-        int i8 = 8;
-        graph.setNode(8, 3, 4);
-        int j9 = 9;
-        graph.setNode(9, 3.3f, 2.2f);
-        int k10 = 10;
-        graph.setNode(10, 4, 1);
-        int l11 = 11;
-        graph.setNode(11, 4.1f, 3);
-        int m12 = 12;
-        graph.setNode(12, 4, 4.5f);
-        int n13 = 13;
-        graph.setNode(13, 4.5f, 4.1f);
-        int o14 = 14;
-        graph.setNode(14, 5, 0);
-        int p15 = 15;
-        graph.setNode(15, 4.9f, 2.5f);
-        int q16 = 16;
-        graph.setNode(16, 5, 5);
-        // => 17 locations
-
-        graph.edge(a0, b1, 1, true);
-        graph.edge(c2, b1, 1, true);
-        graph.edge(c2, d3, 1, true);
-        graph.edge(f5, b1, 1, true);
-        graph.edge(e4, f5, 1, true);
-        graph.edge(m12, d3, 1, true);
-        graph.edge(e4, k10, 1, true);
-        graph.edge(f5, d3, 1, true);
-        graph.edge(f5, i8, 1, true);
-        graph.edge(f5, j9, 1, true);
-        graph.edge(k10, g6, 1, true);
-        graph.edge(j9, l11, 1, true);
-        graph.edge(i8, l11, 1, true);
-        graph.edge(i8, h7, 1, true);
-        graph.edge(k10, n13, 1, true);
-        graph.edge(k10, o14, 1, true);
-        graph.edge(l11, p15, 1, true);
-        graph.edge(m12, p15, 1, true);
-        graph.edge(q16, p15, 1, true);
-        graph.edge(q16, m12, 1, true);
-        return graph;
     }
 }

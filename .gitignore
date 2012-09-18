@@ -3,5 +3,6 @@ target/
 *largeEWD.txt.gz
 TODO.txt
 mmap-graph*
+*-gh/
 *.osm
 docs/

@@ -62,7 +62,7 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
     public void testSave() throws IOException {
         String tmpDir = "/tmp/memory-graph-safe";
         Helper.deleteDir(new File(tmpDir));
-        SaveableGraph graph = new MemoryGraphSafe(tmpDir, 3, 3);
+        MemoryGraphSafe graph = new MemoryGraphSafe(tmpDir, 3, 3);
         graph.setNode(0, 10, 10);
         graph.setNode(1, 11, 20);
         graph.setNode(2, 12, 12);
@@ -119,5 +119,29 @@ public class MemoryGraphSafeTest extends AbstractGraphTester {
         assertEquals(1, GraphUtility.count(g.getEdges(10239)));
         assertEquals(1 << 13, g.getSegmentSize());
         assertEquals(9, g.getSegments());
+    }
+
+    @Test
+    public void testGetAllEdges() {
+        MemoryGraphSafe g = new MemoryGraphSafe(1000);
+        g.edge(0, 1, 2, true);
+        g.edge(3, 1, 1, false);
+        g.edge(3, 2, 1, false);
+
+        EdgeIterator iter = g.getAllEdges();
+        assertTrue(iter.next());
+        assertEquals(0, iter.fromNode());
+        assertEquals(1, iter.node());
+        assertEquals(2, iter.distance(), 1e-6);
+
+        assertTrue(iter.next());
+        assertEquals(1, iter.fromNode());
+        assertEquals(3, iter.node());
+
+        assertTrue(iter.next());
+        assertEquals(2, iter.fromNode());
+        assertEquals(3, iter.node());
+
+        assertFalse(iter.next());
     }
 }

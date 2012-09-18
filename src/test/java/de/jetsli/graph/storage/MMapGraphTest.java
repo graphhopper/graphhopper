@@ -36,7 +36,7 @@ import de.jetsli.graph.util.shapes.BBox;
 public class MMapGraphTest extends AbstractGraphTester {
 
     protected String dir = "/tmp/GraphTest";
-    protected SaveableGraph g;
+    protected MMapGraph g;
 
     @After
     public void tearDown() throws IOException {
