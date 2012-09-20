@@ -17,11 +17,11 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
-import org.junit.Test;
-import static org.junit.Assert.*;
 import static de.jetsli.graph.util.GraphUtility.*;
 import de.jetsli.graph.util.shapes.BBox;
 import java.util.Arrays;
+import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *
