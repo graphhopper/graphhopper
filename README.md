@@ -33,8 +33,8 @@ The following command will make a part of Germany routable:
 
 > ./run.sh unterfranken.osm
 
-  1. it downloads 40MB, unzips it to 450MB and creates road-files for graphhopper (40MB)
-  2. it builds graphhopper
+  1. it downloads 40MB, unzips it to 450MB and creates road-files for graphhopper in unterfranken-gh (40MB)
+  2. it builds the graphhopper jars
   3. and runs some shortest path queries on it
 
 When executing the command again, then the existing graphhopper road-files and jars will be used. So, the UI should pop up fast (~2 seconds).

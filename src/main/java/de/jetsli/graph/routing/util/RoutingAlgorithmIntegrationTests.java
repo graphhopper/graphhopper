@@ -19,6 +19,7 @@ import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.DijkstraBidirectionRef;
 import de.jetsli.graph.routing.DijkstraSimple;
+import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.PathBidirRef;
 import de.jetsli.graph.routing.PathPrio;
 import de.jetsli.graph.routing.RoutingAlgorithm;
@@ -123,31 +124,31 @@ public class RoutingAlgorithmIntegrationTests {
         for (int i = 0; i < runs; i++) {
             double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
             double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
-            sw.start();
+//            sw.start();
             int from = idx.findID(fromLat, fromLon);
             double toLat = rand.nextDouble() * (maxLat - minLat) + minLat;
             double toLon = rand.nextDouble() * (maxLon - minLon) + minLon;
             int to = idx.findID(toLat, toLon);
-            sw.stop();
+//            sw.stop();
 //                logger.info(i + " " + sw + " from (" + from + ")" + fromLat + ", " + fromLon + " to (" + to + ")" + toLat + ", " + toLon);
             if (from == to) {
                 logger.warn("skipping i " + i + " from==to " + from);
                 continue;
             }
 
-//            algo.clear();
-//            sw.start();
-            // Path p = algo.calcPath(from, to);
-//            sw.stop();
-//            if (p == null) {
-//                // there are still paths not found as this point unterfrankenGraph.getLatitude(798809) + "," + unterfrankenGraph.getLongitude(798809)
-//                // is part of a oneway motorway => only routable in one direction
-//                logger.warn("no route found for i=" + i + " !? "
-//                        + "graph-from " + from + "(" + fromLat + "," + fromLon + "), "
-//                        + "graph-to " + to + "(" + toLat + "," + toLon + ")");
-//                continue;
-//            }
-            if (i % 100 == 0)
+            algo.clear();
+            sw.start();
+            Path p = algo.calcPath(from, to);
+            sw.stop();
+            if (p == null) {
+                // there are still paths not found as this point unterfrankenGraph.getLatitude(798809) + "," + unterfrankenGraph.getLongitude(798809)
+                // is part of a oneway motorway => only routable in one direction
+                logger.warn("no route found for i=" + i + " !? "
+                        + "graph-from " + from + "(" + fromLat + "," + fromLon + "), "
+                        + "graph-to " + to + "(" + toLat + "," + toLon + ")");
+                continue;
+            }
+            if (i % 20 == 0)
                 logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run");// (" + p + ")");
         }
     }
