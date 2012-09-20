@@ -20,6 +20,8 @@ import java.util.Random;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static de.jetsli.graph.storage.Location2IDQuadtreeTest.*;
+import de.jetsli.graph.util.Helper;
+import java.io.File;
 
 /**
  *
@@ -71,13 +73,7 @@ public class Location2IDPreciseIndexTest {
     public void testSinglePoints8() {
         Graph g = createSampleGraph();
         Location2IDIndex idx = createIndex(g, 8);
-
-        // maxWidth is ~555km and with size==8 it will be exanded to 4*4 array => maxRasterWidth==555/4
-        // assertTrue(idx.getMaxRasterWidthKm() + "", idx.getMaxRasterWidthKm() < 140);
-        assertEquals(1, idx.findID(1.637, 2.23));
-        assertEquals(10, idx.findID(3.649, 1.375));
-        assertEquals(9, idx.findID(3.3, 2.2));
-        assertEquals(6, idx.findID(3.0, 1.5));
+        assertIndex(idx);
     }
 
     @Test
@@ -149,5 +145,28 @@ public class Location2IDPreciseIndexTest {
             g.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
         }
         createIndex(g, 200);
+    }
+
+    @Test
+    public void testSave() {
+        Graph g = createSampleGraph();
+        Location2IDPreciseIndex idx = (Location2IDPreciseIndex)createIndex(g, 8);
+        assertIndex(idx);
+        File file = new File("./target/test-classes/");
+        file.mkdirs();        
+        String indexLoc = file.getAbsolutePath() + "/loc2idIndex";
+        idx.save(indexLoc);
+        idx = Location2IDPreciseIndex.load(g, indexLoc);
+        assertIndex(idx);
+        Helper.deleteDir(new File(indexLoc));
+    }
+
+    private void assertIndex(Location2IDIndex idx) {
+        // maxWidth is ~555km and with size==8 it will be exanded to 4*4 array => maxRasterWidth==555/4
+        // assertTrue(idx.getMaxRasterWidthKm() + "", idx.getMaxRasterWidthKm() < 140);
+        assertEquals(1, idx.findID(1.637, 2.23));
+        assertEquals(10, idx.findID(3.649, 1.375));
+        assertEquals(9, idx.findID(3.3, 2.2));
+        assertEquals(6, idx.findID(3.0, 1.5));
     }
 }

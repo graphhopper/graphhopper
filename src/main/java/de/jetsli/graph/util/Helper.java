@@ -249,19 +249,20 @@ public class Helper {
     }
 
     public static void writeInts(String file, int[] ints) throws IOException {
-        writeInts(new DataOutputStream(new BufferedOutputStream(
-                new FileOutputStream(file), 4 * 1024)), ints);
+        DataOutputStream out = new DataOutputStream(new BufferedOutputStream(
+                new FileOutputStream(file), 4 * 1024));
+        try {
+            writeInts(out, ints);
+        } finally {
+            out.close();
+        }
     }
 
     public static void writeInts(DataOutputStream out, int[] ints) throws IOException {
-        try {
-            int len = ints.length;
-            out.writeInt(len);
-            for (int i = 0; i < len; i++) {
-                out.writeInt(ints[i]);
-            }
-        } finally {
-            out.close();
+        int len = ints.length;
+        out.writeInt(len);
+        for (int i = 0; i < len; i++) {
+            out.writeInt(ints[i]);
         }
     }
 
@@ -280,21 +281,22 @@ public class Helper {
     }
 
     public static int[] readInts(String file) throws IOException {
-        return readInts(new DataInputStream(new BufferedInputStream(
-                new FileInputStream(file), 4 * 1024)));
-    }
-
-    public static int[] readInts(DataInputStream in) throws IOException {
+        DataInputStream in = new DataInputStream(new BufferedInputStream(
+                new FileInputStream(file), 4 * 1024));
         try {
-            int len = in.readInt();
-            int[] ints = new int[len];
-            for (int i = 0; i < len; i++) {
-                ints[i] = in.readInt();
-            }
-            return ints;
+            return readInts(in);
         } finally {
             in.close();
         }
+    }
+
+    public static int[] readInts(DataInputStream in) throws IOException {
+        int len = in.readInt();
+        int[] ints = new int[len];
+        for (int i = 0; i < len; i++) {
+            ints[i] = in.readInt();
+        }
+        return ints;
     }
 
     public static float[] readFloats(String file) throws IOException {

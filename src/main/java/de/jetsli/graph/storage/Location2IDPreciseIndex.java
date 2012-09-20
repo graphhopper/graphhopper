@@ -36,7 +36,6 @@ import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,11 +66,21 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
     private Graph g;
     private CalcDistance calc = new CalcDistance();
     private KeyAlgo algo;
-    private double normedLatWidthKm, normedLonWidthKm, latWidth, lonWidth, maxNormRasterWidthKm;
+    private double latWidth, lonWidth;
     private int latSizeI, lonSizeI;
+    private boolean calcEdgeDistance = true;
 
     public Location2IDPreciseIndex(Graph g) {
         this.g = g;
+    }
+
+    public Location2IDIndex setPrecision(boolean approxDist, boolean calcEdgeDist) {
+        if (approxDist)
+            calc = new ApproxCalcDistance();
+        else
+            calc = new CalcDistance();
+        calcEdgeDistance = calcEdgeDist;
+        return this;
     }
 
     CalcDistance getCalc() {
@@ -80,13 +89,14 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
 
     @Override
     public Location2IDIndex prepareIndex(int capacity) {
-        initBuffer(capacity);
+        prepareBuffer(capacity);
+        initBuffer(latSizeI, lonSizeI);
         initIndex();
         initEmptySlots();
         return this;
     }
 
-    private void initBuffer(int cap) {
+    private void prepareBuffer(int cap) {
         int bits = (int) (Math.log(cap) / Math.log(2)) + 1;
         int size = (int) Math.pow(2, bits);
         latSizeI = lonSizeI = (int) Math.sqrt(size);
@@ -95,20 +105,14 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         // Accordingly the width of one raster entry is different for x and y!
         if (latSizeI * lonSizeI < size)
             lonSizeI++;
-        size = latSizeI * lonSizeI;
+    }
 
-        index = new TIntArrayList[size];
+    private void initBuffer(int latSizeI, int lonSizeI) {
+        index = new TIntArrayList[latSizeI * lonSizeI];
         BBox b = g.getBounds();
-        logger.info("bounds:" + b + ", bits:" + bits + ", calc:" + calc);
         algo = new LinearKeyAlgo(latSizeI, lonSizeI).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
-        latWidth = (b.maxLat - b.minLat) / Math.sqrt(size);
-        lonWidth = (b.maxLon - b.minLon) / Math.sqrt(size);
-        normedLatWidthKm = calc.normalizeDist(calc.calcDistKm(b.minLat, b.minLon, b.maxLat, b.minLon) / Math.sqrt(size));
-        normedLonWidthKm = calc.normalizeDist(calc.calcDistKm(b.minLat, b.minLon, b.minLat, b.maxLon) / Math.sqrt(size));
-        maxNormRasterWidthKm = Math.max(normedLatWidthKm, normedLonWidthKm);
-
-        // as long as we have "dist < PI*R/2" it is save to compare the normalized distances instead of the real
-        // distances. because sin(x) is only monotonic increasing for x <= PI/2 (and positive for x >= 0)
+        latWidth = (b.maxLat - b.minLat) / latSizeI;
+        lonWidth = (b.maxLon - b.minLon) / lonSizeI;
     }
     StopWatch sw = new StopWatch();
 
@@ -124,43 +128,45 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             added++;
             add((int) algo.encode(lat, lon), node);
 
-            swWhile.start();
-            EdgeIterator iter = g.getOutgoing(node);
-            while (iter.next()) {
-                int connNode = iter.node();
-                if (alreadyDone.contains(connNode))
-                    continue;
+            if (calcEdgeDistance) {
+                swWhile.start();
+                EdgeIterator iter = g.getOutgoing(node);
+                while (iter.next()) {
+                    int connNode = iter.node();
+                    if (alreadyDone.contains(connNode))
+                        continue;
 
-                double connLat = g.getLatitude(connNode);
-                double connLon = g.getLongitude(connNode);
-                // already done in main loop: add((int) algo.encode(connLat, connLon), connNode);
+                    double connLat = g.getLatitude(connNode);
+                    double connLon = g.getLongitude(connNode);
+                    // already done in main loop: add((int) algo.encode(connLat, connLon), connNode);
 
-                double tmpLat = lat;
-                double tmpLon = lon;
-                if (connLat < lat) {
-                    double tmp = tmpLat;
-                    tmpLat = connLat;
-                    connLat = tmp;
-                }
+                    double tmpLat = lat;
+                    double tmpLon = lon;
+                    if (connLat < lat) {
+                        double tmp = tmpLat;
+                        tmpLat = connLat;
+                        connLat = tmp;
+                    }
 
-                if (connLon < lon) {
-                    double tmp = tmpLon;
-                    tmpLon = connLon;
-                    connLon = tmp;
-                }
+                    if (connLon < lon) {
+                        double tmp = tmpLon;
+                        tmpLon = connLon;
+                        connLon = tmp;
+                    }
 
-                // add edge to all possible entries
-                // TODO use bresenhamLine
-                for (double tryLat = tmpLat; tryLat < connLat + latWidth; tryLat += latWidth) {
-                    for (double tryLon = tmpLon; tryLon < connLon + lonWidth; tryLon += lonWidth) {
-                        if (tryLon == tmpLon && tryLat == tmpLat || tryLon == connLon && tryLat == connLat)
-                            continue;
-                        added++;
-                        add((int) algo.encode(tryLat, tryLon), connNode);
+                    // add edge to all possible entries
+                    // TODO use bresenhamLine
+                    for (double tryLat = tmpLat; tryLat < connLat + latWidth; tryLat += latWidth) {
+                        for (double tryLon = tmpLon; tryLon < connLon + lonWidth; tryLon += lonWidth) {
+                            if (tryLon == tmpLon && tryLat == tmpLat || tryLon == connLon && tryLat == connLat)
+                                continue;
+                            added++;
+                            add((int) algo.encode(tryLat, tryLon), connNode);
+                        }
                     }
                 }
+                swWhile.stop();
             }
-            swWhile.stop();
             if (added % 100000 == 0)
                 logger.info("node:" + node + ", added:" + added + " add:" + sw.getSeconds() + ", while:" + swWhile.getSeconds());
         }
@@ -275,7 +281,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
                     double connectDist = calc.calcNormalizedDist(connLat, connLon, lat, lon);
                     double d = connectDist;
                     int tmpNode = connectNode;
-                    if (calc.validEdgeDistance(lat, lon, currLat, currLon, connLat, connLon)) {
+                    if (calcEdgeDistance && calc.validEdgeDistance(lat, lon, currLat, currLon, connLat, connLon)) {
                         d = calc.calcNormalizedEdgeDistance(lat, lon, currLat, currLon, connLat, connLon);
                         if (currDist < connectDist)
                             tmpNode = currNode;
@@ -325,8 +331,9 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             DataOutputStream out = new DataOutputStream(new BufferedOutputStream(
                     new FileOutputStream(location), 4 * 1024));
             try {
-                int len = index.length;
-                out.writeInt(len);
+                out.writeInt(latSizeI);
+                out.writeInt(lonSizeI);
+                int len = latSizeI * lonSizeI;
                 for (int i = 0; i < len; i++) {
                     Helper.writeInts(out, index[i].toArray());
                 }
@@ -343,11 +350,15 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             Location2IDPreciseIndex idx = new Location2IDPreciseIndex(g);
             DataInputStream in = new DataInputStream(new BufferedInputStream(
                     new FileInputStream(location), 4 * 1024));
-            int size = in.readInt();
-            idx.index = new TIntArrayList[size];
+
+            int tmpLat = in.readInt();
+            int tmpLon = in.readInt();
+            idx.initBuffer(tmpLat, tmpLon);
+            int size = idx.index.length;
             for (int i = 0; i < size; i++) {
                 idx.index[i] = new TIntArrayList(Helper.readInts(in));
             }
+
             return idx;
         } catch (IOException ex) {
             throw new RuntimeException("cannot store location2id index to " + location, ex);
