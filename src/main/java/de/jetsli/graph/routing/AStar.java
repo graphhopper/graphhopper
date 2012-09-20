@@ -34,7 +34,7 @@ import java.util.PriorityQueue;
  * @author Peter Karich
  */
 public class AStar extends AbstractRoutingAlgorithm {
-
+    
     private CalcDistance dist = new ApproxCalcDistance();
 
     public AStar(Graph g) {

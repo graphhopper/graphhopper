@@ -66,7 +66,7 @@ import de.jetsli.graph.util.CoordTrig;
 //  |----|----|----|----|
 //            |
 //  lon0 == 0 | lon0 == 1
-public class SpatialKeyAlgo {
+public class SpatialKeyAlgo implements KeyAlgo {
 
     // private int factorForPrecision;
     // normally -180 degree
@@ -111,6 +111,7 @@ public class SpatialKeyAlgo {
         return (int) Math.log10(p);
     }
 
+    @Override
     public SpatialKeyAlgo setInitialBounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit) {
         minLonI = minLonInit;
         maxLonI = maxLonInit;
@@ -123,6 +124,7 @@ public class SpatialKeyAlgo {
         setInitialBounds(-180, 180, -90, 90);
     }
 
+    @Override
     public long encode(CoordTrig coord) {
         return encode(coord.lat, coord.lon);
     }
@@ -132,6 +134,7 @@ public class SpatialKeyAlgo {
      *
      * @return the spatial key
      */
+    @Override
     public final long encode(double lat, double lon) {
         // PERFORMANCE: int operations would be faster than double (for further comparison etc)
         // but we would need 'long' because 'int factorForPrecision' is not enough (problem: coord!=decode(encode(coord)) see testBijection)
@@ -180,6 +183,7 @@ public class SpatialKeyAlgo {
      *
      * @param spatialKey is the input
      */
+    @Override
     public final void decode(long spatialKey, CoordTrig latLon) {
         // Performance: calculating 'midLon' and 'midLat' on the fly is not slower than using 
         // precalculated values from arrays and for 'bits' a precalculated array is even slightly slower!

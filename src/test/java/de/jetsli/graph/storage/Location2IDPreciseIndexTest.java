@@ -25,10 +25,10 @@ import static de.jetsli.graph.storage.Location2IDQuadtreeTest.*;
  *
  * @author Peter Karich
  */
-public class Location2IDFastIndexTest {
+public class Location2IDPreciseIndexTest {
 
     public Location2IDIndex createIndex(Graph g, int resolution) {
-        return new Location2IDFastIndex(g).prepareIndex(resolution);
+        return new Location2IDPreciseIndex(g).prepareIndex(resolution);
     }
 
     @Test

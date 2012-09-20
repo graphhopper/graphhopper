@@ -52,8 +52,8 @@ public class OSMReader {
         } else if (args.getBool("shortestpath", false)) {
             String algo = args.get("algo", "dijkstra");
             //warmup
-            tests.runShortestPathPerf(50, algo);
             tests.runShortestPathPerf(500, algo);
+            tests.runShortestPathPerf(5000, algo);
         }
     }
     private int expectedLocs;
@@ -97,12 +97,12 @@ public class OSMReader {
             File osmXmlFile = new File(strOsm);
             if (!osmXmlFile.exists())
                 throw new IllegalStateException("Your specified OSM file does not exist:" + strOsm);
-            logger.info("size for osm2id-map is " + osmReader.getMaxLocs() + " - start creating graph from " + osmXmlFile);
-            osmReader.osm2Graph(osmXmlFile);
+            logger.info("size for osm2id-map is " + osmReader.getMaxLocs() + " - start creating graph from " + osmXmlFile);            
             String type = args.get("type", "CAR");
             osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
                     type.contains("PUBLIC_TRANSPORT"),
                     type.contains("BIKE"), type.contains("FOOT")));
+            osmReader.osm2Graph(osmXmlFile);
         }
 
         return osmReader.getGraph();

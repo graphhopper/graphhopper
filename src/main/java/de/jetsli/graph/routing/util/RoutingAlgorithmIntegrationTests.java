@@ -147,7 +147,7 @@ public class RoutingAlgorithmIntegrationTests {
 //                        + "graph-to " + to + "(" + toLat + "," + toLon + ")");
 //                continue;
 //            }
-            if (i % 20 == 0)
+            if (i % 100 == 0)
                 logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run");// (" + p + ")");
         }
     }

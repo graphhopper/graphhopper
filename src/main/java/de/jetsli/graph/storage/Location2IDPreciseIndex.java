@@ -18,7 +18,9 @@ package de.jetsli.graph.storage;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
-import de.jetsli.graph.geohash.SpatialKeyAlgo;
+import de.jetsli.graph.geohash.KeyAlgo;
+import de.jetsli.graph.geohash.LinearKeyAlgo;
+import de.jetsli.graph.util.ApproxCalcDistance;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.Helper;
@@ -27,7 +29,6 @@ import de.jetsli.graph.util.XFirstSearch;
 import de.jetsli.graph.util.shapes.BBox;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.set.hash.TIntHashSet;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -35,6 +36,7 @@ import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,17 +60,17 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class Location2IDFastIndex implements Location2IDIndex {
+public class Location2IDPreciseIndex implements Location2IDIndex {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private TIntArrayList[] index;
     private Graph g;
     private CalcDistance calc = new CalcDistance();
-    private SpatialKeyAlgo algo;
+    private KeyAlgo algo;
     private double normedLatWidthKm, normedLonWidthKm, latWidth, lonWidth, maxNormRasterWidthKm;
-    private int size;
+    private int latSizeI, lonSizeI;
 
-    public Location2IDFastIndex(Graph g) {
+    public Location2IDPreciseIndex(Graph g) {
         this.g = g;
     }
 
@@ -78,34 +80,27 @@ public class Location2IDFastIndex implements Location2IDIndex {
 
     @Override
     public Location2IDIndex prepareIndex(int capacity) {
-        int bits = initBuffer(capacity);
-        initAlgo(bits);
+        initBuffer(capacity);
         initIndex();
         initEmptySlots();
         return this;
     }
 
-    private int initBuffer(int cap) {
-        size = cap;
-        int bits = (int) (Math.log(size) / Math.log(2)) + 1;
-        size = (int) Math.pow(2, bits);
-        int x = (int) Math.sqrt(size);
+    private void initBuffer(int cap) {
+        int bits = (int) (Math.log(cap) / Math.log(2)) + 1;
+        int size = (int) Math.pow(2, bits);
+        latSizeI = lonSizeI = (int) Math.sqrt(size);
 
         // Same number of entries for x and y otherwise we would need an adapted spatialkey algo.
         // Accordingly the width of one raster entry is different for x and y!
-        if (x * x < size) {
-            x++;
-            size = x * x;
-        }
+        if (latSizeI * lonSizeI < size)
+            lonSizeI++;
+        size = latSizeI * lonSizeI;
 
         index = new TIntArrayList[size];
-        return bits;
-    }
-
-    void initAlgo(int bits) {
         BBox b = g.getBounds();
         logger.info("bounds:" + b + ", bits:" + bits + ", calc:" + calc);
-        algo = new SpatialKeyAlgo(bits).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
+        algo = new LinearKeyAlgo(latSizeI, lonSizeI).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
         latWidth = (b.maxLat - b.minLat) / Math.sqrt(size);
         lonWidth = (b.maxLon - b.minLon) / Math.sqrt(size);
         normedLatWidthKm = calc.normalizeDist(calc.calcDistKm(b.minLat, b.minLon, b.maxLat, b.minLon) / Math.sqrt(size));
@@ -170,18 +165,48 @@ public class Location2IDFastIndex implements Location2IDIndex {
                 logger.info("node:" + node + ", added:" + added + " add:" + sw.getSeconds() + ", while:" + swWhile.getSeconds());
         }
 
+        // TODO save a lot more memory
+        // remove nodes which can be reached from other nodes within the raster width <=> only one entry per subgraph
+
         // save memory
         for (int i = 0; i < index.length; i++) {
             if (index[i] != null)
                 index[i].trimToSize();
         }
-
-        // TODO skip node which can be reached from other node within the width <=> only one entry per subgraph
-        // do we need findID() here too?
     }
 
     void initEmptySlots() {
-        // TODO
+        // Here we don't need the precision of edge distance which will make it too slow.
+        // Also just use one point or use just the reference of the found entry to save space (?)
+        int len = index.length;
+        TIntArrayList[] indexCopy = new TIntArrayList[index.length];
+        int initializedCounter = 0;
+        while (initializedCounter < len) {
+            initializedCounter = 0;
+            System.arraycopy(index, 0, indexCopy, 0, index.length);
+            for (int i = 0; i < len; i++) {
+                if (indexCopy[i] != null) {
+                    // check change "initialized to empty"
+                    if ((i + 1) % lonSizeI != 0 && indexCopy[i + 1] == null) {
+                        index[i + 1] = indexCopy[i];
+                    } else if (i + lonSizeI < len && indexCopy[i + lonSizeI] == null) {
+                        index[i + lonSizeI] = indexCopy[i];
+                    }
+                } else {
+                    // check change "empty to initialized"
+                    if ((i + 1) % lonSizeI != 0 && indexCopy[i + 1] != null)
+                        index[i] = indexCopy[i + 1];
+                    else if (i + lonSizeI < len && indexCopy[i + lonSizeI] != null)
+                        index[i] = indexCopy[i + lonSizeI];
+                }
+
+                if (index[i] != null)
+                    initializedCounter++;
+            }
+
+            if (initializedCounter == 0)
+                throw new IllegalStateException("at least one entry has to be != null, which should have happened in initIndex");
+        }
     }
 
     void add(int key, int node) {
@@ -265,7 +290,7 @@ public class Location2IDFastIndex implements Location2IDIndex {
             }.start(g, node, false);
             if (!iter.hasNext())
                 break;
-            
+
             node = iter.next();
         }
         // logger.info("nodes:" + len + " key:" + key + " lat:" + lat + ",lon:" + lon);
@@ -313,9 +338,9 @@ public class Location2IDFastIndex implements Location2IDIndex {
         }
     }
 
-    public static Location2IDFastIndex load(Graph g, String location) {
+    public static Location2IDPreciseIndex load(Graph g, String location) {
         try {
-            Location2IDFastIndex idx = new Location2IDFastIndex(g);
+            Location2IDPreciseIndex idx = new Location2IDPreciseIndex(g);
             DataInputStream in = new DataInputStream(new BufferedInputStream(
                     new FileInputStream(location), 4 * 1024));
             int size = in.readInt();

@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.util;
 
-import de.jetsli.graph.storage.Location2IDFastIndex;
+import de.jetsli.graph.storage.Location2IDPreciseIndex;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
