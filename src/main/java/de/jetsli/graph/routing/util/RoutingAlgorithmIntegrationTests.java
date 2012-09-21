@@ -25,7 +25,7 @@ import de.jetsli.graph.routing.PathPrio;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
-import de.jetsli.graph.storage.Location2IDQuadtree;
+import de.jetsli.graph.storage.Location2IDPreciseIndex;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.StopWatch;
 import java.util.Random;
@@ -43,8 +43,8 @@ public class RoutingAlgorithmIntegrationTests {
     public RoutingAlgorithmIntegrationTests(Graph graph) {
         this.unterfrankenGraph = graph;
         StopWatch sw = new StopWatch().start();
-        idx = new Location2IDQuadtree(unterfrankenGraph).prepareIndex(50000);
-//        idx = new Location2IDFastIndex(unterfrankenGraph).prepareIndex(50000);
+//        idx = new Location2IDQuadtree(unterfrankenGraph).prepareIndex(50000);
+        idx = new Location2IDPreciseIndex(unterfrankenGraph).prepareIndex(50000);
         logger.info("idx size:" + idx.calcMemInMB() + " MB, took:" + sw.stop().getSeconds());
     }
 

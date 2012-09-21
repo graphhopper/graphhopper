@@ -15,29 +15,31 @@
  */
 package de.jetsli.graph.storage;
 
-import static org.junit.Assert.*;
+import gnu.trove.iterator.TIntIntIterator;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  *
  * @author Peter Karich
  */
-public class MMapDataAccessTest extends DataAccessTest {
+public class ListOfLinkedListsTest {
 
-    @Override
-    public DataAccess createDataAccess(String location) {
-        return new MMapDataAccess(location);
-    }
-    
     @Test
-    public void textMix() {
-        DataAccess da = new RAMDataAccess(location);
-        assertFalse(da.loadExisting());
-        da.ensureCapacity(300);
-        da.setInt(7, 123);
-        da.close();
-        da = createDataAccess(location);
-        assertTrue(da.loadExisting());
-        assertEquals(123, da.getInt(7));
+    public void testSomeMethod() {
+        RAMDataAccess refs = new RAMDataAccess("refs");
+        RAMDataAccess entries = new RAMDataAccess("entries");
+        ListOfLinkedLists lll = new ListOfLinkedLists(refs, entries);
+
+        lll.add(1, 10);
+        IntIterator iter = lll.getEntries(0);
+        assertFalse(iter.next());
+        iter = lll.getEntries(1);
+        assertTrue(iter.next());
+        assertEquals(10, iter.value());
     }
 }

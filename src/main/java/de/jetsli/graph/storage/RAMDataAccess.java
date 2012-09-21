@@ -16,14 +16,18 @@
 package de.jetsli.graph.storage;
 
 import java.io.RandomAccessFile;
+import java.util.Arrays;
 
 /**
+ * This is an in-memory data structure but with the possibility to be stored on flush().
+ *
  * @author Peter Karich
  */
 public class RAMDataAccess extends AbstractDataAccess {
 
     private String location;
     private int[] area;
+    private float increaseFactor = 1.5f;
     private boolean closed = false;
 
     public RAMDataAccess(String location) {
@@ -31,11 +35,16 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public DataAccess alloc(long bytes) {
-        if (area != null || closed)
-            throw new IllegalStateException("You should not allocated data twice");
-        area = new int[(int) (bytes / 4) + 1];
-        return this;
+    public void ensureCapacity(long bytes) {
+        int intSize = (int) (bytes >> 2);
+        if (area == null) {
+            area = new int[intSize];
+            return;
+        }
+        if (intSize <= area.length)
+            return;
+
+        area = Arrays.copyOf(area, (int) (intSize * increaseFactor));
     }
 
     @Override
@@ -45,8 +54,6 @@ public class RAMDataAccess extends AbstractDataAccess {
                 return false;
 
             RandomAccessFile in = new RandomAccessFile(location, "r");
-//            DataInputStream in = new DataInputStream(new BufferedInputStream(
-//                    new FileInputStream(location), 4 * 1024));
             try {
                 in.seek(0);
                 if (!in.readUTF().equals(DATAACESS_MARKER))
@@ -71,8 +78,6 @@ public class RAMDataAccess extends AbstractDataAccess {
     public DataAccess flush() {
         try {
             RandomAccessFile out = new RandomAccessFile(location, "rw");
-//            DataOutputStream out = new DataOutputStream(new BufferedOutputStream(
-//                    new FileOutputStream(location), 4 * 1024));
             try {
                 out.seek(0);
                 out.writeUTF(DATAACESS_MARKER);
@@ -113,6 +118,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         DataAccess da = new RAMDataAccess(location);
         if (da.loadExisting())
             return da;
-        return da.alloc(byteHint);
+        da.ensureCapacity(byteHint);
+        return da;
     }
 }

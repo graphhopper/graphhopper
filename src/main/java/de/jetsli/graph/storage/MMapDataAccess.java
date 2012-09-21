@@ -32,7 +32,8 @@ public class MMapDataAccess extends AbstractDataAccess {
     private RandomAccessFile raFile;
     private MappedByteBuffer bBuffer;
     private ByteOrder order;
-    private boolean closed = false;
+    private float increaseFactor = 1.5f;
+    private transient boolean closed = false;
 
     public MMapDataAccess(String location) {
         this.location = location;
@@ -45,7 +46,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     /**
-     * Makes it possible to force the order! E.g. if we create the file on a host system and copy it
+     * Makes it possible to force the order. E.g. if we create the file on a host system and copy it
      * to a different like android. http://en.wikipedia.org/wiki/Endianness
      */
     public MMapDataAccess setByteOrder(ByteOrder order) {
@@ -54,16 +55,20 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public DataAccess alloc(long bytes) {
+    public void ensureCapacity(long bytes) {
         if (!mapIt(HEADER_INT, bytes))
             throw new IllegalStateException("problem while file mapping " + location);
-        return this;
     }
 
     protected boolean mapIt(long start, long bytes) {
-        if (closed || bBuffer != null)
-            return false;
         try {
+            if (bBuffer != null) {
+                if (bytes <= bBuffer.capacity())
+                    return true;
+
+                bytes = (long) (increaseFactor * bytes);
+                raFile.setLength(bytes + start);
+            }
             bBuffer = raFile.getChannel().map(FileChannel.MapMode.READ_WRITE, start, bytes);
             if (order != null)
                 bBuffer.order(order);
@@ -76,6 +81,8 @@ public class MMapDataAccess extends AbstractDataAccess {
     @Override
     public boolean loadExisting() {
         try {
+            if (closed)
+                return false;
             raFile.seek(0);
             if (!raFile.readUTF().equals(DATAACESS_MARKER))
                 return false;
@@ -107,6 +114,7 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public int getInt(int intIndex) {
+        bBuffer.capacity();
         return bBuffer.getInt(intIndex * 4);
     }
 
@@ -122,6 +130,7 @@ public class MMapDataAccess extends AbstractDataAccess {
         DataAccess da = new MMapDataAccess(location);
         if (da.loadExisting())
             return da;
-        return da.alloc(byteHint);
+        da.ensureCapacity(byteHint);
+        return da;
     }
 }

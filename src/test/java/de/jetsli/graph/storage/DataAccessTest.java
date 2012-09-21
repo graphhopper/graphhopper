@@ -48,23 +48,23 @@ public abstract class DataAccessTest {
     public void testLoadFlush() {
         DataAccess da = createDataAccess(location);
         assertFalse(da.loadExisting());
-        da.alloc(300);
+        da.ensureCapacity(300);
         da.setInt(7, 123);
         assertEquals(123, da.getInt(7));
         da.setInt(10, Integer.MAX_VALUE / 3);
-        assertEquals(Integer.MAX_VALUE / 3, da.getInt(10));        
-        da.flush();        
-        
+        assertEquals(Integer.MAX_VALUE / 3, da.getInt(10));
+        da.flush();
+
         // not always true for mmap case
         // assertEquals(0, da.getInt(2));
         // assertEquals(0, da.getInt(3));
         assertEquals(123, da.getInt(7));
         assertEquals(Integer.MAX_VALUE / 3, da.getInt(10));
         da.close();
-        
+
         // cannot load data twice
         assertFalse(da.loadExisting());
-        
+
         da = createDataAccess(location);
         assertTrue(da.loadExisting());
         assertEquals(123, da.getInt(7));
@@ -80,8 +80,9 @@ public abstract class DataAccessTest {
             da.setInt(2, 321);
         } catch (Exception ex) {
         }
-        
-        da.alloc(300).setInt(2, 321);
+
+        da.ensureCapacity(300);
+        da.setInt(2, 321);
         // close works the same as flush but one cannot use the same object anymore as probably
         // some underlying resources are freed
         da.close();
@@ -89,5 +90,24 @@ public abstract class DataAccessTest {
         assertTrue(da.loadExisting());
         assertEquals(321, da.getInt(2));
         da.close();
+    }
+
+    @Test
+    public void testEnsureCapacity() {
+        DataAccess da = createDataAccess(location);
+        da.ensureCapacity(20 * 4);
+        da.setInt(19, 200);
+        try {
+            // this should fail with an index out of bounds exception
+            da.setInt(20, 220);
+            assertFalse(true);
+        } catch (Exception ex) {
+        }
+        assertEquals(200, da.getInt(19));
+        da.ensureCapacity(25 * 5);
+        assertEquals(200, da.getInt(19));
+        // now it shouldn't fail
+        da.setInt(20, 220);
+        assertEquals(220, da.getInt(20));
     }
 }

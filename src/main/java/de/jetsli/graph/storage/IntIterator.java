@@ -13,29 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package de.jetsli.graph.storage;
 
 /**
- * Abstraction of the underlying datastructure. Current implementations are RAM and memory mapped
- * kind. After construction and before usage you'll have to call alloc or a successfully
- * loadExisting
- *
  * @author Peter Karich
  */
-public interface DataAccess {
+public interface IntIterator {
 
-    void setInt(int index, int value);
-
-    int getInt(int index);
-
-    void ensureCapacity(long bytes);
-
-    boolean loadExisting();
-
-    DataAccess flush();
-
-    /**
-     * Do not access this object after calling this method. It would result in undefined behaviour
-     */
-    DataAccess close();
+    boolean next();
+    
+    int value();
+    
+    void remove();
 }

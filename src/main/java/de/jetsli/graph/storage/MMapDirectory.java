@@ -13,29 +13,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package de.jetsli.graph.storage;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Abstraction of the underlying datastructure. Current implementations are RAM and memory mapped
- * kind. After construction and before usage you'll have to call alloc or a successfully
- * loadExisting
- *
  * @author Peter Karich
  */
-public interface DataAccess {
+public class MMapDirectory implements Directory {
 
-    void setInt(int index, int value);
+    private Map<String, MMapDataAccess> map = new HashMap<String, MMapDataAccess>();
 
-    int getInt(int index);
+    @Override
+    public DataAccess createDataAccess(String name) {
+        if (map.containsKey(name))
+            throw new IllegalStateException("DataAccess " + name + " already exists");
 
-    void ensureCapacity(long bytes);
-
-    boolean loadExisting();
-
-    DataAccess flush();
-
-    /**
-     * Do not access this object after calling this method. It would result in undefined behaviour
-     */
-    DataAccess close();
+        MMapDataAccess da = new MMapDataAccess(name);
+        map.put(name, da);
+        return da;
+    }
 }

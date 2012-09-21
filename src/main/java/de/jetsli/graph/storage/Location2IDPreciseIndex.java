@@ -54,9 +54,6 @@ import org.slf4j.LoggerFactory;
  * point A using euclidean geometry (which should be fine as long as they are not too far away which
  * is the case for nearest neighbor).
  *
- * TODO 2 should be useable for incremental creation too! E.g. if life updates or used as nearest
- * neighbor search alternative to a quadtree.
- *
  * @author Peter Karich
  */
 public class Location2IDPreciseIndex implements Location2IDIndex {
@@ -102,7 +99,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         latSizeI = lonSizeI = (int) Math.sqrt(size);
 
         // Same number of entries for x and y otherwise we would need an adapted spatialkey algo.
-        // Accordingly the width of one raster entry is different for x and y!
+        // Accordingly the width of a tile is different for x and y!
         if (latSizeI * lonSizeI < size)
             lonSizeI++;
     }
@@ -171,14 +168,24 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
                 logger.info("node:" + node + ", added:" + added + " add:" + sw.getSeconds() + ", while:" + swWhile.getSeconds());
         }
 
-        // TODO save a lot more memory
-        // remove nodes which can be reached from other nodes within the raster width <=> only one entry per subgraph
+        // TODO save a more memory: remove all nodes which can be reached from other nodes within 
+        // the tile width <=> only one entry per subgraph. query needs to be adapted to search 
+        // until it leaves the current tile
 
         // save memory
+        int sum = 0;
+        int max = 0;
+        int counter = 0;
         for (int i = 0; i < index.length; i++) {
-            if (index[i] != null)
+            if (index[i] != null) {
                 index[i].trimToSize();
+                counter++;
+                sum += index[i].size();
+                if (max < index[i].size())
+                    max = index[i].size();
+            }
         }
+        // System.out.println("max:" + max + ", mean:" + (float) sum / counter);
     }
 
     void initEmptySlots() {
@@ -266,8 +273,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
                         closestNode.weight = currDist;
                         closestNode.node = currNode;
                     }
-                    // but keep traversal within rasterWidthInKm
-                    // return maxQueryBox.contains(currLat, currLon);
+                    
                     return goFurther;
                 }
 
