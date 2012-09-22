@@ -40,6 +40,4 @@ public interface DataAccess {
     void ensureCapacity(long bytes);
 
     int capacity();
-
-    void setNoValue(int noValue);
 }

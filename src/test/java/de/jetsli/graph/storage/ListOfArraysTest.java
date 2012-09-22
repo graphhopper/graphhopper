@@ -16,9 +16,9 @@
 package de.jetsli.graph.storage;
 
 import gnu.trove.list.array.TIntArrayList;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -40,11 +40,10 @@ public class ListOfArraysTest {
 
     @Test
     public void testAdd() {
-        assertEquals(0, la.size());
         TIntArrayList list = new TIntArrayList();
         list.add(2);
         list.add(5);
-        la.add(list);
+        la.set(0, list);
 
         IntIterator iter = la.getIterator(0);
         assertTrue(iter.next());
@@ -59,12 +58,12 @@ public class ListOfArraysTest {
         TIntArrayList list = new TIntArrayList();
         list.add(2);
         list.add(5);
-        la.add(list);
+        la.set(0, list);
         list.clear();
         for (int i = 0; i < 200; i++) {
             list.add(i);
         }
-        la.add(list);
+        la.set(1, list);
         IntIterator iter = la.getIterator(1);
         int i = 0;
         while (iter.next()) {
@@ -78,18 +77,15 @@ public class ListOfArraysTest {
     @Test
     public void testSetReferences() {
         TIntArrayList list = new TIntArrayList();
-        list.add(2);
-        list.add(5);
-        la.add(list);
+        for (int i = 0; i < 30; i++) {
+            list.add(i);
+        }
+        la.set(0, list);
         int oldCap = la.capacity();
-        la.setSameReference(0, 1);
+        la.setSameReference(1, 0);
         assertEquals(oldCap, la.capacity());
 
-        IntIterator iter = la.getIterator(1);
-        assertTrue(iter.next());
-        assertEquals(2, iter.value());
-        assertTrue(iter.next());
-        assertEquals(5, iter.value());
-        assertFalse(iter.next());
+        assertEquals(30, IntIterator.Helper.count(la.getIterator(0)));
+        assertEquals(30, IntIterator.Helper.count(la.getIterator(1)));
     }
 }

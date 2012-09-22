@@ -21,7 +21,6 @@ import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
 
 /**
  * @author Peter Karich
@@ -35,7 +34,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     private ByteOrder order;
     private float increaseFactor = 1.5f;
     private transient boolean closed = false;
-    private byte[] EMPTY = new byte[1024];
+    private static byte[] EMPTY = new byte[1024];
 
     public MMapDataAccess(String location) {
         this.location = location;
@@ -139,21 +138,8 @@ public class MMapDataAccess extends AbstractDataAccess {
         return this;
     }
 
-    public static DataAccess load(String location, int byteHint) {
-        DataAccess da = new MMapDataAccess(location);
-        if (da.loadExisting())
-            return da;
-        da.ensureCapacity(byteHint);
-        return da;
-    }
-
     @Override
     public int capacity() {
         return bBuffer.capacity();
-    }
-
-    @Override
-    public void setNoValue(int noValue) {
-        Arrays.fill(EMPTY, (byte) noValue);
     }
 }

@@ -44,15 +44,15 @@ public abstract class DataAccessTest {
         Helper.deleteDir(folder);
     }
 
-    @Test
-    public void testNoValue() {
-        DataAccess da = createDataAccess(location);
-        da.setNoValue(-1);
-        da.ensureCapacity(300);
-        // check noValue clearing
-        assertEquals(-1, da.getInt(2));
-        assertEquals(-1, da.getInt(3));
-    }
+//    @Test
+//    public void testNoValue() {
+//        DataAccess da = createDataAccess(location);
+//        da.setNoValue(-1);
+//        da.ensureCapacity(300);
+//        // check noValue clearing
+//        assertEquals(-1, da.getInt(2));
+//        assertEquals(-1, da.getInt(3));
+//    }
 
     @Test
     public void testLoadFlush() {

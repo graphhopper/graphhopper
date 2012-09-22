@@ -29,7 +29,6 @@ public class RAMDataAccess extends AbstractDataAccess {
     private int[] area;
     private float increaseFactor = 1.5f;
     private boolean closed = false;
-    private int noValue = 0;
 
     public RAMDataAccess(String location) {
         this.location = location;
@@ -48,13 +47,12 @@ public class RAMDataAccess extends AbstractDataAccess {
             oldCapacity = area.length;
             area = Arrays.copyOf(area, (int) (intSize * increaseFactor));
         }
-        Arrays.fill(area, oldCapacity, area.length, noValue);
     }
 
     @Override
     public boolean loadExisting() {
         try {
-            if (area != null || closed)
+            if (area != null || closed || location == null)
                 return false;
 
             RandomAccessFile in = new RandomAccessFile(location, "r");
@@ -80,6 +78,8 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public DataAccess flush() {
+        if (location == null)
+            return this;
         try {
             RandomAccessFile out = new RandomAccessFile(location, "rw");
             try {
@@ -116,21 +116,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         return this;
     }
 
-    public static DataAccess load(String location, int byteHint) {
-        DataAccess da = new RAMDataAccess(location);
-        if (da.loadExisting())
-            return da;
-        da.ensureCapacity(byteHint);
-        return da;
-    }
-
     @Override
     public int capacity() {
         return area.length * 4;
-    }
-
-    @Override
-    public void setNoValue(int noValue) {
-        this.noValue = noValue;
     }
 }

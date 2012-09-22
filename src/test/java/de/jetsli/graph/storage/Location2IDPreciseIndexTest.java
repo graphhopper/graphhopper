@@ -168,7 +168,8 @@ public class Location2IDPreciseIndexTest {
         assertIndex(idx);
         idx.flush();
 
-        idx = (Location2IDPreciseIndex) createIndex(g, 8);
+        idx = new Location2IDPreciseIndex(g, new RAMDirectory(location));
+        assertTrue(idx.loadExisting());
         assertIndex(idx);
     }
 

@@ -26,29 +26,27 @@ public class ListOfArrays {
     private DataAccess refs;
     private DataAccess entries;
     private int nextArrayPointer = headerInfos;
-    private int currentSize;
 
     public ListOfArrays(Directory dir, String listName, int integers) {
-        this(dir.createDataAccess(listName + "refs"), dir.createDataAccess(listName + "buckets"), integers);
+        this(dir.createDataAccess(listName + "refs"),
+                dir.createDataAccess(listName + "entries"),
+                integers);
     }
 
-    public ListOfArrays(DataAccess refs, DataAccess entries, int integers) {
+    ListOfArrays(DataAccess refs, DataAccess entries, int integers) {
         this.refs = refs;
         this.entries = entries;
         refs.ensureCapacity(integers * 4);
         entries.ensureCapacity(integers * 4);
     }
 
-    public void setSameReference(int indexFrom, int indexTo) {
-        int max = Math.max(indexFrom, indexTo) + 1;
-        refs.ensureCapacity(max * 4);
+    public void setSameReference(int indexTo, int indexFrom) {
         refs.setInt(indexTo, refs.getInt(indexFrom));
     }
 
-    public void add(TIntArrayList list) {
-        refs.ensureCapacity((currentSize + 1) * 4);
+    public void set(int index, TIntArrayList list) {
         int tmpPointer = nextArrayPointer;
-        refs.setInt(currentSize, nextArrayPointer);
+        refs.setInt(index, nextArrayPointer);
         // reserver the integers and one integer for the size
         nextArrayPointer += list.size() + 1;
         entries.ensureCapacity((nextArrayPointer + 1) * 4);
@@ -59,9 +57,6 @@ public class ListOfArrays {
             tmpPointer++;
             entries.setInt(tmpPointer, list.get(i));
         }
-
-        currentSize++;
-        entries.setInt(0, currentSize);
     }
 
     public IntIterator getIterator(final int index) {
@@ -76,7 +71,7 @@ public class ListOfArrays {
                 tmpPointer++;
                 if (tmpPointer > end)
                     return false;
-                value = entries.getInt(tmpPointer);                
+                value = entries.getInt(tmpPointer);
                 return true;
             }
 
@@ -89,9 +84,14 @@ public class ListOfArrays {
             }
         };
     }
-
-    public int size() {
-        return currentSize;
+    
+    public boolean loadExisting() {
+        if (refs.loadExisting()) {
+            if (!entries.loadExisting())
+                throw new IllegalStateException("corrupted files?");
+            return true;
+        }
+        return false;
     }
 
     public int capacity() {

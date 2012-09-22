@@ -83,11 +83,11 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         InMemConstructionIndex hi = new InMemConstructionIndex();
         hi.initBuffer(latSizeI, lonSizeI);
         hi.initIndex();
-        hi.saveMemory();
-        // TODO BAD memory usage: in list of linked lists the empty slots will contain cloned lists!
-        hi.initEmptySlots();
+        hi.compact();
+
         index = new ListOfArrays(dir, "id2locIndex", latSizeI * lonSizeI);
         hi.fill(index);
+        hi.initEmptySlots(index);
         return this;
     }
 
@@ -172,7 +172,16 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             }
         }
 
-        void saveMemory() {
+        void add(int key, int node) {
+            sw.start();
+            if (index[key] == null)
+                index[key] = new TIntArrayList(30);
+            if (!index[key].contains(node))
+                index[key].add(node);
+            sw.stop();
+        }
+
+        void compact() {
             // TODO save a more memory: remove all nodes which can be reached from other nodes within 
             // the tile width <=> only one entry per subgraph. query needs to be adapted to search 
             // until it leaves the current tile
@@ -193,29 +202,34 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             // System.out.println("max:" + max + ", mean:" + (float) sum / counter);
         }
 
-        void initEmptySlots() {
+        void initEmptySlots(ListOfArrays la) {
             // Here we don't need the precision of edge distance which will make it too slow.
-            // Also just use one point or use just the reference of the found entry to save space (?)
+            // Also just use just the reference of the found entry to save space
             int len = index.length;
-            TIntArrayList[] indexCopy = new TIntArrayList[index.length];
+            TIntArrayList[] indexCopy = new TIntArrayList[len];
             int initializedCounter = 0;
             while (initializedCounter < len) {
                 initializedCounter = 0;
-                System.arraycopy(index, 0, indexCopy, 0, index.length);
+                System.arraycopy(index, 0, indexCopy, 0, len);
                 for (int i = 0; i < len; i++) {
                     if (indexCopy[i] != null) {
                         // check change "initialized to empty"
                         if ((i + 1) % lonSizeI != 0 && indexCopy[i + 1] == null) {
                             index[i + 1] = indexCopy[i];
+                            la.setSameReference(i + 1, i);
                         } else if (i + lonSizeI < len && indexCopy[i + lonSizeI] == null) {
                             index[i + lonSizeI] = indexCopy[i];
+                            la.setSameReference(i + lonSizeI, i);
                         }
                     } else {
                         // check change "empty to initialized"
-                        if ((i + 1) % lonSizeI != 0 && indexCopy[i + 1] != null)
+                        if ((i + 1) % lonSizeI != 0 && indexCopy[i + 1] != null) {
                             index[i] = indexCopy[i + 1];
-                        else if (i + lonSizeI < len && indexCopy[i + lonSizeI] != null)
+                            la.setSameReference(i, i + 1);
+                        } else if (i + lonSizeI < len && indexCopy[i + lonSizeI] != null) {
                             index[i] = indexCopy[i + lonSizeI];
+                            la.setSameReference(i, i + lonSizeI);
+                        }
                     }
 
                     if (index[i] != null)
@@ -227,19 +241,10 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             }
         }
 
-        void add(int key, int node) {
-            sw.start();
-            if (index[key] == null)
-                index[key] = new TIntArrayList(30);
-            if (!index[key].contains(node))
-                index[key].add(node);
-            sw.stop();
-        }
-
         void fill(ListOfArrays la) {
             for (int i = 0; i < index.length; i++) {
                 if (index[i] != null)
-                    la.add(index[i]);
+                    la.set(i, index[i]);
             }
         }
     }
@@ -339,43 +344,16 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         }
     }
 
-//    public void save(String location) {
-//        try {
-//            DataOutputStream out = new DataOutputStream(new BufferedOutputStream(
-//                    new FileOutputStream(location), 4 * 1024));
-//            try {
-//                out.writeInt(latSizeI);
-//                out.writeInt(lonSizeI);
-//                int len = latSizeI * lonSizeI;
-//                for (int i = 0; i < len; i++) {
-//                    Helper.writeInts(out, index[i].toArray());
-//                }
-//            } finally {
-//                out.close();
-//            }
-//        } catch (IOException ex) {
-//            throw new RuntimeException("cannot store location2id index to " + location, ex);
-//        }
-//    }
-//    public static Location2IDPreciseIndex load(Graph g, String location) {
-//        try {
-//            Location2IDPreciseIndex idx = new Location2IDPreciseIndex(g);
-//            DataInputStream in = new DataInputStream(new BufferedInputStream(
-//                    new FileInputStream(location), 4 * 1024));
-//
-//            int tmpLat = in.readInt();
-//            int tmpLon = in.readInt();
-//            idx.initBuffer(tmpLat, tmpLon);
-//            int size = idx.index.length;
-//            for (int i = 0; i < size; i++) {
-//                idx.index[i] = new TIntArrayList(Helper.readInts(in));
-//            }
-//
-//            return idx;
-//        } catch (IOException ex) {
-//            throw new RuntimeException("cannot store location2id index to " + location, ex);
-//        }
-//    }
+    public boolean loadExisting() {
+        index = new ListOfArrays(dir, "id2locIndex", latSizeI * lonSizeI);        
+        if (index.loadExisting()) {
+            // TODO load properties!!!
+            return true;
+        }
+        
+        return false;
+    }
+
     public void flush() {
         index.flush();
     }
