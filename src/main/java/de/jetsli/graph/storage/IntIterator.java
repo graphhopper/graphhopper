@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package de.jetsli.graph.storage;
+
+import de.jetsli.graph.util.EdgeIterator;
 
 /**
  * @author Peter Karich
@@ -22,8 +23,19 @@ package de.jetsli.graph.storage;
 public interface IntIterator {
 
     boolean next();
-    
+
     int value();
-    
+
     void remove();
+
+    class Helper {
+
+        public static int count(IntIterator iter) {
+            int counter = 0;
+            while (iter.next()) {
+                ++counter;
+            }
+            return counter;
+        }
+    }
 }

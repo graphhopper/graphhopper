@@ -45,6 +45,16 @@ public abstract class DataAccessTest {
     }
 
     @Test
+    public void testNoValue() {
+        DataAccess da = createDataAccess(location);
+        da.setNoValue(-1);
+        da.ensureCapacity(300);
+        // check noValue clearing
+        assertEquals(-1, da.getInt(2));
+        assertEquals(-1, da.getInt(3));
+    }
+
+    @Test
     public void testLoadFlush() {
         DataAccess da = createDataAccess(location);
         assertFalse(da.loadExisting());
@@ -55,9 +65,9 @@ public abstract class DataAccessTest {
         assertEquals(Integer.MAX_VALUE / 3, da.getInt(10));
         da.flush();
 
-        // not always true for mmap case
-        // assertEquals(0, da.getInt(2));
-        // assertEquals(0, da.getInt(3));
+        // check noValue clearing
+        assertEquals(0, da.getInt(2));
+        assertEquals(0, da.getInt(3));
         assertEquals(123, da.getInt(7));
         assertEquals(Integer.MAX_VALUE / 3, da.getInt(10));
         da.close();
@@ -75,7 +85,7 @@ public abstract class DataAccessTest {
     public void testLoadClose() {
         DataAccess da = createDataAccess(location);
         assertFalse(da.loadExisting());
-        // throw some undefined exception if no alloc was called
+        // throw some undefined exception if no ensureCapacity was called
         try {
             da.setInt(2, 321);
         } catch (Exception ex) {

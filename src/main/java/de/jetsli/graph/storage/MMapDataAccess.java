@@ -21,6 +21,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 
 /**
  * @author Peter Karich
@@ -34,6 +35,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     private ByteOrder order;
     private float increaseFactor = 1.5f;
     private transient boolean closed = false;
+    private byte[] EMPTY = new byte[1024];
 
     public MMapDataAccess(String location) {
         this.location = location;
@@ -56,14 +58,16 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void ensureCapacity(long bytes) {
-        if (!mapIt(HEADER_INT, bytes))
+        if (!mapIt(HEADER_INT, bytes, true))
             throw new IllegalStateException("problem while file mapping " + location);
     }
 
-    protected boolean mapIt(long start, long bytes) {
+    protected boolean mapIt(long start, long bytes, boolean clearNew) {
         try {
+            int oldCap = 0;
             if (bBuffer != null) {
-                if (bytes <= bBuffer.capacity())
+                oldCap = bBuffer.capacity();
+                if (bytes <= oldCap)
                     return true;
 
                 bytes = (long) (increaseFactor * bytes);
@@ -72,6 +76,18 @@ public class MMapDataAccess extends AbstractDataAccess {
             bBuffer = raFile.getChannel().map(FileChannel.MapMode.READ_WRITE, start, bytes);
             if (order != null)
                 bBuffer.order(order);
+
+            if (clearNew) {
+                bBuffer.position(oldCap);
+                bytes -= oldCap;
+                int count = (int) (bytes / EMPTY.length);
+                for (int i = 0; i < count; i++) {
+                    bBuffer.put(EMPTY);
+                }
+                int len = (int) (bytes % EMPTY.length);
+                if (len > 0)
+                    bBuffer.put(EMPTY, count * EMPTY.length, len);
+            }
             return true;
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -87,7 +103,7 @@ public class MMapDataAccess extends AbstractDataAccess {
             if (!raFile.readUTF().equals(DATAACESS_MARKER))
                 return false;
             long bytes = raFile.readLong();
-            if (mapIt(HEADER_INT, bytes))
+            if (mapIt(HEADER_INT, bytes, false))
                 return true;
         } catch (Exception ex) {
         }
@@ -98,9 +114,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     public DataAccess flush() {
         try {
             bBuffer.force();
-            raFile.seek(0);
-            raFile.writeUTF(DATAACESS_MARKER);
-            raFile.writeLong(raFile.length());
+            writeHeader(raFile, raFile.length());
             return this;
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -108,14 +122,13 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void setInt(int intIndex, int value) {
-        bBuffer.putInt(intIndex * 4, value);
+    public void setInt(long intIndex, int value) {
+        bBuffer.putInt((int) intIndex * 4, value);
     }
 
     @Override
-    public int getInt(int intIndex) {
-        bBuffer.capacity();
-        return bBuffer.getInt(intIndex * 4);
+    public int getInt(long intIndex) {
+        return bBuffer.getInt((int) intIndex * 4);
     }
 
     @Override
@@ -132,5 +145,15 @@ public class MMapDataAccess extends AbstractDataAccess {
             return da;
         da.ensureCapacity(byteHint);
         return da;
+    }
+
+    @Override
+    public int capacity() {
+        return bBuffer.capacity();
+    }
+
+    @Override
+    public void setNoValue(int noValue) {
+        Arrays.fill(EMPTY, (byte) noValue);
     }
 }

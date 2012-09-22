@@ -20,5 +20,7 @@ package de.jetsli.graph.storage;
  */
 public interface Directory {
 
+    String getLocation();
+    
     DataAccess createDataAccess(String name);
 }

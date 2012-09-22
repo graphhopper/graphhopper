@@ -29,6 +29,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     private int[] area;
     private float increaseFactor = 1.5f;
     private boolean closed = false;
+    private int noValue = 0;
 
     public RAMDataAccess(String location) {
         this.location = location;
@@ -37,14 +38,17 @@ public class RAMDataAccess extends AbstractDataAccess {
     @Override
     public void ensureCapacity(long bytes) {
         int intSize = (int) (bytes >> 2);
+        int oldCapacity = 0;
         if (area == null) {
             area = new int[intSize];
-            return;
-        }
-        if (intSize <= area.length)
-            return;
+        } else {
+            if (intSize <= area.length)
+                return;
 
-        area = Arrays.copyOf(area, (int) (intSize * increaseFactor));
+            oldCapacity = area.length;
+            area = Arrays.copyOf(area, (int) (intSize * increaseFactor));
+        }
+        Arrays.fill(area, oldCapacity, area.length, noValue);
     }
 
     @Override
@@ -79,10 +83,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         try {
             RandomAccessFile out = new RandomAccessFile(location, "rw");
             try {
-                out.seek(0);
-                out.writeUTF(DATAACESS_MARKER);
                 int len = area.length;
-                out.writeLong(len);
+                writeHeader(out, len);
                 out.seek(HEADER_INT);
                 for (int i = 0; i < len; i++) {
                     out.writeInt(area[i]);
@@ -97,13 +99,13 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void setInt(int index, int value) {
-        area[index] = value;
+    public void setInt(long index, int value) {
+        area[(int) index] = value;
     }
 
     @Override
-    public int getInt(int index) {
-        return area[index];
+    public int getInt(long index) {
+        return area[(int) index];
     }
 
     @Override
@@ -120,5 +122,15 @@ public class RAMDataAccess extends AbstractDataAccess {
             return da;
         da.ensureCapacity(byteHint);
         return da;
+    }
+
+    @Override
+    public int capacity() {
+        return area.length * 4;
+    }
+
+    @Override
+    public void setNoValue(int noValue) {
+        this.noValue = noValue;
     }
 }

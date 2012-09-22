@@ -24,11 +24,9 @@ package de.jetsli.graph.storage;
  */
 public interface DataAccess {
 
-    void setInt(int index, int value);
+    void setInt(long index, int value);
 
-    int getInt(int index);
-
-    void ensureCapacity(long bytes);
+    int getInt(long index);
 
     boolean loadExisting();
 
@@ -38,4 +36,10 @@ public interface DataAccess {
      * Do not access this object after calling this method. It would result in undefined behaviour
      */
     DataAccess close();
+
+    void ensureCapacity(long bytes);
+
+    int capacity();
+
+    void setNoValue(int noValue);
 }

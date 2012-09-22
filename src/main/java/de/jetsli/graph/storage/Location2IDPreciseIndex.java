@@ -23,19 +23,11 @@ import de.jetsli.graph.geohash.LinearKeyAlgo;
 import de.jetsli.graph.util.ApproxCalcDistance;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.util.EdgeIterator;
-import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.StopWatch;
 import de.jetsli.graph.util.XFirstSearch;
 import de.jetsli.graph.util.shapes.BBox;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,16 +51,18 @@ import org.slf4j.LoggerFactory;
 public class Location2IDPreciseIndex implements Location2IDIndex {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private TIntArrayList[] index;
+    private ListOfLinkedLists index;
     private Graph g;
     private CalcDistance calc = new CalcDistance();
     private KeyAlgo algo;
     private double latWidth, lonWidth;
     private int latSizeI, lonSizeI;
+    private Directory dir;
     private boolean calcEdgeDistance = true;
 
-    public Location2IDPreciseIndex(Graph g) {
+    public Location2IDPreciseIndex(Graph g, Directory dir) {
         this.g = g;
+        this.dir = dir;
     }
 
     public Location2IDIndex setPrecision(boolean approxDist, boolean calcEdgeDist) {
@@ -86,14 +80,20 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
 
     @Override
     public Location2IDIndex prepareIndex(int capacity) {
-        prepareBuffer(capacity);
-        initBuffer(latSizeI, lonSizeI);
-        initIndex();
-        initEmptySlots();
+        prepare(capacity);
+        InMemConstructionIndex hi = new InMemConstructionIndex();
+        hi.initBuffer(latSizeI, lonSizeI);
+        hi.initIndex();
+        hi.saveMemory();
+        // TODO BAD memory usage: in list of linked lists the empty slots will contain cloned lists!
+        hi.initEmptySlots();
+        index = new ListOfLinkedLists(dir, "id2locIndex", latSizeI * lonSizeI);
+        index.setIntegersPerBucket(20);
+        hi.fill(index);
         return this;
     }
 
-    private void prepareBuffer(int cap) {
+    private void prepare(int cap) {
         int bits = (int) (Math.log(cap) / Math.log(2)) + 1;
         int size = (int) Math.pow(2, bits);
         latSizeI = lonSizeI = (int) Math.sqrt(size);
@@ -102,149 +102,162 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         // Accordingly the width of a tile is different for x and y!
         if (latSizeI * lonSizeI < size)
             lonSizeI++;
-    }
 
-    private void initBuffer(int latSizeI, int lonSizeI) {
-        index = new TIntArrayList[latSizeI * lonSizeI];
         BBox b = g.getBounds();
         algo = new LinearKeyAlgo(latSizeI, lonSizeI).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
         latWidth = (b.maxLat - b.minLat) / latSizeI;
         lonWidth = (b.maxLon - b.minLon) / lonSizeI;
     }
-    StopWatch sw = new StopWatch();
 
-    void initIndex() {
-        int nodes = g.getNodes();
-        MyBitSet alreadyDone = new MyOpenBitSet(nodes);
-        int added = 0;
-        StopWatch swWhile = new StopWatch();
-        for (int node = 0; node < nodes; node++) {
-            alreadyDone.add(node);
-            double lat = g.getLatitude(node);
-            double lon = g.getLongitude(node);
-            added++;
-            add((int) algo.encode(lat, lon), node);
+    private class InMemConstructionIndex {
 
-            if (calcEdgeDistance) {
-                swWhile.start();
-                EdgeIterator iter = g.getOutgoing(node);
-                while (iter.next()) {
-                    int connNode = iter.node();
-                    if (alreadyDone.contains(connNode))
-                        continue;
+        private TIntArrayList[] index;
 
-                    double connLat = g.getLatitude(connNode);
-                    double connLon = g.getLongitude(connNode);
-                    // already done in main loop: add((int) algo.encode(connLat, connLon), connNode);
+        void initBuffer(int latSizeI, int lonSizeI) {
+            index = new TIntArrayList[latSizeI * lonSizeI];
+        }
+        StopWatch sw = new StopWatch();
 
-                    double tmpLat = lat;
-                    double tmpLon = lon;
-                    if (connLat < lat) {
-                        double tmp = tmpLat;
-                        tmpLat = connLat;
-                        connLat = tmp;
-                    }
+        void initIndex() {
+            int nodes = g.getNodes();
+            MyBitSet alreadyDone = new MyOpenBitSet(nodes);
+            int added = 0;
+            StopWatch swWhile = new StopWatch();
+            for (int node = 0; node < nodes; node++) {
+                alreadyDone.add(node);
+                double lat = g.getLatitude(node);
+                double lon = g.getLongitude(node);
+                added++;
+                add((int) algo.encode(lat, lon), node);
 
-                    if (connLon < lon) {
-                        double tmp = tmpLon;
-                        tmpLon = connLon;
-                        connLon = tmp;
-                    }
+                if (calcEdgeDistance) {
+                    swWhile.start();
+                    EdgeIterator iter = g.getOutgoing(node);
+                    while (iter.next()) {
+                        int connNode = iter.node();
+                        if (alreadyDone.contains(connNode))
+                            continue;
 
-                    // add edge to all possible entries
-                    // TODO use bresenhamLine
-                    for (double tryLat = tmpLat; tryLat < connLat + latWidth; tryLat += latWidth) {
-                        for (double tryLon = tmpLon; tryLon < connLon + lonWidth; tryLon += lonWidth) {
-                            if (tryLon == tmpLon && tryLat == tmpLat || tryLon == connLon && tryLat == connLat)
-                                continue;
-                            added++;
-                            add((int) algo.encode(tryLat, tryLon), connNode);
+                        double connLat = g.getLatitude(connNode);
+                        double connLon = g.getLongitude(connNode);
+                        // already done in main loop: add((int) algo.encode(connLat, connLon), connNode);
+
+                        double tmpLat = lat;
+                        double tmpLon = lon;
+                        if (connLat < lat) {
+                            double tmp = tmpLat;
+                            tmpLat = connLat;
+                            connLat = tmp;
+                        }
+
+                        if (connLon < lon) {
+                            double tmp = tmpLon;
+                            tmpLon = connLon;
+                            connLon = tmp;
+                        }
+
+                        // add edge to all possible entries
+                        // TODO use bresenhamLine
+                        for (double tryLat = tmpLat; tryLat < connLat + latWidth; tryLat += latWidth) {
+                            for (double tryLon = tmpLon; tryLon < connLon + lonWidth; tryLon += lonWidth) {
+                                if (tryLon == tmpLon && tryLat == tmpLat || tryLon == connLon && tryLat == connLat)
+                                    continue;
+                                added++;
+                                add((int) algo.encode(tryLat, tryLon), connNode);
+                            }
                         }
                     }
+                    swWhile.stop();
                 }
-                swWhile.stop();
-            }
-            if (added % 100000 == 0)
-                logger.info("node:" + node + ", added:" + added + " add:" + sw.getSeconds() + ", while:" + swWhile.getSeconds());
-        }
-
-        // TODO save a more memory: remove all nodes which can be reached from other nodes within 
-        // the tile width <=> only one entry per subgraph. query needs to be adapted to search 
-        // until it leaves the current tile
-
-        // save memory
-        int sum = 0;
-        int max = 0;
-        int counter = 0;
-        for (int i = 0; i < index.length; i++) {
-            if (index[i] != null) {
-                index[i].trimToSize();
-                counter++;
-                sum += index[i].size();
-                if (max < index[i].size())
-                    max = index[i].size();
+                if (added % 100000 == 0)
+                    logger.info("node:" + node + ", added:" + added + " add:" + sw.getSeconds() + ", while:" + swWhile.getSeconds());
             }
         }
-        // System.out.println("max:" + max + ", mean:" + (float) sum / counter);
-    }
 
-    void initEmptySlots() {
-        // Here we don't need the precision of edge distance which will make it too slow.
-        // Also just use one point or use just the reference of the found entry to save space (?)
-        int len = index.length;
-        TIntArrayList[] indexCopy = new TIntArrayList[index.length];
-        int initializedCounter = 0;
-        while (initializedCounter < len) {
-            initializedCounter = 0;
-            System.arraycopy(index, 0, indexCopy, 0, index.length);
-            for (int i = 0; i < len; i++) {
-                if (indexCopy[i] != null) {
-                    // check change "initialized to empty"
-                    if ((i + 1) % lonSizeI != 0 && indexCopy[i + 1] == null) {
-                        index[i + 1] = indexCopy[i];
-                    } else if (i + lonSizeI < len && indexCopy[i + lonSizeI] == null) {
-                        index[i + lonSizeI] = indexCopy[i];
+        void saveMemory() {
+            // TODO save a more memory: remove all nodes which can be reached from other nodes within 
+            // the tile width <=> only one entry per subgraph. query needs to be adapted to search 
+            // until it leaves the current tile
+
+            // save memory
+            int sum = 0;
+            int max = 0;
+            int counter = 0;
+            for (int i = 0; i < index.length; i++) {
+                if (index[i] != null) {
+                    index[i].trimToSize();
+                    counter++;
+                    sum += index[i].size();
+                    if (max < index[i].size())
+                        max = index[i].size();
+                }
+            }
+            // System.out.println("max:" + max + ", mean:" + (float) sum / counter);
+        }
+
+        void initEmptySlots() {
+            // Here we don't need the precision of edge distance which will make it too slow.
+            // Also just use one point or use just the reference of the found entry to save space (?)
+            int len = index.length;
+            TIntArrayList[] indexCopy = new TIntArrayList[index.length];
+            int initializedCounter = 0;
+            while (initializedCounter < len) {
+                initializedCounter = 0;
+                System.arraycopy(index, 0, indexCopy, 0, index.length);
+                for (int i = 0; i < len; i++) {
+                    if (indexCopy[i] != null) {
+                        // check change "initialized to empty"
+                        if ((i + 1) % lonSizeI != 0 && indexCopy[i + 1] == null) {
+                            index[i + 1] = indexCopy[i];
+                        } else if (i + lonSizeI < len && indexCopy[i + lonSizeI] == null) {
+                            index[i + lonSizeI] = indexCopy[i];
+                        }
+                    } else {
+                        // check change "empty to initialized"
+                        if ((i + 1) % lonSizeI != 0 && indexCopy[i + 1] != null)
+                            index[i] = indexCopy[i + 1];
+                        else if (i + lonSizeI < len && indexCopy[i + lonSizeI] != null)
+                            index[i] = indexCopy[i + lonSizeI];
                     }
-                } else {
-                    // check change "empty to initialized"
-                    if ((i + 1) % lonSizeI != 0 && indexCopy[i + 1] != null)
-                        index[i] = indexCopy[i + 1];
-                    else if (i + lonSizeI < len && indexCopy[i + lonSizeI] != null)
-                        index[i] = indexCopy[i + lonSizeI];
+
+                    if (index[i] != null)
+                        initializedCounter++;
                 }
 
-                if (index[i] != null)
-                    initializedCounter++;
+                if (initializedCounter == 0)
+                    throw new IllegalStateException("at least one entry has to be != null, which should have happened in initIndex");
             }
-
-            if (initializedCounter == 0)
-                throw new IllegalStateException("at least one entry has to be != null, which should have happened in initIndex");
         }
-    }
 
-    void add(int key, int node) {
-        sw.start();
-        if (index[key] == null)
-            index[key] = new TIntArrayList(10);
-        if (!index[key].contains(node))
-            index[key].add(node);
-        sw.stop();
+        void add(int key, int node) {
+            sw.start();
+            if (index[key] == null)
+                index[key] = new TIntArrayList(30);
+            if (!index[key].contains(node))
+                index[key].add(node);
+            sw.stop();
+        }
+
+        void fill(ListOfLinkedLists lll) {
+            for (int i = 0; i < index.length; i++) {
+                if (index[i] != null) {
+                    TIntIterator iter = index[i].iterator();
+                    while (iter.hasNext()) {
+                        lll.add(i, iter.next());
+                    }
+                }
+            }
+        }
     }
 
     @Override
     public int findID(final double lat, final double lon) {
         long key = algo.encode(lat, lon);
-        TIntArrayList ids = index[(int) key];
-        if (ids == null)
-            // TODO implement fillEmpty + throw an exception here!
-            return -1;
-        int len = ids.size();
-        if (len == 0)
+        IntIterator iter = index.getIterator((int) key);
+        if (!iter.next())
             throw new IllegalStateException("shouldn't happen as all keys should have at least one associated id");
 
-        // final BBox maxQueryBox = new BBox(lon - lonWidth, lon + lonWidth, lat - latWidth, lat + latWidth);
-        TIntIterator iter = ids.iterator();
-        int node = iter.next();
+        int node = iter.value();
         double mainLat = g.getLatitude(node);
         double mainLon = g.getLongitude(node);
         final Edge closestNode = new Edge(node, calc.calcNormalizedDist(lat, lon, mainLat, mainLon));
@@ -273,7 +286,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
                         closestNode.weight = currDist;
                         closestNode.node = currNode;
                     }
-                    
+
                     return goFurther;
                 }
 
@@ -300,10 +313,10 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
                     return true;
                 }
             }.start(g, node, false);
-            if (!iter.hasNext())
+            if (!iter.next())
                 break;
 
-            node = iter.next();
+            node = iter.value();
         }
         // logger.info("nodes:" + len + " key:" + key + " lat:" + lat + ",lon:" + lon);
         return closestNode.node;
@@ -332,53 +345,49 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         }
     }
 
-    public void save(String location) {
-        try {
-            DataOutputStream out = new DataOutputStream(new BufferedOutputStream(
-                    new FileOutputStream(location), 4 * 1024));
-            try {
-                out.writeInt(latSizeI);
-                out.writeInt(lonSizeI);
-                int len = latSizeI * lonSizeI;
-                for (int i = 0; i < len; i++) {
-                    Helper.writeInts(out, index[i].toArray());
-                }
-            } finally {
-                out.close();
-            }
-        } catch (IOException ex) {
-            throw new RuntimeException("cannot store location2id index to " + location, ex);
-        }
-    }
-
-    public static Location2IDPreciseIndex load(Graph g, String location) {
-        try {
-            Location2IDPreciseIndex idx = new Location2IDPreciseIndex(g);
-            DataInputStream in = new DataInputStream(new BufferedInputStream(
-                    new FileInputStream(location), 4 * 1024));
-
-            int tmpLat = in.readInt();
-            int tmpLon = in.readInt();
-            idx.initBuffer(tmpLat, tmpLon);
-            int size = idx.index.length;
-            for (int i = 0; i < size; i++) {
-                idx.index[i] = new TIntArrayList(Helper.readInts(in));
-            }
-
-            return idx;
-        } catch (IOException ex) {
-            throw new RuntimeException("cannot store location2id index to " + location, ex);
-        }
+//    public void save(String location) {
+//        try {
+//            DataOutputStream out = new DataOutputStream(new BufferedOutputStream(
+//                    new FileOutputStream(location), 4 * 1024));
+//            try {
+//                out.writeInt(latSizeI);
+//                out.writeInt(lonSizeI);
+//                int len = latSizeI * lonSizeI;
+//                for (int i = 0; i < len; i++) {
+//                    Helper.writeInts(out, index[i].toArray());
+//                }
+//            } finally {
+//                out.close();
+//            }
+//        } catch (IOException ex) {
+//            throw new RuntimeException("cannot store location2id index to " + location, ex);
+//        }
+//    }
+//    public static Location2IDPreciseIndex load(Graph g, String location) {
+//        try {
+//            Location2IDPreciseIndex idx = new Location2IDPreciseIndex(g);
+//            DataInputStream in = new DataInputStream(new BufferedInputStream(
+//                    new FileInputStream(location), 4 * 1024));
+//
+//            int tmpLat = in.readInt();
+//            int tmpLon = in.readInt();
+//            idx.initBuffer(tmpLat, tmpLon);
+//            int size = idx.index.length;
+//            for (int i = 0; i < size; i++) {
+//                idx.index[i] = new TIntArrayList(Helper.readInts(in));
+//            }
+//
+//            return idx;
+//        } catch (IOException ex) {
+//            throw new RuntimeException("cannot store location2id index to " + location, ex);
+//        }
+//    }
+    public void flush() {
+        index.flush();
     }
 
     @Override
     public float calcMemInMB() {
-        float mem = index.length * 4;
-        for (int i = 0; i < index.length; i++) {
-            if (index[i] != null)
-                mem += 12 /*TInt obj*/ + 4 + 4 + 12 /*int array*/ + 4 * index[i].size();
-            //index[i].capacity();
-        }
-        return mem / (1 << 20);
+        return index.calcMemInMB();
     }
 }

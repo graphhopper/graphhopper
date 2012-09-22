@@ -15,6 +15,9 @@
  */
 package de.jetsli.graph.storage;
 
+import java.io.IOException;
+import java.io.RandomAccessFile;
+
 /**
  * @author Peter Karich
  */
@@ -27,5 +30,11 @@ public abstract class AbstractDataAccess implements DataAccess {
     public DataAccess close() {
         flush();
         return this;
+    }
+
+    protected void writeHeader(RandomAccessFile file, long length) throws IOException {
+        file.seek(0);
+        file.writeUTF(DATAACESS_MARKER);
+        file.writeLong(length);
     }
 }

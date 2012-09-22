@@ -15,13 +15,9 @@
  */
 package de.jetsli.graph.storage;
 
-import gnu.trove.iterator.TIntIntIterator;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  *
@@ -29,17 +25,72 @@ import static org.junit.Assert.*;
  */
 public class ListOfLinkedListsTest {
 
-    @Test
-    public void testSomeMethod() {
+    ListOfLinkedLists lll;
+
+    @Before
+    public void setUp() {
+        lll = createLLL();
+    }
+
+    private ListOfLinkedLists createLLL() {
         RAMDataAccess refs = new RAMDataAccess("refs");
         RAMDataAccess entries = new RAMDataAccess("entries");
-        ListOfLinkedLists lll = new ListOfLinkedLists(refs, entries);
+        return new ListOfLinkedLists(refs, entries, 10);
+    }
 
+    @Test
+    public void testAdd() {
+        assertEquals(10, lll.size());
         lll.add(1, 10);
-        IntIterator iter = lll.getEntries(0);
+        IntIterator iter = lll.getIterator(0);
         assertFalse(iter.next());
-        iter = lll.getEntries(1);
+        iter = lll.getIterator(1);
         assertTrue(iter.next());
         assertEquals(10, iter.value());
+        assertFalse(iter.next());
+    }
+
+    @Test
+    public void testAddAutoEnsureSize() {
+        lll.add(100, 10);
+        IntIterator iter = lll.getIterator(100);
+        assertTrue(iter.next());
+        assertEquals(10, iter.value());
+        assertFalse(iter.next());
+
+        iter = lll.getIterator(200);
+        assertFalse(iter.next());
+    }
+
+    // TODO
+//    @Test
+//    public void testAddMany() {
+//        int[] integersPerBucket = {1, 2, 10};
+//        for (int val : integersPerBucket) {
+//            lll = createLLL().setIntegersPerBucket(val);
+//            for (int i = 0; i < 400; i++) {
+//                lll.add(0, i);
+//                lll.add(i, i);
+//            }
+//            assertEquals(400, IntIterator.Helper.count(lll.getIterator(0)));
+//        }
+//    }
+
+    @Test
+    public void testAvoidDuplicates() {
+        int[] integersPerBucket = {1, 2, 10};
+        for (int val : integersPerBucket) {
+            lll = createLLL().setIntegersPerBucket(val);
+            lll.add(1, 10);
+            lll.add(1, 20);
+            lll.add(1, 10);
+            lll.add(1, 10);
+            IntIterator iter = lll.getIterator(1);
+            assertTrue(val + "", iter.next());
+            assertEquals(val + "", 10, iter.value());
+            assertTrue(iter.next());
+            assertEquals(val + "", 20, iter.value());
+            assertFalse(val + "", iter.next());
+        }
     }
 }

@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,14 +25,32 @@ import java.util.Map;
 public class RAMDirectory implements Directory {
 
     private Map<String, RAMDataAccess> map = new HashMap<String, RAMDataAccess>();
+    private String location;
+
+    public RAMDirectory() {
+    }
+
+    public RAMDirectory(String location) {
+        this.location = location;
+        if (location.isEmpty() || location == null)
+            location = new File("").getAbsolutePath();
+        if (!location.endsWith("/"))
+            location += "/";
+    }
 
     @Override
     public DataAccess createDataAccess(String name) {
+        name = location + name;
         if (map.containsKey(name))
             throw new IllegalStateException("DataAccess " + name + " already exists");
 
         RAMDataAccess da = new RAMDataAccess(name);
         map.put(name, da);
         return da;
+    }
+
+    @Override
+    public String getLocation() {
+        return location;
     }
 }

@@ -148,7 +148,6 @@ public class MemoryGraphSafe implements Graph, Saveable {
         }
         tmp[edgeCurrentSegment] = new int[edgesSegmentSize];
         edgesSegments = tmp;
-        // nextEdgePointer = 0;
     }
 
     // Use ONLY within a writer lock area
