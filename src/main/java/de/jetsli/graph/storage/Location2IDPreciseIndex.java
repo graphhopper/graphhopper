@@ -26,7 +26,6 @@ import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.StopWatch;
 import de.jetsli.graph.util.XFirstSearch;
 import de.jetsli.graph.util.shapes.BBox;
-import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +50,7 @@ import org.slf4j.LoggerFactory;
 public class Location2IDPreciseIndex implements Location2IDIndex {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private ListOfLinkedLists index;
+    private ListOfArrays index;
     private Graph g;
     private CalcDistance calc = new CalcDistance();
     private KeyAlgo algo;
@@ -87,8 +86,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         hi.saveMemory();
         // TODO BAD memory usage: in list of linked lists the empty slots will contain cloned lists!
         hi.initEmptySlots();
-        index = new ListOfLinkedLists(dir, "id2locIndex", latSizeI * lonSizeI);
-        index.setIntegersPerBucket(20);
+        index = new ListOfArrays(dir, "id2locIndex", latSizeI * lonSizeI);
         hi.fill(index);
         return this;
     }
@@ -238,14 +236,10 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             sw.stop();
         }
 
-        void fill(ListOfLinkedLists lll) {
+        void fill(ListOfArrays la) {
             for (int i = 0; i < index.length; i++) {
-                if (index[i] != null) {
-                    TIntIterator iter = index[i].iterator();
-                    while (iter.hasNext()) {
-                        lll.add(i, iter.next());
-                    }
-                }
+                if (index[i] != null)
+                    la.add(index[i]);
             }
         }
     }
@@ -388,6 +382,6 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
 
     @Override
     public float calcMemInMB() {
-        return index.calcMemInMB();
+        return (float) index.capacity() / (1 << 20);
     }
 }
