@@ -20,9 +20,7 @@ import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.util.Helper;
 import java.io.File;
 import java.util.Random;
-import org.junit.After;
 import static org.junit.Assert.*;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -31,20 +29,8 @@ import org.junit.Test;
  */
 public class Location2IDPreciseIndexTest {
 
-    private String location = "./target/tmp";
-
     public Location2IDIndex createIndex(Graph g, int resolution) {
-        return new Location2IDPreciseIndex(g, new RAMDirectory(location)).prepareIndex(resolution);
-    }
-
-    @Before
-    public void setUp() {
-        Helper.deleteDir(new File(location));
-    }
-
-    @After
-    public void tearDown() {
-        Helper.deleteDir(new File(location));
+        return new Location2IDPreciseIndex(g, new RAMDirectory()).prepareIndex(resolution);
     }
 
     @Test
@@ -163,14 +149,32 @@ public class Location2IDPreciseIndexTest {
 
     @Test
     public void testSave() {
+        String location = "./target/tmp/";
+        File file = new File(location);
+        Helper.deleteDir(file);
+        file.mkdirs();
+
         Graph g = createSampleGraph();
-        Location2IDPreciseIndex idx = (Location2IDPreciseIndex) createIndex(g, 8);
+        Location2IDPreciseIndex idx = new Location2IDPreciseIndex(g, new RAMDirectory(location, true));
+        idx.prepareIndex(8);
         assertIndex(idx);
         idx.flush();
 
-        idx = new Location2IDPreciseIndex(g, new RAMDirectory(location));
+        idx = new Location2IDPreciseIndex(g, new RAMDirectory(location, true));
         assertTrue(idx.loadExisting());
-        assertIndex(idx);
+        assertIndex(idx);        
+
+        // throw exception if load is made with a wrong graph => store node count into header as check sum
+        g.setNode(g.getNodes(), 12, 23);
+        idx = new Location2IDPreciseIndex(g, new RAMDirectory(location, true));
+        try {
+            idx.loadExisting();
+            assertTrue(false);
+        } catch (Exception ex) {
+        }
+        
+        
+        Helper.deleteDir(file);
     }
 
     private void assertIndex(Location2IDIndex idx) {

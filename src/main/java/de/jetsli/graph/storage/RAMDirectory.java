@@ -25,32 +25,49 @@ import java.util.Map;
 public class RAMDirectory implements Directory {
 
     private Map<String, RAMDataAccess> map = new HashMap<String, RAMDataAccess>();
-    private String location;
+    private String id;
+    private boolean store;
 
     public RAMDirectory() {
+        this("", false);
     }
 
-    public RAMDirectory(String location) {
-        this.location = location;
-        if (location.isEmpty() || location == null)
-            location = new File("").getAbsolutePath();
-        if (!location.endsWith("/"))
-            location += "/";
+    public RAMDirectory(String id) {
+        this(id, false);
+    }
+
+    /**
+     * @param store true if you want that the RAMDirectory can be loaded or saved on demand, false
+     * if it should be entirely in RAM
+     */
+    public RAMDirectory(String id, boolean store) {
+        if (id == null)
+            throw new IllegalStateException("id cannot be null! Use empty string for runtime directory");
+        this.id = id;
+        this.store = store;
+        if (store) {
+            if (id.isEmpty())
+                id = new File("").getAbsolutePath();
+            if (!id.endsWith("/"))
+                id += "/";
+        }
     }
 
     @Override
     public DataAccess createDataAccess(String name) {
-        name = location + name;
+        if (store)
+            name = id + name;
+
         if (map.containsKey(name))
             throw new IllegalStateException("DataAccess " + name + " already exists");
 
-        RAMDataAccess da = new RAMDataAccess(name);
+        RAMDataAccess da = new RAMDataAccess(name, store);
         map.put(name, da);
         return da;
     }
 
     @Override
     public String getLocation() {
-        return location;
+        return id;
     }
 }

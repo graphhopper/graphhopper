@@ -28,9 +28,10 @@ import org.junit.Test;
  */
 public abstract class DataAccessTest {
 
-    public abstract DataAccess createDataAccess(String location);
     private File folder = new File("./target/tmp/");
     protected String location;
+
+    public abstract DataAccess createDataAccess(String location);
 
     @Before
     public void setUp() {
@@ -44,21 +45,11 @@ public abstract class DataAccessTest {
         Helper.deleteDir(folder);
     }
 
-//    @Test
-//    public void testNoValue() {
-//        DataAccess da = createDataAccess(location);
-//        da.setNoValue(-1);
-//        da.ensureCapacity(300);
-//        // check noValue clearing
-//        assertEquals(-1, da.getInt(2));
-//        assertEquals(-1, da.getInt(3));
-//    }
-
     @Test
     public void testLoadFlush() {
         DataAccess da = createDataAccess(location);
         assertFalse(da.loadExisting());
-        da.ensureCapacity(300);
+        da.createNew(300);
         da.setInt(7, 123);
         assertEquals(123, da.getInt(7));
         da.setInt(10, Integer.MAX_VALUE / 3);
@@ -91,7 +82,7 @@ public abstract class DataAccessTest {
         } catch (Exception ex) {
         }
 
-        da.ensureCapacity(300);
+        da.createNew(300);
         da.setInt(2, 321);
         // close works the same as flush but one cannot use the same object anymore as probably
         // some underlying resources are freed
@@ -103,9 +94,25 @@ public abstract class DataAccessTest {
     }
 
     @Test
+    public void testHeader() {
+        DataAccess da = createDataAccess(location);
+        da.createNew(300);
+        da.setHeader(7, 123);
+        assertEquals(123, da.getHeader(7));
+        da.setHeader(10, Integer.MAX_VALUE / 3);
+        assertEquals(Integer.MAX_VALUE / 3, da.getHeader(10));
+        da.flush();
+
+        da = createDataAccess(location);
+        assertTrue(da.loadExisting());
+        assertEquals(123, da.getHeader(7));
+        da.close();
+    }
+
+    @Test
     public void testEnsureCapacity() {
         DataAccess da = createDataAccess(location);
-        da.ensureCapacity(20 * 4);
+        da.createNew(20 * 4);
         da.setInt(19, 200);
         try {
             // this should fail with an index out of bounds exception

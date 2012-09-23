@@ -28,7 +28,15 @@ public interface DataAccess {
 
     int getInt(long index);
 
+    void setHeader(int index, int value);
+
+    int getHeader(int index);
+
     boolean loadExisting();
+
+    DataAccess createNew(long bytes);
+
+    void ensureCapacity(long bytes);
 
     DataAccess flush();
 
@@ -36,8 +44,6 @@ public interface DataAccess {
      * Do not access this object after calling this method. It would result in undefined behaviour
      */
     DataAccess close();
-
-    void ensureCapacity(long bytes);
 
     int capacity();
 }

@@ -50,18 +50,38 @@ import org.slf4j.LoggerFactory;
 public class Location2IDPreciseIndex implements Location2IDIndex {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String LIST_NAME = "id2locIndex";
     private ListOfArrays index;
     private Graph g;
     private CalcDistance calc = new CalcDistance();
     private KeyAlgo algo;
     private double latWidth, lonWidth;
     private int latSizeI, lonSizeI;
-    private Directory dir;
     private boolean calcEdgeDistance = true;
 
     public Location2IDPreciseIndex(Graph g, Directory dir) {
         this.g = g;
-        this.dir = dir;
+        index = new ListOfArrays(dir, LIST_NAME);
+    }
+
+    /**
+     * Make sure you are using the identical graph which was used while flusing this index.
+     *
+     * @return if loading from file was successfully.
+     */
+    public boolean loadExisting() {
+        if (index.loadExisting()) {
+            latSizeI = index.getHeader(0);
+            lonSizeI = index.getHeader(1);
+            calcEdgeDistance = index.getHeader(2) == 1;
+            int checksum = index.getHeader(3);
+            if (checksum != g.getNodes())
+                throw new IllegalStateException("index was created from a different graph with "
+                        + checksum + ". Current nodes:" + g.getNodes());
+            prepareAlgo();
+            return true;
+        }
+        return false;
     }
 
     public Location2IDIndex setPrecision(boolean approxDist, boolean calcEdgeDist) {
@@ -79,19 +99,20 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
 
     @Override
     public Location2IDIndex prepareIndex(int capacity) {
-        prepare(capacity);
+        prepareBounds(capacity);
+        prepareAlgo();
         InMemConstructionIndex hi = new InMemConstructionIndex();
         hi.initBuffer(latSizeI, lonSizeI);
         hi.initIndex();
         hi.compact();
 
-        index = new ListOfArrays(dir, "id2locIndex", latSizeI * lonSizeI);
+        index.createNew(latSizeI * lonSizeI);
         hi.fill(index);
         hi.initEmptySlots(index);
         return this;
     }
 
-    private void prepare(int cap) {
+    private void prepareBounds(int cap) {
         int bits = (int) (Math.log(cap) / Math.log(2)) + 1;
         int size = (int) Math.pow(2, bits);
         latSizeI = lonSizeI = (int) Math.sqrt(size);
@@ -100,7 +121,9 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         // Accordingly the width of a tile is different for x and y!
         if (latSizeI * lonSizeI < size)
             lonSizeI++;
+    }
 
+    private void prepareAlgo() {
         BBox b = g.getBounds();
         algo = new LinearKeyAlgo(latSizeI, lonSizeI).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
         latWidth = (b.maxLat - b.minLat) / latSizeI;
@@ -344,17 +367,11 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         }
     }
 
-    public boolean loadExisting() {
-        index = new ListOfArrays(dir, "id2locIndex", latSizeI * lonSizeI);        
-        if (index.loadExisting()) {
-            // TODO load properties!!!
-            return true;
-        }
-        
-        return false;
-    }
-
     public void flush() {
+        index.setHeader(0, latSizeI);
+        index.setHeader(1, lonSizeI);
+        index.setHeader(2, calcEdgeDistance ? 1 : 0);
+        index.setHeader(3, g.getNodes());
         index.flush();
     }
 

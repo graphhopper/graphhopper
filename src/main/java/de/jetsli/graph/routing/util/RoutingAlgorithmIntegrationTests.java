@@ -25,8 +25,9 @@ import de.jetsli.graph.routing.PathPrio;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
-import de.jetsli.graph.storage.Location2IDQuadtree;
+import de.jetsli.graph.storage.Location2IDPreciseIndex;
 import de.jetsli.graph.storage.PriorityGraph;
+import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.util.StopWatch;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -43,8 +44,9 @@ public class RoutingAlgorithmIntegrationTests {
     public RoutingAlgorithmIntegrationTests(Graph graph) {
         this.unterfrankenGraph = graph;
         StopWatch sw = new StopWatch().start();
-        idx = new Location2IDQuadtree(unterfrankenGraph).prepareIndex(50000);
-//        idx = new Location2IDPreciseIndex(unterfrankenGraph).prepareIndex(50000);
+//        idx = new Location2IDQuadtree(unterfrankenGraph).prepareIndex(50000);
+        // unterfrankenGraph.getDirectory()
+        idx = new Location2IDPreciseIndex(unterfrankenGraph, new RAMDirectory("loc2idIndex", true)).prepareIndex(50000);
         logger.info("idx size:" + idx.calcMemInMB() + " MB, took:" + sw.stop().getSeconds());
     }
 
@@ -124,31 +126,31 @@ public class RoutingAlgorithmIntegrationTests {
         for (int i = 0; i < runs; i++) {
             double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
             double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
-//            sw.start();
+            sw.start();
             int from = idx.findID(fromLat, fromLon);
             double toLat = rand.nextDouble() * (maxLat - minLat) + minLat;
             double toLon = rand.nextDouble() * (maxLon - minLon) + minLon;
             int to = idx.findID(toLat, toLon);
-//            sw.stop();
-//                logger.info(i + " " + sw + " from (" + from + ")" + fromLat + ", " + fromLon + " to (" + to + ")" + toLat + ", " + toLon);
-            if (from == to) {
-                logger.warn("skipping i " + i + " from==to " + from);
-                continue;
-            }
-
-            algo.clear();
-            sw.start();
-            Path p = algo.calcPath(from, to);
             sw.stop();
-            if (p == null) {
-                // there are still paths not found as this point unterfrankenGraph.getLatitude(798809) + "," + unterfrankenGraph.getLongitude(798809)
-                // is part of a oneway motorway => only routable in one direction
-                logger.warn("no route found for i=" + i + " !? "
-                        + "graph-from " + from + "(" + fromLat + "," + fromLon + "), "
-                        + "graph-to " + to + "(" + toLat + "," + toLon + ")");
-                continue;
-            }
-            if (i % 20 == 0)
+//                logger.info(i + " " + sw + " from (" + from + ")" + fromLat + ", " + fromLon + " to (" + to + ")" + toLat + ", " + toLon);
+//            if (from == to) {
+//                logger.warn("skipping i " + i + " from==to " + from);
+//                continue;
+//            }
+//
+//            algo.clear();
+//            sw.start();
+//            Path p = algo.calcPath(from, to);
+//            sw.stop();
+//            if (p == null) {
+//                // there are still paths not found as this point unterfrankenGraph.getLatitude(798809) + "," + unterfrankenGraph.getLongitude(798809)
+//                // is part of a oneway motorway => only routable in one direction
+//                logger.warn("no route found for i=" + i + " !? "
+//                        + "graph-from " + from + "(" + fromLat + "," + fromLon + "), "
+//                        + "graph-to " + to + "(" + toLat + "," + toLon + ")");
+//                continue;
+//            }
+            if (i % 100 == 0)
                 logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run");// (" + p + ")");
         }
     }

@@ -46,6 +46,14 @@ public class MMapDataAccess extends AbstractDataAccess {
         }
     }
 
+    @Override
+    public DataAccess createNew(long bytes) {
+        if (bBuffer != null)
+            throw new IllegalThreadStateException("already created");
+        ensureCapacity(bytes);
+        return this;
+    }
+    
     /**
      * Makes it possible to force the order. E.g. if we create the file on a host system and copy it
      * to a different like android. http://en.wikipedia.org/wiki/Endianness
@@ -57,7 +65,7 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void ensureCapacity(long bytes) {
-        if (!mapIt(HEADER_INT, bytes, true))
+        if (!mapIt(HEADER_SPACE, bytes, true))
             throw new IllegalStateException("problem while file mapping " + location);
     }
 
@@ -101,8 +109,8 @@ public class MMapDataAccess extends AbstractDataAccess {
             raFile.seek(0);
             if (!raFile.readUTF().equals(DATAACESS_MARKER))
                 return false;
-            long bytes = raFile.readLong();
-            if (mapIt(HEADER_INT, bytes, false))
+            long bytes = readHeader(raFile);
+            if (mapIt(HEADER_SPACE, bytes, false))
                 return true;
         } catch (Exception ex) {
         }
@@ -141,5 +149,10 @@ public class MMapDataAccess extends AbstractDataAccess {
     @Override
     public int capacity() {
         return bBuffer.capacity();
+    }
+
+    @Override
+    public String toString() {
+        return location;
     }
 }

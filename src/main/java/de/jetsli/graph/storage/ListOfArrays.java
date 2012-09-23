@@ -22,22 +22,29 @@ import gnu.trove.list.array.TIntArrayList;
  */
 public class ListOfArrays {
 
-    private int headerInfos = 1;
     private DataAccess refs;
     private DataAccess entries;
-    private int nextArrayPointer = headerInfos;
+    // not necessary but use the common law: "avoid valid references being 0"
+    private int nextArrayPointer = 1;
 
-    public ListOfArrays(Directory dir, String listName, int integers) {
-        this(dir.createDataAccess(listName + "refs"),
-                dir.createDataAccess(listName + "entries"),
-                integers);
+    public ListOfArrays(Directory dir, String listName) {
+        this.refs = dir.createDataAccess(listName + "refs");
+        this.entries = dir.createDataAccess(listName + "entries");
     }
 
-    ListOfArrays(DataAccess refs, DataAccess entries, int integers) {
-        this.refs = refs;
-        this.entries = entries;
-        refs.ensureCapacity(integers * 4);
-        entries.ensureCapacity(integers * 4);
+    public boolean loadExisting() {
+        if (refs.loadExisting()) {
+            if (!entries.loadExisting())
+                throw new IllegalStateException("corrupted files or incompatible graphhopper versions?");
+            return true;
+        }
+        return false;
+    }
+
+    public ListOfArrays createNew(int integers) {
+        refs.createNew(integers * 4);
+        entries.createNew(integers * 4);
+        return this;
     }
 
     public void setSameReference(int indexTo, int indexFrom) {
@@ -84,18 +91,17 @@ public class ListOfArrays {
             }
         };
     }
-    
-    public boolean loadExisting() {
-        if (refs.loadExisting()) {
-            if (!entries.loadExisting())
-                throw new IllegalStateException("corrupted files?");
-            return true;
-        }
-        return false;
-    }
 
     public int capacity() {
         return refs.capacity() + entries.capacity();
+    }
+
+    public void setHeader(int index, int value) {
+        refs.setHeader(index, value);
+    }
+
+    public int getHeader(int index) {
+        return refs.getHeader(index);
     }
 
     public void flush() {

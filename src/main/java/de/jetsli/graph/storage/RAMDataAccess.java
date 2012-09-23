@@ -25,51 +25,61 @@ import java.util.Arrays;
  */
 public class RAMDataAccess extends AbstractDataAccess {
 
-    private String location;
+    private String id;
     private int[] area;
     private float increaseFactor = 1.5f;
     private boolean closed = false;
+    private boolean store;
 
-    public RAMDataAccess(String location) {
-        this.location = location;
+    public RAMDataAccess(String id) {
+        this(id, false);
+    }
+
+    public RAMDataAccess(String id, boolean store) {
+        this.id = id;
+        this.store = store;
+        if (id == null)
+            throw new IllegalStateException("RAMDataAccess id cannot be null");
+    }
+
+    @Override
+    public DataAccess createNew(long bytes) {
+        if (area != null)
+            throw new IllegalThreadStateException("already created");
+        int intSize = (int) (bytes >> 2);
+        area = new int[intSize];
+        return this;
     }
 
     @Override
     public void ensureCapacity(long bytes) {
         int intSize = (int) (bytes >> 2);
-        int oldCapacity = 0;
-        if (area == null) {
-            area = new int[intSize];
-        } else {
-            if (intSize <= area.length)
-                return;
+        if (intSize <= area.length)
+            return;
 
-            oldCapacity = area.length;
-            area = Arrays.copyOf(area, (int) (intSize * increaseFactor));
-        }
+        area = Arrays.copyOf(area, (int) (intSize * increaseFactor));
     }
 
     @Override
     public boolean loadExisting() {
+        if (area != null || closed || !store)
+            return false;
         try {
-            if (area != null || closed || location == null)
-                return false;
-
-            RandomAccessFile in = new RandomAccessFile(location, "r");
+            RandomAccessFile raFile = new RandomAccessFile(id, "r");
             try {
-                in.seek(0);
-                if (!in.readUTF().equals(DATAACESS_MARKER))
+                raFile.seek(0);
+                if (!raFile.readUTF().equals(DATAACESS_MARKER))
                     return false;
-                int len = (int) in.readLong();
+                int len = (int) (readHeader(raFile) / 4);
                 area = new int[len];
-                in.seek(HEADER_INT);
+                raFile.seek(HEADER_SPACE);
                 for (int i = 0; i < len; i++) {
-                    area[i] = in.readInt();
+                    area[i] = raFile.readInt();
                 }
 
                 return true;
             } finally {
-                in.close();
+                raFile.close();
             }
         } catch (Exception ex) {
             return false;
@@ -78,14 +88,14 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public DataAccess flush() {
-        if (location == null)
+        if (area == null || closed || !store)
             return this;
         try {
-            RandomAccessFile out = new RandomAccessFile(location, "rw");
+            RandomAccessFile out = new RandomAccessFile(id, "rw");
             try {
                 int len = area.length;
-                writeHeader(out, len);
-                out.seek(HEADER_INT);
+                writeHeader(out, len * 4);
+                out.seek(HEADER_SPACE);
                 for (int i = 0; i < len; i++) {
                     out.writeInt(area[i]);
                 }
@@ -94,7 +104,7 @@ public class RAMDataAccess extends AbstractDataAccess {
             }
             return this;
         } catch (Exception ex) {
-            throw new RuntimeException("Couldn't store integers to " + location, ex);
+            throw new RuntimeException("Couldn't store integers to " + id, ex);
         }
     }
 
@@ -119,5 +129,10 @@ public class RAMDataAccess extends AbstractDataAccess {
     @Override
     public int capacity() {
         return area.length * 4;
+    }
+
+    @Override
+    public String toString() {
+        return id;
     }
 }
