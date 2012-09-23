@@ -40,16 +40,17 @@ public class RAMDirectory implements Directory {
      * @param store true if you want that the RAMDirectory can be loaded or saved on demand, false
      * if it should be entirely in RAM
      */
-    public RAMDirectory(String id, boolean store) {
-        if (id == null)
+    public RAMDirectory(String _id, boolean store) {
+        if (_id == null)
             throw new IllegalStateException("id cannot be null! Use empty string for runtime directory");
-        this.id = id;
+        this.id = _id;
         this.store = store;
         if (store) {
             if (id.isEmpty())
                 id = new File("").getAbsolutePath();
             if (!id.endsWith("/"))
                 id += "/";
+            new File(id).mkdirs();
         }
     }
 

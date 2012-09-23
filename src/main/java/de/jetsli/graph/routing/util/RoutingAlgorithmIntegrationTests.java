@@ -46,7 +46,14 @@ public class RoutingAlgorithmIntegrationTests {
         StopWatch sw = new StopWatch().start();
 //        idx = new Location2IDQuadtree(unterfrankenGraph).prepareIndex(50000);
         // unterfrankenGraph.getDirectory()
-        idx = new Location2IDPreciseIndex(unterfrankenGraph, new RAMDirectory("loc2idIndex", true)).prepareIndex(50000);
+        Location2IDPreciseIndex index = new Location2IDPreciseIndex(unterfrankenGraph, new RAMDirectory("loc2idIndex", true));
+        if (!index.loadExisting()) {
+            index.prepareIndex(50000);
+            logger.info("flushing...");
+            index.flush();
+            logger.info("flushed!");
+        }
+        idx = index;
         logger.info("idx size:" + idx.calcMemInMB() + " MB, took:" + sw.stop().getSeconds());
     }
 

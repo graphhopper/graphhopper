@@ -23,6 +23,11 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
 /**
+ * This is a data structure which uses off-heap memory and the OS to flush(), which is always
+ * amazingly fast.
+ *
+ * TODO make it possible to store more than 2^32 bytes
+ *
  * @author Peter Karich
  */
 @NotThreadSafe
@@ -53,7 +58,7 @@ public class MMapDataAccess extends AbstractDataAccess {
         ensureCapacity(bytes);
         return this;
     }
-    
+
     /**
      * Makes it possible to force the order. E.g. if we create the file on a host system and copy it
      * to a different like android. http://en.wikipedia.org/wiki/Endianness

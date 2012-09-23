@@ -6,3 +6,4 @@ mmap-graph*
 *-gh/
 *.osm
 docs/
+loc2idIndex/

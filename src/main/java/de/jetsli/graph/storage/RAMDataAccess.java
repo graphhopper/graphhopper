@@ -15,11 +15,14 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.util.BitUtil;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 /**
  * This is an in-memory data structure but with the possibility to be stored on flush().
+ *
+ * TODO make it possible to store more than 2^32 bytes
  *
  * @author Peter Karich
  */
@@ -70,13 +73,17 @@ public class RAMDataAccess extends AbstractDataAccess {
                 raFile.seek(0);
                 if (!raFile.readUTF().equals(DATAACESS_MARKER))
                     return false;
-                int len = (int) (readHeader(raFile) / 4);
+                int byteLen = (int) (readHeader(raFile));
+                int len = byteLen / 4;
                 area = new int[len];
+                byte[] bytes = new byte[byteLen];
                 raFile.seek(HEADER_SPACE);
+                // raFile.readInt() <- too slow                
+                raFile.readFully(bytes);
                 for (int i = 0; i < len; i++) {
-                    area[i] = raFile.readInt();
+                    // TODO different system have different default byte order!
+                    area[i] = BitUtil.toInt(bytes, i * 4);
                 }
-
                 return true;
             } finally {
                 raFile.close();
@@ -91,16 +98,20 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (area == null || closed || !store)
             return this;
         try {
-            RandomAccessFile out = new RandomAccessFile(id, "rw");
+            RandomAccessFile raFile = new RandomAccessFile(id, "rw");
             try {
                 int len = area.length;
-                writeHeader(out, len * 4);
-                out.seek(HEADER_SPACE);
+                writeHeader(raFile, len * 4);
+                raFile.seek(HEADER_SPACE);
+                // raFile.writeInt() <- too slow, so copy into byte array
+                byte[] byteArea = new byte[len * 4];
                 for (int i = 0; i < len; i++) {
-                    out.writeInt(area[i]);
+                    // TODO different system have different default byte order!
+                    BitUtil.fromInt(byteArea, area[i], i * 4);
                 }
+                raFile.write(byteArea);
             } finally {
-                out.close();
+                raFile.close();
             }
             return this;
         } catch (Exception ex) {

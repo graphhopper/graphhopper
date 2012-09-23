@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.storage;
 
+import gnu.trove.iterator.TIntIntIterator;
+import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 
 /**
@@ -51,14 +53,13 @@ public class ListOfArrays {
         refs.setInt(indexTo, refs.getInt(indexFrom));
     }
 
-    public void set(int index, TIntArrayList list) {
+    public void set(int index, TIntArrayList list) {        
         int tmpPointer = nextArrayPointer;
         refs.setInt(index, nextArrayPointer);
         // reserver the integers and one integer for the size
-        nextArrayPointer += list.size() + 1;
-        entries.ensureCapacity((nextArrayPointer + 1) * 4);
-
         int len = list.size();
+        nextArrayPointer += len + 1;
+        entries.ensureCapacity((nextArrayPointer + 1) * 4);        
         entries.setInt(tmpPointer, len);
         for (int i = 0; i < len; i++) {
             tmpPointer++;

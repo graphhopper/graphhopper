@@ -27,6 +27,7 @@ import de.jetsli.graph.util.StopWatch;
 import de.jetsli.graph.util.XFirstSearch;
 import de.jetsli.graph.util.shapes.BBox;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.set.hash.TIntHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
