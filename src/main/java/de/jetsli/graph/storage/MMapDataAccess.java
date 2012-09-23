@@ -98,7 +98,7 @@ public class MMapDataAccess extends AbstractDataAccess {
                 }
                 int len = (int) (bytes % EMPTY.length);
                 if (len > 0)
-                    bBuffer.put(EMPTY, count * EMPTY.length, len);
+                    bBuffer.put(EMPTY, 0, len);
             }
             return true;
         } catch (Exception ex) {

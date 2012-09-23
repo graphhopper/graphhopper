@@ -126,5 +126,9 @@ public abstract class DataAccessTest {
         // now it shouldn't fail
         da.setInt(20, 220);
         assertEquals(220, da.getInt(20));
+        
+        da = createDataAccess(location);
+        da.createNew(200 * 4);
+        da.ensureCapacity(2 * 300 * 4);
     }
 }

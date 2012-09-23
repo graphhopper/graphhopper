@@ -19,13 +19,13 @@ import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.DijkstraBidirectionRef;
 import de.jetsli.graph.routing.DijkstraSimple;
-import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.PathBidirRef;
 import de.jetsli.graph.routing.PathPrio;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDPreciseIndex;
+import de.jetsli.graph.storage.MMapDirectory;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.util.StopWatch;
@@ -46,7 +46,9 @@ public class RoutingAlgorithmIntegrationTests {
         StopWatch sw = new StopWatch().start();
 //        idx = new Location2IDQuadtree(unterfrankenGraph).prepareIndex(50000);
         // unterfrankenGraph.getDirectory()
-        Location2IDPreciseIndex index = new Location2IDPreciseIndex(unterfrankenGraph, new RAMDirectory("loc2idIndex", true));
+        Location2IDPreciseIndex index = new Location2IDPreciseIndex(unterfrankenGraph, 
+//                new RAMDirectory("loc2idIndex"));
+                new MMapDirectory("loc2idIndex"));
         if (!index.loadExisting()) {
             index.prepareIndex(50000);
             logger.info("flushing...");

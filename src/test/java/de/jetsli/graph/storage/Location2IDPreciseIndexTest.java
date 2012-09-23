@@ -20,7 +20,9 @@ import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.util.Helper;
 import java.io.File;
 import java.util.Random;
+import org.junit.After;
 import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -29,10 +31,23 @@ import org.junit.Test;
  */
 public class Location2IDPreciseIndexTest {
 
+    String location = "./target/tmp";
+
     public Location2IDIndex createIndex(Graph g, int resolution) {
-        return new Location2IDPreciseIndex(g, new RAMDirectory()).prepareIndex(resolution);
+//        Directory dir = new RAMDirectory();
+        Directory dir = new MMapDirectory(location);
+        return new Location2IDPreciseIndex(g, dir).prepareIndex(resolution);
     }
 
+    @Before
+    public void setUp() {
+        Helper.deleteDir(new File(location));
+    }
+
+    @After
+    public void tearDown() {
+        Helper.deleteDir(new File(location));
+    }
     @Test
     public void testSimpleGraph() {
         //  6      4
@@ -162,7 +177,7 @@ public class Location2IDPreciseIndexTest {
 
         idx = new Location2IDPreciseIndex(g, new RAMDirectory(location, true));
         assertTrue(idx.loadExisting());
-        assertIndex(idx);        
+        assertIndex(idx);
 
         // throw exception if load is made with a wrong graph => store node count into header as check sum
         g.setNode(g.getNodes(), 12, 23);
@@ -172,8 +187,8 @@ public class Location2IDPreciseIndexTest {
             assertTrue(false);
         } catch (Exception ex) {
         }
-        
-        
+
+
         Helper.deleteDir(file);
     }
 

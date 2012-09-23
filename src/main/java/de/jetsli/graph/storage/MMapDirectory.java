@@ -30,12 +30,13 @@ public class MMapDirectory implements Directory {
     public MMapDirectory() {
     }
 
-    public MMapDirectory(String location) {
-        this.location = location;
+    public MMapDirectory(String _location) {
+        this.location = _location;
         if (location.isEmpty() || location == null)
             location = new File("").getAbsolutePath();
         if (!location.endsWith("/"))
             location += "/";
+        new File(location).mkdirs();
     }
 
     @Override
