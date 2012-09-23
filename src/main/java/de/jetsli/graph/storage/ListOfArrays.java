@@ -15,8 +15,6 @@
  */
 package de.jetsli.graph.storage;
 
-import gnu.trove.iterator.TIntIntIterator;
-import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 
 /**
