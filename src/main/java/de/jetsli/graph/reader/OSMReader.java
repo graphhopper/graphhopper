@@ -52,8 +52,8 @@ public class OSMReader {
         } else if (args.getBool("shortestpath", false)) {
             String algo = args.get("algo", "dijkstra");
             //warmup
-            tests.runShortestPathPerf(590, algo);
-            tests.runShortestPathPerf(5000, algo);
+            tests.runShortestPathPerf(50, algo);
+            tests.runShortestPathPerf(500, algo);
         }
     }
     private int expectedLocs;

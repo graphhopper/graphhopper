@@ -47,8 +47,8 @@ public class RoutingAlgorithmIntegrationTests {
     public RoutingAlgorithmIntegrationTests(Graph graph) {
         this.unterfrankenGraph = graph;
         StopWatch sw = new StopWatch().start();
-//        Directory dir = new RAMDirectory("loc2idIndex", true);
-        Directory dir = new MMapDirectory("loc2idIndex");
+        Directory dir = new RAMDirectory("loc2idIndex", false);
+//        Directory dir = new MMapDirectory("loc2idIndex");
         Location2IDQuadtree index = new Location2IDQuadtree(unterfrankenGraph, dir);
         // unterfrankenGraph.getDirectory()
 //      Location2IDPreciseIndex index = new Location2IDPreciseIndex(unterfrankenGraph, dir);
@@ -160,7 +160,7 @@ public class RoutingAlgorithmIntegrationTests {
                         + "graph-to " + to + "(" + toLat + "," + toLon + ")");
                 continue;
             }
-            if (i % 100 == 0)
+            if (i % 20 == 0)
                 logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run");// (" + p + ")");
         }
     }
