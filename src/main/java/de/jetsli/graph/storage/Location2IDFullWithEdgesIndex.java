@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.util.ApproxCalcDistance;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.shapes.Circle;
@@ -31,6 +32,15 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
 
     public Location2IDFullWithEdgesIndex(Graph g) {
         this.g = g;
+    }
+
+    @Override
+    public Location2IDIndex setPrecision(boolean approxDist) {
+        if (approxDist)
+            calc = new ApproxCalcDistance();
+        else
+            calc = new CalcDistance();
+        return this;
     }
 
     @Override

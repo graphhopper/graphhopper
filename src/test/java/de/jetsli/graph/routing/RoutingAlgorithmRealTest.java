@@ -21,6 +21,7 @@ import de.jetsli.graph.routing.util.TestAlgoCollector;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
+import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.Helper;
 import java.io.File;
@@ -80,7 +81,8 @@ public class RoutingAlgorithmRealTest {
         String graphFile = "target/graph-monaco";
         Helper.deleteDir(new File(graphFile));
         Graph g = OSMReader.osm2Graph(new CmdArgs().put("osm", "files/monaco.osm.gz").put("graph", graphFile));
-        final Location2IDIndex idx = new Location2IDQuadtree(g).prepareIndex(2000);
+        // final Location2IDIndex idx = new Location2IDQuadtree(g).prepareIndex(2000);
+        final Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
         final List<OneRun> instances = createMonacoInstances();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
@@ -129,7 +131,7 @@ public class RoutingAlgorithmRealTest {
             Graph g = OSMReader.osm2Graph(new CmdArgs().put("osm", osmFile).put("graph", graphFile));
             // GraphUtility.printInfo(g, 3606, 1000);
             // System.out.println(osmFile + " - all locations " + g.getNodes());
-            Location2IDIndex idx = new Location2IDQuadtree(g).prepareIndex(2000);
+            Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
             RoutingAlgorithm[] algos = RoutingAlgorithmIntegrationTests.createAlgos(g);
             for (RoutingAlgorithm algo : algos) {
                 int failed = testCollector.list.size();

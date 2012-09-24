@@ -37,21 +37,53 @@ import org.slf4j.LoggerFactory;
  */
 public class Location2IDQuadtree implements Location2IDIndex {
 
+    private final static int MAGIC_INT = Integer.MAX_VALUE / 12305;
     private Logger logger = LoggerFactory.getLogger(getClass());
     private SpatialKeyAlgo algo;
-//    protected CalcDistance calc = new ApproxCalcDistance();
     protected CalcDistance calc = new CalcDistance();
-    private int[] spatialKey2Id;
+    private DataAccess index;
     private double maxNormRasterWidthKm;
     private int size;
     private Graph g;
 
-    public Location2IDQuadtree(Graph g) {
+    public Location2IDQuadtree(Graph g, Directory dir) {
         this.g = g;
+        this.index = dir.createDataAccess("loc2idIndex");
+    }
+
+    @Override
+    public Location2IDIndex setPrecision(boolean approxDist) {
+        if (approxDist)
+            calc = new ApproxCalcDistance();
+        else
+            calc = new CalcDistance();
+        return this;
     }
 
     public int getCapacity() {
         return size;
+    }
+
+    /**
+     * Loads the index from disc if exists. Make sure you are using the identical graph which was
+     * used while flusing this index.
+     *
+     * @return if loading from file was successfully.
+     */
+    public boolean loadExisting() {
+        if (index.loadExisting()) {
+            if (index.getHeader(0) != MAGIC_INT)
+                throw new IllegalStateException("incorrect loc2id index version");
+            int bits = index.getHeader(1);
+            int checksum = index.getHeader(2);
+            if (checksum != g.getNodes())
+                throw new IllegalStateException("index was created from a different graph with "
+                        + checksum + ". Current nodes:" + g.getNodes());
+            size = index.capacity() / 4;
+            initAlgo(bits);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -88,7 +120,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
             size = x * x;
         }
 
-        spatialKey2Id = new int[size];
+        index.createNew(size * 4);
         return bits;
     }
 
@@ -112,9 +144,6 @@ public class Location2IDQuadtree implements Location2IDIndex {
         if (locs <= 0)
             throw new IllegalStateException("check your graph - it is empty!");
 
-        if (spatialKey2Id == null)
-            throw new IllegalStateException("call prepareIndex before");
-
         MyOpenBitSet filledIndices = new MyOpenBitSet(size);
         CoordTrig coord = new CoordTrig();
         for (int nodeId = 0; nodeId < locs; nodeId++) {
@@ -122,7 +151,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
             double lon = g.getLongitude(nodeId);
             int key = (int) algo.encode(lat, lon);
             if (filledIndices.contains(key)) {
-                int oldNodeId = spatialKey2Id[key];
+                int oldNodeId = index.getInt(key);
                 algo.decode(key, coord);
                 // decide which one is closer to 'key'
                 double distNew = calc.calcNormalizedDist(coord.lat, coord.lon, lat, lon);
@@ -131,9 +160,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 double distOld = calc.calcNormalizedDist(coord.lat, coord.lon, oldLat, oldLon);
                 // new point is closer to quad tree point (key) so overwrite old
                 if (distNew < distOld)
-                    spatialKey2Id[key] = nodeId;
+                    index.setInt(key, nodeId);
             } else {
-                spatialKey2Id[key] = nodeId;
+                index.setInt(key, nodeId);
                 filledIndices.add(key);
             }
         }
@@ -169,7 +198,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
                     boolean ret = filledIndices.contains(tmpKey);
                     if (ret) {
-                        int tmpId = spatialKey2Id[tmpKey];
+                        int tmpId = index.getInt(tmpKey);
                         double lat = g.getLatitude(tmpId);
                         double lon = g.getLongitude(tmpId);
                         double dist = calc.calcNormalizedDist(mainCoord.lat, mainCoord.lon, lat, lon);
@@ -230,7 +259,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
             if (mainKey < 0 || mainKey >= size)
                 throw new IllegalStateException("Problem with mainKey:" + mainKey + " " + mainCoord + " size:" + size);
 
-            spatialKey2Id[mainKey] = closestNode.node;
+            index.setInt(mainKey, closestNode.node);
             // do not forget this to speed up inner loop
             filledIndices.add(mainKey);
         }
@@ -259,7 +288,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
          */
 
         long key = algo.encode(lat, lon);
-        final int id = spatialKey2Id[(int) key];
+        final int id = index.getInt((int) key);
         double mainLat = g.getLatitude(id);
         double mainLon = g.getLongitude(id);
         final Edge closestNode = new Edge(id, calc.calcNormalizedDist(lat, lon, mainLat, mainLon));
@@ -294,8 +323,15 @@ public class Location2IDQuadtree implements Location2IDIndex {
     public void goFurtherHook(int n) {
     }
 
+    public void flush() {
+        index.setHeader(0, MAGIC_INT);
+        index.setHeader(1, algo.getBits());
+        index.setHeader(2, g.getNodes());
+        index.flush();
+    }
+
     @Override
     public float calcMemInMB() {
-        return (float) (spatialKey2Id.length * 4) / (1 << 20);
+        return (float) index.capacity() / (1 << 20);
     }
 }

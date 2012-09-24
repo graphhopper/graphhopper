@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
 public class Location2IDPreciseIndex implements Location2IDIndex {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private static final String LIST_NAME = "id2locIndex";
+    private static final String LIST_NAME = "loc2idIndex";
     private ListOfArrays index;
     private Graph g;
     private CalcDistance calc = new CalcDistance();
@@ -65,7 +65,8 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
     }
 
     /**
-     * Make sure you are using the identical graph which was used while flusing this index.
+     * Loads the index from disc if exists. Make sure you are using the identical graph which was
+     * used while flusing this index.
      *
      * @return if loading from file was successfully.
      */
@@ -84,12 +85,20 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         return false;
     }
 
-    public Location2IDIndex setPrecision(boolean approxDist, boolean calcEdgeDist) {
+    /**
+     * Applies only if called before prepareIndex
+     */
+    public Location2IDIndex setCalcEdgeDistance(boolean calcEdgeDist) {
+        calcEdgeDistance = calcEdgeDist;
+        return this;
+    }
+
+    @Override
+    public Location2IDIndex setPrecision(boolean approxDist) {
         if (approxDist)
             calc = new ApproxCalcDistance();
         else
             calc = new CalcDistance();
-        calcEdgeDistance = calcEdgeDist;
         return this;
     }
 
@@ -222,7 +231,9 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
                         max = index[i].size();
                 }
             }
-            // System.out.println("max:" + max + ", mean:" + (float) sum / counter);
+
+            // bavaria (full init): max:3327, mean:320
+            System.out.println("max:" + max + ", mean:" + (float) sum / counter);
         }
 
         void initEmptySlots(ListOfArrays la) {

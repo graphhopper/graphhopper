@@ -25,9 +25,23 @@ package de.jetsli.graph.storage;
  */
 public interface Location2IDIndex {
 
+    /**
+     * Creates this index - to be called once before findID.
+     *
+     * @param capacity specifies how many entries will be reserved. More entries means faster and
+     * more precise queries.
+     */
     Location2IDIndex prepareIndex(int capacity);
 
-    int findID(final double lat, final double lon);
-    
+    /**
+     * @return graph id for specified point (lat,lon)
+     */
+    int findID(double lat, double lon);
+
+    /**
+     * @param approxDist If false this makes initialization and querying faster but less precise.
+     */
+    Location2IDIndex setPrecision(boolean approxDist);
+
     float calcMemInMB();
 }

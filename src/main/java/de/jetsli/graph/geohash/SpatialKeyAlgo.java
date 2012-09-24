@@ -99,7 +99,7 @@ public class SpatialKeyAlgo implements KeyAlgo {
         setWorldBounds();
     }
 
-    public long getBits() {
+    public int getBits() {
         return allBits;
     }
 

@@ -26,6 +26,7 @@ import de.jetsli.graph.routing.util.ShortestCalc;
 import de.jetsli.graph.routing.util.WeightCalculation;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
+import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.CoordTrig;
@@ -77,7 +78,7 @@ public class MiniGraphUI {
 
         // prepare location quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
-        this.index = new Location2IDQuadtree(roadGraph);
+        this.index = new Location2IDQuadtree(roadGraph, new RAMDirectory("loc2idIndex"));
         index.prepareIndex(90000);
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);

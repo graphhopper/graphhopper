@@ -27,7 +27,7 @@ import org.junit.Test;
 public class Location2IDQuadtreeTest {
 
     public Location2IDIndex createIndex(Graph g, int resolution) {
-        return new Location2IDQuadtree(g).prepareIndex(resolution);
+        return new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(resolution);
     }
 
     @Test

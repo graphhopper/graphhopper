@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.util.ApproxCalcDistance;
 import de.jetsli.graph.util.CalcDistance;
 import de.jetsli.graph.util.shapes.Circle;
 
@@ -31,10 +32,19 @@ public class Location2IDFullIndex implements Location2IDIndex {
     }
 
     @Override
+    public Location2IDIndex setPrecision(boolean approxDist) {
+        if (approxDist)
+            calc = new ApproxCalcDistance();
+        else
+            calc = new CalcDistance();
+        return this;
+    }
+
+    @Override
     public Location2IDIndex prepareIndex(int capacity) {
         return this;
     }
-    
+
     @Override public int findID(double lat, double lon) {
         int locs = g.getNodes();
         int id = -1;

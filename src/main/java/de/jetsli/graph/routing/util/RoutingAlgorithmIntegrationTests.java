@@ -23,9 +23,12 @@ import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.PathBidirRef;
 import de.jetsli.graph.routing.PathPrio;
 import de.jetsli.graph.routing.RoutingAlgorithm;
+import de.jetsli.graph.storage.Directory;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDPreciseIndex;
+import de.jetsli.graph.storage.Location2IDQuadtree;
+import de.jetsli.graph.storage.MMapDirectory;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.util.StopWatch;
@@ -44,17 +47,17 @@ public class RoutingAlgorithmIntegrationTests {
     public RoutingAlgorithmIntegrationTests(Graph graph) {
         this.unterfrankenGraph = graph;
         StopWatch sw = new StopWatch().start();
-//        idx = new Location2IDQuadtree(unterfrankenGraph).prepareIndex(50000);
+//        Directory dir = new RAMDirectory("loc2idIndex", true);
+        Directory dir = new MMapDirectory("loc2idIndex");
+        Location2IDQuadtree index = new Location2IDQuadtree(unterfrankenGraph, dir);
         // unterfrankenGraph.getDirectory()
-        Location2IDPreciseIndex index = new Location2IDPreciseIndex(unterfrankenGraph,
-                new RAMDirectory("loc2idIndex", true));
-//                new MMapDirectory("loc2idIndex"));
+//      Location2IDPreciseIndex index = new Location2IDPreciseIndex(unterfrankenGraph, dir);
         if (!index.loadExisting()) {
             index.prepareIndex(100000);
             index.flush();
         }
         idx = index;
-        logger.info("idx size:" + idx.calcMemInMB() + " MB, took:" + sw.stop().getSeconds());
+        logger.info(index.getClass().getSimpleName() + " index. Size:" + idx.calcMemInMB() + " MB, took:" + sw.stop().getSeconds());
     }
 
     public void start() {

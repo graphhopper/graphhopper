@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.ui;
 
+import de.jetsli.graph.storage.Directory;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import java.awt.Color;
@@ -28,8 +29,8 @@ class DebugLocation2IDQuadtree extends Location2IDQuadtree {
     private MyGraphics mg;
     private Graphics2D g2;
 
-    public DebugLocation2IDQuadtree(Graph g, MyGraphics mg) {
-        super(g);
+    public DebugLocation2IDQuadtree(Graph g, MyGraphics mg, Directory dir) {
+        super(g, dir);
         this.mg = mg;
     }
 
