@@ -145,6 +145,7 @@ public class Location2IDQuadtreeTest {
 
     public static Graph createGraph() {
         return new MemoryGraphSafe(200);
+        // return new MMapGraph(200).createNew();
     }
 
     public static Graph createSampleGraph() {

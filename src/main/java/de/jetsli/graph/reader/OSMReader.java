@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class OSMReader {
 
     public static void main(String[] strs) throws Exception {
-        CmdArgs args = Helper.readCmdArgs(strs);        
+        CmdArgs args = Helper.readCmdArgs(strs);
         Graph g = osm2Graph(args);
         RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(g);
         if (args.getBool("test", false)) {
@@ -97,7 +97,7 @@ public class OSMReader {
             File osmXmlFile = new File(strOsm);
             if (!osmXmlFile.exists())
                 throw new IllegalStateException("Your specified OSM file does not exist:" + strOsm);
-            logger.info("size for osm2id-map is " + osmReader.getMaxLocs() + " - start creating graph from " + osmXmlFile);            
+            logger.info("size for osm2id-map is " + osmReader.getMaxLocs() + " - start creating graph from " + osmXmlFile);
             String type = args.get("type", "CAR");
             osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
                     type.contains("PUBLIC_TRANSPORT"),

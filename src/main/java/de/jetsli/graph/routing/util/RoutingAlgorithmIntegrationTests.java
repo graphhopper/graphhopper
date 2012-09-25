@@ -29,6 +29,7 @@ import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDPreciseIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.MMapDirectory;
+import de.jetsli.graph.storage.MMapGraph;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.util.StopWatch;
