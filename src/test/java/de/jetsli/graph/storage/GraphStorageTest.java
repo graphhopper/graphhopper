@@ -16,11 +16,13 @@
 package de.jetsli.graph.storage;
 
 /**
+ *
  * @author Peter Karich
  */
-public interface Saveable {
+public class GraphStorageTest extends AbstractGraphTester {
 
-    void flush();
-
-    void close();
+    @Override
+    public Graph createGraph(int size) {
+        return new GraphStorage(new RAMDirectory("graphstorage")).createNew(size);
+    }    
 }

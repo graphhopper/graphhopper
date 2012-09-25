@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class MemoryGraphSafe implements Graph, Saveable {
+public class MemoryGraphSafe implements Graph {
 
     protected static final int EMPTY_LINK = 0;
     private static final float DIST_UNIT = 10000f;
@@ -195,9 +195,7 @@ public class MemoryGraphSafe implements Graph, Saveable {
     @Override
     public void edge(int a, int b, double distance, int flags) {
         // writeLock.lock();
-        ensureNodeIndex(a);
-        ensureNodeIndex(b);
-
+        ensureNodeIndex(Math.max(a, b));
         internalEdgeAdd(a, b, distance, flags);
     }
 
@@ -334,7 +332,6 @@ public class MemoryGraphSafe implements Graph, Saveable {
         return lastLink;
     }
 
-    @Override
     public void close() {
         flush();
     }
@@ -500,7 +497,6 @@ public class MemoryGraphSafe implements Graph, Saveable {
     /**
      * Saves this graph to disc
      */
-    @Override
     public void flush() {
         // we can avoid storing the deletedNodes bitset but we need to defragmentate before saving!
         // writeLock.lock();        

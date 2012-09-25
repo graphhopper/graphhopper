@@ -29,9 +29,8 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected int header[] = new int[(HEADER_SPACE - 20) / 4];
 
     @Override
-    public DataAccess close() {
+    public void close() {
         flush();
-        return this;
     }
 
     @Override

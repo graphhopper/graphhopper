@@ -57,7 +57,7 @@ import org.slf4j.LoggerFactory;
  * @author Peter Karich, info@jetsli.de
  */
 @NotThreadSafe
-public class MMapGraph implements Graph, Saveable {
+public class MMapGraph implements Graph {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final int EMPTY_DIST = 0;
@@ -640,7 +640,6 @@ public class MMapGraph implements Graph, Saveable {
         return false;
     }
 
-    @Override
     public void flush() {
         if (storageFolder != null) {
             if (saveOnFlushOnly) {
@@ -712,7 +711,6 @@ public class MMapGraph implements Graph, Saveable {
         }
     }
 
-    @Override
     public void close() {
         if (storageFolder != null) {
             flush();

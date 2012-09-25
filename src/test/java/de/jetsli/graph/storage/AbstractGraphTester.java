@@ -143,7 +143,7 @@ public abstract class AbstractGraphTester {
         Graph g = createGraph(11);
         g.setNode(0, 12, 23);
         g.setNode(1, 38.33f, 235.3f);
-        g.setNode(2, 6, 2339);
+        g.setNode(2, 6, 339);
         g.setNode(3, 78, 89);
         g.setNode(4, 2, 1);
         g.setNode(5, 7, 5);
@@ -153,17 +153,17 @@ public abstract class AbstractGraphTester {
         g.edge(0, 4, 212, true);
         g.edge(0, 5, 212, true);
 
-        assertEquals(12f, g.getLatitude(0), 1e-9);
-        assertEquals(23f, g.getLongitude(0), 1e-9);
+        assertEquals(12f, g.getLatitude(0), 1e-6);
+        assertEquals(23f, g.getLongitude(0), 1e-6);
 
-        assertEquals(38.33f, g.getLatitude(1), 1e-9);
-        assertEquals(235.3f, g.getLongitude(1), 1e-9);
+        assertEquals(38.33f, g.getLatitude(1), 1e-6);
+        assertEquals(235.3f, g.getLongitude(1), 1e-6);
 
-        assertEquals(6, g.getLatitude(2), 1e-9);
-        assertEquals(2339, g.getLongitude(2), 1e-9);
+        assertEquals(6, g.getLatitude(2), 1e-6);
+        assertEquals(339, g.getLongitude(2), 1e-6);
 
-        assertEquals(78, g.getLatitude(3), 1e-9);
-        assertEquals(89, g.getLongitude(3), 1e-9);
+        assertEquals(78, g.getLatitude(3), 1e-6);
+        assertEquals(89, g.getLongitude(3), 1e-6);
 
         assertEquals(1, count(g.getOutgoing(1)));
         assertEquals(5, count(g.getOutgoing(0)));

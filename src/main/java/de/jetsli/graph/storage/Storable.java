@@ -16,23 +16,18 @@
 package de.jetsli.graph.storage;
 
 /**
- * Abstraction of the underlying datastructure. Current implementations are RAM and memory mapped
- * kind. After construction and before usage you'll have to call alloc or a successfully
- * loadExisting
- *
  * @author Peter Karich
  */
-public interface DataAccess extends Storable {
+public interface Storable {
 
-    void setInt(long index, int value);
+    boolean loadExisting();
 
-    int getInt(long index);
+    void flush();
 
-    void setHeader(int index, int value);
+    /**
+     * Do not access this object after calling this method. It would result in undefined behaviour
+     */
+    void close();
 
-    int getHeader(int index);
-
-    void createNew(long bytes);
-
-    void ensureCapacity(long bytes);
+    long capacity();
 }

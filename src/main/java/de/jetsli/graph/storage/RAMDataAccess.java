@@ -46,12 +46,11 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public DataAccess createNew(long bytes) {
+    public void createNew(long bytes) {
         if (area != null)
             throw new IllegalThreadStateException("already created");
         int intSize = (int) (bytes >> 2);
         area = new int[intSize];
-        return this;
     }
 
     @Override
@@ -94,9 +93,9 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public DataAccess flush() {
+    public void flush() {
         if (area == null || closed || !store)
-            return this;
+            return;
         try {
             RandomAccessFile raFile = new RandomAccessFile(id, "rw");
             try {
@@ -113,7 +112,6 @@ public class RAMDataAccess extends AbstractDataAccess {
             } finally {
                 raFile.close();
             }
-            return this;
         } catch (Exception ex) {
             throw new RuntimeException("Couldn't store integers to " + id, ex);
         }
@@ -130,16 +128,15 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public DataAccess close() {
+    public void close() {
         super.close();
         area = null;
         closed = true;
-        return this;
     }
 
     @Override
-    public int capacity() {
-        return area.length * 4;
+    public long capacity() {
+        return (long) area.length * 4;
     }
 
     @Override

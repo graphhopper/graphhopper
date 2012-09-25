@@ -52,11 +52,10 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public DataAccess createNew(long bytes) {
+    public void createNew(long bytes) {
         if (bBuffer != null)
             throw new IllegalThreadStateException("already created");
         ensureCapacity(bytes);
-        return this;
     }
 
     /**
@@ -122,12 +121,10 @@ public class MMapDataAccess extends AbstractDataAccess {
         return false;
     }
 
-    @Override
-    public DataAccess flush() {
+    public void flush() {
         try {
             bBuffer.force();
             writeHeader(raFile, raFile.length());
-            return this;
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -143,12 +140,10 @@ public class MMapDataAccess extends AbstractDataAccess {
         return bBuffer.getInt((int) intIndex * 4);
     }
 
-    @Override
-    public DataAccess close() {
+    public void close() {
         super.close();
         Helper.close(raFile);
         closed = true;
-        return this;
     }
 
     @Override
