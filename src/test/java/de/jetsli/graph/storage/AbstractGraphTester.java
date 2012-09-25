@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
 import static de.jetsli.graph.util.GraphUtility.*;
@@ -450,5 +451,19 @@ public abstract class AbstractGraphTester {
         assertEquals(20, b.maxLon, 1e-6);
         assertEquals(10, b.minLat, 1e-6);
         assertEquals(-15, b.minLon, 1e-6);
+    }
+
+    @Test public void testFlags() {
+        Graph graph = createGraph(4);
+        graph.edge(0, 1, 10, CarStreetType.flags(120, true));
+        graph.edge(2, 3, 10, CarStreetType.flags(10, false));
+
+        EdgeIterator iter = graph.getEdges(0);
+        assertTrue(iter.next());
+        assertEquals(CarStreetType.flags(120, true), iter.flags());
+
+        iter = graph.getEdges(2);
+        assertTrue(iter.next());
+        assertEquals(CarStreetType.flags(10, false), iter.flags());
     }
 }

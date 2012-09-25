@@ -462,7 +462,7 @@ public class MMapGraph implements Graph, Saveable {
         }
 
         @Override public int flags() {
-            return flags;
+            return flags & 0xFF;
         }
 
         @Override public int fromNode() {
