@@ -47,9 +47,9 @@ elif [ "$FILE" = "germany" ]; then
  SIZE=35000000
 elif [ -f $OSM ]; then
  LINK=""
- JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx300m -Xms300m"
+ JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx1000m -Xms1000m"
  JAVA_OPTS=$JAVA_OPTS_IMPORT
- SIZE=5000000     
+ SIZE=10000000
 else
  echo "Sorry, your osm file $OSM was not found ... exiting"
  exit   
