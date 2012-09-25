@@ -34,11 +34,21 @@ import java.util.PriorityQueue;
  * @author Peter Karich
  */
 public class AStar extends AbstractRoutingAlgorithm {
-    
+
     private CalcDistance dist = new ApproxCalcDistance();
+    private boolean useMap = true;
 
     public AStar(Graph g) {
         super(g);
+    }
+
+    /**
+     * @param useMap if false this algorithm will use less memory but will also be approx. 3 times
+     * slower.
+     */
+    public AStar setUseHelperMap(boolean useMap) {
+        this.useMap = useMap;
+        return this;
     }
 
     /**
@@ -54,7 +64,9 @@ public class AStar extends AbstractRoutingAlgorithm {
 
     @Override public Path calcPath(int from, int to) {
         MyOpenBitSet closedSet = new MyOpenBitSet(graph.getNodes());
-        TIntObjectMap<AStarEdge> map = new TIntObjectHashMap<AStarEdge>();
+        TIntObjectMap<AStarEdge> map = null;
+        if (useMap)
+            map = new TIntObjectHashMap<AStarEdge>();
         PriorityQueue<AStarEdge> prioQueueOpenSet = new PriorityQueue<AStarEdge>();
         double toLat = graph.getLatitude(to);
         double toLon = graph.getLongitude(to);
@@ -74,7 +86,16 @@ public class AStar extends AbstractRoutingAlgorithm {
                     continue;
 
                 float alreadyVisitedWeight = (float) weightCalc.getWeight(iter) + currEdge.weightToCompare;
-                AStarEdge nEdge = map.get(neighborNode);
+                AStarEdge nEdge = null;
+                if (useMap)
+                    nEdge = map.get(neighborNode);
+                else
+                    for (AStarEdge e : prioQueueOpenSet) {
+                        if (e.node == neighborNode) {
+                            nEdge = e;
+                            break;
+                        }
+                    }
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight) {
                     tmpLat = graph.getLatitude(neighborNode);
                     tmpLon = graph.getLongitude(neighborNode);
@@ -84,7 +105,8 @@ public class AStar extends AbstractRoutingAlgorithm {
 
                     if (nEdge == null) {
                         nEdge = new AStarEdge(neighborNode, distEstimation, alreadyVisitedWeight);
-                        map.put(neighborNode, nEdge);
+                        if (useMap)
+                            map.put(neighborNode, nEdge);
                     } else {
                         prioQueueOpenSet.remove(nEdge);
                         nEdge.weightToCompare = alreadyVisitedWeight;
@@ -115,7 +137,7 @@ public class AStar extends AbstractRoutingAlgorithm {
         path.add(fromEntry.node);
         path.reverseOrder();
         return path;
-    }    
+    }
 
     private static class AStarEdge extends EdgeEntry {
 
