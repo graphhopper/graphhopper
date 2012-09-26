@@ -59,34 +59,10 @@ public class GraphStorage implements Graph, Storable {
     }
 
     public GraphStorage createNew(int nodeCount) {
+        dir.clear();
         nodes.createNew((long) nodeCount * 4 * nodeEntrySize);
         edges.createNew((long) nodeCount * 4 * 2 * edgeEntrySize);
         return this;
-    }
-
-    public void ensureNodeIndex(int nodeIndex) {
-        if (nodeIndex < nodeCount)
-            return;
-
-        nodeCount = nodeIndex + 1;
-        if (nodeCount <= nodes.capacity() / 4 / nodeEntrySize)
-            return;
-
-        long cap = Math.max(10, Math.round((long) nodeCount * INC_FACTOR * nodeEntrySize));
-        nodes.ensureCapacity(cap * 4);
-    }
-
-    public void ensureEdgeIndex(int edgeIndex) {
-        // the beginning edge is skipped => -1
-        if (edgeIndex - 1 < edgeCount)
-            return;
-
-        edgeIndex++;
-        if (edgeIndex <= edges.capacity() / 4 / edgeEntrySize)
-            return;
-
-        long cap = Math.max(10, Math.round((long) edgeIndex * INC_FACTOR * edgeEntrySize));
-        edges.ensureCapacity(cap * 4);
     }
 
     @Override
@@ -94,13 +70,34 @@ public class GraphStorage implements Graph, Storable {
         return nodeCount;
     }
 
-    /**
-     * @return the number of edges where a two direction edge is counted only once. Deleted edges
-     * are currently included.
-     */
-//    public int getMaxEdges() {
-//        return edgeCount;
-//    }
+    @Override
+    public double getLatitude(int index) {
+        return intToDouble(nodes.getInt((long) index * nodeEntrySize + I_LAT));
+    }
+
+    @Override
+    public double getLongitude(int index) {
+        return intToDouble(nodes.getInt((long) index * nodeEntrySize + I_LON));
+    }
+    
+    // TODO really use the same factor for latitude and distance?
+    private double intToDouble(int i) {
+        return (double) i / INT_FACTOR;
+    }
+
+    private int doubleToInt(double f) {
+        return (int) (f * INT_FACTOR);
+    }
+
+    private double getDist(long pointer) {
+        return intToDouble(edges.getInt(pointer + I_DIST));
+    }
+
+    @Override
+    public BBox getBounds() {
+        return bounds;
+    }
+
     @Override
     public void setNode(int index, double lat, double lon) {
         ensureNodeIndex(index);
@@ -116,32 +113,30 @@ public class GraphStorage implements Graph, Storable {
             bounds.minLon = lon;
     }
 
-    // TODO really use the same factor for latitude and distance?
-    double intToDouble(int i) {
-        return (double) i / INT_FACTOR;
+    public void ensureNodeIndex(int nodeIndex) {
+        if (nodeIndex < nodeCount)
+            return;
+
+        nodeCount = nodeIndex + 1;
+        long tmp = nodeCount * nodeEntrySize;
+        if (tmp <= nodes.capacity() / 4)
+            return;
+
+        long cap = Math.max(10, (long) (tmp * INC_FACTOR));
+        nodes.ensureCapacity(cap * 4);
+        if (deletedNodes != null)
+            getDeletedNodes().ensureCapacity((int) (nodeCount * INC_FACTOR));
     }
 
-    int doubleToInt(double f) {
-        return (int) (f * INT_FACTOR);
-    }
+    private void ensureEdgeIndex(int edgeIndex) {
+        // the beginning edge is unused i.e. edgeCount == maximum edge index
+        edgeIndex++;
+        long tmp = (long) edgeIndex * edgeEntrySize;
+        if (tmp <= edges.capacity() / 4)
+            return;
 
-    private double getDist(long pointer) {
-        return intToDouble(edges.getInt(pointer + I_DIST));
-    }
-
-    @Override
-    public double getLatitude(int index) {
-        return intToDouble(nodes.getInt((long) index * nodeEntrySize + I_LAT));
-    }
-
-    @Override
-    public double getLongitude(int index) {
-        return intToDouble(nodes.getInt((long) index * nodeEntrySize + I_LON));
-    }
-
-    @Override
-    public BBox getBounds() {
-        return bounds;
+        long cap = Math.max(10, Math.round(tmp * INC_FACTOR));
+        edges.ensureCapacity(cap * 4);
     }
 
     @Override
@@ -166,6 +161,7 @@ public class GraphStorage implements Graph, Storable {
         edgeCount++;
         if (edgeCount < 0)
             throw new IllegalStateException("too many edges. new edge pointer would be negative.");
+        ensureEdgeIndex(edgeCount);
         return edgeCount;
     }
 
@@ -184,8 +180,6 @@ public class GraphStorage implements Graph, Storable {
     // writes distance, flags, nodeThis, *nodeOther* and nextEdgePointer
     protected void writeEdge(int edge, int nodeThis, int nodeOther,
             int nextEdge, int nextEdgeOther, int flags, double dist) {
-        ensureEdgeIndex(edge);
-
         if (nodeThis > nodeOther) {
             int tmp = nodeThis;
             nodeThis = nodeOther;
@@ -275,18 +269,18 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public EdgeIterator getEdges(int index) {
-        return new EdgeIterable(index, true, true);
+    public EdgeIterator getEdges(int node) {
+        return new EdgeIterable(node, true, true);
     }
 
     @Override
-    public EdgeIterator getIncoming(int index) {
-        return new EdgeIterable(index, true, false);
+    public EdgeIterator getIncoming(int node) {
+        return new EdgeIterable(node, true, false);
     }
 
     @Override
-    public EdgeIterator getOutgoing(int index) {
-        return new EdgeIterable(index, false, true);
+    public EdgeIterator getOutgoing(int node) {
+        return new EdgeIterable(node, false, true);
     }
 
     protected class EdgeIterable implements EdgeIterator {
@@ -347,6 +341,7 @@ public class GraphStorage implements Graph, Storable {
                 if (foundNext)
                     break;
             }
+            // road networks typically do not have nodes with plenty of edges!
             if (i > 1000)
                 throw new IllegalStateException("something went wrong: no end of edge-list found");
             return foundNext;
@@ -379,7 +374,7 @@ public class GraphStorage implements Graph, Storable {
         if (this.dir == dir)
             throw new IllegalStateException("cannot copy graph into the same directory!");
 
-        GraphStorage clonedG = new GraphStorage(dir);        
+        GraphStorage clonedG = new GraphStorage(dir);
         edges.copyTo(clonedG.edges);
         clonedG.edgeCount = edgeCount;
         clonedG.edgeEntrySize = edgeEntrySize;
@@ -461,13 +456,11 @@ public class GraphStorage implements Graph, Storable {
             newNodeId++;
         }
         // keep in mind that this graph storage could be in-memory OR mmap
-        // TODO edges = inMemGraph.edges;
-        // inMemGraph.edges.copyTo(edges);
+        inMemGraph.edges.copyTo(edges);
         edgeCount = inMemGraph.edgeCount;
         edgeEntrySize = inMemGraph.edgeEntrySize;
 
-        // TODO nodes = inMemGraph.nodes;
-        // inMemGraph.nodes.copyTo(nodes);
+        inMemGraph.nodes.copyTo(nodes);
         nodeCount = inMemGraph.nodeCount;
         nodeEntrySize = inMemGraph.nodeEntrySize;
         bounds = inMemGraph.bounds;
@@ -547,7 +540,7 @@ public class GraphStorage implements Graph, Storable {
         for (int i = 0; i < itemsToMove; i++) {
             int oldI = oldIndices[i];
             int newI = newIndices[i];
-            inPlaceDeleteNodeHook(oldI, newI);
+            inPlaceDeleteNodeHook((long) oldI * nodeEntrySize, (long) newI * nodeEntrySize);
         }
 
         // rewrite the edges of nodes connected to moved nodes
@@ -582,6 +575,7 @@ public class GraphStorage implements Graph, Storable {
             writeEdge(edge, updatedA, updatedB, linkA, linkB, flags, distance);
         }
 
+        // edgeCount stays!
         nodeCount -= deleted;
         deletedNodes = null;
     }

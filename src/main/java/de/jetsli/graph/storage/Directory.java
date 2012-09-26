@@ -23,4 +23,6 @@ public interface Directory {
     String getLocation();
     
     DataAccess createDataAccess(String name);
+    
+    void clear();
 }

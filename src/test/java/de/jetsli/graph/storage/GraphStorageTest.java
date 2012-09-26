@@ -60,7 +60,7 @@ public class GraphStorageTest extends AbstractGraphTester {
     }
 
     @Test
-    public void testSave() throws IOException {
+    public void testSave_and_fileFormat() throws IOException {
         String tmpDir = "./target/tmp/";
         Helper.deleteDir(new File(tmpDir));
         GraphStorage graph = new GraphStorage(new RAMDirectory(tmpDir, true)).createNew(10);
@@ -75,7 +75,7 @@ public class GraphStorageTest extends AbstractGraphTester {
         checkGraph(graph);
         graph.flush();
 
-        graph = new GraphStorage(new RAMDirectory(tmpDir, true));
+        graph = new GraphStorage(new MMapDirectory(tmpDir));
         assertTrue(graph.loadExisting());
         assertEquals(3, graph.getNodes());
         assertEquals(3, graph.getNodes());

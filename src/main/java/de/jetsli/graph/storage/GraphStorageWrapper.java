@@ -39,7 +39,6 @@ public class GraphStorageWrapper extends DefaultStorage {
 
     @Override
     public void createNew() {
-        Helper.deleteDir(new File(folder));
         tmp.createNew(osmIdToIndexMap.size());
     }
 
@@ -49,7 +48,7 @@ public class GraphStorageWrapper extends DefaultStorage {
     }
 
     @Override
-    public void flush() {
+    public void flush() {        
         tmp.flush();
         super.flush();
     }

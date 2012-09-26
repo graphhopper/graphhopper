@@ -35,6 +35,7 @@ public class MMapDataAccessTest extends DataAccessTest {
         assertFalse(da.loadExisting());
         da.createNew(300);
         da.setInt(7, 123);
+        da.flush();
         da.close();
         da = createDataAccess(location);
         assertTrue(da.loadExisting());

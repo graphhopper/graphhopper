@@ -273,7 +273,7 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testDeleteNode() {
+    public void testComplexDeleteNode() {
         testDeleteNodes(21);
         testDeleteNodes(6);
     }
@@ -358,9 +358,9 @@ public abstract class AbstractGraphTester {
         g.setNode(2, 3, 3);
         g.setNode(3, 78, 89);
 
-        g.edge(3, 0, 20, true);
-        g.edge(5, 0, 20, true);
-        g.edge(5, 3, 20, true);
+        g.edge(3, 0, 21, true);
+        g.edge(5, 0, 22, true);
+        g.edge(5, 3, 23, true);
 
         g.markNodeDeleted(0);
         g.markNodeDeleted(3);

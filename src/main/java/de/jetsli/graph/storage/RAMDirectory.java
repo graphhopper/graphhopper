@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.util.Helper;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,11 +46,16 @@ public class RAMDirectory implements Directory {
             throw new IllegalStateException("id cannot be null! Use empty string for runtime directory");
         this.id = _id;
         this.store = store;
+        if (id.isEmpty())
+            id = new File("").getAbsolutePath();
+        if (!id.endsWith("/"))
+            id += "/";
+
+        mkdirs();
+    }
+
+    private void mkdirs() {
         if (store) {
-            if (id.isEmpty())
-                id = new File("").getAbsolutePath();
-            if (!id.endsWith("/"))
-                id += "/";
             new File(id).mkdirs();
         }
     }
@@ -65,6 +71,15 @@ public class RAMDirectory implements Directory {
         RAMDataAccess da = new RAMDataAccess(name, store);
         map.put(name, da);
         return da;
+    }
+
+    @Override
+    public void clear() {
+        if (store) {
+            Helper.deleteDir(new File(id));
+            mkdirs();
+        }
+        map.clear();
     }
 
     @Override

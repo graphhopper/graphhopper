@@ -15,6 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.util.Helper;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,5 +54,12 @@ public class MMapDirectory implements Directory {
     @Override
     public String getLocation() {
         return location;
+    }
+
+    @Override
+    public void clear() {
+        Helper.deleteDir(new File(location));
+        new File(location).mkdirs();
+        map.clear();
     }
 }

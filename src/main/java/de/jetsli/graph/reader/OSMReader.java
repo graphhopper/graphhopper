@@ -19,8 +19,7 @@ import de.jetsli.graph.routing.util.AcceptStreet;
 import de.jetsli.graph.routing.util.PrepareRoutingSubnetworks;
 import de.jetsli.graph.routing.util.RoutingAlgorithmIntegrationTests;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.MMapGraphStorage;
-import de.jetsli.graph.storage.MemoryGraphSafeStorage;
+import de.jetsli.graph.storage.GraphStorageWrapper;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.*;
 import gnu.trove.list.array.TIntArrayList;
@@ -82,9 +81,9 @@ public class OSMReader {
         int size = (int) args.getLong("size", 5 * 1000 * 1000);
         Storage storage;
         if ("MMapGraph".equalsIgnoreCase(args.get("graphClass", "MemoryGraphSafe")))
-            storage = new MMapGraphStorage(storageFolder, size);
+            storage = new GraphStorageWrapper(storageFolder, size, true);
         else
-            storage = new MemoryGraphSafeStorage(storageFolder, size);
+            storage = new GraphStorageWrapper(storageFolder, size, false);
         return osm2Graph(new OSMReader(storage, size), args);
     }
 
@@ -113,7 +112,7 @@ public class OSMReader {
     }
 
     public OSMReader(String storageLocation, int size) {
-        this(new MemoryGraphSafeStorage(storageLocation, size), size);
+        this(new GraphStorageWrapper(storageLocation, size, false), size);
     }
 
     public OSMReader(Storage storage, int size) {
@@ -146,7 +145,7 @@ public class OSMReader {
 
         preprocessAcceptHighwaysOnly(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
-        // cleanUp();
+        cleanUp();
         flush();
     }
 

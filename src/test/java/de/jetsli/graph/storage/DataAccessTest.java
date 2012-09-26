@@ -140,18 +140,18 @@ public abstract class DataAccessTest {
         da.setInt(123, 321);
         da.setInt(1000, 1111);
 
-        DataAccess da2 = createDataAccess(location);
+        DataAccess da2 = createDataAccess(location + "2");
         da2.createNew(10);
         da.copyTo(da2);
         assertEquals(1, da2.getInt(1));
         assertEquals(321, da2.getInt(123));
         assertEquals(1111, da2.getInt(1000));
-        
+
         da2.setInt(1, 2);
         assertEquals(2, da2.getInt(1));
         da2.flush();
         da.flush();
-        // make sure this is independent!
+        // make sure they are independent!
         assertEquals(1, da.getInt(1));
     }
 }

@@ -59,6 +59,16 @@ public class MMapDataAccess extends AbstractDataAccess {
         ensureCapacity(bytes);
     }
 
+    @Override
+    public void copyTo(DataAccess da) {
+        // if(da instanceof MMapDataAccess) {
+        // TODO make copying into mmap a lot faster via bytebuffer
+        // also copying into RAMDataAccess could be faster via bytebuffer
+        // is a flush necessary then?
+        // }
+        super.copyTo(da);
+    }
+
     /**
      * Makes it possible to force the order. E.g. if we create the file on a host system and copy it
      * to a different like android. http://en.wikipedia.org/wiki/Endianness
@@ -118,10 +128,12 @@ public class MMapDataAccess extends AbstractDataAccess {
             if (mapIt(HEADER_SPACE, bytes, false))
                 return true;
         } catch (Exception ex) {
+            // ex.printStackTrace();
         }
         return false;
     }
 
+    @Override
     public void flush() {
         try {
             bBuffer.force();
