@@ -17,9 +17,7 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.BitUtil;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * This is an in-memory data structure but with the possibility to be stored on flush().
@@ -33,8 +31,8 @@ public class RAMDataAccess extends AbstractDataAccess {
     private float increaseFactor = 1.5f;
     private boolean closed = false;
     private boolean store;
-    private int segmentSizeIntsPower;
-    private int indexDivisor;
+    private transient int segmentSizeIntsPower;
+    private transient int indexDivisor;
 
     public RAMDataAccess(String id) {
         this(id, false);
@@ -74,6 +72,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");
 
+        // initialize transient values
         setSegmentSize(segmentSize);
         ensureCapacity(Math.max(10, bytes));
     }
@@ -84,9 +83,10 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (todoBytes <= 0)
             return;
 
-        int segmentsToCreate = (int) (todoBytes / segmentSize);
+        int segmentsToCreate = (int) (todoBytes / segmentSize);        
         if (todoBytes % segmentSize != 0)
             segmentsToCreate++;
+        System.out.println(id + " new segs:" + segmentsToCreate);
         int[][] newSegs = Arrays.copyOf(segments, segments.length + segmentsToCreate);
         for (int i = segments.length; i < newSegs.length; i++) {
             newSegs[i] = new int[1 << segmentSizeIntsPower];

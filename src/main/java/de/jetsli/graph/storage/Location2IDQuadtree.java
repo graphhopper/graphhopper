@@ -40,7 +40,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     private final static int MAGIC_INT = Integer.MAX_VALUE / 12305;
     private Logger logger = LoggerFactory.getLogger(getClass());
     private SpatialKeyAlgo algo;
-    protected CalcDistance calc = new CalcDistance();
+    protected CalcDistance dist = new ApproxCalcDistance();
     private DataAccess index;
     private double maxNormRasterWidthKm;
     private int size;
@@ -54,9 +54,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
     @Override
     public Location2IDIndex setPrecision(boolean approxDist) {
         if (approxDist)
-            calc = new ApproxCalcDistance();
+            dist = new ApproxCalcDistance();
         else
-            calc = new CalcDistance();
+            dist = new CalcDistance();
         return this;
     }
 
@@ -120,23 +120,25 @@ public class Location2IDQuadtree implements Location2IDIndex {
             size = x * x;
         }
 
+        // avoid default big segment size and use one segment only:
+        index.setSegmentSize(size * 4);
         index.createNew(size * 4);
         return bits;
     }
 
     private void initAlgo(int bits) {
         BBox b = g.getBounds();
-        logger.info("bounds:" + b + ", bits:" + bits + ", calc:" + calc.toString());
+        logger.info("bounds:" + b + ", bits:" + bits + ", calc:" + dist.toString());
         algo = new SpatialKeyAlgo(bits).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
-        maxNormRasterWidthKm = calc.normalizeDist(Math.max(calc.calcDistKm(b.minLat, b.minLon, b.minLat, b.maxLon),
-                calc.calcDistKm(b.minLat, b.minLon, b.maxLat, b.minLon)) / Math.sqrt(size));
+        maxNormRasterWidthKm = dist.normalizeDist(Math.max(dist.calcDistKm(b.minLat, b.minLon, b.minLat, b.maxLon),
+                dist.calcDistKm(b.minLat, b.minLon, b.maxLat, b.minLon)) / Math.sqrt(size));
 
         // as long as we have "dist < PI*R/2" it is save to compare the normalized distances instead of the real
         // distances. because sin(x) is only monotonic increasing for x <= PI/2 (and positive for x >= 0)
     }
 
     protected double getMaxRasterWidthKm() {
-        return calc.denormalizeDist(maxNormRasterWidthKm);
+        return dist.denormalizeDist(maxNormRasterWidthKm);
     }
 
     private MyOpenBitSet fillQuadtree(int size) {
@@ -154,10 +156,10 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 int oldNodeId = index.getInt(key);
                 algo.decode(key, coord);
                 // decide which one is closer to 'key'
-                double distNew = calc.calcNormalizedDist(coord.lat, coord.lon, lat, lon);
+                double distNew = dist.calcNormalizedDist(coord.lat, coord.lon, lat, lon);
                 double oldLat = g.getLatitude(oldNodeId);
                 double oldLon = g.getLongitude(oldNodeId);
-                double distOld = calc.calcNormalizedDist(coord.lat, coord.lon, oldLat, oldLon);
+                double distOld = dist.calcNormalizedDist(coord.lat, coord.lon, oldLat, oldLon);
                 // new point is closer to quad tree point (key) so overwrite old
                 if (distNew < distOld)
                     index.setInt(key, nodeId);
@@ -201,7 +203,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
                         int tmpId = index.getInt(tmpKey);
                         double lat = g.getLatitude(tmpId);
                         double lon = g.getLongitude(tmpId);
-                        double dist = calc.calcNormalizedDist(mainCoord.lat, mainCoord.lon, lat, lon);
+                        double dist = this.dist.calcNormalizedDist(mainCoord.lat, mainCoord.lon, lat, lon);
                         list.add(new Edge(tmpId, dist));
                     }
                 }
@@ -241,7 +243,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
                         double currLat = g.getLatitude(nodeId);
                         double currLon = g.getLongitude(nodeId);
-                        double d = calc.calcNormalizedDist(currLat, currLon, mainCoord.lat, mainCoord.lon);
+                        double d = dist.calcNormalizedDist(currLat, currLon, mainCoord.lat, mainCoord.lon);
                         if (d < closestNode.weight) {
                             closestNode.weight = d;
                             closestNode.node = nodeId;
@@ -291,7 +293,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         final int id = index.getInt((int) key);
         double mainLat = g.getLatitude(id);
         double mainLon = g.getLongitude(id);
-        final Edge closestNode = new Edge(id, calc.calcNormalizedDist(lat, lon, mainLat, mainLon));
+        final Edge closestNode = new Edge(id, dist.calcNormalizedDist(lat, lon, mainLat, mainLon));
         goFurtherHook(id);
         new XFirstSearch() {
             @Override protected MyBitSet createBitSet(int size) {
@@ -305,7 +307,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 goFurtherHook(nodeId);
                 double currLat = g.getLatitude(nodeId);
                 double currLon = g.getLongitude(nodeId);
-                double d = calc.calcNormalizedDist(currLat, currLon, lat, lon);
+                double d = dist.calcNormalizedDist(currLat, currLon, lat, lon);
                 if (d < closestNode.weight) {
                     closestNode.weight = d;
                     closestNode.node = nodeId;

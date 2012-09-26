@@ -23,13 +23,10 @@ import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.PathBidirRef;
 import de.jetsli.graph.routing.PathPrio;
 import de.jetsli.graph.routing.RoutingAlgorithm;
-import de.jetsli.graph.storage.Directory;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.GraphStorage;
 import de.jetsli.graph.storage.Location2IDIndex;
-import de.jetsli.graph.storage.Location2IDPreciseIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
-import de.jetsli.graph.storage.MMapDirectory;
-import de.jetsli.graph.storage.MMapGraph;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.util.StopWatch;
@@ -48,10 +45,11 @@ public class RoutingAlgorithmIntegrationTests {
     public RoutingAlgorithmIntegrationTests(Graph graph) {
         this.unterfrankenGraph = graph;
         StopWatch sw = new StopWatch().start();
-        Directory dir = new RAMDirectory("loc2idIndex", false);
-//        Directory dir = new MMapDirectory("loc2idIndex");
-        Location2IDQuadtree index = new Location2IDQuadtree(unterfrankenGraph, dir);
-        // unterfrankenGraph.getDirectory()
+        Location2IDQuadtree index;
+        if (graph instanceof GraphStorage)
+            index = new Location2IDQuadtree(unterfrankenGraph, ((GraphStorage) graph).getDirectory());
+        else
+            index = new Location2IDQuadtree(unterfrankenGraph, new RAMDirectory("loc2idIndex", false));
 //      Location2IDPreciseIndex index = new Location2IDPreciseIndex(unterfrankenGraph, dir);
         if (!index.loadExisting()) {
             index.prepareIndex(100000);

@@ -19,6 +19,7 @@ import de.jetsli.graph.routing.util.AcceptStreet;
 import de.jetsli.graph.routing.util.PrepareRoutingSubnetworks;
 import de.jetsli.graph.routing.util.RoutingAlgorithmIntegrationTests;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.GraphStorage;
 import de.jetsli.graph.storage.GraphStorageWrapper;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.*;
@@ -44,7 +45,7 @@ public class OSMReader {
 
     public static void main(String[] strs) throws Exception {
         CmdArgs args = Helper.readCmdArgs(strs);
-        Graph g = osm2Graph(args);
+        GraphStorage g = (GraphStorage) osm2Graph(args);
         RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(g);
         if (args.getBool("test", false)) {
             tests.start();
