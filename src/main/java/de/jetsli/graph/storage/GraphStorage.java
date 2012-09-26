@@ -33,7 +33,7 @@ import gnu.trove.set.hash.TIntHashSet;
  */
 public class GraphStorage implements Graph, Storable {
 
-    private static final int EMPTY_LINK = 0;
+    protected static final int EMPTY_LINK = 0;
     private static final float INC_FACTOR = 1.5f;
     // +- 180 and +-90 => let use use 400
     private static final float INT_FACTOR = Integer.MAX_VALUE / 400f;
@@ -41,15 +41,15 @@ public class GraphStorage implements Graph, Storable {
     private static final float INT_DIST_FACTOR = 1000000f;
     private Directory dir;
     // edge memory layout: nodeA,nodeB,linkA,linkB,dist,flags
-    private static final int I_NODEA = 0, I_NODEB = 1, I_LINKA = 2, I_LINKB = 3, I_FLAGS = 4, I_DIST = 5;
-    private int edgeEntrySize = 6;
-    private DataAccess edges;
-    private int edgeCount;
+    protected static final int I_NODEA = 0, I_NODEB = 1, I_LINKA = 2, I_LINKB = 3, I_FLAGS = 4, I_DIST = 5;
+    protected int edgeEntrySize = 6;
+    protected DataAccess edges;
+    protected int edgeCount;
     // node memory layout: edgeRef,lat,lon
-    private static final int I_EDGE_REF = 0, I_LAT = 1, I_LON = 2;
-    private int nodeEntrySize = 3;
-    private DataAccess nodes;
-    private int nodeCount;
+    protected static final int I_EDGE_REF = 0, I_LAT = 1, I_LON = 2;
+    protected int nodeEntrySize = 3;
+    protected DataAccess nodes;
+    protected int nodeCount;
     private BBox bounds;
     // delete marker is not persistent!
     private MyOpenBitSet deletedNodes;
@@ -95,7 +95,7 @@ public class GraphStorage implements Graph, Storable {
         return (int) (f * INT_FACTOR);
     }
 
-    private int distToInt(double f) {
+    protected int distToInt(double f) {
         return (int) (f * INT_DIST_FACTOR);
     }
 
@@ -380,11 +380,15 @@ public class GraphStorage implements Graph, Storable {
         return copyTo(new RAMDirectory());
     }
 
+    protected GraphStorage createThis(Directory dir) {
+        return new GraphStorage(dir);
+    }
+
     public Graph copyTo(Directory dir) {
         if (this.dir == dir)
             throw new IllegalStateException("cannot copy graph into the same directory!");
 
-        GraphStorage clonedG = new GraphStorage(dir);
+        GraphStorage clonedG = createThis(dir);
         edges.copyTo(clonedG.edges);
         clonedG.edgeCount = edgeCount;
         clonedG.edgeEntrySize = edgeEntrySize;
@@ -550,7 +554,9 @@ public class GraphStorage implements Graph, Storable {
         for (int i = 0; i < itemsToMove; i++) {
             int oldI = oldIndices[i];
             int newI = newIndices[i];
-            inPlaceDeleteNodeHook((long) oldI * nodeEntrySize, (long) newI * nodeEntrySize);
+            for (int j = 0; j < nodeEntrySize; j++) {
+                nodes.setInt((long) newI * nodeEntrySize + j, nodes.getInt((long) oldI * nodeEntrySize + j));
+            }
         }
 
         // rewrite the edges of nodes connected to moved nodes

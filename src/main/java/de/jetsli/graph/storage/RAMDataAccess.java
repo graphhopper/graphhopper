@@ -86,7 +86,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         int segmentsToCreate = (int) (todoBytes / segmentSize);        
         if (todoBytes % segmentSize != 0)
             segmentsToCreate++;
-        System.out.println(id + " new segs:" + segmentsToCreate);
+        // System.out.println(id + " new segs:" + segmentsToCreate);
         int[][] newSegs = Arrays.copyOf(segments, segments.length + segmentsToCreate);
         for (int i = segments.length; i < newSegs.length; i++) {
             newSegs[i] = new int[1 << segmentSizeIntsPower];

@@ -19,7 +19,8 @@ import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.routing.util.EdgePrioFilter;
 import de.jetsli.graph.routing.util.PrepareRoutingShortcuts;
 import de.jetsli.graph.storage.PriorityGraph;
-import de.jetsli.graph.storage.PriorityGraphImpl;
+import de.jetsli.graph.storage.PriorityGraphStorage;
+import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.util.EdgeSkipIterator;
 import de.jetsli.graph.util.GraphUtility;
 import static org.junit.Assert.*;
@@ -44,7 +45,9 @@ public class DijkstraBidirectionPrioTest {
     }
 
     PriorityGraph createGraph(int size) {
-        return new PriorityGraphImpl(size);
+        PriorityGraphStorage g = new PriorityGraphStorage(new RAMDirectory("priog", false));
+        g.createNew(size);
+        return g;
     }
 
     @Test
@@ -71,7 +74,7 @@ public class DijkstraBidirectionPrioTest {
 
     @Test
     public void testDirected2() {
-        final PriorityGraphImpl g = new PriorityGraphImpl(30);
+        PriorityGraph g = createGraph(30);
         // see 49.9052,10.35491
         // =19-20-21-22=
 
@@ -100,7 +103,7 @@ public class DijkstraBidirectionPrioTest {
 
     @Test
     public void testTwoEdgesWithDifferentSpeed() {
-        final PriorityGraphImpl g = new PriorityGraphImpl(30);
+        PriorityGraph g = createGraph(30);
         // see 49.894653,9.309765
         //
         //         10

@@ -18,18 +18,20 @@ package de.jetsli.graph.storage;
 import de.jetsli.graph.routing.util.EdgePrioFilter;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *
  * @author Peter Karich
  */
-public class PriorityGraphImplTest extends MemoryGraphSafeTest {
+public class PriorityGraphStorageTest extends AbstractGraphTester {
 
     @Override
     PriorityGraph createGraph(int size) {
-        return new PriorityGraphImpl(size);
+        PriorityGraphStorage g = new PriorityGraphStorage(new RAMDirectory("priog", false));
+        g.createNew(size);
+        return g;
     }
 
     @Test

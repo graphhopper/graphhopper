@@ -19,7 +19,8 @@ import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.routing.util.ShortestCalc;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.PriorityGraph;
-import de.jetsli.graph.storage.PriorityGraphImpl;
+import de.jetsli.graph.storage.PriorityGraphStorage;
+import de.jetsli.graph.storage.RAMDirectory;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -29,9 +30,15 @@ import org.junit.Test;
  */
 public class PathPrioTest {
 
+    PriorityGraph createGraph(int size) {
+        PriorityGraphStorage g = new PriorityGraphStorage(new RAMDirectory("priog", false));
+        g.createNew(size);
+        return g;
+    }
+
     @Test
     public void testNoExpand() {
-        PriorityGraph g = new PriorityGraphImpl(20);
+        PriorityGraph g = createGraph(20);
         g.edge(0, 1, 10, true);
         g.edge(1, 2, 10, true);
         g.edge(2, 3, 10, true);
@@ -50,7 +57,7 @@ public class PathPrioTest {
 
     @Test
     public void testExpand() {
-        PriorityGraph g = new PriorityGraphImpl(20);
+        PriorityGraph g = createGraph(20);
         g.edge(0, 1, 10, true);
         g.edge(1, 2, 10, true);
         g.edge(2, 3, 10, true);
@@ -70,7 +77,7 @@ public class PathPrioTest {
 
     @Test
     public void testExpandMultipleSkippedNodes() {
-        PriorityGraph g = new PriorityGraphImpl(20);
+        PriorityGraph g = createGraph(20);
         g.edge(0, 1, 10, true);
         g.edge(1, 2, 10, true);
         g.edge(2, 3, 10, true);

@@ -17,7 +17,8 @@ package de.jetsli.graph.routing.util;
 
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.PriorityGraph;
-import de.jetsli.graph.storage.PriorityGraphImpl;
+import de.jetsli.graph.storage.PriorityGraphStorage;
+import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeSkipIterator;
 import de.jetsli.graph.util.GraphUtility;
@@ -31,7 +32,9 @@ import static org.junit.Assert.*;
 public class PrepareRoutingShortcutsTest {
 
     PriorityGraph createGraph(int size) {
-        return new PriorityGraphImpl(size);
+        PriorityGraphStorage g = new PriorityGraphStorage(new RAMDirectory("priog", false));
+        g.createNew(size);
+        return g;
     }
 
     @Test
@@ -90,7 +93,7 @@ public class PrepareRoutingShortcutsTest {
 
     @Test
     public void testDirected() {
-        PriorityGraphImpl g = new PriorityGraphImpl(20);
+        PriorityGraph g = createGraph(20);
         // 3->0->1<-2
         g.edge(0, 1, 10, false);
         g.edge(2, 1, 10, false);
@@ -103,7 +106,7 @@ public class PrepareRoutingShortcutsTest {
 
     @Test
     public void testDirectedBug() {
-        final PriorityGraphImpl g = new PriorityGraphImpl(30);
+        PriorityGraph g = createGraph(30);
         //       8
         //       |
         //    6->0->1->3->7
@@ -134,7 +137,7 @@ public class PrepareRoutingShortcutsTest {
 
     @Test
     public void testCircleBug() {
-        final PriorityGraphImpl g = new PriorityGraphImpl(30);
+        PriorityGraph g = createGraph(30);
         //  /--1
         // -0--/
         //  |

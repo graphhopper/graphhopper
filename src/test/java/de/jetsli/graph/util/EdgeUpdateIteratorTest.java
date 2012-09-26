@@ -16,9 +16,9 @@
 package de.jetsli.graph.util;
 
 import de.jetsli.graph.routing.util.CarStreetType;
-import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.MemoryGraphSafe;
-import de.jetsli.graph.storage.PriorityGraphImpl;
+import de.jetsli.graph.storage.PriorityGraph;
+import de.jetsli.graph.storage.PriorityGraphStorage;
+import de.jetsli.graph.storage.RAMDirectory;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -28,9 +28,15 @@ import org.junit.Test;
  */
 public class EdgeUpdateIteratorTest {
 
+    PriorityGraph createGraph(int size) {
+        PriorityGraphStorage g = new PriorityGraphStorage(new RAMDirectory("priog", false));
+        g.createNew(size);
+        return g;
+    }
+
     @Test
     public void testUpdateFlags() {
-        Graph g = new PriorityGraphImpl(20);
+        PriorityGraph g = createGraph(20);
         g.edge(0, 1, 12, CarStreetType.flags(10, true));
         g.edge(0, 2, 13, CarStreetType.flags(20, true));
 
