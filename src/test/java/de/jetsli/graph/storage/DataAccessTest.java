@@ -84,8 +84,7 @@ public abstract class DataAccessTest {
 
         da.createNew(300);
         da.setInt(2, 321);
-        // close works the same as flush but one cannot use the same object anymore as probably
-        // some underlying resources are freed
+        da.flush();
         da.close();
         da = createDataAccess(location);
         assertTrue(da.loadExisting());
@@ -124,12 +123,35 @@ public abstract class DataAccessTest {
         da.ensureCapacity(25 * 5);
         assertEquals(200, da.getInt(19));
         // now it shouldn't fail
-        da.setInt(20, 220);        
+        da.setInt(20, 220);
         assertEquals(220, da.getInt(20));
-        
+
         // ensure some bigger area
         da = createDataAccess(location);
         da.createNew(200 * 4);
         da.ensureCapacity(600 * 4);
+    }
+
+    @Test
+    public void testCopy() {
+        DataAccess da = createDataAccess(location);
+        da.createNew(1001 * 4);
+        da.setInt(1, 1);
+        da.setInt(123, 321);
+        da.setInt(1000, 1111);
+
+        DataAccess da2 = createDataAccess(location);
+        da2.createNew(10);
+        da.copyTo(da2);
+        assertEquals(1, da2.getInt(1));
+        assertEquals(321, da2.getInt(123));
+        assertEquals(1111, da2.getInt(1000));
+        
+        da2.setInt(1, 2);
+        assertEquals(2, da2.getInt(1));
+        da2.flush();
+        da.flush();
+        // make sure this is independent!
+        assertEquals(1, da.getInt(1));
     }
 }

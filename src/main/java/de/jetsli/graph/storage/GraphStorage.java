@@ -15,9 +15,14 @@
  */
 package de.jetsli.graph.storage;
 
+import de.jetsli.graph.coll.MyBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
+import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.shapes.BBox;
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.set.hash.TIntHashSet;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -32,21 +37,20 @@ public class GraphStorage implements Graph, Storable {
     private static final float INC_FACTOR = 1.5f;
     private static final float INT_FACTOR = 1000000f;
     private Directory dir;
-    // nodeA,nodeB,linkA,linkB,dist,flags,(shortcutnode)
+    // edge memory layout: nodeA,nodeB,linkA,linkB,dist,flags
     private static final int I_NODEA = 0, I_NODEB = 1, I_LINKA = 2, I_LINKB = 3, I_FLAGS = 4, I_DIST = 5;
     private int edgeEntrySize = 6;
     private DataAccess edges;
     private int edgeCount;
-    // edgeRef,deleted?,lat,lon,(prio),
+    // node memory layout: edgeRef,lat,lon
     private static final int I_EDGE_REF = 0, I_LAT = 1, I_LON = 2;
     private int nodeEntrySize = 3;
     private DataAccess nodes;
     private int nodeCount;
     private BBox bounds;
+    // delete marker is not persistent!
+    private MyOpenBitSet deletedNodes;
 
-    // TODO
-    // clone => how to create new Graph? => new Directory!
-    // in place delete    
     public GraphStorage(Directory dir) {
         this.dir = dir;
         edges = dir.createDataAccess("edges");
@@ -73,13 +77,15 @@ public class GraphStorage implements Graph, Storable {
     }
 
     public void ensureEdgeIndex(int edgeIndex) {
-        if (edgeIndex < edgeCount)
-            return;
-        edgeCount = edgeIndex + 1;
-        if (edgeCount <= edges.capacity() / 4 / edgeEntrySize)
+        // the beginning edge is skipped => -1
+        if (edgeIndex - 1 < edgeCount)
             return;
 
-        long cap = Math.max(10, Math.round((long) edgeCount * INC_FACTOR * edgeEntrySize));
+        edgeIndex++;
+        if (edgeIndex <= edges.capacity() / 4 / edgeEntrySize)
+            return;
+
+        long cap = Math.max(10, Math.round((long) edgeIndex * INC_FACTOR * edgeEntrySize));
         edges.ensureCapacity(cap * 4);
     }
 
@@ -89,12 +95,12 @@ public class GraphStorage implements Graph, Storable {
     }
 
     /**
-     * @return the number of edges where a two direction edge is counted only once.
+     * @return the number of edges where a two direction edge is counted only once. Deleted edges
+     * are currently included.
      */
-    public int getEdges() {
-        return edgeCount;
-    }
-
+//    public int getMaxEdges() {
+//        return edgeCount;
+//    }
     @Override
     public void setNode(int index, double lat, double lon) {
         ensureNodeIndex(index);
@@ -236,7 +242,36 @@ public class GraphStorage implements Graph, Storable {
     }
 
     public EdgeIterator getAllEdges() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return new EdgeIterator() {
+            private long edgePointer = 0;
+            private int maxEdges = (edgeCount + 1) * edgeEntrySize;
+
+            @Override
+            public boolean next() {
+                edgePointer += edgeEntrySize;
+                return edgePointer < maxEdges;
+            }
+
+            @Override
+            public int fromNode() {
+                return edges.getInt(edgePointer + I_NODEA);
+            }
+
+            @Override
+            public int node() {
+                return edges.getInt(edgePointer + I_NODEB);
+            }
+
+            @Override
+            public double distance() {
+                return getDist(edgePointer);
+            }
+
+            @Override
+            public int flags() {
+                return edges.getInt(edgePointer + I_FLAGS);
+            }
+        };
     }
 
     @Override
@@ -256,7 +291,7 @@ public class GraphStorage implements Graph, Storable {
 
     protected class EdgeIterable implements EdgeIterator {
 
-        int edgePointer;
+        long edgePointer;
         boolean in;
         boolean out;
         boolean foundNext;
@@ -298,12 +333,8 @@ public class GraphStorage implements Graph, Storable {
             }
         }
 
-        int edgePointer() {
+        long edgePointer() {
             return edgePointer;
-        }
-
-        int nextEdgePointer() {
-            return nextEdge;
         }
 
         @Override public boolean next() {
@@ -338,33 +369,237 @@ public class GraphStorage implements Graph, Storable {
         }
     }
 
+    // TODO remove this method from interface and use copy instead!
     @Override
     public Graph clone() {
-        // TODO hhmmh how can we create the graph in a different location if on-disc?
-        // dir.createSubdirectory ?
-        throw new UnsupportedOperationException("Not supported yet.");
+        return copyTo(new RAMDirectory());
     }
 
-    public Graph copy(Directory dir) {
+    public Graph copyTo(Directory dir) {
         if (this.dir == dir)
             throw new IllegalStateException("cannot copy graph into the same directory!");
 
-        GraphStorage clonedG = new GraphStorage(dir);
-        // TODO GraphUtility.copy(this, clonedG);
+        GraphStorage clonedG = new GraphStorage(dir);        
+        edges.copyTo(clonedG.edges);
+        clonedG.edgeCount = edgeCount;
+        clonedG.edgeEntrySize = edgeEntrySize;
+        nodes.copyTo(clonedG.nodes);
+        clonedG.nodeCount = nodeCount;
+        clonedG.nodeEntrySize = nodeEntrySize;
+        clonedG.bounds = bounds;
+        deletedNodes = null;
         return clonedG;
     }
 
+    /**
+     * @param edgeToUpdatePointer if it is negative then it will be saved to refToEdges
+     */
+    void internalEdgeRemove(long edgeToDeletePointer, long edgeToUpdatePointer, int node) {
+        // an edge is shared across the two node even if the edge is not in both directions
+        // so we need to know two edge-pointers pointing to the edge before edgeToDeletePointer
+        int otherNode = getOtherNode(node, edgeToDeletePointer);
+        long linkPos = getLinkPosInEdgeArea(node, otherNode, edgeToDeletePointer);
+        int nextEdge = edges.getInt(linkPos);
+        if (edgeToUpdatePointer < 0) {
+            nodes.setInt(node * nodeEntrySize, nextEdge);
+        } else {
+            long link = getLinkPosInEdgeArea(node, otherNode, edgeToUpdatePointer);
+            edges.setInt(link, nextEdge);
+        }
+    }
+
+    private MyBitSet getDeletedNodes() {
+        if (deletedNodes == null)
+            deletedNodes = new MyOpenBitSet(nodeCount);
+        return deletedNodes;
+    }
+
     @Override
-    public void markNodeDeleted(int index) {        
+    public void markNodeDeleted(int index) {
+        getDeletedNodes().add(index);
     }
 
     @Override
     public boolean isDeleted(int index) {
-        return false;
+        return getDeletedNodes().contains(index);
+    }
+
+    /**
+     * This methods creates a new in-memory graph without the specified deleted nodes.
+     */
+    void replacingDeleteTodo(int deleted) {
+        GraphStorage inMemGraph = new GraphStorage(new RAMDirectory()).createNew(nodeCount);
+
+        // see MMapGraph for a near duplicate         
+        int locs = this.getNodes();
+        int newNodeId = 0;
+        int[] old2NewMap = new int[locs];
+        for (int oldNodeId = 0; oldNodeId < locs; oldNodeId++) {
+            if (deletedNodes.contains(oldNodeId))
+                continue;
+
+            old2NewMap[oldNodeId] = newNodeId;
+            newNodeId++;
+        }
+
+        newNodeId = 0;
+        // create new graph with new mapped ids
+        for (int oldNodeId = 0; oldNodeId < locs; oldNodeId++) {
+            if (deletedNodes.contains(oldNodeId))
+                continue;
+            double lat = this.getLatitude(oldNodeId);
+            double lon = this.getLongitude(oldNodeId);
+            inMemGraph.setNode(newNodeId, lat, lon);
+            EdgeIterator iter = this.getEdges(oldNodeId);
+            while (iter.next()) {
+                if (deletedNodes.contains(iter.node()))
+                    continue;
+
+                // TODO duplicate edges will be created!
+                inMemGraph.internalEdgeAdd(newNodeId, old2NewMap[iter.node()], iter.distance(), iter.flags());
+            }
+            newNodeId++;
+        }
+        // keep in mind that this graph storage could be in-memory OR mmap
+        // TODO edges = inMemGraph.edges;
+        // inMemGraph.edges.copyTo(edges);
+        edgeCount = inMemGraph.edgeCount;
+        edgeEntrySize = inMemGraph.edgeEntrySize;
+
+        // TODO nodes = inMemGraph.nodes;
+        // inMemGraph.nodes.copyTo(nodes);
+        nodeCount = inMemGraph.nodeCount;
+        nodeEntrySize = inMemGraph.nodeEntrySize;
+        bounds = inMemGraph.bounds;
+        deletedNodes = null;
+    }
+
+    /**
+     * This methods moves the last nodes into the deleted nodes, which is much more memory friendly
+     * for only a few deletes but probably not for many deletes.
+     */
+    void inPlaceDelete(int deleted) {
+        // Alternative to this method: use smaller segments for nodes and not one big fat java array?
+        //
+        // Prepare edge-update of nodes which are connected to deleted nodes        
+        int toMoveNode = getNodes();
+        int itemsToMove = 0;
+        int maxMoves = Math.min(deleted, Math.max(0, toMoveNode - deleted));
+        int newIndices[] = new int[maxMoves];
+        int oldIndices[] = new int[maxMoves];
+
+        final TIntIntHashMap oldToNewIndexMap = new TIntIntHashMap(deleted, 1.5f, -1, -1);
+        MyBitSetImpl toUpdatedSet = new MyBitSetImpl(deleted * 3);
+        for (int delNode = deletedNodes.next(0); delNode >= 0; delNode = deletedNodes.next(delNode + 1)) {
+            EdgeIterator delEdgesIter = getEdges(delNode);
+            while (delEdgesIter.next()) {
+                int currNode = delEdgesIter.node();
+                if (deletedNodes.contains(currNode))
+                    continue;
+
+                toUpdatedSet.add(currNode);
+            }
+
+            toMoveNode--;
+            for (; toMoveNode >= 0; toMoveNode--) {
+                if (!deletedNodes.contains(toMoveNode))
+                    break;
+            }
+
+            if (toMoveNode < delNode)
+                break;
+
+            // create sorted old- to new-index map
+            newIndices[itemsToMove] = delNode;
+            oldIndices[itemsToMove] = toMoveNode;
+            oldToNewIndexMap.put(toMoveNode, delNode);
+            itemsToMove++;
+        }
+
+        // all deleted nodes could be connected to existing. remove the connections
+        for (int toUpdateNode = toUpdatedSet.next(0); toUpdateNode >= 0; toUpdateNode = toUpdatedSet.next(toUpdateNode + 1)) {
+            // remove all edges connected to the deleted nodes
+            EdgeIterable nodesConnectedToDelIter = (EdgeIterable) getEdges(toUpdateNode);
+            long prev = -1;
+            while (nodesConnectedToDelIter.next()) {
+                int nodeId = nodesConnectedToDelIter.node();
+                if (deletedNodes.contains(nodeId))
+                    internalEdgeRemove(nodesConnectedToDelIter.edgePointer(), prev, toUpdateNode);
+                else
+                    prev = nodesConnectedToDelIter.edgePointer();
+            }
+        }
+        toUpdatedSet.clear();
+
+        // marks connected nodes to rewrite the edges
+        for (int i = 0; i < itemsToMove; i++) {
+            int oldI = oldIndices[i];
+            EdgeIterator movedEdgeIter = getEdges(oldI);
+            while (movedEdgeIter.next()) {
+                if (deletedNodes.contains(movedEdgeIter.node()))
+                    throw new IllegalStateException("shouldn't happen the edge to the node " + movedEdgeIter.node() + " should be already deleted. " + oldI);
+
+                toUpdatedSet.add(movedEdgeIter.node());
+            }
+        }
+
+        // move nodes into deleted nodes
+        for (int i = 0; i < itemsToMove; i++) {
+            int oldI = oldIndices[i];
+            int newI = newIndices[i];
+            inPlaceDeleteNodeHook(oldI, newI);
+        }
+
+        // rewrite the edges of nodes connected to moved nodes
+        // go through all edges and pick the necessary ... <- this is easier to implement then
+        // a more efficient (?) breadth-first search
+
+        TIntHashSet hash = new TIntHashSet();
+        for (int edge = 1; edge < edgeCount + 1; edge++) {
+            long edgePointer = (long) edge * edgeEntrySize;
+            // nodeId could be wrong - see tests            
+            int nodeA = edges.getInt(edgePointer + I_NODEA);
+            int nodeB = edges.getInt(edgePointer + I_NODEB);
+            if (!toUpdatedSet.contains(nodeA) && !toUpdatedSet.contains(nodeB))
+                continue;
+
+            hash.add(nodeA);
+            hash.add(nodeB);
+            // now overwrite exiting edge with new node ids 
+            // also flags and links could have changed due to different node order
+            int updatedA = oldToNewIndexMap.get(nodeA);
+            if (updatedA < 0)
+                updatedA = nodeA;
+
+            int updatedB = oldToNewIndexMap.get(nodeB);
+            if (updatedB < 0)
+                updatedB = nodeB;
+
+            int linkA = edges.getInt(getLinkPosInEdgeArea(nodeA, nodeB, edgePointer));
+            int linkB = edges.getInt(getLinkPosInEdgeArea(nodeB, nodeA, edgePointer));
+            int flags = edges.getInt(edgePointer + I_FLAGS);
+            double distance = getDist(edgePointer);
+            writeEdge(edge, updatedA, updatedB, linkA, linkB, flags, distance);
+        }
+
+        nodeCount -= deleted;
+        deletedNodes = null;
+    }
+
+    protected void inPlaceDeleteNodeHook(long oldI, long newI) {
+        nodes.setInt(newI, nodes.getInt(oldI));
+        nodes.setInt(newI + I_LAT, nodes.getInt(oldI + I_LAT));
+        nodes.setInt(newI + I_LON, nodes.getInt(oldI + I_LON));
     }
 
     @Override
     public void optimize() {
+        int deleted = getDeletedNodes().getCardinality();
+        if (deleted == 0)
+            return;
+
+        inPlaceDelete(deleted);
+        // TODO replacingDelete(deleted);
     }
 
     @Override

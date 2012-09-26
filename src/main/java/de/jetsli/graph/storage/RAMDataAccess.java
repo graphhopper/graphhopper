@@ -45,12 +45,28 @@ public class RAMDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("RAMDataAccess id cannot be null");
     }
 
+    public RAMDataAccess setStore(boolean store) {
+        this.store = store;
+        return this;
+    }
+
+    @Override
+    public void copyTo(DataAccess da) {
+        if (da instanceof RAMDataAccess) {
+            RAMDataAccess rda = (RAMDataAccess) da;
+            rda.area = Arrays.copyOf(area, area.length);
+            rda.increaseFactor = increaseFactor;
+            // do leave id, store and close unchanged
+        } else
+            super.copyTo(da);
+    }
+
     @Override
     public void createNew(long bytes) {
         if (area != null)
             throw new IllegalThreadStateException("already created");
-        
-        int intSize = Math.max(10, (int) (bytes >> 2));        
+
+        int intSize = Math.max(10, (int) (bytes >> 2));
         area = new int[intSize];
     }
 

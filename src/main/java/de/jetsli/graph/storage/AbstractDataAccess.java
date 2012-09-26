@@ -62,4 +62,16 @@ public abstract class AbstractDataAccess implements DataAccess {
         }
         return bytes;
     }
+
+    @Override
+    public void copyTo(DataAccess da) {
+        for (int h = 0; h < header.length; h++) {
+            da.setHeader(h, getHeader(h));
+        }
+        da.ensureCapacity(capacity());
+        long max = capacity() / 4;
+        for (long l = 0; l < max; l++) {
+            da.setInt(l, getInt(l));
+        }
+    }
 }
