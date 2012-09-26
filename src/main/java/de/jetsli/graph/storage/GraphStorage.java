@@ -35,7 +35,10 @@ public class GraphStorage implements Graph, Storable {
 
     private static final int EMPTY_LINK = 0;
     private static final float INC_FACTOR = 1.5f;
-    private static final float INT_FACTOR = 1000000f;
+    // +- 180 and +-90 => let use use 400
+    private static final float INT_FACTOR = Integer.MAX_VALUE / 400f;
+    // distance of around +-1000 are ok
+    private static final float INT_DIST_FACTOR = 1000000f;
     private Directory dir;
     // edge memory layout: nodeA,nodeB,linkA,linkB,dist,flags
     private static final int I_NODEA = 0, I_NODEB = 1, I_LINKA = 2, I_LINKB = 3, I_FLAGS = 4, I_DIST = 5;
@@ -84,7 +87,6 @@ public class GraphStorage implements Graph, Storable {
         return intToDouble(nodes.getInt((long) index * nodeEntrySize + I_LON));
     }
 
-    // TODO really use the same factor for latitude and distance?
     private double intToDouble(int i) {
         return (double) i / INT_FACTOR;
     }
@@ -93,8 +95,12 @@ public class GraphStorage implements Graph, Storable {
         return (int) (f * INT_FACTOR);
     }
 
+    private int distToInt(double f) {
+        return (int) (f * INT_DIST_FACTOR);
+    }
+
     private double getDist(long pointer) {
-        return intToDouble(edges.getInt(pointer + I_DIST));
+        return (double) edges.getInt(pointer + I_DIST) / INT_DIST_FACTOR;
     }
 
     @Override
@@ -203,7 +209,7 @@ public class GraphStorage implements Graph, Storable {
         edges.setInt(edgePointer + I_LINKB, nextEdgeOther);
         edges.setInt(edgePointer + I_LINKB, nextEdgeOther);
         edges.setInt(edgePointer + I_FLAGS, flags);
-        edges.setInt(edgePointer + I_DIST, doubleToInt(dist));
+        edges.setInt(edgePointer + I_DIST, distToInt(dist));
     }
 
     protected long getLinkPosInEdgeArea(int nodeThis, int nodeOther, long edgePointer) {

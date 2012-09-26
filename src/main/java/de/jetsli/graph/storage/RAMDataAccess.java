@@ -34,7 +34,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     private boolean closed = false;
     private boolean store;
     private int segmentSizeIntsPower;
-    private int tmpHelper;
+    private int indexDivisor;
 
     public RAMDataAccess(String id) {
         this(id, false);
@@ -167,14 +167,14 @@ public class RAMDataAccess extends AbstractDataAccess {
     @Override
     public void setInt(long intIndex, int value) {
         int bufferIndex = (int) (intIndex >>> segmentSizeIntsPower);
-        int index = (int) (intIndex & tmpHelper);
+        int index = (int) (intIndex & indexDivisor);
         segments[bufferIndex][(int) index] = value;
     }
 
     @Override
     public int getInt(long intIndex) {
         int bufferIndex = (int) (intIndex >>> segmentSizeIntsPower);
-        int index = (int) (intIndex & tmpHelper);
+        int index = (int) (intIndex & indexDivisor);
         return segments[bufferIndex][(int) index];
     }
 
@@ -204,7 +204,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     public DataAccess setSegmentSize(int bytes) {
         super.setSegmentSize(bytes);
         segmentSizeIntsPower = (int) (Math.log(segmentSize / 4) / Math.log(2));
-        tmpHelper = segmentSize / 4 - 1;
+        indexDivisor = segmentSize / 4 - 1;
         return this;
     }
 }
