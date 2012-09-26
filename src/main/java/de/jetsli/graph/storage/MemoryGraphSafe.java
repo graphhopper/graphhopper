@@ -477,8 +477,6 @@ public class MemoryGraphSafe implements Graph {
     }
 
     private MyBitSet getDeletedNodes() {
-        if (deletedNodes == null)
-            deletedNodes = new MyOpenBitSet(size);
         return deletedNodes;
     }
 
@@ -626,7 +624,7 @@ public class MemoryGraphSafe implements Graph {
         }
 
         size -= deleted;
-        deletedNodes = null;
+        deletedNodes = new MyOpenBitSet(size);
     }
 
     // Hint: edges with both directions will be returned only once!
@@ -713,7 +711,7 @@ public class MemoryGraphSafe implements Graph {
         }
 
         size = inMemGraph.size;
-        deletedNodes = null;
+        deletedNodes = new MyOpenBitSet(size);
     }
 
     public boolean save() {
@@ -769,7 +767,9 @@ public class MemoryGraphSafe implements Graph {
             for (int i = 0; i <= edgeCurrentSegment; i++) {
                 edgesSegments[i] = Helper.readInts(storageLocation + "/edges" + i);
             }
-            deletedNodes = new MyOpenBitSet(lats.length);
+            if (size != lats.length)
+                throw new IllegalStateException("incompatible size and latitude array length");
+            deletedNodes = new MyOpenBitSet(size);
             return true;
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't load data from disc. location=" + storageLocation, ex);

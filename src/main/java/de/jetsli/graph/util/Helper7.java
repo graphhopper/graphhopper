@@ -15,25 +15,58 @@
  */
 package de.jetsli.graph.util;
 
-import java.nio.MappedByteBuffer;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 /**
- * Put the usage of proprietary "sun" classes and after jdk6 classes into this class.
- * To use Helper class under Android as well.
+ * Put the usage of proprietary "sun" classes and after jdk6 classes into this class. To use Helper
+ * class under Android as well.
  *
  * @author Peter Karich
  */
 public class Helper7 {
 
-    public static void cleanMappedByteBuffer(MappedByteBuffer mapping) {
-        if (mapping == null)
-            return;
+    /**
+     * <code>true</code>, if this platform supports unmapping mmapped files.
+     */
+    public static final boolean UNMAP_SUPPORTED;
 
-        sun.misc.Cleaner cleaner = ((sun.nio.ch.DirectBuffer) mapping).cleaner();
-        if (cleaner != null)
-            cleaner.clean();
+    static {
+        boolean v;
+        try {
+            Class.forName("sun.misc.Cleaner");
+            Class.forName("java.nio.DirectByteBuffer")
+                    .getMethod("cleaner");
+            v = true;
+        } catch (Exception e) {
+            v = false;
+        }
+        UNMAP_SUPPORTED = v;
+    }
+
+    public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
+        try {
+            AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
+                @Override public Object run() throws Exception {
+                    final Method getCleanerMethod = buffer.getClass().getMethod("cleaner");
+                    getCleanerMethod.setAccessible(true);
+                    final Object cleaner = getCleanerMethod.invoke(buffer);
+                    if (cleaner != null)
+                        cleaner.getClass().getMethod("clean").invoke(cleaner);
+                    return null;
+                }
+            });
+        } catch (PrivilegedActionException e) {
+            final RuntimeException ioe = new RuntimeException("unable to unmap the mapped buffer");
+            ioe.initCause(e.getCause());
+            throw ioe;
+        }
     }
 
     public static String getBeanMemInfo() {
@@ -44,7 +77,7 @@ public class Helper7 {
         return "free:" + freeMemory / Helper.MB + ", available:" + availableMemory / Helper.MB
                 + ", rfree:" + Runtime.getRuntime().freeMemory() / Helper.MB;
     }
-    
+
     public static void close(XMLStreamReader r) {
         try {
             if (r != null)

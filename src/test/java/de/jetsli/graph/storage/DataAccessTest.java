@@ -63,7 +63,7 @@ public abstract class DataAccessTest {
         assertEquals(Integer.MAX_VALUE / 3, da.getInt(10));
         da.close();
 
-        // cannot load data twice
+        // cannot load data if already closed
         assertFalse(da.loadExisting());
 
         da = createDataAccess(location);
@@ -111,20 +111,20 @@ public abstract class DataAccessTest {
     @Test
     public void testEnsureCapacity() {
         DataAccess da = createDataAccess(location);
-        da.createNew(20 * 4);
-        da.setInt(19, 200);
+        da.createNew(128);
+        da.setInt(31, 200);
         try {
             // this should fail with an index out of bounds exception
-            da.setInt(20, 220);
+            da.setInt(32, 220);
             assertFalse(true);
         } catch (Exception ex) {
         }
-        assertEquals(200, da.getInt(19));
-        da.ensureCapacity(25 * 5);
-        assertEquals(200, da.getInt(19));
-        // now it shouldn't fail
-        da.setInt(20, 220);
-        assertEquals(220, da.getInt(20));
+        assertEquals(200, da.getInt(31));
+        da.ensureCapacity(2 * 128);
+        assertEquals(200, da.getInt(31));
+        // now it shouldn't fail now
+        da.setInt(32, 220);
+        assertEquals(220, da.getInt(32));
 
         // ensure some bigger area
         da = createDataAccess(location);
@@ -153,5 +153,25 @@ public abstract class DataAccessTest {
         da.flush();
         // make sure they are independent!
         assertEquals(1, da.getInt(1));
+    }
+
+    @Test
+    public void testSegments() {
+        DataAccess da = createDataAccess(location);
+        da.setSegmentSize(128);
+        da.createNew(10);
+        assertEquals(1, da.getSegments());
+        da.ensureCapacity(500);
+        int olds = da.getSegments();
+        assertTrue(olds > 3);
+
+        da.setInt(400 / 4, 321);
+        da.flush();
+        da.close();
+
+        da = createDataAccess(location);
+        assertTrue(da.loadExisting());
+        assertEquals(olds, da.getSegments());
+        assertEquals(321, da.getInt(400 / 4));
     }
 }

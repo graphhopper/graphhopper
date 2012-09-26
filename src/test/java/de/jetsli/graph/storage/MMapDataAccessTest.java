@@ -18,15 +18,14 @@ package de.jetsli.graph.storage;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-/**
- *
+/** 
  * @author Peter Karich
  */
 public class MMapDataAccessTest extends DataAccessTest {
 
     @Override
     public DataAccess createDataAccess(String location) {
-        return new MMapDataAccess(location);
+        return new MMapDataAccess(location).setSegmentSize(128);
     }
     
     @Test

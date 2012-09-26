@@ -23,6 +23,6 @@ public class RAMDataAccessTest extends DataAccessTest {
 
     @Override
     public DataAccess createDataAccess(String location) {
-        return new RAMDataAccess(location, true);
+        return new RAMDataAccess(location, true).setSegmentSize(128);
     }    
 }

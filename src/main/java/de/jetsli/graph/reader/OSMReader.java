@@ -118,7 +118,7 @@ public class OSMReader {
     public OSMReader(Storage storage, int size) {
         this.storage = storage;
         expectedLocs = size;
-        logger.info("using " + storage.getClass().getSimpleName());
+        logger.info("using " + storage.toString());
     }
 
     public boolean loadExisting() {

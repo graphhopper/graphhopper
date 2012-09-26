@@ -15,9 +15,6 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.Helper;
-import java.io.File;
-
 /**
  * @author Peter Karich, info@jetsli.de
  */
@@ -48,8 +45,13 @@ public class GraphStorageWrapper extends DefaultStorage {
     }
 
     @Override
-    public void flush() {        
+    public void flush() {
         tmp.flush();
         super.flush();
+    }
+
+    @Override
+    public String toString() {
+        return "GraphStorage|" + tmp.getDirectory().getClass().getSimpleName();
     }
 }

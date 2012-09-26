@@ -58,6 +58,10 @@ public class GraphStorage implements Graph, Storable {
         this.bounds = BBox.INVERSE.clone();
     }
 
+    public Directory getDirectory() {
+        return dir;
+    }
+
     public GraphStorage createNew(int nodeCount) {
         dir.clear();
         nodes.createNew((long) nodeCount * 4 * nodeEntrySize);
@@ -79,7 +83,7 @@ public class GraphStorage implements Graph, Storable {
     public double getLongitude(int index) {
         return intToDouble(nodes.getInt((long) index * nodeEntrySize + I_LON));
     }
-    
+
     // TODO really use the same factor for latitude and distance?
     private double intToDouble(int i) {
         return (double) i / INT_FACTOR;
@@ -405,7 +409,7 @@ public class GraphStorage implements Graph, Storable {
 
     private MyBitSet getDeletedNodes() {
         if (deletedNodes == null)
-            deletedNodes = new MyOpenBitSet(nodeCount);
+            deletedNodes = new MyOpenBitSet((int) (nodes.capacity() / 4));
         return deletedNodes;
     }
 

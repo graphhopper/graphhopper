@@ -143,4 +143,9 @@ public class DefaultStorage implements Storage {
     public boolean hasHighways(int osmId) {
         return osmIdToIndexMap.get(osmId) == FILLED;
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

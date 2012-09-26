@@ -17,16 +17,17 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.NotThreadSafe;
+import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * This is a data structure which uses off-heap memory and the OS to flush(), which is always
- * amazingly fast.
- *
- * TODO make it possible to store more than 2^32 bytes
+ * This is a data structure which uses the operating system to synchronize between disc and memory.
  *
  * @author Peter Karich
  */
@@ -35,11 +36,10 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     private String location;
     private RandomAccessFile raFile;
-    private MappedByteBuffer bBuffer;
+    private List<ByteBuffer> segments = new ArrayList<ByteBuffer>();
     private ByteOrder order;
     private float increaseFactor = 1.5f;
     private transient boolean closed = false;
-    private static byte[] EMPTY = new byte[1024];
 
     public MMapDataAccess(String location) {
         this.location = location;
@@ -53,7 +53,7 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void createNew(long bytes) {
-        if (bBuffer != null)
+        if (!segments.isEmpty())
             throw new IllegalThreadStateException("already created");
         bytes = Math.max(10 * 4, bytes);
         ensureCapacity(bytes);
@@ -80,40 +80,56 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void ensureCapacity(long bytes) {
-        if (!mapIt(HEADER_SPACE, bytes, true))
+        if (!mapIt(HEADER_OFFSET, bytes, true))
             throw new IllegalStateException("problem while file mapping " + location);
     }
 
-    protected boolean mapIt(long start, long bytes, boolean clearNew) {
+    protected boolean mapIt(long offset, long byteCount, boolean clearNew) {
         try {
-            int oldCap = 0;
-            if (bBuffer != null) {
-                oldCap = bBuffer.capacity();
-                if (bytes <= oldCap)
-                    return true;
+            if (byteCount <= capacity())
+                return true;
 
-                bytes = (long) (increaseFactor * bytes);
-                raFile.setLength(bytes + start);
-            }
-            bBuffer = raFile.getChannel().map(FileChannel.MapMode.READ_WRITE, start, bytes);
-            if (order != null)
-                bBuffer.order(order);
+            raFile.setLength(offset + byteCount);
+            if (!segments.isEmpty())
+                byteCount = (long) (increaseFactor * byteCount);
 
-            if (clearNew) {
-                bBuffer.position(oldCap);
-                bytes -= oldCap;
-                int count = (int) (bytes / EMPTY.length);
-                for (int i = 0; i < count; i++) {
-                    bBuffer.put(EMPTY);
-                }
-                int len = (int) (bytes % EMPTY.length);
-                if (len > 0)
-                    bBuffer.put(EMPTY, 0, len);
+            // can we really assume that this process sees its own changes immediately?
+            // if not we need to expand instead of re-initialize
+            segments.clear();
+            int buffersToMap = (int) (byteCount / segmentSize) + 1;
+            int bufferStart = 0;
+            for (int i = 0; i < buffersToMap; i++) {
+                int bufSize = (int) ((byteCount > (bufferStart + segmentSize))
+                        ? segmentSize
+                        : (byteCount - bufferStart));
+                segments.add(newByteBuffer(offset + bufferStart, bufSize, false));
+                bufferStart += bufSize;
             }
             return true;
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    private ByteBuffer newByteBuffer(long offset, long byteCount, boolean clearNew)
+            throws IOException {
+        ByteBuffer buf = raFile.getChannel().map(FileChannel.MapMode.READ_WRITE, offset, byteCount);
+        if (order != null)
+            buf.order(order);
+
+        // TODO
+        if (clearNew) {
+//            buf.position(oldCap);
+//            byteCount -= oldCap;
+            int count = (int) (byteCount / EMPTY.length);
+            for (int i = 0; i < count; i++) {
+                buf.put(EMPTY);
+            }
+            int len = (int) (byteCount % EMPTY.length);
+            if (len > 0)
+                buf.put(EMPTY, 0, len);
+        }
+        return buf;
     }
 
     @Override
@@ -125,7 +141,7 @@ public class MMapDataAccess extends AbstractDataAccess {
             if (!raFile.readUTF().equals(DATAACESS_MARKER))
                 return false;
             long bytes = readHeader(raFile);
-            if (mapIt(HEADER_SPACE, bytes, false))
+            if (mapIt(HEADER_OFFSET, bytes - HEADER_OFFSET, false))
                 return true;
         } catch (Exception ex) {
             // ex.printStackTrace();
@@ -136,8 +152,15 @@ public class MMapDataAccess extends AbstractDataAccess {
     @Override
     public void flush() {
         try {
-            bBuffer.force();
-            writeHeader(raFile, raFile.length());
+            if (closed)
+                throw new IllegalStateException("already closed");
+
+            if (!segments.isEmpty() && segments.get(0) instanceof MappedByteBuffer) {
+                for (ByteBuffer bb : segments) {
+                    ((MappedByteBuffer) bb).force();
+                }
+            }
+            writeHeader(raFile, raFile.length(), segmentSize);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -145,12 +168,18 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void setInt(long intIndex, int value) {
-        bBuffer.putInt((int) intIndex * 4, value);
+        intIndex *= 4;
+        int bufferIndex = (int) (intIndex / segmentSize);
+        int index = (int) (intIndex % segmentSize);
+        segments.get(bufferIndex).putInt(index, value);
     }
 
     @Override
     public int getInt(long intIndex) {
-        return bBuffer.getInt((int) intIndex * 4);
+        intIndex *= 4;
+        int bufferIndex = (int) (intIndex / segmentSize);
+        int index = (int) (intIndex % segmentSize);
+        return segments.get(bufferIndex).getInt(index);
     }
 
     @Override
@@ -162,11 +191,20 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public long capacity() {
-        return bBuffer.capacity();
+        long cap = 0;
+        for (ByteBuffer bb : segments) {
+            cap += bb.capacity();
+        }
+        return cap;
     }
 
     @Override
     public String toString() {
         return location;
+    }
+
+    @Override
+    public int getSegments() {
+        return segments.size();
     }
 }

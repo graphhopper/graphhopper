@@ -88,8 +88,8 @@ public class RoutingAlgorithmIntegrationTests {
                     new AStar(g),
                     new DijkstraBidirectionRef(g),
                     new DijkstraBidirection(g),
-                    new DijkstraSimple(g),
-                    createPrioAlgo(g)
+                    new DijkstraSimple(g)
+//                TODO , createPrioAlgo(g)
                 };
     }
 
