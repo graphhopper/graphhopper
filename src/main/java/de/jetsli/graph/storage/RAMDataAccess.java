@@ -49,7 +49,8 @@ public class RAMDataAccess extends AbstractDataAccess {
     public void createNew(long bytes) {
         if (area != null)
             throw new IllegalThreadStateException("already created");
-        int intSize = (int) (bytes >> 2);
+        
+        int intSize = Math.max(10, (int) (bytes >> 2));        
         area = new int[intSize];
     }
 

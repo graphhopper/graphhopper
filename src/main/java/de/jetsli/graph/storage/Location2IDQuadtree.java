@@ -79,7 +79,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
             if (checksum != g.getNodes())
                 throw new IllegalStateException("index was created from a different graph with "
                         + checksum + ". Current nodes:" + g.getNodes());
-            size = index.capacity() / 4;
+            size = (int) (index.capacity() / 4);
             initAlgo(bits);
             return true;
         }

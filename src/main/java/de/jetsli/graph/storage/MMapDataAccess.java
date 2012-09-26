@@ -55,6 +55,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     public void createNew(long bytes) {
         if (bBuffer != null)
             throw new IllegalThreadStateException("already created");
+        bytes = Math.max(10 * 4, bytes);
         ensureCapacity(bytes);
     }
 
@@ -140,6 +141,7 @@ public class MMapDataAccess extends AbstractDataAccess {
         return bBuffer.getInt((int) intIndex * 4);
     }
 
+    @Override
     public void close() {
         super.close();
         Helper.close(raFile);
@@ -147,7 +149,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public int capacity() {
+    public long capacity() {
         return bBuffer.capacity();
     }
 

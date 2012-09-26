@@ -71,7 +71,12 @@ fi
 if [ ! -f "$JAR" ]; then
   echo "## now building graphhopper jar: $JAR"
   #mvn clean
-  mvn -DskipTests=true assembly:assembly > /dev/null
+  mvn -DskipTests=true install assembly:single > /dev/null
+  returncode=$?
+  if [[ $returncode != 0 ]] ; then
+      echo "## compilation failed"
+      exit $returncode
+  fi      
 else
   echo "## existing jar found $JAR"
 fi

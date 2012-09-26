@@ -30,7 +30,7 @@ public abstract class AbstractDataAccess implements DataAccess {
 
     @Override
     public void close() {
-        flush();
+        // do not call flush() on close - let others decide
     }
 
     @Override

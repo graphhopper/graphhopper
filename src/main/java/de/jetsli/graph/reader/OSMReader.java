@@ -146,7 +146,7 @@ public class OSMReader {
 
         preprocessAcceptHighwaysOnly(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
-        cleanUp();
+        // cleanUp();
         flush();
     }
 

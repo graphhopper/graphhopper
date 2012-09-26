@@ -81,7 +81,7 @@ public class ListOfArraysTest {
             list.add(i);
         }
         la.set(0, list);
-        int oldCap = la.capacity();
+        long oldCap = la.capacity();
         la.setSameReference(1, 0);
         assertEquals(oldCap, la.capacity());
 

@@ -32,7 +32,6 @@ public class GraphStorage implements Graph, Storable {
     private static final float INC_FACTOR = 1.5f;
     private static final float INT_FACTOR = 1000000f;
     private Directory dir;
-    // TODO make the necessary variables persistent
     // nodeA,nodeB,linkA,linkB,dist,flags,(shortcutnode)
     private static final int I_NODEA = 0, I_NODEB = 1, I_LINKA = 2, I_LINKB = 3, I_FLAGS = 4, I_DIST = 5;
     private int edgeEntrySize = 6;
@@ -47,9 +46,7 @@ public class GraphStorage implements Graph, Storable {
 
     // TODO
     // clone => how to create new Graph? => new Directory!
-    // in place delete ? 
-    // optimize
-    // flush/close
+    // in place delete    
     public GraphStorage(Directory dir) {
         this.dir = dir;
         edges = dir.createDataAccess("edges");
@@ -57,20 +54,9 @@ public class GraphStorage implements Graph, Storable {
         this.bounds = BBox.INVERSE.clone();
     }
 
-    @Override
-    public boolean loadExisting() {
-        if (edges.loadExisting()) {
-            if (!nodes.loadExisting())
-                throw new IllegalStateException("corrupt file?");
-
-            return true;
-        }
-        return false;
-    }
-
     public GraphStorage createNew(int nodeCount) {
-        nodes.createNew((long) nodeCount * 4 * nodeCount);
-        edges.createNew((long) nodeCount * 4 * 2 * edgeCount);
+        nodes.createNew((long) nodeCount * 4 * nodeEntrySize);
+        edges.createNew((long) nodeCount * 4 * 2 * edgeEntrySize);
         return this;
     }
 
@@ -355,12 +341,13 @@ public class GraphStorage implements Graph, Storable {
     @Override
     public Graph clone() {
         // TODO hhmmh how can we create the graph in a different location if on-disc?
+        // dir.createSubdirectory ?
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public Graph clone(Directory dir) {
+    public Graph copy(Directory dir) {
         if (this.dir == dir)
-            throw new IllegalStateException("cannot create graph into the same directory!");
+            throw new IllegalStateException("cannot copy graph into the same directory!");
 
         GraphStorage clonedG = new GraphStorage(dir);
         // TODO GraphUtility.copy(this, clonedG);
@@ -368,31 +355,62 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public void markNodeDeleted(int index) {
-        // nodes.setInt(index, index);
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void markNodeDeleted(int index) {        
     }
 
     @Override
     public boolean isDeleted(int index) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return false;
     }
 
     @Override
     public void optimize() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean loadExisting() {
+        if (edges.loadExisting()) {
+            if (!nodes.loadExisting())
+                throw new IllegalStateException("corrupt file?");
+
+            // edges
+            edgeEntrySize = edges.getHeader(0);
+            edgeCount = edges.getHeader(1);
+
+            // nodes
+            nodeEntrySize = nodes.getHeader(0);
+            nodeCount = nodes.getHeader(1);
+            bounds.minLon = intToDouble(nodes.getHeader(2));
+            bounds.maxLon = intToDouble(nodes.getHeader(3));
+            bounds.minLat = intToDouble(nodes.getHeader(4));
+            bounds.maxLat = intToDouble(nodes.getHeader(5));
+            return true;
+        }
+        return false;
     }
 
     @Override
     public void flush() {
         optimize();
 
-        // TODO save
+        // edges
+        edges.setHeader(0, edgeEntrySize);
+        edges.setHeader(1, edgeCount);
+
+        // nodes
+        nodes.setHeader(0, nodeEntrySize);
+        nodes.setHeader(1, nodeCount);
+        nodes.setHeader(2, doubleToInt(bounds.minLon));
+        nodes.setHeader(3, doubleToInt(bounds.maxLon));
+        nodes.setHeader(4, doubleToInt(bounds.minLat));
+        nodes.setHeader(5, doubleToInt(bounds.maxLat));
+        edges.flush();
+        nodes.flush();
     }
 
     @Override
     public void close() {
-        // TODO flush is called under the hood :/
+        flush();
         edges.close();
         nodes.close();
     }

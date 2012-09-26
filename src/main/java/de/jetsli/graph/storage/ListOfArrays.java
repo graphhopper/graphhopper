@@ -91,7 +91,7 @@ public class ListOfArrays {
         };
     }
 
-    public int capacity() {
+    public long capacity() {
         return refs.capacity() + entries.capacity();
     }
 
