@@ -20,6 +20,7 @@ if [ "x$FILE" = "x" ]; then
  FILE=unterfranken.osm
 fi
 
+# file without extension if any
 NAME="${FILE%.*}"
 OSM=$NAME.osm
 
@@ -33,12 +34,16 @@ DEBUG=false
 GRAPH=$NAME-gh
 JAR=target/graphhopper-1.0-SNAPSHOT-jar-with-dependencies.jar
 
-if [ "$FILE" = "unterfranken" ]; then
+# file without path
+TMP=$(basename "$FILE")
+TMP="${TMP%.*}"
+echo $TMP - $FILE - $NAME
+if [ "$TMP" = "unterfranken" ]; then
  LINK="http://download.geofabrik.de/osm/europe/germany/bayern/unterfranken.osm.bz2"
  JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx300m -Xms300m"
  JAVA_OPTS=$JAVA_OPTS_IMPORT
  SIZE=5000000
-elif [ "$FILE" = "germany" ]; then
+elif [ "$TMP" = "germany" ]; then
  LINK=http://download.geofabrik.de/osm/europe/germany.osm.bz2
 
  # For import we need a lot more memory. For the mmap storage you need to lower this in order to use off-heap memory.
