@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich info@jetsli.de
+ *  Copyright 2012 Peter Karich 
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import de.jetsli.graph.util.EdgeSkipIterator;
 /**
  * Extended graph interface which supports storing and retrieving priorities per node.
  *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich, 
  */
 public interface PriorityGraph extends Graph {
 

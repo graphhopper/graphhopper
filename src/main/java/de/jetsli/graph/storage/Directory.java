@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich info@jetsli.de
+ *  Copyright 2012 Peter Karich 
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ package de.jetsli.graph.storage;
 public interface Directory {
 
     String getLocation();
-    
+
     DataAccess createDataAccess(String name);
-    
+
     void clear();
 }

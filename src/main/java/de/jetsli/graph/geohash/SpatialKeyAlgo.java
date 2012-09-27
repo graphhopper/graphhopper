@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich info@jetsli.de
+ *  Copyright 2012 Peter Karich 
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ import de.jetsli.graph.util.CoordTrig;
  * But when stored e.g. as int one would need to (left) shift several times if precision is only
  * 3bits.
  *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich, 
  */
 // A 2 bit precision spatial key could look like
 // 

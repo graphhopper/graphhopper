@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich info@jetsli.de
+ *  Copyright 2012 Peter Karich 
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import de.jetsli.graph.util.shapes.BBox;
 
 /**
  *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich, 
  */
 public class MMapGraphTest extends AbstractGraphTester {
 

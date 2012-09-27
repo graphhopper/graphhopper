@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich info@jetsli.de
+ *  Copyright 2012 Peter Karich 
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 /**
  * See run-ui.sh
  *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich, 
  */
 public class OSMReader {
 

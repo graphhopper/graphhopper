@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich info@jetsli.de
+ *  Copyright 2012 Peter Karich 
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
  *
  * 5. read thread safety
  *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich, 
  */
 @NotThreadSafe
 public class MMapGraph implements Graph {

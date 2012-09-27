@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich info@jetsli.de
+ *  Copyright 2012 Peter Karich 
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package de.jetsli.graph.util;
 /**
  * Single precision coordinates without an associated value. To add one - subclass.
  *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich, 
  */
 public class CoordFloat<T> {
 

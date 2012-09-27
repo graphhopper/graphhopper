@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich info@jetsli.de
+ *  Copyright 2012 Peter Karich 
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import static java.lang.Math.*;
 /**
  * Calculates the approximative distance of two points on earth.
  *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich, 
  */
 public class ApproxCalcDistance extends CalcDistance {
 

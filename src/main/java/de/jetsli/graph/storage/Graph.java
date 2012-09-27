@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich info@jetsli.de
+ *  Copyright 2012 Peter Karich 
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import de.jetsli.graph.util.shapes.BBox;
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
  * ids. Querying via lat,lon can be done via with a Location2IDIndex implementation
  *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich, 
  */
 public interface Graph {
 

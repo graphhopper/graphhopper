@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich info@jetsli.de
+ *  Copyright 2012 Peter Karich 
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import java.util.PriorityQueue;
  * only find one shortest path and not all, but it it more memory efficient (ie. the
  * shortest-path-trees do not overlap here)
  *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich, 
  */
 public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
 

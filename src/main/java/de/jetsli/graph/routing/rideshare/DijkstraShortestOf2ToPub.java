@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich info@jetsli.de
+ *  Copyright 2012 Peter Karich 
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.util.PriorityQueue;
  * back to his own destination P2 and comparing this with the detour of taking the passenger
  * directly to his destination (and then going back to P2).
  *
- * @author Peter Karich, info@jetsli.de
+ * @author Peter Karich, 
  */
 public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
 

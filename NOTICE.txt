@@ -1,0 +1,8 @@
+GraphHopper licensed under the Apache license, Version 2.0
+
+Copyright 2012 Peter Karich
+
+This product includes the following software
+ * slf4j.org - SLF4J distributed under the MIT license. 
+ * trove.starlight-systems.com - GNU Trove library distributed under the
+   LGPL license
