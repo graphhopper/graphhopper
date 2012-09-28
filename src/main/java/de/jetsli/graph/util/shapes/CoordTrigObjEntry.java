@@ -13,36 +13,33 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.util;
+package de.jetsli.graph.util.shapes;
 
 /**
- * Double precision coordinates without an associated value. To add one - subclass.
  *
  * @author Peter Karich, 
  */
-public class CoordTrig<T> {
+public class CoordTrigObjEntry<T> extends CoordTrig<T> {
 
-    public double lat;
-    public double lon;
+    private T v;
 
-    public CoordTrig() {
+    public CoordTrigObjEntry() {
     }
 
-    public CoordTrig(double lat, double lon) {
-        this.lat = lat;
-        this.lon = lon;
+    public CoordTrigObjEntry(T o, double lat, double lon) {
+        super(lat, lon);
+        this.v = o;
     }
 
-    public void setValue(T t) {
-        throw new UnsupportedOperationException("Use CoordTrigObjEntry for value access");
+    @Override public void setValue(T t) {
+        v = t;
     }
 
-    public T getValue() {
-        throw new UnsupportedOperationException("Use CoordTrigObjEntry for value access");
+    @Override public T getValue() {
+        return v;
     }
 
-    @Override
-    public String toString() {
-        return lat + "," + lon;
+    @Override public String toString() {
+        return super.toString() + " value:" + v;
     }
 }

@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.geohash;
 
-import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.shapes.CoordTrig;
 
 /**
  * This class maps lat,lon in an array fashion unlike SpatialKeyAlgo.

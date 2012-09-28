@@ -18,9 +18,11 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.routing.util.AcceptStreet;
 import de.jetsli.graph.routing.util.PrepareRoutingSubnetworks;
 import de.jetsli.graph.routing.util.RoutingAlgorithmIntegrationTests;
+import de.jetsli.graph.storage.Directory;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.storage.GraphStorage;
 import de.jetsli.graph.storage.GraphStorageWrapper;
+import de.jetsli.graph.storage.MMapDirectory;
+import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.*;
 import gnu.trove.list.array.TIntArrayList;
@@ -39,13 +41,13 @@ import org.slf4j.LoggerFactory;
 /**
  * See run-ui.sh
  *
- * @author Peter Karich, 
+ * @author Peter Karich,
  */
 public class OSMReader {
 
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
-        GraphStorage g = (GraphStorage) osm2Graph(args);
+        Graph g = osm2Graph(args);
         RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(g);
         if (args.getBool("test", false)) {
             tests.start();
@@ -81,10 +83,17 @@ public class OSMReader {
 
         int size = (int) args.getLong("size", 5 * 1000 * 1000);
         Storage storage;
-        if ("mmap".equalsIgnoreCase(args.get("dataaccess", "inmemory")))
-            storage = new GraphStorageWrapper(storageFolder, size, true);
-        else
-            storage = new GraphStorageWrapper(storageFolder, size, false);
+        String dataAccess = args.get("dataaccess", "inmemory");
+        Directory dir;
+        if ("mmap".equalsIgnoreCase(dataAccess)) {
+            dir = new MMapDirectory(storageFolder);
+        } else {
+            if ("inmemory+save".equalsIgnoreCase(dataAccess))
+                dir = new RAMDirectory(storageFolder, true);
+            else
+                dir = new RAMDirectory(storageFolder, false);
+        }
+        storage = new GraphStorageWrapper(dir, size);
         return osm2Graph(new OSMReader(storage, size), args);
     }
 
@@ -113,7 +122,7 @@ public class OSMReader {
     }
 
     public OSMReader(String storageLocation, int size) {
-        this(new GraphStorageWrapper(storageLocation, size, false), size);
+        this(new GraphStorageWrapper(new RAMDirectory(storageLocation, true), size), size);
     }
 
     public OSMReader(Storage storage, int size) {

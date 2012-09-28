@@ -124,16 +124,12 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
                 finish++;
         }
 
-        return getShortest();
+        return shortest.extract();
     }
     
     public void initPath() {
         shortest = new PathBidir(graph, wrapperFrom, wrapperTo, weightCalc);
         shortest.weight = Double.MAX_VALUE;
-    }
-
-    public Path getShortest() {
-        return shortest.extract();
     }
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf

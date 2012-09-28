@@ -18,7 +18,7 @@ package de.jetsli.graph.geohash;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.trees.QuadTreeTester;
 import de.jetsli.graph.util.BitUtil;
-import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.shapes.CoordTrig;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;

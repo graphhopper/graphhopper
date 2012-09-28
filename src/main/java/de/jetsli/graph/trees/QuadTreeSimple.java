@@ -15,6 +15,8 @@
  */
 package de.jetsli.graph.trees;
 
+import de.jetsli.graph.util.shapes.CoordTrig;
+import de.jetsli.graph.util.shapes.CoordTrigObjEntry;
 import de.jetsli.graph.util.shapes.BBox;
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
 import de.jetsli.graph.util.DistanceCalc;

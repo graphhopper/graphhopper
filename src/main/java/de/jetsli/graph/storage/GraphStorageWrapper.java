@@ -16,21 +16,14 @@
 package de.jetsli.graph.storage;
 
 /**
- * @author Peter Karich, 
+ * @author Peter Karich,
  */
 public class GraphStorageWrapper extends DefaultStorage {
 
-    private final String folder;
     private GraphStorage tmp;
 
-    public GraphStorageWrapper(String file, int expectedNodes, boolean mmap) {
+    public GraphStorageWrapper(Directory dir, int expectedNodes) {
         super(expectedNodes);
-        this.folder = file;
-        Directory dir;
-        if (mmap)
-            dir = new MMapDirectory(folder);
-        else
-            dir = new RAMDirectory(folder, true);        
         g = tmp = new GraphStorage(dir);
     }
 

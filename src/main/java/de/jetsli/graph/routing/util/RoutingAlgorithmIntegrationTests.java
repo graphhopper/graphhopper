@@ -16,6 +16,7 @@
 package de.jetsli.graph.routing.util;
 
 import de.jetsli.graph.routing.AStar;
+import de.jetsli.graph.routing.AStarBidirection;
 import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.DijkstraBidirectionRef;
 import de.jetsli.graph.routing.DijkstraSimple;
@@ -23,6 +24,7 @@ import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.PathBidirRef;
 import de.jetsli.graph.routing.PathPrio;
 import de.jetsli.graph.routing.RoutingAlgorithm;
+import de.jetsli.graph.storage.Directory;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.GraphStorage;
 import de.jetsli.graph.storage.Location2IDIndex;
@@ -46,9 +48,11 @@ public class RoutingAlgorithmIntegrationTests {
         this.unterfrankenGraph = graph;
         StopWatch sw = new StopWatch().start();
         Location2IDQuadtree index;
-        if (graph instanceof GraphStorage)
-            index = new Location2IDQuadtree(unterfrankenGraph, ((GraphStorage) graph).getDirectory());
-        else
+        if (graph instanceof GraphStorage) {
+            Directory dir = ((GraphStorage) graph).getDirectory();
+            index = new Location2IDQuadtree(unterfrankenGraph, dir);
+            // logger.info("dir: " + dir.getLocation());
+        } else
             index = new Location2IDQuadtree(unterfrankenGraph, new RAMDirectory("loc2idIndex", false));
 //      Location2IDPreciseIndex index = new Location2IDPreciseIndex(unterfrankenGraph, dir);
         if (!index.loadExisting()) {
@@ -65,12 +69,12 @@ public class RoutingAlgorithmIntegrationTests {
         for (RoutingAlgorithm algo : algos) {
             int failed = testCollector.list.size();
             testCollector.assertDistance(algo, idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 0.5613, 20);
-            testCollector.assertDistance(algo, idx.findID(49.4000, 9.9690), idx.findID(50.2920, 10.4650), 113.7413, 1802);
-            testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 132.0551, 2138);
-            testCollector.assertDistance(algo, idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 95.7919, 1343);
-            testCollector.assertDistance(algo, idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 72.9986, 1229);
-            testCollector.assertDistance(algo, idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77.6807, 1217);
-            testCollector.assertDistance(algo, idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125.4616, 2135);
+            testCollector.assertDistance(algo, idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107.4917, 1673);
+            testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 132.1662, 2138);
+            testCollector.assertDistance(algo, idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 93.5559, 1278);
+            testCollector.assertDistance(algo, idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73.05989, 1229);
+            testCollector.assertDistance(algo, idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77.73985, 1217);
+            testCollector.assertDistance(algo, idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125.5666, 2135);
             System.out.println("unterfranken " + algo + ": " + (testCollector.list.size() - failed) + " failed");
         }
 
@@ -84,10 +88,11 @@ public class RoutingAlgorithmIntegrationTests {
     public static RoutingAlgorithm[] createAlgos(Graph g) {
         return new RoutingAlgorithm[]{
                     new AStar(g),
+                    new AStarBidirection(g),
                     new DijkstraBidirectionRef(g),
                     new DijkstraBidirection(g),
-                    new DijkstraSimple(g)
-//                TODO , createPrioAlgo(g)
+                    new DijkstraSimple(g), 
+//              TODO , createPrioAlgo(g)
                 };
     }
 
@@ -119,6 +124,8 @@ public class RoutingAlgorithmIntegrationTests {
             algo = new DijkstraBidirection(unterfrankenGraph);
         else if ("dijkstra".equalsIgnoreCase(algoStr))
             algo = new DijkstraSimple(unterfrankenGraph);
+        else if ("astarbi".equalsIgnoreCase(algoStr))
+            algo = new AStarBidirection(unterfrankenGraph);
         else
             algo = new AStar(unterfrankenGraph);
 

@@ -27,7 +27,7 @@ import gnu.trove.set.hash.TIntHashSet;
 /**
  * Efficiently stores the entries for Dijkstra algorithm
  *
- * @author Peter Karich, 
+ * @author Peter Karich,
  */
 public class Path {
 
@@ -117,6 +117,9 @@ public class Path {
         return this;
     }
 
+    /**
+     * This method calculates not only the weight but also the distance in kilometer.
+     */
     public void calcWeight(EdgeIterator iter, int to) {
         double lowestW = -1;
         double dist = -1;

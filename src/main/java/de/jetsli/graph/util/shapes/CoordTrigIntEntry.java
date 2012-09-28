@@ -13,20 +13,33 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.geohash;
-
-import de.jetsli.graph.util.shapes.CoordTrig;
+package de.jetsli.graph.util.shapes;
 
 /**
- * @author Peter Karich
+ *
+ * @author Peter Karich, 
  */
-public interface KeyAlgo {
+public class CoordTrigIntEntry extends CoordTrig<Integer> {
 
-    KeyAlgo setInitialBounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit);
+    private int v;
 
-    long encode(CoordTrig coord);
+    public CoordTrigIntEntry() {
+    }
 
-    long encode(double lat, double lon);
+    public CoordTrigIntEntry(int o, double lat, double lon) {
+        super(lat, lon);
+        this.v = o;
+    }
 
-    void decode(long spatialKey, CoordTrig latLon);
+    @Override public void setValue(Integer t) {
+        v = t;
+    }
+
+    @Override public Integer getValue() {
+        return v;
+    }
+
+    @Override public String toString() {
+        return super.toString() + " value:" + v;
+    }
 }

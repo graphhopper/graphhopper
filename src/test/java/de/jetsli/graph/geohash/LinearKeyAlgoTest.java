@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.geohash;
 
-import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.shapes.CoordTrig;
 import static org.junit.Assert.*;
 import org.junit.Test;
 

@@ -21,6 +21,7 @@ import de.jetsli.graph.routing.util.FastestCalc;
 import de.jetsli.graph.routing.util.ShortestCalc;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.MemoryGraphSafe;
+import de.jetsli.graph.util.DistanceCalc;
 import de.jetsli.graph.util.StopWatch;
 import java.io.IOException;
 import java.util.Random;
@@ -30,7 +31,7 @@ import org.junit.Test;
 
 /**
  *
- * @author Peter Karich, 
+ * @author Peter Karich,
  */
 public abstract class AbstractRoutingAlgorithmTester {
 

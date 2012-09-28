@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Copyright 2012 Peter Karich info@jetsli.de
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,33 +13,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package de.jetsli.graph.util;
+package de.jetsli.graph.routing;
+
+import de.jetsli.graph.storage.Graph;
 
 /**
  *
- * @author Peter Karich, 
+ * @author Peter Karich
  */
-public class CoordTrigLongEntry extends CoordTrig<Long> {
+public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
 
-    private long v;
-
-    public CoordTrigLongEntry() {
-    }
-
-    public CoordTrigLongEntry(long o, double lat, double lon) {
-        super(lat, lon);
-        this.v = o;
-    }
-
-    @Override public void setValue(Long t) {
-        v = t;
-    }
-
-    @Override public Long getValue() {
-        return v;
-    }
-
-    @Override public String toString() {
-        return super.toString() + " value:" + v;
+    @Override
+    public RoutingAlgorithm createAlgo(Graph g) {
+        return new AStarBidirection(g);
     }
 }

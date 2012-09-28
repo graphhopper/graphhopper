@@ -16,7 +16,7 @@
 package de.jetsli.graph.trees;
 
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
-import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.shapes.CoordTrig;
 import de.jetsli.graph.util.Helper;
 
 /**

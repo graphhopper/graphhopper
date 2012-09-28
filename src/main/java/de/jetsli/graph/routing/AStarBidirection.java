@@ -17,11 +17,14 @@ package de.jetsli.graph.routing;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
-import de.jetsli.graph.storage.EdgeEntry;
+import de.jetsli.graph.routing.AStar.AStarEdge;
+import de.jetsli.graph.routing.util.EdgePrioFilter;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.DistanceCosProjection;
 import de.jetsli.graph.util.DistanceCalc;
+import de.jetsli.graph.util.DistanceCosProjection;
 import de.jetsli.graph.util.EdgeIterator;
+import de.jetsli.graph.util.GraphUtility;
+import de.jetsli.graph.util.shapes.CoordTrig;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
@@ -34,28 +37,43 @@ import java.util.PriorityQueue;
  *
  * @author Peter Karich
  */
-public class AStar extends AbstractRoutingAlgorithm {
+public class AStarBidirection extends AbstractRoutingAlgorithm {
 
-    private DistanceCalc dist = new DistanceCosProjection();
-    private boolean useMap = true;
+    private DistanceCalc dist = new DistanceCalc();
+    private int from, to;
+    private MyBitSet visitedFrom;
+    private PriorityQueue<AStarEdge> prioQueueOpenSetFrom;
+    private TIntObjectMap<AStarEdge> shortestWeightMapFrom;
+    private MyBitSet visitedTo;
+    private PriorityQueue<AStarEdge> prioQueueOpenSetTo;
+    private TIntObjectMap<AStarEdge> shortestWeightMapTo;
+    private boolean alreadyRun;
+    private AStarEdge currFrom;
+    private AStarEdge currTo;
+    private TIntObjectMap<AStarEdge> shortestWeightMapOther;
+    private EdgePrioFilter edgeFilter;
+    public PathBidirRef shortest;
+    private CoordTrig fromCoord;
+    private CoordTrig toCoord;
 
-    public AStar(Graph g) {
-        super(g);
-    }
+    public AStarBidirection(Graph graph) {
+        super(graph);
+        int locs = Math.max(20, graph.getNodes());
+        visitedFrom = new MyBitSetImpl(locs);
+        prioQueueOpenSetFrom = new PriorityQueue<AStarEdge>(locs / 10);
+        shortestWeightMapFrom = new TIntObjectHashMap<AStarEdge>(locs / 10);
 
-    /**
-     * @param useMap if false this algorithm will use less memory but will also be approx. 3 times
-     * slower.
-     */
-    public AStar setUseHelperMap(boolean useMap) {
-        this.useMap = useMap;
-        return this;
+        visitedTo = new MyBitSetImpl(locs);
+        prioQueueOpenSetTo = new PriorityQueue<AStarEdge>(locs / 10);
+        shortestWeightMapTo = new TIntObjectHashMap<AStarEdge>(locs / 10);
+
+        clear();
     }
 
     /**
      * @param fast if true it enables approximative distance calculation from lat,lon values
      */
-    public AStar setApproximation(boolean approx) {
+    public AStarBidirection setApproximation(boolean approx) {
         if (approx)
             dist = new DistanceCosProjection();
         else
@@ -63,93 +81,184 @@ public class AStar extends AbstractRoutingAlgorithm {
         return this;
     }
 
-    @Override public Path calcPath(int from, int to) {
-        MyBitSet closedSet = new MyBitSetImpl(graph.getNodes());
-        TIntObjectMap<AStarEdge> map = null;
-        if (useMap)
-            map = new TIntObjectHashMap<AStarEdge>();
-        PriorityQueue<AStarEdge> prioQueueOpenSet = new PriorityQueue<AStarEdge>();
-        double toLat = graph.getLatitude(to);
-        double toLon = graph.getLongitude(to);
-        double tmpLat = graph.getLatitude(from);
-        double tmpLon = graph.getLongitude(from);
-        double currWeightToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
-        currWeightToGoal = weightCalc.apply(currWeightToGoal);
-        double distEstimation = 0 + currWeightToGoal;
-        AStarEdge fromEntry = new AStarEdge(from, distEstimation, 0);
-        AStarEdge currEdge = fromEntry;
-        while (true) {
-            int currVertex = currEdge.node;
-            EdgeIterator iter = graph.getOutgoing(currVertex);
-            while (iter.next()) {
-                int neighborNode = iter.node();
-                if (closedSet.contains(neighborNode))
-                    continue;
-
-                float alreadyVisitedWeight = (float) weightCalc.getWeight(iter) + currEdge.weightToCompare;
-                AStarEdge nEdge = null;
-                if (useMap)
-                    nEdge = map.get(neighborNode);
-                else
-                    for (AStarEdge e : prioQueueOpenSet) {
-                        if (e.node == neighborNode) {
-                            nEdge = e;
-                            break;
-                        }
-                    }
-                if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight) {
-                    tmpLat = graph.getLatitude(neighborNode);
-                    tmpLon = graph.getLongitude(neighborNode);
-                    currWeightToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
-                    currWeightToGoal = weightCalc.apply(currWeightToGoal);
-                    distEstimation = alreadyVisitedWeight + currWeightToGoal;
-
-                    if (nEdge == null) {
-                        nEdge = new AStarEdge(neighborNode, distEstimation, alreadyVisitedWeight);
-                        if (useMap)
-                            map.put(neighborNode, nEdge);
-                    } else {
-                        prioQueueOpenSet.remove(nEdge);
-                        nEdge.weightToCompare = alreadyVisitedWeight;
-                        nEdge.weight = distEstimation;
-                    }
-                    nEdge.prevEntry = currEdge;
-                    prioQueueOpenSet.add(nEdge);
-                    updateShortest(nEdge, neighborNode);
-                }
-            }
-            if (to == currVertex)
-                break;
-
-            closedSet.add(currVertex);
-            currEdge = prioQueueOpenSet.poll();
-            if (currEdge == null)
-                return null;
-        }
-
-        // extract path from shortest-path-tree
-        Path path = new Path(weightCalc);
-        while (currEdge.prevEntry != null) {
-            int tmpFrom = currEdge.node;
-            path.add(tmpFrom);
-            currEdge = (AStarEdge) currEdge.prevEntry;
-            path.calcWeight(graph.getIncoming(tmpFrom), currEdge.node);
-        }
-        path.add(fromEntry.node);
-        path.reverseOrder();
-        return path;
+    public RoutingAlgorithm setEdgeFilter(EdgePrioFilter edgeFilter) {
+        this.edgeFilter = edgeFilter;
+        return this;
     }
 
-    private static class AStarEdge extends EdgeEntry {
+    public EdgePrioFilter getEdgeFilter() {
+        return edgeFilter;
+    }
 
-        // the variable 'weight' is used to let heap select smallest *full* distance.
-        // but to compare distance we need it only from start:
-        float weightToCompare;
+    @Override
+    public RoutingAlgorithm clear() {
+        alreadyRun = false;
+        visitedFrom.clear();
+        prioQueueOpenSetFrom.clear();
+        shortestWeightMapFrom.clear();
 
-        public AStarEdge(int loc, double weightForHeap, float weightToCompare) {
-            super(loc, weightForHeap);
-            // round makes distance smaller => heuristic should underestimate the distance!
-            this.weightToCompare = (float) weightToCompare;
+        visitedTo.clear();
+        prioQueueOpenSetTo.clear();
+        shortestWeightMapTo.clear();
+        return this;
+    }
+
+    public void initFrom(int from) {
+        this.from = from;
+        currFrom = new AStar.AStarEdge(from, 0, 0);
+        shortestWeightMapFrom.put(from, currFrom);
+        visitedFrom.add(from);
+        fromCoord = new CoordTrig(graph.getLatitude(from), graph.getLongitude(from));
+    }
+
+    public void initTo(int to) {
+        this.to = to;
+        currTo = new AStar.AStarEdge(to, 0, 0);
+        shortestWeightMapTo.put(to, currTo);
+        visitedTo.add(to);
+        toCoord = new CoordTrig(graph.getLatitude(to), graph.getLongitude(to));
+    }
+
+    @Override public Path calcPath(int from, int to) {
+        if (alreadyRun)
+            throw new IllegalStateException("Call clear before! But this class is not thread safe!");
+
+        alreadyRun = true;
+        initPath();
+        initFrom(from);
+        initTo(to);
+
+        Path p = checkIndenticalFromAndTo();
+        if (p != null)
+            return p;
+
+        int counter = 0;
+        int finish = 0;
+        while (finish < 2) {
+            counter++;
+            finish = 0;
+            if (!fillEdgesFrom())
+                finish++;
+
+            if (!fillEdgesTo())
+                finish++;
         }
+
+        return shortest.extract();
+    }
+
+    // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
+    // a node from overlap may not be on the shortest path!!
+    // => when scanning an arc (v, w) in the forward search and w is scanned in the reverse 
+    //    search, update shortest = μ if df (v) + (v, w) + dr (w) < μ            
+    public boolean checkFinishCondition() {
+        if (currFrom == null)
+            return currTo.weightToCompare >= shortest.weight;
+        else if (currTo == null)
+            return currFrom.weightToCompare >= shortest.weight;
+        return currFrom.weightToCompare + currTo.weightToCompare >= shortest.weight;
+    }
+
+    private void fillEdges(AStarEdge curr, CoordTrig goal, MyBitSet closedSet, PriorityQueue<AStarEdge> prioQueueOpenSet,
+            TIntObjectMap<AStarEdge> shortestWeightMap, boolean out) {
+
+        int currNodeFrom = curr.node;
+        EdgeIterator iter = GraphUtility.getEdges(graph, currNodeFrom, out);
+        if (edgeFilter != null)
+            iter = edgeFilter.doFilter(iter);
+
+        while (iter.next()) {
+            int neighborNode = iter.node();
+            if (closedSet.contains(neighborNode))
+                continue;
+
+            double alreadyVisitedWeight = weightCalc.getWeight(iter) + curr.weightToCompare;
+            AStarEdge de = shortestWeightMap.get(neighborNode);
+            if (de == null || de.weightToCompare > alreadyVisitedWeight) {
+                double tmpLat = graph.getLatitude(neighborNode);
+                double tmpLon = graph.getLongitude(neighborNode);
+                double currWeightToGoal = dist.calcDistKm(goal.lat, goal.lon, tmpLat, tmpLon);
+                currWeightToGoal = weightCalc.apply(currWeightToGoal);
+                double distEstimation = alreadyVisitedWeight + currWeightToGoal;
+                if (de == null) {
+                    de = new AStarEdge(neighborNode, distEstimation, alreadyVisitedWeight);
+                    shortestWeightMap.put(neighborNode, de);
+                } else {
+                    prioQueueOpenSet.remove(de);
+                    de.weight = distEstimation;
+                    de.weightToCompare = alreadyVisitedWeight;
+                }
+
+                de.prevEntry = curr;
+                prioQueueOpenSet.add(de);
+                updateShortest(de, neighborNode);
+            }
+        }
+    }
+
+//    @Override -> TODO weightToCompare with weight => then a simple EdgeEntry is possible
+    public void updateShortest(AStarEdge shortestDE, int currLoc) {
+        AStarEdge entryOther = shortestWeightMapOther.get(currLoc);
+        if (entryOther == null)
+            return;
+
+        // update μ
+        double newShortest = shortestDE.weightToCompare + entryOther.weightToCompare;
+        if (newShortest < shortest.weight) {
+            shortest.switchWrapper = shortestWeightMapFrom == shortestWeightMapOther;
+            shortest.edgeFrom = shortestDE;
+            shortest.edgeTo = entryOther;
+            shortest.weight = newShortest;
+        }
+    }
+
+    public boolean fillEdgesFrom() {
+        if (currFrom != null) {
+            shortestWeightMapOther = shortestWeightMapTo;
+            fillEdges(currFrom, toCoord, visitedFrom, prioQueueOpenSetFrom, shortestWeightMapFrom, true);
+            if (prioQueueOpenSetFrom.isEmpty())
+                return false;
+
+            currFrom = prioQueueOpenSetFrom.poll();
+            if (checkFinishCondition())
+                return false;
+            visitedFrom.add(currFrom.node);
+        } else if (currTo == null)
+            throw new IllegalStateException("Shortest Path not found? " + from + " " + to);
+        return true;
+    }
+
+    public boolean fillEdgesTo() {
+        if (currTo != null) {
+            shortestWeightMapOther = shortestWeightMapFrom;
+            fillEdges(currTo, fromCoord, visitedTo, prioQueueOpenSetTo, shortestWeightMapTo, false);
+            if (prioQueueOpenSetTo.isEmpty())
+                return false;
+
+            currTo = prioQueueOpenSetTo.poll();
+            if (checkFinishCondition())
+                return false;
+            visitedTo.add(currTo.node);
+        } else if (currFrom == null)
+            throw new IllegalStateException("Shortest Path not found? " + from + " " + to);
+        return true;
+    }
+
+    private Path checkIndenticalFromAndTo() {
+        if (from == to) {
+            Path p = new Path(weightCalc);
+            p.add(from);
+            return p;
+        }
+        return null;
+    }
+
+    protected PathBidirRef createPath() {
+        return new PathBidirRef(graph, weightCalc);
+    }
+
+    public void initPath() {
+        shortest = createPath();
+        shortest.weight(Double.MAX_VALUE);
     }
 }

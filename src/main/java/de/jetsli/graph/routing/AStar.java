@@ -19,8 +19,8 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.DistanceCosProjection;
 import de.jetsli.graph.util.DistanceCalc;
+import de.jetsli.graph.util.DistanceCosProjection;
 import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -71,12 +71,8 @@ public class AStar extends AbstractRoutingAlgorithm {
         PriorityQueue<AStarEdge> prioQueueOpenSet = new PriorityQueue<AStarEdge>();
         double toLat = graph.getLatitude(to);
         double toLon = graph.getLongitude(to);
-        double tmpLat = graph.getLatitude(from);
-        double tmpLon = graph.getLongitude(from);
-        double currWeightToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
-        currWeightToGoal = weightCalc.apply(currWeightToGoal);
-        double distEstimation = 0 + currWeightToGoal;
-        AStarEdge fromEntry = new AStarEdge(from, distEstimation, 0);
+        double currWeightToGoal, distEstimation, tmpLat, tmpLon;
+        AStarEdge fromEntry = new AStarEdge(from, 0, 0);
         AStarEdge currEdge = fromEntry;
         while (true) {
             int currVertex = currEdge.node;
@@ -86,7 +82,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                 if (closedSet.contains(neighborNode))
                     continue;
 
-                float alreadyVisitedWeight = (float) weightCalc.getWeight(iter) + currEdge.weightToCompare;
+                double alreadyVisitedWeight = weightCalc.getWeight(iter) + currEdge.weightToCompare;
                 AStarEdge nEdge = null;
                 if (useMap)
                     nEdge = map.get(neighborNode);
@@ -110,8 +106,8 @@ public class AStar extends AbstractRoutingAlgorithm {
                             map.put(neighborNode, nEdge);
                     } else {
                         prioQueueOpenSet.remove(nEdge);
-                        nEdge.weightToCompare = alreadyVisitedWeight;
                         nEdge.weight = distEstimation;
+                        nEdge.weightToCompare = alreadyVisitedWeight;
                     }
                     nEdge.prevEntry = currEdge;
                     prioQueueOpenSet.add(nEdge);
@@ -140,13 +136,13 @@ public class AStar extends AbstractRoutingAlgorithm {
         return path;
     }
 
-    private static class AStarEdge extends EdgeEntry {
+    public static class AStarEdge extends EdgeEntry {
 
         // the variable 'weight' is used to let heap select smallest *full* distance.
         // but to compare distance we need it only from start:
-        float weightToCompare;
+        double weightToCompare;
 
-        public AStarEdge(int loc, double weightForHeap, float weightToCompare) {
+        public AStarEdge(int loc, double weightForHeap, double weightToCompare) {
             super(loc, weightForHeap);
             // round makes distance smaller => heuristic should underestimate the distance!
             this.weightToCompare = (float) weightToCompare;

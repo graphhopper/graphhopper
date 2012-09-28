@@ -16,7 +16,7 @@
 package de.jetsli.graph.trees;
 
 import de.jetsli.graph.util.shapes.BBox;
-import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.shapes.CoordTrig;
 import java.util.Collection;
 import java.util.Iterator;
 import org.junit.*;

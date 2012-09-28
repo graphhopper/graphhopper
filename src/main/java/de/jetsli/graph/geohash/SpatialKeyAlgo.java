@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.geohash;
 
-import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.shapes.CoordTrig;
 
 /**
  * This class implements the idea of a geohash but in 'binary form' - to avoid confusion this is

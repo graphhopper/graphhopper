@@ -19,6 +19,7 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.reader.OSMReader;
 import de.jetsli.graph.routing.AStar;
+import de.jetsli.graph.routing.AStarBidirection;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.routing.util.FastestCalc;
@@ -29,9 +30,8 @@ import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.trees.QuadTree;
 import de.jetsli.graph.util.CmdArgs;
-import de.jetsli.graph.util.CoordTrig;
+import de.jetsli.graph.util.shapes.CoordTrig;
 import de.jetsli.graph.util.EdgeIterator;
-import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.StopWatch;
 import de.jetsli.graph.util.shapes.BBox;
 import java.awt.*;
@@ -79,11 +79,12 @@ public class MiniGraphUI {
         // prepare location quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
         this.index = new Location2IDQuadtree(roadGraph, new RAMDirectory("loc2idIndex"));
-        index.prepareIndex(90000);
+        index.prepareIndex(2000);
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
 //        this.algo = new DebugAStar(graph, mg);
-        this.algo = new AStar(graph);
+//        this.algo = new AStar(graph);
+        this.algo = new AStarBidirection(graph);
 //        this.algo = new DijkstraSimple(graph);
 //        this.algo = new DebugDijkstraSimple(graph, mg);
         infoPanel = new JPanel() {
@@ -147,20 +148,30 @@ public class MiniGraphUI {
                     }
                 }
 
-//                mg.plotNode(g2, 171651, Color.GREEN);
-//                g2.setColor(Color.RED);
-//                PriorityGraph clone = (PriorityGraph) graph.clone();
-//                new PrepareRoutingShortcuts(clone).doWork();
-//                DijkstraBidirectionRef dijkstraBi = new DebugDijkstraBidirection(clone, mg);
-//                ((DebugAlgo) dijkstraBi).setGraphics2D(g2);
-//                dijkstraBi.setEdgeFilter(new EdgePrioFilter((PriorityGraph) clone));
-//                plotPath(dijkstraBi, g2, 10);
-//                Path p1 = calcPath(dijkstraBi);
 
+                g2.setColor(Color.RED);
+                DebugAStarBi astarbi = new DebugAStarBi(graph, mg);
+                astarbi.setGraphics2D(g2);
+                Path p1 = astarbi.calcPath(2733, 1148);
+                plotPath(p1, g2, 10);
+
+                g2.setColor(Color.GREEN);
+                astarbi = new DebugAStarBi(graph, mg);
+                astarbi.setGraphics2D(g2);
+                Path p2 = astarbi.calcPath(2733, 1149);
+                plotPath(p2, g2, 10);
+
+//                mg.plotNode(g2, 18, Color.blue);
+//                mg.plotNode(g2, 2659, Color.green);
+//                mg.plotNode(g2, 2735, Color.yellow);
+//
+//                mg.plotNode(g2, 2655, Color.red);
+//                mg.plotNode(g2, 17, Color.orange);
+                
 //                g2.setColor(Color.GREEN);
-//                dijkstraBi = new DebugDijkstraBidirection(graph, mg);
-//                ((DebugAlgo) dijkstraBi).setGraphics2D(g2);
-//                plotPath(dijkstraBi, g2, 6);
+//                DebugDijkstraBidirection dbi = new DebugDijkstraBidirection(graph, mg);
+//                dbi.setGraphics2D(g2);
+//                plotPath(calcPath(dbi), g2, 6);
 
 //                Path p2 = calcPath(dijkstraBi);
 //                Path.debugDifference(clone, p1, p2);
@@ -180,7 +191,7 @@ public class MiniGraphUI {
 
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
             // one time use the fastest path, the other time use the shortest (e.g. maximize window to switch)
-            WeightCalculation wCalc = FastestCalc.DEFAULT;
+            WeightCalculation wCalc = ShortestCalc.DEFAULT;
 
             @Override public void paintComponent(Graphics2D g2) {
                 if (dijkstraFromId < 0 || dijkstraToId < 0)
@@ -191,10 +202,10 @@ public class MiniGraphUI {
                     ((DebugAlgo) algo).setGraphics2D(g2);
 
                 StopWatch sw = new StopWatch().start();
-                if (wCalc == FastestCalc.DEFAULT)
-                    wCalc = ShortestCalc.DEFAULT;
-                else
-                    wCalc = FastestCalc.DEFAULT;
+//                if (wCalc == FastestCalc.DEFAULT)
+//                    wCalc = ShortestCalc.DEFAULT;
+//                else
+//                    wCalc = FastestCalc.DEFAULT;
 
                 logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + wCalc);
                 path = algo.clear().setType(wCalc).calcPath(dijkstraFromId, dijkstraToId);
@@ -232,14 +243,19 @@ public class MiniGraphUI {
 
     // for debugging
     private Path calcPath(RoutingAlgorithm algo) {
-//        int from = index.findID(49.8020, 9.2470);
-//        int to = index.findID(50.4940, 10.1970);
-//        return algo.calcPath(from, to);
-        return algo.calcPath(309721, 309742);
+        int from = index.findID(43.727687, 7.418737);
+        int to = index.findID(43.74958, 7.436566);
+//        int from = index.findID(43.73987, 7.42747);
+//        int to = index.findID(43.73783, 7.426265);
+        return algo.calcPath(from, to);
+//        return algo.calcPath(309721, 309742);
     }
 
-    private Path plotPath(RoutingAlgorithm algo, Graphics2D g2, int w) {
-        Path tmpPath = calcPath(algo);
+    private Path plotPath(Path tmpPath, Graphics2D g2, int w) {
+        if (tmpPath == null) {
+            // nothing found
+            return tmpPath;
+        }
         for (int jj = 0; jj < tmpPath.locations(); jj++) {
             int loc = tmpPath.location(jj);
             double lat = graph.getLatitude(loc);
