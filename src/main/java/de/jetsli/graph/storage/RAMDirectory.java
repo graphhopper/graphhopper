@@ -73,14 +73,14 @@ public class RAMDirectory implements Directory {
         return da;
     }
 
-    @Override
-    public void clear() {
-        if (store) {
-            Helper.deleteDir(new File(id));
-            mkdirs();
-        }
-        map.clear();
-    }
+//    @Override
+//    public void clear() {
+//        if (store) {
+//            Helper.deleteDir(new File(id));
+//            mkdirs();
+//        }
+//        map.clear();
+//    }
 
     @Override
     public String getLocation() {

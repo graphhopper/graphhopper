@@ -184,7 +184,6 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void close() {
-        super.close();
         Helper.close(raFile);
         closed = true;
     }

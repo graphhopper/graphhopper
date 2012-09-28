@@ -16,6 +16,8 @@
 package de.jetsli.graph.util;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -150,27 +152,6 @@ public class Helper {
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't close resource", ex);
         }
-    }
-
-    public static CmdArgs readCmdArgs(String[] args) {
-        Map<String, String> map = new LinkedHashMap<String, String>();
-        for (String arg : args) {
-            String strs[] = arg.split("\\=");
-            if (strs.length != 2)
-                continue;
-
-            String key = strs[0];
-            if (key.startsWith("-")) {
-                key = key.substring(1);
-            }
-            if (key.startsWith("-")) {
-                key = key.substring(1);
-            }
-            String value = strs[1];
-            map.put(key, value);
-        }
-
-        return new CmdArgs(map);
     }
 
     public static boolean isEmpty(String strOsm) {
@@ -312,5 +293,19 @@ public class Helper {
         } finally {
             in.close();
         }
+    }
+    
+    /**
+     * Determines if the specified ByteBuffer is one which maps to a file!
+     */
+    public static boolean isFileMapped(ByteBuffer bb) {
+        if (bb instanceof MappedByteBuffer) {
+            try {
+                ((MappedByteBuffer) bb).isLoaded();
+                return true;
+            } catch (UnsupportedOperationException ex) {
+            }
+        }
+        return false;
     }
 }

@@ -20,6 +20,7 @@ import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.util.EdgeIterator;
+import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.shapes.BBox;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -66,7 +67,6 @@ public class GraphStorage implements Graph, Storable {
     }
 
     public GraphStorage createNew(int nodeCount) {
-        dir.clear();
         nodes.createNew((long) nodeCount * 4 * nodeEntrySize);
         edges.createNew((long) nodeCount * 4 * 2 * edgeEntrySize);
         return this;

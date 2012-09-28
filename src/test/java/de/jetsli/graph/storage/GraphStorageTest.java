@@ -34,7 +34,7 @@ public class GraphStorageTest extends AbstractGraphTester {
     public Graph createGraph(int size) {
         return new GraphStorage(new RAMDirectory("graphstorage")).createNew(size);
     }
-
+    
     @Test
     public void testCreateDuplicateEdges() {
         Graph graph = createGraph(10);

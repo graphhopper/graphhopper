@@ -558,11 +558,6 @@ public class MMapGraph implements Graph {
 
     @Override
     public Graph clone() {
-        if (storageFolder != null) {
-            // TODO how we should clone a graph on disc? should we name it cloned-graph or how?
-            logger.error("Cloned graph will be in-memory only!");
-        }
-
         MMapGraph graphCloned = new MMapGraph(maxNodes);
         graphCloned.nodes = allocate(nodes.capacity());
         graphCloned.edges = allocate(edges.capacity());
@@ -627,17 +622,6 @@ public class MMapGraph implements Graph {
         } finally {
             Helper.close(channel);
         }
-    }
-
-    static boolean isFileMapped(ByteBuffer bb) {
-        if (bb instanceof MappedByteBuffer) {
-            try {
-                ((MappedByteBuffer) bb).isLoaded();
-                return true;
-            } catch (UnsupportedOperationException ex) {
-            }
-        }
-        return false;
     }
 
     public void flush() {

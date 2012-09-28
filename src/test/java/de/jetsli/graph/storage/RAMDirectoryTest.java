@@ -48,29 +48,29 @@ public class RAMDirectoryTest {
         }
     }
 
-    @Test
-    public void testClear() {
-        file.mkdirs();
-        File fileContent = new File(location + "/anotherone");
-        fileContent.mkdirs();
-        RAMDirectory dir = new RAMDirectory(location);
-        dir.createDataAccess("testing");
-        dir.clear();
-        assertTrue(file.exists());
-        assertTrue(fileContent.exists());
-        // no error
-        dir.createDataAccess("testing");
-
-        dir = new RAMDirectory(location, true);
-        // make sure directory content does not get deleted - load existing should work!
-        assertTrue(fileContent.exists());
-        dir.createDataAccess("testing");
-        dir.clear();
-        assertTrue(file.exists());
-        assertFalse(fileContent.exists());
-        // no error
-        dir.createDataAccess("testing");
-    }
+//    @Test
+//    public void testClear() {
+//        file.mkdirs();
+//        File fileContent = new File(location + "/anotherone");
+//        fileContent.mkdirs();
+//        RAMDirectory dir = new RAMDirectory(location);
+//        dir.createDataAccess("testing");
+//        dir.clear();
+//        assertTrue(file.exists());
+//        assertTrue(fileContent.exists());
+//        // no error
+//        dir.createDataAccess("testing");
+//
+//        dir = new RAMDirectory(location, true);
+//        // make sure directory content does not get deleted - load existing should work!
+//        assertTrue(fileContent.exists());
+//        dir.createDataAccess("testing");
+//        dir.clear();
+//        assertTrue(file.exists());
+//        assertFalse(fileContent.exists());
+//        // no error
+//        dir.createDataAccess("testing");
+//    }
 
     @Test
     public void testNoErrorForDACreate() {

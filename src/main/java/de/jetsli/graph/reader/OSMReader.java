@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class OSMReader {
 
     public static void main(String[] strs) throws Exception {
-        CmdArgs args = Helper.readCmdArgs(strs);
+        CmdArgs args = CmdArgs.read(strs);
         GraphStorage g = (GraphStorage) osm2Graph(args);
         RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(g);
         if (args.getBool("test", false)) {
@@ -81,7 +81,7 @@ public class OSMReader {
 
         int size = (int) args.getLong("size", 5 * 1000 * 1000);
         Storage storage;
-        if ("mmap".equalsIgnoreCase(args.get("storage", "inmemory")))
+        if ("mmap".equalsIgnoreCase(args.get("dataaccess", "inmemory")))
             storage = new GraphStorageWrapper(storageFolder, size, true);
         else
             storage = new GraphStorageWrapper(storageFolder, size, false);

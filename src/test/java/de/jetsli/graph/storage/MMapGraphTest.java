@@ -127,10 +127,10 @@ public class MMapGraphTest extends AbstractGraphTester {
     @Test
     public void testMapped() throws Exception {
         assertTrue(ByteBuffer.allocateDirect(12) instanceof MappedByteBuffer);
-        assertFalse(MMapGraph.isFileMapped(ByteBuffer.allocateDirect(12)));
+        assertFalse(Helper.isFileMapped(ByteBuffer.allocateDirect(12)));
         FileChannel fc = new RandomAccessFile(File.createTempFile("mmap", "test"), "rw").getChannel();
         ByteBuffer bb = fc.map(FileChannel.MapMode.READ_WRITE, 0, 10);
-        assertTrue(MMapGraph.isFileMapped(bb));
+        assertTrue(Helper.isFileMapped(bb));
         fc.close();
     }
 
@@ -157,7 +157,7 @@ public class MMapGraphTest extends AbstractGraphTester {
     public void testSaveOnFlushOnly() throws IOException {
         String tmpDir = dir + "/test-persist-graph";
         MMapGraph mmgraph = new MMapGraph(tmpDir, 3).createNew(true);
-        assertFalse(MMapGraph.isFileMapped(mmgraph.getEdges()));
+        assertFalse(Helper.isFileMapped(mmgraph.getEdges()));
         mmgraph.setNode(0, 10, 10);
         mmgraph.setNode(1, 11, 20);
         mmgraph.setNode(2, 12, 12);
@@ -178,7 +178,7 @@ public class MMapGraphTest extends AbstractGraphTester {
     public void testSave() throws IOException {
         String tmpDir = dir + "/test-persist-graph";
         MMapGraph mmgraph = new MMapGraph(tmpDir, 3).createNew();
-        assertTrue(MMapGraph.isFileMapped(mmgraph.getEdges()));
+        assertTrue(Helper.isFileMapped(mmgraph.getEdges()));
         mmgraph.setNode(0, 10, 10);
         mmgraph.setNode(1, 11, 20);
         mmgraph.setNode(2, 12, 12);

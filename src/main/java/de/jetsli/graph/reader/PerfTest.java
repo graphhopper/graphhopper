@@ -18,6 +18,7 @@ package de.jetsli.graph.reader;
 import de.jetsli.graph.geohash.SpatialHashtable;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.trees.QuadTree;
+import de.jetsli.graph.util.CmdArgs;
 import de.jetsli.graph.util.Helper;
 import java.util.Date;
 
@@ -39,7 +40,7 @@ import java.util.Date;
 public class PerfTest {
 
     public static void main(String[] args) throws Exception {
-        Graph g = OSMReader.osm2Graph(Helper.readCmdArgs(args));
+        Graph g = OSMReader.osm2Graph(CmdArgs.read(args));
         new PerfTest(g).start();
     }
     Graph g;

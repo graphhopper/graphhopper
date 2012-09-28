@@ -29,7 +29,7 @@ public class MMapDataAccessTest extends DataAccessTest {
     }
     
     @Test
-    public void textMix() {
+    public void textMixRAM2MMAP() {
         DataAccess da = new RAMDataAccess(location, true);
         assertFalse(da.loadExisting());
         da.createNew(300);
@@ -37,6 +37,19 @@ public class MMapDataAccessTest extends DataAccessTest {
         da.flush();
         da.close();
         da = createDataAccess(location);
+        assertTrue(da.loadExisting());
+        assertEquals(123, da.getInt(7));
+    }
+    
+    @Test
+    public void textMixMMAP2RAM() {
+        DataAccess da  = createDataAccess(location);
+        assertFalse(da.loadExisting());
+        da.createNew(300);
+        da.setInt(7, 123);
+        da.flush();
+        da.close();
+        da = new RAMDataAccess(location, true);
         assertTrue(da.loadExisting());
         assertEquals(123, da.getInt(7));
     }

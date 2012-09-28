@@ -24,5 +24,9 @@ public interface Directory {
 
     DataAccess createDataAccess(String name);
 
-    void clear();
+    // TODO clear means clearing the in-memory map and deleting underlying files
+    // Problem with clear was: MMapDataAccess creates file in constructor and on createNew
+    // it clears but then the file won't be accessible. Also clearing would mean to avoid
+    // closing of underlying DataAccess object which isn't good.
+//    void clear();
 }

@@ -19,6 +19,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
+ * Stores command line options in a mapped. The case of the key is ignored.
+ *
  * @author Peter Karich
  */
 public class CmdArgs {
@@ -34,12 +36,12 @@ public class CmdArgs {
     }
 
     public CmdArgs put(String key, String str) {
-        map.put(key, str);
+        map.put(key.toLowerCase(), str);
         return this;
     }
 
     public long getLong(String key, long _default) {
-        String str = map.get(key);
+        String str = get(key);
         if (!Helper.isEmpty(str)) {
             try {
                 return Long.parseLong(str);
@@ -50,7 +52,7 @@ public class CmdArgs {
     }
 
     public int getInt(String key, int _default) {
-        String str = map.get(key);
+        String str = get(key);
         if (!Helper.isEmpty(str)) {
             try {
                 return Integer.parseInt(str);
@@ -61,7 +63,7 @@ public class CmdArgs {
     }
 
     public boolean getBool(String key, boolean _default) {
-        String str = map.get(key);
+        String str = get(key);
         if (!Helper.isEmpty(str)) {
             try {
                 return Boolean.parseBoolean(str);
@@ -72,7 +74,7 @@ public class CmdArgs {
     }
 
     public double getDouble(String key, double _default) {
-        String str = map.get(key);
+        String str = get(key);
         if (!Helper.isEmpty(str)) {
             try {
                 return Double.parseDouble(str);
@@ -83,9 +85,36 @@ public class CmdArgs {
     }
 
     public String get(String key, String _default) {
-        String str = map.get(key);
+        String str = get(key);
         if (Helper.isEmpty(str))
             return _default;
         return str;
+    }
+
+    String get(String key) {
+        if (Helper.isEmpty(key))
+            return "";
+        return map.get(key.toLowerCase());
+    }
+
+    public static CmdArgs read(String[] args) {
+        Map<String, String> map = new LinkedHashMap<String, String>();
+        for (String arg : args) {
+            String strs[] = arg.split("\\=");
+            if (strs.length != 2)
+                continue;
+
+            String key = strs[0];
+            if (key.startsWith("-")) {
+                key = key.substring(1);
+            }
+            if (key.startsWith("-")) {
+                key = key.substring(1);
+            }
+            String value = strs[1];
+            map.put(key, value);
+        }
+
+        return new CmdArgs(map);
     }
 }

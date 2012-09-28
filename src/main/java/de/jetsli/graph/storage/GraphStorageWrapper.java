@@ -30,7 +30,7 @@ public class GraphStorageWrapper extends DefaultStorage {
         if (mmap)
             dir = new MMapDirectory(folder);
         else
-            dir = new RAMDirectory(folder, true);
+            dir = new RAMDirectory(folder, true);        
         g = tmp = new GraphStorage(dir);
     }
 

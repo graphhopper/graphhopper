@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
 public class MiniGraphUI {
 
     public static void main(String[] strs) throws Exception {
-        CmdArgs args = Helper.readCmdArgs(strs);
+        CmdArgs args = CmdArgs.read(strs);
         Graph g = OSMReader.osm2Graph(args);
         boolean debug = args.getBool("debug", false);
         new MiniGraphUI(g, debug).visualize();

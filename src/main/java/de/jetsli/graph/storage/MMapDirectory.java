@@ -56,10 +56,10 @@ public class MMapDirectory implements Directory {
         return location;
     }
 
-    @Override
-    public void clear() {
-        Helper.deleteDir(new File(location));
-        new File(location).mkdirs();
-        map.clear();
-    }
+//    @Override
+//    public void clear() {
+//        Helper.deleteDir(new File(location));
+//        new File(location).mkdirs();
+//        map.clear();
+//    }
 }
