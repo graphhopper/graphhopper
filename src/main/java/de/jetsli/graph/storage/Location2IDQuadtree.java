@@ -16,7 +16,7 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
 import de.jetsli.graph.util.*;
@@ -100,7 +100,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         int bits = initBuffer(_size);
         initAlgo(bits);
         StopWatch sw = new StopWatch().start();
-        MyOpenBitSet filledIndices = fillQuadtree(size);
+        MyBitSet filledIndices = fillQuadtree(size);
         int fillQT = filledIndices.getCardinality();
         float res1 = sw.stop().getSeconds();
         sw = new StopWatch().start();
@@ -141,12 +141,12 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return dist.denormalizeDist(maxNormRasterWidthKm);
     }
 
-    private MyOpenBitSet fillQuadtree(int size) {
+    private MyBitSet fillQuadtree(int size) {
         int locs = g.getNodes();
         if (locs <= 0)
             throw new IllegalStateException("check your graph - it is empty!");
 
-        MyOpenBitSet filledIndices = new MyOpenBitSet(size);
+        MyBitSet filledIndices = new MyBitSetImpl(size);
         CoordTrig coord = new CoordTrig();
         for (int nodeId = 0; nodeId < locs; nodeId++) {
             double lat = g.getLatitude(nodeId);
@@ -171,7 +171,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return filledIndices;
     }
 
-    private int fillEmptyIndices(MyOpenBitSet filledIndices) {
+    private int fillEmptyIndices(MyBitSet filledIndices) {
         // 3. fill empty indices with points close to them to return correct id's for find()!
         final int maxSearch = 10;
         int counter = 0;

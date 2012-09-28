@@ -16,7 +16,7 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.geohash.KeyAlgo;
 import de.jetsli.graph.geohash.LinearKeyAlgo;
@@ -150,7 +150,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
 
         void initIndex() {
             int nodes = g.getNodes();
-            MyBitSet alreadyDone = new MyOpenBitSet(nodes);
+            MyBitSet alreadyDone = new MyBitSetImpl(nodes);
             int added = 0;
             StopWatch swWhile = new StopWatch();
             for (int node = 0; node < nodes; node++) {

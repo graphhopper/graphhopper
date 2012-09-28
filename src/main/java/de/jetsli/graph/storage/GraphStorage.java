@@ -17,10 +17,8 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
-import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.util.EdgeIterator;
-import de.jetsli.graph.util.Helper;
 import de.jetsli.graph.util.shapes.BBox;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -53,7 +51,7 @@ public class GraphStorage implements Graph, Storable {
     protected int nodeCount;
     private BBox bounds;
     // delete marker is not persistent!
-    private MyOpenBitSet deletedNodes;
+    private MyBitSet deletedNodes;
 
     public GraphStorage(Directory dir) {
         this.dir = dir;
@@ -419,7 +417,7 @@ public class GraphStorage implements Graph, Storable {
 
     private MyBitSet getDeletedNodes() {
         if (deletedNodes == null)
-            deletedNodes = new MyOpenBitSet((int) (nodes.capacity() / 4));
+            deletedNodes = new MyBitSetImpl((int) (nodes.capacity() / 4));
         return deletedNodes;
     }
 

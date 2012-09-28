@@ -16,7 +16,7 @@
 package de.jetsli.graph.routing.util;
 
 import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.EdgeIterator;
@@ -56,7 +56,7 @@ public class PrepareRoutingSubnetworks {
         Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         final AtomicInteger integ = new AtomicInteger(0);
         int locs = g.getNodes();
-        final MyBitSet bs = new MyOpenBitSet(locs);
+        final MyBitSet bs = new MyBitSetImpl(locs);
         for (int start = 0; start < locs; start++) {
             if (bs.contains(start))
                 continue;

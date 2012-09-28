@@ -16,7 +16,7 @@
 package de.jetsli.graph.routing.rideshare;
 
 import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.routing.AbstractRoutingAlgorithm;
 import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.Path;
@@ -83,13 +83,13 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         if (pubTransport.contains(fromP1) || pubTransport.contains(toP2))
             return new DijkstraBidirection(graph).calcPath(fromP1, toP2);
 
-        MyBitSet visitedFrom = new MyOpenBitSet(graph.getNodes());
+        MyBitSet visitedFrom = new MyBitSetImpl(graph.getNodes());
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
         EdgeEntry entryTo = new EdgeEntry(toP2, 0);
         currTo = entryTo;
-        MyBitSet visitedTo = new MyOpenBitSet(graph.getNodes());
+        MyBitSet visitedTo = new MyBitSetImpl(graph.getNodes());
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
 

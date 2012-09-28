@@ -16,7 +16,7 @@
 package de.jetsli.graph.routing;
 
 import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.routing.util.EdgePrioFilter;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
@@ -52,11 +52,11 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     public DijkstraBidirectionRef(Graph graph) {
         super(graph);
         int locs = Math.max(20, graph.getNodes());
-        visitedFrom = new MyOpenBitSet(locs);
+        visitedFrom = new MyBitSetImpl(locs);
         openSetFrom = new PriorityQueue<EdgeEntry>(locs / 10);
         shortestWeightMapFrom = new TIntObjectHashMap<EdgeEntry>(locs / 10);
 
-        visitedTo = new MyOpenBitSet(locs);
+        visitedTo = new MyBitSetImpl(locs);
         openSetTo = new PriorityQueue<EdgeEntry>(locs / 10);
         shortestWeightMapTo = new TIntObjectHashMap<EdgeEntry>(locs / 10);
 

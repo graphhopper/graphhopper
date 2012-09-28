@@ -17,7 +17,6 @@ package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
-import de.jetsli.graph.coll.MyOpenBitSet;
 import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.Helper;
@@ -172,7 +171,7 @@ public class MemoryGraphSafe implements Graph {
         lons = new float[cap];
         // we ensure that edgePointer always starts from 1 => no need to fill with -1
         refToEdges = new int[cap];
-        deletedNodes = new MyOpenBitSet(cap);
+        deletedNodes = new MyBitSetImpl(cap);
     }
 
     @Override
@@ -624,7 +623,7 @@ public class MemoryGraphSafe implements Graph {
         }
 
         size -= deleted;
-        deletedNodes = new MyOpenBitSet(size);
+        deletedNodes = new MyBitSetImpl(size);
     }
 
     // Hint: edges with both directions will be returned only once!
@@ -711,7 +710,7 @@ public class MemoryGraphSafe implements Graph {
         }
 
         size = inMemGraph.size;
-        deletedNodes = new MyOpenBitSet(size);
+        deletedNodes = new MyBitSetImpl(size);
     }
 
     public boolean save() {
@@ -769,7 +768,7 @@ public class MemoryGraphSafe implements Graph {
             }
             if (size != lats.length)
                 throw new IllegalStateException("incompatible size and latitude array length");
-            deletedNodes = new MyOpenBitSet(size);
+            deletedNodes = new MyBitSetImpl(size);
             return true;
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't load data from disc. location=" + storageLocation, ex);

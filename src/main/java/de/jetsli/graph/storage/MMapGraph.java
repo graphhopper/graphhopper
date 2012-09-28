@@ -16,7 +16,7 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.util.BitUtil;
 import de.jetsli.graph.util.EdgeIterator;
@@ -787,7 +787,7 @@ public class MMapGraph implements Graph {
 
     private MyBitSet getDeletedNodes() {
         if (deletedNodes == null)
-            deletedNodes = new MyOpenBitSet(maxNodes);
+            deletedNodes = new MyBitSetImpl(maxNodes);
         return deletedNodes;
     }
 

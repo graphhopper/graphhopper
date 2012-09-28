@@ -15,7 +15,8 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.coll.MyBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.util.ApproxCalcDistance;
@@ -63,7 +64,7 @@ public class AStar extends AbstractRoutingAlgorithm {
     }
 
     @Override public Path calcPath(int from, int to) {
-        MyOpenBitSet closedSet = new MyOpenBitSet(graph.getNodes());
+        MyBitSet closedSet = new MyBitSetImpl(graph.getNodes());
         TIntObjectMap<AStarEdge> map = null;
         if (useMap)
             map = new TIntObjectHashMap<AStarEdge>();

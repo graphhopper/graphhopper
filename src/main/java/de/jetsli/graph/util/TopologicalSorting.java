@@ -16,7 +16,7 @@
 package de.jetsli.graph.util;
 
 import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.storage.Graph;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
@@ -58,7 +58,7 @@ public class TopologicalSorting {
         if (noIncomingEdges.size() == 0)
             throw new IllegalStateException("No beginning nodes found! Only acyclic graphs are allowed");
 
-        MyBitSet visited = new MyOpenBitSet(g.getNodes());
+        MyBitSet visited = new MyBitSetImpl(g.getNodes());
         final MyIntDeque noIncomingDeque = new MyIntDeque(noIncomingEdges.size());
         for (TIntIterator iter = noIncomingEdges.iterator(); iter.hasNext();) {
             int tmp = iter.next();

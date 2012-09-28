@@ -16,7 +16,7 @@
 package de.jetsli.graph.util;
 
 import de.jetsli.graph.coll.MyBitSet;
-import de.jetsli.graph.coll.MyOpenBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.storage.Graph;
 import gnu.trove.stack.array.TIntArrayStack;
 
@@ -40,7 +40,7 @@ public class XFirstSearch {
     }
 
     protected MyBitSet createBitSet(int size) {
-        return new MyOpenBitSet(size);
+        return new MyBitSetImpl(size);
     }
 
     public void start(Graph g, int startNode, boolean depthFirst) {
