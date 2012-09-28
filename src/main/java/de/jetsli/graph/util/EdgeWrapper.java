@@ -93,7 +93,7 @@ public class EdgeWrapper {
         weights = Arrays.copyOf(weights, cap);
         nodes = Arrays.copyOf(nodes, cap);
         links = Arrays.copyOf(links, cap);
-        node2edge.ensureCapacity(cap);
+        // node2edge.ensureCapacity(cap);
     }
 
     public void clear() {
