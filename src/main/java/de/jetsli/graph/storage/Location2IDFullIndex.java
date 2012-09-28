@@ -15,8 +15,8 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.ApproxCalcDistance;
-import de.jetsli.graph.util.CalcDistance;
+import de.jetsli.graph.util.DistanceCosProjection;
+import de.jetsli.graph.util.DistanceCalc;
 import de.jetsli.graph.util.shapes.Circle;
 
 /**
@@ -24,7 +24,7 @@ import de.jetsli.graph.util.shapes.Circle;
  */
 public class Location2IDFullIndex implements Location2IDIndex {
 
-    private CalcDistance calc = new CalcDistance();
+    private DistanceCalc calc = new DistanceCalc();
     private Graph g;
 
     public Location2IDFullIndex(Graph g) {
@@ -34,9 +34,9 @@ public class Location2IDFullIndex implements Location2IDIndex {
     @Override
     public Location2IDIndex setPrecision(boolean approxDist) {
         if (approxDist)
-            calc = new ApproxCalcDistance();
+            calc = new DistanceCosProjection();
         else
-            calc = new CalcDistance();
+            calc = new DistanceCalc();
         return this;
     }
 

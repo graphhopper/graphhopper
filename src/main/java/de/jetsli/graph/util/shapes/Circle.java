@@ -15,15 +15,15 @@
  */
 package de.jetsli.graph.util.shapes;
 
-import de.jetsli.graph.util.CalcDistance;
+import de.jetsli.graph.util.DistanceCalc;
 
 /**
  * @author Peter Karich
  */
 public class Circle implements Shape {
 
-    private final static CalcDistance SINGLETON = new CalcDistance();
-    private CalcDistance calc = new CalcDistance();
+    private final static DistanceCalc SINGLETON = new DistanceCalc();
+    private DistanceCalc calc = new DistanceCalc();
     private final double radiusInKm;
     private final double lat;
     private final double lon;
@@ -34,7 +34,7 @@ public class Circle implements Shape {
         this(lat, lon, radiusInKm, SINGLETON);
     }
 
-    public Circle(double lat, double lon, double radiusInKm, CalcDistance calc) {
+    public Circle(double lat, double lon, double radiusInKm, DistanceCalc calc) {
         this.calc = calc;
         this.lat = lat;
         this.lon = lon;

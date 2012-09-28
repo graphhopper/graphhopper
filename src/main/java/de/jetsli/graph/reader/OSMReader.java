@@ -65,7 +65,7 @@ public class OSMReader {
     private Storage storage;
     private TIntArrayList tmpLocs = new TIntArrayList(10);
     private Map<String, Object> properties = new HashMap<String, Object>();
-    private CalcDistance callback = new CalcDistance();
+    private DistanceCalc callback = new DistanceCalc();
     private AcceptStreet acceptStreets = new AcceptStreet(true, false, false, false);
 
     /**

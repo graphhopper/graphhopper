@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.CalcDistance;
+import de.jetsli.graph.util.DistanceCalc;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
 import gnu.trove.map.hash.TIntIntHashMap;
@@ -57,7 +57,7 @@ public class DefaultStorage implements Storage {
     int zeroCounter = 0;
 
     @Override
-    public boolean addEdge(int nodeIdFrom, int nodeIdTo, int flags, CalcDistance callback) {
+    public boolean addEdge(int nodeIdFrom, int nodeIdTo, int flags, DistanceCalc callback) {
         int fromIndex = osmIdToIndexMap.get(nodeIdFrom);
         if (fromIndex == FILLED) {
             logger.warn("fromIndex is unresolved:" + nodeIdFrom + " to was:" + nodeIdTo);

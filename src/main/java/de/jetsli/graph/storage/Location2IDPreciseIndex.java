@@ -20,8 +20,8 @@ import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.geohash.KeyAlgo;
 import de.jetsli.graph.geohash.LinearKeyAlgo;
-import de.jetsli.graph.util.ApproxCalcDistance;
-import de.jetsli.graph.util.CalcDistance;
+import de.jetsli.graph.util.DistanceCosProjection;
+import de.jetsli.graph.util.DistanceCalc;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.StopWatch;
 import de.jetsli.graph.util.XFirstSearch;
@@ -53,7 +53,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
     private static final String LIST_NAME = "loc2idIndex";
     private ListOfArrays index;
     private Graph g;
-    private CalcDistance calc = new CalcDistance();
+    private DistanceCalc calc = new DistanceCalc();
     private KeyAlgo algo;
     private double latWidth, lonWidth;
     private int latSizeI, lonSizeI;
@@ -96,13 +96,13 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
     @Override
     public Location2IDIndex setPrecision(boolean approxDist) {
         if (approxDist)
-            calc = new ApproxCalcDistance();
+            calc = new DistanceCosProjection();
         else
-            calc = new CalcDistance();
+            calc = new DistanceCalc();
         return this;
     }
 
-    CalcDistance getCalc() {
+    DistanceCalc getCalc() {
         return calc;
     }
 

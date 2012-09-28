@@ -40,7 +40,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     private final static int MAGIC_INT = Integer.MAX_VALUE / 12305;
     private Logger logger = LoggerFactory.getLogger(getClass());
     private SpatialKeyAlgo algo;
-    protected CalcDistance dist = new ApproxCalcDistance();
+    protected DistanceCalc dist = new DistanceCosProjection();
     private DataAccess index;
     private double maxNormRasterWidthKm;
     private int size;
@@ -54,9 +54,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
     @Override
     public Location2IDIndex setPrecision(boolean approxDist) {
         if (approxDist)
-            dist = new ApproxCalcDistance();
+            dist = new DistanceCosProjection();
         else
-            dist = new CalcDistance();
+            dist = new DistanceCalc();
         return this;
     }
 

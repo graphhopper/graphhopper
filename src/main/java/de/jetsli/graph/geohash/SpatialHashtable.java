@@ -16,7 +16,7 @@
 package de.jetsli.graph.geohash;
 
 import de.jetsli.graph.geohash.SpatialHashtable.BucketOverflowLoop;
-import de.jetsli.graph.util.CalcDistance;
+import de.jetsli.graph.util.DistanceCalc;
 import de.jetsli.graph.trees.*;
 import de.jetsli.graph.util.CoordTrig;
 import de.jetsli.graph.util.CoordTrigLongEntry;
@@ -86,7 +86,7 @@ public class SpatialHashtable implements QuadTree<Long> {
     private static final int BITS8 = 8;
     protected int size;
     protected int maxBuckets;
-    protected CalcDistance calc = new CalcDistance();
+    protected DistanceCalc calc = new DistanceCalc();
     protected SpatialKeyAlgo algo;
     private boolean compressKey = true;
     private ByteBuffer storage;

@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.CalcDistance;
+import de.jetsli.graph.util.DistanceCalc;
 import java.util.Random;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -89,7 +89,7 @@ public class Location2IDQuadtreeTest {
         // hit random lat,lon and compare result to full index
         Random rand = new Random(12);
         Location2IDIndex fullIndex = new Location2IDFullIndex(g);
-        CalcDistance dist = new CalcDistance();
+        DistanceCalc dist = new DistanceCalc();
         for (int i = 0; i < 100; i++) {
             double lat = rand.nextDouble() * 5;
             double lon = rand.nextDouble() * 5;

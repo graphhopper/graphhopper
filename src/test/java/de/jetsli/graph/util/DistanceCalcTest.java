@@ -15,55 +15,54 @@
  */
 package de.jetsli.graph.util;
 
-import de.jetsli.graph.storage.Location2IDPreciseIndex;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *
  * @author Peter Karich, 
  */
-public class CalcDistanceTest {
+public class DistanceCalcTest {
 
     @Test
     public void testCalcCircumference() {
-        assertEquals(CalcDistance.C, new CalcDistance().calcCircumference(0), 1e-7);
+        assertEquals(DistanceCalc.C, new DistanceCalc().calcCircumference(0), 1e-7);
     }
 
     @Test
     public void testGeohashMaxDist() {
-        assertEquals(CalcDistance.C / 2, new CalcDistance().calcSpatialKeyMaxDist(0), 1e-3);
-        assertEquals(CalcDistance.C / 2, new CalcDistance().calcSpatialKeyMaxDist(1), 1e-3);
-        assertEquals(CalcDistance.C / 4, new CalcDistance().calcSpatialKeyMaxDist(2), 1e-3);
-        assertEquals(CalcDistance.C / 4, new CalcDistance().calcSpatialKeyMaxDist(3), 1e-3);
-        assertEquals(CalcDistance.C / 8, new CalcDistance().calcSpatialKeyMaxDist(4), 1e-3);
-        assertEquals(CalcDistance.C / 8, new CalcDistance().calcSpatialKeyMaxDist(5), 1e-3);
+        assertEquals(DistanceCalc.C / 2, new DistanceCalc().calcSpatialKeyMaxDist(0), 1e-3);
+        assertEquals(DistanceCalc.C / 2, new DistanceCalc().calcSpatialKeyMaxDist(1), 1e-3);
+        assertEquals(DistanceCalc.C / 4, new DistanceCalc().calcSpatialKeyMaxDist(2), 1e-3);
+        assertEquals(DistanceCalc.C / 4, new DistanceCalc().calcSpatialKeyMaxDist(3), 1e-3);
+        assertEquals(DistanceCalc.C / 8, new DistanceCalc().calcSpatialKeyMaxDist(4), 1e-3);
+        assertEquals(DistanceCalc.C / 8, new DistanceCalc().calcSpatialKeyMaxDist(5), 1e-3);
     }
 
     @Test
     public void testDistToGeohash() {
-        assertEquals(-1, new CalcDistance().distToSpatialKeyLatBit(-1));
+        assertEquals(-1, new DistanceCalc().distToSpatialKeyLatBit(-1));
 
-        assertEquals(0, new CalcDistance().distToSpatialKeyLatBit(CalcDistance.C / 2));
+        assertEquals(0, new DistanceCalc().distToSpatialKeyLatBit(DistanceCalc.C / 2));
 
-        assertEquals(2, new CalcDistance().distToSpatialKeyLatBit(CalcDistance.C / 4));
-        assertEquals(4, new CalcDistance().distToSpatialKeyLatBit(CalcDistance.C / 8));
-        assertEquals("should be round to bigger distance C/4", 2, new CalcDistance().distToSpatialKeyLatBit(CalcDistance.C / 6));
+        assertEquals(2, new DistanceCalc().distToSpatialKeyLatBit(DistanceCalc.C / 4));
+        assertEquals(4, new DistanceCalc().distToSpatialKeyLatBit(DistanceCalc.C / 8));
+        assertEquals("should be round to bigger distance C/4", 2, new DistanceCalc().distToSpatialKeyLatBit(DistanceCalc.C / 6));
 
         // round to bigger distances!
-        assertEquals(0, new CalcDistance().distToSpatialKeyLatBit(CalcDistance.C / 3));
-        assertEquals(4, new CalcDistance().distToSpatialKeyLatBit(CalcDistance.C / 10));
-        assertEquals(64, new CalcDistance().distToSpatialKeyLatBit(0));
-        assertEquals(34, new CalcDistance().distToSpatialKeyLatBit(0.1));
-        assertEquals(30, new CalcDistance().distToSpatialKeyLatBit(0.6));
+        assertEquals(0, new DistanceCalc().distToSpatialKeyLatBit(DistanceCalc.C / 3));
+        assertEquals(4, new DistanceCalc().distToSpatialKeyLatBit(DistanceCalc.C / 10));
+        assertEquals(64, new DistanceCalc().distToSpatialKeyLatBit(0));
+        assertEquals(34, new DistanceCalc().distToSpatialKeyLatBit(0.1));
+        assertEquals(30, new DistanceCalc().distToSpatialKeyLatBit(0.6));
     }
 
     @Test
     public void testDistance() {
         float lat = 24.235f;
         float lon = 47.234f;
-        CalcDistance approxDist = new ApproxCalcDistance();
-        CalcDistance dist = new CalcDistance();
+        DistanceCalc approxDist = new DistanceCosProjection();
+        DistanceCalc dist = new DistanceCalc();
         double res = 15.051;
         assertEquals(res, dist.calcDistKm(lat, lon, lat - 0.1, lon + 0.1), 1e-3);
         assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 0.1, lon + 0.1), 1e-3);
@@ -97,7 +96,7 @@ public class CalcDistanceTest {
 
     @Test
     public void testEdgeDistance() {
-        CalcDistance calc = new CalcDistance();
+        DistanceCalc calc = new DistanceCalc();
         double dist = calc.calcNormalizedEdgeDistance(49.94241, 11.544356,
                 49.937964, 11.541824,
                 49.942272, 11.555643);
@@ -116,7 +115,7 @@ public class CalcDistanceTest {
 
     @Test
     public void testValidEdgeDistance() {
-        CalcDistance calc = new CalcDistance();
+        DistanceCalc calc = new DistanceCalc();
         assertTrue(calc.validEdgeDistance(49.94241, 11.544356, 49.937964, 11.541824, 49.942272, 11.555643));
         assertTrue(calc.validEdgeDistance(49.936624, 11.547636, 49.937964, 11.541824, 49.942272, 11.555643));
         assertTrue(calc.validEdgeDistance(49.940712, 11.556069, 49.937964, 11.541824, 49.942272, 11.555643));

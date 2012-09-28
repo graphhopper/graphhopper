@@ -17,7 +17,7 @@ package de.jetsli.graph.trees;
 
 import de.jetsli.graph.util.shapes.BBox;
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
-import de.jetsli.graph.util.CalcDistance;
+import de.jetsli.graph.util.DistanceCalc;
 import de.jetsli.graph.util.*;
 import de.jetsli.graph.util.shapes.Circle;
 import de.jetsli.graph.util.shapes.Shape;
@@ -71,7 +71,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     private final long globalMaxBit;
     private final SpatialKeyAlgo algo;
     private final int entriesPerLeaf;
-    private CalcDistance calc = new CalcDistance();
+    private DistanceCalc calc = new DistanceCalc();
     private int size;
     private QTNode<T> root;
 
@@ -90,7 +90,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         algo = new SpatialKeyAlgo(bitsForLatLon);
     }
 
-    public QuadTreeSimple setCalcDistance(CalcDistance dist) {
+    public QuadTreeSimple setCalcDistance(DistanceCalc dist) {
         this.calc = dist;
         return this;
     }

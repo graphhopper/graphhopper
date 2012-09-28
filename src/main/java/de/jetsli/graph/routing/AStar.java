@@ -19,8 +19,8 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
-import de.jetsli.graph.util.ApproxCalcDistance;
-import de.jetsli.graph.util.CalcDistance;
+import de.jetsli.graph.util.DistanceCosProjection;
+import de.jetsli.graph.util.DistanceCalc;
 import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -36,7 +36,7 @@ import java.util.PriorityQueue;
  */
 public class AStar extends AbstractRoutingAlgorithm {
 
-    private CalcDistance dist = new ApproxCalcDistance();
+    private DistanceCalc dist = new DistanceCosProjection();
     private boolean useMap = true;
 
     public AStar(Graph g) {
@@ -57,9 +57,9 @@ public class AStar extends AbstractRoutingAlgorithm {
      */
     public AStar setApproximation(boolean approx) {
         if (approx)
-            dist = new ApproxCalcDistance();
+            dist = new DistanceCosProjection();
         else
-            dist = new CalcDistance();
+            dist = new DistanceCalc();
         return this;
     }
 

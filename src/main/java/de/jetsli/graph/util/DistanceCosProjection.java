@@ -16,14 +16,13 @@
 package de.jetsli.graph.util;
 
 import static java.lang.Math.*;
-//import static org.apache.commons.math3.util.FastMath.*;
 
 /**
  * Calculates the approximative distance of two points on earth.
  *
  * @author Peter Karich, 
  */
-public class ApproxCalcDistance extends CalcDistance {
+public class DistanceCosProjection extends DistanceCalc {
 
     @Override
     public double calcDistKm(double fromLat, double fromLon, double toLat, double toLon) {

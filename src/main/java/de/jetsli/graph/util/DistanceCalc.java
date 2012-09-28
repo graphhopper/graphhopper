@@ -24,7 +24,7 @@ import java.util.Arrays;
  *
  * @author Peter Karich, 
  */
-public class CalcDistance {
+public class DistanceCalc {
 
     /**
      * mean radius of the earth
@@ -135,7 +135,7 @@ public class CalcDistance {
      * @return the bit position i of a spatial key, where dist <= C / 2^i
      */
     public int distToSpatialKeyLatBit(double dist) {
-        if (dist > CalcDistance.C / 4)
+        if (dist > DistanceCalc.C / 4)
             return 0;
         if (dist < 0)
             return -1;
@@ -169,7 +169,7 @@ public class CalcDistance {
         double dLon = (360 / (calcCircumference(lat) / radiusInKm));
 
         // length of a circle is independent of the longitude
-        double dLat = (360 / (CalcDistance.C / radiusInKm));
+        double dLat = (360 / (DistanceCalc.C / radiusInKm));
 
         // Now return bounding box in coordinates
         return new BBox(lon - dLon, lon + dLon, lat - dLat, lat + dLat);

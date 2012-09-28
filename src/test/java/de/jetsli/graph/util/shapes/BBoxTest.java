@@ -15,7 +15,7 @@
  */
 package de.jetsli.graph.util.shapes;
 
-import de.jetsli.graph.util.CalcDistance;
+import de.jetsli.graph.util.DistanceCalc;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -27,7 +27,7 @@ public class BBoxTest {
 
     @Test
     public void testCreate() {
-        CalcDistance c = new CalcDistance();
+        DistanceCalc c = new DistanceCalc();
         BBox b = c.createBBox(52, 10, 100);
 
         // The calclulated bounding box has no negative values (also for southern hemisphere and negative meridians)
