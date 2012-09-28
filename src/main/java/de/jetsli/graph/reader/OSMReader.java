@@ -81,7 +81,7 @@ public class OSMReader {
 
         int size = (int) args.getLong("size", 5 * 1000 * 1000);
         Storage storage;
-        if ("MMapGraph".equalsIgnoreCase(args.get("graphClass", "MemoryGraphSafe")))
+        if ("mmap".equalsIgnoreCase(args.get("storage", "inmemory")))
             storage = new GraphStorageWrapper(storageFolder, size, true);
         else
             storage = new GraphStorageWrapper(storageFolder, size, false);
@@ -119,14 +119,10 @@ public class OSMReader {
     public OSMReader(Storage storage, int size) {
         this.storage = storage;
         expectedLocs = size;
-        logger.info("using " + storage.toString());
+        logger.info("using " + storage.toString() + ", memory:" + Helper7.getBeanMemInfo());
     }
 
     public boolean loadExisting() {
-        try {
-            logger.info("starting with " + Helper7.getBeanMemInfo());
-        } catch (Exception ex) {
-        }
         return storage.loadExisting();
     }
 
