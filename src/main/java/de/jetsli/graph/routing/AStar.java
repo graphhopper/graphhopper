@@ -30,7 +30,7 @@ import java.util.PriorityQueue;
  * This class implements the A* algorithm according to
  * http://en.wikipedia.org/wiki/A*_search_algorithm
  *
- * Different distance calculations can be used via the setFast method.
+ * Different distance calculations can be used via setApproximation.
  *
  * @author Peter Karich
  */
@@ -123,6 +123,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                 return null;
         }
 
+        System.out.println(toString() + " visited nodes:" + closedSet.getCardinality());
         // extract path from shortest-path-tree
         Path path = new Path(weightCalc);
         while (currEdge.prevEntry != null) {

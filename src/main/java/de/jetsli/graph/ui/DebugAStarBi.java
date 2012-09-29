@@ -17,6 +17,7 @@ package de.jetsli.graph.ui;
 
 import de.jetsli.graph.routing.AStar;
 import de.jetsli.graph.routing.AStarBidirection;
+import de.jetsli.graph.storage.EdgeEntry;
 import de.jetsli.graph.storage.Graph;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -39,7 +40,7 @@ public class DebugAStarBi extends AStarBidirection implements DebugAlgo {
         this.g2 = g2;
     }
 
-    @Override public void updateShortest(AStar.AStarEdge shortestDE, int currLoc) {
+    @Override public void updateShortest(EdgeEntry shortestDE, int currLoc) {
         if (g2 != null)
             mg.plotNode(g2, currLoc, Color.YELLOW);
         super.updateShortest(shortestDE, currLoc);

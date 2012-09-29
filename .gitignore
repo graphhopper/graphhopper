@@ -7,3 +7,4 @@ mmap-graph*
 *.osm
 docs/
 loc2idIndex/
+nbactions-*.xml

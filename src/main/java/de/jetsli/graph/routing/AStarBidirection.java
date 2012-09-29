@@ -30,16 +30,23 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 /**
- * This class implements the A* algorithm according to
- * http://en.wikipedia.org/wiki/A*_search_algorithm
+ * This class implements a bidirectional A* algorithm. It is interesting to note that a
+ * bidirectional dijkstra is far more efficient than a single direction one. The same does not apply
+ * for a bidirectional A* as the finish condition can not be so strict which leads to either
+ * suboptimal paths or suboptimal node exploration (too many nodes). Still very good approximations
+ * with a rougly twice times faster running time than the normal A* can be reached.
  *
- * Different distance calculations can be used via the setFast method.
+ * Computing the Shortest Path: A∗ Search Meets Graph Theory ->
+ * http://research.microsoft.com/apps/pubs/default.aspx?id=64511
+ * http://i11www.iti.uni-karlsruhe.de/_media/teaching/sommer2012/routenplanung/vorlesung4.pdf
+ * http://research.microsoft.com/pubs/64504/goldberg-sofsem07.pdf
+ * http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
  *
  * @author Peter Karich
  */
 public class AStarBidirection extends AbstractRoutingAlgorithm {
 
-    private DistanceCalc dist = new DistanceCosProjection();
+    private DistanceCalc dist = new DistanceCalc();
     private int from, to;
     private MyBitSet visitedFrom;
     private PriorityQueue<AStarEdge> prioQueueOpenSetFrom;
@@ -55,7 +62,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     public PathBidirRef shortest;
     private CoordTrig fromCoord;
     private CoordTrig toCoord;
-    private double pi_r_of_t;
+    private double approxFactor = 1.15;
 
     public AStarBidirection(Graph graph) {
         super(graph);
@@ -75,10 +82,21 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
      * @param fast if true it enables approximative distance calculation from lat,lon values
      */
     public AStarBidirection setApproximation(boolean approx) {
-        if (approx)
+        if (approx) {
             dist = new DistanceCosProjection();
-        else
+            approxFactor = 0.5;
+        } else {
             dist = new DistanceCalc();
+            approxFactor = 1.15;
+        }
+        return this;
+    }
+
+    /**
+     * Specify a low value like 0.5 for worse but faster results. Or over 1.1 for more precise.
+     */
+    public AStarBidirection setApproximationFactor(double approxFactor) {
+        this.approxFactor = approxFactor;
         return this;
     }
 
@@ -136,7 +154,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     public void initPath() {
         shortest = createPath();
         shortest.weight(Double.MAX_VALUE);
-        pi_r_of_t = dist.calcDistKm(fromCoord.lat, fromCoord.lon, toCoord.lat, toCoord.lon);
+        // pi_r_of_t = dist.calcDistKm(fromCoord.lat, fromCoord.lon, toCoord.lat, toCoord.lon);
     }
 
     @Override public Path calcPath(int from, int to) {
@@ -164,18 +182,21 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
                 finish++;
         }
 
+        System.out.println(toString() + " visited nodes:" + (visitedTo.getCardinality() + visitedFrom.getCardinality()));
+        // System.out.println(currFrom.weight + " " + currTo.weight + " " + shortest.weight);
         return shortest.extract();
     }
 
-    // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
-    // d_f (v) + (v, w) + d_r (w) < μ +p_r(t)
+    // Problem is the correct finish condition! if the bounds are too wide too many nodes are visited :/   
+    // d_f (v) + (v, w) + d_r (w) < μ + p_r(t)
     // where pi_r_of_t = p_r(t) = 1/2(pi_r(t) - pi_f(t) + pi_f(s)), and pi_f(t)=0
     public boolean checkFinishCondition() {
+        double tmp = shortest.weight * approxFactor;
         if (currFrom == null)
-            return currTo.weight >= shortest.weight + pi_r_of_t;
+            return currTo.weightToCompare >= tmp;
         else if (currTo == null)
-            return currFrom.weight >= shortest.weight + pi_r_of_t;
-        return currFrom.weight + currTo.weight >= shortest.weight + pi_r_of_t;
+            return currFrom.weightToCompare >= tmp;
+        return currFrom.weightToCompare + currTo.weightToCompare >= tmp;
     }
 
     public boolean fillEdgesFrom() {
@@ -247,7 +268,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         }
     }
 
-//    @Override -> TODO weightToCompare with weight => then a simple EdgeEntry is possible
+//    @Override -> TODO use only weight => then a simple EdgeEntry is possible
     public void updateShortest(AStarEdge shortestDE, int currLoc) {
         AStarEdge entryOther = shortestWeightMapOther.get(currLoc);
         if (entryOther == null)

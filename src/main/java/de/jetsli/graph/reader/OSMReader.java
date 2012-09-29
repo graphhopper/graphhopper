@@ -83,7 +83,7 @@ public class OSMReader {
 
         int size = (int) args.getLong("size", 5 * 1000 * 1000);
         Storage storage;
-        String dataAccess = args.get("dataaccess", "inmemory");
+        String dataAccess = args.get("dataaccess", "inmemory+save");
         Directory dir;
         if ("mmap".equalsIgnoreCase(dataAccess)) {
             dir = new MMapDirectory(storageFolder);

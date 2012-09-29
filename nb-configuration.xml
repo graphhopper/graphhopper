@@ -17,4 +17,7 @@ Any value defined here will override the pom.xml file value but is only applicab
         <netbeans.hint.jdkPlatform>Oracle_JDK_1.6</netbeans.hint.jdkPlatform>
         <org-netbeans-modules-whitelist.whitelist-oracle>false</org-netbeans-modules-whitelist.whitelist-oracle>
     </properties>
+    <config-data xmlns="http://www.netbeans.org/ns/maven-config-data/1">
+        <configurations/>
+    </config-data>
 </project-shared-configuration>

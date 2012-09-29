@@ -131,6 +131,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
                 finish++;
         }
 
+        System.out.println(toString() + " visited nodes:" + (visitedFrom.getCardinality() + visitedTo.getCardinality()));
         return getShortest();
     }
 

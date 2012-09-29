@@ -160,6 +160,12 @@ public class MiniGraphUI {
                 astar.setGraphics2D(g2);
                 Path p2 = astar.calcPath(1387, 1454);
                 plotPath(p2, g2, 10);
+                
+                g2.setColor(Color.GREEN);
+                DebugDijkstraBidirection dbi = new DebugDijkstraBidirection(graph, mg);
+                dbi.setGraphics2D(g2);
+                Path p3 = dbi.calcPath(1387, 1454);
+                plotPath(p3, g2, 10);
 
 //                mg.plotNode(g2, 18, Color.blue);
 //                mg.plotNode(g2, 2659, Color.green);
