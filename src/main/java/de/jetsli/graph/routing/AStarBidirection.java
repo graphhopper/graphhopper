@@ -42,6 +42,17 @@ import java.util.PriorityQueue;
  * http://research.microsoft.com/pubs/64504/goldberg-sofsem07.pdf
  * http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
  *
+ * better stop condition
+ *
+ * 1. Ikeda, T., Hsu, M.-Y., Imai, H., Nishimura, S., Shimoura, H., Hashimoto, T., Tenmoku, K., and
+ * Mitoh, K. (1994). A fast algorithm for finding better routes by ai search techniques. In VNIS,
+ * pages 291–296.
+ *
+ * 2. Whangbo, T. K. (2007). Efficient modified bidirectional a* algorithm for optimal route-
+ * finding. In IEA/AIE, volume 4570, pages 344–353. Springer.
+ * 
+ * or could we even use this three phase approach? www.lix.polytechnique.fr/~giacomon/papers/bidirtimedep.pdf
+ *
  * @author Peter Karich
  */
 public class AStarBidirection extends AbstractRoutingAlgorithm {
@@ -182,7 +193,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
                 finish++;
         }
 
-        System.out.println(toString() + " visited nodes:" + (visitedTo.getCardinality() + visitedFrom.getCardinality()));
+        // System.out.println(toString() + " visited nodes:" + (visitedTo.getCardinality() + visitedFrom.getCardinality()));
         // System.out.println(currFrom.weight + " " + currTo.weight + " " + shortest.weight);
         return shortest.extract();
     }
@@ -244,6 +255,8 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
             if (closedSet.contains(neighborNode))
                 continue;
 
+            // TODO performance: check if the node is already existent in the opposite direction
+            // then we could avoid the approximation as we already know the exact complete path!
             double alreadyVisitedWeight = weightCalc.getWeight(iter) + curr.weightToCompare;
             AStarEdge de = shortestWeightMap.get(neighborNode);
             if (de == null || de.weightToCompare > alreadyVisitedWeight) {

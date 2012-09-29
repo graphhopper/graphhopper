@@ -96,7 +96,7 @@ public class RoutingAlgorithmIntegrationTests {
                 };
     }
 
-    static RoutingAlgorithm createPrioAlgo(Graph g) {
+    static RoutingAlgorithm createPrioDijkstraBi(Graph g) {
         g = g.clone();
         new PrepareRoutingShortcuts((PriorityGraph) g).doWork();
         DijkstraBidirectionRef dijkstraBi = new DijkstraBidirectionRef(g) {
@@ -112,6 +112,22 @@ public class RoutingAlgorithmIntegrationTests {
         dijkstraBi.setEdgeFilter(new EdgePrioFilter((PriorityGraph) g));
         return dijkstraBi;
     }
+    static RoutingAlgorithm createPrioAStarBi(Graph g) {
+        g = g.clone();
+        new PrepareRoutingShortcuts((PriorityGraph) g).doWork();
+        AStarBidirection astar = new AStarBidirection(g) {
+            @Override public String toString() {
+                return "AStarBidirection|Shortcut|" + weightCalc;
+            }
+
+            @Override protected PathBidirRef createPath() {
+                // expand skipped nodes
+                return new PathPrio((PriorityGraph) graph, weightCalc);
+            }
+        }.setApproximation(true);
+        astar.setEdgeFilter(new EdgePrioFilter((PriorityGraph) g));
+        return astar;
+    }
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     public void runShortestPathPerf(int runs, String algoStr) throws Exception {
@@ -125,14 +141,19 @@ public class RoutingAlgorithmIntegrationTests {
         else if ("dijkstra".equalsIgnoreCase(algoStr))
             algo = new DijkstraSimple(unterfrankenGraph);
         else if ("astarbi".equalsIgnoreCase(algoStr))
-            algo = new AStarBidirection(unterfrankenGraph);
+            algo = new AStarBidirection(unterfrankenGraph).setApproximation(true);
         else
             algo = new AStar(unterfrankenGraph);
 
         // TODO more algos should support edgepriofilter to skip lengthy paths
-        if (unterfrankenGraph instanceof PriorityGraph && algo instanceof DijkstraBidirectionRef) {
-            algo = createPrioAlgo(unterfrankenGraph);
-            logger.info("[experimental] using shortcuts with bidirectional Dijkstra (ref)");
+        if (unterfrankenGraph instanceof PriorityGraph) {
+            if(algo instanceof DijkstraBidirectionRef) 
+                algo = createPrioDijkstraBi(unterfrankenGraph);
+            else if(algo instanceof AStarBidirection) 
+                algo = createPrioAStarBi(unterfrankenGraph);
+            else
+                throw new IllegalStateException("algo which support priority graph not found " + algo);
+            logger.info("[experimental] using shortcuts with " + algo);
         } else
             logger.info("running " + algo);
 

@@ -81,7 +81,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                 int neighborNode = iter.node();
                 if (closedSet.contains(neighborNode))
                     continue;
-
+                
                 double alreadyVisitedWeight = weightCalc.getWeight(iter) + currEdge.weightToCompare;
                 AStarEdge nEdge = null;
                 if (useMap)
@@ -123,7 +123,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                 return null;
         }
 
-        System.out.println(toString() + " visited nodes:" + closedSet.getCardinality());
+        // System.out.println(toString() + " visited nodes:" + closedSet.getCardinality());
         // extract path from shortest-path-tree
         Path path = new Path(weightCalc);
         while (currEdge.prevEntry != null) {
