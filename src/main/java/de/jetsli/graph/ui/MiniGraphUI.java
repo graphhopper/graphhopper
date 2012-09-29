@@ -152,13 +152,13 @@ public class MiniGraphUI {
                 g2.setColor(Color.RED);
                 DebugAStarBi astarbi = new DebugAStarBi(graph, mg);
                 astarbi.setGraphics2D(g2);
-                Path p1 = astarbi.calcPath(2733, 1148);
+                Path p1 = astarbi.calcPath(1387, 1454);
                 plotPath(p1, g2, 10);
 
                 g2.setColor(Color.GREEN);
-                astarbi = new DebugAStarBi(graph, mg);
-                astarbi.setGraphics2D(g2);
-                Path p2 = astarbi.calcPath(2733, 1149);
+                DebugAStar astar = new DebugAStar(graph, mg);
+                astar.setGraphics2D(g2);
+                Path p2 = astar.calcPath(1387, 1454);
                 plotPath(p2, g2, 10);
 
 //                mg.plotNode(g2, 18, Color.blue);
@@ -243,12 +243,10 @@ public class MiniGraphUI {
 
     // for debugging
     private Path calcPath(RoutingAlgorithm algo) {
-        int from = index.findID(43.727687, 7.418737);
-        int to = index.findID(43.74958, 7.436566);
-//        int from = index.findID(43.73987, 7.42747);
-//        int to = index.findID(43.73783, 7.426265);
-        return algo.calcPath(from, to);
-//        return algo.calcPath(309721, 309742);
+//        int from = index.findID(43.727687, 7.418737);
+//        int to = index.findID(43.74958, 7.436566);
+//        return algo.calcPath(from, to);
+        return algo.calcPath(1387, 1454);
     }
 
     private Path plotPath(Path tmpPath, Graphics2D g2, int w) {

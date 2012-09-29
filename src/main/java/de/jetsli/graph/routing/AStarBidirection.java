@@ -39,7 +39,7 @@ import java.util.PriorityQueue;
  */
 public class AStarBidirection extends AbstractRoutingAlgorithm {
 
-    private DistanceCalc dist = new DistanceCalc();
+    private DistanceCalc dist = new DistanceCosProjection();
     private int from, to;
     private MyBitSet visitedFrom;
     private PriorityQueue<AStarEdge> prioQueueOpenSetFrom;
@@ -55,6 +55,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     public PathBidirRef shortest;
     private CoordTrig fromCoord;
     private CoordTrig toCoord;
+    private double pi_r_of_t;
 
     public AStarBidirection(Graph graph) {
         super(graph);
@@ -119,14 +120,33 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         toCoord = new CoordTrig(graph.getLatitude(to), graph.getLongitude(to));
     }
 
+    private Path checkIndenticalFromAndTo() {
+        if (from == to) {
+            Path p = new Path(weightCalc);
+            p.add(from);
+            return p;
+        }
+        return null;
+    }
+
+    protected PathBidirRef createPath() {
+        return new PathBidirRef(graph, weightCalc);
+    }
+
+    public void initPath() {
+        shortest = createPath();
+        shortest.weight(Double.MAX_VALUE);
+        pi_r_of_t = dist.calcDistKm(fromCoord.lat, fromCoord.lon, toCoord.lat, toCoord.lon);
+    }
+
     @Override public Path calcPath(int from, int to) {
         if (alreadyRun)
             throw new IllegalStateException("Call clear before! But this class is not thread safe!");
 
         alreadyRun = true;
-        initPath();
         initFrom(from);
         initTo(to);
+        initPath();
 
         Path p = checkIndenticalFromAndTo();
         if (p != null)
@@ -148,68 +168,14 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     }
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
-    // a node from overlap may not be on the shortest path!!
-    // => when scanning an arc (v, w) in the forward search and w is scanned in the reverse 
-    //    search, update shortest = μ if df (v) + (v, w) + dr (w) < μ            
+    // d_f (v) + (v, w) + d_r (w) < μ +p_r(t)
+    // where pi_r_of_t = p_r(t) = 1/2(pi_r(t) - pi_f(t) + pi_f(s)), and pi_f(t)=0
     public boolean checkFinishCondition() {
         if (currFrom == null)
-            return currTo.weightToCompare >= shortest.weight;
+            return currTo.weight >= shortest.weight + pi_r_of_t;
         else if (currTo == null)
-            return currFrom.weightToCompare >= shortest.weight;
-        return currFrom.weightToCompare + currTo.weightToCompare >= shortest.weight;
-    }
-
-    private void fillEdges(AStarEdge curr, CoordTrig goal, MyBitSet closedSet, PriorityQueue<AStarEdge> prioQueueOpenSet,
-            TIntObjectMap<AStarEdge> shortestWeightMap, boolean out) {
-
-        int currNodeFrom = curr.node;
-        EdgeIterator iter = GraphUtility.getEdges(graph, currNodeFrom, out);
-        if (edgeFilter != null)
-            iter = edgeFilter.doFilter(iter);
-
-        while (iter.next()) {
-            int neighborNode = iter.node();
-            if (closedSet.contains(neighborNode))
-                continue;
-
-            double alreadyVisitedWeight = weightCalc.getWeight(iter) + curr.weightToCompare;
-            AStarEdge de = shortestWeightMap.get(neighborNode);
-            if (de == null || de.weightToCompare > alreadyVisitedWeight) {
-                double tmpLat = graph.getLatitude(neighborNode);
-                double tmpLon = graph.getLongitude(neighborNode);
-                double currWeightToGoal = dist.calcDistKm(goal.lat, goal.lon, tmpLat, tmpLon);
-                currWeightToGoal = weightCalc.apply(currWeightToGoal);
-                double distEstimation = alreadyVisitedWeight + currWeightToGoal;
-                if (de == null) {
-                    de = new AStarEdge(neighborNode, distEstimation, alreadyVisitedWeight);
-                    shortestWeightMap.put(neighborNode, de);
-                } else {
-                    prioQueueOpenSet.remove(de);
-                    de.weight = distEstimation;
-                    de.weightToCompare = alreadyVisitedWeight;
-                }
-
-                de.prevEntry = curr;
-                prioQueueOpenSet.add(de);
-                updateShortest(de, neighborNode);
-            }
-        }
-    }
-
-//    @Override -> TODO weightToCompare with weight => then a simple EdgeEntry is possible
-    public void updateShortest(AStarEdge shortestDE, int currLoc) {
-        AStarEdge entryOther = shortestWeightMapOther.get(currLoc);
-        if (entryOther == null)
-            return;
-
-        // update μ
-        double newShortest = shortestDE.weightToCompare + entryOther.weightToCompare;
-        if (newShortest < shortest.weight) {
-            shortest.switchWrapper = shortestWeightMapFrom == shortestWeightMapOther;
-            shortest.edgeFrom = shortestDE;
-            shortest.edgeTo = entryOther;
-            shortest.weight = newShortest;
-        }
+            return currFrom.weight >= shortest.weight + pi_r_of_t;
+        return currFrom.weight + currTo.weight >= shortest.weight + pi_r_of_t;
     }
 
     public boolean fillEdgesFrom() {
@@ -244,21 +210,56 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         return true;
     }
 
-    private Path checkIndenticalFromAndTo() {
-        if (from == to) {
-            Path p = new Path(weightCalc);
-            p.add(from);
-            return p;
+    private void fillEdges(AStarEdge curr, CoordTrig goal, MyBitSet closedSet, PriorityQueue<AStarEdge> prioQueueOpenSet,
+            TIntObjectMap<AStarEdge> shortestWeightMap, boolean out) {
+
+        int currNodeFrom = curr.node;
+        EdgeIterator iter = GraphUtility.getEdges(graph, currNodeFrom, out);
+        if (edgeFilter != null)
+            iter = edgeFilter.doFilter(iter);
+
+        while (iter.next()) {
+            int neighborNode = iter.node();
+            if (closedSet.contains(neighborNode))
+                continue;
+
+            double alreadyVisitedWeight = weightCalc.getWeight(iter) + curr.weightToCompare;
+            AStarEdge de = shortestWeightMap.get(neighborNode);
+            if (de == null || de.weightToCompare > alreadyVisitedWeight) {
+                double tmpLat = graph.getLatitude(neighborNode);
+                double tmpLon = graph.getLongitude(neighborNode);
+                double currWeightToGoal = dist.calcDistKm(goal.lat, goal.lon, tmpLat, tmpLon);
+                currWeightToGoal = weightCalc.apply(currWeightToGoal);
+                double estimationFullDist = alreadyVisitedWeight + currWeightToGoal;
+                if (de == null) {
+                    de = new AStarEdge(neighborNode, estimationFullDist, alreadyVisitedWeight);
+                    shortestWeightMap.put(neighborNode, de);
+                } else {
+                    prioQueueOpenSet.remove(de);
+                    de.weight = estimationFullDist;
+                    de.weightToCompare = alreadyVisitedWeight;
+                }
+
+                de.prevEntry = curr;
+                prioQueueOpenSet.add(de);
+                updateShortest(de, neighborNode);
+            }
         }
-        return null;
     }
 
-    protected PathBidirRef createPath() {
-        return new PathBidirRef(graph, weightCalc);
-    }
+//    @Override -> TODO weightToCompare with weight => then a simple EdgeEntry is possible
+    public void updateShortest(AStarEdge shortestDE, int currLoc) {
+        AStarEdge entryOther = shortestWeightMapOther.get(currLoc);
+        if (entryOther == null)
+            return;
 
-    public void initPath() {
-        shortest = createPath();
-        shortest.weight(Double.MAX_VALUE);
+        // update μ
+        double newShortest = shortestDE.weightToCompare + entryOther.weightToCompare;
+        if (newShortest < shortest.weight) {
+            shortest.switchWrapper = shortestWeightMapFrom == shortestWeightMapOther;
+            shortest.edgeFrom = shortestDE;
+            shortest.edgeTo = entryOther;
+            shortest.weight = newShortest;
+        }
     }
 }
