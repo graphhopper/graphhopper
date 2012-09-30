@@ -54,6 +54,7 @@ import org.slf4j.LoggerFactory;
  *
  * 5. read thread safety
  *
+ * @deprecated use GraphStorage with MMapDirectory(location) instead
  * @author Peter Karich, 
  */
 @NotThreadSafe

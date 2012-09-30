@@ -18,6 +18,7 @@ package de.jetsli.graph.storage;
 import de.jetsli.graph.util.DistanceCalc;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.GraphUtility;
+import de.jetsli.graph.util.StopWatch;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

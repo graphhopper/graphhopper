@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  * Also it is easier to maintain compared to the MMapGraph. It allows storage via flush and loads
  * from storage if it exists. It allows duplicate edges.
  *
+ * @deprecated use GraphStorage with RAMDirectory(location, true) instead
  * @author Peter Karich
  */
 public class MemoryGraphSafe implements Graph {

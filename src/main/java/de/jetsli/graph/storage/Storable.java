@@ -15,18 +15,18 @@
  */
 package de.jetsli.graph.storage;
 
+import java.io.Closeable;
+
 /**
  * @author Peter Karich
  */
-public interface Storable {
+public interface Storable extends Closeable {
 
     boolean loadExisting();
 
     void flush();
 
-    /**
-     * Do not access this object after calling this method. It would result in undefined behaviour
-     */
+    @Override
     void close();
 
     long capacity();

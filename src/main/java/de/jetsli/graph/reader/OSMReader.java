@@ -39,7 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * See run-ui.sh
+ * This class parses an OSM xml file and creates a graph from it. See run.sh on how to use it from
+ * command line.
  *
  * @author Peter Karich,
  */

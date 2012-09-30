@@ -41,7 +41,7 @@ public class GraphStorageWrapper extends DefaultStorage {
     @Override
     public void flush() {
         tmp.flush();
-        super.flush();
+        super.flush();        
     }
 
     @Override

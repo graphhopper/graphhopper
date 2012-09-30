@@ -15,13 +15,13 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.shapes.CoordTrig;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyTBitSet;
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
 import de.jetsli.graph.util.*;
 import de.jetsli.graph.util.shapes.BBox;
+import de.jetsli.graph.util.shapes.CoordTrig;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -114,7 +114,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     private int initBuffer(int _size) {
         size = _size;
         int bits = (int) (Math.log(size) / Math.log(2)) + 1;
-        size = (int) Math.pow(2, bits);
+        size = 1 << bits;
         int x = (int) Math.sqrt(size);
         if (x * x < size) {
             x++;
@@ -204,8 +204,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
                         int tmpId = index.getInt(tmpKey);
                         double lat = g.getLatitude(tmpId);
                         double lon = g.getLongitude(tmpId);
-                        double dist = this.dist.calcNormalizedDist(mainCoord.lat, mainCoord.lon, lat, lon);
-                        list.add(new Edge(tmpId, dist));
+                        double tmpDist = this.dist.calcNormalizedDist(mainCoord.lat, mainCoord.lon, lat, lon);
+                        list.add(new Edge(tmpId, tmpDist));
                     }
                 }
             }

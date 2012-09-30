@@ -106,15 +106,19 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         return calc;
     }
 
-    @Override
-    public Location2IDIndex prepareIndex(int capacity) {
+    public InMemConstructionIndex prepareInMemoryIndex(int capacity) {
         prepareBounds(capacity);
         prepareAlgo();
         InMemConstructionIndex hi = new InMemConstructionIndex();
         hi.initBuffer(latSizeI, lonSizeI);
         hi.initIndex();
         hi.compact();
+        return hi;
+    }
 
+    @Override
+    public Location2IDIndex prepareIndex(int capacity) {
+        InMemConstructionIndex hi = prepareInMemoryIndex(capacity);
         index.createNew(latSizeI * lonSizeI);
         hi.fill(index);
         hi.initEmptySlots(index);
@@ -132,14 +136,18 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             lonSizeI++;
     }
 
+    protected KeyAlgo createKeyAlgo(int latS, int lonS) {
+        return new LinearKeyAlgo(latS, lonS);
+    }
+
     private void prepareAlgo() {
         BBox b = g.getBounds();
-        algo = new LinearKeyAlgo(latSizeI, lonSizeI).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
+        algo = createKeyAlgo(latSizeI, lonSizeI).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
         latWidth = (b.maxLat - b.minLat) / latSizeI;
         lonWidth = (b.maxLon - b.minLon) / lonSizeI;
     }
 
-    private class InMemConstructionIndex {
+    public class InMemConstructionIndex {
 
         private TIntArrayList[] index;
 
@@ -199,8 +207,8 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
                     }
                     swWhile.stop();
                 }
-                if (added % 100000 == 0)
-                    logger.info("node:" + node + ", added:" + added + " add:" + sw.getSeconds() + ", while:" + swWhile.getSeconds());
+//                if (added % 100000 == 0)
+//                    logger.info("node:" + node + ", added:" + added + " add:" + sw.getSeconds() + ", while:" + swWhile.getSeconds());
             }
         }
 
@@ -280,6 +288,14 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
                 if (index[i] != null)
                     la.set(i, index[i]);
             }
+        }
+        
+        public int getLength() {
+            return index.length;
+        }
+
+        public TIntArrayList getNodes(int tileNumber) {
+            return index[tileNumber];
         }
     }
 
