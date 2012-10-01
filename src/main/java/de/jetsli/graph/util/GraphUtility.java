@@ -15,22 +15,23 @@
  */
 package de.jetsli.graph.util;
 
+import de.jetsli.graph.coll.MyBitSet;
+import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.geohash.KeyAlgo;
-import de.jetsli.graph.geohash.LinearKeyAlgo;
 import de.jetsli.graph.geohash.SpatialKeyAlgo;
 import de.jetsli.graph.storage.Directory;
 import de.jetsli.graph.storage.Edge;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.GraphStorage;
-import de.jetsli.graph.storage.IntIterator;
 import de.jetsli.graph.storage.Location2IDPreciseIndex;
+import de.jetsli.graph.storage.PriorityGraphStorage;
+import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TIntIntHashMap;
-import gnu.trove.procedure.TIntIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -185,11 +186,34 @@ public class GraphUtility {
         return str;
     }
 
-    // a lot memory is necessary or could we use in-place exchange?
-    // we expect faster execution but get 30% slower !?!? hotspot is not able to speedup in the same manner as unsorted somehow
-    // System.out.println("sorting graph:" + g.getNodes() + ", b:" + g.getBounds());
-    // g = GraphUtility.sort(g, new RAMDirectory(), 1000000);
-    // System.out.println("sorted graph:" + g.getNodes() + ", b:" + g.getBounds());
+    public static Graph shuffle(final Graph g, Directory dir) {
+        int len = g.getNodes();
+        TIntList list = new TIntArrayList(len, -1);
+        list.fill(0, len, -1);
+        for (int i = 0; i < len; i++) {
+            list.set(i, i);
+        }
+        list.shuffle(new Random());
+        return createSortedGraph(g, dir, list);
+    }
+
+    public static Graph sortDFS(final Graph g, Directory dir) {
+        final TIntList list = new TIntArrayList(g.getNodes(), -1);
+        list.fill(0, g.getNodes(), -1);
+        new XFirstSearch() {
+            int counter = 0;
+
+            @Override
+            protected boolean goFurther(int nodeId) {
+                list.set(nodeId, counter);
+                counter++;
+                return super.goFurther(nodeId);
+            }
+        }.start(g, 0, false);
+        return createSortedGraph(g, dir, list);
+    }
+
+    // a lot memory is necessary 
     public static Graph sort(final Graph g, Directory dir, int capacity) {
         // make sure it is a square rootable number -> necessary for spatialkeyalgo
 //        capacity = (int) Math.sqrt(capacity);
@@ -197,7 +221,6 @@ public class GraphUtility {
 
         int bits = (int) (Math.log(capacity) / Math.log(2));
         final KeyAlgo algo = new SpatialKeyAlgo(bits);
-        final GraphStorage sortedGraph = new GraphStorage(dir).createNew(g.getNodes());
         Location2IDPreciseIndex index = new Location2IDPreciseIndex(g, dir) {
             @Override protected KeyAlgo createKeyAlgo(int latS, int lonS) {
                 return algo;
@@ -205,7 +228,8 @@ public class GraphUtility {
         };
         index.setCalcEdgeDistance(false);
         Location2IDPreciseIndex.InMemConstructionIndex idx = index.prepareInMemoryIndex(capacity);
-        final TIntIntHashMap map = new TIntIntHashMap(g.getNodes());
+        final TIntList mappingList = new TIntArrayList(g.getNodes(), -1);
+        mappingList.fill(0, g.getNodes(), -1);
         int counter = 0;
         int tmp = 0;
         for (int ti = 0; ti < idx.getLength(); ti++) {
@@ -215,22 +239,34 @@ public class GraphUtility {
             tmp++;
             int s = list.size();
             for (int ii = 0; ii < s; ii++) {
-                map.put(list.get(ii), counter);
+                mappingList.set(list.get(ii), counter);
                 counter++;
             }
         }
 
-        map.forEachEntry(new TIntIntProcedure() {
-            @Override public boolean execute(int old, int newIndex) {
-                sortedGraph.setNode(newIndex, g.getLatitude(old), g.getLongitude(old));
-                EdgeIterator eIter = g.getOutgoing(old);
-                while (eIter.next()) {
-                    int newEdgeIndex = map.get(eIter.node());
-                    sortedGraph.edge(newIndex, newEdgeIndex, eIter.distance(), eIter.flags());
-                }
-                return true;
+        return createSortedGraph(g, dir, mappingList);
+    }
+
+    private static Graph createSortedGraph(final Graph g, Directory dir, final TIntList oldToNewList) {
+        final GraphStorage sortedGraph = new PriorityGraphStorage(dir).createNew(g.getNodes());
+        int len = oldToNewList.size();
+        // important to avoid creating two edges for edges with both directions
+        MyBitSet bitset = new MyBitSetImpl(len);
+        for (int old = 0; old < len; old++) {
+            int newIndex = oldToNewList.get(old);
+            // ignore empty entries
+            if (newIndex < 0)
+                continue;
+            bitset.add(newIndex);
+            sortedGraph.setNode(newIndex, g.getLatitude(old), g.getLongitude(old));
+            EdgeIterator eIter = g.getOutgoing(old);
+            while (eIter.next()) {
+                int newEdgeIndex = oldToNewList.get(eIter.node());
+                if (bitset.contains(newEdgeIndex))
+                    continue;
+                sortedGraph.edge(newIndex, newEdgeIndex, eIter.distance(), eIter.flags());
             }
-        });
+        }
 
         return sortedGraph;
     }

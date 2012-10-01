@@ -241,7 +241,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             }
 
             // bavaria (full init): max:3327, mean:320
-            System.out.println("max:" + max + ", mean:" + (float) sum / counter);
+            // System.out.println("max:" + max + ", mean:" + (float) sum / counter);
         }
 
         void initEmptySlots(ListOfArrays la) {

@@ -16,18 +16,18 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.EdgeIterator;
+import static de.jetsli.graph.util.GraphUtility.*;
 import de.jetsli.graph.util.Helper;
+import de.jetsli.graph.util.shapes.BBox;
 import java.io.File;
 import java.io.IOException;
-import org.junit.After;
-import org.junit.Test;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import org.junit.After;
 import static org.junit.Assert.*;
-import static de.jetsli.graph.util.GraphUtility.*;
-import de.jetsli.graph.util.shapes.BBox;
+import org.junit.Test;
 
 /**
  *

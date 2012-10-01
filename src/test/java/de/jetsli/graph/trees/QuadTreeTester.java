@@ -73,7 +73,7 @@ public abstract class QuadTreeTester {
 
     @Test
     public void testPutBatch() {
-        int max = 1000;
+        int max = 200;
         QuadTree<Long> instance = createQuadTree(max);
         for (long i = 0; i < max; i++) {
             instance.add(i / 100.0, i / 100.0, i);

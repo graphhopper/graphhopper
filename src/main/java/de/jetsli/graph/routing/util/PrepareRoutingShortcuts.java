@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.routing.util;
 
-import de.jetsli.graph.routing.DijkstraSimple;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.util.EdgeIterator;
 import de.jetsli.graph.util.EdgeSkipIterator;
@@ -25,6 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * This class provides an algorithm which introduces shortcuts to skip lengthy roads (ie. nodes with
+ * a degree of 2)
+ *
  * @author Peter Karich
  */
 public class PrepareRoutingShortcuts {
@@ -75,7 +77,7 @@ public class PrepareRoutingShortcuts {
                 while (true) {
                     if (g.getPriority(currentNode) < 0)
                         continue MAIN;
-                    
+
                     if (!has1InAnd1Out(currentNode))
                         break;
 

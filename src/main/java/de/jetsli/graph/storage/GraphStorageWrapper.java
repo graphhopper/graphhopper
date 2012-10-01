@@ -41,11 +41,11 @@ public class GraphStorageWrapper extends DefaultStorage {
     @Override
     public void flush() {
         tmp.flush();
-        super.flush();        
+        super.flush();
     }
 
     @Override
     public String toString() {
-        return "GraphStorage|" + tmp.getDirectory().getClass().getSimpleName();
+        return tmp.getClass().getSimpleName() + "|" + tmp.getDirectory().getClass().getSimpleName();
     }
 }

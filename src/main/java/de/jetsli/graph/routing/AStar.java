@@ -25,6 +25,7 @@ import de.jetsli.graph.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
+import java.util.TreeMap;
 
 /**
  * This class implements the A* algorithm according to

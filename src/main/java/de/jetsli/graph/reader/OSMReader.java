@@ -16,12 +16,14 @@
 package de.jetsli.graph.reader;
 
 import de.jetsli.graph.routing.util.AcceptStreet;
+import de.jetsli.graph.routing.util.PrepareRoutingShortcuts;
 import de.jetsli.graph.routing.util.PrepareRoutingSubnetworks;
 import de.jetsli.graph.routing.util.RoutingAlgorithmIntegrationTests;
 import de.jetsli.graph.storage.Directory;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.GraphStorageWrapper;
 import de.jetsli.graph.storage.MMapDirectory;
+import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.storage.Storage;
 import de.jetsli.graph.util.*;
@@ -49,6 +51,8 @@ public class OSMReader {
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
         Graph g = osm2Graph(args);
+        // only possible for smaller graphs as we need to have two graphs + an array laying around
+        // g = GraphUtility.sortDFS(g, new RAMDirectory());
         RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(g);
         if (args.getBool("test", false)) {
             tests.start();
@@ -102,7 +106,7 @@ public class OSMReader {
         if (!osmReader.loadExisting()) {
             String strOsm = args.get("osm", "");
             if (Helper.isEmpty(strOsm))
-                throw new IllegalArgumentException("Graph not found - please specify the OSM xml file (.osm) to create the graph");
+                throw new IllegalArgumentException("Graph not found and no OSM xml provided.");
 
             File osmXmlFile = new File(strOsm);
             if (!osmXmlFile.exists())
@@ -153,7 +157,14 @@ public class OSMReader {
         preprocessAcceptHighwaysOnly(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
         cleanUp();
+        optimize();
         flush();
+    }
+
+    public void optimize() {
+        Graph g = storage.getGraph();
+        if (g instanceof PriorityGraph)
+            new PrepareRoutingShortcuts((PriorityGraph) g).doWork();
     }
 
     public void cleanUp() {
@@ -259,7 +270,7 @@ public class OSMReader {
                         break;
                 }
             }
-            logger.info("storage nodes:" + storage.getNodes() + " vs. graph nodes:" + storage.getGraph().getNodes());
+            // logger.info("storage nodes:" + storage.getNodes() + " vs. graph nodes:" + storage.getGraph().getNodes());
         } catch (XMLStreamException ex) {
             throw new RuntimeException("Couldn't process file", ex);
         } finally {

@@ -22,7 +22,7 @@ Features
  * 100% Java and 100% Open Source 
    where the Apache License make GraphHopper business friendly
  * Memory efficient
- * Easy to use and small library (<3MB)
+ * Easy to use and small library (~3MB)
  * Works on the [desktop](http://karussell.files.wordpress.com/2012/06/graphhopper.png), 
    [from the web](https://github.com/graphhopper/graphhopper-web) 
    and even offline [on Android](https://github.com/graphhopper/graphhopper/wiki/Android)

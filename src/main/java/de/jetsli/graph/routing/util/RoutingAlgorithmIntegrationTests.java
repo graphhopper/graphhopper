@@ -91,8 +91,7 @@ public class RoutingAlgorithmIntegrationTests {
                     new AStarBidirection(g),
                     new DijkstraBidirectionRef(g),
                     new DijkstraBidirection(g),
-                    new DijkstraSimple(g), 
-//              TODO , createPrioAlgo(g)
+                    new DijkstraSimple(g), //              TODO , createPrioAlgo(g)
                 };
     }
 
@@ -112,6 +111,7 @@ public class RoutingAlgorithmIntegrationTests {
         dijkstraBi.setEdgeFilter(new EdgePrioFilter((PriorityGraph) g));
         return dijkstraBi;
     }
+
     static RoutingAlgorithm createPrioAStarBi(Graph g) {
         g = g.clone();
         new PrepareRoutingShortcuts((PriorityGraph) g).doWork();
@@ -134,9 +134,9 @@ public class RoutingAlgorithmIntegrationTests {
         double minLat = 49.484186, minLon = 8.974228;
         double maxLat = 50.541363, maxLon = 10.880356;
         RoutingAlgorithm algo;
-        if ("dijkstraref".equalsIgnoreCase(algoStr))
+        if ("dijkstrabi".equalsIgnoreCase(algoStr))
             algo = new DijkstraBidirectionRef(unterfrankenGraph);
-        else if ("dijkstrabi".equalsIgnoreCase(algoStr))
+        else if ("dijkstranative".equalsIgnoreCase(algoStr))
             algo = new DijkstraBidirection(unterfrankenGraph);
         else if ("dijkstra".equalsIgnoreCase(algoStr))
             algo = new DijkstraSimple(unterfrankenGraph);
@@ -147,11 +147,12 @@ public class RoutingAlgorithmIntegrationTests {
 
         // TODO more algos should support edgepriofilter to skip lengthy paths
         if (unterfrankenGraph instanceof PriorityGraph) {
-            if(algo instanceof DijkstraBidirectionRef) 
+            if (algo instanceof DijkstraBidirectionRef)
                 algo = createPrioDijkstraBi(unterfrankenGraph);
-            else if(algo instanceof AStarBidirection) 
+            else if (algo instanceof AStarBidirection)
                 algo = createPrioAStarBi(unterfrankenGraph);
             else
+                // priority graph accepts all algorithms but normally we want to use an optimized one
                 throw new IllegalStateException("algo which support priority graph not found " + algo);
             logger.info("[experimental] using shortcuts with " + algo);
         } else
@@ -160,6 +161,7 @@ public class RoutingAlgorithmIntegrationTests {
         Random rand = new Random(123);
         StopWatch sw = new StopWatch();
 
+        System.out.println("cap:" + ((GraphStorage) unterfrankenGraph).capacity());
         for (int i = 0; i < runs; i++) {
             double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
             double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
