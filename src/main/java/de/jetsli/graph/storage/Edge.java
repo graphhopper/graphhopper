@@ -16,12 +16,11 @@
 package de.jetsli.graph.storage;
 
 /**
- * <b>DistEntry</b> is used in Path.<br/>
+ * This is merely a helper class not much used. 'edges' do not exist as separate objects in
+ * GraphHopper as this would be too memory intensive. Look into EdgeIterator and
+ * Graph.getEdges(index) instead.
  *
- * <b>LinkedDistEntry</b> is used as simple linked list entry for the shortest path tree used in
- * Dijkstra algorithms and PathWrapper
- *
- * @author Peter Karich, 
+ * @author Peter Karich,
  */
 public class Edge implements Comparable<Edge> {
 

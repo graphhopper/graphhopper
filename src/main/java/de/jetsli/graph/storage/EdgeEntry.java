@@ -16,8 +16,9 @@
 package de.jetsli.graph.storage;
 
 /**
- * @see DistEntry
- * @author Peter Karich, 
+ * This class is used to create the shortest-path-tree from linked entities.
+ *
+ * @author Peter Karich,
  */
 public class EdgeEntry extends Edge implements Cloneable {
 

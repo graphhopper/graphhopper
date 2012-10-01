@@ -15,7 +15,6 @@
  */
 package de.jetsli.graph.routing;
 
-import de.jetsli.graph.storage.Edge;
 import gnu.trove.set.TIntSet;
 import org.junit.Test;
 import static org.junit.Assert.*;

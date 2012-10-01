@@ -26,7 +26,7 @@ import gnu.trove.set.hash.TIntHashSet;
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
  * Directory implementations like RAMDirectory for fast and read-thread safe usage which can be even
- * flushed to disc or via MMapDirectory for unbounded heap-memory (and not thread safe) usage.
+ * flushed to disc or via MMapDirectory for (unbounded) virtual-memory and not thread safe usage.
  *
  * @author Peter Karich
  */
@@ -85,11 +85,11 @@ public class GraphStorage implements Graph, Storable {
         return intToDouble(nodes.getInt((long) index * nodeEntrySize + I_LON));
     }
 
-    private double intToDouble(int i) {
+    protected double intToDouble(int i) {
         return (double) i / INT_FACTOR;
     }
 
-    private int doubleToInt(double f) {
+    protected int doubleToInt(double f) {
         return (int) (f * INT_FACTOR);
     }
 
@@ -97,7 +97,7 @@ public class GraphStorage implements Graph, Storable {
         return (int) (f * INT_DIST_FACTOR);
     }
 
-    private double getDist(long pointer) {
+    protected double getDist(long pointer) {
         return (double) edges.getInt(pointer + I_DIST) / INT_DIST_FACTOR;
     }
 
