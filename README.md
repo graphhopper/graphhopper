@@ -1,11 +1,6 @@
 # GraphHopper [![Build Status](https://secure.travis-ci.org/graphhopper/graphhopper.png?branch=master)](http://travis-ci.org/graphhopper/graphhopper)
 
-Memory efficient data structures & algorithms on graphs
-
-License
-----------------
-
-This software stands under Apache License 2
+Java road routing engine
 
 Purpose
 ---------------
@@ -19,8 +14,7 @@ the future as well.
 Features
 ---------------
 
- * 100% Java and 100% Open Source 
-   where the Apache License make GraphHopper business friendly
+ * 100% Java and 100% Open Source
  * Memory efficient
  * Easy to use and small library (~3MB)
  * Works on the [desktop](http://karussell.files.wordpress.com/2012/06/graphhopper.png), 
