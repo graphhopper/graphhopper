@@ -175,6 +175,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     private int fillEmptyIndices(MyBitSet filledIndices) {
         int len = latSize * lonSize;
         DataAccess indexCopy = new RAMDataAccess();
+        indexCopy.createNew(index.capacity());
         MyBitSet indicesCopy = new MyBitSetImpl(len);
         int initializedCounter = filledIndices.getCardinality();
         // fan out initialized entries to avoid "nose-artifacts"
@@ -185,6 +186,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
         for (int i = filledIndices.next(0); i >= 0; i = filledIndices.next(i + 1)) {
             takenFrom[i] = i;
         }
+        if (initializedCounter == 0)
+            throw new IllegalStateException("at least one entry has to be != null, which should have happened in initIndex");
         int tmp = initializedCounter;
         while (initializedCounter < len) {
             index.copyTo(indexCopy);
@@ -229,9 +232,6 @@ public class Location2IDQuadtree implements Location2IDIndex {
                     initializedCounter++;
                 }
             }
-
-            if (initializedCounter == 0)
-                throw new IllegalStateException("at least one entry has to be != null, which should have happened in initIndex");
         }
 
         return initializedCounter - tmp;

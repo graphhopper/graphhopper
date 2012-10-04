@@ -19,7 +19,9 @@ import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.util.Random;
+import org.junit.After;
 import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -28,10 +30,20 @@ import org.junit.Test;
  */
 public class Location2IDQuadtreeTest {
 
-    String location = "./target/tmp";
+    String location = "./target/tmp/";
 
     public Location2IDIndex createIndex(Graph g, int resolution) {
-        return new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(resolution);
+        return new Location2IDQuadtree(g, new MMapDirectory(location + "loc2idIndex")).prepareIndex(resolution);
+    }
+
+    @Before
+    public void setUp() {
+        Helper.deleteDir(new File(location));
+    }
+
+    @After
+    public void tearDown() {
+        Helper.deleteDir(new File(location));
     }
 
     @Test
@@ -185,8 +197,6 @@ public class Location2IDQuadtreeTest {
     @Test
     public void testNoErrorOnEdgeCase_lastIndex() {
         int locs = 10000;
-        Helper.deleteDir(new File(location));
-
         Graph g = new GraphStorage(new MMapDirectory(location)).createNew(locs);
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++) {
