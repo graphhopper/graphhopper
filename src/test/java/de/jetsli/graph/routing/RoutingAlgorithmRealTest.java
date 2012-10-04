@@ -19,6 +19,7 @@ import de.jetsli.graph.reader.OSMReader;
 import de.jetsli.graph.routing.util.RoutingAlgorithmIntegrationTests;
 import de.jetsli.graph.routing.util.TestAlgoCollector;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.Location2IDFullIndex;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.RAMDirectory;
@@ -68,7 +69,7 @@ public class RoutingAlgorithmRealTest {
     @Test
     public void testAndorra() {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 19.240, 814));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 24.0626, 991));
         list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16.452, 603));
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list);
@@ -81,7 +82,6 @@ public class RoutingAlgorithmRealTest {
         String graphFile = "target/graph-monaco";
         Helper.deleteDir(new File(graphFile));
         Graph g = OSMReader.osm2Graph(new CmdArgs().put("osm", "files/monaco.osm.gz").put("graph", graphFile));
-        // final Location2IDIndex idx = new Location2IDQuadtree(g).prepareIndex(2000);
         final Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
         final List<OneRun> instances = createMonacoInstances();
         List<Thread> threads = new ArrayList<Thread>();

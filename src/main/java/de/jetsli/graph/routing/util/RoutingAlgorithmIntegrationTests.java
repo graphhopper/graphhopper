@@ -27,6 +27,7 @@ import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Directory;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.GraphStorage;
+import de.jetsli.graph.storage.Location2IDFullIndex;
 import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.PriorityGraph;
@@ -54,15 +55,16 @@ public class RoutingAlgorithmIntegrationTests {
             // logger.info("dir: " + dir.getLocation());
         } else
             index = new Location2IDQuadtree(unterfrankenGraph, new RAMDirectory("loc2idIndex", false));
-//      Location2IDPreciseIndex index = new Location2IDPreciseIndex(unterfrankenGraph, dir);
-        if (!index.loadExisting()) {
-            index.prepareIndex(100000);
+        // Location2IDPreciseIndex index = new Location2IDPreciseIndex(unterfrankenGraph, dir);        
+        // Location2IDFullIndex index = new Location2IDFullIndex(graph);
+        if (!index.loadExisting()) {            
+            index.prepareIndex(200000);
             index.flush();
         }
         idx = index;
         logger.info(index.getClass().getSimpleName() + " index. Size:" + idx.calcMemInMB() + " MB, took:" + sw.stop().getSeconds());
     }
-
+    
     public void start() {
         TestAlgoCollector testCollector = new TestAlgoCollector();
         RoutingAlgorithm[] algos = createAlgos(unterfrankenGraph);
@@ -70,11 +72,12 @@ public class RoutingAlgorithmIntegrationTests {
             int failed = testCollector.list.size();
             testCollector.assertDistance(algo, idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 0.5613, 20);
             testCollector.assertDistance(algo, idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107.4917, 1673);
-            testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 132.1662, 2138);
             testCollector.assertDistance(algo, idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 93.5559, 1278);
-            testCollector.assertDistance(algo, idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73.05989, 1229);
             testCollector.assertDistance(algo, idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77.73985, 1217);
             testCollector.assertDistance(algo, idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125.5666, 2135);
+            testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 132.1662, 2138);
+            testCollector.assertDistance(algo, idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73.05989, 1229);
+            
             System.out.println("unterfranken " + algo + ": " + (testCollector.list.size() - failed) + " failed");
         }
 

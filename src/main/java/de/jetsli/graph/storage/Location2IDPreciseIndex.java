@@ -125,9 +125,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         return this;
     }
 
-    private void prepareBounds(int cap) {
-        int bits = (int) (Math.log(cap) / Math.log(2)) + 1;
-        int size = (int) Math.pow(2, bits);
+    private void prepareBounds(int size) {
         latSizeI = lonSizeI = (int) Math.sqrt(size);
 
         // Same number of entries for x and y otherwise we would need an adapted spatialkey algo.
@@ -149,10 +147,10 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
 
     public class InMemConstructionIndex {
 
-        private TIntArrayList[] index;
+        private TIntArrayList[] inMemIndex;
 
         void initBuffer(int latSizeI, int lonSizeI) {
-            index = new TIntArrayList[latSizeI * lonSizeI];
+            inMemIndex = new TIntArrayList[latSizeI * lonSizeI];
         }
         StopWatch sw = new StopWatch();
 
@@ -214,10 +212,10 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
 
         void add(int key, int node) {
             sw.start();
-            if (index[key] == null)
-                index[key] = new TIntArrayList(30);
-            if (!index[key].contains(node))
-                index[key].add(node);
+            if (inMemIndex[key] == null)
+                inMemIndex[key] = new TIntArrayList(30);
+            if (!inMemIndex[key].contains(node))
+                inMemIndex[key].add(node);
             sw.stop();
         }
 
@@ -230,13 +228,13 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             int sum = 0;
             int max = 0;
             int counter = 0;
-            for (int i = 0; i < index.length; i++) {
-                if (index[i] != null) {
-                    index[i].trimToSize();
+            for (int i = 0; i < inMemIndex.length; i++) {
+                if (inMemIndex[i] != null) {
+                    inMemIndex[i].trimToSize();
                     counter++;
-                    sum += index[i].size();
-                    if (max < index[i].size())
-                        max = index[i].size();
+                    sum += inMemIndex[i].size();
+                    if (max < inMemIndex[i].size())
+                        max = inMemIndex[i].size();
                 }
             }
 
@@ -247,34 +245,36 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         void initEmptySlots(ListOfArrays la) {
             // Here we don't need the precision of edge distance which will make it too slow.
             // Also just use just the reference of the found entry to save space
-            int len = index.length;
+            int len = inMemIndex.length;
             TIntArrayList[] indexCopy = new TIntArrayList[len];
             int initializedCounter = 0;
             while (initializedCounter < len) {
                 initializedCounter = 0;
-                System.arraycopy(index, 0, indexCopy, 0, len);
+                System.arraycopy(inMemIndex, 0, indexCopy, 0, len);
+                
+                // fan out initialized entries
                 for (int i = 0; i < len; i++) {
                     if (indexCopy[i] != null) {
                         // check change "initialized to empty"
                         if ((i + 1) % lonSizeI != 0 && indexCopy[i + 1] == null) {
-                            index[i + 1] = indexCopy[i];
+                            inMemIndex[i + 1] = indexCopy[i];
                             la.setSameReference(i + 1, i);
                         } else if (i + lonSizeI < len && indexCopy[i + lonSizeI] == null) {
-                            index[i + lonSizeI] = indexCopy[i];
+                            inMemIndex[i + lonSizeI] = indexCopy[i];
                             la.setSameReference(i + lonSizeI, i);
                         }
                     } else {
                         // check change "empty to initialized"
                         if ((i + 1) % lonSizeI != 0 && indexCopy[i + 1] != null) {
-                            index[i] = indexCopy[i + 1];
+                            inMemIndex[i] = indexCopy[i + 1];
                             la.setSameReference(i, i + 1);
                         } else if (i + lonSizeI < len && indexCopy[i + lonSizeI] != null) {
-                            index[i] = indexCopy[i + lonSizeI];
+                            inMemIndex[i] = indexCopy[i + lonSizeI];
                             la.setSameReference(i, i + lonSizeI);
                         }
                     }
 
-                    if (index[i] != null)
+                    if (inMemIndex[i] != null)
                         initializedCounter++;
                 }
 
@@ -284,18 +284,18 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         }
 
         void fill(ListOfArrays la) {
-            for (int i = 0; i < index.length; i++) {
-                if (index[i] != null)
-                    la.set(i, index[i]);
+            for (int i = 0; i < inMemIndex.length; i++) {
+                if (inMemIndex[i] != null)
+                    la.set(i, inMemIndex[i]);
             }
         }
         
         public int getLength() {
-            return index.length;
+            return inMemIndex.length;
         }
 
         public TIntArrayList getNodes(int tileNumber) {
-            return index[tileNumber];
+            return inMemIndex[tileNumber];
         }
     }
 

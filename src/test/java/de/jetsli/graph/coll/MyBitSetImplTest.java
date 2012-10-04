@@ -25,9 +25,4 @@ public class MyBitSetImplTest extends AbstractMyBitSetTest {
     public MyBitSet createBitSet(int no) {
         return new MyBitSetImpl(no);
     }
-
-    @Override
-    public void testEnsureCapacity() {
-        // nothing to test
-    }
 }

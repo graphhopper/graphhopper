@@ -41,6 +41,10 @@ public class MMapDataAccess extends AbstractDataAccess {
     private float increaseFactor = 1.5f;
     private transient boolean closed = false;
 
+    // reserve the empty constructor for direct mapped memory
+    private MMapDataAccess() {
+    }
+
     public MMapDataAccess(String location) {
         this.location = location;
         try {

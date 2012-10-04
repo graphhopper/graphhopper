@@ -34,6 +34,10 @@ public class RAMDataAccess extends AbstractDataAccess {
     private transient int segmentSizeIntsPower;
     private transient int indexDivisor;
 
+    public RAMDataAccess() {
+        this("", false);
+    }
+
     public RAMDataAccess(String id) {
         this(id, false);
     }
@@ -83,7 +87,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (todoBytes <= 0)
             return;
 
-        int segmentsToCreate = (int) (todoBytes / segmentSize);        
+        int segmentsToCreate = (int) (todoBytes / segmentSize);
         if (todoBytes % segmentSize != 0)
             segmentsToCreate++;
         // System.out.println(id + " new segs:" + segmentsToCreate);
@@ -206,5 +210,5 @@ public class RAMDataAccess extends AbstractDataAccess {
         segmentSizeIntsPower = (int) (Math.log(segmentSize / 4) / Math.log(2));
         indexDivisor = segmentSize / 4 - 1;
         return this;
-    }
+    }      
 }

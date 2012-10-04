@@ -15,18 +15,19 @@
  */
 package de.jetsli.graph.coll;
 
+import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.hash.TIntHashSet;
 
 /**
  *
- * @author Peter Karich, 
+ * @author Peter Karich,
  */
 public class MyTBitSet implements MyBitSet {
 
     private final TIntHashSet tHash;
 
     public MyTBitSet(int no) {
-        tHash = new TIntHashSet(no);
+        tHash = new TIntHashSet(no, 0.7f, -1);
     }
 
     public MyTBitSet() {
@@ -56,7 +57,20 @@ public class MyTBitSet implements MyBitSet {
     }
 
     @Override
-    public void ensureCapacity(int size) {
+    public void ensureCapacity(int index) {
+    }
+
+    @Override
+    public void copyTo(MyBitSet bs) {
+        bs.clear();
+        if (bs instanceof MyTBitSet) {
+            ((MyTBitSet) bs).tHash.addAll(this.tHash);
+        } else {
+            TIntIterator iter = tHash.iterator();
+            while (iter.hasNext()) {
+                bs.add(iter.next());
+            }
+        }
     }
 
     @Override

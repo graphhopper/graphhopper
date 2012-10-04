@@ -16,6 +16,8 @@
 package de.jetsli.graph.storage;
 
 import de.jetsli.graph.util.DistanceCalc;
+import de.jetsli.graph.util.Helper;
+import java.io.File;
 import java.util.Random;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -25,6 +27,8 @@ import org.junit.Test;
  * @author Peter Karich
  */
 public class Location2IDQuadtreeTest {
+
+    String location = "./target/tmp";
 
     public Location2IDIndex createIndex(Graph g, int resolution) {
         return new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(resolution);
@@ -56,16 +60,58 @@ public class Location2IDQuadtreeTest {
     }
 
     @Test
-    public void testSinglePoints8() {
+    public void testSimpleGraph2() {
+        //  6         4
+        //  5       
+        //          6
+        //  4                5
+        //  3
+        //  2      1  
+        //  1            3
+        //  0      2      
+        // -1   0
+        //
+        //     -2 -1 0 1 2 3 4
+        Graph g = createGraph();
+        g.setNode(0, -1, -2);
+        g.setNode(1, 2, -1);
+        g.setNode(2, 0, 1);
+        g.setNode(3, 1, 2);
+        g.setNode(4, 6, 1);
+        g.setNode(5, 4, 4);
+        g.setNode(6, 4.5, -0.5);
+        g.edge(0, 1, 3.5, true);
+        g.edge(0, 2, 2.5, true);
+        g.edge(2, 3, 1, true);
+        g.edge(3, 4, 3.2, true);
+        g.edge(1, 4, 2.4, true);
+        g.edge(3, 5, 1.5, true);
+
+        Location2IDIndex idx = createIndex(g, 28);
+        assertEquals(4, idx.findID(5, 2));
+        assertEquals(3, idx.findID(1.5, 2));
+        assertEquals(0, idx.findID(-1, -1));
+        assertEquals(6, idx.findID(4, 0));
+        assertEquals(6, idx.findID(4, -2));
+        // 4 is wrong!
+        assertEquals(6, idx.findID(4, 1));
+        assertEquals(5, idx.findID(3, 3));
+    }
+
+    @Test
+    public void testSinglePoints120() {
         Graph g = createSampleGraph();
-        Location2IDIndex idx = createIndex(g, 8);
+        Location2IDIndex idx = createIndex(g, 120);
 
         // maxWidth is ~555km and with size==8 it will be exanded to 4*4 array => maxRasterWidth==555/4
         // assertTrue(idx.getMaxRasterWidthKm() + "", idx.getMaxRasterWidthKm() < 140);
         assertEquals(1, idx.findID(1.637, 2.23));
-        assertEquals(9, idx.findID(3.649, 1.375));
+        assertEquals(10, idx.findID(3.649, 1.375));
         assertEquals(9, idx.findID(3.3, 2.2));
-        assertEquals(9, idx.findID(3.0, 1.5));
+        assertEquals(6, idx.findID(3.0, 1.5));
+
+        assertEquals(10, idx.findID(3.8, 0));
+        assertEquals(10, idx.findID(3.8466, 0.021));
     }
 
     @Test
@@ -73,15 +119,13 @@ public class Location2IDQuadtreeTest {
         Graph g = createSampleGraph();
         int locs = g.getNodes();
 
-        Location2IDIndex memoryEfficientIndex = createIndex(g, 32);
+        Location2IDIndex memoryEfficientIndex = createIndex(g, 120);
         // if we would use less array entries then some points gets the same key so avoid that for this test
         // e.g. for 16 we get "expected 6 but was 9" i.e 6 was overwritten by node j9 which is a bit closer to the grid center        
         // go through every point of the graph if all points are reachable
         for (int i = 0; i < locs; i++) {
             double lat = g.getLatitude(i);
             double lon = g.getLongitude(i);
-            //System.out.println(key + " " + BitUtil.toBitString(key) + " " + lat + "," + lon);
-            //System.out.println(i + " -> " + (float) lat + "\t," + (float) lon);
             assertEquals("nodeId:" + i + " " + (float) lat + "," + (float) lon,
                     i, memoryEfficientIndex.findID(lat, lon));
         }
@@ -102,8 +146,9 @@ public class Location2IDQuadtreeTest {
             double newLon = g.getLongitude(newId);
             float newDist = (float) dist.calcDistKm(lat, lon, newLat, newLon);
 
-            // conceptual limitation see testSinglePoints32            
-            if (i == 20 || i == 50)
+            // conceptual limitation where we are stuck in a blind alley limited
+            // to the current tile
+            if (i == 6 || i == 36 || i == 90 || i == 96)
                 continue;
 
             assertTrue(i + " orig:" + (float) lat + "," + (float) lon
@@ -120,31 +165,39 @@ public class Location2IDQuadtreeTest {
 
         // 10 or 6
         assertEquals(10, idx.findID(3.649, 1.375));
-
         assertEquals(10, idx.findID(3.8465748, 0.021762699));
+        assertEquals(6, idx.findID(2.485, 1.373));
+        assertEquals(0, idx.findID(0.64628404, 0.53006625));
+    }
 
-        // conceptual limitation for empty area and blind alley situations
-        // see testGrid iteration => (i)
-        // (20) we do not reach the 'hidden' (but more correct/close) node g6 instead we'll get e4
-        // assertEquals(6, idx.findID(2.485, 1.373));
-
-        // (50) we get 4 instead
-        // assertEquals(0, idx.findID(0.64628404, 0.53006625));
+    @Test
+    public void testNormedDist() {
+        Location2IDQuadtree index = new Location2IDQuadtree(createGraph(), new RAMDirectory());
+        index.initAlgo(5, 6);
+        assertEquals(1, index.normedDist(0, 1), 1e-6);
+        assertEquals(2, index.normedDist(0, 7), 1e-6);
+        assertEquals(2, index.normedDist(7, 2), 1e-6);
+        assertEquals(1, index.normedDist(7, 1), 1e-6);
+        assertEquals(4, index.normedDist(13, 25), 1e-6);
+        assertEquals(8, index.normedDist(15, 25), 1e-6);
     }
 
     @Test
     public void testNoErrorOnEdgeCase_lastIndex() {
         int locs = 10000;
-        Graph g = new MMapGraph(locs).createNew();
+        Helper.deleteDir(new File(location));
+
+        Graph g = new GraphStorage(new MMapDirectory(location)).createNew(locs);
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++) {
             g.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
         }
         createIndex(g, 200);
+        Helper.deleteDir(new File(location));
     }
 
     public static Graph createGraph() {
-        return new MemoryGraphSafe(200);
+        return new GraphStorage(new RAMDirectory()).createNew(200);
         // return new MMapGraph(200).createNew();
     }
 

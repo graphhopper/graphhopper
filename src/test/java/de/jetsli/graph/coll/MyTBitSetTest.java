@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Copyright 2012 Peter Karich info@jetsli.de
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,29 +15,30 @@
  */
 package de.jetsli.graph.coll;
 
+import static org.junit.Assert.*;
+
 /**
- * Wrapper interface for different implementations like OpenBitset, BitSet, ...
  *
- * Supports only integer value indices.
- *
- * @author Peter Karich,
+ * @author Peter Karich
  */
-public interface MyBitSet {
+public class MyTBitSetTest extends AbstractMyBitSetTest {
 
-    boolean contains(int index);
+    @Override
+    public MyBitSet createBitSet(int no) {
+        return new MyTBitSet(no);
+    }
 
-    void add(int index);
+    @Override
+    public void testNext() {
+        // not supported (yet) -> due to sorting
+    }
 
-    int getCardinality();
-
-    void clear();
-
-    /**
-     * Ensures that the specified index is valid 
-     */
-    void ensureCapacity(int index);
-
-    int next(int index);
-
-    void copyTo(MyBitSet bs);
+    @Override
+    public void testToString() {
+        // unsorted output!
+        MyBitSet bs = createBitSet(100);
+        bs.add(12);
+        bs.add(1);
+        assertEquals("{12,1}", bs.toString());
+    }
 }

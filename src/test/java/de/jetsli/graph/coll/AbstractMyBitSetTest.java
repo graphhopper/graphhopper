@@ -15,16 +15,43 @@
  */
 package de.jetsli.graph.coll;
 
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *
- * @author Peter Karich, 
+ * @author Peter Karich,
  */
 public abstract class AbstractMyBitSetTest {
 
     public abstract MyBitSet createBitSet(int no);
+
+    @Test
+    public void testCopy() {
+        MyBitSet bs = createBitSet(100);
+        bs.add(100);
+        bs.add(70);
+        bs.add(30);        
+        MyBitSet copyBS = createBitSet(10);
+        copyBS.add(20);
+        copyBS.add(40);
+        bs.copyTo(copyBS);
+        assertFalse(copyBS.contains(20));
+        assertTrue(copyBS.contains(30));
+        assertFalse(copyBS.contains(40));
+        assertTrue(copyBS.contains(70));
+        assertFalse(copyBS.contains(0));
+        assertFalse(copyBS.contains(91));
+        assertFalse(copyBS.contains(90));
+        assertTrue(copyBS.contains(100));
+        
+        bs = createBitSet(100);
+        bs.add(0);
+        copyBS = createBitSet(10);        
+        bs.copyTo(copyBS);
+        assertTrue(copyBS.contains(0));
+        assertFalse(copyBS.contains(1));
+    }
 
     @Test
     public void testToString() {

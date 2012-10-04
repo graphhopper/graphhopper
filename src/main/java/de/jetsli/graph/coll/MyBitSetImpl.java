@@ -52,4 +52,19 @@ public class MyBitSetImpl extends BitSet implements MyBitSet {
     public int next(int index) {
         return super.nextSetBit(index);
     }
+
+    @Override
+    public void copyTo(MyBitSet bs) {
+        bs.clear();
+        if (bs instanceof MyBitSetImpl) {
+            ((MyBitSetImpl) bs).or(this);
+        } else {
+            int len = size();
+            bs.ensureCapacity(len);
+            for (int index = super.nextSetBit(0); index >= 0;
+                    index = super.nextSetBit(index + 1)) {
+                bs.add(index);
+            }
+        }
+    }
 }

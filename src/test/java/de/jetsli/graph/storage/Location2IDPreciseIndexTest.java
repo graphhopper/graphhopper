@@ -48,9 +48,10 @@ public class Location2IDPreciseIndexTest {
     public void tearDown() {
         Helper.deleteDir(new File(location));
     }
+
     @Test
     public void testSimpleGraph() {
-        //  6      4
+        //  6          4
         //  5       
         //          6
         //  4                5
@@ -154,12 +155,15 @@ public class Location2IDPreciseIndexTest {
     @Test
     public void testNoErrorOnEdgeCase_lastIndex() {
         int locs = 10000;
-        Graph g = new MMapGraph(locs).createNew();
+        Helper.deleteDir(new File(location));
+
+        Graph g = new GraphStorage(new MMapDirectory(location)).createNew(locs);
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++) {
             g.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
         }
         createIndex(g, 200);
+        Helper.deleteDir(new File(location));
     }
 
     @Test

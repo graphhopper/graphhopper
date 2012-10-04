@@ -18,12 +18,12 @@ package de.jetsli.graph.storage;
 import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.coll.MyTBitSet;
-import de.jetsli.graph.geohash.SpatialKeyAlgo;
+import de.jetsli.graph.geohash.KeyAlgo;
+import de.jetsli.graph.geohash.LinearKeyAlgo;
 import de.jetsli.graph.util.*;
 import de.jetsli.graph.util.shapes.BBox;
 import de.jetsli.graph.util.shapes.CoordTrig;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,14 +38,14 @@ import org.slf4j.LoggerFactory;
  */
 public class Location2IDQuadtree implements Location2IDIndex {
 
-    private final static int MAGIC_INT = Integer.MAX_VALUE / 12305;
+    private final static int MAGIC_INT = Integer.MAX_VALUE / 12306;
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private SpatialKeyAlgo algo;
+    private KeyAlgo algo;
     protected DistanceCalc dist = new DistanceCosProjection();
     private DataAccess index;
     private double maxNormRasterWidthKm;
-    private int size;
     private Graph g;
+    private int lonSize, latSize;
 
     public Location2IDQuadtree(Graph g, Directory dir) {
         this.g = g;
@@ -62,7 +62,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     }
 
     public int getCapacity() {
-        return size;
+        return (int) (index.capacity() / 4);
     }
 
     /**
@@ -75,13 +75,14 @@ public class Location2IDQuadtree implements Location2IDIndex {
         if (index.loadExisting()) {
             if (index.getHeader(0) != MAGIC_INT)
                 throw new IllegalStateException("incorrect loc2id index version");
-            int bits = index.getHeader(1);
-            int checksum = index.getHeader(2);
+            int lat = index.getHeader(1);
+            int lon = index.getHeader(2);
+            int checksum = index.getHeader(3);
             if (checksum != g.getNodes())
                 throw new IllegalStateException("index was created from a different graph with "
                         + checksum + ". Current nodes:" + g.getNodes());
-            size = (int) (index.capacity() / 4);
-            initAlgo(bits);
+
+            initAlgo(lat, lon);
             return true;
         }
         return false;
@@ -98,41 +99,37 @@ public class Location2IDQuadtree implements Location2IDIndex {
      */
     @Override
     public Location2IDIndex prepareIndex(int _size) {
-        int bits = initBuffer(_size);
-        initAlgo(bits);
+        initBuffer(_size);
+        initAlgo(latSize, lonSize);
         StopWatch sw = new StopWatch().start();
-        MyBitSet filledIndices = fillQuadtree(size);
+        MyBitSet filledIndices = fillQuadtree(latSize * lonSize);
         int fillQT = filledIndices.getCardinality();
         float res1 = sw.stop().getSeconds();
         sw = new StopWatch().start();
         int counter = fillEmptyIndices(filledIndices);
-        logger.info("filled quadtree index array in " + res1 + "s. size is " + size
+        logger.info("filled quadtree index array in " + res1 + "s. size is " + getCapacity()
                 + " (" + fillQT + "). filled empty " + counter + " in " + sw.stop().getSeconds() + "s");
         return this;
     }
 
-    private int initBuffer(int _size) {
-        size = _size;
-        int bits = (int) (Math.log(size) / Math.log(2)) + 1;
-        size = 1 << bits;
-        int x = (int) Math.sqrt(size);
-        if (x * x < size) {
-            x++;
-            size = x * x;
-        }
+    private void initBuffer(int size) {
+        latSize = lonSize = (int) Math.sqrt(size);
+        if (latSize * lonSize < size)
+            lonSize++;
 
         // avoid default big segment size and use one segment only:
-        index.setSegmentSize(size * 4);
-        index.createNew(size * 4);
-        return bits;
+        index.setSegmentSize(latSize * lonSize * 4);
+        index.createNew(latSize * lonSize * 4);
     }
 
-    private void initAlgo(int bits) {
+    void initAlgo(int lat, int lon) {
+        this.latSize = lat;
+        this.lonSize = lon;
         BBox b = g.getBounds();
-        logger.info("bounds:" + b + ", bits:" + bits + ", calc:" + dist.toString());
-        algo = new SpatialKeyAlgo(bits).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
+        logger.info("bounds:" + b + ", latSize:" + lat + ", lonSize:" + lon + ", calc:" + dist.toString());
+        algo = new LinearKeyAlgo(lat, lon).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
         maxNormRasterWidthKm = dist.normalizeDist(Math.max(dist.calcDistKm(b.minLat, b.minLon, b.minLat, b.maxLon),
-                dist.calcDistKm(b.minLat, b.minLon, b.maxLat, b.minLon)) / Math.sqrt(size));
+                dist.calcDistKm(b.minLat, b.minLon, b.maxLat, b.minLon)) / Math.sqrt(getCapacity()));
 
         // as long as we have "dist < PI*R/2" it is save to compare the normalized distances instead of the real
         // distances. because sin(x) is only monotonic increasing for x <= PI/2 (and positive for x >= 0)
@@ -173,101 +170,78 @@ public class Location2IDQuadtree implements Location2IDIndex {
     }
 
     private int fillEmptyIndices(MyBitSet filledIndices) {
-        // 3. fill empty indices with points close to them to return correct id's for find()!
-        final int maxSearch = 10;
-        int counter = 0;
-        List<Edge> list = new ArrayList<Edge>();
-        for (int mainKey = 0; mainKey < size; mainKey++) {
-//            if (mainKey % 100000 == 0)
-//                logger.info("mainKey:" + mainKey);
-            final CoordTrig mainCoord = new CoordTrig();
-            algo.decode(mainKey, mainCoord);
-            if (filledIndices.contains(mainKey))
-                continue;
-
-            counter++;
-            list.clear();
-            // check the quadtree
-            for (int keyOffset = 1; keyOffset < maxSearch || list.isEmpty(); keyOffset++) {
-                // search forward and backwards
-                for (int i = -1; i < 2; i += 2) {
-                    int tmpKey = mainKey + i * keyOffset;
-                    if (tmpKey < 0 || tmpKey >= size) {
-                        if (keyOffset >= size)
-                            throw new IllegalStateException("couldn't find any node!? " + tmpKey + " " + keyOffset + " " + size);
-
-                        continue;
+        int len = latSize * lonSize;
+        DataAccess indexCopy = new RAMDataAccess();
+        MyBitSet indicesCopy = new MyBitSetImpl(len);
+        int initializedCounter = filledIndices.getCardinality();
+        // fan out initialized entries to avoid "nose-artifacts"
+        // we 1. do not use the same index for check and set and iterate until all indices are set
+        // and 2. use a taken-from array to decide which of the colliding should be prefered
+        int[] takenFrom = new int[len];
+        Arrays.fill(takenFrom, -1);
+        for (int i = filledIndices.next(0); i >= 0; i = filledIndices.next(i + 1)) {
+            takenFrom[i] = i;
+        }
+        int tmp = initializedCounter;
+        while (initializedCounter < len) {
+            index.copyTo(indexCopy);
+            filledIndices.copyTo(indicesCopy);
+            initializedCounter = filledIndices.getCardinality();
+            for (int i = 0; i < len; i++) {
+                int to = -1, from = -1;
+                if (indicesCopy.contains(i)) {
+                    // check change "initialized to empty"                    
+                    if ((i + 1) % lonSize != 0 && !indicesCopy.contains(i + 1)) {
+                        // set right from current
+                        from = i;
+                        to = i + 1;
+                    } else if (i + lonSize < len && !indicesCopy.contains(i + lonSize)) {
+                        // set below from current
+                        from = i;
+                        to = i + lonSize;
+                    }
+                } else {
+                    // check change "empty to initialized"
+                    if ((i + 1) % lonSize != 0 && indicesCopy.contains(i + 1)) {
+                        // set from right
+                        from = i + 1;
+                        to = i;
+                    } else if (i + lonSize < len && indicesCopy.contains(i + lonSize)) {
+                        // set from below
+                        from = i + lonSize;
+                        to = i;
+                    }
+                }
+                if (to >= 0) {
+                    if (takenFrom[to] >= 0) {
+                        // takenFrom[to] == to -> special case for normedDist == 0
+                        if (takenFrom[to] == to || 
+                                normedDist(from, to) >= normedDist(takenFrom[to], to))
+                            continue;
                     }
 
-                    boolean ret = filledIndices.contains(tmpKey);
-                    if (ret) {
-                        int tmpId = index.getInt(tmpKey);
-                        double lat = g.getLatitude(tmpId);
-                        double lon = g.getLongitude(tmpId);
-                        double tmpDist = this.dist.calcNormalizedDist(mainCoord.lat, mainCoord.lon, lat, lon);
-                        list.add(new Edge(tmpId, tmpDist));
-                    }
+                    index.setInt(to, indexCopy.getInt(from));
+                    takenFrom[to] = takenFrom[from];
+                    filledIndices.add(to);
+                    initializedCounter++;
                 }
             }
 
-//            if (list.isEmpty())
-//                throw new IllegalStateException("no node found in quadtree which is close to id "
-//                        + mainKey + " " + mainCoord + " size:" + size);
-//            Collections.sort(list, new Comparator<DistEntry>() {
-//
-//                @Override public int compare(DistEntry o1, DistEntry o2) {
-//                    return Double.compare(o1.distance, o2.distance);
-//                }
-//            });
-
-            // choose the best we have so far - no need to sort - just select
-            Edge tmp = list.get(0);
-            for (int i = 1; i < list.size(); i++) {
-                if (tmp.weight > list.get(i).weight)
-                    tmp = list.get(i);
-            }
-            final Edge closestNode = tmp;
-
-            // use only one bitset for the all iterations so we do not check the same nodes again
-            final MyBitSet bitset = new MyTBitSet(maxSearch * 4);
-            // now explore the graph
-            for (final Edge de : list) {
-                final BooleanRef onlyOneDepth = new BooleanRef();
-                new XFirstSearch() {
-                    @Override protected MyBitSet createBitSet(int size) {
-                        return bitset;
-                    }
-
-                    @Override protected boolean goFurther(int nodeId) {
-                        if (nodeId == de.node)
-                            return true;
-
-                        double currLat = g.getLatitude(nodeId);
-                        double currLon = g.getLongitude(nodeId);
-                        double d = dist.calcNormalizedDist(currLat, currLon, mainCoord.lat, mainCoord.lon);
-                        if (d < closestNode.weight) {
-                            closestNode.weight = d;
-                            closestNode.node = nodeId;
-                        }
-
-                        if (onlyOneDepth.value) {
-                            onlyOneDepth.value = false;
-                            return true;
-                        }
-                        return false;
-                    }
-                }.start(g, de.node, false);
-            }
-
-            if (mainKey < 0 || mainKey >= size)
-                throw new IllegalStateException("Problem with mainKey:" + mainKey + " " + mainCoord + " size:" + size);
-
-            index.setInt(mainKey, closestNode.node);
-            // do not forget this to speed up inner loop
-            filledIndices.add(mainKey);
+            if (initializedCounter == 0)
+                throw new IllegalStateException("at least one entry has to be != null, which should have happened in initIndex");
         }
 
-        return counter;
+        return initializedCounter - tmp;
+    }
+
+    double normedDist(int from, int to) {
+        int fromX = from % lonSize;
+        int fromY = from / lonSize;
+        int toX = to % lonSize;
+        int toY = to / lonSize;        
+        int dx = (toX - fromX);
+        int dy = (toY - fromY);
+        return dx * dx + dy * dy;
     }
 
     /**
@@ -328,8 +302,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
     public void flush() {
         index.setHeader(0, MAGIC_INT);
-        index.setHeader(1, algo.getBits());
-        index.setHeader(2, g.getNodes());
+        index.setHeader(1, latSize);
+        index.setHeader(2, lonSize);
+        index.setHeader(3, g.getNodes());
         index.flush();
     }
 

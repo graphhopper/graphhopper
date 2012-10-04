@@ -15,8 +15,8 @@
  */
 package de.jetsli.graph.storage;
 
-import de.jetsli.graph.util.DistanceCosProjection;
 import de.jetsli.graph.util.DistanceCalc;
+import de.jetsli.graph.util.DistanceCosProjection;
 import de.jetsli.graph.util.shapes.Circle;
 
 /**
