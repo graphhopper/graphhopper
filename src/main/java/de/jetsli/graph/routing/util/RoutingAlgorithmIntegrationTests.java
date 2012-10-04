@@ -32,6 +32,7 @@ import de.jetsli.graph.storage.Location2IDIndex;
 import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.RAMDirectory;
+import de.jetsli.graph.util.DistanceCalc;
 import de.jetsli.graph.util.StopWatch;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -57,15 +58,21 @@ public class RoutingAlgorithmIntegrationTests {
             index = new Location2IDQuadtree(unterfrankenGraph, new RAMDirectory("loc2idIndex", false));
         // Location2IDPreciseIndex index = new Location2IDPreciseIndex(unterfrankenGraph, dir);        
         // Location2IDFullIndex index = new Location2IDFullIndex(graph);
-        if (!index.loadExisting()) {            
+        if (!index.loadExisting()) {
             index.prepareIndex(200000);
             index.flush();
         }
         idx = index;
         logger.info(index.getClass().getSimpleName() + " index. Size:" + idx.calcMemInMB() + " MB, took:" + sw.stop().getSeconds());
     }
-    
+
     public void start() {
+        testIndex();
+        testAlgos();
+    }
+
+    void testAlgos() {
+
         TestAlgoCollector testCollector = new TestAlgoCollector();
         RoutingAlgorithm[] algos = createAlgos(unterfrankenGraph);
         for (RoutingAlgorithm algo : algos) {
@@ -77,7 +84,7 @@ public class RoutingAlgorithmIntegrationTests {
             testCollector.assertDistance(algo, idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125.5666, 2135);
             testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 132.1662, 2138);
             testCollector.assertDistance(algo, idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73.05989, 1229);
-            
+
             System.out.println("unterfranken " + algo + ": " + (testCollector.list.size() - failed) + " failed");
         }
 
@@ -195,5 +202,20 @@ public class RoutingAlgorithmIntegrationTests {
             if (i % 20 == 0)
                 logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run");// (" + p + ")");
         }
+    }
+
+    void testIndex() {
+        // query outside        
+        double qLat = 49.4000;
+        double qLon = 9.9690;
+        int id = idx.findID(qLat, qLon);
+        double foundLat = unterfrankenGraph.getLatitude(id);
+        double foundLon = unterfrankenGraph.getLongitude(id);
+        double dist = new DistanceCalc().calcDistKm(qLat, qLon, foundLat, foundLon);
+        double expectedDist = 5.5892;
+        if (Math.abs(dist - expectedDist) > 1e-4)
+            System.out.println("ERROR in test index. queried lat,lon=" + (float) qLat + "," + (float) qLon
+                    + ", but was " + (float) foundLat + "," + (float) foundLon
+                    + "\n   expected distance:" + expectedDist + ", but was:" + dist);
     }
 }
