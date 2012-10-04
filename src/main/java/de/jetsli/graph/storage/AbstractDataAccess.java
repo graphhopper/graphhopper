@@ -70,7 +70,7 @@ public abstract class AbstractDataAccess implements DataAccess {
     }
 
     @Override
-    public void copyTo(DataAccess da) {
+    public DataAccess copyTo(DataAccess da) {
         for (int h = 0; h < header.length; h++) {
             da.setHeader(h, getHeader(h));
         }
@@ -79,6 +79,7 @@ public abstract class AbstractDataAccess implements DataAccess {
         for (long l = 0; l < max; l++) {
             da.setInt(l, getInt(l));
         }
+        return da;
     }
 
     @Override

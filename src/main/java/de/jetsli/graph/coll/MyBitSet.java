@@ -39,5 +39,8 @@ public interface MyBitSet {
 
     int next(int index);
 
-    void copyTo(MyBitSet bs);
+    /**
+     * @return the specified MyBitSet bs
+     */
+    MyBitSet copyTo(MyBitSet bs);
 }

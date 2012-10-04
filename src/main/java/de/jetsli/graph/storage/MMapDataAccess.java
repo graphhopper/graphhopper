@@ -64,13 +64,13 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void copyTo(DataAccess da) {
+    public DataAccess copyTo(DataAccess da) {
         // if(da instanceof MMapDataAccess) {
         // TODO make copying into mmap a lot faster via bytebuffer
         // also copying into RAMDataAccess could be faster via bytebuffer
         // is a flush necessary then?
         // }
-        super.copyTo(da);
+        return super.copyTo(da);
     }
 
     /**

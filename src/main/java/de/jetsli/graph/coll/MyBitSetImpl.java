@@ -54,10 +54,10 @@ public class MyBitSetImpl extends BitSet implements MyBitSet {
     }
 
     @Override
-    public void copyTo(MyBitSet bs) {
+    public MyBitSet copyTo(MyBitSet bs) {
         bs.clear();
         if (bs instanceof MyBitSetImpl) {
-            ((MyBitSetImpl) bs).or(this);
+            ((MyBitSetImpl) bs).or(this);            
         } else {
             int len = size();
             bs.ensureCapacity(len);
@@ -66,5 +66,6 @@ public class MyBitSetImpl extends BitSet implements MyBitSet {
                 bs.add(index);
             }
         }
+        return bs;
     }
 }

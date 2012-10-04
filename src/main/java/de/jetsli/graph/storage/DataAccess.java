@@ -36,7 +36,7 @@ public interface DataAccess extends Storable {
 
     void ensureCapacity(long bytes);
     
-    void copyTo(DataAccess da);
+    DataAccess copyTo(DataAccess da);
     
     DataAccess setSegmentSize(int bytes);
     

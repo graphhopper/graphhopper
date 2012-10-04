@@ -19,6 +19,7 @@ import de.jetsli.graph.coll.MyBitSet;
 import de.jetsli.graph.coll.MyBitSetImpl;
 import de.jetsli.graph.routing.util.CarStreetType;
 import de.jetsli.graph.util.EdgeIterator;
+import de.jetsli.graph.util.GraphUtility;
 import de.jetsli.graph.util.shapes.BBox;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -372,21 +373,26 @@ public class GraphStorage implements Graph, Storable {
         }
     }
 
-    // TODO remove this method from interface and use copy instead!
-    @Override
-    public Graph clone() {
-        return copyTo(new RAMDirectory());
-    }
-
     protected GraphStorage createThis(Directory dir) {
         return new GraphStorage(dir);
+    }
+
+    @Override
+    public Graph copyTo(Graph g) {
+        if (g instanceof GraphStorage) {
+            return _copyTo((GraphStorage) g);
+        } else
+            return GraphUtility.copyTo(this, g);
     }
 
     public Graph copyTo(Directory dir) {
         if (this.dir == dir)
             throw new IllegalStateException("cannot copy graph into the same directory!");
 
-        GraphStorage clonedG = createThis(dir);
+        return _copyTo(createThis(dir));
+    }
+
+    public Graph _copyTo(GraphStorage clonedG) {
         edges.copyTo(clonedG.edges);
         clonedG.edgeCount = edgeCount;
         clonedG.edgeEntrySize = edgeEntrySize;
@@ -394,7 +400,10 @@ public class GraphStorage implements Graph, Storable {
         clonedG.nodeCount = nodeCount;
         clonedG.nodeEntrySize = nodeEntrySize;
         clonedG.bounds = bounds;
-        deletedNodes = null;
+        if (deletedNodes == null)
+            clonedG.deletedNodes = null;
+        else
+            clonedG.deletedNodes = deletedNodes.copyTo(new MyBitSetImpl());
         return clonedG;
     }
 

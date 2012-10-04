@@ -33,6 +33,7 @@ import de.jetsli.graph.storage.Location2IDQuadtree;
 import de.jetsli.graph.storage.PriorityGraph;
 import de.jetsli.graph.storage.RAMDirectory;
 import de.jetsli.graph.util.DistanceCalc;
+import de.jetsli.graph.util.GraphUtility;
 import de.jetsli.graph.util.StopWatch;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -106,7 +107,7 @@ public class RoutingAlgorithmIntegrationTests {
     }
 
     static RoutingAlgorithm createPrioDijkstraBi(Graph g) {
-        g = g.clone();
+        g = g.copyTo(new GraphStorage(new RAMDirectory()));
         new PrepareRoutingShortcuts((PriorityGraph) g).doWork();
         DijkstraBidirectionRef dijkstraBi = new DijkstraBidirectionRef(g) {
             @Override public String toString() {
@@ -123,7 +124,7 @@ public class RoutingAlgorithmIntegrationTests {
     }
 
     static RoutingAlgorithm createPrioAStarBi(Graph g) {
-        g = g.clone();
+        g = g.copyTo(new GraphStorage(new RAMDirectory()));
         new PrepareRoutingShortcuts((PriorityGraph) g).doWork();
         AStarBidirection astar = new AStarBidirection(g) {
             @Override public String toString() {

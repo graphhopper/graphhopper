@@ -61,7 +61,7 @@ public class MyTBitSet implements MyBitSet {
     }
 
     @Override
-    public void copyTo(MyBitSet bs) {
+    public MyBitSet copyTo(MyBitSet bs) {
         bs.clear();
         if (bs instanceof MyTBitSet) {
             ((MyTBitSet) bs).tHash.addAll(this.tHash);
@@ -71,6 +71,7 @@ public class MyTBitSet implements MyBitSet {
                 bs.add(iter.next());
             }
         }
+        return bs;
     }
 
     @Override

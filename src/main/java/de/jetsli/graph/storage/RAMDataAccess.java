@@ -55,7 +55,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void copyTo(DataAccess da) {
+    public DataAccess copyTo(DataAccess da) {
         if (da instanceof RAMDataAccess) {
             RAMDataAccess rda = (RAMDataAccess) da;
             // TODO we could reuse rda segments!
@@ -66,9 +66,10 @@ public class RAMDataAccess extends AbstractDataAccess {
             }
             rda.increaseFactor = increaseFactor;
             rda.setSegmentSize(segmentSize);
-            // do leave id, store and close unchanged
+            // leave id, store and close unchanged
+            return da;
         } else
-            super.copyTo(da);
+            return super.copyTo(da);
     }
 
     @Override
@@ -210,5 +211,5 @@ public class RAMDataAccess extends AbstractDataAccess {
         segmentSizeIntsPower = (int) (Math.log(segmentSize / 4) / Math.log(2));
         indexDivisor = segmentSize / 4 - 1;
         return this;
-    }      
+    }
 }

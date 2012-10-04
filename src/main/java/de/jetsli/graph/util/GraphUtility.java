@@ -24,7 +24,9 @@ import de.jetsli.graph.storage.Edge;
 import de.jetsli.graph.storage.Graph;
 import de.jetsli.graph.storage.GraphStorage;
 import de.jetsli.graph.storage.Location2IDPreciseIndex;
+import de.jetsli.graph.storage.MMapGraph;
 import de.jetsli.graph.storage.PriorityGraphStorage;
+import de.jetsli.graph.storage.RAMDirectory;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
@@ -267,7 +269,32 @@ public class GraphUtility {
                 sortedGraph.edge(newIndex, newEdgeIndex, eIter.distance(), eIter.flags());
             }
         }
-
         return sortedGraph;
+    }
+
+    public static Graph clone(Graph g) {
+        return g.copyTo(new GraphStorage(new RAMDirectory()).createNew(10));
+    }
+
+    /**
+     * @return the graph 'to'
+     */
+    // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
+    public static Graph copyTo(Graph from, Graph to) {
+        int len = from.getNodes();
+        // important to avoid creating two edges for edges with both directions
+        MyBitSet bitset = new MyBitSetImpl(len);
+        for (int old = 0; old < len; old++) {
+            bitset.add(old);
+            to.setNode(old, from.getLatitude(old), from.getLongitude(old));
+            EdgeIterator eIter = from.getOutgoing(old);
+            while (eIter.next()) {
+                int edgeNodeIndex = eIter.node();
+                if (bitset.contains(edgeNodeIndex))
+                    continue;
+                to.edge(old, edgeNodeIndex, eIter.distance(), eIter.flags());
+            }
+        }
+        return to;
     }
 }

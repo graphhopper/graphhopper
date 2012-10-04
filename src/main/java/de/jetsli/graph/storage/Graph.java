@@ -67,10 +67,11 @@ public interface Graph {
 
     EdgeIterator getOutgoing(int index);
     
-    // EdgeIterator getAllEdges();
-
-    Graph clone();
-
+    /**
+     * @return the specified graph g
+     */
+    Graph copyTo(Graph g);
+    
     /**
      * Schedule the deletion of the specified node until an optimize() call happens
      */

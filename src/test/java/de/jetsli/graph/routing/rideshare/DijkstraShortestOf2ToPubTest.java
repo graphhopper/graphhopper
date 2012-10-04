@@ -19,12 +19,15 @@ import de.jetsli.graph.routing.DijkstraBidirection;
 import de.jetsli.graph.routing.Path;
 import de.jetsli.graph.routing.RoutingAlgorithm;
 import de.jetsli.graph.storage.Graph;
+import de.jetsli.graph.storage.GraphStorage;
+import de.jetsli.graph.storage.RAMDirectory;
+import de.jetsli.graph.util.GraphUtility;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
  *
- * @author Peter Karich, 
+ * @author Peter Karich,
  */
 public class DijkstraShortestOf2ToPubTest {
 
@@ -34,7 +37,7 @@ public class DijkstraShortestOf2ToPubTest {
 
     @Test
     public void testCalcShortestPath() {
-        Graph g = DijkstraWhichToOneTest.matrixGraph.clone();
+        Graph g = GraphUtility.clone(DijkstraWhichToOneTest.matrixGraph);
         DijkstraShortestOf2ToPub d = new DijkstraShortestOf2ToPub(g);
         d.addPubTransportPoints(DijkstraWhichToOneTest.pubTransportPath);
         int from = 13;
@@ -47,7 +50,7 @@ public class DijkstraShortestOf2ToPubTest {
 
     @Test
     public void testCalcShortestPath2() {
-        Graph g = DijkstraWhichToOneTest.matrixGraph.clone();
+        Graph g = GraphUtility.clone(DijkstraWhichToOneTest.matrixGraph);
         DijkstraShortestOf2ToPub d = new DijkstraShortestOf2ToPub(g);
         d.addPubTransportPoints(DijkstraWhichToOneTest.pubTransportPath);
         int from = 13;
@@ -62,7 +65,7 @@ public class DijkstraShortestOf2ToPubTest {
     @Test
     public void testCalculateShortestPathWithSpecialFinishCondition() {
         int[] pubTransport = new int[]{20, 21, 31, 41, 51, 52, 62, 72};
-        Graph g = DijkstraWhichToOneTest.matrixGraph.clone();
+        Graph g = GraphUtility.clone(DijkstraWhichToOneTest.matrixGraph);
         g.edge(21, 31, 100, true);
         g.edge(31, 41, 100, true);
         g.edge(41, 51, 100, true);

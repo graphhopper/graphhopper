@@ -112,8 +112,11 @@ public abstract class AbstractGraphTester {
         Graph g = createGraph(11);
         g.edge(1, 2, 10, true);
         g.setNode(0, 12, 23);
+        g.setNode(1, 8, 13);
+        g.setNode(2, 2, 10);
+        g.setNode(3, 5, 9);
         g.edge(1, 3, 10, true);
-        Graph clone = g.clone();
+        Graph clone = g.copyTo(createGraph(5));
         assertEquals(g.getNodes(), clone.getNodes());
         assertEquals(count(g.getOutgoing(1)), count(clone.getOutgoing(1)));
         clone.edge(1, 4, 10, true);
