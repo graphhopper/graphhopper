@@ -8,8 +8,8 @@ ALGO=$2
 CLASS=$3
 
 if [ "x$CLASS" = "x" ]; then
-# CLASS=de.jetsli.graph.ui.MiniGraphUI
- CLASS=de.jetsli.graph.reader.OSMReader
+# CLASS=com.graphhopper.ui.MiniGraphUI
+ CLASS=com.graphhopper.reader.OSMReader
 fi
 
 if [ "x$ALGO" = "x" ]; then
@@ -89,7 +89,7 @@ fi
 if [ ! -d "$GRAPH" ]; then
   echo "## now creating graph $GRAPH (folder) from $OSM (file),  java opts=$JAVA_OPTS_IMPORT"
   echo "## HINT: put the osm on an external usb drive which should speed up import time"
-  $JAVA_HOME/bin/java $JAVA_OPTS_IMPORT -cp $JAR de.jetsli.graph.reader.OSMReader graph=$GRAPH osm=$OSM size=$SIZE
+  $JAVA_HOME/bin/java $JAVA_OPTS_IMPORT -cp $JAR com.graphhopper.reader.OSMReader graph=$GRAPH osm=$OSM size=$SIZE
 else
   echo "## using existing graph at $GRAPH"
 fi
