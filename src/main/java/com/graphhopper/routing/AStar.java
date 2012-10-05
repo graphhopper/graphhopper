@@ -37,19 +37,9 @@ import java.util.PriorityQueue;
 public class AStar extends AbstractRoutingAlgorithm {
 
     private DistanceCalc dist = new DistanceCosProjection();
-    private boolean useMap = true;
 
     public AStar(Graph g) {
         super(g);
-    }
-
-    /**
-     * @param useMap if false this algorithm will use less memory but will also be approx. 3 times
-     * slower.
-     */
-    public AStar setUseHelperMap(boolean useMap) {
-        this.useMap = useMap;
-        return this;
     }
 
     /**
@@ -65,9 +55,7 @@ public class AStar extends AbstractRoutingAlgorithm {
 
     @Override public Path calcPath(int from, int to) {
         MyBitSet closedSet = new MyBitSetImpl(graph.getNodes());
-        TIntObjectMap<AStarEdge> map = null;
-        if (useMap)
-            map = new TIntObjectHashMap<AStarEdge>();
+        TIntObjectMap<AStarEdge> map = new TIntObjectHashMap<AStarEdge>();
         PriorityQueue<AStarEdge> prioQueueOpenSet = new PriorityQueue<AStarEdge>();
         double toLat = graph.getLatitude(to);
         double toLon = graph.getLongitude(to);
@@ -83,16 +71,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                     continue;
 
                 double alreadyVisitedWeight = weightCalc.getWeight(iter) + currEdge.weightToCompare;
-                AStarEdge nEdge = null;
-                if (useMap)
-                    nEdge = map.get(neighborNode);
-                else
-                    for (AStarEdge e : prioQueueOpenSet) {
-                        if (e.node == neighborNode) {
-                            nEdge = e;
-                            break;
-                        }
-                    }
+                AStarEdge nEdge = map.get(neighborNode);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight) {
                     tmpLat = graph.getLatitude(neighborNode);
                     tmpLon = graph.getLongitude(neighborNode);
@@ -102,8 +81,7 @@ public class AStar extends AbstractRoutingAlgorithm {
 
                     if (nEdge == null) {
                         nEdge = new AStarEdge(neighborNode, distEstimation, alreadyVisitedWeight);
-                        if (useMap)
-                            map.put(neighborNode, nEdge);
+                        map.put(neighborNode, nEdge);
                     } else {
                         prioQueueOpenSet.remove(nEdge);
                         nEdge.weight = distEstimation;
