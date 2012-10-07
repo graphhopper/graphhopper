@@ -41,24 +41,52 @@ public class GraphStorage implements Graph, Storable {
     private static final float INT_DIST_FACTOR = 1000000f;
     private Directory dir;
     // edge memory layout: nodeA,nodeB,linkA,linkB,dist,flags
-    protected static final int I_NODEA = 0, I_NODEB = 1, I_LINKA = 2, I_LINKB = 3, I_FLAGS = 4, I_DIST = 5;
-    protected int edgeEntrySize = 6;
+    protected final int I_NODEA, I_NODEB, I_LINKA, I_LINKB, I_FLAGS, I_DIST;
+    protected int edgeEntrySize;
     protected DataAccess edges;
     protected int edgeCount;
     // node memory layout: edgeRef,lat,lon
-    protected static final int I_EDGE_REF = 0, I_LAT = 1, I_LON = 2;
-    protected int nodeEntrySize = 3;
+    protected final int I_EDGE_REF, I_LAT, I_LON;
+    protected int nodeEntrySize;
     protected DataAccess nodes;
     protected int nodeCount;
     private BBox bounds;
     // delete marker is not persistent!
     private MyBitSet deletedNodes;
+    private int edgeEntryIndex = -1, nodeEntryIndex = -1;
 
     public GraphStorage(Directory dir) {
         this.dir = dir;
         edges = dir.createDataAccess("edges");
         nodes = dir.createDataAccess("nodes");
         this.bounds = BBox.INVERSE.clone();
+
+        I_NODEA = nextEdgeEntryIndex();
+        I_NODEB = nextEdgeEntryIndex();
+        I_LINKA = nextEdgeEntryIndex();
+        I_LINKB = nextEdgeEntryIndex();
+        I_FLAGS = nextEdgeEntryIndex();
+        I_DIST = nextEdgeEntryIndex();
+
+        I_EDGE_REF = nextNodeEntryIndex();
+        I_LAT = nextNodeEntryIndex();
+        I_LON = nextNodeEntryIndex();
+        initNodeAndEdgeEntrySize();
+    }
+
+    protected final int nextEdgeEntryIndex() {
+        edgeEntryIndex++;
+        return edgeEntryIndex;
+    }
+
+    protected final int nextNodeEntryIndex() {
+        nodeEntryIndex++;
+        return nodeEntryIndex;
+    }
+
+    protected final void initNodeAndEdgeEntrySize() {
+        nodeEntrySize = nodeEntryIndex + 1;
+        edgeEntrySize = edgeEntryIndex + 1;
     }
 
     public Directory getDirectory() {
@@ -245,36 +273,39 @@ public class GraphStorage implements Graph, Storable {
     }
 
     public EdgeIterator getAllEdges() {
-        return new EdgeIterator() {
-            private long edgePointer = 0;
-            private int maxEdges = (edgeCount + 1) * edgeEntrySize;
+        return new AllEdgeIterator();
+    }
 
-            @Override
-            public boolean next() {
-                edgePointer += edgeEntrySize;
-                return edgePointer < maxEdges;
-            }
+    protected class AllEdgeIterator implements EdgeIterator {
 
-            @Override
-            public int fromNode() {
-                return edges.getInt(edgePointer + I_NODEA);
-            }
+        protected long edgePointer = 0;
+        private int maxEdges = (edgeCount + 1) * edgeEntrySize;
 
-            @Override
-            public int node() {
-                return edges.getInt(edgePointer + I_NODEB);
-            }
+        @Override
+        public boolean next() {
+            edgePointer += edgeEntrySize;
+            return edgePointer < maxEdges;
+        }
 
-            @Override
-            public double distance() {
-                return getDist(edgePointer);
-            }
+        @Override
+        public int fromNode() {
+            return edges.getInt(edgePointer + I_NODEA);
+        }
 
-            @Override
-            public int flags() {
-                return edges.getInt(edgePointer + I_FLAGS);
-            }
-        };
+        @Override
+        public int node() {
+            return edges.getInt(edgePointer + I_NODEB);
+        }
+
+        @Override
+        public double distance() {
+            return getDist(edgePointer);
+        }
+
+        @Override
+        public int flags() {
+            return edges.getInt(edgePointer + I_FLAGS);
+        }
     }
 
     @Override
@@ -373,7 +404,8 @@ public class GraphStorage implements Graph, Storable {
         }
     }
 
-    protected GraphStorage createThis(Directory dir) {
+    protected GraphStorage newThis(Directory dir) {
+        // no create here        
         return new GraphStorage(dir);
     }
 
@@ -389,7 +421,7 @@ public class GraphStorage implements Graph, Storable {
         if (this.dir == dir)
             throw new IllegalStateException("cannot copy graph into the same directory!");
 
-        return _copyTo(createThis(dir));
+        return _copyTo(newThis(dir));
     }
 
     public Graph _copyTo(GraphStorage clonedG) {

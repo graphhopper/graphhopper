@@ -18,8 +18,8 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.EdgeEntry;
-import com.graphhopper.storage.PriorityGraph;
-import com.graphhopper.storage.PriorityGraphStorage;
+import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -28,23 +28,23 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class PathPrioTest {
+public class Path4LevelTest {
 
-    PriorityGraph createGraph(int size) {
-        PriorityGraphStorage g = new PriorityGraphStorage(new RAMDirectory("priog", false));
+    LevelGraph createGraph(int size) {
+        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("levelgraph", false));
         g.createNew(size);
         return g;
     }
 
     @Test
     public void testNoExpand() {
-        PriorityGraph g = createGraph(20);
+        LevelGraph g = createGraph(20);
         g.edge(0, 1, 10, true);
         g.edge(1, 2, 10, true);
         g.edge(2, 3, 10, true);
         g.edge(3, 4, 10, true);
 
-        PathPrio path = new PathPrio(g, ShortestCalc.DEFAULT);
+        Path4Level path = new Path4Level(g, ShortestCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(3, 10);
         path.edgeFrom.prevEntry = new EdgeEntry(2, 10);
         path.edgeFrom.prevEntry.prevEntry = new EdgeEntry(1, 10);
@@ -57,16 +57,16 @@ public class PathPrioTest {
 
     @Test
     public void testExpand() {
-        PriorityGraph g = createGraph(20);
+        LevelGraph g = createGraph(20);
         g.edge(0, 1, 10, true);
         g.edge(1, 2, 10, true);
         g.edge(2, 3, 10, true);
 
-        g.setPriority(1, -1);
-        g.setPriority(2, -1);
+        g.setLevel(1, -1);
+        g.setLevel(2, -1);
         g.shortcut(0, 2, 20, CarStreetType.flagsDefault(true), 1);
 
-        PathPrio path = new PathPrio(g, ShortestCalc.DEFAULT);
+        Path4Level path = new Path4Level(g, ShortestCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(2, 20);
         path.edgeFrom.prevEntry = new EdgeEntry(0, 0);
         path.edgeTo = new EdgeEntry(2, 10);
@@ -77,17 +77,17 @@ public class PathPrioTest {
 
     @Test
     public void testExpandMultipleSkippedNodes() {
-        PriorityGraph g = createGraph(20);
+        LevelGraph g = createGraph(20);
         g.edge(0, 1, 10, true);
         g.edge(1, 2, 10, true);
         g.edge(2, 3, 10, true);
         g.edge(3, 4, 10, true);
 
-        g.setPriority(1, -1);
-        g.setPriority(2, -1);
+        g.setLevel(1, -1);
+        g.setLevel(2, -1);
         g.shortcut(0, 3, 30, CarStreetType.flagsDefault(true), 1);
 
-        PathPrio path = new PathPrio(g, ShortestCalc.DEFAULT);
+        Path4Level path = new Path4Level(g, ShortestCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(3, 30);
         path.edgeFrom.prevEntry = new EdgeEntry(0, 0);
         path.edgeTo = new EdgeEntry(3, 10);

@@ -18,7 +18,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.PriorityGraph;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
@@ -28,9 +28,9 @@ import gnu.trove.list.array.TIntArrayList;
 /**
  * @author Peter Karich,
  */
-public class PathPrio extends PathBidirRef {
+public class Path4Level extends PathBidirRef {
 
-    public PathPrio(Graph g, WeightCalculation weightCalculation) {
+    public Path4Level(Graph g, WeightCalculation weightCalculation) {
         super(g, weightCalculation);
     }
 
@@ -95,7 +95,7 @@ public class PathPrio extends PathBidirRef {
                 tmpIter.next();
 
             skip = node;
-            if (((PriorityGraph) g).getPriority(tmpIter.node()) >= 0 || tmpIter.node() == to)
+            if (((LevelGraph) g).getLevel(tmpIter.node()) >= 0 || tmpIter.node() == to)
                 break;
         }
 

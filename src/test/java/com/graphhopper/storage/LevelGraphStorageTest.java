@@ -15,7 +15,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.EdgePrioFilter;
+import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import static org.junit.Assert.*;
@@ -25,43 +25,43 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class PriorityGraphStorageTest extends AbstractGraphTester {
+public class LevelGraphStorageTest extends AbstractGraphTester {
 
     @Override
-    PriorityGraph createGraph(int size) {
-        PriorityGraphStorage g = new PriorityGraphStorage(new RAMDirectory("priog", false));
+    LevelGraph createGraph(int size) {
+        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("levelgraph", false));
         g.createNew(size);
         return g;
     }
 
     @Test
     public void testPriosWhileDeleting() {
-        PriorityGraph g = (PriorityGraph) createGraph(11);
+        LevelGraph g = (LevelGraph) createGraph(11);
         for (int i = 0; i < 20; i++) {
-            g.setPriority(i, i);
+            g.setLevel(i, i);
         }
         g.markNodeDeleted(10);
         g.optimize();
-        assertEquals(9, g.getPriority(9));
-        assertEquals(19, g.getPriority(10));
-        assertEquals(11, g.getPriority(11));
+        assertEquals(9, g.getLevel(9));
+        assertEquals(19, g.getLevel(10));
+        assertEquals(11, g.getLevel(11));
     }
 
     @Test
     public void testPrios() {
-        PriorityGraph g = createGraph(20);
-        assertEquals(0, g.getPriority(10));
+        LevelGraph g = createGraph(20);
+        assertEquals(0, g.getLevel(10));
 
-        g.setPriority(10, 100);
-        assertEquals(100, g.getPriority(10));
+        g.setLevel(10, 100);
+        assertEquals(100, g.getLevel(10));
 
-        g.setPriority(30, 100);
-        assertEquals(100, g.getPriority(30));
+        g.setLevel(30, 100);
+        assertEquals(100, g.getLevel(30));
     }
 
     @Test
     public void testEdgeFilter() {
-        final PriorityGraph g = createGraph(20);
+        final LevelGraph g = createGraph(20);
         g.edge(0, 1, 10, true);
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);
@@ -69,10 +69,10 @@ public class PriorityGraphStorageTest extends AbstractGraphTester {
 
         // shortcut
         g.edge(0, 4, 40, true);
-        g.setPriority(0, 1);
-        g.setPriority(4, 1);
+        g.setLevel(0, 1);
+        g.setLevel(4, 1);
 
-        EdgeIterator iter = new EdgePrioFilter(g).doFilter(g.getEdges(0));
+        EdgeIterator iter = new EdgeLevelFilter(g).doFilter(g.getEdges(0));
         assertEquals(1, GraphUtility.count(iter));
         iter = g.getEdges(2);
         assertEquals(2, GraphUtility.count(iter));

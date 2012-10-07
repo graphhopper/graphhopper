@@ -23,7 +23,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorageWrapper;
 import com.graphhopper.storage.MMapDirectory;
-import com.graphhopper.storage.PriorityGraph;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.Storage;
 import com.graphhopper.util.CmdArgs;
@@ -167,8 +167,8 @@ public class OSMReader {
 
     public void optimize() {
         Graph g = storage.getGraph();
-        if (g instanceof PriorityGraph)
-            new PrepareRoutingShortcuts((PriorityGraph) g).doWork();
+        if (g instanceof LevelGraph)
+            new PrepareRoutingShortcuts((LevelGraph) g).doWork();
     }
 
     public void cleanUp() {

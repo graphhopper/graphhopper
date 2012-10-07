@@ -20,32 +20,31 @@ import com.graphhopper.util.EdgeSkipIterator;
 /**
  * @author Peter Karich
  */
-public class PriorityGraphStorage extends GraphStorage implements PriorityGraph {
+public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
-    private static final int I_SC_NODE = 6;
-    private static final int I_PRIO = 3;
+    private final int I_SC_NODE, I_ORIG_EDGES;
+    private final int I_LEVEL;
 
-    public PriorityGraphStorage(Directory dir) {
+    public LevelGraphStorage(Directory dir) {
         super(dir);
-        edgeEntrySize = 7;
-        nodeEntrySize = 4;
+        I_SC_NODE = nextEdgeEntryIndex();
+        I_ORIG_EDGES = nextEdgeEntryIndex();
+        I_LEVEL = nextNodeEntryIndex();
+        initNodeAndEdgeEntrySize();
     }
 
-    @Override
-    public void setPriority(int index, int prio) {
+    @Override public void setLevel(int index, int level) {
         ensureNodeIndex(index);
-        nodes.setInt((long) index * nodeEntrySize + I_PRIO, prio);
+        nodes.setInt((long) index * nodeEntrySize + I_LEVEL, level);
     }
 
-    @Override
-    public int getPriority(int index) {
+    @Override public int getLevel(int index) {
         ensureNodeIndex(index);
-        return nodes.getInt((long) index * nodeEntrySize + I_PRIO);
+        return nodes.getInt((long) index * nodeEntrySize + I_LEVEL);
     }
 
-    @Override
-    protected GraphStorage createThis(Directory dir) {
-        return new PriorityGraphStorage(dir);
+    @Override protected GraphStorage newThis(Directory dir) {
+        return new LevelGraphStorage(dir);
     }
 
     @Override public void edge(int a, int b, double distance, int flags) {
@@ -108,7 +107,47 @@ public class PriorityGraphStorage extends GraphStorage implements PriorityGraph 
             flags = fl;
             int nep = edges.getInt(getLinkPosInEdgeArea(fromNode, nodeId, edgePointer));
             int neop = edges.getInt(getLinkPosInEdgeArea(nodeId, fromNode, edgePointer));
-            writeEdge((int) (edgePointer / 4), fromNode, nodeId, nep, neop, flags, distance);
+            writeEdge((int) (edgePointer / edgeEntrySize), fromNode, nodeId, nep, neop, flags, distance);
+        }
+
+        @Override public int originalEdges() {
+            return edges.getInt(edgePointer + I_ORIG_EDGES);
+        }
+
+        @Override public void originalEdges(int no) {
+            edges.setInt(edgePointer + I_ORIG_EDGES, no);
+        }
+    }
+
+    @Override
+    public EdgeSkipIterator getAllEdges() {
+        return new AllEdgeSkipIterator();
+    }
+
+    public class AllEdgeSkipIterator extends AllEdgeIterator implements EdgeSkipIterator {
+
+        @Override public void skippedNode(int node) {
+            edges.setInt(edgePointer + I_SC_NODE, node);
+        }
+
+        @Override public int skippedNode() {
+            return edges.getInt(edgePointer + I_SC_NODE);
+        }
+
+        @Override public void distance(double dist) {
+            edges.setInt(edgePointer + I_DIST, distToInt(dist));
+        }
+
+        @Override public void flags(int flags) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public int originalEdges() {
+            return edges.getInt(edgePointer + I_ORIG_EDGES);
+        }
+
+        @Override public void originalEdges(int no) {
+            edges.setInt(edgePointer + I_ORIG_EDGES, no);
         }
     }
 }

@@ -16,8 +16,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.PriorityGraph;
-import com.graphhopper.storage.PriorityGraphStorage;
+import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
@@ -31,15 +31,15 @@ import static org.junit.Assert.*;
  */
 public class PrepareRoutingShortcutsTest {
 
-    PriorityGraph createGraph(int size) {
-        PriorityGraphStorage g = new PriorityGraphStorage(new RAMDirectory("priog", false));
+    LevelGraph createGraph(int size) {
+        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("priog", false));
         g.createNew(size);
         return g;
     }
 
     @Test
     public void testSimpleShortcuts() {
-        PriorityGraph g = createGraph(20);
+        LevelGraph g = createGraph(20);
         // 1
         // 0-2-4-5
         // 3
@@ -82,7 +82,7 @@ public class PrepareRoutingShortcutsTest {
         assertEquals(6 + 1, GraphUtility.countEdges(g));
     }
 
-    void assertDirected0_5(PriorityGraph g) {
+    void assertDirected0_5(LevelGraph g) {
         // assert 0->5 but not 5->0
         assertFalse(GraphUtility.contains(g.getEdges(0), 5));
         assertFalse(GraphUtility.contains(g.getEdges(5), 0));
@@ -93,7 +93,7 @@ public class PrepareRoutingShortcutsTest {
 
     @Test
     public void testDirected() {
-        PriorityGraph g = createGraph(20);
+        LevelGraph g = createGraph(20);
         // 3->0->1<-2
         g.edge(0, 1, 10, false);
         g.edge(2, 1, 10, false);
@@ -106,7 +106,7 @@ public class PrepareRoutingShortcutsTest {
 
     @Test
     public void testDirectedBug() {
-        PriorityGraph g = createGraph(30);
+        LevelGraph g = createGraph(30);
         //       8
         //       |
         //    6->0->1->3->7
@@ -129,15 +129,15 @@ public class PrepareRoutingShortcutsTest {
         PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
-        assertEquals(-1, g.getPriority(5));
-        assertEquals(0, g.getPriority(4));
-        assertEquals(0, g.getPriority(3));
-        assertEquals(0, g.getPriority(2));
+        assertEquals(-1, g.getLevel(5));
+        assertEquals(0, g.getLevel(4));
+        assertEquals(0, g.getLevel(3));
+        assertEquals(0, g.getLevel(2));
     }
 
     @Test
     public void testCircleBug() {
-        PriorityGraph g = createGraph(30);
+        LevelGraph g = createGraph(30);
         //  /--1
         // -0--/
         //  |
@@ -152,7 +152,7 @@ public class PrepareRoutingShortcutsTest {
 
     @Test
     public void testChangeExistingShortcut() {
-        PriorityGraph g = createGraph(20);
+        LevelGraph g = createGraph(20);
         initBiGraph(g);
 
         PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
@@ -183,7 +183,7 @@ public class PrepareRoutingShortcutsTest {
 
     @Test
     public void testMultiTypeShortcuts() {
-        PriorityGraph g = createGraph(20);
+        LevelGraph g = createGraph(20);
         g.edge(0, 10, 1, CarStreetType.flags(30, true));
         g.edge(0, 1, 10, CarStreetType.flags(30, true));
         g.edge(1, 2, 10, CarStreetType.flags(30, true));
@@ -206,7 +206,7 @@ public class PrepareRoutingShortcutsTest {
     // prepare-routing.svg
     @Test
     public void testIntroduceShortcuts() {
-        final PriorityGraph g = createGraph(20);
+        final LevelGraph g = createGraph(20);
         g.edge(0, 1, 1, true);
         g.edge(0, 2, 1, true);
         g.edge(1, 2, 1, true);

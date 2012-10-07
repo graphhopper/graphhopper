@@ -17,7 +17,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
-import com.graphhopper.routing.util.EdgePrioFilter;
+import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -47,7 +47,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     protected EdgeEntry currTo;
     protected TIntObjectMap<EdgeEntry> shortestWeightMapOther;
     public PathBidirRef shortest;
-    private EdgePrioFilter edgeFilter;
+    private EdgeLevelFilter edgeFilter;
 
     public DijkstraBidirectionRef(Graph graph) {
         super(graph);
@@ -63,12 +63,12 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         clear();
     }
 
-    public RoutingAlgorithm setEdgeFilter(EdgePrioFilter edgeFilter) {
+    public RoutingAlgorithm setEdgeFilter(EdgeLevelFilter edgeFilter) {
         this.edgeFilter = edgeFilter;
         return this;
     }
 
-    public EdgePrioFilter getEdgeFilter() {
+    public EdgeLevelFilter getEdgeFilter() {
         return edgeFilter;
     }
 
@@ -171,10 +171,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
                 de.prevEntry = curr;
                 shortestWeightMap.put(neighborNode, de);
                 prioQueue.add(de);
-//                System.out.println((out ? 1 : 0) + " NEW    " + de);
             } else if (de.weight > tmpWeight) {
-                // use fibonacci? see http://stackoverflow.com/q/6273833/194609
-                // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry
                 prioQueue.remove(de);
                 de.weight = tmpWeight;
                 de.prevEntry = curr;

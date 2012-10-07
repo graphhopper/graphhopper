@@ -15,18 +15,18 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.storage.PriorityGraph;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 
 /**
  * @author Peter Karich
  */
-public class EdgePrioFilter implements EdgeIterator {
+public class EdgeLevelFilter implements EdgeIterator {
 
     protected EdgeIterator edgeIter;
-    private PriorityGraph graph;
+    private LevelGraph graph;
 
-    public EdgePrioFilter(PriorityGraph g) {
+    public EdgeLevelFilter(LevelGraph g) {
         graph = g;
     }
 
@@ -61,7 +61,7 @@ public class EdgePrioFilter implements EdgeIterator {
     }
 
     public boolean accept() {
-        return graph.getPriority(edgeIter.fromNode()) <= graph.getPriority(edgeIter.node());
+        return graph.getLevel(edgeIter.fromNode()) <= graph.getLevel(edgeIter.node());
     }
 
     @Override

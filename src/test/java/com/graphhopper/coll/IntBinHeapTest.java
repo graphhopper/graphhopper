@@ -18,8 +18,8 @@ package com.graphhopper.coll;
 import com.graphhopper.storage.Edge;
 import java.util.PriorityQueue;
 import java.util.Random;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

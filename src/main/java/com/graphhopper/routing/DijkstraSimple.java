@@ -28,17 +28,25 @@ import java.util.PriorityQueue;
  */
 public class DijkstraSimple extends AbstractRoutingAlgorithm {
 
+    protected TIntHashSet visited = new TIntHashSet();
+    private TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
+    private PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
+
     public DijkstraSimple(Graph graph) {
         super(graph);
+    }
+
+    @Override
+    public DijkstraSimple clear() {
+        visited.clear();
+        map.clear();
+        heap.clear();
+        return this;
     }
 
     @Override public Path calcPath(int from, int to) {
         EdgeEntry fromEntry = new EdgeEntry(from, 0);
         EdgeEntry currEdge = fromEntry;
-        TIntHashSet visited = new TIntHashSet();
-        TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
-        PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
-
         while (true) {
             int neighborNode = currEdge.node;
             EdgeIterator iter = graph.getOutgoing(neighborNode);
@@ -55,24 +63,25 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
                     map.put(tmpV, nEdge);
                     heap.add(nEdge);
                 } else if (nEdge.weight > tmpWeight) {
-                    // use fibonacci? see http://stackoverflow.com/q/6273833/194609
-                    // in fibonacci heaps there is decreaseKey                    
                     heap.remove(nEdge);
                     nEdge.weight = tmpWeight;
                     nEdge.prevEntry = currEdge;
                     heap.add(nEdge);
                 }
+
+                updateShortest(nEdge, neighborNode);
             }
-            if (to == neighborNode)
+            if (finished(currEdge, to))
                 break;
 
             visited.add(neighborNode);
             currEdge = heap.poll();
             if (currEdge == null)
                 return null;
-
-            updateShortest(currEdge, neighborNode);
         }
+
+        if (currEdge.node != to)
+            return null;
 
         // extract path from shortest-path-tree
         Path path = new Path(weightCalc);
@@ -85,5 +94,9 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         path.add(fromEntry.node);
         path.reverseOrder();
         return path;
+    }
+
+    public boolean finished(EdgeEntry curr, int to) {
+        return curr.node == to;
     }
 }

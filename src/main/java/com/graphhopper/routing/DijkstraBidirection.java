@@ -158,15 +158,12 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
             } else {
                 double weight = wrapper.getWeight(newEdgeId);
                 if (weight > tmpWeight) {
-                    // use fibonacci? see http://stackoverflow.com/q/6273833/194609
-                    // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry                    
                     wrapper.putWeight(newEdgeId, tmpWeight);
                     wrapper.putLink(newEdgeId, currEdgeId);
                     prioQueue.rekey(newEdgeId, tmpWeight);
                 }
             }
 
-            // TODO optimize: call only if necessary
             updateShortest(neighborNode, newEdgeId, tmpWeight);
         }
     }

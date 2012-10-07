@@ -25,7 +25,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.Location2IDPreciseIndex;
 import com.graphhopper.storage.MMapGraph;
-import com.graphhopper.storage.PriorityGraphStorage;
+import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -250,7 +250,7 @@ public class GraphUtility {
     }
 
     private static Graph createSortedGraph(final Graph g, Directory dir, final TIntList oldToNewList) {
-        final GraphStorage sortedGraph = new PriorityGraphStorage(dir).createNew(g.getNodes());
+        final GraphStorage sortedGraph = new LevelGraphStorage(dir).createNew(g.getNodes());
         int len = oldToNewList.size();
         // important to avoid creating two edges for edges with both directions
         MyBitSet bitset = new MyBitSetImpl(len);

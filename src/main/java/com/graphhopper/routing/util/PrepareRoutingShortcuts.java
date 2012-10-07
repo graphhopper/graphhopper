@@ -15,7 +15,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.storage.PriorityGraph;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
@@ -32,10 +32,10 @@ import org.slf4j.LoggerFactory;
 public class PrepareRoutingShortcuts {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private final PriorityGraph g;
+    private final LevelGraph g;
     private int newShortcuts;
 
-    public PrepareRoutingShortcuts(PriorityGraph g) {
+    public PrepareRoutingShortcuts(LevelGraph g) {
         this.g = g;
     }
 
@@ -75,7 +75,7 @@ public class PrepareRoutingShortcuts {
                 int currentNode = iter.node();
                 double distance = iter.distance();
                 while (true) {
-                    if (g.getPriority(currentNode) < 0)
+                    if (g.getLevel(currentNode) < 0)
                         continue MAIN;
 
                     if (!has1InAnd1Out(currentNode))
@@ -96,7 +96,7 @@ public class PrepareRoutingShortcuts {
                     if (flags != twoDegreeIter.flags())
                         break;
 
-                    g.setPriority(currentNode, -1);
+                    g.setLevel(currentNode, -1);
                     distance += twoDegreeIter.distance();
                     skip = currentNode;
                     currentNode = twoDegreeIter.node();

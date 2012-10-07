@@ -22,7 +22,7 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
-import com.graphhopper.routing.PathPrio;
+import com.graphhopper.routing.Path4Level;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -30,7 +30,7 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.Location2IDFullIndex;
 import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.storage.Location2IDQuadtree;
-import com.graphhopper.storage.PriorityGraph;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.GraphUtility;
@@ -106,9 +106,9 @@ public class RoutingAlgorithmIntegrationTests {
                 };
     }
 
-    static RoutingAlgorithm createPrioDijkstraBi(Graph g) {
+    static RoutingAlgorithm createLevelDijkstraBi(Graph g) {
         g = g.copyTo(new GraphStorage(new RAMDirectory()));
-        new PrepareRoutingShortcuts((PriorityGraph) g).doWork();
+        new PrepareRoutingShortcuts((LevelGraph) g).doWork();
         DijkstraBidirectionRef dijkstraBi = new DijkstraBidirectionRef(g) {
             @Override public String toString() {
                 return "DijkstraBidirectionRef|Shortcut|" + weightCalc;
@@ -116,16 +116,16 @@ public class RoutingAlgorithmIntegrationTests {
 
             @Override protected PathBidirRef createPath() {
                 // expand skipped nodes
-                return new PathPrio((PriorityGraph) graph, weightCalc);
+                return new Path4Level((LevelGraph) graph, weightCalc);
             }
         };
-        dijkstraBi.setEdgeFilter(new EdgePrioFilter((PriorityGraph) g));
+        dijkstraBi.setEdgeFilter(new EdgeLevelFilter((LevelGraph) g));
         return dijkstraBi;
     }
 
-    static RoutingAlgorithm createPrioAStarBi(Graph g) {
+    static RoutingAlgorithm createLevelAStarBi(Graph g) {
         g = g.copyTo(new GraphStorage(new RAMDirectory()));
-        new PrepareRoutingShortcuts((PriorityGraph) g).doWork();
+        new PrepareRoutingShortcuts((LevelGraph) g).doWork();
         AStarBidirection astar = new AStarBidirection(g) {
             @Override public String toString() {
                 return "AStarBidirection|Shortcut|" + weightCalc;
@@ -133,10 +133,10 @@ public class RoutingAlgorithmIntegrationTests {
 
             @Override protected PathBidirRef createPath() {
                 // expand skipped nodes
-                return new PathPrio((PriorityGraph) graph, weightCalc);
+                return new Path4Level((LevelGraph) graph, weightCalc);
             }
         }.setApproximation(true);
-        astar.setEdgeFilter(new EdgePrioFilter((PriorityGraph) g));
+        astar.setEdgeFilter(new EdgeLevelFilter((LevelGraph) g));
         return astar;
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
@@ -156,15 +156,15 @@ public class RoutingAlgorithmIntegrationTests {
         else
             algo = new AStar(unterfrankenGraph);
 
-        // TODO more algos should support edgepriofilter to skip lengthy paths
-        if (unterfrankenGraph instanceof PriorityGraph) {
+        // TODO more algos should support edgeLevelFilter to skip lengthy paths
+        if (unterfrankenGraph instanceof LevelGraph) {
             if (algo instanceof DijkstraBidirectionRef)
-                algo = createPrioDijkstraBi(unterfrankenGraph);
+                algo = createLevelDijkstraBi(unterfrankenGraph);
             else if (algo instanceof AStarBidirection)
-                algo = createPrioAStarBi(unterfrankenGraph);
+                algo = createLevelAStarBi(unterfrankenGraph);
             else
-                // priority graph accepts all algorithms but normally we want to use an optimized one
-                throw new IllegalStateException("algo which support priority graph not found " + algo);
+                // level graph accepts all algorithms but normally we want to use an optimized one
+                throw new IllegalStateException("algo which supports levelgraph not found " + algo);
             logger.info("[experimental] using shortcuts with " + algo);
         } else
             logger.info("running " + algo);

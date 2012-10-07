@@ -18,7 +18,7 @@ package com.graphhopper.routing;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.AStar.AStarEdge;
-import com.graphhopper.routing.util.EdgePrioFilter;
+import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCosProjection;
@@ -70,7 +70,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     private AStarEdge currFrom;
     private AStarEdge currTo;
     private TIntObjectMap<AStarEdge> shortestWeightMapOther;
-    private EdgePrioFilter edgeFilter;
+    private EdgeLevelFilter edgeFilter;
     public PathBidirRef shortest;
     private CoordTrig fromCoord;
     private CoordTrig toCoord;
@@ -112,12 +112,12 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         return this;
     }
 
-    public RoutingAlgorithm setEdgeFilter(EdgePrioFilter edgeFilter) {
+    public RoutingAlgorithm setEdgeFilter(EdgeLevelFilter edgeFilter) {
         this.edgeFilter = edgeFilter;
         return this;
     }
 
-    public EdgePrioFilter getEdgeFilter() {
+    public EdgeLevelFilter getEdgeFilter() {
         return edgeFilter;
     }
 

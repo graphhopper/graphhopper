@@ -18,24 +18,26 @@ package com.graphhopper.storage;
 import com.graphhopper.util.EdgeSkipIterator;
 
 /**
- * Extended graph interface which supports storing and retrieving priorities per node.
+ * Extended graph interface which supports storing and retrieving the level for a node.
  *
  * @author Peter Karich,
  */
-public interface PriorityGraph extends Graph {
+public interface LevelGraph extends Graph {
 
-    void setPriority(int index, int prio);
+    void setLevel(int index, int level);
 
-    int getPriority(int index);
+    int getLevel(int index);
 
     void shortcut(int a, int b, double distance, int flags, int shortcutNode);
 
     @Override
-    public EdgeSkipIterator getEdges(int nodeId);
+    EdgeSkipIterator getEdges(int nodeId);
 
     @Override
-    public EdgeSkipIterator getIncoming(int nodeId);
+    EdgeSkipIterator getIncoming(int nodeId);
 
     @Override
-    public EdgeSkipIterator getOutgoing(int nodeId);
+    EdgeSkipIterator getOutgoing(int nodeId);
+    
+    EdgeSkipIterator getAllEdges();
 }

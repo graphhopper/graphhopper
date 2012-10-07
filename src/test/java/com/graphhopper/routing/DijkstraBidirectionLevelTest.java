@@ -16,10 +16,10 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.CarStreetType;
-import com.graphhopper.routing.util.EdgePrioFilter;
+import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.routing.util.PrepareRoutingShortcuts;
-import com.graphhopper.storage.PriorityGraph;
-import com.graphhopper.storage.PriorityGraphStorage;
+import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
@@ -30,29 +30,29 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class DijkstraBidirectionPrioTest {
+public class DijkstraBidirectionLevelTest {
 
-    RoutingAlgorithm createAlgoWithFilter(final PriorityGraph pg) {
-        return new DijkstraBidirectionRef(pg).setEdgeFilter(new EdgePrioFilter(pg));
+    RoutingAlgorithm createAlgoWithFilter(final LevelGraph pg) {
+        return new DijkstraBidirectionRef(pg).setEdgeFilter(new EdgeLevelFilter(pg));
     }
 
-    RoutingAlgorithm createAlgoWithFilterAndPathUnpacking(final PriorityGraph pg) {
+    RoutingAlgorithm createAlgoWithFilterAndPathUnpacking(final LevelGraph pg) {
         return new DijkstraBidirectionRef(pg) {
             @Override protected PathBidirRef createPath() {
-                return new PathPrio(graph, weightCalc);
+                return new Path4Level(graph, weightCalc);
             }
-        }.setEdgeFilter(new EdgePrioFilter(pg));
+        }.setEdgeFilter(new EdgeLevelFilter(pg));
     }
 
-    PriorityGraph createGraph(int size) {
-        PriorityGraphStorage g = new PriorityGraphStorage(new RAMDirectory("priog", false));
+    LevelGraph createGraph(int size) {
+        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("priog", false));
         g.createNew(size);
         return g;
     }
 
     @Test
     public void testShortcutUnpacking() {
-        PriorityGraph g2 = createGraph(6);
+        LevelGraph g2 = createGraph(6);
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
         // store skipped first node along with the shortcut
         new PrepareRoutingShortcuts(g2).doWork();
@@ -64,7 +64,7 @@ public class DijkstraBidirectionPrioTest {
 
     @Test
     public void testShortcutNoUnpacking() {
-        PriorityGraph g2 = createGraph(6);
+        LevelGraph g2 = createGraph(6);
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
         new PrepareRoutingShortcuts(g2).doWork();
         Path p = createAlgoWithFilter(g2).calcPath(0, 4);
@@ -74,7 +74,7 @@ public class DijkstraBidirectionPrioTest {
 
     @Test
     public void testDirected2() {
-        PriorityGraph g = createGraph(30);
+        LevelGraph g = createGraph(30);
         // see 49.9052,10.35491
         // =19-20-21-22=
 
@@ -95,7 +95,7 @@ public class DijkstraBidirectionPrioTest {
         assertEquals(20, iter.skippedNode());
         Path p = new DijkstraBidirectionRef(g) {
             @Override protected PathBidirRef createPath() {
-                return new PathPrio(graph, weightCalc);
+                return new Path4Level(graph, weightCalc);
             }
         }.calcPath(17, 23);
         assertEquals(6, p.locations());
@@ -103,7 +103,7 @@ public class DijkstraBidirectionPrioTest {
 
     @Test
     public void testTwoEdgesWithDifferentSpeed() {
-        PriorityGraph g = createGraph(30);
+        LevelGraph g = createGraph(30);
         // see 49.894653,9.309765
         //
         //         10
@@ -129,7 +129,7 @@ public class DijkstraBidirectionPrioTest {
         assertEquals(2, prepare.getShortcuts());
         Path p = new DijkstraBidirectionRef(g) {
             @Override protected PathBidirRef createPath() {
-                return new PathPrio(graph, weightCalc);
+                return new Path4Level(graph, weightCalc);
             }
         }.calcPath(1, 4);
         assertEquals(4, p.locations());

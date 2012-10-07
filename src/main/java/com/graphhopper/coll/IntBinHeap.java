@@ -15,7 +15,7 @@ package com.graphhopper.coll;
 import java.util.Arrays;
 
 /**
- * taken from opentripplanner. Note: LGPL 3 is compatible with Apache, where as LGPL 2 was not!
+ * Taken from opentripplanner.
  */
 public class IntBinHeap {
 
