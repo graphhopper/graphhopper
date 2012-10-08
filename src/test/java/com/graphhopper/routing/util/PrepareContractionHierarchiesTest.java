@@ -17,11 +17,14 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.util.PrepareContractionHierarchies.NodeCH;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
+import java.util.ArrayList;
+import java.util.List;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -51,21 +54,45 @@ public class PrepareContractionHierarchiesTest {
         return g;
     }
 
+    List<NodeCH> createGoals(int... gNodes) {
+        List<NodeCH> goals = new ArrayList<NodeCH>();
+        for (int i = 0; i < gNodes.length; i++) {
+            NodeCH n = new NodeCH();
+            n.node = gNodes[i];
+            goals.add(n);
+        }
+        return goals;
+    }
+
     @Test
     public void testShortestPathSkipNode() {
         Graph g = createGraph();
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
-        PrepareContractionHierarchies.LocalShortestPathCH algo = new PrepareContractionHierarchies.LocalShortestPathCH(g, 3);
-        Path p = algo.clear().setLimit(10).calcPath(4, 2);
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g, 3);
+        List<NodeCH> gs = createGoals(2);
+        algo.clear().setLimit(10).calcPath(4, gs);
+        Path p = algo.extractPath(gs.get(0).entry);
+        assertTrue(p.distance() > normalDist);
+    }
+
+    @Test
+    public void testShortestPathSkipNode2() {
+        Graph g = createGraph();
+        double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g, 3);
+        List<NodeCH> gs = createGoals(1, 2);
+        algo.clear().setLimit(10).calcPath(4, gs);
+        Path p = algo.extractPath(gs.get(1).entry);
         assertTrue(p.distance() > normalDist);
     }
 
     @Test
     public void testShortestPathLimit() {
         Graph g = createGraph();
-        PrepareContractionHierarchies.LocalShortestPathCH algo = new PrepareContractionHierarchies.LocalShortestPathCH(g, 0);
-        Path p = algo.clear().setLimit(2).calcPath(4, 1);
-        assertNull(p);
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g, 0);
+        List<NodeCH> gs = createGoals(1);
+        algo.clear().setLimit(2).calcPath(4, gs);
+        assertNull(gs.get(0).entry);
     }
 
     @Test

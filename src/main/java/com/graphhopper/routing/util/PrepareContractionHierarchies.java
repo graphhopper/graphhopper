@@ -20,13 +20,14 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
@@ -47,6 +48,7 @@ public class PrepareContractionHierarchies {
     private WeightedNode refs[];
     // shortcut is in one direction, speed is ignored - see prepareEdges
     private int scFlags = CarStreetType.flags(0, false);
+    private Map<Long, Shortcut> shortcuts = new HashMap<Long, Shortcut>();
 
     public PrepareContractionHierarchies(LevelGraph g) {
         this.g = g;
@@ -103,10 +105,22 @@ public class PrepareContractionHierarchies {
         }
     }
 
+    static class NodeCH {
+
+        int node;
+        int originalEdges;
+        EdgeEntry entry;
+        double distance;
+
+        @Override public String toString() {
+            return "" + node;
+        }
+    }
+
     public void doWork() {
         // TODO integrate -> so avoid all nodes with negative level in the other methods
         // new PrepareRoutingShortcuts(g).doWork();        
-        prepareEdges();
+        // prepareEdges();
         prepareNodes();
         contractNodes();
     }
@@ -147,6 +161,12 @@ public class PrepareContractionHierarchies {
 
             // update priority of current node via simulating 'addShortcuts'
             wn.priority = calculatePriority(wn.node, wn.priority);
+            if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peek().priority) {
+                // node got more important => contract it later
+                // System.out.println("later:" + wn + " minEl:" + sortedNodes.peek());
+                sortedNodes.add(wn);
+                continue;
+            }
 
             // recompute priority of uncontracted neighbors
             EdgeIterator iter = g.getEdges(wn.node);
@@ -158,24 +178,14 @@ public class PrepareContractionHierarchies {
                 WeightedNode neighborWn = refs[iter.node()];
                 int prio = calculatePriority(iter.node(), neighborWn.priority);
                 neighborWn.priority = prio;
+                if (!sortedNodes.remove(neighborWn))
+                    throw new IllegalStateException("couldn't find element:" + neighborWn);
 
-                // TODO
-//                if (!sortedNodes.remove(neighborWn))
-//                    throw new IllegalStateException("couldn't find element:" + neighborWn);
-//
-//                sortedNodes.add(neighborWn);
-                System.out.println("neighbor:" + neighborWn);
+                sortedNodes.add(neighborWn);
+                // System.out.println("neighbor:" + neighborWn);
             }
 
-            // do we really want to contract?
-            // TODO how to avoid endless loops and revert adding shortcuts?
-            // endless loops occur if we enable updating the queue with the neighbors
-            if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peek().priority) {
-                // node got more important => contract it later
-                System.out.println("later:" + wn + " minEl:" + sortedNodes.peek());
-                sortedNodes.add(wn);
-                continue;
-            }
+            // TODO periodically update priorities of ALL nodes
 
             // contract!            
             addShortcuts(wn.node, wn.priority);
@@ -215,13 +225,14 @@ public class PrepareContractionHierarchies {
         }
 
         // according to the paper do a simple linear combination of the properties to get the priority
-        return 2 * edgeDifference + 10 * originalEdges + contractedNeighbors;
+        return 2 * edgeDifference + 4 * originalEdges + contractedNeighbors;
     }
 
     Collection<Shortcut> findShortcuts(int v, int prio) {
-        // do NOT use weight use distance. see prepareEdges where distance is overwritten by weight!
-        LocalShortestPathCH algo = new LocalShortestPathCH(g, v);
-        Map<Long, Shortcut> shortcuts = new HashMap<Long, Shortcut>();
+        // Do NOT use weight use distance! see prepareEdges where distance is overwritten by weight!
+        List<NodeCH> goalNodes = new ArrayList<NodeCH>();
+        OneToManyDijkstraCH algo = new OneToManyDijkstraCH(g, v);
+        shortcuts.clear();
         EdgeSkipIterator iter1 = g.getIncoming(v);
         while (iter1.next()) {
             int u = iter1.node();
@@ -229,44 +240,63 @@ public class PrepareContractionHierarchies {
                 continue;
 
             double v_u_weight = iter1.distance();
+
+            // one-to-many shortest path
+            goalNodes.clear();
             EdgeSkipIterator iter2 = g.getOutgoing(v);
+            double maxWeight = 0;
             while (iter2.next()) {
                 int w = iter2.node();
                 if (w == u || refs[w].priority < prio)
-                    continue;
+                    continue;                
 
-                double u_v_w_weight = v_u_weight + iter2.distance();
-                // TODO ignore also all already contracted nodes
-                Path p = algo.clear().setLimit(u_v_w_weight).calcPath(u, w);
-                if (p != null && p.weight() <= u_v_w_weight) {
-                    // FOUND witness path => do not add shortcut
-                    continue;
+                NodeCH n = new NodeCH();
+                n.node = w;
+                n.originalEdges = iter2.originalEdges();
+                n.distance = v_u_weight + iter2.distance();
+                goalNodes.add(n);
+                
+                if (maxWeight < n.distance)
+                    maxWeight = n.distance;
+            }
+
+            // TODO ignore already contracted nodes?
+            // TODO instead of a weight-limit we could use a hop-limit 
+            // and successively increasing it when mean-degree of graph increases
+            algo.clear().setLimit(maxWeight).calcPath(u, goalNodes);
+            for (NodeCH n : goalNodes) {
+                if (n.entry != null) {
+                    Path p = algo.extractPath(n.entry);
+                    if (p != null && p.weight() <= n.distance) {
+                        // FOUND witness path => do not add shortcut
+                        continue;
+                    }
                 }
 
                 // FOUND shortcut but be sure that it is the only shortcut in the collection 
                 // and also in the graph for u->w. If existing => update it
-                long edge = u + w;
+                long edge = u + n.node;
                 Shortcut sc = shortcuts.get(edge);
                 if (sc == null) {
-                    sc = new Shortcut(u, w, u_v_w_weight);
-                    sc.originalEdges = iter1.originalEdges() + iter2.originalEdges();
+                    sc = new Shortcut(u, n.node, n.distance);
+                    sc.originalEdges = iter1.originalEdges() + n.originalEdges;
                     shortcuts.put(edge, sc);
 
                     // determine if a shortcut already exists in the graph
                     EdgeSkipIterator tmpIter = g.getOutgoing(u);
                     while (tmpIter.next()) {
-                        if (tmpIter.node() != w || tmpIter.skippedNode() < 0)
+                        if (tmpIter.node() != n.node || tmpIter.skippedNode() < 0)
                             continue;
 
-                        if (tmpIter.distance() > u_v_w_weight)
+                        if (tmpIter.distance() > n.distance)
                             sc.update(true);
                     }
                 } else {
                     // TODO direction could be incorrect! u->w is not always the same as w->u
                     // a shortcut exists in the current collection
-                    if (sc.distance > u_v_w_weight) {
-                        sc.originalEdges = iter1.originalEdges() + iter2.originalEdges();
-                        sc.distance = u_v_w_weight;
+                    if (sc.distance > n.distance) {
+                        sc.originalEdges = iter1.originalEdges() + n.originalEdges;
+                        sc.distance = n.distance;
                     }
                 }
             }
@@ -274,30 +304,52 @@ public class PrepareContractionHierarchies {
         return shortcuts.values();
     }
 
-    public static class LocalShortestPathCH extends DijkstraSimple {
+    public static class OneToManyDijkstraCH extends DijkstraSimple {
 
         int skipNode;
         double limit;
+        Collection<NodeCH> goals;
 
-        public LocalShortestPathCH(Graph graph, int v) {
+        public OneToManyDijkstraCH(Graph graph, int v) {
             super(graph);
             setType(ShortestCalc.DEFAULT);
             skipNode = v;
         }
 
-        LocalShortestPathCH setLimit(double weight) {
+        OneToManyDijkstraCH setLimit(double weight) {
             limit = weight;
             return this;
         }
 
-        @Override public LocalShortestPathCH clear() {
+        @Override public OneToManyDijkstraCH clear() {
             super.clear();
             visited.add(skipNode);
             return this;
         }
 
-        @Override public boolean finished(EdgeEntry curr, int to) {
-            return super.finished(curr, to) || curr.weight > limit;
+        @Override public Path calcPath(int from, int to) {
+            throw new IllegalArgumentException("call the other calcPath instead");
+        }
+
+        Path calcPath(int from, Collection<NodeCH> goals) {
+            this.goals = goals;
+            return super.calcPath(from, -1);
+        }
+
+        @Override public boolean finished(EdgeEntry curr, int _ignoreTo) {
+            if (curr.weight > limit)
+                return true;
+
+            int found = 0;
+            for (NodeCH n : goals) {
+                if (n.node == curr.node) {
+                    n.entry = curr;
+                    found++;
+                } else if (n.entry != null) {
+                    found++;
+                }
+            }
+            return found == goals.size();
         }
     }
 
@@ -308,10 +360,12 @@ public class PrepareContractionHierarchies {
         Collection<Shortcut> shortcuts = findShortcuts(v, prio);
         System.out.println("contract:" + v + " (" + prio + "), scs:" + shortcuts);
         for (Shortcut sc : shortcuts) {
-            if (sc.update)
-                // TODO how to update the shortcut?
-                sc = sc;
-            else
+            if (sc.update) {
+                // TODO update the shortcut
+                EdgeSkipIterator iter = g.getOutgoing(sc.from);
+                System.out.println("TODO update:" + sc.from);
+                // find sc.to and do iter.distance(sc.distance);
+            } else
                 g.shortcut(sc.from, sc.to, sc.distance, scFlags, v);
         }
     }

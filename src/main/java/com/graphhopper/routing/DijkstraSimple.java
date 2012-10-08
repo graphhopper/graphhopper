@@ -31,6 +31,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
     protected TIntHashSet visited = new TIntHashSet();
     private TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
     private PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
+    private int from;
 
     public DijkstraSimple(Graph graph) {
         super(graph);
@@ -41,11 +42,13 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         visited.clear();
         map.clear();
         heap.clear();
+        from = -1;
         return this;
     }
 
     @Override public Path calcPath(int from, int to) {
         EdgeEntry fromEntry = new EdgeEntry(from, 0);
+        this.from = from;
         EdgeEntry currEdge = fromEntry;
         while (true) {
             int neighborNode = currEdge.node;
@@ -83,20 +86,24 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         if (currEdge.node != to)
             return null;
 
-        // extract path from shortest-path-tree
-        Path path = new Path(weightCalc);
-        while (currEdge.node != from) {
-            int tmpFrom = currEdge.node;
-            path.add(tmpFrom);
-            currEdge = currEdge.prevEntry;
-            path.calcWeight(graph.getIncoming(tmpFrom), currEdge.node);
-        }
-        path.add(fromEntry.node);
-        path.reverseOrder();
-        return path;
+        return extractPath(currEdge);        
     }
 
     public boolean finished(EdgeEntry curr, int to) {
         return curr.node == to;
+    }
+
+    public Path extractPath(EdgeEntry goalEdge) {
+        // extract path from shortest-path-tree
+        Path path = new Path(weightCalc);
+        while (goalEdge.node != from) {
+            int tmpFrom = goalEdge.node;
+            path.add(tmpFrom);
+            goalEdge = goalEdge.prevEntry;
+            path.calcWeight(graph.getIncoming(tmpFrom), goalEdge.node);
+        }
+        path.add(from);
+        path.reverseOrder();
+        return path;
     }
 }
