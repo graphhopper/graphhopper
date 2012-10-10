@@ -19,12 +19,14 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 
 /**
+ * Only certain nodes are accepted and therefor the others are filtered away.
+ *
  * @author Peter Karich
  */
 public class EdgeLevelFilter implements EdgeIterator {
 
-    protected EdgeIterator edgeIter;
-    private LevelGraph graph;
+    private EdgeIterator edgeIter;
+    protected LevelGraph graph;
 
     public EdgeLevelFilter(LevelGraph g) {
         graph = g;
@@ -35,23 +37,23 @@ public class EdgeLevelFilter implements EdgeIterator {
         return this;
     }
 
-    @Override
-    public final int node() {
+    @Override public int fromNode() {
+        return edgeIter.fromNode();
+    }
+
+    @Override public final int node() {
         return edgeIter.node();
     }
 
-    @Override
-    public final double distance() {
+    @Override public final double distance() {
         return edgeIter.distance();
     }
 
-    @Override
-    public final int flags() {
+    @Override public final int flags() {
         return edgeIter.flags();
     }
 
-    @Override
-    public final boolean next() {
+    @Override public final boolean next() {
         while (edgeIter.next()) {
             if (!accept())
                 continue;
@@ -62,10 +64,5 @@ public class EdgeLevelFilter implements EdgeIterator {
 
     public boolean accept() {
         return graph.getLevel(edgeIter.fromNode()) <= graph.getLevel(edgeIter.node());
-    }
-
-    @Override
-    public int fromNode() {
-        return edgeIter.fromNode();
     }
 }

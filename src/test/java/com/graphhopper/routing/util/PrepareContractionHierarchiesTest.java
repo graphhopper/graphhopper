@@ -18,7 +18,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.PrepareContractionHierarchies.NodeCH;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeSkipIterator;
@@ -66,9 +66,10 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testShortestPathSkipNode() {
-        Graph g = createGraph();
+        LevelGraph g = createGraph();
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g, 3);
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g,
+                new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(3));
         List<NodeCH> gs = createGoals(2);
         algo.clear().setLimit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(0).entry);
@@ -77,9 +78,10 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testShortestPathSkipNode2() {
-        Graph g = createGraph();
+        LevelGraph g = createGraph();
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g, 3);
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g,
+                new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(3));
         List<NodeCH> gs = createGoals(1, 2);
         algo.clear().setLimit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(1).entry);
@@ -88,8 +90,9 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testShortestPathLimit() {
-        Graph g = createGraph();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g, 0);
+        LevelGraph g = createGraph();
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g,
+                new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(0));
         List<NodeCH> gs = createGoals(1);
         algo.clear().setLimit(2).calcPath(4, gs);
         assertNull(gs.get(0).entry);
@@ -106,7 +109,7 @@ public class PrepareContractionHierarchiesTest {
                     + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedNode()
                     + ", level:" + g.getLevel(iter.fromNode()) + "->" + g.getLevel(iter.node()));
         }
-        assertEquals(7 + 6, GraphUtility.count(g.getAllEdges()));
+        assertEquals(7 + 3, GraphUtility.count(g.getAllEdges()));
         assertEquals(3, GraphUtility.count(g.getEdges(5)));
         assertEquals(4, GraphUtility.count(g.getEdges(0)));
     }

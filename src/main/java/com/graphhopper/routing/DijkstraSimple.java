@@ -52,7 +52,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         EdgeEntry currEdge = fromEntry;
         while (true) {
             int neighborNode = currEdge.node;
-            EdgeIterator iter = graph.getOutgoing(neighborNode);
+            EdgeIterator iter = getNeighbors(neighborNode);
             while (iter.next()) {
                 int tmpV = iter.node();
                 if (visited.contains(tmpV))
@@ -86,7 +86,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         if (currEdge.node != to)
             return null;
 
-        return extractPath(currEdge);        
+        return extractPath(currEdge);
     }
 
     public boolean finished(EdgeEntry curr, int to) {
@@ -105,5 +105,10 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         path.add(from);
         path.reverseOrder();
         return path;
+    }
+
+    protected EdgeIterator getNeighbors(int neighborNode) {
+        
+        return graph.getOutgoing(neighborNode);
     }
 }

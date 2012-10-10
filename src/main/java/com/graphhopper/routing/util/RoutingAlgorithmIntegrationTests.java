@@ -102,7 +102,8 @@ public class RoutingAlgorithmIntegrationTests {
                     new AStarBidirection(g),
                     new DijkstraBidirectionRef(g),
                     new DijkstraBidirection(g),
-                    new DijkstraSimple(g), //              TODO , createPrioAlgo(g)
+                    new DijkstraSimple(g), //
+                // TODO , createLevelDijkstraBi(g) etc
                 };
     }
 
@@ -147,7 +148,7 @@ public class RoutingAlgorithmIntegrationTests {
         RoutingAlgorithm algo;
         if ("dijkstrabi".equalsIgnoreCase(algoStr))
             algo = new DijkstraBidirectionRef(unterfrankenGraph);
-        else if ("dijkstranative".equalsIgnoreCase(algoStr))
+        else if ("dijkstraNative".equalsIgnoreCase(algoStr))
             algo = new DijkstraBidirection(unterfrankenGraph);
         else if ("dijkstra".equalsIgnoreCase(algoStr))
             algo = new DijkstraSimple(unterfrankenGraph);
@@ -155,8 +156,7 @@ public class RoutingAlgorithmIntegrationTests {
             algo = new AStarBidirection(unterfrankenGraph).setApproximation(true);
         else
             algo = new AStar(unterfrankenGraph);
-
-        // TODO more algos should support edgeLevelFilter to skip lengthy paths
+        
         if (unterfrankenGraph instanceof LevelGraph) {
             if (algo instanceof DijkstraBidirectionRef)
                 algo = createLevelDijkstraBi(unterfrankenGraph);

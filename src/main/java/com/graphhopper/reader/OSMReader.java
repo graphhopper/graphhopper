@@ -16,6 +16,7 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.routing.util.AcceptStreet;
+import com.graphhopper.routing.util.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.PrepareRoutingShortcuts;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmIntegrationTests;
@@ -167,8 +168,11 @@ public class OSMReader {
 
     public void optimize() {
         Graph g = storage.getGraph();
-        if (g instanceof LevelGraph)
-            new PrepareRoutingShortcuts((LevelGraph) g).doWork();
+        if (g instanceof LevelGraph) {
+            // TODO not yet compatible CH + shortcuts
+            // new PrepareRoutingShortcuts((LevelGraph) g).doWork();
+            new PrepareContractionHierarchies((LevelGraph) g).doWork();
+        }
     }
 
     public void cleanUp() {
