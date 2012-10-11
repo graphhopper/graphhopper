@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Copyright 2012 Peter Karich info@jetsli.de
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,44 +18,46 @@ package com.graphhopper.coll;
 import com.graphhopper.storage.Edge;
 import java.util.PriorityQueue;
 import java.util.Random;
-import static org.junit.Assert.*;
 import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
-public class IntBinHeapTest {
+public abstract class AbstractBinHeapTest {
+
+    public abstract BinHeapWrapper<Integer, Number> createHeap(int capacity);
 
     @Test
     public void test0() {
-        IntBinHeap binHeap = new IntBinHeap(100);
+        BinHeapWrapper<Integer, Number> binHeap = createHeap(100);
         binHeap.insert(0, 123);
-        assertEquals(123, binHeap.peekMinPriority(), 1e-4);
+        assertEquals(123, binHeap.peekValue().intValue());
         assertEquals(1, binHeap.size());
 
-        binHeap.rekey(0, 12);
-        assertEquals(12, binHeap.peekMinPriority(), 1e-4);
+        binHeap.update(0, 12);
+        assertEquals(12, binHeap.peekValue().intValue());
         assertEquals(1, binHeap.size());
     }
 
     @Test
     public void testBasic() {
-        IntBinHeap binHeap = new IntBinHeap(100);
+        BinHeapWrapper<Integer, Number> binHeap = createHeap(100);
         binHeap.insert(1, 20);
         binHeap.insert(2, 123);
         binHeap.insert(3, 120);
         binHeap.insert(4, 130);
 
-        assertEquals(1, binHeap.extractMin());
-        assertEquals(3, binHeap.extractMin());
-        assertEquals(2, binHeap.extractMin());
-        assertEquals(1, binHeap.size());
+        assertEquals(1, (int) binHeap.pollKey());
+        assertEquals(3, (int) binHeap.pollKey());
+        assertEquals(2, (int) binHeap.pollKey());
+        assertEquals(1, (int) binHeap.size());
     }
 
     @Test
     public void testClear() {
-        IntBinHeap binHeap = new IntBinHeap(100);
+        BinHeapWrapper<Integer, Number> binHeap = createHeap(100);
         binHeap.insert(1, 20);
         binHeap.insert(2, 123);
         assertEquals(2, binHeap.size());
@@ -64,32 +66,32 @@ public class IntBinHeapTest {
         assertEquals(0, binHeap.size());
         binHeap.insert(2, 123);
         assertEquals(1, binHeap.size());
-        assertEquals(2, binHeap.extractMin());
+        assertEquals(2, (int) binHeap.pollKey());
     }
 
     @Test
     public void testRekey() {
-        IntBinHeap binHeap = new IntBinHeap(100);
+        BinHeapWrapper<Integer, Number> binHeap = createHeap(100);
         binHeap.insert(1, 20);
         binHeap.insert(2, 123);
-        binHeap.rekey(2, 100);
+        binHeap.update(2, 100);
         binHeap.insert(3, 120);
         binHeap.insert(4, 130);
 
-        assertEquals(1, binHeap.extractMin());
-        assertEquals(2, binHeap.extractMin());
+        assertEquals(1, (int) binHeap.pollKey());
+        assertEquals(2, (int) binHeap.pollKey());
         assertEquals(2, binHeap.size());
     }
 
     @Test
     public void testSize() {
         PriorityQueue<Edge> juQueue = new PriorityQueue<Edge>(100);
-        IntBinHeap binHeap = new IntBinHeap(100);
+        BinHeapWrapper<Integer, Number> binHeap = createHeap(100);
 
         Random rand = new Random(1);
         int N = 1000;
         for (int i = 0; i < N; i++) {
-            float val = rand.nextFloat();
+            int val = rand.nextInt();
             binHeap.insert(i, val);
             juQueue.add(new Edge(i, val));
         }
@@ -97,7 +99,7 @@ public class IntBinHeapTest {
         assertEquals(juQueue.size(), binHeap.size());
 
         for (int i = 0; i < N; i++) {
-            assertEquals(juQueue.poll().node, binHeap.extractMin(), 1e-5);
+            assertEquals(juQueue.poll().node, binHeap.pollKey(), 1e-5);
         }
 
         assertEquals(binHeap.size(), 0);

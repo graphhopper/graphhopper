@@ -37,7 +37,7 @@ JAR=target/graphhopper-1.0-SNAPSHOT-jar-with-dependencies.jar
 # file without path
 TMP=$(basename "$FILE")
 TMP="${TMP%.*}"
-echo $TMP - $FILE - $NAME
+#echo $TMP - $FILE - $NAME
 if [ "$TMP" = "unterfranken" ]; then
  LINK="http://download.geofabrik.de/osm/europe/germany/bayern/unterfranken.osm.bz2"
  JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx1000m -Xms1000m"

@@ -15,7 +15,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.coll.IntBinHeap;
+import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.storage.Graph;
@@ -46,10 +46,10 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     protected PathBidir shortest;
     protected EdgeWrapper wrapperOther;
     private MyBitSet visitedFrom;
-    private IntBinHeap openSetFrom;
+    private IntDoubleBinHeap openSetFrom;
     private EdgeWrapper wrapperFrom;
     private MyBitSet visitedTo;
-    private IntBinHeap openSetTo;
+    private IntDoubleBinHeap openSetTo;
     private EdgeWrapper wrapperTo;
     private boolean alreadyRun;
 
@@ -57,11 +57,11 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         super(graph);
         int locs = Math.max(20, graph.getNodes());
         visitedFrom = new MyBitSetImpl(locs);
-        openSetFrom = new IntBinHeap(locs / 10);
+        openSetFrom = new IntDoubleBinHeap(locs / 10);
         wrapperFrom = new EdgeWrapper(locs / 10);
 
         visitedTo = new MyBitSetImpl(locs);
-        openSetTo = new IntBinHeap(locs / 10);
+        openSetTo = new IntDoubleBinHeap(locs / 10);
         wrapperTo = new EdgeWrapper(locs / 10);
     }
 
@@ -141,7 +141,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     }
 
     public void fillEdges(int currNode, double currWeight, int currEdgeId, MyBitSet visitedMain,
-            IntBinHeap prioQueue, EdgeWrapper wrapper, boolean out) {
+            IntDoubleBinHeap prioQueue, EdgeWrapper wrapper, boolean out) {
 
         EdgeIterator iter = GraphUtility.getEdges(graph, currNode, out);
         while (iter.next()) {
@@ -154,13 +154,13 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
             if (newEdgeId <= 0) {
                 newEdgeId = wrapper.add(neighborNode, tmpWeight);
                 wrapper.putLink(newEdgeId, currEdgeId);
-                prioQueue.insert(newEdgeId, tmpWeight);
+                prioQueue.insert_(newEdgeId, tmpWeight);
             } else {
                 double weight = wrapper.getWeight(newEdgeId);
                 if (weight > tmpWeight) {
                     wrapper.putWeight(newEdgeId, tmpWeight);
                     wrapper.putLink(newEdgeId, currEdgeId);
-                    prioQueue.rekey(newEdgeId, tmpWeight);
+                    prioQueue.update_(newEdgeId, tmpWeight);
                 }
             }
 
@@ -189,7 +189,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         if (openSetFrom.isEmpty())
             return false;
 
-        currFromEdgeId = openSetFrom.extractMin();
+        currFromEdgeId = openSetFrom.poll_key();
         currFrom = wrapperFrom.getNode(currFromEdgeId);
         currFromWeight = wrapperFrom.getWeight(currFromEdgeId);
         if (checkFinishCondition())
@@ -204,7 +204,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         if (openSetTo.isEmpty())
             return false;
 
-        currToEdgeId = openSetTo.extractMin();
+        currToEdgeId = openSetTo.poll_key();
         currTo = wrapperTo.getNode(currToEdgeId);
         currToWeight = wrapperTo.getWeight(currToEdgeId);
         if (checkFinishCondition())

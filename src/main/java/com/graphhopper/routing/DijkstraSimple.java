@@ -15,12 +15,13 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.coll.MyBitSet;
+import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.hash.TIntHashSet;
 import java.util.PriorityQueue;
 
 /**
@@ -28,7 +29,7 @@ import java.util.PriorityQueue;
  */
 public class DijkstraSimple extends AbstractRoutingAlgorithm {
 
-    protected TIntHashSet visited = new TIntHashSet();
+    protected MyBitSet visited = new MyTBitSet();
     private TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
     private PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
     private int from;
@@ -108,7 +109,6 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
     }
 
     protected EdgeIterator getNeighbors(int neighborNode) {
-        
         return graph.getOutgoing(neighborNode);
     }
 }
