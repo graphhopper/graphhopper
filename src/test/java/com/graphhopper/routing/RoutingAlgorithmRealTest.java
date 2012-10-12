@@ -19,7 +19,6 @@ import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.util.RoutingAlgorithmIntegrationTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.Location2IDFullIndex;
 import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.RAMDirectory;

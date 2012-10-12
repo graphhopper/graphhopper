@@ -24,6 +24,7 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.StopWatch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -93,16 +94,6 @@ public class PrepareContractionHierarchies {
             this.distance = dist;
         }
 
-        public Shortcut originalEdges(int oe) {
-            originalEdges = oe;
-            return this;
-        }
-
-        public Shortcut update(boolean update) {
-            this.update = update;
-            return this;
-        }
-
         @Override public String toString() {
             return from + "->" + to + ", dist:" + distance + ",update:" + update;
         }
@@ -122,6 +113,7 @@ public class PrepareContractionHierarchies {
 
     public void doWork() {
         // TODO integrate PrepareRoutingShortcuts -> so avoid all nodes with negative level in the other methods        
+        // in PrepareShortcuts level 0 and -1 is already used move that to level 1 and 2 so that level 0 stays as uncontracted
         prepareEdges();
         prepareNodes();
         contractNodes();
@@ -159,27 +151,32 @@ public class PrepareContractionHierarchies {
     }
 
     void contractNodes() {
-        // in PrepareShortcuts level 0 and -1 is already used
         int level = 1;
-        int newShorts = 0;
+        int newShortcuts = 0;
         final int updateSize = Math.max(10, sortedNodes.size() / 10);
         int counter = 0;
-
+        int updateCounter = 0;
+        StopWatch sw = new StopWatch();
+        // no update all => 600k shortcuts and 3min
         while (!sortedNodes.isEmpty()) {
             if (counter % updateSize == 0) {
-                logger.info(sortedNodes.size() + " nodes. new shortcuts:" + newShorts + ", iterations:" + counter + ", meanValue:" + sortedNodes.getSlidingMeanValue());
-
-                // periodically update priorities of ALL nodes
-                // TODO can we avoid to traverse all nodes?
-                int len = g.getNodes();
-                for (int node = 0; node < len; node++) {
-                    WeightedNode wNode = refs[node];
-                    if (g.getLevel(node) != 0)
-                        continue;
-                    int old = wNode.priority;
-                    wNode.priority = calculatePriority(node);
-                    sortedNodes.update(node, old, wNode.priority);
+                // periodically update priorities of ALL nodes            
+                if (updateCounter > 0 && updateCounter % 2 == 0) {
+                    int len = g.getNodes();
+                    sw.start();
+                    // TODO avoid to traverse all nodes -> via a new sortedNodes.iterator()
+                    for (int node = 0; node < len; node++) {
+                        WeightedNode wNode = refs[node];
+                        if (g.getLevel(node) != 0)
+                            continue;
+                        int old = wNode.priority;
+                        wNode.priority = calculatePriority(node);
+                        sortedNodes.update(node, old, wNode.priority);
+                    }
+                    sw.stop();
                 }
+                updateCounter++;
+                logger.info(counter + ", nodes: " + sortedNodes.size() + ", shortcuts:" + newShortcuts + ", updateAllTime:" + sw.getSeconds() + ", " + updateCounter);
             }
 
             counter++;
@@ -194,7 +191,7 @@ public class PrepareContractionHierarchies {
             }
 
             // contract!            
-            newShorts += addShortcuts(wn.node);
+            newShortcuts += addShortcuts(wn.node);
             g.setLevel(wn.node, level);
             level++;
 
@@ -213,7 +210,7 @@ public class PrepareContractionHierarchies {
                     sortedNodes.update(nn, tmpOld, neighborWn.priority);
             }
         }
-        System.out.println("new shortcuts " + newShorts);
+        System.out.println("new shortcuts " + newShortcuts);
     }
 
     /**
@@ -221,20 +218,20 @@ public class PrepareContractionHierarchies {
      */
     int calculatePriority(int v) {
         // set of shortcuts that would be added if node v would be contracted next.
-        Collection<Shortcut> shortcuts = findShortcuts(v);
+        Collection<Shortcut> tmpShortcuts = findShortcuts(v);
         // from shortcuts we can compute the edgeDifference
         // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|        
         // meanDegree is used instead of outDegree+inDegree as if one edge is in both directions
         // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
         int degree = GraphUtility.count(g.getEdges(v));
-        int edgeDifference = shortcuts.size() - degree;
+        int edgeDifference = tmpShortcuts.size() - degree;
 
         // every edge has an 'original edge' number associated. initially it is r=1
         // when a new shortcut is introduced then r of the associated edges is summed up:
         // r(u,w)=r(u,v)+r(v,w) now we can define
         // originalEdges = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
         int originalEdges = 0;
-        for (Shortcut sc : shortcuts) {
+        for (Shortcut sc : tmpShortcuts) {
             originalEdges += sc.originalEdges;
         }
 
@@ -331,7 +328,7 @@ public class PrepareContractionHierarchies {
                             continue;
 
                         if (tmpIter.distance() > n.distance)
-                            sc.update(true);
+                            sc.update = true;
                     }
                 } else {
                     // the shortcut already exists in the current collection (different direction)
@@ -416,7 +413,7 @@ public class PrepareContractionHierarchies {
                 }
             } else {
                 EdgeSkipIterator iter = g.shortcut(sc.from, sc.to, sc.distance, sc.flags, v);
-                // TODO later iter.originalEdges(sc.originalEdges);
+                iter.originalEdges(sc.originalEdges);
                 newShorts++;
             }
         }

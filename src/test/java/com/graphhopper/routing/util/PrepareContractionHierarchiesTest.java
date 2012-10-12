@@ -119,7 +119,8 @@ public class PrepareContractionHierarchiesTest {
 //        while (iter.next()) {
 //            System.out.println(iter.fromNode() + "->" + iter.node()
 //                    + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedNode()
-//                    + ", level:" + g.getLevel(iter.fromNode()) + "->" + g.getLevel(iter.node()));
+//                    + ", level:" + g.getLevel(iter.fromNode()) + "->" + g.getLevel(iter.node())
+//                     + ", origEdges:" + iter.originalEdges());
 //        }
         assertEquals(old + 6, GraphUtility.count(g.getAllEdges()));
     }

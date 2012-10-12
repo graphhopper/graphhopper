@@ -27,13 +27,12 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.Location2IDFullIndex;
 import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.StopWatch;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -102,14 +101,14 @@ public class RoutingAlgorithmIntegrationTests {
                     new AStarBidirection(g),
                     new DijkstraBidirectionRef(g),
                     new DijkstraBidirection(g),
-                    new DijkstraSimple(g), //
-                // TODO , createLevelDijkstraBi(g) etc
+                    new DijkstraSimple(g),
+                    createLevelDijkstraBi((LevelGraph) g)
                 };
     }
 
-    static RoutingAlgorithm createLevelDijkstraBi(Graph g) {
-        g = g.copyTo(new GraphStorage(new RAMDirectory()));
-        new PrepareRoutingShortcuts((LevelGraph) g).doWork();
+    static RoutingAlgorithm createLevelDijkstraBi(LevelGraph g) {
+        g = (LevelGraph) g.copyTo(new LevelGraphStorage(new RAMDirectory()));
+        new PrepareRoutingShortcuts(g).doWork();
         DijkstraBidirectionRef dijkstraBi = new DijkstraBidirectionRef(g) {
             @Override public String toString() {
                 return "DijkstraBidirectionRef|Shortcut|" + weightCalc;
@@ -117,27 +116,28 @@ public class RoutingAlgorithmIntegrationTests {
 
             @Override protected PathBidirRef createPath() {
                 // expand skipped nodes
-                return new Path4Level((LevelGraph) graph, weightCalc);
+                return new Path4Level(graph, weightCalc);
             }
         };
-        dijkstraBi.setEdgeFilter(new EdgeLevelFilter((LevelGraph) g));
+        dijkstraBi.setEdgeFilter(new EdgeLevelFilter(g));
         return dijkstraBi;
     }
 
-    static RoutingAlgorithm createLevelAStarBi(Graph g) {
-        g = g.copyTo(new GraphStorage(new RAMDirectory()));
-        new PrepareRoutingShortcuts((LevelGraph) g).doWork();
+    static RoutingAlgorithm createLevelAStarBi(LevelGraph g) {
+        g = (LevelGraph) g.copyTo(new LevelGraphStorage(new RAMDirectory()));
+        new PrepareRoutingShortcuts(g).doWork();
         AStarBidirection astar = new AStarBidirection(g) {
-            @Override public String toString() {
+            @Override
+            public String toString() {
                 return "AStarBidirection|Shortcut|" + weightCalc;
             }
 
             @Override protected PathBidirRef createPath() {
                 // expand skipped nodes
-                return new Path4Level((LevelGraph) graph, weightCalc);
+                return new Path4Level(graph, weightCalc);
             }
         }.setApproximation(true);
-        astar.setEdgeFilter(new EdgeLevelFilter((LevelGraph) g));
+        astar.setEdgeFilter(new EdgeLevelFilter(g));
         return astar;
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
@@ -156,12 +156,12 @@ public class RoutingAlgorithmIntegrationTests {
             algo = new AStarBidirection(unterfrankenGraph).setApproximation(true);
         else
             algo = new AStar(unterfrankenGraph);
-        
+
         if (unterfrankenGraph instanceof LevelGraph) {
             if (algo instanceof DijkstraBidirectionRef)
-                algo = createLevelDijkstraBi(unterfrankenGraph);
+                algo = createLevelDijkstraBi((LevelGraph) unterfrankenGraph);
             else if (algo instanceof AStarBidirection)
-                algo = createLevelAStarBi(unterfrankenGraph);
+                algo = createLevelAStarBi((LevelGraph) unterfrankenGraph);
             else
                 // level graph accepts all algorithms but normally we want to use an optimized one
                 throw new IllegalStateException("algo which supports levelgraph not found " + algo);

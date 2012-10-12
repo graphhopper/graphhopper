@@ -15,8 +15,10 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -76,5 +78,18 @@ public class LevelGraphStorageTest extends AbstractGraphTester {
         assertEquals(1, GraphUtility.count(iter));
         iter = g.getEdges(2);
         assertEquals(2, GraphUtility.count(iter));
+    }
+
+    @Test
+    public void testOrigEdges() {
+        final LevelGraph g = createGraph(20);
+        EdgeSkipIterator iter = g.shortcut(0, 1, 10, CarStreetType.flags(10, true), 12);
+        assertEquals(0, iter.originalEdges());
+        iter.originalEdges(1000);
+        assertEquals(1000, iter.originalEdges());
+
+        iter = g.getEdges(0);
+        assertTrue(iter.next());
+        assertEquals(1000, iter.originalEdges());
     }
 }
