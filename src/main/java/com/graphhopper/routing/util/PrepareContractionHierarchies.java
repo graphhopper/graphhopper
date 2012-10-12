@@ -49,7 +49,8 @@ public class PrepareContractionHierarchies {
     private MySortedCollection sortedNodes;
     private WeightedNode refs[];
     // shortcut is in one direction, speed is ignored - see prepareEdges
-    private static int scFlags = CarStreetType.flags(0, false);
+    private static int scOneDir = CarStreetType.flags(0, false);
+    private static int scBothDir = CarStreetType.flags(0, true);
     private Map<Long, Shortcut> shortcuts = new HashMap<Long, Shortcut>();
     private EdgeLevelFilterCH edgeFilter;
     private OneToManyDijkstraCH algo;
@@ -84,7 +85,7 @@ public class PrepareContractionHierarchies {
         double distance;
         boolean update = false;
         int originalEdges;
-        int flags = scFlags;
+        int flags = scOneDir;
 
         public Shortcut(int from, int to, double dist) {
             this.from = from;
@@ -147,7 +148,7 @@ public class PrepareContractionHierarchies {
 
         for (int node = 0; node < len; node++) {
             WeightedNode wn = refs[node];
-            wn.priority = calculatePriority(node, 0);
+            wn.priority = calculatePriority(node);
             // System.out.println(wn);
             sortedNodes.insert(wn.node, wn.priority);
         }
@@ -163,25 +164,37 @@ public class PrepareContractionHierarchies {
         int newShorts = 0;
         final int updateSize = Math.max(10, sortedNodes.size() / 10);
         int counter = 0;
+
         while (!sortedNodes.isEmpty()) {
-            if (counter % updateSize == 0)
+            if (counter % updateSize == 0) {
                 logger.info(sortedNodes.size() + " nodes. new shortcuts:" + newShorts + ", iterations:" + counter + ", meanValue:" + sortedNodes.getSlidingMeanValue());
+
+                // periodically update priorities of ALL nodes
+                // TODO can we avoid to traverse all nodes?
+                int len = g.getNodes();
+                for (int node = 0; node < len; node++) {
+                    WeightedNode wNode = refs[node];
+                    if (g.getLevel(node) != 0)
+                        continue;
+                    int old = wNode.priority;
+                    wNode.priority = calculatePriority(node);
+                    sortedNodes.update(node, old, wNode.priority);
+                }
+            }
 
             counter++;
             WeightedNode wn = refs[sortedNodes.pollKey()];
 
             // update priority of current node via simulating 'addShortcuts'
-            wn.priority = calculatePriority(wn.node, wn.priority);
+            wn.priority = calculatePriority(wn.node);
             if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue()) {
-                // node got more important => contract it later                
+                // node got more important => insert as new value and contract it later
                 sortedNodes.insert(wn.node, wn.priority);
                 continue;
             }
 
-            // TODO periodically update priorities of ALL nodes
-
             // contract!            
-            newShorts += addShortcuts(wn.node, wn.priority);
+            newShorts += addShortcuts(wn.node);
             g.setLevel(wn.node, level);
             level++;
 
@@ -194,9 +207,10 @@ public class PrepareContractionHierarchies {
 
                 int nn = iter.node();
                 WeightedNode neighborWn = refs[nn];
-                int prio = calculatePriority(nn, neighborWn.priority);
-                sortedNodes.update(nn, neighborWn.priority, prio);
-                neighborWn.priority = prio;
+                int tmpOld = neighborWn.priority;
+                neighborWn.priority = calculatePriority(nn);
+                if (neighborWn.priority != tmpOld)
+                    sortedNodes.update(nn, tmpOld, neighborWn.priority);
             }
         }
         System.out.println("new shortcuts " + newShorts);
@@ -205,9 +219,9 @@ public class PrepareContractionHierarchies {
     /**
      * Calculates the priority of node v without changing the graph.
      */
-    int calculatePriority(int v, int oldPrio) {
+    int calculatePriority(int v) {
         // set of shortcuts that would be added if node v would be contracted next.
-        Collection<Shortcut> shortcuts = findShortcuts(v, oldPrio);
+        Collection<Shortcut> shortcuts = findShortcuts(v);
         // from shortcuts we can compute the edgeDifference
         // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|        
         // meanDegree is used instead of outDegree+inDegree as if one edge is in both directions
@@ -250,20 +264,20 @@ public class PrepareContractionHierarchies {
         }
 
         @Override public boolean accept() {
-            // TODO problem bidir: then relation is the other way around!
             // ignore if it is skipNode or a node already contracted
             return skipNode != node() && graph.getLevel(node()) == 0;
         }
     }
 
-    Collection<Shortcut> findShortcuts(int v, int prio) {
+    Collection<Shortcut> findShortcuts(int v) {
         // Do NOT use weight use distance! see prepareEdges where distance is overwritten by weight!
         List<NodeCH> goalNodes = new ArrayList<NodeCH>();
         shortcuts.clear();
         EdgeSkipIterator iter1 = g.getIncoming(v);
         while (iter1.next()) {
             int u = iter1.node();
-            if (refs[u].priority < prio)
+            int lu = g.getLevel(u);
+            if (lu != 0)
                 continue;
 
             double v_u_weight = iter1.distance();
@@ -274,7 +288,8 @@ public class PrepareContractionHierarchies {
             double maxWeight = 0;
             while (iter2.next()) {
                 int w = iter2.node();
-                if (w == u || refs[w].priority < prio)
+                int lw = g.getLevel(w);
+                if (w == u || lw != 0)
                     continue;
 
                 NodeCH n = new NodeCH();
@@ -287,7 +302,6 @@ public class PrepareContractionHierarchies {
                     maxWeight = n.distance;
             }
 
-            // TODO NOW ignore already contracted nodes -> but then we need a bidir dijkstra + a switching edgefilter
             // TODO instead of a weight-limit we could use a hop-limit 
             // and successively increasing it when mean-degree of graph increases
             algo = new OneToManyDijkstraCH(g).setFilter(edgeFilter.setSkipNode(v));
@@ -322,7 +336,7 @@ public class PrepareContractionHierarchies {
                 } else {
                     // the shortcut already exists in the current collection (different direction)
                     // but has identical length so change the flags!
-                    sc.flags = CarStreetType.flags(0, true);
+                    sc.flags = scBothDir;
                 }
             }
         }
@@ -389,9 +403,9 @@ public class PrepareContractionHierarchies {
     /**
      * Introduces the necessary shortcuts for node v in the graph.
      */
-    int addShortcuts(int v, int prio) {
-        Collection<Shortcut> foundShortcuts = findShortcuts(v, prio);
-        // System.out.println("contract:" + v + " (" + prio + "), scs:" + shortcuts);
+    int addShortcuts(int v) {
+        Collection<Shortcut> foundShortcuts = findShortcuts(v);
+//        System.out.println("contract:" + refs[v] + ", scs:" + shortcuts);
         int newShorts = 0;
         for (Shortcut sc : foundShortcuts) {
             if (sc.update) {
@@ -401,7 +415,8 @@ public class PrepareContractionHierarchies {
                         iter.distance(sc.distance);
                 }
             } else {
-                g.shortcut(sc.from, sc.to, sc.distance, sc.flags, v);
+                EdgeSkipIterator iter = g.shortcut(sc.from, sc.to, sc.distance, sc.flags, v);
+                // TODO later iter.originalEdges(sc.originalEdges);
                 newShorts++;
             }
         }

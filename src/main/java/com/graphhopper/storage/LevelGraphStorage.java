@@ -51,17 +51,18 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
         shortcut(a, b, distance, flags, -1);
     }
 
-    @Override public void shortcut(int a, int b, double distance, int flags, int shortcutNode) {
+    @Override public EdgeSkipIterator shortcut(int a, int b, double distance, int flags, int shortcutNode) {
         ensureNodeIndex(a);
         ensureNodeIndex(b);
-        internalEdgeAdd(a, b, distance, flags, shortcutNode);
+        return internalEdgeAdd(a, b, distance, flags, shortcutNode);
     }
 
-    protected void internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags, int shortcutNode) {
+    protected EdgeSkipIterator internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags, int shortcutNode) {
         int newOrExistingEdge = nextEdge();
         connectNewEdge(fromNodeId, newOrExistingEdge);
         connectNewEdge(toNodeId, newOrExistingEdge);
         writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, flags, dist, shortcutNode);
+        return new EdgeSkipIteratorImpl(newOrExistingEdge);
     }
 
     protected void writeEdge(int edge, int nodeThis, int nodeOther, int nextEdge,
@@ -85,6 +86,10 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     }
 
     public class EdgeSkipIteratorImpl extends EdgeIterable implements EdgeSkipIterator {
+
+        public EdgeSkipIteratorImpl(int edge) {
+            super(edge);
+        }
 
         public EdgeSkipIteratorImpl(int node, boolean in, boolean out) {
             super(node, in, out);

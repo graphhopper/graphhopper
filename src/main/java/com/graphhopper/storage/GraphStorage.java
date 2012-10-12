@@ -336,6 +336,13 @@ public class GraphStorage implements Graph, Storable {
         final int fromNode;
         int nextEdge;
 
+        public EdgeIterable(int edge) {
+            this.nextEdge = edge;
+            this.fromNode = edges.getInt(nextEdge * edgeEntrySize + I_NODEA);
+            this.in = true;
+            this.out = true;
+        }
+
         public EdgeIterable(int node, boolean in, boolean out) {
             this.fromNode = node;
             this.nextEdge = nodes.getInt(node * nodeEntrySize);

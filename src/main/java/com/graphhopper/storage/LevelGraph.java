@@ -28,7 +28,7 @@ public interface LevelGraph extends Graph {
 
     int getLevel(int index);
 
-    void shortcut(int a, int b, double distance, int flags, int shortcutNode);
+    EdgeSkipIterator shortcut(int a, int b, double distance, int flags, int shortcutNode);
 
     @Override
     EdgeSkipIterator getEdges(int nodeId);

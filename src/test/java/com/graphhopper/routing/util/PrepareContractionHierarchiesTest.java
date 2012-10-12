@@ -18,18 +18,13 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.PrepareContractionHierarchies.NodeCH;
-import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -105,17 +100,27 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testAddShortcuts() {
-        LevelGraphStorage g = createGraph();
+        LevelGraph g = createGraph();
+        int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
         prepare.doWork();
-        EdgeSkipIterator iter = g.getAllEdges();
-        while (iter.next()) {
-            System.out.println(iter.fromNode() + "->" + iter.node()
-                    + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedNode()
-                    + ", level:" + g.getLevel(iter.fromNode()) + "->" + g.getLevel(iter.node()));
-        }
-        assertEquals(7 + 3, GraphUtility.count(g.getAllEdges()));
-        assertEquals(3, GraphUtility.count(g.getEdges(5)));
-        assertEquals(4, GraphUtility.count(g.getEdges(0)));
+        assertEquals(old, GraphUtility.count(g.getAllEdges()));
+//        assertEquals(3, GraphUtility.count(g.getEdges(5)));
+//        assertEquals(4, GraphUtility.count(g.getEdges(0)));
+    }
+
+    @Test
+    public void testMoreComplexGraph() {
+        LevelGraph g = PrepareRoutingShortcutsTest.createShortcutsGraph();
+        int old = GraphUtility.count(g.getAllEdges());
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        prepare.doWork();
+//        EdgeSkipIterator iter = g.getAllEdges();
+//        while (iter.next()) {
+//            System.out.println(iter.fromNode() + "->" + iter.node()
+//                    + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedNode()
+//                    + ", level:" + g.getLevel(iter.fromNode()) + "->" + g.getLevel(iter.node()));
+//        }
+        assertEquals(old + 6, GraphUtility.count(g.getAllEdges()));
     }
 }

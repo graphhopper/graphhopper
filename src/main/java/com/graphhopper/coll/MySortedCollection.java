@@ -39,7 +39,8 @@ public class MySortedCollection {
     void remove(int key, int value) {
         TIntHashSet set = map.get(value);
         if (set == null || !set.remove(key))
-            throw new IllegalStateException("cannot remove key " + key + " with value " + value);
+            throw new IllegalStateException("cannot remove key " + key + " with value " + value
+                    + " - did you insert " + key + "," + value + " before?");
         size--;
         if (set.isEmpty())
             map.remove(value);
@@ -105,5 +106,10 @@ public class MySortedCollection {
 
     public int getSlidingMeanValue() {
         return slidingMeanValue;
+    }
+
+    @Override
+    public String toString() {
+        return "size " + size + " min=(" + peekKey() + "=>" + peekValue() + ")";
     }
 }

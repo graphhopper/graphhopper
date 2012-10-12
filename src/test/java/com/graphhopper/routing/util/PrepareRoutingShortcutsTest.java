@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
  */
 public class PrepareRoutingShortcutsTest {
 
-    LevelGraph createGraph(int size) {
+    static LevelGraph createGraph(int size) {
         LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("priog", false));
         g.createNew(size);
         return g;
@@ -204,8 +204,7 @@ public class PrepareRoutingShortcutsTest {
     }
 
     // prepare-routing.svg
-    @Test
-    public void testIntroduceShortcuts() {
+    public static LevelGraph createShortcutsGraph() {
         final LevelGraph g = createGraph(20);
         g.edge(0, 1, 1, true);
         g.edge(0, 2, 1, true);
@@ -229,7 +228,12 @@ public class PrepareRoutingShortcutsTest {
         g.edge(13, 16, 1, true);
         g.edge(15, 16, 2, true);
         g.edge(14, 16, 1, true);
+        return g;
+    }
 
+    @Test
+    public void testIntroduceShortcuts() {
+        LevelGraph g = createShortcutsGraph();
         PrepareRoutingShortcuts prepare = new PrepareRoutingShortcuts(g);
         prepare.doWork();
         assertEquals(4, prepare.getShortcuts());
