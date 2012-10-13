@@ -16,6 +16,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.GraphUtility;
 
 /**
  * @author Peter Karich

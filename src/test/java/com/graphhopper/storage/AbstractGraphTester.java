@@ -141,9 +141,7 @@ public abstract class AbstractGraphTester {
         assertEquals(0, g.getNodes());
     }
 
-    @Test
-    public void testAddLocation() {
-        Graph g = createGraph(11);
+    protected void initExampleGraph(Graph g) {
         g.setNode(0, 12, 23);
         g.setNode(1, 38.33f, 235.3f);
         g.setNode(2, 6, 339);
@@ -155,6 +153,12 @@ public abstract class AbstractGraphTester {
         g.edge(0, 3, 212, true);
         g.edge(0, 4, 212, true);
         g.edge(0, 5, 212, true);
+    }
+
+    @Test
+    public void testAddLocation() {
+        Graph g = createGraph(11);
+        initExampleGraph(g);
 
         assertEquals(12f, g.getLatitude(0), 1e-6);
         assertEquals(23f, g.getLongitude(0), 1e-6);
@@ -468,5 +472,23 @@ public abstract class AbstractGraphTester {
         iter = graph.getEdges(2);
         assertTrue(iter.next());
         assertEquals(CarStreetType.flags(10, false), iter.flags());
+    }
+
+    @Test
+    public void testCopyTo() {
+        Graph someGraphImpl = createGraph(20);
+        Graph gs = new GraphStorage(new RAMDirectory()).createNew(200);
+        initExampleGraph(someGraphImpl);
+        try {
+            someGraphImpl.copyTo(gs);
+        } catch (Exception ex) {
+            assertTrue(false);
+        }
+                
+        try {
+            gs.copyTo(someGraphImpl);
+        } catch (Exception ex) {
+            assertTrue(false);
+        }
     }
 }

@@ -22,9 +22,11 @@ import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmIntegrationTests;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.GraphStorageWrapper;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.Storage;
 import com.graphhopper.util.CmdArgs;
@@ -79,6 +81,8 @@ public class OSMReader {
     private Map<String, Object> properties = new HashMap<String, Object>();
     private DistanceCalc callback = new DistanceCalc();
     private AcceptStreet acceptStreets = new AcceptStreet(true, false, false, false);
+    private boolean chShortcuts;
+    private boolean simpleShortcuts;
 
     /**
      * Opens or creates a graph. The specified args need a property 'graph' (a folder) and if no
@@ -103,7 +107,12 @@ public class OSMReader {
             else
                 dir = new RAMDirectory(storageFolder, false);
         }
-        storage = new GraphStorageWrapper(dir, size);
+
+        if (args.getBool("levelGraph", false))
+            storage = new GraphStorageWrapper(new GraphStorage(dir), size);
+        else
+            // necessary for simple or CH shortcuts
+            storage = new GraphStorageWrapper(new LevelGraphStorage(dir), size);
         return osm2Graph(new OSMReader(storage, size), args);
     }
 
@@ -121,24 +130,27 @@ public class OSMReader {
             osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
                     type.contains("PUBLIC_TRANSPORT"),
                     type.contains("BIKE"), type.contains("FOOT")));
+
+            osmReader.setSimpleShortcuts(args.getBool("simpleShortcuts", false));
+            osmReader.setCHShortcuts(args.getBool("chShortcuts", false));
             osmReader.osm2Graph(osmXmlFile);
         }
 
         return osmReader.getGraph();
     }
 
-    private int getMaxLocs() {
-        return expectedLocs;
-    }
-
     public OSMReader(String storageLocation, int size) {
-        this(new GraphStorageWrapper(new RAMDirectory(storageLocation, true), size), size);
+        this(new GraphStorageWrapper(new GraphStorage(new RAMDirectory(storageLocation, true)), size), size);
     }
 
     public OSMReader(Storage storage, int size) {
         this.storage = storage;
         expectedLocs = size;
         logger.info("using " + storage.toString() + ", memory:" + Helper7.getBeanMemInfo());
+    }
+
+    private int getMaxLocs() {
+        return expectedLocs;
     }
 
     public boolean loadExisting() {
@@ -169,9 +181,10 @@ public class OSMReader {
     public void optimize() {
         Graph g = storage.getGraph();
         if (g instanceof LevelGraph) {
-            // TODO not yet compatible CH + shortcuts
-            // new PrepareRoutingShortcuts((LevelGraph) g).doWork();
-            new PrepareContractionHierarchies((LevelGraph) g).doWork();
+            if (simpleShortcuts)
+                new PrepareRoutingShortcuts((LevelGraph) g).doWork();
+            if (chShortcuts)
+                new PrepareContractionHierarchies((LevelGraph) g).doWork();
         }
     }
 
@@ -417,7 +430,18 @@ public class OSMReader {
         logger.info("---");
     }
 
-    public void setAcceptStreet(AcceptStreet acceptStr) {
+    public OSMReader setAcceptStreet(AcceptStreet acceptStr) {
         this.acceptStreets = acceptStr;
+        return this;
+    }
+
+    public OSMReader setCHShortcuts(boolean bool) {
+        chShortcuts = bool;
+        return this;
+    }
+
+    public OSMReader setSimpleShortcuts(boolean bool) {
+        simpleShortcuts = bool;
+        return this;
     }
 }

@@ -22,10 +22,9 @@ public class GraphStorageWrapper extends DefaultStorage {
 
     private GraphStorage tmp;
 
-    public GraphStorageWrapper(Directory dir, int expectedNodes) {
+    public GraphStorageWrapper(GraphStorage gs, int expectedNodes) {
         super(expectedNodes);
-//        g = tmp = new GraphStorage(dir);
-        g = tmp = new LevelGraphStorage(dir);
+        g = tmp = gs;
     }
 
     @Override

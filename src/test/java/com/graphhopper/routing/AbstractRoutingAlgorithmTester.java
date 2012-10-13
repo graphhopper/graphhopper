@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.StopWatch;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import org.junit.Test;
  */
 public abstract class AbstractRoutingAlgorithmTester {
 
+    // problem is: matrix graph is expensive to create to cache it in a static variable
     public static Graph matrixGraph;
 
     static {
@@ -43,9 +45,17 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     public abstract RoutingAlgorithm createAlgo(Graph g);
 
+    public Graph prepareGraph(Graph g) {
+        return g;
+    }
+
+    public Graph getMatrixGraph() {
+        return matrixGraph;
+    }
+
     @Test public void testCalcShortestPath() {
         Graph graph = createTestGraph();
-        Path p = createAlgo(graph).calcPath(0, 7);
+        Path p = createAlgo(prepareGraph(graph)).calcPath(0, 7);
         assertEquals(p.toString(), 13, p.weight(), 1e-4);
         assertEquals(p.toString(), 5, p.locations());
     }
@@ -73,12 +83,12 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(7, 5, 5, CarStreetType.flags(20, false));
 
         graph.edge(6, 7, 5, CarStreetType.flags(20, true));
-        Path p1 = createAlgo(graph).setType(ShortestCalc.DEFAULT).calcPath(0, 3);
+        Path p1 = createAlgo(prepareGraph(graph)).setType(ShortestCalc.DEFAULT).calcPath(0, 3);
         assertEquals(p1.toString(), 24, p1.weight(), 1e-6);
         assertEquals(p1.toString(), 24, p1.distance(), 1e-6);
         assertEquals(p1.toString(), 5, p1.locations());
 
-        Path p2 = createAlgo(graph).setType(FastestCalc.DEFAULT).calcPath(0, 3);
+        Path p2 = createAlgo(prepareGraph(graph)).setType(FastestCalc.DEFAULT).calcPath(0, 3);
 //        assertEquals(5580, p2.timeInSec());
 //        assertTrue("time of fastest path needs to be lower! " + p1.timeInSec() + ">" + p2.timeInSec(),
 //                p1.timeInSec() > p2.timeInSec());
@@ -116,21 +126,21 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     @Test public void testWikipediaShortestPath() {
         Graph graph = createWikipediaTestGraph();
-        Path p = createAlgo(graph).calcPath(0, 4);
+        Path p = createAlgo(prepareGraph(graph)).calcPath(0, 4);
         assertEquals(p.toString(), 20, p.weight(), 1e-4);
         assertEquals(p.toString(), 4, p.locations());
     }
 
     @Test public void testCalcIfNoWay() {
         Graph graph = createTestGraph();
-        Path p = createAlgo(graph).calcPath(0, 0);
+        Path p = createAlgo(prepareGraph(graph)).calcPath(0, 0);
         assertEquals(p.toString(), 0, p.weight(), 1e-4);
         assertEquals(p.toString(), 1, p.locations());
     }
 
     @Test public void testCalcIf1EdgeAway() {
         Graph graph = createTestGraph();
-        Path p = createAlgo(graph).calcPath(1, 2);
+        Path p = createAlgo(prepareGraph(graph)).calcPath(1, 2);
         assertEquals(p.toString(), 2, p.weight(), 1e-4);
         assertEquals(p.toString(), 2, p.locations());
     }
@@ -178,7 +188,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         Graph graph = createGraph(6);
         initBiGraph(graph);
 
-        Path p = createAlgo(graph).calcPath(0, 4);
+        Path p = createAlgo(prepareGraph(graph)).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-4);
         assertEquals(p.toString(), 6, p.locations());
     }
@@ -202,7 +212,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(3, 8, 20, true);
         graph.edge(8, 6, 20, true);
 
-        Path p = createAlgo(graph).calcPath(0, 4);
+        Path p = createAlgo(prepareGraph(graph)).calcPath(0, 4);
         assertEquals(p.toString(), 40, p.weight(), 1e-4);
         assertEquals(p.toString(), 5, p.locations());
     }
@@ -210,51 +220,51 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testRekeyBugOfIntBinHeap() {
         // using DijkstraSimple + IntBinHeap then rekey loops endlessly
-        Path p = createAlgo(matrixGraph).calcPath(36, 91);
+        Path p = createAlgo(getMatrixGraph()).calcPath(36, 91);
         assertEquals(12, p.locations());
         assertEquals(66f, p.weight(), 1e-3);
     }
 
     @Test
     public void testBug1() {
-        assertEquals(17, createAlgo(matrixGraph).calcPath(34, 36).weight(), 1e-5);
+        assertEquals(17, createAlgo(getMatrixGraph()).calcPath(34, 36).weight(), 1e-5);
     }
 
     @Test
     public void testCannotCalculateSP() {
-        Graph g = createGraph(10);
-        g.edge(0, 1, 1, false);
-        g.edge(1, 2, 1, false);
+        Graph graph = createGraph(10);
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
 
-        Path p = createAlgo(g).calcPath(0, 2);
+        Path p = createAlgo(prepareGraph(graph)).calcPath(0, 2);
         assertEquals(p.toString(), 3, p.locations());
     }
 
     @Test
     public void testDirectedGraphBug1() {
-        Graph g = createGraph(10);
-        g.edge(0, 1, 3, false);
-        g.edge(1, 2, 2.99, false);
+        Graph graph = createGraph(10);
+        graph.edge(0, 1, 3, false);
+        graph.edge(1, 2, 2.99, false);
 
-        g.edge(0, 3, 2, false);
-        g.edge(3, 4, 3, false);
-        g.edge(4, 2, 1, false);
+        graph.edge(0, 3, 2, false);
+        graph.edge(3, 4, 3, false);
+        graph.edge(4, 2, 1, false);
 
-        Path p = createAlgo(g).calcPath(0, 2);
+        Path p = createAlgo(prepareGraph(graph)).calcPath(0, 2);
         assertEquals(p.toString(), 5.99, p.weight(), 1e-4);
         assertEquals(p.toString(), 3, p.locations());
     }
 
     @Test
     public void testDirectedGraphBug2() {
-        Graph g = createGraph(10);
-        g.edge(0, 1, 1, false);
-        g.edge(1, 2, 1, false);
-        g.edge(2, 3, 1, false);
+        Graph graph = createGraph(10);
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 3, 1, false);
 
-        g.edge(3, 1, 3, true);
+        graph.edge(3, 1, 3, true);
 
-        Path p = createAlgo(g).calcPath(0, 3);
+        Path p = createAlgo(prepareGraph(graph)).calcPath(0, 3);
         assertEquals(p.toString(), 4, p.locations());
     }
 
@@ -270,6 +280,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
 //        String bigFile = "largeEWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
+        graph = prepareGraph(graph);
         StopWatch sw = new StopWatch();
         for (int i = 0; i < N; i++) {
             int index1 = Math.abs(rand.nextInt(graph.getNodes()));

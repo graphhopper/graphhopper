@@ -16,8 +16,12 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.coll.MySortedCollection;
+import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.Path4Level;
+import com.graphhopper.routing.PathBidirRef;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -418,5 +422,38 @@ public class PrepareContractionHierarchies {
             }
         }
         return newShorts;
+    }
+
+    public DijkstraBidirectionRef createDijkstraBi() {
+        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g) {
+            @Override public RoutingAlgorithm setType(WeightCalculation wc) {
+                // ignore changing of type
+                return this;
+            }
+
+            @Override protected PathBidirRef createPath() {
+                WeightCalculation wc = new WeightCalculation() {
+                    @Override
+                    public double getWeight(EdgeIterator iter) {
+                        return iter.distance() * CarStreetType.getSpeedPart(iter.flags());
+                    }
+
+                    @Override public double apply(double currDistToGoal) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override public double apply(double currDistToGoal, int flags) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override public String toString() {
+                        return "INVERSE";
+                    }
+                };
+                return new Path4Level(graph, wc);
+            }
+        };
+        dijkstra.setEdgeFilter(new EdgeLevelFilter(g));
+        return dijkstra;
     }
 }

@@ -75,7 +75,7 @@ public class RoutingAlgorithmRealTest {
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
     }
 
-//    @Test
+    @Test
     public void testMonacoParallel() throws IOException {
         System.out.println("testMonacoParallel takes a bit time (move to a separate integration test?)");
         String graphFile = "target/graph-monaco";
@@ -85,7 +85,7 @@ public class RoutingAlgorithmRealTest {
         final List<OneRun> instances = createMonacoInstances();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
-        int MAX = 200;
+        int MAX = 100;
         int algosLength = -1;
         for (int no = 0; no < MAX; no++) {
             for (int i = 0; i < instances.size(); i++) {

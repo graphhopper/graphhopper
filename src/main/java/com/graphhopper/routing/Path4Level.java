@@ -34,7 +34,7 @@ public class Path4Level extends PathBidirRef {
         super(g, weightCalculation);
     }
 
-    // TODO remove code duplication!
+    // code duplication with PathBidirRef.calcWeight
     @Override
     public void calcWeight(EdgeIterator mainIter, int to) {
         double lowestW = -1;
@@ -63,47 +63,42 @@ public class Path4Level extends PathBidirRef {
 
         if (skippedNode >= 0) {
             // logger.info("iter(" + currEdge.node + "->" + tmpTo + ") with skipped node:" + iter.skippedNode());
-            expand(iter.fromNode(), to, skippedNode, flags);
+            boolean success = expand(iter.fromNode(), to, skippedNode, flags, false);
+            if (!success) {
+                success = expand(to, iter.fromNode(), skippedNode, flags, true);
+                if (!success)
+                    throw new IllegalStateException("skipped node " + skippedNode + " not found for "
+                            + to + "->" + iter.fromNode() + "? " + BitUtil.toBitString(flags, 8));
+            }
         }
     }
 
-    private void expand(int from, int to, int skippedNode, int flags) {
-        boolean reverse = false;
-        int skip = from;
+    protected boolean expand(int from, int to, int skippedNode, int flags, boolean reverse) {
+        int avoidNode = from;
         EdgeIterator tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, flags);
-        if (tmpIter == EdgeIterator.EMPTY) {
-            skip = to;
+        if (tmpIter == EdgeIterator.EMPTY)
+            return false;
 
-            // swap
-            int tmp = from;
-            from = to;
-            to = tmp;
-            // search skipped node at the other end of the shortcut!
-            reverse = true;
-            tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, CarStreetType.swapDirection(flags));
-            if (tmpIter == EdgeIterator.EMPTY)
-                throw new IllegalStateException("skipped node " + skippedNode + " not found for " + from + "->" + to + "? " + BitUtil.toBitString(flags, 8));
-        }
-
-        TIntArrayList tmp = new TIntArrayList();
+        TIntArrayList tmpList = new TIntArrayList();
         while (true) {
             int node = tmpIter.node();
-            tmp.add(node);
+            tmpList.add(node);
             tmpIter = g.getEdges(node);
             tmpIter.next();
-            if (tmpIter.node() == skip)
+            if (tmpIter.node() == avoidNode)
                 tmpIter.next();
 
-            skip = node;
+            avoidNode = node;
             if (((LevelGraph) g).getLevel(tmpIter.node()) >= 0 || tmpIter.node() == to)
                 break;
         }
 
         if (reverse)
-            tmp.reverse();
+            tmpList.reverse();
 
-        for (int i = 0; i < tmp.size(); i++) {
-            add(tmp.get(i));
+        for (int i = 0; i < tmpList.size(); i++) {
+            add(tmpList.get(i));
         }
+        return true;
     }
 }

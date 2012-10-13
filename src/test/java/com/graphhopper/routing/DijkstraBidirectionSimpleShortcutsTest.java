@@ -30,22 +30,22 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class DijkstraBidirectionLevelTest {
-
-    RoutingAlgorithm createAlgoWithFilter(final LevelGraph pg) {
-        return new DijkstraBidirectionRef(pg).setEdgeFilter(new EdgeLevelFilter(pg));
+public class DijkstraBidirectionSimpleShortcutsTest {
+    
+    RoutingAlgorithm createAlgoWithFilter(final LevelGraph lg) {
+        return new DijkstraBidirectionRef(lg).setEdgeFilter(new EdgeLevelFilter(lg));
     }
 
-    RoutingAlgorithm createAlgoWithFilterAndPathUnpacking(final LevelGraph pg) {
-        return new DijkstraBidirectionRef(pg) {
+    RoutingAlgorithm createAlgoWithFilterAndPathUnpacking(final LevelGraph lg) {
+        return new DijkstraBidirectionRef(lg) {
             @Override protected PathBidirRef createPath() {
                 return new Path4Level(graph, weightCalc);
             }
-        }.setEdgeFilter(new EdgeLevelFilter(pg));
+        }.setEdgeFilter(new EdgeLevelFilter(lg));
     }
 
     LevelGraph createGraph(int size) {
-        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("priog", false));
+        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("levelg", false));
         g.createNew(size);
         return g;
     }

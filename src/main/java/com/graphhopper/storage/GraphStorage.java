@@ -419,7 +419,7 @@ public class GraphStorage implements Graph, Storable {
 
     @Override
     public Graph copyTo(Graph g) {
-        if (g instanceof GraphStorage) {
+        if (g.getClass().equals(getClass())) {
             return _copyTo((GraphStorage) g);
         } else
             return GraphUtility.copyTo(this, g);
@@ -433,12 +433,15 @@ public class GraphStorage implements Graph, Storable {
     }
 
     public Graph _copyTo(GraphStorage clonedG) {
+        if (clonedG.edgeEntrySize != edgeEntrySize)
+            throw new IllegalStateException("edgeEntrySize cannot be different for cloned graph");
+        if (clonedG.nodeEntrySize != nodeEntrySize)
+            throw new IllegalStateException("nodeEntrySize cannot be different for cloned graph");
+
         edges.copyTo(clonedG.edges);
         clonedG.edgeCount = edgeCount;
-        clonedG.edgeEntrySize = edgeEntrySize;
         nodes.copyTo(clonedG.nodes);
         clonedG.nodeCount = nodeCount;
-        clonedG.nodeEntrySize = nodeEntrySize;
         clonedG.bounds = bounds;
         if (deletedNodes == null)
             clonedG.deletedNodes = null;

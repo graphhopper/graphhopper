@@ -102,30 +102,27 @@ public class RoutingAlgorithmIntegrationTests {
                     new DijkstraBidirectionRef(g),
                     new DijkstraBidirection(g),
                     new DijkstraSimple(g),
-                    createLevelDijkstraBi((LevelGraph) g)
+//                    createLevelDijkstraBi((LevelGraph) g)
                 };
     }
 
     static RoutingAlgorithm createLevelDijkstraBi(LevelGraph g) {
-        g = (LevelGraph) g.copyTo(new LevelGraphStorage(new RAMDirectory()));
-        new PrepareRoutingShortcuts(g).doWork();
-        DijkstraBidirectionRef dijkstraBi = new DijkstraBidirectionRef(g) {
-            @Override public String toString() {
-                return "DijkstraBidirectionRef|Shortcut|" + weightCalc;
-            }
-
-            @Override protected PathBidirRef createPath() {
-                // expand skipped nodes
-                return new Path4Level(graph, weightCalc);
-            }
-        };
-        dijkstraBi.setEdgeFilter(new EdgeLevelFilter(g));
-        return dijkstraBi;
+        return new PrepareContractionHierarchies(g).createDijkstraBi();
+//        DijkstraBidirectionRef dijkstraBi = new DijkstraBidirectionRef(g) {
+//            @Override public String toString() {
+//                return "DijkstraBidirectionRef|Shortcut|" + weightCalc;
+//            }
+//
+//            @Override protected PathBidirRef createPath() {
+//                // expand skipped nodes
+//                return new Path4Level(graph, weightCalc);
+//            }
+//        };
+//        dijkstraBi.setEdgeFilter(new EdgeLevelFilter(g));
+//        return dijkstraBi;
     }
 
     static RoutingAlgorithm createLevelAStarBi(LevelGraph g) {
-        g = (LevelGraph) g.copyTo(new LevelGraphStorage(new RAMDirectory()));
-        new PrepareRoutingShortcuts(g).doWork();
         AStarBidirection astar = new AStarBidirection(g) {
             @Override
             public String toString() {

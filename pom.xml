@@ -73,7 +73,7 @@
                 <version>2.12.3</version>
                 <!-- could it be that maven requires a bit too much RAM while testing? -->
                 <configuration>
-                    <argLine>-Xmx140m -Xms140m</argLine>
+                    <argLine>-Xmx200m -Xms200m</argLine>
                 </configuration>
             </plugin>
             <plugin>
