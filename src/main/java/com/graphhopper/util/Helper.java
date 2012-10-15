@@ -20,6 +20,8 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -27,6 +29,7 @@ import java.util.Map.Entry;
  */
 public class Helper {
 
+    private static Logger logger = LoggerFactory.getLogger(Helper.class);
     public static final int MB = 1 << 20;
 
     public static BufferedReader createBuffReader(File file) throws FileNotFoundException, UnsupportedEncodingException {
@@ -39,6 +42,32 @@ public class Helper {
 
     public static BufferedWriter createBuffWriter(File file) throws FileNotFoundException, UnsupportedEncodingException {
         return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
+    }
+
+    public static void loadProperties(Map<String, String> map, Reader tmpReader) throws IOException {
+        BufferedReader reader = new BufferedReader(tmpReader);
+        String line;
+        try {
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("//") || line.startsWith("#"))
+                    continue;
+
+                if (line.isEmpty())
+                    continue;
+
+                int index = line.indexOf("=");
+                if (index < 0) {
+                    logger.warn("Skipping configuration at line:" + line);
+                    continue;
+                }
+
+                String field = line.substring(0, index);
+                String value = line.substring(index + 1);
+                map.put(field, value);
+            }
+        } finally {
+            reader.close();
+        }
     }
 
     public static List<String> readFile(String file) throws IOException {
@@ -307,5 +336,12 @@ public class Helper {
             }
         }
         return false;
+    }
+
+    public static String pruneFileEnd(String file) {
+        int index = file.lastIndexOf(".");
+        if (index < 0)
+            return file;
+        return file.substring(0, index);
     }
 }

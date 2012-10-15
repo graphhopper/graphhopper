@@ -57,17 +57,24 @@ public class OSMReader {
 
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
+        if (!args.get("config", "").isEmpty()) {
+            args = CmdArgs.readFromConfig(args.get("config", ""));
+            // overwrite from command line
+            args.merge(CmdArgs.read(strs));
+        }
+
         Graph g = osm2Graph(args);
         // only possible for smaller graphs as we need to have two graphs + an array laying around
         // g = GraphUtility.sortDFS(g, new RAMDirectory());
         RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(g);
-        if (args.getBool("test", false)) {
+        if (args.getBool("osmreader.test", false)) {
             tests.start();
-        } else if (args.getBool("shortestpath", false)) {
-            String algo = args.get("algo", "dijkstra");
+        } else if (args.getBool("osmreader.runshortestpath", false)) {
+            String algo = args.get("osmreader.algo", "dijkstra");
+            int iters = args.getInt("osmreader.algoIterations", 50);
             //warmup
-            tests.runShortestPathPerf(50, algo);
-            tests.runShortestPathPerf(500, algo);
+            tests.runShortestPathPerf(iters / 10, algo);
+            tests.runShortestPathPerf(iters, algo);
         }
     }
     private int expectedLocs;
@@ -91,34 +98,39 @@ public class OSMReader {
      * allocation or reallocation (default is 5mio)
      */
     public static Graph osm2Graph(final CmdArgs args) throws IOException {
-        String storageFolder = args.get("graph", "graph-storage");
-        if (Helper.isEmpty(storageFolder))
-            throw new IllegalArgumentException("Please specify a folder where to store the graph");
-
-        int size = (int) args.getLong("size", 5 * 1000 * 1000);
-        Storage storage;
-        String dataAccess = args.get("dataaccess", "inmemory+save");
-        Directory dir;
-        if ("mmap".equalsIgnoreCase(dataAccess)) {
-            dir = new MMapDirectory(storageFolder);
-        } else {
-            if ("inmemory+save".equalsIgnoreCase(dataAccess))
-                dir = new RAMDirectory(storageFolder, true);
+        String graphLocation = args.get("osmreader.graph-location", "");
+        if (Helper.isEmpty(graphLocation)) {
+            String strOsm = args.get("osmreader.osm", "");
+            if (Helper.isEmpty(strOsm))
+                graphLocation = "graph-gh";
             else
-                dir = new RAMDirectory(storageFolder, false);
+                graphLocation = Helper.pruneFileEnd(strOsm) + "-gh";
         }
 
-        if (args.getBool("levelGraph", false))
-            storage = new GraphStorageWrapper(new GraphStorage(dir), size);
+        int size = (int) args.getLong("osmreader.size", 5 * 1000 * 1000);
+        Storage storage;
+        String dataAccess = args.get("osmreader.dataaccess", "inmemory+save");
+        Directory dir;
+        if ("mmap".equalsIgnoreCase(dataAccess)) {
+            dir = new MMapDirectory(graphLocation);
+        } else {
+            if ("inmemory+save".equalsIgnoreCase(dataAccess))
+                dir = new RAMDirectory(graphLocation, true);
+            else
+                dir = new RAMDirectory(graphLocation, false);
+        }
+
+        if (args.getBool("osmreader.levelgraph", false))
+            storage = new GraphStorageWrapper(new LevelGraphStorage(dir), size);
         else
             // necessary for simple or CH shortcuts
-            storage = new GraphStorageWrapper(new LevelGraphStorage(dir), size);
+            storage = new GraphStorageWrapper(new GraphStorage(dir), size);
         return osm2Graph(new OSMReader(storage, size), args);
     }
 
     public static Graph osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
         if (!osmReader.loadExisting()) {
-            String strOsm = args.get("osm", "");
+            String strOsm = args.get("osmreader.osm", "");
             if (Helper.isEmpty(strOsm))
                 throw new IllegalArgumentException("Graph not found and no OSM xml provided.");
 
@@ -126,13 +138,13 @@ public class OSMReader {
             if (!osmXmlFile.exists())
                 throw new IllegalStateException("Your specified OSM file does not exist:" + strOsm);
             logger.info("size for osm2id-map is " + osmReader.getMaxLocs() + " - start creating graph from " + osmXmlFile);
-            String type = args.get("type", "CAR");
+            String type = args.get("osmreader.type", "CAR");
             osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
                     type.contains("PUBLIC_TRANSPORT"),
                     type.contains("BIKE"), type.contains("FOOT")));
 
-            osmReader.setSimpleShortcuts(args.getBool("simpleShortcuts", false));
-            osmReader.setCHShortcuts(args.getBool("chShortcuts", false));
+            osmReader.setSimpleShortcuts(args.getBool("osmreader.simpleShortcuts", false));
+            osmReader.setCHShortcuts(args.getBool("osmreader.chShortcuts", false));
             osmReader.osm2Graph(osmXmlFile);
         }
 

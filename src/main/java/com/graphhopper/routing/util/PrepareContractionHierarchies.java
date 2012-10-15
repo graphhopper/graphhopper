@@ -171,6 +171,7 @@ public class PrepareContractionHierarchies {
             }
         }
         logger.info("new shortcuts " + newShortcuts);
+        System.out.println("new shortcuts " + newShortcuts);
     }
 
     /**
@@ -380,6 +381,10 @@ public class PrepareContractionHierarchies {
                 };
                 return new Path4CH(graph, wc);
             }
+
+            @Override public String toString() {
+                return "DijkstraCH";
+            }                        
         };
         dijkstra.setEdgeFilter(new EdgeLevelFilter(g));
         return dijkstra;

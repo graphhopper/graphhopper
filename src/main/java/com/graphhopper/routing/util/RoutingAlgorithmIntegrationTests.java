@@ -97,12 +97,12 @@ public class RoutingAlgorithmIntegrationTests {
 
     public static RoutingAlgorithm[] createAlgos(Graph g) {
         return new RoutingAlgorithm[]{
-                    new AStar(g),
-                    new AStarBidirection(g),
-                    new DijkstraBidirectionRef(g),
-                    new DijkstraBidirection(g),
-                    new DijkstraSimple(g),
-//                    createLevelDijkstraBi((LevelGraph) g)
+//                    new AStar(g),
+//                    new AStarBidirection(g),
+//                    new DijkstraBidirectionRef(g),
+//                    new DijkstraBidirection(g),
+//                    new DijkstraSimple(g),
+                    createLevelDijkstraBi((LevelGraph) g)
                 };
     }
 

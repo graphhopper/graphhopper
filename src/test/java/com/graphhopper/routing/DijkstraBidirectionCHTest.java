@@ -76,11 +76,11 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Test @Override public void testCalcFastestPath() {
-        // TODO make CH possible for SHORTEST too
+        // TODO make CH possible for SHORTEST too -> hmmh then prepareGraph() depends on type
     }
 
     @Test @Override public void testPerformance() throws IOException {
-        // TODO hmmh this takes a bit tooo long
+        // TODO hmmh preparation takes a bit tooo long
         // super.testPerformance();
     }
 
@@ -116,12 +116,5 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         Path p = createAlgo(g2).calcPath(0, 7);
         assertEquals(4, p.locations());
         assertEquals(4.2, p.distance(), 1e-5);
-    }
-
-    @Test
-    public void testCorrectWeight() {
-        Path p = createAlgo(getMatrixGraph()).calcPath(45, 72);
-        assertEquals(38f, p.weight(), 1e-3);
-        assertEquals(Arrays.asList(45, 44, 54, 64, 74, 73, 72), p.toNodeList());
     }
 }

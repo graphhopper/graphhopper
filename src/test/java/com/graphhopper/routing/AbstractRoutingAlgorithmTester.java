@@ -240,6 +240,13 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
 
     @Test
+    public void testCorrectWeight() {
+        Path p = createAlgo(getMatrixGraph()).calcPath(45, 72);
+        assertEquals(38f, p.weight(), 1e-3);
+        assertEquals(Arrays.asList(45, 44, 54, 64, 74, 73, 72), p.toNodeList());
+    }
+
+    @Test
     public void testCannotCalculateSP() {
         Graph graph = createGraph(10);
         graph.edge(0, 1, 1, false);

@@ -24,13 +24,6 @@ fi
 NAME="${FILE%.*}"
 OSM=$NAME.osm
 
-# for perf tests
-TEST=false
-SPATH=true
-
-# for UI
-DEBUG=false
-
 GRAPH=$NAME-gh
 JAR=target/graphhopper-1.0-SNAPSHOT-jar-with-dependencies.jar
 
@@ -89,14 +82,15 @@ fi
 if [ ! -d "$GRAPH" ]; then
   echo "## now creating graph $GRAPH (folder) from $OSM (file),  java opts=$JAVA_OPTS_IMPORT"
   echo "## HINT: put the osm on an external usb drive which should speed up import time"
-  $JAVA_HOME/bin/java $JAVA_OPTS_IMPORT -cp $JAR com.graphhopper.reader.OSMReader graph=$GRAPH osm=$OSM size=$SIZE
+  $JAVA_HOME/bin/java $JAVA_OPTS_IMPORT -cp $JAR com.graphhopper.reader.OSMReader config=config.properties osmreader.graph-location=$GRAPH osmreader.osm=$OSM osmreader.size=$SIZE
 else
   echo "## using existing graph at $GRAPH"
 fi
 
+# run shortest path performance analysis OR MiniGraphUI
 if [ -d "$GRAPH" ]; then
   echo "## now running $CLASS. java opts=$JAVA_OPTS_IMPORT"
-  $JAVA_HOME/bin/java $JAVA_OPTS -cp $JAR $CLASS graph=$GRAPH debug=$DEBUG test=$TEST shortestpath=$SPATH algo=$ALGO
+  $JAVA_HOME/bin/java $JAVA_OPTS -cp $JAR $CLASS config=config.properties osmreader.graph-location=$GRAPH osmreader.algo=$ALGO
 else
   echo "## creating graph failed"
 fi

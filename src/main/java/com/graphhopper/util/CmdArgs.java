@@ -15,8 +15,11 @@
  */
 package com.graphhopper.util;
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Stores command line options in a mapped. The case of the key is ignored.
@@ -97,6 +100,14 @@ public class CmdArgs {
         return map.get(key.toLowerCase());
     }
 
+    public static CmdArgs readFromConfig(String fileStr) throws IOException {
+        Map<String, String> map = new LinkedHashMap<String, String>();
+        Helper.loadProperties(map, new FileReader(fileStr));
+        CmdArgs args = new CmdArgs();
+        args.merge(map);
+        return args;
+    }
+
     public static CmdArgs read(String[] args) {
         Map<String, String> map = new LinkedHashMap<String, String>();
         for (String arg : args) {
@@ -116,5 +127,22 @@ public class CmdArgs {
         }
 
         return new CmdArgs(map);
+    }
+
+    public CmdArgs merge(CmdArgs read) {
+        return merge(read.map);
+    }
+
+    CmdArgs merge(Map<String, String> map) {
+        for (Entry<String, String> e : map.entrySet()) {
+            if (Helper.isEmpty(e.getKey()))
+                continue;
+            this.map.put(e.getKey().toLowerCase(), e.getValue());
+        }
+        return this;
+    }
+
+    @Override public String toString() {
+        return map.toString();
     }
 }

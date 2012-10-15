@@ -18,11 +18,9 @@ package com.graphhopper.ui;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.reader.OSMReader;
-import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -53,7 +51,7 @@ public class MiniGraphUI {
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
         Graph g = OSMReader.osm2Graph(args);
-        boolean debug = args.getBool("debug", false);
+        boolean debug = args.getBool("minigraphui.debug", false);
         new MiniGraphUI(g, debug).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
