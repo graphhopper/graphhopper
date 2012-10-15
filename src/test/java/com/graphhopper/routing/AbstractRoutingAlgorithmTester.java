@@ -286,8 +286,6 @@ public abstract class AbstractRoutingAlgorithmTester {
         Graph graph = createGraph(10000);
 
         String bigFile = "10000EWD.txt.gz";
-
-//        String bigFile = "largeEWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
         graph = prepareGraph(graph);
         StopWatch sw = new StopWatch();

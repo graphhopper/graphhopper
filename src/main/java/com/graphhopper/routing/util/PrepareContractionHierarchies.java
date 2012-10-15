@@ -103,13 +103,11 @@ public class PrepareContractionHierarchies {
         for (int node = 0; node < len; node++) {
             WeightedNode wn = refs[node];
             wn.priority = calculatePriority(node);
-            // System.out.println(wn);
             sortedNodes.insert(wn.node, wn.priority);
         }
 
         if (sortedNodes.isEmpty())
             throw new IllegalStateException("no nodes found!?");
-        // System.out.println("-----------");
     }
 
     void contractNodes() {
@@ -172,7 +170,7 @@ public class PrepareContractionHierarchies {
                     sortedNodes.update(nn, tmpOld, neighborWn.priority);
             }
         }
-        System.out.println("new shortcuts " + newShortcuts);
+        logger.info("new shortcuts " + newShortcuts);
     }
 
     /**
@@ -275,22 +273,34 @@ public class PrepareContractionHierarchies {
                 }
 
                 // FOUND shortcut but be sure that it is the only shortcut in the collection 
-                // and also in the graph for u->w. If existing => update it
-                long edge = u + n.node;
-                Shortcut sc = shortcuts.get(edge);
+                // and also in the graph for u->w. If existing => update it                
+                long edgeId = (long) u * refs.length + n.node;
+                Shortcut sc = shortcuts.get(edgeId);
+                if (sc == null) {
+                    edgeId = (long) n.node * refs.length + u;
+                    sc = shortcuts.get(edgeId);
+                } else if (shortcuts.containsKey((long) n.node * refs.length + u))
+                    throw new IllegalStateException("duplicate edge should be overwritten: " + u + "->" + n.node);
+
                 if (sc == null || sc.distance != n.distance) {
-                    sc = new Shortcut(u, n.node, n.distance);
+                    if (sc == null) {
+                        sc = new Shortcut(u, n.node, n.distance);
+                        shortcuts.put(edgeId, sc);
+                    } else
+                        sc.distance = n.distance;
+
                     sc.originalEdges = iter1.originalEdges() + n.originalEdges;
-                    shortcuts.put(edge, sc);
 
                     // determine if a shortcut already exists in the graph
                     EdgeSkipIterator tmpIter = g.getOutgoing(u);
                     while (tmpIter.next()) {
-                        if (tmpIter.node() != n.node || tmpIter.skippedNode() < 0)
+                        if (tmpIter.node() != n.node || tmpIter.skippedNode() <= 0)
                             continue;
 
+                        // TODO what if existing edge is in both dirs and current is only one
+                        // => wrong distance for other direction!
                         if (tmpIter.distance() > n.distance)
-                            sc.update = true;
+                            sc.updateInGraph = true;
                     }
                 } else {
                     // the shortcut already exists in the current collection (different direction)
@@ -310,11 +320,15 @@ public class PrepareContractionHierarchies {
 //        System.out.println("contract:" + refs[v] + ", scs:" + shortcuts);
         int newShorts = 0;
         for (Shortcut sc : foundShortcuts) {
-            if (sc.update) {
+            if (sc.updateInGraph) {
                 EdgeSkipIterator iter = g.getOutgoing(sc.from);
                 while (iter.next()) {
-                    if (iter.node() == sc.to && iter.distance() > sc.distance)
+                    if (iter.node() == sc.to && iter.distance() > sc.distance) {
+                        // TODO iter.flags(sc.flags);
+                        iter.skippedNode(v);
                         iter.distance(sc.distance);
+                        iter.originalEdges(sc.originalEdges);
+                    }
                 }
             } else {
                 EdgeSkipIterator iter = g.shortcut(sc.from, sc.to, sc.distance, sc.flags, v);
@@ -448,7 +462,7 @@ public class PrepareContractionHierarchies {
         int from;
         int to;
         double distance;
-        boolean update = false;
+        boolean updateInGraph = false;
         int originalEdges;
         int flags = scOneDir;
 
@@ -459,7 +473,7 @@ public class PrepareContractionHierarchies {
         }
 
         @Override public String toString() {
-            return from + "->" + to + ", dist:" + distance + ",update:" + update;
+            return from + "->" + to + ", dist:" + distance + ",update:" + updateInGraph;
         }
     }
 
