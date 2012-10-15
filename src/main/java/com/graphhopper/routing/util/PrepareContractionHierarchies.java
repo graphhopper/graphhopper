@@ -19,7 +19,7 @@ import com.graphhopper.coll.MySortedCollection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.Path4Level;
+import com.graphhopper.routing.Path4CH;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.EdgeEntry;
@@ -64,55 +64,13 @@ public class PrepareContractionHierarchies {
         this.g = g;
         sortedNodes = new MySortedCollection(g.getNodes());
         refs = new WeightedNode[g.getNodes()];
-        weightCalc = FastestCalc.DEFAULT;
+        weightCalc = ShortestCalc.DEFAULT;
         edgeFilter = new EdgeLevelFilterCH(g);
     }
 
-    private static class WeightedNode {
-
-        int node;
-        int priority;
-
-        public WeightedNode(int node, int priority) {
-            this.node = node;
-            this.priority = priority;
-        }
-
-        @Override public String toString() {
-            return node + " (" + priority + ")";
-        }
-    }
-
-    private static class Shortcut {
-
-        int from;
-        int to;
-        double distance;
-        boolean update = false;
-        int originalEdges;
-        int flags = scOneDir;
-
-        public Shortcut(int from, int to, double dist) {
-            this.from = from;
-            this.to = to;
-            this.distance = dist;
-        }
-
-        @Override public String toString() {
-            return from + "->" + to + ", dist:" + distance + ",update:" + update;
-        }
-    }
-
-    static class NodeCH {
-
-        int node;
-        int originalEdges;
-        EdgeEntry entry;
-        double distance;
-
-        @Override public String toString() {
-            return "" + node;
-        }
+    public PrepareContractionHierarchies setWeightCalculation(WeightCalculation weightCalc) {
+        this.weightCalc = weightCalc;
+        return this;
     }
 
     public void doWork() {
@@ -344,7 +302,68 @@ public class PrepareContractionHierarchies {
         return shortcuts.values();
     }
 
-    public static class OneToManyDijkstraCH extends DijkstraSimple {
+    /**
+     * Introduces the necessary shortcuts for node v in the graph.
+     */
+    int addShortcuts(int v) {
+        Collection<Shortcut> foundShortcuts = findShortcuts(v);
+//        System.out.println("contract:" + refs[v] + ", scs:" + shortcuts);
+        int newShorts = 0;
+        for (Shortcut sc : foundShortcuts) {
+            if (sc.update) {
+                EdgeSkipIterator iter = g.getOutgoing(sc.from);
+                while (iter.next()) {
+                    if (iter.node() == sc.to && iter.distance() > sc.distance)
+                        iter.distance(sc.distance);
+                }
+            } else {
+                EdgeSkipIterator iter = g.shortcut(sc.from, sc.to, sc.distance, sc.flags, v);
+                iter.originalEdges(sc.originalEdges);
+                newShorts++;
+            }
+        }
+        return newShorts;
+    }
+
+    public DijkstraBidirectionRef createDijkstraBi() {
+        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g) {
+            @Override public RoutingAlgorithm setType(WeightCalculation wc) {
+                // ignore changing of type
+                return this;
+            }
+
+            @Override protected PathBidirRef createPath() {
+                // CH changes weight at the beginning now we need to transform the weight back to distance
+                WeightCalculation wc = new WeightCalculation() {
+                    @Override
+                    public double getWeight(EdgeIterator iter) {
+                        return weightCalc.revert(iter.distance(), iter.flags());
+                    }
+
+                    @Override public String toString() {
+                        return "INVERSE";
+                    }
+
+                    @Override public double apply(double currDistToGoal) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override public double apply(double currDistToGoal, int flags) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override public double revert(double weight, int flags) {
+                        throw new UnsupportedOperationException("Not supported yet.");
+                    }
+                };
+                return new Path4CH(graph, wc);
+            }
+        };
+        dijkstra.setEdgeFilter(new EdgeLevelFilter(g));
+        return dijkstra;
+    }
+
+    static class OneToManyDijkstraCH extends DijkstraSimple {
 
         EdgeLevelFilter filter;
         double limit;
@@ -401,59 +420,50 @@ public class PrepareContractionHierarchies {
         }
     }
 
-    /**
-     * Introduces the necessary shortcuts for node v in the graph.
-     */
-    int addShortcuts(int v) {
-        Collection<Shortcut> foundShortcuts = findShortcuts(v);
-//        System.out.println("contract:" + refs[v] + ", scs:" + shortcuts);
-        int newShorts = 0;
-        for (Shortcut sc : foundShortcuts) {
-            if (sc.update) {
-                EdgeSkipIterator iter = g.getOutgoing(sc.from);
-                while (iter.next()) {
-                    if (iter.node() == sc.to && iter.distance() > sc.distance)
-                        iter.distance(sc.distance);
-                }
-            } else {
-                EdgeSkipIterator iter = g.shortcut(sc.from, sc.to, sc.distance, sc.flags, v);
-                iter.originalEdges(sc.originalEdges);
-                newShorts++;
-            }
+    private static class WeightedNode {
+
+        int node;
+        int priority;
+
+        public WeightedNode(int node, int priority) {
+            this.node = node;
+            this.priority = priority;
         }
-        return newShorts;
+
+        @Override public String toString() {
+            return node + " (" + priority + ")";
+        }
     }
 
-    public DijkstraBidirectionRef createDijkstraBi() {
-        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g) {
-            @Override public RoutingAlgorithm setType(WeightCalculation wc) {
-                // ignore changing of type
-                return this;
-            }
+    private static class Shortcut {
 
-            @Override protected PathBidirRef createPath() {
-                WeightCalculation wc = new WeightCalculation() {
-                    @Override
-                    public double getWeight(EdgeIterator iter) {
-                        return iter.distance() * CarStreetType.getSpeedPart(iter.flags());
-                    }
+        int from;
+        int to;
+        double distance;
+        boolean update = false;
+        int originalEdges;
+        int flags = scOneDir;
 
-                    @Override public double apply(double currDistToGoal) {
-                        throw new UnsupportedOperationException();
-                    }
+        public Shortcut(int from, int to, double dist) {
+            this.from = from;
+            this.to = to;
+            this.distance = dist;
+        }
 
-                    @Override public double apply(double currDistToGoal, int flags) {
-                        throw new UnsupportedOperationException();
-                    }
+        @Override public String toString() {
+            return from + "->" + to + ", dist:" + distance + ",update:" + update;
+        }
+    }
 
-                    @Override public String toString() {
-                        return "INVERSE";
-                    }
-                };
-                return new Path4Level(graph, wc);
-            }
-        };
-        dijkstra.setEdgeFilter(new EdgeLevelFilter(g));
-        return dijkstra;
+    static class NodeCH {
+
+        int node;
+        int originalEdges;
+        EdgeEntry entry;
+        double distance;
+
+        @Override public String toString() {
+            return "" + node;
+        }
     }
 }

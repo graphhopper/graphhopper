@@ -17,7 +17,7 @@ package com.graphhopper.reader;
 
 import com.graphhopper.routing.util.AcceptStreet;
 import com.graphhopper.routing.util.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.PrepareRoutingShortcuts;
+import com.graphhopper.routing.util.PrepareLongishPathShortcuts;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmIntegrationTests;
 import com.graphhopper.storage.Directory;
@@ -182,7 +182,7 @@ public class OSMReader {
         Graph g = storage.getGraph();
         if (g instanceof LevelGraph) {
             if (simpleShortcuts)
-                new PrepareRoutingShortcuts((LevelGraph) g).doWork();
+                new PrepareLongishPathShortcuts((LevelGraph) g).doWork();
             if (chShortcuts)
                 new PrepareContractionHierarchies((LevelGraph) g).doWork();
         }

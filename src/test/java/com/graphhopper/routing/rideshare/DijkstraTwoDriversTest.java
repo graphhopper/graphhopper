@@ -30,8 +30,12 @@ import org.junit.Test;
  */
 public class DijkstraTwoDriversTest {
 
+    Graph getGraph() {
+        return AbstractRoutingAlgorithmTester.getMatrixAlikeGraph();
+    }
+
     @Test public void testFindMeetingPointWhenNotCrossing() {
-        Graph g = AbstractRoutingAlgorithmTester.matrixGraph;
+        Graph g = getGraph();
         DijkstraTwoDrivers d = new DijkstraTwoDrivers(g);
         d.setDriverA(12, 36);
         d.setDriverB(30, 45);
@@ -58,7 +62,7 @@ public class DijkstraTwoDriversTest {
     }
 
     @Test public void testFindMeetingPointWhenCrossing() {
-        Graph g = AbstractRoutingAlgorithmTester.matrixGraph;
+        Graph g = getGraph();
         DijkstraTwoDrivers d = new DijkstraTwoDrivers(g);
         d.setDriverA(12, 36);
         d.setDriverB(30, 15);

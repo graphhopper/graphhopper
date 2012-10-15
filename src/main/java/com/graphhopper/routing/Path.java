@@ -23,6 +23,8 @@ import com.graphhopper.util.GraphUtility;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Efficiently stores the entries for Dijkstra algorithm
@@ -160,5 +162,14 @@ public class Path {
                 System.out.println("p.dist:" + tmp.weight() + ", dist:" + dist + ", " + from + "->" + to);
             }
         }
+    }
+
+    public List<Integer> toNodeList() {
+        List<Integer> list = new ArrayList<Integer>();
+        int len = locations.size();
+        for (int i = 0; i < len; i++) {
+            list.add(locations.get(i));
+        }
+        return list;
     }
 }

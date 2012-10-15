@@ -16,7 +16,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.MemoryGraphSafe;
+import java.util.Arrays;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -41,11 +41,12 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
         db.addSkipNode(5);
         p = db.calcPath(0, 4);
         assertFalse(p.toString(), p.contains(5));
+        assertEquals(Arrays.asList(0, 2, 3, 4), p.toNodeList());        
     }
 
     @Test
     public void testCannotCalculateSP2() {
-        Graph g = new MemoryGraphSafe(10);
+        Graph g = createGraph(10);
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
 

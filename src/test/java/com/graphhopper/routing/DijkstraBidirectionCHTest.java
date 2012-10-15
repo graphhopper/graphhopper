@@ -15,6 +15,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.PrepareContractionHierarchies;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -32,20 +33,20 @@ import org.junit.Test;
  */
 public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
+    // graph is expensive to create and to prepare!
     private static Graph preparedMatrixGraph;
 
     @Override public Graph getMatrixGraph() {
         if (preparedMatrixGraph == null) {
-            LevelGraph lg = createGraph(matrixGraph.getNodes());
-            matrixGraph.copyTo(lg);
+            LevelGraph lg = createGraph(getMatrixAlikeGraph().getNodes());
+            getMatrixAlikeGraph().copyTo(lg);
             preparedMatrixGraph = prepareGraph(lg);
         }
-        
         return preparedMatrixGraph;
     }
 
     @Override
-    LevelGraph createGraph(int size) {
+    protected LevelGraph createGraph(int size) {
         LevelGraphStorage lg = new LevelGraphStorage(new RAMDirectory());
         lg.createNew(size);
         return lg;
@@ -72,7 +73,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), 6, p.locations());
     }
 
-    @Test public void testCalcFastestPath() {
+    @Test @Override public void testCalcFastestPath() {
         // TODO how to make a difference between fast and shortest preparation?
     }
 
@@ -81,11 +82,36 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Test
-    public void testPathUnpacking() {
+    public void testPathRecursiveUnpacking() {
         LevelGraph g2 = createGraph(6);
-        prepareGraph(g2);
 
-        // TODO recursively unpack the graph (difference to simple PrepareShortcuts)
-        // TODO will fail while unpacking
+        g2.edge(0, 1, 1, true);
+        g2.edge(0, 2, 1.4, true);
+        g2.edge(1, 2, 1, true);
+        g2.edge(1, 3, 3, true);
+        g2.edge(2, 3, 1, true);
+        g2.edge(4, 3, 1, true);
+        g2.edge(2, 5, 1.4, true);
+        g2.edge(3, 5, 1, true);
+        g2.edge(5, 6, 1, true);
+        g2.edge(4, 6, 1, true);
+        g2.edge(5, 7, 1.4, true);
+        g2.edge(6, 7, 1, true);
+
+        // simulate preparation
+        g2.shortcut(0, 5, 2.8, CarStreetType.flagsDefault(true), 2);
+        g2.shortcut(0, 7, 4.2, CarStreetType.flagsDefault(true), 5);
+        g2.setLevel(1, 0);
+        g2.setLevel(3, 1);
+        g2.setLevel(4, 2);
+        g2.setLevel(6, 3);
+        g2.setLevel(2, 4);
+        g2.setLevel(5, 5);
+        g2.setLevel(7, 6);
+        g2.setLevel(0, 7);
+
+        Path p = createAlgo(g2).calcPath(0, 7);
+        assertEquals(4, p.locations());
+        assertEquals(4.2, p.distance(), 1e-5);
     }
 }

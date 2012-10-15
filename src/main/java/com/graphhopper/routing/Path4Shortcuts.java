@@ -15,7 +15,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.CarStreetType;
+import com.graphhopper.routing.util.PrepareLongishPathShortcuts;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -26,11 +26,14 @@ import com.graphhopper.util.GraphUtility;
 import gnu.trove.list.array.TIntArrayList;
 
 /**
+ * Unpack shortcuts of lengthy paths.
+ *
+ * @see PrepareLongishPathShortcuts
  * @author Peter Karich,
  */
-public class Path4Level extends PathBidirRef {
+public class Path4Shortcuts extends PathBidirRef {
 
-    public Path4Level(Graph g, WeightCalculation weightCalculation) {
+    public Path4Shortcuts(Graph g, WeightCalculation weightCalculation) {
         super(g, weightCalculation);
     }
 
@@ -61,21 +64,24 @@ public class Path4Level extends PathBidirRef {
         weight += lowestW;
         distance += dist;
 
-        if (skippedNode >= 0) {
-            // logger.info("iter(" + currEdge.node + "->" + tmpTo + ") with skipped node:" + iter.skippedNode());
-            boolean success = expand(iter.fromNode(), to, skippedNode, flags, false);
-            if (!success) {
-                success = expand(to, iter.fromNode(), skippedNode, flags, true);
-                if (!success)
-                    throw new IllegalStateException("skipped node " + skippedNode + " not found for "
-                            + to + "->" + iter.fromNode() + "? " + BitUtil.toBitString(flags, 8));
-            }
+        if (skippedNode >= 0)
+            handleSkippedNode(iter.fromNode(), to, flags, skippedNode);
+    }
+
+    protected void handleSkippedNode(int from, int to, int flags, int skippedNode) {
+        // logger.info("iter(" + currEdge.node + "->" + tmpTo + ") with skipped node:" + iter.skippedNode());
+        boolean success = expand(from, to, skippedNode, flags, false);
+        if (!success) {
+            success = expand(to, from, skippedNode, flags, true);
+            if (!success)
+                throw new IllegalStateException("skipped node " + skippedNode + " not found for "
+                        + from + "<->" + to + "? " + BitUtil.toBitString(flags, 8));
         }
     }
 
     protected boolean expand(int from, int to, int skippedNode, int flags, boolean reverse) {
         int avoidNode = from;
-        EdgeIterator tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, flags);
+        EdgeIterator tmpIter = until(from, skippedNode, flags);
         if (tmpIter == EdgeIterator.EMPTY)
             return false;
 
@@ -89,6 +95,7 @@ public class Path4Level extends PathBidirRef {
                 tmpIter.next();
 
             avoidNode = node;
+            // TODO introduce edge filter here too?
             if (((LevelGraph) g).getLevel(tmpIter.node()) >= 0 || tmpIter.node() == to)
                 break;
         }
@@ -100,5 +107,9 @@ public class Path4Level extends PathBidirRef {
             add(tmpList.get(i));
         }
         return true;
+    }
+    
+    protected EdgeIterator until(int from, int to, int flags) {
+        return GraphUtility.until(g.getOutgoing(from), to, flags);
     }
 }

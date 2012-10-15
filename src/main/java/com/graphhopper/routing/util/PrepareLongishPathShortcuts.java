@@ -29,13 +29,13 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class PrepareRoutingShortcuts {
+public class PrepareLongishPathShortcuts {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final LevelGraph g;
     private int newShortcuts;
 
-    public PrepareRoutingShortcuts(LevelGraph g) {
+    public PrepareLongishPathShortcuts(LevelGraph g) {
         this.g = g;
     }
 

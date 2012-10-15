@@ -15,15 +15,46 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.GraphUtility;
 
 /**
+ * Recursivly unpack shortcuts.
+ *
+ * @see PrepareContractionHierarchies
  * @author Peter Karich,
  */
-public class Path4CH extends Path4Level {
+public class Path4CH extends Path4Shortcuts {
 
     public Path4CH(Graph g, WeightCalculation weightCalculation) {
         super(g, weightCalculation);
+    }
+
+    @Override
+    protected void handleSkippedNode(int from, int to, int flags, int skippedNode) {
+        EdgeIterator tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, flags);
+        if (tmpIter != EdgeIterator.EMPTY) {
+            EdgeSkipIterator tmp2 = (EdgeSkipIterator) tmpIter;
+            if (tmp2.skippedNode() >= 0)
+                handleSkippedNode(from, skippedNode, flags, tmp2.skippedNode());
+        }
+        super.handleSkippedNode(from, to, flags, skippedNode);
+
+        tmpIter = GraphUtility.until(g.getOutgoing(skippedNode), to, flags);
+        if (tmpIter != EdgeIterator.EMPTY) {
+            EdgeSkipIterator tmp2 = (EdgeSkipIterator) tmpIter;
+            if (tmp2.skippedNode() >= 0)
+                handleSkippedNode(skippedNode, to, flags, tmp2.skippedNode());
+        }
+    }
+
+    @Override
+    protected EdgeIterator until(int from, int to, int flags) {
+        // ignore flags as they should be ignored for shortcuts
+        return GraphUtility.until(g.getOutgoing(from), to);
     }
 }

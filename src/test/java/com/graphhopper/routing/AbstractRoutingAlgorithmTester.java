@@ -21,10 +21,10 @@ import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.StopWatch;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import static org.junit.Assert.*;
@@ -37,11 +37,7 @@ import org.junit.Test;
 public abstract class AbstractRoutingAlgorithmTester {
 
     // problem is: matrix graph is expensive to create to cache it in a static variable
-    public static Graph matrixGraph;
-
-    static {
-        matrixGraph = createMatrixAlikeGraph();
-    }
+    private static Graph matrixGraph;
 
     public abstract RoutingAlgorithm createAlgo(Graph g);
 
@@ -50,7 +46,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
 
     public Graph getMatrixGraph() {
-        return matrixGraph;
+        return getMatrixAlikeGraph();
     }
 
     @Test public void testCalcShortestPath() {
@@ -87,6 +83,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p1.toString(), 24, p1.weight(), 1e-6);
         assertEquals(p1.toString(), 24, p1.distance(), 1e-6);
         assertEquals(p1.toString(), 5, p1.locations());
+        assertEquals(Arrays.asList(0, 1, 5, 2, 3), p1.toNodeList());
 
         Path p2 = createAlgo(prepareGraph(graph)).setType(FastestCalc.DEFAULT).calcPath(0, 3);
 //        assertEquals(5580, p2.timeInSec());
@@ -191,6 +188,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         Path p = createAlgo(prepareGraph(graph)).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-4);
         assertEquals(p.toString(), 6, p.locations());
+        assertEquals(Arrays.asList(0, 7, 6, 8, 3, 4), p.toNodeList());
     }
 
     // 1-2-3-4-5
@@ -215,6 +213,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         Path p = createAlgo(prepareGraph(graph)).calcPath(0, 4);
         assertEquals(p.toString(), 40, p.weight(), 1e-4);
         assertEquals(p.toString(), 5, p.locations());
+        assertEquals(Arrays.asList(0, 7, 6, 5, 4), p.toNodeList());
     }
 
     @Test
@@ -222,6 +221,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         // using DijkstraSimple + IntBinHeap then rekey loops endlessly
         Path p = createAlgo(getMatrixGraph()).calcPath(36, 91);
         assertEquals(12, p.locations());
+        assertEquals(Arrays.asList(36, 46, 56, 66, 76, 86, 85, 84, 94, 93, 92, 91), p.toNodeList());
         assertEquals(66f, p.weight(), 1e-3);
     }
 
@@ -300,6 +300,12 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertTrue("speed to low!? " + perRun + " per run", perRun < 0.07);
     }
 
+    public static Graph getMatrixAlikeGraph() {
+        if (matrixGraph == null)
+            matrixGraph = createMatrixAlikeGraph();
+        return matrixGraph;
+    }
+
     private static Graph createMatrixAlikeGraph() {
         int WIDTH = 10;
         int HEIGHT = 15;
@@ -353,7 +359,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         return tmp;
     }
 
-    Graph createGraph(int size) {
+    protected Graph createGraph(int size) {
         return new GraphStorage(new RAMDirectory()).createNew(size);
     }
 }

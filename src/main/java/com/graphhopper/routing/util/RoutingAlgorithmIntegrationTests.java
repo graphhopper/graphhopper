@@ -22,7 +22,7 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
-import com.graphhopper.routing.Path4Level;
+import com.graphhopper.routing.Path4Shortcuts;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -115,7 +115,7 @@ public class RoutingAlgorithmIntegrationTests {
 //
 //            @Override protected PathBidirRef createPath() {
 //                // expand skipped nodes
-//                return new Path4Level(graph, weightCalc);
+//                return new Path4Shortcuts(graph, weightCalc);
 //            }
 //        };
 //        dijkstraBi.setEdgeFilter(new EdgeLevelFilter(g));
@@ -131,7 +131,7 @@ public class RoutingAlgorithmIntegrationTests {
 
             @Override protected PathBidirRef createPath() {
                 // expand skipped nodes
-                return new Path4Level(graph, weightCalc);
+                return new Path4Shortcuts(graph, weightCalc);
             }
         }.setApproximation(true);
         astar.setEdgeFilter(new EdgeLevelFilter(g));

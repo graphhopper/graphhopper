@@ -31,12 +31,16 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
 
     public static int[] pubTransportPath = new int[]{20, 21, 31, 41, 51, 52, 42, 43, 53, 63, 62, 72, 73, 74, 75};
 
+    Graph getGraph() {
+        return AbstractRoutingAlgorithmTester.getMatrixAlikeGraph();
+    }
+
     @Override public RoutingAlgorithm createAlgo(Graph g) {
         return new DijkstraWhichToOne(g);
     }
 
     @Test public void testDirectlyOnPubTransport() {
-        DijkstraWhichToOne d = new DijkstraWhichToOne(matrixGraph);
+        DijkstraWhichToOne d = new DijkstraWhichToOne(getGraph());
         d.addPubTransportPoints(pubTransportPath);
         int dest = 51;
         d.setDestination(dest);
@@ -46,7 +50,7 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Test public void testABitAway() {
-        DijkstraWhichToOne d = new DijkstraWhichToOne(matrixGraph);
+        DijkstraWhichToOne d = new DijkstraWhichToOne(getGraph());
         d.addPubTransportPoints(pubTransportPath);
         int dest = 49;
         d.setDestination(dest);
@@ -56,7 +60,7 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Test public void testABitAway_DifferentPubTransport() {
-        DijkstraWhichToOne d = new DijkstraWhichToOne(matrixGraph);
+        DijkstraWhichToOne d = new DijkstraWhichToOne(getGraph());
         int[] pubT = new int[]{20, 21, 22, 23, 24, 34, 33, 32, 31, 41, 51, 61, 62, 63, 64, 74, 73};
         d.addPubTransportPoints(pubT);
         int dest = 49;
@@ -69,7 +73,7 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
     private void assertWithBiDijkstra(int[] points, Path path, int dest) {
         Path bestManualPath = null;
         for (int i = 0; i < points.length; i++) {
-            Path manualPath = new DijkstraBidirection(matrixGraph).calcPath(points[i], dest);
+            Path manualPath = new DijkstraBidirection(getGraph()).calcPath(points[i], dest);
             if (bestManualPath == null || manualPath.weight() < bestManualPath.weight())
                 bestManualPath = manualPath;
         }

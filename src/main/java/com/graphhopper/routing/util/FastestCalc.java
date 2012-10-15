@@ -42,6 +42,10 @@ public class FastestCalc implements WeightCalculation {
         return currDistToGoal / CarStreetType.getSpeedPart(flags);
     }
 
+    @Override public double revert(double weight, int flags) {
+        return weight * CarStreetType.getSpeedPart(flags);
+    }
+
     @Override public String toString() {
         return "FASTEST";
     }

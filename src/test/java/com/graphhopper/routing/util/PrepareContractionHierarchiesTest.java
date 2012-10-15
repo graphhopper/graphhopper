@@ -111,7 +111,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testMoreComplexGraph() {
-        LevelGraph g = PrepareRoutingShortcutsTest.createShortcutsGraph();
+        LevelGraph g = PrepareLongishPathShortcutsTest.createShortcutsGraph();
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
         prepare.doWork();

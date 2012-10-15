@@ -24,19 +24,20 @@ public class ShortestCalc implements WeightCalculation {
 
     public static ShortestCalc DEFAULT = new ShortestCalc();
 
-    @Override
-    public double getWeight(EdgeIterator iter) {
+    @Override public double getWeight(EdgeIterator iter) {
         return iter.distance();
     }
 
-    @Override
-    public double apply(double currDistToGoal) {
+    @Override public double apply(double currDistToGoal) {
         return currDistToGoal;
     }
 
-    @Override
-    public double apply(double currDistToGoal, int flags) {
+    @Override public double apply(double currDistToGoal, int flags) {
         return currDistToGoal;
+    }
+
+    @Override public double revert(double weight, int flags) {
+        return weight;
     }
 
     @Override public String toString() {

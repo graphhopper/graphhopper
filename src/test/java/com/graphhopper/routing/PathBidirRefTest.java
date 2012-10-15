@@ -43,8 +43,8 @@ public class PathBidirRefTest {
     @Test
     public void testExtract2() {
         Graph g = new MemoryGraphSafe(10);
-        g.edge(1, 2, 10, true);
-        g.edge(2, 3, 20, true);
+        g.edge(1, 2, 10, false);
+        g.edge(2, 3, 20, false);
         PathBidirRef pw = new PathBidirRef(g, ShortestCalc.DEFAULT);
         pw.edgeFrom = new EdgeEntry(2, 10);
         pw.edgeFrom.prevEntry = new EdgeEntry(1, 0);

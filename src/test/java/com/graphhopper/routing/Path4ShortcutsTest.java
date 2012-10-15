@@ -21,6 +21,7 @@ import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
+import java.util.Arrays;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -28,7 +29,7 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class Path4LevelTest {
+public class Path4ShortcutsTest {
 
     LevelGraph createGraph(int size) {
         LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("levelgraph", false));
@@ -44,7 +45,7 @@ public class Path4LevelTest {
         g.edge(2, 3, 10, true);
         g.edge(3, 4, 10, true);
 
-        Path4Level path = new Path4Level(g, ShortestCalc.DEFAULT);
+        Path4Shortcuts path = new Path4Shortcuts(g, ShortestCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(3, 10);
         path.edgeFrom.prevEntry = new EdgeEntry(2, 10);
         path.edgeFrom.prevEntry.prevEntry = new EdgeEntry(1, 10);
@@ -53,6 +54,7 @@ public class Path4LevelTest {
         path.edgeTo.prevEntry = new EdgeEntry(4, 0);
         Path p = path.extract();
         assertEquals(5, p.locations());
+        assertEquals(Arrays.asList(0, 1, 2, 3, 4), p.toNodeList());
     }
 
     @Test
@@ -66,13 +68,14 @@ public class Path4LevelTest {
         g.setLevel(2, -1);
         g.shortcut(0, 2, 20, CarStreetType.flagsDefault(true), 1);
 
-        Path4Level path = new Path4Level(g, ShortestCalc.DEFAULT);
+        Path4Shortcuts path = new Path4Shortcuts(g, ShortestCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(2, 20);
         path.edgeFrom.prevEntry = new EdgeEntry(0, 0);
         path.edgeTo = new EdgeEntry(2, 10);
         path.edgeTo.prevEntry = new EdgeEntry(3, 0);
         Path p = path.extract();
         assertEquals(4, p.locations());
+        assertEquals(Arrays.asList(0, 1, 2, 3), p.toNodeList());
     }
 
     @Test
@@ -87,12 +90,13 @@ public class Path4LevelTest {
         g.setLevel(2, -1);
         g.shortcut(0, 3, 30, CarStreetType.flagsDefault(true), 1);
 
-        Path4Level path = new Path4Level(g, ShortestCalc.DEFAULT);
+        Path4Shortcuts path = new Path4Shortcuts(g, ShortestCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(3, 30);
         path.edgeFrom.prevEntry = new EdgeEntry(0, 0);
         path.edgeTo = new EdgeEntry(3, 10);
         path.edgeTo.prevEntry = new EdgeEntry(4, 0);
         Path p = path.extract();
         assertEquals(5, p.locations());
+        assertEquals(Arrays.asList(0, 2, 1, 3, 4), p.toNodeList());
     }
 }

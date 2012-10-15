@@ -67,8 +67,8 @@ public class PathBidirRef extends Path {
         while (currEdge.prevEntry != null) {
             int tmpTo = currEdge.node;
             currEdge = currEdge.prevEntry;
-            add(currEdge.node);
             calcWeight(g.getOutgoing(tmpTo), currEdge.node);
+            add(currEdge.node);
         }
 
         return this;

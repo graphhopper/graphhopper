@@ -29,4 +29,6 @@ public interface WeightCalculation {
     double apply(double currDistToGoal);
 
     double apply(double currDistToGoal, int flags);
+
+    double revert(double weight, int flags);
 }
