@@ -25,6 +25,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.StopWatch;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import static org.junit.Assert.*;
@@ -221,13 +222,21 @@ public abstract class AbstractRoutingAlgorithmTester {
         // using DijkstraSimple + IntBinHeap then rekey loops endlessly
         Path p = createAlgo(getMatrixGraph()).calcPath(36, 91);
         assertEquals(12, p.locations());
-        assertEquals(Arrays.asList(36, 46, 56, 66, 76, 86, 85, 84, 94, 93, 92, 91), p.toNodeList());
+
+        List<Integer> list = p.toNodeList();
+        if (!Arrays.asList(36, 46, 56, 66, 76, 86, 85, 84, 94, 93, 92, 91).equals(list)
+                && !Arrays.asList(36, 46, 56, 66, 76, 86, 85, 84, 83, 82, 92, 91).equals(list))
+            assertTrue("wrong locations: " + list.toString(), false);
+
         assertEquals(66f, p.weight(), 1e-3);
     }
 
     @Test
     public void testBug1() {
-        assertEquals(17, createAlgo(getMatrixGraph()).calcPath(34, 36).weight(), 1e-5);
+        Path p = createAlgo(getMatrixGraph()).calcPath(34, 36);
+        assertEquals(Arrays.asList(34, 35, 36), p.toNodeList());
+        assertEquals(3, p.locations());
+        assertEquals(17, p.weight(), 1e-5);
     }
 
     @Test

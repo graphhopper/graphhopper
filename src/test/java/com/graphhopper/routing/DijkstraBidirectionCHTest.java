@@ -74,7 +74,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Test @Override public void testCalcFastestPath() {
-        // TODO how to make a difference between fast and shortest preparation?
+        // TODO make CH possible for SHORTEST too
     }
 
     @Test @Override public void testPerformance() throws IOException {

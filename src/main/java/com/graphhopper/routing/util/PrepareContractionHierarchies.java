@@ -327,6 +327,14 @@ public class PrepareContractionHierarchies {
 
     public DijkstraBidirectionRef createDijkstraBi() {
         DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g) {
+            @Override public boolean checkFinishCondition() {
+                if (currFrom == null)
+                    return currTo.weight >= shortest.weight();
+                else if (currTo == null)
+                    return currFrom.weight >= shortest.weight();
+                return currFrom.weight >= shortest.weight() && currTo.weight >= shortest.weight();
+            }
+
             @Override public RoutingAlgorithm setType(WeightCalculation wc) {
                 // ignore changing of type
                 return this;
