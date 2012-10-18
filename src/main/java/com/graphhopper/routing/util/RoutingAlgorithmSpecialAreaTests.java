@@ -21,8 +21,6 @@ import com.graphhopper.routing.DijkstraBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.PathBidirRef;
-import com.graphhopper.routing.Path4Shortcuts;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -30,7 +28,6 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.StopWatch;
@@ -41,12 +38,12 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Peter Karich
  */
-public class RoutingAlgorithmIntegrationTests {
+public class RoutingAlgorithmSpecialAreaTests {
 
     private final Graph unterfrankenGraph;
     private final Location2IDIndex idx;
 
-    public RoutingAlgorithmIntegrationTests(Graph graph) {
+    public RoutingAlgorithmSpecialAreaTests(Graph graph) {
         this.unterfrankenGraph = graph;
         StopWatch sw = new StopWatch().start();
         Location2IDQuadtree index;
@@ -72,7 +69,6 @@ public class RoutingAlgorithmIntegrationTests {
     }
 
     void testAlgos() {
-
         TestAlgoCollector testCollector = new TestAlgoCollector();
         RoutingAlgorithm[] algos = createAlgos(unterfrankenGraph);
         for (RoutingAlgorithm algo : algos) {

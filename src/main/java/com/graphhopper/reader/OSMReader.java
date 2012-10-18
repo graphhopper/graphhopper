@@ -19,7 +19,7 @@ import com.graphhopper.routing.util.AcceptStreet;
 import com.graphhopper.routing.util.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.PrepareLongishPathShortcuts;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
-import com.graphhopper.routing.util.RoutingAlgorithmIntegrationTests;
+import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -66,7 +66,7 @@ public class OSMReader {
         Graph g = osm2Graph(args);
         // only possible for smaller graphs as we need to have two graphs + an array laying around
         // g = GraphUtility.sortDFS(g, new RAMDirectory());
-        RoutingAlgorithmIntegrationTests tests = new RoutingAlgorithmIntegrationTests(g);
+        RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(g);
         if (args.getBool("osmreader.test", false)) {
             tests.start();
         } else if (args.getBool("osmreader.runshortestpath", false)) {

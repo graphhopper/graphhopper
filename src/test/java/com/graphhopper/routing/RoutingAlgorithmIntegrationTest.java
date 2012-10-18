@@ -16,7 +16,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.OSMReader;
-import com.graphhopper.routing.util.RoutingAlgorithmIntegrationTests;
+import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.Location2IDIndex;
@@ -38,7 +38,7 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class RoutingAlgorithmRealTest {
+public class RoutingAlgorithmIntegrationTest {
 
     TestAlgoCollector testCollector;
 
@@ -89,7 +89,7 @@ public class RoutingAlgorithmRealTest {
         int algosLength = -1;
         for (int no = 0; no < MAX; no++) {
             for (int i = 0; i < instances.size(); i++) {
-                RoutingAlgorithm[] algos = RoutingAlgorithmIntegrationTests.createAlgos(g);
+                RoutingAlgorithm[] algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
                 algosLength = algos.length;
                 for (final RoutingAlgorithm algo : algos) {
                     // not thread safe:
@@ -135,7 +135,7 @@ public class RoutingAlgorithmRealTest {
             // GraphUtility.printInfo(g, 3606, 1000);
             // System.out.println(osmFile + " - all locations " + g.getNodes());
             Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
-            RoutingAlgorithm[] algos = RoutingAlgorithmIntegrationTests.createAlgos(g);
+            RoutingAlgorithm[] algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
             for (RoutingAlgorithm algo : algos) {
                 int failed = testCollector.list.size();
 
