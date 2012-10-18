@@ -28,9 +28,11 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.shapes.BBox;
 import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,8 +72,10 @@ public class RoutingAlgorithmSpecialAreaTests {
 
     void testAlgos() {
         TestAlgoCollector testCollector = new TestAlgoCollector();
-        RoutingAlgorithm[] algos = createAlgos(unterfrankenGraph);
-        for (RoutingAlgorithm algo : algos) {
+        AlgorithmPreparation[] preparations = createAlgos(unterfrankenGraph);
+        for (AlgorithmPreparation prepare : preparations) {
+            prepare.doWork();
+            RoutingAlgorithm algo = prepare.createAlgo();
             int failed = testCollector.list.size();
             testCollector.assertDistance(algo, idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 0.5613, 20);
             testCollector.assertDistance(algo, idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107.4917, 1673);
@@ -91,33 +95,46 @@ public class RoutingAlgorithmSpecialAreaTests {
             System.out.println("SUCCESS!");
     }
 
-    public static RoutingAlgorithm[] createAlgos(Graph g) {
-        return new RoutingAlgorithm[]{
-                    //                    new AStar(g),
-                    //                    new AStarBidirection(g),
-                    //                    new DijkstraBidirectionRef(g),
-                    //                    new DijkstraBidirection(g),
-                    //                    new DijkstraSimple(g),
-                    //                    createShortcutAlgo((LevelGraph) g)
-                    //                    createShortcutAStar((LevelGraph) g)
-                    createCHAlgo((LevelGraph) g)
+    public static AlgorithmPreparation[] createAlgos(final Graph g) {
+        return new AlgorithmPreparation[]{
+                    new NoOpAlgorithmPreparation() {
+                        @Override public RoutingAlgorithm createAlgo() {
+                            return new AStar(g);
+                        }
+                    },
+                    new NoOpAlgorithmPreparation() {
+                        @Override public RoutingAlgorithm createAlgo() {
+                            return new AStarBidirection(g);
+                        }
+                    },
+                    new NoOpAlgorithmPreparation() {
+                        @Override public RoutingAlgorithm createAlgo() {
+                            return new DijkstraBidirectionRef(g);
+                        }
+                    },
+                    new NoOpAlgorithmPreparation() {
+                        @Override public RoutingAlgorithm createAlgo() {
+                            return new DijkstraBidirection(g);
+                        }
+                    },
+                    new NoOpAlgorithmPreparation() {
+                        @Override public RoutingAlgorithm createAlgo() {
+                            return new DijkstraSimple(g);
+                        }
+                    },
+                    new PrepareLongishPathShortcuts((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10))),
+                    new PrepareLongishPathShortcuts((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10))) {
+                        @Override public RoutingAlgorithm createAlgo() {
+                            return ((AStarBidirection) this.createAStar()).setApproximation(false);
+                        }
+                    }
+//                 new PrepareContractionHierarchies((LevelGraph) g)
                 };
-    }
-
-    static RoutingAlgorithm createCHAlgo(LevelGraph g) {
-        return new PrepareContractionHierarchies(g).createAlgo();
-    }
-
-    static RoutingAlgorithm createShortcutAlgo(LevelGraph g) {
-        return new PrepareLongishPathShortcuts(g).createAlgo();
-    }
-
-    static RoutingAlgorithm createShortcutAStar(LevelGraph g) {
-        return new PrepareLongishPathShortcuts(g).createAStar();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     public void runShortestPathPerf(int runs, String algoStr) throws Exception {
+        // TODO use bbox instead of fixed values BBox bbox = unterfrankenGraph.getBounds();
         double minLat = 49.484186, minLon = 8.974228;
         double maxLat = 50.541363, maxLon = 10.880356;
         RoutingAlgorithm algo;
@@ -134,12 +151,12 @@ public class RoutingAlgorithmSpecialAreaTests {
 
         if (unterfrankenGraph instanceof LevelGraph) {
             if (algo instanceof DijkstraBidirectionRef)
-                algo = createCHAlgo((LevelGraph) unterfrankenGraph);
+                algo = new PrepareContractionHierarchies((LevelGraph) unterfrankenGraph).createAlgo();
             else if (algo instanceof AStarBidirection)
-                algo = createShortcutAStar((LevelGraph) unterfrankenGraph);
+                algo = new PrepareLongishPathShortcuts((LevelGraph) unterfrankenGraph).createAStar();
             else
                 // level graph accepts all algorithms but normally we want to use an optimized one
-                throw new IllegalStateException("algo which supports levelgraph not found " + algo);
+                throw new IllegalStateException("algorithm which boosts query time for levelgraph not found " + algo);
             logger.info("[experimental] using shortcuts with " + algo);
         } else
             logger.info("running " + algo);
@@ -168,8 +185,8 @@ public class RoutingAlgorithmSpecialAreaTests {
             Path p = algo.calcPath(from, to);
             sw.stop();
             if (p == null) {
-                // there are still paths not found as this point unterfrankenGraph.getLatitude(798809) + "," + unterfrankenGraph.getLongitude(798809)
-                // is part of a oneway motorway => only routable in one direction
+                // there are still paths not found cause of oneway motorways => only routable in one direction
+                // e.g. unterfrankenGraph.getLatitude(798809) + "," + unterfrankenGraph.getLongitude(798809)
                 logger.warn("no route found for i=" + i + " !? "
                         + "graph-from " + from + "(" + fromLat + "," + fromLon + "), "
                         + "graph-to " + to + "(" + toLat + "," + toLon + ")");

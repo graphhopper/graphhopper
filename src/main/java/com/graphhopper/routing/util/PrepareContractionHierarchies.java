@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class PrepareContractionHierarchies {
+public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private WeightCalculation weightCalc;
@@ -344,6 +344,7 @@ public class PrepareContractionHierarchies {
         return newShorts;
     }
 
+    @Override
     public DijkstraBidirectionRef createAlgo() {
         DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g) {
             @Override public boolean checkFinishCondition() {

@@ -16,6 +16,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.OSMReader;
+import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.storage.Graph;
@@ -75,32 +76,35 @@ public class RoutingAlgorithmIntegrationTest {
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
     }
 
-//    @Test TODO
+    @Test
     public void testMonacoParallel() throws IOException {
         System.out.println("testMonacoParallel takes a bit time (move to a separate integration test?)");
         String graphFile = "target/graph-monaco";
         Helper.deleteDir(new File(graphFile));
-        Graph g = OSMReader.osm2Graph(new CmdArgs().put("osm", "files/monaco.osm.gz").put("graph", graphFile));
+        Graph g = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", "files/monaco.osm.gz").
+                put("osmreader.graph-location", graphFile).
+                put("osmreader.dataaccess", "inmemory").
+                put("osmreader.levelgraph", "true"));
         final Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
         final List<OneRun> instances = createMonacoInstances();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
         int algosLength = -1;
-        for (int no = 0; no < MAX; no++) {
-            for (int i = 0; i < instances.size(); i++) {
-                RoutingAlgorithm[] algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
-                algosLength = algos.length;
-                for (final RoutingAlgorithm algo : algos) {
-                    // not thread safe:
-                    // algo.clear();
-                    final int tmp = i;
+        AlgorithmPreparation[] preparations = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
+        algosLength = preparations.length;
+        for (final AlgorithmPreparation prepare : preparations) {
+            prepare.doWork();
+            for (int no = 0; no < MAX; no++) {
+                for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
+                    // an algorithm is not thread safe! reuse via clear() is ONLY appropriated if used from same thread!
+                    final int instanceIndex = instanceNo;
                     Thread t = new Thread() {
                         @Override public void run() {
-                            OneRun o = instances.get(tmp);
+                            OneRun o = instances.get(instanceIndex);
                             int from = idx.findID(o.fromLat, o.fromLon);
                             int to = idx.findID(o.toLat, o.toLon);
-                            testCollector.assertDistance(algo, from, to, o.dist, o.locs);
+                            testCollector.assertDistance(prepare.createAlgo(), from, to, o.dist, o.locs);
                             integ.addAndGet(1);
                         }
                     };
@@ -130,15 +134,15 @@ public class RoutingAlgorithmIntegrationTest {
             Graph g = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
                     put("osmreader.graph-location", graphFile).
                     put("osmreader.dataaccess", "inmemory").
-                    put("osmreader.levelgraph", "true").
-                    put("osmreader.chShortcuts", "true"));
+                    put("osmreader.levelgraph", "true"));
             // GraphUtility.printInfo(g, 3606, 1000);
             // System.out.println(osmFile + " - all locations " + g.getNodes());
             Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
-            RoutingAlgorithm[] algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
-            for (RoutingAlgorithm algo : algos) {
+            AlgorithmPreparation[] preparations = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
+            for (AlgorithmPreparation prepare : preparations) {
+                prepare.doWork();
+                RoutingAlgorithm algo = prepare.createAlgo();
                 int failed = testCollector.list.size();
-
                 for (OneRun or : forEveryAlgo) {
                     int from = idx.findID(or.fromLat, or.fromLon);
                     int to = idx.findID(or.toLat, or.toLon);

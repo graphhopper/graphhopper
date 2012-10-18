@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class PrepareLongishPathShortcuts {
+public class PrepareLongishPathShortcuts implements AlgorithmPreparation {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final LevelGraph g;
@@ -157,6 +157,7 @@ public class PrepareLongishPathShortcuts {
         return counter == 2;
     }
 
+    @Override
     public RoutingAlgorithm createAlgo() {
         return new DijkstraBidirectionRef(g) {
             @Override public String toString() {

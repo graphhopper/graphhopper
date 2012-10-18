@@ -58,7 +58,7 @@ import java.util.PriorityQueue;
  */
 public class AStarBidirection extends AbstractRoutingAlgorithm {
 
-    private DistanceCalc dist = new DistanceCalc();
+    private DistanceCalc dist;
     private int from, to;
     private MyBitSet visitedFrom;
     private PriorityQueue<AStarEdge> prioQueueOpenSetFrom;
@@ -74,7 +74,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     public PathBidirRef shortest;
     private CoordTrig fromCoord;
     private CoordTrig toCoord;
-    private double approxFactor = 1.15;
+    private double approxFactor;
 
     public AStarBidirection(Graph graph) {
         super(graph);
@@ -88,6 +88,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         shortestWeightMapTo = new TIntObjectHashMap<AStarEdge>(locs / 10);
 
         clear();
+        setApproximation(false);
     }
 
     /**
