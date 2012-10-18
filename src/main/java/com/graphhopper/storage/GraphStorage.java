@@ -536,7 +536,7 @@ public class GraphStorage implements Graph, Storable {
      * for only a few deletes but probably not for many deletes.
      */
     void inPlaceDelete(int deleted) {
-        // Alternative to this method: use smaller segments for nodes and not one big fat java array?
+        // Alternative to this method: use canBeOverwritten segments for nodes and not one big fat java array?
         //
         // Prepare edge-update of nodes which are connected to deleted nodes        
         int toMoveNode = getNodes();

@@ -55,7 +55,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Override public RoutingAlgorithm createAlgo(Graph g) {
-        return new PrepareContractionHierarchies((LevelGraph) g).createDijkstraBi();
+        return new PrepareContractionHierarchies((LevelGraph) g).createAlgo();
     }
 
     @Override

@@ -80,6 +80,23 @@ public class CarStreetType {
         return (flags & 2) == BACKWARD;
     }
 
+    public static boolean isBoth(int flags) {
+        return (flags & 3) == (FORWARD | BACKWARD);
+    }
+
+    /**
+     * Returns true if flags1 can be overwritten by flags2 without restricting or changing the
+     * directions of flags1.
+     */
+    //        \  flags2:
+    // flags1  \ -> | <- | <->
+    // ->         t | f  | t
+    // <-         f | t  | t
+    // <->        f | f  | t
+    public static boolean canBeOverwritten(int flags1, int flags2) {
+        return isBoth(flags2) || (flags1 & 3) == (flags2 & 3);
+    }
+
     /**
      * returns the flags with an opposite direction if not both ways
      */
@@ -133,7 +150,7 @@ public class CarStreetType {
             // linking bigger town
             put("primary", 35);
             put("primary_link", 30);
-            // linking smaller towns + villages
+            // linking canBeOverwritten towns + villages
             put("secondary", 30);
             put("secondary_link", 25);
             // streets without middle line separation

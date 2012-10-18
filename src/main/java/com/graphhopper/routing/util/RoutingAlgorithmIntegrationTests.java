@@ -97,45 +97,27 @@ public class RoutingAlgorithmIntegrationTests {
 
     public static RoutingAlgorithm[] createAlgos(Graph g) {
         return new RoutingAlgorithm[]{
-//                    new AStar(g),
-//                    new AStarBidirection(g),
-//                    new DijkstraBidirectionRef(g),
-//                    new DijkstraBidirection(g),
-//                    new DijkstraSimple(g),
-                    createLevelDijkstraBi((LevelGraph) g)
+                    //                    new AStar(g),
+                    //                    new AStarBidirection(g),
+                    //                    new DijkstraBidirectionRef(g),
+                    //                    new DijkstraBidirection(g),
+                    //                    new DijkstraSimple(g),
+                    //                    createShortcutAlgo((LevelGraph) g)
+                    //                    createShortcutAStar((LevelGraph) g)
+                    createCHAlgo((LevelGraph) g)
                 };
     }
 
-    static RoutingAlgorithm createLevelDijkstraBi(LevelGraph g) {
-        return new PrepareContractionHierarchies(g).createDijkstraBi();
-//        DijkstraBidirectionRef dijkstraBi = new DijkstraBidirectionRef(g) {
-//            @Override public String toString() {
-//                return "DijkstraBidirectionRef|Shortcut|" + weightCalc;
-//            }
-//
-//            @Override protected PathBidirRef createPath() {
-//                // expand skipped nodes
-//                return new Path4Shortcuts(graph, weightCalc);
-//            }
-//        };
-//        dijkstraBi.setEdgeFilter(new EdgeLevelFilter(g));
-//        return dijkstraBi;
+    static RoutingAlgorithm createCHAlgo(LevelGraph g) {
+        return new PrepareContractionHierarchies(g).createAlgo();
     }
 
-    static RoutingAlgorithm createLevelAStarBi(LevelGraph g) {
-        AStarBidirection astar = new AStarBidirection(g) {
-            @Override
-            public String toString() {
-                return "AStarBidirection|Shortcut|" + weightCalc;
-            }
+    static RoutingAlgorithm createShortcutAlgo(LevelGraph g) {
+        return new PrepareLongishPathShortcuts(g).createAlgo();
+    }
 
-            @Override protected PathBidirRef createPath() {
-                // expand skipped nodes
-                return new Path4Shortcuts(graph, weightCalc);
-            }
-        }.setApproximation(true);
-        astar.setEdgeFilter(new EdgeLevelFilter(g));
-        return astar;
+    static RoutingAlgorithm createShortcutAStar(LevelGraph g) {
+        return new PrepareLongishPathShortcuts(g).createAStar();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -156,9 +138,9 @@ public class RoutingAlgorithmIntegrationTests {
 
         if (unterfrankenGraph instanceof LevelGraph) {
             if (algo instanceof DijkstraBidirectionRef)
-                algo = createLevelDijkstraBi((LevelGraph) unterfrankenGraph);
+                algo = createCHAlgo((LevelGraph) unterfrankenGraph);
             else if (algo instanceof AStarBidirection)
-                algo = createLevelAStarBi((LevelGraph) unterfrankenGraph);
+                algo = createShortcutAStar((LevelGraph) unterfrankenGraph);
             else
                 // level graph accepts all algorithms but normally we want to use an optimized one
                 throw new IllegalStateException("algo which supports levelgraph not found " + algo);

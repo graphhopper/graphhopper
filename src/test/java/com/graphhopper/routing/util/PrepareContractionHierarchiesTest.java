@@ -17,6 +17,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.PrepareContractionHierarchies.NodeCH;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -24,6 +25,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -109,19 +111,45 @@ public class PrepareContractionHierarchiesTest {
 //        assertEquals(4, GraphUtility.count(g.getEdges(0)));
     }
 
+    public void printEdges(LevelGraph g) {
+        EdgeSkipIterator iter = g.getAllEdges();
+        while (iter.next()) {
+            System.out.println(iter.fromNode() + "->" + iter.node()
+                    + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedNode()
+                    + ", level:" + g.getLevel(iter.fromNode()) + "->" + g.getLevel(iter.node())
+                    + ", origEdges:" + iter.originalEdges() + ", bothDir:" + CarStreetType.isBackward(iter.flags()));
+        }
+        System.out.println("---");
+    }
+
     @Test
     public void testMoreComplexGraph() {
         LevelGraph g = PrepareLongishPathShortcutsTest.createShortcutsGraph();
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
         prepare.doWork();
-//        EdgeSkipIterator iter = g.getAllEdges();
-//        while (iter.next()) {
-//            System.out.println(iter.fromNode() + "->" + iter.node()
-//                    + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedNode()
-//                    + ", level:" + g.getLevel(iter.fromNode()) + "->" + g.getLevel(iter.node())
-//                     + ", origEdges:" + iter.originalEdges());
-//        }
         assertEquals(old + 6, GraphUtility.count(g.getAllEdges()));
+    }
+
+    @Test
+    public void testDirectedGraph() {
+        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory());
+        g.createNew(10);
+        g.edge(5, 4, 3, false);
+        g.edge(4, 5, 10, false);
+        g.edge(2, 4, 1, false);
+        g.edge(5, 2, 1, false);
+        g.edge(3, 5, 1, false);
+        g.edge(4, 3, 1, false);
+        int old = GraphUtility.count(g.getAllEdges());
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        prepare.doWork();
+//        printEdges(g);
+        assertEquals(old + 2, GraphUtility.count(g.getAllEdges()));
+        RoutingAlgorithm algo = prepare.createAlgo();
+
+        Path p = algo.clear().calcPath(4, 2);
+        assertEquals(3, p.distance(), 1e-6);
+        assertEquals(Arrays.asList(4, 3, 5, 2), p.toNodeList());
     }
 }

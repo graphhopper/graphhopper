@@ -514,7 +514,7 @@ public class MemoryGraphSafe implements Graph {
         if (deleted == 0)
             return;
 
-        // bounds are not changed even if graph could get smaller!
+        // bounds are not changed even if graph could get canBeOverwritten!
 //        if (deleted < size / 4) {
         inPlaceDelete(deleted);
 //        } else
@@ -526,7 +526,7 @@ public class MemoryGraphSafe implements Graph {
      * for only a few deletes but probably not for many deletes.
      */
     void inPlaceDelete(int deleted) {
-        // Alternative to this method: use smaller segments for nodes and not one big fat java array?
+        // Alternative to this method: use canBeOverwritten segments for nodes and not one big fat java array?
         //
         // Prepare edge-update of nodes which are connected to deleted nodes        
         int toMoveNode = getNodes();

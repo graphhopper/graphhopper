@@ -127,8 +127,11 @@ public class RoutingAlgorithmRealTest {
         try {
             // make sure we are using the latest file format
             Helper.deleteDir(new File(graphFile));
-            Graph g = OSMReader.osm2Graph(new CmdArgs().put("osm", osmFile).put("graph", graphFile).
-                    put("dataaccess", "inmemory").put("levelGraph", "true").put("chShortcuts", "true"));
+            Graph g = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
+                    put("osmreader.graph-location", graphFile).
+                    put("osmreader.dataaccess", "inmemory").
+                    put("osmreader.levelgraph", "true").
+                    put("osmreader.chShortcuts", "true"));
             // GraphUtility.printInfo(g, 3606, 1000);
             // System.out.println(osmFile + " - all locations " + g.getNodes());
             Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);

@@ -15,6 +15,11 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.AStarBidirection;
+import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.Path4Shortcuts;
+import com.graphhopper.routing.PathBidirRef;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
@@ -150,5 +155,32 @@ public class PrepareLongishPathShortcuts {
                 return false;
         }
         return counter == 2;
+    }
+
+    public RoutingAlgorithm createAlgo() {
+        return new DijkstraBidirectionRef(g) {
+            @Override public String toString() {
+                return "DijkstraBidirectionRef|Shortcut|" + weightCalc;
+            }
+
+            @Override protected PathBidirRef createPath() {
+                return new Path4Shortcuts(graph, weightCalc);
+            }
+        }.setEdgeFilter(new EdgeLevelFilter(g));
+    }
+
+    public RoutingAlgorithm createAStar() {
+        AStarBidirection astar = new AStarBidirection(g) {
+            @Override public String toString() {
+                return "AStarBidirection|Shortcut|" + weightCalc;
+            }
+
+            @Override protected PathBidirRef createPath() {
+                // expand skipped nodes
+                return new Path4Shortcuts(graph, weightCalc);
+            }
+        }.setApproximation(true);
+        astar.setEdgeFilter(new EdgeLevelFilter(g));
+        return astar;
     }
 }

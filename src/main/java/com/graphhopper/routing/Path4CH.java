@@ -36,19 +36,19 @@ public class Path4CH extends Path4Shortcuts {
 
     @Override
     protected void handleSkippedNode(int from, int to, int flags, int skippedNode) {
-        EdgeIterator tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, flags);
-        if (tmpIter != EdgeIterator.EMPTY) {
-            EdgeSkipIterator tmp2 = (EdgeSkipIterator) tmpIter;
-            if (tmp2.skippedNode() >= 0)
-                handleSkippedNode(from, skippedNode, flags, tmp2.skippedNode());
-        }
-        super.handleSkippedNode(from, to, flags, skippedNode);
-
-        tmpIter = GraphUtility.until(g.getOutgoing(skippedNode), to, flags);
+        EdgeIterator tmpIter = GraphUtility.until(g.getOutgoing(skippedNode), to, flags);
         if (tmpIter != EdgeIterator.EMPTY) {
             EdgeSkipIterator tmp2 = (EdgeSkipIterator) tmpIter;
             if (tmp2.skippedNode() >= 0)
                 handleSkippedNode(skippedNode, to, flags, tmp2.skippedNode());
+        }
+        super.handleSkippedNode(from, to, flags, skippedNode);
+
+        tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, flags);
+        if (tmpIter != EdgeIterator.EMPTY) {
+            EdgeSkipIterator tmp2 = (EdgeSkipIterator) tmpIter;
+            if (tmp2.skippedNode() >= 0)
+                handleSkippedNode(from, skippedNode, flags, tmp2.skippedNode());
         }
     }
 

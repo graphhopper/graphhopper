@@ -38,9 +38,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class prepares the graphs to be used from PrepareContractionHierarchies algorithm.
+ * This class prepares the graph for a bidirectional algorithm supporting contraction hierarchies
+ * ie. an algorithm returned by createAlgo.
  *
- * There are several description of contraction hierarchies available only but this is one of the
+ * There are several description of contraction hierarchies available. This following is one of the
  * more detailed: http://web.cs.du.edu/~sturtevant/papers/highlevelpathfinding.pdf
  *
  * @author Peter Karich
@@ -53,7 +54,7 @@ public class PrepareContractionHierarchies {
     // the most important nodes comes last
     private MySortedCollection sortedNodes;
     private WeightedNode refs[];
-    // shortcut is in one direction, speed is ignored - see prepareEdges
+    // shortcut is one direction, speed is only involved while recalculating the edge weights - see prepareEdges
     private static int scOneDir = CarStreetType.flags(0, false);
     private static int scBothDir = CarStreetType.flags(0, true);
     private Map<Long, Shortcut> shortcuts = new HashMap<Long, Shortcut>();
@@ -166,16 +167,20 @@ public class PrepareContractionHierarchies {
                 WeightedNode neighborWn = refs[nn];
                 int tmpOld = neighborWn.priority;
                 neighborWn.priority = calculatePriority(nn);
-                if (neighborWn.priority != tmpOld)
+                if (neighborWn.priority != tmpOld) {
                     sortedNodes.update(nn, tmpOld, neighborWn.priority);
+                }
             }
         }
         logger.info("new shortcuts " + newShortcuts);
-        System.out.println("new shortcuts " + newShortcuts);
+        // System.out.println("new shortcuts " + newShortcuts);
     }
 
     /**
-     * Calculates the priority of node v without changing the graph.
+     * Calculates the priority of node v without changing the graph. Warning: the calculated
+     * priority must NOT depend on priority(v) and therefor findShortcuts should also not depend on
+     * the priority(v). Otherwise updating the priority before contracting in contractNodes() could
+     * lead to a slowishor even endless loop.
      */
     int calculatePriority(int v) {
         // set of shortcuts that would be added if node v would be contracted next.
@@ -227,6 +232,9 @@ public class PrepareContractionHierarchies {
         }
     }
 
+    /**
+     * Finds shortcuts, does not change the underlying graph.
+     */
     Collection<Shortcut> findShortcuts(int v) {
         // Do NOT use weight use distance! see prepareEdges where distance is overwritten by weight!
         List<NodeCH> goalNodes = new ArrayList<NodeCH>();
@@ -275,6 +283,8 @@ public class PrepareContractionHierarchies {
 
                 // FOUND shortcut but be sure that it is the only shortcut in the collection 
                 // and also in the graph for u->w. If existing => update it                
+                // Hint: shortcuts are always one-way due to distinct level of every node but we don't
+                // know yet the levels so we need to determine the correct direction or if both directions
                 long edgeId = (long) u * refs.length + n.node;
                 Shortcut sc = shortcuts.get(edgeId);
                 if (sc == null) {
@@ -291,18 +301,6 @@ public class PrepareContractionHierarchies {
                         sc.distance = n.distance;
 
                     sc.originalEdges = iter1.originalEdges() + n.originalEdges;
-
-                    // determine if a shortcut already exists in the graph
-                    EdgeSkipIterator tmpIter = g.getOutgoing(u);
-                    while (tmpIter.next()) {
-                        if (tmpIter.node() != n.node || tmpIter.skippedNode() <= 0)
-                            continue;
-
-                        // TODO what if existing edge is in both dirs and current is only one
-                        // => wrong distance for other direction!
-                        if (tmpIter.distance() > n.distance)
-                            sc.updateInGraph = true;
-                    }
                 } else {
                     // the shortcut already exists in the current collection (different direction)
                     // but has identical length so change the flags!
@@ -321,18 +319,24 @@ public class PrepareContractionHierarchies {
 //        System.out.println("contract:" + refs[v] + ", scs:" + shortcuts);
         int newShorts = 0;
         for (Shortcut sc : foundShortcuts) {
-            if (sc.updateInGraph) {
-                EdgeSkipIterator iter = g.getOutgoing(sc.from);
-                while (iter.next()) {
-                    if (iter.node() == sc.to && iter.distance() > sc.distance) {
-                        // TODO iter.flags(sc.flags);
-                        iter.skippedNode(v);
-                        iter.distance(sc.distance);
-                        iter.originalEdges(sc.originalEdges);
-                    }
+            boolean updatedInGraph = false;
+            EdgeSkipIterator iter = g.getOutgoing(sc.from);
+            while (iter.next()) {
+                if (iter.skippedNode() >= 0
+                        && iter.node() == sc.to
+                        && CarStreetType.canBeOverwritten(iter.flags(), sc.flags)
+                        && iter.distance() > sc.distance) {
+                    iter.flags(sc.flags);
+                    iter.skippedNode(v);
+                    iter.distance(sc.distance);
+                    iter.originalEdges(sc.originalEdges);
+                    updatedInGraph = true;
+                    break;
                 }
-            } else {
-                EdgeSkipIterator iter = g.shortcut(sc.from, sc.to, sc.distance, sc.flags, v);
+            }
+
+            if (!updatedInGraph) {
+                iter = g.shortcut(sc.from, sc.to, sc.distance, sc.flags, v);
                 iter.originalEdges(sc.originalEdges);
                 newShorts++;
             }
@@ -340,9 +344,10 @@ public class PrepareContractionHierarchies {
         return newShorts;
     }
 
-    public DijkstraBidirectionRef createDijkstraBi() {
+    public DijkstraBidirectionRef createAlgo() {
         DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g) {
             @Override public boolean checkFinishCondition() {
+                // changed finish condition for CH
                 if (currFrom == null)
                     return currTo.weight >= shortest.weight();
                 else if (currTo == null)
@@ -351,12 +356,13 @@ public class PrepareContractionHierarchies {
             }
 
             @Override public RoutingAlgorithm setType(WeightCalculation wc) {
-                // ignore changing of type
+                // ignore changing of type -> TODO throw exception instead?
                 return this;
             }
 
             @Override protected PathBidirRef createPath() {
-                // CH changes weight at the beginning now we need to transform the weight back to distance
+                // CH changes the distance in prepareEdges to the weight
+                // now we need to transform it back to the real distance
                 WeightCalculation wc = new WeightCalculation() {
                     @Override
                     public double getWeight(EdgeIterator iter) {
@@ -384,7 +390,7 @@ public class PrepareContractionHierarchies {
 
             @Override public String toString() {
                 return "DijkstraCH";
-            }                        
+            }
         };
         dijkstra.setEdgeFilter(new EdgeLevelFilter(g));
         return dijkstra;
@@ -467,7 +473,6 @@ public class PrepareContractionHierarchies {
         int from;
         int to;
         double distance;
-        boolean updateInGraph = false;
         int originalEdges;
         int flags = scOneDir;
 
@@ -478,7 +483,7 @@ public class PrepareContractionHierarchies {
         }
 
         @Override public String toString() {
-            return from + "->" + to + ", dist:" + distance + ",update:" + updateInGraph;
+            return from + "->" + to + ", dist:" + distance;
         }
     }
 

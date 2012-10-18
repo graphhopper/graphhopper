@@ -38,11 +38,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     }
 
     RoutingAlgorithm createAlgoWithFilterAndPathUnpacking(final LevelGraph lg) {
-        return new DijkstraBidirectionRef(lg) {
-            @Override protected PathBidirRef createPath() {
-                return new Path4Shortcuts(graph, weightCalc);
-            }
-        }.setEdgeFilter(new EdgeLevelFilter(lg));
+        return new PrepareLongishPathShortcuts(lg).createAlgo();
     }
 
     LevelGraph createGraph(int size) {
