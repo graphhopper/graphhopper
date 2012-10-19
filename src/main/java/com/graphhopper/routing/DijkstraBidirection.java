@@ -112,10 +112,8 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         if (p != null)
             return p;
 
-        int counter = 0;
         int finish = 0;
         while (finish < 2) {
-            counter++;
             finish = 0;
             if (!fillEdgesFrom())
                 finish++;

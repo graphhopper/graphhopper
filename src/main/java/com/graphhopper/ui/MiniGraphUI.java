@@ -19,11 +19,16 @@ import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.AStarBidirection;
+import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.trees.QuadTree;
@@ -68,6 +73,7 @@ public class MiniGraphUI {
     private MapLayer roadsLayer;
     private MapLayer pathLayer;
     private boolean fastPaint = false;
+    private AlgorithmPreparation prepare;
 
     public MiniGraphUI(Graph roadGraph, boolean debug) {
         this.graph = roadGraph;
@@ -78,11 +84,13 @@ public class MiniGraphUI {
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
         this.index = new Location2IDQuadtree(roadGraph, new RAMDirectory("loc2idIndex"));
         index.prepareIndex(2000);
+        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)));
+        prepare.doWork();
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
 //        this.algo = new DebugAStar(graph, mg);
 //        this.algo = new AStar(graph);
-        this.algo = new AStarBidirection(graph);
+        this.algo = prepare.createAlgo();
 //        this.algo = new DijkstraSimple(graph);
 //        this.algo = new DebugDijkstraSimple(graph, mg);
         infoPanel = new JPanel() {
@@ -146,43 +154,19 @@ public class MiniGraphUI {
                     }
                 }
 
-
-                g2.setColor(Color.RED);
-                DebugAStarBi astarbi = new DebugAStarBi(graph, mg);
-                astarbi.setGraphics2D(g2);
-                Path p1 = astarbi.calcPath(1387, 1454);
-                plotPath(p1, g2, 10);
-
-                g2.setColor(Color.GREEN);
-                DebugAStar astar = new DebugAStar(graph, mg);
-                astar.setGraphics2D(g2);
-                Path p2 = astar.calcPath(1387, 1454);
-                plotPath(p2, g2, 10);
-
-                g2.setColor(Color.GREEN);
-                DebugDijkstraBidirection dbi = new DebugDijkstraBidirection(graph, mg);
-                dbi.setGraphics2D(g2);
-                Path p3 = dbi.calcPath(1387, 1454);
-                plotPath(p3, g2, 10);
-
-//                mg.plotNode(g2, 18, Color.blue);
-//                mg.plotNode(g2, 2659, Color.green);
-//                mg.plotNode(g2, 2735, Color.yellow);
-//
-//                mg.plotNode(g2, 2655, Color.red);
-//                mg.plotNode(g2, 17, Color.orange);
-
-//                g2.setColor(Color.GREEN);
-//                DebugDijkstraBidirection dbi = new DebugDijkstraBidirection(graph, mg);
-//                dbi.setGraphics2D(g2);
-//                plotPath(calcPath(dbi), g2, 6);
-
-//                Path p2 = calcPath(dijkstraBi);
-//                Path.debugDifference(clone, p1, p2);
-
 //                g2.setColor(Color.BLUE);
-//                plotPath(new AStar(graph), g2, 4);
-//                g2.setColor(Color.BLACK);
+//                RoutingAlgorithm algo = prepare.createAlgo();
+//                Path p3 = algo.calcPath(703, 2940);
+//                if (p3 == null)
+//                    logger.error("cannot find path!");
+//                else
+//                    plotPath(p3, g2, 10);
+
+                g2.setColor(Color.GREEN);
+                DijkstraBidirectionRef dbi = new DijkstraBidirectionRef(graph);
+                // dbi.setGraphics2D(g2);
+                Path p3 = dbi.calcPath(703, 2940);
+                plotPath(p3, g2, 10);
 
                 if (quadTreeNodes != null) {
                     logger.info("found neighbors:" + quadTreeNodes.size());
@@ -206,18 +190,15 @@ public class MiniGraphUI {
                     ((DebugAlgo) algo).setGraphics2D(g2);
 
                 StopWatch sw = new StopWatch().start();
-//                if (wCalc == FastestCalc.DEFAULT)
-//                    wCalc = ShortestCalc.DEFAULT;
-//                else
-//                    wCalc = FastestCalc.DEFAULT;
-
                 logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + wCalc);
                 path = algo.clear().setType(wCalc).calcPath(dijkstraFromId, dijkstraToId);
                 sw.stop();
 
                 // if directed edges
-                if (path == null)
+                if (path == null) {
+                    logger.warn("path not found! direction not valid?");
                     return;
+                }
 
                 logger.info("found path in " + sw.getSeconds() + "s with " + path.locations() + " nodes: " + path);
                 g2.setColor(Color.BLUE.brighter().brighter());

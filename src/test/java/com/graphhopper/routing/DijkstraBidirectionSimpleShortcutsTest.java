@@ -18,6 +18,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.routing.util.PrepareLongishPathShortcuts;
+import com.graphhopper.routing.util.PrepareLongishPathShortcutsTest;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -28,6 +29,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
+ * TODO merge with PrepareLongishPathShortcutsTest?
  *
  * @author Peter Karich
  */
@@ -72,7 +74,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     }
 
     @Test
-    public void testDirected2() {
+    public void testDirected() {
         LevelGraph g = createGraph(30);
         // see 49.9052,10.35491
         // =19-20-21-22=
@@ -99,6 +101,34 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         }.calcPath(17, 23);
         assertEquals(6, p.locations());
         assertEquals(Arrays.asList(17, 19, 21, 20, 22, 23), p.toNodeList());
+    }
+
+    @Test
+    public void testDirected1() {
+        LevelGraph g = createGraph(30);
+        PrepareLongishPathShortcutsTest.initDirected1(g);
+        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts(g);
+        prepare.doWork();
+        RoutingAlgorithm algo = prepare.createAlgo();
+        Path p = algo.calcPath(0, 6);
+        assertEquals(Arrays.asList(0, 1, 3, 5, 4, 2, 6), p.toNodeList());
+
+        p = algo.clear().calcPath(4, 7);
+        assertEquals(Arrays.asList(4, 2, 6, 0, 1, 3, 7), p.toNodeList());
+    }
+
+    @Test
+    public void testDirected2() {
+        LevelGraph g = createGraph(30);
+        PrepareLongishPathShortcutsTest.initDirected2(g);
+        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts(g);
+        prepare.doWork();
+        assertEquals(1, prepare.getShortcuts());
+        PrepareLongishPathShortcutsTest.printEdges(g);
+        RoutingAlgorithm algo = prepare.createAlgo();
+        Path p = algo.calcPath(0, 10);
+        assertEquals(10, p.distance(), 1e-6);
+        assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.toNodeList());
     }
 
     @Test

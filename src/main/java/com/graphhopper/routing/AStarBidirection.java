@@ -166,7 +166,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
     public void initPath() {
         shortest = createPath();
-        shortest.weight(Double.MAX_VALUE);
+        shortest.weight(INIT_VALUE);
         // pi_r_of_t = dist.calcDistKm(fromCoord.lat, fromCoord.lon, toCoord.lat, toCoord.lon);
     }
 
@@ -183,10 +183,8 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         if (p != null)
             return p;
 
-        int counter = 0;
         int finish = 0;
         while (finish < 2) {
-            counter++;
             finish = 0;
             if (!fillEdgesFrom())
                 finish++;
@@ -216,15 +214,20 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         if (currFrom != null) {
             shortestWeightMapOther = shortestWeightMapTo;
             fillEdges(currFrom, toCoord, visitedFrom, prioQueueOpenSetFrom, shortestWeightMapFrom, true);
-            if (prioQueueOpenSetFrom.isEmpty())
+            if (prioQueueOpenSetFrom.isEmpty()) {
+                currFrom = null;
                 return false;
+            }
 
             currFrom = prioQueueOpenSetFrom.poll();
             if (checkFinishCondition())
                 return false;
             visitedFrom.add(currFrom.node);
-        } else if (currTo == null)
+        } else if (currTo == null) {
+            if (shortest.weight < INIT_VALUE)
+                return false;
             throw new IllegalStateException("Shortest Path not found? " + from + " " + to);
+        }
         return true;
     }
 
@@ -232,15 +235,20 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         if (currTo != null) {
             shortestWeightMapOther = shortestWeightMapFrom;
             fillEdges(currTo, fromCoord, visitedTo, prioQueueOpenSetTo, shortestWeightMapTo, false);
-            if (prioQueueOpenSetTo.isEmpty())
+            if (prioQueueOpenSetTo.isEmpty()) {
+                currTo = null;
                 return false;
+            }
 
             currTo = prioQueueOpenSetTo.poll();
             if (checkFinishCondition())
                 return false;
             visitedTo.add(currTo.node);
-        } else if (currFrom == null)
+        } else if (currFrom == null) {
+            if (shortest.weight < INIT_VALUE)
+                return false;
             throw new IllegalStateException("Shortest Path not found? " + from + " " + to);
+        }
         return true;
     }
 

@@ -51,6 +51,7 @@ public class PrepareLongishPathShortcuts implements AlgorithmPreparation {
     /**
      * Create short cuts to skip 2 degree nodes and make graph traversal for routing more efficient
      */
+    @Override
     public void doWork() {
         newShortcuts = 0;
         int locs = g.getNodes();

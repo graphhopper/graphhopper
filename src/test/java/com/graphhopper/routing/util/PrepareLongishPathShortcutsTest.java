@@ -107,25 +107,7 @@ public class PrepareLongishPathShortcutsTest {
     @Test
     public void testDirectedBug() {
         LevelGraph g = createGraph(30);
-        //       8
-        //       |
-        //    6->0->1->3->7
-        //    |        |
-        //    |        v
-        //10<-2---4<---5
-        //    9
-        g.edge(0, 8, 1, true);
-        g.edge(0, 1, 1, false);
-        g.edge(1, 3, 1, false);
-        g.edge(3, 7, 1, false);
-        g.edge(3, 5, 1, false);
-        g.edge(5, 4, 1, false);
-        g.edge(4, 2, 1, true);
-        g.edge(2, 9, 1, false);
-        g.edge(2, 10, 1, false);
-        g.edge(2, 6, 1, true);
-        g.edge(6, 0, 1, false);
-
+        initDirected1(g);
         PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
@@ -179,6 +161,53 @@ public class PrepareLongishPathShortcutsTest {
         graph.edge(7, 0, 5, true);
         graph.edge(3, 8, 20, true);
         graph.edge(8, 6, 20, true);
+    }
+
+    // 0-1-.....-9-10
+    // |         ^   \
+    // |         |    |
+    // 17-16-...-11<-/
+    public static void initDirected2(Graph g) {
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(4, 5, 1, true);
+        g.edge(5, 6, 1, true);
+        g.edge(6, 7, 1, true);
+        g.edge(7, 8, 1, true);
+        g.edge(8, 9, 1, true);
+        g.edge(9, 10, 1, true);
+        g.edge(10, 11, 1, false);
+        g.edge(11, 12, 1, true);
+        g.edge(11, 9, 3, false);
+        g.edge(12, 13, 1, true);
+        g.edge(13, 14, 1, true);
+        g.edge(14, 15, 1, true);
+        g.edge(15, 16, 1, true);
+        g.edge(16, 17, 1, true);
+        g.edge(17, 0, 1, true);
+    }
+
+    //       8
+    //       |
+    //    6->0->1->3->7
+    //    |        |
+    //    |        v
+    //10<-2---4<---5
+    //    9
+    public static void initDirected1(Graph g) {
+        g.edge(0, 8, 1, true);
+        g.edge(0, 1, 1, false);
+        g.edge(1, 3, 1, false);
+        g.edge(3, 7, 1, false);
+        g.edge(3, 5, 1, false);
+        g.edge(5, 4, 1, false);
+        g.edge(4, 2, 1, true);
+        g.edge(2, 9, 1, false);
+        g.edge(2, 10, 1, false);
+        g.edge(2, 6, 1, true);
+        g.edge(6, 0, 1, false);
     }
 
     @Test
@@ -253,5 +282,16 @@ public class PrepareLongishPathShortcutsTest {
         assertTrue(GraphUtility.contains(g.getOutgoing(4), 9));
         iter = GraphUtility.until(g.getOutgoing(4), 9);
         assertEquals(5, iter.distance(), 1e-4);
+    }
+
+    public static void printEdges(LevelGraph g) {
+        EdgeSkipIterator iter = g.getAllEdges();
+        while (iter.next()) {
+            System.out.println(iter.fromNode() + "->" + iter.node()
+                    + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedNode()
+                    + ", level:" + g.getLevel(iter.fromNode()) + "->" + g.getLevel(iter.node())
+                    + ", origEdges:" + iter.originalEdges() + ", bothDir:" + CarStreetType.isBackward(iter.flags()));
+        }
+        System.out.println("---");
     }
 }

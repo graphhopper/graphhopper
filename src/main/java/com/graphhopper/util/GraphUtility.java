@@ -24,7 +24,6 @@ import com.graphhopper.storage.Edge;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.Location2IDPreciseIndex;
-import com.graphhopper.storage.MMapGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import gnu.trove.list.TIntList;

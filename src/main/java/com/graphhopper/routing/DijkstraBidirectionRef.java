@@ -119,10 +119,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         if (p != null)
             return p;
 
-        int counter = 0;
         int finish = 0;
         while (finish < 2) {
-            counter++;
             finish = 0;
             if (!fillEdgesFrom())
                 finish++;
@@ -202,15 +200,20 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         if (currFrom != null) {
             shortestWeightMapOther = shortestWeightMapTo;
             fillEdges(currFrom, visitedFrom, openSetFrom, shortestWeightMapFrom, true);
-            if (openSetFrom.isEmpty())
+            if (openSetFrom.isEmpty()) {
+                currFrom = null;
                 return false;
+            }
 
             currFrom = openSetFrom.poll();
             if (checkFinishCondition())
                 return false;
             visitedFrom.add(currFrom.node);
-        } else if (currTo == null)
+        } else if (currTo == null) {
+            if (shortest.weight < INIT_VALUE)
+                return false;
             throw new IllegalStateException("Shortest Path not found? " + from + " " + to);
+        }
         return true;
     }
 
@@ -218,15 +221,20 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         if (currTo != null) {
             shortestWeightMapOther = shortestWeightMapFrom;
             fillEdges(currTo, visitedTo, openSetTo, shortestWeightMapTo, false);
-            if (openSetTo.isEmpty())
+            if (openSetTo.isEmpty()) {
+                currTo = null;
                 return false;
+            }
 
             currTo = openSetTo.poll();
             if (checkFinishCondition())
                 return false;
             visitedTo.add(currTo.node);
-        } else if (currFrom == null)
+        } else if (currFrom == null) {
+            if (shortest.weight < INIT_VALUE)
+                return false;
             throw new IllegalStateException("Shortest Path not found? " + from + " " + to);
+        }
         return true;
     }
 
@@ -253,7 +261,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     public DijkstraBidirectionRef initPath() {
         shortest = createPath();
-        shortest.weight(Double.MAX_VALUE);
+        shortest.weight(INIT_VALUE);
         return this;
     }
 }

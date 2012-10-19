@@ -110,18 +110,7 @@ public class PrepareContractionHierarchiesTest {
 //        assertEquals(3, GraphUtility.count(g.getEdges(5)));
 //        assertEquals(4, GraphUtility.count(g.getEdges(0)));
     }
-
-    public void printEdges(LevelGraph g) {
-        EdgeSkipIterator iter = g.getAllEdges();
-        while (iter.next()) {
-            System.out.println(iter.fromNode() + "->" + iter.node()
-                    + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedNode()
-                    + ", level:" + g.getLevel(iter.fromNode()) + "->" + g.getLevel(iter.node())
-                    + ", origEdges:" + iter.originalEdges() + ", bothDir:" + CarStreetType.isBackward(iter.flags()));
-        }
-        System.out.println("---");
-    }
-
+    
     @Test
     public void testMoreComplexGraph() {
         LevelGraph g = PrepareLongishPathShortcutsTest.createShortcutsGraph();
@@ -144,12 +133,28 @@ public class PrepareContractionHierarchiesTest {
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
         prepare.doWork();
-//        printEdges(g);
         assertEquals(old + 2, GraphUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
 
         Path p = algo.clear().calcPath(4, 2);
         assertEquals(3, p.distance(), 1e-6);
         assertEquals(Arrays.asList(4, 3, 5, 2), p.toNodeList());
+    }
+
+    @Test
+    public void testDirectedGraph2() {
+        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory());
+        g.createNew(10);
+        PrepareLongishPathShortcutsTest.initDirected2(g);
+        int old = GraphUtility.count(g.getAllEdges());
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        prepare.doWork();
+        PrepareLongishPathShortcutsTest.printEdges(g);
+        assertEquals(old + 14, GraphUtility.count(g.getAllEdges()));
+        RoutingAlgorithm algo = prepare.createAlgo();
+
+        Path p = algo.clear().calcPath(0, 10);
+        assertEquals(10, p.distance(), 1e-6);
+        assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.toNodeList());
     }
 }
