@@ -288,8 +288,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                 long edgeId = (long) u * refs.length + n.node;
                 Shortcut sc = shortcuts.get(edgeId);
                 if (sc == null) {
-                    edgeId = (long) n.node * refs.length + u;
-                    sc = shortcuts.get(edgeId);
+                    sc = shortcuts.get((long) n.node * refs.length + u);
                 } else if (shortcuts.containsKey((long) n.node * refs.length + u))
                     throw new IllegalStateException("duplicate edge should be overwritten: " + u + "->" + n.node);
 

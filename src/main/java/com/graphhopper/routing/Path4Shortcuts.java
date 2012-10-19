@@ -73,18 +73,16 @@ public class Path4Shortcuts extends PathBidirRef {
         distance += dist;
 
         if (skippedNode >= 0) {
-            int from;
-            if (reverse) {
-                from = to;
-                to = iter.fromNode();
-            } else {
-                from = iter.fromNode();
-            }
-            handleSkippedNode(from, to, flags, skippedNode);
+            handleSkippedNode(mainIter.fromNode(), to, flags, skippedNode, reverse);
         }
     }
 
-    protected void handleSkippedNode(int from, int to, int flags, int skippedNode) {
+    protected void handleSkippedNode(int from, int to, int flags, int skippedNode, boolean reverse) {
+        if(reverse) {
+            int tmp = from;
+            from = to;
+            to = tmp;
+        }
         // find edge 'from'-skippedNode
         boolean success = expand(from, to, skippedNode, flags, false);
         if (!success) {

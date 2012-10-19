@@ -147,6 +147,14 @@ public class GraphUtility {
         return EdgeIterator.EMPTY;
     }
 
+    public static EdgeIterator until(EdgeIterator edges, int node, double distance) {
+        while (edges.next()) {
+            if (edges.node() == node && edges.distance() == distance)
+                return edges;
+        }
+        return EdgeIterator.EMPTY;
+    }
+
     public static EdgeIterator until(EdgeIterator edges, int node) {
         while (edges.next()) {
             if (edges.node() == node)

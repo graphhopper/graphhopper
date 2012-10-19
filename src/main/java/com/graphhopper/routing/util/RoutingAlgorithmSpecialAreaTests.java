@@ -97,38 +97,38 @@ public class RoutingAlgorithmSpecialAreaTests {
 
     public static AlgorithmPreparation[] createAlgos(final Graph g) {
         return new AlgorithmPreparation[]{
-//                    new NoOpAlgorithmPreparation() {
-//                        @Override public RoutingAlgorithm createAlgo() {
-//                            return new AStar(g);
-//                        }
-//                    },
-//                    new NoOpAlgorithmPreparation() {
-//                        @Override public RoutingAlgorithm createAlgo() {
-//                            return new AStarBidirection(g);
-//                        }
-//                    },
-//                    new NoOpAlgorithmPreparation() {
-//                        @Override public RoutingAlgorithm createAlgo() {
-//                            return new DijkstraBidirectionRef(g);
-//                        }
-//                    },
-//                    new NoOpAlgorithmPreparation() {
-//                        @Override public RoutingAlgorithm createAlgo() {
-//                            return new DijkstraBidirection(g);
-//                        }
-//                    },
-//                    new NoOpAlgorithmPreparation() {
-//                        @Override public RoutingAlgorithm createAlgo() {
-//                            return new DijkstraSimple(g);
-//                        }
-//                    },
-//                    new PrepareLongishPathShortcuts((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10))),
-//                    new PrepareLongishPathShortcuts((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10))) {
-//                        @Override public RoutingAlgorithm createAlgo() {
-//                            return ((AStarBidirection) this.createAStar()).setApproximation(false);
-//                        }
-//                    },
-                    new PrepareContractionHierarchies((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)))
+                    new NoOpAlgorithmPreparation() {
+                        @Override public RoutingAlgorithm createAlgo() {
+                            return new AStar(g);
+                        }
+                    },
+                    new NoOpAlgorithmPreparation() {
+                        @Override public RoutingAlgorithm createAlgo() {
+                            return new AStarBidirection(g);
+                        }
+                    },
+                    new NoOpAlgorithmPreparation() {
+                        @Override public RoutingAlgorithm createAlgo() {
+                            return new DijkstraBidirectionRef(g);
+                        }
+                    },
+                    new NoOpAlgorithmPreparation() {
+                        @Override public RoutingAlgorithm createAlgo() {
+                            return new DijkstraBidirection(g);
+                        }
+                    },
+                    new NoOpAlgorithmPreparation() {
+                        @Override public RoutingAlgorithm createAlgo() {
+                            return new DijkstraSimple(g);
+                        }
+                    },
+                    new PrepareLongishPathShortcuts((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10))),
+                    new PrepareLongishPathShortcuts((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10))) {
+                        @Override public RoutingAlgorithm createAlgo() {
+                            return ((AStarBidirection) this.createAStar()).setApproximation(false);
+                        }
+                    },
+//  TODO NOW new PrepareContractionHierarchies((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)))
                 };
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
