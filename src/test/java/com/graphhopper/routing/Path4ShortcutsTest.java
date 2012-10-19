@@ -97,6 +97,6 @@ public class Path4ShortcutsTest {
         path.edgeTo.prevEntry = new EdgeEntry(4, 0);
         Path p = path.extract();
         assertEquals(5, p.locations());
-        assertEquals(Arrays.asList(0, 2, 1, 3, 4), p.toNodeList());
+        assertEquals(Arrays.asList(0, 1, 2, 3, 4), p.toNodeList());
     }
 }

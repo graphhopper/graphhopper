@@ -15,6 +15,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.PrepareLongishPathShortcuts;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -33,8 +34,15 @@ import gnu.trove.list.array.TIntArrayList;
  */
 public class Path4Shortcuts extends PathBidirRef {
 
+    private boolean reverse = true;
+
     public Path4Shortcuts(Graph g, WeightCalculation weightCalculation) {
         super(g, weightCalculation);
+    }
+
+    @Override public void reverseOrder() {
+        reverse = false;
+        super.reverseOrder();
     }
 
     // code duplication with PathBidirRef.calcWeight
@@ -64,14 +72,23 @@ public class Path4Shortcuts extends PathBidirRef {
         weight += lowestW;
         distance += dist;
 
-        if (skippedNode >= 0)
-            handleSkippedNode(iter.fromNode(), to, flags, skippedNode);
+        if (skippedNode >= 0) {
+            int from;
+            if (reverse) {
+                from = to;
+                to = iter.fromNode();
+            } else {
+                from = iter.fromNode();
+            }
+            handleSkippedNode(from, to, flags, skippedNode);
+        }
     }
 
     protected void handleSkippedNode(int from, int to, int flags, int skippedNode) {
-        // logger.info("iter(" + currEdge.node + "->" + tmpTo + ") with skipped node:" + iter.skippedNode());
+        // find edge 'from'-skippedNode
         boolean success = expand(from, to, skippedNode, flags, false);
         if (!success) {
+            // find edge 'to'-skippedNode
             success = expand(to, from, skippedNode, flags, true);
             if (!success)
                 throw new IllegalStateException("skipped node " + skippedNode + " not found for "
@@ -108,7 +125,7 @@ public class Path4Shortcuts extends PathBidirRef {
         }
         return true;
     }
-    
+
     protected EdgeIterator until(int from, int to, int flags) {
         return GraphUtility.until(g.getOutgoing(from), to, flags);
     }

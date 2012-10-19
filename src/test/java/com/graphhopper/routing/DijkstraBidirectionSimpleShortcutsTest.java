@@ -100,7 +100,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
             }
         }.calcPath(17, 23);
         assertEquals(6, p.locations());
-        assertEquals(Arrays.asList(17, 19, 21, 20, 22, 23), p.toNodeList());
+        assertEquals(Arrays.asList(17, 19, 20, 21, 22, 23), p.toNodeList());
     }
 
     @Test
@@ -124,7 +124,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts(g);
         prepare.doWork();
         assertEquals(1, prepare.getShortcuts());
-        PrepareLongishPathShortcutsTest.printEdges(g);
+//        PrepareLongishPathShortcutsTest.printEdges(g);
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(0, 10);
         assertEquals(10, p.distance(), 1e-6);
@@ -163,6 +163,6 @@ public class DijkstraBidirectionSimpleShortcutsTest {
             }
         }.calcPath(1, 4);
         assertEquals(4, p.locations());
-        assertEquals(Arrays.asList(1, 3, 2, 4), p.toNodeList());
+        assertEquals(Arrays.asList(1, 2, 3, 4), p.toNodeList());
     }
 }

@@ -149,7 +149,7 @@ public class PrepareContractionHierarchiesTest {
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
         prepare.doWork();
-        PrepareLongishPathShortcutsTest.printEdges(g);
+        // PrepareLongishPathShortcutsTest.printEdges(g);
         assertEquals(old + 14, GraphUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
 
