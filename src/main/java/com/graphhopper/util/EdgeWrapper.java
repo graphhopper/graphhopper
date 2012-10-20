@@ -91,7 +91,7 @@ public class EdgeWrapper {
         return parents[ref];
     }
     
-    public int getEdgeId_(int ref) {
+    public int getEdgeId(int ref) {
         return edgeIds[ref];
     }
 

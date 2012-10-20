@@ -90,9 +90,8 @@ public class RoutingAlgorithmIntegrationTest {
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
-        int algosLength = -1;
         AlgorithmPreparation[] preparations = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
-        algosLength = preparations.length;
+        int algosLength = preparations.length;
         for (final AlgorithmPreparation prepare : preparations) {
             prepare.doWork();
             for (int no = 0; no < MAX; no++) {

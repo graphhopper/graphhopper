@@ -105,7 +105,7 @@ public class PrepareContractionHierarchiesTest {
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
         prepare.doWork();
-        PrepareLongishPathShortcutsTest.printEdges(g);
+        // PrepareLongishPathShortcutsTest.printEdges(g);
         assertEquals(old, GraphUtility.count(g.getAllEdges()));
 //        assertEquals(3, GraphUtility.count(g.getEdges(5)));
 //        assertEquals(4, GraphUtility.count(g.getEdges(0)));
