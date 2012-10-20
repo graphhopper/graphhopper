@@ -27,9 +27,9 @@ public class PathTest {
 
     @Test public void testReverseOrder() {
         Path p = new Path();
-        p.add(-1, 1);
-        p.add(-1, 3);
-        p.add(-1, 2);
+        p.add(1);
+        p.add(3);
+        p.add(2);
         assertEquals(1, p.getFromLoc());
 
         p.reverseOrder();
@@ -38,16 +38,16 @@ public class PathTest {
 
     @Test public void testAnd() {
         Path p1 = new Path();
-        p1.add(-1, 1);
-        p1.add(-1, 2);
-        p1.add(-1, 3);
-        p1.add(-1, 4);
+        p1.add(1);
+        p1.add(2);
+        p1.add(3);
+        p1.add(4);
 
         Path p2 = new Path();
-        p2.add(-1, 7);
-        p2.add(-1, 2);
-        p2.add(-1, 3);
-        p2.add(-1, 11);
+        p2.add(7);
+        p2.add(2);
+        p2.add(3);
+        p2.add(11);
 
         TIntSet set = p1.and(p2);
         assertEquals(2, set.size());
@@ -62,8 +62,8 @@ public class PathTest {
 
     @Test public void testContains() {
         Path p1 = new Path();
-        p1.add(-1, 1);
-        p1.add(-1, 2);
+        p1.add(1);
+        p1.add(2);
 
         assertFalse(p1.contains(3));
         assertTrue(p1.contains(2));

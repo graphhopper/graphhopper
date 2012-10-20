@@ -102,7 +102,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         while (goalEdge.edge != -1) {
             path.calcWeight(graph.getEdgeProps(goalEdge.edge, goalEdge.endNode));
             int tmpEnd = goalEdge.endNode;
-            path.add(goalEdge.edge, tmpEnd);
+            path.add(tmpEnd);
             goalEdge = goalEdge.parent;
         }
         path.addFrom(from);

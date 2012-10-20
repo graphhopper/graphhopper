@@ -63,7 +63,7 @@ public class PathBidir extends Path {
 
         int currRef = fromRef;
         while (currRef > 0) {
-            add(currRef, nodeFrom);
+            add(nodeFrom);
             calcWeight(g.getEdgeProps(edgeFrom.getEdgeId_(currRef), nodeFrom));
             currRef = edgeFrom.getParent(currRef);
             nodeFrom = edgeFrom.getNode(currRef);
@@ -73,17 +73,12 @@ public class PathBidir extends Path {
 
         // skip node of toRef (equal to fromRef)
         currRef = toRef;
-        if (currRef > 0) {
-            while (true) {             
-                calcWeight(g.getEdgeProps(edgeTo.getEdgeId_(currRef), nodeTo));
-                currRef = edgeTo.getParent(currRef);
-                nodeTo = edgeTo.getNode(currRef);
-                if(currRef <= 0)
-                    break;
-                                
-                add(currRef, nodeTo);
-            }
-            addFrom(nodeTo);
+        while (currRef > 0) {
+            calcWeight(g.getEdgeProps(edgeTo.getEdgeId_(currRef), nodeTo));
+            int tmpRef = edgeTo.getParent(currRef);
+            nodeTo = edgeTo.getNode(tmpRef);
+            add(nodeTo);
+            currRef = tmpRef;
         }
         return this;
     }

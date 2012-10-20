@@ -34,40 +34,43 @@ import gnu.trove.list.array.TIntArrayList;
  */
 public class Path4Shortcuts extends PathBidirRef {
 
-    private boolean reverse = true;
+    protected boolean reverse = true;
 
     public Path4Shortcuts(Graph g, WeightCalculation weightCalculation) {
         super(g, weightCalculation);
     }
 
     @Override public void reverseOrder() {
-        reverse = false;
+        reverse = !reverse;
         super.reverseOrder();
     }
 
-    // code duplication with PathBidirRef.calcWeight
     @Override
     public void calcWeight(EdgeIterator mainIter) {
         super.calcWeight(mainIter);
         EdgeSkipIterator iter = (EdgeSkipIterator) mainIter;
-        if (iter.skippedNode() >= 0) {
-            handleSkippedNode(iter, reverse);
-        }
+        if (iter.skippedNode() >= 0)
+            handleSkippedNode(iter);
     }
 
-    protected void handleSkippedNode(EdgeSkipIterator iter, boolean reverse) {
+    protected void handleSkippedNode(EdgeSkipIterator iter) {
         int from = iter.fromNode();
         int to = iter.node();
+        int flags = iter.flags();
+        // TODO move this swapping to expand where it belongs (necessary because of usage 'getOutgoing')
         if (reverse) {
             int tmp = from;
             from = to;
             to = tmp;
-        }
+        } 
+        else
+            flags = CarStreetType.swapDirection(flags);
+
         // find edge 'from'-skippedNode
-        boolean success = expand(from, to, iter.skippedNode(), iter.flags(), false);
+        boolean success = expand(from, to, iter.skippedNode(), flags, false);
         if (!success) {
             // find edge 'to'-skippedNode
-            success = expand(to, from, iter.skippedNode(), iter.flags(), true);
+            success = expand(to, from, iter.skippedNode(), flags, true);
             if (!success)
                 throw new IllegalStateException("skipped node " + iter.skippedNode() + " not found for "
                         + iter.fromNode() + "<->" + iter.node() + "? " + BitUtil.toBitString(iter.flags(), 8));
@@ -76,16 +79,14 @@ public class Path4Shortcuts extends PathBidirRef {
 
     protected boolean expand(int from, int to, int skippedNode, int flags, boolean reverse) {
         int avoidNode = from;
-        EdgeIterator tmpIter = until(from, skippedNode, flags);
+        EdgeIterator tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, flags);
         if (tmpIter == EdgeIterator.EMPTY)
             return false;
 
-        TIntArrayList tmpEdgeList = new TIntArrayList();
         TIntArrayList tmpNodeList = new TIntArrayList();
         while (true) {
             int node = tmpIter.node();
             tmpNodeList.add(node);
-            tmpEdgeList.add(tmpIter.edge());
             tmpIter = g.getEdges(node);
             tmpIter.next();
             if (tmpIter.node() == avoidNode)
@@ -101,12 +102,8 @@ public class Path4Shortcuts extends PathBidirRef {
             tmpNodeList.reverse();
 
         for (int i = 0; i < tmpNodeList.size(); i++) {
-            add(tmpEdgeList.get(i), tmpNodeList.get(i));
+            add(tmpNodeList.get(i));
         }
         return true;
-    }
-
-    protected EdgeIterator until(int from, int to, int flags) {
-        return GraphUtility.until(g.getOutgoing(from), to, flags);
     }
 }

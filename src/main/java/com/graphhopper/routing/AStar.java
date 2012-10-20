@@ -107,7 +107,7 @@ public class AStar extends AbstractRoutingAlgorithm {
         Path path = new Path(graph, weightCalc);
         while (currEdge.parent != null) {
             EdgeEntry tmp = currEdge;
-            path.add(tmp.edge, tmp.endNode);
+            path.add(tmp.endNode);
             currEdge = (AStarEdge) currEdge.parent;
             path.calcWeight(graph.getEdgeProps(tmp.edge, tmp.endNode));
         }

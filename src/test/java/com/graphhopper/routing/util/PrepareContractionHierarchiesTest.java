@@ -18,7 +18,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.util.PrepareContractionHierarchies.EdgeCH;
+import com.graphhopper.routing.util.PrepareContractionHierarchies.NodeCH;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -55,11 +55,11 @@ public class PrepareContractionHierarchiesTest {
         return g;
     }
 
-    List<EdgeCH> createGoals(int... gNodes) {
-        List<EdgeCH> goals = new ArrayList<EdgeCH>();
+    List<NodeCH> createGoals(int... gNodes) {
+        List<NodeCH> goals = new ArrayList<NodeCH>();
         for (int i = 0; i < gNodes.length; i++) {
-            EdgeCH n = new EdgeCH();
-            n.edge = gNodes[i];
+            NodeCH n = new NodeCH();
+            n.endNode = gNodes[i];
             goals.add(n);
         }
         return goals;
@@ -71,7 +71,7 @@ public class PrepareContractionHierarchiesTest {
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
                 .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(3));
-        List<EdgeCH> gs = createGoals(2);
+        List<NodeCH> gs = createGoals(2);
         algo.clear().setLimit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(0).entry);
         assertTrue(p.distance() > normalDist);
@@ -83,7 +83,7 @@ public class PrepareContractionHierarchiesTest {
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g).
                 setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(3));
-        List<EdgeCH> gs = createGoals(1, 2);
+        List<NodeCH> gs = createGoals(1, 2);
         algo.clear().setLimit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(1).entry);
         assertTrue(p.distance() > normalDist);
@@ -94,7 +94,7 @@ public class PrepareContractionHierarchiesTest {
         LevelGraph g = createGraph();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
                 .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(0));
-        List<EdgeCH> gs = createGoals(1);
+        List<NodeCH> gs = createGoals(1);
         algo.clear().setLimit(2).calcPath(4, gs);
         assertNull(gs.get(0).entry);
     }
@@ -105,11 +105,12 @@ public class PrepareContractionHierarchiesTest {
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
         prepare.doWork();
+        PrepareLongishPathShortcutsTest.printEdges(g);
         assertEquals(old, GraphUtility.count(g.getAllEdges()));
 //        assertEquals(3, GraphUtility.count(g.getEdges(5)));
 //        assertEquals(4, GraphUtility.count(g.getEdges(0)));
     }
-    
+
     @Test
     public void testMoreComplexGraph() {
         LevelGraph g = PrepareLongishPathShortcutsTest.createShortcutsGraph();
@@ -119,7 +120,7 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(old + 6, GraphUtility.count(g.getAllEdges()));
     }
 
-//  TODO NOW @Test
+    @Test
     public void testDirectedGraph() {
         LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory());
         g.createNew(10);
@@ -133,8 +134,8 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
         prepare.doWork();
         assertEquals(old + 2, GraphUtility.count(g.getAllEdges()));
-        RoutingAlgorithm algo = prepare.createAlgo();        
-        PrepareLongishPathShortcutsTest.printEdges(g);
+        RoutingAlgorithm algo = prepare.createAlgo();
+        // PrepareLongishPathShortcutsTest.printEdges(g);
         Path p = algo.clear().calcPath(4, 2);
         assertEquals(3, p.distance(), 1e-6);
         assertEquals(Arrays.asList(4, 3, 5, 2), p.toNodeList());

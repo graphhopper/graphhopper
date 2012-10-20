@@ -18,9 +18,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
-import com.graphhopper.util.GraphUtility;
 
 /**
  * Recursivly unpack shortcuts.
@@ -35,29 +33,29 @@ public class Path4CH extends Path4Shortcuts {
     }
 
     @Override
-    protected void handleSkippedNode(EdgeSkipIterator mainIter, boolean reverse) {
-        int from = mainIter.fromNode();
-        int skippedNode = mainIter.skippedNode();
-        int flags = mainIter.flags();
-        EdgeIterator tmpIter = until(from, skippedNode, flags);
-        if (tmpIter != EdgeIterator.EMPTY) {
-            EdgeSkipIterator tmp2 = (EdgeSkipIterator) tmpIter;
-            if (tmp2.skippedNode() >= 0)
-                handleSkippedNode(tmp2, false);
-        }
-        
-        super.handleSkippedNode(mainIter, reverse);
-        tmpIter = until(skippedNode, mainIter.node(), flags);
-        if (tmpIter != EdgeIterator.EMPTY) {
-            EdgeSkipIterator tmp2 = (EdgeSkipIterator) tmpIter;
-            if (tmp2.skippedNode() >= 0)
-                handleSkippedNode(tmp2, false);
-        }        
+    protected void handleSkippedNode(EdgeSkipIterator mainIter) {
+        expand(mainIter.fromNode(), mainIter.node(), mainIter.skippedNode());
     }
 
-    @Override
-    protected EdgeIterator until(int from, int to, int flags) {
-        // ignore flags as they should be ignored for shortcuts
-        return GraphUtility.until(g.getOutgoing(from), to);
+    private void expand(int from, int to, int skippedNode) {
+        if (skippedNode <= 0)
+            return;
+
+        findSkippedNode(skippedNode, to);
+        add(skippedNode);
+        findSkippedNode(from, skippedNode);
+    }
+
+    private void findSkippedNode(int from, int to) {
+        EdgeSkipIterator iter = (EdgeSkipIterator) g.getOutgoing(from);
+        double lowest = Double.MAX_VALUE;
+        int skip = -1;
+        while (iter.next()) {
+            if (iter.node() == to && iter.distance() < lowest) {
+                lowest = iter.distance();
+                skip = iter.skippedNode();
+            }
+        }
+        expand(from, to, skip);
     }
 }

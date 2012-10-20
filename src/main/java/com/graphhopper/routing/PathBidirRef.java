@@ -58,22 +58,19 @@ public class PathBidirRef extends Path {
 
         EdgeEntry currEdge = edgeFrom;
         while (currEdge.edge != EdgeIterator.NO_EDGE) {
-            add(currEdge.edge, currEdge.endNode);
+            add(currEdge.endNode);
             calcWeight(g.getEdgeProps(currEdge.edge, currEdge.endNode));
             currEdge = currEdge.parent;
         }
         addFrom(currEdge.endNode);
         reverseOrder();
         currEdge = edgeTo;
-        if (currEdge.edge != EdgeIterator.NO_EDGE) {
-            while (true) {
-                calcWeight(g.getEdgeProps(currEdge.edge, currEdge.endNode));
-                currEdge = currEdge.parent;
-                if (currEdge.edge == EdgeIterator.NO_EDGE)
-                    break;
-                add(currEdge.edge, currEdge.endNode);
-            }
-            addFrom(currEdge.endNode);
+        int tmpEdge = currEdge.edge;
+        while (tmpEdge != EdgeIterator.NO_EDGE) {
+            calcWeight(g.getEdgeProps(tmpEdge, currEdge.endNode));
+            currEdge = currEdge.parent;
+            add(currEdge.endNode);            
+            tmpEdge = currEdge.edge;
         }
         return this;
     }

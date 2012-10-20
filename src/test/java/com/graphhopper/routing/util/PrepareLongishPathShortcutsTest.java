@@ -290,7 +290,7 @@ public class PrepareLongishPathShortcutsTest {
             System.out.println(iter.fromNode() + "->" + iter.node()
                     + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedNode()
                     + ", level:" + g.getLevel(iter.fromNode()) + "->" + g.getLevel(iter.node())
-                    + ", origEdges:" + iter.originalEdges() + ", flags:" + CarStreetType.isBoth(iter.flags()));
+                    + ", origEdges:" + iter.originalEdges() + ", bothDir:" + CarStreetType.isBoth(iter.flags()));
         }
         System.out.println("---");
     }

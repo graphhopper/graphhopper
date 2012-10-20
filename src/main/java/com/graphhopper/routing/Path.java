@@ -38,7 +38,6 @@ public class Path {
     protected WeightCalculation weightCalculation;
     protected double weight;
     protected double distance;
-    private TIntArrayList edgeIds = new TIntArrayList();
     private TIntArrayList nodeIds = new TIntArrayList();
 
     Path() {
@@ -51,11 +50,10 @@ public class Path {
     }
 
     public void addFrom(int node) {
-        add(-1, node);
+        add(node);
     }
 
-    public void add(int edgeId, int node) {
-        edgeIds.add(edgeId);
+    public void add(int node) {
         nodeIds.add(node);
     }
 
@@ -64,7 +62,6 @@ public class Path {
     }
 
     public void reverseOrder() {
-        edgeIds.reverse();
         nodeIds.reverse();
     }
 
