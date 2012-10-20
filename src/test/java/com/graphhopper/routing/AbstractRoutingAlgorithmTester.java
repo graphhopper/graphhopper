@@ -18,12 +18,9 @@ package com.graphhopper.routing;
 import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.PrepareLongishPathShortcuts;
-import com.graphhopper.routing.util.PrepareLongishPathShortcutsTest;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.StopWatch;
 import java.io.IOException;
@@ -45,6 +42,10 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     public abstract RoutingAlgorithm createAlgo(Graph g);
 
+    protected Graph createGraph(int size) {
+        return new GraphStorage(new RAMDirectory()).createNew(size);
+    }
+
     public Graph prepareGraph(Graph g) {
         return g;
     }
@@ -57,7 +58,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         Graph graph = createTestGraph();
         Path p = createAlgo(prepareGraph(graph)).calcPath(0, 7);
         assertEquals(p.toString(), 13, p.weight(), 1e-4);
-        assertEquals(p.toString(), 5, p.locations());
+        assertEquals(p.toString(), 5, p.nodes());
     }
 
     // see calc-fastest-graph.svg
@@ -86,7 +87,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         Path p1 = createAlgo(prepareGraph(graph)).setType(ShortestCalc.DEFAULT).calcPath(0, 3);
         assertEquals(p1.toString(), 24, p1.weight(), 1e-6);
         assertEquals(p1.toString(), 24, p1.distance(), 1e-6);
-        assertEquals(p1.toString(), 5, p1.locations());
+        assertEquals(p1.toString(), 5, p1.nodes());
         assertEquals(Arrays.asList(0, 1, 5, 2, 3), p1.toNodeList());
 
         Path p2 = createAlgo(prepareGraph(graph)).setType(FastestCalc.DEFAULT).calcPath(0, 3);
@@ -95,7 +96,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 //                p1.timeInSec() > p2.timeInSec());
         assertEquals(p2.toString(), 31, p2.distance(), 1e-6);
         assertEquals(p2.toString(), 3.1, p2.weight(), 1e-6);
-        assertEquals(p2.toString(), 6, p2.locations());
+        assertEquals(p2.toString(), 6, p2.nodes());
     }
 
     // see test-graph.svg !
@@ -129,21 +130,21 @@ public abstract class AbstractRoutingAlgorithmTester {
         Graph graph = createWikipediaTestGraph();
         Path p = createAlgo(prepareGraph(graph)).calcPath(0, 4);
         assertEquals(p.toString(), 20, p.weight(), 1e-4);
-        assertEquals(p.toString(), 4, p.locations());
+        assertEquals(p.toString(), 4, p.nodes());
     }
 
     @Test public void testCalcIfNoWay() {
         Graph graph = createTestGraph();
         Path p = createAlgo(prepareGraph(graph)).calcPath(0, 0);
         assertEquals(p.toString(), 0, p.weight(), 1e-4);
-        assertEquals(p.toString(), 1, p.locations());
+        assertEquals(p.toString(), 1, p.nodes());
     }
 
     @Test public void testCalcIf1EdgeAway() {
         Graph graph = createTestGraph();
         Path p = createAlgo(prepareGraph(graph)).calcPath(1, 2);
+        assertEquals(Arrays.asList(1, 2), p.toNodeList());
         assertEquals(p.toString(), 2, p.weight(), 1e-4);
-        assertEquals(p.toString(), 2, p.locations());
     }
 
     // see wikipedia-graph.svg !
@@ -191,7 +192,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         Path p = createAlgo(prepareGraph(graph)).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-4);
-        assertEquals(p.toString(), 6, p.locations());
+        assertEquals(p.toString(), 6, p.nodes());
         assertEquals(Arrays.asList(0, 7, 6, 8, 3, 4), p.toNodeList());
     }
 
@@ -216,7 +217,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         Path p = createAlgo(prepareGraph(graph)).calcPath(0, 4);
         assertEquals(p.toString(), 40, p.weight(), 1e-4);
-        assertEquals(p.toString(), 5, p.locations());
+        assertEquals(p.toString(), 5, p.nodes());
         assertEquals(Arrays.asList(0, 7, 6, 5, 4), p.toNodeList());
     }
 
@@ -224,7 +225,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     public void testRekeyBugOfIntBinHeap() {
         // using DijkstraSimple + IntBinHeap then rekey loops endlessly
         Path p = createAlgo(getMatrixGraph()).calcPath(36, 91);
-        assertEquals(12, p.locations());
+        assertEquals(12, p.nodes());
 
         List<Integer> list = p.toNodeList();
         if (!Arrays.asList(36, 46, 56, 66, 76, 86, 85, 84, 94, 93, 92, 91).equals(list)
@@ -238,7 +239,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     public void testBug1() {
         Path p = createAlgo(getMatrixGraph()).calcPath(34, 36);
         assertEquals(Arrays.asList(34, 35, 36), p.toNodeList());
-        assertEquals(3, p.locations());
+        assertEquals(3, p.nodes());
         assertEquals(17, p.weight(), 1e-5);
     }
 
@@ -256,7 +257,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(1, 2, 1, false);
 
         Path p = createAlgo(prepareGraph(graph)).calcPath(0, 2);
-        assertEquals(p.toString(), 3, p.locations());
+        assertEquals(p.toString(), 3, p.nodes());
     }
 
     @Test
@@ -270,8 +271,9 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(4, 2, 1, false);
 
         Path p = createAlgo(prepareGraph(graph)).calcPath(0, 2);
+        assertEquals(Arrays.asList(0, 1, 2), p.toNodeList());
         assertEquals(p.toString(), 5.99, p.weight(), 1e-4);
-        assertEquals(p.toString(), 3, p.locations());
+        assertEquals(p.toString(), 3, p.nodes());
     }
 
     @Test
@@ -281,10 +283,10 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(1, 2, 1, false);
         graph.edge(2, 3, 1, false);
 
-        graph.edge(3, 1, 3, true);
+        graph.edge(3, 1, 4, true);
 
         Path p = createAlgo(prepareGraph(graph)).calcPath(0, 3);
-        assertEquals(p.toString(), 4, p.locations());
+        assertEquals(Arrays.asList(0, 1, 2, 3), p.toNodeList());
     }
 
     @Test public void testPerformance() throws IOException {
@@ -309,7 +311,7 @@ public abstract class AbstractRoutingAlgorithmTester {
             if (i >= noJvmWarming && p != null)
                 sw.stop();
 
-            // System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.locations());
+            // System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.nodes());
         }
 
         float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
@@ -374,9 +376,5 @@ public abstract class AbstractRoutingAlgorithmTester {
         }
 
         return tmp;
-    }
-
-    protected Graph createGraph(int size) {
-        return new GraphStorage(new RAMDirectory()).createNew(size);
     }
 }

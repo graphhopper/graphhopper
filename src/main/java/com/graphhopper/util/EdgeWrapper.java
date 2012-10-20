@@ -23,12 +23,14 @@ import java.util.Arrays;
  *
  * @author Peter Karich
  */
+@NotThreadSafe
 public class EdgeWrapper {
 
     private static final float FACTOR = 1.5f;
-    private int edgeCounter;
+    private int refCounter;
     private int[] nodes;
-    private int[] links;
+    private int[] edgeIds;
+    private int[] parents;
     private float[] weights;
     protected TIntIntHashMap node2edge;
 
@@ -37,9 +39,9 @@ public class EdgeWrapper {
     }
 
     public EdgeWrapper(int size) {
-        edgeCounter = 1;
         nodes = new int[size];
-        links = new int[size];
+        parents = new int[size];
+        edgeIds = new int[size];
         weights = new float[size];
         node2edge = new TIntIntHashMap(size, FACTOR, -1, -1);
     }
@@ -47,39 +49,50 @@ public class EdgeWrapper {
     /**
      * @return edge id of current added (node,distance) tuple
      */
-    public int add(int nodeId, double distance) {
-        int tmpEdgeId = edgeCounter;
-        edgeCounter++;
-        node2edge.put(nodeId, tmpEdgeId);
-        ensureCapacity(tmpEdgeId);
-        weights[tmpEdgeId] = (float) distance;
-        nodes[tmpEdgeId] = nodeId;
-        links[tmpEdgeId] = -1;
-        return tmpEdgeId;
+    public int add(int nodeId, double distance, int edgeId) {        
+        int ref = refCounter;
+        refCounter++;
+        node2edge.put(nodeId, ref);
+        ensureCapacity(ref);
+        weights[ref] = (float) distance;
+        nodes[ref] = nodeId;
+        parents[ref] = -1;
+        edgeIds[ref] = edgeId;
+        return ref;
     }
 
-    public void putWeight(int edgeId, double dist) {
-        if (edgeId < 1)
-            throw new IllegalStateException("You cannot save edge id's with values smaller 1. 0 is reserved");
-        weights[edgeId] = (float) dist;
+    public void putWeight(int ref, double dist) {
+        if (ref < 1)
+            throw new IllegalStateException("You cannot save a reference with values smaller 1. 0 is reserved");
+        weights[ref] = (float) dist;
+    }
+    
+    public void putEdgeId(int ref, int edgeId) {
+        if (ref < 1)
+            throw new IllegalStateException("You cannot save a reference with values smaller 1. 0 is reserved");
+        edgeIds[ref] = edgeId;
+    }       
+
+    public void putParent(int ref, int link) {
+        if (ref < 1)
+            throw new IllegalStateException("You cannot save a reference with values smaller 1. 0 is reserved");
+        parents[ref] = link;
     }
 
-    public void putLink(int edgeId, int link) {
-        if (edgeId < 1)
-            throw new IllegalStateException("You cannot save edge id's with values smaller 1. 0 is reserved");
-        links[edgeId] = link;
+    public double getWeight(int ref) {
+        return weights[ref];
     }
 
-    public double getWeight(int edgeId) {
-        return weights[edgeId];
+    public int getNode(int ref) {
+        return nodes[ref];
     }
 
-    public int getNode(int edgeId) {
-        return nodes[edgeId];
+    public int getParent(int ref) {
+        return parents[ref];
     }
-
-    public int getLink(int edgeId) {
-        return links[edgeId];
+    
+    public int getEdgeId_(int ref) {
+        return edgeIds[ref];
     }
 
     private void ensureCapacity(int size) {
@@ -92,19 +105,20 @@ public class EdgeWrapper {
     private void resize(int cap) {
         weights = Arrays.copyOf(weights, cap);
         nodes = Arrays.copyOf(nodes, cap);
-        links = Arrays.copyOf(links, cap);
+        parents = Arrays.copyOf(parents, cap);
+        edgeIds = Arrays.copyOf(edgeIds, cap);
         node2edge.ensureCapacity(cap);
     }
 
     public void clear() {
-        edgeCounter = 1;
         Arrays.fill(weights, 0);
         Arrays.fill(nodes, 0);
-        Arrays.fill(links, 0);
+        Arrays.fill(parents, 0);
+        Arrays.fill(edgeIds, 0);
         node2edge.clear();
     }
 
-    public int getEdgeId(int node) {
+    public int getRef(int node) {
         return node2edge.get(node);
     }
 }

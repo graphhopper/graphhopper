@@ -22,25 +22,25 @@ package com.graphhopper.storage;
  */
 public class EdgeEntry extends Edge implements Cloneable {
 
-    public EdgeEntry prevEntry;
+    public EdgeEntry parent;
 
-    public EdgeEntry(int loc, double distance) {
-        super(loc, distance);
+    public EdgeEntry(int edgeId, int endNode, double distance) {
+        super(edgeId, endNode, distance);
     }
 
     @Override
     public EdgeEntry clone() {
-        return new EdgeEntry(node, weight);
+        return new EdgeEntry(edge, endNode, weight);
     }
 
     public EdgeEntry cloneFull() {
         EdgeEntry de = clone();
-        EdgeEntry tmpPrev = prevEntry;
+        EdgeEntry tmpPrev = parent;
         EdgeEntry cl = de;
         while (tmpPrev != null) {
-            cl.prevEntry = tmpPrev.clone();
-            cl = cl.prevEntry;
-            tmpPrev = tmpPrev.prevEntry;
+            cl.parent = tmpPrev.clone();
+            cl = cl.parent;
+            tmpPrev = tmpPrev.parent;
         }
         return de;
     }

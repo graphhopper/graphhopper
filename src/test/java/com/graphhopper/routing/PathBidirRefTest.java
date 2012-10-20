@@ -18,7 +18,10 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.MemoryGraphSafe;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.EdgeIterator;
+import java.util.Arrays;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -27,33 +30,42 @@ import org.junit.Test;
  */
 public class PathBidirRefTest {
 
+    Graph createGraph() {
+        return new GraphStorage(new RAMDirectory()).createNew(10);
+    }
+
     @Test
     public void testExtract() {
-        Graph g = new MemoryGraphSafe(10);
+        Graph g = createGraph();
         g.edge(1, 2, 10, true);
         PathBidirRef pw = new PathBidirRef(g, ShortestCalc.DEFAULT);
-        pw.edgeFrom = new EdgeEntry(2, 10);
-        pw.edgeFrom.prevEntry = new EdgeEntry(1, 10);
-        pw.edgeTo = new EdgeEntry(2, 20);
+        EdgeIterator iter = g.getOutgoing(1);
+        iter.next();
+        pw.edgeFrom = new EdgeEntry(iter.edge(), 2, 0);
+        pw.edgeFrom.parent = new EdgeEntry(-1, 1, 10);
+        pw.edgeTo = new EdgeEntry(-1, 2, 0);
         Path p = pw.extract();
-        assertEquals(2, p.locations());
+        assertEquals(Arrays.asList(1, 2), p.toNodeList());
         assertEquals(10, p.weight(), 1e-4);
     }
 
     @Test
     public void testExtract2() {
-        Graph g = new MemoryGraphSafe(10);
+        Graph g = createGraph();
         g.edge(1, 2, 10, false);
         g.edge(2, 3, 20, false);
+        EdgeIterator iter = g.getOutgoing(1);
+        iter.next();
         PathBidirRef pw = new PathBidirRef(g, ShortestCalc.DEFAULT);
-        pw.edgeFrom = new EdgeEntry(2, 10);
-        pw.edgeFrom.prevEntry = new EdgeEntry(1, 0);
-        pw.edgeTo = new EdgeEntry(2, 20);
-        pw.edgeTo.prevEntry = new EdgeEntry(3, 0);
+        pw.edgeFrom = new EdgeEntry(iter.edge(), 2, 10);
+        pw.edgeFrom.parent = new EdgeEntry(-1, 1, 0);
+
+        iter = g.getIncoming(3);
+        iter.next();
+        pw.edgeTo = new EdgeEntry(iter.edge(), 2, 20);
+        pw.edgeTo.parent = new EdgeEntry(-1, 3, 0);
         Path p = pw.extract();
-        assertEquals(1, p.location(0));
-        assertEquals(3, p.location(2));
-        assertEquals(3, p.locations());
+        assertEquals(Arrays.asList(1, 2, 3), p.toNodeList());
         assertEquals(30, p.weight(), 1e-4);
     }
 }

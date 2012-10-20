@@ -15,6 +15,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
@@ -40,10 +41,39 @@ public class GraphStorageTest extends AbstractGraphTester {
         Graph graph = createGraph(10);
         graph.edge(2, 1, 12, true);
         graph.edge(2, 3, 12, true);
-        graph.edge(2, 3, 12, true);
+        graph.edge(2, 3, 13, false);
         assertEquals(3, GraphUtility.count(graph.getOutgoing(2)));
 
-        graph.edge(3, 2, 12, true);
+        // no exception        
+        graph.getEdgeProps(1, 3);
+        try {
+            graph.getEdgeProps(4, 3);
+            assertFalse(true);
+        } catch (Exception ex) {
+        }        
+        try {
+            graph.getEdgeProps(0, 3);
+            assertFalse(true);
+        } catch (Exception ex) {
+        }
+
+        EdgeIterator iter = graph.getOutgoing(2);
+        iter.next();
+        iter.next();
+        assertTrue(iter.next());
+        EdgeIterator oneIter = graph.getEdgeProps(iter.edge(), 3);
+        assertEquals(13, oneIter.distance(), 1e-6);
+        assertEquals(2, oneIter.fromNode());
+        assertTrue(CarStreetType.isForward(oneIter.flags()));
+        assertFalse(CarStreetType.isBoth(oneIter.flags()));
+
+        oneIter = graph.getEdgeProps(iter.edge(), 2);
+        assertEquals(13, oneIter.distance(), 1e-6);
+        assertEquals(3, oneIter.fromNode());
+        assertTrue(CarStreetType.isBackward(oneIter.flags()));
+        assertFalse(CarStreetType.isBoth(oneIter.flags()));
+
+        graph.edge(3, 2, 14, true);
         assertEquals(4, GraphUtility.count(graph.getOutgoing(2)));
     }
 
@@ -112,11 +142,14 @@ public class GraphStorageTest extends AbstractGraphTester {
 
         EdgeIterator iter = g.getAllEdges();
         assertTrue(iter.next());
+        int edgeId = iter.edge();
         assertEquals(0, iter.fromNode());
         assertEquals(1, iter.node());
         assertEquals(2, iter.distance(), 1e-6);
 
         assertTrue(iter.next());
+        int edgeId2 = iter.edge();
+        assertEquals(1, edgeId2 - edgeId);
         assertEquals(1, iter.fromNode());
         assertEquals(3, iter.node());
 

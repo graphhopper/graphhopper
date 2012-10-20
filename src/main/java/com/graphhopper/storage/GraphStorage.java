@@ -272,6 +272,56 @@ public class GraphStorage implements Graph, Storable {
         return nodeA;
     }
 
+    @Override
+    public EdgeIterator getEdgeProps(int edgeId, final int endNode) {
+        return new SingleEdge(edgeId, endNode);
+    }
+
+    // TODO create a new constructor and reuse EdgeIterable -> new EdgeIterable(edgeId, END node)
+    protected class SingleEdge implements EdgeIterator {
+
+        protected long edgePointer;
+        protected int endNode;
+
+        public SingleEdge(int edgeId, int endNode) {
+            if (edgeId < 1 || edgeId > edgeCount)
+                throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + edgeCount + "]");
+
+            this.edgePointer = (long) edgeId * edgeEntrySize;
+            this.endNode = endNode;
+        }
+
+        @Override public boolean next() {
+            return false;
+        }
+
+        @Override public int edge() {
+            return (int) (edgePointer / edgeEntrySize);
+        }
+
+        @Override
+        public int fromNode() {
+            return getOtherNode(node(), edgePointer);
+        }
+
+        @Override
+        public int node() {
+            // TODO check if equals to the stored node!
+            return endNode;
+        }
+
+        @Override public double distance() {
+            return getDist(edgePointer);
+        }
+
+        @Override public int flags() {
+            int flags = edges.getInt(edgePointer + I_FLAGS);
+            if (endNode != edges.getInt(edgePointer + I_NODEB))
+                flags = CarStreetType.swapDirection(flags);
+            return flags;
+        }
+    }
+
     public EdgeIterator getAllEdges() {
         return new AllEdgeIterator();
     }
@@ -306,6 +356,11 @@ public class GraphStorage implements Graph, Storable {
         public int flags() {
             return edges.getInt(edgePointer + I_FLAGS);
         }
+
+        @Override
+        public int edge() {
+            return (int) (edgePointer / edgeEntrySize);
+        }
     }
 
     @Override
@@ -334,6 +389,7 @@ public class GraphStorage implements Graph, Storable {
         double distance;
         int nodeId;
         final int fromNode;
+        int edgeId;
         int nextEdge;
 
         public EdgeIterable(int edge) {
@@ -352,8 +408,9 @@ public class GraphStorage implements Graph, Storable {
         }
 
         void readNext() {
-            // readLock.lock();
+            // readLock.lock();                       
             edgePointer = nextEdge * edgeEntrySize;
+            edgeId = nextEdge;
             nodeId = getOtherNode(fromNode, edgePointer);
             if (fromNode != getOtherNode(nodeId, edgePointer))
                 throw new IllegalStateException("requested node " + fromNode + " not stored in edge. "
@@ -409,6 +466,10 @@ public class GraphStorage implements Graph, Storable {
 
         @Override public int fromNode() {
             return fromNode;
+        }
+
+        @Override public int edge() {
+            return edgeId;
         }
     }
 

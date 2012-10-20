@@ -48,28 +48,30 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
     }
 
     @Override public Path calcPath(int from, int to) {
-        EdgeEntry fromEntry = new EdgeEntry(from, 0);
+        EdgeEntry fromEntry = new EdgeEntry(-1, from, 0d);
         this.from = from;
+        visited.add(from);
         EdgeEntry currEdge = fromEntry;
         while (true) {
-            int neighborNode = currEdge.node;
+            int neighborNode = currEdge.endNode;
             EdgeIterator iter = getNeighbors(neighborNode);
             while (iter.next()) {
-                int tmpV = iter.node();
-                if (visited.contains(tmpV))
+                int tmpNode = iter.node();
+                if (visited.contains(tmpNode))
                     continue;
 
                 double tmpWeight = weightCalc.getWeight(iter) + currEdge.weight;
-                EdgeEntry nEdge = map.get(tmpV);
+                EdgeEntry nEdge = map.get(tmpNode);
                 if (nEdge == null) {
-                    nEdge = new EdgeEntry(tmpV, tmpWeight);
-                    nEdge.prevEntry = currEdge;
-                    map.put(tmpV, nEdge);
+                    nEdge = new EdgeEntry(iter.edge(), tmpNode, tmpWeight);
+                    nEdge.parent = currEdge;
+                    map.put(tmpNode, nEdge);
                     heap.add(nEdge);
                 } else if (nEdge.weight > tmpWeight) {
                     heap.remove(nEdge);
+                    nEdge.edge = iter.edge();
                     nEdge.weight = tmpWeight;
-                    nEdge.prevEntry = currEdge;
+                    nEdge.parent = currEdge;
                     heap.add(nEdge);
                 }
 
@@ -84,26 +86,26 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
                 return null;
         }
 
-        if (currEdge.node != to)
+        if (currEdge.endNode != to)
             return null;
 
         return extractPath(currEdge);
     }
 
-    public boolean finished(EdgeEntry curr, int to) {
-        return curr.node == to;
+    public boolean finished(EdgeEntry currEdge, int to) {
+        return currEdge.endNode == to;
     }
 
     public Path extractPath(EdgeEntry goalEdge) {
         // extract path from shortest-path-tree
-        Path path = new Path(weightCalc);
-        while (goalEdge.node != from) {
-            int tmpFrom = goalEdge.node;
-            path.add(tmpFrom);
-            goalEdge = goalEdge.prevEntry;
-            path.calcWeight(graph.getIncoming(tmpFrom), goalEdge.node);
+        Path path = new Path(graph, weightCalc);
+        while (goalEdge.edge != -1) {
+            path.calcWeight(graph.getEdgeProps(goalEdge.edge, goalEdge.endNode));
+            int tmpEnd = goalEdge.endNode;
+            path.add(goalEdge.edge, tmpEnd);
+            goalEdge = goalEdge.parent;
         }
-        path.add(from);
+        path.addFrom(from);
         path.reverseOrder();
         return path;
     }

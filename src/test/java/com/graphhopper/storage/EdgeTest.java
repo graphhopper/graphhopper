@@ -26,9 +26,9 @@ public class EdgeTest {
 
     @Test
     public void testCloneFull() {
-        EdgeEntry de = new EdgeEntry(1, 10);
-        EdgeEntry de2 = de.prevEntry = new EdgeEntry(2, 20);
-        EdgeEntry de3 = de2.prevEntry = new EdgeEntry(3, 30);
+        EdgeEntry de = new EdgeEntry(-1, 1, 10);
+        EdgeEntry de2 = de.parent = new EdgeEntry(-1, - 2, 20);
+        EdgeEntry de3 = de2.parent = new EdgeEntry(-1, 3, 30);
 
         EdgeEntry cloning = de.cloneFull();
         EdgeEntry tmp1 = de;
@@ -37,9 +37,9 @@ public class EdgeTest {
         assertNotNull(tmp1);
         while (tmp1 != null) {
             assertFalse(tmp1 == tmp2);
-            assertEquals(tmp1.node, tmp2.node);
-            tmp1 = tmp1.prevEntry;
-            tmp2 = tmp2.prevEntry;
+            assertEquals(tmp1.edge, tmp2.edge);
+            tmp1 = tmp1.parent;
+            tmp2 = tmp2.parent;
         }
         assertNull(tmp2);
     }

@@ -17,6 +17,7 @@ package com.graphhopper.routing.rideshare;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.DijkstraBidirection;
+import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.storage.Graph;
 import gnu.trove.set.TIntSet;
@@ -44,10 +45,10 @@ public class DijkstraTwoDriversTest {
         double shortest = Double.MAX_VALUE;
         TIntHashSet set = new TIntHashSet();
         for (int pointI = 10; pointI < 50; pointI++) {
-            double sum = new DijkstraBidirection(g).calcPath(12, pointI).weight();
-            sum += new DijkstraBidirection(g).calcPath(pointI, 36).weight();
-            sum += new DijkstraBidirection(g).calcPath(30, pointI).weight();
-            sum += new DijkstraBidirection(g).calcPath(pointI, 45).weight();
+            double sum = new DijkstraBidirectionRef(g).calcPath(12, pointI).weight();
+            sum += new DijkstraBidirectionRef(g).calcPath(pointI, 36).weight();
+            sum += new DijkstraBidirectionRef(g).calcPath(30, pointI).weight();
+            sum += new DijkstraBidirectionRef(g).calcPath(pointI, 45).weight();
             if (sum < shortest) {
                 shortest = sum;
                 set.clear();
@@ -68,8 +69,8 @@ public class DijkstraTwoDriversTest {
         d.setDriverB(30, 15);
         d.calcShortestPath();
 
-        Path pA = new DijkstraBidirection(g).calcPath(12, 36);
-        Path pB = new DijkstraBidirection(g).calcPath(30, 15);
+        Path pA = new DijkstraBidirectionRef(g).calcPath(12, 36);
+        Path pB = new DijkstraBidirectionRef(g).calcPath(30, 15);
         TIntSet set = pA.and(pB);
         assertTrue(set.toString(), set.contains(d.getMeetingPoint()));
         assertEquals(pA.weight(), d.getBestForA().weight(), 1e-5);

@@ -57,6 +57,14 @@ public interface Graph {
     void edge(int a, int b, double distance, boolean bothDirections);
 
     /**
+     * @return an edge iterator over one element where the method next() has no meaning and will
+     * return false. The edge will point to the bigger node if endNode is negative otherwise it'll
+     * be used as the end node.
+     * @throws IllegalStateException if edgeId is not valid
+     */
+    EdgeIterator getEdgeProps(int edgeId, int endNode);
+
+    /**
      * Returns an iterator which makes it possible to traverse all edges of the specified node
      * index. Hint: use GraphUtility to go straight to certain neighbor nodes. Hint: edges with both
      * directions will returned only once!

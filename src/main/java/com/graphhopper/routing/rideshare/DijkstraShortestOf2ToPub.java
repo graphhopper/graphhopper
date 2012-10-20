@@ -87,7 +87,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
-        EdgeEntry entryTo = new EdgeEntry(toP2, 0);
+        EdgeEntry entryTo = new EdgeEntry(-1, toP2, 0);
         currTo = entryTo;
         MyBitSet visitedTo = new MyBitSetImpl(graph.getNodes());
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
@@ -100,7 +100,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         if (pubTransport.isEmpty())
             throw new IllegalStateException("You'll need at least one starting point. Set it via addPubTransportPoint");
 
-        currFrom = new EdgeEntry(fromP1, 0);
+        currFrom = new EdgeEntry(-1, fromP1, 0);
         // in the birectional case we maintain the shortest path via:
         // currFrom.distance + currTo.distance >= shortest.distance
         // Now we simply need to check bevor updating if the newly discovered point is from pub tranport
@@ -112,7 +112,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
                 if (currFrom != null) {
                     if (checkFinishCondition())
                         break;
-                    visitedFrom.add(currFrom.node);
+                    visitedFrom.add(currFrom.endNode);
                 }
             } else if (currTo == null)
                 throw new IllegalStateException("Shortest Path not found? " + fromP1 + " " + toP2);
@@ -124,7 +124,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
                 if (currTo != null) {
                     if (checkFinishCondition())
                         break;
-                    visitedTo.add(currTo.node);
+                    visitedTo.add(currTo.endNode);
                 }
             } else if (currFrom == null)
                 throw new IllegalStateException("Shortest Path not found? " + fromP1 + " " + toP2);
@@ -160,7 +160,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
     public void fillEdges(EdgeEntry curr, MyBitSet visitedMain,
             PriorityQueue<EdgeEntry> prioQueue, TIntObjectMap<EdgeEntry> shortestDistMap) {
 
-        int currVertexFrom = curr.node;
+        int currVertexFrom = curr.endNode;
         EdgeIterator iter = graph.getOutgoing(currVertexFrom);
         while (iter.next()) {
             int tmpV = iter.node();
@@ -170,16 +170,17 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
             double tmp = iter.distance() + curr.weight;
             EdgeEntry de = shortestDistMap.get(tmpV);
             if (de == null) {
-                de = new EdgeEntry(tmpV, tmp);
-                de.prevEntry = curr;
+                de = new EdgeEntry(iter.edge(), tmpV, tmp);
+                de.parent = curr;
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
             } else if (de.weight > tmp) {
                 // use fibonacci? see http://stackoverflow.com/q/6273833/194609
                 // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry
                 prioQueue.remove(de);
+                de.edge = iter.edge();
                 de.weight = tmp;
-                de.prevEntry = curr;
+                de.parent = curr;
                 prioQueue.add(de);
             }
 

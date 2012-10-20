@@ -352,6 +352,11 @@ public class MemoryGraphSafe implements Graph {
         return new EdgeIterable(nodeId, false, true);
     }
 
+    @Override
+    public EdgeIterator getEdgeProps(int edgeId, int fromNode) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
     protected class EdgeIterable implements EdgeIterator {
 
         int pointer;
@@ -433,6 +438,11 @@ public class MemoryGraphSafe implements Graph {
 
         @Override public int fromNode() {
             return fromNode;
+        }
+
+        @Override
+        public int edge() {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
     }
 
@@ -662,6 +672,11 @@ public class MemoryGraphSafe implements Graph {
             @Override
             public int flags() {
                 return getFlags(edgePointer);
+            }
+
+            @Override
+            public int edge() {
+                return edgePointer / LEN_EDGE;
             }
         };
     }

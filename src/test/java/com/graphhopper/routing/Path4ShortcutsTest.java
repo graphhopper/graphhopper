@@ -40,63 +40,63 @@ public class Path4ShortcutsTest {
     @Test
     public void testNoExpand() {
         LevelGraph g = createGraph(20);
-        g.edge(0, 1, 10, true);
-        g.edge(1, 2, 10, true);
-        g.edge(2, 3, 10, true);
-        g.edge(3, 4, 10, true);
+        g.edge(0, 1, 10, true); // 1
+        g.edge(1, 2, 10, true); // 2
+        g.edge(2, 3, 10, true); // 3
+        g.edge(3, 4, 10, true); // 4
 
         Path4Shortcuts path = new Path4Shortcuts(g, ShortestCalc.DEFAULT);
-        path.edgeFrom = new EdgeEntry(3, 10);
-        path.edgeFrom.prevEntry = new EdgeEntry(2, 10);
-        path.edgeFrom.prevEntry.prevEntry = new EdgeEntry(1, 10);
-        path.edgeFrom.prevEntry.prevEntry.prevEntry = new EdgeEntry(0, 0);
-        path.edgeTo = new EdgeEntry(3, 10);
-        path.edgeTo.prevEntry = new EdgeEntry(4, 0);
+        path.edgeFrom = new EdgeEntry(3, 3, 10);
+        path.edgeFrom.parent = new EdgeEntry(2, 2, 10);
+        path.edgeFrom.parent.parent = new EdgeEntry(1, 1, 10);
+        path.edgeFrom.parent.parent.parent = new EdgeEntry(-1, 0, 0);
+        path.edgeTo = new EdgeEntry(4, 3, 10);
+        path.edgeTo.parent = new EdgeEntry(-1, 4, 0);
         Path p = path.extract();
-        assertEquals(5, p.locations());
+        assertEquals(5, p.nodes());
         assertEquals(Arrays.asList(0, 1, 2, 3, 4), p.toNodeList());
     }
 
     @Test
     public void testExpand() {
         LevelGraph g = createGraph(20);
-        g.edge(0, 1, 10, true);
-        g.edge(1, 2, 10, true);
-        g.edge(2, 3, 10, true);
+        g.edge(0, 1, 10, true); // 1
+        g.edge(1, 2, 10, true); // 2
+        g.edge(2, 3, 10, true); // 3
 
         g.setLevel(1, -1);
         g.setLevel(2, -1);
-        g.shortcut(0, 2, 20, CarStreetType.flagsDefault(true), 1);
+        g.shortcut(0, 2, 20, CarStreetType.flagsDefault(true), 1); // 4
 
         Path4Shortcuts path = new Path4Shortcuts(g, ShortestCalc.DEFAULT);
-        path.edgeFrom = new EdgeEntry(2, 20);
-        path.edgeFrom.prevEntry = new EdgeEntry(0, 0);
-        path.edgeTo = new EdgeEntry(2, 10);
-        path.edgeTo.prevEntry = new EdgeEntry(3, 0);
+        path.edgeFrom = new EdgeEntry(4, 2, 20);
+        path.edgeFrom.parent = new EdgeEntry(-1, 0, 0);
+        path.edgeTo = new EdgeEntry(3, 2, 10);
+        path.edgeTo.parent = new EdgeEntry(-1, 3, 0);
         Path p = path.extract();
-        assertEquals(4, p.locations());
+        assertEquals(4, p.nodes());
         assertEquals(Arrays.asList(0, 1, 2, 3), p.toNodeList());
     }
 
     @Test
     public void testExpandMultipleSkippedNodes() {
         LevelGraph g = createGraph(20);
-        g.edge(0, 1, 10, true);
-        g.edge(1, 2, 10, true);
-        g.edge(2, 3, 10, true);
-        g.edge(3, 4, 10, true);
+        g.edge(0, 1, 10, true); // 1
+        g.edge(1, 2, 10, true); // 2
+        g.edge(2, 3, 10, true); // 3
+        g.edge(3, 4, 10, true); // 4
 
         g.setLevel(1, -1);
         g.setLevel(2, -1);
-        g.shortcut(0, 3, 30, CarStreetType.flagsDefault(true), 1);
+        g.shortcut(0, 3, 30, CarStreetType.flagsDefault(true), 1); // 5
 
         Path4Shortcuts path = new Path4Shortcuts(g, ShortestCalc.DEFAULT);
-        path.edgeFrom = new EdgeEntry(3, 30);
-        path.edgeFrom.prevEntry = new EdgeEntry(0, 0);
-        path.edgeTo = new EdgeEntry(3, 10);
-        path.edgeTo.prevEntry = new EdgeEntry(4, 0);
+        path.edgeFrom = new EdgeEntry(5, 3, 30);
+        path.edgeFrom.parent = new EdgeEntry(-1, 0, 0);
+        path.edgeTo = new EdgeEntry(4, 3, 10);
+        path.edgeTo.parent = new EdgeEntry(-1, 4, 0);
         Path p = path.extract();
-        assertEquals(5, p.locations());
+        assertEquals(5, p.nodes());
         assertEquals(Arrays.asList(0, 1, 2, 3, 4), p.toNodeList());
     }
 }

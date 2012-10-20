@@ -60,10 +60,10 @@ public class AStar extends AbstractRoutingAlgorithm {
         double toLat = graph.getLatitude(to);
         double toLon = graph.getLongitude(to);
         double currWeightToGoal, distEstimation, tmpLat, tmpLon;
-        AStarEdge fromEntry = new AStarEdge(from, 0, 0);
+        AStarEdge fromEntry = new AStarEdge(-1, from, 0, 0);
         AStarEdge currEdge = fromEntry;
         while (true) {
-            int currVertex = currEdge.node;
+            int currVertex = currEdge.endNode;
             EdgeIterator iter = graph.getOutgoing(currVertex);
             while (iter.next()) {
                 int neighborNode = iter.node();
@@ -80,14 +80,15 @@ public class AStar extends AbstractRoutingAlgorithm {
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;
 
                     if (nEdge == null) {
-                        nEdge = new AStarEdge(neighborNode, distEstimation, alreadyVisitedWeight);
+                        nEdge = new AStarEdge(iter.edge(), neighborNode, distEstimation, alreadyVisitedWeight);
                         map.put(neighborNode, nEdge);
                     } else {
                         prioQueueOpenSet.remove(nEdge);
+                        nEdge.edge = iter.edge();
                         nEdge.weight = distEstimation;
                         nEdge.weightToCompare = alreadyVisitedWeight;
                     }
-                    nEdge.prevEntry = currEdge;
+                    nEdge.parent = currEdge;
                     prioQueueOpenSet.add(nEdge);
                     updateShortest(nEdge, neighborNode);
                 }
@@ -103,14 +104,14 @@ public class AStar extends AbstractRoutingAlgorithm {
 
         // System.out.println(toString() + " visited nodes:" + closedSet.getCardinality());
         // extract path from shortest-path-tree
-        Path path = new Path(weightCalc);
-        while (currEdge.prevEntry != null) {
-            int tmpFrom = currEdge.node;
-            path.add(tmpFrom);
-            currEdge = (AStarEdge) currEdge.prevEntry;
-            path.calcWeight(graph.getIncoming(tmpFrom), currEdge.node);
+        Path path = new Path(graph, weightCalc);
+        while (currEdge.parent != null) {
+            EdgeEntry tmp = currEdge;
+            path.add(tmp.edge, tmp.endNode);
+            currEdge = (AStarEdge) currEdge.parent;
+            path.calcWeight(graph.getEdgeProps(tmp.edge, tmp.endNode));
         }
-        path.add(fromEntry.node);
+        path.addFrom(from);
         path.reverseOrder();
         return path;
     }
@@ -121,8 +122,8 @@ public class AStar extends AbstractRoutingAlgorithm {
         // but to compare distance we need it only from start:
         double weightToCompare;
 
-        public AStarEdge(int loc, double weightForHeap, double weightToCompare) {
-            super(loc, weightForHeap);
+        public AStarEdge(int edgeId, int node, double weightForHeap, double weightToCompare) {
+            super(edgeId, node, weightForHeap);
             // round makes distance smaller => heuristic should underestimate the distance!
             this.weightToCompare = (float) weightToCompare;
         }

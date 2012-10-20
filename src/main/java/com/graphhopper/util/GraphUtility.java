@@ -126,19 +126,6 @@ public class GraphUtility {
         return true;
     }
 
-    public static boolean contains(Iterable<? extends Edge> iter, int... locs) {
-        Iterator<? extends Edge> i = iter.iterator();
-        TIntHashSet set = new TIntHashSet();
-        while (i.hasNext()) {
-            set.add(i.next().node);
-        }
-        for (int l : locs) {
-            if (!set.contains(l))
-                return false;
-        }
-        return true;
-    }
-
     public static EdgeIterator until(EdgeIterator edges, int node, int flags) {
         while (edges.next()) {
             if (edges.node() == node && edges.flags() == flags)
@@ -303,5 +290,13 @@ public class GraphUtility {
             }
         }
         return to;
+    }
+
+    public static int getToNode(Graph g, int edge, int endNode) {
+        if (edge != EdgeIterator.NO_EDGE) {
+            EdgeIterator iterTo = g.getEdgeProps(edge, endNode);
+            return iterTo.node();
+        }
+        return endNode;
     }
 }

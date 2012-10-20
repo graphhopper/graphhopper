@@ -309,7 +309,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         int node = iter.value();
         double mainLat = g.getLatitude(node);
         double mainLon = g.getLongitude(node);
-        final Edge closestNode = new Edge(node, calc.calcNormalizedDist(lat, lon, mainLat, mainLon));
+        final WeightedNode closestNode = new WeightedNode(node, calc.calcNormalizedDist(lat, lon, mainLat, mainLon));
         final MyBitSet bs = new MyTBitSet();
         while (true) {
             bs.clear();

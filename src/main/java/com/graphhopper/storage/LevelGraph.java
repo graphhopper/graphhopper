@@ -31,6 +31,9 @@ public interface LevelGraph extends Graph {
     EdgeSkipIterator shortcut(int a, int b, double distance, int flags, int shortcutNode);
 
     @Override
+    EdgeSkipIterator getEdgeProps(int edgeId, int endNode);
+
+    @Override
     EdgeSkipIterator getEdges(int nodeId);
 
     @Override
@@ -38,6 +41,6 @@ public interface LevelGraph extends Graph {
 
     @Override
     EdgeSkipIterator getOutgoing(int nodeId);
-    
+
     EdgeSkipIterator getAllEdges();
 }

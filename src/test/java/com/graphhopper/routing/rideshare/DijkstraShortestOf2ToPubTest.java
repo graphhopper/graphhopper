@@ -17,6 +17,7 @@ package com.graphhopper.routing.rideshare;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.DijkstraBidirection;
+import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Graph;
@@ -87,8 +88,8 @@ public class DijkstraShortestOf2ToPubTest {
         Path bestManualPathFrom = null;
         Path bestManualPathTo = null;
         for (int i = 0; i < points.length; i++) {
-            Path manualFrom = new DijkstraBidirection(g).calcPath(points[i], from);
-            Path manualTo = new DijkstraBidirection(g).calcPath(points[i], to);
+            Path manualFrom = new DijkstraBidirectionRef(g).calcPath(points[i], from);
+            Path manualTo = new DijkstraBidirectionRef(g).calcPath(points[i], to);
             if (bestManualPathFrom == null
                     || manualFrom.weight() + manualTo.weight()
                     < bestManualPathFrom.weight() + bestManualPathTo.weight()) {
@@ -97,7 +98,7 @@ public class DijkstraShortestOf2ToPubTest {
             }
         }
 
-        assertEquals(bestManualPathFrom.locations() + bestManualPathTo.locations() - 1, path.locations());
+        assertEquals(bestManualPathFrom.nodes() + bestManualPathTo.nodes() - 1, path.nodes());
         assertEquals(bestManualPathFrom.weight() + bestManualPathTo.weight(), path.weight(), 1e-3);
     }
 }

@@ -15,16 +15,13 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.util.PrepareContractionHierarchies.NodeCH;
+import com.graphhopper.routing.util.PrepareContractionHierarchies.EdgeCH;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,11 +55,11 @@ public class PrepareContractionHierarchiesTest {
         return g;
     }
 
-    List<NodeCH> createGoals(int... gNodes) {
-        List<NodeCH> goals = new ArrayList<NodeCH>();
+    List<EdgeCH> createGoals(int... gNodes) {
+        List<EdgeCH> goals = new ArrayList<EdgeCH>();
         for (int i = 0; i < gNodes.length; i++) {
-            NodeCH n = new NodeCH();
-            n.node = gNodes[i];
+            EdgeCH n = new EdgeCH();
+            n.edge = gNodes[i];
             goals.add(n);
         }
         return goals;
@@ -74,7 +71,7 @@ public class PrepareContractionHierarchiesTest {
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
                 .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(3));
-        List<NodeCH> gs = createGoals(2);
+        List<EdgeCH> gs = createGoals(2);
         algo.clear().setLimit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(0).entry);
         assertTrue(p.distance() > normalDist);
@@ -86,7 +83,7 @@ public class PrepareContractionHierarchiesTest {
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g).
                 setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(3));
-        List<NodeCH> gs = createGoals(1, 2);
+        List<EdgeCH> gs = createGoals(1, 2);
         algo.clear().setLimit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(1).entry);
         assertTrue(p.distance() > normalDist);
@@ -97,7 +94,7 @@ public class PrepareContractionHierarchiesTest {
         LevelGraph g = createGraph();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
                 .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(0));
-        List<NodeCH> gs = createGoals(1);
+        List<EdgeCH> gs = createGoals(1);
         algo.clear().setLimit(2).calcPath(4, gs);
         assertNull(gs.get(0).entry);
     }

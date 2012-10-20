@@ -15,29 +15,24 @@
  */
 package com.graphhopper.storage;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
-
 /**
- *
  * @author Peter Karich,
  */
-public class EdgeWithFlagsTest {
+public class WeightedNode implements Comparable<WeightedNode> {
 
-    @Test
-    public void testFlags() {
-        EdgeWithFlags de = new EdgeWithFlags(1, 12, (byte) 1);
-        de.flags |= 1;
-        assertEquals(1, de.flags);
-        de.flags |= 2;
-        assertEquals(3, de.flags);
+    public int node;
+    public double weight;
 
-        de = new EdgeWithFlags(1, 12, (byte) 1);
-        de.flags |= 2;
-        assertEquals(3, de.flags);
+    public WeightedNode(int node, double distance) {
+        this.node = node;
+        this.weight = distance;
+    }
 
-        de = new EdgeWithFlags(1, 12, (byte) 2);
-        de.flags |= 1;
-        assertEquals(3, de.flags);
+    @Override public int compareTo(WeightedNode o) {
+        return Double.compare(weight, o.weight);
+    }
+
+    @Override public String toString() {
+        return node + " distance is " + weight;
     }
 }

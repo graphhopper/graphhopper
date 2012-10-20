@@ -35,20 +35,23 @@ public class Path4CH extends Path4Shortcuts {
     }
 
     @Override
-    protected void handleSkippedNode(int from, int to, int flags, int skippedNode, boolean reverse) {
+    protected void handleSkippedNode(EdgeSkipIterator mainIter, boolean reverse) {
+        int from = mainIter.fromNode();
+        int skippedNode = mainIter.skippedNode();
+        int flags = mainIter.flags();
         EdgeIterator tmpIter = until(from, skippedNode, flags);
         if (tmpIter != EdgeIterator.EMPTY) {
             EdgeSkipIterator tmp2 = (EdgeSkipIterator) tmpIter;
             if (tmp2.skippedNode() >= 0)
-                handleSkippedNode(from, skippedNode, flags, tmp2.skippedNode(), false);
+                handleSkippedNode(tmp2, false);
         }
         
-        super.handleSkippedNode(from, to, flags, skippedNode, reverse);
-        tmpIter = until(skippedNode, to, flags);
+        super.handleSkippedNode(mainIter, reverse);
+        tmpIter = until(skippedNode, mainIter.node(), flags);
         if (tmpIter != EdgeIterator.EMPTY) {
             EdgeSkipIterator tmp2 = (EdgeSkipIterator) tmpIter;
             if (tmp2.skippedNode() >= 0)
-                handleSkippedNode(skippedNode, to, flags, tmp2.skippedNode(), false);
+                handleSkippedNode(tmp2, false);
         }        
     }
 

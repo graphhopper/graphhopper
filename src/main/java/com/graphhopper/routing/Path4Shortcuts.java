@@ -47,50 +47,30 @@ public class Path4Shortcuts extends PathBidirRef {
 
     // code duplication with PathBidirRef.calcWeight
     @Override
-    public void calcWeight(EdgeIterator mainIter, int to) {
-        double lowestW = -1;
-        double dist = -1;
-        int skippedNode = -1;
-        int flags = -1;
+    public void calcWeight(EdgeIterator mainIter) {
+        super.calcWeight(mainIter);
         EdgeSkipIterator iter = (EdgeSkipIterator) mainIter;
-        while (iter.next()) {
-            if (iter.node() == to) {
-                double tmpW = weightCalculation.getWeight(iter);
-                if (lowestW < 0 || lowestW > tmpW) {
-                    lowestW = tmpW;
-                    dist = iter.distance();
-                    flags = iter.flags();
-                    skippedNode = iter.skippedNode();
-                }
-            }
-        }
-
-        if (lowestW < 0)
-            throw new IllegalStateException("couldn't extract path. distance for " + iter.node()
-                    + " to " + to + " not found!?");
-
-        weight += lowestW;
-        distance += dist;
-
-        if (skippedNode >= 0) {
-            handleSkippedNode(mainIter.fromNode(), to, flags, skippedNode, reverse);
+        if (iter.skippedNode() >= 0) {
+            handleSkippedNode(iter, reverse);
         }
     }
 
-    protected void handleSkippedNode(int from, int to, int flags, int skippedNode, boolean reverse) {
-        if(reverse) {
+    protected void handleSkippedNode(EdgeSkipIterator iter, boolean reverse) {
+        int from = iter.fromNode();
+        int to = iter.node();
+        if (reverse) {
             int tmp = from;
             from = to;
             to = tmp;
         }
         // find edge 'from'-skippedNode
-        boolean success = expand(from, to, skippedNode, flags, false);
+        boolean success = expand(from, to, iter.skippedNode(), iter.flags(), false);
         if (!success) {
             // find edge 'to'-skippedNode
-            success = expand(to, from, skippedNode, flags, true);
+            success = expand(to, from, iter.skippedNode(), iter.flags(), true);
             if (!success)
-                throw new IllegalStateException("skipped node " + skippedNode + " not found for "
-                        + from + "<->" + to + "? " + BitUtil.toBitString(flags, 8));
+                throw new IllegalStateException("skipped node " + iter.skippedNode() + " not found for "
+                        + iter.fromNode() + "<->" + iter.node() + "? " + BitUtil.toBitString(iter.flags(), 8));
         }
     }
 
@@ -100,10 +80,12 @@ public class Path4Shortcuts extends PathBidirRef {
         if (tmpIter == EdgeIterator.EMPTY)
             return false;
 
-        TIntArrayList tmpList = new TIntArrayList();
+        TIntArrayList tmpEdgeList = new TIntArrayList();
+        TIntArrayList tmpNodeList = new TIntArrayList();
         while (true) {
             int node = tmpIter.node();
-            tmpList.add(node);
+            tmpNodeList.add(node);
+            tmpEdgeList.add(tmpIter.edge());
             tmpIter = g.getEdges(node);
             tmpIter.next();
             if (tmpIter.node() == avoidNode)
@@ -116,10 +98,10 @@ public class Path4Shortcuts extends PathBidirRef {
         }
 
         if (reverse)
-            tmpList.reverse();
+            tmpNodeList.reverse();
 
-        for (int i = 0; i < tmpList.size(); i++) {
-            add(tmpList.get(i));
+        for (int i = 0; i < tmpNodeList.size(); i++) {
+            add(tmpEdgeList.get(i), tmpNodeList.get(i));
         }
         return true;
     }

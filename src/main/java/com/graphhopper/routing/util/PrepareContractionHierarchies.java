@@ -96,7 +96,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     void prepareNodes() {
         int len = g.getNodes();
 
-        // minor idea: 1. sort nodes randomly and 2. pre-init with node degree
+        // minor idea: 1. sort nodes randomly and 2. pre-init with edge degree
         for (int node = 0; node < len; node++) {
             refs[node] = new WeightedNode(node, 0);
         }
@@ -143,10 +143,10 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
             counter++;
             WeightedNode wn = refs[sortedNodes.pollKey()];
 
-            // update priority of current node via simulating 'addShortcuts'
+            // update priority of current edge via simulating 'addShortcuts'
             wn.priority = calculatePriority(wn.node);
             if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue()) {
-                // node got more important => insert as new value and contract it later
+                // edge got more important => insert as new value and contract it later
                 sortedNodes.insert(wn.node, wn.priority);
                 continue;
             }
@@ -177,13 +177,13 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     }
 
     /**
-     * Calculates the priority of node v without changing the graph. Warning: the calculated
+     * Calculates the priority of edge v without changing the graph. Warning: the calculated
      * priority must NOT depend on priority(v) and therefor findShortcuts should also not depend on
      * the priority(v). Otherwise updating the priority before contracting in contractNodes() could
      * lead to a slowishor even endless loop.
      */
     int calculatePriority(int v) {
-        // set of shortcuts that would be added if node v would be contracted next.
+        // set of shortcuts that would be added if edge v would be contracted next.
         Collection<Shortcut> tmpShortcuts = findShortcuts(v);
         // from shortcuts we can compute the edgeDifference
         // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|        
@@ -227,7 +227,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         }
 
         @Override public boolean accept() {
-            // ignore if it is skipNode or a node already contracted
+            // ignore if it is skipNode or a edge already contracted
             return skipNode != node() && graph.getLevel(node()) == 0;
         }
     }
@@ -237,7 +237,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
      */
     Collection<Shortcut> findShortcuts(int v) {
         // Do NOT use weight use distance! see prepareEdges where distance is overwritten by weight!
-        List<NodeCH> goalNodes = new ArrayList<NodeCH>();
+        List<EdgeCH> goalNodes = new ArrayList<EdgeCH>();
         shortcuts.clear();
         EdgeSkipIterator iter1 = g.getIncoming(v);
         while (iter1.next()) {
@@ -258,8 +258,8 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                 if (w == u || lw != 0)
                     continue;
 
-                NodeCH n = new NodeCH();
-                n.node = w;
+                EdgeCH n = new EdgeCH();
+                n.edge = w;
                 n.originalEdges = iter2.originalEdges();
                 n.distance = v_u_weight + iter2.distance();
                 goalNodes.add(n);
@@ -272,7 +272,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
             // and successively increasing it when mean-degree of graph increases
             algo = new OneToManyDijkstraCH(g).setFilter(edgeFilter.setSkipNode(v));
             algo.setLimit(maxWeight).calcPath(u, goalNodes);
-            for (NodeCH n : goalNodes) {
+            for (EdgeCH n : goalNodes) {
                 if (n.entry != null) {
                     Path p = algo.extractPath(n.entry);
                     if (p != null && p.weight() <= n.distance) {
@@ -283,18 +283,18 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
                 // FOUND shortcut but be sure that it is the only shortcut in the collection 
                 // and also in the graph for u->w. If existing => update it                
-                // Hint: shortcuts are always one-way due to distinct level of every node but we don't
+                // Hint: shortcuts are always one-way due to distinct level of every edge but we don't
                 // know yet the levels so we need to determine the correct direction or if both directions
-                long edgeId = (long) u * refs.length + n.node;
+                long edgeId = (long) u * refs.length + n.edge;
                 Shortcut sc = shortcuts.get(edgeId);
                 if (sc == null) {
-                    sc = shortcuts.get((long) n.node * refs.length + u);
-                } else if (shortcuts.containsKey((long) n.node * refs.length + u))
-                    throw new IllegalStateException("duplicate edge should be overwritten: " + u + "->" + n.node);
+                    sc = shortcuts.get((long) n.edge * refs.length + u);
+                } else if (shortcuts.containsKey((long) n.edge * refs.length + u))
+                    throw new IllegalStateException("duplicate edge should be overwritten: " + u + "->" + n.edge);
 
                 if (sc == null || sc.distance != n.distance) {
                     if (sc == null) {
-                        sc = new Shortcut(u, n.node, n.distance);
+                        sc = new Shortcut(u, n.edge, n.distance);
                         shortcuts.put(edgeId, sc);
                     } else
                         sc.distance = n.distance;
@@ -311,7 +311,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     }
 
     /**
-     * Introduces the necessary shortcuts for node v in the graph.
+     * Introduces the necessary shortcuts for edge v in the graph.
      */
     int addShortcuts(int v) {
         Collection<Shortcut> foundShortcuts = findShortcuts(v);
@@ -400,7 +400,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
         EdgeLevelFilter filter;
         double limit;
-        Collection<NodeCH> goals;
+        Collection<EdgeCH> goals;
 
         public OneToManyDijkstraCH(Graph graph) {
             super(graph);
@@ -431,7 +431,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
             throw new IllegalArgumentException("call the other calcPath instead");
         }
 
-        Path calcPath(int from, Collection<NodeCH> goals) {
+        Path calcPath(int from, Collection<EdgeCH> goals) {
             this.goals = goals;
             return super.calcPath(from, -1);
         }
@@ -441,8 +441,8 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                 return true;
 
             int found = 0;
-            for (NodeCH n : goals) {
-                if (n.node == curr.node) {
+            for (EdgeCH n : goals) {
+                if (n.edge == curr.edge) {
                     n.entry = curr;
                     found++;
                 } else if (n.entry != null) {
@@ -487,15 +487,15 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         }
     }
 
-    static class NodeCH {
+    static class EdgeCH {
 
-        int node;
+        int edge;
         int originalEdges;
         EdgeEntry entry;
         double distance;
 
         @Override public String toString() {
-            return "" + node;
+            return "" + edge;
         }
     }
 }

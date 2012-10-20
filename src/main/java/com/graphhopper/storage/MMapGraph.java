@@ -377,6 +377,11 @@ public class MMapGraph implements Graph {
         return new EdgesIteratorableFlags(index, getBytesFromNodes(index * bytesNode + bytesNodeCore, bytesEdges), (byte) 2);
     }
 
+    @Override
+    public EdgeIterator getEdgeProps(int edgeId, int fromNode) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
     private class EdgesIteratorableFlags extends EdgesIteratorable {
 
         byte requestedFlags;
@@ -469,6 +474,11 @@ public class MMapGraph implements Graph {
 
         @Override public int fromNode() {
             return fromNode;
+        }
+
+        @Override
+        public int edge() {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
     }
 

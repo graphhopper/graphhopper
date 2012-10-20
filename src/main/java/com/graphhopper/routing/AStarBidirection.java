@@ -137,7 +137,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
     public void initFrom(int from) {
         this.from = from;
-        currFrom = new AStar.AStarEdge(from, 0, 0);
+        currFrom = new AStar.AStarEdge(-1, from, 0, 0);
         shortestWeightMapFrom.put(from, currFrom);
         visitedFrom.add(from);
         fromCoord = new CoordTrig(graph.getLatitude(from), graph.getLongitude(from));
@@ -145,7 +145,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
     public void initTo(int to) {
         this.to = to;
-        currTo = new AStar.AStarEdge(to, 0, 0);
+        currTo = new AStar.AStarEdge(-1, to, 0, 0);
         shortestWeightMapTo.put(to, currTo);
         visitedTo.add(to);
         toCoord = new CoordTrig(graph.getLatitude(to), graph.getLongitude(to));
@@ -153,8 +153,8 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
     private Path checkIndenticalFromAndTo() {
         if (from == to) {
-            Path p = new Path(weightCalc);
-            p.add(from);
+            Path p = new Path(graph, weightCalc);
+            p.addFrom(from);
             return p;
         }
         return null;
@@ -222,7 +222,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
             currFrom = prioQueueOpenSetFrom.poll();
             if (checkFinishCondition())
                 return false;
-            visitedFrom.add(currFrom.node);
+            visitedFrom.add(currFrom.endNode);
         } else if (currTo == null) {
             if (shortest.weight < INIT_VALUE)
                 return false;
@@ -243,7 +243,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
             currTo = prioQueueOpenSetTo.poll();
             if (checkFinishCondition())
                 return false;
-            visitedTo.add(currTo.node);
+            visitedTo.add(currTo.endNode);
         } else if (currFrom == null) {
             if (shortest.weight < INIT_VALUE)
                 return false;
@@ -255,7 +255,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     private void fillEdges(AStarEdge curr, CoordTrig goal, MyBitSet closedSet, PriorityQueue<AStarEdge> prioQueueOpenSet,
             TIntObjectMap<AStarEdge> shortestWeightMap, boolean out) {
 
-        int currNodeFrom = curr.node;
+        int currNodeFrom = curr.endNode;
         EdgeIterator iter = GraphUtility.getEdges(graph, currNodeFrom, out);
         if (edgeFilter != null)
             iter = edgeFilter.doFilter(iter);
@@ -276,15 +276,16 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
                 currWeightToGoal = weightCalc.apply(currWeightToGoal);
                 double estimationFullDist = alreadyVisitedWeight + currWeightToGoal;
                 if (de == null) {
-                    de = new AStarEdge(neighborNode, estimationFullDist, alreadyVisitedWeight);
+                    de = new AStarEdge(iter.edge(), neighborNode, estimationFullDist, alreadyVisitedWeight);
                     shortestWeightMap.put(neighborNode, de);
                 } else {
                     prioQueueOpenSet.remove(de);
+                    de.edge = iter.edge();
                     de.weight = estimationFullDist;
                     de.weightToCompare = alreadyVisitedWeight;
                 }
 
-                de.prevEntry = curr;
+                de.parent = curr;
                 prioQueueOpenSet.add(de);
                 updateShortest(de, neighborNode);
             }

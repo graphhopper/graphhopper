@@ -58,7 +58,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         // use that node to correctly unpack the shortcut
         Path p = createAlgoWithFilterAndPathUnpacking(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-6);
-        assertEquals(p.toString(), 6, p.locations());
+        assertEquals(p.toString(), 6, p.nodes());
         assertEquals(Arrays.asList(0, 7, 6, 8, 3, 4), p.toNodeList());
     }
 
@@ -69,7 +69,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         new PrepareLongishPathShortcuts(g2).doWork();
         Path p = createAlgoWithFilter(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-6);
-        assertEquals(p.toString(), 5, p.locations());
+        assertEquals(p.toString(), 5, p.nodes());
         assertEquals(Arrays.asList(0, 7, 6, 3, 4), p.toNodeList());
     }
 
@@ -99,7 +99,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
                 return new Path4Shortcuts(graph, weightCalc);
             }
         }.calcPath(17, 23);
-        assertEquals(6, p.locations());
+        assertEquals(6, p.nodes());
         assertEquals(Arrays.asList(17, 19, 20, 21, 22, 23), p.toNodeList());
     }
 
@@ -162,7 +162,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
                 return new Path4Shortcuts(graph, weightCalc);
             }
         }.calcPath(1, 4);
-        assertEquals(4, p.locations());
+        assertEquals(4, p.nodes());
         assertEquals(Arrays.asList(1, 2, 3, 4), p.toNodeList());
     }
 }

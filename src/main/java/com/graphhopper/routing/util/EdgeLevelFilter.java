@@ -65,4 +65,8 @@ public class EdgeLevelFilter implements EdgeIterator {
     public boolean accept() {
         return graph.getLevel(edgeIter.fromNode()) <= graph.getLevel(edgeIter.node());
     }
+
+    @Override public int edge() {
+        return edgeIter.edge();
+    }
 }

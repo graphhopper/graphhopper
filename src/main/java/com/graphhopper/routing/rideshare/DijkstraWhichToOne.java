@@ -24,6 +24,7 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GraphUtility;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -71,8 +72,8 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     public Path calcShortestPath() {
         // identical
         if (pubTransport.contains(destination)) {
-            Path p = new Path(weightCalc);
-            p.add(destination);
+            Path p = new Path(graph, weightCalc);
+            p.addFrom(destination);
             return p;
         }
 
@@ -80,7 +81,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
-        EdgeEntry entryTo = new EdgeEntry(destination, 0);
+        EdgeEntry entryTo = new EdgeEntry(-1, destination, 0);
         EdgeEntry currTo = entryTo;
         MyBitSet visitedTo = new MyBitSetImpl(graph.getNodes());
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
@@ -96,7 +97,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
 
         EdgeEntry currFrom = null;
         for (int i = 0; i < pubTransport.size(); i++) {
-            EdgeEntry tmpFrom = new EdgeEntry(pubTransport.get(i), 0);
+            EdgeEntry tmpFrom = new EdgeEntry(-1, pubTransport.get(i), 0);
             if (i == 0)
                 currFrom = tmpFrom;
 
@@ -116,7 +117,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
             fillEdges(shortest, currFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom, true);
             if (!prioQueueFrom.isEmpty()) {
                 currFrom = prioQueueFrom.poll();
-                visitedFrom.add(currFrom.node);
+                visitedFrom.add(currFrom.endNode);
             } else
                 finish++;
 
@@ -124,7 +125,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
             fillEdges(shortest, currTo, visitedTo, prioQueueTo, shortestDistMapTo, false);
             if (!prioQueueTo.isEmpty()) {
                 currTo = prioQueueTo.poll();
-                visitedTo.add(currTo.node);
+                visitedTo.add(currTo.endNode);
             } else
                 finish++;
         }
@@ -143,12 +144,8 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
             PriorityQueue<EdgeEntry> prioQueue,
             TIntObjectMap<EdgeEntry> shortestDistMap, boolean out) {
 
-        int currVertexFrom = curr.node;
-        EdgeIterator iter;
-        if (out)
-            iter = graph.getOutgoing(currVertexFrom);
-        else
-            iter = graph.getIncoming(currVertexFrom);
+        int currVertexFrom = curr.endNode;
+        EdgeIterator iter = GraphUtility.getEdges(graph, currVertexFrom, out);        
         while (iter.next()) {
             int tmpV = iter.node();
             if (visitedMain.contains(tmpV))
@@ -157,16 +154,15 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
             double tmp = weightCalc.getWeight(iter) + curr.weight;
             EdgeEntry de = shortestDistMap.get(tmpV);
             if (de == null) {
-                de = new EdgeEntry(tmpV, tmp);
-                de.prevEntry = curr;
+                de = new EdgeEntry(iter.edge(), tmpV, tmp);
+                de.parent = curr;
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
             } else if (de.weight > tmp) {
-                // use fibonacci? see http://stackoverflow.com/q/6273833/194609
-                // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry
                 prioQueue.remove(de);
+                de.edge = iter.edge();
                 de.weight = tmp;
-                de.prevEntry = curr;
+                de.parent = curr;
                 prioQueue.add(de);
             }
 

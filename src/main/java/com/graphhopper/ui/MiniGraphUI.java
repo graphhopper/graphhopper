@@ -80,7 +80,7 @@ public class MiniGraphUI {
         logger.info("locations:" + roadGraph.getNodes() + ", debug:" + debug);
         mg = new MyGraphics(roadGraph);
 
-        // prepare location quadtree to 'enter' the graph. create a 313*313 grid => <3km
+        // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
         this.index = new Location2IDQuadtree(roadGraph, new RAMDirectory("loc2idIndex"));
         index.prepareIndex(2000);
@@ -200,13 +200,13 @@ public class MiniGraphUI {
                     return;
                 }
 
-                logger.info("found path in " + sw.getSeconds() + "s with " + path.locations() + " nodes: " + path);
+                logger.info("found path in " + sw.getSeconds() + "s with " + path.nodes() + " nodes: " + path);
                 g2.setColor(Color.BLUE.brighter().brighter());
-                int tmpLocs = path.locations();
+                int tmpLocs = path.nodes();
                 double prevLat = -1;
                 double prevLon = -1;
                 for (int i = 0; i < tmpLocs; i++) {
-                    int id = path.location(i);
+                    int id = path.node(i);
                     double lat = graph.getLatitude(id);
                     double lon = graph.getLongitude(id);
                     if (prevLat >= 0)
@@ -239,8 +239,8 @@ public class MiniGraphUI {
             // nothing found
             return tmpPath;
         }
-        for (int jj = 0; jj < tmpPath.locations(); jj++) {
-            int loc = tmpPath.location(jj);
+        for (int jj = 0; jj < tmpPath.nodes(); jj++) {
+            int loc = tmpPath.node(jj);
             double lat = graph.getLatitude(loc);
             double lon = graph.getLongitude(loc);
             mg.plot(g2, lat, lon, w);

@@ -93,13 +93,13 @@ public abstract class AbstractBinHeapTest {
         for (int i = 0; i < N; i++) {
             int val = rand.nextInt();
             binHeap.insert(i, val);
-            juQueue.add(new Edge(i, val));
+            juQueue.add(new Edge(-1, i, val));
         }
 
         assertEquals(juQueue.size(), binHeap.size());
 
         for (int i = 0; i < N; i++) {
-            assertEquals(juQueue.poll().node, binHeap.pollKey(), 1e-5);
+            assertEquals(juQueue.poll().endNode, binHeap.pollKey(), 1e-5);
         }
 
         assertEquals(binHeap.size(), 0);

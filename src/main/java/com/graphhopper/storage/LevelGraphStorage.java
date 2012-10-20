@@ -16,7 +16,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.EdgeSkipIterator;
-import com.graphhopper.util.GraphUtility;
 
 /**
  * @author Peter Karich
@@ -114,6 +113,42 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
             int nep = edges.getInt(getLinkPosInEdgeArea(fromNode, nodeId, edgePointer));
             int neop = edges.getInt(getLinkPosInEdgeArea(nodeId, fromNode, edgePointer));
             writeEdge((int) (edgePointer / edgeEntrySize), fromNode, nodeId, nep, neop, flags, distance);
+        }
+
+        @Override public int originalEdges() {
+            return edges.getInt(edgePointer + I_ORIG_EDGES);
+        }
+
+        @Override public void originalEdges(int no) {
+            edges.setInt(edgePointer + I_ORIG_EDGES, no);
+        }
+    }
+
+    @Override
+    public EdgeSkipIterator getEdgeProps(int edgeId, int endNode) {
+        return new SingleSkipEdge(edgeId, endNode);
+    }
+
+    protected class SingleSkipEdge extends SingleEdge implements EdgeSkipIterator {
+
+        public SingleSkipEdge(int edgeId, int endNode) {
+            super(edgeId, endNode);
+        }
+
+        @Override public void skippedNode(int node) {
+            edges.setInt(edgePointer + I_SC_NODE, node);
+        }
+
+        @Override public int skippedNode() {
+            return edges.getInt(edgePointer + I_SC_NODE);
+        }
+
+        @Override public void distance(double dist) {
+            edges.setInt(edgePointer + I_DIST, distToInt(dist));
+        }
+
+        @Override public void flags(int flags) {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override public int originalEdges() {

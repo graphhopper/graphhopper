@@ -16,7 +16,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.MemoryGraphSafe;
+import java.util.Arrays;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -34,6 +34,7 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
     public void testAddSkipNodes() {
         Graph g = createWikipediaTestGraph();
         Path p = createAlgo(g).calcPath(0, 4);
+        assertEquals(Arrays.asList(0, 2, 5, 4), p.toNodeList());
         assertEquals(p.toString(), 20, p.weight(), 1e-6);
         assertTrue(p.toString(), p.contains(5));
 
@@ -45,7 +46,7 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
 
     @Test
     public void testCannotCalculateSP2() {
-        Graph g = new MemoryGraphSafe(10);
+        Graph g = createGraph(10);
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
 

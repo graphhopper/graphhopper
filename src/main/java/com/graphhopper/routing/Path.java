@@ -19,7 +19,6 @@ import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GraphUtility;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -27,51 +26,58 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Efficiently stores the entries for Dijkstra algorithm
+ * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
+ * edge determination faster and less complex as there could be several edges (u,v) especially
+ * for graphs with shortcuts.
  *
  * @author Peter Karich,
  */
 public class Path {
 
+    protected Graph g;
     protected WeightCalculation weightCalculation;
     protected double weight;
     protected double distance;
-    private TIntArrayList locations = new TIntArrayList();
+    private TIntArrayList edgeIds = new TIntArrayList();
+    private TIntArrayList nodeIds = new TIntArrayList();
 
-    public Path() {
-        this(ShortestCalc.DEFAULT);
+    Path() {
+        this(null, ShortestCalc.DEFAULT);
     }
 
-    public Path(WeightCalculation weightCalculation) {
+    public Path(Graph graph, WeightCalculation weightCalculation) {
         this.weightCalculation = weightCalculation;
+        this.g = graph;
     }
 
-    public void add(int node) {
-        locations.add(node);
+    public void addFrom(int node) {
+        add(-1, node);
+    }
+
+    public void add(int edgeId, int node) {
+        edgeIds.add(edgeId);
+        nodeIds.add(node);
     }
 
     public boolean contains(int node) {
-        return locations.contains(node);
-    }
-
-    public int indexOf(int node) {
-        return locations.indexOf(node);
+        return nodeIds.contains(node);
     }
 
     public void reverseOrder() {
-        locations.reverse();
+        edgeIds.reverse();
+        nodeIds.reverse();
     }
 
     public int getFromLoc() {
-        return locations.get(0);
+        return nodeIds.get(0);
     }
 
-    public int locations() {
-        return locations.size();
+    public int nodes() {
+        return nodeIds.size();
     }
 
-    public int location(int index) {
-        return locations.get(index);
+    public int node(int index) {
+        return nodeIds.get(index);
     }
 
     public double distance() {
@@ -87,16 +93,16 @@ public class Path {
     }
 
     @Override public String toString() {
-        return "weight:" + weight() + ", locations:" + locations.size();
+        return "weight:" + weight() + ", locations:" + nodeIds.size();
     }
 
     public String toDetailsString() {
         String str = "";
-        for (int i = 0; i < locations.size(); i++) {
+        for (int i = 0; i < nodes(); i++) {
             if (i > 0)
                 str += "->";
 
-            str += locations.get(i);
+            str += node(i);
         }
         return toString() + ", " + str;
     }
@@ -104,13 +110,13 @@ public class Path {
     public TIntSet and(Path p2) {
         TIntHashSet thisSet = new TIntHashSet();
         TIntHashSet retSet = new TIntHashSet();
-        for (int i = 0; i < locations.size(); i++) {
-            thisSet.add(locations.get(i));
+        for (int i = 0; i < nodes(); i++) {
+            thisSet.add(node(i));
         }
 
-        for (int i = 0; i < p2.locations.size(); i++) {
-            if (thisSet.contains(p2.locations.get(i)))
-                retSet.add(p2.locations.get(i));
+        for (int i = 0; i < p2.nodes(); i++) {
+            if (thisSet.contains(p2.node(i)))
+                retSet.add(p2.node(i));
         }
         return retSet;
     }
@@ -122,53 +128,16 @@ public class Path {
     /**
      * This method calculates not only the weight but also the distance in kilometer.
      */
-    public void calcWeight(EdgeIterator iter, int to) {
-        double lowestW = -1;
-        double dist = -1;
-        while (iter.next()) {
-            if (iter.node() == to) {
-                double tmpW = weightCalculation.getWeight(iter);
-                if (lowestW < 0 || lowestW > tmpW) {
-                    lowestW = tmpW;
-                    dist = iter.distance();
-                }
-            }
-        }
-
-        if (lowestW < 0)
-            throw new IllegalStateException("couldn't extract path. distance for " + iter.node()
-                    + " to " + to + " not found!?");
-
-        weight += lowestW;
-        distance += dist;
-    }
-
-    public static void debugDifference(Graph g, Path p1, Path p2) {
-        int l = p1.locations() - 1;
-        for (int i = 0; i < l; i++) {
-            int from = p1.location(i);
-            int to = p1.location(i + 1);
-            Path tmp = new DijkstraSimple(g).calcPath(from, to);
-
-            double dist = 0;
-            int p2From = p2.indexOf(from);
-            int p2To = p2.indexOf(to);
-            for (int j = p2From; j < p2To; j++) {
-                EdgeIterator iter = GraphUtility.until(g.getOutgoing(p2.location(j)), p2.location(j + 1));
-                dist += iter.distance();
-            }
-
-            if (Math.abs(dist - tmp.weight()) > 0.01) {
-                System.out.println("p.dist:" + tmp.weight() + ", dist:" + dist + ", " + from + "->" + to);
-            }
-        }
+    public void calcWeight(EdgeIterator iter) {
+        weight += weightCalculation.getWeight(iter);
+        distance += iter.distance();
     }
 
     public List<Integer> toNodeList() {
         List<Integer> list = new ArrayList<Integer>();
-        int len = locations.size();
+        int len = nodes();
         for (int i = 0; i < len; i++) {
-            list.add(locations.get(i));
+            list.add(node(i));
         }
         return list;
     }

@@ -22,8 +22,6 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -72,7 +70,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2 = prepareGraph(g2);
         Path p = createAlgo(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-4);
-        assertEquals(p.toString(), 6, p.locations());
+        assertEquals(p.toString(), 6, p.nodes());
     }
 
     @Test @Override public void testCalcFastestPath() {
@@ -114,7 +112,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.setLevel(0, 7);
 
         Path p = createAlgo(g2).calcPath(0, 7);
-        assertEquals(4, p.locations());
+        assertEquals(4, p.nodes());
         assertEquals(4.2, p.distance(), 1e-5);
     }
 }

@@ -47,7 +47,7 @@ public class GraphStorage3DTest {
         edge(g, dist, 1, 4);
 
         Path p = new DijkstraBidirection(g).calcPath(0, 1);
-        assertEquals(3, p.location(1));
+        assertEquals(3, p.node(1));
         assertEquals(0.1, p.distance(), 1e-4);
     }
 

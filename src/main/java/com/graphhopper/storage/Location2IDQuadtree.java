@@ -271,7 +271,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         final int id = index.getInt((int) key);
         double mainLat = g.getLatitude(id);
         double mainLon = g.getLongitude(id);
-        final Edge closestNode = new Edge(id, dist.calcNormalizedDist(lat, lon, mainLat, mainLon));
+        final WeightedNode closestNode = new WeightedNode(id, dist.calcNormalizedDist(lat, lon, mainLat, mainLon));
         goFurtherHook(id);
         new XFirstSearch() {
             @Override protected MyBitSet createBitSet(int size) {

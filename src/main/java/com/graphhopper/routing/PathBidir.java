@@ -27,15 +27,15 @@ import com.graphhopper.util.EdgeWrapper;
 public class PathBidir extends Path {
 
     public boolean switchWrapper = false;
-    public int fromEdgeId = -1;
-    public int toEdgeId = -1;
+    public int fromRef = -1;
+    public int toRef = -1;
     private EdgeWrapper edgeFrom;
     private EdgeWrapper edgeTo;
     protected Graph g;
 
     public PathBidir(Graph g, EdgeWrapper edgesFrom, EdgeWrapper edgesTo,
             WeightCalculation weightCalculation) {
-        super(weightCalculation);
+        super(g, weightCalculation);
         this.g = g;
         this.edgeFrom = edgesFrom;
         this.edgeTo = edgesTo;
@@ -47,44 +47,44 @@ public class PathBidir extends Path {
     @Override
     public Path extract() {
         weight = 0;
-        if (fromEdgeId < 0 || toEdgeId < 0)
+        if (fromRef < 0 || toRef < 0)
             return null;
 
         if (switchWrapper) {
-            int tmp = fromEdgeId;
-            fromEdgeId = toEdgeId;
-            toEdgeId = tmp;
+            int tmp = fromRef;
+            fromRef = toRef;
+            toRef = tmp;
         }
 
-        int nodeFrom = edgeFrom.getNode(fromEdgeId);
-        int nodeTo = edgeTo.getNode(toEdgeId);
+        int nodeFrom = edgeFrom.getNode(fromRef);
+        int nodeTo = edgeTo.getNode(toRef);
         if (nodeFrom != nodeTo)
             throw new IllegalStateException("Locations of 'to' and 'from' DistEntries has to be the same." + toString());
 
-        int currEdgeId = fromEdgeId;
-        add(nodeFrom);
-        currEdgeId = edgeFrom.getLink(currEdgeId);
-        while (currEdgeId > 0) {
-            int tmpFrom = edgeFrom.getNode(currEdgeId);
-            add(tmpFrom);
-            calcWeight(g.getOutgoing(tmpFrom), nodeFrom);
-            currEdgeId = edgeFrom.getLink(currEdgeId);
-            nodeFrom = tmpFrom;
+        int currRef = fromRef;
+        while (currRef > 0) {
+            add(currRef, nodeFrom);
+            calcWeight(g.getEdgeProps(edgeFrom.getEdgeId_(currRef), nodeFrom));
+            currRef = edgeFrom.getParent(currRef);
+            nodeFrom = edgeFrom.getNode(currRef);
         }
+        addFrom(nodeFrom);
         reverseOrder();
 
-        // skip node of toEdgeId (equal to fromEdgeId)
-        currEdgeId = edgeTo.getLink(toEdgeId);
-        while (currEdgeId > 0) {
-            int tmpTo = edgeTo.getNode(currEdgeId);
-            add(tmpTo);
-            calcWeight(g.getOutgoing(nodeTo), tmpTo);
-            currEdgeId = edgeTo.getLink(currEdgeId);
-            nodeTo = tmpTo;
+        // skip node of toRef (equal to fromRef)
+        currRef = toRef;
+        if (currRef > 0) {
+            while (true) {             
+                calcWeight(g.getEdgeProps(edgeTo.getEdgeId_(currRef), nodeTo));
+                currRef = edgeTo.getParent(currRef);
+                nodeTo = edgeTo.getNode(currRef);
+                if(currRef <= 0)
+                    break;
+                                
+                add(currRef, nodeTo);
+            }
+            addFrom(nodeTo);
         }
         return this;
     }
-//    @Override public String toString() {
-//        return "distance:" + weight + ", from:" + edgeFrom.getNode(fromEdgeId) + ", to:" + edgeTo.getNode(toEdgeId);
-//    }
 }

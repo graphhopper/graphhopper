@@ -92,7 +92,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     public DijkstraBidirectionRef initFrom(int from) {
         this.from = from;
-        currFrom = new EdgeEntry(from, 0);
+        currFrom = new EdgeEntry(-1, from, 0);
         shortestWeightMapFrom.put(from, currFrom);
         visitedFrom.add(from);
         return this;
@@ -100,7 +100,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     public DijkstraBidirectionRef initTo(int to) {
         this.to = to;
-        currTo = new EdgeEntry(to, 0);
+        currTo = new EdgeEntry(-1, to, 0);
         shortestWeightMapTo.put(to, currTo);
         visitedTo.add(to);
         return this;
@@ -152,7 +152,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     public void fillEdges(EdgeEntry curr, MyBitSet visitedMain, PriorityQueue<EdgeEntry> prioQueue,
             TIntObjectMap<EdgeEntry> shortestWeightMap, boolean out) {
 
-        int currNodeFrom = curr.node;
+        int currNodeFrom = curr.endNode;
         EdgeIterator iter = GraphUtility.getEdges(graph, currNodeFrom, out);
         if (edgeFilter != null)
             iter = edgeFilter.doFilter(iter);
@@ -165,14 +165,15 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
             double tmpWeight = weightCalc.getWeight(iter) + curr.weight;
             EdgeEntry de = shortestWeightMap.get(neighborNode);
             if (de == null) {
-                de = new EdgeEntry(neighborNode, tmpWeight);
-                de.prevEntry = curr;
+                de = new EdgeEntry(iter.edge(), neighborNode, tmpWeight);
+                de.parent = curr;
                 shortestWeightMap.put(neighborNode, de);
                 prioQueue.add(de);
             } else if (de.weight > tmpWeight) {
                 prioQueue.remove(de);
+                de.edge = iter.edge();
                 de.weight = tmpWeight;
-                de.prevEntry = curr;
+                de.parent = curr;
                 prioQueue.add(de);
             }
 
@@ -208,7 +209,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
             currFrom = openSetFrom.poll();
             if (checkFinishCondition())
                 return false;
-            visitedFrom.add(currFrom.node);
+            visitedFrom.add(currFrom.endNode);
         } else if (currTo == null) {
             if (shortest.weight < INIT_VALUE)
                 return false;
@@ -229,7 +230,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
             currTo = openSetTo.poll();
             if (checkFinishCondition())
                 return false;
-            visitedTo.add(currTo.node);
+            visitedTo.add(currTo.endNode);
         } else if (currFrom == null) {
             if (shortest.weight < INIT_VALUE)
                 return false;
@@ -240,8 +241,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     private Path checkIndenticalFromAndTo() {
         if (from == to) {
-            Path p = new Path(weightCalc);
-            p.add(from);
+            Path p = new Path(graph, weightCalc);
+            p.addFrom(from);
             return p;
         }
         return null;

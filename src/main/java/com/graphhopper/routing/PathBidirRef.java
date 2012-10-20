@@ -18,6 +18,8 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GraphUtility;
 
 /**
  * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
@@ -29,11 +31,9 @@ public class PathBidirRef extends Path {
     public EdgeEntry edgeFrom;
     public EdgeEntry edgeTo;
     public boolean switchWrapper = false;
-    protected Graph g;
 
     public PathBidirRef(Graph g, WeightCalculation weightCalculation) {
-        super(weightCalculation);
-        this.g = g;
+        super(g, weightCalculation);
     }
 
     /**
@@ -45,7 +45,9 @@ public class PathBidirRef extends Path {
         if (edgeFrom == null || edgeTo == null)
             return null;
 
-        if (edgeFrom.node != edgeTo.node)
+        int from = GraphUtility.getToNode(g, edgeFrom.edge, edgeFrom.endNode);
+        int to = GraphUtility.getToNode(g, edgeTo.edge, edgeTo.endNode);
+        if (from != to)
             throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());
 
         if (switchWrapper) {
@@ -55,25 +57,24 @@ public class PathBidirRef extends Path {
         }
 
         EdgeEntry currEdge = edgeFrom;
-        while (currEdge.prevEntry != null) {
-            int tmpFrom = currEdge.node;
-            add(tmpFrom);
-            currEdge = currEdge.prevEntry;
-            calcWeight(g.getOutgoing(currEdge.node), tmpFrom);
+        while (currEdge.edge != EdgeIterator.NO_EDGE) {
+            add(currEdge.edge, currEdge.endNode);
+            calcWeight(g.getEdgeProps(currEdge.edge, currEdge.endNode));
+            currEdge = currEdge.parent;
         }
-        add(currEdge.node);
+        addFrom(currEdge.endNode);
         reverseOrder();
         currEdge = edgeTo;
-        while (currEdge.prevEntry != null) {
-            int tmpTo = currEdge.node;
-            currEdge = currEdge.prevEntry;
-            calcWeight(g.getOutgoing(tmpTo), currEdge.node);
-            add(currEdge.node);
+        if (currEdge.edge != EdgeIterator.NO_EDGE) {
+            while (true) {
+                calcWeight(g.getEdgeProps(currEdge.edge, currEdge.endNode));
+                currEdge = currEdge.parent;
+                if (currEdge.edge == EdgeIterator.NO_EDGE)
+                    break;
+                add(currEdge.edge, currEdge.endNode);
+            }
+            addFrom(currEdge.endNode);
         }
-
         return this;
     }
-//    @Override public String toString() {
-//        return "distance:" + weight + ", from:" + edgeFrom + ", to:" + edgeTo;
-//    }
 }

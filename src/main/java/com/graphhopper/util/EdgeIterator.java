@@ -38,6 +38,11 @@ public interface EdgeIterator {
     boolean next();
 
     /**
+     * @return the edge id of the current edge
+     */
+    int edge();
+
+    /**
      * @return the node id of the origin node. Identical for all edges of this iterator.
      */
     int fromNode();
@@ -53,7 +58,12 @@ public interface EdgeIterator {
     double distance();
 
     int flags();
+    public static final int NO_EDGE = -1;
     public static final EdgeIterator EMPTY = new EdgeIterator() {
+        @Override public int edge() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
         @Override public int fromNode() {
             throw new UnsupportedOperationException("Not supported for EMPTY edge.");
         }

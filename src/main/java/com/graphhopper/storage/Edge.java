@@ -24,11 +24,13 @@ package com.graphhopper.storage;
  */
 public class Edge implements Comparable<Edge> {
 
-    public int node;
+    public int edge;
+    public int endNode;
     public double weight;
 
-    public Edge(int loc, double distance) {
-        this.node = loc;
+    public Edge(int edgeId, int endNode, double distance) {
+        this.edge = edgeId;
+        this.endNode = endNode;
         this.weight = distance;
     }
 
@@ -37,6 +39,6 @@ public class Edge implements Comparable<Edge> {
     }
 
     @Override public String toString() {
-        return "distance to " + node + " is " + weight;
+        return endNode + " (" + edge + ") distance is " + weight;
     }
 }

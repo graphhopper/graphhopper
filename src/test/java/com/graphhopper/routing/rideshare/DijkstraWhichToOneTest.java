@@ -16,7 +16,7 @@
 package com.graphhopper.routing.rideshare;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
-import com.graphhopper.routing.DijkstraBidirection;
+import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Graph;
@@ -73,12 +73,12 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
     private void assertWithBiDijkstra(int[] points, Path path, int dest) {
         Path bestManualPath = null;
         for (int i = 0; i < points.length; i++) {
-            Path manualPath = new DijkstraBidirection(getGraph()).calcPath(points[i], dest);
+            Path manualPath = new DijkstraBidirectionRef(getGraph()).calcPath(points[i], dest);
             if (bestManualPath == null || manualPath.weight() < bestManualPath.weight())
                 bestManualPath = manualPath;
         }
 
         assertEquals(bestManualPath.weight(), path.weight(), 1e-3);
-        assertEquals(bestManualPath.locations(), path.locations());
+        assertEquals(bestManualPath.nodes(), path.nodes());
     }
 }
