@@ -16,7 +16,8 @@
 package com.graphhopper.util;
 
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.MemoryGraphSafe;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.RAMDirectory;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,6 +29,9 @@ import static org.junit.Assert.*;
  */
 public class XFirstSearchTest {
 
+    Graph createGraph(int size) {
+        return new GraphStorage(new RAMDirectory()).createNew(size);
+    }
     int counter;
     TIntHashSet set = new TIntHashSet();
 
@@ -48,7 +52,7 @@ public class XFirstSearchTest {
             }
         };
 
-        Graph g = new MemoryGraphSafe(20);
+        Graph g = createGraph(20);
         g.edge(0, 1, 85, true);
         g.edge(0, 2, 217, true);
         g.edge(0, 3, 173, true);

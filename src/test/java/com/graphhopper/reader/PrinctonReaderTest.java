@@ -16,8 +16,9 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphStorage;
 import static com.graphhopper.util.GraphUtility.*;
-import com.graphhopper.storage.MemoryGraphSafe;
+import com.graphhopper.storage.RAMDirectory;
 import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 import org.junit.Test;
@@ -29,9 +30,13 @@ import static org.junit.Assert.*;
  */
 public class PrinctonReaderTest {
 
+    Graph createGraph(int size) {
+        return new GraphStorage(new RAMDirectory()).createNew(size);
+    }
+
     @Test
     public void testRead() {
-        Graph graph = new MemoryGraphSafe(100);
+        Graph graph = createGraph(100);
         new PrinctonReader(graph).setStream(PrinctonReader.class.getResourceAsStream("tinyEWD.txt")).read();
         assertEquals(8, graph.getNodes());
         assertEquals(2, count(graph.getOutgoing(0)));
@@ -40,7 +45,7 @@ public class PrinctonReaderTest {
 
     @Test
     public void testMediumRead() throws IOException {
-        Graph graph = new MemoryGraphSafe(100);
+        Graph graph = createGraph(100);
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
         assertEquals(250, graph.getNodes());
         assertEquals(13, count(graph.getOutgoing(244)));

@@ -16,7 +16,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.MemoryGraphSafe;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.GraphUtility;
 import java.util.Arrays;
 import java.util.Map;
@@ -30,7 +31,7 @@ import static org.junit.Assert.*;
 public class PrepareRoutingSubnetworksTest {
 
     Graph createGraph(int size) {
-        return new MemoryGraphSafe(size);
+        return new GraphStorage(new RAMDirectory()).createNew(size);
     }
 
     Graph createSubnetworkTestGraph() {
