@@ -126,6 +126,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         return graph;
     }
 
+    @Test public void testNoPathFound() {
+        Graph g = createGraph(10);
+        assertNull(createAlgo(prepareGraph(g)).calcPath(0, 1));
+    }
+
     @Test public void testWikipediaShortestPath() {
         Graph graph = createWikipediaTestGraph();
         Path p = createAlgo(prepareGraph(graph)).calcPath(0, 4);

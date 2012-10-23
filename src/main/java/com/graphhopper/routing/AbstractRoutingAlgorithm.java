@@ -26,7 +26,6 @@ import com.graphhopper.storage.Graph;
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
 
     protected Graph graph;
-    protected static double INIT_VALUE = Double.MAX_VALUE;
     protected WeightCalculation weightCalc = ShortestCalc.DEFAULT;
 
     public AbstractRoutingAlgorithm(Graph graph) {

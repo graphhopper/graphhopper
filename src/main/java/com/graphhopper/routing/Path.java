@@ -27,13 +27,14 @@ import java.util.List;
 
 /**
  * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
- * edge determination faster and less complex as there could be several edges (u,v) especially
- * for graphs with shortcuts.
+ * edge determination faster and less complex as there could be several edges (u,v) especially for
+ * graphs with shortcuts.
  *
  * @author Peter Karich,
  */
 public class Path {
 
+    protected static double INIT_VALUE = Double.MAX_VALUE;
     protected Graph g;
     protected WeightCalculation weightCalculation;
     protected double weight;
@@ -119,7 +120,9 @@ public class Path {
     }
 
     public Path extract() {
-        return this;
+        if (weight < INIT_VALUE)
+            return this;
+        return null;
     }
 
     /**

@@ -31,9 +31,9 @@ import com.graphhopper.util.GraphUtility;
  * TODO: use only one EdgeWrapper to save memory. This is not easy if we want it to be as fast as
  * the current solution. But we need to try it out if a forwardSearchBitset.contains(ref) is that
  * expensive
- * 
- * TODO EdgeWrapper: instead of creating references point to the edges itself => we only need an edge+node array
- * and from that can retrieve eg. the distance
+ *
+ * TODO EdgeWrapper: instead of creating references point to the edges itself => we only need an
+ * edge+node array and from that can retrieve eg. the distance
  *
  * @author Peter Karich,
  */
@@ -90,14 +90,14 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         this.from = from;
         currFrom = from;
         currFromWeight = 0;
-        currFromRef = wrapperFrom.add(from, 0, -1);        
+        currFromRef = wrapperFrom.add(from, 0, -1);
         return this;
     }
 
     public DijkstraBidirection initTo(int to) {
         this.to = to;
         currTo = to;
-        currToWeight = 0;        
+        currToWeight = 0;
         currToRef = wrapperTo.add(to, 0, -1);
         return this;
     }
@@ -130,7 +130,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
     public void initPath() {
         shortest = new PathBidir(graph, wrapperFrom, wrapperTo, weightCalc);
-        shortest.weight = INIT_VALUE;
+        shortest.initWeight();
     }
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf

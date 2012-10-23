@@ -41,6 +41,9 @@ public class PathBidirRef extends Path {
      */
     @Override
     public Path extract() {
+        if (weight == INIT_VALUE)
+            return null;
+
         weight = 0;
         if (edgeFrom == null || edgeTo == null)
             return null;
@@ -69,9 +72,13 @@ public class PathBidirRef extends Path {
         while (tmpEdge != EdgeIterator.NO_EDGE) {
             calcWeight(g.getEdgeProps(tmpEdge, currEdge.endNode));
             currEdge = currEdge.parent;
-            add(currEdge.endNode);            
+            add(currEdge.endNode);
             tmpEdge = currEdge.edge;
         }
         return this;
+    }
+
+    public void initWeight() {
+        weight = INIT_VALUE;
     }
 }

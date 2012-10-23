@@ -78,23 +78,28 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     public void doWork() {
         // TODO integrate PrepareRoutingShortcuts -> so avoid all nodes with negative level in the other methods        
         // in PrepareShortcuts level 0 and -1 is already used move that to level 1 and 2 so that level 0 stays as uncontracted
-        prepareEdges();
-        prepareNodes();
+        if (!prepareEdges())
+            return;
+        if (!prepareNodes())
+            return;
         contractNodes();
     }
 
-    void prepareEdges() {
+    boolean prepareEdges() {
         // in CH the flags will be ignored (calculating the new flags for the shortcuts is impossible)
         // also several shortcuts would be necessary with the different modes (e.g. fastest and shortest)
         // so calculate the weight and store this as distance, then use only distance instead of getWeight
         EdgeSkipIterator iter = g.getAllEdges();
+        int c = 0;
         while (iter.next()) {
+            c++;
             iter.distance(weightCalc.getWeight(iter));
             iter.originalEdges(1);
         }
+        return c > 0;
     }
 
-    void prepareNodes() {
+    boolean prepareNodes() {
         int len = g.getNodes();
 
         // minor idea: 1. sort nodes randomly and 2. pre-init with endNode degree
@@ -109,7 +114,9 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         }
 
         if (sortedNodes.isEmpty())
-            throw new IllegalStateException("no nodes found!?");
+            return false;
+
+        return true;
     }
 
     void contractNodes() {

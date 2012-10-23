@@ -210,11 +210,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
             if (checkFinishCondition())
                 return false;
             visitedFrom.add(currFrom.endNode);
-        } else if (currTo == null) {
-            if (shortest.weight < INIT_VALUE)
-                return false;
-            throw new IllegalStateException("Shortest Path not found? " + from + " " + to);
-        }
+        } else if (currTo == null)
+            return false;
         return true;
     }
 
@@ -231,11 +228,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
             if (checkFinishCondition())
                 return false;
             visitedTo.add(currTo.endNode);
-        } else if (currFrom == null) {
-            if (shortest.weight < INIT_VALUE)
-                return false;
-            throw new IllegalStateException("Shortest Path not found? " + from + " " + to);
-        }
+        } else if (currFrom == null)
+            return false;
         return true;
     }
 
@@ -262,7 +256,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     public DijkstraBidirectionRef initPath() {
         shortest = createPath();
-        shortest.weight(INIT_VALUE);
+        shortest.initWeight();
         return this;
     }
 }
