@@ -298,21 +298,22 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
             if (n.entry != null) {
                 Path p = algo.extractPath(n.entry);
                 if (p != null && p.weight() <= n.distance) {
-                    // FOUND witness path => do not add shortcut
+                    // FOUND witness path, so do not add shortcut
                     continue;
                 }
             }
 
             // FOUND shortcut but be sure that it is the only shortcut in the collection 
-            // and also in the graph for u->w. If existing => update it                
+            // and also in the graph for u->w. If existing AND identical length => update flags
             // Hint: shortcuts are always one-way due to distinct level of every endNode but we don't
             // know yet the levels so we need to determine the correct direction or if both directions
             long edgeId = (long) u * refs.length + n.endNode;
             Shortcut sc = shortcuts.get(edgeId);
             if (sc == null) {
                 sc = shortcuts.get((long) n.endNode * refs.length + u);
-            } else if (shortcuts.containsKey((long) n.endNode * refs.length + u))
-                throw new IllegalStateException("duplicate edge should be overwritten: " + u + "->" + n.endNode);
+            } 
+            // minor improvement: if (shortcuts.containsKey((long) n.endNode * refs.length + u)) 
+            // then two shortcuts with the same nodes (u<->n.endNode) exists => check current shortcut against both
 
             if (sc == null || sc.distance != n.distance) {
                 sc = new Shortcut(u, n.endNode, n.distance);
