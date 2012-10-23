@@ -19,12 +19,14 @@ import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.PrepareContractionHierarchies.NodeCH;
+import com.graphhopper.routing.util.PrepareContractionHierarchies.Shortcut;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.GraphUtility;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -219,5 +221,31 @@ public class PrepareContractionHierarchiesTest {
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.clear().calcPath(4, 7);
         assertEquals(Arrays.asList(4, 5, 6, 7), p.toNodeList());
+    }
+
+    @Test
+    public void testFindShortcuts_Roundabout() {
+        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory());
+        g.createNew(10);
+        g.edge(1, 3, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(4, 5, 1, false);
+        g.edge(5, 6, 1, false);
+        g.edge(6, 7, 1, true);
+        g.edge(6, 8, 2, false);
+        g.edge(8, 4, 1, false);
+        g.setLevel(3, 3);
+        g.setLevel(5, 5);
+        g.setLevel(7, 7);
+        g.setLevel(8, 8);
+
+        g.shortcut(1, 4, 2, CarStreetType.flagsDefault(true), 3);
+        g.shortcut(4, 6, 2, CarStreetType.flagsDefault(false), 5);
+        g.shortcut(6, 4, 3, CarStreetType.flagsDefault(false), 8);
+
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        // there should be two different shortcuts for both directions!
+        Collection<Shortcut> sc = prepare.findShortcuts(4);
+        assertEquals(2, sc.size());
     }
 }

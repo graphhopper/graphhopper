@@ -221,6 +221,10 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         return 2 * edgeDifference + 4 * originalEdges + contractedNeighbors;
     }
 
+    Map<Long, Shortcut> getShortcuts() {
+        return shortcuts;
+    }
+
     static class EdgeLevelFilterCH extends EdgeLevelFilter {
 
         int skipNode;
@@ -248,6 +252,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         List<NodeCH> goalNodes = new ArrayList<NodeCH>();
         shortcuts.clear();
         EdgeSkipIterator iter1 = g.getIncoming(v);
+        // TODO PERFORMANCE collect outgoing nodes (goalnodes) only once and just skip u
         while (iter1.next()) {
             int u = iter1.node();
             int lu = g.getLevel(u);
@@ -276,46 +281,49 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                     maxWeight = n.distance;
             }
 
+            if (goalNodes.isEmpty())
+                continue;
+
             // TODO instead of a weight-limit we could use a hop-limit 
             // and successively increasing it when mean-degree of graph increases
             algo = new OneToManyDijkstraCH(g).setFilter(edgeFilter.setSkipNode(v));
             algo.setLimit(maxWeight).calcPath(u, goalNodes);
-            for (NodeCH n : goalNodes) {
-                if (n.entry != null) {
-                    Path p = algo.extractPath(n.entry);
-                    if (p != null && p.weight() <= n.distance) {
-                        // FOUND witness path => do not add shortcut
-                        continue;
-                    }
-                }
-
-                // FOUND shortcut but be sure that it is the only shortcut in the collection 
-                // and also in the graph for u->w. If existing => update it                
-                // Hint: shortcuts are always one-way due to distinct level of every endNode but we don't
-                // know yet the levels so we need to determine the correct direction or if both directions
-                long edgeId = (long) u * refs.length + n.endNode;
-                Shortcut sc = shortcuts.get(edgeId);
-                if (sc == null) {
-                    sc = shortcuts.get((long) n.endNode * refs.length + u);
-                } else if (shortcuts.containsKey((long) n.endNode * refs.length + u))
-                    throw new IllegalStateException("duplicate edge should be overwritten: " + u + "->" + n.endNode);
-
-                if (sc == null || sc.distance != n.distance) {
-                    if (sc == null) {
-                        sc = new Shortcut(u, n.endNode, n.distance);
-                        shortcuts.put(edgeId, sc);
-                    } else
-                        sc.distance = n.distance;
-
-                    sc.originalEdges = iter1.originalEdges() + n.originalEdges;
-                } else {
-                    // the shortcut already exists in the current collection (different direction)
-                    // but has identical length so change the flags!
-                    sc.flags = scBothDir;
-                }
-            }
+            internalFindShortcuts(goalNodes, u, iter1.originalEdges());
         }
         return shortcuts.values();
+    }
+
+    void internalFindShortcuts(List<NodeCH> goalNodes, int u, int uOrigEdge) {
+        for (NodeCH n : goalNodes) {
+            if (n.entry != null) {
+                Path p = algo.extractPath(n.entry);
+                if (p != null && p.weight() <= n.distance) {
+                    // FOUND witness path => do not add shortcut
+                    continue;
+                }
+            }
+
+            // FOUND shortcut but be sure that it is the only shortcut in the collection 
+            // and also in the graph for u->w. If existing => update it                
+            // Hint: shortcuts are always one-way due to distinct level of every endNode but we don't
+            // know yet the levels so we need to determine the correct direction or if both directions
+            long edgeId = (long) u * refs.length + n.endNode;
+            Shortcut sc = shortcuts.get(edgeId);
+            if (sc == null) {
+                sc = shortcuts.get((long) n.endNode * refs.length + u);
+            } else if (shortcuts.containsKey((long) n.endNode * refs.length + u))
+                throw new IllegalStateException("duplicate edge should be overwritten: " + u + "->" + n.endNode);
+
+            if (sc == null || sc.distance != n.distance) {
+                sc = new Shortcut(u, n.endNode, n.distance);
+                shortcuts.put(edgeId, sc);
+                sc.originalEdges = uOrigEdge + n.originalEdges;
+            } else {                
+                // the shortcut already exists in the current collection (different direction)
+                // but has identical length so change the flags!
+                sc.flags = scBothDir;
+            }
+        }
     }
 
     /**
@@ -476,7 +484,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         }
     }
 
-    private static class Shortcut {
+    static class Shortcut {
 
         int from;
         int to;

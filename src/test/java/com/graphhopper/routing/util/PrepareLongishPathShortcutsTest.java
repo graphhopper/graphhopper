@@ -287,7 +287,7 @@ public class PrepareLongishPathShortcutsTest {
     public static void printEdges(LevelGraph g) {
         EdgeSkipIterator iter = g.getAllEdges();
         while (iter.next()) {
-            System.out.println(iter.fromNode() + "->" + iter.node()
+            System.out.println(iter.fromNode() + "<->" + iter.node()
                     + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedNode()
                     + ", level:" + g.getLevel(iter.fromNode()) + "->" + g.getLevel(iter.node())
                     + ", origEdges:" + iter.originalEdges() + ", bothDir:" + CarStreetType.isBoth(iter.flags()));

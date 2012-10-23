@@ -84,8 +84,8 @@ public class MiniGraphUI {
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
         this.index = new Location2IDQuadtree(roadGraph, new RAMDirectory("loc2idIndex"));
         index.prepareIndex(2000);
-        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)));
-//        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph);
+//        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)));
+        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph);
         prepare.doWork();
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
@@ -155,25 +155,25 @@ public class MiniGraphUI {
                     }
                 }
 
-//                RoutingAlgorithm algo = prepare.createAlgo();
-//                Path p3 = algo.calcPath(4013, 97);
-//                if (p3 == null)
-//                    logger.error("cannot find path for CH!");
-//                else
-//                    plotPath(p3, g2, 10);
+                RoutingAlgorithm algo = prepare.createAlgo();
+                Path p3 = algo.calcPath(4015, 627);
+                if (p3 == null)
+                    logger.error("cannot find path for CH!");
+                else
+                    plotPath(p3, g2, 10);
 
                 g2.setColor(Color.GREEN);
                 DijkstraBidirectionRef dbi = new DijkstraBidirectionRef(graph);
                 // dbi.setGraphics2D(g2);
-                Path p3 = dbi.calcPath(15895, 10181);
-                System.out.println(p3.toNodeList());
-                java.util.List<Integer> list = p3.toNodeList();
+                Path p4 = dbi.calcPath(4015, 627);
+                System.out.println(p4.toNodeList());
+                java.util.List<Integer> list = p4.toNodeList();
                 LevelGraph lg = (LevelGraph) graph;
                 for (int i = 0; i < list.size(); i++) {
                     System.out.println(list.get(i) + ":" + lg.getLevel(list.get(i)) 
                             + " " + GraphUtility.getNodeInfo(lg, list.get(i)));
                 }
-                plotPath(p3, g2, 10);
+                plotPath(p4, g2, 10);
                 
                 mg.plotNode(g2, 15895, Color.red);
                 // mg.plotNode(g2, 627, Color.red);
