@@ -8,3 +8,4 @@ mmap-graph*
 docs/
 loc2idIndex/
 nbactions-*.xml
+config.properties
