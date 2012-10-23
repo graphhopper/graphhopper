@@ -44,11 +44,11 @@ public class Path4CH extends Path4Shortcuts {
         if (reverse) {
             findSkippedNode(skippedNode, to);
             add(skippedNode);
-            findSkippedNode(from, skippedNode);            
+            findSkippedNode(from, skippedNode);
         } else {
-            findSkippedNode(to, skippedNode);
-            add(skippedNode);            
-            findSkippedNode(skippedNode, from);
+            findSkippedNode(from, skippedNode);
+            add(skippedNode);
+            findSkippedNode(skippedNode, to);
         }
     }
 

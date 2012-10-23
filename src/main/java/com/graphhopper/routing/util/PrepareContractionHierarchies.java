@@ -318,7 +318,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                 sc = new Shortcut(u, n.endNode, n.distance);
                 shortcuts.put(edgeId, sc);
                 sc.originalEdges = uOrigEdge + n.originalEdges;
-            } else {                
+            } else {
                 // the shortcut already exists in the current collection (different direction)
                 // but has identical length so change the flags!
                 sc.flags = scBothDir;

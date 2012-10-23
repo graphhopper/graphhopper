@@ -84,8 +84,8 @@ public class MiniGraphUI {
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
         this.index = new Location2IDQuadtree(roadGraph, new RAMDirectory("loc2idIndex"));
         index.prepareIndex(2000);
-//        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)));
-        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph);
+        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)));
+//        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph);
         prepare.doWork();
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
@@ -155,28 +155,24 @@ public class MiniGraphUI {
                     }
                 }
 
+                g2.setColor(Color.BLUE);
                 RoutingAlgorithm algo = prepare.createAlgo();
-                Path p3 = algo.calcPath(4015, 627);
-                if (p3 == null)
-                    logger.error("cannot find path for CH!");
-                else
-                    plotPath(p3, g2, 10);
-
+                Path p1 = calcPath(algo);
+                plotPath(p1, g2, 15);
+                System.out.println(p1.toNodeList());
+                
                 g2.setColor(Color.GREEN);
                 DijkstraBidirectionRef dbi = new DijkstraBidirectionRef(graph);
                 // dbi.setGraphics2D(g2);
-                Path p4 = dbi.calcPath(4015, 627);
-                System.out.println(p4.toNodeList());
-                java.util.List<Integer> list = p4.toNodeList();
-                LevelGraph lg = (LevelGraph) graph;
-                for (int i = 0; i < list.size(); i++) {
-                    System.out.println(list.get(i) + ":" + lg.getLevel(list.get(i)) 
-                            + " " + GraphUtility.getNodeInfo(lg, list.get(i)));
-                }
-                plotPath(p4, g2, 10);
-                
-                mg.plotNode(g2, 15895, Color.red);
-                // mg.plotNode(g2, 627, Color.red);
+                Path p2 = calcPath(dbi);
+                System.out.println(p2.toNodeList());
+//                java.util.List<Integer> list = p2.toNodeList();
+//                LevelGraph lg = (LevelGraph) graph;
+//                for (int i = 0; i < list.size(); i++) {
+//                    System.out.println(list.get(i) + ":" + lg.getLevel(list.get(i))
+//                            + " " + GraphUtility.getNodeInfo(lg, list.get(i)));
+//                }
+                plotPath(p2, g2, 5);
 
                 if (quadTreeNodes != null) {
                     logger.info("found neighbors:" + quadTreeNodes.size());
@@ -238,15 +234,16 @@ public class MiniGraphUI {
 
     // for debugging
     private Path calcPath(RoutingAlgorithm algo) {
-//        int from = index.findID(43.727687, 7.418737);
-//        int to = index.findID(43.74958, 7.436566);
+//        int from = index.findID(43.72915, 7.410572);
+//        int to = index.findID(43.739213, 7.427806);
+//        System.out.println("path " + from + "->" + to);
 //        return algo.calcPath(from, to);
-        return algo.calcPath(1387, 1454);
+        return algo.calcPath(25, 855);
     }
 
     private Path plotPath(Path tmpPath, Graphics2D g2, int w) {
         if (tmpPath == null) {
-            // nothing found
+            System.out.println("nothing found " + w);
             return tmpPath;
         }
         for (int jj = 0; jj < tmpPath.nodes(); jj++) {

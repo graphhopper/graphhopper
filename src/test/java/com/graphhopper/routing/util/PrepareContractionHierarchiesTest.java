@@ -37,9 +37,14 @@ import org.junit.Test;
  */
 public class PrepareContractionHierarchiesTest {
 
-    LevelGraphStorage createGraph() {
+    LevelGraph createGraph() {
         LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory());
         g.createNew(10);
+        return g;
+    }
+
+    LevelGraph createExampleGraph() {
+        LevelGraph g = createGraph();
 
         //5-1-----2
         //   \ __/|
@@ -69,7 +74,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testShortestPathSkipNode() {
-        LevelGraph g = createGraph();
+        LevelGraph g = createExampleGraph();
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
                 .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(3));
@@ -81,7 +86,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testShortestPathSkipNode2() {
-        LevelGraph g = createGraph();
+        LevelGraph g = createExampleGraph();
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g).
                 setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(3));
@@ -93,7 +98,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testShortestPathLimit() {
-        LevelGraph g = createGraph();
+        LevelGraph g = createExampleGraph();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
                 .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(0));
         List<NodeCH> gs = createGoals(1);
@@ -103,7 +108,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testAddShortcuts() {
-        LevelGraph g = createGraph();
+        LevelGraph g = createExampleGraph();
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
         prepare.doWork();
@@ -124,8 +129,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testDirectedGraph() {
-        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory());
-        g.createNew(10);
+        LevelGraph g = createGraph();
         g.edge(5, 4, 3, false);
         g.edge(4, 5, 10, false);
         g.edge(2, 4, 1, false);
@@ -135,9 +139,9 @@ public class PrepareContractionHierarchiesTest {
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
         prepare.doWork();
+        PrepareLongishPathShortcutsTest.printEdges(g);
         assertEquals(old + 2, GraphUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
-        // PrepareLongishPathShortcutsTest.printEdges(g);
         Path p = algo.clear().calcPath(4, 2);
         assertEquals(3, p.distance(), 1e-6);
         assertEquals(Arrays.asList(4, 3, 5, 2), p.toNodeList());
@@ -145,8 +149,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testDirectedGraph2() {
-        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory());
-        g.createNew(10);
+        LevelGraph g = createGraph();
         PrepareLongishPathShortcutsTest.initDirected2(g);
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
@@ -162,8 +165,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testRoundaboutUnpacking() {
-        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory());
-        g.createNew(10);
+        LevelGraph g = createGraph();
         //              roundabout:
         //16-0-9-10--11   12<-13
         //    \       \  /      \
@@ -216,7 +218,7 @@ public class PrepareContractionHierarchiesTest {
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
         prepare.doWork();
-        PrepareLongishPathShortcutsTest.printEdges(g);
+        // PrepareLongishPathShortcutsTest.printEdges(g);
         assertEquals(old + 20, GraphUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.clear().calcPath(4, 7);
@@ -225,8 +227,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testFindShortcuts_Roundabout() {
-        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory());
-        g.createNew(10);
+        LevelGraph g = createGraph();
         g.edge(1, 3, 1, true);
         g.edge(3, 4, 1, true);
         g.edge(4, 5, 1, false);
@@ -247,5 +248,34 @@ public class PrepareContractionHierarchiesTest {
         // there should be two different shortcuts for both directions!
         Collection<Shortcut> sc = prepare.findShortcuts(4);
         assertEquals(2, sc.size());
+    }
+
+    @Test
+    public void testUnpackingOrder() {
+        LevelGraph g = createGraph();
+        g.edge(10, 0, 1, false);
+        g.edge(0, 1, 1, false);
+        g.edge(1, 2, 1, false);
+        g.edge(2, 3, 1, false);
+        g.edge(3, 4, 1, false);
+        g.edge(4, 5, 1, false);
+        g.edge(5, 6, 1, false);
+        g.shortcut(0, 2, 2, CarStreetType.flagsDefault(false), 1);
+        g.shortcut(0, 3, 3, CarStreetType.flagsDefault(false), 2);
+        g.shortcut(0, 4, 4, CarStreetType.flagsDefault(false), 3);
+        g.shortcut(0, 5, 5, CarStreetType.flagsDefault(false), 4);
+        g.shortcut(0, 6, 6, CarStreetType.flagsDefault(false), 5);
+        g.setLevel(0, 10);
+        g.setLevel(6, 9);
+        g.setLevel(5, 8);
+        g.setLevel(4, 7);
+        g.setLevel(3, 6);
+        g.setLevel(2, 5);
+        g.setLevel(1, 4);
+        g.setLevel(10, 3);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        RoutingAlgorithm algo = prepare.createAlgo();
+        Path p = algo.calcPath(10, 6);
+        assertEquals(Arrays.asList(10, 0, 1, 2, 3, 4, 5, 6), p.toNodeList());
     }
 }

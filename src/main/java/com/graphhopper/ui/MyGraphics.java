@@ -39,6 +39,10 @@ public class MyGraphics {
 
     public MyGraphics(Graph g) {
         this.g = g;
+        BBox b = g.getBounds();
+        // TODO improve
+        offsetY = -(b.maxLat + b.minLat) / 2 - 3;
+        offsetX = -(b.maxLon + b.minLon) / 2;
     }
 
     public double getOffsetX() {

@@ -62,9 +62,7 @@ public class Path4Shortcuts extends PathBidirRef {
             int tmp = from;
             from = to;
             to = tmp;
-        } 
-        else
-            flags = CarStreetType.swapDirection(flags);
+        }
 
         // find edge 'from'-skippedNode
         boolean success = expand(from, to, iter.skippedNode(), flags, false);
