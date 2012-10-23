@@ -38,7 +38,8 @@ public class Path4CH extends Path4Shortcuts {
     }
 
     private void expand(int from, int to, int skippedNode) {
-        if (skippedNode <= 0)
+        // TODO smaller or equal to 0
+        if (skippedNode < 0)
             return;
 
         if (reverse) {

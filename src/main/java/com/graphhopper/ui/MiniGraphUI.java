@@ -84,8 +84,8 @@ public class MiniGraphUI {
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
         this.index = new Location2IDQuadtree(roadGraph, new RAMDirectory("loc2idIndex"));
         index.prepareIndex(2000);
-        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)));
-//        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph);
+//        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)));
+        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph);
         prepare.doWork();
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
@@ -160,18 +160,17 @@ public class MiniGraphUI {
                 Path p1 = calcPath(algo);
                 plotPath(p1, g2, 15);
                 System.out.println(p1.toNodeList());
-                
+                java.util.List<Integer> list = p1.toNodeList();
+                LevelGraph lg = (LevelGraph) graph;
+                for (int i = 0; i < list.size(); i++) {
+                    System.out.println(list.get(i) + ":" + lg.getLevel(list.get(i))
+                            + " " + GraphUtility.getNodeInfo(lg, list.get(i)));
+                }
                 g2.setColor(Color.GREEN);
                 DijkstraBidirectionRef dbi = new DijkstraBidirectionRef(graph);
                 // dbi.setGraphics2D(g2);
                 Path p2 = calcPath(dbi);
                 System.out.println(p2.toNodeList());
-//                java.util.List<Integer> list = p2.toNodeList();
-//                LevelGraph lg = (LevelGraph) graph;
-//                for (int i = 0; i < list.size(); i++) {
-//                    System.out.println(list.get(i) + ":" + lg.getLevel(list.get(i))
-//                            + " " + GraphUtility.getNodeInfo(lg, list.get(i)));
-//                }
                 plotPath(p2, g2, 5);
 
                 if (quadTreeNodes != null) {

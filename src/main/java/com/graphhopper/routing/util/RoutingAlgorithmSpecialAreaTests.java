@@ -128,7 +128,7 @@ public class RoutingAlgorithmSpecialAreaTests {
                             return ((AStarBidirection) this.createAStar()).setApproximation(false);
                         }
                     },
-//  TODO NOW new PrepareContractionHierarchies((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)))
+                    new PrepareContractionHierarchies((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)))
                 };
     }
     private Logger logger = LoggerFactory.getLogger(getClass());

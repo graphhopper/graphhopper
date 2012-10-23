@@ -176,7 +176,7 @@ public class GraphUtility {
         EdgeSkipIterator iter = g.getOutgoing(nodeId);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next()) {
-            str += "  ->" + iter.node() + "(" + iter.skippedNode() + ") \t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
+            str += "  ->" + iter.node() + "(" + iter.skippedNode() + " " + iter.edge() + ") \t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
         }
         return str;
     }
