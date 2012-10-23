@@ -41,9 +41,6 @@ public class PathBidirRef extends Path {
      */
     @Override
     public Path extract() {
-        if (weight == INIT_VALUE)
-            return null;
-
         weight = 0;
         if (edgeFrom == null || edgeTo == null)
             return null;

@@ -157,4 +157,67 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(10, p.distance(), 1e-6);
         assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.toNodeList());
     }
+
+    @Test
+    public void testRoundaboutUnpacking() {
+        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory());
+        g.createNew(10);
+        //              roundabout:
+        //16-0-9-10--11   12<-13
+        //    \       \  /      \
+        //    17       \|        7-8-..
+        // -15-1--2--3--4       /     /
+        //     /         \-5->6/     /
+        //  -14            \________/
+
+        g.edge(16, 0, 1, true);
+        g.edge(0, 9, 1, true);
+        g.edge(0, 17, 1, true);
+        g.edge(9, 10, 1, true);
+        g.edge(10, 11, 1, true);
+        g.edge(11, 28, 1, true);
+        g.edge(28, 29, 1, true);
+        g.edge(29, 30, 1, true);
+        g.edge(30, 31, 1, true);
+        g.edge(31, 4, 1, true);
+
+        g.edge(17, 1, 1, true);
+        g.edge(15, 1, 1, true);
+        g.edge(14, 1, 1, true);
+        g.edge(14, 18, 1, true);
+        g.edge(18, 19, 1, true);
+        g.edge(19, 20, 1, true);
+        g.edge(20, 15, 1, true);
+        g.edge(19, 21, 1, true);
+        g.edge(21, 16, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1, true);
+        g.edge(3, 4, 1, true);
+
+        g.edge(4, 5, 1, false);
+        g.edge(5, 6, 1, false);
+        g.edge(6, 7, 1, false);
+        g.edge(7, 13, 1, false);
+        g.edge(13, 12, 1, false);
+        g.edge(12, 4, 1, false);
+
+        g.edge(7, 8, 1, true);
+        g.edge(8, 22, 1, true);
+        g.edge(22, 23, 1, true);
+        g.edge(23, 24, 1, true);
+        g.edge(24, 25, 1, true);
+        g.edge(25, 27, 1, true);
+        g.edge(27, 5, 1, true);
+        g.edge(25, 26, 1, false);
+        g.edge(26, 25, 1, false);
+
+        int old = GraphUtility.count(g.getAllEdges());
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        prepare.doWork();
+        PrepareLongishPathShortcutsTest.printEdges(g);
+        assertEquals(old + 20, GraphUtility.count(g.getAllEdges()));
+        RoutingAlgorithm algo = prepare.createAlgo();
+        Path p = algo.clear().calcPath(4, 7);
+        assertEquals(Arrays.asList(4, 5, 6, 7), p.toNodeList());
+    }
 }

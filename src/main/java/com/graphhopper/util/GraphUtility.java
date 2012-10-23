@@ -20,9 +20,9 @@ import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Edge;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.Location2IDPreciseIndex;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -30,7 +30,6 @@ import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -171,6 +170,15 @@ public class GraphUtility {
                 return true;
             }
         }.start(g, startNode, false);
+    }
+
+    public static String getNodeInfo(LevelGraph g, int nodeId) {
+        EdgeSkipIterator iter = g.getOutgoing(nodeId);
+        String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
+        while (iter.next()) {
+            str += "  ->" + iter.node() + "(" + iter.skippedNode() + ") \t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
+        }
+        return str;
     }
 
     public static String getNodeInfo(Graph g, int nodeId) {
