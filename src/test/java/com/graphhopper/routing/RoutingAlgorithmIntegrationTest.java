@@ -76,26 +76,56 @@ public class RoutingAlgorithmIntegrationTest {
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
     }
 
+    void runAlgo(TestAlgoCollector testCollector, String osmFile,
+            String graphFile, List<OneRun> forEveryAlgo) {
+        try {
+            // make sure we are using the latest file format
+            Helper.deleteDir(new File(graphFile));
+            Graph g = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
+                    put("osmreader.graph-location", graphFile).
+                    put("osmreader.dataaccess", "inmemory").
+                    put("osmreader.levelgraph", "true"));
+
+            Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
+            RoutingAlgorithm[] algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
+            for (RoutingAlgorithm algo : algos) {
+//                int failed = testCollector.list.size();
+                for (OneRun or : forEveryAlgo) {
+                    int from = idx.findID(or.fromLat, or.fromLon);
+                    int to = idx.findID(or.toLat, or.toLon);
+                    testCollector.assertDistance(algo, from, to, or.dist, or.locs);
+                }
+
+//                System.out.println(osmFile + " " + algo.getClass().getSimpleName()
+//                        + ": " + (testCollector.list.size() - failed) + " failed");
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("cannot handle osm file " + osmFile, ex);
+        } finally {
+            Helper.deleteDir(new File(graphFile));
+        }
+    }
+
     @Test
     public void testMonacoParallel() throws IOException {
-        System.out.println("testMonacoParallel takes a bit time (move to a separate integration test?)");
+        System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/graph-monaco";
         Helper.deleteDir(new File(graphFile));
-        Graph g = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", "files/monaco.osm.gz").
+        final Graph g = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", "files/monaco.osm.gz").
                 put("osmreader.graph-location", graphFile).
-                put("osmreader.dataaccess", "inmemory").
-                put("osmreader.levelgraph", "true"));
+                put("osmreader.dataaccess", "inmemory"));
         final Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
         final List<OneRun> instances = createMonacoInstances();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
-        AlgorithmPreparation[] preparations = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
-        int algosLength = preparations.length;
-        for (final AlgorithmPreparation prepare : preparations) {
-            prepare.doWork();
-            for (int no = 0; no < MAX; no++) {
-                for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
+
+        // testing if algorithms are independent (should be. so test only two algorithms)
+        int algosLength = 2;
+        for (int no = 0; no < MAX; no++) {
+            for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
+                RoutingAlgorithm[] algos = new RoutingAlgorithm[]{new AStar(g), new DijkstraBidirectionRef(g)};
+                for (final RoutingAlgorithm algo : algos) {
                     // an algorithm is not thread safe! reuse via clear() is ONLY appropriated if used from same thread!
                     final int instanceIndex = instanceNo;
                     Thread t = new Thread() {
@@ -103,7 +133,7 @@ public class RoutingAlgorithmIntegrationTest {
                             OneRun o = instances.get(instanceIndex);
                             int from = idx.findID(o.fromLat, o.fromLon);
                             int to = idx.findID(o.toLat, o.toLon);
-                            testCollector.assertDistance(prepare.createAlgo(), from, to, o.dist, o.locs);
+                            testCollector.assertDistance(algo, from, to, o.dist, o.locs);
                             integ.addAndGet(1);
                         }
                     };
@@ -123,39 +153,6 @@ public class RoutingAlgorithmIntegrationTest {
 
         assertEquals(MAX * algosLength * instances.size(), integ.get());
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
-    }
-
-    void runAlgo(TestAlgoCollector testCollector, String osmFile,
-            String graphFile, List<OneRun> forEveryAlgo) {
-        try {
-            // make sure we are using the latest file format
-            Helper.deleteDir(new File(graphFile));
-            Graph g = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
-                    put("osmreader.graph-location", graphFile).
-                    put("osmreader.dataaccess", "inmemory").
-                    put("osmreader.levelgraph", "true"));
-            // GraphUtility.printInfo(g, 3606, 1000);
-            // System.out.println(osmFile + " - all locations " + g.getNodes());
-            Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
-            AlgorithmPreparation[] preparations = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
-            for (AlgorithmPreparation prepare : preparations) {
-                prepare.doWork();
-                RoutingAlgorithm algo = prepare.createAlgo();
-                int failed = testCollector.list.size();
-                for (OneRun or : forEveryAlgo) {
-                    int from = idx.findID(or.fromLat, or.fromLon);
-                    int to = idx.findID(or.toLat, or.toLon);
-                    testCollector.assertDistance(algo, from, to, or.dist, or.locs);
-                }
-
-//                System.out.println(osmFile + " " + algo.getClass().getSimpleName()
-//                        + ": " + (testCollector.list.size() - failed) + " failed");
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException("cannot handle osm file " + osmFile, ex);
-        } finally {
-            Helper.deleteDir(new File(graphFile));
-        }
     }
 
     class OneRun {

@@ -69,7 +69,9 @@ public class OSMReader {
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(g);
         if (args.getBool("osmreader.test", false)) {
             tests.start();
-        } else if (args.getBool("osmreader.runshortestpath", false)) {
+        } 
+        
+        if (args.getBool("osmreader.runshortestpath", false)) {
             String algo = args.get("osmreader.algo", "dijkstra");
             int iters = args.getInt("osmreader.algoIterations", 50);
             //warmup

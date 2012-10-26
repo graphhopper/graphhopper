@@ -71,11 +71,12 @@ public class RoutingAlgorithmSpecialAreaTests {
     }
 
     void testAlgos() {
+        if (unterfrankenGraph instanceof LevelGraph)
+            throw new IllegalStateException("run testAlgos only with a none-LevelGraph. Use osmreader.levelgraph=false");
+
         TestAlgoCollector testCollector = new TestAlgoCollector();
-        AlgorithmPreparation[] preparations = createAlgos(unterfrankenGraph);
-        for (AlgorithmPreparation prepare : preparations) {
-            prepare.doWork();
-            RoutingAlgorithm algo = prepare.createAlgo();
+        RoutingAlgorithm[] algos = createAlgos(unterfrankenGraph);
+        for (RoutingAlgorithm algo : algos) {
             int failed = testCollector.list.size();
             testCollector.assertDistance(algo, idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 0.5613, 20);
             testCollector.assertDistance(algo, idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107.4917, 1673);
@@ -95,48 +96,25 @@ public class RoutingAlgorithmSpecialAreaTests {
             System.out.println("SUCCESS!");
     }
 
-    public static AlgorithmPreparation[] createAlgos(final Graph g) {
-        return new AlgorithmPreparation[]{
-                    new NoOpAlgorithmPreparation() {
-                        @Override public RoutingAlgorithm createAlgo() {
-                            return new AStar(g);
-                        }
-                    },
-                    new NoOpAlgorithmPreparation() {
-                        @Override public RoutingAlgorithm createAlgo() {
-                            return new AStarBidirection(g);
-                        }
-                    },
-                    new NoOpAlgorithmPreparation() {
-                        @Override public RoutingAlgorithm createAlgo() {
-                            return new DijkstraBidirectionRef(g);
-                        }
-                    },
-                    new NoOpAlgorithmPreparation() {
-                        @Override public RoutingAlgorithm createAlgo() {
-                            return new DijkstraBidirection(g);
-                        }
-                    },
-                    new NoOpAlgorithmPreparation() {
-                        @Override public RoutingAlgorithm createAlgo() {
-                            return new DijkstraSimple(g);
-                        }
-                    },
-                    new PrepareLongishPathShortcuts((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10))),
-                    new PrepareLongishPathShortcuts((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10))) {
-                        @Override public RoutingAlgorithm createAlgo() {
-                            return ((AStarBidirection) this.createAStar()).setApproximation(false);
-                        }
-                    },
-                    new PrepareContractionHierarchies((LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)))
-                };
+    public static RoutingAlgorithm[] createAlgos(final Graph g) {
+        LevelGraph graphSimpleSC = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
+        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts(graphSimpleSC);
+        prepare.doWork();
+        AStarBidirection astarSimpleSC = (AStarBidirection) prepare.createAStar();
+        astarSimpleSC.setApproximation(false);
+        LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
+        PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(graphCH);
+        prepareCH.doWork();
+        return new RoutingAlgorithm[]{
+            new AStar(g), new AStarBidirection(g), new DijkstraBidirectionRef(g), new DijkstraBidirection(g),
+            new DijkstraSimple(g), prepare.createAlgo(), astarSimpleSC, prepareCH.createAlgo()};
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     public void runShortestPathPerf(int runs, String algoStr) throws Exception {
-        // TODO use bbox instead of fixed values BBox bbox = unterfrankenGraph.getBounds();
-        double minLat = 49.484186, minLon = 8.974228;
-        double maxLat = 50.541363, maxLon = 10.880356;
+        BBox bbox = unterfrankenGraph.getBounds();
+        double minLat = bbox.minLat, minLon = bbox.minLon;
+        double maxLat = bbox.maxLat, maxLon = bbox.maxLon;
         RoutingAlgorithm algo;
         if ("dijkstrabi".equalsIgnoreCase(algoStr))
             algo = new DijkstraBidirectionRef(unterfrankenGraph);
