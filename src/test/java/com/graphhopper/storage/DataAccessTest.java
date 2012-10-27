@@ -134,15 +134,15 @@ public abstract class DataAccessTest {
 
     @Test
     public void testCopy() {
-        DataAccess da = createDataAccess(location);
-        da.createNew(1001 * 4);
-        da.setInt(1, 1);
-        da.setInt(123, 321);
-        da.setInt(1000, 1111);
+        DataAccess da1 = createDataAccess(location);
+        da1.createNew(1001 * 4);
+        da1.setInt(1, 1);
+        da1.setInt(123, 321);
+        da1.setInt(1000, 1111);
 
         DataAccess da2 = createDataAccess(location + "2");
         da2.createNew(10);
-        da.copyTo(da2);
+        da1.copyTo(da2);
         assertEquals(1, da2.getInt(1));
         assertEquals(321, da2.getInt(123));
         assertEquals(1111, da2.getInt(1000));
@@ -150,9 +150,9 @@ public abstract class DataAccessTest {
         da2.setInt(1, 2);
         assertEquals(2, da2.getInt(1));
         da2.flush();
-        da.flush();
+        da1.flush();
         // make sure they are independent!
-        assertEquals(1, da.getInt(1));
+        assertEquals(1, da1.getInt(1));
     }
 
     @Test

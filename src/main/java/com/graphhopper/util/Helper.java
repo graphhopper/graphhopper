@@ -344,6 +344,8 @@ public class Helper {
             return file;
         return file.substring(0, index);
     }
+    public static final String VERSION_MAJOR;
+    public static final String VERSION_MINOR;
     public static final String VERSION;
 
     static {
@@ -355,5 +357,15 @@ public class Helper {
             System.err.append("GraphHopper Initialization ERROR: cannot read version!? " + ex.getMessage());
         }
         VERSION = version;
+        int indexM = version.indexOf("-");
+        int indexP = version.indexOf(".");
+        if ("0".equals(VERSION) || indexM < 0 || indexP >= indexM) {
+            VERSION_MAJOR = "0";
+            VERSION_MINOR = "0";
+        } else {
+            // throw away snapshot            
+            VERSION_MAJOR = version.substring(0, indexP);
+            VERSION_MINOR = version.substring(indexP + 1, indexM);
+        }
     }
 }

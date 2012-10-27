@@ -15,6 +15,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.Helper;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -25,7 +26,6 @@ public abstract class AbstractDataAccess implements DataAccess {
 
     private static final int SEGMENT_SIZE_MIN = 1 << 7;
     private static final int SEGMENT_SIZE_DEFAULT = 16 * 1 << 20;
-    protected static final String DATAACESS_MARKER = "GHDA1";
     // reserve some space for downstream usage (in classes using/exting this)
     protected static final int HEADER_OFFSET = 20 * 4 + 20;
     protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
@@ -52,7 +52,7 @@ public abstract class AbstractDataAccess implements DataAccess {
      */
     protected void writeHeader(RandomAccessFile file, long length, int segmentSize) throws IOException {
         file.seek(0);
-        file.writeUTF(DATAACESS_MARKER);
+        file.writeUTF(getDAMarker());
         file.writeLong(length);
         file.writeInt(segmentSize);
         for (int i = 0; i < header.length; i++) {
@@ -60,7 +60,19 @@ public abstract class AbstractDataAccess implements DataAccess {
         }
     }
 
+    protected String getDAMarker() {
+        // make changes to file format only with major version changes
+        return "GH" + Helper.VERSION_MAJOR;
+    }
+
     protected long readHeader(RandomAccessFile raFile) throws IOException {
+        raFile.seek(0);
+        String versionHint = raFile.readUTF();
+        if (Helper.isEmpty(versionHint))
+            return -1;
+        if (!versionHint.equals(getDAMarker()))
+            throw new IllegalArgumentException("File format unsupported. Required version "
+                    + getDAMarker() + " but was " + versionHint);
         long bytes = raFile.readLong();
         setSegmentSize(raFile.readInt());
         for (int i = 0; i < header.length; i++) {

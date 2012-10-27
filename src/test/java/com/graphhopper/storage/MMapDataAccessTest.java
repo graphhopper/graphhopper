@@ -15,6 +15,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.StopWatch;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -32,7 +33,7 @@ public class MMapDataAccessTest extends DataAccessTest {
     public void textMixRAM2MMAP() {
         DataAccess da = new RAMDataAccess(location, true);
         assertFalse(da.loadExisting());
-        da.createNew(300);
+        da.createNew(100);
         da.setInt(7, 123);
         da.flush();
         da.close();
@@ -45,8 +46,10 @@ public class MMapDataAccessTest extends DataAccessTest {
     public void textMixMMAP2RAM() {
         DataAccess da = createDataAccess(location);
         assertFalse(da.loadExisting());
-        da.createNew(300);
+        da.createNew(100);
         da.setInt(7, 123);
+        
+        // TODO "memory mapped flush" is expensive and not required. only writing the header is required.
         da.flush();
         da.close();
         da = new RAMDataAccess(location, true);

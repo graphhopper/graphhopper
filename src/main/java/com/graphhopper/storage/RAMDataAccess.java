@@ -16,6 +16,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.BitUtil;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
 
@@ -108,11 +109,9 @@ public class RAMDataAccess extends AbstractDataAccess {
         try {
             RandomAccessFile raFile = new RandomAccessFile(id, "r");
             try {
-                raFile.seek(0);
-                if (!raFile.readUTF().equals(DATAACESS_MARKER))
-                    return false;
-
                 long byteCount = readHeader(raFile) - HEADER_OFFSET;
+                if (byteCount < 0)
+                    return false;
                 byte[] bytes = new byte[segmentSize];
                 raFile.seek(HEADER_OFFSET);
                 // raFile.readInt() <- too slow                
@@ -133,7 +132,7 @@ public class RAMDataAccess extends AbstractDataAccess {
             } finally {
                 raFile.close();
             }
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             return false;
         }
     }

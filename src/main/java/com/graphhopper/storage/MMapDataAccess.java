@@ -141,13 +141,13 @@ public class MMapDataAccess extends AbstractDataAccess {
         try {
             if (closed)
                 return false;
-            raFile.seek(0);
-            if (!raFile.readUTF().equals(DATAACESS_MARKER))
+
+            long byteCount = readHeader(raFile);
+            if (byteCount < 0)
                 return false;
-            long bytes = readHeader(raFile);
-            if (mapIt(HEADER_OFFSET, bytes - HEADER_OFFSET, false))
+            if (mapIt(HEADER_OFFSET, byteCount - HEADER_OFFSET, false))
                 return true;
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             // ex.printStackTrace();
         }
         return false;
@@ -171,6 +171,12 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
+    public void close() {
+        Helper.close(raFile);
+        closed = true;
+    }
+
+    @Override
     public void setInt(long intIndex, int value) {
         intIndex *= 4;
         int bufferIndex = (int) (intIndex / segmentSize);
@@ -184,12 +190,6 @@ public class MMapDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (intIndex / segmentSize);
         int index = (int) (intIndex % segmentSize);
         return segments.get(bufferIndex).getInt(index);
-    }
-
-    @Override
-    public void close() {
-        Helper.close(raFile);
-        closed = true;
     }
 
     @Override

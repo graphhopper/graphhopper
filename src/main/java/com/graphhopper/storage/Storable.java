@@ -18,16 +18,34 @@ package com.graphhopper.storage;
 import java.io.Closeable;
 
 /**
+ * A simple interface for storage abstraction.
+ *
  * @author Peter Karich
  */
 public interface Storable extends Closeable {
 
+    /**
+     * @return true if successfully loaded from persistent storage.
+     */
     boolean loadExisting();
 
+    /**
+     * This method makes sure that the underlying data is written to the storage. Keep in mind that
+     * a disc normally has an IO cache so that flush() is (less) probably not save against power
+     * loses.
+     */
     void flush();
 
+    /**
+     * This method makes sure that the underlying used resources are released. WARNING: it does not
+     * necessarily flush the data to the storage! Eg. memory mapped storages could have earlier
+     * persisted (parts of) the data.
+     */
     @Override
     void close();
 
+    /**
+     * @return the allocated storage size in bytes
+     */
     long capacity();
 }
