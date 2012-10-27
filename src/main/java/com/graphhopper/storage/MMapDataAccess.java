@@ -155,10 +155,9 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void flush() {
+        if (closed)
+            throw new IllegalStateException("already closed");
         try {
-            if (closed)
-                throw new IllegalStateException("already closed");
-
             if (!segments.isEmpty() && segments.get(0) instanceof MappedByteBuffer) {
                 for (ByteBuffer bb : segments) {
                     ((MappedByteBuffer) bb).force();

@@ -20,6 +20,8 @@ import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.Helper;
+import java.io.File;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -34,6 +36,26 @@ public class LevelGraphStorageTest extends AbstractGraphTester {
         LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("levelgraph", false));
         g.createNew(size);
         return g;
+    }
+
+    @Test
+    public void testCannotBeLoadedViaDifferentClass() {
+        File folder = new File("./target/tmp/");
+        Helper.deleteDir(folder);
+        folder.mkdirs();
+
+        LevelGraphStorage lg = new LevelGraphStorage(new RAMDirectory(folder.getAbsolutePath(), true));
+        lg.createNew(10);
+        lg.flush();
+        lg.close();
+
+        GraphStorage g = new GraphStorage(new RAMDirectory(folder.getAbsolutePath(), true));
+        try {
+            g.loadExisting();
+            assertTrue(false);
+        } catch (Exception ex) {
+            String test = "te";
+        }
     }
 
     @Test

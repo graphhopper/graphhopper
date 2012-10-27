@@ -52,13 +52,12 @@ public class MMapDirectory implements Directory {
     }
 
     @Override
+    public String toString() {
+        return getLocation();
+    }
+
+    @Override
     public String getLocation() {
         return location;
     }
-//    @Override
-//    public void clear() {
-//        Helper.deleteDir(new File(location));
-//        new File(location).mkdirs();
-//        map.clear();
-//    }
 }

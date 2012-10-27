@@ -729,17 +729,22 @@ public class GraphStorage implements Graph, Storable {
             if (!nodes.loadExisting())
                 throw new IllegalStateException("corrupt file?");
 
+            // nodes
+            int hash = nodes.getHeader(0);
+            if (hash != getClass().hashCode())
+                throw new IllegalStateException("The graph file wasn't create via "
+                        + getClass().getName() + "! Location:" + dir);
+
+            nodeEntrySize = nodes.getHeader(1);
+            nodeCount = nodes.getHeader(2);
+            bounds.minLon = intToDouble(nodes.getHeader(3));
+            bounds.maxLon = intToDouble(nodes.getHeader(4));
+            bounds.minLat = intToDouble(nodes.getHeader(5));
+            bounds.maxLat = intToDouble(nodes.getHeader(6));
+
             // edges
             edgeEntrySize = edges.getHeader(0);
             edgeCount = edges.getHeader(1);
-
-            // nodes
-            nodeEntrySize = nodes.getHeader(0);
-            nodeCount = nodes.getHeader(1);
-            bounds.minLon = intToDouble(nodes.getHeader(2));
-            bounds.maxLon = intToDouble(nodes.getHeader(3));
-            bounds.minLat = intToDouble(nodes.getHeader(4));
-            bounds.maxLat = intToDouble(nodes.getHeader(5));
             return true;
         }
         return false;
@@ -749,17 +754,19 @@ public class GraphStorage implements Graph, Storable {
     public void flush() {
         optimize();
 
+        // nodes
+        nodes.setHeader(0, getClass().hashCode());
+        nodes.setHeader(1, nodeEntrySize);
+        nodes.setHeader(2, nodeCount);
+        nodes.setHeader(3, doubleToInt(bounds.minLon));
+        nodes.setHeader(4, doubleToInt(bounds.maxLon));
+        nodes.setHeader(5, doubleToInt(bounds.minLat));
+        nodes.setHeader(6, doubleToInt(bounds.maxLat));
+
         // edges
         edges.setHeader(0, edgeEntrySize);
         edges.setHeader(1, edgeCount);
 
-        // nodes
-        nodes.setHeader(0, nodeEntrySize);
-        nodes.setHeader(1, nodeCount);
-        nodes.setHeader(2, doubleToInt(bounds.minLon));
-        nodes.setHeader(3, doubleToInt(bounds.maxLon));
-        nodes.setHeader(4, doubleToInt(bounds.minLat));
-        nodes.setHeader(5, doubleToInt(bounds.maxLat));
         edges.flush();
         nodes.flush();
     }

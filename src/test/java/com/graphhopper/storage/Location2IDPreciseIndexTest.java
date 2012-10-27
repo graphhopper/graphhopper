@@ -155,22 +155,17 @@ public class Location2IDPreciseIndexTest {
     @Test
     public void testNoErrorOnEdgeCase_lastIndex() {
         int locs = 10000;
-        Helper.deleteDir(new File(location));
-
         Graph g = new GraphStorage(new MMapDirectory(location)).createNew(locs);
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++) {
             g.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
         }
         createIndex(g, 200);
-        Helper.deleteDir(new File(location));
     }
 
     @Test
     public void testSave() {
-        String location = "./target/tmp/";
         File file = new File(location);
-        Helper.deleteDir(file);
         file.mkdirs();
 
         Graph g = createSampleGraph();
@@ -191,9 +186,6 @@ public class Location2IDPreciseIndexTest {
             assertTrue(false);
         } catch (Exception ex) {
         }
-
-
-        Helper.deleteDir(file);
     }
 
     private void assertIndex(Location2IDIndex idx) {

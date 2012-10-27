@@ -15,7 +15,6 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Helper;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -73,14 +72,11 @@ public class RAMDirectory implements Directory {
         return da;
     }
 
-//    @Override
-//    public void clear() {
-//        if (store) {
-//            Helper.deleteDir(new File(id));
-//            mkdirs();
-//        }
-//        map.clear();
-//    }
+    @Override
+    public String toString() {
+        return getLocation();
+    }
+
     @Override
     public String getLocation() {
         return id;
