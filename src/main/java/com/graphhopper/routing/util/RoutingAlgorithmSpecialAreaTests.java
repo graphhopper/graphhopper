@@ -106,8 +106,9 @@ public class RoutingAlgorithmSpecialAreaTests {
         PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(graphCH);
         prepareCH.doWork();
         return new RoutingAlgorithm[]{
-            new AStar(g), new AStarBidirection(g), new DijkstraBidirectionRef(g), new DijkstraBidirection(g),
-            new DijkstraSimple(g), prepare.createAlgo(), astarSimpleSC, prepareCH.createAlgo()};
+                    new AStar(g), new AStarBidirection(g), new DijkstraBidirectionRef(g), new DijkstraBidirection(g),
+                    new DijkstraSimple(g), prepare.createAlgo(), astarSimpleSC,
+                    prepareCH.createAlgo()};
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
 

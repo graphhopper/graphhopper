@@ -16,7 +16,6 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.OSMReader;
-import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.storage.Graph;
@@ -83,8 +82,7 @@ public class RoutingAlgorithmIntegrationTest {
             Helper.deleteDir(new File(graphFile));
             Graph g = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
                     put("osmreader.graph-location", graphFile).
-                    put("osmreader.dataaccess", "inmemory").
-                    put("osmreader.levelgraph", "true"));
+                    put("osmreader.dataaccess", "inmemory"));
 
             Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
             RoutingAlgorithm[] algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
