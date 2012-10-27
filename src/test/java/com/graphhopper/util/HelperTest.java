@@ -56,6 +56,11 @@ public class HelperTest {
     }
 
     @Test
+    public void testVERSION() throws Exception {
+        assertNotSame("0", Helper.VERSION);
+    }
+
+    @Test
     public void testStoreSettings() throws Exception {
         Object[] settings = new Object[]{12, "test", true};
         Helper.writeSettings("test", settings);

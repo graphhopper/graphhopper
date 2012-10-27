@@ -344,4 +344,16 @@ public class Helper {
             return file;
         return file.substring(0, index);
     }
+    public static final String VERSION;
+
+    static {
+        String version = "0";
+        try {
+            List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/version"), "UTF-8"));
+            version = v.get(0);
+        } catch (Exception ex) {
+            System.err.append("GraphHopper Initialization ERROR: cannot read version!? " + ex.getMessage());
+        }
+        VERSION = version;
+    }
 }

@@ -107,8 +107,18 @@
                 </configuration>
             </plugin>
         </plugins>
+        
+        <!-- make version available at runtime via version file -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/version</include>
+                </includes>
+            </resource>
+        </resources>
     </build>    
-    
     <repositories>
         
     </repositories>    
