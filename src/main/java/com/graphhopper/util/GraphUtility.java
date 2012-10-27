@@ -263,7 +263,7 @@ public class GraphUtility {
                 continue;
             bitset.add(newIndex);
             sortedGraph.setNode(newIndex, g.getLatitude(old), g.getLongitude(old));
-            EdgeIterator eIter = g.getOutgoing(old);
+            EdgeIterator eIter = g.getEdges(old);
             while (eIter.next()) {
                 int newEdgeIndex = oldToNewList.get(eIter.node());
                 if (bitset.contains(newEdgeIndex))
@@ -284,12 +284,12 @@ public class GraphUtility {
     // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
     public static Graph copyTo(Graph from, Graph to) {
         int len = from.getNodes();
-        // important to avoid creating two edges for edges with both directions
-        MyBitSet bitset = new MyBitSetImpl(len);
+        // important to avoid creating two edges for edges with both directions        
+        MyBitSet bitset = new MyBitSetImpl(len);        
         for (int old = 0; old < len; old++) {
             bitset.add(old);
             to.setNode(old, from.getLatitude(old), from.getLongitude(old));
-            EdgeIterator eIter = from.getOutgoing(old);
+            EdgeIterator eIter = from.getEdges(old);
             while (eIter.next()) {
                 int edgeNodeIndex = eIter.node();
                 if (bitset.contains(edgeNodeIndex))

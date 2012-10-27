@@ -17,6 +17,8 @@ package com.graphhopper.util;
 
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -27,8 +29,11 @@ import org.junit.Test;
  */
 public class GraphUtilityTest {
 
-    Graph createUnsorted() {
-        Graph g = new GraphStorage(new RAMDirectory()).createNew(10);
+    Graph createGraph() {
+        return new GraphStorage(new RAMDirectory()).createNew(10);
+    }
+
+    Graph initUnsorted(Graph g) {
         g.setNode(0, 0, 1);
         g.setNode(1, 2.5, 4.5);
         g.setNode(2, 4.5, 4.5);
@@ -49,7 +54,7 @@ public class GraphUtilityTest {
 
     @Test
     public void testSort() {
-        Graph g = createUnsorted();
+        Graph g = initUnsorted(createGraph());
         Graph newG = GraphUtility.sort(g, new RAMDirectory(), 16);
         assertEquals(g.getNodes(), newG.getNodes());
         assertEquals(0, newG.getLatitude(0), 1e-4); // 0
@@ -63,7 +68,7 @@ public class GraphUtilityTest {
 
     @Test
     public void testSort2() {
-        Graph g = createUnsorted();
+        Graph g = initUnsorted(createGraph());
         Graph newG = GraphUtility.sortDFS(g, new RAMDirectory());
         // TODO does not handle subnetworks
         // assertEquals(g.getNodes(), newG.getNodes());
@@ -71,5 +76,33 @@ public class GraphUtilityTest {
         assertEquals(2.5, newG.getLatitude(1), 1e-4); // 1
         assertEquals(4.5, newG.getLatitude(2), 1e-4); // 2
         assertEquals(4.6, newG.getLatitude(3), 1e-4); // 8       
+    }
+
+    @Test
+    public void testCopy() {
+        Graph g = initUnsorted(createGraph());
+        LevelGraph lg = (LevelGraph) new LevelGraphStorage(new RAMDirectory()).createNew(10);
+        g.copyTo(lg);
+        assertEquals(0, lg.getLevel(0));
+        assertEquals(0, lg.getLevel(1));
+        assertEquals(0, lg.getLatitude(0), 1e-6);
+        assertEquals(1, lg.getLongitude(0), 1e-6);
+        assertEquals(2.5, lg.getLatitude(1), 1e-6);
+        assertEquals(4.5, lg.getLongitude(1), 1e-6);
+        assertEquals(9, lg.getNodes());
+        EdgeIterator iter = lg.getOutgoing(8);
+        iter.next();
+        assertEquals(2.05, iter.distance(), 1e-6);
+        assertEquals("11", BitUtil.toBitString(iter.flags(), 2));
+        iter.next();
+        assertEquals(0.5, iter.distance(), 1e-6);
+        assertEquals("11", BitUtil.toBitString(iter.flags(), 2));
+        
+        iter = lg.getOutgoing(7);
+        iter.next();
+        assertEquals(2.1, iter.distance(), 1e-6);
+        assertEquals("01", BitUtil.toBitString(iter.flags(), 2));
+        assertTrue(iter.next());
+        assertEquals(0.7, iter.distance(), 1e-6);        
     }
 }
