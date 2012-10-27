@@ -98,41 +98,29 @@ public class RoutingAlgorithmSpecialAreaTests {
 
     public static RoutingAlgorithm[] createAlgos(final Graph g) {
         LevelGraph graphSimpleSC = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts(graphSimpleSC);
+        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(graphSimpleSC);
         prepare.doWork();
         AStarBidirection astarSimpleSC = (AStarBidirection) prepare.createAStar();
         astarSimpleSC.setApproximation(false);
         LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
-        PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(graphCH);
+        PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().setGraph(graphCH);
         prepareCH.doWork();
         return new RoutingAlgorithm[]{
                     new AStar(g), new AStarBidirection(g), new DijkstraBidirectionRef(g), new DijkstraBidirection(g),
                     new DijkstraSimple(g), prepare.createAlgo(), astarSimpleSC,
                     prepareCH.createAlgo()};
     }
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private Logger logger = LoggerFactory.getLogger(getClass());    
 
-    public void runShortestPathPerf(int runs, String algoStr) throws Exception {
+    public void runShortestPathPerf(int runs, RoutingAlgorithm algo) throws Exception {
         BBox bbox = unterfrankenGraph.getBounds();
         double minLat = bbox.minLat, minLon = bbox.minLon;
         double maxLat = bbox.maxLat, maxLon = bbox.maxLon;
-        RoutingAlgorithm algo;
-        if ("dijkstrabi".equalsIgnoreCase(algoStr))
-            algo = new DijkstraBidirectionRef(unterfrankenGraph);
-        else if ("dijkstraNative".equalsIgnoreCase(algoStr))
-            algo = new DijkstraBidirection(unterfrankenGraph);
-        else if ("dijkstra".equalsIgnoreCase(algoStr))
-            algo = new DijkstraSimple(unterfrankenGraph);
-        else if ("astarbi".equalsIgnoreCase(algoStr))
-            algo = new AStarBidirection(unterfrankenGraph).setApproximation(true);
-        else
-            algo = new AStar(unterfrankenGraph);
-
         if (unterfrankenGraph instanceof LevelGraph) {
             if (algo instanceof DijkstraBidirectionRef)
-                algo = new PrepareContractionHierarchies((LevelGraph) unterfrankenGraph).createAlgo();
+                algo = new PrepareContractionHierarchies().setGraph(unterfrankenGraph).createAlgo();
             else if (algo instanceof AStarBidirection)
-                algo = new PrepareLongishPathShortcuts((LevelGraph) unterfrankenGraph).createAStar();
+                algo = new PrepareLongishPathShortcuts().setGraph(unterfrankenGraph).createAStar();
             else
                 // level graph accepts all algorithms but normally we want to use an optimized one
                 throw new IllegalStateException("algorithm which boosts query time for levelgraph not found " + algo);

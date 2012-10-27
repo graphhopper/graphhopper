@@ -80,9 +80,10 @@ public class RoutingAlgorithmIntegrationTest {
         try {
             // make sure we are using the latest file format
             Helper.deleteDir(new File(graphFile));
-            Graph g = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
+            OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
                     put("osmreader.graph-location", graphFile).
                     put("osmreader.dataaccess", "inmemory"));
+            Graph g = osm.getGraph();
 
             Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
             RoutingAlgorithm[] algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
@@ -109,9 +110,10 @@ public class RoutingAlgorithmIntegrationTest {
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/graph-monaco";
         Helper.deleteDir(new File(graphFile));
-        final Graph g = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", "files/monaco.osm.gz").
+        OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", "files/monaco.osm.gz").
                 put("osmreader.graph-location", graphFile).
                 put("osmreader.dataaccess", "inmemory"));
+        final Graph g = osm.getGraph();
         final Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
         final List<OneRun> instances = createMonacoInstances();
         List<Thread> threads = new ArrayList<Thread>();

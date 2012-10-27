@@ -20,6 +20,7 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path4Shortcuts;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
@@ -37,11 +38,16 @@ import org.slf4j.LoggerFactory;
 public class PrepareLongishPathShortcuts implements AlgorithmPreparation {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private final LevelGraph g;
+    private LevelGraph g;
     private int newShortcuts;
+    private boolean prepared = false;
 
-    public PrepareLongishPathShortcuts(LevelGraph g) {
-        this.g = g;
+    public PrepareLongishPathShortcuts() {
+    }
+
+    @Override public PrepareLongishPathShortcuts setGraph(Graph lg) {
+        g = (LevelGraph) lg;
+        return this;
     }
 
     public int getShortcuts() {
@@ -52,17 +58,10 @@ public class PrepareLongishPathShortcuts implements AlgorithmPreparation {
      * Create short cuts to skip 2 degree nodes and make graph traversal for routing more efficient
      */
     @Override
-    public void doWork() {
+    public PrepareLongishPathShortcuts doWork() {
         newShortcuts = 0;
         int locs = g.getNodes();
         StopWatch sw = new StopWatch().start();
-//        System.out.println("309722, 309730:" + new DijkstraSimple(g).calcPath(309722, 309730).distance());
-//        System.out.println(GraphUtility.until(g.getOutgoing(309721), 309722).distance() + "," + GraphUtility.until(g.getOutgoing(309730), 309742).distance());
-//        System.out.println();
-//        System.out.println("314596, 314598:" + new DijkstraSimple(g).calcPath(314596, 314598).distance());
-//        System.out.println(GraphUtility.until(g.getOutgoing(309721), 314596).distance() + "," + GraphUtility.until(g.getOutgoing(314598), 309742).distance());
-//        GraphUtility.printInfo(g, 309721, 100);
-//        for (int startNode = 300000; startNode < locs; startNode++) {
         for (int startNode = 0; startNode < locs; startNode++) {
             if (has1InAnd1Out(startNode))
                 continue;
@@ -128,6 +127,12 @@ public class PrepareLongishPathShortcuts implements AlgorithmPreparation {
             }
         }
         logger.info("introduced " + newShortcuts + " new shortcuts in: " + sw.stop().getSeconds() + "s");
+        prepared = true;
+        return this;
+    }
+
+    @Override public boolean isPrepared() {
+        return prepared;
     }
 
     /**

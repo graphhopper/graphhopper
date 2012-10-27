@@ -55,9 +55,9 @@ public class MiniGraphUI {
 
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
-        Graph g = OSMReader.osm2Graph(args);
+        OSMReader osm = OSMReader.osm2Graph(args);
         boolean debug = args.getBool("minigraphui.debug", false);
-        new MiniGraphUI(g, debug).visualize();
+        new MiniGraphUI(osm.getGraph(), osm.getPreparation().createAlgo(), debug).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
     private QuadTree<Long> quadTree;
@@ -75,7 +75,11 @@ public class MiniGraphUI {
     private boolean fastPaint = false;
     private AlgorithmPreparation prepare;
 
-    public MiniGraphUI(Graph roadGraph, boolean debug) {
+    public MiniGraphUI(Graph roadGraph, AlgorithmPreparation prepare, boolean debug) {
+        this(roadGraph, prepare.isPrepared() ? prepare.doWork().createAlgo() : prepare.createAlgo(), debug);
+    }
+
+    public MiniGraphUI(Graph roadGraph, RoutingAlgorithm ra, boolean debug) {
         this.graph = roadGraph;
         logger.info("locations:" + roadGraph.getNodes() + ", debug:" + debug);
         mg = new MyGraphics(roadGraph);
@@ -84,14 +88,11 @@ public class MiniGraphUI {
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
         this.index = new Location2IDQuadtree(roadGraph, new RAMDirectory("loc2idIndex"));
         index.prepareIndex(2000);
-//        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10)));
-        prepare = new PrepareContractionHierarchies((LevelGraph) roadGraph);
-        prepare.doWork();
+        this.algo = ra;
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
 //        this.algo = new DebugAStar(graph, mg);
 //        this.algo = new AStar(graph);
-        this.algo = prepare.createAlgo();
 //        this.algo = new DijkstraSimple(graph);
 //        this.algo = new DebugDijkstraSimple(graph, mg);
         infoPanel = new JPanel() {

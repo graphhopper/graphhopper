@@ -731,7 +731,7 @@ public class GraphStorage implements Graph, Storable {
 
             // nodes
             int hash = nodes.getHeader(0);
-            if (hash != getClass().hashCode())
+            if (hash != getClass().getName().hashCode())
                 throw new IllegalStateException("The graph file wasn't create via "
                         + getClass().getName() + "! Location:" + dir);
 
@@ -755,7 +755,7 @@ public class GraphStorage implements Graph, Storable {
         optimize();
 
         // nodes
-        nodes.setHeader(0, getClass().hashCode());
+        nodes.setHeader(0, getClass().getName().hashCode());
         nodes.setHeader(1, nodeEntrySize);
         nodes.setHeader(2, nodeCount);
         nodes.setHeader(3, doubleToInt(bounds.minLon));

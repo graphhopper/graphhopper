@@ -16,6 +16,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.storage.Graph;
 
 /**
  * @author Peter Karich
@@ -25,7 +26,14 @@ public interface AlgorithmPreparation {
     /**
      * Prepares the underlying graph to be used by a specialized algorithm.
      */
-    void doWork();
+    AlgorithmPreparation doWork();
+
+    /**
+     * @return true if doWork was already called.
+     */
+    boolean isPrepared();
+
+    AlgorithmPreparation setGraph(Graph g);
 
     RoutingAlgorithm createAlgo();
 }

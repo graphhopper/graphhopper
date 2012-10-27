@@ -15,7 +15,13 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.routing.AbstractRoutingAlgorithm;
+import com.graphhopper.routing.DijkstraBidirection;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AcceptStreet;
+import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.FastestCalc;
+import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.PrepareLongishPathShortcuts;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
@@ -63,16 +69,16 @@ public class OSMReader {
             args.merge(CmdArgs.read(strs));
         }
 
-        Graph g = osm2Graph(args);
+        Graph g = osm2Graph(args).getGraph();
         // only possible for smaller graphs as we need to have two graphs + an array laying around
         // g = GraphUtility.sortDFS(g, new RAMDirectory());
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(g);
         if (args.getBool("osmreader.test", false)) {
             tests.start();
-        } 
-        
+        }
+
         if (args.getBool("osmreader.runshortestpath", false)) {
-            String algo = args.get("osmreader.algo", "dijkstra");
+            RoutingAlgorithm algo = AbstractRoutingAlgorithm.createAlgoFromString(g, args.get("osmreader.algo", "dijkstra"));
             int iters = args.getInt("osmreader.algoIterations", 50);
             //warmup
             tests.runShortestPathPerf(iters / 10, algo);
@@ -90,8 +96,7 @@ public class OSMReader {
     private Map<String, Object> properties = new HashMap<String, Object>();
     private DistanceCalc callback = new DistanceCalc();
     private AcceptStreet acceptStreets = new AcceptStreet(true, false, false, false);
-    private boolean chShortcuts;
-    private boolean simpleShortcuts;
+    private AlgorithmPreparation prepare;
 
     /**
      * Opens or creates a graph. The specified args need a property 'graph' (a folder) and if no
@@ -99,7 +104,7 @@ public class OSMReader {
      * property 'size' is used to preinstantiate a datastructure/graph to avoid over-memory
      * allocation or reallocation (default is 5mio)
      */
-    public static Graph osm2Graph(final CmdArgs args) throws IOException {
+    public static OSMReader osm2Graph(final CmdArgs args) throws IOException {
         String graphLocation = args.get("osmreader.graph-location", "");
         if (Helper.isEmpty(graphLocation)) {
             String strOsm = args.get("osmreader.osm", "");
@@ -130,7 +135,19 @@ public class OSMReader {
         return osm2Graph(new OSMReader(storage, size), args);
     }
 
-    public static Graph osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
+    public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
+        String type = args.get("osmreader.type", "CAR");
+        osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
+                type.contains("PUBLIC_TRANSPORT"),
+                type.contains("BIKE"), type.contains("FOOT")));
+        final String algoStr = args.get("osmreader.algo", "astar");
+        osmReader.setDefaultAlgoPrepare(new NoOpAlgorithmPreparation() {
+            @Override public RoutingAlgorithm createAlgo() {
+                return AbstractRoutingAlgorithm.createAlgoFromString(graph, algoStr);
+            }
+        });
+        osmReader.setSimpleShortcuts(args.getBool("osmreader.simpleShortcuts", false));
+        osmReader.setCHShortcuts(args.get("osmreader.chShortcuts", "no"));
         if (!osmReader.loadExisting()) {
             String strOsm = args.get("osmreader.osm", "");
             if (Helper.isEmpty(strOsm))
@@ -140,17 +157,10 @@ public class OSMReader {
             if (!osmXmlFile.exists())
                 throw new IllegalStateException("Your specified OSM file does not exist:" + strOsm);
             logger.info("size for osm2id-map is " + osmReader.getMaxLocs() + " - start creating graph from " + osmXmlFile);
-            String type = args.get("osmreader.type", "CAR");
-            osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
-                    type.contains("PUBLIC_TRANSPORT"),
-                    type.contains("BIKE"), type.contains("FOOT")));
-
-            osmReader.setSimpleShortcuts(args.getBool("osmreader.simpleShortcuts", false));
-            osmReader.setCHShortcuts(args.getBool("osmreader.chShortcuts", false));
             osmReader.osm2Graph(osmXmlFile);
         }
 
-        return osmReader.getGraph();
+        return osmReader;
     }
 
     public OSMReader(String storageLocation, int size) {
@@ -193,13 +203,13 @@ public class OSMReader {
     }
 
     public void optimize() {
-        Graph g = storage.getGraph();
-        if (g instanceof LevelGraph) {
-            if (simpleShortcuts)
-                new PrepareLongishPathShortcuts((LevelGraph) g).doWork();
-            if (chShortcuts)
-                new PrepareContractionHierarchies((LevelGraph) g).doWork();
-        }
+        final Graph g = storage.getGraph();
+        prepare.setGraph(g);
+        prepare.doWork();
+    }
+
+    public AlgorithmPreparation getPreparation() {
+        return prepare;
     }
 
     public void cleanUp() {
@@ -449,13 +459,22 @@ public class OSMReader {
         return this;
     }
 
-    public OSMReader setCHShortcuts(boolean bool) {
-        chShortcuts = bool;
+    public OSMReader setCHShortcuts(String chShortcuts) {
+        if ("true".equals(chShortcuts) || "fastest".equals(chShortcuts)) {
+            prepare = new PrepareContractionHierarchies().setWeightCalculation(FastestCalc.DEFAULT);
+        } else if ("shortest".equals(chShortcuts)) {
+            prepare = new PrepareContractionHierarchies();
+        }
         return this;
     }
 
     public OSMReader setSimpleShortcuts(boolean bool) {
-        simpleShortcuts = bool;
+        if (bool)
+            prepare = new PrepareLongishPathShortcuts();
         return this;
+    }
+
+    private void setDefaultAlgoPrepare(AlgorithmPreparation defaultPrepare) {
+        prepare = defaultPrepare;
     }
 }

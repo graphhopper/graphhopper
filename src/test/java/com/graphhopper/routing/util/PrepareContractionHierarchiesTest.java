@@ -110,7 +110,7 @@ public class PrepareContractionHierarchiesTest {
     public void testAddShortcuts() {
         LevelGraph g = createExampleGraph();
         int old = GraphUtility.count(g.getAllEdges());
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         prepare.doWork();
         // PrepareLongishPathShortcutsTest.printEdges(g);
         assertEquals(old, GraphUtility.count(g.getAllEdges()));
@@ -122,7 +122,7 @@ public class PrepareContractionHierarchiesTest {
     public void testMoreComplexGraph() {
         LevelGraph g = PrepareLongishPathShortcutsTest.createShortcutsGraph();
         int old = GraphUtility.count(g.getAllEdges());
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         prepare.doWork();
         assertEquals(old + 6, GraphUtility.count(g.getAllEdges()));
     }
@@ -137,7 +137,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(3, 5, 1, false);
         g.edge(4, 3, 1, false);
         int old = GraphUtility.count(g.getAllEdges());
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         prepare.doWork();
         // PrepareLongishPathShortcutsTest.printEdges(g);
         assertEquals(old + 2, GraphUtility.count(g.getAllEdges()));
@@ -152,7 +152,7 @@ public class PrepareContractionHierarchiesTest {
         LevelGraph g = createGraph();
         PrepareLongishPathShortcutsTest.initDirected2(g);
         int old = GraphUtility.count(g.getAllEdges());
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         prepare.doWork();
         // PrepareLongishPathShortcutsTest.printEdges(g);
         assertEquals(old + 14, GraphUtility.count(g.getAllEdges()));
@@ -216,7 +216,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(26, 25, 1, false);
 
         int old = GraphUtility.count(g.getAllEdges());
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         prepare.doWork();
         // PrepareLongishPathShortcutsTest.printEdges(g);
         assertEquals(old + 20, GraphUtility.count(g.getAllEdges()));
@@ -244,7 +244,7 @@ public class PrepareContractionHierarchiesTest {
         g.shortcut(4, 6, 2, CarStreetType.flagsDefault(false), 5);
         g.shortcut(6, 4, 3, CarStreetType.flagsDefault(false), 8);
 
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         // there should be two different shortcuts for both directions!
         Collection<Shortcut> sc = prepare.findShortcuts(4);
         assertEquals(2, sc.size());
@@ -273,7 +273,7 @@ public class PrepareContractionHierarchiesTest {
         g.setLevel(2, 5);
         g.setLevel(1, 4);
         g.setLevel(10, 3);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(10, 6);
         assertEquals(Arrays.asList(10, 0, 1, 2, 3, 4, 5, 6), p.toNodeList());

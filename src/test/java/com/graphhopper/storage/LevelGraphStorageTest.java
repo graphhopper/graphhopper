@@ -54,7 +54,13 @@ public class LevelGraphStorageTest extends AbstractGraphTester {
             g.loadExisting();
             assertTrue(false);
         } catch (Exception ex) {
-            String test = "te";
+        }
+
+        g = new LevelGraphStorage(new RAMDirectory(folder.getAbsolutePath(), true));
+        try {
+            assertTrue(g.loadExisting());
+        } catch (Exception ex) {
+            assertTrue(false);
         }
     }
 

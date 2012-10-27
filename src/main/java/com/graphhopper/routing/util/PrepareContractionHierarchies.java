@@ -60,13 +60,19 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     private Map<Long, Shortcut> shortcuts = new HashMap<Long, Shortcut>();
     private EdgeLevelFilterCH edgeFilter;
     private OneToManyDijkstraCH algo;
+    private boolean prepared = false;
 
-    public PrepareContractionHierarchies(LevelGraph g) {
-        this.g = g;
+    public PrepareContractionHierarchies() {        
+    }
+
+    @Override
+    public PrepareContractionHierarchies setGraph(Graph g) {
+        this.g = (LevelGraph) g;
         sortedNodes = new MySortedCollection(g.getNodes());
         refs = new WeightedNode[g.getNodes()];
         weightCalc = ShortestCalc.DEFAULT;
-        edgeFilter = new EdgeLevelFilterCH(g);
+        edgeFilter = new EdgeLevelFilterCH(this.g);
+        return this;
     }
 
     public PrepareContractionHierarchies setWeightCalculation(WeightCalculation weightCalc) {
@@ -75,14 +81,20 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     }
 
     @Override
-    public void doWork() {
+    public PrepareContractionHierarchies doWork() {
         // TODO integrate PrepareRoutingShortcuts -> so avoid all nodes with negative level in the other methods        
         // in PrepareShortcuts level 0 and -1 is already used move that to level 1 and 2 so that level 0 stays as uncontracted
         if (!prepareEdges())
-            return;
+            return this;
         if (!prepareNodes())
-            return;
+            return this;
         contractNodes();
+        prepared = true;
+        return this;
+    }
+
+    @Override public boolean isPrepared() {
+        return prepared;
     }
 
     boolean prepareEdges() {
@@ -311,7 +323,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
             Shortcut sc = shortcuts.get(edgeId);
             if (sc == null) {
                 sc = shortcuts.get((long) n.endNode * refs.length + u);
-            } 
+            }
             // minor improvement: if (shortcuts.containsKey((long) n.endNode * refs.length + u)) 
             // then two shortcuts with the same nodes (u<->n.endNode) exists => check current shortcut against both
 

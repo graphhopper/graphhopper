@@ -40,7 +40,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     }
 
     RoutingAlgorithm createAlgoWithFilterAndPathUnpacking(final LevelGraph lg) {
-        return new PrepareLongishPathShortcuts(lg).createAlgo();
+        return new PrepareLongishPathShortcuts().setGraph(lg).createAlgo();
     }
 
     LevelGraph createGraph(int size) {
@@ -54,7 +54,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         LevelGraph g2 = createGraph(6);
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
         // store skipped first node along with the shortcut
-        new PrepareLongishPathShortcuts(g2).doWork();
+        new PrepareLongishPathShortcuts().setGraph(g2).doWork();
         // use that node to correctly unpack the shortcut
         Path p = createAlgoWithFilterAndPathUnpacking(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-6);
@@ -66,7 +66,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     public void testShortcutNoUnpacking() {
         LevelGraph g2 = createGraph(6);
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
-        new PrepareLongishPathShortcuts(g2).doWork();
+        new PrepareLongishPathShortcuts().setGraph(g2).doWork();
         Path p = createAlgoWithFilter(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-6);
         assertEquals(p.toString(), 5, p.nodes());
@@ -89,7 +89,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         g.edge(22, 23, 1, true);
         g.edge(22, 24, 1, true);
 
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts(g);
+        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(1, prepare.getShortcuts());
         EdgeSkipIterator iter = (EdgeSkipIterator) GraphUtility.until(g.getEdges(19), 22);
@@ -107,7 +107,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     public void testDirected1() {
         LevelGraph g = createGraph(30);
         PrepareLongishPathShortcutsTest.initDirected1(g);
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts(g);
+        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
         prepare.doWork();
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(0, 6);
@@ -121,7 +121,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     public void testDirected2() {
         LevelGraph g = createGraph(30);
         PrepareLongishPathShortcutsTest.initDirected2(g);
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts(g);
+        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(1, prepare.getShortcuts());
 //        PrepareLongishPathShortcutsTest.printEdges(g);
@@ -154,7 +154,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         g.edge(4, 9, 1, CarStreetType.flags(10, true));
         g.edge(4, 10, 1, CarStreetType.flags(50, true));
 
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts(g);
+        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         Path p = new DijkstraBidirectionRef(g) {
