@@ -15,7 +15,6 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.StopWatch;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
