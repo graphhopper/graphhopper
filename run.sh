@@ -45,7 +45,7 @@ elif [ "$TMP" = "germany" ]; then
  SIZE=35000000
 elif [ -f $OSM ]; then
  LINK=""
- JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx1000m -Xms1000m"
+ JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx2700m -Xms2700m"
  JAVA_OPTS=$JAVA_OPTS_IMPORT
  SIZE=10000000
 else
