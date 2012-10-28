@@ -464,7 +464,7 @@ public class OSMReader {
 
     public OSMReader setCHShortcuts(String chShortcuts) {
         if ("true".equals(chShortcuts) || "fastest".equals(chShortcuts)) {
-            prepare = new PrepareContractionHierarchies().setWeightCalculation(FastestCalc.DEFAULT);
+            prepare = new PrepareContractionHierarchies().setType(FastestCalc.DEFAULT);
         } else if ("shortest".equals(chShortcuts)) {
             prepare = new PrepareContractionHierarchies();
         }

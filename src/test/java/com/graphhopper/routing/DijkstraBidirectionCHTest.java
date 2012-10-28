@@ -58,8 +58,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     @Override
     public PrepareContractionHierarchies prepareGraph(Graph g, WeightCalculation calc) {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies().
-                setGraph(g).
-                setWeightCalculation(calc);
+                setGraph(g).setType(calc);
         // prepare matrixgraph only once
         if (g != preparedMatrixGraph)
             ch.doWork();

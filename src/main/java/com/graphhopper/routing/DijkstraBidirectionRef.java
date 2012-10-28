@@ -51,16 +51,18 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     public DijkstraBidirectionRef(Graph graph) {
         super(graph);
-        int locs = Math.max(20, graph.getNodes());
-        visitedFrom = new MyBitSetImpl(locs);
-        openSetFrom = new PriorityQueue<EdgeEntry>(locs / 10);
-        shortestWeightMapFrom = new TIntObjectHashMap<EdgeEntry>(locs / 10);
-
-        visitedTo = new MyBitSetImpl(locs);
-        openSetTo = new PriorityQueue<EdgeEntry>(locs / 10);
-        shortestWeightMapTo = new TIntObjectHashMap<EdgeEntry>(locs / 10);
-
+        initCollections(Math.max(20, graph.getNodes()));
         clear();
+    }
+    
+    protected void initCollections(int nodes) {
+        visitedFrom = new MyBitSetImpl(nodes);
+        openSetFrom = new PriorityQueue<EdgeEntry>(nodes / 10);
+        shortestWeightMapFrom = new TIntObjectHashMap<EdgeEntry>(nodes / 10);
+
+        visitedTo = new MyBitSetImpl(nodes);
+        openSetTo = new PriorityQueue<EdgeEntry>(nodes / 10);
+        shortestWeightMapTo = new TIntObjectHashMap<EdgeEntry>(nodes / 10);
     }
 
     public RoutingAlgorithm setEdgeFilter(EdgeLevelFilter edgeFilter) {

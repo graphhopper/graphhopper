@@ -72,7 +72,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         return this;
     }
 
-    public PrepareContractionHierarchies setWeightCalculation(WeightCalculation weightCalc) {
+    public PrepareContractionHierarchies setType(WeightCalculation weightCalc) {
         this.prepareWeightCalc = weightCalc;
         return this;
     }
@@ -381,6 +381,11 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     @Override
     public DijkstraBidirectionRef createAlgo() {
         DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g) {
+            @Override protected void initCollections(int nodes) {
+                // algorithm with CH does not need that much memory pre allocated
+                super.initCollections(Math.min(10000, nodes));
+            }
+
             @Override public boolean checkFinishCondition() {
                 // changed finish condition for CH
                 if (currFrom == null)
