@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * This class prepares the graph for a bidirectional algorithm supporting contraction hierarchies
  * ie. an algorithm returned by createAlgo.
  *
- * There are several description of contraction hierarchies available. This following is one of the
+ * There are several description of contraction hierarchies available. The following is one of the
  * more detailed: http://web.cs.du.edu/~sturtevant/papers/highlevelpathfinding.pdf
  *
  * @author Peter Karich
@@ -68,7 +68,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
     @Override
     public PrepareContractionHierarchies setGraph(Graph g) {
-        this.g = (LevelGraph) g;               
+        this.g = (LevelGraph) g;
         return this;
     }
 
@@ -83,10 +83,8 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         // in PrepareShortcuts level 0 and -1 is already used move that to level 1 and 2 so that level 0 stays as uncontracted
         if (!prepareEdges())
             return this;
-        
-        edgeFilter = new EdgeLevelFilterCH(this.g);
-        sortedNodes = new MySortedCollection(g.getNodes());
-        refs = new WeightedNode[g.getNodes()];
+
+        initFromGraph();
         if (!prepareNodes())
             return this;
         contractNodes();
@@ -193,7 +191,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                 }
             }
         }
-        logger.info("new shortcuts " + newShortcuts);
+        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc);
         // System.out.println("new shortcuts " + newShortcuts);
     }
 
@@ -236,6 +234,13 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
     Map<Long, Shortcut> getShortcuts() {
         return shortcuts;
+    }
+
+    PrepareContractionHierarchies initFromGraph() {
+        edgeFilter = new EdgeLevelFilterCH(this.g);
+        sortedNodes = new MySortedCollection(g.getNodes());
+        refs = new WeightedNode[g.getNodes()];
+        return this;
     }
 
     static class EdgeLevelFilterCH extends EdgeLevelFilter {

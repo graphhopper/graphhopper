@@ -244,7 +244,7 @@ public class PrepareContractionHierarchiesTest {
         g.shortcut(4, 6, 2, CarStreetType.flagsDefault(false), 5);
         g.shortcut(6, 4, 3, CarStreetType.flagsDefault(false), 8);
 
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g).initFromGraph();
         // there should be two different shortcuts for both directions!
         Collection<Shortcut> sc = prepare.findShortcuts(4);
         assertEquals(2, sc.size());
