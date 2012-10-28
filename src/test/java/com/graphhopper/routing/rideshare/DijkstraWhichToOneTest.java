@@ -17,8 +17,12 @@ package com.graphhopper.routing.rideshare;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -35,8 +39,13 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
         return AbstractRoutingAlgorithmTester.getMatrixAlikeGraph();
     }
 
-    @Override public RoutingAlgorithm createAlgo(Graph g) {
-        return new DijkstraWhichToOne(g);
+    @Override
+    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc) {
+        return new NoOpAlgorithmPreparation() {
+            @Override public RoutingAlgorithm createAlgo() {
+                return new DijkstraWhichToOne(graph).setType(calc);
+            }
+        }.setGraph(g);
     }
 
     @Test public void testDirectlyOnPubTransport() {

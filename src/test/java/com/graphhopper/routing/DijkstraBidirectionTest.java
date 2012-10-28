@@ -15,6 +15,9 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import java.util.Arrays;
 import static org.junit.Assert.*;
@@ -26,14 +29,19 @@ import org.junit.Test;
  */
 public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
 
-    @Override public RoutingAlgorithm createAlgo(Graph g) {
-        return new DijkstraBidirection(g);
+    @Override
+    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc) {
+        return new NoOpAlgorithmPreparation() {
+            @Override public RoutingAlgorithm createAlgo() {
+                return new DijkstraBidirection(graph).setType(calc);
+            }
+        }.setGraph(g);
     }
 
     @Test
     public void testAddSkipNodes() {
         Graph g = createWikipediaTestGraph();
-        Path p = createAlgo(g).calcPath(0, 4);
+        Path p = prepareGraph(g).createAlgo().calcPath(0, 4);
         assertEquals(Arrays.asList(0, 2, 5, 4), p.toNodeList());
         assertEquals(p.toString(), 20, p.weight(), 1e-6);
         assertTrue(p.toString(), p.contains(5));

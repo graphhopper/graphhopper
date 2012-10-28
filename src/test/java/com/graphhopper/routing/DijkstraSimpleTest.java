@@ -15,6 +15,10 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.rideshare.DijkstraShortestOf2ToPub;
+import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 
 /**
@@ -23,7 +27,12 @@ import com.graphhopper.storage.Graph;
  */
 public class DijkstraSimpleTest extends AbstractRoutingAlgorithmTester {
 
-    @Override public RoutingAlgorithm createAlgo(Graph g) {
-        return new DijkstraSimple(g);
+    @Override
+    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc) {
+        return new NoOpAlgorithmPreparation() {
+            @Override public RoutingAlgorithm createAlgo() {
+                return new DijkstraSimple(graph).setType(calc);
+            }
+        }.setGraph(g);
     }
 }

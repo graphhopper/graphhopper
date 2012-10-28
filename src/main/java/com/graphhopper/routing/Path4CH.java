@@ -18,6 +18,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 
 /**
@@ -35,6 +36,15 @@ public class Path4CH extends Path4Shortcuts {
     @Override
     protected void handleSkippedNode(EdgeSkipIterator mainIter) {
         expand(mainIter.fromNode(), mainIter.node(), mainIter.skippedNode());
+    }
+
+    @Override
+    public void calcWeight(EdgeIterator mainIter) {
+        weight += weightCalculation.getWeight(mainIter);
+        distance += weightCalculation.revert(mainIter.distance(), mainIter.flags());
+        EdgeSkipIterator iter = (EdgeSkipIterator) mainIter;
+        if (iter.skippedNode() >= 0)
+            handleSkippedNode(iter);
     }
 
     private void expand(int from, int to, int skippedNode) {

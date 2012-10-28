@@ -16,7 +16,6 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
-import com.graphhopper.routing.DijkstraBidirection;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AcceptStreet;
 import com.graphhopper.routing.util.AlgorithmPreparation;
@@ -31,7 +30,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.GraphStorageWrapper;
 import com.graphhopper.storage.MMapDirectory;
-import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.Storage;
@@ -158,7 +156,8 @@ public class OSMReader {
                 throw new IllegalStateException("Your specified OSM file does not exist:" + strOsm);
             logger.info("size for osm2id-map is " + osmReader.getMaxLocs() + " - start creating graph from " + osmXmlFile);
             osmReader.osm2Graph(osmXmlFile);
-        }
+        } else
+            osmReader.setGraph();
 
         return osmReader;
     }
@@ -202,9 +201,13 @@ public class OSMReader {
         flush();
     }
 
+    // TODO how can we avoid that hack?
+    void setGraph() {
+        prepare.setGraph(storage.getGraph());
+    }
+
     public void optimize() {
-        final Graph g = storage.getGraph();
-        prepare.setGraph(g);
+        setGraph();
         prepare.doWork();
     }
 

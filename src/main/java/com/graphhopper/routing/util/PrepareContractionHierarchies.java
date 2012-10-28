@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
 public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private WeightCalculation weightCalc;
+    private WeightCalculation prepareWeightCalc;
     private LevelGraph g;
     // the most important nodes comes last
     private MySortedCollection sortedNodes;
@@ -62,21 +62,18 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     private OneToManyDijkstraCH algo;
     private boolean prepared = false;
 
-    public PrepareContractionHierarchies() {        
+    public PrepareContractionHierarchies() {
+        prepareWeightCalc = ShortestCalc.DEFAULT;
     }
 
     @Override
     public PrepareContractionHierarchies setGraph(Graph g) {
-        this.g = (LevelGraph) g;
-        sortedNodes = new MySortedCollection(g.getNodes());
-        refs = new WeightedNode[g.getNodes()];
-        weightCalc = ShortestCalc.DEFAULT;
-        edgeFilter = new EdgeLevelFilterCH(this.g);
+        this.g = (LevelGraph) g;               
         return this;
     }
 
     public PrepareContractionHierarchies setWeightCalculation(WeightCalculation weightCalc) {
-        this.weightCalc = weightCalc;
+        this.prepareWeightCalc = weightCalc;
         return this;
     }
 
@@ -86,6 +83,10 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         // in PrepareShortcuts level 0 and -1 is already used move that to level 1 and 2 so that level 0 stays as uncontracted
         if (!prepareEdges())
             return this;
+        
+        edgeFilter = new EdgeLevelFilterCH(this.g);
+        sortedNodes = new MySortedCollection(g.getNodes());
+        refs = new WeightedNode[g.getNodes()];
         if (!prepareNodes())
             return this;
         contractNodes();
@@ -105,7 +106,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         int c = 0;
         while (iter.next()) {
             c++;
-            iter.distance(weightCalc.getWeight(iter));
+            iter.distance(prepareWeightCalc.getWeight(iter));
             iter.originalEdges(1);
         }
         return c > 0;
@@ -411,7 +412,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                     }
 
                     @Override public double revert(double weight, int flags) {
-                        throw new UnsupportedOperationException("Not supported yet.");
+                        return prepareWeightCalc.revert(weight, flags);
                     }
                 };
                 return new Path4CH(graph, wc);
@@ -421,6 +422,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                 return "DijkstraCH";
             }
         };
+        dijkstra.setType(prepareWeightCalc);
         dijkstra.setEdgeFilter(new EdgeLevelFilter(g));
         return dijkstra;
     }

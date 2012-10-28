@@ -15,8 +15,10 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.PrepareContractionHierarchies;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -40,7 +42,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         if (preparedMatrixGraph == null) {
             LevelGraph lg = createGraph(getMatrixAlikeGraph().getNodes());
             getMatrixAlikeGraph().copyTo(lg);
-            preparedMatrixGraph = prepareGraph(lg);
+            prepareGraph(lg);
+            preparedMatrixGraph = lg;
         }
         return preparedMatrixGraph;
     }
@@ -52,29 +55,24 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         return lg;
     }
 
-    @Override public RoutingAlgorithm createAlgo(Graph g) {
-        return new PrepareContractionHierarchies().setGraph(g).createAlgo();
-    }
-
     @Override
-    public LevelGraph prepareGraph(Graph g) {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies().setGraph(g);
-        ch.doWork();
-        return (LevelGraph) g;
+    public PrepareContractionHierarchies prepareGraph(Graph g, WeightCalculation calc) {
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies().
+                setGraph(g).
+                setWeightCalculation(calc);
+        // prepare matrixgraph only once
+        if (g != preparedMatrixGraph)
+            ch.doWork();
+        return ch;
     }
 
     @Test
     public void testShortcutUnpacking() {
         LevelGraph g2 = createGraph(6);
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
-        g2 = prepareGraph(g2);
-        Path p = createAlgo(g2).calcPath(0, 4);
+        Path p = prepareGraph(g2).createAlgo().calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-4);
         assertEquals(p.toString(), 6, p.nodes());
-    }
-
-    @Test @Override public void testCalcFastestPath() {
-        // TODO make CH possible for SHORTEST too -> hmmh then prepareGraph() depends on type
     }
 
     @Test @Override public void testPerformance() throws IOException {
@@ -111,7 +109,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.setLevel(7, 6);
         g2.setLevel(0, 7);
 
-        Path p = createAlgo(g2).calcPath(0, 7);
+        Path p = new PrepareContractionHierarchies().setGraph(g2).createAlgo().calcPath(0, 7);
         assertEquals(4, p.nodes());
         assertEquals(4.2, p.distance(), 1e-5);
     }
