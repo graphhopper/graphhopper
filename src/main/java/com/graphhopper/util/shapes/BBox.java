@@ -15,6 +15,9 @@
  */
 package com.graphhopper.util.shapes;
 
+import com.graphhopper.util.NumHelper;
+import javax.crypto.NullCipher;
+
 /**
  * A simple bounding box defined as follows: minLon, maxLon followed by minLat which is south(!) and
  * maxLat. Equally to EX_GeographicBoundingBox in the ISO 19115 standard see
@@ -25,7 +28,7 @@ package com.graphhopper.util.shapes;
  *
  * @author Peter Karich
  */
-public class BBox implements Shape {
+public class BBox implements Shape, Cloneable {
 
     public static final BBox INVERSE = new BBox();
 
@@ -131,11 +134,11 @@ public class BBox implements Shape {
 
     @Override
     public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
         BBox b = (BBox) obj;
-        return Double.doubleToLongBits(minLat) == Double.doubleToLongBits(b.minLat)
-                && Double.doubleToLongBits(maxLat) == Double.doubleToLongBits(b.maxLat)
-                && Double.doubleToLongBits(minLon) == Double.doubleToLongBits(b.minLon)
-                && Double.doubleToLongBits(maxLon) == Double.doubleToLongBits(b.maxLon);
+        return NumHelper.equals(minLat, b.minLat) && NumHelper.equals(maxLat, b.maxLat)
+                && NumHelper.equals(minLon, b.minLon) && NumHelper.equals(maxLon, b.maxLon);
     }
 
     @Override

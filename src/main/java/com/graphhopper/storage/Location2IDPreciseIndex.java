@@ -23,6 +23,7 @@ import com.graphhopper.geohash.LinearKeyAlgo;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCosProjection;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
@@ -49,7 +50,6 @@ import org.slf4j.LoggerFactory;
  */
 public class Location2IDPreciseIndex implements Location2IDIndex {
 
-    private Logger logger = LoggerFactory.getLogger(getClass());
     private static final String LIST_NAME = "loc2idIndex";
     private ListOfArrays index;
     private Graph g;
@@ -196,7 +196,8 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
                         // TODO use bresenhamLine
                         for (double tryLat = tmpLat; tryLat < connLat + latWidth; tryLat += latWidth) {
                             for (double tryLon = tmpLon; tryLon < connLon + lonWidth; tryLon += lonWidth) {
-                                if (tryLon == tmpLon && tryLat == tmpLat || tryLon == connLon && tryLat == connLat)
+                                if (NumHelper.equals(tryLon, tmpLon) && NumHelper.equals(tryLat, tmpLat)
+                                        || NumHelper.equals(tryLon, connLon) && NumHelper.equals(tryLat, connLat))
                                     continue;
                                 added++;
                                 add((int) algo.encode(tryLat, tryLon), connNode);

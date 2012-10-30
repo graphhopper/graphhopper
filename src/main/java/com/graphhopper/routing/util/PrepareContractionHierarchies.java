@@ -28,6 +28,7 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.StopWatch;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -333,7 +334,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
             // minor improvement: if (shortcuts.containsKey((long) n.endNode * refs.length + u)) 
             // then two shortcuts with the same nodes (u<->n.endNode) exists => check current shortcut against both
 
-            if (sc == null || sc.distance != n.distance) {
+            if (sc == null || !NumHelper.equals(sc.distance, n.distance)) {
                 sc = new Shortcut(u, n.endNode, n.distance);
                 shortcuts.put(edgeId, sc);
                 sc.originalEdges = uOrigEdge + n.originalEdges;

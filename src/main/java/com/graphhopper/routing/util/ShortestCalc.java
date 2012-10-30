@@ -22,7 +22,7 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class ShortestCalc implements WeightCalculation {
 
-    public static ShortestCalc DEFAULT = new ShortestCalc();
+    public final static ShortestCalc DEFAULT = new ShortestCalc();
 
     @Override public double getWeight(EdgeIterator iter) {
         return iter.distance();

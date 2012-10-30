@@ -22,7 +22,7 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class FastestCalc implements WeightCalculation {
 
-    public static FastestCalc DEFAULT = new FastestCalc();
+    public final static FastestCalc DEFAULT = new FastestCalc();
 
     private FastestCalc() {
     }

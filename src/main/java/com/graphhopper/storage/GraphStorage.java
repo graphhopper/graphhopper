@@ -402,7 +402,7 @@ public class GraphStorage implements Graph, Storable {
 
         public EdgeIterable(int node, boolean in, boolean out) {
             this.fromNode = node;
-            this.nextEdge = nodes.getInt(node * nodeEntrySize);
+            this.nextEdge = nodes.getInt((long) node * nodeEntrySize);
             this.in = in;
             this.out = out;
         }
@@ -521,7 +521,7 @@ public class GraphStorage implements Graph, Storable {
         long linkPos = getLinkPosInEdgeArea(node, otherNode, edgeToDeletePointer);
         int nextEdge = edges.getInt(linkPos);
         if (edgeToUpdatePointer < 0) {
-            nodes.setInt(node * nodeEntrySize, nextEdge);
+            nodes.setInt((long) node * nodeEntrySize, nextEdge);
         } else {
             long link = getLinkPosInEdgeArea(node, otherNode, edgeToUpdatePointer);
             edges.setInt(link, nextEdge);

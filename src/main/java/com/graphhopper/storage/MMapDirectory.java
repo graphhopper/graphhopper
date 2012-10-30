@@ -33,7 +33,7 @@ public class MMapDirectory implements Directory {
 
     public MMapDirectory(String _location) {
         this.location = _location;
-        if (location.isEmpty() || location == null)
+        if (location == null || location.isEmpty())
             location = new File("").getAbsolutePath();
         if (!location.endsWith("/"))
             location += "/";

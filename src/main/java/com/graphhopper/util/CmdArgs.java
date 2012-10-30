@@ -15,8 +15,10 @@
  */
 package com.graphhopper.util;
 
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -102,7 +104,7 @@ public class CmdArgs {
 
     public static CmdArgs readFromConfig(String fileStr) throws IOException {
         Map<String, String> map = new LinkedHashMap<String, String>();
-        Helper.loadProperties(map, new FileReader(fileStr));
+        Helper.loadProperties(map, new InputStreamReader(new FileInputStream(fileStr), "UTF-8"));
         CmdArgs args = new CmdArgs();
         args.merge(map);
         return args;

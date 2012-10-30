@@ -106,6 +106,32 @@
                     </descriptorRefs>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.2</version>
+                <configuration>
+                    <reportPlugins>
+                        <plugin>
+                            <!-- either call mvn compile site or mvn findbugs:gui -->
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>findbugs-maven-plugin</artifactId>
+                            <version>2.5.2</version>
+                            <configuration>
+                                <!-- <xmlOutput>true</xmlOutput> -->
+                                <!-- Optional directory to put FindBugs xdoc xml report -->
+                                <xmlOutputDirectory>target/site</xmlOutputDirectory>
+                                <threshold>Normal</threshold>
+                                <effort>Default</effort>
+                                <!--
+                                <threshold>High|Normal|Low|Exp|Ignore</threshold>
+                                <effort>Min|Default|Max</effort>
+                                -->
+                            </configuration>
+                        </plugin>
+                    </reportPlugins>
+                </configuration>
+            </plugin>
         </plugins>
         
         <!-- make version available at runtime via version file -->

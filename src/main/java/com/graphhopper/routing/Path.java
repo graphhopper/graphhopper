@@ -34,7 +34,7 @@ import java.util.List;
  */
 public class Path {
 
-    protected static double INIT_VALUE = Double.MAX_VALUE;
+    protected final static double INIT_VALUE = Double.MAX_VALUE;
     protected Graph g;
     protected WeightCalculation weightCalculation;
     protected double weight;

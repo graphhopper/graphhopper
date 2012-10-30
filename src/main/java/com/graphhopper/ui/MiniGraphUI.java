@@ -22,12 +22,10 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.trees.QuadTree;
@@ -57,11 +55,11 @@ public class MiniGraphUI {
         CmdArgs args = CmdArgs.read(strs);
         OSMReader osm = OSMReader.osm2Graph(args);
         boolean debug = args.getBool("minigraphui.debug", false);
-        new MiniGraphUI(osm.getGraph(), osm.getPreparation().createAlgo(), debug).visualize();
+        new MiniGraphUI(osm.getGraph(), osm.getPreparation(), debug).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private QuadTree<Long> quadTree;
-    private Collection<CoordTrig<Long>> quadTreeNodes;
+//    private QuadTree<Long> quadTree;
+//    private Collection<CoordTrig<Long>> quadTreeNodes;
     private Path path;
     private RoutingAlgorithm algo;
     private final Graph graph;
@@ -73,13 +71,8 @@ public class MiniGraphUI {
     private MapLayer roadsLayer;
     private MapLayer pathLayer;
     private boolean fastPaint = false;
-    private AlgorithmPreparation prepare;
 
-    public MiniGraphUI(Graph roadGraph, AlgorithmPreparation prepare, boolean debug) {
-        this(roadGraph, prepare.isPrepared() ? prepare.doWork().createAlgo() : prepare.createAlgo(), debug);
-    }
-
-    public MiniGraphUI(Graph roadGraph, RoutingAlgorithm ra, boolean debug) {
+    public MiniGraphUI(Graph roadGraph, final AlgorithmPreparation prepare, boolean debug) {
         this.graph = roadGraph;
         logger.info("locations:" + roadGraph.getNodes() + ", debug:" + debug);
         mg = new MyGraphics(roadGraph);
@@ -88,7 +81,7 @@ public class MiniGraphUI {
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
         this.index = new Location2IDQuadtree(roadGraph, new RAMDirectory("loc2idIndex"));
         index.prepareIndex(2000);
-        this.algo = ra;
+        this.algo = prepare.createAlgo();
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
 //        this.algo = new DebugAStar(graph, mg);
@@ -174,12 +167,12 @@ public class MiniGraphUI {
                 System.out.println(p2.toNodeList());
                 plotPath(p2, g2, 5);
 
-                if (quadTreeNodes != null) {
-                    logger.info("found neighbors:" + quadTreeNodes.size());
-                    for (CoordTrig<Long> coord : quadTreeNodes) {
-                        mg.plot(g2, coord.lat, coord.lon, 1);
-                    }
-                }
+//                if (quadTreeNodes != null) {
+//                    logger.info("found neighbors:" + quadTreeNodes.size());
+//                    for (CoordTrig<Long> coord : quadTreeNodes) {
+//                        mg.plot(g2, coord.lat, coord.lon, 1);
+//                    }
+//                }
             }
         });
 
@@ -357,21 +350,21 @@ public class MiniGraphUI {
                     mainPanel.addMouseMotionListener(ml);
 
                     // just for fun
-                    mainPanel.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), "deleteNodes");
-                    mainPanel.getActionMap().put("deleteNodes", new AbstractAction() {
-                        @Override public void actionPerformed(ActionEvent e) {
-                            int counter = 0;
-                            for (CoordTrig<Long> coord : quadTreeNodes) {
-                                int ret = quadTree.remove(coord.lat, coord.lon);
-                                if (ret < 1) {
-//                                    logger.info("cannot remove " + coord + " " + ret);
-//                                    ret = quadTree.remove(coord.getLatitude(), coord.getLongitude());
-                                } else
-                                    counter += ret;
-                            }
-                            logger.info("Deleted " + counter + " of " + quadTreeNodes.size() + " nodes");
-                        }
-                    });
+//                    mainPanel.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), "deleteNodes");
+//                    mainPanel.getActionMap().put("deleteNodes", new AbstractAction() {
+//                        @Override public void actionPerformed(ActionEvent e) {
+//                            int counter = 0;
+//                            for (CoordTrig<Long> coord : quadTreeNodes) {
+//                                int ret = quadTree.remove(coord.lat, coord.lon);
+//                                if (ret < 1) {
+////                                    logger.info("cannot remove " + coord + " " + ret);
+////                                    ret = quadTree.remove(coord.getLatitude(), coord.getLongitude());
+//                                } else
+//                                    counter += ret;
+//                            }
+//                            logger.info("Deleted " + counter + " of " + quadTreeNodes.size() + " nodes");
+//                        }
+//                    });
 
                     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                     frame.setSize(frameWidth + 10, frameHeight + 30);

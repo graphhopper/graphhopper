@@ -42,8 +42,8 @@ public class ListOfArrays {
     }
 
     public ListOfArrays createNew(int integers) {
-        refs.createNew(integers * 4);
-        entries.createNew(integers * 4);
+        refs.createNew((long) integers * 4);
+        entries.createNew((long) integers * 4);
         return this;
     }
 

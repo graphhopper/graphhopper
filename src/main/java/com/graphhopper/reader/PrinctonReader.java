@@ -15,7 +15,6 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.Helper;
 import java.io.BufferedReader;
