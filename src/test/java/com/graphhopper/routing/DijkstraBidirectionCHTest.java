@@ -15,8 +15,8 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarStreetType;
+import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;

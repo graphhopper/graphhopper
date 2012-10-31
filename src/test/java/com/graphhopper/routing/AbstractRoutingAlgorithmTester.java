@@ -157,21 +157,15 @@ public abstract class AbstractRoutingAlgorithmTester {
     // see wikipedia-graph.svg !
     protected Graph createWikipediaTestGraph() {
         Graph graph = createGraph(6);
-
         graph.edge(0, 1, 7, true);
         graph.edge(0, 2, 9, true);
         graph.edge(0, 5, 14, true);
-
         graph.edge(1, 2, 10, true);
         graph.edge(1, 3, 15, true);
-
         graph.edge(2, 5, 2, true);
         graph.edge(2, 3, 11, true);
-
         graph.edge(3, 4, 6, true);
-
         graph.edge(4, 5, 9, true);
-
         return graph;
     }
 

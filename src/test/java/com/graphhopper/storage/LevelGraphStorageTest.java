@@ -107,17 +107,4 @@ public class LevelGraphStorageTest extends AbstractGraphTester {
         iter = g.getEdges(2);
         assertEquals(2, GraphUtility.count(iter));
     }
-
-    @Test
-    public void testOrigEdges() {
-        final LevelGraph g = createGraph(20);
-        EdgeSkipIterator iter = g.shortcut(0, 1, 10, CarStreetType.flags(10, true), 12);
-        assertEquals(0, iter.originalEdges());
-        iter.originalEdges(1000);
-        assertEquals(1000, iter.originalEdges());
-
-        iter = g.getEdges(0);
-        assertTrue(iter.next());
-        assertEquals(1000, iter.originalEdges());
-    }
 }

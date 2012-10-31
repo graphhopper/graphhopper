@@ -22,13 +22,12 @@ import com.graphhopper.util.EdgeSkipIterator;
  */
 public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
-    private final int I_SC_NODE, I_ORIG_EDGES;
+    private final int I_SC_NODE;
     private final int I_LEVEL;
 
     public LevelGraphStorage(Directory dir) {
         super(dir);
         I_SC_NODE = nextEdgeEntryIndex();
-        I_ORIG_EDGES = nextEdgeEntryIndex();
         I_LEVEL = nextNodeEntryIndex();
         initNodeAndEdgeEntrySize();
     }
@@ -114,14 +113,6 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
             int neop = edges.getInt(getLinkPosInEdgeArea(nodeId, fromNode, edgePointer));
             writeEdge((int) (edgePointer / edgeEntrySize), fromNode, nodeId, nep, neop, flags, distance);
         }
-
-        @Override public int originalEdges() {
-            return edges.getInt(edgePointer + I_ORIG_EDGES);
-        }
-
-        @Override public void originalEdges(int no) {
-            edges.setInt(edgePointer + I_ORIG_EDGES, no);
-        }
     }
 
     @Override
@@ -150,14 +141,6 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
         @Override public void flags(int flags) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
-
-        @Override public int originalEdges() {
-            return edges.getInt(edgePointer + I_ORIG_EDGES);
-        }
-
-        @Override public void originalEdges(int no) {
-            edges.setInt(edgePointer + I_ORIG_EDGES, no);
-        }
     }
 
     @Override
@@ -181,14 +164,6 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
         @Override public void flags(int flags) {
             throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override public int originalEdges() {
-            return edges.getInt(edgePointer + I_ORIG_EDGES);
-        }
-
-        @Override public void originalEdges(int no) {
-            edges.setInt(edgePointer + I_ORIG_EDGES, no);
         }
     }
 }

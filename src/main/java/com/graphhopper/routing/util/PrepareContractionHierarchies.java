@@ -30,6 +30,7 @@ import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.StopWatch;
+import gnu.trove.list.array.TIntArrayList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -55,6 +56,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     // the most important nodes comes last
     private MySortedCollection sortedNodes;
     private WeightedNode refs[];
+    private TIntArrayList originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
     private static int scOneDir = CarStreetType.flags(0, false);
     private static int scBothDir = CarStreetType.flags(0, true);
@@ -80,12 +82,12 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
     @Override
     public PrepareContractionHierarchies doWork() {
+        initFromGraph();
         // TODO integrate PrepareRoutingShortcuts -> so avoid all nodes with negative level in the other methods        
         // in PrepareShortcuts level 0 and -1 is already used move that to level 1 and 2 so that level 0 stays as uncontracted
         if (!prepareEdges())
             return this;
 
-        initFromGraph();
         if (!prepareNodes())
             return this;
         contractNodes();
@@ -106,7 +108,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         while (iter.next()) {
             c++;
             iter.distance(prepareWeightCalc.getWeight(iter));
-            iter.originalEdges(1);
+            setOrigEdges(iter.edge(), 1);
         }
         return c > 0;
     }
@@ -216,9 +218,9 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         // when a new shortcut is introduced then r of the associated edges is summed up:
         // r(u,w)=r(u,v)+r(v,w) now we can define
         // originalEdges = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
-        int originalEdges = 0;
+        int originalEdgesCount = 0;
         for (Shortcut sc : tmpShortcuts) {
-            originalEdges += sc.originalEdges;
+            originalEdgesCount += sc.originalEdges;
         }
 
         // number of already contracted neighbors of v
@@ -230,7 +232,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         }
 
         // according to the paper do a simple linear combination of the properties to get the priority
-        return 2 * edgeDifference + 4 * originalEdges + contractedNeighbors;
+        return 2 * edgeDifference + 4 * originalEdgesCount + contractedNeighbors;
     }
 
     Map<Long, Shortcut> getShortcuts() {
@@ -238,6 +240,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     }
 
     PrepareContractionHierarchies initFromGraph() {
+        originalEdges = new TIntArrayList(g.getNodes() / 2, -1);
         edgeFilter = new EdgeLevelFilterCH(this.g);
         sortedNodes = new MySortedCollection(g.getNodes());
         refs = new WeightedNode[g.getNodes()];
@@ -292,7 +295,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
                 NodeCH n = new NodeCH();
                 n.endNode = w;
-                n.originalEdges = iter2.originalEdges();
+                n.originalEdges = getOrigEdges(iter2.edge());
                 n.distance = v_u_weight + iter2.distance();
                 goalNodes.add(n);
 
@@ -307,7 +310,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
             // and successively increasing it when mean-degree of graph increases
             algo = new OneToManyDijkstraCH(g).setFilter(edgeFilter.setSkipNode(v));
             algo.setLimit(maxWeight).calcPath(u, goalNodes);
-            internalFindShortcuts(goalNodes, u, iter1.originalEdges());
+            internalFindShortcuts(goalNodes, u, getOrigEdges(iter1.edge()));
         }
         return shortcuts.values();
     }
@@ -364,7 +367,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                     iter.flags(sc.flags);
                     iter.skippedNode(v);
                     iter.distance(sc.distance);
-                    iter.originalEdges(sc.originalEdges);
+                    setOrigEdges(iter.edge(), sc.originalEdges);
                     updatedInGraph = true;
                     break;
                 }
@@ -372,11 +375,21 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
             if (!updatedInGraph) {
                 iter = g.shortcut(sc.from, sc.to, sc.distance, sc.flags, v);
-                iter.originalEdges(sc.originalEdges);
+                setOrigEdges(iter.edge(), sc.originalEdges);
                 newShorts++;
             }
         }
         return newShorts;
+    }
+
+    private void setOrigEdges(int index, int value) {
+        originalEdges.ensureCapacity(index + 1);
+        originalEdges.setQuick(index, value);
+    }
+
+    private int getOrigEdges(int index) {
+        originalEdges.ensureCapacity(index + 1);
+        return originalEdges.getQuick(index);
     }
 
     @Override

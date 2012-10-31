@@ -40,8 +40,4 @@ public interface EdgeSkipIterator extends EdgeIterator {
     void flags(int flags);
 
     void skippedNode(int node);
-
-    int originalEdges();
-
-    void originalEdges(int no);
 }
