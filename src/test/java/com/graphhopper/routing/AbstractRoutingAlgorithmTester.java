@@ -130,7 +130,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     @Test public void testNoPathFound() {
         Graph graph = createGraph(10);
-        assertNull(prepareGraph(graph).createAlgo().calcPath(0, 1));
+        assertEquals(Path.NOT_FOUND, prepareGraph(graph).createAlgo().calcPath(0, 1));
     }
 
     @Test public void testWikipediaShortestPath() {
@@ -309,7 +309,7 @@ public abstract class AbstractRoutingAlgorithmTester {
             if (i >= noJvmWarming)
                 sw.start();
             Path p = d.calcPath(index1, index2);
-            if (i >= noJvmWarming && p != null)
+            if (i >= noJvmWarming && p.nodes() > -100)
                 sw.stop();
 
             // System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.nodes());

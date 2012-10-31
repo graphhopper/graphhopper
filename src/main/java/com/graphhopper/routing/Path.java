@@ -23,6 +23,7 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,6 +35,42 @@ import java.util.List;
  */
 public class Path {
 
+    public final static Path NOT_FOUND = new Path() {
+        @Override public boolean contains(int node) {
+            return false;
+        }
+
+        @Override public int getFromNode() {
+            throw new IllegalStateException("cannot get first node from empty path");
+        }
+
+        @Override public int nodes() {
+            return 0;
+        }
+
+        @Override public double distance() {
+            return 0;
+        }
+
+        @Override public double weight() {
+            return 0;
+        }
+
+        @Override public String toString() {
+            return "NOT_FOUND";
+        }
+
+        @Override public List<Integer> toNodeList() {
+            return Collections.EMPTY_LIST;
+        }
+
+        @Override public void reverseOrder() {
+        }
+
+        @Override public boolean equals(Object obj) {
+            return this == obj;
+        }
+    };
     protected final static double INIT_VALUE = Double.MAX_VALUE;
     protected Graph g;
     protected WeightCalculation weightCalculation;
@@ -66,7 +103,7 @@ public class Path {
         nodeIds.reverse();
     }
 
-    public int getFromLoc() {
+    public int getFromNode() {
         return nodeIds.get(0);
     }
 
@@ -91,7 +128,7 @@ public class Path {
     }
 
     @Override public String toString() {
-        return "weight:" + weight() + ", locations:" + nodeIds.size();
+        return "weight:" + weight() + ", nodes:" + nodeIds.size();
     }
 
     public String toDetailsString() {
@@ -122,7 +159,7 @@ public class Path {
     public Path extract() {
         if (weight < INIT_VALUE)
             return this;
-        return null;
+        return NOT_FOUND;
     }
 
     /**

@@ -43,7 +43,7 @@ public class PathBidirRef extends Path {
     public Path extract() {
         weight = 0;
         if (edgeFrom == null || edgeTo == null)
-            return null;
+            return NOT_FOUND;
 
         int from = GraphUtility.getToNode(g, edgeFrom.edge, edgeFrom.endNode);
         int to = GraphUtility.getToNode(g, edgeTo.edge, edgeTo.endNode);

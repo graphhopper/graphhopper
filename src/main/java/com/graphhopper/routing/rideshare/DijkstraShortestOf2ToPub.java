@@ -131,7 +131,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         }
 
         Path p = shortest.extract();
-        if (!pubTransport.contains(p.getFromLoc()))
+        if (!pubTransport.contains(p.getFromNode()))
             p.reverseOrder();
 
         return p;

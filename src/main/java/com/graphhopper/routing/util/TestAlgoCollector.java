@@ -27,9 +27,9 @@ public class TestAlgoCollector {
 
     public List<String> list = new ArrayList<String>();
 
-    public TestAlgoCollector assertNull(RoutingAlgorithm algo, int from, int to) {
+    public TestAlgoCollector assertNotFound(RoutingAlgorithm algo, int from, int to) {
         Path p = algo.clear().calcPath(from, to);
-        if (p != null) {
+        if (p != Path.NOT_FOUND) {
             synchronized (this) {
                 list.add(algo + " returns value where null is expected. " + "from:" + from + ", to:" + to);
             }
@@ -39,7 +39,7 @@ public class TestAlgoCollector {
 
     public TestAlgoCollector assertDistance(RoutingAlgorithm algo, int from, int to, double distance, int locations) {
         Path p = algo.clear().calcPath(from, to);
-        if (p == null) {
+        if (p == Path.NOT_FOUND) {
             list.add(algo + " returns no path. from:" + from + ", to:" + to);
             return this;
         } else if (Math.abs(p.distance() - distance) > 1e-2)

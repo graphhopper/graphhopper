@@ -15,7 +15,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.PrepareLongishPathShortcuts;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;

@@ -30,10 +30,10 @@ public class PathTest {
         p.add(1);
         p.add(3);
         p.add(2);
-        assertEquals(1, p.getFromLoc());
+        assertEquals(1, p.getFromNode());
 
         p.reverseOrder();
-        assertEquals(2, p.getFromLoc());
+        assertEquals(2, p.getFromNode());
     }
 
     @Test public void testAnd() {

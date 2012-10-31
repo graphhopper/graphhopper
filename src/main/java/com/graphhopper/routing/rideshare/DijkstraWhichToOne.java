@@ -131,10 +131,9 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         }
 
         Path p = shortest.extract();
-        if (p == null)
-            return null;
-
-        if (!pubTransport.contains(p.getFromLoc()))
+        if (p == Path.NOT_FOUND)
+            return p;
+        if (!pubTransport.contains(p.getFromNode()))
             p.reverseOrder();
 
         return p;
@@ -145,7 +144,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
             TIntObjectMap<EdgeEntry> shortestDistMap, boolean out) {
 
         int currVertexFrom = curr.endNode;
-        EdgeIterator iter = GraphUtility.getEdges(graph, currVertexFrom, out);        
+        EdgeIterator iter = GraphUtility.getEdges(graph, currVertexFrom, out);
         while (iter.next()) {
             int tmpV = iter.node();
             if (visitedMain.contains(tmpV))

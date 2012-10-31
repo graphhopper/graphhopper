@@ -28,7 +28,9 @@ import com.graphhopper.util.NotThreadSafe;
 public interface RoutingAlgorithm {
 
     /**
-     * Calculates the fastest or shortest path
+     * Calculates the fastest or shortest path.
+     *
+     * @return Path.NOT_FOUND if nothing was found
      */
     Path calcPath(int from, int to);
 

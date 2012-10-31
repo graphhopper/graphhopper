@@ -61,6 +61,6 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
         DijkstraBidirectionRef db = new DijkstraBidirectionRef(g);
         db.addSkipNode(1);
         Path p = db.calcPath(0, 2);
-        assertNull(p);
+        assertEquals(Path.NOT_FOUND, p);
     }
 }

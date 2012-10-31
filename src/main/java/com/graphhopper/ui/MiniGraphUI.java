@@ -28,16 +28,13 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.trees.QuadTree;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Collection;
 import java.util.Random;
 import javax.swing.*;
 import org.slf4j.Logger;
@@ -194,7 +191,7 @@ public class MiniGraphUI {
                 sw.stop();
 
                 // if directed edges
-                if (path == null) {
+                if (path == Path.NOT_FOUND) {
                     logger.warn("path not found! direction not valid?");
                     return;
                 }
@@ -235,7 +232,7 @@ public class MiniGraphUI {
     }
 
     private Path plotPath(Path tmpPath, Graphics2D g2, int w) {
-        if (tmpPath == null) {
+        if (tmpPath == Path.NOT_FOUND) {
             System.out.println("nothing found " + w);
             return tmpPath;
         }

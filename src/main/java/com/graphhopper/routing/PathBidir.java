@@ -48,7 +48,7 @@ public class PathBidir extends Path {
     public Path extract() {
         weight = 0;
         if (fromRef < 0 || toRef < 0)
-            return null;
+            return NOT_FOUND;
 
         if (switchWrapper) {
             int tmp = fromRef;

@@ -15,7 +15,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.rideshare.DijkstraShortestOf2ToPub;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.WeightCalculation;

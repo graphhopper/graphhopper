@@ -83,11 +83,11 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
             visited.add(neighborNode);
             currEdge = heap.poll();
             if (currEdge == null)
-                return null;
+                return Path.NOT_FOUND;
         }
 
         if (currEdge.endNode != to)
-            return null;
+            return Path.NOT_FOUND;
 
         return extractPath(currEdge);
     }
