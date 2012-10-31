@@ -18,7 +18,7 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import java.io.File;

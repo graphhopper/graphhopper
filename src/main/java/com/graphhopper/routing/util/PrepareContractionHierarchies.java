@@ -27,6 +27,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.StopWatch;
@@ -58,8 +59,8 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     private WeightedNode refs[];
     private TIntArrayList originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
-    private static int scOneDir = CarStreetType.flags(0, false);
-    private static int scBothDir = CarStreetType.flags(0, true);
+    static final int scOneDir = CarStreetType.flags(0, false);
+    static final int scBothDir = CarStreetType.flags(0, true);
     private Map<Long, Shortcut> shortcuts = new HashMap<Long, Shortcut>();
     private EdgeLevelFilterCH edgeFilter;
     private OneToManyDijkstraCH algo;
@@ -103,7 +104,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         // in CH the flags will be ignored (calculating the new flags for the shortcuts is impossible)
         // also several shortcuts would be necessary with the different modes (e.g. fastest and shortest)
         // so calculate the weight and store this as distance, then use only distance instead of getWeight
-        EdgeSkipIterator iter = g.getAllEdges();
+        EdgeWriteIterator iter = g.getAllEdges();
         int c = 0;
         while (iter.next()) {
             c++;
@@ -273,7 +274,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         // we can use distance instead of weight, see prepareEdges where distance is overwritten by weight!
         List<NodeCH> goalNodes = new ArrayList<NodeCH>();
         shortcuts.clear();
-        EdgeSkipIterator iter1 = g.getIncoming(v);
+        EdgeWriteIterator iter1 = g.getIncoming(v);
         // TODO PERFORMANCE collect outgoing nodes (goalnodes) only once and just skip u
         while (iter1.next()) {
             int u = iter1.node();
@@ -285,7 +286,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
             // one-to-many shortest path
             goalNodes.clear();
-            EdgeSkipIterator iter2 = g.getOutgoing(v);
+            EdgeWriteIterator iter2 = g.getOutgoing(v);
             double maxWeight = 0;
             while (iter2.next()) {
                 int w = iter2.node();

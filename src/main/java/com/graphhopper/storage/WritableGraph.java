@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Copyright 2012 Peter Karich
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,33 +15,27 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.EdgeWriteIterator;
 
 /**
- * Extended graph interface which supports storing and retrieving the level for a node.
+ * Interface to allow writing to an edge via the EdgeWriteIterator.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
-public interface LevelGraph extends WritableGraph {
-
-    void setLevel(int index, int level);
-
-    int getLevel(int index);
-
-    EdgeSkipIterator shortcut(int a, int b, double distance, int flags, int shortcutNode);
+public interface WritableGraph extends Graph {
 
     @Override
-    EdgeSkipIterator getEdgeProps(int edgeId, int endNode);
+    EdgeWriteIterator getEdgeProps(int edgeId, int endNode);
 
     @Override
-    EdgeSkipIterator getEdges(int nodeId);
+    EdgeWriteIterator getEdges(int nodeId);
 
     @Override
-    EdgeSkipIterator getIncoming(int nodeId);
+    EdgeWriteIterator getIncoming(int nodeId);
 
     @Override
-    EdgeSkipIterator getOutgoing(int nodeId);
+    EdgeWriteIterator getOutgoing(int nodeId);
 
     @Override
-    EdgeSkipIterator getAllEdges();
+    EdgeWriteIterator getAllEdges();
 }

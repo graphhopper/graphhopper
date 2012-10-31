@@ -19,6 +19,7 @@ import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.map.hash.TIntIntHashMap;
@@ -31,7 +32,7 @@ import gnu.trove.set.hash.TIntHashSet;
  *
  * @author Peter Karich
  */
-public class GraphStorage implements Graph, Storable {
+public class GraphStorage implements WritableGraph, Storable {
 
     protected static final int EMPTY_LINK = 0;
     private static final float INC_FACTOR = 1.5f;
@@ -273,12 +274,12 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public EdgeIterator getEdgeProps(int edgeId, final int endNode) {
+    public EdgeWriteIterator getEdgeProps(int edgeId, final int endNode) {
         return new SingleEdge(edgeId, endNode);
     }
 
     // TODO create a new constructor and reuse EdgeIterable -> new EdgeIterable(edgeId, END node)
-    protected class SingleEdge implements EdgeIterator {
+    protected class SingleEdge implements EdgeWriteIterator {
 
         protected long edgePointer;
         protected int endNode;
@@ -314,19 +315,28 @@ public class GraphStorage implements Graph, Storable {
             return getDist(edgePointer);
         }
 
+        @Override public void distance(double dist) {
+            edges.setInt(edgePointer + I_DIST, distToInt(dist));
+        }
+
         @Override public int flags() {
             int flags = edges.getInt(edgePointer + I_FLAGS);
             if (endNode != edges.getInt(edgePointer + I_NODEB))
                 flags = CarStreetType.swapDirection(flags);
             return flags;
         }
+
+        @Override public void flags(int flags) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
     }
 
-    public EdgeIterator getAllEdges() {
+    @Override
+    public EdgeWriteIterator getAllEdges() {
         return new AllEdgeIterator();
     }
 
-    protected class AllEdgeIterator implements EdgeIterator {
+    protected class AllEdgeIterator implements EdgeWriteIterator {
 
         protected long edgePointer = 0;
         private int maxEdges = (edgeCount + 1) * edgeEntrySize;
@@ -352,9 +362,17 @@ public class GraphStorage implements Graph, Storable {
             return getDist(edgePointer);
         }
 
+        @Override public void distance(double dist) {
+            edges.setInt(edgePointer + I_DIST, distToInt(dist));
+        }
+
         @Override
         public int flags() {
             return edges.getInt(edgePointer + I_FLAGS);
+        }
+
+        @Override public void flags(int flags) {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
@@ -364,21 +382,21 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public EdgeIterator getEdges(int node) {
+    public EdgeWriteIterator getEdges(int node) {
         return new EdgeIterable(node, true, true);
     }
 
     @Override
-    public EdgeIterator getIncoming(int node) {
+    public EdgeWriteIterator getIncoming(int node) {
         return new EdgeIterable(node, true, false);
     }
 
     @Override
-    public EdgeIterator getOutgoing(int node) {
+    public EdgeWriteIterator getOutgoing(int node) {
         return new EdgeIterable(node, false, true);
     }
 
-    protected class EdgeIterable implements EdgeIterator {
+    protected class EdgeIterable implements EdgeWriteIterator {
 
         long edgePointer;
         boolean in;
@@ -470,6 +488,18 @@ public class GraphStorage implements Graph, Storable {
 
         @Override public int edge() {
             return edgeId;
+        }
+        
+        @Override public void distance(double dist) {
+            distance = dist;
+            edges.setInt(edgePointer + I_DIST, distToInt(dist));
+        }
+
+        @Override public void flags(int fl) {
+            flags = fl;
+            int nep = edges.getInt(getLinkPosInEdgeArea(fromNode, nodeId, edgePointer));
+            int neop = edges.getInt(getLinkPosInEdgeArea(nodeId, fromNode, edgePointer));
+            writeEdge((int) (edgePointer / edgeEntrySize), fromNode, nodeId, nep, neop, flags, distance);
         }
     }
 

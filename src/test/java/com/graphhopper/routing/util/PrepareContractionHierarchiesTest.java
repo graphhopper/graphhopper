@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich info@jetsli.de
+ *  Copyright 2012 Peter Karich
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.PrepareContractionHierarchies.NodeCH;
 import com.graphhopper.routing.util.PrepareContractionHierarchies.Shortcut;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -112,10 +113,7 @@ public class PrepareContractionHierarchiesTest {
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         prepare.doWork();
-        // PrepareLongishPathShortcutsTest.printEdges(g);
         assertEquals(old, GraphUtility.count(g.getAllEdges()));
-//        assertEquals(3, GraphUtility.count(g.getEdges(5)));
-//        assertEquals(4, GraphUtility.count(g.getEdges(0)));
     }
 
     @Test
@@ -163,9 +161,7 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.toNodeList());
     }
 
-    @Test
-    public void testRoundaboutUnpacking() {
-        LevelGraph g = createGraph();
+    void initRoundaboutGraph(Graph g) {
         //              roundabout:
         //16-0-9-10--11   12<-13
         //    \       \  /      \
@@ -214,7 +210,12 @@ public class PrepareContractionHierarchiesTest {
         g.edge(27, 5, 1, true);
         g.edge(25, 26, 1, false);
         g.edge(26, 25, 1, false);
+    }
 
+    @Test
+    public void testRoundaboutUnpacking() {
+        LevelGraph g = createGraph();
+        initRoundaboutGraph(g);
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         prepare.doWork();
@@ -239,10 +240,11 @@ public class PrepareContractionHierarchiesTest {
         g.setLevel(5, 5);
         g.setLevel(7, 7);
         g.setLevel(8, 8);
-
-        g.shortcut(1, 4, 2, CarStreetType.flagsDefault(true), 3);
-        g.shortcut(4, 6, 2, CarStreetType.flagsDefault(false), 5);
-        g.shortcut(6, 4, 3, CarStreetType.flagsDefault(false), 8);
+        
+        g.shortcut(1, 4, 2, PrepareContractionHierarchies.scBothDir, 3);
+        int f = PrepareContractionHierarchies.scOneDir;
+        g.shortcut(4, 6, 2, f, 5);
+        g.shortcut(6, 4, 3, f, 8);
 
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g).initFromGraph();
         // there should be two different shortcuts for both directions!
@@ -250,9 +252,7 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(2, sc.size());
     }
 
-    @Test
-    public void testUnpackingOrder() {
-        LevelGraph g = createGraph();
+    void initUnpackingGraph(LevelGraph g) {
         g.edge(10, 0, 1, false);
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
@@ -260,11 +260,12 @@ public class PrepareContractionHierarchiesTest {
         g.edge(3, 4, 1, false);
         g.edge(4, 5, 1, false);
         g.edge(5, 6, 1, false);
-        g.shortcut(0, 2, 2, CarStreetType.flagsDefault(false), 1);
-        g.shortcut(0, 3, 3, CarStreetType.flagsDefault(false), 2);
-        g.shortcut(0, 4, 4, CarStreetType.flagsDefault(false), 3);
-        g.shortcut(0, 5, 5, CarStreetType.flagsDefault(false), 4);
-        g.shortcut(0, 6, 6, CarStreetType.flagsDefault(false), 5);
+        int f = PrepareContractionHierarchies.scOneDir;
+        g.shortcut(0, 2, 2, f, 1);
+        g.shortcut(0, 3, 3, f, 2);
+        g.shortcut(0, 4, 4, f, 3);
+        g.shortcut(0, 5, 5, f, 4);
+        g.shortcut(0, 6, 6, f, 5);
         g.setLevel(0, 10);
         g.setLevel(6, 9);
         g.setLevel(5, 8);
@@ -273,9 +274,29 @@ public class PrepareContractionHierarchiesTest {
         g.setLevel(2, 5);
         g.setLevel(1, 4);
         g.setLevel(10, 3);
+    }
+
+    @Test
+    public void testUnpackingOrder() {
+        LevelGraph g = createGraph();
+        initUnpackingGraph(g);
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(10, 6);
+        assertEquals(7, p.distance(), 1e-5);
         assertEquals(Arrays.asList(10, 0, 1, 2, 3, 4, 5, 6), p.toNodeList());
     }
+
+    // TODO NOW
+//    @Test
+//    public void testUnpackingOrder_Fastest() {
+//        LevelGraph g = createGraph();
+//        initUnpackingGraph(g);
+//        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().
+//                setGraph(g).setType(FastestCalc.DEFAULT);
+//        RoutingAlgorithm algo = prepare.createAlgo();
+//        Path p = algo.calcPath(10, 6);
+//        assertEquals(7, p.distance(), 1e-5);
+//        assertEquals(Arrays.asList(10, 0, 1, 2, 3, 4, 5, 6), p.toNodeList());
+//    }
 }

@@ -42,7 +42,7 @@ public class EdgeSkipIteratorTest {
 
         assertEquals(4, GraphUtility.countEdges(g));
         assertEquals(1, GraphUtility.count(g.getOutgoing(1)));
-        EdgeSkipIterator iter = g.getEdges(0);
+        EdgeWriteIterator iter = g.getEdges(0);
         assertTrue(iter.next());
         assertEquals(1, iter.node());
         assertEquals(CarStreetType.flags(10, true), iter.flags());

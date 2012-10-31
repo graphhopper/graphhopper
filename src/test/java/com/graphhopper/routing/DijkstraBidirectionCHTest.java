@@ -97,8 +97,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.edge(6, 7, 1, true);
 
         // simulate preparation
-        g2.shortcut(0, 5, 2.8, CarStreetType.flagsDefault(true), 2);
-        g2.shortcut(0, 7, 4.2, CarStreetType.flagsDefault(true), 5);
+        g2.shortcut(0, 5, 2.8, CarStreetType.flags(0, true), 2);
+        g2.shortcut(0, 7, 4.2, CarStreetType.flags(0, true), 5);
         g2.setLevel(1, 0);
         g2.setLevel(3, 1);
         g2.setLevel(4, 2);

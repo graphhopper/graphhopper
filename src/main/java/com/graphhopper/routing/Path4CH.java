@@ -20,6 +20,7 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.EdgeWriteIterator;
 
 /**
  * Recursivly unpack shortcuts.
@@ -48,7 +49,6 @@ public class Path4CH extends Path4Shortcuts {
     }
 
     private void expand(int from, int to, int skippedNode) {
-        // TODO smaller or equal to 0
         if (skippedNode < 0)
             return;
 

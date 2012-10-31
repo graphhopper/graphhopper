@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich
+ *  Copyright 2012 Peter Karich 
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,16 +13,27 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.coll;
+package com.graphhopper.util;
 
 /**
+ * Support for retrieving the skipped node and updating methods for distance and flags.
+ *
+ * Current usage
+ * <pre>
+ * // use a graph with level support like LevelGraphStorage
+ * EdgeWriteIterator iter = (EdgeWriteIterator) graph.getEdges(n);
+ * while(iter.next()) {
+ *   iter.distance(19.0);
+ *   ...
+ * }
+ * </pre>
  *
  * @author Peter Karich
  */
-public class IntIntBinHeapTest extends AbstractBinHeapTest {
+public interface EdgeWriteIterator extends EdgeIterator {
 
-    @Override
-    public BinHeapWrapper<Integer, Number> createHeap(int capacity) {
-        return (BinHeapWrapper) new IntIntBinHeap(capacity);
-    }
+    // update
+    void distance(double dist);
+
+    void flags(int flags);
 }
