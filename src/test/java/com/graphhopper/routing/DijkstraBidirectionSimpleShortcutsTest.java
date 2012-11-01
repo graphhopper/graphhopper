@@ -17,8 +17,8 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.EdgeLevelFilter;
-import com.graphhopper.routing.util.PrepareLongishPathShortcuts;
-import com.graphhopper.routing.util.PrepareLongishPathShortcutsTest;
+import com.graphhopper.routing.util.PrepareSimpleShortcuts;
+import com.graphhopper.routing.util.PrepareSimpleShortcutsTest;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
- * TODO merge with PrepareLongishPathShortcutsTest?
+ * TODO merge with PrepareSimpleShortcutsTest?
  *
  * @author Peter Karich
  */
@@ -40,7 +40,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     }
 
     RoutingAlgorithm createAlgoWithFilterAndPathUnpacking(final LevelGraph lg) {
-        return new PrepareLongishPathShortcuts().setGraph(lg).createAlgo();
+        return new PrepareSimpleShortcuts().setGraph(lg).createAlgo();
     }
 
     LevelGraph createGraph(int size) {
@@ -54,11 +54,12 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         LevelGraph g2 = createGraph(6);
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
         // store skipped first node along with the shortcut
-        new PrepareLongishPathShortcuts().setGraph(g2).doWork();
+        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g2).doWork();
+        // TODO NOW why only one shortcut? 
+        assertEquals(1, prepare.getShortcuts());
         // use that node to correctly unpack the shortcut
         Path p = createAlgoWithFilterAndPathUnpacking(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-6);
-        assertEquals(p.toString(), 6, p.nodes());
         assertEquals(Arrays.asList(0, 7, 6, 8, 3, 4), p.toNodeList());
     }
 
@@ -66,48 +67,47 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     public void testShortcutNoUnpacking() {
         LevelGraph g2 = createGraph(6);
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
-        new PrepareLongishPathShortcuts().setGraph(g2).doWork();
+        new PrepareSimpleShortcuts().setGraph(g2).doWork();
         Path p = createAlgoWithFilter(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-6);
-        assertEquals(p.toString(), 5, p.nodes());
         assertEquals(Arrays.asList(0, 7, 6, 3, 4), p.toNodeList());
     }
 
     @Test
     public void testDirected() {
-        LevelGraph g = createGraph(30);
+        LevelGraphStorage g = (LevelGraphStorage) createGraph(30);
         // see 49.9052,10.35491
+        //
         // =19-20-21-22=
 
-        g.edge(18, 19, 1, true);
-        g.edge(17, 19, 1, true);
+        g.newEdge(18, 19, 1, true);
+        g.newEdge(17, 19, 1, true);
 
-        g.edge(19, 20, 1, false);
-        g.edge(20, 21, 1, false);
-        g.edge(21, 22, 1, false);
+        EdgeSkipIterator iter = g.newEdge(19, 20, 1, false);
+        g.newEdge(20, 21, 1, false);
+        g.newEdge(21, 22, 1, false);
 
-        g.edge(22, 23, 1, true);
-        g.edge(22, 24, 1, true);
+        g.newEdge(22, 23, 1, true);
+        g.newEdge(22, 24, 1, true);
 
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
+        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(1, prepare.getShortcuts());
-        EdgeSkipIterator iter = (EdgeSkipIterator) GraphUtility.until(g.getEdges(19), 22);
-        assertEquals(20, iter.skippedNode());
+        EdgeSkipIterator iter2 = (EdgeSkipIterator) GraphUtility.until(g.getEdges(19), 22);
+        assertEquals(iter.edge(), iter2.skippedEdge());
         Path p = new DijkstraBidirectionRef(g) {
             @Override protected PathBidirRef createPath() {
                 return new Path4Shortcuts(graph, weightCalc);
             }
         }.calcPath(17, 23);
-        assertEquals(6, p.nodes());
         assertEquals(Arrays.asList(17, 19, 20, 21, 22, 23), p.toNodeList());
     }
 
     @Test
     public void testDirected1() {
         LevelGraph g = createGraph(30);
-        PrepareLongishPathShortcutsTest.initDirected1(g);
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
+        PrepareSimpleShortcutsTest.initDirected1(g);
+        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
         prepare.doWork();
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(0, 6);
@@ -120,11 +120,11 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     @Test
     public void testDirected2() {
         LevelGraph g = createGraph(30);
-        PrepareLongishPathShortcutsTest.initDirected2(g);
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
+        PrepareSimpleShortcutsTest.initDirected2(g);
+        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(1, prepare.getShortcuts());
-//        PrepareLongishPathShortcutsTest.printEdges(g);
+//        PrepareSimpleShortcutsTest.printEdges(g);
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(0, 10);
         assertEquals(10, p.distance(), 1e-6);
@@ -154,7 +154,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         g.edge(4, 9, 1, CarStreetType.flags(10, true));
         g.edge(4, 10, 1, CarStreetType.flags(50, true));
 
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
+        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         Path p = new DijkstraBidirectionRef(g) {
@@ -162,7 +162,6 @@ public class DijkstraBidirectionSimpleShortcutsTest {
                 return new Path4Shortcuts(graph, weightCalc);
             }
         }.calcPath(1, 4);
-        assertEquals(4, p.nodes());
         assertEquals(Arrays.asList(1, 2, 3, 4), p.toNodeList());
     }
 }

@@ -174,7 +174,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     // |    8  |
     // \   /   /
     //  7-6-5-/
-    static void initBiGraph(Graph graph) {
+    public static void initBiGraph(Graph graph) {
         graph.edge(0, 1, 100, true);
         graph.edge(1, 2, 1, true);
         graph.edge(2, 3, 1, true);

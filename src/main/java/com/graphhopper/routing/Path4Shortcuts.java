@@ -15,20 +15,19 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.PrepareLongishPathShortcuts;
+import com.graphhopper.routing.util.PrepareSimpleShortcuts;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
-import com.graphhopper.util.GraphUtility;
 import gnu.trove.list.array.TIntArrayList;
 
 /**
  * Unpack shortcuts of lengthy paths.
  *
- * @see PrepareLongishPathShortcuts
+ * @see PrepareSimpleShortcuts
  * @author Peter Karich,
  */
 public class Path4Shortcuts extends PathBidirRef {
@@ -48,14 +47,14 @@ public class Path4Shortcuts extends PathBidirRef {
     public void calcWeight(EdgeIterator mainIter) {
         super.calcWeight(mainIter);
         EdgeSkipIterator iter = (EdgeSkipIterator) mainIter;
-        if (iter.skippedNode() >= 0)
-            handleSkippedNode(iter);
+        if (iter.skippedEdge() >= 0)
+            handleSkippedEdge(iter);
     }
 
-    protected void handleSkippedNode(EdgeSkipIterator iter) {
+    protected void handleSkippedEdge(EdgeSkipIterator iter) {
         int from = iter.fromNode();
         int to = iter.node();
-        int flags = iter.flags();
+
         // TODO move this swapping to expand where it belongs (necessary because of usage 'getOutgoing')
         if (reverse) {
             int tmp = from;
@@ -63,33 +62,36 @@ public class Path4Shortcuts extends PathBidirRef {
             to = tmp;
         }
 
-        // find edge 'from'-skippedNode
-        boolean success = expand(from, to, iter.skippedNode(), flags, false);
+        // find edge 'from'-skippedEdge
+        boolean success = expand(from, to, iter.skippedEdge(), false);
         if (!success) {
-            // find edge 'to'-skippedNode
-            success = expand(to, from, iter.skippedNode(), flags, true);
+            // find edge 'to'-skippedEdge
+            success = expand(to, from, iter.skippedEdge(), true);
             if (!success)
-                throw new IllegalStateException("skipped node " + iter.skippedNode() + " not found for "
+                throw new IllegalStateException("skipped edge " + iter.skippedEdge() + " not found for "
                         + iter.fromNode() + "<->" + iter.node() + "? " + BitUtil.toBitString(iter.flags(), 8));
         }
     }
 
-    protected boolean expand(int from, int to, int skippedNode, int flags, boolean reverse) {
+    protected boolean expand(int from, int to, int skippedEdge, boolean reverse) {
         int avoidNode = from;
-        EdgeIterator tmpIter = GraphUtility.until(g.getOutgoing(from), skippedNode, flags);
-        if (tmpIter == EdgeIterator.EMPTY)
+        EdgeIterator tmpIter = g.getEdgeProps(skippedEdge, from);
+        if (tmpIter.isEmpty())
             return false;
 
+        int node = tmpIter.fromNode();
         TIntArrayList tmpNodeList = new TIntArrayList();
-        while (true) {
-            int node = tmpIter.node();
+        while (true) {            
             tmpNodeList.add(node);
             tmpIter = g.getEdges(node);
             tmpIter.next();
-            if (tmpIter.node() == avoidNode)
-                tmpIter.next();
-
+            if (tmpIter.node() == avoidNode) {
+                if (!tmpIter.next())
+                    throw new IllegalStateException("node should have two degree:" + node);
+            }
+            
             avoidNode = node;
+            node = tmpIter.node();
             // TODO introduce edge filter here too?
             if (((LevelGraph) g).getLevel(tmpIter.node()) >= 0 || tmpIter.node() == to)
                 break;

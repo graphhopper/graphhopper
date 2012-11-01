@@ -16,7 +16,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.shapes.BBox;
 
 /**

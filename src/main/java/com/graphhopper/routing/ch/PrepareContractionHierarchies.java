@@ -13,15 +13,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.ch;
 
 import com.graphhopper.coll.MySortedCollection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.Path4CH;
+import com.graphhopper.routing.ch.Path4CH;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.CarStreetType;
+import com.graphhopper.routing.util.EdgeLevelFilter;
+import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -46,6 +51,9 @@ import org.slf4j.LoggerFactory;
  *
  * There are several description of contraction hierarchies available. The following is one of the
  * more detailed: http://web.cs.du.edu/~sturtevant/papers/highlevelpathfinding.pdf
+ *
+ * The only difference is that we use a skipped edgeId instead of skipped nodes for faster
+ * unpacking.
  *
  * @author Peter Karich
  */
@@ -116,7 +124,6 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
     boolean prepareNodes() {
         int len = g.getNodes();
-
         // minor idea: 1. sort nodes randomly and 2. pre-init with endNode degree
         for (int node = 0; node < len; node++) {
             refs[node] = new WeightedNode(node, 0);
@@ -228,7 +235,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         int contractedNeighbors = 0;
         EdgeSkipIterator iter = g.getEdges(v);
         while (iter.next()) {
-            if (iter.skippedNode() >= 0)
+            if (iter.skippedEdge() >= 0)
                 contractedNeighbors++;
         }
 
@@ -311,16 +318,17 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
             // and successively increasing it when mean-degree of graph increases
             algo = new OneToManyDijkstraCH(g).setFilter(edgeFilter.setSkipNode(v));
             algo.setLimit(maxWeight).calcPath(u, goalNodes);
-            internalFindShortcuts(goalNodes, u, getOrigEdges(iter1.edge()));
+            internalFindShortcuts(goalNodes, u, iter1.edge());
         }
         return shortcuts.values();
     }
 
-    void internalFindShortcuts(List<NodeCH> goalNodes, int u, int uOrigEdge) {
+    void internalFindShortcuts(List<NodeCH> goalNodes, int u, int uEdgeId) {
+        int uOrigEdge = getOrigEdges(uEdgeId);        
         for (NodeCH n : goalNodes) {
             if (n.entry != null) {
                 Path p = algo.extractPath(n.entry);
-                if (p != null && p.weight() <= n.distance) {
+                if (p != Path.NOT_FOUND && p.weight() <= n.distance) {
                     // FOUND witness path, so do not add shortcut
                     continue;
                 }
@@ -332,15 +340,15 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
             // know yet the levels so we need to determine the correct direction or if both directions
             long edgeId = (long) u * refs.length + n.endNode;
             Shortcut sc = shortcuts.get(edgeId);
-            if (sc == null) {
+            if (sc == null)
                 sc = shortcuts.get((long) n.endNode * refs.length + u);
-            }
+
             // minor improvement: if (shortcuts.containsKey((long) n.endNode * refs.length + u)) 
             // then two shortcuts with the same nodes (u<->n.endNode) exists => check current shortcut against both
-
             if (sc == null || !NumHelper.equals(sc.distance, n.distance)) {
                 sc = new Shortcut(u, n.endNode, n.distance);
                 shortcuts.put(edgeId, sc);
+                sc.edge = uEdgeId;
                 sc.originalEdges = uOrigEdge + n.originalEdges;
             } else {
                 // the shortcut already exists in the current collection (different direction)
@@ -361,12 +369,12 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
             boolean updatedInGraph = false;
             EdgeSkipIterator iter = g.getOutgoing(sc.from);
             while (iter.next()) {
-                if (iter.skippedNode() >= 0
+                if (Path4CH.isValidEdge(iter.skippedEdge())
                         && iter.node() == sc.to
                         && CarStreetType.canBeOverwritten(iter.flags(), sc.flags)
                         && iter.distance() > sc.distance) {
                     iter.flags(sc.flags);
-                    iter.skippedNode(v);
+                    iter.skippedEdge(sc.edge);
                     iter.distance(sc.distance);
                     setOrigEdges(iter.edge(), sc.originalEdges);
                     updatedInGraph = true;
@@ -375,7 +383,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
             }
 
             if (!updatedInGraph) {
-                iter = g.shortcut(sc.from, sc.to, sc.distance, sc.flags, v);
+                iter = g.shortcut(sc.from, sc.to, sc.distance, sc.flags, sc.edge);
                 setOrigEdges(iter.edge(), sc.originalEdges);
                 newShorts++;
             }
@@ -528,6 +536,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
         int from;
         int to;
+        int edge;
         double distance;
         int originalEdges;
         int flags = scOneDir;

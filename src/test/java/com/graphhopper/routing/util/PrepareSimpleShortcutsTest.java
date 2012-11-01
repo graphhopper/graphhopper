@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class PrepareLongishPathShortcutsTest {
+public class PrepareSimpleShortcutsTest {
 
     static LevelGraph createGraph(int size) {
         LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("priog", false));
@@ -52,7 +52,7 @@ public class PrepareLongishPathShortcutsTest {
         // assert additional 0, 5
         assertFalse(GraphUtility.contains(g.getEdges(0), 5));
         assertFalse(GraphUtility.contains(g.getEdges(5), 0));
-        new PrepareLongishPathShortcuts().setGraph(g).doWork();
+        new PrepareSimpleShortcuts().setGraph(g).doWork();
         assertTrue(GraphUtility.contains(g.getEdges(0), 5));
         EdgeIterator iter = GraphUtility.until(g.getEdges(0), 5);
         assertEquals(11, iter.distance(), 1e-5);
@@ -86,7 +86,7 @@ public class PrepareLongishPathShortcutsTest {
         // assert 0->5 but not 5->0
         assertFalse(GraphUtility.contains(g.getEdges(0), 5));
         assertFalse(GraphUtility.contains(g.getEdges(5), 0));
-        new PrepareLongishPathShortcuts().setGraph(g).doWork();
+        new PrepareSimpleShortcuts().setGraph(g).doWork();
         assertTrue(GraphUtility.contains(g.getOutgoing(0), 5));
         assertFalse(GraphUtility.contains(g.getOutgoing(5), 0));
     }
@@ -99,16 +99,16 @@ public class PrepareLongishPathShortcutsTest {
         g.edge(2, 1, 10, false);
         g.edge(3, 0, 10, false);
 
-        assertFalse(new PrepareLongishPathShortcuts().setGraph(g).has1InAnd1Out(2));
-        assertTrue(new PrepareLongishPathShortcuts().setGraph(g).has1InAnd1Out(0));
-        assertFalse(new PrepareLongishPathShortcuts().setGraph(g).has1InAnd1Out(1));
+        assertFalse(new PrepareSimpleShortcuts().setGraph(g).has1InAnd1Out(2));
+        assertTrue(new PrepareSimpleShortcuts().setGraph(g).has1InAnd1Out(0));
+        assertFalse(new PrepareSimpleShortcuts().setGraph(g).has1InAnd1Out(1));
     }
 
     @Test
     public void testDirectedBug() {
         LevelGraph g = createGraph(30);
         initDirected1(g);
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
+        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         assertEquals(-1, g.getLevel(5));
@@ -127,7 +127,7 @@ public class PrepareLongishPathShortcutsTest {
         g.edge(0, 1, 4, true);
         g.edge(0, 2, 10, true);
         g.edge(0, 3, 10, true);
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
+        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(0, prepare.getShortcuts());
     }
@@ -137,12 +137,12 @@ public class PrepareLongishPathShortcutsTest {
         LevelGraph g = createGraph(20);
         initBiGraph(g);
 
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
+        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(1, prepare.getShortcuts());
         EdgeSkipIterator iter = (EdgeSkipIterator) GraphUtility.until(g.getEdges(6), 3);
         assertEquals(40, iter.distance(), 1e-4);
-        assertEquals(8, iter.skippedNode());
+        assertEquals(9, iter.skippedEdge());
     }
 
     // 0-1-2-3-4
@@ -221,7 +221,7 @@ public class PrepareLongishPathShortcutsTest {
         g.edge(4, 3, 20, CarStreetType.flags(120, true));
         g.edge(3, 11, 1, CarStreetType.flags(30, true));
 
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
+        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
 
@@ -263,7 +263,7 @@ public class PrepareLongishPathShortcutsTest {
     @Test
     public void testIntroduceShortcuts() {
         LevelGraph g = createShortcutsGraph();
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(g);
+        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(4, prepare.getShortcuts());
 
@@ -288,7 +288,7 @@ public class PrepareLongishPathShortcutsTest {
         EdgeSkipIterator iter = g.getAllEdges();
         while (iter.next()) {
             System.out.println(iter.fromNode() + "<->" + iter.node()
-                    + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedNode()
+                    + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedEdge()
                     + ", level:" + g.getLevel(iter.fromNode()) + "->" + g.getLevel(iter.node())
                     + ", bothDir:" + CarStreetType.isBoth(iter.flags()));
         }

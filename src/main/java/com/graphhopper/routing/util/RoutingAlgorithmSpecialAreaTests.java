@@ -15,6 +15,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirection;
@@ -98,7 +99,7 @@ public class RoutingAlgorithmSpecialAreaTests {
 
     public static RoutingAlgorithm[] createAlgos(final Graph g) {
         LevelGraph graphSimpleSC = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
-        PrepareLongishPathShortcuts prepare = new PrepareLongishPathShortcuts().setGraph(graphSimpleSC);
+        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(graphSimpleSC);
         prepare.doWork();
         AStarBidirection astarSimpleSC = (AStarBidirection) prepare.createAStar();
         astarSimpleSC.setApproximation(false);
@@ -120,7 +121,7 @@ public class RoutingAlgorithmSpecialAreaTests {
             if (algo instanceof DijkstraBidirectionRef)
                 algo = new PrepareContractionHierarchies().setGraph(unterfrankenGraph).createAlgo();
             else if (algo instanceof AStarBidirection)
-                algo = new PrepareLongishPathShortcuts().setGraph(unterfrankenGraph).createAStar();
+                algo = new PrepareSimpleShortcuts().setGraph(unterfrankenGraph).createAStar();
             else
                 // level graph accepts all algorithms but normally we want to use an optimized one
                 throw new IllegalStateException("algorithm which boosts query time for levelgraph not found " + algo);

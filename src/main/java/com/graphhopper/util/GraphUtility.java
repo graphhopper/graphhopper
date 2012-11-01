@@ -124,13 +124,14 @@ public class GraphUtility {
         }
         return true;
     }
+    
 
     public static EdgeIterator until(EdgeIterator edges, int node, int flags) {
         while (edges.next()) {
             if (edges.node() == node && edges.flags() == flags)
                 return edges;
         }
-        return EdgeIterator.EMPTY;
+        return EMPTY;
     }
 
     public static EdgeIterator until(EdgeIterator edges, int node, double distance) {
@@ -138,7 +139,7 @@ public class GraphUtility {
             if (edges.node() == node && edges.distance() == distance)
                 return edges;
         }
-        return EdgeIterator.EMPTY;
+        return EMPTY;
     }
 
     public static EdgeIterator until(EdgeIterator edges, int node) {
@@ -146,7 +147,7 @@ public class GraphUtility {
             if (edges.node() == node)
                 return edges;
         }
-        return EdgeIterator.EMPTY;
+        return EMPTY;
     }
 
     /**
@@ -176,7 +177,7 @@ public class GraphUtility {
         EdgeSkipIterator iter = g.getOutgoing(nodeId);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next()) {
-            str += "  ->" + iter.node() + "(" + iter.skippedNode() + " " + iter.edge() + ") \t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
+            str += "  ->" + iter.node() + "(" + iter.skippedEdge() + " " + iter.edge() + ") \t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
         }
         return str;
     }
@@ -305,6 +306,53 @@ public class GraphUtility {
             EdgeIterator iterTo = g.getEdgeProps(edge, endNode);
             return iterTo.node();
         }
-        return endNode;
+        return endNode;        
     }
+        
+    public static EdgeSkipIterator EMPTY = new EdgeSkipIterator() {
+
+        @Override public int skippedEdge() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public void skippedEdge(int node) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public void distance(double dist) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public void flags(int flags) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public boolean next() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public int edge() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public int fromNode() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public int node() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public double distance() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public int flags() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public boolean isEmpty() {
+            return true;
+        }    
+    };
 }

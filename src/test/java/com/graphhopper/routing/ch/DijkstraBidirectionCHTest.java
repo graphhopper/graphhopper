@@ -13,16 +13,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper.routing.ch;
 
+import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarStreetType;
-import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.PrepareContractionHierarchies;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.EdgeSkipIterator;
 import java.io.IOException;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -81,24 +83,24 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
     @Test
     public void testPathRecursiveUnpacking() {
-        LevelGraph g2 = createGraph(6);
+        LevelGraphStorage g2 = (LevelGraphStorage) createGraph(6);
 
-        g2.edge(0, 1, 1, true);
-        g2.edge(0, 2, 1.4, true);
-        g2.edge(1, 2, 1, true);
-        g2.edge(1, 3, 3, true);
-        g2.edge(2, 3, 1, true);
-        g2.edge(4, 3, 1, true);
-        g2.edge(2, 5, 1.4, true);
-        g2.edge(3, 5, 1, true);
-        g2.edge(5, 6, 1, true);
-        g2.edge(4, 6, 1, true);
-        g2.edge(5, 7, 1.4, true);
-        g2.edge(6, 7, 1, true);
+        g2.newEdge(0, 1, 1, true);
+        EdgeSkipIterator iter = g2.newEdge(0, 2, 1.4, true);
+        g2.newEdge(1, 2, 1, true);
+        g2.newEdge(1, 3, 3, true);
+        g2.newEdge(2, 3, 1, true);
+        g2.newEdge(4, 3, 1, true);
+        g2.newEdge(2, 5, 1.4, true);
+        g2.newEdge(3, 5, 1, true);
+        g2.newEdge(5, 6, 1, true);
+        g2.newEdge(4, 6, 1, true);
+        g2.newEdge(5, 7, 1.4, true);
+        g2.newEdge(6, 7, 1, true);
 
         // simulate preparation
-        g2.shortcut(0, 5, 2.8, CarStreetType.flags(0, true), 2);
-        g2.shortcut(0, 7, 4.2, CarStreetType.flags(0, true), 5);
+        EdgeSkipIterator iter2 = g2.shortcut(0, 5, 2.8, CarStreetType.flags(0, true), iter.edge());
+        g2.shortcut(0, 7, 4.2, CarStreetType.flags(0, true), iter2.edge());
         g2.setLevel(1, 0);
         g2.setLevel(3, 1);
         g2.setLevel(4, 2);

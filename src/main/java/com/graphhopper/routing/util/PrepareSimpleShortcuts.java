@@ -35,17 +35,17 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class PrepareLongishPathShortcuts implements AlgorithmPreparation {
+public class PrepareSimpleShortcuts implements AlgorithmPreparation {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private LevelGraph g;
     private int newShortcuts;
     private boolean prepared = false;
 
-    public PrepareLongishPathShortcuts() {
+    public PrepareSimpleShortcuts() {
     }
 
-    @Override public PrepareLongishPathShortcuts setGraph(Graph lg) {
+    @Override public PrepareSimpleShortcuts setGraph(Graph lg) {
         g = (LevelGraph) lg;
         return this;
     }
@@ -58,7 +58,7 @@ public class PrepareLongishPathShortcuts implements AlgorithmPreparation {
      * Create short cuts to skip 2 degree nodes and make graph traversal for routing more efficient
      */
     @Override
-    public PrepareLongishPathShortcuts doWork() {
+    public PrepareSimpleShortcuts doWork() {
         newShortcuts = 0;
         int locs = g.getNodes();
         StopWatch sw = new StopWatch().start();
@@ -71,10 +71,10 @@ public class PrepareLongishPathShortcuts implements AlgorithmPreparation {
             MAIN:
             while (iter.next()) {
                 // while iterating new shortcuts could have been introduced. ignore them!
-                if (iter.skippedNode() >= 0)
+                if (iter.skippedEdge() >= 0)
                     continue;
 
-                int firstSkippedNode = iter.node();
+                int firstSkippedEdge = iter.edge();
                 int flags = iter.flags();
                 int skip = startNode;
                 int currentNode = iter.node();
@@ -110,18 +110,19 @@ public class PrepareLongishPathShortcuts implements AlgorithmPreparation {
                     continue;
 
                 // found shortcut but check if an edge already exists which is shorter than the shortcut
+                // -> TODO run shortest path algorithm like in CH (instead a simple edge check)
                 EdgeSkipIterator tmpIter = g.getOutgoing(startNode);
                 EdgeIterator tmpIter2 = GraphUtility.until(tmpIter, currentNode, flags);
-                if (tmpIter2 != EdgeIterator.EMPTY) {
+                if (!tmpIter2.isEmpty()) {
                     tmpIter = (EdgeSkipIterator) tmpIter2;
                     if (tmpIter.distance() > distance) {
                         // update the distance
                         tmpIter.distance(distance);
-                        tmpIter.skippedNode(firstSkippedNode);
+                        tmpIter.skippedEdge(firstSkippedEdge);
                     }
                 } else {
                     // finally create the shortcut
-                    g.shortcut(startNode, currentNode, distance, flags, firstSkippedNode);
+                    g.shortcut(startNode, currentNode, distance, flags, firstSkippedEdge);
                     newShortcuts++;
                 }
             }

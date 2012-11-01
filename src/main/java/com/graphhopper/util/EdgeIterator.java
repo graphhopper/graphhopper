@@ -58,34 +58,7 @@ public interface EdgeIterator {
     double distance();
 
     int flags();
-    public static final int NO_EDGE = -1;
-    public static final EdgeIterator EMPTY = new EdgeIterator() {
-        @Override public int edge() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override public int fromNode() {
-            throw new UnsupportedOperationException("Not supported for EMPTY edge.");
-        }
-
-        @Override public boolean next() {
-            return false;
-        }
-
-        @Override public int node() {
-            throw new UnsupportedOperationException("Not supported for EMPTY edge.");
-        }
-
-        @Override public double distance() {
-            throw new UnsupportedOperationException("Not supported for EMPTY edge.");
-        }
-
-        @Override public int flags() {
-            throw new UnsupportedOperationException("Not supported for EMPTY edge.");
-        }
-
-        @Override public String toString() {
-            return "EMPTY EdgeIterator";
-        }
-    };
+    
+    boolean isEmpty();
+    public static final int NO_EDGE = -1;   
 }

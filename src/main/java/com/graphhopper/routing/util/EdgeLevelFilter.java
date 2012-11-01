@@ -69,4 +69,8 @@ public class EdgeLevelFilter implements EdgeIterator {
     @Override public int edge() {
         return edgeIter.edge();
     }
+
+    @Override public boolean isEmpty() {
+        return false;
+    }
 }

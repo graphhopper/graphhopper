@@ -15,20 +15,20 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeSkipIterator;
-import com.graphhopper.util.EdgeWriteIterator;
 
 /**
  * @author Peter Karich
  */
 public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
-    private final int I_SC_NODE;
+    private final int I_SKIP_EDGE;
     private final int I_LEVEL;
 
     public LevelGraphStorage(Directory dir) {
         super(dir);
-        I_SC_NODE = nextEdgeEntryIndex();
+        I_SKIP_EDGE = nextEdgeEntryIndex();
         I_LEVEL = nextNodeEntryIndex();
         initNodeAndEdgeEntrySize();
     }
@@ -47,30 +47,31 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
         return new LevelGraphStorage(dir);
     }
 
+    public EdgeSkipIterator newEdge(int a, int b, double distance, boolean bothDir) {
+        return newEdge(a, b, distance, CarStreetType.flagsDefault(bothDir));
+    }
+
+    public EdgeSkipIterator newEdge(int a, int b, double distance, int flags) {
+        return shortcut(a, b, distance, flags, -1);
+    }
+
     @Override public void edge(int a, int b, double distance, int flags) {
         shortcut(a, b, distance, flags, -1);
     }
 
-    @Override public EdgeSkipIterator shortcut(int a, int b, double distance, int flags, int shortcutNode) {
+    @Override public EdgeSkipIterator shortcut(int a, int b, double distance, int flags, int skippedEdge) {
         ensureNodeIndex(a);
         ensureNodeIndex(b);
-        return internalEdgeAdd(a, b, distance, flags, shortcutNode);
+        return internalEdgeAdd(a, b, distance, flags, skippedEdge);
     }
 
-    protected EdgeSkipIterator internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags, int shortcutNode) {
+    protected EdgeSkipIterator internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags, int skippedEdge) {
         int newOrExistingEdge = nextEdge();
         connectNewEdge(fromNodeId, newOrExistingEdge);
         connectNewEdge(toNodeId, newOrExistingEdge);
-        writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, flags, dist, shortcutNode);
+        writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, flags, dist);
+        edges.setInt((long) newOrExistingEdge * edgeEntrySize + I_SKIP_EDGE, skippedEdge);
         return new EdgeSkipIteratorImpl(newOrExistingEdge);
-    }
-
-    protected void writeEdge(int edge, int nodeThis, int nodeOther, int nextEdge,
-            int nextEdgeOther, int flags, double dist, int shortcutNode) {
-
-        super.writeEdge(edge, nodeThis, nodeOther, nextEdge,
-                nextEdgeOther, flags, dist);
-        edges.setInt((long) edge * edgeEntrySize + I_SC_NODE, shortcutNode);
     }
 
     @Override public EdgeSkipIterator getEdges(int nodeId) {
@@ -95,17 +96,22 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
             super(node, in, out);
         }
 
-        @Override public void skippedNode(int node) {
-            edges.setInt(edgePointer + I_SC_NODE, node);
+        @Override public void skippedEdge(int edgeId) {
+            edges.setInt(edgePointer + I_SKIP_EDGE, edgeId);
         }
 
-        @Override public int skippedNode() {
-            return edges.getInt(edgePointer + I_SC_NODE);
+        @Override public int skippedEdge() {
+            return edges.getInt(edgePointer + I_SKIP_EDGE);
         }
     }
 
     @Override
     public EdgeSkipIterator getEdgeProps(int edgeId, int endNode) {
+        return (EdgeSkipIterator) super.getEdgeProps(edgeId, endNode);
+    }
+
+    @Override
+    protected SingleEdge createSingleEdge(int edgeId, int endNode) {
         return new SingleLevelEdge(edgeId, endNode);
     }
 
@@ -115,12 +121,12 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
             super(edgeId, endNode);
         }
 
-        @Override public void skippedNode(int node) {
-            edges.setInt(edgePointer + I_SC_NODE, node);
+        @Override public void skippedEdge(int node) {
+            edges.setInt(edgePointer + I_SKIP_EDGE, node);
         }
 
-        @Override public int skippedNode() {
-            return edges.getInt(edgePointer + I_SC_NODE);
+        @Override public int skippedEdge() {
+            return edges.getInt(edgePointer + I_SKIP_EDGE);
         }
     }
 
@@ -131,12 +137,12 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
     public class AllEdgeSkipIterator extends AllEdgeIterator implements EdgeSkipIterator {
 
-        @Override public void skippedNode(int node) {
-            edges.setInt(edgePointer + I_SC_NODE, node);
+        @Override public void skippedEdge(int node) {
+            edges.setInt(edgePointer + I_SKIP_EDGE, node);
         }
 
-        @Override public int skippedNode() {
-            return edges.getInt(edgePointer + I_SC_NODE);
+        @Override public int skippedEdge() {
+            return edges.getInt(edgePointer + I_SKIP_EDGE);
         }
     }
 }

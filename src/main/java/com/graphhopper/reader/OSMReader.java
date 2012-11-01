@@ -21,8 +21,8 @@ import com.graphhopper.routing.util.AcceptStreet;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.PrepareLongishPathShortcuts;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.util.PrepareSimpleShortcuts;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.storage.Directory;
@@ -473,7 +473,7 @@ public class OSMReader {
 
     public OSMReader setSimpleShortcuts(boolean bool) {
         if (bool)
-            prepare = new PrepareLongishPathShortcuts();
+            prepare = new PrepareSimpleShortcuts();
         return this;
     }
 

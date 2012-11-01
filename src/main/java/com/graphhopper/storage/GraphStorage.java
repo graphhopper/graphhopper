@@ -275,9 +275,19 @@ public class GraphStorage implements WritableGraph, Storable {
 
     @Override
     public EdgeWriteIterator getEdgeProps(int edgeId, final int endNode) {
-        return new SingleEdge(edgeId, endNode);
+        SingleEdge edge = createSingleEdge(edgeId, endNode);
+        if (endNode < 0)
+            edge.endNode = edges.getInt(edge.edgePointer + I_NODEB);
+        else if (edges.getInt(edge.edgePointer + I_NODEA) != edge.endNode
+                && edges.getInt(edge.edgePointer + I_NODEB) != edge.endNode)
+            return GraphUtility.EMPTY;
+        return edge;
     }
 
+    protected SingleEdge createSingleEdge(int edgeId, final int endNode) {
+        return new SingleEdge(edgeId, endNode);
+    }
+    
     // TODO create a new constructor and reuse EdgeIterable -> new EdgeIterable(edgeId, END node)
     protected class SingleEdge implements EdgeWriteIterator {
 
@@ -307,7 +317,6 @@ public class GraphStorage implements WritableGraph, Storable {
 
         @Override
         public int node() {
-            // TODO check if equals to the stored node!
             return endNode;
         }
 
@@ -329,6 +338,10 @@ public class GraphStorage implements WritableGraph, Storable {
         @Override public void flags(int flags) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
+
+        @Override public boolean isEmpty() {
+            return false;
+        }
     }
 
     @Override
@@ -341,24 +354,20 @@ public class GraphStorage implements WritableGraph, Storable {
         protected long edgePointer = 0;
         private int maxEdges = (edgeCount + 1) * edgeEntrySize;
 
-        @Override
-        public boolean next() {
+        @Override public boolean next() {
             edgePointer += edgeEntrySize;
             return edgePointer < maxEdges;
         }
 
-        @Override
-        public int fromNode() {
+        @Override public int fromNode() {
             return edges.getInt(edgePointer + I_NODEA);
         }
 
-        @Override
-        public int node() {
+        @Override public int node() {
             return edges.getInt(edgePointer + I_NODEB);
         }
 
-        @Override
-        public double distance() {
+        @Override public double distance() {
             return getDist(edgePointer);
         }
 
@@ -366,8 +375,7 @@ public class GraphStorage implements WritableGraph, Storable {
             edges.setInt(edgePointer + I_DIST, distToInt(dist));
         }
 
-        @Override
-        public int flags() {
+        @Override public int flags() {
             return edges.getInt(edgePointer + I_FLAGS);
         }
 
@@ -375,9 +383,12 @@ public class GraphStorage implements WritableGraph, Storable {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
-        @Override
-        public int edge() {
+        @Override public int edge() {
             return (int) (edgePointer / edgeEntrySize);
+        }
+
+        @Override public boolean isEmpty() {
+            return false;
         }
     }
 
@@ -489,7 +500,7 @@ public class GraphStorage implements WritableGraph, Storable {
         @Override public int edge() {
             return edgeId;
         }
-        
+
         @Override public void distance(double dist) {
             distance = dist;
             edges.setInt(edgePointer + I_DIST, distToInt(dist));
@@ -500,6 +511,10 @@ public class GraphStorage implements WritableGraph, Storable {
             int nep = edges.getInt(getLinkPosInEdgeArea(fromNode, nodeId, edgePointer));
             int neop = edges.getInt(getLinkPosInEdgeArea(nodeId, fromNode, edgePointer));
             writeEdge((int) (edgePointer / edgeEntrySize), fromNode, nodeId, nep, neop, flags, distance);
+        }
+
+        @Override public boolean isEmpty() {
+            return false;
         }
     }
 

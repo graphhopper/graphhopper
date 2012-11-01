@@ -28,7 +28,7 @@ public interface LevelGraph extends WritableGraph {
 
     int getLevel(int index);
 
-    EdgeSkipIterator shortcut(int a, int b, double distance, int flags, int shortcutNode);
+    EdgeSkipIterator shortcut(int a, int b, double distance, int flags, int skippedEdge);
 
     @Override
     EdgeSkipIterator getEdgeProps(int edgeId, int endNode);

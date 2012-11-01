@@ -18,7 +18,6 @@ package com.graphhopper.storage;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
-import com.graphhopper.util.StopWatch;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +91,7 @@ public class DefaultStorage implements Storage {
             }
 
             EdgeIterator iter = GraphUtility.until(g.getOutgoing(fromIndex), toIndex);
-            if (iter != EdgeIterator.EMPTY) {
+            if (!iter.isEmpty()) {
                 if (flags == iter.flags() && dist > iter.distance()) {
                     // silently skip if exactly the same way and the new one would be longer
 //                    return true;

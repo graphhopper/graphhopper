@@ -484,11 +484,41 @@ public abstract class AbstractGraphTester {
         } catch (Exception ex) {
             assertTrue(false);
         }
-                
+
         try {
             gs.copyTo(someGraphImpl);
         } catch (Exception ex) {
             assertTrue(false);
         }
+    }
+
+    @Test public void testEdgeProperties() {
+        Graph someGraphImpl = createGraph(20);
+        someGraphImpl.edge(0, 1, 10, true);
+        someGraphImpl.edge(0, 2, 20, true);
+
+        // TODO edge creation should return the EdgeIterator like we do in LevelGraphStorage
+        int edgeId = 1;
+        EdgeIterator iter = someGraphImpl.getEdgeProps(edgeId, 0);
+        assertEquals(10, iter.distance(), 1e-5);
+
+        edgeId = 2;
+        iter = someGraphImpl.getEdgeProps(edgeId, 0);
+        assertEquals(2, iter.fromNode());
+        assertEquals(0, iter.node());
+        assertEquals(20, iter.distance(), 1e-5);
+
+        iter = someGraphImpl.getEdgeProps(edgeId, 2);
+        assertEquals(0, iter.fromNode());
+        assertEquals(2, iter.node());
+        assertEquals(20, iter.distance(), 1e-5);
+
+        iter = someGraphImpl.getEdgeProps(edgeId, -1);
+        assertEquals(0, iter.fromNode());
+        assertEquals(2, iter.node());
+        assertEquals(20, iter.distance(), 1e-5);
+
+        iter = someGraphImpl.getEdgeProps(edgeId, 1);
+        assertTrue(iter.isEmpty());
     }
 }

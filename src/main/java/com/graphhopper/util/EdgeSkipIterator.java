@@ -20,7 +20,7 @@ package com.graphhopper.util;
  */
 public interface EdgeSkipIterator extends EdgeWriteIterator {
 
-    int skippedNode();
+    int skippedEdge();
 
-    void skippedNode(int node);
+    void skippedEdge(int node);
 }
