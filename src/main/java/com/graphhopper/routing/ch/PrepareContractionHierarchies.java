@@ -19,7 +19,6 @@ import com.graphhopper.coll.MySortedCollection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.ch.Path4CH;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;

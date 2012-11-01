@@ -39,50 +39,58 @@ public class Path4CH extends Path4Shortcuts {
 
     @Override
     public void calcWeight(EdgeIterator mainIter) {
-        weight += weightCalculation.getWeight(mainIter);
-        distance += weightCalculation.revert(mainIter.distance(), mainIter.flags());
         handleSkippedEdge((EdgeSkipIterator) mainIter);
     }
 
     @Override
     protected void handleSkippedEdge(EdgeSkipIterator mainIter) {
-        expand(mainIter.fromNode(), mainIter.node(), mainIter.skippedEdge());
+        expandIt(mainIter, false);
     }
 
-    void expand(int from, int to, int skippedEdge) {
-        if (!isValidEdge(skippedEdge))
+    void expandIt(EdgeSkipIterator mainIter, boolean revert) {
+        int skippedEdge = mainIter.skippedEdge();
+        if (!isValidEdge(skippedEdge)) {
+            weight += weightCalculation.getWeight(mainIter);
+            distance += weightCalculation.revert(mainIter.distance(), mainIter.flags());
             return;
+        }
+        int from = mainIter.fromNode(), to = mainIter.node();
+        if (revert) {
+            int tmp = from;
+            from = to;
+            to = tmp;
+        }
 
         // 2 things:
-        // - one edge needs to be determined explicitely -> because we store only one
-        // - edgeProps can return an empty edge if the shortcuts is available for both directions
+        // - one edge needs to be determined explicitely because we store only one -> one futher branch necessary :/
+        // - getEdgeProps can return an empty edge if the shortcuts is available for both directions
         if (reverse) {
             EdgeSkipIterator iter = (EdgeSkipIterator) g.getEdgeProps(skippedEdge, from);
             if (iter.isEmpty()) {
                 iter = (EdgeSkipIterator) g.getEdgeProps(skippedEdge, to);
                 int skippedNode = iter.fromNode();
-                expand(skippedNode, to, iter.skippedEdge());
+                expandIt(iter, false);
                 add(skippedNode);
                 findSkippedNode(from, skippedNode);
             } else {
                 int skippedNode = iter.fromNode();
                 findSkippedNode(skippedNode, to);
                 add(skippedNode);
-                expand(from, skippedNode, iter.skippedEdge());
+                expandIt(iter, true);
             }
         } else {
             EdgeSkipIterator iter = (EdgeSkipIterator) g.getEdgeProps(skippedEdge, to);
             if (iter.isEmpty()) {
                 iter = (EdgeSkipIterator) g.getEdgeProps(skippedEdge, from);
                 int skippedNode = iter.fromNode();
-                expand(from, skippedNode, iter.skippedEdge());
+                expandIt(iter, true);
                 add(skippedNode);
                 findSkippedNode(skippedNode, to);
             } else {
                 int skippedNode = iter.fromNode();
                 findSkippedNode(from, skippedNode);
                 add(skippedNode);
-                expand(skippedNode, to, iter.skippedEdge());
+                expandIt(iter, false);
             }
         }
     }
@@ -90,13 +98,14 @@ public class Path4CH extends Path4Shortcuts {
     private void findSkippedNode(int from, int to) {
         EdgeSkipIterator iter = (EdgeSkipIterator) g.getOutgoing(from);
         double lowest = Double.MAX_VALUE;
-        int skip = -1;
+        int edge = -1;
         while (iter.next()) {
             if (iter.node() == to && iter.distance() < lowest) {
                 lowest = iter.distance();
-                skip = iter.skippedEdge();
+                edge = iter.edge();
             }
         }
-        expand(from, to, skip);
+        if (isValidEdge(edge))
+            expandIt((EdgeSkipIterator) g.getEdgeProps(edge, to), false);
     }
 }
