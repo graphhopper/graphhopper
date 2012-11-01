@@ -215,6 +215,10 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         return true;
     }
 
+    public int getVisited() {
+        return visitedFrom.getCardinality() + visitedTo.getCardinality();
+    }
+
     private Path checkIndenticalFromAndTo() {
         if (from == to) {
             Path p = new Path(graph, weightCalc);

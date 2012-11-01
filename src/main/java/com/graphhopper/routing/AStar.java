@@ -37,6 +37,8 @@ import java.util.PriorityQueue;
 public class AStar extends AbstractRoutingAlgorithm {
 
     private DistanceCalc dist = new DistanceCosProjection();
+    private boolean alreadyRun;
+    private MyBitSet closedSet;
 
     public AStar(Graph g) {
         super(g);
@@ -53,8 +55,17 @@ public class AStar extends AbstractRoutingAlgorithm {
         return this;
     }
 
+    @Override
+    public RoutingAlgorithm clear() {
+        alreadyRun = false;
+        return this;
+    }
+
     @Override public Path calcPath(int from, int to) {
-        MyBitSet closedSet = new MyBitSetImpl(graph.getNodes());
+        if (alreadyRun)
+            throw new IllegalStateException("Call clear before! But this class is not thread safe!");
+        alreadyRun = true;
+        closedSet = new MyBitSetImpl(graph.getNodes());
         TIntObjectMap<AStarEdge> map = new TIntObjectHashMap<AStarEdge>();
         PriorityQueue<AStarEdge> prioQueueOpenSet = new PriorityQueue<AStarEdge>();
         double toLat = graph.getLatitude(to);
@@ -114,6 +125,10 @@ public class AStar extends AbstractRoutingAlgorithm {
         path.addFrom(from);
         path.reverseOrder();
         return path;
+    }
+
+    public int getVisited() {
+        return closedSet.getCardinality();
     }
 
     public static class AStarEdge extends EdgeEntry {
