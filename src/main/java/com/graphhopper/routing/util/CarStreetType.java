@@ -137,20 +137,23 @@ public class CarStreetType {
     /**
      * A map which associates string to speed. The speed is calculated from the integer with FACTOR.
      * I.e. only 1 byte is necessary.
+     * Get some impression:
+     * http://www.itoworld.com/map/124#fullscreen
+     * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
      */
     private static class CarSpeed extends HashMap<String, Integer> {
 
         {
             // autobahn
             put("motorway", 100 / FACTOR);
-            put("motorway_link", 80 / FACTOR);
+            put("motorway_link", 70 / FACTOR);
             // bundesstraße
-            put("trunk", 80 / FACTOR);
-            put("trunk_link", 70 / FACTOR);
+            put("trunk", 70 / FACTOR);
+            put("trunk_link", 65 / FACTOR);
             // linking bigger town
-            put("primary", 70 / FACTOR);
+            put("primary", 65 / FACTOR);
             put("primary_link", 60 / FACTOR);
-            // linking canBeOverwritten towns + villages
+            // linking towns + villages
             put("secondary", 60 / FACTOR);
             put("secondary_link", 50 / FACTOR);
             // streets without middle line separation
