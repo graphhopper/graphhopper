@@ -16,7 +16,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.CarStreetType;
-import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -46,7 +46,7 @@ public class Path4ShortcutsTest {
         g.edge(2, 3, 10, true); // 3
         g.edge(3, 4, 10, true); // 4
 
-        Path4Shortcuts path = new Path4Shortcuts(g, ShortestCalc.DEFAULT);
+        Path4Shortcuts path = new Path4Shortcuts(g, ShortestCarCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(3, 3, 10);
         path.edgeFrom.parent = new EdgeEntry(2, 2, 10);
         path.edgeFrom.parent.parent = new EdgeEntry(1, 1, 10);
@@ -69,7 +69,7 @@ public class Path4ShortcutsTest {
         g.setLevel(2, -1);
         EdgeSkipIterator iter4 = g.shortcut(0, 2, 20, CarStreetType.flagsDefault(true), iter.edge()); // 4
 
-        Path4Shortcuts path = new Path4Shortcuts(g, ShortestCalc.DEFAULT);
+        Path4Shortcuts path = new Path4Shortcuts(g, ShortestCarCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(iter4.edge(), 2, 20);
         path.edgeFrom.parent = new EdgeEntry(-1, 0, 0);
         path.edgeTo = new EdgeEntry(iter3.edge(), 2, 10);
@@ -91,7 +91,7 @@ public class Path4ShortcutsTest {
         g.setLevel(2, -1);
         g.shortcut(0, 3, 30, CarStreetType.flagsDefault(true), iter.edge()); // 5
 
-        Path4Shortcuts path = new Path4Shortcuts(g, ShortestCalc.DEFAULT);
+        Path4Shortcuts path = new Path4Shortcuts(g, ShortestCarCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(5, 3, 30);
         path.edgeFrom.parent = new EdgeEntry(-1, 0, 0);
         path.edgeTo = new EdgeEntry(4, 3, 10);

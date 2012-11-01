@@ -150,7 +150,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
             if (visitedMain.contains(neighborNode))
                 continue;
 
-            double tmpWeight = weightCalc.getWeight(iter) + currWeight;
+            double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currWeight;
             int newRef = wrapper.getRef(neighborNode);
             if (newRef < 0) {
                 newRef = wrapper.add(neighborNode, tmpWeight, iter.edge());

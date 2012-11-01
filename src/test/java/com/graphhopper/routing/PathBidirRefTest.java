@@ -15,7 +15,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -38,7 +38,7 @@ public class PathBidirRefTest {
     public void testExtract() {
         Graph g = createGraph();
         g.edge(1, 2, 10, true);
-        PathBidirRef pw = new PathBidirRef(g, ShortestCalc.DEFAULT);
+        PathBidirRef pw = new PathBidirRef(g, ShortestCarCalc.DEFAULT);
         EdgeIterator iter = g.getOutgoing(1);
         iter.next();
         pw.edgeFrom = new EdgeEntry(iter.edge(), 2, 0);
@@ -56,7 +56,7 @@ public class PathBidirRefTest {
         g.edge(2, 3, 20, false);
         EdgeIterator iter = g.getOutgoing(1);
         iter.next();
-        PathBidirRef pw = new PathBidirRef(g, ShortestCalc.DEFAULT);
+        PathBidirRef pw = new PathBidirRef(g, ShortestCarCalc.DEFAULT);
         pw.edgeFrom = new EdgeEntry(iter.edge(), 2, 10);
         pw.edgeFrom.parent = new EdgeEntry(-1, 1, 0);
 

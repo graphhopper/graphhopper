@@ -50,8 +50,11 @@ public class Path4CH extends Path4Shortcuts {
     void expandIt(EdgeSkipIterator mainIter, boolean revert) {
         int skippedEdge = mainIter.skippedEdge();
         if (!isValidEdge(skippedEdge)) {
-            weight += weightCalculation.getWeight(mainIter);
-            distance += weightCalculation.revert(mainIter.distance(), mainIter.flags());
+            double dist = mainIter.distance();
+            int flags = mainIter.flags();
+            weight += weightCalculation.getWeight(dist, flags);
+            distance += weightCalculation.revert(dist, flags);
+            time += weightCalculation.getTime(dist, flags);
             return;
         }
         int from = mainIter.fromNode(), to = mainIter.node();

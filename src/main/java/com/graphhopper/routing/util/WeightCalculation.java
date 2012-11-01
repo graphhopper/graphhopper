@@ -24,11 +24,23 @@ import com.graphhopper.util.EdgeIterator;
  */
 public interface WeightCalculation {
 
-    double getWeight(EdgeIterator iter);
+    /**
+     * @return time in seconds for the specified edge
+     */
+    long getTime(double distance, int flags);
 
-    double apply(double currDistToGoal);
+    /**
+     * @return the calculated weight with the maximum velocity
+     */
+    double getMinWeight(double distance);
 
-    double apply(double currDistToGoal, int flags);
+    /**
+     * @return the calculated weight with the specified velocity
+     */
+    double getWeight(double distance, int flags);
 
+    /**
+     * @return distance from specified weight
+     */
     double revert(double weight, int flags);
 }

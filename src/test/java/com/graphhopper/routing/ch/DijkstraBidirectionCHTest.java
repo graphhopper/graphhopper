@@ -18,7 +18,6 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarStreetType;
-import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;

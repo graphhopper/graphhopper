@@ -81,15 +81,14 @@ public class AStar extends AbstractRoutingAlgorithm {
                 if (closedSet.contains(neighborNode))
                     continue;
 
-                double alreadyVisitedWeight = weightCalc.getWeight(iter) + currEdge.weightToCompare;
+                double alreadyVisitedWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currEdge.weightToCompare;
                 AStarEdge nEdge = map.get(neighborNode);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight) {
                     tmpLat = graph.getLatitude(neighborNode);
                     tmpLon = graph.getLongitude(neighborNode);
                     currWeightToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
-                    currWeightToGoal = weightCalc.apply(currWeightToGoal);
+                    currWeightToGoal = weightCalc.getMinWeight(currWeightToGoal);
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;
-
                     if (nEdge == null) {
                         nEdge = new AStarEdge(iter.edge(), neighborNode, distEstimation, alreadyVisitedWeight);
                         map.put(neighborNode, nEdge);

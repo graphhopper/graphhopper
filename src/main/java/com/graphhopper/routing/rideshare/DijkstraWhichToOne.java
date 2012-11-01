@@ -150,7 +150,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
             if (visitedMain.contains(tmpV))
                 continue;
 
-            double tmp = weightCalc.getWeight(iter) + curr.weight;
+            double tmp = weightCalc.getWeight(iter.distance(), iter.flags()) + curr.weight;
             EdgeEntry de = shortestDistMap.get(tmpV);
             if (de == null) {
                 de = new EdgeEntry(iter.edge(), tmpV, tmp);

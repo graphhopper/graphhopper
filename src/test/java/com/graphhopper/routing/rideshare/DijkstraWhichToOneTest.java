@@ -17,7 +17,6 @@ package com.graphhopper.routing.rideshare;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;

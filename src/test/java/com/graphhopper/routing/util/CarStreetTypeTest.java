@@ -60,4 +60,10 @@ public class CarStreetTypeTest {
         assertTrue(fl.isBackward());
         assertTrue(fl.isService());
     }
+
+    @Test
+    public void testTime() {
+        WeightCalculation wc = FastestCarCalc.DEFAULT;
+        assertEquals(60 * 60, wc.getTime(100, CarStreetType.flags(100, true)));
+    }
 }

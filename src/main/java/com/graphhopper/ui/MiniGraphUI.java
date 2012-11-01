@@ -22,7 +22,7 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -175,7 +175,7 @@ public class MiniGraphUI {
 
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
             // one time use the fastest path, the other time use the shortest (e.g. maximize window to switch)
-            WeightCalculation wCalc = ShortestCalc.DEFAULT;
+            WeightCalculation wCalc = ShortestCarCalc.DEFAULT;
 
             @Override public void paintComponent(Graphics2D g2) {
                 if (dijkstraFromId < 0 || dijkstraToId < 0)

@@ -21,9 +21,9 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.NodeCH;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
 import com.graphhopper.routing.util.CarStreetType;
-import com.graphhopper.routing.util.FastestCalc;
+import com.graphhopper.routing.util.FastestCarCalc;
 import com.graphhopper.routing.util.PrepareSimpleShortcutsTest;
-import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -261,13 +261,13 @@ public class PrepareContractionHierarchiesTest {
     void initUnpackingGraph(LevelGraphStorage g, WeightCalculation w) {
         double dist = 1;
         int flags = CarStreetType.flags(30, false);
-        g.edge(10, 0, w.apply(dist, flags), flags);
-        EdgeSkipIterator iter = g.newEdge(0, 1, w.apply(dist, flags), flags);
-        g.edge(1, 2, w.apply(dist, flags), flags);
-        g.edge(2, 3, w.apply(dist, flags), flags);
-        g.edge(3, 4, w.apply(dist, flags), flags);
-        g.edge(4, 5, w.apply(dist, flags), flags);
-        g.edge(5, 6, w.apply(dist, flags), flags);
+        g.edge(10, 0, w.getWeight(dist, flags), flags);
+        EdgeSkipIterator iter = g.newEdge(0, 1, w.getWeight(dist, flags), flags);
+        g.edge(1, 2, w.getWeight(dist, flags), flags);
+        g.edge(2, 3, w.getWeight(dist, flags), flags);
+        g.edge(3, 4, w.getWeight(dist, flags), flags);
+        g.edge(4, 5, w.getWeight(dist, flags), flags);
+        g.edge(5, 6, w.getWeight(dist, flags), flags);
         int f = PrepareContractionHierarchies.scOneDir;
         iter = g.shortcut(0, 2, 2, f, iter.edge());
         iter = g.shortcut(0, 3, 3, f, iter.edge());
@@ -287,7 +287,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testUnpackingOrder() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
-        WeightCalculation calc = ShortestCalc.DEFAULT;
+        WeightCalculation calc = ShortestCarCalc.DEFAULT;
         initUnpackingGraph(g, calc);
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         RoutingAlgorithm algo = prepare.setType(calc).createAlgo();
@@ -300,7 +300,7 @@ public class PrepareContractionHierarchiesTest {
     public void testUnpackingOrder_Fastest() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
-        WeightCalculation calc = FastestCalc.DEFAULT;
+        WeightCalculation calc = FastestCarCalc.DEFAULT;
         initUnpackingGraph(g, calc);
         RoutingAlgorithm algo = prepare.setType(calc).createAlgo();
         Path p = algo.calcPath(10, 6);

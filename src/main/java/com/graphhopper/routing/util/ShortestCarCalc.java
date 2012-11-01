@@ -15,25 +15,24 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.EdgeIterator;
-
 /**
  * @author Peter Karich
  */
-public class ShortestCalc implements WeightCalculation {
+public class ShortestCarCalc implements WeightCalculation {
 
-    public final static ShortestCalc DEFAULT = new ShortestCalc();
+    public final static ShortestCarCalc DEFAULT = new ShortestCarCalc();
 
-    @Override public double getWeight(EdgeIterator iter) {
-        return iter.distance();
-    }
-
-    @Override public double apply(double currDistToGoal) {
+    @Override public double getMinWeight(double currDistToGoal) {
         return currDistToGoal;
     }
 
-    @Override public double apply(double currDistToGoal, int flags) {
-        return currDistToGoal;
+    @Override
+    public long getTime(double distance, int flags) {
+        return (long) (distance * 3600 / CarStreetType.getSpeed(flags));
+    }
+
+    @Override public double getWeight(double distance, int flags) {
+        return distance;
     }
 
     @Override public double revert(double weight, int flags) {

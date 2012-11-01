@@ -31,7 +31,7 @@ import java.util.PriorityQueue;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
- * bidirectional dijkstra is far more efficient than a single direction one. The same does not apply
+ * bidirectional dijkstra is far more efficient than a single direction one. The same does not getMinWeight
  * for a bidirectional A* as the finish condition can not be so strict which leads to either
  * suboptimal paths or suboptimal node exploration (too many nodes). Still very good approximations
  * with a rougly twice times faster running time than the normal A* can be reached.
@@ -263,13 +263,13 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
-            double alreadyVisitedWeight = weightCalc.getWeight(iter) + curr.weightToCompare;
+            double alreadyVisitedWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + curr.weightToCompare;
             AStarEdge de = shortestWeightMap.get(neighborNode);
             if (de == null || de.weightToCompare > alreadyVisitedWeight) {
                 double tmpLat = graph.getLatitude(neighborNode);
                 double tmpLon = graph.getLongitude(neighborNode);
                 double currWeightToGoal = dist.calcDistKm(goal.lat, goal.lon, tmpLat, tmpLon);
-                currWeightToGoal = weightCalc.apply(currWeightToGoal);
+                currWeightToGoal = weightCalc.getMinWeight(currWeightToGoal);
                 double estimationFullDist = alreadyVisitedWeight + currWeightToGoal;
                 if (de == null) {
                     de = new AStarEdge(iter.edge(), neighborNode, estimationFullDist, alreadyVisitedWeight);

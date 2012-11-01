@@ -24,7 +24,7 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.EdgeLevelFilter;
-import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
@@ -74,7 +74,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     private boolean prepared = false;
 
     public PrepareContractionHierarchies() {
-        prepareWeightCalc = ShortestCalc.DEFAULT;
+        prepareWeightCalc = ShortestCarCalc.DEFAULT;
     }
 
     @Override
@@ -115,7 +115,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         int c = 0;
         while (iter.next()) {
             c++;
-            iter.distance(prepareWeightCalc.getWeight(iter));
+            iter.distance(prepareWeightCalc.getWeight(iter.distance(), iter.flags()));
             setOrigEdges(iter.edge(), 1);
         }
         return c > 0;
@@ -323,7 +323,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     }
 
     void internalFindShortcuts(List<NodeCH> goalNodes, int u, int uEdgeId) {
-        int uOrigEdge = getOrigEdges(uEdgeId);        
+        int uOrigEdge = getOrigEdges(uEdgeId);
         for (NodeCH n : goalNodes) {
             if (n.entry != null) {
                 Path path = algo.extractPath(n.entry);
@@ -402,6 +402,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
     @Override
     public DijkstraBidirectionRef createAlgo() {
+        // do not change weight within DijkstraBidirectionRef => so use ShortestCalc
         DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g) {
             @Override protected void initCollections(int nodes) {
                 // algorithm with CH does not need that much memory pre allocated
@@ -418,29 +419,27 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
             }
 
             @Override public RoutingAlgorithm setType(WeightCalculation wc) {
-                // ignore changing of type -> TODO throw exception instead?
-                return this;
+                throw new IllegalStateException("You'll need to change weightCalculation of preparation instead of algorithm!");
             }
 
             @Override protected PathBidirRef createPath() {
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
                 WeightCalculation wc = new WeightCalculation() {
-                    @Override
-                    public double getWeight(EdgeIterator iter) {
-                        return weightCalc.revert(iter.distance(), iter.flags());
-                    }
-
                     @Override public String toString() {
                         return "INVERSE";
                     }
 
-                    @Override public double apply(double currDistToGoal) {
-                        throw new UnsupportedOperationException();
+                    @Override public double getMinWeight(double distance) {
+                        throw new IllegalStateException("getMinWeight not supported yet");
                     }
 
-                    @Override public double apply(double currDistToGoal, int flags) {
-                        throw new UnsupportedOperationException();
+                    @Override public double getWeight(double distance, int flags) {
+                        return distance;
+                    }
+
+                    @Override public long getTime(double distance, int flags) {
+                        return prepareWeightCalc.getTime(revert(distance, flags), flags);
                     }
 
                     @Override public double revert(double weight, int flags) {
@@ -454,7 +453,6 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                 return "DijkstraCH";
             }
         };
-        dijkstra.setType(prepareWeightCalc);
         dijkstra.setEdgeFilter(new EdgeLevelFilter(g));
         return dijkstra;
     }
@@ -467,7 +465,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
         public OneToManyDijkstraCH(Graph graph) {
             super(graph);
-            setType(ShortestCalc.DEFAULT);
+            setType(ShortestCarCalc.DEFAULT);
         }
 
         public OneToManyDijkstraCH setFilter(EdgeLevelFilter filter) {

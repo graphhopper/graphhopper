@@ -18,8 +18,8 @@ package com.graphhopper.routing;
 import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarStreetType;
-import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.FastestCarCalc;
+import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -47,7 +47,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
 
     public AlgorithmPreparation prepareGraph(Graph g) {
-        return prepareGraph(g, ShortestCalc.DEFAULT);
+        return prepareGraph(g, ShortestCarCalc.DEFAULT);
     }
 
     public abstract AlgorithmPreparation prepareGraph(Graph g, WeightCalculation calc);
@@ -86,18 +86,20 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test public void testCalcFastestPath() {
         Graph graphShortest = createGraph(20);
         initFastVsShort(graphShortest);
-        Path p1 = prepareGraph(graphShortest, ShortestCalc.DEFAULT).createAlgo().calcPath(0, 3);
+        Path p1 = prepareGraph(graphShortest, ShortestCarCalc.DEFAULT).createAlgo().calcPath(0, 3);
         assertEquals(p1.toString(), 24, p1.weight(), 1e-6);
         assertEquals(p1.toString(), 24, p1.distance(), 1e-6);
+        assertEquals(p1.toString(), 8640, p1.time());
         assertEquals(p1.toString(), 5, p1.nodes());
         assertEquals(Arrays.asList(0, 1, 5, 2, 3), p1.toNodeList());
 
         Graph graphFastest = createGraph(20);
         initFastVsShort(graphFastest);
-        Path p2 = prepareGraph(graphFastest, FastestCalc.DEFAULT).createAlgo().calcPath(0, 3);
+        Path p2 = prepareGraph(graphFastest, FastestCarCalc.DEFAULT).createAlgo().calcPath(0, 3);
         assertEquals(p2.toString(), 3.1, p2.weight(), 1e-6);
-        assertEquals(p2.toString(), 6, p2.nodes());
         assertEquals(p2.toString(), 31, p2.distance(), 1e-6);
+        assertEquals(p2.toString(), 5580, p2.time());
+        assertEquals(p2.toString(), 6, p2.nodes());        
     }
 
     // see test-graph.svg !

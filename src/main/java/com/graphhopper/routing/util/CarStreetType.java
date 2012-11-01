@@ -142,29 +142,29 @@ public class CarStreetType {
 
         {
             // autobahn
-            put("motorway", 55);
-            put("motorway_link", 45);
+            put("motorway", 100 / FACTOR);
+            put("motorway_link", 80 / FACTOR);
             // bundesstraße
-            put("trunk", 45);
-            put("trunk_link", 35);
+            put("trunk", 80 / FACTOR);
+            put("trunk_link", 70 / FACTOR);
             // linking bigger town
-            put("primary", 35);
-            put("primary_link", 30);
+            put("primary", 70 / FACTOR);
+            put("primary_link", 60 / FACTOR);
             // linking canBeOverwritten towns + villages
-            put("secondary", 30);
-            put("secondary_link", 25);
+            put("secondary", 60 / FACTOR);
+            put("secondary_link", 50 / FACTOR);
             // streets without middle line separation
-            put("tertiary", 25);
-            put("tertiary_link", 20);
-            put("unclassified", 25);
-            put("residential", 20);
+            put("tertiary", 50 / FACTOR);
+            put("tertiary_link", 40 / FACTOR);
+            put("unclassified", 30 / FACTOR);
+            put("residential", 30 / FACTOR);
             // spielstraße
-            put("living_street", 5);
-            put("service", 15);
+            put("living_street", 10 / FACTOR);
+            put("service", 20 / FACTOR);
             // unknown road
-            put("road", 15);
+            put("road", 20 / FACTOR);
             // forestry stuff
-            put("track", 10);
+            put("track", 20 / FACTOR);
         }
     }
 }

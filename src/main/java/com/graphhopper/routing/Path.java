@@ -15,7 +15,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -39,11 +39,12 @@ public class Path {
     protected WeightCalculation weightCalculation;
     protected double weight;
     protected double distance;
+    protected long time;
     protected boolean found;
     private TIntArrayList nodeIds = new TIntArrayList();
 
     Path() {
-        this(null, ShortestCalc.DEFAULT);
+        this(null, ShortestCarCalc.DEFAULT);
     }
 
     public Path(Graph graph, WeightCalculation weightCalculation) {
@@ -137,8 +138,18 @@ public class Path {
      * This method calculates not only the weight but also the distance in kilometer.
      */
     public void calcWeight(EdgeIterator iter) {
-        weight += weightCalculation.getWeight(iter);
-        distance += iter.distance();
+        double dist = iter.distance();
+        int fl = iter.flags();
+        weight += weightCalculation.getWeight(dist, fl);
+        distance += dist;
+        time += weightCalculation.getTime(dist, fl);
+    }
+    
+    /**
+     * @return time in seconds
+     */
+    public long time() {
+        return time;
     }
 
     public List<Integer> toNodeList() {

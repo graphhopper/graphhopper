@@ -60,7 +60,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
                 if (visited.contains(tmpNode))
                     continue;
 
-                double tmpWeight = weightCalc.getWeight(iter) + currEdge.weight;
+                double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currEdge.weight;
                 EdgeEntry nEdge = map.get(tmpNode);
                 if (nEdge == null) {
                     nEdge = new EdgeEntry(iter.edge(), tmpNode, tmpWeight);
