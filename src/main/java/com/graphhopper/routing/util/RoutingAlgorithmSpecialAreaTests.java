@@ -152,7 +152,7 @@ public class RoutingAlgorithmSpecialAreaTests {
             sw.start();
             Path p = algo.calcPath(from, to);
             sw.stop();
-            if (p == Path.NOT_FOUND) {
+            if (!p.found()) {
                 // there are still paths not found cause of oneway motorways => only routable in one direction
                 // e.g. unterfrankenGraph.getLatitude(798809) + "," + unterfrankenGraph.getLongitude(798809)
                 logger.warn("no route found for i=" + i + " !? "

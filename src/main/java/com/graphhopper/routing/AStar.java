@@ -110,7 +110,7 @@ public class AStar extends AbstractRoutingAlgorithm {
             closedSet.add(currVertex);
             currEdge = prioQueueOpenSet.poll();
             if (currEdge == null)
-                return Path.NOT_FOUND;
+                return new Path();
         }
 
         // System.out.println(toString() + " visited nodes:" + closedSet.getCardinality());
@@ -124,7 +124,7 @@ public class AStar extends AbstractRoutingAlgorithm {
         }
         path.addFrom(from);
         path.reverseOrder();
-        return path;
+        return path.found(true);
     }
 
     public int getVisited() {

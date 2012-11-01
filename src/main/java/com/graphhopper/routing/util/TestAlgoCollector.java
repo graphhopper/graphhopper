@@ -29,7 +29,7 @@ public class TestAlgoCollector {
 
     public TestAlgoCollector assertNotFound(RoutingAlgorithm algo, int from, int to) {
         Path p = algo.clear().calcPath(from, to);
-        if (p != Path.NOT_FOUND) {
+        if (p.found()) {
             synchronized (this) {
                 list.add(algo + " returns value where null is expected. " + "from:" + from + ", to:" + to);
             }
@@ -39,7 +39,7 @@ public class TestAlgoCollector {
 
     public TestAlgoCollector assertDistance(RoutingAlgorithm algo, int from, int to, double distance, int locations) {
         Path p = algo.clear().calcPath(from, to);
-        if (p == Path.NOT_FOUND) {
+        if (!p.found()) {
             list.add(algo + " returns no path. from:" + from + ", to:" + to);
             return this;
         } else if (Math.abs(p.distance() - distance) > 1e-2)

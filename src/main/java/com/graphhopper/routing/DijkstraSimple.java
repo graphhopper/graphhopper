@@ -83,11 +83,11 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
             visited.add(neighborNode);
             currEdge = heap.poll();
             if (currEdge == null)
-                return Path.NOT_FOUND;
+                return new Path();
         }
 
         if (currEdge.endNode != to)
-            return Path.NOT_FOUND;
+            return new Path();
 
         return extractPath(currEdge);
     }
@@ -107,7 +107,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         }
         path.addFrom(from);
         path.reverseOrder();
-        return path;
+        return path.found(true);
     }
 
     protected EdgeIterator getNeighbors(int neighborNode) {

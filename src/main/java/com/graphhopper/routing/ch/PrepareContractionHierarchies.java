@@ -326,8 +326,8 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         int uOrigEdge = getOrigEdges(uEdgeId);        
         for (NodeCH n : goalNodes) {
             if (n.entry != null) {
-                Path p = algo.extractPath(n.entry);
-                if (p != Path.NOT_FOUND && p.weight() <= n.distance) {
+                Path path = algo.extractPath(n.entry);
+                if (path.found() && path.weight() <= n.distance) {
                     // FOUND witness path, so do not add shortcut
                     continue;
                 }

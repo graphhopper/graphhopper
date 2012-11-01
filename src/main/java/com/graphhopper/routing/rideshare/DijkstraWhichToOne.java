@@ -131,7 +131,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         }
 
         Path p = shortest.extract();
-        if (p == Path.NOT_FOUND)
+        if (!p.found())
             return p;
         if (!pubTransport.contains(p.getFromNode()))
             p.reverseOrder();

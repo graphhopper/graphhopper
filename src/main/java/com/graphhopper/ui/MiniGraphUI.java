@@ -191,7 +191,7 @@ public class MiniGraphUI {
                 sw.stop();
 
                 // if directed edges
-                if (path == Path.NOT_FOUND) {
+                if (!path.found()) {
                     logger.warn("path not found! direction not valid?");
                     return;
                 }
@@ -232,7 +232,7 @@ public class MiniGraphUI {
     }
 
     private Path plotPath(Path tmpPath, Graphics2D g2, int w) {
-        if (tmpPath == Path.NOT_FOUND) {
+        if (!tmpPath.found()) {
             System.out.println("nothing found " + w);
             return tmpPath;
         }

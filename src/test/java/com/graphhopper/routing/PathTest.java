@@ -68,4 +68,11 @@ public class PathTest {
         assertFalse(p1.contains(3));
         assertTrue(p1.contains(2));
     }
+
+    @Test public void testFound() {
+        Path p = new Path();
+        assertFalse(p.found());
+        assertEquals(0, p.distance(), 1e-7);
+        assertEquals(0, p.nodes());
+    }
 }

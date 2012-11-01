@@ -48,7 +48,7 @@ public class PathBidir extends Path {
     public Path extract() {
         weight = 0;
         if (fromRef < 0 || toRef < 0)
-            return NOT_FOUND;
+            return this;
 
         if (switchWrapper) {
             int tmp = fromRef;
@@ -86,7 +86,7 @@ public class PathBidir extends Path {
             add(nodeTo);
             currRef = tmpRef;
         }
-        return this;
+        return found(true);
     }
 
     public void initWeight() {

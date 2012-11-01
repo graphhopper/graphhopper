@@ -19,7 +19,6 @@ import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -130,7 +129,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     @Test public void testNoPathFound() {
         Graph graph = createGraph(10);
-        assertEquals(Path.NOT_FOUND, prepareGraph(graph).createAlgo().calcPath(0, 1));
+        assertFalse(prepareGraph(graph).createAlgo().calcPath(0, 1).found());
     }
 
     @Test public void testWikipediaShortestPath() {
