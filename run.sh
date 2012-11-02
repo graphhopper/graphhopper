@@ -1,6 +1,10 @@
 #!/bin/bash
+JAVA=$JAVA_HOME/bin/java
+if [ "x$JAVA_HOME" = "x" ]; then
+ JAVA=java
+fi
 
-vers=`$JAVA_HOME/bin/java -version 2>&1 | grep "java version" | awk '{print $3}' | tr -d \"`
+vers=`$JAVA -version 2>&1 | grep "java version" | awk '{print $3}' | tr -d \"`
 echo "using java $vers from $JAVA_HOME"
 
 FILE=$1
@@ -53,6 +57,10 @@ else
  exit   
 fi
 
+if [ ! -f "config.properties" ]; then
+  cp config-example.properties config.properties
+fi
+
 if [ ! -f "$OSM" ]; then
   echo "No OSM file found. Grabbing it from internet. Press CTRL+C if you do not have enough disc space or you don't want to download several MB"
   read -e  
@@ -82,7 +90,7 @@ fi
 if [ ! -d "$GRAPH" ]; then
   echo "## now creating graph $GRAPH (folder) from $OSM (file),  java opts=$JAVA_OPTS_IMPORT"
   echo "## HINT: put the osm on an external usb drive which should speed up import time"
-  $JAVA_HOME/bin/java $JAVA_OPTS_IMPORT -cp $JAR com.graphhopper.reader.OSMReader config=config.properties osmreader.graph-location=$GRAPH osmreader.osm=$OSM osmreader.size=$SIZE
+  $JAVA $JAVA_OPTS_IMPORT -cp $JAR com.graphhopper.reader.OSMReader config=config.properties osmreader.graph-location=$GRAPH osmreader.osm=$OSM osmreader.size=$SIZE
 else
   echo "## using existing graph at $GRAPH"
 fi
@@ -90,7 +98,7 @@ fi
 # run shortest path performance analysis OR MiniGraphUI
 if [ -d "$GRAPH" ]; then
   echo "## now running $CLASS. java opts=$JAVA_OPTS_IMPORT"
-  $JAVA_HOME/bin/java $JAVA_OPTS -cp $JAR $CLASS config=config.properties osmreader.graph-location=$GRAPH osmreader.algo=$ALGO
+  $JAVA $JAVA_OPTS -cp $JAR $CLASS config=config.properties osmreader.graph-location=$GRAPH osmreader.algo=$ALGO
 else
   echo "## creating graph failed"
 fi
