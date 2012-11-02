@@ -16,7 +16,6 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.coll.MySortedCollection;
-import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
@@ -216,21 +215,29 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         // set of shortcuts that would be added if endNode v would be contracted next.
         Collection<Shortcut> tmpShortcuts = findShortcuts(v);
         // from shortcuts we can compute the edgeDifference
+
+        // # low influence: with it the shortcut creation is slightly faster
+        //
         // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|        
         // meanDegree is used instead of outDegree+inDegree as if one endNode is in both directions
         // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
         int degree = GraphUtility.count(g.getEdges(v));
         int edgeDifference = tmpShortcuts.size() - degree;
 
-        // every endNode has an 'original endNode' number associated. initially it is r=1
+        // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
+        //
+        // every endNode has an 'original edge' number associated. initially it is r=1
         // when a new shortcut is introduced then r of the associated edges is summed up:
         // r(u,w)=r(u,v)+r(v,w) now we can define
-        // originalEdges = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
+        // originalEdgesCount = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
         int originalEdgesCount = 0;
         for (Shortcut sc : tmpShortcuts) {
             originalEdgesCount += sc.originalEdges;
         }
 
+        // # lowest influence on preparation speed or shortcut creation count 
+        // (but according to paper should speed up queries)
+        //
         // number of already contracted neighbors of v
         int contractedNeighbors = 0;
         EdgeSkipIterator iter = g.getEdges(v);
@@ -239,8 +246,11 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                 contractedNeighbors++;
         }
 
+        // unterfranken example
+        // 10, 50, 1 => 180s preparation, q 3.3ms
+        //  2,  4, 1 => 200s preparation, q 3.0ms
         // according to the paper do a simple linear combination of the properties to get the priority
-        return 2 * edgeDifference + 4 * originalEdgesCount + contractedNeighbors;
+        return 10 * edgeDifference + 50 * originalEdgesCount + contractedNeighbors;
     }
 
     Map<Long, Shortcut> getShortcuts() {

@@ -33,12 +33,12 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
         initNodeAndEdgeEntrySize();
     }
 
-    @Override public void setLevel(int index, int level) {
+    @Override public final void setLevel(int index, int level) {
         ensureNodeIndex(index);
         nodes.setInt((long) index * nodeEntrySize + I_LEVEL, level);
     }
 
-    @Override public int getLevel(int index) {
+    @Override public final int getLevel(int index) {
         ensureNodeIndex(index);
         return nodes.getInt((long) index * nodeEntrySize + I_LEVEL);
     }
@@ -111,14 +111,14 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     }
 
     @Override
-    protected SingleEdge createSingleEdge(int edgeId, int endNode) {
-        return new SingleLevelEdge(edgeId, endNode);
+    protected SingleEdge createSingleEdge(long edgePointer) {
+        return new SingleLevelEdge(edgePointer);
     }
 
     protected class SingleLevelEdge extends SingleEdge implements EdgeSkipIterator {
 
-        public SingleLevelEdge(int edgeId, int endNode) {
-            super(edgeId, endNode);
+        public SingleLevelEdge(long edgePointer) {
+            super(edgePointer);
         }
 
         @Override public void skippedEdge(int node) {

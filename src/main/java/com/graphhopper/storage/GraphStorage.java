@@ -268,38 +268,47 @@ public class GraphStorage implements WritableGraph, Storable {
         int nodeA = edges.getInt(edgePointer + I_NODEA);
         if (nodeA == nodeThis)
             // return b
-            return edges.getInt(edgePointer + I_NODEB);
+            return edges.getInt(edgePointer + I_NODEB);        
         // return a
         return nodeA;
     }
 
     @Override
     public EdgeWriteIterator getEdgeProps(int edgeId, final int endNode) {
-        SingleEdge edge = createSingleEdge(edgeId, endNode);
-        if (endNode < 0)
-            edge.endNode = edges.getInt(edge.edgePointer + I_NODEB);
-        else if (edges.getInt(edge.edgePointer + I_NODEA) != edge.endNode
-                && edges.getInt(edge.edgePointer + I_NODEB) != edge.endNode)
+        if (edgeId < 1 || edgeId > edgeCount)
+            throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + edgeCount + "]");
+        long edgePointer = (long) edgeId * edgeEntrySize;
+        // a bit complex but faster
+        int nodeA = edges.getInt(edgePointer + I_NODEA);
+        int nodeB = edges.getInt(edgePointer + I_NODEB);
+        SingleEdge edge = createSingleEdge(edgePointer);
+        if (endNode < 0 || endNode == nodeB) {
+            edge.fromNode = nodeA;
+            edge.node = nodeB;
+            return edge;
+        } else if (endNode == nodeA) {
+            edge.fromNode = nodeB;
+            edge.node = nodeA;
+            edge.switchFlags = true;
+            return edge;
+        } else
             return GraphUtility.EMPTY;
-        return edge;
     }
 
-    protected SingleEdge createSingleEdge(int edgeId, final int endNode) {
-        return new SingleEdge(edgeId, endNode);
+    protected SingleEdge createSingleEdge(long edgePointer) {
+        return new SingleEdge(edgePointer);
     }
-    
+
     // TODO create a new constructor and reuse EdgeIterable -> new EdgeIterable(edgeId, END node)
     protected class SingleEdge implements EdgeWriteIterator {
 
         protected long edgePointer;
-        protected int endNode;
+        protected int fromNode;
+        protected int node;
+        protected boolean switchFlags;
 
-        public SingleEdge(int edgeId, int endNode) {
-            if (edgeId < 1 || edgeId > edgeCount)
-                throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + edgeCount + "]");
-
-            this.edgePointer = (long) edgeId * edgeEntrySize;
-            this.endNode = endNode;
+        public SingleEdge(long edgePointer) {
+            this.edgePointer = edgePointer;
         }
 
         @Override public boolean next() {
@@ -312,12 +321,12 @@ public class GraphStorage implements WritableGraph, Storable {
 
         @Override
         public int fromNode() {
-            return getOtherNode(node(), edgePointer);
+            return fromNode;
         }
 
         @Override
         public int node() {
-            return endNode;
+            return node;
         }
 
         @Override public double distance() {
@@ -330,8 +339,8 @@ public class GraphStorage implements WritableGraph, Storable {
 
         @Override public int flags() {
             int flags = edges.getInt(edgePointer + I_FLAGS);
-            if (endNode != edges.getInt(edgePointer + I_NODEB))
-                flags = CarStreetType.swapDirection(flags);
+            if (switchFlags)
+                return CarStreetType.swapDirection(flags);
             return flags;
         }
 
@@ -441,9 +450,6 @@ public class GraphStorage implements WritableGraph, Storable {
             edgePointer = nextEdge * edgeEntrySize;
             edgeId = nextEdge;
             nodeId = getOtherNode(fromNode, edgePointer);
-            if (fromNode != getOtherNode(nodeId, edgePointer))
-                throw new IllegalStateException("requested node " + fromNode + " not stored in edge. "
-                        + "was:" + nodeId + "," + getOtherNode(nodeId, edgePointer));
 
             // position to next edge
             nextEdge = edges.getInt(getLinkPosInEdgeArea(fromNode, nodeId, edgePointer));

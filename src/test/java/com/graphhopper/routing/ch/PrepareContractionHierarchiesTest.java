@@ -128,7 +128,7 @@ public class PrepareContractionHierarchiesTest {
         int old = GraphUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         prepare.doWork();
-        assertEquals(old + 6, GraphUtility.count(g.getAllEdges()));
+        assertEquals(old + 7, GraphUtility.count(g.getAllEdges()));
     }
 
     @Test
@@ -226,7 +226,7 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
         prepare.doWork();
         // PrepareSimpleShortcutsTest.printEdges(g);
-        assertEquals(old + 20, GraphUtility.count(g.getAllEdges()));
+        assertEquals(old + 19, GraphUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.clear().calcPath(4, 7);
         assertEquals(Arrays.asList(4, 5, 6, 7), p.toNodeList());

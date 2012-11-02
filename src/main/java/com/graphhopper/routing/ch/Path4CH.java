@@ -47,7 +47,7 @@ public class Path4CH extends Path4Shortcuts {
         expandIt(mainIter, false);
     }
 
-    void expandIt(EdgeSkipIterator mainIter, boolean revert) {
+    private void expandIt(EdgeSkipIterator mainIter, boolean revert) {
         int skippedEdge = mainIter.skippedEdge();
         if (!isValidEdge(skippedEdge)) {
             double dist = mainIter.distance();
