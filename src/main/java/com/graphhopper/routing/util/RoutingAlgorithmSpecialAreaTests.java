@@ -132,7 +132,7 @@ public class RoutingAlgorithmSpecialAreaTests {
         Random rand = new Random(123);
         StopWatch sw = new StopWatch();
 
-        System.out.println("cap:" + ((GraphStorage) unterfrankenGraph).capacity());
+        // System.out.println("cap:" + ((GraphStorage) unterfrankenGraph).capacity());
         for (int i = 0; i < runs; i++) {
             double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
             double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
