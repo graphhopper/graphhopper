@@ -25,7 +25,7 @@ import java.io.RandomAccessFile;
 public abstract class AbstractDataAccess implements DataAccess {
 
     private static final int SEGMENT_SIZE_MIN = 1 << 7;
-    private static final int SEGMENT_SIZE_DEFAULT = 16 * 1 << 20;
+    private static final int SEGMENT_SIZE_DEFAULT = 8 * 1 << 20;
     // reserve some space for downstream usage (in classes using/exting this)
     protected static final int HEADER_OFFSET = 20 * 4 + 20;
     protected int header[] = new int[(HEADER_OFFSET - 20) / 4];

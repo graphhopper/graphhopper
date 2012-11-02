@@ -31,10 +31,10 @@ import java.util.PriorityQueue;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
- * bidirectional dijkstra is far more efficient than a single direction one. The same does not getMinWeight
- * for a bidirectional A* as the finish condition can not be so strict which leads to either
- * suboptimal paths or suboptimal node exploration (too many nodes). Still very good approximations
- * with a rougly twice times faster running time than the normal A* can be reached.
+ * bidirectional dijkstra is far more efficient than a single direction one. The same does not
+ * getMinWeight for a bidirectional A* as the finish condition can not be so strict which leads to
+ * either suboptimal paths or suboptimal node exploration (too many nodes). Still very good
+ * approximations with a rougly twice times faster running time than the normal A* can be reached.
  *
  * Computing the Shortest Path: A∗ Search Meets Graph Theory ->
  * http://research.microsoft.com/apps/pubs/default.aspx?id=64511
@@ -137,7 +137,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
     public void initFrom(int from) {
         this.from = from;
-        currFrom = new AStar.AStarEdge(-1, from, 0, 0);
+        currFrom = new AStarEdge(-1, from, 0, 0);
         shortestWeightMapFrom.put(from, currFrom);
         visitedFrom.add(from);
         fromCoord = new CoordTrig(graph.getLatitude(from), graph.getLongitude(from));
@@ -145,7 +145,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
     public void initTo(int to) {
         this.to = to;
-        currTo = new AStar.AStarEdge(-1, to, 0, 0);
+        currTo = new AStarEdge(-1, to, 0, 0);
         shortestWeightMapTo.put(to, currTo);
         visitedTo.add(to);
         toCoord = new CoordTrig(graph.getLatitude(to), graph.getLongitude(to));

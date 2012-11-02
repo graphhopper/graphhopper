@@ -16,6 +16,7 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.coll.MySortedCollection;
+import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
@@ -457,6 +458,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         return dijkstra;
     }
 
+    // we need to use DijkstraSimple as AStar or DijkstraBidirection cannot be efficiently used with multiple goals
     static class OneToManyDijkstraCH extends DijkstraSimple {
 
         EdgeLevelFilter filter;

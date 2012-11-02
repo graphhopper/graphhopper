@@ -32,8 +32,17 @@ public class MySortedCollection {
     private int slidingMeanValue = 20;
     private TreeMap<Integer, TIntHashSet> map;
 
+    public MySortedCollection() {
+        this(0);
+    }
+
     public MySortedCollection(int size) {
+        // use size as indicator for maxEntries => try radix sort?
         map = new TreeMap<Integer, TIntHashSet>();
+    }
+
+    public void clear() {
+        map.clear();
     }
 
     void remove(int key, int value) {
@@ -80,6 +89,9 @@ public class MySortedCollection {
         return set.iterator().next();
     }
 
+    /**
+     * @return removes the smallest entry (key and value) from this collection
+     */
     public int pollKey() {
         size--;
         if (size < 0)

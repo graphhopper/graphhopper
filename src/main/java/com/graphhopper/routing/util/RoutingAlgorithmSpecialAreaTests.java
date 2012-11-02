@@ -111,7 +111,7 @@ public class RoutingAlgorithmSpecialAreaTests {
                     new DijkstraSimple(g), prepare.createAlgo(), astarSimpleSC,
                     prepareCH.createAlgo()};
     }
-    private Logger logger = LoggerFactory.getLogger(getClass());    
+    private Logger logger = LoggerFactory.getLogger(getClass());
 
     public void runShortestPathPerf(int runs, RoutingAlgorithm algo) throws Exception {
         BBox bbox = unterfrankenGraph.getBounds();
@@ -120,6 +120,7 @@ public class RoutingAlgorithmSpecialAreaTests {
         if (unterfrankenGraph instanceof LevelGraph) {
             if (algo instanceof DijkstraBidirectionRef)
                 algo = new PrepareContractionHierarchies().setGraph(unterfrankenGraph).createAlgo();
+//                algo = new PrepareSimpleShortcuts().setGraph(unterfrankenGraph).createAlgo();
             else if (algo instanceof AStarBidirection)
                 algo = new PrepareSimpleShortcuts().setGraph(unterfrankenGraph).createAStar();
             else
@@ -161,7 +162,7 @@ public class RoutingAlgorithmSpecialAreaTests {
                 continue;
             }
             if (i % 20 == 0)
-                logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run");// (" + p + ")");
+                logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run");// (" + p + ")");            
         }
     }
 

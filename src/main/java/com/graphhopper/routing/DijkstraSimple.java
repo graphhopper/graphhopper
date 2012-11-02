@@ -15,6 +15,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.storage.EdgeEntry;
@@ -22,7 +23,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import java.util.PriorityQueue;
 
 /**
  * @author Peter Karich,
@@ -31,7 +31,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
 
     protected MyBitSet visited = new MyTBitSet();
     private TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
-    private PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
+    private IntDoubleBinHeap heap = new IntDoubleBinHeap();
     private int from;
 
     public DijkstraSimple(Graph graph) {
@@ -66,24 +66,26 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
                     nEdge = new EdgeEntry(iter.edge(), tmpNode, tmpWeight);
                     nEdge.parent = currEdge;
                     map.put(tmpNode, nEdge);
-                    heap.add(nEdge);
+                    heap.insert_(tmpNode, tmpWeight);
                 } else if (nEdge.weight > tmpWeight) {
-                    heap.remove(nEdge);
+                    heap.update_(tmpNode, tmpWeight);
                     nEdge.edge = iter.edge();
                     nEdge.weight = tmpWeight;
                     nEdge.parent = currEdge;
-                    heap.add(nEdge);
                 }
 
                 updateShortest(nEdge, neighborNode);
             }
-            if (finished(currEdge, to))
-                break;
 
             visited.add(neighborNode);
-            currEdge = heap.poll();
-            if (currEdge == null)
+            if (finished(currEdge, to))
+                break;
+            if (heap.isEmpty())
                 return new Path();
+
+            currEdge = map.get(heap.poll_key());
+            if (currEdge == null)
+                throw new IllegalStateException("cannot happen?");
         }
 
         if (currEdge.endNode != to)

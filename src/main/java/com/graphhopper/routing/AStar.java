@@ -39,6 +39,7 @@ public class AStar extends AbstractRoutingAlgorithm {
     private DistanceCalc dist = new DistanceCosProjection();
     private boolean alreadyRun;
     private MyBitSet closedSet;
+    private int from;
 
     public AStar(Graph g) {
         super(g);
@@ -58,6 +59,7 @@ public class AStar extends AbstractRoutingAlgorithm {
     @Override
     public RoutingAlgorithm clear() {
         alreadyRun = false;
+        from = -1;
         return this;
     }
 
@@ -67,15 +69,15 @@ public class AStar extends AbstractRoutingAlgorithm {
         alreadyRun = true;
         closedSet = new MyBitSetImpl(graph.getNodes());
         TIntObjectMap<AStarEdge> map = new TIntObjectHashMap<AStarEdge>();
-        PriorityQueue<AStarEdge> prioQueueOpenSet = new PriorityQueue<AStarEdge>();
+        PriorityQueue<AStarEdge> prioQueueOpenSet = new PriorityQueue<AStarEdge>(1000);
         double toLat = graph.getLatitude(to);
         double toLon = graph.getLongitude(to);
         double currWeightToGoal, distEstimation, tmpLat, tmpLon;
-        AStarEdge fromEntry = new AStarEdge(-1, from, 0, 0);
+        AStarEdge fromEntry = new AStarEdge(-1, this.from = from, 0, 0);
         AStarEdge currEdge = fromEntry;
         while (true) {
             int currVertex = currEdge.endNode;
-            EdgeIterator iter = graph.getOutgoing(currVertex);
+            EdgeIterator iter = getNeighbors(currVertex);
             while (iter.next()) {
                 int neighborNode = iter.node();
                 if (closedSet.contains(neighborNode))
@@ -103,31 +105,45 @@ public class AStar extends AbstractRoutingAlgorithm {
                     updateShortest(nEdge, neighborNode);
                 }
             }
-            if (to == currVertex)
-                break;
 
             closedSet.add(currVertex);
+            if (finished(currEdge, to))
+                break;
+            if (prioQueueOpenSet.isEmpty())
+                return new Path();
+
             currEdge = prioQueueOpenSet.poll();
             if (currEdge == null)
-                return new Path();
+                throw new IllegalStateException("cannot happen?");
         }
 
-        // System.out.println(toString() + " visited nodes:" + closedSet.getCardinality());
+        return extractPath(currEdge);
+    }
+
+    public boolean finished(EdgeEntry currEdge, int to) {
+        return currEdge.endNode == to;
+    }
+
+    public int getVisited() {
+        return closedSet.getCardinality();
+    }
+
+    protected EdgeIterator getNeighbors(int currVertex) {
+        return graph.getOutgoing(currVertex);
+    }
+
+    public Path extractPath(EdgeEntry currEdge) {
         // extract path from shortest-path-tree
         Path path = new Path(graph, weightCalc);
         while (currEdge.parent != null) {
             EdgeEntry tmp = currEdge;
             path.add(tmp.endNode);
-            currEdge = (AStarEdge) currEdge.parent;
+            currEdge = currEdge.parent;
             path.calcWeight(graph.getEdgeProps(tmp.edge, tmp.endNode));
         }
         path.addFrom(from);
         path.reverseOrder();
         return path.found(true);
-    }
-
-    public int getVisited() {
-        return closedSet.getCardinality();
     }
 
     public static class AStarEdge extends EdgeEntry {

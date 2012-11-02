@@ -54,7 +54,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         initCollections(Math.max(20, graph.getNodes()));
         clear();
     }
-    
+
     protected void initCollections(int nodes) {
         visitedFrom = new MyBitSetImpl(nodes);
         openSetFrom = new PriorityQueue<EdgeEntry>(nodes / 10);
@@ -260,5 +260,9 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         shortest = createPath();
         shortest.initWeight();
         return this;
+    }
+
+    public int getVisited() {
+        return visitedFrom.getCardinality() + visitedTo.getCardinality();
     }
 }

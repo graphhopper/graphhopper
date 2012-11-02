@@ -46,7 +46,7 @@ public class PrepareContractionHierarchiesTest {
 
     LevelGraph createGraph() {
         LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory());
-        g.createNew(10);
+        g.createNew(100);
         return g;
     }
 
