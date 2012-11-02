@@ -23,6 +23,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import java.util.PriorityQueue;
 
 /**
  * @author Peter Karich,
@@ -31,7 +32,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
 
     protected MyBitSet visited = new MyTBitSet();
     private TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
-    private IntDoubleBinHeap heap = new IntDoubleBinHeap();
+    private PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
     private int from;
 
     public DijkstraSimple(Graph graph) {
@@ -66,12 +67,13 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
                     nEdge = new EdgeEntry(iter.edge(), tmpNode, tmpWeight);
                     nEdge.parent = currEdge;
                     map.put(tmpNode, nEdge);
-                    heap.insert_(tmpNode, tmpWeight);
+                    heap.add(nEdge);
                 } else if (nEdge.weight > tmpWeight) {
-                    heap.update_(tmpNode, tmpWeight);
+                    heap.remove(nEdge);
                     nEdge.edge = iter.edge();
                     nEdge.weight = tmpWeight;
                     nEdge.parent = currEdge;
+                    heap.add(nEdge);
                 }
 
                 updateShortest(nEdge, neighborNode);
@@ -83,7 +85,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
             if (heap.isEmpty())
                 return new Path();
 
-            currEdge = map.get(heap.poll_key());
+            currEdge = heap.poll();
             if (currEdge == null)
                 throw new IllegalStateException("cannot happen?");
         }
