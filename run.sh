@@ -97,7 +97,7 @@ fi
 
 # run shortest path performance analysis OR MiniGraphUI
 if [ -d "$GRAPH" ]; then
-  echo "## now running $CLASS. java opts=$JAVA_OPTS_IMPORT"
+  echo "## now running $CLASS. java opts=$JAVA_OPTS"
   $JAVA $JAVA_OPTS -cp $JAR $CLASS config=config.properties osmreader.graph-location=$GRAPH osmreader.algo=$ALGO
 else
   echo "## creating graph failed"
