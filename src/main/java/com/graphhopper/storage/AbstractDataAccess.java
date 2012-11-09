@@ -62,6 +62,7 @@ public abstract class AbstractDataAccess implements DataAccess {
         }
     }
 
+    @Override
     public int getVersion() {
         return Helper.VERSION_FILE;
     }

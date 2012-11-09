@@ -29,7 +29,8 @@ NAME="${FILE%.*}"
 OSM=$NAME.osm
 
 GRAPH=$NAME-gh
-JAR=target/graphhopper-1.0-SNAPSHOT-jar-with-dependencies.jar
+VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
+JAR=target/graphhopper-$VERSION-jar-with-dependencies.jar
 
 # file without path
 TMP=$(basename "$FILE")
@@ -62,7 +63,7 @@ if [ ! -f "config.properties" ]; then
 fi
 
 if [ ! -f "$OSM" ]; then
-  echo "No OSM file found. Grabbing it from internet. Press CTRL+C if you do not have enough disc space or you don't want to download several MB"
+  echo "No OSM file found or specified. Grabbing it from internet. Press CTRL+C if you do not have enough disc space or you don't want to download several MB"
   read -e  
   BZ=$OSM.bz2
   rm $BZ

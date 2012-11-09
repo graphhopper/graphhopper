@@ -65,7 +65,7 @@ public interface Graph {
     EdgeIterator getEdgeProps(int edgeId, int endNode);
 
     EdgeIterator getAllEdges();
-    
+
     /**
      * Returns an iterator which makes it possible to traverse all edges of the specified node
      * index. Hint: use GraphUtility to go straight to certain neighbor nodes. Hint: edges with both

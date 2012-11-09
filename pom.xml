@@ -5,9 +5,9 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper</artifactId>
+    <name>GraphHopper</name>
     <version>0.1-SNAPSHOT</version>
-    <packaging>jar</packaging>
-    <name>GraphHopper</name>    
+    <packaging>jar</packaging>     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <slf4j.version>1.6.6</slf4j.version>

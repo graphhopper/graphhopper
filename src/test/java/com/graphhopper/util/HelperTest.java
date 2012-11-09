@@ -58,7 +58,7 @@ public class HelperTest {
     @Test
     public void testVERSION() throws Exception {
         // assertTrue(Helper.SNAPSHOT);
-        assertNotSame("0.0", Helper.VERSION);    
+        assertNotSame("0.0", Helper.VERSION);
     }
 
     @Test
@@ -68,5 +68,16 @@ public class HelperTest {
 
         Object[] newSett = Helper.readSettings("test");
         assertArrayEquals(settings, newSett);
+    }
+
+    @Test
+    public void testUnzip() throws Exception {
+        String to = "./target/tmp/test";
+        Helper.deleteDir(new File(to));
+        Helper.unzip("./src/test/resources/com/graphhopper/util/test.zip", to, false);
+        assertTrue(new File("./target/tmp/test/file2 bäh").exists());
+        assertTrue(new File("./target/tmp/test/folder1").isDirectory());
+        assertTrue(new File("./target/tmp/test/folder1/folder 3").isDirectory());
+        Helper.deleteDir(new File(to));
     }
 }

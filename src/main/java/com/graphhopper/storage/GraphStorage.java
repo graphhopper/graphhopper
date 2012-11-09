@@ -55,7 +55,7 @@ public class GraphStorage implements WritableGraph, Storable {
     // delete marker is not persistent!
     private MyBitSet deletedNodes;
     private int edgeEntryIndex = -1, nodeEntryIndex = -1;
-
+    
     public GraphStorage(Directory dir) {
         this.dir = dir;
         edges = dir.createDataAccess("edges");

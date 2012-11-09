@@ -20,6 +20,8 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -336,6 +338,52 @@ public class Helper {
             }
         }
         return false;
+    }
+
+    public static void unzip(String from, boolean remove) throws IOException {
+        String to = pruneFileEnd(from);
+        unzip(from, to, remove);
+    }
+
+    public static boolean unzip(String fromStr, String toStr, boolean remove) throws IOException {
+        File from = new File(fromStr);
+        File to = new File(toStr);
+        if (!from.exists() || fromStr.equals(toStr))
+            return false;
+
+        if (!to.exists())
+            to.mkdirs();
+
+        ZipInputStream zis = new ZipInputStream(new FileInputStream(from));
+        try {
+            ZipEntry ze = zis.getNextEntry();
+            byte[] buffer = new byte[1024];
+            while (ze != null) {
+                if (ze.isDirectory()) {
+                    new File(to, ze.getName()).mkdir();
+                } else {
+                    File newFile = new File(to, ze.getName());
+                    FileOutputStream fos = new FileOutputStream(newFile);
+                    try {
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) {
+                            fos.write(buffer, 0, len);
+                        }
+                    } finally {
+                        fos.close();
+                    }
+                }
+                ze = zis.getNextEntry();
+            }
+            zis.closeEntry();
+        } finally {
+            zis.close();
+        }
+
+        if (remove)
+            Helper.deleteDir(from);
+
+        return true;
     }
 
     public static String pruneFileEnd(String file) {

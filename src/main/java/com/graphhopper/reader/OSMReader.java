@@ -112,6 +112,12 @@ public class OSMReader {
                 graphLocation = Helper.pruneFileEnd(strOsm) + "-gh";
         }
 
+        File compressed = new File(graphLocation + ".gh");
+        if (compressed.exists() && !compressed.isDirectory()) {
+            boolean deleteZipped = args.getBool("osmreader.graph.removeZipped", true);
+            Helper.unzip(compressed.getAbsolutePath(), graphLocation, deleteZipped);
+        }
+
         int size = (int) args.getLong("osmreader.size", 5 * 1000 * 1000);
         Storage storage;
         String dataAccess = args.get("osmreader.dataaccess", "inmemory+save");
