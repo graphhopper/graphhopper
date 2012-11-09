@@ -32,7 +32,7 @@ import org.junit.Test;
  */
 public class OSMReaderTest {
 
-    private String dir = "/tmp/OSMReaderTrialsTest/test-db";
+    private String dir = "./target/tmp/test-db";
     private OSMReader reader;
 
     @Before

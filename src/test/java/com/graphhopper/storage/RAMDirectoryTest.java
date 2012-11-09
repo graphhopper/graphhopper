@@ -28,7 +28,7 @@ import org.junit.Test;
  */
 public class RAMDirectoryTest {
 
-    String location = "./tmp/ramdir";
+    String location = "./target/tmp/ramdir";
     File file = new File(location);
 
     @After
