@@ -16,6 +16,7 @@
 package com.graphhopper.storage;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,6 +50,11 @@ public class MMapDirectory implements Directory {
         MMapDataAccess da = new MMapDataAccess(name);
         map.put(name, da);
         return da;
+    }
+
+    @Override
+    public Collection<DataAccess> getAll() {
+        return (Collection) map.values();
     }
 
     @Override

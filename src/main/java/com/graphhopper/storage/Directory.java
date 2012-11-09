@@ -15,6 +15,8 @@
  */
 package com.graphhopper.storage;
 
+import java.util.Collection;
+
 /**
  * @author Peter Karich
  */
@@ -23,6 +25,8 @@ public interface Directory {
     String getLocation();
 
     DataAccess createDataAccess(String name);
+    
+    Collection<DataAccess> getAll();
     // TODO clear means clearing the in-memory map and deleting underlying files
     // Problem with clear was: MMapDataAccess creates file in constructor and on createNew
     // it clears but then the file won't be accessible. Also clearing would mean to avoid

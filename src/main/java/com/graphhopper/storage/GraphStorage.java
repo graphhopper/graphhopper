@@ -268,7 +268,7 @@ public class GraphStorage implements WritableGraph, Storable {
         int nodeA = edges.getInt(edgePointer + I_NODEA);
         if (nodeA == nodeThis)
             // return b
-            return edges.getInt(edgePointer + I_NODEB);        
+            return edges.getInt(edgePointer + I_NODEB);
         // return a
         return nodeA;
     }
@@ -779,7 +779,8 @@ public class GraphStorage implements WritableGraph, Storable {
         if (edges.loadExisting()) {
             if (!nodes.loadExisting())
                 throw new IllegalStateException("corrupt file?");
-
+            if (nodes.getVersion() != edges.getVersion())
+                throw new IllegalStateException("nodes and edge file have different versions!?");
             // nodes
             int hash = nodes.getHeader(0);
             if (hash != getClass().getName().hashCode())
@@ -832,5 +833,9 @@ public class GraphStorage implements WritableGraph, Storable {
     @Override
     public long capacity() {
         return edges.capacity() + nodes.capacity();
+    }
+
+    public int getVersion() {
+        return nodes.getVersion();
     }
 }

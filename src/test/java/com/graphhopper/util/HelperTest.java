@@ -57,11 +57,8 @@ public class HelperTest {
 
     @Test
     public void testVERSION() throws Exception {
-        assertNotSame("0", Helper.VERSION);
-        
-        // changes with every version :/
-        assertEquals("0", Helper.VERSION_MAJOR);
-        assertEquals("0", Helper.VERSION_MINOR);        
+        // assertTrue(Helper.SNAPSHOT);
+        assertNotSame("0.0", Helper.VERSION);    
     }
 
     @Test

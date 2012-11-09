@@ -16,6 +16,7 @@
 package com.graphhopper.storage;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -70,6 +71,11 @@ public class RAMDirectory implements Directory {
         RAMDataAccess da = new RAMDataAccess(name, store);
         map.put(name, da);
         return da;
+    }
+
+    @Override
+    public Collection<DataAccess> getAll() {
+        return (Collection) map.values();
     }
 
     @Override

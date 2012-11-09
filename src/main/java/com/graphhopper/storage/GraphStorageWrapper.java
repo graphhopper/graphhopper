@@ -45,6 +45,6 @@ public class GraphStorageWrapper extends DefaultStorage {
 
     @Override
     public String toString() {
-        return tmp.getClass().getSimpleName() + "|" + tmp.getDirectory().getClass().getSimpleName();
+        return tmp.getClass().getSimpleName() + "|" + tmp.getDirectory().getClass().getSimpleName() + "|" + tmp.getVersion();
     }
 }

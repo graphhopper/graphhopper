@@ -344,28 +344,46 @@ public class Helper {
             return file;
         return file.substring(0, index);
     }
-    public static final String VERSION_MAJOR;
-    public static final String VERSION_MINOR;
+    /**
+     * The file version is independent of the real world version. E.g. to make major version jumps
+     * without the need to change the file version.
+     */
+    public static final int VERSION_FILE = 1;
+    /**
+     * The version without the snapshot string
+     */
     public static final String VERSION;
+    public static final boolean SNAPSHOT;
 
     static {
-        String version = "0";
+        String version = "0.0";
         try {
             List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/version"), "UTF-8"));
             version = v.get(0);
         } catch (Exception ex) {
-            System.err.append("GraphHopper Initialization ERROR: cannot read version!? " + ex.getMessage());
+            System.err.println("GraphHopper Initialization ERROR: cannot read version!? " + ex.getMessage());
         }
-        VERSION = version;
         int indexM = version.indexOf("-");
         int indexP = version.indexOf(".");
-        if ("0".equals(VERSION) || indexM < 0 || indexP >= indexM) {
-            VERSION_MAJOR = "0";
-            VERSION_MINOR = "0";
+        if ("${project.version}".equals(version)) {
+            VERSION = "0.0";
+            SNAPSHOT = true;
+            System.err.println("GraphHopper Initialization ERROR: maven did not preprocess the version file!?");
+        } else if ("0.0".equals(version) || indexM < 0 || indexP >= indexM) {
+            VERSION = "0.0";
+            SNAPSHOT = true;
+            System.err.println("GraphHopper Initialization ERROR: cannot get version!?");
         } else {
-            // throw away snapshot            
-            VERSION_MAJOR = version.substring(0, indexP);
-            VERSION_MINOR = version.substring(indexP + 1, indexM);
+            // throw away the "-SNAPSHOT"
+            int major = -1, minor = -1;
+            try {
+                major = Integer.parseInt(version.substring(0, indexP));
+                minor = Integer.parseInt(version.substring(indexP + 1, indexM));
+            } catch (Exception ex) {
+                System.err.println("GraphHopper Initialization ERROR: cannot parse version!? " + ex.getMessage());
+            }
+            SNAPSHOT = version.toLowerCase().contains("-snapshot");
+            VERSION = major + "." + minor;
         }
     }
 }
