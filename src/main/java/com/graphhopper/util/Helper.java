@@ -34,6 +34,9 @@ public class Helper {
     private static Logger logger = LoggerFactory.getLogger(Helper.class);
     public static final int MB = 1 << 20;
 
+    private Helper() {
+    }
+
     public static BufferedReader createBuffReader(File file) throws FileNotFoundException, UnsupportedEncodingException {
         return new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
     }
@@ -88,6 +91,19 @@ public class Helper {
         } finally {
             reader.close();
         }
+    }
+
+    public static int idealIntArraySize(int need) {
+        return idealByteArraySize(need * 4) / 4;
+    }
+
+    public static int idealByteArraySize(int need) {
+        for (int i = 4; i < 32; i++) {
+            if (need <= (1 << i) - 12)
+                return (1 << i) - 12;
+        }
+
+        return need;
     }
 
     /**
@@ -416,11 +432,11 @@ public class Helper {
         if ("${project.version}".equals(version)) {
             VERSION = "0.0";
             SNAPSHOT = true;
-            System.err.println("GraphHopper Initialization ERROR: maven did not preprocess the version file!?");
+            System.err.println("GraphHopper Initialization WARNING: maven did not preprocess the version file!?");
         } else if ("0.0".equals(version) || indexM < 0 || indexP >= indexM) {
             VERSION = "0.0";
             SNAPSHOT = true;
-            System.err.println("GraphHopper Initialization ERROR: cannot get version!?");
+            System.err.println("GraphHopper Initialization WARNING: cannot get version!?");
         } else {
             // throw away the "-SNAPSHOT"
             int major = -1, minor = -1;
@@ -428,7 +444,7 @@ public class Helper {
                 major = Integer.parseInt(version.substring(0, indexP));
                 minor = Integer.parseInt(version.substring(indexP + 1, indexM));
             } catch (Exception ex) {
-                System.err.println("GraphHopper Initialization ERROR: cannot parse version!? " + ex.getMessage());
+                System.err.println("GraphHopper Initialization WARNING: cannot parse version!? " + ex.getMessage());
             }
             SNAPSHOT = version.toLowerCase().contains("-snapshot");
             VERSION = major + "." + minor;

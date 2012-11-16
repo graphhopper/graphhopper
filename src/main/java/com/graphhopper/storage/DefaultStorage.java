@@ -15,10 +15,10 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.coll.OSMIDMap;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
-import gnu.trove.map.hash.TIntIntHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,20 +30,24 @@ public class DefaultStorage implements Storage {
     protected static final int FILLED = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     protected Graph g;
-    protected TIntIntHashMap osmIdToIndexMap;
+    protected OSMIDMap osmIdToIndexMap;
+    private int expectedNodes;
     private int internalId = 0;
 
     public DefaultStorage(int expectedNodes) {
-        osmIdToIndexMap = new TIntIntHashMap(expectedNodes, 1.4f, -1, -1);
+        this.expectedNodes = expectedNodes;
+        osmIdToIndexMap = new OSMIDMap(expectedNodes);
     }
 
-    @Override
-    public boolean loadExisting() {
+    @Override public boolean loadExisting() {
         return false;
     }
 
-    @Override
-    public void createNew() {
+    @Override public void createNew() {
+    }
+
+    @Override public int getExpectedNodes() {
+        return expectedNodes;
     }
 
     @Override
@@ -58,12 +62,12 @@ public class DefaultStorage implements Storage {
 
     @Override
     public boolean addEdge(int nodeIdFrom, int nodeIdTo, int flags, DistanceCalc callback) {
-        int fromIndex = osmIdToIndexMap.get(nodeIdFrom);
+        int fromIndex = (int) osmIdToIndexMap.get(nodeIdFrom);
         if (fromIndex == FILLED) {
             logger.warn("fromIndex is unresolved:" + nodeIdFrom + " to was:" + nodeIdTo);
             return false;
         }
-        int toIndex = osmIdToIndexMap.get(nodeIdTo);
+        int toIndex = (int) osmIdToIndexMap.get(nodeIdTo);
         if (toIndex == FILLED) {
             logger.warn("toIndex is unresolved:" + nodeIdTo + " from was:" + nodeIdFrom);
             return false;
@@ -126,24 +130,19 @@ public class DefaultStorage implements Storage {
         osmIdToIndexMap = null;
     }
 
-    @Override
-    public int getNodes() {
-        return osmIdToIndexMap.size();
-    }
-
-    @Override
-    public void setHasHighways(int osmId, boolean isHighway) {
-        if (isHighway)
-            osmIdToIndexMap.put(osmId, FILLED);
-        else
-            osmIdToIndexMap.remove(osmId);
-    }
-
-    @Override
-    public boolean hasHighways(int osmId) {
-        return osmIdToIndexMap.get(osmId) == FILLED;
-    }
-
+//    @Override
+//    public int getNodes() {
+//        return osmIdToIndexMap.size();
+//    }
+//    public void setHasHighways(int osmId, boolean isHighway) {
+//        if (isHighway)
+//            osmIdToIndexMap.put(osmId, FILLED);        
+//        else
+//            osmIdToIndexMap.remove(osmId);
+//    }
+//    public boolean hasHighways(int osmId) {
+//        return osmIdToIndexMap.get(osmId) == FILLED;
+//    }
     @Override
     public String toString() {
         return getClass().getSimpleName();

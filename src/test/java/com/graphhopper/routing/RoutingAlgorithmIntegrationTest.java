@@ -68,7 +68,8 @@ public class RoutingAlgorithmIntegrationTest {
     @Test
     public void testAndorra() {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 24.0626, 991));
+        // list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 24.0626, 991));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 24.101, 992));
         list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16.452, 603));
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list);
@@ -80,23 +81,18 @@ public class RoutingAlgorithmIntegrationTest {
         try {
             // make sure we are using the latest file format
             Helper.deleteDir(new File(graphFile));
-            OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
+            OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).                    
                     put("osmreader.graph-location", graphFile).
                     put("osmreader.dataaccess", "inmemory"));
             Graph g = osm.getGraph();
-
             Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
             RoutingAlgorithm[] algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
             for (RoutingAlgorithm algo : algos) {
-//                int failed = testCollector.list.size();
                 for (OneRun or : forEveryAlgo) {
                     int from = idx.findID(or.fromLat, or.fromLon);
                     int to = idx.findID(or.toLat, or.toLon);
                     testCollector.assertDistance(algo, from, to, or.dist, or.locs);
                 }
-
-//                System.out.println(osmFile + " " + algo.getClass().getSimpleName()
-//                        + ": " + (testCollector.list.size() - failed) + " failed");
             }
         } catch (Exception ex) {
             throw new RuntimeException("cannot handle osm file " + osmFile, ex);

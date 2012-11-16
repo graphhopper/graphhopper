@@ -35,13 +35,9 @@ public interface Storage extends Closeable {
 
     boolean addEdge(int nodeIdFrom, int nodeIdTo, int flags, DistanceCalc callback);
 
-    int getNodes();
-
+    int getExpectedNodes();
+    
     void flush();
 
     public void stats();
-
-    public void setHasHighways(int osmId, boolean isHighway);
-
-    public boolean hasHighways(int osmId);
 }

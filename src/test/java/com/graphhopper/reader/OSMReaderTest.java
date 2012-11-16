@@ -47,11 +47,13 @@ public class OSMReaderTest {
 
     @Test public void testMain() {
         reader = new OSMReader(dir, 1000);
-        reader.preprocessAcceptHighwaysOnly(getClass().getResourceAsStream("test-osm.xml"));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.flush();
         Graph graph = reader.getGraph();
-        assertEquals(4, graph.getNodes());
+        // all nodes
+        assertEquals(8, graph.getNodes());
+        // nodes on ways and used for routing
+        // assertEquals(4, graph.getNodes());
         assertEquals(1, GraphUtility.count(graph.getOutgoing(0)));
         assertEquals(3, GraphUtility.count(graph.getOutgoing(1)));
         assertEquals(1, GraphUtility.count(graph.getOutgoing(2)));
@@ -86,11 +88,10 @@ public class OSMReaderTest {
                 return lat > 49 && lon > 8;
             }
         };
-        reader.preprocessAcceptHighwaysOnly(getClass().getResourceAsStream("test-osm.xml"));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.flush();
         Graph graph = reader.getGraph();
-        assertEquals(3, graph.getNodes());
+        assertEquals(7, graph.getNodes());
         assertEquals(1, GraphUtility.count(graph.getOutgoing(0)));
         assertEquals(2, GraphUtility.count(graph.getOutgoing(1)));
         assertEquals(1, GraphUtility.count(graph.getOutgoing(2)));
@@ -112,7 +113,6 @@ public class OSMReaderTest {
 
     @Test public void testOneWay() {
         reader = new OSMReader(dir, 1000);
-        reader.preprocessAcceptHighwaysOnly(getClass().getResourceAsStream("test-osm2.xml"));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm2.xml"));
         reader.flush();
         Graph graph = reader.getGraph();

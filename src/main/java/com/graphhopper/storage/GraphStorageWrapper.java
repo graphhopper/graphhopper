@@ -29,7 +29,7 @@ public class GraphStorageWrapper extends DefaultStorage {
 
     @Override
     public void createNew() {
-        tmp.createNew(osmIdToIndexMap.size());
+        tmp.createNew(getExpectedNodes());
     }
 
     @Override

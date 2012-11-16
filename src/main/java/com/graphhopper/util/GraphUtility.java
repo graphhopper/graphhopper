@@ -309,7 +309,7 @@ public class GraphUtility {
         return endNode;        
     }
         
-    public static EdgeSkipIterator EMPTY = new EdgeSkipIterator() {
+    public static final EdgeSkipIterator EMPTY = new EdgeSkipIterator() {
 
         @Override public int skippedEdge() {
             throw new UnsupportedOperationException("Not supported yet.");

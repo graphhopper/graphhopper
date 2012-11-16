@@ -83,7 +83,7 @@ public class OSMReader {
             tests.runShortestPathPerf(iters, algo);
         }
     }
-    private int expectedLocs;
+    
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
     private int locations = 0;
     private int skippedLocations = 0;
@@ -118,7 +118,7 @@ public class OSMReader {
             Helper.unzip(compressed.getAbsolutePath(), graphLocation, deleteZipped);
         }
 
-        int size = (int) args.getLong("osmreader.size", 5 * 1000 * 1000);
+        int size = (int) args.getLong("osmreader.size", 10 * 1000);
         Storage storage;
         String dataAccess = args.get("osmreader.dataaccess", "inmemory+save");
         Directory dir;
@@ -136,7 +136,7 @@ public class OSMReader {
         else
             // necessary for simple or CH shortcuts
             storage = new GraphStorageWrapper(new GraphStorage(dir), size);
-        return osm2Graph(new OSMReader(storage, size), args);
+        return osm2Graph(new OSMReader(storage), args);
     }
 
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
@@ -160,7 +160,7 @@ public class OSMReader {
             File osmXmlFile = new File(strOsm);
             if (!osmXmlFile.exists())
                 throw new IllegalStateException("Your specified OSM file does not exist:" + strOsm);
-            logger.info("size for osm2id-map is " + osmReader.getMaxLocs() + " - start creating graph from " + osmXmlFile);
+            logger.info("start creating graph from " + osmXmlFile + " (expected size for osm2id-map: " + osmReader.getExpectedNodes());
             osmReader.osm2Graph(osmXmlFile);
         } else
             osmReader.setGraph();
@@ -169,17 +169,16 @@ public class OSMReader {
     }
 
     public OSMReader(String storageLocation, int size) {
-        this(new GraphStorageWrapper(new GraphStorage(new RAMDirectory(storageLocation, true)), size), size);
+        this(new GraphStorageWrapper(new GraphStorage(new RAMDirectory(storageLocation, true)), size));
     }
 
-    public OSMReader(Storage storage, int size) {
+    public OSMReader(Storage storage) {
         this.storage = storage;
-        expectedLocs = size;
         logger.info("using " + storage.toString() + ", memory:" + Helper7.getBeanMemInfo());
     }
 
-    private int getMaxLocs() {
-        return expectedLocs;
+    private int getExpectedNodes() {
+        return storage.getExpectedNodes();
     }
 
     public boolean loadExisting() {
@@ -197,10 +196,6 @@ public class OSMReader {
     }
 
     public void osm2Graph(File osmXmlFile) throws IOException {
-        // TODO instead of creating two separate input streams,
-        // could we use PushbackInputStream(new FileInputStream(osmFile)); ???
-
-        preprocessAcceptHighwaysOnly(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
         cleanUp();
         optimize();
@@ -228,7 +223,8 @@ public class OSMReader {
         logger.info("start finding subnetworks");
         preparation.doWork();
         int n = g.getNodes();
-        logger.info("nodes " + n + ", there were " + preparation.getSubNetworks() + " sub-networks. removed them => " + (prev - n)
+        logger.info("nodes " + n + ", there were " + preparation.getSubNetworks() 
+                + " sub-networks. removed them => " + (prev - n)
                 + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
     }
 
@@ -238,54 +234,13 @@ public class OSMReader {
     }
 
     /**
-     * Preprocessing of OSM file to select nodes which are used for highways. This allows a more
-     * compact graph data structure.
-     */
-    public void preprocessAcceptHighwaysOnly(InputStream osmXml) {
-        if (osmXml == null)
-            throw new IllegalStateException("Stream cannot be empty");
-
-        XMLInputFactory factory = XMLInputFactory.newInstance();
-        XMLStreamReader sReader = null;
-        try {
-            sReader = factory.createXMLStreamReader(osmXml, "UTF-8");
-            int counter = 0;
-            for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
-                    event = sReader.next()) {
-                if (++counter % 10000000 == 0) {
-                    logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
-                            + " (" + skippedEdges + "), " + Helper.getMemInfo());
-                }
-                switch (event) {
-                    case XMLStreamConstants.START_ELEMENT:
-                        if ("way".equals(sReader.getLocalName())) {
-                            boolean isHighway = isHighway(sReader);
-                            if (isHighway && tmpLocs.size() > 1) {
-                                int s = tmpLocs.size();
-                                for (int index = 0; index < s; index++) {
-                                    storage.setHasHighways(tmpLocs.get(index), true);
-                                }
-                            }
-                        }
-                        break;
-                }
-            }
-        } catch (XMLStreamException ex) {
-            throw new RuntimeException("Problem while parsing file", ex);
-        } finally {
-            Helper7.close(sReader);
-        }
-    }
-
-    /**
      * Creates the edges and nodes files from the specified inputstream (osm xml file).
      */
     public void writeOsm2Graph(InputStream is) {
         if (is == null)
             throw new IllegalStateException("Stream cannot be empty");
-        logger.info("init storage with " + storage.getNodes() + " nodes");
-        storage.createNew();
-        logger.info("starting 2nd parsing");
+        
+        storage.createNew();        
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         int wayStart = -1;
@@ -334,10 +289,8 @@ public class OSMReader {
 
     public void processNode(XMLStreamReader sReader) throws XMLStreamException {
         int osmId;
-        boolean hasHighways;
         try {
             osmId = Integer.parseInt(sReader.getAttributeValue(null, "id"));
-            hasHighways = storage.hasHighways(osmId);
         } catch (Exception ex) {
             logger.error("cannot get id from xml node:" + sReader.getAttributeValue(null, "id"), ex);
             return;
@@ -349,15 +302,9 @@ public class OSMReader {
             lat = Double.parseDouble(sReader.getAttributeValue(null, "lat"));
             lon = Double.parseDouble(sReader.getAttributeValue(null, "lon"));
             if (isInBounds(lat, lon)) {
-                if (hasHighways) {
-                    storage.addNode(osmId, lat, lon);
-                    locations++;
-                }
+                storage.addNode(osmId, lat, lon);
+                locations++;
             } else {
-                // remove the osmId if not in bounds to avoid trouble when processing the highway
-                if (hasHighways)
-                    storage.setHasHighways(osmId, false);
-
                 skippedLocations++;
             }
         } catch (Exception ex) {
@@ -422,8 +369,8 @@ public class OSMReader {
 
     public void processHighway(XMLStreamReader sReader) throws XMLStreamException {
         if (isHighway(sReader) && tmpLocs.size() > 1) {
-            int prevOsmId = tmpLocs.get(0);
             int l = tmpLocs.size();
+            int prevOsmId = tmpLocs.get(0);
             int flags = acceptStreets.toFlags(properties);
             for (int index = 1; index < l; index++) {
                 int currOsmId = tmpLocs.get(index);
