@@ -21,6 +21,9 @@ package com.graphhopper.util;
  */
 public class BitUtil {
 
+    private BitUtil() {
+        // do not instantiate
+    }
     public static double toDouble(byte[] bytes) {
         return toDouble(bytes, 0);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 The Android Open Source Project
+ *  Copyright 2012 Peter Karich 
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,12 @@
  */
 package com.graphhopper.coll;
 
+import com.graphhopper.storage.VLongStorage;
 import java.util.Arrays;
 
 /**
  * This is a special purpose map for writing increasing OSM IDs with consecutive values. It stores
- * long->int in a memory friendly way and but does NOT provide O(1) access.
+ * the keys in vlong format and values are determined by the resulting index.
  *
  * @author Peter Karich
  */
@@ -27,7 +28,7 @@ public class OSMIDSegmentedMap {
 
     private int bucketSize;
     private long[] keys;
-    private short[][] buckets;
+    private VLongStorage[] buckets;
     private long lastKey = 1;
     private long lastValue = -1;
     private int currentBucket = 0;
@@ -38,11 +39,11 @@ public class OSMIDSegmentedMap {
         this(100, 10);
     }
 
-    public OSMIDSegmentedMap(int initialCapacity, int bucketSize) {
-        this.bucketSize = bucketSize;
+    public OSMIDSegmentedMap(int initialCapacity, int maxEntryPerBucket) {
+        this.bucketSize = maxEntryPerBucket;
         int cap = initialCapacity / bucketSize;
         keys = new long[cap];
-        buckets = new short[cap][];
+        buckets = new VLongStorage[cap];
     }
 
     public void put(long key, long value) {
@@ -67,40 +68,44 @@ public class OSMIDSegmentedMap {
 
         if (buckets[currentBucket] == null) {
             keys[currentBucket] = key;
-            buckets[currentBucket] = new short[bucketSize];
-            buckets[currentBucket][currentIndex] = -2;
-        } else {
-            long keyToStore = key - lastKey;
-            if (keyToStore != (short) keyToStore) {
-                // TODO if the difference does NOT fit into a byte => store as two byte and skip next
-                // hmmh but then we cannot estimate the value from the index via index*bucketSize!!
-                throw new UnsupportedOperationException("todo: think/impossible? key=" + key + ", lastKey=" + lastKey);
-            }
-            buckets[currentBucket][currentIndex] = (short) keyToStore;
-        }
+            if (currentBucket > 0)
+                buckets[currentBucket - 1].trimToSize();
+            buckets[currentBucket] = new VLongStorage(bucketSize);
+        } else
+            buckets[currentBucket].writeVLong(key);
+
         size++;
         lastKey = key;
         lastValue = value;
     }
 
     public long get(long key) {
-        int retBucket = SparseLongLongArray.binarySearch(keys, 0, currentBucket, key);
+        int retBucket = SparseLongLongArray.binarySearch(keys, 0, currentBucket + 1, key);
         if (retBucket < 0) {
             retBucket = ~retBucket;
+            retBucket--;
+            if(retBucket < 0)            
+                return getNoEntryValue();
+            
             long storedKey = keys[retBucket];
             if (storedKey == key)
                 return retBucket * bucketSize;
 
-            short[] buck = buckets[retBucket];
-            int max = currentBucket == retBucket ? currentIndex + 1 : buck.length;
+            VLongStorage buck = buckets[retBucket];
+            long tmp = buck.getPosition();
+            buck.seek(0);
+            int max = currentBucket == retBucket ? currentIndex + 1 : bucketSize;
+            long ret = getNoEntryValue();
             for (int i = 1; i < max; i++) {
-                storedKey += buck[i];
-                if (storedKey == key)
-                    return retBucket * bucketSize + i;
-                else if (storedKey > key)
+                storedKey = buck.readVLong();
+                if (storedKey == key) {
+                    ret = retBucket * bucketSize + i;
+                    break;
+                } else if (storedKey > key)
                     break;
             }
-            return getNoEntryValue();
+            buck.seek(tmp);
+            return ret;
         }
 
         return retBucket * bucketSize;

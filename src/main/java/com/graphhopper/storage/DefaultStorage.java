@@ -31,14 +31,15 @@ public class DefaultStorage implements Storage {
     protected static final int FILLED = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     protected Graph g;
-    protected OSMIDMap osmIdToIndexMap;
+    // protected OSMIDMap osmIdToIndexMap;
+    protected OSMIDSegmentedMap osmIdToIndexMap;
     private int expectedNodes;
     private int internalId = 0;
 
     public DefaultStorage(int expectedNodes) {
         this.expectedNodes = expectedNodes;
-        // osmIdToIndexMap = new OSMIDSegmentedMap(expectedNodes, 100);
-        osmIdToIndexMap = new OSMIDMap(expectedNodes);
+        osmIdToIndexMap = new OSMIDSegmentedMap(expectedNodes, 100);
+        // osmIdToIndexMap = new OSMIDMap(expectedNodes);
     }
 
     @Override public boolean loadExisting() {

@@ -337,7 +337,6 @@ public class SparseLongLongArray {
 
     public static int binarySearch(long[] a, int start, int len, long key) {
         int high = start + len, low = start - 1, guess;
-
         while (high - low > 1) {
             guess = (high + low) / 2;
 
