@@ -38,7 +38,7 @@ import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Helper7;
 import com.graphhopper.util.StopWatch;
-import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TLongArrayList;
 import java.io.*;
 import java.util.*;
 import java.util.Map.Entry;
@@ -83,14 +83,13 @@ public class OSMReader {
             tests.runShortestPathPerf(iters, algo);
         }
     }
-    
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
     private int locations = 0;
     private int skippedLocations = 0;
     private int nextEdgeIndex = 0;
     private int skippedEdges = 0;
     private Storage storage;
-    private TIntArrayList tmpLocs = new TIntArrayList(10);
+    private TLongArrayList tmpLocs = new TLongArrayList(10);
     private Map<String, Object> properties = new HashMap<String, Object>();
     private DistanceCalc callback = new DistanceCalc();
     private AcceptStreet acceptStreets = new AcceptStreet(true, false, false, false);
@@ -160,7 +159,8 @@ public class OSMReader {
             File osmXmlFile = new File(strOsm);
             if (!osmXmlFile.exists())
                 throw new IllegalStateException("Your specified OSM file does not exist:" + strOsm);
-            logger.info("start creating graph from " + osmXmlFile + " (expected size for osm2id-map: " + osmReader.getExpectedNodes());
+            logger.info("start creating graph from " + osmXmlFile
+                    + " (expected size for osm2id-map: " + osmReader.getExpectedNodes() + ")");
             osmReader.osm2Graph(osmXmlFile);
         } else
             osmReader.setGraph();
@@ -223,7 +223,7 @@ public class OSMReader {
         logger.info("start finding subnetworks");
         preparation.doWork();
         int n = g.getNodes();
-        logger.info("nodes " + n + ", there were " + preparation.getSubNetworks() 
+        logger.info("nodes " + n + ", there were " + preparation.getSubNetworks()
                 + " sub-networks. removed them => " + (prev - n)
                 + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
     }
@@ -239,8 +239,8 @@ public class OSMReader {
     public void writeOsm2Graph(InputStream is) {
         if (is == null)
             throw new IllegalStateException("Stream cannot be empty");
-        
-        storage.createNew();        
+
+        storage.createNew();
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         int wayStart = -1;
@@ -288,9 +288,9 @@ public class OSMReader {
     }
 
     public void processNode(XMLStreamReader sReader) throws XMLStreamException {
-        int osmId;
+        long osmId;
         try {
-            osmId = Integer.parseInt(sReader.getAttributeValue(null, "id"));
+            osmId = Long.parseLong(sReader.getAttributeValue(null, "id"));
         } catch (Exception ex) {
             logger.error("cannot get id from xml node:" + sReader.getAttributeValue(null, "id"), ex);
             return;
@@ -316,7 +316,7 @@ public class OSMReader {
         return true;
     }
 
-    boolean parseWay(TIntArrayList tmpLocs, Map<String, Object> properties, XMLStreamReader sReader)
+    boolean parseWay(TLongArrayList tmpLocs, Map<String, Object> properties, XMLStreamReader sReader)
             throws XMLStreamException {
 
         boolean handled = false;
@@ -370,10 +370,10 @@ public class OSMReader {
     public void processHighway(XMLStreamReader sReader) throws XMLStreamException {
         if (isHighway(sReader) && tmpLocs.size() > 1) {
             int l = tmpLocs.size();
-            int prevOsmId = tmpLocs.get(0);
+            long prevOsmId = tmpLocs.get(0);
             int flags = acceptStreets.toFlags(properties);
             for (int index = 1; index < l; index++) {
-                int currOsmId = tmpLocs.get(index);
+                long currOsmId = tmpLocs.get(index);
                 boolean ret = storage.addEdge(prevOsmId, currOsmId, flags, callback);
                 if (ret)
                     nextEdgeIndex++;

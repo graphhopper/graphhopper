@@ -15,46 +15,53 @@
  */
 package com.graphhopper.coll;
 
+import java.util.Arrays;
+
 /**
- * This is a special purpose map for writing consecutive OSM IDs. It stores long->int in a memory
- * friendly way and does NOT provide O(1) access.
+ * This is a special purpose map for writing increasing OSM IDs with consecutive values. It stores
+ * long->int in a memory friendly way and but does NOT provide O(1) access.
  *
  * @author Peter Karich
  */
 public class OSMIDMap {
 
-    // segmented int/long array which is sorted and stores the offset to point to the values
-    // 1-5   => [a,b,c,d,e] where a to e are integers
-    // 20-22 => [f,g,h]
-    // ...
-    //
-    // sorted key intervals pointing (access through binary search?) to integer arrays
-    // still problematic if the intervals get too large => big 'rehashing' occurs again
-    private SparseLongLongArray array;
+    private long[] keys;
+    private long lastKey = Long.MIN_VALUE;
+    private long lastValue = -1;
+    private int size;
 
     public OSMIDMap() {
-        this(100);
+        this(10);
     }
 
     public OSMIDMap(int initialCapacity) {
-        array = new SparseLongLongArray(initialCapacity);
+        keys = new long[initialCapacity];
     }
-    long lastKey = Long.MIN_VALUE;
-    long lastValue = Long.MIN_VALUE;
 
     public void put(long key, long value) {
         if (key <= lastKey)
-            throw new IllegalStateException("TODO key " + key + " is lower than last one " + lastKey);
-        if (value <= lastValue)
-            throw new IllegalStateException("Not supported: value " + value + " is lower than last one " + lastValue);
+            throw new IllegalStateException("Not supported: key " + key + " is lower than last one " + lastKey);
+        if (value < 0)
+            throw new IllegalStateException("Not supported: negative value " + value);
+        if (value != lastValue + 1)
+            throw new IllegalStateException("Not supported: value " + value + " is not " + (lastValue + 1));
 
+        if (size >= keys.length) {
+            int cap = (int) (size * 1.5f);
+            keys = Arrays.copyOf(keys, cap);
+        }
+        keys[size] = key;
+        size++;
         lastKey = key;
         lastValue = value;
-        array.append(key, value);
     }
 
     public long get(long key) {
-        return array.get(key);
+        int retIndex = SparseLongLongArray.binarySearch(keys, 0, size, key);
+        if (retIndex < 0)
+            return getNoEntryValue();
+
+        return retIndex;
     }
 
     public long getNoEntryValue() {
@@ -62,6 +69,6 @@ public class OSMIDMap {
     }
 
     public int size() {
-        return array.size();
+        return size;
     }
 }

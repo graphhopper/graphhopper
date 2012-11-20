@@ -51,7 +51,7 @@ public class DefaultStorage implements Storage {
     }
 
     @Override
-    public boolean addNode(int osmId, double lat, double lon) {
+    public boolean addNode(long osmId, double lat, double lon) {
         g.setNode(internalId, lat, lon);
         osmIdToIndexMap.put(osmId, internalId);
         internalId++;
@@ -61,7 +61,7 @@ public class DefaultStorage implements Storage {
     int zeroCounter = 0;
 
     @Override
-    public boolean addEdge(int nodeIdFrom, int nodeIdTo, int flags, DistanceCalc callback) {
+    public boolean addEdge(long nodeIdFrom, long nodeIdTo, int flags, DistanceCalc callback) {
         int fromIndex = (int) osmIdToIndexMap.get(nodeIdFrom);
         if (fromIndex == FILLED) {
             logger.warn("fromIndex is unresolved:" + nodeIdFrom + " to was:" + nodeIdTo);
@@ -108,7 +108,8 @@ public class DefaultStorage implements Storage {
             g.edge(fromIndex, toIndex, dist, flags);
             return true;
         } catch (Exception ex) {
-            throw new RuntimeException("Problem to add edge! with node " + fromIndex + "->" + toIndex + " osm:" + nodeIdFrom + "->" + nodeIdTo, ex);
+            throw new RuntimeException("Problem to add edge! with node ids " + fromIndex + "->" + toIndex
+                    + " vs. osm ids:" + nodeIdFrom + "->" + nodeIdTo, ex);
         }
     }
 

@@ -85,6 +85,7 @@ public class RoutingAlgorithmIntegrationTest {
                     put("osmreader.graph-location", graphFile).
                     put("osmreader.dataaccess", "inmemory"));
             Graph g = osm.getGraph();
+            System.out.println("nodes:" + g.getNodes());
             Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
             RoutingAlgorithm[] algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
             for (RoutingAlgorithm algo : algos) {
