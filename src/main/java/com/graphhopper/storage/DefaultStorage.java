@@ -16,6 +16,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.coll.OSMIDMap;
+import com.graphhopper.coll.OSMIDSegmentedMap;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
@@ -36,6 +37,7 @@ public class DefaultStorage implements Storage {
 
     public DefaultStorage(int expectedNodes) {
         this.expectedNodes = expectedNodes;
+        // osmIdToIndexMap = new OSMIDSegmentedMap(expectedNodes, 100);
         osmIdToIndexMap = new OSMIDMap(expectedNodes);
     }
 
