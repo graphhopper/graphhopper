@@ -16,7 +16,8 @@ package com.graphhopper.storage;
 import java.util.Arrays;
 
 /**
- * Taken from lucene DataOutput
+ * Taken from lucene DataOutput. VLong's are longs which have variable length depending on the size.
+ * When used together with 'delta compression' it is likely that you'll use only 1 byte per value.
  */
 public class VLongStorage {
 
@@ -40,13 +41,17 @@ public class VLongStorage {
         return pointer;
     }
 
-    public byte readByte() {
+    public long getLength() {
+        return bytes.length;
+    }
+
+    byte readByte() {
         byte b = bytes[pointer];
         pointer++;
         return b;
     }
 
-    public void writeByte(byte b) {
+    void writeByte(byte b) {
         if (pointer >= bytes.length) {
             int cap = Math.max(10, (int) (pointer * 1.5f));
             bytes = Arrays.copyOf(bytes, cap);

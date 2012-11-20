@@ -16,6 +16,7 @@
 package com.graphhopper.coll;
 
 import com.graphhopper.storage.VLongStorage;
+import com.graphhopper.util.Helper;
 import java.util.Arrays;
 
 /**
@@ -71,8 +72,10 @@ public class OSMIDSegmentedMap {
             if (currentBucket > 0)
                 buckets[currentBucket - 1].trimToSize();
             buckets[currentBucket] = new VLongStorage(bucketSize);
-        } else
-            buckets[currentBucket].writeVLong(key);
+        } else {
+            long delta = key - lastKey;
+            buckets[currentBucket].writeVLong(delta);
+        }
 
         size++;
         lastKey = key;
@@ -84,9 +87,9 @@ public class OSMIDSegmentedMap {
         if (retBucket < 0) {
             retBucket = ~retBucket;
             retBucket--;
-            if(retBucket < 0)            
+            if (retBucket < 0)
                 return getNoEntryValue();
-            
+
             long storedKey = keys[retBucket];
             if (storedKey == key)
                 return retBucket * bucketSize;
@@ -97,7 +100,7 @@ public class OSMIDSegmentedMap {
             int max = currentBucket == retBucket ? currentIndex + 1 : bucketSize;
             long ret = getNoEntryValue();
             for (int i = 1; i < max; i++) {
-                storedKey = buck.readVLong();
+                storedKey += buck.readVLong();
                 if (storedKey == key) {
                     ret = retBucket * bucketSize + i;
                     break;
@@ -117,5 +120,14 @@ public class OSMIDSegmentedMap {
 
     public int size() {
         return size;
+    }
+
+    public float calcMemInMB() {
+        long bytes = 0;
+        for (int i = 0; i < buckets.length; i++) {
+            if (buckets[i] != null)
+                bytes += buckets[i].getLength();
+        }
+        return (float) (keys.length * 4 + bytes) / Helper.MB;
     }
 }

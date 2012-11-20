@@ -35,6 +35,8 @@ public class DefaultStorage implements Storage {
     protected OSMIDSegmentedMap osmIdToIndexMap;
     private int expectedNodes;
     private int internalId = 0;
+    private int counter = 0;
+    private int zeroCounter = 0;
 
     public DefaultStorage(int expectedNodes) {
         this.expectedNodes = expectedNodes;
@@ -59,9 +61,7 @@ public class DefaultStorage implements Storage {
         osmIdToIndexMap.put(osmId, internalId);
         internalId++;
         return true;
-    }
-    int counter = 0;
-    int zeroCounter = 0;
+    }    
 
     @Override
     public boolean addEdge(long nodeIdFrom, long nodeIdTo, int flags, DistanceCalc callback) {
@@ -130,23 +130,12 @@ public class DefaultStorage implements Storage {
 
     @Override
     public void flush() {
-        logger.info("Found " + zeroCounter + " zero and " + counter + " negative distances.");
+        logger.info("Found " + zeroCounter + " zero and " + counter
+                + " negative distances. mapSize:" + osmIdToIndexMap.size() + ", mapMem:"
+                + osmIdToIndexMap.calcMemInMB());
         osmIdToIndexMap = null;
     }
 
-//    @Override
-//    public int getNodes() {
-//        return osmIdToIndexMap.size();
-//    }
-//    public void setHasHighways(int osmId, boolean isHighway) {
-//        if (isHighway)
-//            osmIdToIndexMap.put(osmId, FILLED);        
-//        else
-//            osmIdToIndexMap.remove(osmId);
-//    }
-//    public boolean hasHighways(int osmId) {
-//        return osmIdToIndexMap.get(osmId) == FILLED;
-//    }
     @Override
     public String toString() {
         return getClass().getSimpleName();
