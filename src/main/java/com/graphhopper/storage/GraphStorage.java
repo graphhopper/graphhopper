@@ -96,7 +96,7 @@ public class GraphStorage implements WritableGraph, Storable {
 
     public GraphStorage createNew(int nodeCount) {
         nodes.createNew((long) nodeCount * 4 * nodeEntrySize);
-        edges.createNew((long) nodeCount * 4 * 2 * edgeEntrySize);
+        edges.createNew((long) nodeCount * 4 * edgeEntrySize);
         return this;
     }
 

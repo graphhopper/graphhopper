@@ -38,7 +38,7 @@ TMP="${TMP%.*}"
 #echo $TMP - $FILE - $NAME
 if [ "$TMP" = "unterfranken" ]; then
  LINK="http://download.geofabrik.de/osm/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx550m -Xms550m"
+ JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx250m -Xms250m"
  JAVA_OPTS=$JAVA_OPTS_IMPORT
  SIZE=5000000
 elif [ "$TMP" = "germany" ]; then

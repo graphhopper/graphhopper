@@ -220,7 +220,7 @@ public class OSMReader {
         Graph g = storage.getGraph();
         int prev = g.getNodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(g);
-        logger.info("start finding subnetworks");
+        logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
         int n = g.getNodes();
         logger.info("nodes " + n + ", there were " + preparation.getSubNetworks()
