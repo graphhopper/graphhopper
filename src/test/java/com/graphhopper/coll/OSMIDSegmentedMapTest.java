@@ -25,6 +25,15 @@ import static org.junit.Assert.*;
 public class OSMIDSegmentedMapTest {
 
     @Test
+    public void testZeroKey() {
+        OSMIDSegmentedMap map = new OSMIDSegmentedMap();
+        map.put(0, 0);
+        assertEquals(1, map.size());
+        assertEquals(0, map.get(0));
+        assertEquals(-1, map.get(1));
+    }
+
+    @Test
     public void testGet() {
         OSMIDSegmentedMap map = new OSMIDSegmentedMap();
         map.put(9, 0);

@@ -30,7 +30,7 @@ public class OSMIDSegmentedMap {
     private int bucketSize;
     private long[] keys;
     private VLongStorage[] buckets;
-    private long lastKey = 1;
+    private long lastKey = -1;
     private long lastValue = -1;
     private int currentBucket = 0;
     private int currentIndex = -1;
