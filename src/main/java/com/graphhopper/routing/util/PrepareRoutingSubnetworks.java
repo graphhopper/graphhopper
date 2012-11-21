@@ -98,7 +98,7 @@ public class PrepareRoutingSubnetworks {
 
         int biggestStart = -1;
         int count = -1;
-        MyTBitSet bs = new MyTBitSet(g.getNodes());
+        MyBitSetImpl bs = new MyBitSetImpl(g.getNodes());
         for (Entry<Integer, Integer> e : map.entrySet()) {
             if (biggestStart < 0) {
                 biggestStart = e.getKey();

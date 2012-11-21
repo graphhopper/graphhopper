@@ -40,7 +40,7 @@ if [ "$TMP" = "unterfranken" ]; then
  LINK="http://download.geofabrik.de/osm/europe/germany/bayern/unterfranken.osm.bz2"
  JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx300m -Xms300m"
  JAVA_OPTS=$JAVA_OPTS_IMPORT
- SIZE=5000000
+ SIZE=3000000
 elif [ "$TMP" = "germany" ]; then
  LINK=http://download.geofabrik.de/osm/europe/germany.osm.bz2
 
