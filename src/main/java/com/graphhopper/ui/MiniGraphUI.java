@@ -146,22 +146,21 @@ public class MiniGraphUI {
                     }
                 }
 
-                g2.setColor(Color.BLUE);
-                RoutingAlgorithm algo = prepare.createAlgo();
-                Path p1 = calcPath(algo);
-                plotPath(p1, g2, 15);
-                System.out.println(p1.toNodeList());
-                java.util.List<Integer> list = p1.toNodeList();
-                LevelGraph lg = (LevelGraph) graph;
-                for (int i = 0; i < list.size(); i++) {
-                    System.out.println(list.get(i) + ":" + lg.getLevel(list.get(i))
-                            + " " + GraphUtility.getNodeInfo(lg, list.get(i)));
-                }
+//                g2.setColor(Color.BLUE);
+//                RoutingAlgorithm algo = prepare.createAlgo();
+//                Path p1 = calcPath(algo);
+//                plotPath(p1, g2, 15);
+//                System.out.println(p1.toNodeList());
+//                java.util.List<Integer> list = p1.toNodeList();
+//                LevelGraph lg = (LevelGraph) graph;
+//                for (int i = 0; i < list.size(); i++) {
+//                    System.out.println(list.get(i) + ":" + lg.getLevel(list.get(i))
+//                            + " " + GraphUtility.getNodeInfo(lg, list.get(i)));
+//                }
                 g2.setColor(Color.GREEN);
                 DijkstraBidirectionRef dbi = new DijkstraBidirectionRef(graph);
                 // dbi.setGraphics2D(g2);
-                Path p2 = calcPath(dbi);
-                System.out.println(p2.toNodeList());
+                Path p2 = calcPath(dbi);                
                 plotPath(p2, g2, 5);
 
 //                if (quadTreeNodes != null) {
@@ -224,11 +223,11 @@ public class MiniGraphUI {
 
     // for debugging
     private Path calcPath(RoutingAlgorithm algo) {
-//        int from = index.findID(43.72915, 7.410572);
-//        int to = index.findID(43.739213, 7.427806);
-//        System.out.println("path " + from + "->" + to);
+        int from = index.findID(42.56819, 1.603231);
+        int to = index.findID(42.571034, 1.520662);
+        System.out.println("path " + from + "->" + to);
 //        return algo.calcPath(from, to);
-        return algo.calcPath(25, 855);
+        return algo.calcPath(from, to);
     }
 
     private Path plotPath(Path tmpPath, Graphics2D g2, int w) {

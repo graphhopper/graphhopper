@@ -84,7 +84,7 @@ public class RoutingAlgorithmSpecialAreaTests {
             testCollector.assertDistance(algo, idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 93.5559, 1278);
             testCollector.assertDistance(algo, idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77.73985, 1217);
             testCollector.assertDistance(algo, idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125.5666, 2135);
-            testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 132.1662, 2138);
+            testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 130.8159, 2115);
             testCollector.assertDistance(algo, idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73.05989, 1229);
 
             System.out.println("unterfranken " + algo + ": " + (testCollector.list.size() - failed) + " failed");
