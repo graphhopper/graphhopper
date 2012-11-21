@@ -16,6 +16,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Helper7;
 import com.graphhopper.util.NotThreadSafe;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -97,10 +98,13 @@ public class MMapDataAccess extends AbstractDataAccess {
             if (!segments.isEmpty())
                 byteCount = (long) (increaseFactor * byteCount);
 
-            // can we really assume that this process sees its own changes immediately?
-            // if not we need to expand instead of re-initialize
+            // - can we really assume that this process sees its own changes immediately?
+            //   if not we need to expand instead of re-initialize
+            // - do we need to clean and release the ByteBuffer or is it even problematic?
             segments.clear();
-            int buffersToMap = (int) (byteCount / segmentSize) + 1;
+            int buffersToMap = (int) (byteCount / segmentSize);
+            if (byteCount % segmentSize != 0)
+                buffersToMap++;
             int bufferStart = 0;
             for (int i = 0; i < buffersToMap; i++) {
                 int bufSize = (int) ((byteCount > (bufferStart + segmentSize))
@@ -208,5 +212,23 @@ public class MMapDataAccess extends AbstractDataAccess {
     @Override
     public int getSegments() {
         return segments.size();
+    }
+
+    @Override
+    public void trimTo(long capacity) {
+        int remainingSegNo = (int) (capacity / segmentSize);
+        if (capacity % segmentSize != 0)
+            remainingSegNo++;
+        List<ByteBuffer> remainingSegments = segments.subList(0, remainingSegNo);
+        List<ByteBuffer> delSegments = segments.subList(remainingSegNo, segments.size());
+        for (ByteBuffer bb : delSegments) {
+            Helper7.cleanMappedByteBuffer(bb);
+        }
+        segments = remainingSegments;
+        try {
+            raFile.setLength(HEADER_OFFSET + remainingSegNo * segmentSize);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

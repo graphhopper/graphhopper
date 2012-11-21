@@ -211,4 +211,13 @@ public class RAMDataAccess extends AbstractDataAccess {
         indexDivisor = segmentSize / 4 - 1;
         return this;
     }
+
+    @Override
+    public void trimTo(long capacity) {
+        int remainingSegments = (int) (capacity / segmentSize);
+        if (capacity % segmentSize != 0)
+            remainingSegments++;
+
+        segments = Arrays.copyOf(segments, remainingSegments);
+    }
 }

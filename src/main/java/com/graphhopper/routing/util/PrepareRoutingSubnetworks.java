@@ -28,6 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Removes nodes which are not part of the largest network. Ie. mostly nodes with no edges at all
+ * but also small subnetworks which are nearly always bugs in OSM data.
+ *
  * @author Peter Karich
  */
 public class PrepareRoutingSubnetworks {
@@ -41,9 +44,10 @@ public class PrepareRoutingSubnetworks {
     }
 
     public void doWork() {
+        int del = deleteZeroDegreeNodes();
         Map<Integer, Integer> map = findSubnetworks();
         keepLargestNetwork(map);
-        logger.info("optimize to delete...");
+        logger.info("optimize to delete: subnetworks(" + map.size() + "), 0degreeNodes(" + del + ")");
         g.optimize();
         subNetworks = map.size();
     }
@@ -58,7 +62,7 @@ public class PrepareRoutingSubnetworks {
         int locs = g.getNodes();
         final MyBitSet bs = new MyBitSetImpl(locs);
         for (int start = 0; start < locs; start++) {
-            if (bs.contains(start))
+            if (g.isDeleted(start) || bs.contains(start))
                 continue;
 
             new XFirstSearch() {
@@ -130,5 +134,22 @@ public class PrepareRoutingSubnetworks {
                 return super.goFurther(nodeId);
             }
         }.start(g, start, true);
+    }
+
+    /**
+     * To avoid large processing and a large HashMap remove nodes with no edges up front
+     *
+     * @return deleted nodes
+     */
+    public int deleteZeroDegreeNodes() {
+        int deleted = 0;
+        int locs = g.getNodes();
+        for (int start = 0; start < locs; start++) {
+            if (!g.getEdges(start).next()) {
+                deleted++;
+                g.markNodeDeleted(start);
+            }
+        }
+        return deleted;
     }
 }

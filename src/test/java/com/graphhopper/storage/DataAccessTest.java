@@ -174,4 +174,40 @@ public abstract class DataAccessTest {
         assertEquals(olds, da.getSegments());
         assertEquals(321, da.getInt(400 / 4));
     }
+
+    @Test
+    public void testTrimTo() {
+        DataAccess da = createDataAccess(location);
+        da.setSegmentSize(128);
+        da.createNew(128 * 11);
+        da.setInt(1, 10);
+        da.setInt(27, 200);
+        da.setInt(31, 301);
+        da.setInt(32, 302);
+        da.setInt(337, 4000);
+
+        // now 11 segments: (337 + 1) * 4 = 1352
+        assertEquals(11, da.getSegments());
+        assertEquals(11 * 128, da.capacity());
+
+        // now 3 segments
+        da.trimTo(128 * 2 + 1);
+        assertEquals(3, da.getSegments());
+
+        // now 2 segments
+        da.trimTo(128 * 2);
+        assertEquals(2, da.getSegments());
+        assertEquals(301, da.getInt(31));
+        assertEquals(302, da.getInt(32));
+
+        // now only one segment
+        da.trimTo(128 * 1);
+        assertEquals(1, da.getSegments());
+        assertEquals(301, da.getInt(31));
+        try {
+            assertEquals(302, da.getInt(32));
+            assertTrue(false);
+        } catch (Exception ex) {
+        }
+    }
 }

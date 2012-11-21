@@ -309,7 +309,7 @@ public class OSMReader {
             }
         } catch (Exception ex) {
             throw new RuntimeException("cannot handle lon/lat of node " + osmId + ": " + lat + "," + lon, ex);
-        }
+        }      
     }
 
     public boolean isInBounds(double lat, double lon) {

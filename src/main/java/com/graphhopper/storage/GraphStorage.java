@@ -772,6 +772,12 @@ public class GraphStorage implements WritableGraph, Storable {
 
         inPlaceDelete(deleted);
         // TODO replacingDelete(deleted);
+        trimToSize();
+    }
+    
+    void trimToSize() {
+        // TODO delete empty edges too
+        nodes.trimTo(nodeCount * nodeEntrySize);
     }
 
     @Override

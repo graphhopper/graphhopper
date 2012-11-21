@@ -35,6 +35,8 @@ public interface DataAccess extends Storable {
     void createNew(long bytes);
 
     void ensureCapacity(long bytes);
+    
+    void trimTo(long capacity);
 
     DataAccess copyTo(DataAccess da);
 
