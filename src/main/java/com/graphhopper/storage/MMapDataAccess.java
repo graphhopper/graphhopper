@@ -216,6 +216,8 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void trimTo(long capacity) {
+        if (capacity < segmentSize)
+            capacity = segmentSize;
         int remainingSegNo = (int) (capacity / segmentSize);
         if (capacity % segmentSize != 0)
             remainingSegNo++;

@@ -33,7 +33,8 @@ public class GraphStorageTest extends AbstractGraphTester {
 
     @Override
     public Graph createGraph(int size) {
-        return new GraphStorage(new RAMDirectory("graphstorage")).createNew(size);
+        // reduce segment size in order to test the case where multiple segments come into the game        
+        return new GraphStorage(new RAMDirectory("graphstorage")).setSegmentSize(size / 2).createNew(size);
     }
 
     @Test
@@ -50,7 +51,7 @@ public class GraphStorageTest extends AbstractGraphTester {
             graph.getEdgeProps(4, 3);
             assertFalse(true);
         } catch (Exception ex) {
-        }        
+        }
         try {
             graph.getEdgeProps(0, 3);
             assertFalse(true);

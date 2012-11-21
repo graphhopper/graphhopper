@@ -521,4 +521,14 @@ public abstract class AbstractGraphTester {
         iter = someGraphImpl.getEdgeProps(edgeId, 1);
         assertTrue(iter.isEmpty());
     }
+
+    @Test
+    public void testDeleteAndOptimize() {
+        Graph g = createGraph(20);
+        g.setNode(20, 10, 10);
+        g.setNode(21, 10, 11);
+        g.markNodeDeleted(20);
+        g.optimize();
+        assertEquals(11, g.getLongitude(20), 1e-5);
+    }
 }

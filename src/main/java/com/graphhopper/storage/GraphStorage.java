@@ -55,7 +55,7 @@ public class GraphStorage implements WritableGraph, Storable {
     // delete marker is not persistent!
     private MyBitSet deletedNodes;
     private int edgeEntryIndex = -1, nodeEntryIndex = -1;
-    
+
     public GraphStorage(Directory dir) {
         this.dir = dir;
         edges = dir.createDataAccess("edges");
@@ -92,6 +92,12 @@ public class GraphStorage implements WritableGraph, Storable {
 
     public Directory getDirectory() {
         return dir;
+    }
+
+    public GraphStorage setSegmentSize(int bytes) {
+        nodes.setSegmentSize(bytes);
+        edges.setSegmentSize(bytes);
+        return this;
     }
 
     public GraphStorage createNew(int nodeCount) {
@@ -758,12 +764,6 @@ public class GraphStorage implements WritableGraph, Storable {
         deletedNodes = null;
     }
 
-    protected void inPlaceDeleteNodeHook(long oldI, long newI) {
-        nodes.setInt(newI, nodes.getInt(oldI));
-        nodes.setInt(newI + I_LAT, nodes.getInt(oldI + I_LAT));
-        nodes.setInt(newI + I_LON, nodes.getInt(oldI + I_LON));
-    }
-
     @Override
     public void optimize() {
         int deleted = getDeletedNodes().getCardinality();
@@ -771,13 +771,14 @@ public class GraphStorage implements WritableGraph, Storable {
             return;
 
         inPlaceDelete(deleted);
-        // TODO replacingDelete(deleted);
+        // replacingDelete(deleted);
         trimToSize();
     }
-    
+
     void trimToSize() {
+        long nodeCap = (long) nodeCount * 4 * nodeEntrySize;
+        nodes.trimTo(nodeCap);
         // TODO delete empty edges too
-        nodes.trimTo(nodeCount * nodeEntrySize);
     }
 
     @Override

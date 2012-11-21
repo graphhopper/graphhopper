@@ -92,7 +92,7 @@ public class OSMIDSegmentedMap {
 
             long storedKey = keys[retBucket];
             if (storedKey == key)
-                return retBucket * bucketSize;
+                return (long) retBucket * bucketSize;
 
             VLongStorage buck = buckets[retBucket];
             long tmp = buck.getPosition();
@@ -102,7 +102,7 @@ public class OSMIDSegmentedMap {
             for (int i = 1; i < max; i++) {
                 storedKey += buck.readVLong();
                 if (storedKey == key) {
-                    ret = retBucket * bucketSize + i;
+                    ret = (long) retBucket * bucketSize + i;
                     break;
                 } else if (storedKey > key)
                     break;
@@ -111,7 +111,7 @@ public class OSMIDSegmentedMap {
             return ret;
         }
 
-        return retBucket * bucketSize;
+        return (long) retBucket * bucketSize;
     }
 
     public long getNoEntryValue() {

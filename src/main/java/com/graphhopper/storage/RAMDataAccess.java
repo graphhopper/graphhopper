@@ -172,14 +172,14 @@ public class RAMDataAccess extends AbstractDataAccess {
     public void setInt(long intIndex, int value) {
         int bufferIndex = (int) (intIndex >>> segmentSizeIntsPower);
         int index = (int) (intIndex & indexDivisor);
-        segments[bufferIndex][(int) index] = value;
+        segments[bufferIndex][index] = value;
     }
 
     @Override
     public int getInt(long intIndex) {
         int bufferIndex = (int) (intIndex >>> segmentSizeIntsPower);
         int index = (int) (intIndex & indexDivisor);
-        return segments[bufferIndex][(int) index];
+        return segments[bufferIndex][index];
     }
 
     @Override
@@ -214,6 +214,8 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public void trimTo(long capacity) {
+        if (capacity < segmentSize)
+            capacity = segmentSize;
         int remainingSegments = (int) (capacity / segmentSize);
         if (capacity % segmentSize != 0)
             remainingSegments++;

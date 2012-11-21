@@ -195,6 +195,15 @@ public class OSMReader {
         return fi;
     }
 
+    // TODO how can we avoid that hack?
+    void setGraph() {
+        prepare.setGraph(storage.getGraph());
+    }
+
+    public AlgorithmPreparation getPreparation() {
+        return prepare;
+    }
+
     public void osm2Graph(File osmXmlFile) throws IOException {
         writeOsm2Graph(createInputStream(osmXmlFile));
         cleanUp();
@@ -202,18 +211,9 @@ public class OSMReader {
         flush();
     }
 
-    // TODO how can we avoid that hack?
-    void setGraph() {
-        prepare.setGraph(storage.getGraph());
-    }
-
     public void optimize() {
         setGraph();
         prepare.doWork();
-    }
-
-    public AlgorithmPreparation getPreparation() {
-        return prepare;
     }
 
     public void cleanUp() {
@@ -229,7 +229,7 @@ public class OSMReader {
     }
 
     public void flush() {
-        logger.info("flushing ...");
+        logger.info("flushing, " + Helper7.getBeanMemInfo());
         storage.flush();
     }
 
@@ -309,7 +309,7 @@ public class OSMReader {
             }
         } catch (Exception ex) {
             throw new RuntimeException("cannot handle lon/lat of node " + osmId + ": " + lat + "," + lon, ex);
-        }      
+        }
     }
 
     public boolean isInBounds(double lat, double lon) {

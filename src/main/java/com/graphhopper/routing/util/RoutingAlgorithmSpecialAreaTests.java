@@ -103,13 +103,15 @@ public class RoutingAlgorithmSpecialAreaTests {
         prepare.doWork();
         AStarBidirection astarSimpleSC = (AStarBidirection) prepare.createAStar();
         astarSimpleSC.setApproximation(false);
-        LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
-        PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().setGraph(graphCH);
-        prepareCH.doWork();
+        // TODO preparation takes too long
+//        LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
+//        PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().setGraph(graphCH);
+//        prepareCH.doWork();
         return new RoutingAlgorithm[]{
                     new AStar(g), new AStarBidirection(g), new DijkstraBidirectionRef(g), new DijkstraBidirection(g),
-                    new DijkstraSimple(g), prepare.createAlgo(), astarSimpleSC,
-                    prepareCH.createAlgo()};
+                    new DijkstraSimple(g), prepare.createAlgo(), astarSimpleSC
+                // , prepareCH.createAlgo()
+                };
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
 

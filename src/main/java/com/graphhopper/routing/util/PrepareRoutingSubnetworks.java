@@ -82,7 +82,7 @@ public class PrepareRoutingSubnetworks {
                     return ret;
                 }
             }.start(g, start, true);
-
+            // System.out.println(start + " MAP "+map.size());
             map.put(start, integ.get());
             integ.set(0);
         }
