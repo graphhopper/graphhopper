@@ -15,7 +15,6 @@
  */
 package com.graphhopper.coll;
 
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.CoordTrig;
 import java.util.Random;
 import org.junit.Test;
@@ -47,11 +46,7 @@ public class CompressedArrayTest {
         assertEquals(12, coord.lat, 1e-6);
         assertEquals(3, coord.lon, 1e-6);
 
-        try {
-            assertNull(arr.get(3));
-            assertFalse(true);
-        } catch (Exception ex) {
-        }
+        assertNull(arr.get(3));
         // assertEquals(42, arr.calcMemInMB() * Helper.MB, 1e-3);
     }
 
@@ -60,9 +55,25 @@ public class CompressedArrayTest {
         CompressedArray arr = new CompressedArray();
         Random rand = new Random(0);
         for (int i = 0; i < 10000; i++) {
-            arr.write(i * rand.nextDouble(), i);
+            arr.write(i / 1000.0, rand.nextDouble() * 90);
         }
+        
         arr.flush();
+        CoordTrig coord = arr.get(0);
+        assertEquals(0, coord.lat, 1e-6);
+        assertEquals(65.787100, coord.lon, 1e-6);
+
+        coord = arr.get(999);
+        assertEquals(0.999, coord.lat, 1e-6);
+
+        coord = arr.get(9998);
+        assertEquals(9.998, coord.lat, 1e-6);
+
+        coord = arr.get(9999);
+        assertEquals(9.999, coord.lat, 1e-6);
+
+        assertNull(arr.get(10000));
+
         // assertEquals(43, arr.calcMemInMB() * Helper.MB, 1e-3);
     }
 }

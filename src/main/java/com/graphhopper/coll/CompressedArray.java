@@ -36,7 +36,7 @@ public class CompressedArray {
 
     private int compressionLevel = 5;
     private VLongStorage currentWriter;
-    private int currentEntry = -1;
+    private int currentEntry = 0;
     private List<byte[]> segments;
     private int entriesPerSegment;
     private int approxBytesPerEntry;
@@ -86,11 +86,13 @@ public class CompressedArray {
         int segmentNo = (int) (index / entriesPerSegment);
         int entry = (int) (index % entriesPerSegment);
         try {
+            if (segmentNo >= segments.size())
+                return null;
             byte[] bytes = segments.get(segmentNo);
-            VLongStorage stream = new VLongStorage(decompress(bytes));
-            int max = Math.min(entry, entriesPerSegment);
-            for (int i = 0; i <= max; i++) {
-                long latlon = stream.readVLong();
+            VLongStorage store = new VLongStorage(decompress(bytes));
+            long len = store.getLength();
+            for (int i = 0; store.getPosition() < len; i++) {
+                long latlon = store.readVLong();
                 if (i == entry) {
                     CoordTrig coord = new CoordTrig();
                     algo.decode(latlon, coord);
@@ -98,6 +100,10 @@ public class CompressedArray {
                 }
             }
             return null;
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            // hack to get more information when exception happens
+            throw new RuntimeException("index " + index + "=> segNo:" + segmentNo + ", entry=" + entry
+                    + ", segments:" + segments.size(), ex);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }

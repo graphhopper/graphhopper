@@ -47,14 +47,10 @@ public class OSMIDSegmentedMap {
         buckets = new VLongStorage[cap];
     }
 
-    public void put(long key, long value) {
+    public void write(long key) {
         if (key <= lastKey)
             throw new IllegalStateException("Not supported: key " + key + " is lower than last one " + lastKey);
-        if (value < 0)
-            throw new IllegalStateException("Not supported: negative value " + value);
-        if (value != lastValue + 1)
-            throw new IllegalStateException("Not supported: value " + value + " is not " + (lastValue + 1));
-
+        
         currentIndex++;
         if (currentIndex >= bucketSize) {
             currentBucket++;
@@ -79,7 +75,6 @@ public class OSMIDSegmentedMap {
 
         size++;
         lastKey = key;
-        lastValue = value;
     }
 
     public long get(long key) {

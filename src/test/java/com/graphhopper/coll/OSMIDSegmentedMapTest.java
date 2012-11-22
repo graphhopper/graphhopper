@@ -27,7 +27,7 @@ public class OSMIDSegmentedMapTest {
     @Test
     public void testZeroKey() {
         OSMIDSegmentedMap map = new OSMIDSegmentedMap();
-        map.put(0, 0);
+        map.write(0);
         assertEquals(1, map.size());
         assertEquals(0, map.get(0));
         assertEquals(-1, map.get(1));
@@ -36,13 +36,13 @@ public class OSMIDSegmentedMapTest {
     @Test
     public void testGet() {
         OSMIDSegmentedMap map = new OSMIDSegmentedMap();
-        map.put(9, 0);
-        map.put(10, 1);
-        map.put(11, 2);
-        map.put(12, 3);
-        map.put(20, 4);
-        map.put(21, 5);
-        map.put(31, 6);
+        map.write(9);
+        map.write(10);
+        map.write(11);
+        map.write(12);
+        map.write(20);
+        map.write(21);
+        map.write(31);
 
         assertEquals(7, map.size());
         assertEquals(-1, map.get(8));
@@ -58,7 +58,7 @@ public class OSMIDSegmentedMapTest {
         assertEquals(-1, map.get(32));
 
         for (int i = 0; i < 200; i++) {
-            map.put(i + 50, i + 7);
+            map.write(i + 50);
         }
         assertEquals(207, map.size());
         assertEquals(-1, map.get(49));
@@ -68,15 +68,15 @@ public class OSMIDSegmentedMapTest {
     @Test
     public void testGet2() {
         OSMIDSegmentedMap map = new OSMIDSegmentedMap();
-        map.put(9, 0);
-        map.put(10, 1);
-        map.put(11, 2);
-        map.put(12, 3);
-        map.put(13, 4);
-        map.put(14, 5);
-        map.put(16, 6);
-        map.put(18, 7);
-        map.put(19, 8);
+        map.write(9);
+        map.write(10);
+        map.write(11);
+        map.write(12);
+        map.write(13);
+        map.write(14);
+        map.write(16);
+        map.write(18);
+        map.write(19);
 
         assertEquals(9, map.size());
         assertEquals(-1, map.get(8));

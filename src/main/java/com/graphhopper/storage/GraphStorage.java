@@ -661,8 +661,6 @@ public class GraphStorage implements WritableGraph, Storable {
         int toMoveNode = getNodes();
         int itemsToMove = 0;
         int maxMoves = Math.min(deleted, Math.max(0, toMoveNode - deleted));
-        System.out.println("deleted:" + deleted + ", toMove:" + toMoveNode + ", maxMoves:" + maxMoves
-                + " " + Helper7.getBeanMemInfo());
         int newIndices[] = new int[maxMoves];
         int oldIndices[] = new int[maxMoves];
 

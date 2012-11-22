@@ -25,6 +25,7 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.PrepareSimpleShortcuts;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
+import com.graphhopper.storage.DefaultStorage;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -217,6 +218,8 @@ public class OSMReader {
     }
 
     public void cleanUp() {
+        // TODO remove Storage interface and this ugly hack:
+        ((DefaultStorage) storage).freeOSMIDMap();
         Graph g = storage.getGraph();
         int prev = g.getNodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(g);
@@ -261,6 +264,8 @@ public class OSMReader {
                             }
                         } else if ("way".equals(sReader.getLocalName())) {
                             if (wayStart < 0) {
+                                // TODO remove that hack
+                                ((DefaultStorage) storage).flushLatLonArray();
                                 logger.info("parsing ways");
                                 wayStart = counter;
                                 sw.start();

@@ -91,7 +91,7 @@ public class OSMReaderTest {
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.flush();
         Graph graph = reader.getGraph();
-        assertEquals(7, graph.getNodes());
+        assertEquals(3, graph.getNodes());
         assertEquals(1, GraphUtility.count(graph.getOutgoing(0)));
         assertEquals(2, GraphUtility.count(graph.getOutgoing(1)));
         assertEquals(1, GraphUtility.count(graph.getOutgoing(2)));

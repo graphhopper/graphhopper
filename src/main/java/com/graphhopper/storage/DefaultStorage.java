@@ -15,10 +15,12 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.coll.CompressedArray;
 import com.graphhopper.coll.OSMIDSegmentedMap;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.shapes.CoordTrig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,14 +34,15 @@ public class DefaultStorage implements Storage {
     protected Graph g;
     // protected OSMIDMap osmIdToIndexMap;
     protected OSMIDSegmentedMap osmIdToIndexMap;
+    protected CompressedArray latLonArray;
     private int expectedNodes;
-    private int internalId = 0;
     private int counter = 0;
     private int zeroCounter = 0;
 
     public DefaultStorage(int expectedNodes) {
         this.expectedNodes = expectedNodes;
         osmIdToIndexMap = new OSMIDSegmentedMap(expectedNodes, 100);
+        latLonArray = new CompressedArray();
         // osmIdToIndexMap = new OSMIDMap(expectedNodes);
     }
 
@@ -56,34 +59,30 @@ public class DefaultStorage implements Storage {
 
     @Override
     public boolean addNode(long osmId, double lat, double lon) {
-        g.setNode(internalId, lat, lon);
-        osmIdToIndexMap.put(osmId, internalId);
-        internalId++;
+        // map.get returns the required index for the latLon array. 
+        // TODO later we need the index also for the way/node name
+        osmIdToIndexMap.write(osmId);
+        latLonArray.write(lat, lon);
         return true;
-    }    
+    }
 
     @Override
     public boolean addEdge(long nodeIdFrom, long nodeIdTo, int flags, DistanceCalc callback) {
         int fromIndex = (int) osmIdToIndexMap.get(nodeIdFrom);
-        if (fromIndex == FILLED) {
-            logger.warn("fromIndex is unresolved:" + nodeIdFrom + " to was:" + nodeIdTo);
-            return false;
-        }
         int toIndex = (int) osmIdToIndexMap.get(nodeIdTo);
-        if (toIndex == FILLED) {
-            logger.warn("toIndex is unresolved:" + nodeIdTo + " from was:" + nodeIdFrom);
-            return false;
-        }
-
         if (fromIndex == osmIdToIndexMap.getNoEntryValue() || toIndex == osmIdToIndexMap.getNoEntryValue())
             return false;
 
         try {
-            double laf = g.getLatitude(fromIndex);
-            double lof = g.getLongitude(fromIndex);
-            double lat = g.getLatitude(toIndex);
-            double lot = g.getLongitude(toIndex);
-            double dist = callback.calcDistKm(laf, lof, lat, lot);
+            CoordTrig from = latLonArray.get(fromIndex);
+            CoordTrig to = latLonArray.get(toIndex);
+            if (from == null || to == null)
+                // probably out of bounds
+                return false;
+
+            g.setNode(fromIndex, from.lat, from.lon);
+            g.setNode(toIndex, to.lat, to.lon);
+            double dist = callback.calcDistKm(from.lat, from.lon, to.lat, to.lon);
             if (dist == 0) {
                 // As investigation shows often two paths should have crossed via one identical point 
                 // but end up in two very close points. later this will be removed/fixed while 
@@ -91,8 +90,8 @@ public class DefaultStorage implements Storage {
                 zeroCounter++;
                 dist = 0.0001;
             } else if (dist < 0) {
-                logger.info(counter + " - distances negative. " + fromIndex + " (" + laf + ", " + lof + ")->"
-                        + toIndex + "(" + lat + ", " + lot + ") :" + dist);
+                logger.info(counter + " - distances negative. " + fromIndex + " (" + from.lat + ", " + from.lon + ")->"
+                        + toIndex + "(" + to.lat + ", " + to.lon + ") :" + dist);
                 return false;
             }
 
@@ -129,14 +128,19 @@ public class DefaultStorage implements Storage {
 
     @Override
     public void flush() {
-        logger.info("Found " + zeroCounter + " zero and " + counter
-                + " negative distances. mapSize:" + osmIdToIndexMap.size() + ", mapMem:"
-                + osmIdToIndexMap.calcMemInMB());
-        osmIdToIndexMap = null;
+        logger.info("Found " + zeroCounter + " zero and " + counter + " negative distances.");
     }
 
     @Override
     public String toString() {
         return getClass().getSimpleName();
+    }
+
+    public void freeOSMIDMap() {
+        osmIdToIndexMap = null;
+    }
+
+    public void flushLatLonArray() {
+        latLonArray.flush();
     }
 }
