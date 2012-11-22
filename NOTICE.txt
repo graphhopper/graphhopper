@@ -6,3 +6,5 @@ This product includes the following software
  * slf4j.org - SLF4J distributed under the MIT license. 
  * trove.starlight-systems.com - GNU Trove library distributed under the
    LGPL license
+ * SparseArray from the Android project (Apache license)
+ * Some snippets regarding mmap, vint and compression from Lucene (Apache license)

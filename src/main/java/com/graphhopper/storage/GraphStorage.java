@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.Helper7;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -660,6 +661,8 @@ public class GraphStorage implements WritableGraph, Storable {
         int toMoveNode = getNodes();
         int itemsToMove = 0;
         int maxMoves = Math.min(deleted, Math.max(0, toMoveNode - deleted));
+        System.out.println("deleted:" + deleted + ", toMove:" + toMoveNode + ", maxMoves:" + maxMoves
+                + " " + Helper7.getBeanMemInfo());
         int newIndices[] = new int[maxMoves];
         int oldIndices[] = new int[maxMoves];
 
@@ -730,8 +733,6 @@ public class GraphStorage implements WritableGraph, Storable {
         // rewrite the edges of nodes connected to moved nodes
         // go through all edges and pick the necessary ... <- this is easier to implement then
         // a more efficient (?) breadth-first search
-
-        TIntHashSet hash = new TIntHashSet();
         for (int edge = 1; edge < edgeCount + 1; edge++) {
             long edgePointer = (long) edge * edgeEntrySize;
             // nodeId could be wrong - see tests            
@@ -740,8 +741,6 @@ public class GraphStorage implements WritableGraph, Storable {
             if (!toUpdatedSet.contains(nodeA) && !toUpdatedSet.contains(nodeB))
                 continue;
 
-            hash.add(nodeA);
-            hash.add(nodeB);
             // now overwrite exiting edge with new node ids 
             // also flags and links could have changed due to different node order
             int updatedA = oldToNewIndexMap.get(nodeA);
