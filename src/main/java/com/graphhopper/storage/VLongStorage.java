@@ -29,7 +29,11 @@ public class VLongStorage {
     }
 
     public VLongStorage(int cap) {
-        bytes = new byte[cap];
+        this(new byte[cap]);
+    }
+
+    public VLongStorage(byte[] bytes) {
+        this.bytes = bytes;
     }
 
     public void seek(long pos) {
@@ -140,5 +144,9 @@ public class VLongStorage {
             System.arraycopy(bytes, 0, tmp, 0, pointer);
             bytes = tmp;
         }
+    }
+
+    public byte[] getBytes() {
+        return bytes;
     }
 }

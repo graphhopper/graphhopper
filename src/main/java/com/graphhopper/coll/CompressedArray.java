@@ -15,34 +15,32 @@
  */
 package com.graphhopper.coll;
 
+import com.graphhopper.geohash.SpatialKeyAlgo;
+import com.graphhopper.storage.VLongStorage;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.CoordTrig;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 import java.util.zip.Inflater;
 
 /**
- * The methods de(compress) are taken from lucene CompressionTools
+ * Stores the entries in compressed segments. The methods de(compress) are taken from lucene
+ * CompressionTools. Before accessing the stored values be sure you called flush.
  *
  * @author Peter Karich
  */
 public class CompressedArray {
 
-    private DataOutputStream currentWriter;
-    private ByteArrayOutputStream currentBao;
+    private int compressionLevel = 5;
+    private VLongStorage currentWriter;
     private int currentEntry = -1;
     private List<byte[]> segments;
     private int entriesPerSegment;
     private int approxBytesPerEntry;
+    private SpatialKeyAlgo algo;
 
     public CompressedArray() {
         this(100, 200, 4);
@@ -59,51 +57,46 @@ public class CompressedArray {
         this.entriesPerSegment = entriesPerSeg;
         this.approxBytesPerEntry = approxBytesPerEntry;
         segments = new ArrayList<byte[]>(_segments);
+        algo = new SpatialKeyAlgo(63);
+    }
+
+    public CompressedArray setCompressionLevel(int compressionLevel) {
+        this.compressionLevel = compressionLevel;
+        return this;
     }
 
     public void write(double lat, double lon) {
         try {
-            if (currentWriter == null) {
-                currentWriter = new DataOutputStream(new GZIPOutputStream(
-                        currentBao = new ByteArrayOutputStream(entriesPerSegment * approxBytesPerEntry)));
-            }
+            if (currentWriter == null)
+                currentWriter = new VLongStorage(entriesPerSegment * approxBytesPerEntry);
 
+            long latlon = algo.encode(new CoordTrig(lat, lon));
+            // we cannot use delta encoding as vlong does not support negative numbers
+            // but compression of vlong is much more efficient than directly storing the integers
+            currentWriter.writeVLong(latlon);
             currentEntry++;
-            // last entry?
-//            if (currentEntry + 1 == entriesPerSegment)
-//                compressor.finish();
-//            compressor.setInput(data, 0, data.length);
-
-            currentWriter.writeFloat((float) lat);
-            currentWriter.writeFloat((float) lon);
-
             if (currentEntry >= entriesPerSegment)
                 flush();
-
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    public CoordTrig getEntry(long index) {
+    public CoordTrig get(long index) {
         int segmentNo = (int) (index / entriesPerSegment);
         int entry = (int) (index % entriesPerSegment);
         try {
             byte[] bytes = segments.get(segmentNo);
-            DataInputStream stream = new DataInputStream(new GZIPInputStream(new ByteArrayInputStream(bytes)));
-            for (int i = 0; i <= entry; i++) {
-                float lat = stream.readFloat();
-                float lon = stream.readFloat();
+            VLongStorage stream = new VLongStorage(decompress(bytes));
+            int max = Math.min(entry, entriesPerSegment);
+            for (int i = 0; i <= max; i++) {
+                long latlon = stream.readVLong();
                 if (i == entry) {
                     CoordTrig coord = new CoordTrig();
-                    coord.lat = lat;
-                    coord.lon = lon;
+                    algo.decode(latlon, coord);
                     return coord;
                 }
             }
-
-            return null;
-        } catch (EOFException ex) {
             return null;
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -114,10 +107,9 @@ public class CompressedArray {
         if (currentWriter == null)
             return;
         try {
-            currentWriter.flush();
-            currentWriter.close();
-//                compressor.end();
-            segments.add(currentBao.toByteArray());
+            currentWriter.trimToSize();
+            byte[] input = currentWriter.getBytes();
+            segments.add(compress(input, 0, input.length, compressionLevel));
             currentWriter = null;
             currentEntry = 0;
         } catch (Exception ex) {

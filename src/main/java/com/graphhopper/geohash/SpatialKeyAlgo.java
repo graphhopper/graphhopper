@@ -80,6 +80,9 @@ public class SpatialKeyAlgo implements KeyAlgo {
     private int allBits;
     private long initialBits;
 
+    /**
+     * @param allBits how many bits should be used for the spatial key when encoding/decoding
+     */
     public SpatialKeyAlgo(int allBits) {
         myinit(allBits);
     }
