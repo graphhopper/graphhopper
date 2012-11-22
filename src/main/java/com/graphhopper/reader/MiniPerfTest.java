@@ -76,7 +76,7 @@ public class MiniPerfTest {
         }
         System.out.println(new Date() + "# progress 100% in " + sw.stop().getSeconds()
                 + " secs => secs/iter:" + sw.stop().getSeconds() / maxNo + "\n avoid jvm removal:"
-                + res + ", memInfo:" + Helper.getMemInfo() + " " + Helper7.getBeanMemInfo() + "\n");
+                + res + ", memInfo:" + Helper.getMemInfo() + " " + Helper.getMemInfo() + "\n");
     }
 
     /**

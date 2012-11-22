@@ -33,6 +33,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Helper7;
 import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.StopWatch;
@@ -169,7 +170,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                 updateCounter++;
                 logger.info(counter + ", nodes: " + sortedNodes.size() + ", shortcuts:" + newShortcuts
                         + ", updateAllTime:" + sw.getSeconds() + ", " + updateCounter
-                        + ", memory:" + Helper7.getBeanMemInfo());
+                        + ", memory:" + Helper.getMemInfo());
             }
 
             counter++;

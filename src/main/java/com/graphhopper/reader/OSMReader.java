@@ -25,15 +25,12 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.PrepareSimpleShortcuts;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
-import com.graphhopper.storage.DefaultStorage;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.GraphStorageWrapper;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.Storage;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
@@ -42,7 +39,6 @@ import com.graphhopper.util.StopWatch;
 import gnu.trove.list.array.TLongArrayList;
 import java.io.*;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
 import javax.xml.stream.XMLInputFactory;
@@ -85,11 +81,13 @@ public class OSMReader {
         }
     }
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
-    private int locations = 0;
-    private int skippedLocations = 0;
-    private int nextEdgeIndex = 0;
-    private int skippedEdges = 0;
-    private Storage storage;
+    private int locations;
+    private int skippedLocations;
+    private int nextEdgeIndex;
+    private int skippedEdges;
+    private GraphStorage graphStorage;
+    private OSMReaderHelper helper;
+    private int expectedNodes;
     private TLongArrayList tmpLocs = new TLongArrayList(10);
     private Map<String, Object> properties = new HashMap<String, Object>();
     private DistanceCalc callback = new DistanceCalc();
@@ -119,7 +117,7 @@ public class OSMReader {
         }
 
         int size = (int) args.getLong("osmreader.size", 10 * 1000);
-        Storage storage;
+        GraphStorage storage;
         String dataAccess = args.get("osmreader.dataaccess", "inmemory+save");
         Directory dir;
         if ("mmap".equalsIgnoreCase(dataAccess)) {
@@ -132,14 +130,15 @@ public class OSMReader {
         }
 
         if (args.getBool("osmreader.levelgraph", false))
-            storage = new GraphStorageWrapper(new LevelGraphStorage(dir), size);
+            storage = new LevelGraphStorage(dir);
         else
             // necessary for simple or CH shortcuts
-            storage = new GraphStorageWrapper(new GraphStorage(dir), size);
-        return osm2Graph(new OSMReader(storage), args);
+            storage = new GraphStorage(dir);
+        return osm2Graph(new OSMReader(storage, size), args);
     }
 
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
+        osmReader.setFastRead(args.getBool("osmreader.fastRead", true));
         String type = args.get("osmreader.type", "CAR");
         osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
                 type.contains("PUBLIC_TRANSPORT"),
@@ -163,27 +162,27 @@ public class OSMReader {
             logger.info("start creating graph from " + osmXmlFile
                     + " (expected size for osm2id-map: " + osmReader.getExpectedNodes() + ")");
             osmReader.osm2Graph(osmXmlFile);
-        } else
-            osmReader.setGraph();
-
+        }
         return osmReader;
     }
 
     public OSMReader(String storageLocation, int size) {
-        this(new GraphStorageWrapper(new GraphStorage(new RAMDirectory(storageLocation, true)), size));
+        this(new GraphStorage(new RAMDirectory(storageLocation, true)), size);
     }
 
-    public OSMReader(Storage storage) {
-        this.storage = storage;
-        logger.info("using " + storage.toString() + ", memory:" + Helper7.getBeanMemInfo());
+    public OSMReader(GraphStorage storage, int expectedNodes) {
+        this.graphStorage = storage;
+        this.expectedNodes = expectedNodes;
+        this.helper = new OSMReaderHelperFast(graphStorage, expectedNodes);
+        logger.info("using " + helper.getStorageInfo(storage) + ", memory:" + Helper.getMemInfo());
     }
 
     private int getExpectedNodes() {
-        return storage.getExpectedNodes();
+        return expectedNodes;
     }
 
     public boolean loadExisting() {
-        return storage.loadExisting();
+        return graphStorage.loadExisting();
     }
 
     private InputStream createInputStream(File file) throws IOException {
@@ -196,16 +195,12 @@ public class OSMReader {
         return fi;
     }
 
-    // TODO how can we avoid that hack?
-    void setGraph() {
-        prepare.setGraph(storage.getGraph());
-    }
-
     public AlgorithmPreparation getPreparation() {
         return prepare;
     }
 
     public void osm2Graph(File osmXmlFile) throws IOException {
+        helper.preProcess(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
         cleanUp();
         optimize();
@@ -213,27 +208,24 @@ public class OSMReader {
     }
 
     public void optimize() {
-        setGraph();
         prepare.doWork();
     }
 
     public void cleanUp() {
-        // TODO remove Storage interface and this ugly hack:
-        ((DefaultStorage) storage).freeOSMIDMap();
-        Graph g = storage.getGraph();
-        int prev = g.getNodes();
-        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(g);
+        helper.freeNodeMap();
+        int prev = graphStorage.getNodes();
+        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graphStorage);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
-        int n = g.getNodes();
+        int n = graphStorage.getNodes();
         logger.info("nodes " + n + ", there were " + preparation.getSubNetworks()
                 + " sub-networks. removed them => " + (prev - n)
                 + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
     }
 
     public void flush() {
-        logger.info("flushing, " + Helper7.getBeanMemInfo());
-        storage.flush();
+        logger.info("flushing... (" + Helper.getMemInfo() + ")");
+        graphStorage.flush();
     }
 
     /**
@@ -243,7 +235,7 @@ public class OSMReader {
         if (is == null)
             throw new IllegalStateException("Stream cannot be empty");
 
-        storage.createNew();
+        graphStorage.createNew(expectedNodes);
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         int wayStart = -1;
@@ -264,8 +256,7 @@ public class OSMReader {
                             }
                         } else if ("way".equals(sReader.getLocalName())) {
                             if (wayStart < 0) {
-                                // TODO remove that hack
-                                ((DefaultStorage) storage).flushLatLonArray();
+                                helper.startWayProcessing();
                                 logger.info("parsing ways");
                                 wayStart = counter;
                                 sw.start();
@@ -307,7 +298,7 @@ public class OSMReader {
             lat = Double.parseDouble(sReader.getAttributeValue(null, "lat"));
             lon = Double.parseDouble(sReader.getAttributeValue(null, "lon"));
             if (isInBounds(lat, lon)) {
-                storage.addNode(osmId, lat, lon);
+                helper.addNode(osmId, lat, lon);
                 locations++;
             } else {
                 skippedLocations++;
@@ -379,7 +370,7 @@ public class OSMReader {
             int flags = acceptStreets.toFlags(properties);
             for (int index = 1; index < l; index++) {
                 long currOsmId = tmpLocs.get(index);
-                boolean ret = storage.addEdge(prevOsmId, currOsmId, flags, callback);
+                boolean ret = helper.addEdge(prevOsmId, currOsmId, flags, callback);
                 if (ret)
                     nextEdgeIndex++;
                 else
@@ -390,29 +381,7 @@ public class OSMReader {
     }
 
     public Graph getGraph() {
-        return storage.getGraph();
-    }
-
-    private void stats() {
-        logger.info("Stats");
-
-//        printSorted(countMap.entrySet());
-//        printSorted(highwayMap.entrySet());
-        storage.stats();
-    }
-
-    private void printSorted(Set<Entry<String, Integer>> entrySet) {
-        List<Entry<String, Integer>> list = new ArrayList<Entry<String, Integer>>(entrySet);
-        Collections.sort(list, new Comparator<Entry<String, Integer>>() {
-            @Override
-            public int compare(Entry<String, Integer> o1, Entry<String, Integer> o2) {
-                return o1.getValue() - o2.getValue();
-            }
-        });
-        for (Entry<String, Integer> e : list) {
-            logger.info(e.getKey() + "\t -> " + e.getValue());
-        }
-        logger.info("---");
+        return graphStorage;
     }
 
     public OSMReader setAcceptStreet(AcceptStreet acceptStr) {
@@ -426,16 +395,41 @@ public class OSMReader {
         } else if ("shortest".equals(chShortcuts)) {
             prepare = new PrepareContractionHierarchies();
         }
+        prepare.setGraph(graphStorage);
         return this;
     }
 
     public OSMReader setSimpleShortcuts(boolean bool) {
-        if (bool)
+        if (bool) {
             prepare = new PrepareSimpleShortcuts();
+        }
         return this;
     }
 
     private void setDefaultAlgoPrepare(AlgorithmPreparation defaultPrepare) {
         prepare = defaultPrepare;
+        prepare.setGraph(graphStorage);
+    }
+
+    public OSMReader setFastRead(boolean fast) {
+        if (fast)
+            helper = new OSMReaderHelperFast(graphStorage, expectedNodes);
+        else
+            helper = createLessMemHelper();
+        return this;
+    }
+
+    OSMReaderHelper createLessMemHelper() {
+        return new OSMReaderHelperLessMem(graphStorage, expectedNodes) {
+            @Override
+            boolean parseWay(TLongArrayList tmpLocs, Map<String, Object> properties,
+                    XMLStreamReader sReader) throws XMLStreamException {
+                return OSMReader.this.parseWay(tmpLocs, properties, sReader);
+            }
+        };
+    }
+
+    OSMReaderHelper getHelper() {
+        return helper;
     }
 }
