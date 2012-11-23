@@ -86,7 +86,7 @@ public class RoutingAlgorithmIntegrationTest {
                     put("osmreader.dataaccess", "inmemory"));
             Graph g = osm.getGraph();
             // System.out.println("nodes:" + g.getNodes());
-            Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
+            Location2IDIndex idx = osm.getLocation2IDIndex();
             RoutingAlgorithm[] algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
             for (RoutingAlgorithm algo : algos) {
                 for (OneRun or : forEveryAlgo) {
@@ -111,7 +111,7 @@ public class RoutingAlgorithmIntegrationTest {
                 put("osmreader.graph-location", graphFile).
                 put("osmreader.dataaccess", "inmemory"));
         final Graph g = osm.getGraph();
-        final Location2IDIndex idx = new Location2IDQuadtree(g, new RAMDirectory("loc2idIndex")).prepareIndex(2000);
+        final Location2IDIndex idx = osm.getLocation2IDIndex();
         final List<OneRun> instances = createMonacoInstances();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);

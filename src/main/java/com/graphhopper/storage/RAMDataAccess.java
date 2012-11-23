@@ -66,7 +66,7 @@ public class RAMDataAccess extends AbstractDataAccess {
                 rda.segments[i] = Arrays.copyOf(area, area.length);
             }
             rda.increaseFactor = increaseFactor;
-            rda.setSegmentSize(segmentSize);
+            rda.setSegmentSize(segmentSizeInBytes);
             // leave id, store and close unchanged
             return da;
         } else
@@ -79,7 +79,7 @@ public class RAMDataAccess extends AbstractDataAccess {
             throw new IllegalThreadStateException("already created");
 
         // initialize transient values
-        setSegmentSize(segmentSize);
+        setSegmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10, bytes));
     }
 
@@ -89,8 +89,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (todoBytes <= 0)
             return;
 
-        int segmentsToCreate = (int) (todoBytes / segmentSize);
-        if (todoBytes % segmentSize != 0)
+        int segmentsToCreate = (int) (todoBytes / segmentSizeInBytes);
+        if (todoBytes % segmentSizeInBytes != 0)
             segmentsToCreate++;
         // System.out.println(id + " new segs:" + segmentsToCreate);
         int[][] newSegs = Arrays.copyOf(segments, segments.length + segmentsToCreate);
@@ -112,11 +112,11 @@ public class RAMDataAccess extends AbstractDataAccess {
                 long byteCount = readHeader(raFile) - HEADER_OFFSET;
                 if (byteCount < 0)
                     return false;
-                byte[] bytes = new byte[segmentSize];
+                byte[] bytes = new byte[segmentSizeInBytes];
                 raFile.seek(HEADER_OFFSET);
                 // raFile.readInt() <- too slow                
-                int segmentCount = (int) (byteCount / segmentSize);
-                if (byteCount % segmentSize != 0)
+                int segmentCount = (int) (byteCount / segmentSizeInBytes);
+                if (byteCount % segmentSizeInBytes != 0)
                     segmentCount++;
                 segments = new int[segmentCount][];
                 for (int s = 0; s < segmentCount; s++) {
@@ -147,7 +147,7 @@ public class RAMDataAccess extends AbstractDataAccess {
             RandomAccessFile raFile = new RandomAccessFile(id, "rw");
             try {
                 long len = capacity();
-                writeHeader(raFile, len, segmentSize);
+                writeHeader(raFile, len, segmentSizeInBytes);
                 raFile.seek(HEADER_OFFSET);
                 // raFile.writeInt() <- too slow, so copy into byte array
                 for (int s = 0; s < segments.length; s++) {
@@ -191,7 +191,7 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public long capacity() {
-        return getSegments() * segmentSize;
+        return getSegments() * segmentSizeInBytes;
     }
 
     @Override
@@ -207,17 +207,17 @@ public class RAMDataAccess extends AbstractDataAccess {
     @Override
     public DataAccess setSegmentSize(int bytes) {
         super.setSegmentSize(bytes);
-        segmentSizeIntsPower = (int) (Math.log(segmentSize / 4) / Math.log(2));
-        indexDivisor = segmentSize / 4 - 1;
+        segmentSizeIntsPower = (int) (Math.log(segmentSizeInBytes / 4) / Math.log(2));
+        indexDivisor = segmentSizeInBytes / 4 - 1;
         return this;
     }
 
     @Override
     public void trimTo(long capacity) {
-        if (capacity < segmentSize)
-            capacity = segmentSize;
-        int remainingSegments = (int) (capacity / segmentSize);
-        if (capacity % segmentSize != 0)
+        if (capacity < segmentSizeInBytes)
+            capacity = segmentSizeInBytes;
+        int remainingSegments = (int) (capacity / segmentSizeInBytes);
+        if (capacity % segmentSizeInBytes != 0)
             remainingSegments++;
 
         segments = Arrays.copyOf(segments, remainingSegments);

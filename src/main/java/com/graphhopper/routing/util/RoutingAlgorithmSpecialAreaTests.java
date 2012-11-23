@@ -15,6 +15,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.AStarBidirection;
@@ -23,11 +24,8 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.Location2IDIndex;
-import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -46,24 +44,11 @@ public class RoutingAlgorithmSpecialAreaTests {
     private final Graph unterfrankenGraph;
     private final Location2IDIndex idx;
 
-    public RoutingAlgorithmSpecialAreaTests(Graph graph) {
-        this.unterfrankenGraph = graph;
+    public RoutingAlgorithmSpecialAreaTests(OSMReader reader) {
+        this.unterfrankenGraph = reader.getGraph();
         StopWatch sw = new StopWatch().start();
-        Location2IDQuadtree index;
-        if (graph instanceof GraphStorage) {
-            Directory dir = ((GraphStorage) graph).getDirectory();
-            index = new Location2IDQuadtree(unterfrankenGraph, dir);
-            // logger.info("dir: " + dir.getLocation());
-        } else
-            index = new Location2IDQuadtree(unterfrankenGraph, new RAMDirectory("loc2idIndex", false));
-        // Location2IDPreciseIndex index = new Location2IDPreciseIndex(unterfrankenGraph, dir);        
-        // Location2IDFullIndex index = new Location2IDFullIndex(graph);
-        if (!index.loadExisting()) {
-            index.prepareIndex(200000);
-            index.flush();
-        }
-        idx = index;
-        logger.info(index.getClass().getSimpleName() + " index. Size:" + idx.calcMemInMB() + " MB, took:" + sw.stop().getSeconds());
+        idx = reader.getLocation2IDIndex();
+        logger.info(idx.getClass().getSimpleName() + " index. Size:" + idx.calcMemInMB() + " MB, took:" + sw.stop().getSeconds());
     }
 
     public void start() {

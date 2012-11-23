@@ -15,6 +15,7 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.coll.OSMIDSegmentedMap;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
@@ -41,7 +42,9 @@ import org.slf4j.LoggerFactory;
 public class OSMReaderHelperLessMem extends OSMReaderHelper {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    protected TIntIntHashMap osmIdToIndexMap;
+    private TIntIntHashMap osmIdToIndexMap;
+    // very slow: private SparseLongLongArray osmIdToIndexMap;
+    // not applicable as ways introduces the nodes in 'wrong' order: new OSMIDSegmentedMap
     private int internalId = 0;
     private TLongArrayList tmpLocs = new TLongArrayList(10);
 
@@ -62,19 +65,15 @@ public class OSMReaderHelperLessMem extends OSMReaderHelper {
     }
 
     @Override
-    public boolean addEdge(long nodeIdFrom, long nodeIdTo, int flags, DistanceCalc callback) {
-        int fromIndex = osmIdToIndexMap.get((int) nodeIdFrom);
-        if (fromIndex == FILLED) {
-            logger.warn("fromIndex is unresolved:" + nodeIdFrom + " to was:" + nodeIdTo);
-            return false;
-        }
-        int toIndex = osmIdToIndexMap.get((int) nodeIdTo);
-        if (toIndex == FILLED) {
-            logger.warn("toIndex is unresolved:" + nodeIdTo + " from was:" + nodeIdFrom);
-            return false;
-        }
+    public int getExpectedNodes() {
+        return osmIdToIndexMap.size();
+    }
 
-        if (fromIndex == osmIdToIndexMap.getNoEntryValue() || toIndex == osmIdToIndexMap.getNoEntryValue())
+    @Override
+    public boolean addEdge(long nodeIdFrom, long nodeIdTo, int flags, DistanceCalc callback) {
+        int fromIndex = (int) osmIdToIndexMap.get((int) nodeIdFrom);
+        int toIndex = (int) osmIdToIndexMap.get((int) nodeIdTo);
+        if (fromIndex < 0 || toIndex < 0)
             return false;
 
         try {
@@ -90,7 +89,7 @@ public class OSMReaderHelperLessMem extends OSMReaderHelper {
 
     @Override
     public void startWayProcessing() {
-        LoggerFactory.getLogger(getClass()).info("finished preprocessing. osmIdMap:" + osmIdToIndexMap.capacity() * 9f / Helper.MB 
+        LoggerFactory.getLogger(getClass()).info("finished node processing. osmIdMap:" + osmIdToIndexMap.size() * 16f / Helper.MB
                 + ", " + Helper.getMemInfo());
     }
 
@@ -99,11 +98,8 @@ public class OSMReaderHelperLessMem extends OSMReaderHelper {
         osmIdToIndexMap = null;
     }
 
-    public void setHasHighways(long osmId, boolean isHighway) {
-        if (isHighway)
-            osmIdToIndexMap.put((int) osmId, FILLED);
-        else
-            osmIdToIndexMap.remove((int) osmId);
+    public void setHasHighways(long osmId) {
+        osmIdToIndexMap.put((int) osmId, FILLED);
     }
 
     public boolean hasHighways(long osmId) {
@@ -129,11 +125,11 @@ public class OSMReaderHelperLessMem extends OSMReaderHelper {
         XMLStreamReader sReader = null;
         try {
             sReader = factory.createXMLStreamReader(osmXml, "UTF-8");
-            int tmpCounter = 0;
+            int tmpCounter = 1;
             for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
-                    event = sReader.next()) {
-                if (++tmpCounter % 10000000 == 0)
-                    logger.info(tmpCounter + Helper.getMemInfo());
+                    event = sReader.next(), tmpCounter++) {
+                if (tmpCounter % 20000000 == 0)
+                    logger.info(tmpCounter + " (preprocess) " + Helper.getMemInfo());
 
                 switch (event) {
                     case XMLStreamConstants.START_ELEMENT:
@@ -142,7 +138,7 @@ public class OSMReaderHelperLessMem extends OSMReaderHelper {
                             if (isHighway && tmpLocs.size() > 1) {
                                 int s = tmpLocs.size();
                                 for (int index = 0; index < s; index++) {
-                                    setHasHighways(tmpLocs.get(index), true);
+                                    setHasHighways(tmpLocs.get(index));
                                 }
                             }
                         }

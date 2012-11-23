@@ -30,6 +30,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.storage.Location2IDIndex;
+import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DistanceCalc;
@@ -64,10 +66,11 @@ public class OSMReader {
             args.merge(CmdArgs.read(strs));
         }
 
-        Graph g = osm2Graph(args).getGraph();
+        OSMReader reader = osm2Graph(args);
+        Graph g = reader.getGraph();
         // only possible for smaller graphs as we need to have two graphs + an array laying around
         // g = GraphUtility.sortDFS(g, new RAMDirectory());
-        RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(g);
+        RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(reader);
         if (args.getBool("osmreader.test", false)) {
             tests.start();
         }
@@ -93,6 +96,8 @@ public class OSMReader {
     private DistanceCalc callback = new DistanceCalc();
     private AcceptStreet acceptStreets = new AcceptStreet(true, false, false, false);
     private AlgorithmPreparation prepare;
+    private Location2IDQuadtree index;
+    private int indexCapacity = 2000;
 
     /**
      * Opens or creates a graph. The specified args need a property 'graph' (a folder) and if no
@@ -139,6 +144,7 @@ public class OSMReader {
 
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
         osmReader.setFastRead(args.getBool("osmreader.fastRead", true));
+        osmReader.setIndexCapacity(args.getInt("osmreader.locationIndexCapacity", 2000));
         String type = args.get("osmreader.type", "CAR");
         osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
                 type.contains("PUBLIC_TRANSPORT"),
@@ -160,7 +166,7 @@ public class OSMReader {
             if (!osmXmlFile.exists())
                 throw new IllegalStateException("Your specified OSM file does not exist:" + strOsm);
             logger.info("start creating graph from " + osmXmlFile
-                    + " (expected size for osm2id-map: " + osmReader.getExpectedNodes() + ")");
+                    + " (expected size: " + osmReader.getExpectedNodes() + ")");
             osmReader.osm2Graph(osmXmlFile);
         }
         return osmReader;
@@ -174,15 +180,22 @@ public class OSMReader {
         this.graphStorage = storage;
         this.expectedNodes = expectedNodes;
         this.helper = new OSMReaderHelperFast(graphStorage, expectedNodes);
+        this.index = new Location2IDQuadtree(storage, storage.getDirectory());
         logger.info("using " + helper.getStorageInfo(storage) + ", memory:" + Helper.getMemInfo());
     }
 
     private int getExpectedNodes() {
-        return expectedNodes;
+        return helper.getExpectedNodes();
     }
 
     public boolean loadExisting() {
-        return graphStorage.loadExisting();
+        if (!graphStorage.loadExisting())
+            return false;
+
+        // load index afterwards
+        if (!index.loadExisting())
+            throw new IllegalStateException("couldn't load location index");
+        return true;
     }
 
     private InputStream createInputStream(File file) throws IOException {
@@ -226,6 +239,14 @@ public class OSMReader {
     public void flush() {
         logger.info("flushing... (" + Helper.getMemInfo() + ")");
         graphStorage.flush();
+        prepareIndex();
+    }
+
+    public void prepareIndex() {
+        // TODO make index configurable
+        logger.info("now initializing index");
+        index.prepareIndex(indexCapacity);
+        index.flush();
     }
 
     /**
@@ -235,22 +256,23 @@ public class OSMReader {
         if (is == null)
             throw new IllegalStateException("Stream cannot be empty");
 
-        graphStorage.createNew(expectedNodes);
+        logger.info("Creating graph with expected nodes:" + helper.getExpectedNodes());
+        graphStorage.createNew(helper.getExpectedNodes());
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         int wayStart = -1;
         StopWatch sw = new StopWatch();
         try {
             sReader = factory.createXMLStreamReader(is, "UTF-8");
-            int counter = 0;
+            int counter = 1;
             for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
-                    event = sReader.next()) {
+                    event = sReader.next(), counter++) {
 
                 switch (event) {
                     case XMLStreamConstants.START_ELEMENT:
                         if ("node".equals(sReader.getLocalName())) {
                             processNode(sReader);
-                            if (++counter % 10000000 == 0) {
+                            if (counter % 10000000 == 0) {
                                 logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
                                         + " (" + skippedEdges + "), " + Helper.getMemInfo());
                             }
@@ -266,7 +288,7 @@ public class OSMReader {
                                 logger.warn("Something is wrong! Processing ways takes too long! "
                                         + sw.getSeconds() + "sec for only " + (counter - wayStart) + " docs");
                             }
-                            if (counter++ % 1000000 == 0) {
+                            if (counter % 1000000 == 0) {
                                 logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
                                         + " (" + skippedEdges + "), " + Helper.getMemInfo());
                             }
@@ -431,5 +453,14 @@ public class OSMReader {
 
     OSMReaderHelper getHelper() {
         return helper;
+    }
+
+    public Location2IDIndex getLocation2IDIndex() {
+        return index;
+    }
+
+    public OSMReader setIndexCapacity(int cap) {
+        indexCapacity = cap;
+        return this;
     }
 }

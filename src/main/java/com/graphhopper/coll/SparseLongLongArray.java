@@ -25,7 +25,7 @@ import com.graphhopper.util.Helper;
  */
 public class SparseLongLongArray {
 
-    private static final long DELETED = -2L;
+    private static final long DELETED = Long.MIN_VALUE;
     private boolean mGarbage = false;
 
     /**

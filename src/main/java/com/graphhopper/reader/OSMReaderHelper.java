@@ -34,9 +34,15 @@ public abstract class OSMReaderHelper {
     protected int counter = 0;
     protected int zeroCounter = 0;
     protected final Graph g;
+    private final int expectedNodes;
 
     public OSMReaderHelper(Graph g, int expectedNodes) {
         this.g = g;
+        this.expectedNodes = expectedNodes;
+    }
+
+    public int getExpectedNodes() {
+        return expectedNodes;
     }
 
     public boolean addNode(long osmId, double lat, double lon) {
@@ -90,6 +96,6 @@ public abstract class OSMReaderHelper {
     public void freeNodeMap() {
     }
 
-    public void startWayProcessing() {        
+    public void startWayProcessing() {
     }
 }

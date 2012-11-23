@@ -30,7 +30,7 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected static final int HEADER_OFFSET = 20 * 4 + 20;
     protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
     final static byte[] EMPTY = new byte[1024];
-    protected int segmentSize = SEGMENT_SIZE_DEFAULT;
+    protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
 
     @Override
     public void close() {
@@ -103,7 +103,7 @@ public abstract class AbstractDataAccess implements DataAccess {
     @Override
     public DataAccess setSegmentSize(int bytes) {
         int tmp = (int) (Math.log(bytes) / Math.log(2));
-        segmentSize = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
+        segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
         return this;
     }
 }

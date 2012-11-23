@@ -25,12 +25,9 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.Location2IDQuadtree;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import java.awt.*;
@@ -52,7 +49,7 @@ public class MiniGraphUI {
         CmdArgs args = CmdArgs.read(strs);
         OSMReader osm = OSMReader.osm2Graph(args);
         boolean debug = args.getBool("minigraphui.debug", false);
-        new MiniGraphUI(osm.getGraph(), osm.getPreparation(), debug).visualize();
+        new MiniGraphUI(osm, debug).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
 //    private QuadTree<Long> quadTree;
@@ -60,7 +57,7 @@ public class MiniGraphUI {
     private Path path;
     private RoutingAlgorithm algo;
     private final Graph graph;
-    private Location2IDQuadtree index;
+    private Location2IDIndex index;
     private String latLon = "";
     private MyGraphics mg;
     private JPanel infoPanel;
@@ -69,15 +66,15 @@ public class MiniGraphUI {
     private MapLayer pathLayer;
     private boolean fastPaint = false;
 
-    public MiniGraphUI(Graph roadGraph, final AlgorithmPreparation prepare, boolean debug) {
-        this.graph = roadGraph;
-        logger.info("locations:" + roadGraph.getNodes() + ", debug:" + debug);
-        mg = new MyGraphics(roadGraph);
+    public MiniGraphUI(OSMReader reader, boolean debug) {
+        this.graph = reader.getGraph();
+        AlgorithmPreparation prepare = reader.getPreparation();
+        logger.info("locations:" + graph.getNodes() + ", debug:" + debug);
+        mg = new MyGraphics(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
-        this.index = new Location2IDQuadtree(roadGraph, new RAMDirectory("loc2idIndex"));
-        index.prepareIndex(2000);
+        this.index = reader.getLocation2IDIndex();
         this.algo = prepare.createAlgo();
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
@@ -160,7 +157,7 @@ public class MiniGraphUI {
                 g2.setColor(Color.GREEN);
                 DijkstraBidirectionRef dbi = new DijkstraBidirectionRef(graph);
                 // dbi.setGraphics2D(g2);
-                Path p2 = calcPath(dbi);                
+                Path p2 = calcPath(dbi);
                 plotPath(p2, g2, 5);
 
 //                if (quadTreeNodes != null) {
