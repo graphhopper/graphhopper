@@ -91,7 +91,7 @@ public abstract class QuadTreeTester {
 
         for (int i = 0; i < max; i++) {
             assertEquals(max - i, instance.size());
-            Collection<CoordTrig<Long>> res = instance.getNodes(i / 100.0, i / 100.0, 0.001d);
+            Collection<CoordTrig<Long>> res = instance.getNodes(i / 100.0, i / 100.0, 1d);
             CoordTrig<Long> coord = res.iterator().next();
             assertEquals("couldn't remove " + i / 100.0 + " -> " + coord, 1, instance.remove(coord.lat, coord.lon));
         }
@@ -123,7 +123,7 @@ public abstract class QuadTreeTester {
     @Test
     public void testGetNeighboursExactHit() {
         QuadTree<Long> instance = createQuadTree(100);
-        Collection<CoordTrig<Long>> coll = instance.getNodes(8.124, 8.123, 10);
+        Collection<CoordTrig<Long>> coll = instance.getNodes(8.124, 8.123, 10000);
         assertTrue(coll.isEmpty());
 
         instance.add(8.124, 8.123, 1L);
@@ -132,10 +132,10 @@ public abstract class QuadTreeTester {
         assertEquals(3, instance.size());
 
         // search in 10km - exact hit
-        coll = instance.getNodes(8.124, 8.123, 10L);
+        coll = instance.getNodes(8.124, 8.123, 10000);
         assertEquals(2, coll.size());
 
-        coll = instance.getNodes(8.124, 8.123, 120L);
+        coll = instance.getNodes(8.124, 8.123, 120000);
         assertEquals(3, coll.size());
     }
 
@@ -148,7 +148,7 @@ public abstract class QuadTreeTester {
     @Test
     public void testGetNeighboursSearch() {
         QuadTree<Long> instance = createQuadTree(100);
-        Collection<CoordTrig<Long>> coll = instance.getNodes(8.124, 8.123, 10);
+        Collection<CoordTrig<Long>> coll = instance.getNodes(8.124, 8.123, 10000);
         assertTrue(coll.isEmpty());
 
         instance.add(8.124, 8.123, 1L);
@@ -183,16 +183,16 @@ public abstract class QuadTreeTester {
 
         assertEquals(10, instance.size());
 
-        assertEquals(2, instance.getNodes(8.12, 8.12, 10).size());
-        assertEquals(2, instance.getNodes(8.12, 8.12, 50).size());
-        assertEquals(1, instance.getNodes(8.12, 8.12, 0.5).size());
-        Iterator<CoordTrig<Long>> iter = instance.getNodes(8.12, 8.12, 0.5).iterator();
+        assertEquals(2, instance.getNodes(8.12, 8.12, 10000).size());
+        assertEquals(2, instance.getNodes(8.12, 8.12, 50000).size());
+        assertEquals(1, instance.getNodes(8.12, 8.12, 500).size());
+        Iterator<CoordTrig<Long>> iter = instance.getNodes(8.12, 8.12, 500).iterator();
         assertEquals(2, (long) iter.next().getValue());
-        assertEquals(3, instance.getNodes(8.12, 8.12, 100).size());
+        assertEquals(3, instance.getNodes(8.12, 8.12, 100000).size());
 //        System.out.println(instance.getNodes(8.12, 8.12, 130));
-        assertEquals(6, instance.getNodes(8.12, 8.12, 130).size());
-        assertEquals(9, instance.getNodes(8.12, 8.12, 175).size());
-        assertEquals(10, instance.getNodes(8.12, 8.12, 176).size());
+        assertEquals(6, instance.getNodes(8.12, 8.12, 130000).size());
+        assertEquals(9, instance.getNodes(8.12, 8.12, 175000).size());
+        assertEquals(10, instance.getNodes(8.12, 8.12, 176000).size());
     }
 
     public static void assertOrder(Collection<CoordTrig> coll, double... latitudes) {

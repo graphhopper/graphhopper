@@ -120,16 +120,16 @@ public class Location2IDPreciseIndexTest {
             int fullId = fullIndex.findID(lat, lon);
             double fullLat = g.getLatitude(fullId);
             double fullLon = g.getLongitude(fullId);
-            float fullDist = (float) dist.calcDistKm(lat, lon, fullLat, fullLon);
+            float fullDist = (float) dist.calcDist(lat, lon, fullLat, fullLon);
             int newId = memoryEfficientIndex.findID(lat, lon);
             double newLat = g.getLatitude(newId);
             double newLon = g.getLongitude(newId);
-            float newDist = (float) dist.calcDistKm(lat, lon, newLat, newLon);
+            float newDist = (float) dist.calcDist(lat, lon, newLat, newLon);
 
             assertTrue(i + " orig:" + (float) lat + "," + (float) lon
                     + " full:" + fullLat + "," + fullLon + " fullDist:" + fullDist
                     + " found:" + newLat + "," + newLon + " foundDist:" + newDist,
-                    Math.abs(fullDist - newDist) < 50);
+                    Math.abs(fullDist - newDist) < 50000);
         }
     }
 

@@ -15,7 +15,6 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.Path;
 import com.graphhopper.storage.Graph;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -35,11 +34,11 @@ public class DouglasPeucker {
         this.g = g;
         calc = new DistanceCalc();
         // 1m
-        setMaxDist(1d / 1000);
+        setMaxDist(1);
     }
 
     /**
-     * distance in km
+     * distance in meter
      */
     public DouglasPeucker setMaxDist(double dist) {
         this.normedMaxDist = calc.normalizeDist(dist);

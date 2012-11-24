@@ -167,7 +167,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     public void initPath() {
         shortest = createPath();
         shortest.initWeight();
-        // pi_r_of_t = dist.calcDistKm(fromCoord.lat, fromCoord.lon, toCoord.lat, toCoord.lon);
+        // pi_r_of_t = dist.calcDist(fromCoord.lat, fromCoord.lon, toCoord.lat, toCoord.lon);
     }
 
     @Override public Path calcPath(int from, int to) {
@@ -268,7 +268,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
             if (de == null || de.weightToCompare > alreadyVisitedWeight) {
                 double tmpLat = graph.getLatitude(neighborNode);
                 double tmpLon = graph.getLongitude(neighborNode);
-                double currWeightToGoal = dist.calcDistKm(goal.lat, goal.lon, tmpLat, tmpLon);
+                double currWeightToGoal = dist.calcDist(goal.lat, goal.lon, tmpLat, tmpLon);
                 currWeightToGoal = weightCalc.getMinWeight(currWeightToGoal);
                 double estimationFullDist = alreadyVisitedWeight + currWeightToGoal;
                 if (de == null) {

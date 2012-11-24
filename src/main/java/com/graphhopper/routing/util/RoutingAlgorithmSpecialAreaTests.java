@@ -64,14 +64,14 @@ public class RoutingAlgorithmSpecialAreaTests {
         RoutingAlgorithm[] algos = createAlgos(unterfrankenGraph);
         for (RoutingAlgorithm algo : algos) {
             int failed = testCollector.list.size();
-            testCollector.assertDistance(algo, idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 0.5613, 20);
-            testCollector.assertDistance(algo, idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107.4917, 1673);
-            testCollector.assertDistance(algo, idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 93.5559, 1278);
-            testCollector.assertDistance(algo, idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77.73985, 1217);
-            testCollector.assertDistance(algo, idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125.5666, 2135);
-            // different id2location init order: testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 130.8159, 2115);
-            testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 132.166156, 2138);
-            testCollector.assertDistance(algo, idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73.05989, 1229);
+            testCollector.assertDistance(algo, idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 561.3, 20);
+            testCollector.assertDistance(algo, idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107491.7, 1673);
+            testCollector.assertDistance(algo, idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 93555.9, 1278);
+            testCollector.assertDistance(algo, idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77739.85, 1217);
+            testCollector.assertDistance(algo, idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125566.6, 2135);
+            //different id2location init order: testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 130815.9, 2115);
+            testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 132166.156, 2138);
+            testCollector.assertDistance(algo, idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73059.89, 1229);
 
             System.out.println("unterfranken " + algo + ": " + (testCollector.list.size() - failed) + " failed");
         }
@@ -161,9 +161,9 @@ public class RoutingAlgorithmSpecialAreaTests {
         int id = idx.findID(qLat, qLon);
         double foundLat = unterfrankenGraph.getLatitude(id);
         double foundLon = unterfrankenGraph.getLongitude(id);
-        double dist = new DistanceCalc().calcDistKm(qLat, qLon, foundLat, foundLon);
-        double expectedDist = 5.5892;
-        if (Math.abs(dist - expectedDist) > 1e-4)
+        double dist = new DistanceCalc().calcDist(qLat, qLon, foundLat, foundLon);
+        double expectedDist = 5589.2;
+        if (Math.abs(dist - expectedDist) > .1)
             System.out.println("ERROR in test index. queried lat,lon=" + (float) qLat + "," + (float) qLon
                     + ", but was " + (float) foundLat + "," + (float) foundLon
                     + "\n   expected distance:" + expectedDist + ", but was:" + dist);

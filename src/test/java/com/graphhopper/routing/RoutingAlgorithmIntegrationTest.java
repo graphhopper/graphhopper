@@ -20,8 +20,6 @@ import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.Location2IDIndex;
-import com.graphhopper.storage.Location2IDQuadtree;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import java.io.File;
@@ -53,9 +51,9 @@ public class RoutingAlgorithmIntegrationTest {
         // it is not possible to cross the place du palais and there is a oneway directive:
         // list.add(new OneRun(43.727687, 7.418737, 43.730729, 7.421288, 1.532, 88));
         // but the other way (where no crossing is necessary) is possible:
-        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2.536, 107));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3.604, 179));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2.371, 128));
+        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2536, 107));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 179));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2371, 128));
         return list;
     }
 
@@ -68,9 +66,9 @@ public class RoutingAlgorithmIntegrationTest {
     @Test
     public void testAndorra() {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 24.0626, 991));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 24063, 991));
         // if id2location is created a bit different: list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 24.101, 992));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16.452, 603));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16452, 603));
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list);
         assertEquals(testCollector.toString(), 0, testCollector.list.size());

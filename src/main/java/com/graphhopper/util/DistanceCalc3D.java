@@ -29,10 +29,10 @@ public class DistanceCalc3D extends DistanceCalc {
      * @param fromHeight in meters above 0
      * @param toHeight in meters above 0
      */
-    public double calcDistKm(double fromLat, double fromLon, double fromHeight,
+    public double calcDist(double fromLat, double fromLon, double fromHeight,
             double toLat, double toLon, double toHeight) {
-        double len = super.calcDistKm(fromLat, fromLon, toLat, toLon);
-        double delta = Math.abs(toHeight - fromHeight) / 1000;
+        double len = super.calcDist(fromLat, fromLon, toLat, toLon);
+        double delta = Math.abs(toHeight - fromHeight);
         return Math.sqrt(delta * delta + len * len);
     }
 }

@@ -28,7 +28,7 @@ public class BBoxTest {
     @Test
     public void testCreate() {
         DistanceCalc c = new DistanceCalc();
-        BBox b = c.createBBox(52, 10, 100);
+        BBox b = c.createBBox(52, 10, 100000);
 
         // The calclulated bounding box has no negative values (also for southern hemisphere and negative meridians)
         // and the ordering is always the same (top to bottom and left to right)
@@ -39,8 +39,8 @@ public class BBoxTest {
         assertEquals(11.4607, b.maxLon, 1e-4);
 
         // something about 141 = sqrt(2*100^2)
-//        System.out.println(c.calcDistKm(52, 10, 52.8993, 11.4607));
-//        System.out.println(c.calcDistKm(52, 10, 51.1007, 8.5393));
+//        System.out.println(c.calcDist(52, 10, 52.8993, 11.4607));
+//        System.out.println(c.calcDist(52, 10, 51.1007, 8.5393));
     }
 
     @Test
@@ -49,7 +49,7 @@ public class BBoxTest {
         assertTrue(new BBox(1, 2, 0, 1).contains(new BBox(1.5, 2, 0.5, 1)));
         assertFalse(new BBox(1, 2, 0, 0.5).contains(new BBox(1.5, 2, 0.5, 1)));
 
-        Circle c = new Circle(10, 10, 120);
+        Circle c = new Circle(10, 10, 120000);
         assertTrue(c.getBBox().contains(c));
         assertFalse(new BBox(8.9, 11.09, 8.9, 11.2).contains(c));
     }

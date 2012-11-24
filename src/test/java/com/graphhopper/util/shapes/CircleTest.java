@@ -26,22 +26,22 @@ public class CircleTest {
 
     @Test
     public void testIntersectCircleCircle() {
-        assertTrue(new Circle(0, 0, 80).intersect(new Circle(1, 1, 80)));
-        assertFalse(new Circle(0, 0, 75).intersect(new Circle(1, 1, 80)));
+        assertTrue(new Circle(0, 0, 80000).intersect(new Circle(1, 1, 80000)));
+        assertFalse(new Circle(0, 0, 75000).intersect(new Circle(1, 1, 80000)));
     }
 
     @Test
     public void testIntersectCircleBBox() {
-        assertTrue(new Circle(10, 10, 120).intersect(new BBox(9, 11, 8, 9)));
-        assertTrue(new BBox(9, 11, 8, 9).intersect(new Circle(10, 10, 120)));
+        assertTrue(new Circle(10, 10, 120000).intersect(new BBox(9, 11, 8, 9)));
+        assertTrue(new BBox(9, 11, 8, 9).intersect(new Circle(10, 10, 120000)));
 
-        assertFalse(new Circle(10, 10, 110).intersect(new BBox(9, 11, 8, 9)));
-        assertFalse(new BBox(9, 11, 8, 9).intersect(new Circle(10, 10, 110)));
+        assertFalse(new Circle(10, 10, 110000).intersect(new BBox(9, 11, 8, 9)));
+        assertFalse(new BBox(9, 11, 8, 9).intersect(new Circle(10, 10, 110000)));
     }
 
     @Test
     public void testContains() {
-        Circle c = new Circle(10, 10, 120);
+        Circle c = new Circle(10, 10, 120000);
         assertTrue(c.contains(new BBox(9, 11, 10, 10.1)));
         assertFalse(c.contains(new BBox(9, 11, 8, 9)));
         assertFalse(c.contains(new BBox(9, 12, 10, 10.1)));
@@ -49,8 +49,8 @@ public class CircleTest {
 
     @Test
     public void testContainsCircle() {
-        Circle c = new Circle(10, 10, 120);
-        assertTrue(c.contains(new Circle(9.9, 10.2, 90)));
-        assertFalse(c.contains(new Circle(10, 10.4, 90)));
+        Circle c = new Circle(10, 10, 120000);
+        assertTrue(c.contains(new Circle(9.9, 10.2, 90000)));
+        assertFalse(c.contains(new Circle(10, 10.4, 90000)));
     }
 }

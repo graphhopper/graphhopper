@@ -32,7 +32,7 @@ public class FastestCarCalc implements WeightCalculation {
 
     @Override
     public long getTime(double distance, int flags) {
-        return (long) (distance * 3600 / CarStreetType.getSpeed(flags));
+        return (long) (distance * 3.6 / CarStreetType.getSpeed(flags));
     }
 
     @Override

@@ -60,26 +60,26 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
 
     void initFastVsShort(Graph graph) {
-        graph.edge(0, 1, 7, CarStreetType.flags(10, false));
-        graph.edge(0, 4, 5, CarStreetType.flags(20, false));
+        graph.edge(0, 1, 7000, CarStreetType.flags(10, false));
+        graph.edge(0, 4, 5000, CarStreetType.flags(20, false));
 
-        graph.edge(1, 4, 7, CarStreetType.flags(10, true));
-        graph.edge(1, 5, 7, CarStreetType.flags(10, true));
-        graph.edge(1, 2, 20, CarStreetType.flags(10, true));
+        graph.edge(1, 4, 7000, CarStreetType.flags(10, true));
+        graph.edge(1, 5, 7000, CarStreetType.flags(10, true));
+        graph.edge(1, 2, 20000, CarStreetType.flags(10, true));
 
-        graph.edge(5, 2, 5, CarStreetType.flags(10, false));
-        graph.edge(2, 3, 5, CarStreetType.flags(10, false));
+        graph.edge(5, 2, 5000, CarStreetType.flags(10, false));
+        graph.edge(2, 3, 5000, CarStreetType.flags(10, false));
 
-        graph.edge(5, 3, 11, CarStreetType.flags(20, false));
-        graph.edge(3, 7, 7, CarStreetType.flags(10, false));
+        graph.edge(5, 3, 11000, CarStreetType.flags(20, false));
+        graph.edge(3, 7, 7000, CarStreetType.flags(10, false));
 
-        graph.edge(4, 6, 5, CarStreetType.flags(20, false));
-        graph.edge(5, 4, 7, CarStreetType.flags(10, false));
+        graph.edge(4, 6, 5000, CarStreetType.flags(20, false));
+        graph.edge(5, 4, 7000, CarStreetType.flags(10, false));
 
-        graph.edge(5, 6, 7, CarStreetType.flags(10, false));
-        graph.edge(7, 5, 5, CarStreetType.flags(20, false));
+        graph.edge(5, 6, 7000, CarStreetType.flags(10, false));
+        graph.edge(7, 5, 5000, CarStreetType.flags(20, false));
 
-        graph.edge(6, 7, 5, CarStreetType.flags(20, true));
+        graph.edge(6, 7, 5000, CarStreetType.flags(20, true));
     }
     // see calc-fastest-graph.svg
 
@@ -87,8 +87,8 @@ public abstract class AbstractRoutingAlgorithmTester {
         Graph graphShortest = createGraph(20);
         initFastVsShort(graphShortest);
         Path p1 = prepareGraph(graphShortest, ShortestCarCalc.DEFAULT).createAlgo().calcPath(0, 3);
-        assertEquals(p1.toString(), 24, p1.weight(), 1e-6);
-        assertEquals(p1.toString(), 24, p1.distance(), 1e-6);
+        assertEquals(p1.toString(), 24000, p1.weight(), 1e-6);
+        assertEquals(p1.toString(), 24000, p1.distance(), 1e-6);
         assertEquals(p1.toString(), 8640, p1.time());
         assertEquals(p1.toString(), 5, p1.nodes());
         assertEquals(Arrays.asList(0, 1, 5, 2, 3), p1.toNodeList());
@@ -96,10 +96,10 @@ public abstract class AbstractRoutingAlgorithmTester {
         Graph graphFastest = createGraph(20);
         initFastVsShort(graphFastest);
         Path p2 = prepareGraph(graphFastest, FastestCarCalc.DEFAULT).createAlgo().calcPath(0, 3);
-        assertEquals(p2.toString(), 3.1, p2.weight(), 1e-6);
-        assertEquals(p2.toString(), 31, p2.distance(), 1e-6);
+        assertEquals(p2.toString(), 3100, p2.weight(), 1e-6);
+        assertEquals(p2.toString(), 31000, p2.distance(), 1e-6);
         assertEquals(p2.toString(), 5580, p2.time());
-        assertEquals(p2.toString(), 6, p2.nodes());        
+        assertEquals(p2.toString(), 6, p2.nodes());
     }
 
     // see test-graph.svg !

@@ -31,30 +31,12 @@ public class DistanceCalcTest {
 
     @Test
     public void testGeohashMaxDist() {
-        assertEquals(DistanceCalc.C / 2, new DistanceCalc().calcSpatialKeyMaxDist(0), 1e-3);
-        assertEquals(DistanceCalc.C / 2, new DistanceCalc().calcSpatialKeyMaxDist(1), 1e-3);
-        assertEquals(DistanceCalc.C / 4, new DistanceCalc().calcSpatialKeyMaxDist(2), 1e-3);
-        assertEquals(DistanceCalc.C / 4, new DistanceCalc().calcSpatialKeyMaxDist(3), 1e-3);
-        assertEquals(DistanceCalc.C / 8, new DistanceCalc().calcSpatialKeyMaxDist(4), 1e-3);
-        assertEquals(DistanceCalc.C / 8, new DistanceCalc().calcSpatialKeyMaxDist(5), 1e-3);
-    }
-
-    @Test
-    public void testDistToGeohash() {
-        assertEquals(-1, new DistanceCalc().distToSpatialKeyLatBit(-1));
-
-        assertEquals(0, new DistanceCalc().distToSpatialKeyLatBit(DistanceCalc.C / 2));
-
-        assertEquals(2, new DistanceCalc().distToSpatialKeyLatBit(DistanceCalc.C / 4));
-        assertEquals(4, new DistanceCalc().distToSpatialKeyLatBit(DistanceCalc.C / 8));
-        assertEquals("should be round to bigger distance C/4", 2, new DistanceCalc().distToSpatialKeyLatBit(DistanceCalc.C / 6));
-
-        // round to bigger distances!
-        assertEquals(0, new DistanceCalc().distToSpatialKeyLatBit(DistanceCalc.C / 3));
-        assertEquals(4, new DistanceCalc().distToSpatialKeyLatBit(DistanceCalc.C / 10));
-        assertEquals(64, new DistanceCalc().distToSpatialKeyLatBit(0));
-        assertEquals(34, new DistanceCalc().distToSpatialKeyLatBit(0.1));
-        assertEquals(30, new DistanceCalc().distToSpatialKeyLatBit(0.6));
+        assertEquals(DistanceCalc.C / 2, new DistanceCalc().calcSpatialKeyMaxDist(0), 1);
+        assertEquals(DistanceCalc.C / 2, new DistanceCalc().calcSpatialKeyMaxDist(1), 1);
+        assertEquals(DistanceCalc.C / 4, new DistanceCalc().calcSpatialKeyMaxDist(2), 1);
+        assertEquals(DistanceCalc.C / 4, new DistanceCalc().calcSpatialKeyMaxDist(3), 1);
+        assertEquals(DistanceCalc.C / 8, new DistanceCalc().calcSpatialKeyMaxDist(4), 1);
+        assertEquals(DistanceCalc.C / 8, new DistanceCalc().calcSpatialKeyMaxDist(5), 1);
     }
 
     @Test
@@ -63,35 +45,35 @@ public class DistanceCalcTest {
         float lon = 47.234f;
         DistanceCalc approxDist = new DistanceCosProjection();
         DistanceCalc dist = new DistanceCalc();
-        double res = 15.051;
-        assertEquals(res, dist.calcDistKm(lat, lon, lat - 0.1, lon + 0.1), 1e-3);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 0.1, lon + 0.1), 1e-3);
-        assertEquals(res, approxDist.calcDistKm(lat, lon, lat - 0.1, lon + 0.1), 1e-3);
+        double res = 15051;
+        assertEquals(res, dist.calcDist(lat, lon, lat - 0.1, lon + 0.1), 1);
+        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 0.1, lon + 0.1), 1);
+        assertEquals(res, approxDist.calcDist(lat, lon, lat - 0.1, lon + 0.1), 1);
 
-        res = 15.046;
-        assertEquals(res, dist.calcDistKm(lat, lon, lat + 0.1, lon - 0.1), 1e-3);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 0.1, lon - 0.1), 1e-3);
-        assertEquals(res, approxDist.calcDistKm(lat, lon, lat + 0.1, lon - 0.1), 1e-3);
+        res = 15046;
+        assertEquals(res, dist.calcDist(lat, lon, lat + 0.1, lon - 0.1), 1);
+        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 0.1, lon - 0.1), 1);
+        assertEquals(res, approxDist.calcDist(lat, lon, lat + 0.1, lon - 0.1), 1);
 
-        res = 150.748;
-        assertEquals(res, dist.calcDistKm(lat, lon, lat - 1, lon + 1), 1e-3);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 1, lon + 1), 1e-3);
-        assertEquals(res, approxDist.calcDistKm(lat, lon, lat - 1, lon + 1), 1e-2);
+        res = 150748;
+        assertEquals(res, dist.calcDist(lat, lon, lat - 1, lon + 1), 1);
+        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 1, lon + 1), 1);
+        assertEquals(res, approxDist.calcDist(lat, lon, lat - 1, lon + 1), 10);
 
-        res = 150.211;
-        assertEquals(res, dist.calcDistKm(lat, lon, lat + 1, lon - 1), 1e-3);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 1, lon - 1), 1e-3);
-        assertEquals(res, approxDist.calcDistKm(lat, lon, lat + 1, lon - 1), 1e-2);
+        res = 150211;
+        assertEquals(res, dist.calcDist(lat, lon, lat + 1, lon - 1), 1);
+        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 1, lon - 1), 1);
+        assertEquals(res, approxDist.calcDist(lat, lon, lat + 1, lon - 1), 10);
 
-        res = 1527.919;
-        assertEquals(res, dist.calcDistKm(lat, lon, lat - 10, lon + 10), 1e-3);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 10, lon + 10), 1e-3);
-        assertEquals(res, approxDist.calcDistKm(lat, lon, lat - 10, lon + 10), 10);
+        res = 1527919;
+        assertEquals(res, dist.calcDist(lat, lon, lat - 10, lon + 10), 1);
+        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 10, lon + 10), 1);
+        assertEquals(res, approxDist.calcDist(lat, lon, lat - 10, lon + 10), 10000);
 
-        res = 1474.016;
-        assertEquals(res, dist.calcDistKm(lat, lon, lat + 10, lon - 10), 1e-3);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 10, lon - 10), 1e-3);
-        assertEquals(res, approxDist.calcDistKm(lat, lon, lat + 10, lon - 10), 10);
+        res = 1474016;
+        assertEquals(res, dist.calcDist(lat, lon, lat + 10, lon - 10), 1);
+        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 10, lon - 10), 1);
+        assertEquals(res, approxDist.calcDist(lat, lon, lat + 10, lon - 10), 10000);
     }
 
     @Test

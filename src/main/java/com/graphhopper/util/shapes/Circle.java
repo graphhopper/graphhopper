@@ -30,17 +30,17 @@ public class Circle implements Shape {
     private final double normedDist;
     private final BBox bbox;
 
-    public Circle(double lat, double lon, double radiusInKm) {
-        this(lat, lon, radiusInKm, SINGLETON);
+    public Circle(double lat, double lon, double radiusInMeter) {
+        this(lat, lon, radiusInMeter, SINGLETON);
     }
 
-    public Circle(double lat, double lon, double radiusInKm, DistanceCalc calc) {
+    public Circle(double lat, double lon, double radiusInMeter, DistanceCalc calc) {
         this.calc = calc;
         this.lat = lat;
         this.lon = lon;
-        this.radiusInKm = radiusInKm;
-        this.normedDist = calc.normalizeDist(radiusInKm);
-        bbox = calc.createBBox(lat, lon, radiusInKm);
+        this.radiusInKm = radiusInMeter;
+        this.normedDist = calc.normalizeDist(radiusInMeter);
+        bbox = calc.createBBox(lat, lon, radiusInMeter);
     }
 
     public double getLat() {
@@ -133,7 +133,7 @@ public class Circle implements Shape {
         if (res < 0)
             return false;
 
-        return calc.calcDistKm(lat, lon, c.lat, c.lon) <= res;
+        return calc.calcDist(lat, lon, c.lat, c.lon) <= res;
     }
 
     @Override

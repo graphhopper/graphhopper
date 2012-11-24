@@ -131,8 +131,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
         BBox b = g.getBounds();
         logger.info("bounds:" + b + ", latSize:" + lat + ", lonSize:" + lon + ", calc:" + dist.toString());
         algo = new LinearKeyAlgo(lat, lon).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
-        maxNormRasterWidthKm = dist.normalizeDist(Math.max(dist.calcDistKm(b.minLat, b.minLon, b.minLat, b.maxLon),
-                dist.calcDistKm(b.minLat, b.minLon, b.maxLat, b.minLon)) / Math.sqrt(getCapacity()));
+        maxNormRasterWidthKm = dist.normalizeDist(Math.max(dist.calcDist(b.minLat, b.minLon, b.minLat, b.maxLon),
+                dist.calcDist(b.minLat, b.minLon, b.maxLat, b.minLon)) / Math.sqrt(getCapacity()));
 
         // as long as we have "dist < PI*R/2" it is save to compare the normalized distances instead of the real
         // distances. because sin(x) is only monotonic increasing for x <= PI/2 (and positive for x >= 0)

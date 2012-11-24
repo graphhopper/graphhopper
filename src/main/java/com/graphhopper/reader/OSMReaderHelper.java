@@ -56,7 +56,7 @@ public abstract class OSMReaderHelper {
 
     public boolean addEdge(double laf, double lof, double lat, double lot,
             int fromIndex, int toIndex, int flags, DistanceCalc callback) {
-        double dist = callback.calcDistKm(laf, lof, lat, lot);
+        double dist = callback.calcDist(laf, lof, lat, lot);
         if (dist == 0) {
             // As investigation shows often two paths should have crossed via one identical point 
             // but end up in two very close points. later this will be removed/fixed while 

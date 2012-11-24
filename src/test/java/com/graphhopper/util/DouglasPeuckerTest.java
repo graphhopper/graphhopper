@@ -72,7 +72,7 @@ public class DouglasPeuckerTest {
         for (int i = 0; i < pointCount; i++) {
             path.add(i);
         }
-        int newLength = path.simplify(new DouglasPeucker(g).setMaxDist(1d / 2000));
+        int newLength = path.simplify(new DouglasPeucker(g).setMaxDist(.5));
         assertEquals(Arrays.asList(0, 2, 4, 5, 6, 7, 10, 12, 13, 15, 16, 17, 18, 20, 22, 25, 26, 27, 29, 31), path.toNodeList());
         assertEquals(12, newLength);
     }
@@ -81,7 +81,7 @@ public class DouglasPeuckerTest {
     public void testSimplify() {
         Graph g = createGraph();
         int pointCount = parse(g, points1);
-        DouglasPeucker dp = new DouglasPeucker(g).setMaxDist(1d / 2000);
+        DouglasPeucker dp = new DouglasPeucker(g).setMaxDist(.5);
         TIntArrayList points = new TIntArrayList();
         for (int i = 0; i < pointCount; i++) {
             points.add(i);

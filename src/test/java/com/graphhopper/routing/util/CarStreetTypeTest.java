@@ -64,6 +64,6 @@ public class CarStreetTypeTest {
     @Test
     public void testTime() {
         WeightCalculation wc = FastestCarCalc.DEFAULT;
-        assertEquals(60 * 60, wc.getTime(100, CarStreetType.flags(100, true)));
+        assertEquals(60 * 60, wc.getTime(100000, CarStreetType.flags(100, true)));
     }
 }

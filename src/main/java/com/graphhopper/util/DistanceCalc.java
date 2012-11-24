@@ -29,21 +29,23 @@ public class DistanceCalc {
     /**
      * mean radius of the earth
      */
-    public final static double R = 6371; // km
+    public final static double R = 6371000; // m
     /**
      * Radius of the earth at equator
      */
-    public final static double R_EQ = 6378.137; // km
+    public final static double R_EQ = 6378137; // m
     /**
      * Circumference of the earth
      */
     public final static double C = 2 * PI * R;
 
     /**
+     * Calculates distance of (from, to) in meter.
+     *
      * http://en.wikipedia.org/wiki/Haversine_formula a = sin²(Δlat/2) +
      * cos(lat1).cos(lat2).sin²(Δlong/2) c = 2.atan2(√a, √(1−a)) d = R.c
      */
-    public double calcDistKm(double fromLat, double fromLon, double toLat, double toLon) {
+    public double calcDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = toRadians(toLat - fromLat);
         double dLon = toRadians(toLon - fromLon);
         double normedDist = sin(dLat / 2) * sin(dLat / 2)
@@ -55,13 +57,16 @@ public class DistanceCalc {
         return R * 2 * asin(sqrt(normedDist));
     }
 
+    /**
+     * in meter
+     */
     public double normalizeDist(double dist) {
         double tmp = sin(dist / 2 / R);
         return tmp * tmp;
     }
 
     /**
-     * in km
+     * Calculates in normalized meter
      */
     public double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = toRadians(toLat - fromLat);
@@ -71,7 +76,7 @@ public class DistanceCalc {
     }
 
     /**
-     * @deprecated hmmh seems to be lot slower than calcDistKm
+     * @deprecated hmmh seems to be lot slower than calcDist
      */
     public double calcCartesianDist(double fromLat, double fromLon, double toLat, double toLon) {
         fromLat = toRadians(fromLat);
@@ -113,66 +118,22 @@ public class DistanceCalc {
 
     public double calcSpatialKeyMaxDist(int bit) {
         bit = bit / 2 + 1;
-        return ((int) (C * 1000) >> bit) / 1000d;
-    }
-    // maximum distance necessary for a spatial key is 2^16 = 65536 kilometres which is the first 
-    // distance higher than C => we can multiple the distance of type double to make the integer 
-    // value more precise        
-    private static final int MAX_DIST = 65536;
-    private static final int[] arr = new int[64];
-
-    static {
-        // sort ascending distances
-        int i = arr.length - 1;
-        arr[i] = (int) (round(C * MAX_DIST) / 2);
-        for (; i > 0; i--) {
-            arr[i - 1] = arr[i] / 2;
-        }
+        return (int) C >> bit;
     }
 
-    /**
-     * @param dist distance in kilometers
-     *
-     * running time is O(1) => at maximum 6 + 3 integer comparisons
-     *
-     * @return the bit position i of a spatial key, where dist <= C / 2^i
-     */
-    public int distToSpatialKeyLatBit(double dist) {
-        if (dist > DistanceCalc.C / 4)
-            return 0;
-        if (dist < 0)
-            return -1;
-
-        int distInt = ((int) round(dist * MAX_DIST));
-        int bitPos = Arrays.binarySearch(arr, distInt);
-
-        // negative if located between two distances
-        if (bitPos < 0)
-            bitPos = -bitPos - 1;
-
-        // * 2 => because one bit for latitude and one for longitude
-        return (63 - bitPos) * 2;
-    }
-
-//    public void toCart(double lat, double lon, FloatCart2D result) {
-//        lat = toRadians(lat);
-//        lon = toRadians(lon);
-//        result.x = (float) (R * cos(lat) * cos(lon));
-//        result.y = (float) (R * cos(lat) * sin(lon));
-//    }
     public boolean isDateLineCrossOver(double lon1, double lon2) {
         return abs(lon1 - lon2) > 180.0;
     }
 
-    public BBox createBBox(double lat, double lon, double radiusInKm) {
-        if (radiusInKm <= 0)
-            throw new IllegalArgumentException("Distance cannot be 0 or negative! " + radiusInKm + " lat,lon:" + lat + "," + lon);
+    public BBox createBBox(double lat, double lon, double radiusInMeter) {
+        if (radiusInMeter <= 0)
+            throw new IllegalArgumentException("Distance cannot be 0 or negative! " + radiusInMeter + " lat,lon:" + lat + "," + lon);
 
         // length of a circle at specified lat / dist
-        double dLon = (360 / (calcCircumference(lat) / radiusInKm));
+        double dLon = (360 / (calcCircumference(lat) / radiusInMeter));
 
         // length of a circle is independent of the longitude
-        double dLat = (360 / (DistanceCalc.C / radiusInKm));
+        double dLat = (360 / (DistanceCalc.C / radiusInMeter));
 
         // Now return bounding box in coordinates
         return new BBox(lon - dLon, lon + dLon, lat - dLat, lat + dLat);
@@ -180,6 +141,8 @@ public class DistanceCalc {
 
     /**
      * This method calculates the distance from r to edge g=(a to b) where the crossing point is t
+     *
+     * @return the normalized distance in meter
      */
     public double calcNormalizedEdgeDistance(double r_lat, double r_lon,
             double a_lat, double a_lon,
@@ -239,8 +202,6 @@ public class DistanceCalc {
         // return Math.acos(ab_ar / ab_ar_norm) <= Math.PI / 2 && Math.acos(ab_rb / ab_rb_norm) <= Math.PI / 2;
         return ab_ar > 0 && ab_rb > 0;
     }
-    
-    
 
     @Override
     public String toString() {

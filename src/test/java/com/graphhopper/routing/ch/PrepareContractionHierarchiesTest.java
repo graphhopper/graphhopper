@@ -304,7 +304,7 @@ public class PrepareContractionHierarchiesTest {
         initUnpackingGraph(g, calc);
         RoutingAlgorithm algo = prepare.setType(calc).createAlgo();
         Path p = algo.calcPath(10, 6);
-        assertEquals(7, p.distance(), 1e-4);
+        assertEquals(7, p.distance(), 1e-1);
         assertEquals(Arrays.asList(10, 0, 1, 2, 3, 4, 5, 6), p.toNodeList());
     }
 }

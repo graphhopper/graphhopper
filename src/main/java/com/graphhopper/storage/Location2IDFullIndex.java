@@ -54,7 +54,7 @@ public class Location2IDFullIndex implements Location2IDIndex {
             double tmpLon = g.getLongitude(i);
             if (circle == null || circle.contains(tmpLat, tmpLon)) {
                 id = i;
-                double dist = calc.calcDistKm(tmpLat, tmpLon, lat, lon);
+                double dist = calc.calcDist(tmpLat, tmpLon, lat, lon);
                 if (dist <= 0)
                     break;
 

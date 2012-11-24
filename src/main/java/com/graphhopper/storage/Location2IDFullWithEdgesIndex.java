@@ -55,7 +55,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
         for (int fromNode = 0; fromNode < locs; fromNode++) {
             double fromLat = g.getLatitude(fromNode);
             double fromLon = g.getLongitude(fromNode);
-            double fromDist = calc.calcDistKm(fromLat, fromLon, queryLat, queryLon);
+            double fromDist = calc.calcDist(fromLat, fromLon, queryLat, queryLon);
             if (fromDist < 0)
                 continue;
 
@@ -74,7 +74,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
                     double distEdge = calc.denormalizeDist(calc.calcNormalizedEdgeDistance(queryLat, queryLon,
                             fromLat, fromLon, toLat, toLon));
                     if (distEdge < foundDist) {
-                        if (fromDist < calc.calcDistKm(toLat, toLon, queryLat, queryLon))
+                        if (fromDist < calc.calcDist(toLat, toLon, queryLat, queryLon))
                             id = fromNode;
                         else
                             id = toNode;

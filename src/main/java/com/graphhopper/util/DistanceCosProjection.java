@@ -25,7 +25,7 @@ import static java.lang.Math.*;
 public class DistanceCosProjection extends DistanceCalc {
 
     @Override
-    public double calcDistKm(double fromLat, double fromLon, double toLat, double toLon) {
+    public double calcDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = toRadians(toLat - fromLat);
         double dLon = toRadians(toLon - fromLon);
         double left = cos(toRadians((fromLat + toLat) / 2)) * dLon;

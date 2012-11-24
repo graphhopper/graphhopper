@@ -51,7 +51,7 @@ public class SpatialKeyAlgoTest {
         assertEquals(lon, fl.lon, .1);
 
         double expectedDist = ((float) DistanceCalc.C / (1 << bits / 2));
-        double d = new DistanceCalc().calcDistKm(lat, lon, fl.lat, fl.lon);
+        double d = new DistanceCalc().calcDist(lat, lon, fl.lat, fl.lon);
         assertTrue("Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d, d < expectedDist);
     }
 
@@ -70,7 +70,7 @@ public class SpatialKeyAlgoTest {
         assertEquals(lon, fl.lon, 1e-2);
 
         double expectedDist = ((float) DistanceCalc.C / (1 << bits / 2));
-        double d = new DistanceCalc().calcDistKm(lat, lon, fl.lat, fl.lon);
+        double d = new DistanceCalc().calcDist(lat, lon, fl.lat, fl.lon);
         assertTrue("Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d, d < expectedDist);
     }
 
@@ -89,7 +89,7 @@ public class SpatialKeyAlgoTest {
         assertEquals(lon, fl.lon, 1e-4);
 
         double expectedDist = ((float) DistanceCalc.C / (1 << bits / 2));
-        double d = new DistanceCalc().calcDistKm(lat, lon, fl.lat, fl.lon);
+        double d = new DistanceCalc().calcDist(lat, lon, fl.lat, fl.lon);
         assertTrue("Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d, d < expectedDist);
     }
 
@@ -107,7 +107,7 @@ public class SpatialKeyAlgoTest {
             algo.decode(keyY, coord2);
 
             double precision = DistanceCalc.C / (1 << (i / 2 - 2)) / 4;
-            double dist = new DistanceCalc().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
+            double dist = new DistanceCalc().calcDist(coord.lat, coord.lon, coord2.lat, coord2.lon);
             assertEquals(0, dist, 1e-5);
 //            System.out.println("\n\n##" + i + "\nkeyX:" + BitUtil.toBitString(keyX));
 //            System.out.println("keyY:" + BitUtil.toBitString(keyY));
@@ -148,9 +148,9 @@ public class SpatialKeyAlgoTest {
         key = algo.encode(coord);
         algo.decode(key, coord2);
         assertEquals(key, algo.encode(coord2));
-        double dist = new DistanceCalc().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
+        double dist = new DistanceCalc().calcDist(coord.lat, coord.lon, coord2.lat, coord2.lon);
         // and ensure small distance
-        assertTrue(dist + "", dist < 5e-3);
+        assertTrue(dist + "", dist < 5);
 
         long queriedKey = 246557819640268L;
         long storedKey = 246557819640269L;
@@ -159,25 +159,25 @@ public class SpatialKeyAlgoTest {
 
         // 2. fix bijection precision problem
         assertEquals(storedKey, algo.encode(coord2));
-        dist = new DistanceCalc().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
+        dist = new DistanceCalc().calcDist(coord.lat, coord.lon, coord2.lat, coord2.lon);
         // and ensure small distance
-        assertTrue(dist + "", dist < 5e-3);
+        assertTrue(dist + "", dist < 5);
 
         coord = new CoordTrig(50.0606072, 9.6277542);
         key = algo.encode(coord);
         algo.decode(key, coord2);
         assertEquals(key, algo.encode(coord2));
-        dist = new DistanceCalc().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
+        dist = new DistanceCalc().calcDist(coord.lat, coord.lon, coord2.lat, coord2.lon);
         // and ensure small distance
-        assertTrue(dist + "", dist < 5e-3);
+        assertTrue(dist + "", dist < 5);
 
         coord = new CoordTrig(0.01, 0.01);
         key = algo.encode(coord);
         algo.decode(key, coord2);
         assertEquals(key, algo.encode(coord2));
-        dist = new DistanceCalc().calcDistKm(coord.lat, coord.lon, coord2.lat, coord2.lon);
+        dist = new DistanceCalc().calcDist(coord.lat, coord.lon, coord2.lat, coord2.lon);
         // and ensure small distance
-        assertTrue(dist + "", dist < 5e-3);
+        assertTrue(dist + "", dist < 5);
     }
 
     @Test

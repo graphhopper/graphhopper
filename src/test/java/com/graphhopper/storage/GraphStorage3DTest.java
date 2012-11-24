@@ -31,12 +31,12 @@ public class GraphStorage3DTest {
     public void testGetHeight() {
         GraphStorage3D g = new GraphStorage3D(new RAMDirectory());
         g.createNew(10);
-        g.setNode(0, 50, 20.00000, 100);
-        g.setNode(1, 50, 20.00002, 100);
+        g.setNode(0, 50, 20000.00, 100);
+        g.setNode(1, 50, 20000.02, 100);
 
-        g.setNode(2, 50, 20.00001, 200);
-        g.setNode(3, 50, 20.00001, 50);
-        g.setNode(4, 50, 20.00001, 5);
+        g.setNode(2, 50, 20000.01, 200);
+        g.setNode(3, 50, 20000.01, 50);
+        g.setNode(4, 50, 20000.01, 5);
 
         DistanceCalc3D dist = new DistanceCalc3D();
         edge(g, dist, 0, 2);
@@ -48,11 +48,11 @@ public class GraphStorage3DTest {
 
         Path p = new DijkstraBidirection(g).calcPath(0, 1);
         assertEquals(3, p.node(1));
-        assertEquals(0.1, p.distance(), 1e-4);
+        assertEquals(100, p.distance(), .1);
     }
 
     public static void edge(GraphStorage3D g, DistanceCalc3D dist, int from, int to) {
-        double tmpDist = dist.calcDistKm(g.getLatitude(from), g.getLongitude(from), g.getHeight(from),
+        double tmpDist = dist.calcDist(g.getLatitude(from), g.getLongitude(from), g.getHeight(from),
                 g.getLatitude(to), g.getLongitude(to), g.getHeight(to));
         // System.out.println(from + "->" + to + " " + tmpDist);
         g.edge(from, to, tmpDist, true);

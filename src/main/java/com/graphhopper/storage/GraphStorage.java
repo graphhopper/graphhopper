@@ -37,8 +37,8 @@ public class GraphStorage implements WritableGraph, Storable {
     private static final float INC_FACTOR = 1.5f;
     // +- 180 and +-90 => let use use 400
     private static final float INT_FACTOR = Integer.MAX_VALUE / 400f;
-    // distance of around +-1000 are ok
-    private static final float INT_DIST_FACTOR = 1000000f;
+    // distance of around +-1000 000 meter are ok
+    private static final float INT_DIST_FACTOR = 1000f;
     private Directory dir;
     // edge memory layout: nodeA,nodeB,linkA,linkB,dist,flags
     protected final int I_NODEA, I_NODEB, I_LINKA, I_LINKB, I_FLAGS, I_DIST;
