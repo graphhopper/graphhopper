@@ -54,12 +54,11 @@ public class DouglasPeucker {
         return simplify(points, 0, points.size() - 1);
     }
 
-    public int simplify(TIntArrayList points, int fromIndex, int toIndex) {
-        if (toIndex - fromIndex < 2)
+    public int simplify(TIntArrayList points, int fromIndex, int lastIndex) {
+        if (lastIndex - fromIndex < 2)
             return 0;
         int indexWithMaxDist = -1;
         double maxDist = -1;
-        int lastIndex = toIndex;
         double firstLat = g.getLatitude(points.get(fromIndex));
         double firstLon = g.getLongitude(points.get(fromIndex));
         double lastLat = g.getLatitude(points.get(lastIndex));
@@ -78,17 +77,17 @@ public class DouglasPeucker {
         }
 
         if (indexWithMaxDist < 0)
-            throw new IllegalStateException("maximum not found in [" + fromIndex + "," + toIndex + "]");
+            throw new IllegalStateException("maximum not found in [" + fromIndex + "," + lastIndex + "]");
 
         int counter = 0;
         if (maxDist < normedMaxDist) {
-            for (int i = fromIndex + 1; i < toIndex; i++) {
+            for (int i = fromIndex + 1; i < lastIndex; i++) {
                 points.set(i, EMPTY);
                 counter++;
             }
         } else {
             counter = simplify(points, fromIndex, indexWithMaxDist);
-            counter += simplify(points, indexWithMaxDist, toIndex);
+            counter += simplify(points, indexWithMaxDist, lastIndex);
         }
         return counter;
     }
