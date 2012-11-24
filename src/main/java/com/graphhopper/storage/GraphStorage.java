@@ -21,10 +21,8 @@ import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
-import com.graphhopper.util.Helper7;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.map.hash.TIntIntHashMap;
-import gnu.trove.set.hash.TIntHashSet;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different

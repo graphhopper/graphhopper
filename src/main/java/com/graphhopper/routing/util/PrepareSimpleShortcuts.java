@@ -61,6 +61,8 @@ public class PrepareSimpleShortcuts implements AlgorithmPreparation {
     public PrepareSimpleShortcuts doWork() {
         newShortcuts = 0;
         int locs = g.getNodes();
+        int maxSkipped = Integer.MIN_VALUE;
+        int sumSkipped = 0;
         StopWatch sw = new StopWatch().start();
         for (int startNode = 0; startNode < locs; startNode++) {
             if (has1InAnd1Out(startNode))
@@ -79,6 +81,7 @@ public class PrepareSimpleShortcuts implements AlgorithmPreparation {
                 int skip = startNode;
                 int currentNode = iter.node();
                 double distance = iter.distance();
+                int countSkipped = 0;
                 while (true) {
                     if (g.getLevel(currentNode) < 0)
                         continue MAIN;
@@ -105,6 +108,7 @@ public class PrepareSimpleShortcuts implements AlgorithmPreparation {
                     distance += twoDegreeIter.distance();
                     skip = currentNode;
                     currentNode = twoDegreeIter.node();
+                    countSkipped++;
                 }
                 if (currentNode == startNode)
                     continue;
@@ -124,10 +128,16 @@ public class PrepareSimpleShortcuts implements AlgorithmPreparation {
                     // finally create the shortcut
                     g.shortcut(startNode, currentNode, distance, flags, firstSkippedEdge);
                     newShortcuts++;
+                    countSkipped--;
+                    sumSkipped += countSkipped;
+                    if (maxSkipped < countSkipped)
+                        maxSkipped = countSkipped;
                 }
             }
         }
-        logger.info("introduced " + newShortcuts + " new shortcuts in: " + sw.stop().getSeconds() + "s");
+        logger.info("introduced " + newShortcuts + " new shortcuts in: " + sw.stop().getSeconds() + "s, "
+                + "maxSkipped:" + maxSkipped + ", averageSkipped:" + sumSkipped * 1f / newShortcuts
+                + ", sumSkipped:" + sumSkipped);
         prepared = true;
         return this;
     }

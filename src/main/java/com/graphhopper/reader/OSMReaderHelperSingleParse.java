@@ -25,16 +25,16 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This helper does not require the osm to be parsed twice but is potentially more memory intensive
- * as it stores all occuring nodes and its lat,lon.
+ * as it stores all occuring nodes and its lat,lon. Only useful for smaller (<150km) graphs.
  *
  * @author Peter Karich
  */
-public class OSMReaderHelperFast extends OSMReaderHelper {
+public class OSMReaderHelperSingleParse extends OSMReaderHelper {
 
     private OSMIDSegmentedMap osmIdToIndexMap;
     private CompressedArray arr;
 
-    public OSMReaderHelperFast(Graph g, int expectedNodes) {
+    public OSMReaderHelperSingleParse(Graph g, int expectedNodes) {
         super(g, expectedNodes);
         osmIdToIndexMap = new OSMIDSegmentedMap(expectedNodes, 100);
         arr = new CompressedArray();

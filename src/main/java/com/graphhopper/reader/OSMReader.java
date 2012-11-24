@@ -143,7 +143,7 @@ public class OSMReader {
     }
 
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
-        osmReader.setFastRead(args.getBool("osmreader.fastRead", true));
+        osmReader.setDoubleParse(args.getBool("osmreader.doubleParse", true));
         osmReader.setIndexCapacity(args.getInt("osmreader.locationIndexCapacity", 2000));
         String type = args.get("osmreader.type", "CAR");
         osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
@@ -179,7 +179,7 @@ public class OSMReader {
     public OSMReader(GraphStorage storage, int expectedNodes) {
         this.graphStorage = storage;
         this.expectedNodes = expectedNodes;
-        this.helper = new OSMReaderHelperFast(graphStorage, expectedNodes);
+        this.helper = new OSMReaderHelperSingleParse(graphStorage, expectedNodes);
         this.index = new Location2IDQuadtree(storage, storage.getDirectory());
         logger.info("using " + helper.getStorageInfo(storage) + ", memory:" + Helper.getMemInfo());
     }
@@ -243,7 +243,6 @@ public class OSMReader {
     }
 
     public void prepareIndex() {
-        // TODO make index configurable
         logger.info("now initializing index");
         index.prepareIndex(indexCapacity);
         index.flush();
@@ -288,7 +287,8 @@ public class OSMReader {
                                 logger.warn("Something is wrong! Processing ways takes too long! "
                                         + sw.getSeconds() + "sec for only " + (counter - wayStart) + " docs");
                             }
-                            if (counter % 1000000 == 0) {
+                            // counter does +=2 until the next loop
+                            if ((counter / 2) % 1000000 == 0) {
                                 logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
                                         + " (" + skippedEdges + "), " + Helper.getMemInfo());
                             }
@@ -433,16 +433,16 @@ public class OSMReader {
         prepare.setGraph(graphStorage);
     }
 
-    public OSMReader setFastRead(boolean fast) {
-        if (fast)
-            helper = new OSMReaderHelperFast(graphStorage, expectedNodes);
+    public OSMReader setDoubleParse(boolean dp) {
+        if (dp)
+            helper = createDoubleParseHelper();
         else
-            helper = createLessMemHelper();
+            helper = new OSMReaderHelperSingleParse(graphStorage, expectedNodes);
         return this;
     }
 
-    OSMReaderHelper createLessMemHelper() {
-        return new OSMReaderHelperLessMem(graphStorage, expectedNodes) {
+    OSMReaderHelper createDoubleParseHelper() {
+        return new OSMReaderHelperDoubleParse(graphStorage, expectedNodes) {
             @Override
             boolean parseWay(TLongArrayList tmpLocs, Map<String, Object> properties,
                     XMLStreamReader sReader) throws XMLStreamException {

@@ -205,7 +205,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
                 }
             }
         }
-        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc);
+        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc + ", prioNodeCollection:" + sortedNodes);
         // System.out.println("new shortcuts " + newShortcuts);
     }
 

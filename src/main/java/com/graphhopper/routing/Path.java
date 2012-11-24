@@ -18,6 +18,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
@@ -60,7 +61,7 @@ public class Path {
         this.found = found;
         return this;
     }
-    
+
     public void addFrom(int node) {
         add(node);
     }
@@ -144,7 +145,7 @@ public class Path {
         distance += dist;
         time += weightCalculation.getTime(dist, fl);
     }
-    
+
     /**
      * @return time in seconds
      */
@@ -159,5 +160,20 @@ public class Path {
             list.add(node(i));
         }
         return list;
+    }
+
+    public int simplify(DouglasPeucker algo) {
+        int deleted = algo.simplify(nodeIds);
+        if (deleted == 0)
+            return 0;
+        TIntArrayList res = new TIntArrayList(nodeIds.size() - deleted);
+        int tmp = nodeIds.size();
+        for (int i = 0; i < tmp; i++) {
+            int n = nodeIds.get(i);
+            if (n != DouglasPeucker.EMPTY)
+                res.add(n);
+        }
+        nodeIds = res;
+        return deleted;
     }
 }

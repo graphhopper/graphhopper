@@ -60,6 +60,9 @@ public class DistanceCalc {
         return tmp * tmp;
     }
 
+    /**
+     * in km
+     */
     public double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = toRadians(toLat - fromLat);
         double dLon = toRadians(toLon - fromLon);
@@ -176,9 +179,9 @@ public class DistanceCalc {
     }
 
     /**
-     * This method calculates the distance from r to edge g = a to b where the crossing point is t
+     * This method calculates the distance from r to edge g=(a to b) where the crossing point is t
      */
-    public double calcNormalizedEdgeDistance(double qLat, double qLon,
+    public double calcNormalizedEdgeDistance(double r_lat, double r_lon,
             double a_lat, double a_lon,
             double b_lat, double b_lon) {
         // x <=> lon
@@ -186,56 +189,58 @@ public class DistanceCalc {
         double dY_a = a_lat - b_lat;
         if (dY_a == 0)
             // special case: horizontal edge
-            return calcNormalizedDist(a_lat, qLon, qLat, qLon);
+            return calcNormalizedDist(a_lat, r_lon, r_lat, r_lon);
 
         double dX_a = a_lon - b_lon;
         if (dX_a == 0)
             // special case: vertical edge
-            return calcNormalizedDist(qLat, a_lon, qLat, qLon);
+            return calcNormalizedDist(r_lat, a_lon, r_lat, r_lon);
 
         double m = dY_a / dX_a;
         double n = a_lat - m * a_lon;
         double m_i = 1 / m;
-        double n_s = qLat + m_i * qLon;
+        double n_s = r_lat + m_i * r_lon;
         // g should cross s => t=(t_x,t_y)
         // m + m_i cannot get 0
         double t_x = (n_s - n) / (m + m_i);
         double t_y = m * t_x + n;
-        return calcNormalizedDist(qLat, qLon, t_y, t_x);
+        return calcNormalizedDist(r_lat, r_lon, t_y, t_x);
     }
 
     /**
-     * This method decides if we should use distance(lat, lon to edge) or better
-     * min(distance(lat,lon to a), distance(lat,lon to b)) where edge=a to b
+     * This method decides case 1: if we should use distance(r to edge) where r=(lat,lon) or case 2:
+     * min(distance(r to a), distance(r to b)) where edge=(a to b)
      */
+    // case 1:
     //   r
     //  . 
     // a-------b
-    //
-    // both angles need to be <= 90°
-    //
+    //    
+    // case 2:
     // r
     //  .
     //    a-------b
-    public boolean validEdgeDistance(double lat, double lon,
+    public boolean validEdgeDistance(double r_lat, double r_lon,
             double a_lat, double a_lon,
             double b_lat, double b_lon) {
-        double ar_x = lon - a_lon;
-        double ar_y = lat - a_lat;
+        double ar_x = r_lon - a_lon;
+        double ar_y = r_lat - a_lat;
         double ab_x = b_lon - a_lon;
         double ab_y = b_lat - a_lat;
         double ab_ar = ar_x * ab_x + ar_y * ab_y;
 
-        double rb_x = b_lon - lon;
-        double rb_y = b_lat - lat;
+        double rb_x = b_lon - r_lon;
+        double rb_y = b_lat - r_lat;
         double ab_rb = rb_x * ab_x + rb_y * ab_y;
 
-        // calculate the exact degree and it should be <= 90° for BOTH angles!
+        // calculate the exact degree alpha(ar, ab) and beta(rb,ab) if it is case 1 then both angles are <= 90°
         // double ab_ar_norm = Math.sqrt(ar_x * ar_x + ar_y * ar_y) * Math.sqrt(ab_x * ab_x + ab_y * ab_y);
         // double ab_rb_norm = Math.sqrt(rb_x * rb_x + rb_y * rb_y) * Math.sqrt(ab_x * ab_x + ab_y * ab_y);
         // return Math.acos(ab_ar / ab_ar_norm) <= Math.PI / 2 && Math.acos(ab_rb / ab_rb_norm) <= Math.PI / 2;
         return ab_ar > 0 && ab_rb > 0;
     }
+    
+    
 
     @Override
     public String toString() {

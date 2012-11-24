@@ -44,7 +44,7 @@ public class OSMReaderTest {
     }
 
     OSMReader preProcess(OSMReader osmreader) {
-        return osmreader.setFastRead(true);
+        return osmreader.setDoubleParse(false);
     }
 
     @Test public void testMain() {

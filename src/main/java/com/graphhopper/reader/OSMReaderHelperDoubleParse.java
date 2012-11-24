@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class OSMReaderHelperLessMem extends OSMReaderHelper {
+public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private TIntIntHashMap osmIdToIndexMap;
@@ -48,7 +48,7 @@ public class OSMReaderHelperLessMem extends OSMReaderHelper {
     private int internalId = 0;
     private TLongArrayList tmpLocs = new TLongArrayList(10);
 
-    public OSMReaderHelperLessMem(GraphStorage storage, int expectedNodes) {
+    public OSMReaderHelperDoubleParse(GraphStorage storage, int expectedNodes) {
         super(storage, expectedNodes);
         osmIdToIndexMap = new TIntIntHashMap(expectedNodes, 1.4f, -1, -1);
     }

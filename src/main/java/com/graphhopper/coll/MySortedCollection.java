@@ -122,6 +122,20 @@ public class MySortedCollection {
 
     @Override
     public String toString() {
-        return "size " + size + " min=(" + peekKey() + "=>" + peekValue() + ")";
+        int min = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
+        for (Entry<Integer, TIntHashSet> e : map.entrySet()) {
+            int tmpSize = e.getValue().size();
+            if (min > tmpSize)
+                min = tmpSize;
+            if (max < tmpSize)
+                max = tmpSize;
+        }
+        String str = "";
+        if (!isEmpty())
+            str = ", minEntry=(" + peekKey() + "=>" + peekValue() + ")";
+        return "size=" + size + ", treeMap.size=" + map.size()
+                + ", averageNo=" + size * 1f / map.size()
+                + ", minNo=" + min + ", maxNo=" + max + str;
     }
 }

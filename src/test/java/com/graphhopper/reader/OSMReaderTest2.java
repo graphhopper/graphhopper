@@ -22,7 +22,7 @@ public class OSMReaderTest2 extends OSMReaderTest {
 
     @Override
     OSMReader preProcess(OSMReader osmreader) {
-        osmreader.setFastRead(false);
+        osmreader.setDoubleParse(true);
         osmreader.getHelper().preProcess(getClass().getResourceAsStream("test-osm.xml"));
         return osmreader;
     }
