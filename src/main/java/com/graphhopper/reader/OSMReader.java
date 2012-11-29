@@ -247,14 +247,14 @@ public class OSMReader {
                 + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
     }
 
-    public void flush() {
+    public void flush() {        
         logger.info("flushing... (" + Helper.getMemInfo() + ")");
-        graphStorage.flush();
+        graphStorage.flush();        
         prepareIndex();
     }
 
     public void prepareIndex() {
-        logger.info("now initializing index");
+        logger.info("now initializing and flushin index");
         index.prepareIndex(indexCapacity);
         index.flush();
     }
