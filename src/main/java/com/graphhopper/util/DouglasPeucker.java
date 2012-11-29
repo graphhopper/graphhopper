@@ -67,8 +67,8 @@ public class DouglasPeucker {
             int tmpIndex = points.get(i);
             if (tmpIndex == EMPTY)
                 continue;
-            double lat = g.getLatitude(i);
-            double lon = g.getLongitude(i);
+            double lat = g.getLatitude(tmpIndex);
+            double lon = g.getLongitude(tmpIndex);
             double dist = calc.calcNormalizedEdgeDistance(lat, lon, firstLat, firstLon, lastLat, lastLon);
             if (maxDist < dist) {
                 indexWithMaxDist = i;

@@ -17,7 +17,6 @@ package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.BBox;
 import static java.lang.Math.*;
-import java.util.Arrays;
 
 /**
  * Calculates the distance of two points on earth.
