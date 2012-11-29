@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class PrepareSimpleShortcutsTest {
+public class PrepareTowerNodesShortcutsTest {
 
     static LevelGraph createGraph(int size) {
         LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("priog", false));
@@ -52,7 +52,7 @@ public class PrepareSimpleShortcutsTest {
         // assert additional 0, 5
         assertFalse(GraphUtility.contains(g.getEdges(0), 5));
         assertFalse(GraphUtility.contains(g.getEdges(5), 0));
-        new PrepareSimpleShortcuts().setGraph(g).doWork();
+        new PrepareTowerNodesShortcuts().setGraph(g).doWork();
         assertTrue(GraphUtility.contains(g.getEdges(0), 5));
         EdgeIterator iter = GraphUtility.until(g.getEdges(0), 5);
         assertEquals(11, iter.distance(), 1e-5);
@@ -86,7 +86,7 @@ public class PrepareSimpleShortcutsTest {
         // assert 0->5 but not 5->0
         assertFalse(GraphUtility.contains(g.getEdges(0), 5));
         assertFalse(GraphUtility.contains(g.getEdges(5), 0));
-        new PrepareSimpleShortcuts().setGraph(g).doWork();
+        new PrepareTowerNodesShortcuts().setGraph(g).doWork();
         assertTrue(GraphUtility.contains(g.getOutgoing(0), 5));
         assertFalse(GraphUtility.contains(g.getOutgoing(5), 0));
     }
@@ -99,16 +99,16 @@ public class PrepareSimpleShortcutsTest {
         g.edge(2, 1, 10, false);
         g.edge(3, 0, 10, false);
 
-        assertFalse(new PrepareSimpleShortcuts().setGraph(g).has1InAnd1Out(2));
-        assertTrue(new PrepareSimpleShortcuts().setGraph(g).has1InAnd1Out(0));
-        assertFalse(new PrepareSimpleShortcuts().setGraph(g).has1InAnd1Out(1));
+        assertFalse(new PrepareTowerNodesShortcuts().setGraph(g).has1InAnd1Out(2));
+        assertTrue(new PrepareTowerNodesShortcuts().setGraph(g).has1InAnd1Out(0));
+        assertFalse(new PrepareTowerNodesShortcuts().setGraph(g).has1InAnd1Out(1));
     }
 
     @Test
     public void testDirectedBug() {
         LevelGraph g = createGraph(30);
         initDirected1(g);
-        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         assertEquals(-1, g.getLevel(5));
@@ -127,7 +127,7 @@ public class PrepareSimpleShortcutsTest {
         g.edge(0, 1, 4, true);
         g.edge(0, 2, 10, true);
         g.edge(0, 3, 10, true);
-        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(0, prepare.getShortcuts());
     }
@@ -137,7 +137,7 @@ public class PrepareSimpleShortcutsTest {
         LevelGraph g = createGraph(20);
         initBiGraph(g);
 
-        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(1, prepare.getShortcuts());
         EdgeSkipIterator iter = (EdgeSkipIterator) GraphUtility.until(g.getEdges(6), 3);
@@ -221,7 +221,7 @@ public class PrepareSimpleShortcutsTest {
         g.edge(4, 3, 20, CarStreetType.flags(120, true));
         g.edge(3, 11, 1, CarStreetType.flags(30, true));
 
-        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
 
@@ -263,7 +263,7 @@ public class PrepareSimpleShortcutsTest {
     @Test
     public void testIntroduceShortcuts() {
         LevelGraph g = createShortcutsGraph();
-        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(4, prepare.getShortcuts());
 

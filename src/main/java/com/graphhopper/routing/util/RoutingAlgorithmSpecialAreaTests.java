@@ -84,8 +84,8 @@ public class RoutingAlgorithmSpecialAreaTests {
     }
 
     public static RoutingAlgorithm[] createAlgos(final Graph g) {
-        LevelGraph graphSimpleSC = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
-        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(graphSimpleSC);
+        LevelGraph graphTowerNodesSC = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(graphTowerNodesSC);
         prepare.doWork();
         AStarBidirection astarSimpleSC = (AStarBidirection) prepare.createAStar();
         astarSimpleSC.setApproximation(false);
@@ -108,9 +108,9 @@ public class RoutingAlgorithmSpecialAreaTests {
         if (unterfrankenGraph instanceof LevelGraph) {
             if (algo instanceof DijkstraBidirectionRef)
                 algo = new PrepareContractionHierarchies().setGraph(unterfrankenGraph).createAlgo();
-//                algo = new PrepareSimpleShortcuts().setGraph(unterfrankenGraph).createAlgo();
+//                algo = new PrepareTowerNodesShortcuts().setGraph(unterfrankenGraph).createAlgo();
             else if (algo instanceof AStarBidirection)
-                algo = new PrepareSimpleShortcuts().setGraph(unterfrankenGraph).createAStar();
+                algo = new PrepareTowerNodesShortcuts().setGraph(unterfrankenGraph).createAStar();
             else
                 // level graph accepts all algorithms but normally we want to use an optimized one
                 throw new IllegalStateException("algorithm which boosts query time for levelgraph not found " + algo);

@@ -15,7 +15,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.PrepareSimpleShortcuts;
+import com.graphhopper.routing.util.PrepareTowerNodesShortcuts;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -25,9 +25,9 @@ import com.graphhopper.util.EdgeSkipIterator;
 import gnu.trove.list.array.TIntArrayList;
 
 /**
- * Unpack shortcuts of lengthy paths.
+ * Unpack shortcuts of paths between tower nodes.
  *
- * @see PrepareSimpleShortcuts
+ * @see PrepareTowerNodesShortcuts
  * @author Peter Karich,
  */
 public class Path4Shortcuts extends PathBidirRef {

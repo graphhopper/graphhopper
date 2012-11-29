@@ -30,22 +30,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class provides an algorithm which introduces shortcuts to skip lengthy roads (ie. nodes with
- * a degree of 2)
+ * This class provides an algorithm which introduces shortcuts to skip nodes (degree of 2) between
+ * tower nodes (degree of > 2).
  *
  * @author Peter Karich
  */
-public class PrepareSimpleShortcuts implements AlgorithmPreparation {
+public class PrepareTowerNodesShortcuts implements AlgorithmPreparation {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private LevelGraph g;
     private int newShortcuts;
     private boolean prepared = false;
 
-    public PrepareSimpleShortcuts() {
+    public PrepareTowerNodesShortcuts() {
     }
 
-    @Override public PrepareSimpleShortcuts setGraph(Graph lg) {
+    @Override public PrepareTowerNodesShortcuts setGraph(Graph lg) {
         g = (LevelGraph) lg;
         return this;
     }
@@ -58,13 +58,13 @@ public class PrepareSimpleShortcuts implements AlgorithmPreparation {
      * Create short cuts to skip 2 degree nodes and make graph traversal for routing more efficient
      */
     @Override
-    public PrepareSimpleShortcuts doWork() {
+    public PrepareTowerNodesShortcuts doWork() {
         newShortcuts = 0;
-        int locs = g.getNodes();
+        int nodes = g.getNodes();
         int maxSkipped = Integer.MIN_VALUE;
         int sumSkipped = 0;
         StopWatch sw = new StopWatch().start();
-        for (int startNode = 0; startNode < locs; startNode++) {
+        for (int startNode = 0; startNode < nodes; startNode++) {
             if (has1InAnd1Out(startNode))
                 continue;
 

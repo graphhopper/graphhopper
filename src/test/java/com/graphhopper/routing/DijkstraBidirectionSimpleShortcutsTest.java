@@ -17,8 +17,8 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.EdgeLevelFilter;
-import com.graphhopper.routing.util.PrepareSimpleShortcuts;
-import com.graphhopper.routing.util.PrepareSimpleShortcutsTest;
+import com.graphhopper.routing.util.PrepareTowerNodesShortcuts;
+import com.graphhopper.routing.util.PrepareTowerNodesShortcutsTest;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
- * TODO merge with PrepareSimpleShortcutsTest?
+ * TODO merge with PrepareTowerNodesShortcutsTest?
  *
  * @author Peter Karich
  */
@@ -40,7 +40,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     }
 
     RoutingAlgorithm createAlgoWithFilterAndPathUnpacking(final LevelGraph lg) {
-        return new PrepareSimpleShortcuts().setGraph(lg).createAlgo();
+        return new PrepareTowerNodesShortcuts().setGraph(lg).createAlgo();
     }
 
     LevelGraph createGraph(int size) {
@@ -54,7 +54,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         LevelGraph g2 = createGraph(6);
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
         // store skipped first node along with the shortcut
-        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g2).doWork();
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g2).doWork();
         // TODO NOW why only one shortcut? 
         assertEquals(1, prepare.getShortcuts());
         // use that node to correctly unpack the shortcut
@@ -67,7 +67,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     public void testShortcutNoUnpacking() {
         LevelGraph g2 = createGraph(6);
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
-        new PrepareSimpleShortcuts().setGraph(g2).doWork();
+        new PrepareTowerNodesShortcuts().setGraph(g2).doWork();
         Path p = createAlgoWithFilter(g2).calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-6);
         assertEquals(Arrays.asList(0, 7, 6, 3, 4), p.toNodeList());
@@ -90,7 +90,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         g.newEdge(22, 23, 1, true);
         g.newEdge(22, 24, 1, true);
 
-        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(1, prepare.getShortcuts());
         EdgeSkipIterator iter2 = (EdgeSkipIterator) GraphUtility.until(g.getEdges(19), 22);
@@ -106,8 +106,8 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     @Test
     public void testDirected1() {
         LevelGraph g = createGraph(30);
-        PrepareSimpleShortcutsTest.initDirected1(g);
-        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
+        PrepareTowerNodesShortcutsTest.initDirected1(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
         prepare.doWork();
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(0, 6);
@@ -120,11 +120,11 @@ public class DijkstraBidirectionSimpleShortcutsTest {
     @Test
     public void testDirected2() {
         LevelGraph g = createGraph(30);
-        PrepareSimpleShortcutsTest.initDirected2(g);
-        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
+        PrepareTowerNodesShortcutsTest.initDirected2(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(1, prepare.getShortcuts());
-//        PrepareSimpleShortcutsTest.printEdges(g);
+//        PrepareTowerNodesShortcutsTest.printEdges(g);
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(0, 10);
         assertEquals(10, p.distance(), 1e-6);
@@ -154,7 +154,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         g.edge(4, 9, 1, CarStreetType.flags(10, true));
         g.edge(4, 10, 1, CarStreetType.flags(50, true));
 
-        PrepareSimpleShortcuts prepare = new PrepareSimpleShortcuts().setGraph(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         Path p = new DijkstraBidirectionRef(g) {
