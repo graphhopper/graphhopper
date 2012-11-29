@@ -165,8 +165,7 @@ public class OSMReader {
             File osmXmlFile = new File(strOsm);
             if (!osmXmlFile.exists())
                 throw new IllegalStateException("Your specified OSM file does not exist:" + strOsm);
-            logger.info("start creating graph from " + osmXmlFile
-                    + " (expected size: " + osmReader.getExpectedNodes() + ")");
+            logger.info("start creating graph from " + osmXmlFile);
             osmReader.osm2Graph(osmXmlFile);
         }
         return osmReader;

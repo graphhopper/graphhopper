@@ -15,7 +15,6 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.coll.OSMIDSegmentedMap;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
