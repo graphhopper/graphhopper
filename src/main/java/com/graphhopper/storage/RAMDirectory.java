@@ -60,6 +60,10 @@ public class RAMDirectory implements Directory {
         }
     }
 
+    public boolean isStoring() {
+        return store;
+    }
+
     @Override
     public DataAccess createDataAccess(String name) {
         if (store)

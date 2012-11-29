@@ -26,8 +26,8 @@ import gnu.trove.map.hash.TIntIntHashMap;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
- * Directory implementations like RAMDirectory for fast and read-thread safe usage which can be even
- * flushed to disc or via MMapDirectory for (unbounded) virtual-memory and not thread safe usage.
+ * Directory implementations like RAMDirectory for fast and read-thread safe usage which can be
+ * flushed to disc or via MMapDirectory for virtual-memory and not thread safe usage.
  *
  * @author Peter Karich
  */
@@ -549,7 +549,7 @@ public class GraphStorage implements WritableGraph, Storable {
         return _copyTo(newThis(dir));
     }
 
-    public Graph _copyTo(GraphStorage clonedG) {
+    Graph _copyTo(GraphStorage clonedG) {
         if (clonedG.edgeEntrySize != edgeEntrySize)
             throw new IllegalStateException("edgeEntrySize cannot be different for cloned graph");
         if (clonedG.nodeEntrySize != nodeEntrySize)

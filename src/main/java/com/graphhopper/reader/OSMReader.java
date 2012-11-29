@@ -35,6 +35,7 @@ import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Helper7;
 import com.graphhopper.util.StopWatch;
@@ -98,6 +99,7 @@ public class OSMReader {
     private AlgorithmPreparation prepare;
     private Location2IDQuadtree index;
     private int indexCapacity = 2000;
+    private boolean sortGraph = false;
 
     /**
      * Opens or creates a graph. The specified args need a property 'graph' (a folder) and if no
@@ -155,6 +157,7 @@ public class OSMReader {
                 return AbstractRoutingAlgorithm.createAlgoFromString(graph, algoStr);
             }
         });
+        osmReader.setSort(args.getBool("osmreader.sortGraph", false));
         osmReader.setTowerNodeShortcuts(args.getBool("osmreader.towerNodesShortcuts", false));
         osmReader.setCHShortcuts(args.get("osmreader.chShortcuts", "no"));
         if (!osmReader.loadExisting()) {
@@ -220,7 +223,16 @@ public class OSMReader {
     }
 
     public void optimize() {
+        logger.info("optimizing ... (" + Helper.getMemInfo() + ")");
         prepare.doWork();
+        graphStorage.optimize();
+        // move this into the GraphStorage.optimize method?
+        if (sortGraph) {
+            logger.info("sorting ... (" + Helper.getMemInfo() + ")");
+            GraphStorage newGraph = GraphUtility.newStorage(graphStorage);            
+            GraphUtility.sortDFS(graphStorage, newGraph);
+            graphStorage = newGraph;
+        }
     }
 
     public void cleanUp() {
@@ -254,7 +266,7 @@ public class OSMReader {
         if (is == null)
             throw new IllegalStateException("Stream cannot be empty");
 
-        logger.info("Creating graph with expected nodes:" + helper.getExpectedNodes());
+        logger.info("creating graph with expected nodes:" + helper.getExpectedNodes());
         graphStorage.createNew(helper.getExpectedNodes());
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
@@ -462,6 +474,11 @@ public class OSMReader {
 
     public OSMReader setIndexCapacity(int cap) {
         indexCapacity = cap;
+        return this;
+    }
+
+    public OSMReader setSort(boolean bool) {
+        sortGraph = bool;
         return this;
     }
 }

@@ -54,7 +54,6 @@ public class XFirstSearch {
         visited.add(startNode);
         coll.push(startNode);
         int current;
-
         while (!coll.isEmpty()) {
             current = coll.pop();
             if (goFurther(current)) {

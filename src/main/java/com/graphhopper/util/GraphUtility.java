@@ -19,12 +19,14 @@ import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.SpatialKeyAlgo;
+import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.Location2IDPreciseIndex;
 import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -124,7 +126,6 @@ public class GraphUtility {
         }
         return true;
     }
-    
 
     public static EdgeIterator until(EdgeIterator edges, int node, int flags) {
         while (edges.next()) {
@@ -191,7 +192,7 @@ public class GraphUtility {
         return str;
     }
 
-    public static Graph shuffle(final Graph g, Directory dir) {
+    public static Graph shuffle(Graph g, Graph sortedGraph) {
         int len = g.getNodes();
         TIntList list = new TIntArrayList(len, -1);
         list.fill(0, len, -1);
@@ -199,14 +200,23 @@ public class GraphUtility {
             list.set(i, i);
         }
         list.shuffle(new Random());
-        return createSortedGraph(g, dir, list);
+        return createSortedGraph(g, sortedGraph, list);
     }
 
-    public static Graph sortDFS(final Graph g, Directory dir) {
+    /**
+     * Sorts the graph according to depth-first search traversal. Other traversals have either no
+     * significant difference (bfs) for querying or are worse (see sort).
+     */
+    public static Graph sortDFS(Graph g, Graph sortedGraph) {
         final TIntList list = new TIntArrayList(g.getNodes(), -1);
         list.fill(0, g.getNodes(), -1);
         new XFirstSearch() {
             int counter = 0;
+
+            @Override
+            protected EdgeIterator getEdges(Graph g, int current) {
+                return g.getEdges(current);
+            }
 
             @Override
             protected boolean goFurther(int nodeId) {
@@ -215,18 +225,21 @@ public class GraphUtility {
                 return super.goFurther(nodeId);
             }
         }.start(g, 0, false);
-        return createSortedGraph(g, dir, list);
+        return createSortedGraph(g, sortedGraph, list);
     }
 
-    // a lot memory is necessary 
-    public static Graph sort(final Graph g, Directory dir, int capacity) {
+    // 
+    /**
+     * Sorts according to the z-curve. Better use sortDFS as a lot memory is necessary.
+     */
+    public static Graph sort(Graph g, Graph sortedGraph, int capacity) {
         // make sure it is a square rootable number -> necessary for spatialkeyalgo
 //        capacity = (int) Math.sqrt(capacity);
 //        capacity *= capacity;
 
         int bits = (int) (Math.log(capacity) / Math.log(2));
         final KeyAlgo algo = new SpatialKeyAlgo(bits);
-        Location2IDPreciseIndex index = new Location2IDPreciseIndex(g, dir) {
+        Location2IDPreciseIndex index = new Location2IDPreciseIndex(g, new RAMDirectory()) {
             @Override protected KeyAlgo createKeyAlgo(int latS, int lonS) {
                 return algo;
             }
@@ -249,11 +262,10 @@ public class GraphUtility {
             }
         }
 
-        return createSortedGraph(g, dir, mappingList);
+        return createSortedGraph(g, sortedGraph, mappingList);
     }
 
-    private static Graph createSortedGraph(final Graph g, Directory dir, final TIntList oldToNewList) {
-        final GraphStorage sortedGraph = new LevelGraphStorage(dir).createNew(g.getNodes());
+    static Graph createSortedGraph(Graph g, Graph sortedGraph, final TIntList oldToNewList) {
         int len = oldToNewList.size();
         // important to avoid creating two edges for edges with both directions
         MyBitSet bitset = new MyBitSetImpl(len);
@@ -267,6 +279,8 @@ public class GraphUtility {
             EdgeIterator eIter = g.getEdges(old);
             while (eIter.next()) {
                 int newEdgeIndex = oldToNewList.get(eIter.node());
+                if (newEdgeIndex < 0)
+                    throw new IllegalStateException("empty entries should be connected to the others");
                 if (bitset.contains(newEdgeIndex))
                     continue;
                 sortedGraph.edge(newIndex, newEdgeIndex, eIter.distance(), eIter.flags());
@@ -275,8 +289,50 @@ public class GraphUtility {
         return sortedGraph;
     }
 
-    public static Graph clone(Graph g) {
-        return g.copyTo(new GraphStorage(new RAMDirectory()).createNew(10));
+    static Directory guessDirectory(GraphStorage store) {
+        String location = store.getDirectory().getLocation();
+        Directory outdir;
+        if (store.getDirectory() instanceof MMapDirectory) {
+            // TODO mmap will overwrite existing storage at the same location!                
+            throw new IllegalStateException("not supported yet");
+            // outdir = new MMapDirectory(location);                
+        } else {
+            boolean isStoring = ((RAMDirectory) store.getDirectory()).isStoring();
+            outdir = new RAMDirectory(location, isStoring);
+        }
+        return outdir;
+    }
+
+    static GraphStorage guessStorage(Graph g, Directory outdir) {
+        GraphStorage store;
+        if (g instanceof LevelGraphStorage)
+            store = new LevelGraphStorage(outdir);
+        else
+            store = new GraphStorage(outdir);
+        return store;
+    }
+
+    /**
+     * Create a new storage from the specified one without copying the data.
+     */
+    public static GraphStorage newStorage(GraphStorage store) {
+        return guessStorage(store, guessDirectory(store)).createNew(store.getNodes());
+    }
+
+    /**
+     * Create a new in-memory storage from the specified one with copying the data.
+     *
+     * @return the new storage
+     */
+    public static Graph clone(Graph graph) {
+        return clone(graph, guessStorage(graph, new RAMDirectory()));
+    }
+
+    /**
+     * @return the graph outGraph
+     */
+    public static Graph clone(Graph g, GraphStorage outGraph) {
+        return g.copyTo(outGraph.createNew(g.getNodes()));
     }
 
     /**
@@ -286,7 +342,7 @@ public class GraphUtility {
     public static Graph copyTo(Graph from, Graph to) {
         int len = from.getNodes();
         // important to avoid creating two edges for edges with both directions        
-        MyBitSet bitset = new MyBitSetImpl(len);        
+        MyBitSet bitset = new MyBitSetImpl(len);
         for (int old = 0; old < len; old++) {
             bitset.add(old);
             to.setNode(old, from.getLatitude(old), from.getLongitude(old));
@@ -306,11 +362,9 @@ public class GraphUtility {
             EdgeIterator iterTo = g.getEdgeProps(edge, endNode);
             return iterTo.node();
         }
-        return endNode;        
+        return endNode;
     }
-        
     public static final EdgeSkipIterator EMPTY = new EdgeSkipIterator() {
-
         @Override public int skippedEdge() {
             throw new UnsupportedOperationException("Not supported yet.");
         }
@@ -353,6 +407,6 @@ public class GraphUtility {
 
         @Override public boolean isEmpty() {
             return true;
-        }    
+        }
     };
 }

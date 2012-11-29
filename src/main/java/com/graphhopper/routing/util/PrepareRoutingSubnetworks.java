@@ -17,7 +17,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
-import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.XFirstSearch;
@@ -81,7 +80,7 @@ public class PrepareRoutingSubnetworks {
                         integ.incrementAndGet();
                     return ret;
                 }
-            }.start(g, start, true);
+            }.start(g, start, false);
             // System.out.println(start + " MAP "+map.size());
             map.put(start, integ.get());
             integ.set(0);
