@@ -50,6 +50,7 @@ public class OSMReaderTest {
     @Test public void testMain() {
         OSMReader reader = preProcess(new OSMReader(dir, 1000));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
+        reader.optimize();
         reader.flush();
         Graph graph = reader.getGraph();
         // all nodes
@@ -82,6 +83,19 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(1, iter.node());
         assertEquals(93146.888, iter.distance(), 1);
+
+        assertEquals(10, graph.getLongitude(reader.getLocation2IDIndex().findID(49, 10)), 1e-3);
+        assertEquals(51.249, graph.getLatitude(reader.getLocation2IDIndex().findID(51.2492152, 9.4317166)), 1e-3);
+    }
+
+    @Test public void testSort() {
+        OSMReader reader = preProcess(new OSMReader(dir, 1000).setSort(true));
+        reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
+        reader.optimize();
+        reader.flush();
+        Graph graph = reader.getGraph();
+        assertEquals(10, graph.getLongitude(reader.getLocation2IDIndex().findID(49, 10)), 1e-3);
+        assertEquals(51.249, graph.getLatitude(reader.getLocation2IDIndex().findID(51.2492152, 9.4317166)), 1e-3);
     }
 
     @Test public void testWithBounds() {

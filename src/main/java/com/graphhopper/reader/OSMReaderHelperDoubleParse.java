@@ -93,7 +93,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     @Override
-    public void freeNodeMap() {
+    public void cleanup() {
         osmIdToIndexMap = null;
     }
 

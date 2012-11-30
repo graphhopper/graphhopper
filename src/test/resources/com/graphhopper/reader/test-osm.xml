@@ -12,20 +12,20 @@
         <tag k="name" v="Dresden" />
     </node>
     
-    <node id="35" lat="15.2" lon="123.431" uid="3212487">
+    <node id="35" lat="45.2" lon="13.431" uid="3212487">
         <tag k="name" v="Unused1" />
     </node>
 
     <node id="40" lat="51.25" lon="9.43" uid="24856">
         <tag k="name" v="Cottbus" />
     </node>
-    <node id="41" lat="51.2" lon="139.43" uid="3214857">
+    <node id="41" lat="51.2" lon="11.43" uid="3214857">
         <tag k="name" v="Unused2" />
     </node>
-    <node id="45" lat="11.2" lon="39.431" uid="32124857">
+    <node id="45" lat="41.2" lon="10.431" uid="32124857">
         <tag k="name" v="Unused3" />
     </node>
-    <node id="50" lat="49" lon="8" uid="24857">
+    <node id="50" lat="49" lon="10" uid="24857">
         <tag k="name" v="Tester" />
     </node>
     

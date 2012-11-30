@@ -93,7 +93,7 @@ public abstract class OSMReaderHelper {
                 + "|" + storage.getVersion();
     }
 
-    public void freeNodeMap() {
+    public void cleanup() {
     }
 
     public void startWayProcessing() {

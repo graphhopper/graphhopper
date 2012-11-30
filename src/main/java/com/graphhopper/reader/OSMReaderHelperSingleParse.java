@@ -77,7 +77,7 @@ public class OSMReaderHelperSingleParse extends OSMReaderHelper {
     }
 
     @Override
-    public void freeNodeMap() {
+    public void cleanup() {
         osmIdToIndexMap = null;
     }
 }

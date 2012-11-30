@@ -171,6 +171,7 @@ public class OSMReader {
             logger.info("start creating graph from " + osmXmlFile);
             osmReader.osm2Graph(osmXmlFile);
         }
+        logger.info("graph " + osmReader.getGraph().toString());
         return osmReader;
     }
 
@@ -182,18 +183,15 @@ public class OSMReader {
         this.graphStorage = storage;
         this.expectedNodes = expectedNodes;
         this.helper = new OSMReaderHelperSingleParse(graphStorage, expectedNodes);
-        this.index = new Location2IDQuadtree(storage, storage.getDirectory());
         logger.info("using " + helper.getStorageInfo(storage) + ", memory:" + Helper.getMemInfo());
-    }
-
-    private int getExpectedNodes() {
-        return helper.getExpectedNodes();
     }
 
     public boolean loadExisting() {
         if (!graphStorage.loadExisting())
             return false;
 
+        // init
+        getLocation2IDIndex();
         // load index afterwards
         if (!index.loadExisting())
             throw new IllegalStateException("couldn't load location index");
@@ -224,19 +222,26 @@ public class OSMReader {
 
     public void optimize() {
         logger.info("optimizing ... (" + Helper.getMemInfo() + ")");
-        prepare.doWork();
+        if (prepare == null) {
+            setDefaultAlgoPrepare(new NoOpAlgorithmPreparation() {
+                @Override public RoutingAlgorithm createAlgo() {
+                    return AbstractRoutingAlgorithm.createAlgoFromString(graph, "astar");
+                }
+            });
+        } else
+            prepare.doWork();
         graphStorage.optimize();
         // move this into the GraphStorage.optimize method?
         if (sortGraph) {
             logger.info("sorting ... (" + Helper.getMemInfo() + ")");
-            GraphStorage newGraph = GraphUtility.newStorage(graphStorage);            
+            GraphStorage newGraph = GraphUtility.newStorage(graphStorage);
             GraphUtility.sortDFS(graphStorage, newGraph);
             graphStorage = newGraph;
         }
     }
 
     public void cleanUp() {
-        helper.freeNodeMap();
+        helper.cleanup();
         int prev = graphStorage.getNodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graphStorage);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
@@ -247,15 +252,12 @@ public class OSMReader {
                 + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
     }
 
-    public void flush() {        
-        logger.info("flushing... (" + Helper.getMemInfo() + ")");
-        graphStorage.flush();        
-        prepareIndex();
-    }
+    public void flush() {
+        logger.info("flushing graph ... (" + Helper.getMemInfo() + ")");
+        graphStorage.flush();
 
-    public void prepareIndex() {
-        logger.info("now initializing and flushin index");
-        index.prepareIndex(indexCapacity);
+        logger.info("now initializing and flushing index");
+        getLocation2IDIndex().prepareIndex(indexCapacity);
         index.flush();
     }
 
@@ -469,6 +471,8 @@ public class OSMReader {
     }
 
     public Location2IDIndex getLocation2IDIndex() {
+        if (index == null)
+            index = new Location2IDQuadtree(graphStorage, graphStorage.getDirectory());
         return index;
     }
 

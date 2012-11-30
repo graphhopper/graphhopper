@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.map.hash.TIntIntHashMap;
 
@@ -839,5 +840,11 @@ public class GraphStorage implements WritableGraph, Storable {
 
     public int getVersion() {
         return nodes.getVersion();
+    }
+
+    @Override public String toString() {
+        return "edges:" + edgeCount + "(" + edges.capacity() / Helper.MB + "), "
+                + "nodes:" + nodeCount + "(" + nodes.capacity() / Helper.MB + ")"
+                + ", bounds:" + bounds;
     }
 }

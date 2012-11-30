@@ -129,7 +129,6 @@ public class Location2IDQuadtree implements Location2IDIndex {
         this.latSize = lat;
         this.lonSize = lon;
         BBox b = g.getBounds();
-        logger.info("bounds:" + b + ", latSize:" + lat + ", lonSize:" + lon + ", calc:" + dist.toString());
         algo = new LinearKeyAlgo(lat, lon).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
         maxNormRasterWidthKm = dist.normalizeDist(Math.max(dist.calcDist(b.minLat, b.minLon, b.minLat, b.maxLon),
                 dist.calcDist(b.minLat, b.minLon, b.maxLat, b.minLon)) / Math.sqrt(getCapacity()));
