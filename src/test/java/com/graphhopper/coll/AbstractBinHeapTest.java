@@ -32,54 +32,54 @@ public abstract class AbstractBinHeapTest {
     @Test
     public void test0() {
         BinHeapWrapper<Integer, Number> binHeap = createHeap(100);
-        binHeap.insert(0, 123);
-        assertEquals(123, binHeap.peekValue().intValue());
+        binHeap.insert(123, 0);
+        assertEquals(123, binHeap.peekKey().intValue());
         assertEquals(1, binHeap.size());
 
-        binHeap.update(0, 12);
-        assertEquals(12, binHeap.peekValue().intValue());
+        binHeap.update(12, 0);
+        assertEquals(12, binHeap.peekKey().intValue());
         assertEquals(1, binHeap.size());
     }
 
     @Test
     public void testBasic() {
         BinHeapWrapper<Integer, Number> binHeap = createHeap(100);
-        binHeap.insert(1, 20);
-        binHeap.insert(2, 123);
-        binHeap.insert(3, 120);
-        binHeap.insert(4, 130);
+        binHeap.insert(20, 1);
+        binHeap.insert(123, 2);
+        binHeap.insert(120, 3);
+        binHeap.insert(130, 4);
 
-        assertEquals(1, (int) binHeap.pollKey());
-        assertEquals(3, (int) binHeap.pollKey());
-        assertEquals(2, (int) binHeap.pollKey());
+        assertEquals(1, (int) binHeap.pollElement());
+        assertEquals(3, (int) binHeap.pollElement());
+        assertEquals(2, (int) binHeap.pollElement());
         assertEquals(1, (int) binHeap.size());
     }
 
     @Test
     public void testClear() {
         BinHeapWrapper<Integer, Number> binHeap = createHeap(100);
-        binHeap.insert(1, 20);
-        binHeap.insert(2, 123);
+        binHeap.insert(20, 1);
+        binHeap.insert(123, 2);
         assertEquals(2, binHeap.size());
         binHeap.clear();
 
         assertEquals(0, binHeap.size());
-        binHeap.insert(2, 123);
+        binHeap.insert(123, 2);
         assertEquals(1, binHeap.size());
-        assertEquals(2, (int) binHeap.pollKey());
+        assertEquals(2, (int) binHeap.pollElement());
     }
 
     @Test
     public void testRekey() {
         BinHeapWrapper<Integer, Number> binHeap = createHeap(100);
-        binHeap.insert(1, 20);
-        binHeap.insert(2, 123);
-        binHeap.update(2, 100);
-        binHeap.insert(3, 120);
-        binHeap.insert(4, 130);
+        binHeap.insert(20, 1);
+        binHeap.insert(123, 2);
+        binHeap.update(100, 2);
+        binHeap.insert(120, 3);
+        binHeap.insert(130, 4);
 
-        assertEquals(1, (int) binHeap.pollKey());
-        assertEquals(2, (int) binHeap.pollKey());
+        assertEquals(1, (int) binHeap.pollElement());
+        assertEquals(2, (int) binHeap.pollElement());
         assertEquals(2, binHeap.size());
     }
 
@@ -92,14 +92,14 @@ public abstract class AbstractBinHeapTest {
         int N = 1000;
         for (int i = 0; i < N; i++) {
             int val = rand.nextInt();
-            binHeap.insert(i, val);
+            binHeap.insert(val, i);
             juQueue.add(new Edge(-1, i, val));
         }
 
         assertEquals(juQueue.size(), binHeap.size());
 
         for (int i = 0; i < N; i++) {
-            assertEquals(juQueue.poll().endNode, binHeap.pollKey(), 1e-5);
+            assertEquals(juQueue.poll().endNode, binHeap.pollElement(), 1e-5);
         }
 
         assertEquals(binHeap.size(), 0);

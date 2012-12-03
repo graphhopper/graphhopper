@@ -15,28 +15,24 @@
  */
 package com.graphhopper.coll;
 
+import gnu.trove.list.array.TIntArrayList;
+
 /**
  * @author Peter Karich
  */
-public interface BinHeapWrapper<K, V> {
+public class MyIntArrayList extends TIntArrayList {
 
-    void update(V value, K key);
+    public MyIntArrayList() {
+        super();
+    }
 
-    void insert(V value, K key);
+    public MyIntArrayList(int capacity) {
+        super(capacity);
+    }
 
-    boolean isEmpty();
-    
-    int size();
-
-    K peekElement();
-
-    V peekKey();
-
-    K pollElement();
-
-    // not necessary? V pollValue();
-
-    void clear();
-    
-    void ensureCapacity(int size);
+    public void trimTo(int toSize) {
+        // TODO should we also shrink if applicable?
+        ensureCapacity(toSize);
+        _pos = toSize;
+    }
 }

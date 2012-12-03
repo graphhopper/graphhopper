@@ -331,11 +331,14 @@ public class SparseLongLongArray {
         return pos;
     }
 
+    /**
+     * Warning: returns ~index and not -(index+1) like trove and jdk do
+     */
     public int binarySearch(long key) {
         return binarySearch(mKeys, 0, mSize, key);
     }
 
-    public static int binarySearch(long[] a, int start, int len, long key) {
+    static int binarySearch(long[] a, int start, int len, long key) {
         int high = start + len, low = start - 1, guess;
         while (high - low > 1) {
             guess = (high + low) / 2;

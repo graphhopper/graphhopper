@@ -19,7 +19,7 @@ import com.graphhopper.util.Helper;
 
 /**
  * Copied from Android project. android.util.SparseArray.java
- * 
+ *
  * SparseArrays map integers to Objects. Unlike a normal array of Objects, there can be gaps in the
  * indices. It is intended to be more efficient than using a HashMap to map Integers to Objects.
  */
@@ -283,11 +283,14 @@ public class SparseArray<E> implements Cloneable {
      * Removes all key-value mappings from this SparseArray.
      */
     public void clear() {
-        int n = mSize;
-        Object[] values = mValues;
+        trimTo(0);
+    }
 
-        for (int i = 0; i < n; i++) {
-            values[i] = null;
+    public void trimTo(int size) {
+        // let the gc do its work
+        int max = Math.min(mSize, size);
+        for (int i = max; i < mSize; i++) {
+            mValues[i] = null;
         }
 
         mSize = 0;
@@ -328,9 +331,9 @@ public class SparseArray<E> implements Cloneable {
         mSize = pos + 1;
     }
 
+    // Warning: returns ~index and not -(index+1) like trove and jdk do
     private static int binarySearch(int[] a, int start, int len, int key) {
         int high = start + len, low = start - 1, guess;
-
         while (high - low > 1) {
             guess = (high + low) / 2;
 

@@ -155,14 +155,14 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
             if (newRef < 0) {
                 newRef = wrapper.add(neighborNode, tmpWeight, iter.edge());
                 wrapper.putParent(newRef, currRef);
-                prioQueue.insert_(newRef, tmpWeight);
+                prioQueue.insert_(tmpWeight, newRef);
             } else {
                 double weight = wrapper.getWeight(newRef);
                 if (weight > tmpWeight) {
                     wrapper.putEdgeId(newRef, iter.edge());
                     wrapper.putWeight(newRef, tmpWeight);
                     wrapper.putParent(newRef, currRef);
-                    prioQueue.update_(newRef, tmpWeight);
+                    prioQueue.update_(tmpWeight, newRef);
                 }
             }
 

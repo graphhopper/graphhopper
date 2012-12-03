@@ -408,6 +408,7 @@ public class Helper {
             return file;
         return file.substring(0, index);
     }
+    
     /**
      * The file version is independent of the real world version. E.g. to make major version jumps
      * without the need to change the file version.
