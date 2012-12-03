@@ -17,7 +17,7 @@ import java.util.Arrays;
 /**
  * Taken from opentripplanner.
  */
-public class IntIntBinHeap implements BinHeapWrapper<Integer, Number> {
+public class IntIntBinHeap implements BinHeapWrapper<Number, Integer> {
 
     private static final double GROW_FACTOR = 2.0;
     private int[] keys;

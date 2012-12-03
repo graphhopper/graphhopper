@@ -15,7 +15,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.storage.EdgeEntry;

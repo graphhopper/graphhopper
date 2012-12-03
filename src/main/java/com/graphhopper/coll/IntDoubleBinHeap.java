@@ -17,7 +17,7 @@ import java.util.Arrays;
 /**
  * Taken from opentripplanner.
  */
-public class IntDoubleBinHeap implements BinHeapWrapper<Integer, Number> {
+public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
 
     private static final double GROW_FACTOR = 2.0;
     private float[] keys;
@@ -73,6 +73,34 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Integer, Number> {
             return elem[1];
         else
             throw new IllegalStateException("An empty queue does not have a minimum value.");
+    }
+
+    @Override
+    public Integer pollElement() {
+        return poll_element();
+    }
+
+    public int poll_element() {
+        int i, child;
+        int minElem = elem[1];
+        int lastElem = elem[size];
+        double lastPrio = keys[size];
+        if (size <= 0)
+            throw new IllegalStateException("An empty queue does not have a minimum value.");
+        size -= 1;
+        for (i = 1; i * 2 <= size; i = child) {
+            child = i * 2;
+            if (child != size && keys[child + 1] < keys[child])
+                child++;
+            if (lastPrio > keys[child]) {
+                elem[i] = elem[child];
+                keys[i] = keys[child];
+            } else
+                break;
+        }
+        elem[i] = lastElem;
+        keys[i] = (float) lastPrio;
+        return minElem;
     }
 
     @Override
@@ -137,34 +165,6 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Integer, Number> {
     }
 
     @Override
-    public Integer pollElement() {
-        return poll_key();
-    }
-
-    public int poll_key() {
-        int i, child;
-        int minElem = elem[1];
-        int lastElem = elem[size];
-        double lastPrio = keys[size];
-        if (size <= 0)
-            throw new IllegalStateException("An empty queue does not have a minimum value.");
-        size -= 1;
-        for (i = 1; i * 2 <= size; i = child) {
-            child = i * 2;
-            if (child != size && keys[child + 1] < keys[child])
-                child++;
-            if (lastPrio > keys[child]) {
-                elem[i] = elem[child];
-                keys[i] = keys[child];
-            } else
-                break;
-        }
-        elem[i] = lastElem;
-        keys[i] = (float) lastPrio;
-        return minElem;
-    }
-
-    @Override
     public void ensureCapacity(int capacity) {
         // System.out.println("Growing queue to " + capacity);
         if (capacity < size)
@@ -174,12 +174,54 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Integer, Number> {
         elem = Arrays.copyOf(elem, capacity + 1);
     }
 
-    @Override
-    public void clear() {
-        this.size = 0;
+    public int getCapacity() {
+        return capacity;
+    }
+
+    float getKey(int index) {
+        return keys[index];
+    }
+
+    int getElement(int index) {
+        return elem[index];
+    }
+
+    void set(int index, float key, int element) {
+        keys[index] = key;
+        elem[index] = element;
+    }
+
+    void trimTo(int toSize) {
+        this.size = toSize;
 
         // necessary?
-        Arrays.fill(keys, 0f);
-        Arrays.fill(elem, 0);
+        Arrays.fill(keys, toSize, size, 0f);
+        Arrays.fill(elem, toSize, size, 0);
+    }
+
+    @Override
+    public void clear() {
+        trimTo(0);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i <= size; i++) {
+            if (i > 1)
+                sb.append(", ");
+            sb.append(keys[i]).append(":").append(elem[i]);
+        }
+        return sb.toString();
+    }
+    
+    public String toKeyString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i <= size; i++) {
+            if (i > 1)
+                sb.append(", ");
+            sb.append(keys[i]);
+        }
+        return sb.toString();
     }
 }

@@ -191,7 +191,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         if (openSetFrom.isEmpty())
             return false;
 
-        currFromRef = openSetFrom.poll_key();
+        currFromRef = openSetFrom.poll_element();
         currFrom = wrapperFrom.getNode(currFromRef);
         currFromWeight = wrapperFrom.getWeight(currFromRef);
         if (checkFinishCondition())
@@ -206,7 +206,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         if (openSetTo.isEmpty())
             return false;
 
-        currToRef = openSetTo.poll_key();
+        currToRef = openSetTo.poll_element();
         currTo = wrapperTo.getNode(currToRef);
         currToWeight = wrapperTo.getWeight(currToRef);
         if (checkFinishCondition())
