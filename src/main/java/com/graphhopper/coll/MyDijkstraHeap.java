@@ -16,6 +16,8 @@
 package com.graphhopper.coll;
 
 /**
+ * TODO do not use if you need the update method which is broken!
+ *
  * Several papers regarding queues are interesting:
  *
  * "Priority Queues and Dijkstra’s Algorithm" http://www.cs.utexas.edu/~shaikat/papers/TR-07-54.pdf
@@ -48,40 +50,59 @@ public class MyDijkstraHeap implements BinHeapWrapper<Number, Integer> {
     }
 
     public MyDijkstraHeap(int cap) {
-        if (cap < 100)
-            cap = 100;
-        smallHeap = new IntDoubleBinHeap(smallCapacity = cap / 16);
-        midHeap = new IntDoubleBinHeap(midCapacity = cap / 4);
-        largeHeap = new IntDoubleBinHeap(cap);
+        this(cap < 100 ? 6 : cap / 16, cap < 100 ? 25 : cap / 4, cap < 100 ? 100 : cap);
+    }
+
+    public MyDijkstraHeap(int smallCap, int midCap, int largeCap) {
+        smallCapacity = smallCap;
+        midCapacity = midCap;
+        smallHeap = new IntDoubleBinHeap(smallCapacity);
+        midHeap = new IntDoubleBinHeap(midCapacity);
+        largeHeap = new IntDoubleBinHeap(largeCap);
     }
 
     @Override
     public void update(Number key, Integer element) {
-        update_(key.doubleValue(), element);
+        // SLOW but we do not have old key!
+        if (smallHeap.update_(key.intValue(), element))
+            return;
+
+        if (midHeap.update_(key.intValue(), element))
+            return;
+
+        if (!largeHeap.update_(key.intValue(), element))
+            throw new IllegalStateException("cannot update key:" + key + ", element:" + element);
+
+        throw new RuntimeException("update is problematic -> see todo test!");
     }
 
-    public void update_(double key, int element) {
-        if (key >= midMin) {
-            if (key >= largeMin) {
-                largeHeap.update_(key, element);
+    public void update_(double oldKey, double key, int element) {
+        // TODO problematic -> see todo test!
+        if (oldKey >= midMin) {
+            if (oldKey >= largeMin) {
+                if (!largeHeap.update_(key, element))
+                    throw new IllegalStateException("cannot update large key:" + key + " (" + oldKey + "), element:"
+                            + element + ", midMin:" + midMin + ", largeMin:" + largeMin);
             } else {
-                midHeap.update_(key, element);
+                if (!midHeap.update_(key, element))
+                    throw new IllegalStateException("cannot update mid key:" + key + " (" + oldKey + "), element:"
+                            + element + ", midMin:" + midMin);
             }
         } else {
-            smallHeap.update_(key, element);
+            if (!smallHeap.update_(key, element))
+                throw new IllegalStateException("cannot update small key:" + key + " (" + oldKey + "), element:"
+                        + element + ", midMin:" + midMin);
         }
+
+        throw new RuntimeException("update is problematic -> see todo test!");
     }
 
     @Override
     public void insert(Number key, Integer element) {
         insert_(key.doubleValue(), element);
     }
-//    int tmp = 0;
 
     public void insert_(double key, int element) {
-//        tmp++;
-//        if (tmp % 10000 == 0)
-//            System.out.println(tmp + " " + stats());
         // 1. find out the correct heap
         if (key >= midMin) {
             if (key >= largeMin) {
@@ -158,7 +179,7 @@ public class MyDijkstraHeap implements BinHeapWrapper<Number, Integer> {
     @Override
     public void ensureCapacity(int size) {
         size = size - (smallHeap.getCapacity() + midHeap.getCapacity());
-        if (size < 0)
+        if (size <= 0)
             return;
         largeHeap.ensureCapacity(size);
     }
@@ -240,13 +261,12 @@ public class MyDijkstraHeap implements BinHeapWrapper<Number, Integer> {
             newFrom.insert_(key, el);
         }
 
-        // ... and the remaining one into the 'to' heap
+        // ... and the remaining larger ones into the 'to' heap
         while (!from.isEmpty()) {
             double key = from.peek_key();
             int el = from.poll_element();
             to.insert_(key, el);
         }
-
         return newFrom;
     }
 
@@ -256,5 +276,21 @@ public class MyDijkstraHeap implements BinHeapWrapper<Number, Integer> {
                 + ", midSize: " + midHeap.size() + "(" + midHeap.getCapacity() + ")"
                 + ", largeSize: " + largeHeap.size() + "(" + largeHeap.getCapacity() + ")"
                 + ", overflows:" + overflows + ", underflows:" + underflows;
+    }
+
+    public String containsValue(int value) {
+        int index = smallHeap.indexOfValue(value);
+        if (index > 0)
+            return "sma " + index + " " + smallHeap.getKey(index);
+
+        index = midHeap.indexOfValue(value);
+        if (index > 0)
+            return "mid " + index + " " + midHeap.getKey(index);
+
+        index = largeHeap.indexOfValue(value);
+        if (index > 0)
+            return "lar " + index + " " + largeHeap.getKey(index);
+
+        return "null";
     }
 }

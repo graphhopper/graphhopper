@@ -108,7 +108,7 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
         update_(key.doubleValue(), element);
     }
 
-    public void update_(double key, int element) {
+    public boolean update_(double key, int element) {
         // Perform "inefficient" but straightforward linear search 
         // for an element then change its key by sifting up or down
         int i;
@@ -117,7 +117,7 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
                 break;
         }
         if (i > size)
-            return;
+            return false;
 
         if (key > keys[i]) {
             // sift up (as in extract)
@@ -144,6 +144,7 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
             elem[i] = element;
             keys[i] = (float) key;
         }
+        return true;
     }
 
     @Override
@@ -193,10 +194,10 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
 
     void trimTo(int toSize) {
         this.size = toSize;
-
+        toSize++;
         // necessary?
-        Arrays.fill(keys, toSize, size, 0f);
-        Arrays.fill(elem, toSize, size, 0);
+        Arrays.fill(keys, toSize, size + 1, 0f);
+        Arrays.fill(elem, toSize, size + 1, 0);
     }
 
     @Override
@@ -214,7 +215,7 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
         }
         return sb.toString();
     }
-    
+
     public String toKeyString() {
         StringBuilder sb = new StringBuilder();
         for (int i = 1; i <= size; i++) {
@@ -223,5 +224,13 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
             sb.append(keys[i]);
         }
         return sb.toString();
+    }
+
+    public int indexOfValue(int value) {
+        for (int i = 0; i <= size; i++) {
+            if (elem[i] == value)
+                return i;
+        }
+        return -1;
     }
 }

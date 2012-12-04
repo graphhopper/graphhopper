@@ -19,6 +19,7 @@ import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
@@ -69,13 +70,13 @@ public class MiniGraphUI {
     public MiniGraphUI(OSMReader reader, boolean debug) {
         this.graph = reader.getGraph();
         AlgorithmPreparation prepare = reader.getPreparation();
-        logger.info("locations:" + graph.getNodes() + ", debug:" + debug);
+        this.algo = prepare.createAlgo();
+        logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algo:" + algo.getClass().getSimpleName());
         mg = new MyGraphics(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
-        this.index = reader.getLocation2IDIndex();
-        this.algo = prepare.createAlgo();
+        this.index = reader.getLocation2IDIndex();        
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
 //        this.algo = new DebugAStar(graph, mg);
@@ -142,23 +143,16 @@ public class MiniGraphUI {
                         mg.plotEdge(g2, lat, lon, lat2, lon2);
                     }
                 }
-
-//                g2.setColor(Color.BLUE);
-//                RoutingAlgorithm algo = prepare.createAlgo();
-//                Path p1 = calcPath(algo);
-//                plotPath(p1, g2, 15);
-//                System.out.println(p1.toNodeList());
-//                java.util.List<Integer> list = p1.toNodeList();
-//                LevelGraph lg = (LevelGraph) graph;
-//                for (int i = 0; i < list.size(); i++) {
-//                    System.out.println(list.get(i) + ":" + lg.getLevel(list.get(i))
-//                            + " " + GraphUtility.getNodeInfo(lg, list.get(i)));
-//                }
-                g2.setColor(Color.GREEN);
-                DijkstraBidirectionRef dbi = new DijkstraBidirectionRef(graph);
-                // dbi.setGraphics2D(g2);
-                Path p2 = calcPath(dbi);
-                plotPath(p2, g2, 5);
+                
+//                g2.setColor(Color.red);
+//                DijkstraSimple dijkstra = new DijkstraSimple(graph);
+//                Path p1 = calcPath(dijkstra);
+//                plotPath(p1, g2, 5);
+//                
+//                g2.setColor(Color.blue);
+//                DijkstraBidirectionRef dbi = new DijkstraBidirectionRef(graph);
+//                Path p2 = calcPath(dbi);
+//                plotPath(p2, g2, 5);
 
 //                if (quadTreeNodes != null) {
 //                    logger.info("found neighbors:" + quadTreeNodes.size());
@@ -220,11 +214,11 @@ public class MiniGraphUI {
 
     // for debugging
     private Path calcPath(RoutingAlgorithm algo) {
-        int from = index.findID(42.56819, 1.603231);
-        int to = index.findID(42.571034, 1.520662);
-        System.out.println("path " + from + "->" + to);
+//        int from = index.findID(43.72915, 7.410572);
+//        int to = index.findID(43.739213, 7.427806);
+//        System.out.println("path " + from + "->" + to);
 //        return algo.calcPath(from, to);
-        return algo.calcPath(from, to);
+        return algo.calcPath(1510, 368);
     }
 
     private Path plotPath(Path tmpPath, Graphics2D g2, int w) {
