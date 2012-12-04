@@ -37,12 +37,12 @@ TMP=$(basename "$FILE")
 TMP="${TMP%.*}"
 #echo $TMP - $FILE - $NAME
 if [ "$TMP" = "unterfranken" ]; then
- LINK="http://download.geofabrik.de/osm/europe/germany/bayern/unterfranken.osm.bz2"
+ LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
  JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx2000m -Xms2000m"
  JAVA_OPTS=$JAVA_OPTS_IMPORT
  SIZE=3000000
 elif [ "$TMP" = "germany" ]; then
- LINK=http://download.geofabrik.de/osm/europe/germany.osm.bz2
+ LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
 
  # For import we need a lot more memory. For the mmap storage you need to lower this in order to use off-heap memory.
  JAVA_OPTS_IMPORT="-XX:PermSize=10m -XX:MaxPermSize=10m -Xmx2200m -Xms2200m"
@@ -68,7 +68,9 @@ if [ ! -f "$OSM" ]; then
   BZ=$OSM.bz2
   rm $BZ
   echo "## now downloading OSM file from $LINK"
-  wget -O $BZ $LINK
+  # wget is not available on all platforms
+  # wget -O $BZ $LINK
+  curl -O $LINK
   echo "## extracting $BZ"
   bzip2 -d $BZ
 else
