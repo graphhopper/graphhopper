@@ -11,8 +11,9 @@ FILE=$1
 ALGO=$2
 CLASS=$3
 
-if [ "x$CLASS" = "x" ]; then
-# CLASS=com.graphhopper.ui.MiniGraphUI
+if [ "x$ALGO" = "xui" ]; then
+ CLASS=com.graphhopper.ui.MiniGraphUI
+else
  CLASS=com.graphhopper.reader.OSMReader
 fi
 
@@ -63,16 +64,27 @@ if [ ! -f "config.properties" ]; then
 fi
 
 if [ ! -f "$OSM" ]; then
-  echo "No OSM file found or specified. Grabbing it from internet. Press CTRL+C if you do not have enough disc space or you don't want to download several MB"
+  echo "No OSM file found or specified. Press ENTER to grab one from internet."
+  echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
   read -e  
   BZ=$OSM.bz2
-  rm $BZ
+  rm $BZ &> /dev/null
   echo "## now downloading OSM file from $LINK"
-  # wget is not available on all platforms
-  # wget -O $BZ $LINK
-  curl -O $LINK
+
+  # curl or wget
+  DOWNLOADER=`which curl` 
+  if [ "x$DOWNLOADER" = "x" ]; then    
+    wget -O $BZ $LINK
+  else
+    curl -O $LINK
+  fi    
   echo "## extracting $BZ"
   bzip2 -d $BZ
+
+  if [ ! -f "$OSM" ]; then
+    echo "ERROR couldn't download or extract OSM file $OSM ... exiting"
+    exit
+  fi
 else
   echo "## using existing osm file $OSM"
 fi
@@ -90,18 +102,5 @@ else
   echo "## existing jar found $JAR"
 fi
 
-if [ ! -d "$GRAPH" ]; then
-  echo "## now creating graph $GRAPH (folder) from $OSM (file),  JAVA_OPTS=$JAVA_OPTS_IMPORT"
-  echo "## HINT: put the osm on an external device to speed up import time"
-  $JAVA $JAVA_OPTS_IMPORT -cp $JAR com.graphhopper.reader.OSMReader config=config.properties osmreader.graph-location=$GRAPH osmreader.osm=$OSM osmreader.size=$SIZE
-else
-  echo "## using existing graph at $GRAPH"
-fi
-
-# run shortest path performance analysis OR MiniGraphUI
-if [ -d "$GRAPH" ]; then
-  echo "## now running $CLASS. java opts=$JAVA_OPTS"
-  $JAVA $JAVA_OPTS -cp $JAR $CLASS config=config.properties osmreader.graph-location=$GRAPH osmreader.algo=$ALGO
-else
-  echo "## creating graph failed"
-fi
+echo "## now running $CLASS. JAVA_OPTS=$JAVA_OPTS"
+$JAVA $JAVA_OPTS -cp $JAR $CLASS config=config.properties osmreader.graph-location=$GRAPH osmreader.osm=$OSM osmreader.size=$SIZE osmreader.algo=$ALGO

@@ -29,20 +29,18 @@ import org.slf4j.LoggerFactory;
 public class MyGraphics {
 
     private Graph g;
-    private double scaleX = 0.001f;
-    private double scaleY = 0.001f;
-    // initial position to center unterfranken
-    // 49.50381,9.953613 -> south unterfranken
-    private double offsetX = -9f;
-    private double offsetY = -39.7f;
+    private double scaleX;
+    private double scaleY;
+    private double offsetX;
+    private double offsetY;
     private BBox bounds = new BBox(-180, 180, -90, 90);
 
     public MyGraphics(Graph g) {
         this.g = g;
         BBox b = g.getBounds();
-        // TODO improve
-        offsetY = -(b.maxLat + b.minLat) / 2 - 3;
-        offsetX = -(b.maxLon + b.minLon) / 2;
+        scaleX = scaleY = 0.002 * (b.maxLat - b.minLat);
+        offsetY = b.maxLat - 90;
+        offsetX = -b.minLon;
     }
 
     public double getOffsetX() {
