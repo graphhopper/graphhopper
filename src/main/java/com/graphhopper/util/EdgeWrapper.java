@@ -111,6 +111,7 @@ public class EdgeWrapper {
     }
 
     public void clear() {
+        refCounter = 0;
         Arrays.fill(weights, 0);
         Arrays.fill(nodes, 0);
         Arrays.fill(parents, 0);

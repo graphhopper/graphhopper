@@ -75,7 +75,7 @@ public class OSMReader {
         if (args.getBool("osmreader.test", false)) {
             tests.start();
         }
-
+        
         if (args.getBool("osmreader.runshortestpath", false)) {
             RoutingAlgorithm algo = AbstractRoutingAlgorithm.createAlgoFromString(g, args.get("osmreader.algo", "dijkstra"));
             int iters = args.getInt("osmreader.algoIterations", 50);

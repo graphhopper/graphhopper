@@ -39,7 +39,7 @@ TMP="${TMP%.*}"
 #echo $TMP - $FILE - $NAME
 if [ "$TMP" = "unterfranken" ]; then
  LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx2000m -Xms2000m"
+ JAVA_OPTS_IMPORT="-XX:PermSize=20m -XX:MaxPermSize=20m -Xmx500m -Xms500m"
  JAVA_OPTS=$JAVA_OPTS_IMPORT
  SIZE=3000000
 elif [ "$TMP" = "germany" ]; then
@@ -102,5 +102,5 @@ else
   echo "## existing jar found $JAR"
 fi
 
-echo "## now running $CLASS. JAVA_OPTS=$JAVA_OPTS"
+echo "## now running $CLASS. algo=$ALGO. JAVA_OPTS=$JAVA_OPTS"
 $JAVA $JAVA_OPTS -cp $JAR $CLASS config=config.properties osmreader.graph-location=$GRAPH osmreader.osm=$OSM osmreader.size=$SIZE osmreader.algo=$ALGO
