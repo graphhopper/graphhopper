@@ -82,7 +82,7 @@ public class MyDijkstraHeap2 implements BinHeapWrapper<Number, Integer> {
             // update
             putSorted(key.doubleValue(), element);
         }
-        throw new RuntimeException("update is problematic -> see todo in MyDijkstraHeapTest!");
+        // TODO throw new RuntimeException("update is problematic -> see todo in MyDijkstraHeapTest!");
     }
 
     public void update_(double oldKey, double key, int element) {
@@ -97,7 +97,7 @@ public class MyDijkstraHeap2 implements BinHeapWrapper<Number, Integer> {
             removeSorted(oldKey, element);
             putSorted(key, element);
         }
-        throw new RuntimeException("update is problematic -> see todo test!");
+        // TODO throw new RuntimeException("update is problematic -> see todo test!");
     }
 
     @Override

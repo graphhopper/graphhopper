@@ -17,32 +17,62 @@ package com.graphhopper.storage;
 
 /**
  * Abstraction of the underlying datastructure. Current implementations are RAM and memory mapped
- * kind. After construction and before usage you'll have to call alloc or a successfully
- * loadExisting
+ * kind. After construction and before usage you'll have to call createNew or a successfully
+ * Storable.loadExisting
  *
  * @author Peter Karich
  */
 public interface DataAccess extends Storable {
 
+    /**
+     * Set 4 bytes at position 'index' to the specified value
+     */
     void setInt(long index, int value);
 
+    /**
+     * Get 4 bytes from position 'index'
+     */
     int getInt(long index);
 
+    /**
+     * Set 4 bytes at the header space index to the specified value
+     */
     void setHeader(int index, int value);
 
+    /**
+     * Get 4 bytes from the header at 'index'
+     */
     int getHeader(int index);
 
+    /**
+     * The first time you use DataAccess you need to call this in order to allocate space for this
+     * DataAccess object. After that use ensureCapacity
+     */
     void createNew(long bytes);
 
+    /**
+     * Ensures the specified capacity. The first time call createNew.
+     */
     void ensureCapacity(long bytes);
-    
-    void trimTo(long capacity);
 
+    /**
+     * Reduces the allocate space to the specified bytes. Warning: it'll free the space even if it
+     * is in use!
+     */
+    void trimTo(long bytes);
+
+    /**
+     * Copies the content from this object into the specified one.
+     */
     DataAccess copyTo(DataAccess da);
 
+    /**
+     * In order to increase allocated space one needs to layout the underlying storage in segments.
+     * This is how you can customize the size.
+     */
     DataAccess setSegmentSize(int bytes);
-    
+
     int getSegments();
-    
+
     int getVersion();
 }

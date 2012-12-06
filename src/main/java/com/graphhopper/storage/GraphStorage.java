@@ -17,6 +17,8 @@ package com.graphhopper.storage;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
+import com.graphhopper.coll.SparseArray;
+import com.graphhopper.coll.SparseLongLongArray;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeWriteIterator;
@@ -52,8 +54,9 @@ public class GraphStorage implements WritableGraph, Storable {
     protected DataAccess nodes;
     protected int nodeCount;
     private BBox bounds;
-    // delete marker is not persistent!
+    // delete markers are not yet persistent!
     private MyBitSet deletedNodes;
+    private MyBitSet deletedEdges;
     private int edgeEntryIndex = -1, nodeEntryIndex = -1;
 
     public GraphStorage(Directory dir) {
@@ -181,6 +184,8 @@ public class GraphStorage implements WritableGraph, Storable {
 
         long cap = Math.max(10, Math.round(tmp * INC_FACTOR));
         edges.ensureCapacity(cap * 4);
+        if (deletedEdges != null)
+            getDeletedEdges().ensureCapacity((int) (edgeCount * INC_FACTOR));
     }
 
     @Override
@@ -565,6 +570,10 @@ public class GraphStorage implements WritableGraph, Storable {
             clonedG.deletedNodes = null;
         else
             clonedG.deletedNodes = deletedNodes.copyTo(new MyBitSetImpl());
+        if (deletedEdges == null)
+            clonedG.deletedEdges = null;
+        else
+            clonedG.deletedEdges = deletedEdges.copyTo(new MyBitSetImpl());
         return clonedG;
     }
 
@@ -591,14 +600,30 @@ public class GraphStorage implements WritableGraph, Storable {
         return deletedNodes;
     }
 
+    private MyBitSet getDeletedEdges() {
+        if (deletedEdges == null)
+            deletedEdges = new MyBitSetImpl((int) (edges.capacity() / 4));
+        return deletedEdges;
+    }
+
     @Override
     public void markNodeDeleted(int index) {
         getDeletedNodes().add(index);
     }
 
     @Override
-    public boolean isDeleted(int index) {
+    public boolean isNodeDeleted(int index) {
         return getDeletedNodes().contains(index);
+    }
+
+    @Override
+    public void markEdgeDeleted(int index) {
+        getDeletedEdges().add(index);
+    }
+
+    @Override
+    public boolean isEdgeDeleted(int index) {
+        return getDeletedEdges().contains(index);
     }
 
     /**
@@ -654,16 +679,12 @@ public class GraphStorage implements WritableGraph, Storable {
      * for only a few deletes but probably not for many deletes.
      */
     void inPlaceDelete(int deleted) {
-        // Alternative to this method: use canBeOverwritten segments for nodes and not one big fat java array?
-        //
         // Prepare edge-update of nodes which are connected to deleted nodes        
         int toMoveNode = getNodes();
         int itemsToMove = 0;
-        int maxMoves = Math.min(deleted, Math.max(0, toMoveNode - deleted));
-        int newIndices[] = new int[maxMoves];
-        int oldIndices[] = new int[maxMoves];
 
-        final TIntIntHashMap oldToNewIndexMap = new TIntIntHashMap(deleted, 1.5f, -1, -1);
+        // sorted map when we access it via keyAt and valueAt - see below!
+        final SparseLongLongArray oldToNewMap = new SparseLongLongArray(deleted);
         MyBitSetImpl toUpdatedSet = new MyBitSetImpl(deleted * 3);
         for (int delNode = deletedNodes.next(0); delNode >= 0; delNode = deletedNodes.next(delNode + 1)) {
             EdgeIterator delEdgesIter = getEdges(delNode);
@@ -683,11 +704,8 @@ public class GraphStorage implements WritableGraph, Storable {
 
             if (toMoveNode < delNode)
                 break;
-
-            // create sorted old- to new-index map
-            newIndices[itemsToMove] = delNode;
-            oldIndices[itemsToMove] = toMoveNode;
-            oldToNewIndexMap.put(toMoveNode, delNode);
+            
+            oldToNewMap.put(toMoveNode, delNode);
             itemsToMove++;
         }
 
@@ -708,7 +726,7 @@ public class GraphStorage implements WritableGraph, Storable {
 
         // marks connected nodes to rewrite the edges
         for (int i = 0; i < itemsToMove; i++) {
-            int oldI = oldIndices[i];
+            int oldI = (int) oldToNewMap.keyAt(i);
             EdgeIterator movedEdgeIter = getEdges(oldI);
             while (movedEdgeIter.next()) {
                 if (deletedNodes.contains(movedEdgeIter.node()))
@@ -720,8 +738,8 @@ public class GraphStorage implements WritableGraph, Storable {
 
         // move nodes into deleted nodes
         for (int i = 0; i < itemsToMove; i++) {
-            int oldI = oldIndices[i];
-            int newI = newIndices[i];
+            int oldI = (int) oldToNewMap.keyAt(i);
+            int newI = (int) oldToNewMap.valueAt(i);
             for (int j = 0; j < nodeEntrySize; j++) {
                 nodes.setInt((long) newI * nodeEntrySize + j, nodes.getInt((long) oldI * nodeEntrySize + j));
             }
@@ -740,11 +758,11 @@ public class GraphStorage implements WritableGraph, Storable {
 
             // now overwrite exiting edge with new node ids 
             // also flags and links could have changed due to different node order
-            int updatedA = oldToNewIndexMap.get(nodeA);
+            int updatedA = (int) oldToNewMap.get(nodeA);
             if (updatedA < 0)
                 updatedA = nodeA;
 
-            int updatedB = oldToNewIndexMap.get(nodeB);
+            int updatedB = (int) oldToNewMap.get(nodeB);
             if (updatedB < 0)
                 updatedB = nodeB;
 
@@ -774,7 +792,9 @@ public class GraphStorage implements WritableGraph, Storable {
     void trimToSize() {
         long nodeCap = (long) nodeCount * 4 * nodeEntrySize;
         nodes.trimTo(nodeCap);
-        // TODO delete empty edges too
+
+//        long edgeCap = (long) edgeCount * 4 * edgeEntrySize;
+//        edges.trimTo(edgeCap);
     }
 
     @Override
@@ -783,11 +803,11 @@ public class GraphStorage implements WritableGraph, Storable {
             if (!nodes.loadExisting())
                 throw new IllegalStateException("corrupt file?");
             if (nodes.getVersion() != edges.getVersion())
-                throw new IllegalStateException("nodes and edge file have different versions!?");
+                throw new IllegalStateException("nodes and edges files have different versions!?");
             // nodes
             int hash = nodes.getHeader(0);
             if (hash != getClass().getName().hashCode())
-                throw new IllegalStateException("The graph file wasn't create via "
+                throw new IllegalStateException("Cannot load the graph - it wasn't create via "
                         + getClass().getName() + "! Location:" + dir);
 
             nodeEntrySize = nodes.getHeader(1);
@@ -807,8 +827,6 @@ public class GraphStorage implements WritableGraph, Storable {
 
     @Override
     public void flush() {
-        optimize();
-
         // nodes
         nodes.setHeader(0, getClass().getName().hashCode());
         nodes.setHeader(1, nodeEntrySize);
@@ -828,6 +846,7 @@ public class GraphStorage implements WritableGraph, Storable {
 
     @Override
     public void close() {
+        // TODO let the user decide if flush on close?
         flush();
         edges.close();
         nodes.close();

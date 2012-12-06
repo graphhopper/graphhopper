@@ -241,16 +241,14 @@ public abstract class AbstractGraphTester {
         assertEquals(1, count(g.getIncoming(2)));
     }
 
-    @Test
-    public void testCheckFirstNode() {
+    @Test public void testCheckFirstNode() {
         Graph g = createGraph(2);
         assertEquals(0, count(g.getEdges(1)));
         g.edge(0, 1, 12, true);
         assertEquals(1, count(g.getEdges(1)));
     }
 
-    @Test
-    public void testDeleteNodeForUnidir() {
+    @Test public void testDeleteNodeForUnidir() {
         Graph g = createGraph(11);
         g.setNode(10, 10, 1);
         g.setNode(6, 6, 1);
@@ -279,8 +277,7 @@ public abstract class AbstractGraphTester {
         assertEquals(0, GraphUtility.count(g.getIncoming(getIdOf(g, 21))));
     }
 
-    @Test
-    public void testComplexDeleteNode() {
+    @Test public void testComplexDeleteNode() {
         testDeleteNodes(21);
         testDeleteNodes(6);
     }
@@ -357,8 +354,7 @@ public abstract class AbstractGraphTester {
         return -1;
     }
 
-    @Test
-    public void testSimpleDelete() {
+    @Test public void testSimpleDelete() {
         Graph g = createGraph(11);
         g.setNode(0, 12, 23);
         g.setNode(1, 38.33f, 135.3f);
@@ -386,8 +382,7 @@ public abstract class AbstractGraphTester {
         assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
     }
 
-    @Test
-    public void testSimpleDelete2() {
+    @Test public void testSimpleDelete2() {
         Graph g = createGraph(11);
         g.setNode(9, 9, 1);
         g.setNode(11, 11, 1);
@@ -414,8 +409,7 @@ public abstract class AbstractGraphTester {
         assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 12))));
     }
 
-    @Test
-    public void testSimpleDelete3() {
+    @Test public void testSimpleDelete3() {
         Graph g = createGraph(11);
         g.setNode(7, 7, 1);
         g.setNode(8, 8, 1);
@@ -442,6 +436,15 @@ public abstract class AbstractGraphTester {
         assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 7))));
         assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 8))));
         assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 11))));
+    }
+
+    @Test public void testDeleteAndOptimize() {
+        Graph g = createGraph(20);
+        g.setNode(20, 10, 10);
+        g.setNode(21, 10, 11);
+        g.markNodeDeleted(20);
+        g.optimize();
+        assertEquals(11, g.getLongitude(20), 1e-5);
     }
 
     @Test public void testBounds() {
@@ -474,8 +477,7 @@ public abstract class AbstractGraphTester {
         assertEquals(CarStreetType.flags(10, false), iter.flags());
     }
 
-    @Test
-    public void testCopyTo() {
+    @Test public void testCopyTo() {
         Graph someGraphImpl = createGraph(20);
         Graph gs = new GraphStorage(new RAMDirectory()).createNew(200);
         initExampleGraph(someGraphImpl);
@@ -520,15 +522,5 @@ public abstract class AbstractGraphTester {
 
         iter = someGraphImpl.getEdgeProps(edgeId, 1);
         assertTrue(iter.isEmpty());
-    }
-
-    @Test
-    public void testDeleteAndOptimize() {
-        Graph g = createGraph(20);
-        g.setNode(20, 10, 10);
-        g.setNode(21, 10, 11);
-        g.markNodeDeleted(20);
-        g.optimize();
-        assertEquals(11, g.getLongitude(20), 1e-5);
     }
 }

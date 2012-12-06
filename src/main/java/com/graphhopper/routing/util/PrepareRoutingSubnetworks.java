@@ -61,7 +61,7 @@ public class PrepareRoutingSubnetworks {
         int locs = g.getNodes();
         final MyBitSet bs = new MyBitSetImpl(locs);
         for (int start = 0; start < locs; start++) {
-            if (g.isDeleted(start) || bs.contains(start))
+            if (g.isNodeDeleted(start) || bs.contains(start))
                 continue;
 
             new XFirstSearch() {
