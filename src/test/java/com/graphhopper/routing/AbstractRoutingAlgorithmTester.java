@@ -228,12 +228,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         // using DijkstraSimple + IntBinHeap then rekey loops endlessly
         Path p = prepareGraph(getMatrixGraph()).createAlgo().calcPath(36, 91);
         assertEquals(12, p.nodes());
-
+        
         List<Integer> list = p.toNodeList();
         if (!Arrays.asList(36, 46, 56, 66, 76, 86, 85, 84, 94, 93, 92, 91).equals(list)
                 && !Arrays.asList(36, 46, 56, 66, 76, 86, 85, 84, 83, 82, 92, 91).equals(list))
-            assertTrue("wrong locations: " + list.toString(), false);
-
+            assertTrue("wrong locations: " + list.toString(), false);        
         assertEquals(66f, p.weight(), 1e-3);
     }
 
