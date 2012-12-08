@@ -34,7 +34,6 @@ import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Helper7;
 import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.StopWatch;
 import gnu.trove.list.array.TIntArrayList;

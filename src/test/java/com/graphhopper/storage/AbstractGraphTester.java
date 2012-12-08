@@ -107,8 +107,7 @@ public abstract class AbstractGraphTester {
         assertFalse(i.next());
     }
 
-    @Test
-    public void testClone() {
+    @Test public void testClone() {
         Graph g = createGraph(11);
         g.edge(1, 2, 10, true);
         g.setNode(0, 12, 23);
@@ -124,8 +123,7 @@ public abstract class AbstractGraphTester {
         assertEquals(g.getBounds(), clone.getBounds());
     }
 
-    @Test
-    public void testGetLocations() {
+    @Test public void testGetLocations() {
         Graph g = createGraph(11);
         g.setNode(0, 12, 23);
         g.setNode(1, 22, 23);
@@ -155,8 +153,7 @@ public abstract class AbstractGraphTester {
         g.edge(0, 5, 212, true);
     }
 
-    @Test
-    public void testAddLocation() {
+    @Test public void testAddLocation() {
         Graph g = createGraph(11);
         initExampleGraph(g);
 

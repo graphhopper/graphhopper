@@ -17,7 +17,6 @@ package com.graphhopper.storage;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
-import com.graphhopper.coll.SparseArray;
 import com.graphhopper.coll.SparseLongLongArray;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeIterator;
@@ -25,7 +24,6 @@ import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.map.hash.TIntIntHashMap;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -44,15 +42,19 @@ public class GraphStorage implements WritableGraph, Storable {
     private static final float INT_DIST_FACTOR = 1000f;
     private Directory dir;
     // edge memory layout: nodeA,nodeB,linkA,linkB,dist,flags
-    protected final int I_NODEA, I_NODEB, I_LINKA, I_LINKB, I_FLAGS, I_DIST;
+    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS, E_DIST;
     protected int edgeEntrySize;
     protected DataAccess edges;
-    protected int edgeCount;
+    // starting from 1 => fresh int arrays do not need to be initialized with -1
+    private int edgeCount;
     // node memory layout: edgeRef,lat,lon
-    protected final int I_EDGE_REF, I_LAT, I_LON;
+    private final int N_EDGE_REF, N_LAT, N_LON;
     protected int nodeEntrySize;
     protected DataAccess nodes;
-    protected int nodeCount;
+    // starting from 0 (inconsistent :/) => normal iteration and no internal correction is possible
+    // problem: we exported this to external API => or should we change the edge count in order to 
+    // have [0,n) based edge indices in outside API?
+    private int nodeCount;
     private BBox bounds;
     // delete markers are not yet persistent!
     private MyBitSet deletedNodes;
@@ -65,16 +67,16 @@ public class GraphStorage implements WritableGraph, Storable {
         nodes = dir.createDataAccess("nodes");
         this.bounds = BBox.INVERSE.clone();
 
-        I_NODEA = nextEdgeEntryIndex();
-        I_NODEB = nextEdgeEntryIndex();
-        I_LINKA = nextEdgeEntryIndex();
-        I_LINKB = nextEdgeEntryIndex();
-        I_FLAGS = nextEdgeEntryIndex();
-        I_DIST = nextEdgeEntryIndex();
+        E_NODEA = nextEdgeEntryIndex();
+        E_NODEB = nextEdgeEntryIndex();
+        E_LINKA = nextEdgeEntryIndex();
+        E_LINKB = nextEdgeEntryIndex();
+        E_FLAGS = nextEdgeEntryIndex();
+        E_DIST = nextEdgeEntryIndex();
 
-        I_EDGE_REF = nextNodeEntryIndex();
-        I_LAT = nextNodeEntryIndex();
-        I_LON = nextNodeEntryIndex();
+        N_EDGE_REF = nextNodeEntryIndex();
+        N_LAT = nextNodeEntryIndex();
+        N_LON = nextNodeEntryIndex();
         initNodeAndEdgeEntrySize();
     }
 
@@ -116,12 +118,12 @@ public class GraphStorage implements WritableGraph, Storable {
 
     @Override
     public double getLatitude(int index) {
-        return intToDouble(nodes.getInt((long) index * nodeEntrySize + I_LAT));
+        return intToDouble(nodes.getInt((long) index * nodeEntrySize + N_LAT));
     }
 
     @Override
     public double getLongitude(int index) {
-        return intToDouble(nodes.getInt((long) index * nodeEntrySize + I_LON));
+        return intToDouble(nodes.getInt((long) index * nodeEntrySize + N_LON));
     }
 
     protected double intToDouble(int i) {
@@ -137,7 +139,7 @@ public class GraphStorage implements WritableGraph, Storable {
     }
 
     protected double getDist(long pointer) {
-        return (double) edges.getInt(pointer + I_DIST) / INT_DIST_FACTOR;
+        return (double) edges.getInt(pointer + E_DIST) / INT_DIST_FACTOR;
     }
 
     @Override
@@ -148,8 +150,8 @@ public class GraphStorage implements WritableGraph, Storable {
     @Override
     public void setNode(int index, double lat, double lon) {
         ensureNodeIndex(index);
-        nodes.setInt((long) index * nodeEntrySize + I_LAT, doubleToInt(lat));
-        nodes.setInt((long) index * nodeEntrySize + I_LON, doubleToInt(lon));
+        nodes.setInt((long) index * nodeEntrySize + N_LAT, doubleToInt(lat));
+        nodes.setInt((long) index * nodeEntrySize + N_LON, doubleToInt(lon));
         if (lat > bounds.maxLat)
             bounds.maxLat = lat;
         if (lat < bounds.minLat)
@@ -216,13 +218,13 @@ public class GraphStorage implements WritableGraph, Storable {
 
     protected void connectNewEdge(int fromNodeId, int newOrExistingEdge) {
         long nodePointer = (long) fromNodeId * nodeEntrySize;
-        int edge = nodes.getInt(nodePointer + I_EDGE_REF);
+        int edge = nodes.getInt(nodePointer + N_EDGE_REF);
         if (edge > 0) {
             // append edge and overwrite EMPTY_LINK
             long lastEdge = getLastEdge(fromNodeId, edge);
             edges.setInt(lastEdge, newOrExistingEdge);
         } else {
-            nodes.setInt(nodePointer + I_EDGE_REF, newOrExistingEdge);
+            nodes.setInt(nodePointer + N_EDGE_REF, newOrExistingEdge);
         }
     }
 
@@ -242,19 +244,19 @@ public class GraphStorage implements WritableGraph, Storable {
         }
 
         long edgePointer = (long) edge * edgeEntrySize;
-        edges.setInt(edgePointer + I_NODEA, nodeThis);
-        edges.setInt(edgePointer + I_NODEB, nodeOther);
-        edges.setInt(edgePointer + I_LINKA, nextEdge);
-        edges.setInt(edgePointer + I_LINKB, nextEdgeOther);
-        edges.setInt(edgePointer + I_LINKB, nextEdgeOther);
-        edges.setInt(edgePointer + I_FLAGS, flags);
-        edges.setInt(edgePointer + I_DIST, distToInt(dist));
+        edges.setInt(edgePointer + E_NODEA, nodeThis);
+        edges.setInt(edgePointer + E_NODEB, nodeOther);
+        edges.setInt(edgePointer + E_LINKA, nextEdge);
+        edges.setInt(edgePointer + E_LINKB, nextEdgeOther);
+        edges.setInt(edgePointer + E_LINKB, nextEdgeOther);
+        edges.setInt(edgePointer + E_FLAGS, flags);
+        edges.setInt(edgePointer + E_DIST, distToInt(dist));
     }
 
     protected long getLinkPosInEdgeArea(int nodeThis, int nodeOther, long edgePointer) {
         if (nodeThis <= nodeOther)
-            return edgePointer + I_LINKA;
-        return edgePointer + I_LINKB;
+            return edgePointer + E_LINKA;
+        return edgePointer + E_LINKB;
     }
 
     private long getLastEdge(int nodeThis, long edgePointer) {
@@ -276,10 +278,10 @@ public class GraphStorage implements WritableGraph, Storable {
     }
 
     private int getOtherNode(int nodeThis, long edgePointer) {
-        int nodeA = edges.getInt(edgePointer + I_NODEA);
+        int nodeA = edges.getInt(edgePointer + E_NODEA);
         if (nodeA == nodeThis)
             // return b
-            return edges.getInt(edgePointer + I_NODEB);
+            return edges.getInt(edgePointer + E_NODEB);
         // return a
         return nodeA;
     }
@@ -290,8 +292,8 @@ public class GraphStorage implements WritableGraph, Storable {
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + edgeCount + "]");
         long edgePointer = (long) edgeId * edgeEntrySize;
         // a bit complex but faster
-        int nodeA = edges.getInt(edgePointer + I_NODEA);
-        int nodeB = edges.getInt(edgePointer + I_NODEB);
+        int nodeA = edges.getInt(edgePointer + E_NODEA);
+        int nodeB = edges.getInt(edgePointer + E_NODEB);
         SingleEdge edge = createSingleEdge(edgePointer);
         if (endNode < 0 || endNode == nodeB) {
             edge.fromNode = nodeA;
@@ -345,11 +347,11 @@ public class GraphStorage implements WritableGraph, Storable {
         }
 
         @Override public void distance(double dist) {
-            edges.setInt(edgePointer + I_DIST, distToInt(dist));
+            edges.setInt(edgePointer + E_DIST, distToInt(dist));
         }
 
         @Override public int flags() {
-            int flags = edges.getInt(edgePointer + I_FLAGS);
+            int flags = edges.getInt(edgePointer + E_FLAGS);
             if (switchFlags)
                 return CarStreetType.swapDirection(flags);
             return flags;
@@ -380,11 +382,11 @@ public class GraphStorage implements WritableGraph, Storable {
         }
 
         @Override public int fromNode() {
-            return edges.getInt(edgePointer + I_NODEA);
+            return edges.getInt(edgePointer + E_NODEA);
         }
 
         @Override public int node() {
-            return edges.getInt(edgePointer + I_NODEB);
+            return edges.getInt(edgePointer + E_NODEB);
         }
 
         @Override public double distance() {
@@ -392,11 +394,11 @@ public class GraphStorage implements WritableGraph, Storable {
         }
 
         @Override public void distance(double dist) {
-            edges.setInt(edgePointer + I_DIST, distToInt(dist));
+            edges.setInt(edgePointer + E_DIST, distToInt(dist));
         }
 
         @Override public int flags() {
-            return edges.getInt(edgePointer + I_FLAGS);
+            return edges.getInt(edgePointer + E_FLAGS);
         }
 
         @Override public void flags(int flags) {
@@ -443,7 +445,7 @@ public class GraphStorage implements WritableGraph, Storable {
 
         public EdgeIterable(int edge) {
             this.nextEdge = edge;
-            this.fromNode = edges.getInt(nextEdge * edgeEntrySize + I_NODEA);
+            this.fromNode = edges.getInt(nextEdge * edgeEntrySize + E_NODEA);
             this.in = true;
             this.out = true;
             next();
@@ -464,7 +466,7 @@ public class GraphStorage implements WritableGraph, Storable {
 
             // position to next edge
             nextEdge = edges.getInt(getLinkPosInEdgeArea(fromNode, nodeId, edgePointer));
-            flags = edges.getInt(edgePointer + I_FLAGS);
+            flags = edges.getInt(edgePointer + E_FLAGS);
 
             // switch direction flags if necessary
             if (fromNode > nodeId)
@@ -520,7 +522,7 @@ public class GraphStorage implements WritableGraph, Storable {
 
         @Override public void distance(double dist) {
             distance = dist;
-            edges.setInt(edgePointer + I_DIST, distToInt(dist));
+            edges.setInt(edgePointer + E_DIST, distToInt(dist));
         }
 
         @Override public void flags(int fl) {
@@ -578,10 +580,14 @@ public class GraphStorage implements WritableGraph, Storable {
     }
 
     /**
+     * This method disconnects the specified edge from the list of edges of the specified node. It
+     * does not release the freed space to be reused.
+     *
      * @param edgeToUpdatePointer if it is negative then it will be saved to refToEdges
      */
-    void internalEdgeRemove(long edgeToDeletePointer, long edgeToUpdatePointer, int node) {
-        // an edge is shared across the two node even if the edge is not in both directions
+    void internalEdgeDisconnect(int edge, long edgeToUpdatePointer, int node) {
+        long edgeToDeletePointer = (long) edge * edgeEntrySize;
+        // an edge is shared across the two nodes even if the edge is not in both directions
         // so we need to know two edge-pointers pointing to the edge before edgeToDeletePointer
         int otherNode = getOtherNode(node, edgeToDeletePointer);
         long linkPos = getLinkPosInEdgeArea(node, otherNode, edgeToDeletePointer);
@@ -592,6 +598,26 @@ public class GraphStorage implements WritableGraph, Storable {
             long link = getLinkPosInEdgeArea(node, otherNode, edgeToUpdatePointer);
             edges.setInt(link, nextEdge);
         }
+    }
+
+    @Override
+    public void optimize() {
+        // 1. disconnect all marked edges from nodes
+        disconnectEdges(getDeletedEdges().getCardinality());
+        // 2. delete all marked nodes and move remaining nodes into gaps to do compaction.
+        // also disconnect edges but leave edge compaction to the third step
+        inPlaceNodeDelete(getDeletedNodes().getCardinality());
+        // 3. finally do edge compaction! The deleted edges could have changes while removing nodes!
+        inPlaceEdgeCompaction(getDeletedEdges().getCardinality());
+
+        trimToSize();
+    }
+
+    private void trimToSize() {
+        long nodeCap = (long) nodeCount * nodeEntrySize;
+        nodes.trimTo(nodeCap * 4);
+        long edgeCap = (long) (edgeCount + 1) * edgeEntrySize;
+        edges.trimTo(edgeCap * 4);
     }
 
     private MyBitSet getDeletedNodes() {
@@ -627,65 +653,127 @@ public class GraphStorage implements WritableGraph, Storable {
     }
 
     /**
-     * This methods creates a new in-memory graph without the specified deleted nodes.
+     * This method removes all edges marked in deletedEdges from the edge list of every node
      */
-    void replacingDeleteTodo(int deleted) {
-        GraphStorage inMemGraph = new GraphStorage(new RAMDirectory()).createNew(nodeCount);
+    void disconnectEdges(int deletedEdgeCount) {
+        if (deletedEdgeCount <= 0)
+            return;
 
-        // see MMapGraph for a near duplicate         
-        int locs = this.getNodes();
-        int newNodeId = 0;
-        int[] old2NewMap = new int[locs];
-        for (int oldNodeId = 0; oldNodeId < locs; oldNodeId++) {
-            if (deletedNodes.contains(oldNodeId))
-                continue;
-
-            old2NewMap[oldNodeId] = newNodeId;
-            newNodeId++;
-        }
-
-        newNodeId = 0;
-        // create new graph with new mapped ids
-        for (int oldNodeId = 0; oldNodeId < locs; oldNodeId++) {
-            if (deletedNodes.contains(oldNodeId))
-                continue;
-            double lat = this.getLatitude(oldNodeId);
-            double lon = this.getLongitude(oldNodeId);
-            inMemGraph.setNode(newNodeId, lat, lon);
-            EdgeIterator iter = this.getEdges(oldNodeId);
-            while (iter.next()) {
-                if (deletedNodes.contains(iter.node()))
-                    continue;
-
-                // TODO duplicate edges will be created!
-                inMemGraph.internalEdgeAdd(newNodeId, old2NewMap[iter.node()], iter.distance(), iter.flags());
+        for (int toUpdateNode = 0; toUpdateNode < nodeCount; toUpdateNode++) {
+            EdgeIterable nodeIter = (EdgeIterable) getEdges(toUpdateNode);
+            long prev = -1;
+            while (nodeIter.next()) {
+                int edgeId = nodeIter.edge();
+                if (deletedEdges.contains(edgeId))
+                    internalEdgeDisconnect(edgeId, prev, toUpdateNode);
+                else
+                    prev = nodeIter.edgePointer();
             }
-            newNodeId++;
         }
-        // keep in mind that this graph storage could be in-memory OR mmap
-        inMemGraph.edges.copyTo(edges);
-        edgeCount = inMemGraph.edgeCount;
-        edgeEntrySize = inMemGraph.edgeEntrySize;
-
-        inMemGraph.nodes.copyTo(nodes);
-        nodeCount = inMemGraph.nodeCount;
-        nodeEntrySize = inMemGraph.nodeEntrySize;
-        bounds = inMemGraph.bounds;
-        deletedNodes = null;
     }
 
     /**
-     * This methods moves the last nodes into the deleted nodes, which is much more memory friendly
-     * for only a few deletes but probably not for many deletes.
+     * This method finds all references to an edge in order to move that edge into a gap. All
+     * references will be updated accordingly.
      */
-    void inPlaceDelete(int deleted) {
+    void inPlaceEdgeCompaction(int deletedEdgeCount) {
+        if (deletedEdgeCount <= 0)
+            return;
+
+        int[] previousA = new int[edgeCount + 1];
+        int[] previousB = new int[edgeCount + 1];
+
+        // create arrays which contain pointers to the previou edge
+        EdgeWriteIterator iter = getAllEdges();
+        while (iter.next()) {
+            int edge = iter.edge();
+            long edgePointer = (long) edge * edgeEntrySize;
+            int nodeA = edges.getInt(edgePointer + E_NODEA);
+            int linkA = edges.getInt(edgePointer + E_LINKA);
+            if (linkA > 0)
+                if (edges.getInt(linkA + E_NODEA) == nodeA)
+                    previousA[linkA] = edge;
+                else
+                    previousB[linkA] = edge;
+
+            int nodeB = edges.getInt(edgePointer + E_NODEB);
+            int linkB = edges.getInt(edgePointer + E_LINKB);
+            if (linkB > 0)
+                if (edges.getInt(linkB + E_NODEB) == nodeB)
+                    previousB[linkB] = edge;
+                else
+                    previousA[linkB] = edge;
+        }
+
+        // now update references pointing to the moving edge
+        int edgeToMove = edgeCount;
+        for (int delEdge = deletedEdges.next(0); delEdge >= 0;
+                delEdge = deletedEdges.next(delEdge + 1), edgeToMove--) {
+            // find next edge to be moved into delEdge            
+            for (; edgeToMove > 0; edgeToMove--) {
+                if (!deletedEdges.contains(edgeToMove))
+                    break;
+            }
+            if (edgeToMove <= 0)
+                break;
+
+            changeEdgePointers(edgeToMove, previousA, delEdge, true);
+            changeEdgePointers(edgeToMove, previousB, delEdge, false);
+            // copy
+            long toEdgePointer = (long) delEdge * edgeEntrySize;
+            long fromEdgePointer = (long) edgeToMove * edgeEntrySize;
+            for (int j = 0; j < edgeEntrySize; j++) {
+                edges.setInt(toEdgePointer + j, edges.getInt(fromEdgePointer + j));
+            }
+        }
+
+        edgeCount -= deletedEdgeCount;
+        deletedEdges = null;
+    }
+
+    private void changeEdgePointers(int edgeToMove, int[] from, int delEdge, boolean isA) {
+        int previous = from[edgeToMove];
+        if (previous > 0 && deletedEdges.contains(previous))
+            throw new IllegalStateException("shouldn't happen that a previous edge is deleted as "
+                    + "the from array should get updated accordingly");
+
+        long edgeToMoveLink = (long) edgeToMove * edgeEntrySize;
+        edgeToMoveLink = isA ? edgeToMoveLink + E_NODEA : edgeToMoveLink + E_NODEB;
+        int node = edges.getInt(edgeToMoveLink);
+
+        // change pointers which go into 'A' or 'B'. update so that they contain the new edge (delEdge)
+        long fromPointer = (long) previous * edgeEntrySize;
+        if (fromPointer > 0) {
+            // edgeToMove was referenced by another edge ... but we don't know yet if it was at link A or B            
+            if (isA && edges.getInt(fromPointer + E_NODEA) != node
+                    || !isA && edges.getInt(fromPointer + E_NODEB) != node)
+                isA = !isA;
+            edges.setInt(fromPointer + (isA ? E_LINKA : E_LINKB), delEdge);
+        } else {
+            // edgeToMove was NOT referenced by previous edge. so change the edge pointer of the node array            
+            long nodePointer = (long) node * nodeEntrySize;
+            // only write if node is still pointing to the deleted edge!
+            if (nodes.getInt(nodePointer + N_EDGE_REF) == edgeToMove)
+                nodes.setInt(nodePointer + N_EDGE_REF, delEdge);
+        }
+    }
+
+    /**
+     * This methods disconnects all edges from removed nodes. It does no edge compaction. Then it
+     * moves the last nodes into the deleted nodes, where it needs to update the node ids in every
+     * edge.
+     */
+    void inPlaceNodeDelete(int deletedNodeCount) {
+        if (deletedNodeCount <= 0)
+            return;
+
         // Prepare edge-update of nodes which are connected to deleted nodes        
         int toMoveNode = getNodes();
         int itemsToMove = 0;
 
         // sorted map when we access it via keyAt and valueAt - see below!
-        final SparseLongLongArray oldToNewMap = new SparseLongLongArray(deleted);
-        MyBitSetImpl toUpdatedSet = new MyBitSetImpl(deleted * 3);
+        final SparseLongLongArray oldToNewMap = new SparseLongLongArray(deletedNodeCount);
+        MyBitSetImpl toUpdatedSet = new MyBitSetImpl(deletedNodeCount * 3);
         for (int delNode = deletedNodes.next(0); delNode >= 0; delNode = deletedNodes.next(delNode + 1)) {
             EdgeIterator delEdgesIter = getEdges(delNode);
             while (delEdgesIter.next()) {
@@ -704,11 +792,12 @@ public class GraphStorage implements WritableGraph, Storable {
 
             if (toMoveNode < delNode)
                 break;
-            
+
             oldToNewMap.put(toMoveNode, delNode);
             itemsToMove++;
         }
 
+        // now similar process to disconnectEdges but only for specific nodes
         // all deleted nodes could be connected to existing. remove the connections
         for (int toUpdateNode = toUpdatedSet.next(0); toUpdateNode >= 0; toUpdateNode = toUpdatedSet.next(toUpdateNode + 1)) {
             // remove all edges connected to the deleted nodes
@@ -716,9 +805,11 @@ public class GraphStorage implements WritableGraph, Storable {
             long prev = -1;
             while (nodesConnectedToDelIter.next()) {
                 int nodeId = nodesConnectedToDelIter.node();
-                if (deletedNodes.contains(nodeId))
-                    internalEdgeRemove(nodesConnectedToDelIter.edgePointer(), prev, toUpdateNode);
-                else
+                if (deletedNodes.contains(nodeId)) {
+                    int edgeToDelete = nodesConnectedToDelIter.edge();
+                    internalEdgeDisconnect(edgeToDelete, prev, toUpdateNode);
+                    getDeletedEdges().add(edgeToDelete);
+                } else
                     prev = nodesConnectedToDelIter.edgePointer();
             }
         }
@@ -740,19 +831,22 @@ public class GraphStorage implements WritableGraph, Storable {
         for (int i = 0; i < itemsToMove; i++) {
             int oldI = (int) oldToNewMap.keyAt(i);
             int newI = (int) oldToNewMap.valueAt(i);
+            long newOffset = (long) newI * nodeEntrySize;
+            long oldOffset = (long) oldI * nodeEntrySize;
             for (int j = 0; j < nodeEntrySize; j++) {
-                nodes.setInt((long) newI * nodeEntrySize + j, nodes.getInt((long) oldI * nodeEntrySize + j));
+                nodes.setInt(newOffset + j, nodes.getInt(oldOffset + j));
             }
         }
 
-        // rewrite the edges of nodes connected to moved nodes
+        // *rewrites* all edges connected to moved nodes
         // go through all edges and pick the necessary ... <- this is easier to implement then
         // a more efficient (?) breadth-first search
-        for (int edge = 1; edge < edgeCount + 1; edge++) {
+        EdgeWriteIterator iter = getAllEdges();
+        while (iter.next()) {
+            int edge = iter.edge();
             long edgePointer = (long) edge * edgeEntrySize;
-            // nodeId could be wrong - see tests            
-            int nodeA = edges.getInt(edgePointer + I_NODEA);
-            int nodeB = edges.getInt(edgePointer + I_NODEB);
+            int nodeA = edges.getInt(edgePointer + E_NODEA);
+            int nodeB = edges.getInt(edgePointer + E_NODEB);
             if (!toUpdatedSet.contains(nodeA) && !toUpdatedSet.contains(nodeB))
                 continue;
 
@@ -768,33 +862,14 @@ public class GraphStorage implements WritableGraph, Storable {
 
             int linkA = edges.getInt(getLinkPosInEdgeArea(nodeA, nodeB, edgePointer));
             int linkB = edges.getInt(getLinkPosInEdgeArea(nodeB, nodeA, edgePointer));
-            int flags = edges.getInt(edgePointer + I_FLAGS);
+            int flags = edges.getInt(edgePointer + E_FLAGS);
             double distance = getDist(edgePointer);
             writeEdge(edge, updatedA, updatedB, linkA, linkB, flags, distance);
         }
 
         // edgeCount stays!
-        nodeCount -= deleted;
+        nodeCount -= deletedNodeCount;
         deletedNodes = null;
-    }
-
-    @Override
-    public void optimize() {
-        int deleted = getDeletedNodes().getCardinality();
-        if (deleted == 0)
-            return;
-
-        inPlaceDelete(deleted);
-        // replacingDelete(deleted);
-        trimToSize();
-    }
-
-    void trimToSize() {
-        long nodeCap = (long) nodeCount * 4 * nodeEntrySize;
-        nodes.trimTo(nodeCap);
-
-//        long edgeCap = (long) edgeCount * 4 * edgeEntrySize;
-//        edges.trimTo(edgeCap);
     }
 
     @Override

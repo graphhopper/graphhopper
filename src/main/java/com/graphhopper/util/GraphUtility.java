@@ -53,27 +53,32 @@ public class GraphUtility {
     public static List<String> getProblems(Graph g) {
         List<String> problems = new ArrayList<String>();
         int nodes = g.getNodes();
-        for (int i = 0; i < nodes; i++) {
-            double lat = g.getLatitude(i);
-            if (lat > 90 || lat < -90)
-                problems.add("latitude is not within its bounds " + lat);
-            double lon = g.getLongitude(i);
-            if (lon > 180 || lon < -180)
-                problems.add("longitude is not within its bounds " + lon);
-            int incom = count(g.getIncoming(i));
-            int out = count(g.getOutgoing(i));
-            int e = count(g.getEdges(i));
-            if (Math.max(out, incom) > e)
-                problems.add("count incoming or outgoing edges should be maximum "
-                        + e + " but were:" + incom + "(in), " + out + "(out)");
+        int nodeIndex = 0;
+        try {
+            for (; nodeIndex < nodes; nodeIndex++) {
+                double lat = g.getLatitude(nodeIndex);
+                if (lat > 90 || lat < -90)
+                    problems.add("latitude is not within its bounds " + lat);
+                double lon = g.getLongitude(nodeIndex);
+                if (lon > 180 || lon < -180)
+                    problems.add("longitude is not within its bounds " + lon);
+                int incom = count(g.getIncoming(nodeIndex));
+                int out = count(g.getOutgoing(nodeIndex));
+                int e = count(g.getEdges(nodeIndex));
+                if (Math.max(out, incom) > e)
+                    problems.add("count incoming or outgoing edges should be maximum "
+                            + e + " but were:" + incom + "(in), " + out + "(out)");
 
-            EdgeIterator iter = g.getEdges(i);
-            while (iter.next()) {
-                if (iter.node() >= nodes)
-                    problems.add("edge of " + i + " has a node " + iter.node() + " greater or equal to getNodes");
-                if (iter.node() < 0)
-                    problems.add("edge of " + i + " has a negative node " + iter.node());
+                EdgeIterator iter = g.getEdges(nodeIndex);
+                while (iter.next()) {
+                    if (iter.node() >= nodes)
+                        problems.add("edge of " + nodeIndex + " has a node " + iter.node() + " greater or equal to getNodes");
+                    if (iter.node() < 0)
+                        problems.add("edge of " + nodeIndex + " has a negative node " + iter.node());
+                }
             }
+        } catch (Exception ex) {
+            throw new RuntimeException("problem with node " + nodeIndex, ex);
         }
 
 //        for (int i = 0; i < nodes; i++) {

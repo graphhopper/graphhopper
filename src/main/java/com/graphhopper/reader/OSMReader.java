@@ -22,6 +22,7 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FastestCarCalc;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.PrepareTowerNodesShortcuts;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
@@ -35,6 +36,7 @@ import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Helper7;
@@ -75,7 +77,7 @@ public class OSMReader {
         if (args.getBool("osmreader.test", false)) {
             tests.start();
         }
-        
+
         if (args.getBool("osmreader.runshortestpath", false)) {
             RoutingAlgorithm algo = AbstractRoutingAlgorithm.createAlgoFromString(g, args.get("osmreader.algo", "dijkstra"));
             int iters = args.getInt("osmreader.algoIterations", 50);

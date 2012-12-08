@@ -169,16 +169,16 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void setInt(long intIndex, int value) {
-        int bufferIndex = (int) (intIndex >>> segmentSizeIntsPower);
-        int index = (int) (intIndex & indexDivisor);
+    public void setInt(long longIndex, int value) {
+        int bufferIndex = (int) (longIndex >>> segmentSizeIntsPower);
+        int index = (int) (longIndex & indexDivisor);
         segments[bufferIndex][index] = value;
     }
 
     @Override
-    public int getInt(long intIndex) {
-        int bufferIndex = (int) (intIndex >>> segmentSizeIntsPower);
-        int index = (int) (intIndex & indexDivisor);
+    public int getInt(long longIndex) {
+        int bufferIndex = (int) (longIndex >>> segmentSizeIntsPower);
+        int index = (int) (longIndex & indexDivisor);
         return segments[bufferIndex][index];
     }
 
