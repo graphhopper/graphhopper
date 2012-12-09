@@ -35,19 +35,19 @@ import java.util.List;
 @NotThreadSafe
 public class MMapDataAccess extends AbstractDataAccess {
 
-    private String location;
     private RandomAccessFile raFile;
     private List<ByteBuffer> segments = new ArrayList<ByteBuffer>();
     private ByteOrder order;
     private float increaseFactor = 1.5f;
     private transient boolean closed = false;
 
-    // reserve the empty constructor for direct mapped memory
     private MMapDataAccess() {
+        this(null, null);
+        throw new IllegalStateException("reserved for direct mapped memory");
     }
 
-    public MMapDataAccess(String location) {
-        this.location = location;
+    public MMapDataAccess(String id, String location) {
+        super(id, location);        
         try {
             // raFile necessary for loadExisting and alloc
             raFile = new RandomAccessFile(location, "rw");
@@ -86,7 +86,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     @Override
     public void ensureCapacity(long bytes) {
         if (!mapIt(HEADER_OFFSET, bytes, true))
-            throw new IllegalStateException("problem while file mapping " + location);
+            throw new IllegalStateException("problem while file mapping " + id);
     }
 
     protected boolean mapIt(long offset, long byteCount, boolean clearNew) {
@@ -202,11 +202,6 @@ public class MMapDataAccess extends AbstractDataAccess {
             cap += bb.capacity();
         }
         return cap;
-    }
-
-    @Override
-    public String toString() {
-        return location;
     }
 
     @Override

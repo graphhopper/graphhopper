@@ -17,6 +17,10 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
 import java.io.File;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -38,21 +42,49 @@ public class RAMDirectoryTest {
     }
 
     @Test
-    public void testDataAccessSingletons() {
+    public void testNoDuplicates() {
         RAMDirectory dir = new RAMDirectory();
-        dir.createDataAccess("testing");
-        try {
-            dir.createDataAccess("testing");
-            assertTrue(false);
-        } catch (Exception ex) {
-        }
+        DataAccess da1 = dir.findAttach("testing");
+        DataAccess da2 = dir.findAttach("testing");
+        assertTrue(da1 == da2);
     }
 
     @Test
     public void testNoErrorForDACreate() {
         RAMDirectory dir = new RAMDirectory(location, true);
-        DataAccess da = dir.createDataAccess("testing");
+        DataAccess da = dir.findAttach("testing");
         da.createNew(100);
         da.flush();
+    }
+
+    @Test
+    public void testLoadProperties() {
+        final Reader reader = new StringReader("testing=testing0\nnice=nice1");
+        RAMDirectory dir = new RAMDirectory(location, true) {
+            @Override protected Reader createReader(String location) {
+                return reader;
+            }
+        };
+        dir.loadExisting();
+        assertEquals(location + "/nice1", dir.findAttach("nice").getLocation());
+        DataAccess da = dir.findAttach("ui");
+        assertEquals("ui", da.getId());
+        assertEquals(location + "/ui2", da.getLocation());
+    }
+
+    @Test
+    public void testStoreProperties() {
+        final Writer sw = new StringWriter();
+        RAMDirectory dir = new RAMDirectory(location, true) {
+            @Override protected Writer createWriter(String location) {
+                return sw;
+            }
+        };
+        dir.findAttach("testing");
+        dir.findAttach("nice");
+        dir.flush();
+        String[] lines = sw.toString().split("\n");
+        assertEquals("testing=testing0", lines[2]);
+        assertEquals("nice=nice1", lines[3]);
     }
 }

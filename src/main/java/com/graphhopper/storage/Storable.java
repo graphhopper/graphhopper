@@ -37,9 +37,8 @@ public interface Storable extends Closeable {
     void flush();
 
     /**
-     * This method makes sure that the underlying used resources are released. WARNING: it does not
-     * necessarily flush the data to the storage! Eg. memory mapped storages could have earlier
-     * persisted (parts of) the data.
+     * This method makes sure that the underlying used resources are released. WARNING: it does NOT
+     * flush on close!
      */
     @Override
     void close();

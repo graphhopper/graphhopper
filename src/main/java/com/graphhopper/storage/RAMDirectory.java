@@ -15,49 +15,35 @@
  */
 package com.graphhopper.storage;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author Peter Karich
  */
-public class RAMDirectory implements Directory {
+public class RAMDirectory extends AbstractDirectory {
 
-    private Map<String, RAMDataAccess> map = new HashMap<String, RAMDataAccess>();
-    private String id;
     private boolean store;
 
     public RAMDirectory() {
         this("", false);
     }
 
-    public RAMDirectory(String id) {
-        this(id, false);
+    public RAMDirectory(String location) {
+        this(location, false);
     }
 
     /**
      * @param store true if you want that the RAMDirectory can be loaded or saved on demand, false
      * if it should be entirely in RAM
      */
-    public RAMDirectory(String _id, boolean store) {
-        if (_id == null)
-            throw new IllegalStateException("id cannot be null! Use empty string for runtime directory");
-        this.id = _id;
+    public RAMDirectory(String _location, boolean store) {
+        super(_location);
         this.store = store;
-        if (id.isEmpty())
-            id = new File("").getAbsolutePath();
-        if (!id.endsWith("/"))
-            id += "/";
-
         mkdirs();
     }
 
-    private void mkdirs() {
-        if (store) {
-            new File(id).mkdirs();
-        }
+    @Override
+    protected void mkdirs() {
+        if (store)
+            super.mkdirs();
     }
 
     public boolean isStoring() {
@@ -65,30 +51,20 @@ public class RAMDirectory implements Directory {
     }
 
     @Override
-    public DataAccess createDataAccess(String name) {
+    protected DataAccess create(String id, String location) {
+        return new RAMDataAccess(id, location, store);
+    }
+
+    @Override
+    public boolean loadExisting() {
         if (store)
-            name = id + name;
-
-        if (map.containsKey(name))
-            throw new IllegalStateException("DataAccess " + name + " already exists");
-
-        RAMDataAccess da = new RAMDataAccess(name, store);
-        map.put(name, da);
-        return da;
+            return super.loadExisting();
+        return false;
     }
 
     @Override
-    public Collection<DataAccess> getAll() {
-        return (Collection) map.values();
-    }
-
-    @Override
-    public String toString() {
-        return getLocation();
-    }
-
-    @Override
-    public String getLocation() {
-        return id;
+    public void flush() {
+        if (store)
+            super.flush();
     }
 }

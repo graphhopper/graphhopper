@@ -63,10 +63,9 @@ public class GraphStorage implements WritableGraph, Storable {
 
     public GraphStorage(Directory dir) {
         this.dir = dir;
-        edges = dir.createDataAccess("edges");
-        nodes = dir.createDataAccess("nodes");
+        edges = dir.findAttach("edges");
+        nodes = dir.findAttach("nodes");
         this.bounds = BBox.INVERSE.clone();
-
         E_NODEA = nextEdgeEntryIndex();
         E_NODEB = nextEdgeEntryIndex();
         E_LINKA = nextEdgeEntryIndex();
@@ -874,16 +873,16 @@ public class GraphStorage implements WritableGraph, Storable {
 
     @Override
     public boolean loadExisting() {
-        if (edges.loadExisting()) {
-            if (!nodes.loadExisting())
-                throw new IllegalStateException("corrupt file?");
+        if (edges != null && edges.loadExisting()) {
+            if (nodes == null || !nodes.loadExisting())
+                throw new IllegalStateException("corrupt file or directory? " + dir);
             if (nodes.getVersion() != edges.getVersion())
-                throw new IllegalStateException("nodes and edges files have different versions!?");
+                throw new IllegalStateException("nodes and edges files have different versions!? " + dir);
             // nodes
             int hash = nodes.getHeader(0);
             if (hash != getClass().getName().hashCode())
                 throw new IllegalStateException("Cannot load the graph - it wasn't create via "
-                        + getClass().getName() + "! Location:" + dir);
+                        + getClass().getName() + "! " + dir);
 
             nodeEntrySize = nodes.getHeader(1);
             nodeCount = nodes.getHeader(2);
@@ -921,8 +920,6 @@ public class GraphStorage implements WritableGraph, Storable {
 
     @Override
     public void close() {
-        // TODO let the user decide if flush on close?
-        flush();
         edges.close();
         nodes.close();
     }

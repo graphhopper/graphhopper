@@ -31,10 +31,26 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
     final static byte[] EMPTY = new byte[1024];
     protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
+    protected final String id;
+    private final String location;
+
+    public AbstractDataAccess(String id, String location) {
+        this.id = id;
+        this.location = location;
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public String getLocation() {
+        return location;
+    }
 
     @Override
     public void close() {
-        // do not call flush() on close - let others decide
     }
 
     @Override
@@ -105,5 +121,10 @@ public abstract class AbstractDataAccess implements DataAccess {
         int tmp = (int) (Math.log(bytes) / Math.log(2));
         segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return id;
     }
 }

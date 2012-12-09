@@ -18,18 +18,28 @@ package com.graphhopper.storage;
 import java.util.Collection;
 
 /**
+ * Maintains a collection of DataAccess objects stored at the same location. E.g. for a GraphStorage
+ * we need one DataAccess object for nodes, edges and location2id index.
+ *
  * @author Peter Karich
  */
 public interface Directory {
 
     String getLocation();
 
-    DataAccess createDataAccess(String name);
-    
+    /**
+     * Tries to find the object with that id if not existent it creates one and associates a name
+     * and location with it.
+     */
+    DataAccess findAttach(String id);
+
+    /**
+     * Creates a new DataAccess object with a unique location and the specified id without attaching
+     * it.
+     */
+    DataAccess create(String id);
+
+    void delete(DataAccess da);
+
     Collection<DataAccess> getAll();
-    // TODO clear means clearing the in-memory map and deleting underlying files
-    // Problem with clear was: MMapDataAccess creates file in constructor and on createNew
-    // it clears but then the file won't be accessible. Also clearing would mean to avoid
-    // closing of underlying DataAccess object which isn't good.
-//    void clear();
 }

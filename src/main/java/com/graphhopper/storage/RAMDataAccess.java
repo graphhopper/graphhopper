@@ -27,7 +27,6 @@ import java.util.Arrays;
  */
 public class RAMDataAccess extends AbstractDataAccess {
 
-    private String id;
     private int[][] segments = new int[0][];
     private float increaseFactor = 1.5f;
     private boolean closed = false;
@@ -36,18 +35,16 @@ public class RAMDataAccess extends AbstractDataAccess {
     private transient int indexDivisor;
 
     public RAMDataAccess() {
-        this("", false);
+        this("", "", false);
     }
 
     public RAMDataAccess(String id) {
-        this(id, false);
+        this(id, id, false);
     }
 
-    public RAMDataAccess(String id, boolean store) {
-        this.id = id;
+    public RAMDataAccess(String id, String location, boolean store) {
+        super(id, location);
         this.store = store;
-        if (id == null)
-            throw new IllegalStateException("RAMDataAccess id cannot be null");
     }
 
     public RAMDataAccess setStore(boolean store) {
@@ -107,7 +104,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (!store || closed)
             return false;
         try {
-            RandomAccessFile raFile = new RandomAccessFile(id, "r");
+            RandomAccessFile raFile = new RandomAccessFile(getLocation(), "r");
             try {
                 long byteCount = readHeader(raFile) - HEADER_OFFSET;
                 if (byteCount < 0)
@@ -144,7 +141,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (!store)
             return;
         try {
-            RandomAccessFile raFile = new RandomAccessFile(id, "rw");
+            RandomAccessFile raFile = new RandomAccessFile(getLocation(), "rw");
             try {
                 long len = capacity();
                 writeHeader(raFile, len, segmentSizeInBytes);
@@ -164,7 +161,7 @@ public class RAMDataAccess extends AbstractDataAccess {
                 raFile.close();
             }
         } catch (Exception ex) {
-            throw new RuntimeException("Couldn't store integers to " + id, ex);
+            throw new RuntimeException("Couldn't store integers to " + toString(), ex);
         }
     }
 
@@ -192,11 +189,6 @@ public class RAMDataAccess extends AbstractDataAccess {
     @Override
     public long capacity() {
         return getSegments() * segmentSizeInBytes;
-    }
-
-    @Override
-    public String toString() {
-        return id;
     }
 
     @Override

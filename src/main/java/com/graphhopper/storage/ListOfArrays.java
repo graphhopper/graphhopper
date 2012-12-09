@@ -28,8 +28,8 @@ public class ListOfArrays {
     private int nextArrayPointer = 1;
 
     public ListOfArrays(Directory dir, String listName) {
-        this.refs = dir.createDataAccess(listName + "refs");
-        this.entries = dir.createDataAccess(listName + "entries");
+        this.refs = dir.findAttach(listName + "refs");
+        this.entries = dir.findAttach(listName + "entries");
     }
 
     public boolean loadExisting() {

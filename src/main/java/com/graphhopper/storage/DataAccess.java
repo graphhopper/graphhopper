@@ -25,6 +25,17 @@ package com.graphhopper.storage;
 public interface DataAccess extends Storable {
 
     /**
+     * The logical name of this object.
+     */
+    String getId();
+
+    /**
+     * The current folder it resides. This will be initialized from the Directory and is empty if it
+     * is entirely in-memory.
+     */
+    String getLocation();
+
+    /**
      * Set 4 bytes at position 'index' to the specified value
      */
     void setInt(long index, int value);
