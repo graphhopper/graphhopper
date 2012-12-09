@@ -331,6 +331,21 @@ public class SparseLongLongArray {
         return pos;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < mKeys.length; i++) {
+            long k = mKeys[i];
+            long v = mValues[i];
+            if (i > 0)
+                sb.append(",");
+            sb.append(k);
+            sb.append(":");
+            sb.append(v);
+        }
+        return sb.toString();
+    }
+
     /**
      * Warning: returns ~index and not -(index+1) like trove and jdk do
      */

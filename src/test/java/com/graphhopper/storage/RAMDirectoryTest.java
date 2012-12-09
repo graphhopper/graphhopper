@@ -21,6 +21,9 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -59,7 +62,7 @@ public class RAMDirectoryTest {
 
     @Test
     public void testLoadProperties() {
-        final Reader reader = new StringReader("testing=testing0\nnice=nice1");
+        final Reader reader = new StringReader("testing=testing0\nnice=nice1\n_version=0.1");
         RAMDirectory dir = new RAMDirectory(location, true) {
             @Override protected Reader createReader(String location) {
                 return reader;
@@ -69,7 +72,7 @@ public class RAMDirectoryTest {
         assertEquals(location + "/nice1", dir.findAttach("nice").getLocation());
         DataAccess da = dir.findAttach("ui");
         assertEquals("ui", da.getId());
-        assertEquals(location + "/ui2", da.getLocation());
+        assertEquals(location + "/ui3", da.getLocation());
     }
 
     @Test
@@ -83,8 +86,8 @@ public class RAMDirectoryTest {
         dir.findAttach("testing");
         dir.findAttach("nice");
         dir.flush();
-        String[] lines = sw.toString().split("\n");
-        assertEquals("testing=testing0", lines[2]);
-        assertEquals("nice=nice1", lines[3]);
+        Set<String> mySet = new HashSet<String>(Arrays.asList(sw.toString().split("\n")));        
+        assertTrue(mySet.toString(), mySet.contains("testing=testing0"));
+        assertTrue(mySet.toString(), mySet.contains("nice=nice1"));
     }
 }

@@ -20,8 +20,7 @@ import com.graphhopper.util.Helper;
 /**
  * Copied from Android project. android.util.SparseArray.java
  *
- * SparseArrays map ints to ints. Unlike a normal array of ints, there can be gaps in the
- * indices.
+ * SparseArrays map ints to ints. Unlike a normal array of ints, there can be gaps in the indices.
  */
 public class SparseIntIntArray {
 
@@ -327,6 +326,21 @@ public class SparseIntIntArray {
         mValues[pos] = value;
         mSize = pos + 1;
         return pos;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < mKeys.length; i++) {
+            int k = mKeys[i];
+            int v = mValues[i];
+            if (i > 0)
+                sb.append(",");
+            sb.append(k);
+            sb.append(":");
+            sb.append(v);
+        }
+        return sb.toString();
     }
 
     /**

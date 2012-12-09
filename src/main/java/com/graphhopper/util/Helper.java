@@ -240,6 +240,22 @@ public class Helper {
         }
     }
 
+    public static String readString(InputStream is, String encoding) throws IOException {
+        InputStream in = is instanceof BufferedInputStream
+                ? (BufferedInputStream) is : new BufferedInputStream(is);;
+        try {
+            byte[] buffer = new byte[4096];
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            int numRead;
+            while ((numRead = in.read(buffer)) != -1) {
+                output.write(buffer, 0, numRead);
+            }
+            return output.toString(encoding);
+        } finally {
+            in.close();
+        }
+    }
+
     public static Object[] readSettings(String file) throws IOException {
         DataInputStream in = new DataInputStream(new FileInputStream(file));
         try {
@@ -414,7 +430,7 @@ public class Helper {
      * The file version is independent of the real world version. E.g. to make major version jumps
      * without the need to change the file version.
      */
-    public static final int VERSION_FILE = 1;
+    public static final int VERSION_FILE = 2;
     /**
      * The version without the snapshot string
      */

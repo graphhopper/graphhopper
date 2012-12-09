@@ -250,8 +250,8 @@ public class GraphUtility {
         };
         index.setCalcEdgeDistance(false);
         Location2IDPreciseIndex.InMemConstructionIndex idx = index.prepareInMemoryIndex(capacity);
-        final TIntList mappingList = new TIntArrayList(g.getNodes(), -1);
-        mappingList.fill(0, g.getNodes(), -1);
+        final TIntList nodeMappingList = new TIntArrayList(g.getNodes(), -1);
+        nodeMappingList.fill(0, g.getNodes(), -1);
         int counter = 0;
         int tmp = 0;
         for (int ti = 0; ti < idx.getLength(); ti++) {
@@ -261,20 +261,20 @@ public class GraphUtility {
             tmp++;
             int s = list.size();
             for (int ii = 0; ii < s; ii++) {
-                mappingList.set(list.get(ii), counter);
+                nodeMappingList.set(list.get(ii), counter);
                 counter++;
             }
         }
 
-        return createSortedGraph(g, sortedGraph, mappingList);
+        return createSortedGraph(g, sortedGraph, nodeMappingList);
     }
 
-    static Graph createSortedGraph(Graph g, Graph sortedGraph, final TIntList oldToNewList) {
-        int len = oldToNewList.size();
+    static Graph createSortedGraph(Graph g, Graph sortedGraph, final TIntList oldToNewNodeList) {
+        int len = oldToNewNodeList.size();
         // important to avoid creating two edges for edges with both directions
         MyBitSet bitset = new MyBitSetImpl(len);
         for (int old = 0; old < len; old++) {
-            int newIndex = oldToNewList.get(old);
+            int newIndex = oldToNewNodeList.get(old);
             // ignore empty entries
             if (newIndex < 0)
                 continue;
@@ -282,12 +282,12 @@ public class GraphUtility {
             sortedGraph.setNode(newIndex, g.getLatitude(old), g.getLongitude(old));
             EdgeIterator eIter = g.getEdges(old);
             while (eIter.next()) {
-                int newEdgeIndex = oldToNewList.get(eIter.node());
-                if (newEdgeIndex < 0)
+                int newNodeIndex = oldToNewNodeList.get(eIter.node());
+                if (newNodeIndex < 0)
                     throw new IllegalStateException("empty entries should be connected to the others");
-                if (bitset.contains(newEdgeIndex))
+                if (bitset.contains(newNodeIndex))
                     continue;
-                sortedGraph.edge(newIndex, newEdgeIndex, eIter.distance(), eIter.flags());
+                sortedGraph.edge(newIndex, newNodeIndex, eIter.distance(), eIter.flags());
             }
         }
         return sortedGraph;

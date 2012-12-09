@@ -15,6 +15,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -36,7 +37,7 @@ import java.util.Properties;
  *
  * @author Peter Karich
  */
-public abstract class AbstractDirectory implements Directory, Storable {
+public abstract class AbstractDirectory implements Directory {
 
     protected Map<String, DataAccess> map = new LinkedHashMap<String, DataAccess>();
     protected Map<DataAccess, String> nameMap = new IdentityHashMap<DataAccess, String>();
@@ -111,15 +112,22 @@ public abstract class AbstractDirectory implements Directory, Storable {
         checkClosed();
         Properties properties = new Properties();
         try {
-            properties.load(createReader(location + "info"));
-            for (Entry<Object, Object> e : properties.entrySet()) {
-                counter++;
-                String id = e.getKey().toString();
-                String name = e.getValue().toString();
-                attach(create(id, location + name));
+            Reader reader = createReader(location + "info");
+            try {
+                properties.load(reader);
+                for (Entry<Object, Object> e : properties.entrySet()) {
+                    counter++;
+                    String id = e.getKey().toString();
+                    if (id.startsWith("_"))
+                        continue;
+                    String name = e.getValue().toString();
+                    attach(create(id, location + name));
+                }
+                return true;
+            } finally {
+                reader.close();
             }
-            return true;
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             return false;
         }
     }
@@ -132,8 +140,15 @@ public abstract class AbstractDirectory implements Directory, Storable {
             String name = nameMap.get(da);
             properties.put(da.getId(), name);
         }
+        properties.put("_version", Helper.VERSION);
+        properties.put("_version_file", "" + Helper.VERSION_FILE);
         try {
-            properties.store(createWriter(location + "info"), "");
+            Writer writer = createWriter(location + "info");
+            try {
+                properties.store(writer, "");
+            } finally {
+                writer.close();
+            }
         } catch (IOException ex) {
             throw new RuntimeException("Cannot flush properties to " + location, ex);
         }
