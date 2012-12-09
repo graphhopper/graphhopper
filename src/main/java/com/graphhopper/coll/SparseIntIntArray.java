@@ -18,32 +18,32 @@ package com.graphhopper.coll;
 import com.graphhopper.util.Helper;
 
 /**
- * Copied from Android project. android.util.LongSparseArray.java
+ * Copied from Android project. android.util.SparseArray.java
  *
- * SparseArrays map longs to longs. Unlike a normal array of longs, there can be gaps in the
+ * SparseArrays map ints to ints. Unlike a normal array of ints, there can be gaps in the
  * indices.
  */
-public class SparseLongLongArray {
+public class SparseIntIntArray {
 
-    private static final long DELETED = Long.MIN_VALUE;
+    private static final int DELETED = Integer.MIN_VALUE;
     private boolean mGarbage = false;
 
     /**
-     * Creates a new SparseLongLongArray containing no mappings.
+     * Creates a new SparseIntIntArray containing no mappings.
      */
-    public SparseLongLongArray() {
+    public SparseIntIntArray() {
         this(10);
     }
 
     /**
-     * Creates a new SparseLongLongArray containing no mappings that will not require any additional
+     * Creates a new SparseIntIntArray containing no mappings that will not require any additional
      * memory allocation to store the specified number of mappings.
      */
-    public SparseLongLongArray(int cap) {
+    public SparseIntIntArray(int cap) {
         try {
             cap = Helper.idealIntArraySize(cap);
-            mKeys = new long[cap];
-            mValues = new long[cap];
+            mKeys = new int[cap];
+            mValues = new int[cap];
             mSize = 0;
         } catch (OutOfMemoryError err) {
             System.err.println("requested capacity " + cap);
@@ -54,9 +54,9 @@ public class SparseLongLongArray {
     /**
      * @return A copy of all keys contained in the sparse array.
      */
-    private long[] getKeys() {
+    private int[] getKeys() {
         int length = mKeys.length;
-        long[] result = new long[length];
+        int[] result = new int[length];
         System.arraycopy(mKeys, 0, result, 0, length);
         return result;
     }
@@ -67,7 +67,7 @@ public class SparseLongLongArray {
      * @param keys Keys to set
      * @param uniqueValue Value to set all supplied keys to
      */
-    private void setValues(long[] keys, long uniqueValue) {
+    private void setValues(int[] keys, int uniqueValue) {
         int length = keys.length;
         for (int i = 0; i < length; i++) {
             put(keys[i], uniqueValue);
@@ -78,7 +78,7 @@ public class SparseLongLongArray {
      * Gets the Object mapped from the specified key, or
      * <code>null</code> if no such mapping has been made.
      */
-    public long get(long key) {
+    public int get(int key) {
         return get(key, -1);
     }
 
@@ -86,7 +86,7 @@ public class SparseLongLongArray {
      * Gets the Object mapped from the specified key, or the specified Object if no such mapping has
      * been made.
      */
-    private long get(long key, long valueIfKeyNotFound) {
+    private int get(int key, int valueIfKeyNotFound) {
         int i = binarySearch(mKeys, 0, mSize, key);
         if (i < 0 || mValues[i] == DELETED) {
             return valueIfKeyNotFound;
@@ -98,7 +98,7 @@ public class SparseLongLongArray {
     /**
      * Removes the mapping from the specified key, if there was any.
      */
-    public void delete(long key) {
+    public void delete(int key) {
         int i = binarySearch(mKeys, 0, mSize, key);
 
         if (i >= 0) {
@@ -110,21 +110,20 @@ public class SparseLongLongArray {
     }
 
     /**
-     * Alias for {@link #delete(long)}.
+     * Alias for {@link #delete(int)}.
      */
-    public void remove(long key) {
+    public void remove(int key) {
         delete(key);
     }
 
     private void gc() {
         int n = mSize;
         int o = 0;
-        long[] keys = mKeys;
-        long[] values = mValues;
+        int[] keys = mKeys;
+        int[] values = mValues;
 
         for (int i = 0; i < n; i++) {
-            long val = values[i];
-
+            int val = values[i];
             if (val != DELETED) {
                 if (i != o) {
                     keys[o] = keys[i];
@@ -143,7 +142,7 @@ public class SparseLongLongArray {
      * Adds a mapping from the specified key to the specified value, replacing the previous mapping
      * from the specified key if there was one.
      */
-    public int put(long key, long value) {
+    public int put(int key, int value) {
         int i = binarySearch(mKeys, 0, mSize, key);
 
         if (i >= 0) {
@@ -167,8 +166,8 @@ public class SparseLongLongArray {
             if (mSize >= mKeys.length) {
                 int n = Helper.idealIntArraySize(mSize + 1);
 
-                long[] nkeys = new long[n];
-                long[] nvalues = new long[n];
+                int[] nkeys = new int[n];
+                int[] nvalues = new int[n];
 
                 System.arraycopy(mKeys, 0, nkeys, 0, mKeys.length);
                 System.arraycopy(mValues, 0, nvalues, 0, mValues.length);
@@ -190,7 +189,7 @@ public class SparseLongLongArray {
     }
 
     /**
-     * Returns the number of key-value mappings that this SparseLongLongArray currently stores.
+     * Returns the number of key-value mappings that this SparseIntIntArray currently stores.
      */
     public int size() {
         if (mGarbage) {
@@ -203,9 +202,9 @@ public class SparseLongLongArray {
     /**
      * Given an index in the range
      * <code>0...size()-1</code>, returns the key from the
-     * <code>index</code>th key-value mapping that this SparseLongLongArray stores.
+     * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
      */
-    public long keyAt(int index) {
+    public int keyAt(int index) {
         if (mGarbage) {
             gc();
         }
@@ -216,9 +215,9 @@ public class SparseLongLongArray {
     /**
      * Given an index in the range
      * <code>0...size()-1</code>, sets a new key for the
-     * <code>index</code>th key-value mapping that this SparseLongLongArray stores.
+     * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
      */
-    public void setKeyAt(int index, long key) {
+    public void setKeyAt(int index, int key) {
         if (mGarbage) {
             gc();
         }
@@ -229,9 +228,9 @@ public class SparseLongLongArray {
     /**
      * Given an index in the range
      * <code>0...size()-1</code>, returns the value from the
-     * <code>index</code>th key-value mapping that this SparseLongLongArray stores.
+     * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
      */
-    public long valueAt(int index) {
+    public int valueAt(int index) {
         if (mGarbage) {
             gc();
         }
@@ -242,9 +241,9 @@ public class SparseLongLongArray {
     /**
      * Given an index in the range
      * <code>0...size()-1</code>, sets a new value for the
-     * <code>index</code>th key-value mapping that this SparseLongLongArray stores.
+     * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
      */
-    public void setValueAt(int index, long value) {
+    public void setValueAt(int index, int value) {
         if (mGarbage) {
             gc();
         }
@@ -256,7 +255,7 @@ public class SparseLongLongArray {
      * Returns the index for which {@link #keyAt} would return the specified key, or a negative
      * number if the specified key is not mapped.
      */
-    private int indexOfKey(long key) {
+    private int indexOfKey(int key) {
         if (mGarbage) {
             gc();
         }
@@ -270,7 +269,7 @@ public class SparseLongLongArray {
      * lookups by key, and that multiple keys can map to the same value and this will find only one
      * of them.
      */
-    private int indexOfValue(long value) {
+    private int indexOfValue(int value) {
         if (mGarbage) {
             gc();
         }
@@ -284,12 +283,11 @@ public class SparseLongLongArray {
     }
 
     /**
-     * Removes all key-value mappings from this SparseLongLongArray.
+     * Removes all key-value mappings from this SparseIntIntArray.
      */
     public void clear() {
         int n = mSize;
-        long[] values = mValues;
-
+        int[] values = mValues;
         for (int i = 0; i < n; i++) {
             values[i] = -1;
         }
@@ -302,7 +300,7 @@ public class SparseLongLongArray {
      * Puts a key/value pair into the array, optimizing for the case where the key is greater than
      * all existing keys in the array.
      */
-    public int append(long key, long value) {
+    public int append(int key, int value) {
         if (mSize != 0 && key <= mKeys[mSize - 1]) {
             return put(key, value);
         }
@@ -315,8 +313,8 @@ public class SparseLongLongArray {
         if (pos >= mKeys.length) {
             int n = Helper.idealIntArraySize(pos + 1);
 
-            long[] nkeys = new long[n];
-            long[] nvalues = new long[n];
+            int[] nkeys = new int[n];
+            int[] nvalues = new int[n];
 
             System.arraycopy(mKeys, 0, nkeys, 0, mKeys.length);
             System.arraycopy(mValues, 0, nvalues, 0, mValues.length);
@@ -334,11 +332,11 @@ public class SparseLongLongArray {
     /**
      * Warning: returns ~index and not -(index+1) like trove and jdk do
      */
-    public int binarySearch(long key) {
+    public int binarySearch(int key) {
         return binarySearch(mKeys, 0, mSize, key);
     }
 
-    static int binarySearch(long[] a, int start, int len, long key) {
+    static int binarySearch(int[] a, int start, int len, int key) {
         int high = start + len, low = start - 1, guess;
         while (high - low > 1) {
             guess = (high + low) / 2;
@@ -368,7 +366,7 @@ public class SparseLongLongArray {
             }
         }
     }
-    private long[] mKeys;
-    private long[] mValues;
+    private int[] mKeys;
+    private int[] mValues;
     private int mSize;
 }

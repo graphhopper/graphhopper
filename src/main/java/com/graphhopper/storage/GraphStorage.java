@@ -17,7 +17,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
-import com.graphhopper.coll.SparseLongLongArray;
+import com.graphhopper.coll.SparseIntIntArray;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeWriteIterator;
@@ -757,6 +757,12 @@ public class GraphStorage implements Graph, Storable {
         }
     }
 
+//    void inPlaceNodeDelete(int deletedNodeCount) {
+//        if (deletedNodeCount <= 0)
+//            return;
+//
+//    }
+
     /**
      * This methods disconnects all edges from removed nodes. It does no edge compaction. Then it
      * moves the last nodes into the deleted nodes, where it needs to update the node ids in every
@@ -771,7 +777,7 @@ public class GraphStorage implements Graph, Storable {
         int itemsToMove = 0;
 
         // sorted map when we access it via keyAt and valueAt - see below!
-        final SparseLongLongArray oldToNewMap = new SparseLongLongArray(deletedNodeCount);
+        final SparseIntIntArray oldToNewMap = new SparseIntIntArray(deletedNodeCount);
         MyBitSetImpl toUpdatedSet = new MyBitSetImpl(deletedNodeCount * 3);
         for (int delNode = deletedNodes.next(0); delNode >= 0; delNode = deletedNodes.next(delNode + 1)) {
             EdgeIterator delEdgesIter = getEdges(delNode);
@@ -816,7 +822,7 @@ public class GraphStorage implements Graph, Storable {
 
         // marks connected nodes to rewrite the edges
         for (int i = 0; i < itemsToMove; i++) {
-            int oldI = (int) oldToNewMap.keyAt(i);
+            int oldI = oldToNewMap.keyAt(i);
             EdgeIterator movedEdgeIter = getEdges(oldI);
             while (movedEdgeIter.next()) {
                 if (deletedNodes.contains(movedEdgeIter.node()))
@@ -828,8 +834,8 @@ public class GraphStorage implements Graph, Storable {
 
         // move nodes into deleted nodes
         for (int i = 0; i < itemsToMove; i++) {
-            int oldI = (int) oldToNewMap.keyAt(i);
-            int newI = (int) oldToNewMap.valueAt(i);
+            int oldI = oldToNewMap.keyAt(i);
+            int newI = oldToNewMap.valueAt(i);
             long newOffset = (long) newI * nodeEntrySize;
             long oldOffset = (long) oldI * nodeEntrySize;
             for (int j = 0; j < nodeEntrySize; j++) {
