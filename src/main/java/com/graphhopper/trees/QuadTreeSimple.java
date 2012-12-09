@@ -33,6 +33,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * A simple implementation of a spatial index via a spatial key trie - the normal java way (a bit
  * memory intensive with all those object references).
  *
+ * TODO depth is too large!
+ *
  * The latitude and longitude is encoded via our spatial key - see SpatialKeyAlgo for more details.
  *
  * If the branch node would have only 2 children then it would be a binary tree - we would need to

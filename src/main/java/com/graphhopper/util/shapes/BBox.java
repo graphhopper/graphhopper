@@ -16,7 +16,6 @@
 package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.NumHelper;
-import javax.crypto.NullCipher;
 
 /**
  * A simple bounding box defined as follows: minLon, maxLon followed by minLat which is south(!) and

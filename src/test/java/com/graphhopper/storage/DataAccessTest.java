@@ -209,7 +209,7 @@ public abstract class DataAccessTest {
             assertTrue(false);
         } catch (Exception ex) {
         }
-        
+
         // at least one segment
         da.trimTo(0);
         assertEquals(1, da.getSegments());

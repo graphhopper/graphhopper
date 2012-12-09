@@ -18,7 +18,6 @@ package com.graphhopper.storage;
 import com.graphhopper.util.DistanceCosProjection;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.shapes.Circle;
 
 /**
  * Same as full index but calculates distance to all edges too

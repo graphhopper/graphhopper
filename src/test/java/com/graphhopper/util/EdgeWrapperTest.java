@@ -32,7 +32,7 @@ public class EdgeWrapperTest {
         assertEquals(-1, instance.getParent(ref));
         assertEquals(10, instance.getNode(ref));
     }
-    
+
     @Test
     public void testClear() {
         EdgeWrapper instance = new EdgeWrapper(5);

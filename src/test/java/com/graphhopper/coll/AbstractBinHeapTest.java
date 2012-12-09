@@ -80,7 +80,7 @@ public abstract class AbstractBinHeapTest {
             binHeap.insert(i * 10, i * 11);
         }
         binHeap.insert(59, 61);
-        binHeap.insert(160, 161);        
+        binHeap.insert(160, 161);
 
         assertEquals(26, binHeap.size());
         assertEquals(0, binHeap.pollElement().intValue());

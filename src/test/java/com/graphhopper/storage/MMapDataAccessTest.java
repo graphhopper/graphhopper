@@ -47,7 +47,7 @@ public class MMapDataAccessTest extends DataAccessTest {
         assertFalse(da.loadExisting());
         da.createNew(100);
         da.setInt(7, 123);
-        
+
         // TODO "memory mapped flush" is expensive and not required. only writing the header is required.
         da.flush();
         da.close();

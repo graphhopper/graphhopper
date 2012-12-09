@@ -16,12 +16,11 @@
 package com.graphhopper.util;
 
 /**
- * Support for retrieving the skipped node and updating methods for distance and flags.
+ * Support for updating distance or flags of the current active edge of the iterator.
  *
  * Current usage
  * <pre>
- * // use a graph with level support like LevelGraphStorage
- * EdgeWriteIterator iter = (EdgeWriteIterator) graph.getEdges(n);
+ * EdgeWriteIterator iter = graph.getEdges(n);
  * while(iter.next()) {
  *   iter.distance(19.0);
  *   ...
@@ -32,7 +31,6 @@ package com.graphhopper.util;
  */
 public interface EdgeWriteIterator extends EdgeIterator {
 
-    // update
     void distance(double dist);
 
     void flags(int flags);

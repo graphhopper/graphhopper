@@ -15,12 +15,14 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.DijkstraBidirection;
 import gnu.trove.map.hash.TIntIntHashMap;
 import java.util.Arrays;
 
 /**
- * Not thread safe. Use one per thread or sync.
+ * Used to implement references for a none-java way dijkstra.
  *
+ * @see DijkstraBidirection
  * @author Peter Karich
  */
 @NotThreadSafe
@@ -49,7 +51,7 @@ public class EdgeWrapper {
     /**
      * @return edge id of current added (node,distance) tuple
      */
-    public int add(int nodeId, double distance, int edgeId) {        
+    public int add(int nodeId, double distance, int edgeId) {
         int ref = refCounter;
         refCounter++;
         node2edge.put(nodeId, ref);
@@ -66,12 +68,12 @@ public class EdgeWrapper {
             throw new IllegalStateException("You cannot save a reference with values smaller 1. 0 is reserved");
         weights[ref] = (float) dist;
     }
-    
+
     public void putEdgeId(int ref, int edgeId) {
         if (ref < 1)
             throw new IllegalStateException("You cannot save a reference with values smaller 1. 0 is reserved");
         edgeIds[ref] = edgeId;
-    }       
+    }
 
     public void putParent(int ref, int link) {
         if (ref < 1)
@@ -90,7 +92,7 @@ public class EdgeWrapper {
     public int getParent(int ref) {
         return parents[ref];
     }
-    
+
     public int getEdgeId(int ref) {
         return edgeIds[ref];
     }

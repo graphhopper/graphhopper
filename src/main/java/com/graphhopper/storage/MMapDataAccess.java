@@ -47,7 +47,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     public MMapDataAccess(String id, String location) {
-        super(id, location);        
+        super(id, location);
         try {
             // raFile necessary for loadExisting and alloc
             raFile = new RandomAccessFile(location, "rw");

@@ -19,6 +19,8 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Graph;
 
 /**
+ * Holds an algorithm which can be prepared and created.
+ *
  * @author Peter Karich
  */
 public interface AlgorithmPreparation {

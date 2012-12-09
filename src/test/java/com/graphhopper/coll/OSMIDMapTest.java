@@ -36,7 +36,7 @@ public class OSMIDMapTest {
         map.put(31, 6);
 
         assertEquals(7, map.size());
-        assertEquals(-1, map.get(8));        
+        assertEquals(-1, map.get(8));
         assertEquals(0, map.get(9));
         assertEquals(1, map.get(10));
         assertEquals(2, map.get(11));

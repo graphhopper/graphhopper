@@ -19,8 +19,8 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.NotThreadSafe;
 
 /**
- * Calculates the shortest path from the specified node ids. An implementation is not required to
- * make an instance thread safe.
+ * Calculates the shortest path from the specified node ids. The implementation does not need to be
+ * thread safe.
  *
  * @author Peter Karich,
  */
@@ -30,7 +30,7 @@ public interface RoutingAlgorithm {
     /**
      * Calculates the fastest or shortest path.
      *
-     * @return Path.NOT_FOUND if nothing was found
+     * @return the path but check the method found() to make sure if the path is valid.
      */
     Path calcPath(int from, int to);
 

@@ -19,6 +19,14 @@ import static java.lang.Math.*;
 
 /**
  * Calculates the approximative distance of two points on earth.
+ * 
+ * http://en.wikipedia.org/wiki/Geographical_distance#Spherical_Earth_projected_to_a_plane
+ * 
+ * http://stackoverflow.com/q/1006654
+ * 
+ * TODO
+ * http://en.wikipedia.org/wiki/Mercator_projection#Mathematics_of_the_Mercator_projection
+ * http://gis.stackexchange.com/questions/4906/why-is-law-of-cosines-more-preferable-than-haversine-when-calculating-distance-b
  *
  * @author Peter Karich,
  */

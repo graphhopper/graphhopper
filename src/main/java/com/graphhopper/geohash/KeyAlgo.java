@@ -18,6 +18,8 @@ package com.graphhopper.geohash;
 import com.graphhopper.util.shapes.CoordTrig;
 
 /**
+ * Defines the mapping between a one dimensional 'number' and a point (lat, lon).
+ *
  * @author Peter Karich
  */
 public interface KeyAlgo {

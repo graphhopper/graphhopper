@@ -55,7 +55,6 @@ public class MyDijkstraHeapTest extends AbstractBinHeapTest {
         assertEquals("90.0, 99.0, 100.0, 100.0, 110.0, 120.0, 130.0, 140.0, "
                 + "150.0, 160.0, 160.0, 170.0, 180.0, 190.0", to.toKeyString());
     }
-
 //    @Test
 //    public void testTodoUpdate() {
 //        MyDijkstraHeap heap = new MyDijkstraHeap(4, 16, 100);

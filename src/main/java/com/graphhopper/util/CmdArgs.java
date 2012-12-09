@@ -16,7 +16,6 @@
 package com.graphhopper.util;
 
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.LinkedHashMap;
@@ -24,7 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Stores command line options in a mapped. The case of the key is ignored.
+ * Stores command line options in a map. The capitalization of the key is ignored.
  *
  * @author Peter Karich
  */

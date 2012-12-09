@@ -16,9 +16,15 @@
 package com.graphhopper.storage;
 
 /**
- * Abstraction of the underlying datastructure. Current implementations are RAM and memory mapped
- * kind. After construction and before usage you'll have to call createNew or a successfully
- * Storable.loadExisting
+ * Abstraction of the underlying datastructure with a unique id and location. To ensure that the id
+ * is unique use a Directory.attach or findAttach, if you don't need uniqueness call
+ * Directory.create. Current implementations are RAM and memory mapped access. To have a useable
+ * instance do the following:
+ *
+ * <pre>
+ * if(!storage.loadExisting())
+ *    storage.createNew(bytes)
+ * </pre>
  *
  * @author Peter Karich
  */

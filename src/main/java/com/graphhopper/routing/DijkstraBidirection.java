@@ -26,7 +26,7 @@ import com.graphhopper.util.GraphUtility;
 /**
  * Calculates shortest path in bidirectional way. Compared to DijkstraBidirectionRef this class is
  * more memory efficient as it does not go the normal Java way via references. In first tests this
- * class saves 30% memory, but as you can see it is a bit more complicated.
+ * class saves 30% memory, but as you can see it is more complicated.
  *
  * TODO: use only one EdgeWrapper to save memory. This is not easy if we want it to be as fast as
  * the current solution. But we need to try it out if a forwardSearchBitset.contains(ref) is that

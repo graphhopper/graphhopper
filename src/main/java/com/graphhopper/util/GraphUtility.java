@@ -19,7 +19,6 @@ import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.SpatialKeyAlgo;
-import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;

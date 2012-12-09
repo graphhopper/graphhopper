@@ -22,7 +22,7 @@ import com.graphhopper.util.EdgeSkipIterator;
  *
  * @author Peter Karich,
  */
-public interface LevelGraph extends WritableGraph {
+public interface LevelGraph extends Graph {
 
     void setLevel(int index, int level);
 

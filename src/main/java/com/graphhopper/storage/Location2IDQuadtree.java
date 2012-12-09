@@ -34,8 +34,9 @@ import org.slf4j.LoggerFactory;
  * This class is an index mapping lat,lon coordinates to one node id or index of a routing graph.
  *
  * This implementation is the most memory efficient representation for indices which maps to a
- * routing graph. As a minor drawback it involves that you have to post-process the findID() query.
- * See the javadocs.
+ * routing graph. But it is not the most efficient one
+ *
+ * @see Location2IDPreciseIndex for a more precise Location2IDIndex
  *
  * @author Peter Karich
  */

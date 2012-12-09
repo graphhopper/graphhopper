@@ -18,7 +18,7 @@ package com.graphhopper.storage;
 import java.io.Closeable;
 
 /**
- * A simple interface for storage abstraction.
+ * Interface for a storage abstraction.
  *
  * @author Peter Karich
  */

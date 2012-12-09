@@ -29,8 +29,9 @@ import java.util.PriorityQueue;
 /**
  * Calculates shortest path in bidirectional way.
  *
- * 'Ref' stands for reference implementation and is using the normal Java-'reference'-way
+ * 'Ref' stands for reference implementation and is using the normal Java-'reference'-way.
  *
+ * @see DijkstraBidirection for an optimized but more complicated version
  * @author Peter Karich,
  */
 public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {

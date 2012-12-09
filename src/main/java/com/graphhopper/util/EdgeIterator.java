@@ -17,8 +17,7 @@ package com.graphhopper.util;
 
 /**
  * Iterates through all edges of one node. Avoids object creation in-between via direct access
- * methods. These methods can be implemented as lazy fetching but often this will be avoid to "fetch
- * the properties as a whole" (benefits for transactions, locks, etc)
+ * methods.
  *
  * Usage:
  * <pre>
@@ -58,7 +57,7 @@ public interface EdgeIterator {
     double distance();
 
     int flags();
-    
+
     boolean isEmpty();
-    public static final int NO_EDGE = -1;   
+    public static final int NO_EDGE = -1;
 }

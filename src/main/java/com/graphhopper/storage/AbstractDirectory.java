@@ -64,7 +64,8 @@ public abstract class AbstractDirectory implements Directory, Storable {
         return attach(create(id));
     }
 
-    private DataAccess attach(DataAccess da) {
+    @Override
+    public DataAccess attach(DataAccess da) {
         if (map.put(da.getId(), da) != null)
             throw new IllegalStateException("Cannot attach multiple DataAccess objects for the same id:" + da.getId());
         return da;
@@ -72,11 +73,11 @@ public abstract class AbstractDirectory implements Directory, Storable {
 
     @Override
     public DataAccess create(String id) {
-        checkClosed();        
+        checkClosed();
         String name = id + counter;
         DataAccess da = create(id, location + name);
         counter++;
-        nameMap.put(da, name);        
+        nameMap.put(da, name);
         return da;
     }
 

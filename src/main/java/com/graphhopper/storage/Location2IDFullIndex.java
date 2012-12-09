@@ -20,6 +20,8 @@ import com.graphhopper.util.DistanceCosProjection;
 import com.graphhopper.util.shapes.Circle;
 
 /**
+ * Very slow O(n) Location2IDIndex but no RAM required.
+ *
  * @author Peter Karich
  */
 public class Location2IDFullIndex implements Location2IDIndex {

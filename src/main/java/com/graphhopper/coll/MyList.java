@@ -74,8 +74,8 @@ public class MyList<T> {
     }
 
     /**
-     * Sets the size accordingly and if toSize is too big then ensureCapacity.
-     * Problem: if current size will be expanded the elements stay always 'null'!
+     * Sets the size accordingly and if toSize is too big then ensureCapacity. Problem: if current
+     * size will be expanded the elements stay always 'null'!
      */
     private void trimTo(int toSize) {
         // TODO should we shrink the array if toSize is too low?        

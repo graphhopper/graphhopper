@@ -22,8 +22,8 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class MySortedCollectionTest {    
-    
+public class MySortedCollectionTest {
+
     @Test
     public void testPoll() {
         MySortedCollection instance = new MySortedCollection(100);

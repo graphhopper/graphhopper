@@ -20,6 +20,7 @@ import gnu.trove.list.array.TIntArrayList;
 
 /**
  * Simplyfies a list of points which are not too far away.
+ * http://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
  *
  * @author Peter Karich
  */

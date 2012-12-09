@@ -31,10 +31,10 @@ import java.util.PriorityQueue;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
- * bidirectional dijkstra is far more efficient than a single direction one. The same does not
- * getMinWeight for a bidirectional A* as the finish condition can not be so strict which leads to
- * either suboptimal paths or suboptimal node exploration (too many nodes). Still very good
- * approximations with a rougly twice times faster running time than the normal A* can be reached.
+ * bidirectional dijkstra is far more efficient than a single direction one. The same does not hold
+ * for a bidirectional A* as the finish condition can not be so strict which leads to either
+ * suboptimal paths or suboptimal node exploration (too many nodes). Still very good approximations
+ * with a rougly twice times faster running time than the normal A* can be reached.
  *
  * Computing the Shortest Path: A∗ Search Meets Graph Theory ->
  * http://research.microsoft.com/apps/pubs/default.aspx?id=64511

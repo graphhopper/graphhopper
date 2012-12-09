@@ -33,6 +33,8 @@ public interface Directory {
      */
     DataAccess findAttach(String id);
 
+    DataAccess attach(DataAccess da);
+
     /**
      * Creates a new DataAccess object with a unique location and the specified id without attaching
      * it.

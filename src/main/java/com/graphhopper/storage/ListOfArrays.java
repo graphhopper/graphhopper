@@ -18,6 +18,8 @@ package com.graphhopper.storage;
 import gnu.trove.list.array.TIntArrayList;
 
 /**
+ * List of List<Integer>
+ *
  * @author Peter Karich
  */
 public class ListOfArrays {

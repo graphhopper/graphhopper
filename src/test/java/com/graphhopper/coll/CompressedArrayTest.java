@@ -57,7 +57,7 @@ public class CompressedArrayTest {
         for (int i = 0; i < 10000; i++) {
             arr.write(i / 1000.0, rand.nextDouble() * 90);
         }
-        
+
         arr.flush();
         CoordTrig coord = arr.get(0);
         assertEquals(0, coord.lat, 1e-6);

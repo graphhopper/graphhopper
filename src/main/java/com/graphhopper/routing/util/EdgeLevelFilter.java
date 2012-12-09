@@ -19,7 +19,7 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 
 /**
- * Only certain nodes are accepted and therefor the others are filtered away.
+ * Only certain nodes are accepted and therefor the others are filtered out.
  *
  * @author Peter Karich
  */

@@ -19,7 +19,10 @@ import com.graphhopper.util.shapes.BBox;
 import static java.lang.Math.*;
 
 /**
- * Calculates the distance of two points on earth.
+ * Calculates the distance of two points or one point and an edge on earth. Allow subclasses to
+ * implement less or more precise calculations (so: do not use static methods!).
+ * 
+ * http://en.wikipedia.org/wiki/Haversine_formula
  *
  * @author Peter Karich,
  */

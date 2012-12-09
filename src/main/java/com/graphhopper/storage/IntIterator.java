@@ -15,8 +15,6 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.EdgeIterator;
-
 /**
  * @author Peter Karich
  */

@@ -28,11 +28,10 @@ import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.array.TIntArrayList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Faster and more precise index compared to Location2IDQuadtree.
+ * More precise index compared to Location2IDQuadtree. Preparation takes longer and it requires a
+ * lot more RAM.
  *
  * 1. use an array organized as quadtree. I.e. you can devide your area into tiles, and per tile you
  * have an array entry.

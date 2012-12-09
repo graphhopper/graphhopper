@@ -50,7 +50,7 @@ public class OSMIDSegmentedMap {
     public void write(long key) {
         if (key <= lastKey)
             throw new IllegalStateException("Not supported: key " + key + " is lower than last one " + lastKey);
-        
+
         currentIndex++;
         if (currentIndex >= bucketSize) {
             currentBucket++;

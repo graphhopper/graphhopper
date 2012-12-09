@@ -32,7 +32,7 @@ import com.graphhopper.util.shapes.BBox;
  *
  * @author Peter Karich
  */
-public class GraphStorage implements WritableGraph, Storable {
+public class GraphStorage implements Graph, Storable {
 
     protected static final int EMPTY_LINK = 0;
     private static final float INC_FACTOR = 1.5f;

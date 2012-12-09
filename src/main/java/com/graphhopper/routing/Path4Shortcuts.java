@@ -81,7 +81,7 @@ public class Path4Shortcuts extends PathBidirRef {
 
         int node = tmpIter.fromNode();
         TIntArrayList tmpNodeList = new TIntArrayList();
-        while (true) {            
+        while (true) {
             tmpNodeList.add(node);
             tmpIter = g.getEdges(node);
             tmpIter.next();
@@ -89,7 +89,7 @@ public class Path4Shortcuts extends PathBidirRef {
                 if (!tmpIter.next())
                     throw new IllegalStateException("node should have two degree:" + node);
             }
-            
+
             avoidNode = node;
             node = tmpIter.node();
             // TODO introduce edge filter here too?

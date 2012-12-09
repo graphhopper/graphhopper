@@ -16,7 +16,6 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyDijkstraHeap;
 import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
@@ -26,6 +25,9 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 /**
+ * Implements a single source shortest path algorithm
+ * http://en.wikipedia.org/wiki/Dijkstra's_algorithm
+ *
  * @author Peter Karich,
  */
 public class DijkstraSimple extends AbstractRoutingAlgorithm {

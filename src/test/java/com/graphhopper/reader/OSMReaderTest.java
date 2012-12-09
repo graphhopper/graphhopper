@@ -85,7 +85,7 @@ public class OSMReaderTest {
         assertEquals(93146.888, iter.distance(), 1);
 
         assertEquals(9.432, graph.getLongitude(reader.getLocation2IDIndex().findID(51.25, 9.43)), 1e-3);
-        assertEquals(9.4, graph.getLongitude(reader.getLocation2IDIndex().findID(51.2, 9.4)), 1e-3);        
+        assertEquals(9.4, graph.getLongitude(reader.getLocation2IDIndex().findID(51.2, 9.4)), 1e-3);
         assertEquals(10, graph.getLongitude(reader.getLocation2IDIndex().findID(49, 10)), 1e-3);
         assertEquals(51.249, graph.getLatitude(reader.getLocation2IDIndex().findID(51.2492152, 9.4317166)), 1e-3);
     }

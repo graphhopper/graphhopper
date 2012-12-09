@@ -136,8 +136,7 @@ public class CarStreetType {
 
     /**
      * A map which associates string to speed. The speed is calculated from the integer with FACTOR.
-     * I.e. only 1 byte is necessary.
-     * Get some impression:
+     * I.e. only 1 byte is necessary. Get some impression:
      * http://www.itoworld.com/map/124#fullscreen
      * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
      */

@@ -19,7 +19,7 @@ package com.graphhopper.storage;
  * Provides a way to map realword data "lat,lon" to internal ids/indices of a memory efficient graph
  * - often just implemented as an array.
  *
- * The implementations needs to be thread safe!
+ * The implementations of findID needs to be thread safe!
  *
  * @author Peter Karich
  */

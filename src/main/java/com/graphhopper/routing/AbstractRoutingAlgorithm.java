@@ -53,7 +53,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         RoutingAlgorithm algo;
         if ("dijkstrabi".equalsIgnoreCase(algoStr))
             algo = new DijkstraBidirectionRef(g);
-        else if ("dijkstraNative".equalsIgnoreCase(algoStr))                  
+        else if ("dijkstraNative".equalsIgnoreCase(algoStr))
             algo = new DijkstraBidirection(g);
         else if ("dijkstra".equalsIgnoreCase(algoStr))
             algo = new DijkstraSimple(g);

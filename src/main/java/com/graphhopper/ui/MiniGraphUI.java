@@ -18,8 +18,6 @@ package com.graphhopper.ui;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.reader.OSMReader;
-import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
@@ -41,6 +39,9 @@ import org.slf4j.LoggerFactory;
 /**
  * A rough graphical user interface for visualizing the OSM graph. Mainly for debugging algorithms
  * and spatial datastructures.
+ *
+ * Use the project at https://github.com/graphhopper/graphhopper-web for a
+ * better/faster/userfriendly/... alternative!
  *
  * @author Peter Karich
  */
@@ -76,7 +77,7 @@ public class MiniGraphUI {
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
-        this.index = reader.getLocation2IDIndex();        
+        this.index = reader.getLocation2IDIndex();
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
 //        this.algo = new DebugAStar(graph, mg);
@@ -143,7 +144,7 @@ public class MiniGraphUI {
                         mg.plotEdge(g2, lat, lon, lat2, lon2);
                     }
                 }
-                
+
 //                g2.setColor(Color.red);
 //                DijkstraSimple dijkstra = new DijkstraSimple(graph);
 //                Path p1 = calcPath(dijkstra);

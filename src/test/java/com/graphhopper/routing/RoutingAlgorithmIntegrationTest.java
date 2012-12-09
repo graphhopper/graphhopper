@@ -79,7 +79,7 @@ public class RoutingAlgorithmIntegrationTest {
         try {
             // make sure we are using the latest file format
             Helper.deleteDir(new File(graphFile));
-            OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).                    
+            OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
                     put("osmreader.graph-location", graphFile).
                     put("osmreader.dataaccess", "inmemory"));
             Graph g = osm.getGraph();

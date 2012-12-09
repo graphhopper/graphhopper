@@ -21,7 +21,7 @@ import com.graphhopper.storage.Graph;
 import gnu.trove.stack.array.TIntArrayStack;
 
 /**
- * breadth first search (BFS) or depth first search (DFS)
+ * This class can be used for breadth first search (BFS) or depth first search (DFS)
  *
  * @author Peter Karich,
  */

@@ -53,13 +53,13 @@ public class MyDijkstraHeap2Test extends AbstractBinHeapTest {
         heap.insert(4, 3);
         heap.insert(4, 4);
         heap.insert(4, 5);
-        heap.insert(5, 6);        
+        heap.insert(5, 6);
 
         heap.removeSorted(4, 4);
         assertEquals(5, heap.pollElement().intValue());
         assertEquals(3, heap.pollElement().intValue());
         assertEquals(6, heap.pollElement().intValue());
-        
+
         try {
             heap.removeSorted(4, 6);
             assertTrue(false);

@@ -32,6 +32,6 @@ public class SparseLongLongArrayTest {
 
         a = new long[]{9};
         assertEquals(~0, SparseLongLongArray.binarySearch(a, 0, 1, 5));
-        assertEquals(~1, SparseLongLongArray.binarySearch(a, 0, 1, 50));        
+        assertEquals(~1, SparseLongLongArray.binarySearch(a, 0, 1, 50));
     }
 }

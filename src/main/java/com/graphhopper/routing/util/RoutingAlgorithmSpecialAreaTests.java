@@ -37,6 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Integration tests for one bigger area - at the moment Unterfranken (Germany).
+ *
  * @author Peter Karich
  */
 public class RoutingAlgorithmSpecialAreaTests {

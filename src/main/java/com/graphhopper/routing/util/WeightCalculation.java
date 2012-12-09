@@ -15,8 +15,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.EdgeIterator;
-
 /**
  * Specifies how the best route is calculated. E.g. the fastest or shortest route.
  *
