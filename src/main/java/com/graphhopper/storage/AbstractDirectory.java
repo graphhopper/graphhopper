@@ -43,6 +43,7 @@ public abstract class AbstractDirectory implements Directory {
     protected Map<DataAccess, String> nameMap = new IdentityHashMap<DataAccess, String>();
     protected final String location;
     private int counter = 0;
+    private boolean loaded = false;
     private boolean closed = false;
 
     public AbstractDirectory(String _location) {
@@ -51,13 +52,16 @@ public abstract class AbstractDirectory implements Directory {
         if (!_location.endsWith("/"))
             _location += "/";
         location = _location;
+        File dir = new File(location);
+        if (dir.exists() && !dir.isDirectory())
+            throw new RuntimeException("file '" + dir + "' exists but is not a directory");
     }
 
     protected abstract DataAccess create(String id, String location);
 
     @Override
     public DataAccess findAttach(String id) {
-        checkClosed();
+        loadExisting();
         DataAccess da = map.get(id);
         if (da != null)
             return da;
@@ -67,8 +71,20 @@ public abstract class AbstractDirectory implements Directory {
 
     @Override
     public DataAccess attach(DataAccess da) {
+        return attach(da, true);
+    }
+
+    public DataAccess attach(DataAccess da, boolean flush) {
         if (map.put(da.getId(), da) != null)
             throw new IllegalStateException("Cannot attach multiple DataAccess objects for the same id:" + da.getId());
+        if (flush)
+            flush();
+        return da;
+    }
+
+    private DataAccess _create(String id, String name) {
+        DataAccess da = create(id, location + name);
+        nameMap.put(da, name);
         return da;
     }
 
@@ -76,9 +92,8 @@ public abstract class AbstractDirectory implements Directory {
     public DataAccess create(String id) {
         checkClosed();
         String name = id + counter;
-        DataAccess da = create(id, location + name);
         counter++;
-        nameMap.put(da, name);
+        DataAccess da = _create(id, name);
         return da;
     }
 
@@ -107,9 +122,11 @@ public abstract class AbstractDirectory implements Directory {
         return location;
     }
 
-    @Override
-    public boolean loadExisting() {
+    protected boolean loadExisting() {
         checkClosed();
+        if (loaded)
+            return true;
+        loaded = true;
         Properties properties = new Properties();
         try {
             Reader reader = createReader(location + "info");
@@ -121,7 +138,7 @@ public abstract class AbstractDirectory implements Directory {
                     if (id.startsWith("_"))
                         continue;
                     String name = e.getValue().toString();
-                    attach(create(id, location + name));
+                    attach(_create(id, name), false);
                 }
                 return true;
             } finally {
@@ -132,12 +149,13 @@ public abstract class AbstractDirectory implements Directory {
         }
     }
 
-    @Override
-    public void flush() {
+    protected void flush() {
         checkClosed();
         Properties properties = new Properties();
         for (DataAccess da : getAll()) {
             String name = nameMap.get(da);
+            if (name == null)
+                throw new RuntimeException("no name found for " + da.getId());
             properties.put(da.getId(), name);
         }
         properties.put("_version", Helper.VERSION);
@@ -158,11 +176,10 @@ public abstract class AbstractDirectory implements Directory {
         return new FileWriter(location);
     }
 
-    protected Reader createReader(String location) throws FileNotFoundException {
+    protected Reader createReader(String location) throws IOException {
         return new FileReader(location);
     }
 
-    @Override
     public void close() {
         closed = true;
     }
@@ -173,7 +190,6 @@ public abstract class AbstractDirectory implements Directory {
                     + " already closed:" + location);
     }
 
-    @Override
     public long capacity() {
         long cap = 0;
         for (DataAccess da : getAll()) {

@@ -17,6 +17,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
 import java.io.File;
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -68,11 +69,21 @@ public class RAMDirectoryTest {
                 return reader;
             }
         };
-        dir.loadExisting();
         assertEquals(location + "/nice1", dir.findAttach("nice").getLocation());
         DataAccess da = dir.findAttach("ui");
         assertEquals("ui", da.getId());
         assertEquals(location + "/ui3", da.getLocation());
+    }
+
+    @Test
+    public void testLoadPropertiesNoFile() {
+        RAMDirectory dir = new RAMDirectory(location, true) {
+            @Override protected Reader createReader(String location) throws IOException {
+                throw new IOException("I cannot find location");
+            }
+        };
+        assertEquals("nodes", dir.findAttach("nodes").getId());
+        assertEquals("edges", dir.findAttach("edges").getId());
     }
 
     @Test
@@ -85,8 +96,7 @@ public class RAMDirectoryTest {
         };
         dir.findAttach("testing");
         dir.findAttach("nice");
-        dir.flush();
-        Set<String> mySet = new HashSet<String>(Arrays.asList(sw.toString().split("\n")));        
+        Set<String> mySet = new HashSet<String>(Arrays.asList(sw.toString().split("\n")));
         assertTrue(mySet.toString(), mySet.contains("testing=testing0"));
         assertTrue(mySet.toString(), mySet.contains("nice=nice1"));
     }

@@ -24,7 +24,7 @@ import java.util.Collection;
  *
  * @author Peter Karich
  */
-public interface Directory extends Storable {
+public interface Directory {
 
     String getLocation();
 

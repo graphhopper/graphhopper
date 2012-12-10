@@ -59,14 +59,14 @@ public class RAMDirectory extends AbstractDirectory {
     }
 
     @Override
-    public boolean loadExisting() {
+    protected boolean loadExisting() {
         if (store)
             return super.loadExisting();
         return false;
     }
 
     @Override
-    public void flush() {
+    protected void flush() {
         if (store)
             super.flush();
     }

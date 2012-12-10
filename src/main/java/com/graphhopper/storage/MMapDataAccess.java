@@ -48,9 +48,15 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     public MMapDataAccess(String id, String location) {
         super(id, location);
+    }
+
+    private void initRandomAccessFile() {
+        if (raFile != null)
+            return;
+
         try {
             // raFile necessary for loadExisting and alloc
-            raFile = new RandomAccessFile(location, "rw");
+            raFile = new RandomAccessFile(getLocation(), "rw");
         } catch (Exception x) {
             throw new RuntimeException(x);
         }
@@ -60,6 +66,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     public void createNew(long bytes) {
         if (!segments.isEmpty())
             throw new IllegalThreadStateException("already created");
+        initRandomAccessFile();
         bytes = Math.max(10 * 4, bytes);
         ensureCapacity(bytes);
     }
@@ -146,6 +153,7 @@ public class MMapDataAccess extends AbstractDataAccess {
             if (closed)
                 return false;
 
+            initRandomAccessFile();
             long byteCount = readHeader(raFile);
             if (byteCount < 0)
                 return false;
