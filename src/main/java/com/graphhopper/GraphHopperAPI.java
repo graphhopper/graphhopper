@@ -18,7 +18,7 @@ package com.graphhopper;
 import com.graphhopper.util.shapes.GeoPoint;
 
 /**
- * Wrapper of the graphhopper online or offline API.
+ * Wrapper of the graphhopper online or offline API. Provides read only access.
  *
  * Usage:
  * <pre>

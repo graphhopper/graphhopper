@@ -53,6 +53,14 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper() {
     }
 
+    /**
+     * For testing
+     */
+    GraphHopper(Graph g) {
+        this.graph = g;
+        initIndex(new RAMDirectory());
+    }
+
     public GraphHopper setInMemory(boolean inMemory, boolean storeOnFlush) {
         if (inMemory) {
             this.inMemory = true;
@@ -78,6 +86,9 @@ public class GraphHopper implements GraphHopperAPI {
     // TODO accept zipped folders and osm files too!
     @Override
     public GraphHopper load(String graphHopperFile) {
+        if (graph != null)
+            throw new IllegalStateException("graph is already loaded");
+
         GraphStorage storage;
         Directory dir;
         if (memoryMapped) {
@@ -88,6 +99,7 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("either memory mapped or in-memory!");
 
         if (levelGraph)
+            // TODO use level algorithm then!?
             storage = new LevelGraphStorage(dir);
         else
             storage = new GraphStorage(dir);
@@ -95,15 +107,8 @@ public class GraphHopper implements GraphHopperAPI {
         if (!storage.loadExisting())
             throw new IllegalStateException("TODO load via OSMReader!");
 
-        Location2IDQuadtree tmp = new Location2IDQuadtree(graph, dir);
-        if (!tmp.loadExisting()) {
-            BBox bbox = graph.getBounds();
-            double dist = new DistanceCalc().calcDist(bbox.maxLat, bbox.minLon, bbox.minLat, bbox.maxLon);
-            // convert to km and maximum 5000km
-            dist = Math.min(dist / 1000, 5000);
-            tmp.prepareIndex(Math.max(2000, (int) (dist * dist)));
-        }
-        index = tmp;
+        graph = storage;
+        initIndex(dir);
         return this;
     }
 
@@ -130,8 +135,20 @@ public class GraphHopper implements GraphHopperAPI {
         List<GeoPoint> list = new ArrayList<GeoPoint>(nodes);
         if (path.found())
             for (int i = 0; i < nodes; i++) {
-                list.add(new GeoPoint(graph.getLatitude(i), graph.getLongitude(i)));
+                list.add(new GeoPoint(graph.getLatitude(path.node(i)), graph.getLongitude(path.node(i))));
             }
         return new PathHelper(list).distance(path.distance()).time(path.time());
+    }
+
+    private void initIndex(Directory dir) {
+        Location2IDQuadtree tmp = new Location2IDQuadtree(graph, dir);
+        if (!tmp.loadExisting()) {
+            BBox bbox = graph.getBounds();
+            double dist = new DistanceCalc().calcDist(bbox.maxLat, bbox.minLon, bbox.minLat, bbox.maxLon);
+            // convert to km and maximum 5000km => 25mio capacity, minimum capacity is 2000
+            dist = Math.min(dist / 1000, 5000);
+            tmp.prepareIndex(Math.max(2000, (int) (dist * dist)));
+        }
+        index = tmp;
     }
 }
