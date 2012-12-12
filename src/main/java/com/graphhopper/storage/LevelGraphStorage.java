@@ -27,7 +27,11 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     private final int I_LEVEL;
 
     public LevelGraphStorage(Directory dir) {
-        super(dir);
+        this(dir, dir.findAttach("nodes"), dir.findAttach("edges"));
+    }
+
+    LevelGraphStorage(Directory dir, DataAccess nodes, DataAccess edges) {
+        super(dir, nodes, edges);
         I_SKIP_EDGE = nextEdgeEntryIndex();
         I_LEVEL = nextNodeEntryIndex();
         initNodeAndEdgeEntrySize();

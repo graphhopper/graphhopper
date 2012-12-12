@@ -124,6 +124,11 @@ public abstract class AbstractDataAccess implements DataAccess {
     }
 
     @Override
+    public int getSegmentSize() {
+        return segmentSizeInBytes;
+    }
+
+    @Override
     public String toString() {
         return id;
     }

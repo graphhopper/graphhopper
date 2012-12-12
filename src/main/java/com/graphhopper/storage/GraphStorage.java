@@ -24,6 +24,9 @@ import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -45,13 +48,19 @@ public class GraphStorage implements Graph, Storable {
     private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS;
     protected int edgeEntrySize;
     protected DataAccess edges;
-    // starting from 1 => fresh int arrays do not need to be initialized with -1
+    /**
+     * specified how many entries (integers) are used per edge. starting from 1 => fresh int arrays
+     * do not need to be initialized with -1
+     */
     private int edgeCount;
     // node memory layout: edgeRef,lat,lon
     private final int N_EDGE_REF, N_LAT, N_LON;
+    /**
+     * specified how many entries (integers) are used per node
+     */
     protected int nodeEntrySize;
     protected DataAccess nodes;
-    // starting from 0 (inconsistent :/) => normal iteration and no internal correction is possible
+    // starting from 0 (inconsistent :/) => normal iteration and no internal correction is necessary.
     // problem: we exported this to external API => or should we change the edge count in order to 
     // have [0,n) based edge indices in outside API?
     private int nodeCount;
@@ -65,7 +74,7 @@ public class GraphStorage implements Graph, Storable {
         this(dir, dir.findAttach("nodes"), dir.findAttach("edges"));
     }
 
-    private GraphStorage(Directory dir, DataAccess nodes, DataAccess edges) {
+    GraphStorage(Directory dir, DataAccess nodes, DataAccess edges) {
         this.dir = dir;
         this.nodes = nodes;
         this.edges = edges;
@@ -696,7 +705,21 @@ public class GraphStorage implements Graph, Storable {
         DataAccess tmpEdges = dir.create("edges");
         int newNodeCount = nodeCount - deletedNodeCount;
         MyBitSet avoidDuplicateEdges = new MyBitSetImpl(newNodeCount);
-        GraphStorage tmpGraph = new GraphStorage(dir, tmpNodes, tmpEdges).createNew(newNodeCount);
+
+        // TODO replace with newThis
+        GraphStorage tmpGraph;
+        if (this instanceof LevelGraphStorage)
+            tmpGraph = new LevelGraphStorage(dir, tmpNodes, tmpEdges);
+        else
+            tmpGraph = new GraphStorage(dir, tmpNodes, tmpEdges);
+
+        tmpGraph.createNew(newNodeCount);
+
+        int nodesPerSegment = nodes.getSegmentSize() / nodeEntrySize / 4;
+        List<Integer> positions = Arrays.asList(E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS);
+        Collections.sort(positions);
+        int maxStandardEdgePosition = positions.get(positions.size() - 1);
+
         // TODO nearly identical to GraphUtility.createSortedGraph 
         for (int oldNode = 0; oldNode < nodeCount; oldNode++) {
             int newNode = oldToNewMap.get(oldNode);
@@ -719,9 +742,22 @@ public class GraphStorage implements Graph, Storable {
                 if (connectedNewNode < 0 || avoidDuplicateEdges.contains(connectedNewNode))
                     continue;
 
-                // TODO what if its a level graph!!??
-                // write via tmpGraph.writeEdge(edgeId, newNode, connectedNewNode, linkA, linkB, flags, distance);
-                tmpGraph.edge(newNode, connectedNewNode, iter.distance(), iter.flags());
+                int fromNodeId = newNode;
+                int toNodeId = connectedNewNode;
+                int newOrExistingEdge = tmpGraph.nextEdge();
+                tmpGraph.connectNewEdge(fromNodeId, newOrExistingEdge);
+                tmpGraph.connectNewEdge(toNodeId, newOrExistingEdge);
+                tmpGraph.writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, iter.distance(), iter.flags());
+
+                // copy values of extended graphs is currently NOT supported/needed
+                // PROBLEM: edge ids are changing so we need an edgeOldToNewMap too!
+//                long oldEdgePointer = (long) iter.edge() * edgeEntrySize;
+//                long newEdgePointer = (long) newOrExistingEdge * edgeEntrySize;
+//                for (int j = maxStandardEdgePosition; j < edgeEntrySize; j++) {
+//                    int value = edges.getInt(oldEdgePointer + j);
+//                    if (j != N_EDGE_REF)
+//                        tmpEdges.setInt(newEdgePointer + j, value);
+//                }
             }
 
             // TODO CLEAR free segments of tmpNodes AND tmpEdges in order to reduce memory usage!!

@@ -73,8 +73,8 @@ public class LevelGraphStorageTest extends AbstractGraphTester {
         g.markNodeDeleted(10);
         g.optimize();
         assertEquals(9, g.getLevel(9));
-        assertEquals(19, g.getLevel(10));
-        assertEquals(11, g.getLevel(11));
+        assertEquals(11, g.getLevel(10));
+        assertEquals(12, g.getLevel(11));
     }
 
     @Test

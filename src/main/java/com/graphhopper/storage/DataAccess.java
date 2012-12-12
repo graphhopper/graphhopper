@@ -89,6 +89,11 @@ public interface DataAccess extends Storable {
      */
     DataAccess setSegmentSize(int bytes);
 
+    /**
+     * @return the size of one segment in bytes
+     */
+    int getSegmentSize();
+
     int getSegments();
 
     int getVersion();

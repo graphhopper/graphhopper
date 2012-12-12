@@ -17,7 +17,6 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -44,7 +43,6 @@ public abstract class AbstractDirectory implements Directory {
     protected final String location;
     private int counter = 0;
     private boolean loaded = false;
-    private boolean closed = false;
 
     public AbstractDirectory(String _location) {
         if (_location == null || _location.isEmpty())
@@ -90,7 +88,6 @@ public abstract class AbstractDirectory implements Directory {
 
     @Override
     public DataAccess create(String id) {
-        checkClosed();
         String name = id + counter;
         counter++;
         DataAccess da = _create(id, name);
@@ -123,7 +120,6 @@ public abstract class AbstractDirectory implements Directory {
     }
 
     protected boolean loadExisting() {
-        checkClosed();
         if (loaded)
             return true;
         loaded = true;
@@ -150,7 +146,6 @@ public abstract class AbstractDirectory implements Directory {
     }
 
     protected void flush() {
-        checkClosed();
         Properties properties = new Properties();
         for (DataAccess da : getAll()) {
             String name = nameMap.get(da);
@@ -178,16 +173,6 @@ public abstract class AbstractDirectory implements Directory {
 
     protected Reader createReader(String location) throws IOException {
         return new FileReader(location);
-    }
-
-    public void close() {
-        closed = true;
-    }
-
-    void checkClosed() {
-        if (closed)
-            throw new IllegalStateException("Cannot insert new DataAccess files as the directory is"
-                    + " already closed:" + location);
     }
 
     public long capacity() {
