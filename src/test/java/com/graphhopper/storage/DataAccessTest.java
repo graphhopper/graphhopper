@@ -214,4 +214,11 @@ public abstract class DataAccessTest {
         da.trimTo(0);
         assertEquals(1, da.getSegments());
     }
+
+    @Test
+    public void testSegmentSize() {
+        DataAccess da = createDataAccess(location);
+        da.setSegmentSize(20);
+        assertEquals(128, da.getSegmentSize());
+    }
 }

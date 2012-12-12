@@ -183,13 +183,17 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void close() {
+        // cleaning all ByteBuffers?
+        // Helper7.cleanMappedByteBuffer(bb);
         Helper.close(raFile);
+        segments.clear();
         closed = true;
     }
 
     @Override
     public void setInt(long intIndex, int value) {
         intIndex *= 4;
+        // TODO improve via bit operations! see RAMDataAccess
         int bufferIndex = (int) (intIndex / segmentSizeInBytes);
         int index = (int) (intIndex % segmentSizeInBytes);
         segments.get(bufferIndex).putInt(index, value);
@@ -235,5 +239,16 @@ public class MMapDataAccess extends AbstractDataAccess {
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    @Override
+    public boolean releaseSegment(int segNumber) {
+        ByteBuffer segment = segments.get(segNumber);
+        if (segment instanceof MappedByteBuffer)
+            ((MappedByteBuffer) segment).force();
+
+        Helper7.cleanMappedByteBuffer(segment);
+        segments.set(segNumber, null);
+        return true;
     }
 }

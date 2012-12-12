@@ -612,7 +612,7 @@ public class GraphStorage implements Graph, Storable {
     public boolean isNodeDeleted(int index) {
         return getDeletedNodes().contains(index);
     }
-    
+
     @Override
     public void optimize() {
         // 1. disconnect all marked edges from nodes
@@ -695,15 +695,11 @@ public class GraphStorage implements Graph, Storable {
         DataAccess tmpEdges = dir.create("edges");
         int newNodeCount = nodeCount - deletedNodeCount;
         MyBitSet avoidDuplicateEdges = new MyBitSetImpl(newNodeCount);
-
-        // TODO replace with newThis
         GraphStorage tmpGraph = newThis(dir, tmpNodes, tmpEdges);
         tmpGraph.createNew(newNodeCount);
-
-        int nodesPerSegment = nodes.getSegmentSize() / nodeEntrySize / 4;
-        List<Integer> positions = Arrays.asList(E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS);
-        Collections.sort(positions);
-        int maxStandardEdgePosition = positions.get(positions.size() - 1);
+        int nodesPerSegment = nodes.getSegmentSize() / (nodeEntrySize * 4);
+        if (nodes.getSegmentSize() % (nodeEntrySize * 4) != 0)
+            nodesPerSegment++;
 
         // TODO nearly identical to GraphUtility.createSortedGraph 
         for (int oldNode = 0; oldNode < nodeCount; oldNode++) {
@@ -720,10 +716,11 @@ public class GraphStorage implements Graph, Storable {
                     tmpNodes.setInt(newNodePointer + j, value);
             }
 
-            EdgeIterator iter = getEdges(oldNode);
-            while (iter.next()) {
-                int connectedNode = iter.node();
-                int connectedNewNode = oldToNewMap.get(connectedNode);
+            EdgeIterator oldIter = getEdges(oldNode);
+            while (oldIter.next()) {
+                int connectedOldNode = oldIter.node();
+                deletedEdges.add(oldIter.edge());
+                int connectedNewNode = oldToNewMap.get(connectedOldNode);
                 if (connectedNewNode < 0 || avoidDuplicateEdges.contains(connectedNewNode))
                     continue;
 
@@ -732,7 +729,7 @@ public class GraphStorage implements Graph, Storable {
                 int newOrExistingEdge = tmpGraph.nextEdge();
                 tmpGraph.connectNewEdge(fromNodeId, newOrExistingEdge);
                 tmpGraph.connectNewEdge(toNodeId, newOrExistingEdge);
-                tmpGraph.writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, iter.distance(), iter.flags());
+                tmpGraph.writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, oldIter.distance(), oldIter.flags());
 
                 // copy values of extended graphs is currently NOT supported/needed
                 // PROBLEM: edge ids are changing so we need an edgeOldToNewMap too!
@@ -745,7 +742,14 @@ public class GraphStorage implements Graph, Storable {
 //                }
             }
 
-            // TODO CLEAR free segments of tmpNodes AND tmpEdges in order to reduce memory usage!!
+            if (oldNode > 0 && oldNode % nodesPerSegment == 0) {
+                int segmentNumber = oldNode / nodesPerSegment - 1;
+                nodes.releaseSegment(segmentNumber);
+                
+                // TODO release segments for edges too
+                // deletedEdges.next();
+                // edges.releaseSegment(edgeSegmentNumber);
+            }
         }
 
         dir.delete(nodes);
