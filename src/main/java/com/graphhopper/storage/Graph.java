@@ -90,10 +90,6 @@ public interface Graph {
 
     boolean isNodeDeleted(int index);
 
-    void markEdgeDeleted(int id);
-
-    boolean isEdgeDeleted(int id);
-
     /**
      * Performs optimization routines like deletion or node rearrangements.
      */

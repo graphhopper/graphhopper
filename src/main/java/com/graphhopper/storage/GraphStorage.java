@@ -549,9 +549,9 @@ public class GraphStorage implements Graph, Storable {
         }
     }
 
-    protected GraphStorage newThis(Directory dir) {
-        // no create here        
-        return new GraphStorage(dir);
+    protected GraphStorage newThis(Directory dir, DataAccess nodes, DataAccess edges) {
+        // no storage.create here!
+        return new GraphStorage(dir, nodes, edges);
     }
 
     @Override
@@ -566,7 +566,7 @@ public class GraphStorage implements Graph, Storable {
         if (this.dir == dir)
             throw new IllegalStateException("cannot copy graph into the same directory!");
 
-        return _copyTo(newThis(dir));
+        return _copyTo(newThis(dir, dir.create("nodes"), dir.create("edges")));
     }
 
     Graph _copyTo(GraphStorage clonedG) {
@@ -612,17 +612,7 @@ public class GraphStorage implements Graph, Storable {
     public boolean isNodeDeleted(int index) {
         return getDeletedNodes().contains(index);
     }
-
-    @Override
-    public void markEdgeDeleted(int index) {
-        getDeletedEdges().add(index);
-    }
-
-    @Override
-    public boolean isEdgeDeleted(int index) {
-        return getDeletedEdges().contains(index);
-    }
-
+    
     @Override
     public void optimize() {
         // 1. disconnect all marked edges from nodes
@@ -707,12 +697,7 @@ public class GraphStorage implements Graph, Storable {
         MyBitSet avoidDuplicateEdges = new MyBitSetImpl(newNodeCount);
 
         // TODO replace with newThis
-        GraphStorage tmpGraph;
-        if (this instanceof LevelGraphStorage)
-            tmpGraph = new LevelGraphStorage(dir, tmpNodes, tmpEdges);
-        else
-            tmpGraph = new GraphStorage(dir, tmpNodes, tmpEdges);
-
+        GraphStorage tmpGraph = newThis(dir, tmpNodes, tmpEdges);
         tmpGraph.createNew(newNodeCount);
 
         int nodesPerSegment = nodes.getSegmentSize() / nodeEntrySize / 4;
