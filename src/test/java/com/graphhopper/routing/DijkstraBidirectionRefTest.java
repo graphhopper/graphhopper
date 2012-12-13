@@ -33,7 +33,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
     public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
-                return new DijkstraBidirectionRef(graph).setType(calc);
+                return new DijkstraBidirectionRef(_graph).setType(calc);
             }
         }.setGraph(g);
     }

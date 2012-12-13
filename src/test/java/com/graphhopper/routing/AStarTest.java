@@ -30,7 +30,7 @@ public class AStarTest extends AbstractRoutingAlgorithmTester {
     public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
-                return new AStar(graph).setType(calc);
+                return new AStar(_graph).setType(calc);
             }
         }.setGraph(g);
     }

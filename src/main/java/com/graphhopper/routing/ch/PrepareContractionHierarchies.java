@@ -21,7 +21,7 @@ import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.routing.util.ShortestCarCalc;
@@ -57,7 +57,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class PrepareContractionHierarchies implements AlgorithmPreparation {
+public class PrepareContractionHierarchies extends AbstractAlgoPreparation<PrepareContractionHierarchies> {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private WeightCalculation prepareWeightCalc;
@@ -72,7 +72,6 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
     private Map<Long, Shortcut> shortcuts = new HashMap<Long, Shortcut>();
     private EdgeLevelFilterCH edgeFilter;
     private OneToManyDijkstraCH algo;
-    private boolean prepared = false;
 
     public PrepareContractionHierarchies() {
         prepareWeightCalc = ShortestCarCalc.DEFAULT;
@@ -91,6 +90,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
 
     @Override
     public PrepareContractionHierarchies doWork() {
+        super.doWork();
         initFromGraph();
         // TODO integrate PrepareRoutingShortcuts -> so avoid all nodes with negative level in the other methods        
         // in PrepareShortcuts level 0 and -1 is already used move that to level 1 and 2 so that level 0 stays as uncontracted
@@ -100,12 +100,7 @@ public class PrepareContractionHierarchies implements AlgorithmPreparation {
         if (!prepareNodes())
             return this;
         contractNodes();
-        prepared = true;
         return this;
-    }
-
-    @Override public boolean isPrepared() {
-        return prepared;
     }
 
     boolean prepareEdges() {

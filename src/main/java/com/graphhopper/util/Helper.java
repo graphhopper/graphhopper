@@ -370,7 +370,7 @@ public class Helper {
     }
 
     /**
-     * Creates a preparation wrapper for the specified algorithm. Warning/TODO: set the graph for
+     * Creates a preparation wrapper for the specified algorithm. Warning/TODO: set the _graph for
      * the instance otherwise you'll get NPE when calling createAlgo. Possible values for
      * algorithmStr: astar (A* algorithm), astarbi (bidirectional A*) dijkstra (Dijkstra),
      * dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
@@ -378,7 +378,7 @@ public class Helper {
     public static AlgorithmPreparation createAlgoPrepare(final String algorithmStr) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
-                return createAlgoFromString(graph, algorithmStr);
+                return createAlgoFromString(_graph, algorithmStr);
             }
         };
     }

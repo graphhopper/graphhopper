@@ -35,12 +35,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class PrepareTowerNodesShortcuts implements AlgorithmPreparation {
+public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareTowerNodesShortcuts> {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private LevelGraph g;
     private int newShortcuts;
-    private boolean prepared = false;
 
     public PrepareTowerNodesShortcuts() {
     }
@@ -59,6 +58,7 @@ public class PrepareTowerNodesShortcuts implements AlgorithmPreparation {
      */
     @Override
     public PrepareTowerNodesShortcuts doWork() {
+        super.doWork();
         newShortcuts = 0;
         int nodes = g.getNodes();
         int maxSkipped = Integer.MIN_VALUE;
@@ -138,12 +138,7 @@ public class PrepareTowerNodesShortcuts implements AlgorithmPreparation {
         logger.info("introduced " + newShortcuts + " new shortcuts in: " + sw.stop().getSeconds() + "s, "
                 + "maxSkipped:" + maxSkipped + ", averageSkipped:" + sumSkipped * 1f / newShortcuts
                 + ", sumSkipped:" + sumSkipped);
-        prepared = true;
         return this;
-    }
-
-    @Override public boolean isPrepared() {
-        return prepared;
     }
 
     /**

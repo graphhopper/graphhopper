@@ -13,25 +13,32 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 
 /**
- *
  * @author Peter Karich
  */
-public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
+public abstract class AbstractAlgoPreparation<T extends AlgorithmPreparation> implements AlgorithmPreparation {
 
-    @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc) {
-        return new NoOpAlgorithmPreparation() {
-            @Override public RoutingAlgorithm createAlgo() {
-                return new AStarBidirection(_graph).setType(calc);
-            }
-        }.setGraph(g);
+    protected Graph _graph;
+    private boolean prepared = false;
+
+    @Override public AlgorithmPreparation setGraph(Graph g) {
+        _graph = g;
+        return this;
+    }
+
+    @Override public T doWork() {
+        if (prepared)
+            throw new IllegalStateException("Call doWork only once!");
+        prepared = true;
+        // no operation
+        return (T) this;
+    }
+
+    @Override public boolean isPrepared() {
+        return prepared;
     }
 }

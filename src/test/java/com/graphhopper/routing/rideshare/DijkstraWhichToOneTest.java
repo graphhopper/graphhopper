@@ -42,7 +42,7 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
     public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
-                return new DijkstraWhichToOne(graph).setType(calc);
+                return new DijkstraWhichToOne(_graph).setType(calc);
             }
         }.setGraph(g);
     }

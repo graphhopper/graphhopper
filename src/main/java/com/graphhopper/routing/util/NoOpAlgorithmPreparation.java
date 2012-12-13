@@ -15,29 +15,11 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.storage.Graph;
-
 /**
  * @author Peter Karich
  */
-public abstract class NoOpAlgorithmPreparation implements AlgorithmPreparation {
+public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<NoOpAlgorithmPreparation> {
 
-    protected Graph graph;
-
-    public NoOpAlgorithmPreparation() {
-    }
-
-    @Override public AlgorithmPreparation setGraph(Graph g) {
-        graph = g;
-        return this;
-    }
-
-    @Override public NoOpAlgorithmPreparation doWork() {
-        // no operation
-        return this;
-    }
-
-    @Override public boolean isPrepared() {
-        return true;
+    public NoOpAlgorithmPreparation() {        
     }
 }
