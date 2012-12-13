@@ -369,23 +369,35 @@ public class Helper {
         }
     }
 
-    public static AlgorithmPreparation createAlgoPrepare(final String str) {
+    /**
+     * Creates a preparation wrapper for the specified algorithm. Warning/TODO: set the graph for
+     * the instance otherwise you'll get NPE when calling createAlgo. Possible values for
+     * algorithmStr: astar (A* algorithm), astarbi (bidirectional A*) dijkstra (Dijkstra),
+     * dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
+     */
+    public static AlgorithmPreparation createAlgoPrepare(final String algorithmStr) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
-                return createAlgoFromString(graph, str);
+                return createAlgoFromString(graph, algorithmStr);
             }
         };
     }
 
-    public static RoutingAlgorithm createAlgoFromString(Graph g, String algoStr) {
+    /**
+     * Possible values: astar (A* algorithm), astarbi (bidirectional A*) dijkstra (Dijkstra),
+     * dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
+     */
+    public static RoutingAlgorithm createAlgoFromString(Graph g, String algorithmStr) {
+        if (g == null)
+            throw new NullPointerException("You have to specify a graph different from null!");
         RoutingAlgorithm algo;
-        if ("dijkstrabi".equalsIgnoreCase(algoStr))
+        if ("dijkstrabi".equalsIgnoreCase(algorithmStr))
             algo = new DijkstraBidirectionRef(g);
-        else if ("dijkstraNative".equalsIgnoreCase(algoStr))
+        else if ("dijkstraNative".equalsIgnoreCase(algorithmStr))
             algo = new DijkstraBidirection(g);
-        else if ("dijkstra".equalsIgnoreCase(algoStr))
+        else if ("dijkstra".equalsIgnoreCase(algorithmStr))
             algo = new DijkstraSimple(g);
-        else if ("astarbi".equalsIgnoreCase(algoStr))
+        else if ("astarbi".equalsIgnoreCase(algorithmStr))
             algo = new AStarBidirection(g).setApproximation(true);
         else
             algo = new AStar(g);

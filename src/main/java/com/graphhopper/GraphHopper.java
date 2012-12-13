@@ -17,6 +17,7 @@ package com.graphhopper;
 
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -46,14 +47,13 @@ public class GraphHopper implements GraphHopperAPI {
     private AlgorithmPreparation prepare;
     private Location2IDIndex index;
     private boolean inMemory = true;
+    private boolean storeOnFlush = true;
     private boolean memoryMapped;
-    private boolean storeOnFlush;
     private boolean levelGraph;
     private double minPathPrecision = 1;
-    private static String defaultAlgo = "astar";
+    private String algoStr = "astar";
 
     public GraphHopper() {
-        prepare = Helper.createAlgoPrepare(defaultAlgo);
     }
 
     /**
@@ -102,10 +102,10 @@ public class GraphHopper implements GraphHopperAPI {
         } else
             throw new IllegalStateException("either memory mapped or in-memory!");
 
-        if (levelGraph)
-            // TODO use level algorithm then!?
+        if (levelGraph) {
             storage = new LevelGraphStorage(dir);
-        else
+            prepare = new PrepareContractionHierarchies();
+        } else
             storage = new GraphStorage(dir);
 
         if (!storage.loadExisting())
@@ -124,19 +124,20 @@ public class GraphHopper implements GraphHopperAPI {
 
     @Override
     public GraphHopper algorithm(String algo) {
-        // TODO does not work with levelgraph/CH!
+        // TODO customizing algorithm does not work with levelgraph/CH! (well, we could allow bidirectional astar ...)
         if (levelGraph)
             throw new IllegalStateException("not supported yet");
 
-        prepare = Helper.createAlgoPrepare(algo);
+        algoStr = algo;
         return this;
     }
 
     @Override
     public PathHelper route(GeoPoint startPoint, GeoPoint endPoint) {
         if (prepare == null)
-            prepare = Helper.createAlgoPrepare(defaultAlgo);
+            prepare = Helper.createAlgoPrepare(algoStr);
 
+        prepare.setGraph(graph);
         RoutingAlgorithm algo = prepare.createAlgo();
         int from = index.findID(startPoint.lat, startPoint.lon);
         int to = index.findID(endPoint.lat, endPoint.lon);

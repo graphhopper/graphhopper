@@ -61,8 +61,8 @@ public interface GraphHopperAPI {
     GraphHopperAPI minPathPrecision(double precision);
 
     /**
-     * Possible values: astar (A* algorithm), dijkstra (Dijkstra), dijkstrabi (bidirectional
-     * Dijkstra) and dijkstraNative (a bit faster bidirectional Dijkstra).
+     * Possible values: astar (A* algorithm), astarbi (bidirectional A*) dijkstra (Dijkstra),
+     * dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
      */
     GraphHopperAPI algorithm(String algo);
 

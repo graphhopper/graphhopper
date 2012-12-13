@@ -175,7 +175,7 @@ public class OSMReader {
     public OSMReader(GraphStorage storage, int expectedNodes) {
         this.graphStorage = storage;
         this.expectedNodes = expectedNodes;
-        this.helper = new OSMReaderHelperDoubleParse(graphStorage, expectedNodes);
+        this.helper = createDoubleParseHelper();
         logger.info("using " + helper.getStorageInfo(storage) + ", memory:" + Helper.getMemInfo());
     }
 
