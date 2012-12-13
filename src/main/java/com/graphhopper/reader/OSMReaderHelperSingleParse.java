@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
  * (and also slower!?) as it stores all occuring nodes and its lat,lon. Only useful for smaller
  * (&lt; 150km) graphs.
  *
+ * @deprecated too slow and too much memory is used
  * @author Peter Karich
  */
 public class OSMReaderHelperSingleParse extends OSMReaderHelper {

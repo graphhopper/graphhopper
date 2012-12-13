@@ -15,6 +15,15 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.AStar;
+import com.graphhopper.routing.AStarBidirection;
+import com.graphhopper.routing.DijkstraBidirection;
+import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.DijkstraSimple;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
+import com.graphhopper.storage.Graph;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -358,6 +367,29 @@ public class Helper {
         } finally {
             in.close();
         }
+    }
+
+    public static AlgorithmPreparation createAlgoPrepare(final String str) {
+        return new NoOpAlgorithmPreparation() {
+            @Override public RoutingAlgorithm createAlgo() {
+                return createAlgoFromString(graph, str);
+            }
+        };
+    }
+
+    public static RoutingAlgorithm createAlgoFromString(Graph g, String algoStr) {
+        RoutingAlgorithm algo;
+        if ("dijkstrabi".equalsIgnoreCase(algoStr))
+            algo = new DijkstraBidirectionRef(g);
+        else if ("dijkstraNative".equalsIgnoreCase(algoStr))
+            algo = new DijkstraBidirection(g);
+        else if ("dijkstra".equalsIgnoreCase(algoStr))
+            algo = new DijkstraSimple(g);
+        else if ("astarbi".equalsIgnoreCase(algoStr))
+            algo = new AStarBidirection(g).setApproximation(true);
+        else
+            algo = new AStar(g);
+        return algo;
     }
 
     /**

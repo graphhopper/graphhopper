@@ -139,14 +139,6 @@ public class GraphUtility {
         return EMPTY;
     }
 
-    public static EdgeIterator until(EdgeIterator edges, int node, double distance) {
-        while (edges.next()) {
-            if (edges.node() == node && edges.distance() == distance)
-                return edges;
-        }
-        return EMPTY;
-    }
-
     public static EdgeIterator until(EdgeIterator edges, int node) {
         while (edges.next()) {
             if (edges.node() == node)
@@ -232,9 +224,8 @@ public class GraphUtility {
         return createSortedGraph(g, sortedGraph, list);
     }
 
-    // 
     /**
-     * Sorts according to the z-curve. Better use sortDFS as a lot memory is necessary.
+     * Sorts the graph according to the z-curve. Better use sortDFS as a lot memory is necessary.
      */
     public static Graph sort(Graph g, Graph sortedGraph, int capacity) {
         // make sure it is a square rootable number -> necessary for spatialkeyalgo

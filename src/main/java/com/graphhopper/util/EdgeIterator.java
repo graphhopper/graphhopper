@@ -37,7 +37,8 @@ public interface EdgeIterator {
     boolean next();
 
     /**
-     * @return the edge id of the current edge
+     * @return the edge id of the current edge. Although the current implementation uses an index
+     * starting from 1, do not make any assumptions about it.
      */
     int edge();
 
@@ -47,7 +48,8 @@ public interface EdgeIterator {
     int fromNode();
 
     /**
-     * @return the node id of the destination node for the current edge.
+     * @return the node id of the destination node for the current edge. The value can lay within [0,
+     * n).
      */
     int node();
 

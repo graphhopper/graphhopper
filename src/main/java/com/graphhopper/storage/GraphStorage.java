@@ -696,6 +696,7 @@ public class GraphStorage implements Graph, Storable {
         int newNodeCount = nodeCount - deletedNodeCount;
         MyBitSet avoidDuplicateEdges = new MyBitSetImpl(newNodeCount);
         GraphStorage tmpGraph = newThis(dir, tmpNodes, tmpEdges);
+        // TODO only aquire two node segments in order to remove memory usage
         tmpGraph.createNew(newNodeCount);
         int nodesPerSegment = nodes.getSegmentSize() / (nodeEntrySize * 4);
         if (nodes.getSegmentSize() % (nodeEntrySize * 4) != 0)
@@ -732,7 +733,7 @@ public class GraphStorage implements Graph, Storable {
                 tmpGraph.writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, oldIter.distance(), oldIter.flags());
 
                 // copy values of extended graphs is currently NOT supported/needed
-                // PROBLEM: edge ids are changing so we need an edgeOldToNewMap too!
+                // edge ids are changing too, so we need an edgeOldToNewMap too!
 //                long oldEdgePointer = (long) iter.edge() * edgeEntrySize;
 //                long newEdgePointer = (long) newOrExistingEdge * edgeEntrySize;
 //                for (int j = maxStandardEdgePosition; j < edgeEntrySize; j++) {

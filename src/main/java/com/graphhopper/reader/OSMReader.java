@@ -15,12 +15,10 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AcceptStreet;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FastestCarCalc;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.PrepareTowerNodesShortcuts;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
@@ -77,7 +75,7 @@ public class OSMReader {
         }
 
         if (args.getBool("osmreader.runshortestpath", false)) {
-            RoutingAlgorithm algo = AbstractRoutingAlgorithm.createAlgoFromString(g, args.get("osmreader.algo", "dijkstra"));
+            RoutingAlgorithm algo = Helper.createAlgoFromString(g, args.get("osmreader.algo", "dijkstra"));
             int iters = args.getInt("osmreader.algoIterations", 50);
             //warmup
             tests.runShortestPathPerf(iters / 10, algo);
@@ -145,18 +143,13 @@ public class OSMReader {
     }
 
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
-        osmReader.setDoubleParse(args.getBool("osmreader.doubleParse", true));
         osmReader.setIndexCapacity(args.getInt("osmreader.locationIndexCapacity", 2000));
         String type = args.get("osmreader.type", "CAR");
         osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
                 type.contains("PUBLIC_TRANSPORT"),
                 type.contains("BIKE"), type.contains("FOOT")));
         final String algoStr = args.get("osmreader.algo", "astar");
-        osmReader.setDefaultAlgoPrepare(new NoOpAlgorithmPreparation() {
-            @Override public RoutingAlgorithm createAlgo() {
-                return AbstractRoutingAlgorithm.createAlgoFromString(graph, algoStr);
-            }
-        });
+        osmReader.setDefaultAlgoPrepare(Helper.createAlgoPrepare(algoStr));
         osmReader.setSort(args.getBool("osmreader.sortGraph", false));
         osmReader.setTowerNodeShortcuts(args.getBool("osmreader.towerNodesShortcuts", false));
         osmReader.setCHShortcuts(args.get("osmreader.chShortcuts", "no"));
@@ -182,7 +175,7 @@ public class OSMReader {
     public OSMReader(GraphStorage storage, int expectedNodes) {
         this.graphStorage = storage;
         this.expectedNodes = expectedNodes;
-        this.helper = new OSMReaderHelperSingleParse(graphStorage, expectedNodes);
+        this.helper = new OSMReaderHelperDoubleParse(graphStorage, expectedNodes);
         logger.info("using " + helper.getStorageInfo(storage) + ", memory:" + Helper.getMemInfo());
     }
 
@@ -222,13 +215,9 @@ public class OSMReader {
 
     public void optimize() {
         logger.info("optimizing ... (" + Helper.getMemInfo() + ")");
-        if (prepare == null) {
-            setDefaultAlgoPrepare(new NoOpAlgorithmPreparation() {
-                @Override public RoutingAlgorithm createAlgo() {
-                    return AbstractRoutingAlgorithm.createAlgoFromString(graph, "astar");
-                }
-            });
-        } else
+        if (prepare == null)
+            setDefaultAlgoPrepare(Helper.createAlgoPrepare("astar"));
+        else
             prepare.doWork();
         graphStorage.optimize();
         // move this into the GraphStorage.optimize method?
@@ -253,7 +242,7 @@ public class OSMReader {
     }
 
     public void flush() {
-        logger.info("flushing graph ... (" + Helper.getMemInfo() + ")");
+        logger.info("flushing graph with " + graphStorage.getNodes() + " nodes ... (" + Helper.getMemInfo() + ")");
         graphStorage.flush();
 
         logger.info("now initializing and flushing index");
@@ -448,7 +437,7 @@ public class OSMReader {
         prepare.setGraph(graphStorage);
     }
 
-    public OSMReader setDoubleParse(boolean dp) {
+    OSMReader setDoubleParse(boolean dp) {
         if (dp)
             helper = createDoubleParseHelper();
         else

@@ -48,19 +48,4 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     @Override public String toString() {
         return getClass().getSimpleName() + "|" + weightCalc;
     }
-
-    public static RoutingAlgorithm createAlgoFromString(Graph g, String algoStr) {
-        RoutingAlgorithm algo;
-        if ("dijkstrabi".equalsIgnoreCase(algoStr))
-            algo = new DijkstraBidirectionRef(g);
-        else if ("dijkstraNative".equalsIgnoreCase(algoStr))
-            algo = new DijkstraBidirection(g);
-        else if ("dijkstra".equalsIgnoreCase(algoStr))
-            algo = new DijkstraSimple(g);
-        else if ("astarbi".equalsIgnoreCase(algoStr))
-            algo = new AStarBidirection(g).setApproximation(true);
-        else
-            algo = new AStar(g);
-        return algo;
-    }
 }
