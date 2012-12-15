@@ -30,6 +30,8 @@ import org.junit.Test;
  */
 public abstract class AbstractGraphTester {
 
+    protected String location = "./target/testgraphstorage";
+
     abstract Graph createGraph(int size);
 
     @Test public void testCreateLocation() {
@@ -238,7 +240,8 @@ public abstract class AbstractGraphTester {
         assertEquals(1, count(g.getIncoming(2)));
     }
 
-    @Test public void testCheckFirstNode() {
+    @Test
+    public void testCheckFirstNode() {
         Graph g = createGraph(2);
         assertEquals(0, count(g.getEdges(1)));
         g.edge(0, 1, 12, true);
@@ -276,6 +279,9 @@ public abstract class AbstractGraphTester {
 
     @Test public void testComplexDeleteNode() {
         testDeleteNodes(21);
+    }
+
+    @Test public void testComplexDeleteNode2() {
         testDeleteNodes(6);
     }
 
@@ -476,7 +482,7 @@ public abstract class AbstractGraphTester {
 
     @Test public void testCopyTo() {
         Graph someGraphImpl = createGraph(20);
-        Graph gs = new GraphStorage(new RAMDirectory()).createNew(200);
+        Graph gs = new GraphStorage(new RAMDirectory()).setSegmentSize(8000).createNew(200);
         initExampleGraph(someGraphImpl);
         try {
             someGraphImpl.copyTo(gs);
@@ -487,7 +493,7 @@ public abstract class AbstractGraphTester {
         try {
             gs.copyTo(someGraphImpl);
         } catch (Exception ex) {
-            assertTrue(false);
+            assertTrue(ex.toString(), false);
         }
     }
 

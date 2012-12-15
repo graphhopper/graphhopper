@@ -34,16 +34,16 @@ public class RAMDataAccess extends AbstractDataAccess {
     private transient int segmentSizeIntsPower;
     private transient int indexDivisor;
 
-    public RAMDataAccess() {
+    RAMDataAccess() {
         this("", "", false);
     }
 
-    public RAMDataAccess(String id) {
-        this(id, id, false);
+    RAMDataAccess(String name) {
+        this(name, name, false);
     }
 
-    public RAMDataAccess(String id, String location, boolean store) {
-        super(id, location);
+    RAMDataAccess(String name, String location, boolean store) {
+        super(name, location);
         this.store = store;
     }
 
@@ -220,4 +220,19 @@ public class RAMDataAccess extends AbstractDataAccess {
         segments[segNumber] = null;
         return true;
     }
+
+//    @Override
+//    public void rename(String newName) {
+//        if (store) {
+//            File file = new File(name);
+//            if (file.exists())
+//                try {
+//                    file.renameTo(new File(newName));
+//                } catch (Exception ex) {
+//                    throw new IllegalStateException("Couldn't rename this RAMDataAccess object!", ex);
+//                }
+//        }
+//
+//        name = newName;
+//    }
 }

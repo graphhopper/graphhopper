@@ -34,7 +34,7 @@ public class GraphStorageTest extends AbstractGraphTester {
     @Override
     public Graph createGraph(int size) {
         // reduce segment size in order to test the case where multiple segments come into the game        
-        return new GraphStorage(new RAMDirectory("graphstorage")).setSegmentSize(size / 2).createNew(size);
+        return new GraphStorage(new RAMDirectory(location)).setSegmentSize(size / 2).createNew(size);
     }
 
     @Test
@@ -83,8 +83,11 @@ public class GraphStorageTest extends AbstractGraphTester {
         Graph g = createGraph(2);
         g.edge(0, 0, 100, true);
         assertEquals(1, GraphUtility.count(g.getEdges(0)));
+    }
 
-        g = createGraph(2);
+    @Test
+    public void testIdenticalNodes2() {
+        Graph g = createGraph(2);
         g.edge(0, 0, 100, false);
         g.edge(0, 0, 100, false);
         assertEquals(2, GraphUtility.count(g.getEdges(0)));
@@ -92,9 +95,8 @@ public class GraphStorageTest extends AbstractGraphTester {
 
     @Test
     public void testSave_and_fileFormat() throws IOException {
-        String tmpDir = "./target/tmp/";
-        Helper.deleteDir(new File(tmpDir));
-        GraphStorage graph = new GraphStorage(new RAMDirectory(tmpDir, true)).createNew(10);
+        Helper.deleteDir(new File(location));
+        GraphStorage graph = new GraphStorage(new RAMDirectory(location, true)).createNew(10);
         graph.setNode(0, 10, 10);
         graph.setNode(1, 11, 20);
         graph.setNode(2, 12, 12);
@@ -106,7 +108,7 @@ public class GraphStorageTest extends AbstractGraphTester {
         checkGraph(graph);
         graph.flush();
 
-        graph = new GraphStorage(new MMapDirectory(tmpDir));
+        graph = new GraphStorage(new MMapDirectory(location));
         assertTrue(graph.loadExisting());
         assertEquals(3, graph.getNodes());
         assertEquals(3, graph.getNodes());

@@ -28,11 +28,11 @@ public abstract class AbstractDataAccess implements DataAccess {
     private static final int SEGMENT_SIZE_DEFAULT = 8 * 1 << 20;
     // reserve some space for downstream usage (in classes using/exting this)
     protected static final int HEADER_OFFSET = 20 * 4 + 20;
+    protected static final byte[] EMPTY = new byte[1024];
     protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
-    final static byte[] EMPTY = new byte[1024];
+    private final String location;
     protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
     protected final String id;
-    private final String location;
 
     public AbstractDataAccess(String id, String location) {
         this.id = id;
