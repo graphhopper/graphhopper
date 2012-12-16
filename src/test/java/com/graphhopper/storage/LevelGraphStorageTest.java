@@ -15,10 +15,8 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import java.io.File;
@@ -29,13 +27,11 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class LevelGraphStorageTest extends AbstractGraphTester {
+public class LevelGraphStorageTest extends GraphStorageTest {
 
     @Override
-    LevelGraph createGraph(int size) {
-        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("levelgraph", false));
-        g.createNew(size);
-        return g;
+    public GraphStorage newGraph(Directory dir) {
+        return new LevelGraphStorage(dir);
     }
 
     @Test
@@ -79,7 +75,7 @@ public class LevelGraphStorageTest extends AbstractGraphTester {
 
     @Test
     public void testPrios() {
-        LevelGraph g = createGraph(20);
+        LevelGraph g = (LevelGraph) createGraph(20);
         assertEquals(0, g.getLevel(10));
 
         g.setLevel(10, 100);
@@ -91,7 +87,7 @@ public class LevelGraphStorageTest extends AbstractGraphTester {
 
     @Test
     public void testEdgeFilter() {
-        final LevelGraph g = createGraph(20);
+        final LevelGraph g = (LevelGraph) createGraph(20);
         g.edge(0, 1, 10, true);
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);

@@ -19,7 +19,7 @@ package com.graphhopper.storage;
  *
  * @author Peter Karich
  */
-public class MMapDirectoryTest extends AbstractDirectoryTest {
+public class MMapDirectoryTest extends AbstractDirectoryTester {
 
     @Override
     Directory createDir() {

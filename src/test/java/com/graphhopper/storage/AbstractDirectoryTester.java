@@ -25,7 +25,7 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public abstract class AbstractDirectoryTest {
+public abstract class AbstractDirectoryTester {
 
     protected String location = "./target/tmp/ramdir";
 

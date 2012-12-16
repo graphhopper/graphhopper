@@ -25,6 +25,8 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
+ * Abstract test class to be extended for implementations of the Graph interface. Graphs
+ * implementing GraphStorage should extend GraphStorageTest instead.
  *
  * @author Peter Karich,
  */
@@ -525,5 +527,61 @@ public abstract class AbstractGraphTester {
 
         iter = someGraphImpl.getEdgeProps(edgeId, 1);
         assertTrue(iter.isEmpty());
+    }
+
+    @Test
+    public void testCreateDuplicateEdges() {
+        Graph graph = createGraph(10);
+        graph.edge(2, 1, 12, true);
+        graph.edge(2, 3, 12, true);
+        graph.edge(2, 3, 13, false);
+        assertEquals(3, GraphUtility.count(graph.getOutgoing(2)));
+
+        // no exception        
+        graph.getEdgeProps(1, 3);
+        try {
+            graph.getEdgeProps(4, 3);
+            assertFalse(true);
+        } catch (Exception ex) {
+        }
+        try {
+            graph.getEdgeProps(0, 3);
+            assertFalse(true);
+        } catch (Exception ex) {
+        }
+
+        EdgeIterator iter = graph.getOutgoing(2);
+        iter.next();
+        iter.next();
+        assertTrue(iter.next());
+        EdgeIterator oneIter = graph.getEdgeProps(iter.edge(), 3);
+        assertEquals(13, oneIter.distance(), 1e-6);
+        assertEquals(2, oneIter.fromNode());
+        assertTrue(CarStreetType.isForward(oneIter.flags()));
+        assertFalse(CarStreetType.isBoth(oneIter.flags()));
+
+        oneIter = graph.getEdgeProps(iter.edge(), 2);
+        assertEquals(13, oneIter.distance(), 1e-6);
+        assertEquals(3, oneIter.fromNode());
+        assertTrue(CarStreetType.isBackward(oneIter.flags()));
+        assertFalse(CarStreetType.isBoth(oneIter.flags()));
+
+        graph.edge(3, 2, 14, true);
+        assertEquals(4, GraphUtility.count(graph.getOutgoing(2)));
+    }
+
+    @Test
+    public void testIdenticalNodes() {
+        Graph g = createGraph(2);
+        g.edge(0, 0, 100, true);
+        assertEquals(1, GraphUtility.count(g.getEdges(0)));
+    }
+
+    @Test
+    public void testIdenticalNodes2() {
+        Graph g = createGraph(2);
+        g.edge(0, 0, 100, false);
+        g.edge(0, 0, 100, false);
+        assertEquals(2, GraphUtility.count(g.getEdges(0)));
     }
 }

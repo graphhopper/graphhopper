@@ -22,11 +22,10 @@ import org.junit.Before;
 /**
  * @author Peter Karich
  */
-public class GraphStorageViaMMapTest extends GraphStorageTest {
+public class GraphStorageViaMMapTest extends AbstractGraphTester {
 
     @Override
-    public Graph createGraph(int size) {
-        // reduce segment size in order to test the case where multiple segments come into the game        
+    public GraphStorage createGraph(int size) {
         return new GraphStorage(new MMapDirectory(location)).setSegmentSize(size / 2).createNew(size);
     }
 

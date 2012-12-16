@@ -19,7 +19,7 @@ package com.graphhopper.storage;
  *
  * @author Peter Karich
  */
-public class RAMDirectoryTest extends AbstractDirectoryTest {
+public class RAMDirectoryTest extends AbstractDirectoryTester {
 
     @Override
     Directory createDir() {
