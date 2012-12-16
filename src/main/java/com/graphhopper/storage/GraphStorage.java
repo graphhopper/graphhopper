@@ -24,9 +24,6 @@ import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -65,13 +62,13 @@ public class GraphStorage implements Graph, Storable {
     // have [0,n) based edge indices in outside API?
     private int nodeCount;
     private BBox bounds;
-    // delete markers are not yet persistent!
+    // remove markers are not yet persistent!
     private MyBitSet deletedNodes;
     private MyBitSet deletedEdges;
     private int edgeEntryIndex = -1, nodeEntryIndex = -1;
 
     public GraphStorage(Directory dir) {
-        this(dir, dir.findAttach("nodes"), dir.findAttach("edges"));
+        this(dir, dir.findCreate("nodes"), dir.findCreate("edges"));
     }
 
     GraphStorage(Directory dir, DataAccess nodes, DataAccess edges) {
@@ -566,7 +563,7 @@ public class GraphStorage implements Graph, Storable {
         if (this.dir == dir)
             throw new IllegalStateException("cannot copy graph into the same directory!");
 
-        return _copyTo(newThis(dir, dir.create("nodes"), dir.create("edges")));
+        return _copyTo(newThis(dir, dir.findCreate("nodes"), dir.findCreate("edges")));
     }
 
     Graph _copyTo(GraphStorage clonedG) {
@@ -617,9 +614,9 @@ public class GraphStorage implements Graph, Storable {
     public void optimize() {
         // 1. disconnect all marked edges from nodes
         disconnectEdges(getDeletedEdges().getCardinality());
-        // 2. delete all marked nodes and move remaining nodes into gaps to do compaction.
+        // 2. remove all marked nodes and move remaining nodes into gaps to do compaction.
         // also disconnect edges, then copy into new area while clearing out old area (to reduce memory usage)
-        inPlaceDelete();
+        copyToDelete();
         trimToSize();
     }
 
@@ -676,7 +673,7 @@ public class GraphStorage implements Graph, Storable {
      * release resources for edges and nodes while copying in order to reduce memory usage. So that
      * one is able to copy even GB-sized graphs.
      */
-    void inPlaceDelete() {
+    void copyToDelete() {
         int deletedNodeCount = getDeletedNodes().getCardinality();
         if (deletedNodeCount <= 0)
             return;
@@ -691,8 +688,8 @@ public class GraphStorage implements Graph, Storable {
             newNode++;
         }
 
-        DataAccess tmpNodes = dir.create("nodes");
-        DataAccess tmpEdges = dir.create("edges");
+        DataAccess tmpNodes = dir.findCreate("nodesTMP");
+        DataAccess tmpEdges = dir.findCreate("edgesTMP");
         int newNodeCount = nodeCount - deletedNodeCount;
         MyBitSet avoidDuplicateEdges = new MyBitSetImpl(newNodeCount);
         GraphStorage tmpGraph = newThis(dir, tmpNodes, tmpEdges);
@@ -746,19 +743,23 @@ public class GraphStorage implements Graph, Storable {
             if (oldNode > 0 && oldNode % nodesPerSegment == 0) {
                 int segmentNumber = oldNode / nodesPerSegment - 1;
                 nodes.releaseSegment(segmentNumber);
-                
+
                 // TODO release segments for edges too
                 // deletedEdges.next();
                 // edges.releaseSegment(edgeSegmentNumber);
             }
         }
 
-        dir.delete(nodes);
+        tmpNodes.flush();
+        dir.remove(nodes);
+        dir.rename(tmpNodes, "nodes");
         nodes = tmpNodes;
         nodeCount = newNodeCount;
         deletedNodes = null;
 
-        dir.delete(edges);
+        tmpEdges.flush();
+        dir.remove(edges);
+        dir.rename(tmpEdges, "edges");
         edges = tmpEdges;
         edgeCount = tmpGraph.edgeCount;
         deletedEdges = null;

@@ -17,32 +17,19 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
 import java.util.Collection;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
 
 /**
- * Implements some common methods for the subclasses. Warning/TODO: It does not close, flush or load
- * the underlying DataAccess objects (if one of the methods are called) as there could be
- * dependencies between the objects! It only does the necessary work for the directory itself.
+ * Implements some common methods for the subclasses.
  *
  * @author Peter Karich
  */
 public abstract class AbstractDirectory implements Directory {
 
     protected Map<String, DataAccess> map = new LinkedHashMap<String, DataAccess>();
-    protected Map<DataAccess, String> nameMap = new IdentityHashMap<DataAccess, String>();
     protected final String location;
-    private int counter = 0;
-    private boolean loaded = false;
 
     public AbstractDirectory(String _location) {
         if (_location == null || _location.isEmpty())
@@ -58,46 +45,35 @@ public abstract class AbstractDirectory implements Directory {
     protected abstract DataAccess create(String id, String location);
 
     @Override
-    public DataAccess findAttach(String id) {
-        loadExisting();
-        DataAccess da = map.get(id);
+    public DataAccess findCreate(String name) {
+        DataAccess da = map.get(name);
         if (da != null)
             return da;
 
-        return attach(create(id));
-    }
-
-    @Override
-    public DataAccess attach(DataAccess da) {
-        return attach(da, true);
-    }
-
-    public DataAccess attach(DataAccess da, boolean flush) {
-        if (map.put(da.getId(), da) != null)
-            throw new IllegalStateException("Cannot attach multiple DataAccess objects for the same id:" + da.getId());
-        if (flush)
-            flush();
-        return da;
-    }
-
-    private DataAccess _create(String id, String name) {
-        DataAccess da = create(id, location + name);
-        nameMap.put(da, name);
+        da = create(name, location);
+        map.put(name, da);
         return da;
     }
 
     @Override
-    public DataAccess create(String id) {
-        String name = id + counter;
-        counter++;
-        DataAccess da = _create(id, name);
+    public DataAccess rename(DataAccess da, String newName) {
+        String oldName = da.getName();
+        da.rename(newName);
+        removeByName(oldName);
+        map.put(newName, da);
         return da;
     }
 
     @Override
-    public void delete(DataAccess da) {
-        if (map.remove(da.getId()) == null)
-            throw new IllegalStateException("Couldn't remove dataAccess object:" + da);
+    public void remove(DataAccess da) {
+        removeByName(da.getName());
+    }
+
+    void removeByName(String name) {
+        if (map.remove(name) == null)
+            throw new IllegalStateException("Couldn't remove dataAccess object:" + name);
+
+        Helper.deleteDir(new File(location + name));
     }
 
     protected void mkdirs() {
@@ -117,69 +93,5 @@ public abstract class AbstractDirectory implements Directory {
     @Override
     public String getLocation() {
         return location;
-    }
-
-    protected boolean loadExisting() {
-        if (loaded)
-            return true;
-        loaded = true;
-        Properties properties = new Properties();
-        try {
-            Reader reader = createReader(location + "info");
-            try {
-                properties.load(reader);
-                for (Entry<Object, Object> e : properties.entrySet()) {
-                    counter++;
-                    String id = e.getKey().toString();
-                    if (id.startsWith("_"))
-                        continue;
-                    String name = e.getValue().toString();
-                    attach(_create(id, name), false);
-                }
-                return true;
-            } finally {
-                reader.close();
-            }
-        } catch (IOException ex) {
-            return false;
-        }
-    }
-
-    protected void flush() {
-        Properties properties = new Properties();
-        for (DataAccess da : getAll()) {
-            String name = nameMap.get(da);
-            if (name == null)
-                throw new RuntimeException("no name found for " + da.getId());
-            properties.put(da.getId(), name);
-        }
-        properties.put("_version", Helper.VERSION);
-        properties.put("_version_file", "" + Helper.VERSION_FILE);
-        try {
-            Writer writer = createWriter(location + "info");
-            try {
-                properties.store(writer, "");
-            } finally {
-                writer.close();
-            }
-        } catch (IOException ex) {
-            throw new RuntimeException("Cannot flush properties to " + location, ex);
-        }
-    }
-
-    protected Writer createWriter(String location) throws IOException {
-        return new FileWriter(location);
-    }
-
-    protected Reader createReader(String location) throws IOException {
-        return new FileReader(location);
-    }
-
-    public long capacity() {
-        long cap = 0;
-        for (DataAccess da : getAll()) {
-            cap += da.capacity();
-        }
-        return cap;
     }
 }

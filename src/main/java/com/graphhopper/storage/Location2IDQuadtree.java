@@ -53,7 +53,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
     public Location2IDQuadtree(Graph g, Directory dir) {
         this.g = g;
-        index = dir.findAttach("loc2idIndex");
+        index = dir.findCreate("loc2idIndex");
     }
 
     @Override

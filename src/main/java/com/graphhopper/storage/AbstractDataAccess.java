@@ -16,6 +16,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -32,21 +33,22 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
     private final String location;
     protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
-    protected final String id;
+    protected String name;
 
-    public AbstractDataAccess(String id, String location) {
-        this.id = id;
+    public AbstractDataAccess(String name, String location) {
+        this.name = name;
+        if (!location.isEmpty() && !location.endsWith("/"))
+            throw new IllegalArgumentException("Create DataAccess object via its corresponding Directory!");
         this.location = location;
     }
 
     @Override
-    public String getId() {
-        return id;
+    public String getName() {
+        return name;
     }
 
-    @Override
-    public String getLocation() {
-        return location;
+    protected String getFullName() {
+        return location + name;
     }
 
     @Override
@@ -89,7 +91,7 @@ public abstract class AbstractDataAccess implements DataAccess {
             return -1;
         String versionHint = raFile.readUTF();
         if (!"GH".equals(versionHint))
-            throw new IllegalArgumentException("Not a GraphHopper file! Expected GH but was " + versionHint);
+            throw new IllegalArgumentException("Not a GraphHopper file! Expected 'GH' as file marker but was " + versionHint);
         // use a separate version field
         int majorVersion = raFile.readInt();
         if (majorVersion != getVersion())
@@ -130,6 +132,33 @@ public abstract class AbstractDataAccess implements DataAccess {
 
     @Override
     public String toString() {
-        return id;
+        return getFullName();
+    }
+
+    @Override
+    public void rename(String newName) {
+        File file = new File(location + name);
+        if (file.exists())
+            try {
+                if (!file.renameTo(new File(location + newName)))
+                    throw new IllegalStateException("Couldn't rename this RAMDataAccess object to " + newName);
+                name = newName;
+            } catch (Exception ex) {
+                throw new IllegalStateException("Couldn't rename this RAMDataAccess object!", ex);
+            }
+        else
+            throw new IllegalStateException("File does not exist!? " + getFullName()
+                    + " Make sure that you flushed before renaming. Otherwise it could make problems"
+                    + " for memory mapped DataAccess objects");
+    }
+
+    protected boolean checkBeforeRename(String newName) {
+        if (newName == null || newName.isEmpty())
+            throw new IllegalArgumentException("newName mustn't be empty!");
+        if (newName.equals(name))
+            return false;
+        if (new File(location + newName).exists())
+            throw new IllegalArgumentException("file newName already exists!");
+        return true;
     }
 }

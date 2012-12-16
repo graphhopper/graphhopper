@@ -38,7 +38,6 @@ public class MMapDataAccess extends AbstractDataAccess {
     private RandomAccessFile raFile;
     private List<ByteBuffer> segments = new ArrayList<ByteBuffer>();
     private ByteOrder order;
-    private float increaseFactor = 1.5f;
     private transient boolean closed = false;
 
     MMapDataAccess() {
@@ -55,9 +54,9 @@ public class MMapDataAccess extends AbstractDataAccess {
             return;
 
         try {
-            // raFile necessary for loadExisting and alloc
-            raFile = new RandomAccessFile(getLocation(), "rw");
-        } catch (Exception x) {
+            // raFile necessary for loadExisting and createNew
+            raFile = new RandomAccessFile(getFullName(), "rw");
+        } catch (IOException x) {
             throw new RuntimeException(x);
         }
     }
@@ -250,13 +249,17 @@ public class MMapDataAccess extends AbstractDataAccess {
         segments.set(segNumber, null);
         return true;
     }
-    // @Override
-//    public void rename(String newName) {
-//        close();
-//
-//        // 'reopen'
-//        raFile = null;
-//        closed = false;
-//        loadExisting();
-//    }
+
+    @Override
+    public void rename(String newName) {
+        if (!checkBeforeRename(newName))
+            return;
+        close();
+
+        super.rename(newName);
+        // 'reopen' with newName
+        raFile = null;
+        closed = false;
+        loadExisting();
+    }
 }

@@ -29,20 +29,23 @@ public interface Directory {
     String getLocation();
 
     /**
-     * Tries to find the object with that id if not existent it creates one and associates a name
-     * and location with it.
+     * Tries to find the object with that name if not existent it creates one and associates the
+     * location with it. A name is unique in one Directory.
      */
-    DataAccess findAttach(String id);
-
-    DataAccess attach(DataAccess da);
+    DataAccess findCreate(String name);
 
     /**
-     * Creates a new DataAccess object with a unique location and the specified id without attaching
-     * it.
+     * Renames the specified DataAccess object into one.
      */
-    DataAccess create(String id);
+    DataAccess rename(DataAccess da, String newName);
 
-    void delete(DataAccess da);
+    /**
+     * Removes the specified object from the directory.
+     *
+     * TODO Hmmh naming is a bit problematic as it removes the DataAccess object only from the
+     * managing map in the current implementations.
+     */
+    void remove(DataAccess da);
 
     Collection<DataAccess> getAll();
 }

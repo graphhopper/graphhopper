@@ -24,26 +24,26 @@ import org.junit.Test;
 public class MMapDataAccessTest extends DataAccessTest {
 
     @Override
-    public DataAccess createDataAccess(String location) {
-        return new MMapDataAccess(location, location).setSegmentSize(128);
+    public DataAccess createDataAccess(String name) {
+        return new MMapDataAccess(name, directory).setSegmentSize(128);
     }
 
     @Test
     public void textMixRAM2MMAP() {
-        DataAccess da = new RAMDataAccess(location, location, true);
+        DataAccess da = new RAMDataAccess(name, directory, true);
         assertFalse(da.loadExisting());
         da.createNew(100);
         da.setInt(7, 123);
         da.flush();
         da.close();
-        da = createDataAccess(location);
+        da = createDataAccess(name);
         assertTrue(da.loadExisting());
         assertEquals(123, da.getInt(7));
     }
 
     @Test
     public void textMixMMAP2RAM() {
-        DataAccess da = createDataAccess(location);
+        DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
         da.createNew(100);
         da.setInt(7, 123);
@@ -51,7 +51,7 @@ public class MMapDataAccessTest extends DataAccessTest {
         // TODO "memory mapped flush" is expensive and not required. only writing the header is required.
         da.flush();
         da.close();
-        da = new RAMDataAccess(location, location, true);
+        da = new RAMDataAccess(name, directory, true);
         assertTrue(da.loadExisting());
         assertEquals(123, da.getInt(7));
     }

@@ -31,15 +31,17 @@ package com.graphhopper.storage;
 public interface DataAccess extends Storable {
 
     /**
-     * The logical name of this object.
+     * The logical identification of this object.
      */
-    String getId();
+    String getName();
 
     /**
-     * The current folder it resides. This will be initialized from the Directory and is empty if it
-     * is entirely in-memory.
+     * Renames the underlying DataAccess object. (Flushing shouldn't be necessary before or
+     * afterwards)
+     *
+     * @throws IllegalStateException if a rename is not possible
      */
-    String getLocation();
+    void rename(String newName);
 
     /**
      * Set 4 bytes at position 'index' to the specified value

@@ -104,7 +104,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (!store || closed)
             return false;
         try {
-            RandomAccessFile raFile = new RandomAccessFile(getLocation(), "r");
+            RandomAccessFile raFile = new RandomAccessFile(getFullName(), "r");
             try {
                 long byteCount = readHeader(raFile) - HEADER_OFFSET;
                 if (byteCount < 0)
@@ -141,7 +141,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (!store)
             return;
         try {
-            RandomAccessFile raFile = new RandomAccessFile(getLocation(), "rw");
+            RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw");
             try {
                 long len = capacity();
                 writeHeader(raFile, len, segmentSizeInBytes);
@@ -221,18 +221,14 @@ public class RAMDataAccess extends AbstractDataAccess {
         return true;
     }
 
-//    @Override
-//    public void rename(String newName) {
-//        if (store) {
-//            File file = new File(name);
-//            if (file.exists())
-//                try {
-//                    file.renameTo(new File(newName));
-//                } catch (Exception ex) {
-//                    throw new IllegalStateException("Couldn't rename this RAMDataAccess object!", ex);
-//                }
-//        }
-//
-//        name = newName;
-//    }
+    @Override
+    public void rename(String newName) {
+        if (!checkBeforeRename(newName))
+            return;
+        if (store)
+            super.rename(newName);
+
+        // in every case set the name
+        name = newName;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Copyright 2012 Peter Karich
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ package com.graphhopper.storage;
  *
  * @author Peter Karich
  */
-public class RAMDirectoryTest extends AbstractDirectoryTest {
+public class MMapDirectoryTest extends AbstractDirectoryTest {
 
     @Override
     Directory createDir() {
-        return new RAMDirectory(location, true);
+        return new MMapDirectory(location);
     }
 }

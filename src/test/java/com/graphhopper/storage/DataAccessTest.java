@@ -29,7 +29,8 @@ import org.junit.Test;
 public abstract class DataAccessTest {
 
     private File folder = new File("./target/tmp/");
-    protected String location;
+    protected String directory;
+    protected String name = "dataacess";
 
     public abstract DataAccess createDataAccess(String location);
 
@@ -37,7 +38,7 @@ public abstract class DataAccessTest {
     public void setUp() {
         Helper.deleteDir(folder);
         folder.mkdirs();
-        location = folder.getAbsolutePath() + "/dataacess";
+        directory = folder.getAbsolutePath() + "/";
     }
 
     @After
@@ -47,7 +48,7 @@ public abstract class DataAccessTest {
 
     @Test
     public void testLoadFlush() {
-        DataAccess da = createDataAccess(location);
+        DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
         da.createNew(300);
         da.setInt(7, 123);
@@ -66,7 +67,7 @@ public abstract class DataAccessTest {
         // cannot load data if already closed
         assertFalse(da.loadExisting());
 
-        da = createDataAccess(location);
+        da = createDataAccess(name);
         assertTrue(da.loadExisting());
         assertEquals(123, da.getInt(7));
         da.close();
@@ -74,7 +75,7 @@ public abstract class DataAccessTest {
 
     @Test
     public void testLoadClose() {
-        DataAccess da = createDataAccess(location);
+        DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
         // throw some undefined exception if no ensureCapacity was called
         try {
@@ -86,7 +87,7 @@ public abstract class DataAccessTest {
         da.setInt(2, 321);
         da.flush();
         da.close();
-        da = createDataAccess(location);
+        da = createDataAccess(name);
         assertTrue(da.loadExisting());
         assertEquals(321, da.getInt(2));
         da.close();
@@ -94,7 +95,7 @@ public abstract class DataAccessTest {
 
     @Test
     public void testHeader() {
-        DataAccess da = createDataAccess(location);
+        DataAccess da = createDataAccess(name);
         da.createNew(300);
         da.setHeader(7, 123);
         assertEquals(123, da.getHeader(7));
@@ -102,7 +103,7 @@ public abstract class DataAccessTest {
         assertEquals(Integer.MAX_VALUE / 3, da.getHeader(10));
         da.flush();
 
-        da = createDataAccess(location);
+        da = createDataAccess(name);
         assertTrue(da.loadExisting());
         assertEquals(123, da.getHeader(7));
         da.close();
@@ -110,7 +111,7 @@ public abstract class DataAccessTest {
 
     @Test
     public void testEnsureCapacity() {
-        DataAccess da = createDataAccess(location);
+        DataAccess da = createDataAccess(name);
         da.createNew(128);
         da.setInt(31, 200);
         try {
@@ -127,20 +128,20 @@ public abstract class DataAccessTest {
         assertEquals(220, da.getInt(32));
 
         // ensure some bigger area
-        da = createDataAccess(location);
+        da = createDataAccess(name);
         da.createNew(200 * 4);
         da.ensureCapacity(600 * 4);
     }
 
     @Test
     public void testCopy() {
-        DataAccess da1 = createDataAccess(location);
+        DataAccess da1 = createDataAccess(name);
         da1.createNew(1001 * 4);
         da1.setInt(1, 1);
         da1.setInt(123, 321);
         da1.setInt(1000, 1111);
 
-        DataAccess da2 = createDataAccess(location + "2");
+        DataAccess da2 = createDataAccess(name + "2");
         da2.createNew(10);
         da1.copyTo(da2);
         assertEquals(1, da2.getInt(1));
@@ -157,7 +158,7 @@ public abstract class DataAccessTest {
 
     @Test
     public void testSegments() {
-        DataAccess da = createDataAccess(location);
+        DataAccess da = createDataAccess(name);
         da.setSegmentSize(128);
         da.createNew(10);
         assertEquals(1, da.getSegments());
@@ -169,7 +170,7 @@ public abstract class DataAccessTest {
         da.flush();
         da.close();
 
-        da = createDataAccess(location);
+        da = createDataAccess(name);
         assertTrue(da.loadExisting());
         assertEquals(olds, da.getSegments());
         assertEquals(321, da.getInt(400 / 4));
@@ -177,7 +178,7 @@ public abstract class DataAccessTest {
 
     @Test
     public void testTrimTo() {
-        DataAccess da = createDataAccess(location);
+        DataAccess da = createDataAccess(name);
         da.setSegmentSize(128);
         da.createNew(128 * 11);
         da.setInt(1, 10);
@@ -217,8 +218,37 @@ public abstract class DataAccessTest {
 
     @Test
     public void testSegmentSize() {
-        DataAccess da = createDataAccess(location);
+        DataAccess da = createDataAccess(name);
         da.setSegmentSize(20);
         assertEquals(128, da.getSegmentSize());
+    }
+
+    @Test
+    public void testRenameNoFlush() {
+        DataAccess da = createDataAccess(name);
+        da.createNew(100);
+        da.setInt(17, 17);
+        try {
+            da.rename(name + "wow");
+            assertTrue(false);
+        } catch (Exception ex) {
+        }
+    }
+
+    @Test
+    public void testRenameFlush() {
+        DataAccess da = createDataAccess(name);
+        da.createNew(100);
+        da.setInt(17, 17);
+        da.flush();
+        assertTrue(new File(directory + name).exists());
+        da.rename(name + "wow");
+        assertFalse(new File(directory + name).exists());
+        assertTrue(new File(directory + name + "wow").exists());
+        assertEquals(17, da.getInt(17));
+
+        da = createDataAccess(name + "wow");
+        assertTrue(da.loadExisting());
+        assertEquals(17, da.getInt(17));
     }
 }

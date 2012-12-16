@@ -57,17 +57,4 @@ public class RAMDirectory extends AbstractDirectory {
     protected DataAccess create(String id, String location) {
         return new RAMDataAccess(id, location, store);
     }
-
-    @Override
-    protected boolean loadExisting() {
-        if (store)
-            return super.loadExisting();
-        return false;
-    }
-
-    @Override
-    protected void flush() {
-        if (store)
-            super.flush();
-    }
 }
