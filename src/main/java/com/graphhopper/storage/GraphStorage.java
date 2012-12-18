@@ -24,8 +24,6 @@ import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -66,7 +64,6 @@ public class GraphStorage implements Graph, Storable {
     private BBox bounds;
     // remove markers are not yet persistent!
     private MyBitSet deletedNodes;
-    private MyBitSet deletedEdges;
     private int edgeEntryIndex = -1, nodeEntryIndex = -1;
 
     public GraphStorage(Directory dir) {
@@ -197,8 +194,6 @@ public class GraphStorage implements Graph, Storable {
 
         long cap = Math.max(10, Math.round(tmp * INC_FACTOR));
         edges.ensureCapacity(cap * 4);
-        if (deletedEdges != null)
-            getDeletedEdges().ensureCapacity((int) (edgeCount * INC_FACTOR));
     }
 
     @Override
@@ -583,10 +578,6 @@ public class GraphStorage implements Graph, Storable {
             clonedG.deletedNodes = null;
         else
             clonedG.deletedNodes = deletedNodes.copyTo(new MyBitSetImpl());
-        if (deletedEdges == null)
-            clonedG.deletedEdges = null;
-        else
-            clonedG.deletedEdges = deletedEdges.copyTo(new MyBitSetImpl());
         return clonedG;
     }
 
@@ -594,12 +585,6 @@ public class GraphStorage implements Graph, Storable {
         if (deletedNodes == null)
             deletedNodes = new MyBitSetImpl((int) (nodes.capacity() / 4));
         return deletedNodes;
-    }
-
-    private MyBitSet getDeletedEdges() {
-        if (deletedEdges == null)
-            deletedEdges = new MyBitSetImpl((int) (edges.capacity() / 4));
-        return deletedEdges;
     }
 
     @Override
@@ -614,39 +599,19 @@ public class GraphStorage implements Graph, Storable {
 
     @Override
     public void optimize() {
-        // 1. disconnect all marked edges from nodes
-        disconnectEdges(getDeletedEdges().getCardinality());
-        // 2. remove all marked nodes and move remaining nodes into gaps to do compaction.
-        // also disconnect edges, then copy into new area while clearing out old area (to reduce memory usage)
-        copyToDelete();
+        // Deletes only nodes. 
+        // It reduces the fragmentation of the node space but introduces new unused edges.
+        inPlaceNodeDelete(getDeletedNodes().getCardinality());
+        
+        // Reduce memory usage
         trimToSize();
     }
 
     private void trimToSize() {
         long nodeCap = (long) nodeCount * nodeEntrySize;
         nodes.trimTo(nodeCap * 4);
-        long edgeCap = (long) (edgeCount + 1) * edgeEntrySize;
-        edges.trimTo(edgeCap * 4);
-    }
-
-    /**
-     * This method removes all edges marked in deletedEdges from the edge list of every node
-     */
-    void disconnectEdges(int deletedEdgeCount) {
-        if (deletedEdgeCount <= 0)
-            return;
-
-        for (int toUpdateNode = 0; toUpdateNode < nodeCount; toUpdateNode++) {
-            EdgeIterable nodeIter = (EdgeIterable) getEdges(toUpdateNode);
-            long prev = -1;
-            while (nodeIter.next()) {
-                int edgeId = nodeIter.edge();
-                if (deletedEdges.contains(edgeId))
-                    internalEdgeDisconnect(edgeId, prev, toUpdateNode);
-                else
-                    prev = nodeIter.edgePointer();
-            }
-        }
+//        long edgeCap = (long) (edgeCount + 1) * edgeEntrySize;
+//        edges.trimTo(edgeCap * 4);
     }
 
     /**
@@ -655,7 +620,7 @@ public class GraphStorage implements Graph, Storable {
      *
      * @param edgeToUpdatePointer if it is negative then it will be saved to refToEdges
      */
-    void internalEdgeDisconnect(int edge, long edgeToUpdatePointer, int node) {
+    private void internalEdgeDisconnect(int edge, long edgeToUpdatePointer, int node) {
         long edgeToDeletePointer = (long) edge * edgeEntrySize;
         // an edge is shared across the two nodes even if the edge is not in both directions
         // so we need to know two edge-pointers pointing to the edge before edgeToDeletePointer
@@ -671,135 +636,116 @@ public class GraphStorage implements Graph, Storable {
     }
 
     /**
-     * Removes nodes and edges via efficiently copying into a new graph. Efficiently means it will
-     * release resources for edges and nodes while copying in order to reduce memory usage. So that
-     * one is able to copy even GB-sized graphs. Only Graph is currently supported. A LevelGraph can
-     * be copied too but the shortcut edge ids won't be correctly transferred!
-     *
-     * Limitation:
-     *
-     * In theory this is efficient. Sadly it isn't as nodes are interconnected and we need to
-     * allocate memory too early for the new edge pointers (-> DataAccess object of nodes).
-     * Releasing the segments for the edge is problematic too as we have a graph and the nodes are
-     * highly interconnected which would lead to sparse but not fully empty edge segments.
+     * This methods disconnects all edges from removed nodes. It does no edge compaction. Then it
+     * moves the last nodes into the deleted nodes, where it needs to update the node ids in every
+     * edge.
      */
-    void copyToDelete() {
-        int deletedNodeCount = getDeletedNodes().getCardinality();
+    private void inPlaceNodeDelete(int deletedNodeCount) {
         if (deletedNodeCount <= 0)
             return;
 
-        // fill sparse array efficiently via append which requires increasing key!
+        // Prepare edge-update of nodes which are connected to deleted nodes        
+        int toMoveNode = getNodes();
+        int itemsToMove = 0;
+
+        // sorted map when we access it via keyAt and valueAt - see below!
         final SparseIntIntArray oldToNewMap = new SparseIntIntArray(deletedNodeCount);
-        for (int newNode = 0, oldNode = 0; oldNode < nodeCount; oldNode++) {
-            if (deletedNodes.contains(oldNode))
-                continue;
-
-            oldToNewMap.append(oldNode, newNode);
-            newNode++;
-        }
-
-        DataAccess tmpNodes = dir.findCreate("nodesTMP");
-        DataAccess tmpEdges = dir.findCreate("edgesTMP");
-        int newNodeCount = nodeCount - deletedNodeCount;
-        MyBitSet avoidDuplicateEdges = new MyBitSetImpl(newNodeCount);
-        int nodesPerSegment = nodes.getSegmentSize() / (nodeEntrySize * 4);
-        if (nodes.getSegmentSize() % (nodeEntrySize * 4) != 0)
-            nodesPerSegment++;
-        GraphStorage tmpGraph = newThis(dir, tmpNodes, tmpEdges);
-        // only aquire two node segments in order to reduce memory usage
-        tmpGraph.createNew(nodesPerSegment * 2);
-
-        int edgesPerSegment = edges.getSegmentSize() / (edgeEntrySize * 4);
-        if (edges.getSegmentSize() % (edgeEntrySize * 4) != 0)
-            edgesPerSegment++;
-
-        // TODO LATER translate already deleted edges into deletedEdgesBitsets
-        deletedEdges = null;
-        // split deleted edges into per segment        
-        List<MyBitSet> deletedEdgesBitsets = new ArrayList<MyBitSet>();
-        int edgeSegments = edges.getSegments();
-        for (int i = 0; i < edgeSegments; i++) {
-            MyBitSet bitset = new MyBitSetImpl(edgesPerSegment);
-            deletedEdgesBitsets.add(bitset);
-        }
-
-        int releasedEdgeSegments = 0;
-        // TODO nearly identical to GraphUtility.createSortedGraph 
-        for (int oldNode = 0; oldNode < nodeCount; oldNode++) {
-            int newNode = oldToNewMap.get(oldNode);
-            if (newNode < 0)
-                continue;
-            avoidDuplicateEdges.add(newNode);
-            long oldNodePointer = (long) oldNode * nodeEntrySize;
-            long newNodePointer = (long) newNode * nodeEntrySize;
-            // copy all node properties except the edge ref!
-            for (int j = 0; j < nodeEntrySize; j++) {
-                int value = nodes.getInt(oldNodePointer + j);
-                if (j != N_EDGE_REF)
-                    tmpNodes.setInt(newNodePointer + j, value);
-            }
-            tmpNodes.ensureCapacity((long) oldNode * tmpGraph.nodeEntrySize * 4);
-            EdgeIterator oldIter = getEdges(oldNode);
-            while (oldIter.next()) {
-                int connectedOldNode = oldIter.node();
-
-                // mark deleted only if the other node of an edge is already handled!
-                if (oldNode >= connectedOldNode) {
-                    int edgeId = oldIter.edge() * 4 * edgeEntrySize;
-                    int segmentNumber = edgeId / edges.getSegmentSize();
-                    MyBitSet bs = deletedEdgesBitsets.get(segmentNumber);
-                    bs.add(edgeId % edges.getSegmentSize() / 4 / edgeEntrySize);
-                    // Problem: some segments contain edgesPerSegment but some only edgesPerSegment-1
-                    if (bs.getCardinality() == edgesPerSegment) {
-                        releasedEdgeSegments++;
-                        edges.releaseSegment(segmentNumber);
-                        deletedEdgesBitsets.set(segmentNumber, null);
-                    }
-                }
-
-                int connectedNewNode = oldToNewMap.get(connectedOldNode);
-                if (connectedNewNode < 0 || avoidDuplicateEdges.contains(connectedNewNode))
+        MyBitSetImpl toUpdatedSet = new MyBitSetImpl(deletedNodeCount * 3);
+        for (int delNode = deletedNodes.next(0); delNode >= 0; delNode = deletedNodes.next(delNode + 1)) {
+            EdgeIterator delEdgesIter = getEdges(delNode);
+            while (delEdgesIter.next()) {
+                int currNode = delEdgesIter.node();
+                if (deletedNodes.contains(currNode))
                     continue;
 
-                int fromNodeId = newNode;
-                int toNodeId = connectedNewNode;
-                int newOrExistingEdge = tmpGraph.nextEdge();
-                tmpNodes.ensureCapacity((long) Math.max(fromNodeId, toNodeId) * tmpGraph.nodeEntrySize * 4);
-                tmpGraph.connectNewEdge(fromNodeId, newOrExistingEdge);
-                tmpGraph.connectNewEdge(toNodeId, newOrExistingEdge);
-                tmpGraph.writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, oldIter.distance(), oldIter.flags());
-
-                // copy values of extended graphs is currently NOT supported/needed
-                // edge ids are changing too, so we need an edgeOldToNewMap too!
-//                long oldEdgePointer = (long) iter.edge() * edgeEntrySize;
-//                long newEdgePointer = (long) newOrExistingEdge * edgeEntrySize;
-//                for (int j = maxStandardEdgePosition; j < edgeEntrySize; j++) {
-//                    int value = edges.getInt(oldEdgePointer + j);
-//                    if (j != N_EDGE_REF)
-//                        tmpEdges.setInt(newEdgePointer + j, value);
-//                }
+                toUpdatedSet.add(currNode);
             }
 
-            if (oldNode > 0 && oldNode % nodesPerSegment == 0) {
-                int segmentNumber = oldNode / nodesPerSegment - 1;
-                nodes.releaseSegment(segmentNumber);
+            toMoveNode--;
+            for (; toMoveNode >= 0; toMoveNode--) {
+                if (!deletedNodes.contains(toMoveNode))
+                    break;
+            }
+
+            if (toMoveNode < delNode)
+                break;
+
+            oldToNewMap.put(toMoveNode, delNode);
+            itemsToMove++;
+        }
+
+        // now similar process to disconnectEdges but only for specific nodes
+        // all deleted nodes could be connected to existing. remove the connections
+        for (int toUpdateNode = toUpdatedSet.next(0); toUpdateNode >= 0; toUpdateNode = toUpdatedSet.next(toUpdateNode + 1)) {
+            // remove all edges connected to the deleted nodes
+            EdgeIterable nodesConnectedToDelIter = (EdgeIterable) getEdges(toUpdateNode);
+            long prev = -1;
+            while (nodesConnectedToDelIter.next()) {
+                int nodeId = nodesConnectedToDelIter.node();
+                if (deletedNodes.contains(nodeId)) {
+                    int edgeToDelete = nodesConnectedToDelIter.edge();
+                    internalEdgeDisconnect(edgeToDelete, prev, toUpdateNode);
+                } else
+                    prev = nodesConnectedToDelIter.edgePointer();
+            }
+        }
+        toUpdatedSet.clear();
+
+        // marks connected nodes to rewrite the edges
+        for (int i = 0; i < itemsToMove; i++) {
+            int oldI = oldToNewMap.keyAt(i);
+            EdgeIterator movedEdgeIter = getEdges(oldI);
+            while (movedEdgeIter.next()) {
+                if (deletedNodes.contains(movedEdgeIter.node()))
+                    throw new IllegalStateException("shouldn't happen the edge to the node " + movedEdgeIter.node() + " should be already deleted. " + oldI);
+
+                toUpdatedSet.add(movedEdgeIter.node());
             }
         }
 
-        tmpNodes.flush();
-        dir.remove(nodes);
-        dir.rename(tmpNodes, "nodes");
-        nodes = tmpNodes;
-        nodeCount = newNodeCount;
-        deletedNodes = null;
+        // move nodes into deleted nodes
+        for (int i = 0; i < itemsToMove; i++) {
+            int oldI = oldToNewMap.keyAt(i);
+            int newI = oldToNewMap.valueAt(i);
+            long newOffset = (long) newI * nodeEntrySize;
+            long oldOffset = (long) oldI * nodeEntrySize;
+            for (int j = 0; j < nodeEntrySize; j++) {
+                nodes.setInt(newOffset + j, nodes.getInt(oldOffset + j));
+            }
+        }
 
-        tmpEdges.flush();
-        dir.remove(edges);
-        dir.rename(tmpEdges, "edges");
-        edges = tmpEdges;
-        edgeCount = tmpGraph.edgeCount;
-        System.out.println("NOW " + releasedEdgeSegments);
-        // already cleared // deletedEdges = null;
+        // *rewrites* all edges connected to moved nodes
+        // go through all edges and pick the necessary ... <- this is easier to implement then
+        // a more efficient (?) breadth-first search
+        EdgeWriteIterator iter = getAllEdges();
+        while (iter.next()) {
+            int edge = iter.edge();
+            long edgePointer = (long) edge * edgeEntrySize;
+            int nodeA = edges.getInt(edgePointer + E_NODEA);
+            int nodeB = edges.getInt(edgePointer + E_NODEB);
+            if (!toUpdatedSet.contains(nodeA) && !toUpdatedSet.contains(nodeB))
+                continue;
+
+            // now overwrite exiting edge with new node ids 
+            // also flags and links could have changed due to different node order
+            int updatedA = (int) oldToNewMap.get(nodeA);
+            if (updatedA < 0)
+                updatedA = nodeA;
+
+            int updatedB = (int) oldToNewMap.get(nodeB);
+            if (updatedB < 0)
+                updatedB = nodeB;
+
+            int linkA = edges.getInt(getLinkPosInEdgeArea(nodeA, nodeB, edgePointer));
+            int linkB = edges.getInt(getLinkPosInEdgeArea(nodeB, nodeA, edgePointer));
+            int flags = edges.getInt(edgePointer + E_FLAGS);
+            double distance = getDist(edgePointer);
+            writeEdge(edge, updatedA, updatedB, linkA, linkB, distance, flags);
+        }
+
+        // edgeCount stays!
+        nodeCount -= deletedNodeCount;
+        deletedNodes = null;
     }
 
     @Override
