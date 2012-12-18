@@ -15,6 +15,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -27,11 +28,13 @@ import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GeoPoint;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +55,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean levelGraph;
     private double minPathPrecision = 1;
     private String algoStr = "astar";
+    private String ghLocation = "";
 
     public GraphHopper() {
     }
@@ -99,32 +103,67 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
+    GraphHopper setGraphHopperLocation(String ghLocation) {
+        if (ghLocation != null)
+            this.ghLocation = ghLocation;
+        return this;
+    }
+
     // TODO accept zipped folders and osm files too!
     @Override
     public GraphHopper load(String graphHopperFile) {
         if (graph != null)
             throw new IllegalStateException("graph is already loaded");
 
-        GraphStorage storage;
-        Directory dir;
-        if (memoryMapped) {
-            dir = new MMapDirectory(graphHopperFile);
-        } else if (inMemory) {
-            dir = new RAMDirectory(graphHopperFile, storeOnFlush);
-        } else
-            throw new IllegalStateException("either memory mapped or in-memory!");
+        String tmp = graphHopperFile.toLowerCase();
+        if (tmp.endsWith(".zip") || tmp.endsWith(".osm") || tmp.endsWith(".xml")) {
+            if (ghLocation.isEmpty())
+                ghLocation = Helper.pruneFileEnd(graphHopperFile) + "-gh";
+            CmdArgs args = new CmdArgs().put("osmreader.osm", graphHopperFile).
+                    put("osmreader.graph-location", ghLocation).
+                    put("osmreader.locationIndexCapacity", "20000").
+                    put("osmreader.algo", algoStr);
+            if (memoryMapped)
+                args.put("osmreader.dataaccess", "mmap");
+            else {
+                if (inMemory && storeOnFlush) {
+                    args.put("osmreader.dataaccess", "inmemory+save");
+                } else
+                    args.put("osmreader.dataaccess", "inmemory");
+            }
+            if (levelGraph)
+                args.put("osmreader.levelgraph", "true");
 
-        if (levelGraph) {
-            storage = new LevelGraphStorage(dir);
-            prepare = new PrepareContractionHierarchies();
-        } else
-            storage = new GraphStorage(dir);
+            try {
+                OSMReader reader = OSMReader.osm2Graph(args);
+                graph = reader.getGraph();
+                prepare = reader.getPreparation();
+                index = reader.getLocation2IDIndex();
+            } catch (IOException ex) {
+                throw new RuntimeException("Cannot parse file " + graphHopperFile, ex);
+            }
+        } else {
+            GraphStorage storage;
+            Directory dir;
+            if (memoryMapped) {
+                dir = new MMapDirectory(graphHopperFile);
+            } else if (inMemory) {
+                dir = new RAMDirectory(graphHopperFile, storeOnFlush);
+            } else
+                throw new IllegalStateException("either memory mapped or in-memory!");
 
-        if (!storage.loadExisting())
-            throw new IllegalStateException("TODO load via OSMReader!");
+            if (levelGraph) {
+                storage = new LevelGraphStorage(dir);
+                prepare = new PrepareContractionHierarchies();
+            } else
+                storage = new GraphStorage(dir);
 
-        graph = storage;
-        initIndex(dir);
+            if (!storage.loadExisting())
+                throw new IllegalStateException("TODO load via OSMReader!");
+
+            graph = storage;
+            initIndex(dir);
+        }
         return this;
     }
 
