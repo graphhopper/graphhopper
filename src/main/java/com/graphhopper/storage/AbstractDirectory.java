@@ -18,7 +18,7 @@ package com.graphhopper.storage;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public abstract class AbstractDirectory implements Directory {
 
-    protected Map<String, DataAccess> map = new LinkedHashMap<String, DataAccess>();
+    protected Map<String, DataAccess> map = new HashMap<String, DataAccess>();
     protected final String location;
 
     public AbstractDirectory(String _location) {

@@ -24,6 +24,8 @@ import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -671,7 +673,15 @@ public class GraphStorage implements Graph, Storable {
     /**
      * Removes nodes and edges via efficiently copying into a new graph. Efficiently means it will
      * release resources for edges and nodes while copying in order to reduce memory usage. So that
-     * one is able to copy even GB-sized graphs.
+     * one is able to copy even GB-sized graphs. Only Graph is currently supported. A LevelGraph can
+     * be copied too but the shortcut edge ids won't be correctly transferred!
+     *
+     * Limitation:
+     *
+     * In theory this is efficient. Sadly it isn't as nodes are interconnected and we need to
+     * allocate memory too early for the new edge pointers (-> DataAccess object of nodes).
+     * Releasing the segments for the edge is problematic too as we have a graph and the nodes are
+     * highly interconnected which would lead to sparse but not fully empty edge segments.
      */
     void copyToDelete() {
         int deletedNodeCount = getDeletedNodes().getCardinality();
@@ -692,13 +702,28 @@ public class GraphStorage implements Graph, Storable {
         DataAccess tmpEdges = dir.findCreate("edgesTMP");
         int newNodeCount = nodeCount - deletedNodeCount;
         MyBitSet avoidDuplicateEdges = new MyBitSetImpl(newNodeCount);
-        GraphStorage tmpGraph = newThis(dir, tmpNodes, tmpEdges);
-        // TODO only aquire two node segments in order to remove memory usage
-        tmpGraph.createNew(newNodeCount);
         int nodesPerSegment = nodes.getSegmentSize() / (nodeEntrySize * 4);
         if (nodes.getSegmentSize() % (nodeEntrySize * 4) != 0)
             nodesPerSegment++;
+        GraphStorage tmpGraph = newThis(dir, tmpNodes, tmpEdges);
+        // only aquire two node segments in order to reduce memory usage
+        tmpGraph.createNew(nodesPerSegment * 2);
 
+        int edgesPerSegment = edges.getSegmentSize() / (edgeEntrySize * 4);
+        if (edges.getSegmentSize() % (edgeEntrySize * 4) != 0)
+            edgesPerSegment++;
+
+        // TODO LATER translate already deleted edges into deletedEdgesBitsets
+        deletedEdges = null;
+        // split deleted edges into per segment        
+        List<MyBitSet> deletedEdgesBitsets = new ArrayList<MyBitSet>();
+        int edgeSegments = edges.getSegments();
+        for (int i = 0; i < edgeSegments; i++) {
+            MyBitSet bitset = new MyBitSetImpl(edgesPerSegment);
+            deletedEdgesBitsets.add(bitset);
+        }
+
+        int releasedEdgeSegments = 0;
         // TODO nearly identical to GraphUtility.createSortedGraph 
         for (int oldNode = 0; oldNode < nodeCount; oldNode++) {
             int newNode = oldToNewMap.get(oldNode);
@@ -713,11 +738,25 @@ public class GraphStorage implements Graph, Storable {
                 if (j != N_EDGE_REF)
                     tmpNodes.setInt(newNodePointer + j, value);
             }
-
+            tmpNodes.ensureCapacity((long) oldNode * tmpGraph.nodeEntrySize * 4);
             EdgeIterator oldIter = getEdges(oldNode);
             while (oldIter.next()) {
                 int connectedOldNode = oldIter.node();
-                deletedEdges.add(oldIter.edge());
+
+                // mark deleted only if the other node of an edge is already handled!
+                if (oldNode >= connectedOldNode) {
+                    int edgeId = oldIter.edge() * 4 * edgeEntrySize;
+                    int segmentNumber = edgeId / edges.getSegmentSize();
+                    MyBitSet bs = deletedEdgesBitsets.get(segmentNumber);
+                    bs.add(edgeId % edges.getSegmentSize() / 4 / edgeEntrySize);
+                    // Problem: some segments contain edgesPerSegment but some only edgesPerSegment-1
+                    if (bs.getCardinality() == edgesPerSegment) {
+                        releasedEdgeSegments++;
+                        edges.releaseSegment(segmentNumber);
+                        deletedEdgesBitsets.set(segmentNumber, null);
+                    }
+                }
+
                 int connectedNewNode = oldToNewMap.get(connectedOldNode);
                 if (connectedNewNode < 0 || avoidDuplicateEdges.contains(connectedNewNode))
                     continue;
@@ -725,6 +764,7 @@ public class GraphStorage implements Graph, Storable {
                 int fromNodeId = newNode;
                 int toNodeId = connectedNewNode;
                 int newOrExistingEdge = tmpGraph.nextEdge();
+                tmpNodes.ensureCapacity((long) Math.max(fromNodeId, toNodeId) * tmpGraph.nodeEntrySize * 4);
                 tmpGraph.connectNewEdge(fromNodeId, newOrExistingEdge);
                 tmpGraph.connectNewEdge(toNodeId, newOrExistingEdge);
                 tmpGraph.writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, oldIter.distance(), oldIter.flags());
@@ -743,10 +783,6 @@ public class GraphStorage implements Graph, Storable {
             if (oldNode > 0 && oldNode % nodesPerSegment == 0) {
                 int segmentNumber = oldNode / nodesPerSegment - 1;
                 nodes.releaseSegment(segmentNumber);
-
-                // TODO release segments for edges too
-                // deletedEdges.next();
-                // edges.releaseSegment(edgeSegmentNumber);
             }
         }
 
@@ -762,7 +798,8 @@ public class GraphStorage implements Graph, Storable {
         dir.rename(tmpEdges, "edges");
         edges = tmpEdges;
         edgeCount = tmpGraph.edgeCount;
-        deletedEdges = null;
+        System.out.println("NOW " + releasedEdgeSegments);
+        // already cleared // deletedEdges = null;
     }
 
     @Override

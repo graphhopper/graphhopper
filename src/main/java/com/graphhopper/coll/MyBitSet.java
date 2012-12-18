@@ -33,10 +33,13 @@ public interface MyBitSet {
     void clear();
 
     /**
-     * Ensures that the specified index is valid
+     * Ensures that the specified index is valid and can be accessed.
      */
     void ensureCapacity(int index);
 
+    /**
+     * Searches for a bigger or equal entry and returns it.
+     */
     int next(int index);
 
     /**

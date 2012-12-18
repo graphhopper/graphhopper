@@ -65,6 +65,18 @@ public class GraphHopper implements GraphHopperAPI {
         initIndex(new RAMDirectory());
     }
 
+    public GraphHopper forDesktop() {
+        return setInMemory(true, true);
+    }
+
+    public GraphHopper forServer() {
+        return setInMemory(true, true);
+    }
+
+    public GraphHopper forAndroid() {
+        return memoryMapped();
+    }
+
     public GraphHopper setInMemory(boolean inMemory, boolean storeOnFlush) {
         if (inMemory) {
             this.inMemory = true;
