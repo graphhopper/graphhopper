@@ -37,8 +37,8 @@ public class EdgeLevelFilter implements EdgeIterator {
         return this;
     }
 
-    @Override public int fromNode() {
-        return edgeIter.fromNode();
+    @Override public int baseNode() {
+        return edgeIter.baseNode();
     }
 
     @Override public final int node() {
@@ -63,7 +63,7 @@ public class EdgeLevelFilter implements EdgeIterator {
     }
 
     public boolean accept() {
-        return graph.getLevel(edgeIter.fromNode()) <= graph.getLevel(edgeIter.node());
+        return graph.getLevel(edgeIter.baseNode()) <= graph.getLevel(edgeIter.node());
     }
 
     @Override public int edge() {

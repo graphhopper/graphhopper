@@ -57,7 +57,7 @@ public class Path4CH extends Path4Shortcuts {
             time += weightCalculation.getTime(dist, flags);
             return;
         }
-        int from = mainIter.fromNode(), to = mainIter.node();
+        int from = mainIter.baseNode(), to = mainIter.node();
         if (revert) {
             int tmp = from;
             from = to;
@@ -71,12 +71,12 @@ public class Path4CH extends Path4Shortcuts {
             EdgeSkipIterator iter = (EdgeSkipIterator) g.getEdgeProps(skippedEdge, from);
             if (iter.isEmpty()) {
                 iter = (EdgeSkipIterator) g.getEdgeProps(skippedEdge, to);
-                int skippedNode = iter.fromNode();
+                int skippedNode = iter.baseNode();
                 expandIt(iter, false);
                 add(skippedNode);
                 findSkippedNode(from, skippedNode);
             } else {
-                int skippedNode = iter.fromNode();
+                int skippedNode = iter.baseNode();
                 findSkippedNode(skippedNode, to);
                 add(skippedNode);
                 expandIt(iter, true);
@@ -85,12 +85,12 @@ public class Path4CH extends Path4Shortcuts {
             EdgeSkipIterator iter = (EdgeSkipIterator) g.getEdgeProps(skippedEdge, to);
             if (iter.isEmpty()) {
                 iter = (EdgeSkipIterator) g.getEdgeProps(skippedEdge, from);
-                int skippedNode = iter.fromNode();
+                int skippedNode = iter.baseNode();
                 expandIt(iter, true);
                 add(skippedNode);
                 findSkippedNode(skippedNode, to);
             } else {
-                int skippedNode = iter.fromNode();
+                int skippedNode = iter.baseNode();
                 findSkippedNode(from, skippedNode);
                 add(skippedNode);
                 expandIt(iter, false);

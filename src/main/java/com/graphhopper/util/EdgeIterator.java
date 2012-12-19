@@ -22,8 +22,12 @@ package com.graphhopper.util;
  * Usage:
  * <pre>
  * // calls to iter.node(), distance() without next() will cause undefined behaviour
+ * EdgeIterator iter = graph.getOutgoing(nodeId);
+ * // or similar
+ * EdgeIterator iter = graph.getIncoming(nodeId);
  * while(iter.next()) {
- *   int nodeId = iter.node();
+ *   int baseNodeId = iter.baseNode(); // equal to nodeId
+ *   int outerNodeId = iter.node();
  *   ...
  * }
  *
@@ -43,13 +47,18 @@ public interface EdgeIterator {
     int edge();
 
     /**
-     * @return the node id of the origin node. Identical for all edges of this iterator.
+     * If you retrieve edges via "edgeIterator = graph.getXY(nodeId)" then the returned node is
+     * identical to nodeId. Often only used instead of nodeId for convenience reasons. Do not mix
+     * this with destination node of a directed edge.
+     *
+     * @return the node id of the 'base' node
+     * @see EdgeIterator
      */
-    int fromNode();
+    int baseNode();
 
     /**
-     * @return the node id of the destination node for the current edge. The value can lay within [0,
-     * n).
+     * @return the node id of the 'outer' node for the current edge.
+     * @see EdgeIterator
      */
     int node();
 

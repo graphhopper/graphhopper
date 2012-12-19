@@ -339,7 +339,7 @@ public class GraphStorage implements Graph, Storable {
         }
 
         @Override
-        public int fromNode() {
+        public int baseNode() {
             return fromNode;
         }
 
@@ -387,7 +387,7 @@ public class GraphStorage implements Graph, Storable {
             return edgePointer < maxEdges;
         }
 
-        @Override public int fromNode() {
+        @Override public int baseNode() {
             return edges.getInt(edgePointer + E_NODEA);
         }
 
@@ -518,7 +518,7 @@ public class GraphStorage implements Graph, Storable {
             return flags;
         }
 
-        @Override public int fromNode() {
+        @Override public int baseNode() {
             return fromNode;
         }
 

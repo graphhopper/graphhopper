@@ -511,17 +511,17 @@ public abstract class AbstractGraphTester {
 
         edgeId = 2;
         iter = someGraphImpl.getEdgeProps(edgeId, 0);
-        assertEquals(2, iter.fromNode());
+        assertEquals(2, iter.baseNode());
         assertEquals(0, iter.node());
         assertEquals(20, iter.distance(), 1e-5);
 
         iter = someGraphImpl.getEdgeProps(edgeId, 2);
-        assertEquals(0, iter.fromNode());
+        assertEquals(0, iter.baseNode());
         assertEquals(2, iter.node());
         assertEquals(20, iter.distance(), 1e-5);
 
         iter = someGraphImpl.getEdgeProps(edgeId, -1);
-        assertEquals(0, iter.fromNode());
+        assertEquals(0, iter.baseNode());
         assertEquals(2, iter.node());
         assertEquals(20, iter.distance(), 1e-5);
 
@@ -556,13 +556,13 @@ public abstract class AbstractGraphTester {
         assertTrue(iter.next());
         EdgeIterator oneIter = graph.getEdgeProps(iter.edge(), 3);
         assertEquals(13, oneIter.distance(), 1e-6);
-        assertEquals(2, oneIter.fromNode());
+        assertEquals(2, oneIter.baseNode());
         assertTrue(CarStreetType.isForward(oneIter.flags()));
         assertFalse(CarStreetType.isBoth(oneIter.flags()));
 
         oneIter = graph.getEdgeProps(iter.edge(), 2);
         assertEquals(13, oneIter.distance(), 1e-6);
-        assertEquals(3, oneIter.fromNode());
+        assertEquals(3, oneIter.baseNode());
         assertTrue(CarStreetType.isBackward(oneIter.flags()));
         assertFalse(CarStreetType.isBoth(oneIter.flags()));
 

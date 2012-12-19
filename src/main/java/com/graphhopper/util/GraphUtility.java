@@ -384,7 +384,7 @@ public class GraphUtility {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
-        @Override public int fromNode() {
+        @Override public int baseNode() {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
