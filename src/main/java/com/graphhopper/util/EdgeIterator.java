@@ -48,8 +48,8 @@ public interface EdgeIterator {
 
     /**
      * If you retrieve edges via "edgeIterator = graph.getXY(nodeId)" then the returned node is
-     * identical to nodeId. Often only used instead of nodeId for convenience reasons. Do not mix
-     * this with destination node of a directed edge.
+     * identical to nodeId. Often only used instead of nodeId for convenience reasons. Do not
+     * confuse this with <i>source</i> node of a directed edge.
      *
      * @return the node id of the 'base' node
      * @see EdgeIterator
