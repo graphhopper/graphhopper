@@ -35,4 +35,11 @@ public class GeoPoint {
     public String toString() {
         return lat + ", " + lon;
     }
+
+    /**
+     * Attention geoJson is LON,LAT
+     */
+    public Double[] toGeoJson() {
+        return new Double[]{lon, lat};
+    }
 }

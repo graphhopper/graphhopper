@@ -96,7 +96,7 @@ public class OSMReader {
     private AcceptStreet acceptStreets = new AcceptStreet(true, false, false, false);
     private AlgorithmPreparation prepare;
     private Location2IDQuadtree index;
-    private int indexCapacity = 2000;
+    private int indexCapacity = -1;
     private boolean sortGraph = false;
 
     /**
@@ -245,7 +245,9 @@ public class OSMReader {
         logger.info("flushing graph with " + graphStorage.getNodes() + " nodes ... (" + Helper.getMemInfo() + ")");
         graphStorage.flush();
 
-        logger.info("now initializing and flushing index");
+        if (indexCapacity < 0)
+            indexCapacity = Helper.calcIndexSize(graphStorage.getBounds());
+        logger.info("now initializing and flushing index with " + indexCapacity);
         getLocation2IDIndex().prepareIndex(indexCapacity);
         index.flush();
     }

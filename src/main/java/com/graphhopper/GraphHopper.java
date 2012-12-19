@@ -20,7 +20,6 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -30,12 +29,10 @@ import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DouglasPeucker;
-import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GeoPoint;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +52,6 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean storeOnFlush = true;
     private boolean memoryMapped;
     private boolean levelGraph;
-    private double minPathPrecision = 1;
     private String algoStr = "astar";
     private String ghLocation = "";
 
@@ -90,7 +86,7 @@ public class GraphHopper implements GraphHopperAPI {
             this.storeOnFlush = storeOnFlush;
         } else {
             memoryMapped();
-        }        
+        }
         return this;
     }
 
@@ -105,46 +101,37 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    GraphHopper setGraphHopperLocation(String ghLocation) {
+    public GraphHopper setGraphHopperLocation(String ghLocation) {
         if (ghLocation != null)
             this.ghLocation = ghLocation;
         return this;
     }
 
-    // TODO accept zipped folders and osm files too!
     @Override
     public GraphHopper load(String graphHopperFile) {
         if (graph != null)
             throw new IllegalStateException("graph is already loaded");
 
-        String tmp = graphHopperFile.toLowerCase();
-        if (tmp.endsWith(".zip") || tmp.endsWith(".osm") || tmp.endsWith(".xml")) {
-            if (ghLocation.isEmpty())
-                ghLocation = Helper.pruneFileEnd(graphHopperFile) + "-gh";
-            CmdArgs args = new CmdArgs().put("osmreader.osm", graphHopperFile).
-                    put("osmreader.graph-location", ghLocation).
-                    put("osmreader.locationIndexCapacity", "20000").
-                    put("osmreader.algo", algoStr);
-            if (memoryMapped)
-                args.put("osmreader.dataaccess", "mmap");
-            else {
-                if (inMemory && storeOnFlush) {
-                    args.put("osmreader.dataaccess", "inmemory+save");
-                } else
-                    args.put("osmreader.dataaccess", "inmemory");
-            }
-            if (levelGraph)
-                args.put("osmreader.levelgraph", "true");
+        if (graphHopperFile.indexOf(".") < 0) {
+            if (new File(graphHopperFile + "-gh").exists())
+                graphHopperFile += "-gh";
+            else if (new File(graphHopperFile + ".osm").exists())
+                graphHopperFile += ".osm";
+            else
+                throw new IllegalArgumentException("No file end and no existing osm or gh file found for " + graphHopperFile);
+        }
 
-            try {
-                OSMReader reader = OSMReader.osm2Graph(args);
-                graph = reader.getGraph();
-                prepare = reader.getPreparation();
-                index = reader.getLocation2IDIndex();
-            } catch (IOException ex) {
-                throw new RuntimeException("Cannot parse file " + graphHopperFile, ex);
+        String tmp = graphHopperFile.toLowerCase();
+        if (tmp.endsWith("-gh") || tmp.endsWith(".ghz")) {
+            if (tmp.endsWith(".ghz")) {
+                String to = Helper.pruneFileEnd(tmp) + "-gh";
+                try {
+                    Helper.unzip(tmp, to, true);
+                } catch (IOException ex) {
+                    throw new IllegalStateException("Couldn't extract file " + tmp + " to " + to, ex);
+                }
             }
-        } else {
+
             GraphStorage storage;
             Directory dir;
             if (memoryMapped) {
@@ -165,55 +152,70 @@ public class GraphHopper implements GraphHopperAPI {
 
             graph = storage;
             initIndex(dir);
-        }
+
+        } else if (tmp.endsWith(".osm") || tmp.endsWith(".xml")) {
+            if (ghLocation.isEmpty())
+                ghLocation = Helper.pruneFileEnd(graphHopperFile) + "-gh";
+            CmdArgs args = new CmdArgs().put("osmreader.osm", graphHopperFile).
+                    put("osmreader.graph-location", ghLocation).
+                    put("osmreader.algo", algoStr);
+            if (memoryMapped)
+                args.put("osmreader.dataaccess", "mmap");
+            else {
+                if (inMemory && storeOnFlush) {
+                    args.put("osmreader.dataaccess", "inmemory+save");
+                } else
+                    args.put("osmreader.dataaccess", "inmemory");
+            }
+            if (levelGraph)
+                args.put("osmreader.levelgraph", "true");
+
+            try {
+                OSMReader reader = OSMReader.osm2Graph(args);
+                graph = reader.getGraph();
+                prepare = reader.getPreparation();
+                index = reader.getLocation2IDIndex();
+            } catch (IOException ex) {
+                throw new RuntimeException("Cannot parse file " + graphHopperFile, ex);
+            }
+        } else
+            throw new IllegalArgumentException("Unknown file end " + graphHopperFile);
+
         return this;
     }
 
     @Override
-    public GraphHopper minPathPrecision(double precision) {
-        minPathPrecision = precision;
-        return this;
-    }
-
-    @Override
-    public GraphHopper algorithm(String algo) {
-        // TODO customizing algorithm does not work with levelgraph/CH! (well, we could allow bidirectional astar ...)
-        if (levelGraph)
-            throw new IllegalStateException("not supported yet");
-
-        algoStr = algo;
-        return this;
-    }
-
-    @Override
-    public PathHelper route(GeoPoint startPoint, GeoPoint endPoint) {
+    public GHResponse route(GHRequest request) {
+        if (levelGraph && !request.algorithm().equals("dijkstrabi"))
+            throw new IllegalStateException("customizing algorithm does not work with levelgraph/CH! (well, we could allow bidirectional astar ...)");
+        request.check();
         if (prepare == null)
             prepare = Helper.createAlgoPrepare(algoStr);
 
         prepare.setGraph(graph);
         RoutingAlgorithm algo = prepare.createAlgo();
-        int from = index.findID(startPoint.lat, startPoint.lon);
-        int to = index.findID(endPoint.lat, endPoint.lon);
+        int from = index.findID(request.from().lat, request.from().lon);
+        int to = index.findID(request.to().lat, request.to().lon);
         Path path = algo.calcPath(from, to);
-        path.simplify(new DouglasPeucker(graph).setMaxDist(minPathPrecision));
+        path.simplify(new DouglasPeucker(graph).setMaxDist(request.minPathPrecision()));
         int nodes = path.nodes();
         List<GeoPoint> list = new ArrayList<GeoPoint>(nodes);
         if (path.found())
             for (int i = 0; i < nodes; i++) {
                 list.add(new GeoPoint(graph.getLatitude(path.node(i)), graph.getLongitude(path.node(i))));
             }
-        return new PathHelper(list).distance(path.distance()).time(path.time());
+        return new GHResponse(list).distance(path.distance()).time(path.time());
     }
 
     private void initIndex(Directory dir) {
         Location2IDQuadtree tmp = new Location2IDQuadtree(graph, dir);
-        if (!tmp.loadExisting()) {
-            BBox bbox = graph.getBounds();
-            double dist = new DistanceCalc().calcDist(bbox.maxLat, bbox.minLon, bbox.minLat, bbox.maxLon);
-            // convert to km and maximum 5000km => 25mio capacity, minimum capacity is 2000
-            dist = Math.min(dist / 1000, 5000);
-            tmp.prepareIndex(Math.max(2000, (int) (dist * dist)));
-        }
+        if (!tmp.loadExisting())
+            tmp.prepareIndex(Helper.calcIndexSize(graph.getBounds()));
+
         index = tmp;
+    }
+
+    public Graph getGraph() {
+        return graph;
     }
 }

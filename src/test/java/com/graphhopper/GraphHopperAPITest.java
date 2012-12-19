@@ -43,7 +43,7 @@ public class GraphHopperAPITest {
         graph.edge(4, 3, 40, true);
 
         GraphHopperAPI instance = new GraphHopper(graph);
-        PathHelper ph = instance.route(new GeoPoint(42, 10.4), new GeoPoint(42, 10));
+        GHResponse ph = instance.route(new GHRequest().points(42, 10.4, 42, 10));
         assertTrue(ph.found());
         assertEquals(80, ph.distance(), 1e-6);
         assertEquals(42, ph.points().get(0).lat, 1e-5);
@@ -57,7 +57,7 @@ public class GraphHopperAPITest {
     public void testLoadOSM() {
         GraphHopperAPI instance = new GraphHopper().setGraphHopperLocation("./target/tmp/ghosm");
         instance.load("./src/test/resources/com/graphhopper/reader/test-osm.xml");
-        PathHelper ph = instance.route(new GeoPoint(51.2492152, 9.4317166), new GeoPoint(51.2, 9.4));
+        GHResponse ph = instance.route(new GHRequest().points(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.found());
         assertEquals(3, ph.points().size());
     }

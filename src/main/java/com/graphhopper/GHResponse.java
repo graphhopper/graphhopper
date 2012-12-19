@@ -19,19 +19,21 @@ import com.graphhopper.util.shapes.GeoPoint;
 import java.util.List;
 
 /**
+ * Wrapper to simplify output of GraphHopper.
+ *
  * @author Peter Karich
  */
-public class PathHelper {
+public class GHResponse {
 
     private final List<GeoPoint> list;
     private double distance;
     private long time;
 
-    public PathHelper(List<GeoPoint> list) {
+    public GHResponse(List<GeoPoint> list) {
         this.list = list;
     }
 
-    public PathHelper distance(double distance) {
+    public GHResponse distance(double distance) {
         this.distance = distance;
         return this;
     }
@@ -40,7 +42,7 @@ public class PathHelper {
         return distance;
     }
 
-    public PathHelper time(long time) {
+    public GHResponse time(long time) {
         this.time = time;
         return this;
     }

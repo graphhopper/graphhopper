@@ -15,8 +15,6 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.util.shapes.GeoPoint;
-
 /**
  * Wrapper of the graphhopper online or offline API. Provides read only access.
  *
@@ -32,7 +30,7 @@ import com.graphhopper.util.shapes.GeoPoint;
  * gh.load("http://your-graphhopper-service.com/api");
  *
  * gh.algorithm("astar");
- * PathHelper ph = gh.route(new GeoPoint(fromLat, fromLon), new GeoPoint(toLat, toLon));
+ * GHResponse ph = gh.route(new GeoPoint(fromLat, fromLon), new GeoPoint(toLat, toLon));
  * print(ph.distance() + " " + ph.time());
  * for(GeoPoint point : ph.points()) {
  *    add(point.lat, point.lon);
@@ -51,23 +49,13 @@ import com.graphhopper.util.shapes.GeoPoint;
  */
 public interface GraphHopperAPI {
 
+    /**
+     * Load the specified service or graph file (graphhopper or OSM).
+     */
     GraphHopperAPI load(String urlOrFile);
 
     /**
-     * Reduces the node count of the resulting path. Useful for performance or if you're using the
-     * web version for network latency. If a high value in meter is specified the route will be less
-     * precise along the real networks.
+     * Calculates the path from specified request with startPoint to endPoint.
      */
-    GraphHopperAPI minPathPrecision(double precision);
-
-    /**
-     * Possible values: astar (A* algorithm), astarbi (bidirectional A*) dijkstra (Dijkstra),
-     * dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
-     */
-    GraphHopperAPI algorithm(String algo);
-
-    /**
-     * Calculates the path from specified startPoint to endPoint.
-     */
-    PathHelper route(GeoPoint from, GeoPoint to);
+    GHResponse route(GHRequest request);
 }
