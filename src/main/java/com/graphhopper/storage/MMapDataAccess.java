@@ -239,8 +239,7 @@ public class MMapDataAccess extends AbstractDataAccess {
         }
     }
 
-    @Override
-    public boolean releaseSegment(int segNumber) {
+    boolean releaseSegment(int segNumber) {
         ByteBuffer segment = segments.get(segNumber);
         if (segment instanceof MappedByteBuffer)
             ((MappedByteBuffer) segment).force();

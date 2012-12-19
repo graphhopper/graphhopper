@@ -99,13 +99,4 @@ public interface DataAccess extends Storable {
     int getSegments();
 
     int getVersion();
-
-    /**
-     * While copying it is a big bonus to release memory as early as possible. This method frees the
-     * specified segment. Warning: this object is not functional after calling this method. All
-     * methods (except this one) could fail! Use only if you know what you do!
-     *
-     * @return false if not supported
-     */
-    boolean releaseSegment(int segNumber);
 }

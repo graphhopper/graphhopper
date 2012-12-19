@@ -41,9 +41,6 @@ public interface Directory {
 
     /**
      * Removes the specified object from the directory.
-     *
-     * TODO Hmmh naming is a bit problematic as it removes the DataAccess object only from the
-     * managing map in the current implementations.
      */
     void remove(DataAccess da);
 

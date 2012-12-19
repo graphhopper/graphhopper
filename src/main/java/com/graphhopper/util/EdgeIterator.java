@@ -57,7 +57,7 @@ public interface EdgeIterator {
     int baseNode();
 
     /**
-     * @return the node id of the 'outer' node for the current edge.
+     * @return the node id of the 'outer' node (connected to baseNode) for the current edge.
      * @see EdgeIterator
      */
     int node();

@@ -215,8 +215,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         segments = Arrays.copyOf(segments, remainingSegments);
     }
 
-    @Override
-    public boolean releaseSegment(int segNumber) {
+    boolean releaseSegment(int segNumber) {
         segments[segNumber] = null;
         return true;
     }
