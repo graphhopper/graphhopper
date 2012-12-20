@@ -28,6 +28,7 @@ public class GHResponse {
     private final List<GHPoint> list;
     private double distance;
     private long time;
+    private String debugInfo = "";
 
     public GHResponse(List<GHPoint> list) {
         this.list = list;
@@ -57,6 +58,15 @@ public class GHResponse {
 
     public List<GHPoint> points() {
         return list;
+    }
+
+    public String debugInfo() {
+        return debugInfo;
+    }
+
+    public GHResponse debugInfo(String debugInfo) {
+        this.debugInfo = debugInfo;
+        return this;
     }
 
     @Override

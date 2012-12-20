@@ -26,7 +26,7 @@ public class QuadTreeSimpleTest extends QuadTreeTester {
 
     @Override
     protected QuadTree createQuadTree(long items) {
-        return new QuadTreeSimple().init(items);
+        return new QuadTreeSimple<Integer>().init(items);
     }
 
     @Test

@@ -174,4 +174,8 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
     protected EdgeIterator getNeighbors(int neighborNode) {
         return graph.getOutgoing(neighborNode);
     }
+
+    @Override public String name() {
+        return "dijkstra";
+    }
 }

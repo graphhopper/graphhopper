@@ -30,6 +30,7 @@ public abstract class AbstractAlgoPreparation<T extends AlgorithmPreparation> im
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     @Override public T doWork() {
         if (prepared)
             throw new IllegalStateException("Call doWork only once!");

@@ -26,19 +26,19 @@ public class MyListTest {
 
     @Test
     public void testAdd() {
-        MyList instance = new MyList();
+        MyList<Integer> instance = new MyList<Integer>();
         instance.add(0);
         instance.add(2);
         instance.add(1, 10);
         assertEquals("0,10,2", instance.toString());
-        assertEquals(10, instance.remove(1));
+        assertEquals(10, instance.remove(1).intValue());
 
         assertEquals("0,2", instance.toString());
     }
 
     @Test
     public void testBinSearch() {
-        MyList instance = new MyList();
+        MyList<Integer> instance = new MyList<Integer>();
         instance.add(0);
         instance.add(2);
         instance.add(7);

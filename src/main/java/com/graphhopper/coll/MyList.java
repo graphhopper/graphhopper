@@ -31,10 +31,12 @@ public class MyList<T> {
         this(10);
     }
 
+    @SuppressWarnings("unchecked")
     public MyList(int cap) {
         arr = (T[]) new Object[cap];
     }
 
+    @SuppressWarnings("unchecked")
     void ensureCapacity(int minSize) {
         if (minSize <= arr.length)
             return;

@@ -32,8 +32,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         this.graph = graph;
     }
 
-    @Override
-    public RoutingAlgorithm setType(WeightCalculation wc) {
+    @Override public RoutingAlgorithm setType(WeightCalculation wc) {
         this.weightCalc = wc;
         return this;
     }
@@ -46,6 +45,10 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     }
 
     @Override public String toString() {
-        return getClass().getSimpleName() + "|" + weightCalc;
+        return name() + "|" + weightCalc;
+    }
+
+    @Override public String name() {
+        return getClass().getSimpleName();
     }
 }

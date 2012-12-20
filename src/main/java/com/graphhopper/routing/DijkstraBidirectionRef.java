@@ -266,4 +266,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     public int getVisited() {
         return visitedFrom.getCardinality() + visitedTo.getCardinality();
     }
+
+    @Override public String name() {
+        return "dijkstrabi";
+    }
 }

@@ -227,4 +227,8 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         }
         return null;
     }
+    
+    @Override public String name() {
+        return "dijkstraNativebi";
+    }
 }

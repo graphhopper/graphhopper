@@ -458,8 +458,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 return new Path4CH(graph, wc);
             }
 
-            @Override public String toString() {
-                return "DijkstraCH";
+            @Override public String name() {
+                return "dijkstraCH";
             }
         };
         dijkstra.setEdgeFilter(new EdgeLevelFilter(g));
@@ -521,6 +521,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 }
             }
             return found == goals.size();
+        }
+
+        @Override public String name() {
+            return "dijkstra12Many";
         }
     }
 

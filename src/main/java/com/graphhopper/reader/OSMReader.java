@@ -416,11 +416,15 @@ public class OSMReader {
     }
 
     public OSMReader setCHShortcuts(String chShortcuts) {
+        if (chShortcuts.isEmpty() || "no".equals(chShortcuts) || "false".equals(chShortcuts))
+            return this;
         if ("true".equals(chShortcuts) || "fastest".equals(chShortcuts)) {
             prepare = new PrepareContractionHierarchies().setType(FastestCarCalc.DEFAULT);
         } else if ("shortest".equals(chShortcuts)) {
             prepare = new PrepareContractionHierarchies();
-        }
+        } else
+            throw new IllegalArgumentException("Value " + chShortcuts + " not valid for configuring "
+                    + "contraction hierarchies algorithm preparation");
         prepare.setGraph(graphStorage);
         return this;
     }

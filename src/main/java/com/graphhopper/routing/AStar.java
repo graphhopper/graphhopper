@@ -158,4 +158,8 @@ public class AStar extends AbstractRoutingAlgorithm {
             this.weightToCompare = (float) weightToCompare;
         }
     }
+
+    @Override public String name() {
+        return "astar";
+    }
 }

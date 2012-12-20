@@ -16,6 +16,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.BitUtil;
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
@@ -103,6 +104,9 @@ public class RAMDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (!store || closed)
             return false;
+        File file = new File(getFullName());
+        if (!file.exists() || file.length() == 0)
+            return false;
         try {
             RandomAccessFile raFile = new RandomAccessFile(getFullName(), "r");
             try {
@@ -130,7 +134,7 @@ public class RAMDataAccess extends AbstractDataAccess {
                 raFile.close();
             }
         } catch (IOException ex) {
-            return false;
+            throw new RuntimeException("Problem while loading " + getFullName(), ex);
         }
     }
 

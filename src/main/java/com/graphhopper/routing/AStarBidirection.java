@@ -303,4 +303,8 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
             shortest.weight = newShortest;
         }
     }
+    
+    @Override public String name() {
+        return "astarbi";
+    }
 }

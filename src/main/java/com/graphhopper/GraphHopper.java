@@ -20,6 +20,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.FastestCarCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -31,6 +32,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.io.IOException;
@@ -142,16 +144,15 @@ public class GraphHopper implements GraphHopperAPI {
 
             if (levelGraph) {
                 storage = new LevelGraphStorage(dir);
-                prepare = new PrepareContractionHierarchies();
+                prepare = new PrepareContractionHierarchies().setType(FastestCarCalc.DEFAULT);
             } else
                 storage = new GraphStorage(dir);
 
             if (!storage.loadExisting())
-                throw new IllegalStateException("TODO load via OSMReader!");
+                throw new IllegalStateException("Couldn't load storage at " + graphHopperFile);
 
             graph = storage;
             initIndex(dir);
-
         } else if (tmp.endsWith(".osm") || tmp.endsWith(".xml")) {
             if (ghLocation.isEmpty())
                 ghLocation = Helper.pruneFileEnd(graphHopperFile) + "-gh";
@@ -193,20 +194,32 @@ public class GraphHopper implements GraphHopperAPI {
         } else
             prepare = Helper.createAlgoPrepare(request.algorithm());
 
-        request.check();
-        prepare.setGraph(graph);
-        RoutingAlgorithm algo = prepare.createAlgo();
+        request.check();        
+        StopWatch sw = new StopWatch().start();
         int from = index.findID(request.from().lat, request.from().lon);
         int to = index.findID(request.to().lat, request.to().lon);
+        String debug = "idLookup:" + sw.stop().getSeconds() + "s";
+
+        sw = new StopWatch().start();
+        prepare.setGraph(graph);
+        RoutingAlgorithm algo = prepare.createAlgo();
         Path path = algo.calcPath(from, to);
+        debug += " routing (" + algo.name() + "):" + sw.stop().getSeconds() + "s";
+
+        sw = new StopWatch().start();
         path.simplify(new DouglasPeucker(graph).setMaxDist(request.minPathPrecision()));
+        debug += " simplify:" + sw.stop().getSeconds() + "s";
+
         int nodes = path.nodes();
         List<GHPoint> list = new ArrayList<GHPoint>(nodes);
-        if (path.found())
+        if (path.found()) {
+            sw = new StopWatch().start();
             for (int i = 0; i < nodes; i++) {
                 list.add(new GHPoint(graph.getLatitude(path.node(i)), graph.getLongitude(path.node(i))));
             }
-        return new GHResponse(list).distance(path.distance()).time(path.time());
+            debug += " createList:" + sw.stop().getSeconds() + "s";
+        }
+        return new GHResponse(list).distance(path.distance()).time(path.time()).debugInfo(debug);
     }
 
     private void initIndex(Directory dir) {

@@ -72,7 +72,7 @@ public class MiniGraphUI {
         this.graph = reader.getGraph();
         AlgorithmPreparation prepare = reader.getPreparation();
         this.algo = prepare.createAlgo();
-        logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algo:" + algo.getClass().getSimpleName());
+        logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algo:" + algo.name());
         mg = new MyGraphics(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km

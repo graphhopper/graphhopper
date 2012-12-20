@@ -37,4 +37,6 @@ public interface RoutingAlgorithm {
     RoutingAlgorithm setType(WeightCalculation calc);
 
     RoutingAlgorithm clear();
+    
+    String name();
 }

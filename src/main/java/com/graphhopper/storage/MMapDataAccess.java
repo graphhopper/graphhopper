@@ -18,6 +18,7 @@ package com.graphhopper.storage;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Helper7;
 import com.graphhopper.util.NotThreadSafe;
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -56,8 +57,8 @@ public class MMapDataAccess extends AbstractDataAccess {
         try {
             // raFile necessary for loadExisting and createNew
             raFile = new RandomAccessFile(getFullName(), "rw");
-        } catch (IOException x) {
-            throw new RuntimeException(x);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
@@ -147,20 +148,23 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public boolean loadExisting() {
+        if (segments.size() > 0)
+            throw new IllegalStateException("already initialized");
+        if (closed)
+            return false;
+        File file = new File(getFullName());
+        if (!file.exists() || file.length() == 0)
+            return false;
+        initRandomAccessFile();
         try {
-            if (closed)
-                return false;
-
-            initRandomAccessFile();
             long byteCount = readHeader(raFile);
             if (byteCount < 0)
                 return false;
             mapIt(HEADER_OFFSET, byteCount - HEADER_OFFSET, false);
             return true;
         } catch (IOException ex) {
-            // ex.printStackTrace();
+            throw new RuntimeException("Problem while loading " + getFullName(), ex);
         }
-        return false;
     }
 
     @Override
