@@ -38,10 +38,12 @@ Usage
  GraphHopperAPI gh = new GraphHopper();
  gh.load("http://your-graphhopper-service.com/api");
 
- gh.algorithm("astar");
- PathHelper ph = gh.route(new GeoPoint(fromLat, fromLon), new GeoPoint(toLat, toLon));
- print(ph.distance() + " " + ph.time());
- for(GeoPoint point : ph.points()) {
+ 
+ GHRequest request = new GHRequest(new GeoPoint(fromLat, fromLon), new GeoPoint(toLat, toLon));
+ request.algorithm("astar");
+ GHResponse response = gh.route(request);
+ print(response.distance() + " " + response.time());
+ for(GHPoint point : response.points()) {
     add(point.lat, point.lon);
  }
 ```
