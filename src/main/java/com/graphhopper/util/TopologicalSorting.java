@@ -72,7 +72,7 @@ public class TopologicalSorting {
             list.add(current);
             EdgeIterator iter = g.getOutgoing(current);
             while (iter.next()) {
-                int nodeId = iter.node();
+                int nodeId = iter.adjNode();
                 if (!visited.contains(nodeId)) {
                     visited.add(nodeId);
                     noIncomingDeque.push(nodeId);

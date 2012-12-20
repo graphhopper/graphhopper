@@ -77,15 +77,15 @@ public abstract class AbstractGraphTester {
         assertEquals(1, GraphUtility.count(g.getOutgoing(3)));
         i = g.getOutgoing(3);
         i.next();
-        assertEquals(2, i.node());
+        assertEquals(2, i.adjNode());
 
         i = g.getOutgoing(1);
         assertTrue(i.next());
-        assertEquals(2, i.node());
+        assertEquals(2, i.adjNode());
         assertTrue(i.next());
-        assertEquals(11, i.node());
+        assertEquals(11, i.adjNode());
         assertTrue(i.next());
-        assertEquals(12, i.node());
+        assertEquals(12, i.adjNode());
         assertFalse(i.next());
     }
 
@@ -98,16 +98,16 @@ public abstract class AbstractGraphTester {
         assertFalse(i.next());
         i = g.getOutgoing(3);
         assertTrue(i.next());
-        assertEquals(2, i.node());
+        assertEquals(2, i.adjNode());
         assertFalse(i.next());
 
         g.edge(2, 3, 112, false);
         i = g.getOutgoing(2);
         assertTrue(i.next());
-        assertEquals(3, i.node());
+        assertEquals(3, i.adjNode());
         i = g.getOutgoing(3);
         i.next();
-        assertEquals(2, i.node());
+        assertEquals(2, i.adjNode());
         assertFalse(i.next());
     }
 
@@ -344,7 +344,7 @@ public abstract class AbstractGraphTester {
 
     public boolean containsLatitude(Graph g, EdgeIterator iter, double latitude) {
         while (iter.next()) {
-            if (Math.abs(g.getLatitude(iter.node()) - latitude) < 1e-4)
+            if (Math.abs(g.getLatitude(iter.adjNode()) - latitude) < 1e-4)
                 return true;
         }
         return false;
@@ -512,17 +512,17 @@ public abstract class AbstractGraphTester {
         edgeId = 2;
         iter = someGraphImpl.getEdgeProps(edgeId, 0);
         assertEquals(2, iter.baseNode());
-        assertEquals(0, iter.node());
+        assertEquals(0, iter.adjNode());
         assertEquals(20, iter.distance(), 1e-5);
 
         iter = someGraphImpl.getEdgeProps(edgeId, 2);
         assertEquals(0, iter.baseNode());
-        assertEquals(2, iter.node());
+        assertEquals(2, iter.adjNode());
         assertEquals(20, iter.distance(), 1e-5);
 
         iter = someGraphImpl.getEdgeProps(edgeId, -1);
         assertEquals(0, iter.baseNode());
-        assertEquals(2, iter.node());
+        assertEquals(2, iter.adjNode());
         assertEquals(20, iter.distance(), 1e-5);
 
         iter = someGraphImpl.getEdgeProps(edgeId, 1);

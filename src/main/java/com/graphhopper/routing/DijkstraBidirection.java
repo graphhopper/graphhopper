@@ -146,7 +146,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
         EdgeIterator iter = GraphUtility.getEdges(graph, currNode, out);
         while (iter.next()) {
-            int neighborNode = iter.node();
+            int neighborNode = iter.adjNode();
             if (visitedMain.contains(neighborNode))
                 continue;
 

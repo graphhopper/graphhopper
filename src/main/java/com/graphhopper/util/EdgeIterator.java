@@ -16,18 +16,18 @@
 package com.graphhopper.util;
 
 /**
- * Iterates through all edges of one node. Avoids object creation in-between via direct access
- * methods.
+ * Iterates through all edges of one node. Avoids object creation in-between via
+ * direct access methods.
  *
  * Usage:
  * <pre>
- * // calls to iter.node(), distance() without next() will cause undefined behaviour
+ * // calls to iter.adjNode(), distance() without next() will cause undefined behaviour
  * EdgeIterator iter = graph.getOutgoing(nodeId);
  * // or similar
  * EdgeIterator iter = graph.getIncoming(nodeId);
  * while(iter.next()) {
  *   int baseNodeId = iter.baseNode(); // equal to nodeId
- *   int outerNodeId = iter.node();
+ *   int outerNodeId = iter.adjNode();
  *   ...
  * }
  *
@@ -41,26 +41,44 @@ public interface EdgeIterator {
     boolean next();
 
     /**
-     * @return the edge id of the current edge. Although the current implementation uses an index
-     * starting from 1, do not make any assumptions about it.
+     * @return the edge id of the current edge. Although the current
+     *         implementation uses an index starting from 1, do not make any
+     *         assumptions about it.
      */
     int edge();
 
     /**
-     * If you retrieve edges via "edgeIterator = graph.getXY(nodeId)" then the returned node is
-     * identical to nodeId. Often only used instead of nodeId for convenience reasons. Do not
-     * confuse this with <i>source</i> node of a directed edge.
+     * If you retrieve edges via {@link com.graphhopper.storage.Graph#getEdges(int)},
+     * {@link com.graphhopper.storage.Graph#getIncoming(int)}, or
+     * {@link com.graphhopper.storage.Graph#getOutgoing(int)} then the returned
+     * node is identical to the node ID; if you retrieve via
+     * {@link com.graphhopper.storage.Graph#getAllEdges()}, then the returned
+     * node is always less than or equal to the node returned by
+     * {@link #adjNode()}.
+     *
+     * This is often used instead of the node ID for convenience reasons. Do not
+     * confuse this with the <i>source</i> node of a directed edge.
      *
      * @return the node id of the 'base' node
+     *
      * @see EdgeIterator
+     * @see #adjNode()
      */
     int baseNode();
 
     /**
-     * @return the node id of the 'outer' node for the current edge.
+     * Returns the node which is adjacent to the node given by
+     * {@link #baseNode()} via the current edge; i.e., for an incoming
+     * edge, the source node is returned, and for an outgoing edge,
+     * the destination node is returned.
+     *
+     * @return the node which is adjacent to the node given by
+     *         {@link #baseNode()} via the current edge.
+     *
      * @see EdgeIterator
+     * @see #baseNode()
      */
-    int node();
+    int adjNode();
 
     /**
      * @return the distance of the current edge edge

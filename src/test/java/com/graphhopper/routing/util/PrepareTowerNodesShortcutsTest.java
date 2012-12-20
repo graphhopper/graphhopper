@@ -287,9 +287,9 @@ public class PrepareTowerNodesShortcutsTest {
     public static void printEdges(LevelGraph g) {
         EdgeSkipIterator iter = g.getAllEdges();
         while (iter.next()) {
-            System.out.println(iter.baseNode() + "<->" + iter.node()
+            System.out.println(iter.baseNode() + "<->" + iter.adjNode()
                     + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedEdge()
-                    + ", level:" + g.getLevel(iter.baseNode()) + "->" + g.getLevel(iter.node())
+                    + ", level:" + g.getLevel(iter.baseNode()) + "->" + g.getLevel(iter.adjNode())
                     + ", bothDir:" + CarStreetType.isBoth(iter.flags()));
         }
         System.out.println("---");

@@ -59,7 +59,7 @@ public class XFirstSearch {
             if (goFurther(current)) {
                 EdgeIterator iter = getEdges(g, current);
                 while (iter.next()) {
-                    int connectedId = iter.node();
+                    int connectedId = iter.adjNode();
                     if (checkConnected(connectedId) && !visited.contains(connectedId)) {
                         visited.add(connectedId);
                         coll.push(connectedId);

@@ -63,10 +63,10 @@ public class OSMReaderTest {
 
         EdgeIterator iter = graph.getOutgoing(1);
         assertTrue(iter.next());
-        assertEquals(0, iter.node());
+        assertEquals(0, iter.adjNode());
         assertEquals(88643, iter.distance(), 1);
         assertTrue(iter.next());
-        assertEquals(2, iter.node());
+        assertEquals(2, iter.adjNode());
         assertEquals(93146.888, iter.distance(), 1);
         CarStreetType flags = new CarStreetType(iter.flags());
         assertTrue(flags.isMotorway());
@@ -81,7 +81,7 @@ public class OSMReaderTest {
         // get third added location id=30
         iter = graph.getOutgoing(2);
         assertTrue(iter.next());
-        assertEquals(1, iter.node());
+        assertEquals(1, iter.adjNode());
         assertEquals(93146.888, iter.distance(), 1);
 
         assertEquals(9.432, graph.getLongitude(reader.getLocation2IDIndex().findID(51.25, 9.43)), 1e-3);
@@ -116,16 +116,16 @@ public class OSMReaderTest {
 
         EdgeIterator iter = graph.getOutgoing(1);
         assertTrue(iter.next());
-        assertEquals(0, iter.node());
+        assertEquals(0, iter.adjNode());
         assertEquals(88643, iter.distance(), 1);
         assertTrue(iter.next());
-        assertEquals(2, iter.node());
+        assertEquals(2, iter.adjNode());
         assertEquals(93146.888, iter.distance(), 1);
 
         // get third added location => 2
         iter = graph.getOutgoing(2);
         assertTrue(iter.next());
-        assertEquals(1, iter.node());
+        assertEquals(1, iter.adjNode());
         assertEquals(93146.888, iter.distance(), 1);
     }
 
@@ -141,7 +141,7 @@ public class OSMReaderTest {
 
         EdgeIterator iter = graph.getOutgoing(1);
         assertTrue(iter.next());
-        assertEquals(2, iter.node());
+        assertEquals(2, iter.adjNode());
 
         iter = graph.getEdges(1);
         assertTrue(iter.next());

@@ -64,7 +64,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
             }
             EdgeIterator iter = g.getOutgoing(fromNode);
             while (iter.next()) {
-                int toNode = iter.node();
+                int toNode = iter.adjNode();
                 double toLat = g.getLatitude(toNode);
                 double toLon = g.getLongitude(toNode);
 

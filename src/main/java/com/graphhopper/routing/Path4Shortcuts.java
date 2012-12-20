@@ -53,7 +53,7 @@ public class Path4Shortcuts extends PathBidirRef {
 
     protected void handleSkippedEdge(EdgeSkipIterator iter) {
         int from = iter.baseNode();
-        int to = iter.node();
+        int to = iter.adjNode();
 
         // TODO move this swapping to expand where it belongs (necessary because of usage 'getOutgoing')
         if (reverse) {
@@ -69,7 +69,7 @@ public class Path4Shortcuts extends PathBidirRef {
             success = expand(to, from, iter.skippedEdge(), true);
             if (!success)
                 throw new IllegalStateException("skipped edge " + iter.skippedEdge() + " not found for "
-                        + iter.baseNode() + "<->" + iter.node() + "? " + BitUtil.toBitString(iter.flags(), 8));
+                        + iter.baseNode() + "<->" + iter.adjNode() + "? " + BitUtil.toBitString(iter.flags(), 8));
         }
     }
 
@@ -85,15 +85,15 @@ public class Path4Shortcuts extends PathBidirRef {
             tmpNodeList.add(node);
             tmpIter = g.getEdges(node);
             tmpIter.next();
-            if (tmpIter.node() == avoidNode) {
+            if (tmpIter.adjNode() == avoidNode) {
                 if (!tmpIter.next())
                     throw new IllegalStateException("node should have two degree:" + node);
             }
 
             avoidNode = node;
-            node = tmpIter.node();
+            node = tmpIter.adjNode();
             // TODO introduce edge filter here too?
-            if (((LevelGraph) g).getLevel(tmpIter.node()) >= 0 || tmpIter.node() == to)
+            if (((LevelGraph) g).getLevel(tmpIter.adjNode()) >= 0 || tmpIter.adjNode() == to)
                 break;
         }
 

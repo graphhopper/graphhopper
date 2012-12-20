@@ -79,7 +79,7 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
                 int firstSkippedEdge = iter.edge();
                 int flags = iter.flags();
                 int skip = startNode;
-                int currentNode = iter.node();
+                int currentNode = iter.adjNode();
                 double distance = iter.distance();
                 int countSkipped = 0;
                 while (true) {
@@ -91,13 +91,13 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
 
                     EdgeIterator twoDegreeIter = g.getEdges(currentNode);
                     twoDegreeIter.next();
-                    if (twoDegreeIter.node() == skip) {
+                    if (twoDegreeIter.adjNode() == skip) {
                         if (!twoDegreeIter.next())
                             throw new IllegalStateException("there should be an opposite node to "
                                     + "traverse to but wasn't for " + currentNode);
                     }
 
-                    if (twoDegreeIter.node() == skip)
+                    if (twoDegreeIter.adjNode() == skip)
                         throw new IllegalStateException("next node shouldn't be identical to skip "
                                 + "(" + skip + ") for " + currentNode + ", startNode=" + startNode);
 
@@ -107,7 +107,7 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
                     g.setLevel(currentNode, -1);
                     distance += twoDegreeIter.distance();
                     skip = currentNode;
-                    currentNode = twoDegreeIter.node();
+                    currentNode = twoDegreeIter.adjNode();
                     countSkipped++;
                 }
                 if (currentNode == startNode)
@@ -154,9 +154,9 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
         for (; iter.next(); counter++) {
             if (counter == 0) {
                 firstForward = CarStreetType.isForward(iter.flags());
-                node = iter.node();
+                node = iter.adjNode();
             } else if (counter == 1) {
-                if (node == iter.node())
+                if (node == iter.adjNode())
                     break;
                 if (firstForward && !CarStreetType.isBackward(iter.flags()))
                     return false;
