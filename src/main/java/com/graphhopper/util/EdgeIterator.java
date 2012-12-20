@@ -68,7 +68,9 @@ public interface EdgeIterator {
 
     /**
      * Returns the node which is adjacent to the node given by
-     * {@link #baseNode()} via the current edge.
+     * {@link #baseNode()} via the current edge; i.e., for an incoming
+     * edge, the source node is returned, and for an outgoing edge,
+     * the destination node is returned.
      *
      * @return the node which is adjacent to the node given by
      *         {@link #baseNode()} via the current edge.
