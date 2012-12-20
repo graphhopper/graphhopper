@@ -62,7 +62,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             CoordTrigObjEntry<T> entry = new CoordTrigObjEntry<T>();
             algo.decode(dataNode.keys[i], entry);
             if (accept(entry)) {
-                entry.setValue((T) dataNode.values[i]);
+                entry.setValue(dataNode.values[i]);
                 result.add(entry);
             }
         }
@@ -158,7 +158,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             int previousNum, long maxBit) {
         size++;
 
-        QTDataNode<T> dataNode = (QTDataNode) current;
+        QTDataNode<T> dataNode = (QTDataNode<T>) current;
         boolean overflow = dataNode.add(spatialKey, value);
         if (!overflow)
             return;
@@ -232,7 +232,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     @Override
     public Collection<CoordTrig<T>> getNodesFromValue(final double lat, final double lon, final T value) {
         if (root == null)
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
 
         final long spatialKey = algo.encode(lat, lon);
         final List<CoordTrig<T>> nodes = new ArrayList<CoordTrig<T>>(1);
@@ -244,7 +244,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
                 if (dataNode.keys[i] == spatialKey) {
                     CoordTrig<T> ret = new CoordTrigObjEntry<T>();
                     algo.decode(dataNode.keys[i], ret);
-                    ret.setValue((T) dataNode.values[i]);
+                    ret.setValue(dataNode.values[i]);
                     nodes.add(ret);
                 }
             }
@@ -262,7 +262,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
     @Override
     public Collection<CoordTrig<T>> getNodes(final Shape boundingBox) {
         if (root == null)
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
 
         Acceptor<T> worker = new Acceptor<T>(algo) {
             @Override public boolean accept(CoordTrig<T> entry) {
@@ -273,7 +273,8 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
         return worker.result;
     }
 
-    private void getNeighbours(BBox nodeBB, Shape searchRect, QTNode current, LeafWorker<T> worker) {
+    @SuppressWarnings("unchecked")
+    private void getNeighbours(BBox nodeBB, Shape searchRect, QTNode<T> current, LeafWorker<T> worker) {
         if (current.hasData()) {
             QTDataNode<T> dataNode = (QTDataNode<T>) current;
             for (int i = 0; i < dataNode.values.length; i++) {

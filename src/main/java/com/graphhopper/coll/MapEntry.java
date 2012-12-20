@@ -55,6 +55,7 @@ public class MapEntry<K, V> implements Map.Entry<K, V>, Serializable {
         return getKey() + ", " + getValue();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean equals(Object obj) {
         if (obj == null)

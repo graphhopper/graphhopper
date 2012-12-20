@@ -28,11 +28,12 @@ class QTDataNode<V> implements QTNode<V> {
     /**
      * Use 'null' to mark the end of the array and to avoid an additional capacity int
      */
-    Object[] values;
+    V[] values;
 
+    @SuppressWarnings("unchecked")
     public QTDataNode(int entries) {
         keys = new long[entries];
-        values = new Object[entries];
+        values = (V[]) new Object[entries];
     }
 
     @Override
@@ -190,13 +191,14 @@ class QTDataNode<V> implements QTNode<V> {
         return i;
     }
 
+    @SuppressWarnings("unchecked")
     void ensure(int newSize) {
         long[] tmpKeys = new long[newSize];
         Object[] tmpValues = new Object[newSize];
         System.arraycopy(keys, 0, tmpKeys, 0, keys.length);
         System.arraycopy(values, 0, tmpValues, 0, values.length);
         keys = tmpKeys;
-        values = tmpValues;
+        values = (V[]) tmpValues;
     }
 
     int count(long spatialKey) {

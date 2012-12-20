@@ -268,7 +268,7 @@ public class MyDijkstraHeap implements BinHeapWrapper<Number, Integer> {
         List<Entry<Double, Integer>> sortedList = new ArrayList<Entry<Double, Integer>>();
         int len = from.size();
         for (int i = 1; i <= len; i++) {
-            sortedList.add(new MapEntry((double) from.getKey(i), from.getElement(i)));
+            sortedList.add(new MapEntry<Double, Integer>((double) from.getKey(i), from.getElement(i)));
         }
 
         Collections.sort(sortedList, comparator);

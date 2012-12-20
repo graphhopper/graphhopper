@@ -22,16 +22,16 @@ import com.graphhopper.util.Helper;
  */
 class QTBranchNode<V> implements QTNode<V> {
 
-    QTNode node0;
-    QTNode node1;
-    QTNode node2;
-    QTNode node3;
+    QTNode<V> node0;
+    QTNode<V> node1;
+    QTNode<V> node2;
+    QTNode<V> node3;
 
     public QTBranchNode() {
     }
 
     @Override
-    public final QTNode get(int num) {
+    public final QTNode<V> get(int num) {
         switch (num) {
             case 0:
                 return node0;
@@ -45,7 +45,7 @@ class QTBranchNode<V> implements QTNode<V> {
     }
 
     @Override
-    public void set(int num, QTNode n) {
+    public void set(int num, QTNode<V> n) {
         switch (num) {
             case 0:
                 node0 = n;

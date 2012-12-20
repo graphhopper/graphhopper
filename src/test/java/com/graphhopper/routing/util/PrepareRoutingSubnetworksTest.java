@@ -83,7 +83,7 @@ public class PrepareRoutingSubnetworksTest {
         g.optimize();
 
         assertEquals(7, g.getNodes());
-        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+        assertEquals(Arrays.<String>asList(), GraphUtility.getProblems(g));
         map = instance.findSubnetworks();
         assertEquals(1, map.size());
         assertEquals(7, (int) map.get(0));

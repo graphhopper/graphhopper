@@ -25,8 +25,10 @@ import static org.junit.Assert.*;
 public class QuadTreeSimpleTest extends QuadTreeTester {
 
     @Override
-    protected QuadTree createQuadTree(long items) {
-        return new QuadTreeSimple<Integer>().init(items);
+    protected QuadTree<Long> createQuadTree(long items) {
+        QuadTreeSimple<Long> qt = new QuadTreeSimple<Long>();
+        qt.init(items);
+        return qt;
     }
 
     @Test

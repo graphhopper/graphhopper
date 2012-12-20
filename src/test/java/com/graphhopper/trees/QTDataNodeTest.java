@@ -28,7 +28,7 @@ public class QTDataNodeTest {
     public void testGetMemoryUsageInBytes() {
         QTDataNode<Integer> dn = new QTDataNode<Integer>(8);
         dn.keys[1] = 111;
-        dn.values[1] = 222;
+        // dn.values[1] = (Integer) 222;
         assertEquals(0, dn.count());
         dn.add(1, 1);
         assertEquals(1, dn.count());

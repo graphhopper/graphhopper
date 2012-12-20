@@ -323,12 +323,12 @@ public abstract class AbstractGraphTester {
         // no deletion happend
         assertEquals(fillToSize, g.getNodes());
 
-        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+        assertEquals(Arrays.<String>asList(), GraphUtility.getProblems(g));
 
         // now actually perform deletion
         g.optimize();
 
-        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+        assertEquals(Arrays.<String>asList(), GraphUtility.getProblems(g));
 
         assertEquals(fillToSize - deleted, g.getNodes());
         int id1 = getIdOf(g, 38.33f);
@@ -374,17 +374,17 @@ public abstract class AbstractGraphTester {
         g.markNodeDeleted(3);
 
         assertEquals(6, g.getNodes());
-        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+        assertEquals(Arrays.<String>asList(), GraphUtility.getProblems(g));
 
         // now actually perform deletion
         g.optimize();
 
         assertEquals(4, g.getNodes());
-        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+        assertEquals(Arrays.<String>asList(), GraphUtility.getProblems(g));
         // shouldn't change anything
         g.optimize();
         assertEquals(4, g.getNodes());
-        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+        assertEquals(Arrays.<String>asList(), GraphUtility.getProblems(g));
     }
 
     @Test public void testSimpleDelete2() {
@@ -402,13 +402,13 @@ public abstract class AbstractGraphTester {
         g.edge(9, 12, 912, true);
 
         assertEquals(13, g.getNodes());
-        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+        assertEquals(Arrays.<String>asList(), GraphUtility.getProblems(g));
 
         // perform deletion
         g.optimize();
 
         assertEquals(11, g.getNodes());
-        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+        assertEquals(Arrays.<String>asList(), GraphUtility.getProblems(g));
         assertEquals(2, GraphUtility.count(g.getEdges(getIdOf(g, 9))));
         assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 11))));
         assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 12))));
@@ -435,7 +435,7 @@ public abstract class AbstractGraphTester {
         // perform deletion
         g.optimize();
 
-        assertEquals(Arrays.asList(), GraphUtility.getProblems(g));
+        assertEquals(Arrays.<String>asList(), GraphUtility.getProblems(g));
 
         assertEquals(3, GraphUtility.count(g.getEdges(getIdOf(g, 9))));
         assertEquals(1, GraphUtility.count(g.getEdges(getIdOf(g, 7))));

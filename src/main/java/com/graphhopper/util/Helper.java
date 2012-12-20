@@ -94,7 +94,7 @@ public class Helper {
     public static List<String> readFile(Reader simpleReader) throws IOException {
         BufferedReader reader = new BufferedReader(simpleReader);
         try {
-            List<String> res = new ArrayList();
+            List<String> res = new ArrayList<String>();
             String line;
             while ((line = reader.readLine()) != null) {
                 res.add(line);

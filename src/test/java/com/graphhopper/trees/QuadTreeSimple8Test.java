@@ -22,7 +22,9 @@ package com.graphhopper.trees;
 public class QuadTreeSimple8Test extends QuadTreeTester {
 
     @Override
-    protected QuadTree createQuadTree(long items) {
-        return new QuadTreeSimple(8).init(items);
+    protected QuadTree<Long> createQuadTree(long items) {
+        QuadTreeSimple<Long> qt = new QuadTreeSimple<Long>(8);
+        qt.init(items);
+        return qt;
     }
 }
