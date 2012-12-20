@@ -62,7 +62,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
             int neighborNode = currEdge.endNode;
             EdgeIterator iter = getNeighbors(neighborNode);
             while (iter.next()) {
-                int tmpNode = iter.node();
+                int tmpNode = iter.adjNode();
                 if (visited.contains(tmpNode))
                     continue;
 
@@ -111,7 +111,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
 //            int neighborNode = currEdge.endNode;
 //            EdgeIterator iter = getNeighbors(neighborNode);
 //            while (iter.next()) {
-//                int tmpNode = iter.node();
+//                int tmpNode = iter.adjNode();
 //                if (visited.contains(tmpNode))
 //                    continue;
 //

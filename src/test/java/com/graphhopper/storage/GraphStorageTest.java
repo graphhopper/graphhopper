@@ -94,18 +94,18 @@ public class GraphStorageTest extends AbstractGraphTester {
         assertTrue(iter.next());
         int edgeId = iter.edge();
         assertEquals(0, iter.baseNode());
-        assertEquals(1, iter.node());
+        assertEquals(1, iter.adjNode());
         assertEquals(2, iter.distance(), 1e-6);
 
         assertTrue(iter.next());
         int edgeId2 = iter.edge();
         assertEquals(1, edgeId2 - edgeId);
         assertEquals(1, iter.baseNode());
-        assertEquals(3, iter.node());
+        assertEquals(3, iter.adjNode());
 
         assertTrue(iter.next());
         assertEquals(2, iter.baseNode());
-        assertEquals(3, iter.node());
+        assertEquals(3, iter.adjNode());
 
         assertFalse(iter.next());
     }

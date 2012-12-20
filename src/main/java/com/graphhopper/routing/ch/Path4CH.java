@@ -57,7 +57,7 @@ public class Path4CH extends Path4Shortcuts {
             time += weightCalculation.getTime(dist, flags);
             return;
         }
-        int from = mainIter.baseNode(), to = mainIter.node();
+        int from = mainIter.baseNode(), to = mainIter.adjNode();
         if (revert) {
             int tmp = from;
             from = to;
@@ -103,7 +103,7 @@ public class Path4CH extends Path4Shortcuts {
         double lowest = Double.MAX_VALUE;
         int edge = -1;
         while (iter.next()) {
-            if (iter.node() == to && iter.distance() < lowest) {
+            if (iter.adjNode() == to && iter.distance() < lowest) {
                 lowest = iter.distance();
                 edge = iter.edge();
             }

@@ -257,7 +257,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
             iter = edgeFilter.doFilter(iter);
 
         while (iter.next()) {
-            int neighborNode = iter.node();
+            int neighborNode = iter.adjNode();
             if (closedSet.contains(neighborNode))
                 continue;
 

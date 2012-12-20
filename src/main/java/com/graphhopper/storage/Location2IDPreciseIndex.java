@@ -169,7 +169,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
                     swWhile.start();
                     EdgeIterator iter = g.getOutgoing(node);
                     while (iter.next()) {
-                        int connNode = iter.node();
+                        int connNode = iter.adjNode();
                         if (alreadyDone.contains(connNode))
                             continue;
 

@@ -186,11 +186,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // recompute priority of uncontracted neighbors
             EdgeIterator iter = g.getEdges(wn.node);
             while (iter.next()) {
-                if (g.getLevel(iter.node()) != 0)
+                if (g.getLevel(iter.adjNode()) != 0)
                     // already contracted no update necessary
                     continue;
 
-                int nn = iter.node();
+                int nn = iter.adjNode();
                 WeightedNode neighborWn = refs[nn];
                 int tmpOld = neighborWn.priority;
                 neighborWn.priority = calculatePriority(nn);
@@ -278,7 +278,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         @Override public boolean accept() {
             // ignore if it is skipNode or a endNode already contracted
-            return skipNode != node() && graph.getLevel(node()) == 0;
+            return skipNode != adjNode() && graph.getLevel(adjNode()) == 0;
         }
     }
 
@@ -292,7 +292,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         EdgeWriteIterator iter1 = g.getIncoming(v);
         // TODO PERFORMANCE collect outgoing nodes (goalnodes) only once and just skip u
         while (iter1.next()) {
-            int u = iter1.node();
+            int u = iter1.adjNode();
             int lu = g.getLevel(u);
             if (lu != 0)
                 continue;
@@ -304,7 +304,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             EdgeWriteIterator iter2 = g.getOutgoing(v);
             double maxWeight = 0;
             while (iter2.next()) {
-                int w = iter2.node();
+                int w = iter2.adjNode();
                 int lw = g.getLevel(w);
                 if (w == u || lw != 0)
                     continue;
@@ -378,7 +378,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             EdgeSkipIterator iter = g.getOutgoing(sc.from);
             while (iter.next()) {
                 if (Path4CH.isValidEdge(iter.skippedEdge())
-                        && iter.node() == sc.to
+                        && iter.adjNode() == sc.to
                         && CarStreetType.canBeOverwritten(iter.flags(), sc.flags)
                         && iter.distance() > sc.distance) {
                     iter.flags(sc.flags);

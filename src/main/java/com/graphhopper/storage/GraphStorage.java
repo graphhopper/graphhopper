@@ -344,7 +344,7 @@ public class GraphStorage implements Graph, Storable {
         }
 
         @Override
-        public int node() {
+        public int adjNode() {
             return node;
         }
 
@@ -391,7 +391,7 @@ public class GraphStorage implements Graph, Storable {
             return edges.getInt(edgePointer + E_NODEA);
         }
 
-        @Override public int node() {
+        @Override public int adjNode() {
             return edges.getInt(edgePointer + E_NODEB);
         }
 
@@ -506,7 +506,7 @@ public class GraphStorage implements Graph, Storable {
             return foundNext;
         }
 
-        @Override public int node() {
+        @Override public int adjNode() {
             return nodeId;
         }
 
@@ -654,7 +654,7 @@ public class GraphStorage implements Graph, Storable {
         for (int delNode = deletedNodes.next(0); delNode >= 0; delNode = deletedNodes.next(delNode + 1)) {
             EdgeIterator delEdgesIter = getEdges(delNode);
             while (delEdgesIter.next()) {
-                int currNode = delEdgesIter.node();
+                int currNode = delEdgesIter.adjNode();
                 if (deletedNodes.contains(currNode))
                     continue;
 
@@ -681,7 +681,7 @@ public class GraphStorage implements Graph, Storable {
             EdgeIterable nodesConnectedToDelIter = (EdgeIterable) getEdges(toUpdateNode);
             long prev = -1;
             while (nodesConnectedToDelIter.next()) {
-                int nodeId = nodesConnectedToDelIter.node();
+                int nodeId = nodesConnectedToDelIter.adjNode();
                 if (deletedNodes.contains(nodeId)) {
                     int edgeToDelete = nodesConnectedToDelIter.edge();
                     internalEdgeDisconnect(edgeToDelete, prev, toUpdateNode);
@@ -696,10 +696,10 @@ public class GraphStorage implements Graph, Storable {
             int oldI = oldToNewMap.keyAt(i);
             EdgeIterator movedEdgeIter = getEdges(oldI);
             while (movedEdgeIter.next()) {
-                if (deletedNodes.contains(movedEdgeIter.node()))
-                    throw new IllegalStateException("shouldn't happen the edge to the node " + movedEdgeIter.node() + " should be already deleted. " + oldI);
+                if (deletedNodes.contains(movedEdgeIter.adjNode()))
+                    throw new IllegalStateException("shouldn't happen the edge to the node " + movedEdgeIter.adjNode() + " should be already deleted. " + oldI);
 
-                toUpdatedSet.add(movedEdgeIter.node());
+                toUpdatedSet.add(movedEdgeIter.adjNode());
             }
         }
 

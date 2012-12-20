@@ -41,8 +41,8 @@ public class EdgeLevelFilter implements EdgeIterator {
         return edgeIter.baseNode();
     }
 
-    @Override public final int node() {
-        return edgeIter.node();
+    @Override public final int adjNode() {
+        return edgeIter.adjNode();
     }
 
     @Override public final double distance() {
@@ -63,7 +63,7 @@ public class EdgeLevelFilter implements EdgeIterator {
     }
 
     public boolean accept() {
-        return graph.getLevel(edgeIter.baseNode()) <= graph.getLevel(edgeIter.node());
+        return graph.getLevel(edgeIter.baseNode()) <= graph.getLevel(edgeIter.adjNode());
     }
 
     @Override public int edge() {

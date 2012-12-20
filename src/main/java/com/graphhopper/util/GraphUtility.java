@@ -70,10 +70,10 @@ public class GraphUtility {
 
                 EdgeIterator iter = g.getEdges(nodeIndex);
                 while (iter.next()) {
-                    if (iter.node() >= nodes)
-                        problems.add("edge of " + nodeIndex + " has a node " + iter.node() + " greater or equal to getNodes");
-                    if (iter.node() < 0)
-                        problems.add("edge of " + nodeIndex + " has a negative node " + iter.node());
+                    if (iter.adjNode() >= nodes)
+                        problems.add("edge of " + nodeIndex + " has a node " + iter.adjNode() + " greater or equal to getNodes");
+                    if (iter.adjNode() < 0)
+                        problems.add("edge of " + nodeIndex + " has a negative node " + iter.adjNode());
                 }
             }
         } catch (Exception ex) {
@@ -122,7 +122,7 @@ public class GraphUtility {
         TIntHashSet set = new TIntHashSet();
 
         while (iter.next()) {
-            set.add(iter.node());
+            set.add(iter.adjNode());
         }
         for (int l : locs) {
             if (!set.contains(l))
@@ -133,7 +133,7 @@ public class GraphUtility {
 
     public static EdgeIterator until(EdgeIterator edges, int node, int flags) {
         while (edges.next()) {
-            if (edges.node() == node && edges.flags() == flags)
+            if (edges.adjNode() == node && edges.flags() == flags)
                 return edges;
         }
         return EMPTY;
@@ -141,7 +141,7 @@ public class GraphUtility {
 
     public static EdgeIterator until(EdgeIterator edges, int node) {
         while (edges.next()) {
-            if (edges.node() == node)
+            if (edges.adjNode() == node)
                 return edges;
         }
         return EMPTY;
@@ -174,7 +174,7 @@ public class GraphUtility {
         EdgeSkipIterator iter = g.getOutgoing(nodeId);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next()) {
-            str += "  ->" + iter.node() + "(" + iter.skippedEdge() + " " + iter.edge() + ") \t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
+            str += "  ->" + iter.adjNode() + "(" + iter.skippedEdge() + " " + iter.edge() + ") \t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
         }
         return str;
     }
@@ -183,7 +183,7 @@ public class GraphUtility {
         EdgeIterator iter = g.getOutgoing(nodeId);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next()) {
-            str += "  ->" + iter.node() + "\t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
+            str += "  ->" + iter.adjNode() + "\t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
         }
         return str;
     }
@@ -273,7 +273,7 @@ public class GraphUtility {
             sortedGraph.setNode(newIndex, g.getLatitude(old), g.getLongitude(old));
             EdgeIterator eIter = g.getEdges(old);
             while (eIter.next()) {
-                int newNodeIndex = oldToNewNodeList.get(eIter.node());
+                int newNodeIndex = oldToNewNodeList.get(eIter.adjNode());
                 if (newNodeIndex < 0)
                     throw new IllegalStateException("empty entries should be connected to the others");
                 if (bitset.contains(newNodeIndex))
@@ -343,7 +343,7 @@ public class GraphUtility {
             to.setNode(old, from.getLatitude(old), from.getLongitude(old));
             EdgeIterator eIter = from.getEdges(old);
             while (eIter.next()) {
-                int edgeNodeIndex = eIter.node();
+                int edgeNodeIndex = eIter.adjNode();
                 if (bitset.contains(edgeNodeIndex))
                     continue;
                 to.edge(old, edgeNodeIndex, eIter.distance(), eIter.flags());
@@ -355,7 +355,7 @@ public class GraphUtility {
     public static int getToNode(Graph g, int edge, int endNode) {
         if (edge != EdgeIterator.NO_EDGE) {
             EdgeIterator iterTo = g.getEdgeProps(edge, endNode);
-            return iterTo.node();
+            return iterTo.adjNode();
         }
         return endNode;
     }
@@ -388,7 +388,7 @@ public class GraphUtility {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
-        @Override public int node() {
+        @Override public int adjNode() {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 

@@ -44,7 +44,7 @@ public class EdgeSkipIteratorTest {
         assertEquals(1, GraphUtility.count(g.getOutgoing(1)));
         EdgeWriteIterator iter = g.getEdges(0);
         assertTrue(iter.next());
-        assertEquals(1, iter.node());
+        assertEquals(1, iter.adjNode());
         assertEquals(CarStreetType.flags(10, true), iter.flags());
         iter.flags(CarStreetType.flags(20, false));
         assertEquals(12, iter.distance(), 1e-4);
