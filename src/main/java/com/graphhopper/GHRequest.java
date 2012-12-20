@@ -15,7 +15,7 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.util.shapes.GeoPoint;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * GraphHopper request wrapper to simplify requesting GraphHopper.
@@ -25,21 +25,21 @@ import com.graphhopper.util.shapes.GeoPoint;
 public class GHRequest {
 
     private String algo = "astar";
-    private GeoPoint from;
-    private GeoPoint to;
+    private GHPoint from;
+    private GHPoint to;
     private double precision = 1;
 
     /**
      * Calculate the path from specified startPoint (fromLat, fromLon) to endPoint (toLat, toLon).
      */
     public GHRequest(double fromLat, double fromLon, double toLat, double toLon) {
-        this(new GeoPoint(fromLat, fromLon), new GeoPoint(toLat, toLon));
+        this(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon));
     }
 
     /**
      * Calculate the path from specified startPoint to endPoint.
      */
-    public GHRequest(GeoPoint startPoint, GeoPoint endPoint) {
+    public GHRequest(GHPoint startPoint, GHPoint endPoint) {
         this.from = startPoint;
         this.to = endPoint;
     }
@@ -64,11 +64,11 @@ public class GHRequest {
         return algo;
     }
 
-    public GeoPoint from() {
+    public GHPoint from() {
         return from;
     }
 
-    public GeoPoint to() {
+    public GHPoint to() {
         return to;
     }
 

@@ -15,7 +15,7 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.util.shapes.GeoPoint;
+import com.graphhopper.util.shapes.GHPoint;
 import java.util.List;
 
 /**
@@ -25,11 +25,11 @@ import java.util.List;
  */
 public class GHResponse {
 
-    private final List<GeoPoint> list;
+    private final List<GHPoint> list;
     private double distance;
     private long time;
 
-    public GHResponse(List<GeoPoint> list) {
+    public GHResponse(List<GHPoint> list) {
         this.list = list;
     }
 
@@ -55,7 +55,7 @@ public class GHResponse {
         return !list.isEmpty();
     }
 
-    public List<GeoPoint> points() {
+    public List<GHPoint> points() {
         return list;
     }
 

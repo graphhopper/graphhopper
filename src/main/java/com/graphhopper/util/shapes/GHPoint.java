@@ -21,12 +21,12 @@ package com.graphhopper.util.shapes;
  * @see CoordTrig <-- TODO remove this? -->
  * @author Peter Karich
  */
-public class GeoPoint {
+public class GHPoint {
 
     public double lat;
     public double lon;
 
-    public GeoPoint(double lat, double lon) {
+    public GHPoint(double lat, double lon) {
         this.lat = lat;
         this.lon = lon;
     }

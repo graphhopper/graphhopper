@@ -31,7 +31,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.GeoPoint;
+import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -201,10 +201,10 @@ public class GraphHopper implements GraphHopperAPI {
         Path path = algo.calcPath(from, to);
         path.simplify(new DouglasPeucker(graph).setMaxDist(request.minPathPrecision()));
         int nodes = path.nodes();
-        List<GeoPoint> list = new ArrayList<GeoPoint>(nodes);
+        List<GHPoint> list = new ArrayList<GHPoint>(nodes);
         if (path.found())
             for (int i = 0; i < nodes; i++) {
-                list.add(new GeoPoint(graph.getLatitude(path.node(i)), graph.getLongitude(path.node(i))));
+                list.add(new GHPoint(graph.getLatitude(path.node(i)), graph.getLongitude(path.node(i))));
             }
         return new GHResponse(list).distance(path.distance()).time(path.time());
     }

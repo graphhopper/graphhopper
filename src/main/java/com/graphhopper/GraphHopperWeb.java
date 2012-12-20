@@ -16,7 +16,7 @@
 package com.graphhopper;
 
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.GeoPoint;
+import com.graphhopper.util.shapes.GHPoint;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,11 +58,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
     }
 
     // TODO
-//    public String whatIsHere(GeoPoint point) {
+//    public String whatIsHere(GHPoint point) {
 //        return "address";
 //    }
-//    public GeoPoint findAddress(String from) {
-//        return new GeoPoint(lat, lon);
+//    public GHPoint findAddress(String from) {
+//        return new GHPoint(lat, lon);
 //    }
     @Override
     public GHResponse route(GHRequest request) {
@@ -86,11 +86,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
             float distance = is.readFloat();
             int time = is.readInt();
             int nodes = is.readInt();
-            List<GeoPoint> list = new ArrayList<GeoPoint>(nodes);
+            List<GHPoint> list = new ArrayList<GHPoint>(nodes);
             for (int i = 0; i < nodes; i++) {
                 float lat = is.readFloat();
                 float lon = is.readFloat();
-                list.add(new GeoPoint(lat, lon));
+                list.add(new GHPoint(lat, lon));
             }
             return new GHResponse(list).distance(distance).time(time);
         } catch (IOException ex) {
