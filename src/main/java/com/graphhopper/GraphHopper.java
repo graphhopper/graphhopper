@@ -52,7 +52,6 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean storeOnFlush = true;
     private boolean memoryMapped;
     private boolean levelGraph;
-    private String algoStr = "astar";
     private String ghLocation = "";
 
     public GraphHopper() {
@@ -157,8 +156,7 @@ public class GraphHopper implements GraphHopperAPI {
             if (ghLocation.isEmpty())
                 ghLocation = Helper.pruneFileEnd(graphHopperFile) + "-gh";
             CmdArgs args = new CmdArgs().put("osmreader.osm", graphHopperFile).
-                    put("osmreader.graph-location", ghLocation).
-                    put("osmreader.algo", algoStr);
+                    put("osmreader.graph-location", ghLocation);
             if (memoryMapped)
                 args.put("osmreader.dataaccess", "mmap");
             else {
@@ -167,8 +165,10 @@ public class GraphHopper implements GraphHopperAPI {
                 } else
                     args.put("osmreader.dataaccess", "inmemory");
             }
-            if (levelGraph)
+            if (levelGraph) {
                 args.put("osmreader.levelgraph", "true");
+                args.put("osmreader.chShortcuts", "fastest");
+            }
 
             try {
                 OSMReader reader = OSMReader.osm2Graph(args);
@@ -186,12 +186,14 @@ public class GraphHopper implements GraphHopperAPI {
 
     @Override
     public GHResponse route(GHRequest request) {
-        if (levelGraph && !request.algorithm().equals("dijkstrabi"))
-            throw new IllegalStateException("customizing algorithm does not work with levelgraph/CH! (well, we could allow bidirectional astar ...)");
-        request.check();
-        if (prepare == null)
-            prepare = Helper.createAlgoPrepare(algoStr);
+        if (levelGraph) {
+            if (!request.algorithm().equals("dijkstrabi"))
+                throw new IllegalStateException("Only dijkstrabi is supported for levelgraph/CH! "
+                        + "TODO we could allow bidirectional astar");
+        } else
+            prepare = Helper.createAlgoPrepare(request.algorithm());
 
+        request.check();
         prepare.setGraph(graph);
         RoutingAlgorithm algo = prepare.createAlgo();
         int from = index.findID(request.from().lat, request.from().lon);

@@ -39,7 +39,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
     public static void main(String[] args) {
         GraphHopperAPI gh = new GraphHopperWeb().load("http://217.92.216.224:8080/api");
-        GHResponse ph = gh.route(new GHRequest().points(53.080827, 9.074707, 50.597186, 11.184082));
+        GHResponse ph = gh.route(new GHRequest(53.080827, 9.074707, 50.597186, 11.184082));
         System.out.println(ph);
     }
     private Logger logger = LoggerFactory.getLogger(getClass());

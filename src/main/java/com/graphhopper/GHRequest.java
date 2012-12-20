@@ -18,8 +18,7 @@ package com.graphhopper;
 import com.graphhopper.util.shapes.GeoPoint;
 
 /**
- * GraphHopper request wrapper to simplify requesting GraphHopper. From and to are required
- * parameters!
+ * GraphHopper request wrapper to simplify requesting GraphHopper.
  *
  * @author Peter Karich
  */
@@ -29,6 +28,21 @@ public class GHRequest {
     private GeoPoint from;
     private GeoPoint to;
     private double precision = 1;
+
+    /**
+     * Calculate the path from specified startPoint (fromLat, fromLon) to endPoint (toLat, toLon).
+     */
+    public GHRequest(double fromLat, double fromLon, double toLat, double toLon) {
+        this(new GeoPoint(fromLat, fromLon), new GeoPoint(toLat, toLon));
+    }
+
+    /**
+     * Calculate the path from specified startPoint to endPoint.
+     */
+    public GHRequest(GeoPoint startPoint, GeoPoint endPoint) {
+        this.from = startPoint;
+        this.to = endPoint;
+    }
 
     void check() {
         if (from == null)
@@ -48,19 +62,6 @@ public class GHRequest {
 
     public String algorithm() {
         return algo;
-    }
-
-    /**
-     * Required parameters for request: to calculate the path from specified startPoint to endPoint.
-     */
-    public GHRequest points(double fromLat, double fromLon, double toLat, double toLon) {
-        return points(new GeoPoint(fromLat, fromLon), new GeoPoint(toLat, toLon));
-    }
-
-    public GHRequest points(GeoPoint from, GeoPoint to) {
-        this.from = from;
-        this.to = to;
-        return this;
     }
 
     public GeoPoint from() {
