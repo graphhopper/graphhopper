@@ -57,8 +57,8 @@
         
         <dependency>
             <groupId>junit</groupId>
-            <artifactId>junit-dep</artifactId>
-            <version>4.10</version>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
             <scope>test</scope>
         </dependency>
         
@@ -79,7 +79,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.0</version>
                 <configuration>
-                    <compilerArgument>-Xlint:unchecked</compilerArgument>                    
+                   <!-- <compilerArgument>-Xlint:unchecked</compilerArgument>
+                    -->
                     <source>1.6</source>
                     <target>1.6</target>
                 </configuration>

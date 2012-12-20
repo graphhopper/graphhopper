@@ -6,7 +6,7 @@ Purpose
 ---------------
 
 Solving shortest path (related) problems is the main goal. GraphHopper is a routing engine which
-makes implementing shortest path problems in Java easier and much more memory efficient than
+makes implementing shortest path problems in Java easier and more efficient (faster, less memory, etc) than
 a naive implementation.
 GraphHopper is tuned for road networks at the moment but can be useful for public transport problems in
 the future as well.
@@ -21,3 +21,27 @@ Features
    [from the web](https://github.com/graphhopper/graphhopper-web) 
    and even offline [on Android](https://github.com/graphhopper/graphhopper/wiki/Android)
  * Well tested
+
+Usage
+---------------
+
+```java
+ // Initialization for the API to be used on a desktop or server pc
+ GraphHopperAPI gh = new GraphHopper().forServer();
+ gh.load("graph-hopper-folder");
+
+ // Offline API on Android
+ GraphHopperAPI gh = new GraphHopper().forAndroid();
+ gh.load("graph-hopper-folder");
+
+ // Online: easily connect to your own hosted graphhopper web service
+ GraphHopperAPI gh = new GraphHopper();
+ gh.load("http://your-graphhopper-service.com/api");
+
+ gh.algorithm("astar");
+ PathHelper ph = gh.route(new GeoPoint(fromLat, fromLon), new GeoPoint(toLat, toLon));
+ print(ph.distance() + " " + ph.time());
+ for(GeoPoint point : ph.points()) {
+    add(point.lat, point.lon);
+ }
+```
