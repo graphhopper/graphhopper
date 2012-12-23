@@ -19,9 +19,12 @@ import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import static com.graphhopper.util.GraphUtility.*;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
+import java.io.File;
 import java.util.Arrays;
 import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -32,9 +35,24 @@ import org.junit.Test;
  */
 public abstract class AbstractGraphTester {
 
-    protected String location = "./target/testgraphstorage";
+    private String location = "./target/graphstorage";
+    protected String defaultGraph = "./target/graphstorage/default";
 
-    abstract Graph createGraph(int size);
+    protected Graph createGraph(int size) {
+        return createGraph(defaultGraph, size);
+    }
+
+    abstract Graph createGraph(String location, int size);
+
+    @Before
+    public void tearDown() {
+        Helper.deleteDir(new File(location));
+    }
+
+    @Before
+    public void setUp() {
+        Helper.deleteDir(new File(location));
+    }
 
     @Test public void testCreateLocation() {
         Graph graph = createGraph(4);
@@ -119,7 +137,8 @@ public abstract class AbstractGraphTester {
         g.setNode(2, 2, 10);
         g.setNode(3, 5, 9);
         g.edge(1, 3, 10, true);
-        Graph clone = g.copyTo(createGraph(5));
+
+        Graph clone = g.copyTo(createGraph(location + "/clone", 5));
         assertEquals(g.getNodes(), clone.getNodes());
         assertEquals(count(g.getOutgoing(1)), count(clone.getOutgoing(1)));
         clone.edge(1, 4, 10, true);
@@ -242,8 +261,7 @@ public abstract class AbstractGraphTester {
         assertEquals(1, count(g.getIncoming(2)));
     }
 
-    @Test
-    public void testCheckFirstNode() {
+    @Test public void testCheckFirstNode() {
         Graph g = createGraph(2);
         assertEquals(0, count(g.getEdges(1)));
         g.edge(0, 1, 12, true);
@@ -529,8 +547,7 @@ public abstract class AbstractGraphTester {
         assertTrue(iter.isEmpty());
     }
 
-    @Test
-    public void testCreateDuplicateEdges() {
+    @Test public void testCreateDuplicateEdges() {
         Graph graph = createGraph(10);
         graph.edge(2, 1, 12, true);
         graph.edge(2, 3, 12, true);
@@ -570,18 +587,23 @@ public abstract class AbstractGraphTester {
         assertEquals(4, GraphUtility.count(graph.getOutgoing(2)));
     }
 
-    @Test
-    public void testIdenticalNodes() {
+    @Test public void testIdenticalNodes() {
         Graph g = createGraph(2);
         g.edge(0, 0, 100, true);
         assertEquals(1, GraphUtility.count(g.getEdges(0)));
     }
 
-    @Test
-    public void testIdenticalNodes2() {
+    @Test public void testIdenticalNodes2() {
         Graph g = createGraph(2);
         g.edge(0, 0, 100, false);
         g.edge(0, 0, 100, false);
         assertEquals(2, GraphUtility.count(g.getEdges(0)));
     }
+//    @Test public void testGeometry() {
+//        Graph g = createGraph(2);
+//        g.edge(0, 4, 100, CarStreetType.flags(10, true), Helper.createTList(0, 1, 2, 3, 4));
+//        g.edge(4, 10, 100, CarStreetType.flags(10, true), Helper.createTList(4, 5, 6, 7, 8, 9, 10));
+//        
+//        
+//    }
 }

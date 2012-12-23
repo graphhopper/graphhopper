@@ -114,7 +114,7 @@ public abstract class AbstractDataAccess implements DataAccess {
         long max = capacity() / 4;
         for (long l = 0; l < max; l++) {
             da.setInt(l, getInt(l));
-        }
+        }        
         return da;
     }
 

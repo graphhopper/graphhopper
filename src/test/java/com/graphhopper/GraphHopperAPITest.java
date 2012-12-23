@@ -17,7 +17,6 @@ package com.graphhopper;
 
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

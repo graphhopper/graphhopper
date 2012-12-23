@@ -17,9 +17,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
-import java.io.File;
 import java.io.IOException;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -31,7 +29,7 @@ import org.junit.Test;
 public class GraphStorageTest extends AbstractGraphTester {
 
     @Override
-    public GraphStorage createGraph(int size) {
+    public GraphStorage createGraph(String location, int size) {
         return newGraph(new RAMDirectory(location)).setSegmentSize(size / 2).createNew(size);
     }
 
@@ -42,8 +40,7 @@ public class GraphStorageTest extends AbstractGraphTester {
 
     @Test
     public void testSave_and_fileFormat() throws IOException {
-        Helper.deleteDir(new File(location));
-        GraphStorage graph = newGraph(new RAMDirectory(location, true)).createNew(10);
+        GraphStorage graph = newGraph(new RAMDirectory(defaultGraph, true)).createNew(10);
         graph.setNode(0, 10, 10);
         graph.setNode(1, 11, 20);
         graph.setNode(2, 12, 12);
@@ -55,7 +52,7 @@ public class GraphStorageTest extends AbstractGraphTester {
         checkGraph(graph);
         graph.flush();
 
-        graph = newGraph(new MMapDirectory(location));
+        graph = newGraph(new MMapDirectory(defaultGraph));
         assertTrue(graph.loadExisting());
         assertEquals(3, graph.getNodes());
         assertEquals(3, graph.getNodes());

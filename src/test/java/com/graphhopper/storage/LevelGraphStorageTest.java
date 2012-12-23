@@ -35,24 +35,20 @@ public class LevelGraphStorageTest extends GraphStorageTest {
     }
 
     @Test
-    public void testCannotBeLoadedViaDifferentClass() {
-        File folder = new File("./target/tmp/");
-        Helper.deleteDir(folder);
-        folder.mkdirs();
-
-        LevelGraphStorage lg = new LevelGraphStorage(new RAMDirectory(folder.getAbsolutePath(), true));
+    public void testCannotBeLoadedViaDifferentClass() {        
+        LevelGraphStorage lg = new LevelGraphStorage(new RAMDirectory(defaultGraph, true));
         lg.createNew(10);
         lg.flush();
         lg.close();
 
-        GraphStorage g = new GraphStorage(new RAMDirectory(folder.getAbsolutePath(), true));
+        GraphStorage g = new GraphStorage(new RAMDirectory(defaultGraph, true));
         try {
             g.loadExisting();
             assertTrue(false);
         } catch (Exception ex) {
         }
 
-        g = new LevelGraphStorage(new RAMDirectory(folder.getAbsolutePath(), true));
+        g = new LevelGraphStorage(new RAMDirectory(defaultGraph, true));
         try {
             assertTrue(g.loadExisting());
         } catch (Exception ex) {

@@ -15,7 +15,10 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.RAMDataAccess;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Helper7;
@@ -45,19 +48,28 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     // very slow: private SparseLongLongArray osmIdToIndexMap;
     // not applicable as ways introduces the nodes in 'wrong' order: new OSMIDSegmentedMap
     private int internalId = 0;
-    private TLongArrayList tmpLocs = new TLongArrayList(10);
+    private final TLongArrayList tmpLocs = new TLongArrayList(10);
+    // remember how many times a node was used to identify tower nodes
+    private DataAccess indexToCount;
+    private final Directory dir;
 
     public OSMReaderHelperDoubleParse(GraphStorage storage, int expectedNodes) {
         super(storage, expectedNodes);
+        dir = storage.getDirectory();
+        indexToCount = dir.findCreate("tmpOSMReaderMap");
+        indexToCount.createNew(expectedNodes);
         osmIdToIndexMap = new TIntIntHashMap(expectedNodes, 1.4f, -1, -1);
     }
 
     @Override
     public boolean addNode(long osmId, double lat, double lon) {
-        if (!hasHighways(osmId))
+        int count = osmIdToIndexMap.get((int) osmId);
+        if (count > FILLED)
             return false;
 
         g.setNode(internalId, lat, lon);
+        indexToCount.ensureCapacity(4 * (internalId + 1));
+        indexToCount.setInt(internalId, 1 - (count - FILLED));
         osmIdToIndexMap.put((int) osmId, internalId);
         internalId++;
         return true;
@@ -95,14 +107,14 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     @Override
     public void cleanup() {
         osmIdToIndexMap = null;
+        dir.remove(indexToCount);
+        indexToCount = null;
     }
 
     public void setHasHighways(long osmId) {
-        osmIdToIndexMap.put((int) osmId, FILLED);
-    }
-
-    public boolean hasHighways(long osmId) {
-        return osmIdToIndexMap.get((int) osmId) == FILLED;
+        int ret = osmIdToIndexMap.put((int) osmId, FILLED);
+        if (ret <= FILLED)
+            osmIdToIndexMap.put((int) osmId, ret - 1);
     }
 
     @Override

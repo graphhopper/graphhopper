@@ -18,6 +18,7 @@ package com.graphhopper.storage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.shapes.BBox;
+import gnu.trove.list.TIntList;
 
 /**
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via

@@ -15,27 +15,13 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Helper;
-import java.io.File;
-import org.junit.Before;
-
 /**
  * @author Peter Karich
  */
 public class GraphStorageViaMMapTest extends AbstractGraphTester {
 
     @Override
-    public GraphStorage createGraph(int size) {
+    public GraphStorage createGraph(String location, int size) {
         return new GraphStorage(new MMapDirectory(location)).setSegmentSize(size / 2).createNew(size);
-    }
-
-    @Before
-    public void tearDown() {
-        Helper.deleteDir(new File(location));
-    }
-
-    @Before
-    public void setUp() {
-        Helper.deleteDir(new File(location));
     }
 }

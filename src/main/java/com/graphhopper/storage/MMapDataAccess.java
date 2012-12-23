@@ -100,35 +100,31 @@ public class MMapDataAccess extends AbstractDataAccess {
             return;
 
         int i = 0;
-        int buffersToMap = (int) (byteCount / segmentSizeInBytes);
-        if (byteCount % segmentSizeInBytes != 0)
-            buffersToMap++;
-        int bufferStart = 0;
-        try {
-            raFile.setLength(offset + byteCount);
-            // RE-MAP all buffers and add as many as needed!
-            segments.clear();
-            for (; i < buffersToMap; i++) {
-                int bufSize = (int) ((byteCount > (bufferStart + segmentSizeInBytes))
-                        ? segmentSizeInBytes
-                        : (byteCount - bufferStart));
-                segments.add(newByteBuffer(offset + bufferStart, bufSize));
-                bufferStart += bufSize;
-            }
+        int segmentsToMap = (int) (byteCount / segmentSizeInBytes);
+        if (segmentsToMap < 0)
+            throw new IllegalStateException("Too many segments needs to be allocated. Increase segmentSize.");
 
-            // IMPORTANT NOTICE regarding only the newly mapped buffers:
-            // If file length was increased clearing (copying 0 into it) is not necessary!
-            // You only have to take care that previous existing files should be removed.
+        if (byteCount % segmentSizeInBytes != 0)
+            segmentsToMap++;
+        if (segmentsToMap == 0)
+            throw new IllegalStateException("0 segments are not allowed.");
+
+        long bufferStart = offset + segments.size() * segmentSizeInBytes;
+        try {
+            int newSegments = segmentsToMap - segments.size();
+            for (; i < newSegments; i++) {
+                segments.add(newByteBuffer(bufferStart, segmentSizeInBytes));
+                bufferStart += segmentSizeInBytes;
+            }
         } catch (Exception ex) {
             // we could get an exception here if buffer is too small and area too large
             // e.g. I got an exception for the 65421th buffer (probably around 2**16 == 65536)
-            throw new RuntimeException("Couldn't map buffer " + i + " of " + buffersToMap
+            throw new RuntimeException("Couldn't map buffer " + i + " of " + segmentsToMap
                     + " at position " + bufferStart + " for " + byteCount + " bytes with offset " + offset, ex);
         }
     }
 
-    private ByteBuffer newByteBuffer(long offset, int byteCount)
-            throws IOException {
+    private ByteBuffer newByteBuffer(long offset, long byteCount) throws IOException {
         ByteBuffer buf = raFile.getChannel().map(FileChannel.MapMode.READ_WRITE, offset, byteCount);
         if (order != null)
             buf.order(order);
@@ -189,23 +185,29 @@ public class MMapDataAccess extends AbstractDataAccess {
         // Helper7.cleanMappedByteBuffer(bb);
         Helper.close(raFile);
         segments.clear();
+        cleanHack();
         closed = true;
     }
 
+    private void cleanHack() {
+        // trying to force the release of the mapped ByteBuffer
+        System.gc();
+    }
+
     @Override
-    public void setInt(long intIndex, int value) {
-        intIndex *= 4;
+    public void setInt(long longIndex, int value) {
+        longIndex *= 4;
         // TODO improve via bit operations! see RAMDataAccess
-        int bufferIndex = (int) (intIndex / segmentSizeInBytes);
-        int index = (int) (intIndex % segmentSizeInBytes);
+        int bufferIndex = (int) (longIndex / segmentSizeInBytes);
+        int index = (int) (longIndex % segmentSizeInBytes);
         segments.get(bufferIndex).putInt(index, value);
     }
 
     @Override
-    public int getInt(long intIndex) {
-        intIndex *= 4;
-        int bufferIndex = (int) (intIndex / segmentSizeInBytes);
-        int index = (int) (intIndex % segmentSizeInBytes);
+    public int getInt(long longIndex) {
+        longIndex *= 4;
+        int bufferIndex = (int) (longIndex / segmentSizeInBytes);
+        int index = (int) (longIndex % segmentSizeInBytes);
         return segments.get(bufferIndex).getInt(index);
     }
 
@@ -236,11 +238,14 @@ public class MMapDataAccess extends AbstractDataAccess {
             Helper7.cleanMappedByteBuffer(bb);
         }
         segments = remainingSegments;
+
+        // reduce file size
         try {
             raFile.setLength(HEADER_OFFSET + remainingSegNo * segmentSizeInBytes);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+        cleanHack();
     }
 
     boolean releaseSegment(int segNumber) {
@@ -250,6 +255,7 @@ public class MMapDataAccess extends AbstractDataAccess {
 
         Helper7.cleanMappedByteBuffer(segment);
         segments.set(segNumber, null);
+        cleanHack();
         return true;
     }
 

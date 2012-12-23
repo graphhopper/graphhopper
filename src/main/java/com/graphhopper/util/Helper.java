@@ -25,6 +25,8 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.shapes.BBox;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -477,6 +479,14 @@ public class Helper {
         if (index < 0)
             return file;
         return file.substring(0, index);
+    }
+
+    public static TIntList createTList(int... list) {
+        TIntList res = new TIntArrayList(list.length);
+        for (int i : list) {
+            res.add(i);
+        }
+        return res;
     }
     /**
      * The file version is independent of the real world version. E.g. to make major version jumps
