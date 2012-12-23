@@ -18,7 +18,6 @@ package com.graphhopper.reader;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.RAMDataAccess;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Helper7;

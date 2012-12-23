@@ -27,11 +27,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     private final int I_LEVEL;
 
     public LevelGraphStorage(Directory dir) {
-        this(dir, dir.findCreate("nodes"), dir.findCreate("edges"));
-    }
-
-    LevelGraphStorage(Directory dir, DataAccess nodes, DataAccess edges) {
-        super(dir, nodes, edges);
+        super(dir);
         I_SKIP_EDGE = nextEdgeEntryIndex();
         I_LEVEL = nextNodeEntryIndex();
         initNodeAndEdgeEntrySize();
@@ -47,8 +43,8 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
         return nodes.getInt((long) index * nodeEntrySize + I_LEVEL);
     }
 
-    @Override protected GraphStorage newThis(Directory dir, DataAccess nodes, DataAccess edges) {
-        return new LevelGraphStorage(dir, nodes, edges);
+    @Override protected GraphStorage newThis(Directory dir) {
+        return new LevelGraphStorage(dir);
     }
 
     public EdgeSkipIterator newEdge(int a, int b, double distance, boolean bothDir) {

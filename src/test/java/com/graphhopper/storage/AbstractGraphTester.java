@@ -106,7 +106,7 @@ public abstract class AbstractGraphTester {
         assertEquals(12, i.node());
         assertFalse(i.next());
     }
-    
+
     @Test public void testUnidirectionalEdgeFilter() {
         Graph g = createGraph(14);
 
@@ -631,11 +631,45 @@ public abstract class AbstractGraphTester {
         g.edge(0, 0, 100, false);
         assertEquals(2, GraphUtility.count(g.getEdges(0)));
     }
+
 //    @Test public void testGeometry() {
 //        Graph g = createGraph(2);
-//        g.edge(0, 4, 100, CarStreetType.flags(10, true), Helper.createTList(0, 1, 2, 3, 4));
-//        g.edge(4, 10, 100, CarStreetType.flags(10, true), Helper.createTList(4, 5, 6, 7, 8, 9, 10));
+//        g.edge(0, 4, 100, CarStreetType.flags(10, false), Helper.createTList(0, 1, 2, 3, 4));
+//        g.edge(4, 10, 100, CarStreetType.flags(10, false), Helper.createTList(4, 5, 6, 7, 8, 9, 10));
+//        g.edge(14, 0, 100, CarStreetType.flags(10, false), Helper.createTList(14, 13, 12, 11, 0));
+//
+//        EdgeIterator iter = g.getEdges(0, EdgeFilter.ALL);
+//        assertTrue(iter.next());
+//        assertEquals(1, iter.node());
+//        assertTrue(iter.next());
+//        assertEquals(11, iter.node());
+//        assertFalse(iter.next());
+//
+//        iter = g.getEdges(0, EdgeFilter.IN);
+//        assertTrue(iter.next());
+//        assertEquals(11, iter.node());
+//        assertFalse(iter.next());
+//
+//        iter = g.getEdges(0, EdgeFilter.OUT);
+//        assertTrue(iter.next());
+//        assertEquals(1, iter.node());
+//        assertFalse(iter.next());
+//
+//        iter = g.getEdges(0, EdgeFilter.TOWER_NODES);
+//        assertTrue(iter.next());
+//        assertEquals(4, iter.node());
+//        assertTrue(iter.next());
+//        assertEquals(14, iter.node());
+//        assertFalse(iter.next());
+//
+//        iter = g.getEdges(0, EdgeFilter.TOWER_NODES.combine(EdgeFilter.OUT));
+//        assertTrue(iter.next());
+//        assertEquals(4, iter.node());
+//        assertFalse(iter.next());
 //        
-//        
+//        iter = g.getEdges(4, EdgeFilter.TOWER_NODES.combine(EdgeFilter.OUT));
+//        assertTrue(iter.next());
+//        assertEquals(10, iter.node());        
+//        assertFalse(iter.next());
 //    }
 }

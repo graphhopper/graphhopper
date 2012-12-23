@@ -24,6 +24,7 @@ import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
+import gnu.trove.list.TIntList;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -67,13 +68,10 @@ public class GraphStorage implements Graph, Storable {
     private int edgeEntryIndex = -1, nodeEntryIndex = -1;
 
     public GraphStorage(Directory dir) {
-        this(dir, dir.findCreate("nodes"), dir.findCreate("edges"));
-    }
-
-    GraphStorage(Directory dir, DataAccess nodes, DataAccess edges) {
         this.dir = dir;
-        this.nodes = nodes;
-        this.edges = edges;
+        this.nodes = dir.findCreate("nodes");
+        this.edges = dir.findCreate("egdes");
+        // TODO this.geometry = dir.findCreate("egdes");
         this.bounds = BBox.INVERSE.clone();
         E_NODEA = nextEdgeEntryIndex();
         E_NODEB = nextEdgeEntryIndex();
@@ -203,8 +201,16 @@ public class GraphStorage implements Graph, Storable {
 
     @Override
     public void edge(int a, int b, double distance, int flags) {
+        edge(a, b, distance, flags, null);
+    }
+
+//    @Override
+    public void edge(int a, int b, double distance, int flags, TIntList onPathNodes) {
         ensureNodeIndex(Math.max(a, b));
         internalEdgeAdd(a, b, distance, flags);
+
+        if (onPathNodes != null && !onPathNodes.isEmpty()) {
+        }
     }
 
     protected void internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags) {
@@ -558,9 +564,9 @@ public class GraphStorage implements Graph, Storable {
         }
     }
 
-    protected GraphStorage newThis(Directory dir, DataAccess nodes, DataAccess edges) {
+    protected GraphStorage newThis(Directory dir) {
         // no storage.create here!
-        return new GraphStorage(dir, nodes, edges);
+        return new GraphStorage(dir);
     }
 
     @Override
@@ -575,7 +581,7 @@ public class GraphStorage implements Graph, Storable {
         if (this.dir == dir)
             throw new IllegalStateException("cannot copy graph into the same directory!");
 
-        return _copyTo(newThis(dir, dir.findCreate("nodes"), dir.findCreate("edges")));
+        return _copyTo(newThis(dir));
     }
 
     Graph _copyTo(GraphStorage clonedG) {

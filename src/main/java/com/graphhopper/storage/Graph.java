@@ -27,7 +27,7 @@ import com.graphhopper.util.shapes.BBox;
 public interface Graph {
 
     /**
-     * @return the number of indirectly created locations. E.g. via setNode() or edge()
+     * @return the number of created locations - via setNode() or edge()
      */
     int getNodes();
 
@@ -47,10 +47,16 @@ public interface Graph {
     BBox getBounds();
 
     /**
-     * @param a index of the starting node of the edge
-     * @param b index of the ending node of the edge
+     * Creates an edge between the nodes a and b. If you have no OSM data you can often ignore the
+     * nodesOnPath parameter as it is only important to define the exact geometry of the edge - i.e.
+     * for OSM it is often a curve not just a straight line.
+     *
+     * @param a the index of the starting (tower) node of the edge
+     * @param b the index of the ending (tower) node of the edge
      * @param distance necessary if no setNode is called - e.g. if the graph is not a geo-graph
      * @param flags see EdgeFlags - involves velocity and direction
+     * @param a list of nodes between a and b but inclusive the tower nodes a and b. The nodes
+     * between a and b would otherwise have no connection - so called pillar nodes.
      */
     void edge(int a, int b, double distance, int flags);
 

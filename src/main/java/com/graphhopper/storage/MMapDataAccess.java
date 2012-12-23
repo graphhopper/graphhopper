@@ -40,6 +40,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     private List<ByteBuffer> segments = new ArrayList<ByteBuffer>();
     private ByteOrder order;
     private transient boolean closed = false;
+    private boolean cleanAndRemap = true;
 
     MMapDataAccess() {
         this(null, null);
@@ -109,14 +110,27 @@ public class MMapDataAccess extends AbstractDataAccess {
         if (segmentsToMap == 0)
             throw new IllegalStateException("0 segments are not allowed.");
 
-        long bufferStart = offset + segments.size() * segmentSizeInBytes;
+        long bufferStart = offset;
+        int newSegments;
         try {
-            int newSegments = segmentsToMap - segments.size();
+            // ugly remapping
+            // http://stackoverflow.com/q/14011919/194609
+            if (cleanAndRemap) {
+                newSegments = segmentsToMap;
+                clean(0, segments.size());
+                segments.clear();
+            } else {
+                // This approach is more problematic, as we rely on the OS+file system that 
+                // increasing the file size has no effect on the old mappings!
+                bufferStart += segments.size() * segmentSizeInBytes;
+                newSegments = segmentsToMap - segments.size();
+            }
+            raFile.setLength(offset + segmentsToMap * segmentSizeInBytes);
             for (; i < newSegments; i++) {
                 segments.add(newByteBuffer(bufferStart, segmentSizeInBytes));
                 bufferStart += segmentSizeInBytes;
             }
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             // we could get an exception here if buffer is too small and area too large
             // e.g. I got an exception for the 65421th buffer (probably around 2**16 == 65536)
             throw new RuntimeException("Couldn't map buffer " + i + " of " + segmentsToMap
@@ -128,7 +142,28 @@ public class MMapDataAccess extends AbstractDataAccess {
         // if we request a buffer larger than the file length, it will automatically increase the file length!
         // will this cause problems? http://stackoverflow.com/q/14011919/194609
         // so for trimTo we need to reset the file length later on to reduce that size
-        ByteBuffer buf = raFile.getChannel().map(FileChannel.MapMode.READ_WRITE, offset, byteCount);
+        ByteBuffer buf = null;
+        IOException ioex = null;
+        // One retry if it fails. It could fail e.g. if previously buffer wasn't yet unmapped from the jvm
+        for (int trial = 0; trial < 1;) {
+            try {
+                buf = raFile.getChannel().map(FileChannel.MapMode.READ_WRITE, offset, byteCount);
+                break;
+            } catch (IOException tmpex) {
+                ioex = tmpex;
+                trial++;
+                cleanHack();
+                try {
+                    Thread.sleep(5);
+                } catch (InterruptedException iex) {
+                }
+            }
+        }
+        if (buf == null) {
+            if (ioex == null)
+                throw new IllegalStateException("internal problem as ioex shouldn't be null");
+            throw ioex;
+        }
         if (order != null)
             buf.order(order);
 
@@ -188,11 +223,9 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void close() {
-        // cleaning all ByteBuffers?
-        // Helper7.cleanMappedByteBuffer(bb);
         Helper.close(raFile);
+        clean(0, segments.size());
         segments.clear();
-        cleanHack();
         closed = true;
     }
 
@@ -232,6 +265,22 @@ public class MMapDataAccess extends AbstractDataAccess {
         return segments.size();
     }
 
+    /**
+     * Cleans up MappedByteBuffers. Be sure you bring the segments list in a consistent state
+     * afterwards.
+     *
+     * @param from inclusive
+     * @param to exclusive
+     */
+    private void clean(int from, int to) {
+        for (int i = from; i < to; i++) {
+            ByteBuffer bb = segments.get(i);
+            Helper7.cleanMappedByteBuffer(bb);
+            segments.set(i, null);
+        }
+        cleanHack();
+    }
+
     @Override
     public void trimTo(long capacity) {
         if (capacity < segmentSizeInBytes)
@@ -239,12 +288,9 @@ public class MMapDataAccess extends AbstractDataAccess {
         int remainingSegNo = (int) (capacity / segmentSizeInBytes);
         if (capacity % segmentSizeInBytes != 0)
             remainingSegNo++;
-        List<ByteBuffer> remainingSegments = segments.subList(0, remainingSegNo);
-        List<ByteBuffer> delSegments = segments.subList(remainingSegNo, segments.size());
-        for (ByteBuffer bb : delSegments) {
-            Helper7.cleanMappedByteBuffer(bb);
-        }
-        segments = remainingSegments;
+
+        clean(remainingSegNo, segments.size());
+        segments = new ArrayList<ByteBuffer>(segments.subList(0, remainingSegNo));
 
         // reduce file size
         try {
