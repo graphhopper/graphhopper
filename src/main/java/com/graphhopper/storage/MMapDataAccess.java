@@ -125,6 +125,9 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     private ByteBuffer newByteBuffer(long offset, long byteCount) throws IOException {
+        // if we request a buffer larger than the file length, it will automatically increase the file length!
+        // will this cause problems? http://stackoverflow.com/q/14011919/194609
+        // so for trimTo we need to reset the file length later on to reduce that size
         ByteBuffer buf = raFile.getChannel().map(FileChannel.MapMode.READ_WRITE, offset, byteCount);
         if (order != null)
             buf.order(order);
@@ -173,6 +176,9 @@ public class MMapDataAccess extends AbstractDataAccess {
                     ((MappedByteBuffer) bb).force();
                 }
             }
+            // this could be necessary too
+            // http://stackoverflow.com/q/14011398/194609
+            raFile.getFD().sync();
             writeHeader(raFile, raFile.length(), segmentSizeInBytes);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
