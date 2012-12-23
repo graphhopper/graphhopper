@@ -69,8 +69,7 @@ public class PrepareRoutingSubnetworks {
                     return bs;
                 }
 
-                @Override
-                protected EdgeIterator getEdges(Graph g, int current) {
+                @Override protected EdgeIterator getEdges(Graph g, int current) {
                     return g.getEdges(current);
                 }
 

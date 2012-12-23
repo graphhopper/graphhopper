@@ -435,6 +435,21 @@ public class GraphStorage implements Graph, Storable {
         return new EdgeIterable(node, false, true);
     }
 
+    @Override
+    public EdgeWriteIterator getEdges(int node, EdgeFilter filter) {
+        if (filter.contains(EdgeFilter.TOWER_NODES))
+            throw new UnsupportedOperationException("to be implemented");
+
+        switch (filter.value()) {
+            case 1:
+                return getOutgoing(node);
+            case 2:
+                return getIncoming(node);
+            default:
+                return getEdges(node);
+        }
+    }
+
     protected class EdgeIterable implements EdgeWriteIterator {
 
         long edgePointer;
@@ -602,7 +617,7 @@ public class GraphStorage implements Graph, Storable {
         // Deletes only nodes. 
         // It reduces the fragmentation of the node space but introduces new unused edges.
         inPlaceNodeDelete(getDeletedNodes().getCardinality());
-        
+
         // Reduce memory usage
         trimToSize();
     }

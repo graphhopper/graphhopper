@@ -106,6 +106,38 @@ public abstract class AbstractGraphTester {
         assertEquals(12, i.node());
         assertFalse(i.next());
     }
+    
+    @Test public void testUnidirectionalEdgeFilter() {
+        Graph g = createGraph(14);
+
+        g.edge(1, 2, 12, false);
+        g.edge(1, 11, 12, false);
+        g.edge(11, 1, 12, false);
+        g.edge(1, 12, 12, false);
+        g.edge(3, 2, 112, false);
+        EdgeIterator i = g.getEdges(2, EdgeFilter.OUT);
+        assertFalse(i.next());
+
+        assertEquals(1, GraphUtility.count(g.getEdges(1, EdgeFilter.IN)));
+        assertEquals(2, GraphUtility.count(g.getEdges(2, EdgeFilter.IN)));
+        assertEquals(0, GraphUtility.count(g.getEdges(3, EdgeFilter.IN)));
+
+        assertEquals(3, GraphUtility.count(g.getEdges(1, EdgeFilter.OUT)));
+        assertEquals(0, GraphUtility.count(g.getEdges(2, EdgeFilter.OUT)));
+        assertEquals(1, GraphUtility.count(g.getEdges(3, EdgeFilter.OUT)));
+        i = g.getEdges(3, EdgeFilter.OUT);
+        i.next();
+        assertEquals(2, i.node());
+
+        i = g.getEdges(1, EdgeFilter.OUT);
+        assertTrue(i.next());
+        assertEquals(2, i.node());
+        assertTrue(i.next());
+        assertEquals(11, i.node());
+        assertTrue(i.next());
+        assertEquals(12, i.node());
+        assertFalse(i.next());
+    }
 
     @Test public void testUpdateUnidirectional() {
         Graph g = createGraph(4);

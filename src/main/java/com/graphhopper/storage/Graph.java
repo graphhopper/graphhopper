@@ -15,10 +15,8 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.list.TIntList;
 
 /**
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
@@ -75,9 +73,11 @@ public interface Graph {
      */
     EdgeWriteIterator getEdges(int index);
 
+    EdgeWriteIterator getEdges(int index, EdgeFilter filter);
+
     EdgeWriteIterator getIncoming(int index);
 
-    EdgeIterator getOutgoing(int index);
+    EdgeWriteIterator getOutgoing(int index);
 
     /**
      * @return the specified graph g
