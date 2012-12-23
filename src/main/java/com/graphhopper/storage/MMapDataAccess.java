@@ -179,6 +179,7 @@ public class MMapDataAccess extends AbstractDataAccess {
             // this could be necessary too
             // http://stackoverflow.com/q/14011398/194609
             raFile.getFD().sync();
+            // equivalent to raFile.getChannel().force(true);
             writeHeader(raFile, raFile.length(), segmentSizeInBytes);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
