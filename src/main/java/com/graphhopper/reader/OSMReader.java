@@ -215,10 +215,6 @@ public class OSMReader {
 
     public void optimize() {
         logger.info("optimizing ... (" + Helper.getMemInfo() + ")");
-        if (prepare == null)
-            setDefaultAlgoPrepare(Helper.createAlgoPrepare("astar"));
-        else
-            prepare.doWork();
         graphStorage.optimize();
         // move this into the GraphStorage.optimize method?
         if (sortGraph) {
@@ -227,6 +223,12 @@ public class OSMReader {
             GraphUtility.sortDFS(graphStorage, newGraph);
             graphStorage = newGraph;
         }
+        
+        // TODO at the moment a prepared levelgraph cannot be sorted, as otherwise edgeIds won't be copied+recognized
+        if (prepare == null)
+            setDefaultAlgoPrepare(Helper.createAlgoPrepare("astar"));
+        else
+            prepare.doWork();
     }
 
     public void cleanUp() {
