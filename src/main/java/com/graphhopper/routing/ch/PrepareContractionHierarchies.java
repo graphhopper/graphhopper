@@ -391,7 +391,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             if (!updatedInGraph) {
-                iter = g.shortcut(sc.from, sc.to, sc.distance, sc.flags, sc.edge);
+                iter = g.edge(sc.from, sc.to, sc.distance, sc.flags);
+                iter.skippedEdge(sc.edge);
                 setOrigEdges(iter.edge(), sc.originalEdges);
                 newShorts++;
             }

@@ -868,8 +868,8 @@ public class GraphStorage implements Graph, Storable {
 
     @Override public String toString() {
         return "edges:" + edgeCount + "(" + edges.capacity() / Helper.MB + "), "
-                + "nodes:" + nodeCount + "(" + nodes.capacity() / Helper.MB + ")"
-                + "geo:" + maxGeoRef + "(" + geometry.capacity() / Helper.MB + ")"
-                + ", bounds:" + bounds;
+                + "nodes:" + nodeCount + "(" + nodes.capacity() / Helper.MB + "), "
+                + "geo:" + maxGeoRef + "(" + geometry.capacity() / Helper.MB + "), "
+                + "bounds:" + bounds;
     }
 }

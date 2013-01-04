@@ -126,7 +126,7 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
                     }
                 } else {
                     // finally create the shortcut
-                    g.shortcut(startNode, currentNode, distance, flags, firstSkippedEdge);
+                    g.edge(startNode, currentNode, distance, flags).skippedEdge(firstSkippedEdge);
                     newShortcuts++;
                     countSkipped--;
                     sumSkipped += countSkipped;

@@ -247,10 +247,10 @@ public class PrepareContractionHierarchiesTest {
         g.setLevel(7, 7);
         g.setLevel(8, 8);
 
-        g.shortcut(1, 4, 2, PrepareContractionHierarchies.scBothDir, iter.edge());
+        g.edge(1, 4, 2, PrepareContractionHierarchies.scBothDir).skippedEdge(iter.edge());
         int f = PrepareContractionHierarchies.scOneDir;
-        g.shortcut(4, 6, 2, f, iter2.edge());
-        g.shortcut(6, 4, 3, f, iter3.edge());
+        g.edge(4, 6, 2, f).skippedEdge(iter2.edge());
+        g.edge(6, 4, 3, f).skippedEdge(iter3.edge());
 
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g).initFromGraph();
         // there should be two different shortcuts for both directions!
@@ -269,11 +269,22 @@ public class PrepareContractionHierarchiesTest {
         g.edge(4, 5, w.getWeight(dist, flags), flags);
         g.edge(5, 6, w.getWeight(dist, flags), flags);
         int f = PrepareContractionHierarchies.scOneDir;
-        iter = g.shortcut(0, 2, 2, f, iter.edge());
-        iter = g.shortcut(0, 3, 3, f, iter.edge());
-        iter = g.shortcut(0, 4, 4, f, iter.edge());
-        iter = g.shortcut(0, 5, 5, f, iter.edge());
-        g.shortcut(0, 6, 6, f, iter.edge());
+
+        int tmp = iter.edge();
+        iter = g.edge(0, 2, 2, f);
+        iter.skippedEdge(tmp);
+        tmp = iter.edge();
+        iter = g.edge(0, 3, 3, f);
+        iter.skippedEdge(tmp);
+        tmp = iter.edge();
+        iter = g.edge(0, 4, 4, f);
+        iter.skippedEdge(tmp);
+        tmp = iter.edge();
+        iter = g.edge(0, 5, 5, f);
+        iter.skippedEdge(tmp);
+        tmp = iter.edge();
+        iter = g.edge(0, 6, 6, f);
+        iter.skippedEdge(tmp);
         g.setLevel(0, 10);
         g.setLevel(6, 9);
         g.setLevel(5, 8);

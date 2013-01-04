@@ -67,7 +67,8 @@ public class Path4ShortcutsTest {
 
         g.setLevel(1, -1);
         g.setLevel(2, -1);
-        EdgeSkipIterator iter4 = g.shortcut(0, 2, 20, CarStreetType.flagsDefault(true), iter.edge()); // 4
+        EdgeSkipIterator iter4 = g.edge(0, 2, 20, CarStreetType.flagsDefault(true));
+        iter4.skippedEdge(iter.edge());// 4
 
         Path4Shortcuts path = new Path4Shortcuts(g, ShortestCarCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(iter4.edge(), 2, 20);
@@ -89,7 +90,7 @@ public class Path4ShortcutsTest {
 
         g.setLevel(1, -1);
         g.setLevel(2, -1);
-        g.shortcut(0, 3, 30, CarStreetType.flagsDefault(true), iter.edge()); // 5
+        g.edge(0, 3, 30, CarStreetType.flagsDefault(true)).skippedEdge(iter.edge()); // 5
 
         Path4Shortcuts path = new Path4Shortcuts(g, ShortestCarCalc.DEFAULT);
         path.edgeFrom = new EdgeEntry(5, 3, 30);

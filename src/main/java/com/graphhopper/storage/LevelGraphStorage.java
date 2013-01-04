@@ -15,7 +15,6 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeSkipIterator;
 
 /**
@@ -47,27 +46,16 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
         return new LevelGraphStorage(dir);
     }
 
-    @Override public EdgeSkipIterator edge(int a, int b, double distance, boolean bothDirections) {
-        return edge(a, b, distance, CarStreetType.flagsDefault(bothDirections));
+    @Override public EdgeSkipIterator edge(int a, int b, double distance, boolean bothDir) {
+        return (EdgeSkipIterator) super.edge(a, b, distance, bothDir);
     }
 
     @Override public EdgeSkipIterator edge(int a, int b, double distance, int flags) {
-        return shortcut(a, b, distance, flags, -1);
-    }
-
-    @Override public EdgeSkipIterator shortcut(int a, int b, double distance, int flags, int skippedEdge) {
-        ensureNodeIndex(a);
-        ensureNodeIndex(b);
-        return internalEdgeAdd(a, b, distance, flags, skippedEdge);
-    }
-
-    protected EdgeSkipIterator internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags, int skippedEdge) {
-        int newOrExistingEdge = nextEdge();
-        connectNewEdge(fromNodeId, newOrExistingEdge);
-        connectNewEdge(toNodeId, newOrExistingEdge);
-        long edgePointer = writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, dist, flags);
-        edges.setInt(edgePointer + I_SKIP_EDGE, skippedEdge);
-        return new EdgeSkipIteratorImpl(newOrExistingEdge);
+        ensureNodeIndex(Math.max(a, b));
+        int edgeId = internalEdgeAdd(a, b, distance, flags);
+        EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(edgeId);
+        iter.skippedEdge(-1);
+        return iter;
     }
 
     @Override public EdgeSkipIterator getEdges(int nodeId) {

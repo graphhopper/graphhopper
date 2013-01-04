@@ -348,15 +348,15 @@ public class GraphUtility {
         int len = from.getNodes();
         // important to avoid creating two edges for edges with both directions        
         MyBitSet bitset = new MyBitSetImpl(len);
-        for (int old = 0; old < len; old++) {
-            bitset.add(old);
-            to.setNode(old, from.getLatitude(old), from.getLongitude(old));
-            EdgeIterator eIter = from.getEdges(old);
+        for (int oldNode = 0; oldNode < len; oldNode++) {
+            bitset.add(oldNode);
+            to.setNode(oldNode, from.getLatitude(oldNode), from.getLongitude(oldNode));
+            EdgeIterator eIter = from.getEdges(oldNode);
             while (eIter.next()) {
-                int edgeNodeIndex = eIter.node();
-                if (bitset.contains(edgeNodeIndex))
+                int adjacentNodeIndex = eIter.node();
+                if (bitset.contains(adjacentNodeIndex))
                     continue;
-                to.edge(old, edgeNodeIndex, eIter.distance(), eIter.flags());
+                to.edge(oldNode, adjacentNodeIndex, eIter.distance(), eIter.flags());
             }
         }
         return to;

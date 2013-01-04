@@ -17,6 +17,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -33,7 +34,7 @@ public class LevelGraphStorageTest extends GraphStorageTest {
     }
 
     @Test
-    public void testCannotBeLoadedViaDifferentClass() {        
+    public void testCannotBeLoadedViaDifferentClass() {
         LevelGraphStorage lg = new LevelGraphStorage(new RAMDirectory(defaultGraph, true));
         lg.createNew(10);
         lg.flush();
@@ -85,7 +86,8 @@ public class LevelGraphStorageTest extends GraphStorageTest {
         g.edge(0, 1, 10, true);
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);
-        g.edge(3, 4, 40, true);
+        EdgeSkipIterator tmpIter = g.edge(3, 4, 40, true);
+        assertEquals(-1, tmpIter.skippedEdge());
 
         // shortcut
         g.edge(0, 4, 40, true);

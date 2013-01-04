@@ -29,13 +29,12 @@ public interface LevelGraph extends Graph {
 
     int getLevel(int index);
 
+    // override to use EdgeSkipIterator
     @Override
     EdgeSkipIterator edge(int a, int b, double distance, int flags);
 
     @Override
     EdgeSkipIterator edge(int a, int b, double distance, boolean bothDirections);
-
-    EdgeSkipIterator shortcut(int a, int b, double distance, int flags, int skippedEdge);
 
     @Override
     EdgeSkipIterator getEdgeProps(int edgeId, int endNode);
