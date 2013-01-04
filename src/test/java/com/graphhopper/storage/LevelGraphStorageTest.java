@@ -18,8 +18,6 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
-import com.graphhopper.util.Helper;
-import java.io.File;
 import static org.junit.Assert.*;
 import org.junit.Test;
 

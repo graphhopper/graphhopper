@@ -61,9 +61,9 @@ public class Path4ShortcutsTest {
     @Test
     public void testExpand() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph(20);
-        EdgeSkipIterator iter = g.newEdge(0, 1, 10, true); // 1
-        g.newEdge(1, 2, 10, true); // 2
-        EdgeSkipIterator iter3 = g.newEdge(2, 3, 10, true); // 3
+        EdgeSkipIterator iter = g.edge(0, 1, 10, true); // 1
+        g.edge(1, 2, 10, true); // 2
+        EdgeSkipIterator iter3 = g.edge(2, 3, 10, true); // 3
 
         g.setLevel(1, -1);
         g.setLevel(2, -1);
@@ -82,10 +82,10 @@ public class Path4ShortcutsTest {
     @Test
     public void testExpandMultipleSkippedNodes() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph(20);
-        EdgeSkipIterator iter = g.newEdge(0, 1, 10, true); // 1
-        g.newEdge(1, 2, 10, true); // 2
-        g.newEdge(2, 3, 10, true); // 3
-        g.newEdge(3, 4, 10, true); // 4
+        EdgeSkipIterator iter = g.edge(0, 1, 10, true); // 1
+        g.edge(1, 2, 10, true); // 2
+        g.edge(2, 3, 10, true); // 3
+        g.edge(3, 4, 10, true); // 4
 
         g.setLevel(1, -1);
         g.setLevel(2, -1);

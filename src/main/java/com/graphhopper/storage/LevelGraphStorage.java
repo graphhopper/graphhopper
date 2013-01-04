@@ -47,16 +47,12 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
         return new LevelGraphStorage(dir);
     }
 
-    public EdgeSkipIterator newEdge(int a, int b, double distance, boolean bothDir) {
-        return newEdge(a, b, distance, CarStreetType.flagsDefault(bothDir));
+    @Override public EdgeSkipIterator edge(int a, int b, double distance, boolean bothDirections) {
+        return edge(a, b, distance, CarStreetType.flagsDefault(bothDirections));
     }
 
-    public EdgeSkipIterator newEdge(int a, int b, double distance, int flags) {
+    @Override public EdgeSkipIterator edge(int a, int b, double distance, int flags) {
         return shortcut(a, b, distance, flags, -1);
-    }
-
-    @Override public void edge(int a, int b, double distance, int flags) {
-        shortcut(a, b, distance, flags, -1);
     }
 
     @Override public EdgeSkipIterator shortcut(int a, int b, double distance, int flags, int skippedEdge) {
@@ -96,18 +92,6 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
             super(node, in, out);
         }
 
-        @Override public void distance(double dist) {
-            distance = dist;
-            edges.setInt(edgePointer + E_DIST, distToInt(dist));
-        }
-
-        @Override public void flags(int fl) {
-            flags = fl;
-            int nep = edges.getInt(getLinkPosInEdgeArea(baseNode, nodeId, edgePointer));
-            int neop = edges.getInt(getLinkPosInEdgeArea(nodeId, baseNode, edgePointer));
-            writeEdge((int) (edgePointer / edgeEntrySize), baseNode, nodeId, nep, neop, distance, flags);
-        }
-
         @Override public void skippedEdge(int edgeId) {
             edges.setInt(edgePointer + I_SKIP_EDGE, edgeId);
         }
@@ -123,46 +107,14 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     }
 
     @Override
-    protected SingleEdge createSingleEdge(int nodeId, long edgePointer) {
-        return new SingleLevelEdge(nodeId, edgePointer);
+    protected SingleEdge createSingleEdge(int edge, int nodeId) {
+        return new SingleLevelEdge(edge, nodeId);
     }
 
     protected class SingleLevelEdge extends SingleEdge implements EdgeSkipIterator {
 
-        public SingleLevelEdge(int nodeId, long edgePointer) {
-            super(nodeId, edgePointer);
-        }
-
-        @Override public void flags(int flags) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override public void distance(double dist) {
-            edges.setInt(edgePointer + E_DIST, distToInt(dist));
-        }
-
-        @Override public void skippedEdge(int node) {
-            edges.setInt(edgePointer + I_SKIP_EDGE, node);
-        }
-
-        @Override public int skippedEdge() {
-            return edges.getInt(edgePointer + I_SKIP_EDGE);
-        }
-    }
-
-    @Override
-    public EdgeSkipIterator getAllEdges() {
-        return new AllEdgeSkipIterator();
-    }
-
-    public class AllEdgeSkipIterator extends AllEdgeIterator implements EdgeSkipIterator {
-
-        @Override public void distance(double dist) {
-            edges.setInt(edgePointer + E_DIST, distToInt(dist));
-        }
-
-        @Override public void flags(int flags) {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public SingleLevelEdge(int edge, int nodeId) {
+            super(edge, nodeId);
         }
 
         @Override public void skippedEdge(int node) {

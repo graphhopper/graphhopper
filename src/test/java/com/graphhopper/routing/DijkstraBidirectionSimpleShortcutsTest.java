@@ -80,15 +80,15 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         //
         // =19-20-21-22=
 
-        g.newEdge(18, 19, 1, true);
-        g.newEdge(17, 19, 1, true);
+        g.edge(18, 19, 1, true);
+        g.edge(17, 19, 1, true);
 
-        EdgeSkipIterator iter = g.newEdge(19, 20, 1, false);
-        g.newEdge(20, 21, 1, false);
-        g.newEdge(21, 22, 1, false);
+        EdgeSkipIterator iter = g.edge(19, 20, 1, false);
+        g.edge(20, 21, 1, false);
+        g.edge(21, 22, 1, false);
 
-        g.newEdge(22, 23, 1, true);
-        g.newEdge(22, 24, 1, true);
+        g.edge(22, 23, 1, true);
+        g.edge(22, 24, 1, true);
 
         PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
         prepare.doWork();

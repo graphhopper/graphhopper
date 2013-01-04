@@ -235,13 +235,13 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testFindShortcuts_Roundabout() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
-        EdgeSkipIterator iter = g.newEdge(1, 3, 1, true);
-        g.newEdge(3, 4, 1, true);
-        EdgeSkipIterator iter2 = g.newEdge(4, 5, 1, false);
-        g.newEdge(5, 6, 1, false);
-        g.newEdge(6, 7, 1, true);
-        EdgeSkipIterator iter3 = g.newEdge(6, 8, 2, false);
-        g.newEdge(8, 4, 1, false);
+        EdgeSkipIterator iter = g.edge(1, 3, 1, true);
+        g.edge(3, 4, 1, true);
+        EdgeSkipIterator iter2 = g.edge(4, 5, 1, false);
+        g.edge(5, 6, 1, false);
+        g.edge(6, 7, 1, true);
+        EdgeSkipIterator iter3 = g.edge(6, 8, 2, false);
+        g.edge(8, 4, 1, false);
         g.setLevel(3, 3);
         g.setLevel(5, 5);
         g.setLevel(7, 7);
@@ -262,7 +262,7 @@ public class PrepareContractionHierarchiesTest {
         double dist = 1;
         int flags = CarStreetType.flags(30, false);
         g.edge(10, 0, w.getWeight(dist, flags), flags);
-        EdgeSkipIterator iter = g.newEdge(0, 1, w.getWeight(dist, flags), flags);
+        EdgeSkipIterator iter = g.edge(0, 1, w.getWeight(dist, flags), flags);
         g.edge(1, 2, w.getWeight(dist, flags), flags);
         g.edge(2, 3, w.getWeight(dist, flags), flags);
         g.edge(3, 4, w.getWeight(dist, flags), flags);

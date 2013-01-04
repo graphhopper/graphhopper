@@ -16,6 +16,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.RawEdgeIterator;
 
 /**
  * Extended graph interface which supports storing and retrieving the level for a node.
@@ -27,6 +28,12 @@ public interface LevelGraph extends Graph {
     void setLevel(int index, int level);
 
     int getLevel(int index);
+
+    @Override
+    EdgeSkipIterator edge(int a, int b, double distance, int flags);
+
+    @Override
+    EdgeSkipIterator edge(int a, int b, double distance, boolean bothDirections);
 
     EdgeSkipIterator shortcut(int a, int b, double distance, int flags, int skippedEdge);
 
@@ -43,5 +50,5 @@ public interface LevelGraph extends Graph {
     EdgeSkipIterator getOutgoing(int nodeId);
 
     @Override
-    EdgeSkipIterator getAllEdges();
+    RawEdgeIterator getAllEdges();
 }

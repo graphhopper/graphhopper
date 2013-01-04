@@ -31,10 +31,10 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
-import com.graphhopper.util.EdgeWriteIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
+import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.StopWatch;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.ArrayList;
@@ -107,7 +107,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // in CH the flags will be ignored (calculating the new flags for the shortcuts is impossible)
         // also several shortcuts would be necessary with the different modes (e.g. fastest and shortest)
         // so calculate the weight and store this as distance, then use only distance instead of getWeight
-        EdgeWriteIterator iter = g.getAllEdges();
+        RawEdgeIterator iter = g.getAllEdges();
         int c = 0;
         while (iter.next()) {
             c++;
@@ -289,7 +289,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // we can use distance instead of weight, see prepareEdges where distance is overwritten by weight!
         List<NodeCH> goalNodes = new ArrayList<NodeCH>();
         shortcuts.clear();
-        EdgeWriteIterator iter1 = g.getIncoming(v);
+        EdgeIterator iter1 = g.getIncoming(v);
         // TODO PERFORMANCE collect outgoing nodes (goalnodes) only once and just skip u
         while (iter1.next()) {
             int u = iter1.node();
@@ -301,7 +301,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             // one-to-many shortest path
             goalNodes.clear();
-            EdgeWriteIterator iter2 = g.getOutgoing(v);
+            EdgeIterator iter2 = g.getOutgoing(v);
             double maxWeight = 0;
             while (iter2.next()) {
                 int w = iter2.node();

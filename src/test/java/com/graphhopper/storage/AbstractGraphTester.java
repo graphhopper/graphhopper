@@ -115,21 +115,21 @@ public abstract class AbstractGraphTester {
         g.edge(11, 1, 12, false);
         g.edge(1, 12, 12, false);
         g.edge(3, 2, 112, false);
-        EdgeIterator i = g.getEdges(2, EdgeFilter.OUT);
+        EdgeIterator i = g.getOutgoing(2);
         assertFalse(i.next());
 
-        assertEquals(1, GraphUtility.count(g.getEdges(1, EdgeFilter.IN)));
-        assertEquals(2, GraphUtility.count(g.getEdges(2, EdgeFilter.IN)));
-        assertEquals(0, GraphUtility.count(g.getEdges(3, EdgeFilter.IN)));
+        assertEquals(1, GraphUtility.count(g.getIncoming(1)));
+        assertEquals(2, GraphUtility.count(g.getIncoming(2)));
+        assertEquals(0, GraphUtility.count(g.getIncoming(3)));
 
-        assertEquals(3, GraphUtility.count(g.getEdges(1, EdgeFilter.OUT)));
-        assertEquals(0, GraphUtility.count(g.getEdges(2, EdgeFilter.OUT)));
-        assertEquals(1, GraphUtility.count(g.getEdges(3, EdgeFilter.OUT)));
-        i = g.getEdges(3, EdgeFilter.OUT);
+        assertEquals(3, GraphUtility.count(g.getOutgoing(1)));
+        assertEquals(0, GraphUtility.count(g.getOutgoing(2)));
+        assertEquals(1, GraphUtility.count(g.getOutgoing(3)));
+        i = g.getOutgoing(3);
         i.next();
         assertEquals(2, i.node());
 
-        i = g.getEdges(1, EdgeFilter.OUT);
+        i = g.getOutgoing(1);
         assertTrue(i.next());
         assertEquals(2, i.node());
         assertTrue(i.next());
@@ -634,42 +634,30 @@ public abstract class AbstractGraphTester {
 
     @Test public void testGeometry() {
         Graph g = createGraph(2);
-        g.edge(0, 4, 100, CarStreetType.flags(10, false), Helper.createTList(0, 1, 2, 3, 4));
-        g.edge(4, 10, 100, CarStreetType.flags(10, false), Helper.createTList(4, 5, 6, 7, 8, 9, 10));
-        g.edge(14, 0, 100, CarStreetType.flags(10, false), Helper.createTList(14, 13, 12, 11, 0));
+        g.edge(0, 4, 100, CarStreetType.flags(10, false)).pillarNodes(Helper.createTList(1, 2, 3));
+        g.edge(4, 10, 100, CarStreetType.flags(10, false)).pillarNodes(Helper.createTList(5, 6, 7, 8, 9));
+        g.edge(14, 0, 100, CarStreetType.flags(10, false)).pillarNodes(Helper.createTList(13, 12, 11));
 
-        EdgeIterator iter = g.getEdges(0, EdgeFilter.ALL);
-        assertTrue(iter.next());
-        assertEquals(1, iter.node());
-        assertTrue(iter.next());
-        assertEquals(11, iter.node());
-        assertFalse(iter.next());
-
-        iter = g.getEdges(0, EdgeFilter.IN);
-        assertTrue(iter.next());
-        assertEquals(11, iter.node());
-        assertFalse(iter.next());
-
-        iter = g.getEdges(0, EdgeFilter.OUT);
-        assertTrue(iter.next());
-        assertEquals(1, iter.node());
-        assertFalse(iter.next());
-
-        iter = g.getEdges(0, EdgeFilter.TOWER_NODES);
+        EdgeIterator iter = g.getEdges(0);
         assertTrue(iter.next());
         assertEquals(4, iter.node());
+        // TODO order
+        assertEquals(Arrays.asList(1, 2, 3), Helper.toList(iter.pillarNodes()));
         assertTrue(iter.next());
+        assertEquals(Arrays.asList(13, 12, 11), Helper.toList(iter.pillarNodes()));
         assertEquals(14, iter.node());
         assertFalse(iter.next());
 
-        iter = g.getEdges(0, EdgeFilter.TOWER_NODES.combine(EdgeFilter.OUT));
+        iter = g.getOutgoing(0);
         assertTrue(iter.next());
         assertEquals(4, iter.node());
+        assertEquals(Arrays.asList(1, 2, 3), Helper.toList(iter.pillarNodes()));
         assertFalse(iter.next());
 
-        iter = g.getEdges(4, EdgeFilter.TOWER_NODES.combine(EdgeFilter.OUT));
+        iter = g.getIncoming(4);
         assertTrue(iter.next());
         assertEquals(10, iter.node());
+        assertEquals(Arrays.asList(13, 12, 11), Helper.toList(iter.pillarNodes()));
         assertFalse(iter.next());
     }
 }

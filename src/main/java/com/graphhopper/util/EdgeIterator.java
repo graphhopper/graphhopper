@@ -15,6 +15,9 @@
  */
 package com.graphhopper.util;
 
+import gnu.trove.TIntCollection;
+import gnu.trove.iterator.TIntIterator;
+
 /**
  * Iterates through all edges of one node. Avoids object creation in-between via direct access
  * methods.
@@ -63,11 +66,25 @@ public interface EdgeIterator {
     int node();
 
     /**
+     * @return pillar nodes
+     */
+    TIntIterator pillarNodes();
+
+    /**
+     * @param pillarNodes list of nodes between a and b.
+     */
+    void pillarNodes(TIntCollection pillarNodes);
+
+    /**
      * @return the distance of the current edge edge
      */
     double distance();
 
+    void distance(double dist);
+
     int flags();
+
+    void flags(int flags);
 
     /**
      * @return true if no data is available where we could iterate over

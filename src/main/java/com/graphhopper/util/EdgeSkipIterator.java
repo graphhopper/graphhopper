@@ -23,7 +23,7 @@ import com.graphhopper.storage.LevelGraph;
  * @see LevelGraph
  * @author Peter Karich
  */
-public interface EdgeSkipIterator extends EdgeWriteIterator {
+public interface EdgeSkipIterator extends EdgeIterator {
 
     int skippedEdge();
 

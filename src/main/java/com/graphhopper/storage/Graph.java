@@ -16,8 +16,8 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.list.TIntList;
 
 /**
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
@@ -56,14 +56,11 @@ public interface Graph {
      * @param b the index of the ending (tower) node of the edge
      * @param distance necessary if no setNode is called - e.g. if the graph is not a geo-graph
      * @param flags see EdgeFlags - involves velocity and direction
-     * @param nodesOnPath list of nodes between a and b but inclusive the tower nodes a and b. The nodes
-     * between a and b would otherwise have no connection - so called pillar nodes.
+     * @return the created edge
      */
-    void edge(int a, int b, double distance, int flags, TIntList nodesOnPath);
-    
-    void edge(int a, int b, double distance, int flags);
+    EdgeIterator edge(int a, int b, double distance, int flags);
 
-    void edge(int a, int b, double distance, boolean bothDirections);        
+    EdgeIterator edge(int a, int b, double distance, boolean bothDirections);
 
     /**
      * @return an edge iterator over one element where the method next() has no meaning and will
@@ -73,7 +70,10 @@ public interface Graph {
      */
     EdgeIterator getEdgeProps(int edgeId, int endNode);
 
-    EdgeIterator getAllEdges();
+    /**
+     * @return all edges in this graph
+     */
+    RawEdgeIterator getAllEdges();
 
     /**
      * Returns an iterator which makes it possible to traverse all edges of the specified node
@@ -81,8 +81,6 @@ public interface Graph {
      * directions will returned only once!
      */
     EdgeIterator getEdges(int index);
-
-    EdgeIterator getEdges(int index, EdgeFilter filter);
 
     EdgeIterator getIncoming(int index);
 

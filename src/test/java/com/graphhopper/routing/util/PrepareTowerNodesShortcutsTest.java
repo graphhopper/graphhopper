@@ -22,6 +22,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.RawEdgeIterator;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -285,11 +286,11 @@ public class PrepareTowerNodesShortcutsTest {
     }
 
     public static void printEdges(LevelGraph g) {
-        EdgeSkipIterator iter = g.getAllEdges();
+        RawEdgeIterator iter = g.getAllEdges();
         while (iter.next()) {
-            System.out.println(iter.baseNode() + "<->" + iter.node()
-                    + ", dist: " + (float) iter.distance() + ", skip:" + iter.skippedEdge()
-                    + ", level:" + g.getLevel(iter.baseNode()) + "->" + g.getLevel(iter.node())
+            System.out.println(iter.nodeA() + "<->" + iter.nodeB()
+                    + ", dist: " + (float) iter.distance()
+                    + ", level:" + g.getLevel(iter.nodeA()) + "->" + g.getLevel(iter.nodeB())
                     + ", bothDir:" + CarStreetType.isBoth(iter.flags()));
         }
         System.out.println("---");

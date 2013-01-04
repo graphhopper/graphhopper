@@ -83,19 +83,18 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     @Test
     public void testPathRecursiveUnpacking() {
         LevelGraphStorage g2 = (LevelGraphStorage) createGraph(6);
-
-        g2.newEdge(0, 1, 1, true);
-        EdgeSkipIterator iter = g2.newEdge(0, 2, 1.4, true);
-        g2.newEdge(1, 2, 1, true);
-        g2.newEdge(1, 3, 3, true);
-        g2.newEdge(2, 3, 1, true);
-        g2.newEdge(4, 3, 1, true);
-        g2.newEdge(2, 5, 1.4, true);
-        g2.newEdge(3, 5, 1, true);
-        g2.newEdge(5, 6, 1, true);
-        g2.newEdge(4, 6, 1, true);
-        g2.newEdge(5, 7, 1.4, true);
-        g2.newEdge(6, 7, 1, true);
+        g2.edge(0, 1, 1, true);
+        EdgeSkipIterator iter = g2.edge(0, 2, 1.4, true);
+        g2.edge(1, 2, 1, true);
+        g2.edge(1, 3, 3, true);
+        g2.edge(2, 3, 1, true);
+        g2.edge(4, 3, 1, true);
+        g2.edge(2, 5, 1.4, true);
+        g2.edge(3, 5, 1, true);
+        g2.edge(5, 6, 1, true);
+        g2.edge(4, 6, 1, true);
+        g2.edge(5, 7, 1.4, true);
+        g2.edge(6, 7, 1, true);
 
         // simulate preparation
         EdgeSkipIterator iter2 = g2.shortcut(0, 5, 2.8, CarStreetType.flags(0, true), iter.edge());

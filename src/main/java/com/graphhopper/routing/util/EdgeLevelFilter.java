@@ -17,6 +17,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
+import gnu.trove.TIntCollection;
+import gnu.trove.iterator.TIntIterator;
 
 /**
  * Only certain nodes are accepted and therefor the others are filtered out.
@@ -72,5 +74,21 @@ public class EdgeLevelFilter implements EdgeIterator {
 
     @Override public boolean isEmpty() {
         return false;
+    }
+
+    @Override public TIntIterator pillarNodes() {
+        return edgeIter.pillarNodes();
+    }
+
+    @Override public void pillarNodes(TIntCollection pillarNodes) {
+        edgeIter.pillarNodes(pillarNodes);
+    }
+
+    @Override public void distance(double dist) {
+        edgeIter.distance(dist);
+    }
+
+    @Override public void flags(int flags) {
+        edgeIter.flags(flags);
     }
 }

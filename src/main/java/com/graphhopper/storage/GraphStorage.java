@@ -20,11 +20,12 @@ import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.list.TIntList;
+import gnu.trove.TIntCollection;
+import gnu.trove.iterator.TIntIterator;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -69,7 +70,8 @@ public class GraphStorage implements Graph, Storable {
     // length | nodeA | nextNode | ... | nodeB
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 2GB
     private DataAccess geometry;
-    private int maxGeoRef;
+    // 0 stands for no separate geoRef
+    private int maxGeoRef = 1;
 
     public GraphStorage(Directory dir) {
         this.dir = dir;
@@ -218,31 +220,15 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public void edge(int a, int b, double distance, boolean bothDirections) {
-        edge(a, b, distance, CarStreetType.flagsDefault(bothDirections));
+    public EdgeIterator edge(int a, int b, double distance, boolean bothDirections) {
+        return edge(a, b, distance, CarStreetType.flagsDefault(bothDirections));
     }
 
     @Override
-    public void edge(int a, int b, double distance, int flags) {
-        edge(a, b, distance, flags, null);
-    }
-
-    @Override
-    public void edge(int a, int b, double distance, int flags, TIntList onPathNodes) {
+    public EdgeIterator edge(int a, int b, double distance, int flags) {
         ensureNodeIndex(Math.max(a, b));
-        long edgePointer = internalEdgeAdd(a, b, distance, flags);
-        if (onPathNodes != null && !onPathNodes.isEmpty()) {
-            int len = onPathNodes.size();
-            int geoRef = nextGeoRef(len);
-            edges.setInt(edgePointer + E_GEO, geoRef);
-            ensureGeometry(geoRef, len);
-            geometry.setInt(geoRef, len);
-            geoRef++;
-            for (int i = 0; i < len; i++, geoRef++) {
-                geometry.setInt(geoRef, onPathNodes.get(i));
-            }
-        } else
-            edges.setInt(edgePointer + E_GEO, EMPTY_LINK);
+        int edge = internalEdgeAdd(a, b, distance, flags);
+        return new EdgeIterable(edge);
     }
 
     protected int nextGeoRef(int arrayLength) {
@@ -253,13 +239,14 @@ public class GraphStorage implements Graph, Storable {
     }
 
     /**
-     * @return edgePointer which is edgeId * edgeEntrySize
+     * @return edgeIdPointer which is edgeId * edgeEntrySize
      */
-    protected long internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags) {
+    protected int internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags) {
         int newOrExistingEdge = nextEdge();
         connectNewEdge(fromNodeId, newOrExistingEdge);
         connectNewEdge(toNodeId, newOrExistingEdge);
-        return writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, dist, flags);
+        writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, dist, flags);
+        return newOrExistingEdge;
     }
 
     protected int nextEdge() {
@@ -338,81 +325,14 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public EdgeIterator getEdgeProps(int edgeId, final int endNode) {
-        if (edgeId < 1 || edgeId > edgeCount)
-            throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + edgeCount + "]");
-        long edgePointer = (long) edgeId * edgeEntrySize;
-        // a bit complex but faster
-        int nodeA = edges.getInt(edgePointer + E_NODEA);
-        int nodeB = edges.getInt(edgePointer + E_NODEB);
-        SingleEdge edge;
-        if (endNode < 0 || endNode == nodeB) {
-            edge = createSingleEdge(nodeA, edgePointer);
-            edge.node = nodeB;
-            return edge;
-        } else if (endNode == nodeA) {
-            edge = createSingleEdge(nodeB, edgePointer);
-            edge.node = nodeA;
-            edge.switchFlags = true;
-            return edge;
-        } else
-            return GraphUtility.EMPTY;
-    }
-
-    protected SingleEdge createSingleEdge(int nodeId, long edgePointer) {
-        return new SingleEdge(nodeId, edgePointer);
-    }
-
-    protected class SingleEdge implements EdgeIterator {
-
-        protected final long edgePointer;
-        protected final int baseNode;
-        protected int node;
-        protected boolean switchFlags;
-
-        public SingleEdge(int nodeId, long edgePointer) {
-            this.baseNode = nodeId;
-            this.edgePointer = edgePointer;
-        }
-
-        @Override public boolean next() {
-            return false;
-        }
-
-        @Override public int edge() {
-            return (int) (edgePointer / edgeEntrySize);
-        }
-
-        @Override public int baseNode() {
-            return baseNode;
-        }
-
-        @Override public int node() {
-            return node;
-        }
-
-        @Override public double distance() {
-            return getDist(edgePointer);
-        }
-
-        @Override public int flags() {
-            int flags = edges.getInt(edgePointer + E_FLAGS);
-            if (switchFlags)
-                return CarStreetType.swapDirection(flags);
-            return flags;
-        }
-
-        @Override public boolean isEmpty() {
-            return false;
-        }
-    }
-
-    @Override
-    public EdgeIterator getAllEdges() {
+    public RawEdgeIterator getAllEdges() {
         return new AllEdgeIterator();
     }
 
-    protected class AllEdgeIterator implements EdgeIterator {
+    /**
+     * Include all edges of this storage in the iterator.
+     */
+    protected class AllEdgeIterator implements RawEdgeIterator {
 
         protected long edgePointer = 0;
         private int maxEdges = (edgeCount + 1) * edgeEntrySize;
@@ -422,11 +342,11 @@ public class GraphStorage implements Graph, Storable {
             return edgePointer < maxEdges;
         }
 
-        @Override public int baseNode() {
+        @Override public int nodeA() {
             return edges.getInt(edgePointer + E_NODEA);
         }
 
-        @Override public int node() {
+        @Override public int nodeB() {
             return edges.getInt(edgePointer + E_NODEB);
         }
 
@@ -434,10 +354,17 @@ public class GraphStorage implements Graph, Storable {
             return getDist(edgePointer);
         }
 
+        @Override public void distance(double dist) {
+            edges.setInt(edgePointer + E_DIST, distToInt(dist));
+        }
+
         @Override public int flags() {
             return edges.getInt(edgePointer + E_FLAGS);
         }
 
+        @Override public void flags(int flags) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
 
         @Override public int edge() {
             return (int) (edgePointer / edgeEntrySize);
@@ -445,6 +372,54 @@ public class GraphStorage implements Graph, Storable {
 
         @Override public boolean isEmpty() {
             return false;
+        }
+    }
+
+    @Override
+    public EdgeIterator getEdgeProps(int edgeId, final int endNode) {
+        if (edgeId < 1 || edgeId > edgeCount)
+            throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + edgeCount + "]");
+        long edgePointer = (long) edgeId * edgeEntrySize;
+        // a bit complex but faster
+        int nodeA = edges.getInt(edgePointer + E_NODEA);
+        int nodeB = edges.getInt(edgePointer + E_NODEB);
+        SingleEdge edge;
+        if (endNode < 0 || endNode == nodeB) {
+            edge = createSingleEdge(edgeId, nodeA);
+            edge.node = nodeB;
+            return edge;
+        } else if (endNode == nodeA) {
+            edge = createSingleEdge(edgeId, nodeB);
+            edge.node = nodeA;
+            edge.switchFlags = true;
+            return edge;
+        } else
+            return GraphUtility.EMPTY;
+    }
+
+    protected SingleEdge createSingleEdge(int edgeId, int nodeId) {
+        return new SingleEdge(edgeId, nodeId);
+    }
+
+    protected class SingleEdge extends EdgeIterable {
+
+        protected boolean switchFlags;
+
+        public SingleEdge(int edgeId, int nodeId) {
+            super(edgeId, nodeId);
+            edgePointer = edgeId * edgeEntrySize;
+            flags = flags();
+        }
+
+        @Override public boolean next() {
+            return false;
+        }
+
+        @Override public int flags() {
+            int flags = edges.getInt(edgePointer + E_FLAGS);
+            if (switchFlags)
+                return CarStreetType.swapDirection(flags);
+            return flags;
         }
     }
 
@@ -462,79 +437,59 @@ public class GraphStorage implements Graph, Storable {
     public EdgeIterator getOutgoing(int node) {
         return new EdgeIterable(node, false, true);
     }
-    private final static EdgeFilter PILLAR_NODES = new EdgeFilter(EdgeFilter.TOWER_NODES.value() * 2);
-
-    @Override
-    public EdgeIterator getEdges(int node, EdgeFilter filter) {
-        if (filter.contains(PILLAR_NODES)) {
-            // iterate through ALL nodes, also the ones stored in geometry
-            if (filter.contains(EdgeFilter.OUT)) {
-                return new EdgeIterable(node, false, true);
-            } else if (filter.contains(EdgeFilter.IN)) {
-                return new EdgeIterable(node, true, false);
-            } else {
-                return new EdgeIterable(node, true, true);
-            }
-        } else {
-            switch (filter.value()) {
-                case 1:
-                    return new EdgeIterable(node, false, true);
-                case 2:
-                    return new EdgeIterable(node, true, false);
-                default:
-                    return new EdgeIterable(node, true, true);
-            }
-        }
-    }
 
     protected class EdgeIterable implements EdgeIterator {
 
         long edgePointer;
         boolean in;
         boolean out;
-        boolean foundNext;
         // edge properties
         int flags;
-        double distance;
-        int nodeId;
+        int node;
         final int baseNode;
         int edgeId;
         int nextEdge;
 
+        // used as return value for edge creation method
         public EdgeIterable(int edge) {
-            this.nextEdge = edge;
-            this.baseNode = edges.getInt(nextEdge * edgeEntrySize + E_NODEA);
-            this.in = true;
-            this.out = true;
+            this(edge, edges.getInt(edge * edgeEntrySize + E_NODEA));
             next();
         }
 
+        // used for SingleEdge
+        public EdgeIterable(int edge, int baseNode) {
+            this.nextEdge = edge;
+            this.baseNode = baseNode;
+            this.in = true;
+            this.out = true;
+        }
+
+        // used in getEdges/getOutgoing/getIncoming
         public EdgeIterable(int node, boolean in, boolean out) {
-            this.baseNode = node;
-            this.nextEdge = nodes.getInt((long) node * nodeEntrySize + N_EDGE_REF);
+            this(nodes.getInt((long) node * nodeEntrySize + N_EDGE_REF), node);
             this.in = in;
             this.out = out;
         }
 
-        void readNext() {
+        boolean readNext() {
             // readLock.lock();                       
             edgePointer = nextEdge * edgeEntrySize;
             edgeId = nextEdge;
-            nodeId = getOtherNode(baseNode, edgePointer);
+            node = getOtherNode(baseNode, edgePointer);
 
             // position to next edge
-            nextEdge = edges.getInt(getLinkPosInEdgeArea(baseNode, nodeId, edgePointer));
+            nextEdge = edges.getInt(getLinkPosInEdgeArea(baseNode, node, edgePointer));
             flags = edges.getInt(edgePointer + E_FLAGS);
 
             // switch direction flags if necessary
-            if (baseNode > nodeId)
+            if (baseNode > node)
                 flags = CarStreetType.swapDirection(flags);
 
             if (!in && !CarStreetType.isForward(flags) || !out && !CarStreetType.isBackward(flags)) {
                 // skip this edge as it does not fit to defined filter
+                return false;
             } else {
-                distance = getDist(edgePointer);
-                foundNext = true;
+                return true;
             }
         }
 
@@ -544,11 +499,11 @@ public class GraphStorage implements Graph, Storable {
 
         @Override public boolean next() {
             int i = 0;
-            foundNext = false;
+            boolean foundNext = false;
             for (; i < 1000; i++) {
                 if (nextEdge == EMPTY_LINK)
                     break;
-                readNext();
+                foundNext = readNext();
                 if (foundNext)
                     break;
             }
@@ -559,19 +514,67 @@ public class GraphStorage implements Graph, Storable {
         }
 
         @Override public int node() {
-            return nodeId;
+            return node;
         }
 
         @Override public double distance() {
-            return distance;
+            return getDist(edgePointer);
+        }
+
+        @Override public void distance(double dist) {
+            edges.setInt(edgePointer + E_DIST, distToInt(dist));
         }
 
         @Override public int flags() {
             return flags;
         }
 
+        @Override public void flags(int fl) {
+            flags = fl;
+            int nep = edges.getInt(getLinkPosInEdgeArea(baseNode, node, edgePointer));
+            int neop = edges.getInt(getLinkPosInEdgeArea(node, baseNode, edgePointer));
+            writeEdge((int) (edgePointer / edgeEntrySize), baseNode, node, nep, neop, distance(), flags);
+        }
+
         @Override public int baseNode() {
             return baseNode;
+        }
+
+        @Override public void pillarNodes(TIntCollection nodes) {
+            if (nodes != null && !nodes.isEmpty()) {
+                int len = nodes.size();
+                int geoRef = nextGeoRef(len);
+                edges.setInt(edgePointer + E_GEO, geoRef);
+                ensureGeometry(geoRef, len);
+                geometry.setInt(geoRef, len);
+                geoRef++;
+                TIntIterator iter = nodes.iterator();
+                for (; iter.hasNext(); geoRef++) {
+                    geometry.setInt(geoRef, iter.next());
+                }
+            } else
+                edges.setInt(edgePointer + E_GEO, EMPTY_LINK);
+        }
+
+        @Override public TIntIterator pillarNodes() {
+            final int geoRef = edges.getInt(edgePointer + E_GEO);
+            final int count = geometry.getInt(geoRef);
+            return new TIntIterator() {
+                int offset = 0;
+
+                @Override public int next() {
+                    offset++;
+                    return geometry.getInt(geoRef + offset);
+                }
+
+                @Override public boolean hasNext() {
+                    return count > 0 && offset <= count;
+                }
+
+                @Override public void remove() {
+                    throw new UnsupportedOperationException("Not supported");
+                }
+            };
         }
 
         @Override public int edge() {
@@ -762,12 +765,12 @@ public class GraphStorage implements Graph, Storable {
         // *rewrites* all edges connected to moved nodes
         // go through all edges and pick the necessary ... <- this is easier to implement then
         // a more efficient (?) breadth-first search
-        EdgeIterator iter = getAllEdges();
+        RawEdgeIterator iter = getAllEdges();
         while (iter.next()) {
             int edge = iter.edge();
             long edgePointer = (long) edge * edgeEntrySize;
-            int nodeA = edges.getInt(edgePointer + E_NODEA);
-            int nodeB = edges.getInt(edgePointer + E_NODEB);
+            int nodeA = iter.nodeA();
+            int nodeB = iter.nodeB();
             if (!toUpdatedSet.contains(nodeA) && !toUpdatedSet.contains(nodeB))
                 continue;
 

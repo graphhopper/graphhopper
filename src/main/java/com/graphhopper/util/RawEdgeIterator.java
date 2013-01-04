@@ -1,5 +1,5 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Copyright 2013 Peter Karich
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,22 +16,35 @@
 package com.graphhopper.util;
 
 /**
- * Support for updating distance or flags of the current active edge of the iterator.
+ * Used as return value for Graph.getAllEdges. Different to EdgeIterator as we don't have an access
+ * direction (where we could say 'base' versus 'adjacent' node).
  *
- * Current usage
- * <pre>
- * EdgeWriteIterator iter = graph.getEdges(n);
- * while(iter.next()) {
- *   iter.distance(19.0);
- *   ...
- * }
- * </pre>
- *
+ * @see com.graphhopper.storage.Graph
  * @author Peter Karich
  */
-public interface EdgeWriteIterator extends EdgeIterator {
+public interface RawEdgeIterator {
+
+    boolean next();
+
+    /**
+     * @return node smaller or equal to B
+     */
+    int nodeA();
+
+    /**
+     * @return node greater than A
+     */
+    int nodeB();
+
+    double distance();
 
     void distance(double dist);
 
+    int flags();
+
     void flags(int flags);
+
+    int edge();
+
+    boolean isEmpty();
 }
