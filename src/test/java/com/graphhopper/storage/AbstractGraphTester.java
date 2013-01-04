@@ -549,6 +549,13 @@ public abstract class AbstractGraphTester {
         }
     }
 
+    @Test public void testEnsureSize() {
+        Directory dir = new RAMDirectory();
+        Graph gs = new GraphStorage(dir).createNew(200);
+        int testIndex = dir.findCreate("edges").getSegmentSize() * 3;
+        gs.edge(0, testIndex, 10, true);
+    }
+
     @Test public void testEdgeProperties() {
         Graph someGraphImpl = createGraph(20);
         someGraphImpl.edge(0, 1, 10, true);

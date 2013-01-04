@@ -85,8 +85,8 @@ public class RoutingAlgorithmSpecialAreaTests {
             System.out.println("SUCCESS!");
     }
 
-    public static RoutingAlgorithm[] createAlgos(final Graph g) {
-        LevelGraph graphTowerNodesSC = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
+    public static RoutingAlgorithm[] createAlgos(Graph g) {
+        LevelGraph graphTowerNodesSC = (LevelGraph) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
         PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(graphTowerNodesSC);
         prepare.doWork();
         AStarBidirection astarSimpleSC = (AStarBidirection) prepare.createAStar();

@@ -18,6 +18,9 @@ package com.graphhopper.storage;
 import com.graphhopper.util.EdgeSkipIterator;
 
 /**
+ * A Graph necessary for shortcut algorithms like Contraction Hierarchies (stores level of nodes and
+ * shortcut edge per edge).
+ *
  * @author Peter Karich
  */
 public class LevelGraphStorage extends GraphStorage implements LevelGraph {

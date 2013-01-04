@@ -183,42 +183,43 @@ public class GraphStorage implements Graph, Storable {
             bounds.minLon = lon;
     }
 
+    private long incCapacity(DataAccess da, long deltaCap) {
+        long newSeg = deltaCap / da.getSegmentSize();
+        if (deltaCap % da.getSegmentSize() != 0)
+            newSeg++;
+        long cap = da.capacity() + newSeg * da.getSegmentSize();
+        da.ensureCapacity(cap);
+        return cap;
+    }
+
     public void ensureNodeIndex(int nodeIndex) {
         if (nodeIndex < nodeCount)
             return;
 
         nodeCount = nodeIndex + 1;
-        long tmp = nodeCount * nodeEntrySize;
-        if (tmp <= nodes.capacity() / 4)
+        long deltaCap = (long) nodeCount * nodeEntrySize * 4 - nodes.capacity();
+        if (deltaCap <= 0)
             return;
 
-        long newCapacity = incCapacity(nodes);
+        long newCapacity = incCapacity(nodes, deltaCap);
         if (deletedNodes != null)
             getDeletedNodes().ensureCapacity((int) newCapacity);
     }
 
-    private long incCapacity(DataAccess da) {
-        long cap = da.capacity() + da.getSegmentSize();
-        da.ensureCapacity(cap);
-        return cap;
-    }
-
     private void ensureEdgeIndex(int edgeIndex) {
-        // the first edge is unused i.e. edgeCount == maximum edge index
-        edgeIndex++;
-        long tmp = (long) edgeIndex * edgeEntrySize;
-        if (tmp <= edges.capacity() / 4)
+        long deltaCap = (long) edgeIndex * edgeEntrySize * 4 - edges.capacity();
+        if (deltaCap <= 0)
             return;
 
-        incCapacity(edges);
+        incCapacity(edges, deltaCap);
     }
 
     private void ensureGeometry(int index, int size) {
-        int tmp = index + size;
-        if (tmp <= geometry.capacity() / 4)
+        long deltaCap = ((long) index + size) * 4 - geometry.capacity();
+        if (deltaCap <= 0)
             return;
 
-        incCapacity(geometry);
+        incCapacity(geometry, deltaCap);
     }
 
     @Override
@@ -255,7 +256,7 @@ public class GraphStorage implements Graph, Storable {
         edgeCount++;
         if (edgeCount < 0)
             throw new IllegalStateException("too many edges. new edge pointer would be negative.");
-        ensureEdgeIndex(edgeCount);
+        ensureEdgeIndex(edgeCount + 1);
         return edgeCount;
     }
 
