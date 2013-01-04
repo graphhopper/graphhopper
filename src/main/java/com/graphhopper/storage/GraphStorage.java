@@ -568,7 +568,7 @@ public class GraphStorage implements Graph, Storable {
                 }
 
                 @Override public boolean hasNext() {
-                    return count > 0 && offset <= count;
+                    return count > 0 && offset < count;
                 }
 
                 @Override public void remove() {

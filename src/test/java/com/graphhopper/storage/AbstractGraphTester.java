@@ -654,10 +654,10 @@ public abstract class AbstractGraphTester {
         assertEquals(Arrays.asList(1, 2, 3), Helper.toList(iter.pillarNodes()));
         assertFalse(iter.next());
 
-        iter = g.getIncoming(4);
+        iter = g.getIncoming(10);
         assertTrue(iter.next());
-        assertEquals(10, iter.node());
-        assertEquals(Arrays.asList(13, 12, 11), Helper.toList(iter.pillarNodes()));
+        assertEquals(4, iter.node());
+        assertEquals(Arrays.asList(5, 6, 7, 8, 9), Helper.toList(iter.pillarNodes()));
         assertFalse(iter.next());
     }
 }
