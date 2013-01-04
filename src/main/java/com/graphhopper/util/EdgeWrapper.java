@@ -28,7 +28,7 @@ import java.util.Arrays;
 @NotThreadSafe
 public class EdgeWrapper {
 
-    private static final float FACTOR = 1.5f;
+    private static final float GROW_FACTOR = 1.5f;
     private int refCounter;
     private int[] nodes;
     private int[] edgeIds;
@@ -45,7 +45,7 @@ public class EdgeWrapper {
         parents = new int[size];
         edgeIds = new int[size];
         weights = new float[size];
-        node2edge = new TIntIntHashMap(size, FACTOR, -1, -1);
+        node2edge = new TIntIntHashMap(size, GROW_FACTOR, -1, -1);
     }
 
     /**
@@ -101,7 +101,7 @@ public class EdgeWrapper {
         if (size < nodes.length)
             return;
 
-        resize(Math.round(FACTOR * size));
+        resize(Math.round(GROW_FACTOR * size));
     }
 
     private void resize(int cap) {

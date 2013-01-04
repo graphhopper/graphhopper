@@ -25,7 +25,7 @@ import java.util.Arrays;
 public class MyIntDeque {
 
     private int[] arr;
-    private float factor;
+    private float growFactor;
     private int frontIndex;
     private int endIndexPlusOne;
 
@@ -37,11 +37,11 @@ public class MyIntDeque {
         this(initSize, 2);
     }
 
-    public MyIntDeque(int initSize, float factor) {
-        if ((int) (initSize * factor) <= initSize)
-            throw new RuntimeException("initial size or increasing factor too low!");
+    public MyIntDeque(int initSize, float growFactor) {
+        if ((int) (initSize * growFactor) <= initSize)
+            throw new RuntimeException("initial size or increasing grow-factor too low!");
 
-        this.factor = factor;
+        this.growFactor = growFactor;
         this.arr = new int[initSize];
     }
 
@@ -49,8 +49,8 @@ public class MyIntDeque {
         return arr.length;
     }
 
-    public void setFactor(float factor) {
-        this.factor = factor;
+    public void setGrowFactor(float factor) {
+        this.growFactor = factor;
     }
 
     public boolean isEmpty() {
@@ -62,7 +62,7 @@ public class MyIntDeque {
         frontIndex++;
 
         // removing the empty space of the front if too much is unused        
-        int smallerSize = (int) (arr.length / factor);
+        int smallerSize = (int) (arr.length / growFactor);
         if (frontIndex > smallerSize) {
             endIndexPlusOne = size();
             // ensure that there are at least 10 entries
@@ -81,7 +81,7 @@ public class MyIntDeque {
 
     public void push(int v) {
         if (endIndexPlusOne >= arr.length)
-            arr = Arrays.copyOf(arr, (int) (arr.length * factor));
+            arr = Arrays.copyOf(arr, (int) (arr.length * growFactor));
 
         arr[endIndexPlusOne] = v;
         endIndexPlusOne++;

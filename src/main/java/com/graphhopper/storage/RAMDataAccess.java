@@ -29,7 +29,6 @@ import java.util.Arrays;
 public class RAMDataAccess extends AbstractDataAccess {
 
     private int[][] segments = new int[0][];
-    private float increaseFactor = 1.5f;
     private boolean closed = false;
     private boolean store;
     private transient int segmentSizeIntsPower;
@@ -62,8 +61,7 @@ public class RAMDataAccess extends AbstractDataAccess {
             for (int i = 0; i < segments.length; i++) {
                 int[] area = segments[i];
                 rda.segments[i] = Arrays.copyOf(area, area.length);
-            }
-            rda.increaseFactor = increaseFactor;
+            }            
             rda.setSegmentSize(segmentSizeInBytes);
             // leave id, store and close unchanged
             return da;

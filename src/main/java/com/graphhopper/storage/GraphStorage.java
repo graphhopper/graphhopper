@@ -37,7 +37,6 @@ import gnu.trove.iterator.TIntIterator;
 public class GraphStorage implements Graph, Storable {
 
     protected static final int EMPTY_LINK = 0;
-    private static final float INC_FACTOR = 1.5f;
     // +- 180 and +-90 => let use use 400
     private static final float INT_FACTOR = Integer.MAX_VALUE / 400f;
     // distance of around +-1000 000 meter are ok
@@ -193,10 +192,15 @@ public class GraphStorage implements Graph, Storable {
         if (tmp <= nodes.capacity() / 4)
             return;
 
-        long cap = Math.max(10, (long) (tmp * INC_FACTOR));
-        nodes.ensureCapacity(cap * 4);
+        long newCapacity = incCapacity(nodes);
         if (deletedNodes != null)
-            getDeletedNodes().ensureCapacity((int) (nodeCount * INC_FACTOR));
+            getDeletedNodes().ensureCapacity((int) newCapacity);
+    }
+
+    private long incCapacity(DataAccess da) {
+        long cap = da.capacity() + da.getSegmentSize();
+        da.ensureCapacity(cap);
+        return cap;
     }
 
     private void ensureEdgeIndex(int edgeIndex) {
@@ -206,8 +210,7 @@ public class GraphStorage implements Graph, Storable {
         if (tmp <= edges.capacity() / 4)
             return;
 
-        long cap = Math.max(10, Math.round(tmp * INC_FACTOR));
-        edges.ensureCapacity(cap * 4);
+        incCapacity(edges);
     }
 
     private void ensureGeometry(int index, int size) {
@@ -215,8 +218,7 @@ public class GraphStorage implements Graph, Storable {
         if (tmp <= geometry.capacity() / 4)
             return;
 
-        long cap = Math.max(10, Math.round(tmp * INC_FACTOR));
-        geometry.ensureCapacity(cap * 4);
+        incCapacity(geometry);
     }
 
     @Override
