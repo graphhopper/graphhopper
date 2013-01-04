@@ -34,7 +34,7 @@ public abstract class OSMReaderHelper {
     protected int counter = 0;
     protected int zeroCounter = 0;
     protected final Graph g;
-    private final int expectedNodes;
+    protected final int expectedNodes;
 
     public OSMReaderHelper(Graph g, int expectedNodes) {
         this.g = g;

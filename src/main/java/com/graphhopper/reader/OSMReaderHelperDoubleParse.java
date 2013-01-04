@@ -55,8 +55,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     public OSMReaderHelperDoubleParse(GraphStorage storage, int expectedNodes) {
         super(storage, expectedNodes);
         dir = storage.getDirectory();
-        indexToCount = dir.findCreate("tmpOSMReaderMap");
-        indexToCount.createNew(expectedNodes);
+        indexToCount = dir.findCreate("tmpOSMReaderMap");        
         osmIdToIndexMap = new TIntIntHashMap(expectedNodes, 1.4f, -1, -1);
     }
 
@@ -127,6 +126,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
      */
     @Override
     public void preProcess(InputStream osmXml) {
+        indexToCount.createNew(expectedNodes);        
         if (osmXml == null)
             throw new IllegalStateException("Stream cannot be empty");
 

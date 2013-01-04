@@ -18,12 +18,11 @@ package com.graphhopper.reader;
 /**
  * @author Peter Karich
  */
-public class OSMReaderTest2 extends OSMReaderTest {
+public class OSMReader2Test extends OSMReaderTest {
 
     @Override
     OSMReader preProcess(OSMReader osmreader) {
-        osmreader.setDoubleParse(true);
-        osmreader.getHelper().preProcess(getClass().getResourceAsStream("test-osm.xml"));
+        osmreader.setDoubleParse(false);
         return osmreader;
     }
 }

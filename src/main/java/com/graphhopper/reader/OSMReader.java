@@ -223,7 +223,7 @@ public class OSMReader {
             GraphUtility.sortDFS(graphStorage, newGraph);
             graphStorage = newGraph;
         }
-        
+
         // TODO at the moment a prepared levelgraph cannot be sorted, as otherwise edgeIds won't be copied+recognized
         if (prepare == null)
             setDefaultAlgoPrepare(Helper.createAlgoPrepare("astar"));
@@ -250,7 +250,7 @@ public class OSMReader {
         if (indexCapacity < 0)
             indexCapacity = Helper.calcIndexSize(graphStorage.getBounds());
         logger.info("now initializing and flushing index with " + indexCapacity);
-        getLocation2IDIndex().prepareIndex(indexCapacity);
+        getLocation2IDIndex().prepareIndex(indexCapacity);        
         index.flush();
     }
 
@@ -396,8 +396,8 @@ public class OSMReader {
             int l = tmpLocs.size();
             long prevOsmId = tmpLocs.get(0);
             int flags = acceptStreets.toFlags(properties);
-            for (int index = 1; index < l; index++) {
-                long currOsmId = tmpLocs.get(index);
+            for (int ii = 1; ii < l; ii++) {
+                long currOsmId = tmpLocs.get(ii);
                 boolean ret = helper.addEdge(prevOsmId, currOsmId, flags, callback);
                 if (ret)
                     nextEdgeIndex++;
@@ -445,10 +445,10 @@ public class OSMReader {
         prepare.setGraph(graphStorage);
     }
 
-    OSMReader setDoubleParse(boolean dp) {
-        if (dp)
+    OSMReader setDoubleParse(boolean doubleParse) {
+        if (doubleParse) {
             helper = createDoubleParseHelper();
-        else
+        } else
             helper = new OSMReaderHelperSingleParse(graphStorage, expectedNodes);
         return this;
     }

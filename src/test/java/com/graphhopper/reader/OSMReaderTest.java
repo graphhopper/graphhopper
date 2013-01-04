@@ -17,9 +17,12 @@ package com.graphhopper.reader;
 
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.StopWatch;
 import java.io.File;
 import org.junit.After;
 import static org.junit.Assert.*;
@@ -43,12 +46,24 @@ public class OSMReaderTest {
         Helper.deleteDir(new File(dir));
     }
 
+    GraphStorage createGraph(String directory) {
+        return new GraphStorage(new RAMDirectory(dir, false));
+    }
+
+    OSMReader init(OSMReader osmreader) {
+        // make index creation fast
+        osmreader.setIndexCapacity(1000);
+        return osmreader;
+    }
+
     OSMReader preProcess(OSMReader osmreader) {
-        return osmreader.setDoubleParse(false);
+        osmreader.setDoubleParse(true);
+        osmreader.getHelper().preProcess(getClass().getResourceAsStream("test-osm.xml"));
+        return osmreader;
     }
 
     @Test public void testMain() {
-        OSMReader reader = preProcess(new OSMReader(dir, 1000));
+        OSMReader reader = preProcess(init(new OSMReader(createGraph(dir), 1000)));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.optimize();
         reader.flush();
@@ -67,7 +82,7 @@ public class OSMReaderTest {
         assertEquals(88643, iter.distance(), 1);
         assertTrue(iter.next());
         assertEquals(2, iter.node());
-        assertEquals(93146.888, iter.distance(), 1);
+        assertEquals(93147, iter.distance(), 1);
         CarStreetType flags = new CarStreetType(iter.flags());
         assertTrue(flags.isMotorway());
         assertTrue(flags.isForward());
@@ -91,7 +106,7 @@ public class OSMReaderTest {
     }
 
     @Test public void testSort() {
-        OSMReader reader = preProcess(new OSMReader(dir, 1000).setSort(true));
+        OSMReader reader = preProcess(init(new OSMReader(createGraph(dir), 1000).setSort(true)));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.optimize();
         reader.flush();
@@ -101,11 +116,11 @@ public class OSMReaderTest {
     }
 
     @Test public void testWithBounds() {
-        OSMReader reader = preProcess(new OSMReader(dir, 1000) {
+        OSMReader reader = preProcess(init(new OSMReader(createGraph(dir), 1000) {
             @Override public boolean isInBounds(double lat, double lon) {
                 return lat > 49 && lon > 8;
             }
-        });
+        }));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.flush();
         Graph graph = reader.getGraph();
@@ -130,7 +145,7 @@ public class OSMReaderTest {
     }
 
     @Test public void testOneWay() {
-        OSMReader reader = preProcess(new OSMReader(dir, 1000));
+        OSMReader reader = preProcess(init(new OSMReader(createGraph(dir), 1000)));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm2.xml"));
         reader.flush();
         Graph graph = reader.getGraph();
