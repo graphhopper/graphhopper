@@ -69,8 +69,8 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
         int newOrExistingEdge = nextEdge();
         connectNewEdge(fromNodeId, newOrExistingEdge);
         connectNewEdge(toNodeId, newOrExistingEdge);
-        writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, dist, flags);
-        edges.setInt((long) newOrExistingEdge * edgeEntrySize + I_SKIP_EDGE, skippedEdge);
+        long edgePointer = writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, dist, flags);
+        edges.setInt(edgePointer + I_SKIP_EDGE, skippedEdge);
         return new EdgeSkipIteratorImpl(newOrExistingEdge);
     }
 
@@ -96,6 +96,18 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
             super(node, in, out);
         }
 
+        @Override public void distance(double dist) {
+            distance = dist;
+            edges.setInt(edgePointer + E_DIST, distToInt(dist));
+        }
+
+        @Override public void flags(int fl) {
+            flags = fl;
+            int nep = edges.getInt(getLinkPosInEdgeArea(baseNode, nodeId, edgePointer));
+            int neop = edges.getInt(getLinkPosInEdgeArea(nodeId, baseNode, edgePointer));
+            writeEdge((int) (edgePointer / edgeEntrySize), baseNode, nodeId, nep, neop, distance, flags);
+        }
+
         @Override public void skippedEdge(int edgeId) {
             edges.setInt(edgePointer + I_SKIP_EDGE, edgeId);
         }
@@ -111,14 +123,22 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     }
 
     @Override
-    protected SingleEdge createSingleEdge(long edgePointer) {
-        return new SingleLevelEdge(edgePointer);
+    protected SingleEdge createSingleEdge(int nodeId, long edgePointer) {
+        return new SingleLevelEdge(nodeId, edgePointer);
     }
 
     protected class SingleLevelEdge extends SingleEdge implements EdgeSkipIterator {
 
-        public SingleLevelEdge(long edgePointer) {
-            super(edgePointer);
+        public SingleLevelEdge(int nodeId, long edgePointer) {
+            super(nodeId, edgePointer);
+        }
+
+        @Override public void flags(int flags) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public void distance(double dist) {
+            edges.setInt(edgePointer + E_DIST, distToInt(dist));
         }
 
         @Override public void skippedEdge(int node) {
@@ -136,6 +156,14 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     }
 
     public class AllEdgeSkipIterator extends AllEdgeIterator implements EdgeSkipIterator {
+
+        @Override public void distance(double dist) {
+            edges.setInt(edgePointer + E_DIST, distToInt(dist));
+        }
+
+        @Override public void flags(int flags) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
 
         @Override public void skippedEdge(int node) {
             edges.setInt(edgePointer + I_SKIP_EDGE, node);

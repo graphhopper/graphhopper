@@ -15,8 +15,9 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.EdgeWriteIterator;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.shapes.BBox;
+import gnu.trove.list.TIntList;
 
 /**
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
@@ -55,12 +56,14 @@ public interface Graph {
      * @param b the index of the ending (tower) node of the edge
      * @param distance necessary if no setNode is called - e.g. if the graph is not a geo-graph
      * @param flags see EdgeFlags - involves velocity and direction
-     * @param a list of nodes between a and b but inclusive the tower nodes a and b. The nodes
+     * @param nodesOnPath list of nodes between a and b but inclusive the tower nodes a and b. The nodes
      * between a and b would otherwise have no connection - so called pillar nodes.
      */
+    void edge(int a, int b, double distance, int flags, TIntList nodesOnPath);
+    
     void edge(int a, int b, double distance, int flags);
 
-    void edge(int a, int b, double distance, boolean bothDirections);
+    void edge(int a, int b, double distance, boolean bothDirections);        
 
     /**
      * @return an edge iterator over one element where the method next() has no meaning and will
@@ -68,22 +71,22 @@ public interface Graph {
      * be used as the end node.
      * @throws IllegalStateException if edgeId is not valid
      */
-    EdgeWriteIterator getEdgeProps(int edgeId, int endNode);
+    EdgeIterator getEdgeProps(int edgeId, int endNode);
 
-    EdgeWriteIterator getAllEdges();
+    EdgeIterator getAllEdges();
 
     /**
      * Returns an iterator which makes it possible to traverse all edges of the specified node
      * index. Hint: use GraphUtility to go straight to certain neighbor nodes. Hint: edges with both
      * directions will returned only once!
      */
-    EdgeWriteIterator getEdges(int index);
+    EdgeIterator getEdges(int index);
 
-    EdgeWriteIterator getEdges(int index, EdgeFilter filter);
+    EdgeIterator getEdges(int index, EdgeFilter filter);
 
-    EdgeWriteIterator getIncoming(int index);
+    EdgeIterator getIncoming(int index);
 
-    EdgeWriteIterator getOutgoing(int index);
+    EdgeIterator getOutgoing(int index);
 
     /**
      * @return the specified graph g

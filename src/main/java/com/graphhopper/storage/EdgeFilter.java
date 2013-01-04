@@ -37,8 +37,8 @@ public class EdgeFilter {
     /**
      * only (virtual) edges to tower nodes will be selected
      */
-    public final static EdgeFilter TOWER_NODES = new EdgeFilter(4);
-    private int value;
+    public final static EdgeFilter TOWER_NODES = new EdgeFilter(4);    
+    private final int value;
 
     public EdgeFilter(int value) {
         this.value = value;

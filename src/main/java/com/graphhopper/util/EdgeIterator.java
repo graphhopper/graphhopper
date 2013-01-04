@@ -27,7 +27,7 @@ package com.graphhopper.util;
  * EdgeIterator iter = graph.getIncoming(nodeId);
  * while(iter.next()) {
  *   int baseNodeId = iter.baseNode(); // equal to nodeId
- *   int outerNodeId = iter.node();
+ *   int adjacentNodeId = iter.node();
  *   ...
  * }
  *
@@ -47,17 +47,17 @@ public interface EdgeIterator {
     int edge();
 
     /**
-     * If you retrieve edges via "edgeIterator = graph.getXY(nodeId)" then the returned node is
+     * If you retrieve edges via "edgeIterator = graph.getEdges(nodeId)" then the returned node is
      * identical to nodeId. Often only used instead of nodeId for convenience reasons. Do not
      * confuse this with <i>source</i> node of a directed edge.
      *
-     * @return the node id of the 'base' node
+     * @return the requested node itself
      * @see EdgeIterator
      */
     int baseNode();
 
     /**
-     * @return the node id of the 'outer' node (connected to baseNode) for the current edge.
+     * @return the node id of the adjacent node (to baseNode) for the current edge.
      * @see EdgeIterator
      */
     int node();
@@ -69,6 +69,13 @@ public interface EdgeIterator {
 
     int flags();
 
+    /**
+     * @return true if no data is available where we could iterate over
+     */
     boolean isEmpty();
+    /**
+     * integer value to indicate if an edge is valid or not which then would be initialized with
+     * this value
+     */
     public static final int NO_EDGE = -1;
 }
