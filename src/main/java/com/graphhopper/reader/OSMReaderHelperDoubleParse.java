@@ -18,11 +18,14 @@ package com.graphhopper.reader;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Helper7;
+import gnu.trove.list.TLongList;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TLongIntHashMap;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +46,7 @@ import org.slf4j.LoggerFactory;
 public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private TIntIntHashMap osmIdToIndexMap;
+    private TLongIntHashMap osmIdToIndexMap;
     // very slow: private SparseLongLongArray osmIdToIndexMap;
     // not applicable as ways introduces the nodes in 'wrong' order: new OSMIDSegmentedMap
     private int internalId = 0;
@@ -55,20 +58,21 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     public OSMReaderHelperDoubleParse(GraphStorage storage, int expectedNodes) {
         super(storage, expectedNodes);
         dir = storage.getDirectory();
-        indexToCount = dir.findCreate("tmpOSMReaderMap");        
-        osmIdToIndexMap = new TIntIntHashMap(expectedNodes, 1.4f, -1, -1);
+        indexToCount = dir.findCreate("tmpOSMReaderMap");
+        // we expect 4 nodes between two tower nodes => 2/6 => 1/3
+        osmIdToIndexMap = new TLongIntHashMap(expectedNodes / 3, 1.4f, -1, -1);
     }
 
     @Override
     public boolean addNode(long osmId, double lat, double lon) {
-        int count = osmIdToIndexMap.get((int) osmId);
+        int count = osmIdToIndexMap.get(osmId);
         if (count > FILLED)
             return false;
 
         g.setNode(internalId, lat, lon);
         indexToCount.ensureCapacity(4 * (internalId + 1));
         indexToCount.setInt(internalId, 1 - (count - FILLED));
-        osmIdToIndexMap.put((int) osmId, internalId);
+        osmIdToIndexMap.put(osmId, internalId);
         internalId++;
         return true;
     }
@@ -79,21 +83,35 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     @Override
-    public boolean addEdge(long nodeIdFrom, long nodeIdTo, int flags, DistanceCalc callback) {
-        int fromIndex = (int) osmIdToIndexMap.get((int) nodeIdFrom);
-        int toIndex = (int) osmIdToIndexMap.get((int) nodeIdTo);
-        if (fromIndex < 0 || toIndex < 0)
-            return false;
+    public int addEdge(TLongList nodes, int flags) {
+        TDoubleArrayList longitudes = new TDoubleArrayList(nodes.size());
+        TDoubleArrayList latitudes = new TDoubleArrayList(nodes.size());
+        TIntArrayList allNodes = new TIntArrayList(nodes.size());
+        int successfullyAdded = 0;
+        for (int i = 0; i < nodes.size(); i++) {
+            int tmpNode = osmIdToIndexMap.get(nodes.get(i));
+            if (tmpNode < 0)
+                continue;
 
-        try {
-            double laf = g.getLatitude(fromIndex);
-            double lof = g.getLongitude(fromIndex);
-            double lat = g.getLatitude(toIndex);
-            double lot = g.getLongitude(toIndex);
-            return addEdge(laf, lof, lat, lot, fromIndex, toIndex, flags, callback);
-        } catch (Exception ex) {
-            throw new RuntimeException("Problem to add edge! with node " + fromIndex + "->" + toIndex + " osm:" + nodeIdFrom + "->" + nodeIdTo, ex);
+            allNodes.add(tmpNode);
+            latitudes.add(g.getLatitude(tmpNode));
+            longitudes.add(g.getLongitude(tmpNode));
+            // split way into more than one edge!
+            if (allNodes.size() > 1 && indexToCount.getInt(tmpNode) > 1) {
+                successfullyAdded += addEdge(latitudes, longitudes, allNodes, flags);
+                latitudes.clear();
+                longitudes.clear();
+                allNodes.clear();
+                allNodes.add(tmpNode);
+                latitudes.add(g.getLatitude(tmpNode));
+                longitudes.add(g.getLongitude(tmpNode));
+            }
         }
+        if (allNodes.size() > 1)
+            successfullyAdded += addEdge(latitudes, longitudes, allNodes, flags);
+        return successfullyAdded;
+//       throw new RuntimeException("Problem to add edge! with node "
+//              + fromIndex + "->" + toIndex + " osm:" + nodeIdFrom + "->" + nodeIdTo, ex);        
     }
 
     @Override
@@ -126,7 +144,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
      */
     @Override
     public void preProcess(InputStream osmXml) {
-        indexToCount.createNew(expectedNodes);        
+        indexToCount.createNew(expectedNodes);
         if (osmXml == null)
             throw new IllegalStateException("Stream cannot be empty");
 

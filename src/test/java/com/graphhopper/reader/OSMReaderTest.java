@@ -22,8 +22,8 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.StopWatch;
 import java.io.File;
+import java.util.Arrays;
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -88,6 +88,8 @@ public class OSMReaderTest {
         assertTrue(flags.isForward());
         assertTrue(flags.isBackward());
         assertTrue(iter.next());
+        assertEquals(4, iter.node());
+        assertEquals(Arrays.asList(3), Helper.toList(iter.pillarNodes()));
         flags = new CarStreetType(iter.flags());
         assertTrue(flags.isService());
         assertTrue(flags.isForward());
@@ -99,7 +101,7 @@ public class OSMReaderTest {
         assertEquals(1, iter.node());
         assertEquals(93146.888, iter.distance(), 1);
 
-        assertEquals(9.432, graph.getLongitude(reader.getLocation2IDIndex().findID(51.25, 9.43)), 1e-3);
+        assertEquals(9.43, graph.getLongitude(reader.getLocation2IDIndex().findID(51.25, 9.43)), 1e-3);
         assertEquals(9.4, graph.getLongitude(reader.getLocation2IDIndex().findID(51.2, 9.4)), 1e-3);
         assertEquals(10, graph.getLongitude(reader.getLocation2IDIndex().findID(49, 10)), 1e-3);
         assertEquals(51.249, graph.getLatitude(reader.getLocation2IDIndex().findID(51.2492152, 9.4317166)), 1e-3);
@@ -124,9 +126,9 @@ public class OSMReaderTest {
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.flush();
         Graph graph = reader.getGraph();
-        assertEquals(3, graph.getNodes());
+         assertEquals(4, graph.getNodes());
         assertEquals(1, GraphUtility.count(graph.getOutgoing(0)));
-        assertEquals(2, GraphUtility.count(graph.getOutgoing(1)));
+        assertEquals(3, GraphUtility.count(graph.getOutgoing(1)));
         assertEquals(1, GraphUtility.count(graph.getOutgoing(2)));
 
         EdgeIterator iter = graph.getOutgoing(1);
@@ -136,6 +138,9 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(2, iter.node());
         assertEquals(93146.888, iter.distance(), 1);
+        assertTrue(iter.next());
+        assertEquals(3, iter.node());
+        assertEquals(Arrays.asList(), Helper.toList(iter.pillarNodes()));
 
         // get third added location => 2
         iter = graph.getOutgoing(2);

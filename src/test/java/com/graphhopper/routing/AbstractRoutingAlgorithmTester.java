@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import java.io.IOException;
 import java.util.Arrays;
@@ -59,6 +60,26 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), 5, p.nodes());
     }
 
+    // see calc-fastest-graph.svg
+    @Test public void testCalcFastestPath() {
+        Graph graphShortest = createGraph(20);
+        initFastVsShort(graphShortest);
+        Path p1 = prepareGraph(graphShortest, ShortestCarCalc.DEFAULT).createAlgo().calcPath(0, 3);
+        assertEquals(p1.toString(), 24000, p1.weight(), 1e-6);
+        assertEquals(p1.toString(), 24000, p1.distance(), 1e-6);
+        assertEquals(p1.toString(), 8640, p1.time());
+        assertEquals(p1.toString(), 5, p1.nodes());
+        assertEquals(Arrays.asList(0, 1, 5, 2, 3), p1.toNodeList());
+
+        Graph graphFastest = createGraph(20);
+        initFastVsShort(graphFastest);
+        Path p2 = prepareGraph(graphFastest, FastestCarCalc.DEFAULT).createAlgo().calcPath(0, 3);
+        assertEquals(p2.toString(), 3100, p2.weight(), 1e-6);
+        assertEquals(p2.toString(), 31000, p2.distance(), 1e-6);
+        assertEquals(p2.toString(), 5580, p2.time());
+        assertEquals(p2.toString(), 6, p2.nodes());
+    }
+
     void initFastVsShort(Graph graph) {
         graph.edge(0, 1, 7000, CarStreetType.flags(10, false));
         graph.edge(0, 4, 5000, CarStreetType.flags(20, false));
@@ -80,26 +101,6 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(7, 5, 5000, CarStreetType.flags(20, false));
 
         graph.edge(6, 7, 5000, CarStreetType.flags(20, true));
-    }
-    // see calc-fastest-graph.svg
-
-    @Test public void testCalcFastestPath() {
-        Graph graphShortest = createGraph(20);
-        initFastVsShort(graphShortest);
-        Path p1 = prepareGraph(graphShortest, ShortestCarCalc.DEFAULT).createAlgo().calcPath(0, 3);
-        assertEquals(p1.toString(), 24000, p1.weight(), 1e-6);
-        assertEquals(p1.toString(), 24000, p1.distance(), 1e-6);
-        assertEquals(p1.toString(), 8640, p1.time());
-        assertEquals(p1.toString(), 5, p1.nodes());
-        assertEquals(Arrays.asList(0, 1, 5, 2, 3), p1.toNodeList());
-
-        Graph graphFastest = createGraph(20);
-        initFastVsShort(graphFastest);
-        Path p2 = prepareGraph(graphFastest, FastestCarCalc.DEFAULT).createAlgo().calcPath(0, 3);
-        assertEquals(p2.toString(), 3100, p2.weight(), 1e-6);
-        assertEquals(p2.toString(), 31000, p2.distance(), 1e-6);
-        assertEquals(p2.toString(), 5580, p2.time());
-        assertEquals(p2.toString(), 6, p2.nodes());
     }
 
     // see test-graph.svg !
@@ -188,6 +189,12 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(8, 6, 20, true);
     }
 
+    public static void initBiGraphPillarNodes(Graph graph) {
+        graph.edge(6, 3, 20 + 20, true).pillarNodes(Helper.createTList(8));
+        graph.edge(6, 3, 5 + 5 + 100 + 1 + 1, true).pillarNodes(Helper.createTList(7, 0, 1, 2));
+        graph.edge(6, 3, 25 + 25 + 1, true).pillarNodes(Helper.createTList(5, 4));
+    }
+
     @Test public void testBidirectional() {
         Graph graph = createGraph(6);
         initBiGraph(graph);
@@ -196,8 +203,13 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), 51, p.weight(), 1e-4);
         assertEquals(p.toString(), 6, p.nodes());
         assertEquals(Arrays.asList(0, 7, 6, 8, 3, 4), p.toNodeList());
-    }
 
+        p = prepareGraph(graph).createAlgo().calcPath(1, 2);
+        assertEquals(p.toString(), 1, p.weight(), 1e-4);
+        assertEquals(p.toString(), 2, p.nodes());
+        assertEquals(Arrays.asList(1, 2), p.toNodeList());
+    }
+    
     // 1-2-3-4-5
     // |     / |
     // |    9  |

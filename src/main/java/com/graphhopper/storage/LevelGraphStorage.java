@@ -56,31 +56,54 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     @Override public EdgeSkipIterator edge(int a, int b, double distance, int flags) {
         ensureNodeIndex(Math.max(a, b));
         int edgeId = internalEdgeAdd(a, b, distance, flags);
-        EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(edgeId);
+        EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(edgeId, a, false, false);
+        iter.next();
         iter.skippedEdge(-1);
         return iter;
     }
 
-    @Override public EdgeSkipIterator getEdges(int nodeId) {
-        return new EdgeSkipIteratorImpl(nodeId, true, true);
+    @Override
+    public EdgeSkipIterator getEdges(int node) {
+        return createEdgeIterable(node, true, true);
     }
 
-    @Override public EdgeSkipIterator getIncoming(int nodeId) {
-        return new EdgeSkipIteratorImpl(nodeId, true, false);
+    @Override
+    public EdgeSkipIterator getIncoming(int node) {
+        return createEdgeIterable(node, true, false);
     }
 
-    @Override public EdgeSkipIterator getOutgoing(int nodeId) {
-        return new EdgeSkipIteratorImpl(nodeId, false, true);
+    @Override
+    public EdgeSkipIterator getOutgoing(int node) {
+        return createEdgeIterable(node, false, true);
+    }
+
+    @Override
+    protected EdgeSkipIterator createEdgeIterable(int baseNode, boolean in, boolean out) {
+        int edge = nodes.getInt((long) baseNode * nodeEntrySize + N_EDGE_REF);
+        if (edge < 0)
+            return new PillarSkipIteratorImpl(-edge, baseNode, in, out);
+        return new EdgeSkipIteratorImpl(edge, baseNode, in, out);
+    }
+
+    public class PillarSkipIteratorImpl extends PillarEdgeIterable implements EdgeSkipIterator {
+
+        public PillarSkipIteratorImpl(int edge, int baseNode, boolean in, boolean out) {
+            super(edge, baseNode, in, out);
+        }
+
+        @Override public int skippedEdge() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override public void skippedEdge(int node) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
     }
 
     public class EdgeSkipIteratorImpl extends EdgeIterable implements EdgeSkipIterator {
 
-        public EdgeSkipIteratorImpl(int edge) {
-            super(edge);
-        }
-
-        public EdgeSkipIteratorImpl(int node, boolean in, boolean out) {
-            super(node, in, out);
+        public EdgeSkipIteratorImpl(int edge, int node, boolean in, boolean out) {
+            super(edge, node, in, out);
         }
 
         @Override public void skippedEdge(int edgeId) {

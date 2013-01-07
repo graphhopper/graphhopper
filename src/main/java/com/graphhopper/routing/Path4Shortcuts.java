@@ -32,15 +32,8 @@ import gnu.trove.list.array.TIntArrayList;
  */
 public class Path4Shortcuts extends PathBidirRef {
 
-    protected boolean reverse = true;
-
     public Path4Shortcuts(Graph g, WeightCalculation weightCalculation) {
         super(g, weightCalculation);
-    }
-
-    @Override public void reverseOrder() {
-        reverse = !reverse;
-        super.reverseOrder();
     }
 
     @Override

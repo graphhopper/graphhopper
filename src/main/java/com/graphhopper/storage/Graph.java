@@ -48,13 +48,12 @@ public interface Graph {
     BBox getBounds();
 
     /**
-     * Creates an edge between the nodes a and b. If you have no OSM data you can often ignore the
-     * nodesOnPath parameter as it is only important to define the exact geometry of the edge - i.e.
-     * for OSM it is often a curve not just a straight line.
+     * Creates an edge between the nodes a and b.
      *
      * @param a the index of the starting (tower) node of the edge
      * @param b the index of the ending (tower) node of the edge
-     * @param distance necessary if no setNode is called - e.g. if the graph is not a geo-graph
+     * @param distance between a and b. Often setNode is not called - if it is not a geo-graph - and
+     * we need the distance parameter here.
      * @param flags see EdgeFlags - involves velocity and direction
      * @return the created edge
      */

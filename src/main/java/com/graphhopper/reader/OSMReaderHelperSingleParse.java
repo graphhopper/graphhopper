@@ -21,6 +21,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.CoordTrig;
+import gnu.trove.list.TLongList;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -57,25 +58,26 @@ public class OSMReaderHelperSingleParse extends OSMReaderHelper {
     }
 
     @Override
-    public boolean addEdge(long nodeIdFrom, long nodeIdTo, int flags, DistanceCalc callback) {
-        int fromIndex = (int) osmIdToIndexMap.get(nodeIdFrom);
-        int toIndex = (int) osmIdToIndexMap.get(nodeIdTo);
-        if (fromIndex == osmIdToIndexMap.getNoEntryValue() || toIndex == osmIdToIndexMap.getNoEntryValue())
-            return false;
-
-        try {
-            CoordTrig from = arr.get(fromIndex);
-            CoordTrig to = arr.get(toIndex);
-            if (from == null || to == null)
-                return false;
-
-            g.setNode(fromIndex, from.lat, from.lon);
-            g.setNode(toIndex, to.lat, to.lon);
-            return addEdge(from.lat, from.lon, to.lat, to.lon, fromIndex, toIndex, flags, callback);
-        } catch (Exception ex) {
-            throw new RuntimeException("Problem to add edge! with node ids " + fromIndex + "->" + toIndex
-                    + " vs. osm ids:" + nodeIdFrom + "->" + nodeIdTo, ex);
-        }
+    public int addEdge(TLongList nodes, int flags) {
+        throw new UnsupportedOperationException("todo");
+//        int fromIndex = (int) osmIdToIndexMap.get(nodeIdFrom);
+//        int toIndex = (int) osmIdToIndexMap.get(nodeIdTo);
+//        if (fromIndex == osmIdToIndexMap.getNoEntryValue() || toIndex == osmIdToIndexMap.getNoEntryValue())
+//            return false;
+//
+//        try {
+//            CoordTrig from = arr.get(fromIndex);
+//            CoordTrig to = arr.get(toIndex);
+//            if (from == null || to == null)
+//                return false;
+//
+//            g.setNode(fromIndex, from.lat, from.lon);
+//            g.setNode(toIndex, to.lat, to.lon);
+//            return addEdge(from.lat, from.lon, to.lat, to.lon, fromIndex, toIndex, flags, callback);
+//        } catch (Exception ex) {
+//            throw new RuntimeException("Problem to add edge! with node ids " + fromIndex + "->" + toIndex
+//                    + " vs. osm ids:" + nodeIdFrom + "->" + nodeIdTo, ex);
+//        }
     }
 
     @Override

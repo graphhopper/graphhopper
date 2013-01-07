@@ -24,8 +24,8 @@ import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.TIntCollection;
-import gnu.trove.iterator.TIntIterator;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
@@ -52,7 +52,7 @@ public class GraphStorage implements Graph, Storable {
      */
     private int edgeCount;
     // node memory layout: edgeRef,lat,lon
-    private final int N_EDGE_REF, N_LAT, N_LON;
+    protected final int N_EDGE_REF, N_LAT, N_LON;
     /**
      * specified how many entries (integers) are used per node
      */
@@ -231,7 +231,9 @@ public class GraphStorage implements Graph, Storable {
     public EdgeIterator edge(int a, int b, double distance, int flags) {
         ensureNodeIndex(Math.max(a, b));
         int edge = internalEdgeAdd(a, b, distance, flags);
-        return new EdgeIterable(edge);
+        EdgeIterable iter = new EdgeIterable(edge, a, false, false);
+        iter.next();
+        return iter;
     }
 
     protected int nextGeoRef(int arrayLength) {
@@ -409,7 +411,7 @@ public class GraphStorage implements Graph, Storable {
         protected boolean switchFlags;
 
         public SingleEdge(int edgeId, int nodeId) {
-            super(edgeId, nodeId);
+            super(edgeId, nodeId, false, false);
             edgePointer = edgeId * edgeEntrySize;
             flags = flags();
         }
@@ -428,17 +430,86 @@ public class GraphStorage implements Graph, Storable {
 
     @Override
     public EdgeIterator getEdges(int node) {
-        return new EdgeIterable(node, true, true);
+        return createEdgeIterable(node, true, true);
     }
 
     @Override
     public EdgeIterator getIncoming(int node) {
-        return new EdgeIterable(node, true, false);
+        return createEdgeIterable(node, true, false);
     }
 
     @Override
     public EdgeIterator getOutgoing(int node) {
-        return new EdgeIterable(node, false, true);
+        return createEdgeIterable(node, false, true);
+    }
+
+    protected EdgeIterator createEdgeIterable(int baseNode, boolean in, boolean out) {
+        int edge = nodes.getInt((long) baseNode * nodeEntrySize + N_EDGE_REF);
+        if (edge < 0)
+            return new PillarEdgeIterable(-edge, baseNode, in, out);
+        return new EdgeIterable(edge, baseNode, in, out);
+    }
+    private static TIntList EMPTY_LIST = Helper.createTList();
+
+    protected class PillarEdgeIterable extends EdgeIterable {
+
+        // contains all neighbor nodes of baseNode (pillar or tower), maximum count is 2
+        final TIntList resNodes;
+        int current = -1;
+
+        public PillarEdgeIterable(int edge, int baseNode, boolean in, boolean out) {
+            super(edge, baseNode, in, out);
+            final int geoRef = edges.getInt(edgePointer + E_GEO);
+            final int count = geometry.getInt(geoRef);
+            resNodes = new TIntArrayList(2);
+            int nodeA = edges.getInt(edgePointer + E_NODEA);
+            int nodeB = edges.getInt(edgePointer + E_NODEB);
+            flags = edges.getInt(edgePointer + E_FLAGS);
+            if ((!in || !out) && CarStreetType.isBackward(flags)) {
+                in = !in;
+                out = !out;
+            }
+            for (int i = 1; i <= count; i++) {
+                int tmpNode = geometry.getInt(geoRef + i);
+                if (tmpNode == baseNode) {
+                    if (in)
+                        if (i == 1) {
+                            resNodes.add(nodeA);
+                        } else
+                            resNodes.add(geometry.getInt(geoRef + i - 1));
+
+                    if (out)
+                        if (i == count)
+                            resNodes.add(nodeB);
+                        else
+                            resNodes.add(geometry.getInt(geoRef + i + 1));
+
+                    break;
+                }
+            }
+        }
+
+        @Override public boolean next() {
+            current++;
+            if (current < resNodes.size()) {
+                node = resNodes.get(current);
+                return true;
+            }
+            return false;
+        }
+
+        @Override public TIntList pillarNodes() {
+            throw new UnsupportedOperationException("pillar node cannot have pillarNode list");
+            // return EMPTY_LIST;
+        }
+
+        @Override public void pillarNodes(TIntList pillarNodes) {
+            throw new UnsupportedOperationException("pillar node cannot have pillarNode list");
+        }
+
+        @Override public void flags(int fl) {
+            throw new UnsupportedOperationException("not yet implemented");
+        }
     }
 
     protected class EdgeIterable implements EdgeIterator {
@@ -453,30 +524,17 @@ public class GraphStorage implements Graph, Storable {
         int edgeId;
         int nextEdge;
 
-        // used as return value for edge creation method
-        public EdgeIterable(int edge) {
-            this(edge, edges.getInt(edge * edgeEntrySize + E_NODEA));
-            next();
-        }
-
-        // used for SingleEdge
-        public EdgeIterable(int edge, int baseNode) {
-            this.nextEdge = edge;
+        // used for SingleEdge and as return value of edge()
+        public EdgeIterable(int edge, int baseNode, boolean in, boolean out) {
+            this.nextEdge = this.edgeId = edge;
+            this.edgePointer = (long) nextEdge * edgeEntrySize;
             this.baseNode = baseNode;
-            this.in = true;
-            this.out = true;
-        }
-
-        // used in getEdges/getOutgoing/getIncoming
-        public EdgeIterable(int node, boolean in, boolean out) {
-            this(nodes.getInt((long) node * nodeEntrySize + N_EDGE_REF), node);
             this.in = in;
             this.out = out;
         }
 
         boolean readNext() {
-            // readLock.lock();                       
-            edgePointer = nextEdge * edgeEntrySize;
+            edgePointer = (long) nextEdge * edgeEntrySize;
             edgeId = nextEdge;
             node = getOtherNode(baseNode, edgePointer);
 
@@ -536,48 +594,48 @@ public class GraphStorage implements Graph, Storable {
             flags = fl;
             int nep = edges.getInt(getLinkPosInEdgeArea(baseNode, node, edgePointer));
             int neop = edges.getInt(getLinkPosInEdgeArea(node, baseNode, edgePointer));
-            writeEdge((int) (edgePointer / edgeEntrySize), baseNode, node, nep, neop, distance(), flags);
+            writeEdge(edge(), baseNode, node, nep, neop, distance(), flags);
         }
 
         @Override public int baseNode() {
             return baseNode;
         }
 
-        @Override public void pillarNodes(TIntCollection nodes) {
-            if (nodes != null && !nodes.isEmpty()) {
-                int len = nodes.size();
+        @Override public void pillarNodes(TIntList pillarNodes) {
+            if (pillarNodes != null && !pillarNodes.isEmpty()) {
+                int len = pillarNodes.size();
                 int geoRef = nextGeoRef(len);
                 edges.setInt(edgePointer + E_GEO, geoRef);
                 ensureGeometry(geoRef, len);
                 geometry.setInt(geoRef, len);
                 geoRef++;
-                TIntIterator iter = nodes.iterator();
-                for (; iter.hasNext(); geoRef++) {
-                    geometry.setInt(geoRef, iter.next());
+                if (baseNode <= node)
+                    for (int i = 0; i < len; geoRef++, i++) {
+                        geometry.setInt(geoRef, pillarNodes.get(i));
+                    }
+                else
+                    for (int i = len - 1; i >= 0; geoRef++, i--) {
+                        geometry.setInt(geoRef, pillarNodes.get(i));
+                    }
+
+                for (int pn = 0; pn < len; pn++) {
+                    nodes.setInt((long) pillarNodes.get(pn) * nodeEntrySize + N_EDGE_REF, -edgeId);
                 }
             } else
                 edges.setInt(edgePointer + E_GEO, EMPTY_LINK);
         }
 
-        @Override public TIntIterator pillarNodes() {
+        @Override public TIntList pillarNodes() {
             final int geoRef = edges.getInt(edgePointer + E_GEO);
             final int count = geometry.getInt(geoRef);
-            return new TIntIterator() {
-                int offset = 0;
-
-                @Override public int next() {
-                    offset++;
-                    return geometry.getInt(geoRef + offset);
-                }
-
-                @Override public boolean hasNext() {
-                    return count > 0 && offset < count;
-                }
-
-                @Override public void remove() {
-                    throw new UnsupportedOperationException("Not supported");
-                }
-            };
+            TIntArrayList list = new TIntArrayList(count);
+            for (int i = 1; i <= count; i++) {
+                list.add(geometry.getInt(geoRef + i));
+            }
+            // TODO make this a bit faster: avoid reverse
+            if (baseNode > node)
+                list.reverse();
+            return list;
         }
 
         @Override public int edge() {

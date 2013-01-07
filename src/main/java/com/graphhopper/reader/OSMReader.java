@@ -20,7 +20,6 @@ import com.graphhopper.routing.util.AcceptStreet;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FastestCarCalc;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.PrepareTowerNodesShortcuts;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.storage.Directory;
@@ -32,7 +31,6 @@ import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Helper7;
@@ -85,14 +83,13 @@ public class OSMReader {
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
     private int locations;
     private int skippedLocations;
-    private int nextEdgeIndex;
+    private int edgeCount;
     private int skippedEdges;
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
     private int expectedNodes;
     private TLongArrayList tmpLocs = new TLongArrayList(10);
     private Map<String, Object> properties = new HashMap<String, Object>();
-    private DistanceCalc callback = new DistanceCalc();
     private AcceptStreet acceptStreets = new AcceptStreet(true, false, false, false);
     private AlgorithmPreparation prepare;
     private Location2IDQuadtree index;
@@ -151,7 +148,11 @@ public class OSMReader {
         final String algoStr = args.get("osmreader.algo", "astar");
         osmReader.setDefaultAlgoPrepare(Helper.createAlgoPrepare(algoStr));
         osmReader.setSort(args.getBool("osmreader.sortGraph", false));
-        osmReader.setTowerNodeShortcuts(args.getBool("osmreader.towerNodesShortcuts", false));
+        
+        // TODO LATER make this configurable in OSMReaderHelper
+        if (args.getBool("osmreader.towerNodesShortcuts", false))
+            throw new IllegalArgumentException("towerNodes are always automatically created");
+
         osmReader.setCHShortcuts(args.get("osmreader.chShortcuts", "no"));
         if (!osmReader.loadExisting()) {
             String strOsm = args.get("osmreader.osm", "");
@@ -250,7 +251,7 @@ public class OSMReader {
         if (indexCapacity < 0)
             indexCapacity = Helper.calcIndexSize(graphStorage.getBounds());
         logger.info("now initializing and flushing index with " + indexCapacity);
-        getLocation2IDIndex().prepareIndex(indexCapacity);        
+        getLocation2IDIndex().prepareIndex(indexCapacity);
         index.flush();
     }
 
@@ -278,7 +279,7 @@ public class OSMReader {
                         if ("node".equals(sReader.getLocalName())) {
                             processNode(sReader);
                             if (counter % 10000000 == 0) {
-                                logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
+                                logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + edgeCount
                                         + " (" + skippedEdges + "), " + Helper.getMemInfo());
                             }
                         } else if ("way".equals(sReader.getLocalName())) {
@@ -295,7 +296,7 @@ public class OSMReader {
                             }
                             // counter does +=2 until the next loop
                             if ((counter / 2) % 1000000 == 0) {
-                                logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + nextEdgeIndex
+                                logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + edgeCount
                                         + " (" + skippedEdges + "), " + Helper.getMemInfo());
                             }
                         }
@@ -393,18 +394,11 @@ public class OSMReader {
 
     public void processHighway(XMLStreamReader sReader) throws XMLStreamException {
         if (isHighway(sReader) && tmpLocs.size() > 1) {
-            int l = tmpLocs.size();
-            long prevOsmId = tmpLocs.get(0);
+            int all = tmpLocs.size();
             int flags = acceptStreets.toFlags(properties);
-            for (int ii = 1; ii < l; ii++) {
-                long currOsmId = tmpLocs.get(ii);
-                boolean ret = helper.addEdge(prevOsmId, currOsmId, flags, callback);
-                if (ret)
-                    nextEdgeIndex++;
-                else
-                    skippedEdges++;
-                prevOsmId = currOsmId;
-            }
+            int successfullAdded = helper.addEdge(tmpLocs, flags);
+            edgeCount += successfullAdded;
+            skippedEdges += all - successfullAdded;
         }
     }
 
@@ -428,15 +422,6 @@ public class OSMReader {
             throw new IllegalArgumentException("Value " + chShortcuts + " not valid for configuring "
                     + "contraction hierarchies algorithm preparation");
         prepare.setGraph(graphStorage);
-        return this;
-    }
-
-    /**
-     * @param bool if yes then shortcuts will be introduced to skip all nodes with only 2 edges.
-     */
-    public OSMReader setTowerNodeShortcuts(boolean bool) {
-        if (bool)
-            prepare = new PrepareTowerNodesShortcuts();
         return this;
     }
 

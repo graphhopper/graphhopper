@@ -15,8 +15,7 @@
  */
 package com.graphhopper.util;
 
-import gnu.trove.TIntCollection;
-import gnu.trove.iterator.TIntIterator;
+import gnu.trove.list.TIntList;
 
 /**
  * Iterates through all edges of one node. Avoids object creation in-between via direct access
@@ -66,14 +65,17 @@ public interface EdgeIterator {
     int node();
 
     /**
+     * For OSM a way is often a curve not just a straight line and so nodes between tower nodes are
+     * necessary to have a more exact geometry (for drawing). Those nodes are called pillar nodes
+     *
      * @return pillar nodes
      */
-    TIntIterator pillarNodes();
+    TIntList pillarNodes();
 
     /**
-     * @param pillarNodes list of nodes between a and b.
+     * @param pillarNodes list of nodes between the baseNode and the current adjacent node.
      */
-    void pillarNodes(TIntCollection pillarNodes);
+    void pillarNodes(TIntList pillarNodes);
 
     /**
      * @return the distance of the current edge edge

@@ -18,7 +18,7 @@ package com.graphhopper.reader;
 /**
  * @author Peter Karich
  */
-public class OSMReader2Test extends OSMReaderTest {
+public class OSMReader2TestTODO extends OSMReaderTest {
 
     @Override
     OSMReader preProcess(OSMReader osmreader) {

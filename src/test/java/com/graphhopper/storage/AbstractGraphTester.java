@@ -639,32 +639,79 @@ public abstract class AbstractGraphTester {
         assertEquals(2, GraphUtility.count(g.getEdges(0)));
     }
 
-    @Test public void testGeometry() {
+    @Test public void testEdgeReturn() {
+        Graph g = createGraph(2);
+        EdgeIterator iter = g.edge(4, 10, 100, CarStreetType.flags(10, false));
+        assertEquals(4, iter.baseNode());
+        assertEquals(10, iter.node());
+        iter = g.edge(14, 10, 100, CarStreetType.flags(10, false));
+        assertEquals(14, iter.baseNode());
+        assertEquals(10, iter.node());
+    }
+
+    @Test public void testPillarNodes() {
         Graph g = createGraph(2);
         g.edge(0, 4, 100, CarStreetType.flags(10, false)).pillarNodes(Helper.createTList(1, 2, 3));
         g.edge(4, 10, 100, CarStreetType.flags(10, false)).pillarNodes(Helper.createTList(5, 6, 7, 8, 9));
         g.edge(14, 0, 100, CarStreetType.flags(10, false)).pillarNodes(Helper.createTList(13, 12, 11));
 
+        // if tower node requested => return only tower nodes
         EdgeIterator iter = g.getEdges(0);
         assertTrue(iter.next());
         assertEquals(4, iter.node());
-        // TODO order
         assertEquals(Arrays.asList(1, 2, 3), Helper.toList(iter.pillarNodes()));
         assertTrue(iter.next());
-        assertEquals(Arrays.asList(13, 12, 11), Helper.toList(iter.pillarNodes()));
+        assertEquals(Arrays.asList(11, 12, 13), Helper.toList(iter.pillarNodes()));
         assertEquals(14, iter.node());
         assertFalse(iter.next());
 
         iter = g.getOutgoing(0);
         assertTrue(iter.next());
-        assertEquals(4, iter.node());
         assertEquals(Arrays.asList(1, 2, 3), Helper.toList(iter.pillarNodes()));
+        assertEquals(4, iter.node());
         assertFalse(iter.next());
 
         iter = g.getIncoming(10);
         assertTrue(iter.next());
+        assertEquals(Arrays.asList(9, 8, 7, 6, 5), Helper.toList(iter.pillarNodes()));
         assertEquals(4, iter.node());
-        assertEquals(Arrays.asList(5, 6, 7, 8, 9), Helper.toList(iter.pillarNodes()));
+        assertFalse(iter.next());
+
+        // if pillar node requested => return adjacent node (tower or pillar node)
+        // otherwise we could NOT get the shortest path for two pillar nodes on the same edge
+        iter = g.getEdges(1);
+        assertTrue(iter.next());
+        assertEquals(0, iter.node());
+        assertTrue(iter.next());
+        assertEquals(2, iter.node());
+        assertFalse(iter.next());
+
+        iter = g.getIncoming(1);
+        assertTrue(iter.next());
+        assertEquals(0, iter.node());
+        assertFalse(iter.next());
+
+        iter = g.getOutgoing(1);
+        assertTrue(iter.next());
+        assertEquals(2, iter.node());
+        assertFalse(iter.next());
+
+        // backward edge
+        iter = g.getEdges(5);
+        assertTrue(iter.next());
+        assertEquals(4, iter.node());
+        assertTrue(iter.next());
+        assertEquals(6, iter.node());
+        assertFalse(iter.next());
+
+        iter = g.getIncoming(5);
+        assertTrue(iter.next());
+        assertEquals(4, iter.node());
+        assertFalse(iter.next());
+
+        iter = g.getOutgoing(5);
+        assertTrue(iter.next());
+        assertEquals(6, iter.node());
         assertFalse(iter.next());
     }
 }

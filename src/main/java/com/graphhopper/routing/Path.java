@@ -18,8 +18,10 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.EdgeIterator;
+import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -42,6 +44,7 @@ public class Path {
     protected double distance;
     protected long time;
     protected boolean found;
+    protected boolean reverse = true;
     private TIntArrayList nodeIds = new TIntArrayList();
 
     Path() {
@@ -75,6 +78,7 @@ public class Path {
     }
 
     public void reverseOrder() {
+        reverse = !reverse;
         nodeIds.reverse();
     }
 
@@ -90,8 +94,18 @@ public class Path {
         return nodeIds.get(index);
     }
 
+    /**
+     * @return distance in meter
+     */
     public double distance() {
         return distance;
+    }
+
+    /**
+     * @return time in seconds
+     */
+    public long time() {
+        return time;
     }
 
     public double weight() {
@@ -144,13 +158,30 @@ public class Path {
         weight += weightCalculation.getWeight(dist, fl);
         distance += dist;
         time += weightCalculation.getTime(dist, fl);
+        handleSkippedEdge(iter);
     }
 
     /**
-     * @return time in seconds
+     * Unpack stored pillar nodes between tower nodes. Differences to Path4Shortcuts:
+     *
+     * 1. the shortcut is stored in a different manner as pillar nodes
+     *
+     * 2. simpler (no LevelGraph is necessary, no bidirectional algorithm is necessary, no edge
+     * search is necessary ...)
      */
-    public long time() {
-        return time;
+    protected void handleSkippedEdge(EdgeIterator iter) {
+        if (iter.pillarNodes().isEmpty())
+            return;
+        TIntList pillarNodes = iter.pillarNodes();
+        int size = pillarNodes.size();
+        if (reverse)
+            for (int i = size - 1; i >= 0; i--) {
+                add(pillarNodes.get(i));
+            }
+        else
+            for (int i = 0; i < size; i++) {
+                add(pillarNodes.get(i));
+            }
     }
 
     public List<Integer> toNodeList() {

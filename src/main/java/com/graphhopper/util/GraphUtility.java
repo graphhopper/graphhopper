@@ -27,8 +27,6 @@ import com.graphhopper.storage.Location2IDPreciseIndex;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
-import gnu.trove.TIntCollection;
-import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
@@ -410,11 +408,11 @@ public class GraphUtility {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
-        @Override public TIntIterator pillarNodes() {
+        @Override public TIntList pillarNodes() {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
-        @Override public void pillarNodes(TIntCollection pillarNodes) {
+        @Override public void pillarNodes(TIntList pillarNodes) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 

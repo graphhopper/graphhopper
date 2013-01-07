@@ -17,6 +17,8 @@ package com.graphhopper;
 
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.Helper;
+import java.io.File;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -54,7 +56,9 @@ public class GraphHopperAPITest {
 
     @Test
     public void testLoadOSM() {
-        GraphHopperAPI instance = new GraphHopper().setGraphHopperLocation("./target/tmp/ghosm");
+        String str = "./target/tmp/ghosm";
+        Helper.deleteDir(new File(str));
+        GraphHopperAPI instance = new GraphHopper().setGraphHopperLocation(str);
         instance.load("./src/test/resources/com/graphhopper/reader/test-osm.xml");
         GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.found());

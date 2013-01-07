@@ -19,7 +19,10 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GraphUtility;
+import gnu.trove.list.TDoubleList;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.TLongList;
+import gnu.trove.list.array.TIntArrayList;
 import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,53 +38,64 @@ public abstract class OSMReaderHelper {
     protected int zeroCounter = 0;
     protected final Graph g;
     protected final int expectedNodes;
+    private DistanceCalc callback = new DistanceCalc();
 
     public OSMReaderHelper(Graph g, int expectedNodes) {
         this.g = g;
         this.expectedNodes = expectedNodes;
     }
 
+    public void setCallback(DistanceCalc callback) {
+        this.callback = callback;
+    }
+
     public int getExpectedNodes() {
         return expectedNodes;
+    }
+
+    public void preProcess(InputStream osmXml) {
     }
 
     public boolean addNode(long osmId, double lat, double lon) {
         return true;
     }
 
-    public abstract boolean addEdge(long nodeIdFrom, long nodeIdTo, int flags, DistanceCalc callback);
+    public abstract int addEdge(TLongList nodes, int flags);
 
-    public void preProcess(InputStream osmXml) {
-    }
+    public int addEdge(TDoubleList latitudes, TDoubleList longitudes,
+            TIntList allNodes, int flags) {
+        int nodes = allNodes.size();
+        if (latitudes.size() != nodes || longitudes.size() != nodes)
+            throw new IllegalArgumentException("latitudes.size must be equals to longitudes.size and node list size " + nodes);
 
-    public boolean addEdge(double laf, double lof, double lat, double lot,
-            int fromIndex, int toIndex, int flags, DistanceCalc callback) {
-        double dist = callback.calcDist(laf, lof, lat, lot);
-        if (dist == 0) {
+        double towerNodeDistance = 0;
+        double prevLat = latitudes.get(0);
+        double prevLon = longitudes.get(0);
+        double lat;
+        double lon;
+        for (int i = 1; i < nodes; i++) {
+            lat = latitudes.get(i);
+            lon = longitudes.get(i);
+            towerNodeDistance += callback.calcDist(prevLat, prevLon, lat, lon);
+            prevLat = lat;
+            prevLon = lon;
+        }
+        if (towerNodeDistance == 0) {
             // As investigation shows often two paths should have crossed via one identical point 
             // but end up in two very close points. later this will be removed/fixed while 
             // removing short edges where one node is of degree 2
             zeroCounter++;
-            dist = 0.0001;
-        } else if (dist < 0) {
-            logger.info(counter + " - distances negative. " + fromIndex + " (" + laf + ", " + lof + ")->"
-                    + toIndex + "(" + lat + ", " + lot + ") :" + dist);
-            return false;
+            towerNodeDistance = 0.0001;
         }
 
-        EdgeIterator iter = GraphUtility.until(g.getOutgoing(fromIndex), toIndex);
-        if (!iter.isEmpty()) {
-            if (flags == iter.flags() && dist > iter.distance()) {
-                // silently skip if exactly the same way and the new one would be longer
-//                    return true;
-            }
-//                else logger.warn("longer edge already exists " + fromIndex + "->" + toIndex + "!? "
-//                            + "existing: " + iter.distance() + "|" + BitUtil.toBitString(iter.flags(), 8)
-//                            + " new:" + dist + "|" + BitUtil.toBitString(flags, 8));
+        int fromIndex = allNodes.get(0);
+        int toIndex = allNodes.get(nodes - 1);
+        EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
+        if (nodes > 2) {
+            TIntList pillarNodes = allNodes.subList(1, nodes - 1);
+            iter.pillarNodes(pillarNodes);
         }
-
-        g.edge(fromIndex, toIndex, dist, flags);
-        return true;
+        return nodes;
     }
 
     public String getInfo() {

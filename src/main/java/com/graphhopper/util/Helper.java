@@ -482,6 +482,14 @@ public class Helper {
         return file.substring(0, index);
     }
 
+    public static List<Integer> toList(TIntList list) {
+        ArrayList<Integer> res = new ArrayList<Integer>(list.size());
+        for (int i = 0; i < list.size(); i++) {
+            res.add(list.get(i));
+        }
+        return res;
+    }
+
     public static List<Integer> toList(TIntIterator iter) {
         ArrayList<Integer> res = new ArrayList<Integer>();
         while (iter.hasNext()) {
