@@ -21,29 +21,3 @@ Features
    [from the web](https://github.com/graphhopper/graphhopper-web) 
    and even offline [on Android](https://github.com/graphhopper/graphhopper/wiki/Android)
  * Well tested
-
-Usage
----------------
-
-```java
- // Initialization for the API to be used on a desktop or server pc
- GraphHopperAPI gh = new GraphHopper().forServer();
- gh.load("graph-hopper-folder");
-
- // Offline API on Android
- GraphHopperAPI gh = new GraphHopper().forAndroid();
- gh.load("graph-hopper-folder");
-
- // Online: easily connect to your own hosted graphhopper web service
- GraphHopperAPI gh = new GraphHopper();
- gh.load("http://your-graphhopper-service.com/api");
-
- 
- GHRequest request = new GHRequest(new GeoPoint(fromLat, fromLon), new GeoPoint(toLat, toLon));
- request.algorithm("astar");
- GHResponse response = gh.route(request);
- print(response.distance() + " " + response.time());
- for(GHPoint point : response.points()) {
-    add(point.lat, point.lon);
- }
-```
