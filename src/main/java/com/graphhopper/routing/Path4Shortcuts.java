@@ -25,10 +25,12 @@ import com.graphhopper.util.EdgeSkipIterator;
 import gnu.trove.list.array.TIntArrayList;
 
 /**
- * Unpack shortcuts of paths between tower nodes.
+ * Unpack shortcuts of paths between tower nodes. At the moment unused as we
+ * handle tower and pillar nodes while import. We'll see if it could help us
+ * later.
  *
  * @see PrepareTowerNodesShortcuts
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class Path4Shortcuts extends PathBidirRef {
 
@@ -37,11 +39,18 @@ public class Path4Shortcuts extends PathBidirRef {
     }
 
     @Override
-    public void calcWeight(EdgeIterator mainIter) {
-        super.calcWeight(mainIter);
-        EdgeSkipIterator iter = (EdgeSkipIterator) mainIter;
-        if (iter.skippedEdge() >= 0)
+    protected void processWeight(int tmpEdge, int endNode) {
+        EdgeIterator mainIter = graph.getEdgeProps(tmpEdge, endNode);
+        calcWeight(mainIter);
+        // Shortcuts do only contain valid weight so first expand before adding
+        // to distance and time
+        EdgeSkipIterator iter = (EdgeSkipIterator) mainIter;        
+        if (EdgeIterator.Edge.isValid(iter.skippedEdge())) {
             handleSkippedEdge(iter);
+        } else {
+            // only add if it is not a shortcut            
+            addEdge(mainIter.edge());
+        }
     }
 
     protected void handleSkippedEdge(EdgeSkipIterator iter) {
@@ -56,45 +65,45 @@ public class Path4Shortcuts extends PathBidirRef {
         }
 
         // find edge 'from'-skippedEdge
-        boolean success = expand(from, to, iter.skippedEdge(), false);
+        boolean success = expandEdge(from, to, iter.skippedEdge(), false);
         if (!success) {
             // find edge 'to'-skippedEdge
-            success = expand(to, from, iter.skippedEdge(), true);
+            success = expandEdge(to, from, iter.skippedEdge(), true);
             if (!success)
                 throw new IllegalStateException("skipped edge " + iter.skippedEdge() + " not found for "
                         + iter.baseNode() + "<->" + iter.node() + "? " + BitUtil.toBitString(iter.flags(), 8));
         }
     }
 
-    protected boolean expand(int from, int to, int skippedEdge, boolean reverse) {
+    protected boolean expandEdge(int from, int to, int skippedEdge, boolean reverse) {
         int avoidNode = from;
-        EdgeIterator tmpIter = g.getEdgeProps(skippedEdge, from);
+        EdgeIterator tmpIter = graph.getEdgeProps(skippedEdge, from);
         if (tmpIter.isEmpty())
             return false;
 
         int node = tmpIter.baseNode();
-        TIntArrayList tmpNodeList = new TIntArrayList();
-        while (true) {
-            tmpNodeList.add(node);
-            tmpIter = g.getEdges(node);
+        TIntArrayList tmpEdgeList = new TIntArrayList();
+        tmpEdgeList.add(tmpIter.edge());
+        while (true) {            
+            tmpIter = graph.getEdges(node);
             tmpIter.next();
             if (tmpIter.node() == avoidNode) {
                 if (!tmpIter.next())
-                    throw new IllegalStateException("node should have two degree:" + node);
+                    throw new IllegalStateException("pillar node should have two degree:" + node);
             }
-
-            avoidNode = node;
+            avoidNode = tmpIter.baseNode();
             node = tmpIter.node();
+            tmpEdgeList.add(tmpIter.edge());
             // TODO introduce edge filter here too?
-            if (((LevelGraph) g).getLevel(tmpIter.node()) >= 0 || tmpIter.node() == to)
-                break;
+            if (((LevelGraph) graph).getLevel(node) >= 0 || node == to)
+                break;            
         }
 
         if (reverse)
-            tmpNodeList.reverse();
+            tmpEdgeList.reverse();
 
-        for (int i = 0; i < tmpNodeList.size(); i++) {
-            add(tmpNodeList.get(i));
+        for (int i = 0; i < tmpEdgeList.size(); i++) {
+            addEdge(tmpEdgeList.get(i));
         }
         return true;
     }

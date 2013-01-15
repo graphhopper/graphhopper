@@ -15,6 +15,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import java.io.DataInputStream;
@@ -86,11 +87,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
             float distance = is.readFloat();
             int time = is.readInt();
             int nodes = is.readInt();
-            List<GHPoint> list = new ArrayList<GHPoint>(nodes);
+            PointList list = new PointList(nodes);
             for (int i = 0; i < nodes; i++) {
                 float lat = is.readFloat();
                 float lon = is.readFloat();
-                list.add(new GHPoint(lat, lon));
+                list.add(lat, lon);
             }
             return new GHResponse(list).distance(distance).time(time);
         } catch (IOException ex) {

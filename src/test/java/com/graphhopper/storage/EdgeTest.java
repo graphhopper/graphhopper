@@ -15,6 +15,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.EdgeIterator;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -26,9 +27,9 @@ public class EdgeTest {
 
     @Test
     public void testCloneFull() {
-        EdgeEntry de = new EdgeEntry(-1, 1, 10);
-        EdgeEntry de2 = de.parent = new EdgeEntry(-1, - 2, 20);
-        EdgeEntry de3 = de2.parent = new EdgeEntry(-1, 3, 30);
+        EdgeEntry de = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 10);
+        EdgeEntry de2 = de.parent = new EdgeEntry(EdgeIterator.NO_EDGE, -2, 20);
+        EdgeEntry de3 = de2.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 3, 30);
 
         EdgeEntry cloning = de.cloneFull();
         EdgeEntry tmp1 = de;

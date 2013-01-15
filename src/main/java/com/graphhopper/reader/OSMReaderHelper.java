@@ -19,10 +19,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
-import gnu.trove.list.TDoubleList;
-import gnu.trove.list.TIntList;
+import com.graphhopper.util.PointList;
 import gnu.trove.list.TLongList;
-import gnu.trove.list.array.TIntArrayList;
 import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +30,6 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class OSMReaderHelper {
 
-    protected static final int FILLED = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     protected int counter = 0;
     protected int zeroCounter = 0;
@@ -56,29 +53,26 @@ public abstract class OSMReaderHelper {
     public void preProcess(InputStream osmXml) {
     }
 
-    public boolean addNode(long osmId, double lat, double lon) {
-        return true;
-    }
+    public abstract boolean addNode(long osmId, double lat, double lon);
 
     public abstract int addEdge(TLongList nodes, int flags);
 
-    public int addEdge(TDoubleList latitudes, TDoubleList longitudes,
-            TIntList allNodes, int flags) {
-        int nodes = allNodes.size();
-        if (latitudes.size() != nodes || longitudes.size() != nodes)
-            throw new IllegalArgumentException("latitudes.size must be equals to longitudes.size and node list size " + nodes);
-
+    public int addEdge(int fromIndex, int toIndex, PointList pointList, int flags) {
         double towerNodeDistance = 0;
-        double prevLat = latitudes.get(0);
-        double prevLon = longitudes.get(0);
+        double prevLat = pointList.latitude(0);
+        double prevLon = pointList.longitude(0);
         double lat;
         double lon;
+        PointList pillarNodes = new PointList(pointList.size() - 2);
+        int nodes = pointList.size();
         for (int i = 1; i < nodes; i++) {
-            lat = latitudes.get(i);
-            lon = longitudes.get(i);
+            lat = pointList.latitude(i);
+            lon = pointList.longitude(i);
             towerNodeDistance += callback.calcDist(prevLat, prevLon, lat, lon);
             prevLat = lat;
             prevLon = lon;
+            if (nodes > 2 && i < nodes - 1)
+                pillarNodes.add(lat, lon);
         }
         if (towerNodeDistance == 0) {
             // As investigation shows often two paths should have crossed via one identical point 
@@ -88,13 +82,9 @@ public abstract class OSMReaderHelper {
             towerNodeDistance = 0.0001;
         }
 
-        int fromIndex = allNodes.get(0);
-        int toIndex = allNodes.get(nodes - 1);
         EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
-        if (nodes > 2) {
-            TIntList pillarNodes = allNodes.subList(1, nodes - 1);
+        if (nodes > 2)
             iter.pillarNodes(pillarNodes);
-        }
         return nodes;
     }
 

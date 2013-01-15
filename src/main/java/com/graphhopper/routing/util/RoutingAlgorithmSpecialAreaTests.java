@@ -30,6 +30,7 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import java.util.Random;
@@ -91,10 +92,9 @@ public class RoutingAlgorithmSpecialAreaTests {
         prepare.doWork();
         AStarBidirection astarSimpleSC = (AStarBidirection) prepare.createAStar();
         astarSimpleSC.setApproximation(false);
-        // TODO preparation takes too long
-//        LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
-//        PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().setGraph(graphCH);
-//        prepareCH.doWork();
+        LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
+        PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().setGraph(graphCH);
+        prepareCH.doWork();
         return new RoutingAlgorithm[]{
                     new AStar(g), new AStarBidirection(g), new DijkstraBidirectionRef(g), new DijkstraBidirection(g),
                     new DijkstraSimple(g), prepare.createAlgo(), astarSimpleSC

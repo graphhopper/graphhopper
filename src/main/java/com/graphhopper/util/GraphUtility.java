@@ -37,8 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class is introduced as a helper to avoid cluttering the Graph interface with all the common
- * methods. Most of the methods are useful for unit tests.
+ * This class is introduced as a helper to avoid cluttering the Graph interface
+ * with all the common methods. Most of the methods are useful for unit tests.
  *
  * @author Peter Karich,
  */
@@ -47,7 +47,8 @@ public class GraphUtility {
     private static Logger logger = LoggerFactory.getLogger(GraphUtility.class);
 
     /**
-     * @throws could throw exception if uncatched problems like index out of bounds etc
+     * @throws could throw exception if uncatched problems like index out of
+     * bounds etc
      */
     public static List<String> getProblems(Graph g) {
         List<String> problems = new ArrayList<String>();
@@ -88,7 +89,8 @@ public class GraphUtility {
     }
 
     /**
-     * note/todo: this methods counts edges twice if both directions are available
+     * note/todo: this methods counts edges twice if both directions are
+     * available
      */
     public static int countEdges(Graph g) {
         int counter = 0;
@@ -103,13 +105,17 @@ public class GraphUtility {
     }
 
     public static int count(EdgeIterator iter) {
-        int counter = 0;
-        while (iter.next()) {
-            ++counter;
-        }
-        return counter;
+        return neighbors(iter).size();
     }
-    
+
+    public static List<Integer> neighbors(EdgeIterator iter) {
+        List<Integer> list = new ArrayList<Integer>();
+        while (iter.next()) {
+            list.add(iter.node());
+        }
+        return list;
+    }
+
     public static int count(RawEdgeIterator iter) {
         int counter = 0;
         while (iter.next()) {
@@ -156,7 +162,8 @@ public class GraphUtility {
     }
 
     /**
-     * Added this helper method to avoid cluttering the graph interface. Good idea?
+     * Added this helper method to avoid cluttering the graph interface. Good
+     * idea?
      */
     public static EdgeIterator getEdges(Graph graph, int index, boolean out) {
         if (out)
@@ -182,7 +189,8 @@ public class GraphUtility {
         EdgeSkipIterator iter = g.getOutgoing(nodeId);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next()) {
-            str += "  ->" + iter.node() + "(" + iter.skippedEdge() + " " + iter.edge() + ") \t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
+            str += "  ->" + iter.node() + "(" + iter.skippedEdge() + " " + iter.edge() + ") \t"
+                    + BitUtil.toBitString(iter.flags(), 8) + "\n";
         }
         return str;
     }
@@ -208,8 +216,9 @@ public class GraphUtility {
     }
 
     /**
-     * Sorts the graph according to depth-first search traversal. Other traversals have either no
-     * significant difference (bfs) for querying or are worse (see sort).
+     * Sorts the graph according to depth-first search traversal. Other
+     * traversals have either no significant difference (bfs) for querying or
+     * are worse (see sort).
      */
     public static Graph sortDFS(Graph g, Graph sortedGraph) {
         final TIntList list = new TIntArrayList(g.getNodes(), -1);
@@ -233,7 +242,8 @@ public class GraphUtility {
     }
 
     /**
-     * Sorts the graph according to the z-curve. Better use sortDFS as a lot memory is necessary.
+     * Sorts the graph according to the z-curve. Better use sortDFS as a lot
+     * memory is necessary.
      */
     public static Graph sort(Graph g, Graph sortedGraph, int capacity) {
         // make sure it is a square rootable number -> necessary for spatialkeyalgo
@@ -323,7 +333,8 @@ public class GraphUtility {
     }
 
     /**
-     * Create a new in-memory storage from the specified one with copying the data.
+     * Create a new in-memory storage from the specified one with copying the
+     * data.
      *
      * @return the new storage
      */
@@ -354,14 +365,14 @@ public class GraphUtility {
                 int adjacentNodeIndex = eIter.node();
                 if (bitset.contains(adjacentNodeIndex))
                     continue;
-                to.edge(oldNode, adjacentNodeIndex, eIter.distance(), eIter.flags());
+                to.edge(oldNode, adjacentNodeIndex, eIter.distance(), eIter.flags()).pillarNodes(eIter.pillarNodes());
             }
         }
         return to;
     }
 
     public static int getToNode(Graph g, int edge, int endNode) {
-        if (edge != EdgeIterator.NO_EDGE) {
+        if (EdgeIterator.Edge.isValid(edge)) {
             EdgeIterator iterTo = g.getEdgeProps(edge, endNode);
             return iterTo.node();
         }
@@ -369,51 +380,51 @@ public class GraphUtility {
     }
     public static final EdgeSkipIterator EMPTY = new EdgeSkipIterator() {
         @Override public int skippedEdge() {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override public void skippedEdge(int node) {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override public void distance(double dist) {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override public void flags(int flags) {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override public boolean next() {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override public int edge() {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override public int baseNode() {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override public int node() {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override public double distance() {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override public int flags() {
-            throw new UnsupportedOperationException("Not supported yet.");
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
-        @Override public TIntList pillarNodes() {
-            throw new UnsupportedOperationException("Not supported yet.");
+        @Override public PointList pillarNodes() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
-        @Override public void pillarNodes(TIntList pillarNodes) {
-            throw new UnsupportedOperationException("Not supported yet.");
+        @Override public void pillarNodes(PointList list) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override public boolean isEmpty() {

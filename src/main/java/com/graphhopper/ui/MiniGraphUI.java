@@ -18,6 +18,7 @@ package com.graphhopper.ui;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.reader.OSMReader;
+import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
@@ -27,6 +28,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import java.awt.*;
@@ -37,8 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A rough graphical user interface for visualizing the OSM graph. Mainly for debugging algorithms
- * and spatial datastructures.
+ * A rough graphical user interface for visualizing the OSM graph. Mainly for
+ * debugging algorithms and spatial datastructures.
  *
  * Use the project at https://github.com/graphhopper/graphhopper-web for a
  * better/faster/userfriendly/... alternative!
@@ -129,7 +131,6 @@ public class MiniGraphUI {
 
                     EdgeIterator iter = graph.getOutgoing(nodeIndex);
                     while (iter.next()) {
-
                         int nodeId = iter.node();
                         int sum = nodeIndex + nodeId;
                         if (fastPaint) {
@@ -145,11 +146,11 @@ public class MiniGraphUI {
                     }
                 }
 
-//                g2.setColor(Color.red);
-//                DijkstraSimple dijkstra = new DijkstraSimple(graph);
-//                Path p1 = calcPath(dijkstra);
-//                plotPath(p1, g2, 5);
-//                
+                g2.setColor(Color.red);
+                DijkstraSimple dijkstra = new DijkstraSimple(graph);
+                Path p1 = calcPath(dijkstra);
+                plotPath(p1, g2, 5);
+
 //                g2.setColor(Color.blue);
 //                DijkstraBidirectionRef dbi = new DijkstraBidirectionRef(graph);
 //                Path p2 = calcPath(dbi);
@@ -165,7 +166,6 @@ public class MiniGraphUI {
         });
 
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
-            // one time use the fastest path, the other time use the shortest (e.g. maximize window to switch)
             WeightCalculation wCalc = ShortestCarCalc.DEFAULT;
 
             @Override public void paintComponent(Graphics2D g2) {
@@ -189,14 +189,13 @@ public class MiniGraphUI {
 
                 logger.info("found path in " + sw.getSeconds() + "s with " + path.nodes() + " nodes: " + path);
                 g2.setColor(Color.BLUE.brighter().brighter());
-                int tmpLocs = path.nodes();
-                double prevLat = -1;
-                double prevLon = -1;
-                for (int i = 0; i < tmpLocs; i++) {
-                    int id = path.node(i);
-                    double lat = graph.getLatitude(id);
-                    double lon = graph.getLongitude(id);
-                    if (prevLat >= 0)
+                PointList list = path.points();
+                double prevLat = Double.NaN;
+                double prevLon = Double.NaN;
+                for (int i = 0; i < list.size(); i++) {
+                    double lat = list.latitude(i);
+                    double lon = list.longitude(i);
+                    if (Double.isNaN(prevLat))
                         mg.plotEdge(g2, prevLat, prevLon, lat, lon, 3);
 
                     prevLat = lat;
@@ -215,11 +214,11 @@ public class MiniGraphUI {
 
     // for debugging
     private Path calcPath(RoutingAlgorithm algo) {
-//        int from = index.findID(43.72915, 7.410572);
-//        int to = index.findID(43.739213, 7.427806);
+        int from = index.findID(43.730729, 7.421288);
+        int to = index.findID(43.727687, 7.418737);
 //        System.out.println("path " + from + "->" + to);
-//        return algo.calcPath(from, to);
-        return algo.calcPath(1510, 368);
+        return algo.calcPath(from, to);
+//        return algo.calcPath(1510, 368);
     }
 
     private Path plotPath(Path tmpPath, Graphics2D g2, int w) {
@@ -227,11 +226,17 @@ public class MiniGraphUI {
             System.out.println("nothing found " + w);
             return tmpPath;
         }
-        for (int jj = 0; jj < tmpPath.nodes(); jj++) {
-            int loc = tmpPath.node(jj);
-            double lat = graph.getLatitude(loc);
-            double lon = graph.getLongitude(loc);
-            mg.plot(g2, lat, lon, w);
+        double lastLat = Double.NaN;
+        double lastLon = Double.NaN;
+        for (int i = 0; i < tmpPath.points().size(); i++) {
+            double lat = tmpPath.points().latitude(i);
+            double lon = tmpPath.points().longitude(i);
+            if (!Double.isNaN(lastLat))
+                mg.plotEdge(g2, lastLat, lastLon, lat, lon, w);
+            else
+                mg.plot(g2, lat, lon, w);
+            lastLat = lat;
+            lastLon = lon;
         }
         logger.info(tmpPath.toString());
         return tmpPath;

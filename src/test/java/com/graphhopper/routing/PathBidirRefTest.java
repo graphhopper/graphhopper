@@ -21,7 +21,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
-import java.util.Arrays;
+import com.graphhopper.util.Helper;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -41,11 +41,11 @@ public class PathBidirRefTest {
         PathBidirRef pw = new PathBidirRef(g, ShortestCarCalc.DEFAULT);
         EdgeIterator iter = g.getOutgoing(1);
         iter.next();
-        pw.edgeFrom = new EdgeEntry(iter.edge(), 2, 0);
-        pw.edgeFrom.parent = new EdgeEntry(-1, 1, 10);
-        pw.edgeTo = new EdgeEntry(-1, 2, 0);
+        pw.edgeEntry = new EdgeEntry(iter.edge(), 2, 0);
+        pw.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 10);
+        pw.edgeTo = new EdgeEntry(EdgeIterator.NO_EDGE, 2, 0);
         Path p = pw.extract();
-        assertEquals(Arrays.asList(1, 2), p.toNodeList());
+        assertEquals(Helper.createTList(1, 2), p.nodes());
         assertEquals(10, p.weight(), 1e-4);
     }
 
@@ -57,15 +57,15 @@ public class PathBidirRefTest {
         EdgeIterator iter = g.getOutgoing(1);
         iter.next();
         PathBidirRef pw = new PathBidirRef(g, ShortestCarCalc.DEFAULT);
-        pw.edgeFrom = new EdgeEntry(iter.edge(), 2, 10);
-        pw.edgeFrom.parent = new EdgeEntry(-1, 1, 0);
+        pw.edgeEntry = new EdgeEntry(iter.edge(), 2, 10);
+        pw.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 0);
 
         iter = g.getIncoming(3);
         iter.next();
         pw.edgeTo = new EdgeEntry(iter.edge(), 2, 20);
-        pw.edgeTo.parent = new EdgeEntry(-1, 3, 0);
+        pw.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 3, 0);
         Path p = pw.extract();
-        assertEquals(Arrays.asList(1, 2, 3), p.toNodeList());
+        assertEquals(Helper.createTList(1, 2, 3), p.nodes());
         assertEquals(30, p.weight(), 1e-4);
     }
 }

@@ -21,7 +21,9 @@ import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.Helper;
 import java.util.Arrays;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -47,15 +49,15 @@ public class Path4ShortcutsTest {
         g.edge(3, 4, 10, true); // 4
 
         Path4Shortcuts path = new Path4Shortcuts(g, ShortestCarCalc.DEFAULT);
-        path.edgeFrom = new EdgeEntry(3, 3, 10);
-        path.edgeFrom.parent = new EdgeEntry(2, 2, 10);
-        path.edgeFrom.parent.parent = new EdgeEntry(1, 1, 10);
-        path.edgeFrom.parent.parent.parent = new EdgeEntry(-1, 0, 0);
+        path.edgeEntry = new EdgeEntry(3, 3, 10);
+        path.edgeEntry.parent = new EdgeEntry(2, 2, 10);
+        path.edgeEntry.parent.parent = new EdgeEntry(1, 1, 10);
+        path.edgeEntry.parent.parent.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 0, 0);
         path.edgeTo = new EdgeEntry(4, 3, 10);
-        path.edgeTo.parent = new EdgeEntry(-1, 4, 0);
+        path.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 4, 0);
         Path p = path.extract();
-        assertEquals(5, p.nodes());
-        assertEquals(Arrays.asList(0, 1, 2, 3, 4), p.toNodeList());
+        assertEquals(5, p.nodes().size());
+        assertEquals(Helper.createTList(0, 1, 2, 3, 4), p.nodes());
     }
 
     @Test
@@ -71,13 +73,13 @@ public class Path4ShortcutsTest {
         iter4.skippedEdge(iter.edge());// 4
 
         Path4Shortcuts path = new Path4Shortcuts(g, ShortestCarCalc.DEFAULT);
-        path.edgeFrom = new EdgeEntry(iter4.edge(), 2, 20);
-        path.edgeFrom.parent = new EdgeEntry(-1, 0, 0);
+        path.edgeEntry = new EdgeEntry(iter4.edge(), 2, 20);
+        path.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 0, 0);
         path.edgeTo = new EdgeEntry(iter3.edge(), 2, 10);
-        path.edgeTo.parent = new EdgeEntry(-1, 3, 0);
+        path.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 3, 0);
         Path p = path.extract();
-        assertEquals(Arrays.asList(0, 1, 2, 3), p.toNodeList());
-        assertEquals(4, p.nodes());
+        assertEquals(Helper.createTList(0, 1, 2, 3), p.nodes());
+        assertEquals(4, p.nodes().size());
     }
 
     @Test
@@ -93,11 +95,11 @@ public class Path4ShortcutsTest {
         g.edge(0, 3, 30, CarStreetType.flagsDefault(true)).skippedEdge(iter.edge()); // 5
 
         Path4Shortcuts path = new Path4Shortcuts(g, ShortestCarCalc.DEFAULT);
-        path.edgeFrom = new EdgeEntry(5, 3, 30);
-        path.edgeFrom.parent = new EdgeEntry(-1, 0, 0);
+        path.edgeEntry = new EdgeEntry(5, 3, 30);
+        path.edgeEntry.parent = new EdgeEntry(-1, 0, 0);
         path.edgeTo = new EdgeEntry(4, 3, 10);
-        path.edgeTo.parent = new EdgeEntry(-1, 4, 0);
+        path.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 4, 0);
         Path p = path.extract();
-        assertEquals(Arrays.asList(0, 1, 2, 3, 4), p.toNodeList());
+        assertEquals(Helper.createTList(0, 1, 2, 3, 4), p.nodes());
     }
 }

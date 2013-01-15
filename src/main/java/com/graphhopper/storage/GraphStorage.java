@@ -22,23 +22,21 @@ import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
 
 /**
- * The main implementation which handles nodes and edges file format. It can be used with different
- * Directory implementations like RAMDirectory for fast and read-thread safe usage which can be
- * flushed to disc or via MMapDirectory for virtual-memory and not thread safe usage.
+ * The main implementation which handles nodes and edges file format. It can be
+ * used with different Directory implementations like RAMDirectory for fast and
+ * read-thread safe usage which can be flushed to disc or via MMapDirectory for
+ * virtual-memory and not thread safe usage.
  *
  * @author Peter Karich
  */
 public class GraphStorage implements Graph, Storable {
 
     protected static final int EMPTY_LINK = 0;
-    // +- 180 and +-90 => let use use 400
-    private static final float INT_FACTOR = Integer.MAX_VALUE / 400f;
     // distance of around +-1000 000 meter are ok
     private static final float INT_DIST_FACTOR = 1000f;
     private Directory dir;
@@ -47,8 +45,8 @@ public class GraphStorage implements Graph, Storable {
     protected int edgeEntrySize;
     protected DataAccess edges;
     /**
-     * specified how many entries (integers) are used per edge. starting from 1 => fresh int arrays
-     * do not need to be initialized with -1
+     * specified how many entries (integers) are used per edge. starting from 1
+     * => fresh int arrays do not need to be initialized with -1
      */
     private int edgeCount;
     // node memory layout: edgeRef,lat,lon
@@ -133,24 +131,17 @@ public class GraphStorage implements Graph, Storable {
 
     @Override
     public double getLatitude(int index) {
-        return intToDouble(nodes.getInt((long) index * nodeEntrySize + N_LAT));
+        return Helper.intToDegree(nodes.getInt((long) index * nodeEntrySize + N_LAT));
     }
 
     @Override
     public double getLongitude(int index) {
-        return intToDouble(nodes.getInt((long) index * nodeEntrySize + N_LON));
-    }
-
-    protected double intToDouble(int i) {
-        return (double) i / INT_FACTOR;
-    }
-
-    protected int doubleToInt(double f) {
-        return (int) (f * INT_FACTOR);
+        return Helper.intToDegree(nodes.getInt((long) index * nodeEntrySize + N_LON));
     }
 
     /**
-     * translates double VALUE to integer in order to save it in a DataAccess object
+     * translates double VALUE to integer in order to save it in a DataAccess
+     * object
      */
     protected int distToInt(double f) {
         return (int) (f * INT_DIST_FACTOR);
@@ -171,8 +162,8 @@ public class GraphStorage implements Graph, Storable {
     @Override
     public void setNode(int index, double lat, double lon) {
         ensureNodeIndex(index);
-        nodes.setInt((long) index * nodeEntrySize + N_LAT, doubleToInt(lat));
-        nodes.setInt((long) index * nodeEntrySize + N_LON, doubleToInt(lon));
+        nodes.setInt((long) index * nodeEntrySize + N_LAT, Helper.degreeToInt(lat));
+        nodes.setInt((long) index * nodeEntrySize + N_LON, Helper.degreeToInt(lon));
         if (lat > bounds.maxLat)
             bounds.maxLat = lat;
         if (lat < bounds.minLat)
@@ -445,71 +436,7 @@ public class GraphStorage implements Graph, Storable {
 
     protected EdgeIterator createEdgeIterable(int baseNode, boolean in, boolean out) {
         int edge = nodes.getInt((long) baseNode * nodeEntrySize + N_EDGE_REF);
-        if (edge < 0)
-            return new PillarEdgeIterable(-edge, baseNode, in, out);
         return new EdgeIterable(edge, baseNode, in, out);
-    }
-    private static TIntList EMPTY_LIST = Helper.createTList();
-
-    protected class PillarEdgeIterable extends EdgeIterable {
-
-        // contains all neighbor nodes of baseNode (pillar or tower), maximum count is 2
-        final TIntList resNodes;
-        int current = -1;
-
-        public PillarEdgeIterable(int edge, int baseNode, boolean in, boolean out) {
-            super(edge, baseNode, in, out);
-            final int geoRef = edges.getInt(edgePointer + E_GEO);
-            final int count = geometry.getInt(geoRef);
-            resNodes = new TIntArrayList(2);
-            int nodeA = edges.getInt(edgePointer + E_NODEA);
-            int nodeB = edges.getInt(edgePointer + E_NODEB);
-            flags = edges.getInt(edgePointer + E_FLAGS);
-            if ((!in || !out) && CarStreetType.isBackward(flags)) {
-                in = !in;
-                out = !out;
-            }
-            for (int i = 1; i <= count; i++) {
-                int tmpNode = geometry.getInt(geoRef + i);
-                if (tmpNode == baseNode) {
-                    if (in)
-                        if (i == 1) {
-                            resNodes.add(nodeA);
-                        } else
-                            resNodes.add(geometry.getInt(geoRef + i - 1));
-
-                    if (out)
-                        if (i == count)
-                            resNodes.add(nodeB);
-                        else
-                            resNodes.add(geometry.getInt(geoRef + i + 1));
-
-                    break;
-                }
-            }
-        }
-
-        @Override public boolean next() {
-            current++;
-            if (current < resNodes.size()) {
-                node = resNodes.get(current);
-                return true;
-            }
-            return false;
-        }
-
-        @Override public TIntList pillarNodes() {
-            throw new UnsupportedOperationException("pillar node cannot have pillarNode list");
-            // return EMPTY_LIST;
-        }
-
-        @Override public void pillarNodes(TIntList pillarNodes) {
-            throw new UnsupportedOperationException("pillar node cannot have pillarNode list");
-        }
-
-        @Override public void flags(int fl) {
-            throw new UnsupportedOperationException("not yet implemented");
-        }
     }
 
     protected class EdgeIterable implements EdgeIterator {
@@ -601,41 +528,37 @@ public class GraphStorage implements Graph, Storable {
             return baseNode;
         }
 
-        @Override public void pillarNodes(TIntList pillarNodes) {
+        @Override public void pillarNodes(PointList pillarNodes) {
             if (pillarNodes != null && !pillarNodes.isEmpty()) {
                 int len = pillarNodes.size();
-                int geoRef = nextGeoRef(len);
+                int geoRef = nextGeoRef(len * 2);
                 edges.setInt(edgePointer + E_GEO, geoRef);
-                ensureGeometry(geoRef, len);
+                ensureGeometry(geoRef, len * 2);
                 geometry.setInt(geoRef, len);
                 geoRef++;
-                if (baseNode <= node)
-                    for (int i = 0; i < len; geoRef++, i++) {
-                        geometry.setInt(geoRef, pillarNodes.get(i));
-                    }
-                else
-                    for (int i = len - 1; i >= 0; geoRef++, i--) {
-                        geometry.setInt(geoRef, pillarNodes.get(i));
-                    }
+                if (baseNode > node)
+                    pillarNodes.reverse();
 
-                for (int pn = 0; pn < len; pn++) {
-                    nodes.setInt((long) pillarNodes.get(pn) * nodeEntrySize + N_EDGE_REF, -edgeId);
+                for (int i = 0; i < len; geoRef += 2, i++) {
+                    geometry.setInt(geoRef, Helper.degreeToInt(pillarNodes.latitude(i)));
+                    geometry.setInt(geoRef + 1, Helper.degreeToInt(pillarNodes.longitude(i)));
                 }
             } else
                 edges.setInt(edgePointer + E_GEO, EMPTY_LINK);
         }
 
-        @Override public TIntList pillarNodes() {
+        @Override public PointList pillarNodes() {
             final int geoRef = edges.getInt(edgePointer + E_GEO);
             final int count = geometry.getInt(geoRef);
-            TIntArrayList list = new TIntArrayList(count);
-            for (int i = 1; i <= count; i++) {
-                list.add(geometry.getInt(geoRef + i));
+            PointList pillarNodes = new PointList(count);
+            for (int i = 0; i < count; i++) {
+                double lat = Helper.intToDegree(geometry.getInt(geoRef + i * 2 + 1));
+                double lon = Helper.intToDegree(geometry.getInt(geoRef + i * 2 + 2));
+                pillarNodes.add(lat, lon);
             }
-            // TODO make this a bit faster: avoid reverse
             if (baseNode > node)
-                list.reverse();
-            return list;
+                pillarNodes.reverse();
+            return pillarNodes;
         }
 
         @Override public int edge() {
@@ -724,10 +647,11 @@ public class GraphStorage implements Graph, Storable {
     }
 
     /**
-     * This method disconnects the specified edge from the list of edges of the specified node. It
-     * does not release the freed space to be reused.
+     * This method disconnects the specified edge from the list of edges of the
+     * specified node. It does not release the freed space to be reused.
      *
-     * @param edgeToUpdatePointer if it is negative then it will be saved to refToEdges
+     * @param edgeToUpdatePointer if it is negative then it will be saved to
+     * refToEdges
      */
     private void internalEdgeDisconnect(int edge, long edgeToUpdatePointer, int node) {
         long edgeToDeletePointer = (long) edge * edgeEntrySize;
@@ -745,9 +669,9 @@ public class GraphStorage implements Graph, Storable {
     }
 
     /**
-     * This methods disconnects all edges from removed nodes. It does no edge compaction. Then it
-     * moves the last nodes into the deleted nodes, where it needs to update the node ids in every
-     * edge.
+     * This methods disconnects all edges from removed nodes. It does no edge
+     * compaction. Then it moves the last nodes into the deleted nodes, where it
+     * needs to update the node ids in every edge.
      */
     private void inPlaceNodeDelete(int deletedNodeCount) {
         if (deletedNodeCount <= 0)
@@ -860,7 +784,7 @@ public class GraphStorage implements Graph, Storable {
     @Override
     public boolean loadExisting() {
         if (edges.loadExisting()) {
-            if (!nodes.loadExisting())
+            if (!nodes.loadExisting() || !geometry.loadExisting())
                 throw new IllegalStateException("corrupt file or directory? " + dir);
             if (nodes.getVersion() != edges.getVersion())
                 throw new IllegalStateException("nodes and edges files have different versions!? " + dir);
@@ -872,10 +796,10 @@ public class GraphStorage implements Graph, Storable {
 
             nodeEntrySize = nodes.getHeader(1);
             nodeCount = nodes.getHeader(2);
-            bounds.minLon = intToDouble(nodes.getHeader(3));
-            bounds.maxLon = intToDouble(nodes.getHeader(4));
-            bounds.minLat = intToDouble(nodes.getHeader(5));
-            bounds.maxLat = intToDouble(nodes.getHeader(6));
+            bounds.minLon = Helper.intToDegree(nodes.getHeader(3));
+            bounds.maxLon = Helper.intToDegree(nodes.getHeader(4));
+            bounds.minLat = Helper.intToDegree(nodes.getHeader(5));
+            bounds.maxLat = Helper.intToDegree(nodes.getHeader(6));
 
             // edges
             edgeEntrySize = edges.getHeader(0);
@@ -894,10 +818,10 @@ public class GraphStorage implements Graph, Storable {
         nodes.setHeader(0, getClass().getName().hashCode());
         nodes.setHeader(1, nodeEntrySize);
         nodes.setHeader(2, nodeCount);
-        nodes.setHeader(3, doubleToInt(bounds.minLon));
-        nodes.setHeader(4, doubleToInt(bounds.maxLon));
-        nodes.setHeader(5, doubleToInt(bounds.minLat));
-        nodes.setHeader(6, doubleToInt(bounds.maxLat));
+        nodes.setHeader(3, Helper.degreeToInt(bounds.minLon));
+        nodes.setHeader(4, Helper.degreeToInt(bounds.maxLon));
+        nodes.setHeader(5, Helper.degreeToInt(bounds.minLat));
+        nodes.setHeader(6, Helper.degreeToInt(bounds.maxLat));
 
         // edges
         edges.setHeader(0, edgeEntrySize);
@@ -906,6 +830,7 @@ public class GraphStorage implements Graph, Storable {
         // geometry
         geometry.setHeader(0, maxGeoRef);
 
+        geometry.flush();
         edges.flush();
         nodes.flush();
     }

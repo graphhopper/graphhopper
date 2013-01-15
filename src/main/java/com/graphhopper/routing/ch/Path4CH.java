@@ -15,7 +15,7 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.Path4Shortcuts;
+import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -27,34 +27,42 @@ import com.graphhopper.util.EdgeSkipIterator;
  * @see PrepareContractionHierarchies
  * @author Peter Karich,
  */
-public class Path4CH extends Path4Shortcuts {
+public class Path4CH extends PathBidirRef {
 
     public Path4CH(Graph g, WeightCalculation weightCalculation) {
         super(g, weightCalculation);
     }
 
-    static boolean isValidEdge(int edgeId) {
-        return edgeId > 0;
+    @Override
+    protected void processWeight(int tmpEdge, int endNode) {
+        EdgeIterator mainIter = graph.getEdgeProps(tmpEdge, endNode);
+
+        // Shortcuts do only contain valid weight so first expand before adding
+        // to distance and time
+        EdgeSkipIterator iter = (EdgeSkipIterator) mainIter;
+        if (EdgeIterator.Edge.isValid(iter.skippedEdge())) {
+            expandEdge(iter, false);
+        } else {
+            // only add if it is not a shortcut
+            calcWeight(mainIter);
+            addEdge(mainIter.edge());
+        }
     }
 
     @Override
     public void calcWeight(EdgeIterator mainIter) {
-        handleSkippedEdge((EdgeSkipIterator) mainIter);
+        double dist = mainIter.distance();
+        int flags = mainIter.flags();
+        weight += weightCalculation.getWeight(dist, flags);
+        distance += weightCalculation.revert(dist, flags);
+        time += weightCalculation.getTime(dist, flags);
     }
 
-    @Override
-    protected void handleSkippedEdge(EdgeSkipIterator mainIter) {
-        expandIt(mainIter, false);
-    }
-
-    private void expandIt(EdgeSkipIterator mainIter, boolean revert) {
+    private void expandEdge(EdgeSkipIterator mainIter, boolean revert) {
         int skippedEdge = mainIter.skippedEdge();
-        if (!isValidEdge(skippedEdge)) {
-            double dist = mainIter.distance();
-            int flags = mainIter.flags();
-            weight += weightCalculation.getWeight(dist, flags);
-            distance += weightCalculation.revert(dist, flags);
-            time += weightCalculation.getTime(dist, flags);
+        if (!EdgeIterator.Edge.isValid(skippedEdge)) {
+            calcWeight(mainIter);
+            addEdge(mainIter.edge());
             return;
         }
         int from = mainIter.baseNode(), to = mainIter.node();
@@ -68,47 +76,47 @@ public class Path4CH extends Path4Shortcuts {
         // - one edge needs to be determined explicitely because we store only one -> one futher branch necessary :/
         // - getEdgeProps can return an empty edge if the shortcuts is available for both directions
         if (reverse) {
-            EdgeSkipIterator iter = (EdgeSkipIterator) g.getEdgeProps(skippedEdge, from);
+            EdgeSkipIterator iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge, from);
             if (iter.isEmpty()) {
-                iter = (EdgeSkipIterator) g.getEdgeProps(skippedEdge, to);
+                iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge, to);
                 int skippedNode = iter.baseNode();
-                expandIt(iter, false);
-                add(skippedNode);
-                findSkippedNode(from, skippedNode);
+                expandEdge(iter, false);
+                // addEdge(iter.edge());
+                findSkippedEdge(from, skippedNode);
             } else {
                 int skippedNode = iter.baseNode();
-                findSkippedNode(skippedNode, to);
-                add(skippedNode);
-                expandIt(iter, true);
+                findSkippedEdge(skippedNode, to);
+                // addEdge(iter.edge());
+                expandEdge(iter, true);
             }
         } else {
-            EdgeSkipIterator iter = (EdgeSkipIterator) g.getEdgeProps(skippedEdge, to);
+            EdgeSkipIterator iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge, to);
             if (iter.isEmpty()) {
-                iter = (EdgeSkipIterator) g.getEdgeProps(skippedEdge, from);
+                iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge, from);
                 int skippedNode = iter.baseNode();
-                expandIt(iter, true);
-                add(skippedNode);
-                findSkippedNode(skippedNode, to);
+                expandEdge(iter, true);
+                // addEdge(iter.edge());
+                findSkippedEdge(skippedNode, to);
             } else {
                 int skippedNode = iter.baseNode();
-                findSkippedNode(from, skippedNode);
-                add(skippedNode);
-                expandIt(iter, false);
+                findSkippedEdge(from, skippedNode);
+                // addEdge(iter.edge());
+                expandEdge(iter, false);
             }
         }
     }
 
-    private void findSkippedNode(int from, int to) {
-        EdgeSkipIterator iter = (EdgeSkipIterator) g.getOutgoing(from);
+    private void findSkippedEdge(int from, int to) {
+        EdgeSkipIterator iter = (EdgeSkipIterator) graph.getOutgoing(from);
         double lowest = Double.MAX_VALUE;
-        int edge = -1;
+        int edge = EdgeIterator.NO_EDGE;
         while (iter.next()) {
             if (iter.node() == to && iter.distance() < lowest) {
                 lowest = iter.distance();
                 edge = iter.edge();
             }
         }
-        if (isValidEdge(edge))
-            expandIt((EdgeSkipIterator) g.getEdgeProps(edge, to), false);
+        if (EdgeIterator.Edge.isValid(edge))
+            expandEdge((EdgeSkipIterator) graph.getEdgeProps(edge, to), false);
     }
 }

@@ -16,6 +16,7 @@
 package com.graphhopper.coll;
 
 import com.graphhopper.storage.Edge;
+import com.graphhopper.util.EdgeIterator;
 import java.util.PriorityQueue;
 import java.util.Random;
 import org.junit.Test;
@@ -121,7 +122,7 @@ public abstract class AbstractBinHeapTest {
         for (int i = 0; i < N; i++) {
             int val = rand.nextInt();
             binHeap.insert(val, i);
-            juQueue.add(new Edge(-1, i, val));
+            juQueue.add(new Edge(EdgeIterator.NO_EDGE, i, val));
         }
 
         assertEquals(juQueue.size(), binHeap.size());

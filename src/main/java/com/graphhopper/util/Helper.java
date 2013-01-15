@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.*;
@@ -69,11 +68,13 @@ public class Helper {
         String line;
         try {
             while ((line = reader.readLine()) != null) {
-                if (line.startsWith("//") || line.startsWith("#"))
+                if (line.startsWith("//") || line.startsWith("#")) {
                     continue;
+                }
 
-                if (line.isEmpty())
+                if (line.isEmpty()) {
                     continue;
+                }
 
                 int index = line.indexOf("=");
                 if (index < 0) {
@@ -114,15 +115,17 @@ public class Helper {
 
     public static int idealByteArraySize(int need) {
         for (int i = 4; i < 32; i++) {
-            if (need <= (1 << i) - 12)
+            if (need <= (1 << i) - 12) {
                 return (1 << i) - 12;
+            }
         }
 
         return need;
     }
 
     /**
-     * @return a sorted list where the object with the highest integer value comes first!
+     * @return a sorted list where the object with the highest integer value
+     * comes first!
      */
     public static <T> List<Entry<T, Integer>> sort(Collection<Entry<T, Integer>> entrySet) {
         List<Entry<T, Integer>> sorted = new ArrayList<Entry<T, Integer>>(entrySet);
@@ -131,12 +134,13 @@ public class Helper {
             public int compare(Entry<T, Integer> o1, Entry<T, Integer> o2) {
                 int i1 = o1.getValue();
                 int i2 = o2.getValue();
-                if (i1 < i2)
+                if (i1 < i2) {
                     return 1;
-                else if (i1 > i2)
+                } else if (i1 > i2) {
                     return -1;
-                else
+                } else {
                     return 0;
+                }
             }
         });
 
@@ -144,7 +148,8 @@ public class Helper {
     }
 
     /**
-     * @return a sorted list where the string with the highest integer value comes first!
+     * @return a sorted list where the string with the highest integer value
+     * comes first!
      */
     public static <T> List<Entry<T, Long>> sortLong(Collection<Entry<T, Long>> entrySet) {
         List<Entry<T, Long>> sorted = new ArrayList<Entry<T, Long>>(entrySet);
@@ -153,12 +158,13 @@ public class Helper {
             public int compare(Entry<T, Long> o1, Entry<T, Long> o2) {
                 long i1 = o1.getValue();
                 long i2 = o2.getValue();
-                if (i1 < i2)
+                if (i1 < i2) {
                     return 1;
-                else if (i1 > i2)
+                } else if (i1 > i2) {
                     return -1;
-                else
+                } else {
                     return 0;
+                }
             }
         });
 
@@ -180,8 +186,9 @@ public class Helper {
         File pFile = specificFile.getParentFile();
         if (pFile != null) {
             for (File f : pFile.listFiles()) {
-                if (f.getName().startsWith(specificFile.getName()))
+                if (f.getName().startsWith(specificFile.getName())) {
                     f.delete();
+                }
             }
         }
     }
@@ -209,8 +216,9 @@ public class Helper {
 
     public static void close(Closeable cl) {
         try {
-            if (cl != null)
+            if (cl != null) {
                 cl.close();
+            }
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't close resource", ex);
         }
@@ -227,26 +235,28 @@ public class Helper {
             out.writeInt(objs.length);
             for (Object obj : objs) {
                 char cl;
-                if (obj instanceof Byte)
+                if (obj instanceof Byte) {
                     cl = 'Y';
-                else
+                } else {
                     cl = obj.getClass().getSimpleName().charAt(0);
+                }
 
                 out.writeChar(cl);
-                if (obj instanceof String)
+                if (obj instanceof String) {
                     out.writeUTF((String) obj);
-                else if (obj instanceof Float)
+                } else if (obj instanceof Float) {
                     out.writeFloat((Float) obj);
-                else if (obj instanceof Double)
+                } else if (obj instanceof Double) {
                     out.writeDouble((Double) obj);
-                else if (obj instanceof Integer)
+                } else if (obj instanceof Integer) {
                     out.writeInt((Integer) obj);
-                else if (obj instanceof Long)
+                } else if (obj instanceof Long) {
                     out.writeLong((Long) obj);
-                else if (obj instanceof Boolean)
+                } else if (obj instanceof Boolean) {
                     out.writeBoolean((Boolean) obj);
-                else
+                } else {
                     throw new IllegalStateException("Unsupported type");
+                }
             }
         } finally {
             out.close();
@@ -374,37 +384,42 @@ public class Helper {
     }
 
     /**
-     * Creates a preparation wrapper for the specified algorithm. Warning/TODO: set the _graph for
-     * the instance otherwise you'll get NPE when calling createAlgo. Possible values for
-     * algorithmStr: astar (A* algorithm), astarbi (bidirectional A*) dijkstra (Dijkstra),
-     * dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
+     * Creates a preparation wrapper for the specified algorithm. Warning/TODO:
+     * set the _graph for the instance otherwise you'll get NPE when calling
+     * createAlgo. Possible values for algorithmStr: astar (A* algorithm),
+     * astarbi (bidirectional A*) dijkstra (Dijkstra), dijkstrabi and
+     * dijkstraNative (a bit faster bidirectional Dijkstra).
      */
     public static AlgorithmPreparation createAlgoPrepare(final String algorithmStr) {
         return new NoOpAlgorithmPreparation() {
-            @Override public RoutingAlgorithm createAlgo() {
+            @Override
+            public RoutingAlgorithm createAlgo() {
                 return createAlgoFromString(_graph, algorithmStr);
             }
         };
     }
 
     /**
-     * Possible values: astar (A* algorithm), astarbi (bidirectional A*) dijkstra (Dijkstra),
-     * dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
+     * Possible values: astar (A* algorithm), astarbi (bidirectional A*)
+     * dijkstra (Dijkstra), dijkstrabi and dijkstraNative (a bit faster
+     * bidirectional Dijkstra).
      */
     public static RoutingAlgorithm createAlgoFromString(Graph g, String algorithmStr) {
-        if (g == null)
+        if (g == null) {
             throw new NullPointerException("You have to specify a graph different from null!");
+        }
         RoutingAlgorithm algo;
-        if ("dijkstrabi".equalsIgnoreCase(algorithmStr))
+        if ("dijkstrabi".equalsIgnoreCase(algorithmStr)) {
             algo = new DijkstraBidirectionRef(g);
-        else if ("dijkstraNative".equalsIgnoreCase(algorithmStr))
+        } else if ("dijkstraNative".equalsIgnoreCase(algorithmStr)) {
             algo = new DijkstraBidirection(g);
-        else if ("dijkstra".equalsIgnoreCase(algorithmStr))
+        } else if ("dijkstra".equalsIgnoreCase(algorithmStr)) {
             algo = new DijkstraSimple(g);
-        else if ("astarbi".equalsIgnoreCase(algorithmStr))
+        } else if ("astarbi".equalsIgnoreCase(algorithmStr)) {
             algo = new AStarBidirection(g).setApproximation(true);
-        else
+        } else {
             algo = new AStar(g);
+        }
         return algo;
     }
 
@@ -482,32 +497,68 @@ public class Helper {
         return file.substring(0, index);
     }
 
-    public static List<Integer> toList(TIntList list) {
-        ArrayList<Integer> res = new ArrayList<Integer>(list.size());
-        for (int i = 0; i < list.size(); i++) {
-            res.add(list.get(i));
-        }
-        return res;
-    }
-
-    public static List<Integer> toList(TIntIterator iter) {
-        ArrayList<Integer> res = new ArrayList<Integer>();
-        while (iter.hasNext()) {
-            res.add(iter.next());
-        }
-        return res;
-    }
-
     public static TIntList createTList(int... list) {
         TIntList res = new TIntArrayList(list.length);
-        for (int i : list) {
-            res.add(i);
+        for (int val : list) {
+            res.add(val);
         }
         return res;
     }
+
+    public static PointList createPointList(double... list) {
+        if (list.length % 2 != 0)
+            throw new IllegalArgumentException("list should consist of lat,lon pairs!");
+        PointList res = new PointList(list.length);
+        int max = list.length / 2;
+        for (int i = 0; i < max; i++) {
+            res.add(list[2 * i], list[2 * i + 1]);
+        }
+        return res;
+    }
+
     /**
-     * The file version is independent of the real world version. E.g. to make major version jumps
-     * without the need to change the file version.
+     * Converts a double (maximum value 10000) into an integer.
+     *
+     * @return the integer to be stored
+     */
+    public static int doubleToInt(double deg) {
+        return (int) (deg * INT_FACTOR);
+    }
+
+    /**
+     * Converts back the once transformed storedInt from doubleToInt
+     */
+    public static double intToDouble(int storedInt) {
+        return (double) storedInt / INT_FACTOR;
+    }
+
+    /**
+     * Converts into an integer to be compatible with the still limited
+     * DataAccess class (accepts only integer values). But this conversation
+     * also reduces memory consumption where the precision loss is accceptable.
+     * As +- 180° and +-90° are assumed as maximum values.
+     *
+     * @return the integer of the specified degree
+     */
+    public static int degreeToInt(double deg) {
+        return (int) (deg * DEGREE_FACTOR);
+    }
+
+    /**
+     * Converts back the integer value.
+     *
+     * @return the degree value of the specified integer
+     */
+    public static double intToDegree(int storedInt) {
+        // Double.longBitsToDouble();
+        return (double) storedInt / DEGREE_FACTOR;
+    }
+    // +- 180 and +-90 => let use use 400
+    private static final float DEGREE_FACTOR = Integer.MAX_VALUE / 400f;
+    private static final float INT_FACTOR = Integer.MAX_VALUE / 10000f;
+    /**
+     * The file version is independent of the real world version. E.g. to make
+     * major version jumps without the need to change the file version.
      */
     public static final int VERSION_FILE = 2;
     /**

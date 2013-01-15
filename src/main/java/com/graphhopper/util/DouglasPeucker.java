@@ -15,9 +15,6 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.storage.Graph;
-import gnu.trove.list.array.TIntArrayList;
-
 /**
  * Simplyfies a list of points which are not too far away.
  * http://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
@@ -26,13 +23,10 @@ import gnu.trove.list.array.TIntArrayList;
  */
 public class DouglasPeucker {
 
-    public static final int EMPTY = -1;
     private double normedMaxDist;
-    private Graph g;
     private DistanceCalc calc;
 
-    public DouglasPeucker(Graph g) {
-        this.g = g;
+    public DouglasPeucker() {
         calc = new DistanceCalc();
         // 1m
         setMaxDist(1);
@@ -47,29 +41,52 @@ public class DouglasPeucker {
     }
 
     /**
-     * Points which should be removed will get the EMPTY value
+     * This method removes points which are close to the line (defined by
+     * maxDist).
      *
      * @return deleted nodes
      */
-    public int simplify(TIntArrayList points) {
-        return simplify(points, 0, points.size() - 1);
+    public int simplify(PointList points) {
+        int deleted = simplify(points, 0, points.size() - 1);
+        // compress list: move points into EMPTY slots
+        int freeIndex = -1;
+        for (int currentIndex = 0; currentIndex < points.size(); currentIndex++) {
+            if (Double.isNaN(points.latitude(currentIndex))) {
+                if (freeIndex < 0)
+                    freeIndex = currentIndex;
+                continue;
+            }
+
+            if (freeIndex < 0)
+                continue;
+            points.set(freeIndex, points.latitude(currentIndex), points.longitude(currentIndex));
+            // find next free index
+            int max = currentIndex;
+            for (int searchIndex = freeIndex; searchIndex < max; searchIndex++) {
+                if (Double.isNaN(points.latitude(searchIndex))) {
+                    freeIndex = searchIndex;
+                    break;
+                }
+            }
+        }
+        points.setSize(points.size() - deleted);
+        return deleted;
     }
 
-    public int simplify(TIntArrayList points, int fromIndex, int lastIndex) {
+    int simplify(PointList points, int fromIndex, int lastIndex) {
         if (lastIndex - fromIndex < 2)
             return 0;
         int indexWithMaxDist = -1;
         double maxDist = -1;
-        double firstLat = g.getLatitude(points.get(fromIndex));
-        double firstLon = g.getLongitude(points.get(fromIndex));
-        double lastLat = g.getLatitude(points.get(lastIndex));
-        double lastLon = g.getLongitude(points.get(lastIndex));
+        double firstLat = points.latitude(fromIndex);
+        double firstLon = points.longitude(fromIndex);
+        double lastLat = points.latitude(lastIndex);
+        double lastLon = points.longitude(lastIndex);
         for (int i = fromIndex + 1; i < lastIndex; i++) {
-            int tmpIndex = points.get(i);
-            if (tmpIndex == EMPTY)
+            double lat = points.latitude(i);
+            if (Double.isNaN(lat))
                 continue;
-            double lat = g.getLatitude(tmpIndex);
-            double lon = g.getLongitude(tmpIndex);
+            double lon = points.longitude(i);
             double dist = calc.calcNormalizedEdgeDistance(lat, lon, firstLat, firstLon, lastLat, lastLon);
             if (maxDist < dist) {
                 indexWithMaxDist = i;
@@ -83,7 +100,7 @@ public class DouglasPeucker {
         int counter = 0;
         if (maxDist < normedMaxDist) {
             for (int i = fromIndex + 1; i < lastIndex; i++) {
-                points.set(i, EMPTY);
+                points.set(i, Double.NaN, Double.NaN);
                 counter++;
             }
         } else {

@@ -24,16 +24,17 @@ import com.graphhopper.util.EdgeWrapper;
 import com.graphhopper.util.GraphUtility;
 
 /**
- * Calculates shortest path in bidirectional way. Compared to DijkstraBidirectionRef this class is
- * more memory efficient as it does not go the normal Java way via references. In first tests this
- * class saves 30% memory, but as you can see it is more complicated.
+ * Calculates shortest path in bidirectional way. Compared to
+ * DijkstraBidirectionRef this class is more memory efficient as it does not go
+ * the normal Java way via references. In first tests this class saves 30%
+ * memory, but as you can see it is more complicated.
  *
- * TODO: use only one EdgeWrapper to save memory. This is not easy if we want it to be as fast as
- * the current solution. But we need to try it out if a forwardSearchBitset.contains(ref) is that
- * expensive
+ * TODO: use only one EdgeWrapper to save memory. This is not easy if we want it
+ * to be as fast as the current solution. But we need to try it out if a
+ * forwardSearchBitset.contains(ref) is that expensive
  *
- * TODO EdgeWrapper: instead of creating references point to the edges itself => we only need an
- * edge+node array and from that can retrieve eg. the distance
+ * TODO EdgeWrapper: instead of creating references point to the edges itself =>
+ * we only need an edge+node array and from that can retrieve eg. the distance
  *
  * @author Peter Karich,
  */
@@ -129,7 +130,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     }
 
     public void initPath() {
-        shortest = new PathBidir(graph, wrapperFrom, wrapperTo, weightCalc);
+        shortest = new PathBidir(graph, weightCalc, wrapperFrom, wrapperTo);
         shortest.initWeight();
     }
 
@@ -220,14 +221,11 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     }
 
     private Path checkIndenticalFromAndTo() {
-        if (from == to) {
-            Path p = new Path(graph, weightCalc);
-            p.addFrom(from);
-            return p;
-        }
+        if (from == to)
+            return new Path(graph, weightCalc);
         return null;
     }
-    
+
     @Override public String name() {
         return "dijkstraNativebi";
     }

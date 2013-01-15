@@ -93,8 +93,12 @@ public class GraphUtilityTest {
     @Test
     public void testCopy() {
         Graph g = initUnsorted(createGraph());
+        EdgeIterator iter = g.edge(6, 5, 11, true);
+        iter.pillarNodes(Helper.createPointList(12, 10, -1, 3));
         LevelGraph lg = (LevelGraph) new LevelGraphStorage(new RAMDirectory()).createNew(10);
-        g.copyTo(lg);
+        GraphUtility.copyTo(g, lg);
+        iter = lg.getEdgeProps(iter.edge(), 6);
+        assertEquals(Helper.createPointList(-1, 3, 12, 10), iter.pillarNodes());
         assertEquals(0, lg.getLevel(0));
         assertEquals(0, lg.getLevel(1));
         assertEquals(0, lg.getLatitude(0), 1e-6);
@@ -102,7 +106,7 @@ public class GraphUtilityTest {
         assertEquals(2.5, lg.getLatitude(1), 1e-6);
         assertEquals(4.5, lg.getLongitude(1), 1e-6);
         assertEquals(9, lg.getNodes());
-        EdgeIterator iter = lg.getOutgoing(8);
+        iter = lg.getOutgoing(8);
         iter.next();
         assertEquals(2.05, iter.distance(), 1e-6);
         assertEquals("11", BitUtil.toBitString(iter.flags(), 2));

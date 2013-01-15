@@ -71,17 +71,14 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
 
     public Path calcShortestPath() {
         // identical
-        if (pubTransport.contains(destination)) {
-            Path p = new Path(graph, weightCalc);
-            p.addFrom(destination);
-            return p;
-        }
+        if (pubTransport.contains(destination))
+            return new Path(graph, weightCalc);
 
         MyBitSet visitedFrom = new MyBitSetImpl(graph.getNodes());
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
-        EdgeEntry entryTo = new EdgeEntry(-1, destination, 0);
+        EdgeEntry entryTo = new EdgeEntry(EdgeIterator.NO_EDGE, destination, 0);
         EdgeEntry currTo = entryTo;
         MyBitSet visitedTo = new MyBitSetImpl(graph.getNodes());
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
@@ -97,7 +94,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
 
         EdgeEntry currFrom = null;
         for (int i = 0; i < pubTransport.size(); i++) {
-            EdgeEntry tmpFrom = new EdgeEntry(-1, pubTransport.get(i), 0);
+            EdgeEntry tmpFrom = new EdgeEntry(EdgeIterator.NO_EDGE, pubTransport.get(i), 0);
             if (i == 0)
                 currFrom = tmpFrom;
 
@@ -176,9 +173,9 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
             // update μ
             double newShortest = de.weight + entryOther.weight;
             if (newShortest < shortest.weight()) {
-                shortest.switchWrapper = shortestDistMapFrom == shortestDistMapOther;
-                shortest.edgeFrom = de;
-                shortest.edgeTo = entryOther;
+                shortest.switchToFrom(shortestDistMapFrom == shortestDistMapOther);
+                shortest.edgeEntry(de);
+                shortest.edgeEntryTo(entryOther);
                 shortest.weight(newShortest);
             }
         }

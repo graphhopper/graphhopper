@@ -79,25 +79,8 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
     @Override
     protected EdgeSkipIterator createEdgeIterable(int baseNode, boolean in, boolean out) {
-        int edge = nodes.getInt((long) baseNode * nodeEntrySize + N_EDGE_REF);
-        if (edge < 0)
-            return new PillarSkipIteratorImpl(-edge, baseNode, in, out);
+        int edge = nodes.getInt((long) baseNode * nodeEntrySize + N_EDGE_REF);        
         return new EdgeSkipIteratorImpl(edge, baseNode, in, out);
-    }
-
-    public class PillarSkipIteratorImpl extends PillarEdgeIterable implements EdgeSkipIterator {
-
-        public PillarSkipIteratorImpl(int edge, int baseNode, boolean in, boolean out) {
-            super(edge, baseNode, in, out);
-        }
-
-        @Override public int skippedEdge() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override public void skippedEdge(int node) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
     }
 
     public class EdgeSkipIteratorImpl extends EdgeIterable implements EdgeSkipIterator {

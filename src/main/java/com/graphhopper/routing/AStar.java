@@ -46,7 +46,8 @@ public class AStar extends AbstractRoutingAlgorithm {
     }
 
     /**
-     * @param fast if true it enables approximative distance calculation from lat,lon values
+     * @param fast if true it enables approximative distance calculation from
+     * lat,lon values
      */
     public AStar setApproximation(boolean approx) {
         if (approx)
@@ -73,7 +74,7 @@ public class AStar extends AbstractRoutingAlgorithm {
         double toLat = graph.getLatitude(to);
         double toLon = graph.getLongitude(to);
         double currWeightToGoal, distEstimation, tmpLat, tmpLon;
-        AStarEdge fromEntry = new AStarEdge(-1, this.from = from, 0, 0);
+        AStarEdge fromEntry = new AStarEdge(EdgeIterator.NO_EDGE, this.from = from, 0, 0);
         AStarEdge currEdge = fromEntry;
         while (true) {
             int currVertex = currEdge.endNode;
@@ -133,17 +134,7 @@ public class AStar extends AbstractRoutingAlgorithm {
     }
 
     public Path extractPath(EdgeEntry currEdge) {
-        // extract path from shortest-path-tree
-        Path path = new Path(graph, weightCalc);
-        while (currEdge.parent != null) {
-            EdgeEntry tmp = currEdge;
-            path.add(tmp.endNode);
-            currEdge = currEdge.parent;
-            path.calcWeight(graph.getEdgeProps(tmp.edge, tmp.endNode));
-        }
-        path.addFrom(from);
-        path.reverseOrder();
-        return path.found(true);
+        return new Path(graph, weightCalc).edgeEntry(currEdge).extract();
     }
 
     public static class AStarEdge extends EdgeEntry {

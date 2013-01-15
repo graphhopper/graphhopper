@@ -20,8 +20,9 @@ import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
 
 /**
- * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
- * ids. Querying via lat,lon can be done via with a Location2IDIndex implementation.
+ * An interface to represent a (geo) graph - suited for efficient storage as it
+ * can be requested via ids. Querying via lat,lon can be done via with a
+ * Location2IDIndex implementation.
  *
  * @author Peter Karich,
  */
@@ -33,8 +34,9 @@ public interface Graph {
     int getNodes();
 
     /**
-     * This method ensures that the node with the specified index exists and sets the lat+lon to the
-     * specified values. The index goes from 0 (inclusive) to getNodes() (exclusive)
+     * This method ensures that the node with the specified index exists and
+     * sets the lat+lon to the specified values. The index goes from 0
+     * (inclusive) to getNodes() (exclusive)
      */
     void setNode(int index, double lat, double lon);
 
@@ -43,7 +45,8 @@ public interface Graph {
     double getLongitude(int index);
 
     /**
-     * Returns the implicit bounds of this graph calculated from the lat,lon input of setNode
+     * Returns the implicit bounds of this graph calculated from the lat,lon
+     * input of setNode
      */
     BBox getBounds();
 
@@ -52,8 +55,8 @@ public interface Graph {
      *
      * @param a the index of the starting (tower) node of the edge
      * @param b the index of the ending (tower) node of the edge
-     * @param distance between a and b. Often setNode is not called - if it is not a geo-graph - and
-     * we need the distance parameter here.
+     * @param distance between a and b. Often setNode is not called - if it is
+     * not a geo-graph - and we need the distance parameter here.
      * @param flags see EdgeFlags - involves velocity and direction
      * @return the created edge
      */
@@ -62,9 +65,11 @@ public interface Graph {
     EdgeIterator edge(int a, int b, double distance, boolean bothDirections);
 
     /**
-     * @return an edge iterator over one element where the method next() has no meaning and will
-     * return false. The edge will point to the bigger node if endNode is negative otherwise it'll
-     * be used as the end node.
+     * The returned EdgeIterator will return endNode for node() or if endNode is
+     * negative node() will return the bigger node (nodeB).
+     *
+     * @return an edge iterator over one element where the method next() has no
+     * meaning and will return false.
      * @throws IllegalStateException if edgeId is not valid
      */
     EdgeIterator getEdgeProps(int edgeId, int endNode);
@@ -75,9 +80,9 @@ public interface Graph {
     RawEdgeIterator getAllEdges();
 
     /**
-     * Returns an iterator which makes it possible to traverse all edges of the specified node
-     * index. Hint: use GraphUtility to go straight to certain neighbor nodes. Hint: edges with both
-     * directions will returned only once!
+     * Returns an iterator which makes it possible to traverse all edges of the
+     * specified node index. Hint: use GraphUtility to go straight to certain
+     * neighbor nodes. Hint: edges with both directions will returned only once!
      */
     EdgeIterator getEdges(int index);
 
@@ -91,7 +96,8 @@ public interface Graph {
     Graph copyTo(Graph g);
 
     /**
-     * Schedule the deletion of the specified node until an optimize() call happens
+     * Schedule the deletion of the specified node until an optimize() call
+     * happens
      */
     void markNodeDeleted(int index);
 

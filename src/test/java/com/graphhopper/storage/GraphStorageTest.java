@@ -15,7 +15,9 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
 import java.io.IOException;
@@ -34,7 +36,7 @@ public class GraphStorageTest extends AbstractGraphTester {
         return newGraph(new RAMDirectory(location)).setSegmentSize(size / 2).createNew(size);
     }
 
-    public GraphStorage newGraph(Directory dir) {        
+    public GraphStorage newGraph(Directory dir) {
         return new GraphStorage(dir);
     }
 
@@ -45,7 +47,7 @@ public class GraphStorageTest extends AbstractGraphTester {
         graph.setNode(1, 11, 20);
         graph.setNode(2, 12, 12);
 
-        graph.edge(0, 1, 100, true);
+        graph.edge(0, 1, 100, true).pillarNodes(Helper.createPointList(1, 1, 2, 3));
         graph.edge(0, 2, 200, true);
         graph.edge(1, 2, 120, false);
 
@@ -68,6 +70,10 @@ public class GraphStorageTest extends AbstractGraphTester {
         assertEquals(10, g.getLongitude(0), 1e-2);
         assertEquals(2, GraphUtility.count(g.getOutgoing(0)));
         assertTrue(GraphUtility.contains(g.getOutgoing(0), 1, 2));
+
+        EdgeIterator iter = g.getOutgoing(0);
+        assertTrue(iter.next());
+        assertEquals(Helper.createPointList(1, 1, 2, 3), iter.pillarNodes());
 
         assertEquals(11, g.getLatitude(1), 1e-2);
         assertEquals(20, g.getLongitude(1), 1e-2);

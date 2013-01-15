@@ -15,6 +15,8 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.Helper;
+
 /**
  * @author Peter Karich
  */
@@ -34,12 +36,12 @@ public class GraphStorage3D extends GraphStorage implements Graph3D {
         // TODO 2 location to id index
         // we need to avoid rewriting every algorithm like A*
         // TODO 3 currWeightToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
-        nodes.setInt((long) index * nodeEntrySize + I_HEIGHT, doubleToInt(height));
+        nodes.setInt((long) index * nodeEntrySize + I_HEIGHT, Helper.doubleToInt(height));
     }
 
     @Override
     public double getHeight(int index) {
         ensureNodeIndex(index);
-        return intToDouble(nodes.getInt((long) index * nodeEntrySize + I_HEIGHT));
+        return Helper.intToDouble(nodes.getInt((long) index * nodeEntrySize + I_HEIGHT));
     }
 }

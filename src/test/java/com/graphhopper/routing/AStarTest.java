@@ -21,7 +21,6 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 
 /**
- *
  * @author Peter Karich
  */
 public class AStarTest extends AbstractRoutingAlgorithmTester {

@@ -152,11 +152,8 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     }
 
     private Path checkIndenticalFromAndTo() {
-        if (from == to) {
-            Path p = new Path(graph, weightCalc);
-            p.addFrom(from);
-            return p;
-        }
+        if (from == to) 
+            return new Path(graph, weightCalc);        
         return null;
     }
 
@@ -297,8 +294,8 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         // update μ
         double newShortest = shortestDE.weightToCompare + entryOther.weightToCompare;
         if (newShortest < shortest.weight) {
-            shortest.switchWrapper = shortestWeightMapFrom == shortestWeightMapOther;
-            shortest.edgeFrom = shortestDE;
+            shortest.switchToFrom(shortestWeightMapFrom == shortestWeightMapOther);
+            shortest.edgeEntry = shortestDE;
             shortest.edgeTo = entryOther;
             shortest.weight = newShortest;
         }

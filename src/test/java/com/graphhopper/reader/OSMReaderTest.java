@@ -16,6 +16,7 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.routing.util.CarStreetType;
+import com.graphhopper.storage.AbstractGraphTester;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -68,40 +69,41 @@ public class OSMReaderTest {
         reader.optimize();
         reader.flush();
         Graph graph = reader.getGraph();
-        // all nodes
-        // assertEquals(8, graph.getNodes());
-        // nodes on ways and used for routing
-        // assertEquals(4, graph.getNodes());
-        assertEquals(1, GraphUtility.count(graph.getOutgoing(0)));
-        assertEquals(3, GraphUtility.count(graph.getOutgoing(1)));
-        assertEquals(1, GraphUtility.count(graph.getOutgoing(2)));
+        assertEquals(4, graph.getNodes());
+        int internalIdMain = AbstractGraphTester.getIdOf(graph, 52);
+        int internalId1 = AbstractGraphTester.getIdOf(graph, 51.2492152);
+        int internalId2 = AbstractGraphTester.getIdOf(graph, 51.2);
+        int internalId3 = AbstractGraphTester.getIdOf(graph, 49);
+        assertEquals(Arrays.asList(internalIdMain), GraphUtility.neighbors(graph.getOutgoing(internalId1)));
+        assertEquals(3, GraphUtility.count(graph.getOutgoing(internalIdMain)));
+        assertEquals(Arrays.asList(internalIdMain), GraphUtility.neighbors(graph.getOutgoing(internalId2)));
 
-        EdgeIterator iter = graph.getOutgoing(1);
+        EdgeIterator iter = graph.getOutgoing(internalIdMain);
         assertTrue(iter.next());
-        assertEquals(0, iter.node());
+        assertEquals(internalId1, iter.node());
         assertEquals(88643, iter.distance(), 1);
         assertTrue(iter.next());
-        assertEquals(2, iter.node());
+        assertEquals(internalId2, iter.node());
         assertEquals(93147, iter.distance(), 1);
         CarStreetType flags = new CarStreetType(iter.flags());
         assertTrue(flags.isMotorway());
         assertTrue(flags.isForward());
         assertTrue(flags.isBackward());
         assertTrue(iter.next());
-        assertEquals(4, iter.node());
-        assertEquals(Arrays.asList(3), Helper.toList(iter.pillarNodes()));
+        assertEquals(internalId3, iter.node());
+        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.pillarNodes());
         flags = new CarStreetType(iter.flags());
         assertTrue(flags.isService());
         assertTrue(flags.isForward());
         assertTrue(flags.isBackward());
 
         // get third added location id=30
-        iter = graph.getOutgoing(2);
+        iter = graph.getOutgoing(internalId2);
         assertTrue(iter.next());
-        assertEquals(1, iter.node());
+        assertEquals(internalIdMain, iter.node());
         assertEquals(93146.888, iter.distance(), 1);
 
-        assertEquals(9.43, graph.getLongitude(reader.getLocation2IDIndex().findID(51.25, 9.43)), 1e-3);
+        assertEquals(9.431, graph.getLongitude(reader.getLocation2IDIndex().findID(51.25, 9.43)), 1e-3);
         assertEquals(9.4, graph.getLongitude(reader.getLocation2IDIndex().findID(51.2, 9.4)), 1e-3);
         assertEquals(10, graph.getLongitude(reader.getLocation2IDIndex().findID(49, 10)), 1e-3);
         assertEquals(51.249, graph.getLatitude(reader.getLocation2IDIndex().findID(51.2492152, 9.4317166)), 1e-3);
@@ -126,27 +128,33 @@ public class OSMReaderTest {
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.flush();
         Graph graph = reader.getGraph();
-         assertEquals(4, graph.getNodes());
-        assertEquals(1, GraphUtility.count(graph.getOutgoing(0)));
-        assertEquals(3, GraphUtility.count(graph.getOutgoing(1)));
-        assertEquals(1, GraphUtility.count(graph.getOutgoing(2)));
+        assertEquals(4, graph.getNodes());
+        int internalId1 = AbstractGraphTester.getIdOf(graph, 51.2492152); // 10
+        int internalIdMain = AbstractGraphTester.getIdOf(graph, 52); // 20
+        int internalId2 = AbstractGraphTester.getIdOf(graph, 51.2);  // 30
+        int internalId4 = AbstractGraphTester.getIdOf(graph, 51.25); // 40
 
-        EdgeIterator iter = graph.getOutgoing(1);
+        assertEquals(Arrays.asList(internalIdMain), GraphUtility.neighbors(graph.getOutgoing(internalId1)));
+        assertEquals(3, GraphUtility.count(graph.getOutgoing(internalIdMain)));
+        assertEquals(Arrays.asList(internalIdMain), GraphUtility.neighbors(graph.getOutgoing(internalId2)));
+
+        EdgeIterator iter = graph.getOutgoing(internalIdMain);
         assertTrue(iter.next());
-        assertEquals(0, iter.node());
+        assertEquals(internalId1, iter.node());
         assertEquals(88643, iter.distance(), 1);
         assertTrue(iter.next());
-        assertEquals(2, iter.node());
+        assertEquals(internalId2, iter.node());
         assertEquals(93146.888, iter.distance(), 1);
         assertTrue(iter.next());
-        assertEquals(3, iter.node());
-        assertEquals(Arrays.asList(), Helper.toList(iter.pillarNodes()));
+        assertEquals(internalId4, iter.node());
+        AbstractGraphTester.assertPList(Helper.createPointList(), iter.pillarNodes());
 
         // get third added location => 2
-        iter = graph.getOutgoing(2);
+        iter = graph.getOutgoing(internalId2);
         assertTrue(iter.next());
-        assertEquals(1, iter.node());
+        assertEquals(internalIdMain, iter.node());
         assertEquals(93146.888, iter.distance(), 1);
+        assertFalse(iter.next());
     }
 
     @Test public void testOneWay() {
@@ -155,16 +163,20 @@ public class OSMReaderTest {
         reader.flush();
         Graph graph = reader.getGraph();
 
-        assertEquals(1, GraphUtility.count(graph.getOutgoing(0)));
-        assertEquals(1, GraphUtility.count(graph.getOutgoing(1)));
-        assertEquals(0, GraphUtility.count(graph.getOutgoing(2)));
+        int internalIdMain = AbstractGraphTester.getIdOf(graph, 52);
+        int internalId1 = AbstractGraphTester.getIdOf(graph, 51.2492152);
+        int internalId2 = AbstractGraphTester.getIdOf(graph, 51.2);
+        assertEquals(1, GraphUtility.count(graph.getOutgoing(internalId1)));
+        assertEquals(1, GraphUtility.count(graph.getOutgoing(internalIdMain)));
+        assertEquals(0, GraphUtility.count(graph.getOutgoing(internalId2)));
 
-        EdgeIterator iter = graph.getOutgoing(1);
+        EdgeIterator iter = graph.getOutgoing(internalIdMain);
         assertTrue(iter.next());
-        assertEquals(2, iter.node());
+        assertEquals(internalId2, iter.node());
 
-        iter = graph.getEdges(1);
+        iter = graph.getEdges(internalIdMain);
         assertTrue(iter.next());
+        assertEquals(internalId1, iter.node());
         CarStreetType flags = new CarStreetType(iter.flags());
         assertTrue(flags.isMotorway());
         assertFalse(flags.isForward());

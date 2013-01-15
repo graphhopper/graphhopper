@@ -71,7 +71,7 @@ public class DijkstraTwoDriversTest {
 
         Path pA = new DijkstraBidirectionRef(g).calcPath(12, 36);
         Path pB = new DijkstraBidirectionRef(g).calcPath(30, 15);
-        TIntSet set = pA.and(pB);
+        TIntSet set = pA.calculateIdenticalNodes(pB);
         assertTrue(set.toString(), set.contains(d.getMeetingPoint()));
         assertEquals(pA.weight(), d.getBestForA().weight(), 1e-5);
         assertEquals(pB.weight(), d.getBestForB().weight(), 1e-5);

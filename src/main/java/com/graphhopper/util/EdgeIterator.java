@@ -15,11 +15,9 @@
  */
 package com.graphhopper.util;
 
-import gnu.trove.list.TIntList;
-
 /**
- * Iterates through all edges of one node. Avoids object creation in-between via direct access
- * methods.
+ * Iterates through all edges of one node. Avoids object creation in-between via
+ * direct access methods.
  *
  * Usage:
  * <pre>
@@ -43,15 +41,17 @@ public interface EdgeIterator {
     boolean next();
 
     /**
-     * @return the edge id of the current edge. Although the current implementation uses an index
-     * starting from 1, do not make any assumptions about it.
+     * @return the edge id of the current edge. Although the current
+     * implementation uses an index starting from 1, do not make any assumptions
+     * about it.
      */
     int edge();
 
     /**
-     * If you retrieve edges via "edgeIterator = graph.getEdges(nodeId)" then the returned node is
-     * identical to nodeId. Often only used instead of nodeId for convenience reasons. Do not
-     * confuse this with <i>source</i> node of a directed edge.
+     * If you retrieve edges via "edgeIterator = graph.getEdges(nodeId)" then
+     * the returned node is identical to nodeId. Often only used instead of
+     * nodeId for convenience reasons. Do not confuse this with <i>source</i>
+     * node of a directed edge.
      *
      * @return the requested node itself
      * @see EdgeIterator
@@ -59,23 +59,26 @@ public interface EdgeIterator {
     int baseNode();
 
     /**
-     * @return the node id of the adjacent node (to baseNode) for the current edge.
+     * @return the node id of the adjacent node (to baseNode) for the current
+     * edge.
      * @see EdgeIterator
      */
     int node();
 
     /**
-     * For OSM a way is often a curve not just a straight line and so nodes between tower nodes are
-     * necessary to have a more exact geometry (for drawing). Those nodes are called pillar nodes
+     * For OSM a way is often a curve not just a straight line and so nodes
+     * between tower nodes are necessary to have a more exact geometry (for
+     * drawing). Those nodes are called pillar nodes
      *
      * @return pillar nodes
      */
-    TIntList pillarNodes();
+    PointList pillarNodes();
 
     /**
-     * @param pillarNodes list of nodes between the baseNode and the current adjacent node.
+     * @param pillarNodes list of nodes between the baseNode and the current
+     * adjacent node.
      */
-    void pillarNodes(TIntList pillarNodes);
+    void pillarNodes(PointList list);
 
     /**
      * @return the distance of the current edge edge
@@ -93,8 +96,15 @@ public interface EdgeIterator {
      */
     boolean isEmpty();
     /**
-     * integer value to indicate if an edge is valid or not which then would be initialized with
-     * this value
+     * integer value to indicate if an edge is valid or not which then would be
+     * initialized with this value
      */
     public static final int NO_EDGE = -1;
+
+    static class Edge {
+
+        public static boolean isValid(int edgeId) {
+            return edgeId > NO_EDGE;
+        }
+    }
 }

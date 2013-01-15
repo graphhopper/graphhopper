@@ -20,7 +20,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeWrapper;
 
 /**
- * This class creates a Path from two Edge's resulting from a BidirectionalDijkstra
+ * This class creates a Path from two Edge's resulting from a
+ * BidirectionalDijkstra
  *
  * @author Peter Karich,
  */
@@ -29,16 +30,14 @@ public class PathBidir extends Path {
     public boolean switchWrapper = false;
     public int fromRef = -1;
     public int toRef = -1;
-    private EdgeWrapper edgeFrom;
-    private EdgeWrapper edgeTo;
-    protected Graph g;
+    private EdgeWrapper edgeWFrom;
+    private EdgeWrapper edgeWTo;
 
-    public PathBidir(Graph g, EdgeWrapper edgesFrom, EdgeWrapper edgesTo,
-            WeightCalculation weightCalculation) {
+    public PathBidir(Graph g, WeightCalculation weightCalculation,
+            EdgeWrapper edgesFrom, EdgeWrapper edgesTo) {
         super(g, weightCalculation);
-        this.g = g;
-        this.edgeFrom = edgesFrom;
-        this.edgeTo = edgesTo;
+        this.edgeWFrom = edgesFrom;
+        this.edgeWTo = edgesTo;
     }
 
     /**
@@ -56,36 +55,34 @@ public class PathBidir extends Path {
             toRef = tmp;
         }
 
-        int nodeFrom = edgeFrom.getNode(fromRef);
-        int nodeTo = edgeTo.getNode(toRef);
+        int nodeFrom = edgeWFrom.getNode(fromRef);
+        int nodeTo = edgeWTo.getNode(toRef);
         if (nodeFrom != nodeTo)
             throw new IllegalStateException("Locations of 'to' and 'from' DistEntries has to be the same." + toString());
 
         int currRef = fromRef;
         while (currRef > 0) {
-            add(nodeFrom);
-            int edgeId = edgeFrom.getEdgeId(currRef);
+            int edgeId = edgeWFrom.getEdgeId(currRef);
             if (edgeId < 0)
                 break;
-            calcWeight(g.getEdgeProps(edgeId, nodeFrom));
-            currRef = edgeFrom.getParent(currRef);
-            nodeFrom = edgeFrom.getNode(currRef);
+            processWeight(edgeId, nodeFrom);
+            currRef = edgeWFrom.getParent(currRef);
+            nodeFrom = edgeWFrom.getNode(currRef);
         }
-        addFrom(nodeFrom);
+        setFromNode(nodeFrom);
         reverseOrder();
 
         // skip node of toRef (equal to fromRef)
         currRef = toRef;
         while (currRef > 0) {
-            int edgeId = edgeTo.getEdgeId(currRef);
+            int edgeId = edgeWTo.getEdgeId(currRef);
             if (edgeId < 0)
                 break;
-            calcWeight(g.getEdgeProps(edgeId, nodeTo));
-            int tmpRef = edgeTo.getParent(currRef);
-            nodeTo = edgeTo.getNode(tmpRef);
-            add(nodeTo);
+            processWeight(edgeId, nodeTo);
+            int tmpRef = edgeWTo.getParent(currRef);
+            nodeTo = edgeWTo.getNode(tmpRef);            
             currRef = tmpRef;
-        }
+        }        
         return found(true);
     }
 

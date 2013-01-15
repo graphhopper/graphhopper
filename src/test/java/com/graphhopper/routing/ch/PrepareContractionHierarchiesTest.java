@@ -31,8 +31,8 @@ import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.Helper;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import static org.junit.Assert.*;
@@ -148,7 +148,7 @@ public class PrepareContractionHierarchiesTest {
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.clear().calcPath(4, 2);
         assertEquals(3, p.distance(), 1e-6);
-        assertEquals(Arrays.asList(4, 3, 5, 2), p.toNodeList());
+        assertEquals(Helper.createTList(4, 3, 5, 2), p.nodes());
     }
 
     @Test
@@ -164,7 +164,7 @@ public class PrepareContractionHierarchiesTest {
 
         Path p = algo.clear().calcPath(0, 10);
         assertEquals(10, p.distance(), 1e-6);
-        assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.toNodeList());
+        assertEquals(Helper.createTList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.nodes());
     }
 
     void initRoundaboutGraph(Graph g) {
@@ -229,7 +229,7 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(old + 19, GraphUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.clear().calcPath(4, 7);
-        assertEquals(Arrays.asList(4, 5, 6, 7), p.toNodeList());
+        assertEquals(Helper.createTList(4, 5, 6, 7), p.nodes());
     }
 
     @Test
@@ -304,7 +304,7 @@ public class PrepareContractionHierarchiesTest {
         RoutingAlgorithm algo = prepare.setType(calc).createAlgo();
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.distance(), 1e-5);
-        assertEquals(Arrays.asList(10, 0, 1, 2, 3, 4, 5, 6), p.toNodeList());
+        assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.nodes());
     }
 
     @Test
@@ -316,6 +316,6 @@ public class PrepareContractionHierarchiesTest {
         RoutingAlgorithm algo = prepare.setType(calc).createAlgo();
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.distance(), 1e-1);
-        assertEquals(Arrays.asList(10, 0, 1, 2, 3, 4, 5, 6), p.toNodeList());
+        assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.nodes());
     }
 }

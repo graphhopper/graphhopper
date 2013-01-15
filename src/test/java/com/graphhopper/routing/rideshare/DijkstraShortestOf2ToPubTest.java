@@ -97,7 +97,7 @@ public class DijkstraShortestOf2ToPubTest {
             }
         }
 
-        assertEquals(bestManualPathFrom.nodes() + bestManualPathTo.nodes() - 1, path.nodes());
+        assertEquals(bestManualPathFrom.nodes().size() + bestManualPathTo.nodes().size() - 1, path.nodes().size());
         assertEquals(bestManualPathFrom.weight() + bestManualPathTo.weight(), path.weight(), 1e-3);
     }
 }

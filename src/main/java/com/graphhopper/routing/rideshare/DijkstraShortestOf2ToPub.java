@@ -25,24 +25,28 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
+import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 /**
- * Public transport represents a collection of Locations. Then there are two points P1 and P1 and it
- * is the aim to find the shortest path from P1 to one of the public transport points (M) and to P2.
+ * Public transport represents a collection of Locations. Then there are two
+ * points P1 and P1 and it is the aim to find the shortest path from P1 to one
+ * of the public transport points (M) and further to P2. So the point M needs to
+ * be determined.
  *
- * <br/> Usage: A driver can carry the passenger from P1 to a public transport point (M) and going
- * back to his own destination P2 and comparing this with the detour of taking the passenger
- * directly to his destination (and then going back to P2).
+ * <br/> Usage: A driver can carry the passenger from P1 to a public transport
+ * point (M) and going back to his own destination P2 and comparing this with
+ * the detour of taking the passenger directly to his destination (and then
+ * going back to P2).
  *
  * @author Peter Karich,
  */
 public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
 
-    private TIntArrayList pubTransport = new TIntArrayList();
+    private TIntList pubTransport = new TIntArrayList();
     private int fromP1;
     private int toP2;
     private EdgeEntry currTo;
@@ -87,7 +91,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
-        EdgeEntry entryTo = new EdgeEntry(-1, toP2, 0);
+        EdgeEntry entryTo = new EdgeEntry(EdgeIterator.NO_EDGE, toP2, 0);
         currTo = entryTo;
         MyBitSet visitedTo = new MyBitSetImpl(graph.getNodes());
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
@@ -100,10 +104,10 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         if (pubTransport.isEmpty())
             throw new IllegalStateException("You'll need at least one starting point. Set it via addPubTransportPoint");
 
-        currFrom = new EdgeEntry(-1, fromP1, 0);
+        currFrom = new EdgeEntry(EdgeIterator.NO_EDGE, fromP1, 0);
         // in the birectional case we maintain the shortest path via:
         // currFrom.distance + currTo.distance >= shortest.distance
-        // Now we simply need to check bevor updating if the newly discovered point is from pub tranport
+        // Now we simply need to check before updating if the newly discovered point is from pub tranport
         while (true) {
             if (currFrom != null) {
                 shortestDistMapOther = shortestDistMapTo;
@@ -130,21 +134,16 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
                 throw new IllegalStateException("Shortest Path not found? " + fromP1 + " " + toP2);
         }
 
-        Path p = shortest.extract();
-        if (!pubTransport.contains(p.getFromNode()))
-            p.reverseOrder();
-
+        Path p = shortest.extract();        
+        // TODO if path directly from P1 to P2 is shorter
         return p;
     }
 
-    // this won't work anymore as the dijkstra heaps are independent and can take a completely 
+    // The normal checkFinishCondition won't work anymore as the dijkstra heaps are independent and can take a completely 
     // different returning point into account (not necessarily the shortest).
-    // example: P1 to M is relativ long, also P2 to M - in sum they can be longer than the shortest.
+    // example: P1 to M is long, also P2 to M - in sum they can be longer than the shortest.
     // But even now it could be that there is an undiscovered M' from P1 which results in a very short 
     // (and already discovered) back path M'-P2. See test testCalculateShortestPathWithSpecialFinishCondition
-//    public boolean checkFinishCondition() {
-//        return currFrom.distance + currTo.distance >= shortest.distance;
-//    }
     public boolean checkFinishCondition() {
         if (currFrom == null) {
             if (currTo == null)
@@ -175,8 +174,6 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
             } else if (de.weight > tmp) {
-                // use fibonacci? see http://stackoverflow.com/q/6273833/194609
-                // in fibonacci heaps there is decreaseKey but it has a lot more overhead per entry
                 prioQueue.remove(de);
                 de.edge = iter.edge();
                 de.weight = tmp;
@@ -196,9 +193,9 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
                 // update μ
                 double newShortest = shortestDE.weight + entryOther.weight;
                 if (newShortest < shortest.weight()) {
-                    shortest.switchWrapper = shortestDistMapFrom == shortestDistMapOther;
-                    shortest.edgeFrom = shortestDE;
-                    shortest.edgeTo = entryOther;
+                    shortest.switchToFrom(shortestDistMapFrom == shortestDistMapOther);
+                    shortest.edgeEntry(shortestDE);
+                    shortest.edgeEntryTo(entryOther);
                     shortest.weight(newShortest);
                 }
             }

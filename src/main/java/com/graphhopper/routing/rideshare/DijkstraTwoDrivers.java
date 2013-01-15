@@ -149,12 +149,12 @@ public class DijkstraTwoDrivers {
                 overallDistance = newShortest;
                 meetingPoint = currLoc;
 
-                getOtherDriver().shortest.edgeFrom = fromOther;
-                getOtherDriver().shortest.edgeTo = toOther;
+                getOtherDriver().shortest.edgeEntry(fromOther);
+                getOtherDriver().shortest.edgeEntryTo(toOther);
                 getOtherDriver().shortest.weight(shortestOther);
 
-                shortest.edgeFrom = shortestDE;
-                shortest.edgeTo = entryOther;
+                shortest.edgeEntry(shortestDE);
+                shortest.edgeEntryTo(entryOther);
                 shortest.weight(shortestCurrent);
             }
         }

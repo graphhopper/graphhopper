@@ -47,10 +47,10 @@ public class GraphHopperAPITest {
         GHResponse ph = instance.route(new GHRequest(42, 10.4, 42, 10));
         assertTrue(ph.found());
         assertEquals(80, ph.distance(), 1e-6);
-        assertEquals(42, ph.points().get(0).lat, 1e-5);
-        assertEquals(10.4, ph.points().get(0).lon, 1e-5);
-        assertEquals(41.9, ph.points().get(1).lat, 1e-5);
-        assertEquals(10.2, ph.points().get(1).lon, 1e-5);
+        assertEquals(42, ph.points().latitude(0), 1e-5);
+        assertEquals(10.4, ph.points().longitude(0), 1e-5);
+        assertEquals(41.9, ph.points().latitude(1), 1e-5);
+        assertEquals(10.2, ph.points().longitude(1), 1e-5);
         assertEquals(3, ph.points().size());
     }
 

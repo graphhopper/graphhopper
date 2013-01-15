@@ -47,13 +47,12 @@ public class RoutingAlgorithmIntegrationTest {
 
     List<OneRun> createMonacoInstances() {
         List<OneRun> list = new ArrayList<OneRun>();
-
         // it is not possible to cross the place du palais and there is a oneway directive:
         // list.add(new OneRun(43.727687, 7.418737, 43.730729, 7.421288, 1.532, 88));
         // but the other way (where no crossing is necessary) is possible:
-        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2536, 107));
+        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2542, 107));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 179));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2371, 128));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2365, 126));
         return list;
     }
 
@@ -66,9 +65,9 @@ public class RoutingAlgorithmIntegrationTest {
     @Test
     public void testAndorra() {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 24063, 991));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 21265, 922));
         // if id2location is created a bit different: list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 24.101, 992));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16452, 603));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16256, 604));
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list);
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
@@ -115,7 +114,8 @@ public class RoutingAlgorithmIntegrationTest {
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
 
-        // testing if algorithms are independent (should be. so test only two algorithms)
+        // testing if algorithms are independent. should be. so test only two algorithms. 
+        // also the preparing is too costly to be called for every thread
         int algosLength = 2;
         for (int no = 0; no < MAX; no++) {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {

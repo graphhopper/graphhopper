@@ -377,7 +377,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             boolean updatedInGraph = false;
             EdgeSkipIterator iter = g.getOutgoing(sc.from);
             while (iter.next()) {
-                if (Path4CH.isValidEdge(iter.skippedEdge())
+                if (EdgeIterator.Edge.isValid(iter.skippedEdge())
                         && iter.node() == sc.to
                         && CarStreetType.canBeOverwritten(iter.flags(), sc.flags)
                         && iter.distance() > sc.distance) {

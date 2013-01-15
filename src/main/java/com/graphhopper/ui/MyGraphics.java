@@ -99,15 +99,6 @@ public class MyGraphics {
     public void plot(Graphics2D g2, double lat, double lon, int width) {
         double x = getX(lon);
         double y = getY(lat);
-//        if (y < minY)
-//            minY = y;
-//        else if (y > maxY)
-//            maxY = y;
-//        if (x < minX)
-//            minX = x;
-//        else if (x > maxX)
-//            maxX = x;
-
         g2.fillOval((int) x, (int) y, width, width);
     }
     private Logger logger = LoggerFactory.getLogger(getClass());

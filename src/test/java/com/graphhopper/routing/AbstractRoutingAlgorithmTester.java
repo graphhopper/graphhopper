@@ -24,8 +24,10 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
+import gnu.trove.list.TIntList;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -57,7 +59,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         Graph graph = createTestGraph();
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 7);
         assertEquals(p.toString(), 13, p.weight(), 1e-4);
-        assertEquals(p.toString(), 5, p.nodes());
+        assertEquals(p.toString(), 5, p.nodes().size());
     }
 
     // see calc-fastest-graph.svg
@@ -68,8 +70,8 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p1.toString(), 24000, p1.weight(), 1e-6);
         assertEquals(p1.toString(), 24000, p1.distance(), 1e-6);
         assertEquals(p1.toString(), 8640, p1.time());
-        assertEquals(p1.toString(), 5, p1.nodes());
-        assertEquals(Arrays.asList(0, 1, 5, 2, 3), p1.toNodeList());
+        assertEquals(p1.toString(), 5, p1.nodes().size());
+        assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.nodes());
 
         Graph graphFastest = createGraph(20);
         initFastVsShort(graphFastest);
@@ -77,7 +79,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p2.toString(), 3100, p2.weight(), 1e-6);
         assertEquals(p2.toString(), 31000, p2.distance(), 1e-6);
         assertEquals(p2.toString(), 5580, p2.time());
-        assertEquals(p2.toString(), 6, p2.nodes());
+        assertEquals(p2.toString(), 6, p2.nodes().size());
     }
 
     void initFastVsShort(Graph graph) {
@@ -139,20 +141,20 @@ public abstract class AbstractRoutingAlgorithmTester {
         Graph graph = createWikipediaTestGraph();
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 4);
         assertEquals(p.toString(), 20, p.weight(), 1e-4);
-        assertEquals(p.toString(), 4, p.nodes());
+        assertEquals(p.toString(), 4, p.nodes().size());
     }
 
     @Test public void testCalcIfNoWay() {
         Graph graph = createTestGraph();
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 0);
         assertEquals(p.toString(), 0, p.weight(), 1e-4);
-        assertEquals(p.toString(), 1, p.nodes());
+        assertEquals(p.toString(), 0, p.nodes().size());
     }
 
     @Test public void testCalcIf1EdgeAway() {
         Graph graph = createTestGraph();
         Path p = prepareGraph(graph).createAlgo().calcPath(1, 2);
-        assertEquals(Arrays.asList(1, 2), p.toNodeList());
+        assertEquals(Helper.createTList(1, 2), p.nodes());
         assertEquals(p.toString(), 2, p.weight(), 1e-4);
     }
 
@@ -189,27 +191,21 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(8, 6, 20, true);
     }
 
-    public static void initBiGraphPillarNodes(Graph graph) {
-        graph.edge(6, 3, 20 + 20, true).pillarNodes(Helper.createTList(8));
-        graph.edge(6, 3, 5 + 5 + 100 + 1 + 1, true).pillarNodes(Helper.createTList(7, 0, 1, 2));
-        graph.edge(6, 3, 25 + 25 + 1, true).pillarNodes(Helper.createTList(5, 4));
-    }
-
     @Test public void testBidirectional() {
         Graph graph = createGraph(6);
         initBiGraph(graph);
 
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-4);
-        assertEquals(p.toString(), 6, p.nodes());
-        assertEquals(Arrays.asList(0, 7, 6, 8, 3, 4), p.toNodeList());
+        assertEquals(p.toString(), 6, p.nodes().size());
+        assertEquals(Helper.createTList(0, 7, 6, 8, 3, 4), p.nodes());
 
         p = prepareGraph(graph).createAlgo().calcPath(1, 2);
         assertEquals(p.toString(), 1, p.weight(), 1e-4);
-        assertEquals(p.toString(), 2, p.nodes());
-        assertEquals(Arrays.asList(1, 2), p.toNodeList());
+        assertEquals(p.toString(), 2, p.nodes().size());
+        assertEquals(Helper.createTList(1, 2), p.nodes());
     }
-    
+
     // 1-2-3-4-5
     // |     / |
     // |    9  |
@@ -231,19 +227,19 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 4);
         assertEquals(p.toString(), 40, p.weight(), 1e-4);
-        assertEquals(p.toString(), 5, p.nodes());
-        assertEquals(Arrays.asList(0, 7, 6, 5, 4), p.toNodeList());
+        assertEquals(p.toString(), 5, p.nodes().size());
+        assertEquals(Helper.createTList(0, 7, 6, 5, 4), p.nodes());
     }
 
     @Test
     public void testRekeyBugOfIntBinHeap() {
         // using DijkstraSimple + IntBinHeap then rekey loops endlessly
         Path p = prepareGraph(getMatrixGraph()).createAlgo().calcPath(36, 91);
-        assertEquals(12, p.nodes());
+        assertEquals(12, p.nodes().size());
 
-        List<Integer> list = p.toNodeList();
-        if (!Arrays.asList(36, 46, 56, 66, 76, 86, 85, 84, 94, 93, 92, 91).equals(list)
-                && !Arrays.asList(36, 46, 56, 66, 76, 86, 85, 84, 83, 82, 92, 91).equals(list))
+        TIntList list = p.nodes();
+        if (!Helper.createTList(36, 46, 56, 66, 76, 86, 85, 84, 94, 93, 92, 91).equals(list)
+                && !Helper.createTList(36, 46, 56, 66, 76, 86, 85, 84, 83, 82, 92, 91).equals(list))
             assertTrue("wrong locations: " + list.toString(), false);
         assertEquals(66f, p.weight(), 1e-3);
     }
@@ -251,8 +247,8 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testBug1() {
         Path p = prepareGraph(getMatrixGraph()).createAlgo().calcPath(34, 36);
-        assertEquals(Arrays.asList(34, 35, 36), p.toNodeList());
-        assertEquals(3, p.nodes());
+        assertEquals(Helper.createTList(34, 35, 36), p.nodes());
+        assertEquals(3, p.nodes().size());
         assertEquals(17, p.weight(), 1e-5);
     }
 
@@ -260,7 +256,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     public void testCorrectWeight() {
         Path p = prepareGraph(getMatrixGraph()).createAlgo().calcPath(45, 72);
         assertEquals(38f, p.weight(), 1e-3);
-        assertEquals(Arrays.asList(45, 44, 54, 64, 74, 73, 72), p.toNodeList());
+        assertEquals(Helper.createTList(45, 44, 54, 64, 74, 73, 72), p.nodes());
     }
 
     @Test
@@ -270,7 +266,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(1, 2, 1, false);
 
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 2);
-        assertEquals(p.toString(), 3, p.nodes());
+        assertEquals(p.toString(), 3, p.nodes().size());
     }
 
     @Test
@@ -284,9 +280,9 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(4, 2, 1, false);
 
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 2);
-        assertEquals(Arrays.asList(0, 1, 2), p.toNodeList());
+        assertEquals(Helper.createTList(0, 1, 2), p.nodes());
         assertEquals(p.toString(), 5.99, p.weight(), 1e-4);
-        assertEquals(p.toString(), 3, p.nodes());
+        assertEquals(p.toString(), 3, p.nodes().size());
     }
 
     @Test
@@ -299,7 +295,40 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(3, 1, 4, true);
 
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 3);
-        assertEquals(Arrays.asList(0, 1, 2, 3), p.toNodeList());
+        assertEquals(Helper.createTList(0, 1, 2, 3), p.nodes());
+    }
+
+    // a-b-0-c-1
+    // |   |  _/\
+    // |  /  /  |
+    // d-2--3-e-4
+    @Test
+    public void testWithCoordinates() {
+        Graph graph = createGraph(10);
+        graph.setNode(0, 0, 2);
+        graph.setNode(1, 0, 3.5);
+        graph.setNode(2, 1, 1);
+        graph.setNode(3, 1.5, 2.5);
+        graph.setNode(4, 0.5, 4.5);
+
+        graph.edge(0, 1, 2, true).pillarNodes(Helper.createPointList(0, 3));
+        graph.edge(2, 3, 2, true);
+        graph.edge(3, 4, 2, true).pillarNodes(Helper.createPointList(1, 3.5));
+
+        graph.edge(0, 2, 0.8, true).pillarNodes(Helper.createPointList(0, 1.6, 0, 0, 1, 0));
+        graph.edge(0, 2, 1.2, true);
+        graph.edge(1, 3, 1.3, true);
+        graph.edge(1, 4, 1, true);
+
+        Path p = prepareGraph(graph).createAlgo().calcPath(4, 0);        
+        assertEquals(Helper.createTList(4, 1, 0), p.nodes());    
+        assertEquals(Helper.createPointList(0.5, 4.5, 0, 3.5, 0, 3, 0, 2), p.points());
+        assertEquals(291110, p.points().calculateDistance(new DistanceCalc()), 1);
+
+        p = prepareGraph(graph).createAlgo().calcPath(2, 1);
+        assertEquals(Helper.createTList(2, 0, 1), p.nodes());
+        assertEquals(Helper.createPointList(1, 1, 1, 0, 0, 0, 0, 1.6, 0, 2, 0, 3, 0, 3.5), p.points());
+        assertEquals(611555, p.points().calculateDistance(new DistanceCalc()), 1);
     }
 
     @Test public void testPerformance() throws IOException {
@@ -321,7 +350,8 @@ public abstract class AbstractRoutingAlgorithmTester {
             if (i >= noJvmWarming)
                 sw.start();
             Path p = d.calcPath(index1, index2);
-            if (i >= noJvmWarming && p.nodes() > -100)
+            // avoid jvm optimization => call p.distance
+            if (i >= noJvmWarming && p.distance() > -1)
                 sw.stop();
 
             // System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.nodes());

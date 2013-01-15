@@ -18,6 +18,7 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.DijkstraBidirection;
 import com.graphhopper.routing.Path;
 import com.graphhopper.util.DistanceCalc3D;
+import com.graphhopper.util.Helper;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -47,7 +48,7 @@ public class GraphStorage3DTest {
         edge(g, dist, 1, 4);
 
         Path p = new DijkstraBidirection(g).calcPath(0, 1);
-        assertEquals(3, p.node(1));
+        assertEquals(Helper.createTList(0, 3, 1), p.nodes());
         assertEquals(100, p.distance(), .1);
     }
 

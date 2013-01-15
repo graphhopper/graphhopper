@@ -17,43 +17,66 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.PointList;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
- * edge determination faster and less complex as there could be several edges (u,v) especially for
- * graphs with shortcuts.
+ * Stores the nodes for the found path of an algorithm. It additionally needs
+ * the edgeIds to make edge determination faster and less complex as there could
+ * be several edges (u,v) especially for graphs with shortcuts.
  *
  * @author Peter Karich,
  */
 public class Path {
 
     protected final static double INIT_VALUE = Double.MAX_VALUE;
-    protected Graph g;
+    protected Graph graph;
     protected WeightCalculation weightCalculation;
     protected double weight;
     protected double distance;
     protected long time;
     protected boolean found;
+    // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverse = true;
-    private TIntArrayList nodeIds = new TIntArrayList();
+    protected EdgeEntry edgeEntry;
+    private int fromNode = EdgeIterator.NO_EDGE;
+    private TIntList edgeIds = new TIntArrayList();
+    private PointList cachedPoints;
+    private TIntList cachedNodes;
 
     Path() {
         this(null, ShortestCarCalc.DEFAULT);
     }
 
     public Path(Graph graph, WeightCalculation weightCalculation) {
+        this.graph = graph;
         this.weightCalculation = weightCalculation;
-        this.g = graph;
+    }
+
+    public Path edgeEntry(EdgeEntry edgeEntry) {
+        this.edgeEntry = edgeEntry;
+        return this;
+    }
+
+    protected void addEdge(int edge) {
+        edgeIds.add(edge);
+    }
+
+    public void setFound(boolean found) {
+        this.found = found;
+    }
+
+    public int getFromNode() {
+        if (!EdgeIterator.Edge.isValid(fromNode))
+            throw new IllegalStateException("Call extract() before retrieving fromNode");
+        return fromNode;
     }
 
     public boolean found() {
@@ -65,33 +88,9 @@ public class Path {
         return this;
     }
 
-    public void addFrom(int node) {
-        add(node);
-    }
-
-    public void add(int node) {
-        nodeIds.add(node);
-    }
-
-    public boolean contains(int node) {
-        return nodeIds.contains(node);
-    }
-
     public void reverseOrder() {
         reverse = !reverse;
-        nodeIds.reverse();
-    }
-
-    public int getFromNode() {
-        return nodeIds.get(0);
-    }
-
-    public int nodes() {
-        return nodeIds.size();
-    }
-
-    public int node(int index) {
-        return nodeIds.get(index);
+        edgeIds.reverse();
     }
 
     /**
@@ -108,6 +107,9 @@ public class Path {
         return time;
     }
 
+    /**
+     * The final weight which is the sum from the weights of the used edges.
+     */
     public double weight() {
         return weight;
     }
@@ -117,40 +119,44 @@ public class Path {
     }
 
     @Override public String toString() {
-        return "weight:" + weight() + ", nodes:" + nodeIds.size();
+        return "weight:" + weight() + ", edges:" + edgeIds.size();
     }
 
     public String toDetailsString() {
         String str = "";
-        for (int i = 0; i < nodes(); i++) {
+        TIntList nodes = nodes();
+        for (int i = 0; i < nodes.size(); i++) {
             if (i > 0)
                 str += "->";
 
-            str += node(i);
+            str += nodes.get(i);
         }
         return toString() + ", " + str;
     }
 
-    public TIntSet and(Path p2) {
-        TIntHashSet thisSet = new TIntHashSet();
-        TIntHashSet retSet = new TIntHashSet();
-        for (int i = 0; i < nodes(); i++) {
-            thisSet.add(node(i));
+    /**
+     * Extract path from shortest-path-tree.
+     */
+    public Path extract() {
+        EdgeEntry goalEdge = edgeEntry;
+        while (EdgeIterator.Edge.isValid(goalEdge.edge)) {
+            processWeight(goalEdge.edge, goalEdge.endNode);
+            goalEdge = goalEdge.parent;
         }
 
-        for (int i = 0; i < p2.nodes(); i++) {
-            if (thisSet.contains(p2.node(i)))
-                retSet.add(p2.node(i));
-        }
-        return retSet;
+        setFromNode(goalEdge.endNode);
+        reverseOrder();
+        return found(true);
     }
 
-    public Path extract() {
-        return this;
+    protected void processWeight(int tmpEdge, int endNode) {
+        calcWeight(graph.getEdgeProps(tmpEdge, endNode));
+        addEdge(tmpEdge);
     }
 
     /**
-     * This method calculates not only the weight but also the distance in kilometer.
+     * This method calculates not only the weight but also the distance in
+     * kilometer.
      */
     public void calcWeight(EdgeIterator iter) {
         double dist = iter.distance();
@@ -158,53 +164,84 @@ public class Path {
         weight += weightCalculation.getWeight(dist, fl);
         distance += dist;
         time += weightCalculation.getTime(dist, fl);
-        handleSkippedEdge(iter);
     }
 
     /**
-     * Unpack stored pillar nodes between tower nodes. Differences to Path4Shortcuts:
-     *
-     * 1. the shortcut is stored in a different manner as pillar nodes
-     *
-     * 2. simpler (no LevelGraph is necessary, no bidirectional algorithm is necessary, no edge
-     * search is necessary ...)
+     * @return the node indices of the tower nodes in this path.
      */
-    protected void handleSkippedEdge(EdgeIterator iter) {
-        if (iter.pillarNodes().isEmpty())
-            return;
-        TIntList pillarNodes = iter.pillarNodes();
-        int size = pillarNodes.size();
-        if (reverse)
-            for (int i = size - 1; i >= 0; i--) {
-                add(pillarNodes.get(i));
-            }
-        else
-            for (int i = 0; i < size; i++) {
-                add(pillarNodes.get(i));
-            }
+    public TIntList nodes() {
+        if (cachedNodes == null)
+            calcNodes();
+        return cachedNodes;
     }
 
-    public List<Integer> toNodeList() {
-        List<Integer> list = new ArrayList<Integer>();
-        int len = nodes();
+    private TIntList calcNodes() {
+        cachedNodes = new TIntArrayList(edgeIds.size() + 1);
+        if (edgeIds.isEmpty())
+            return cachedNodes;
+
+        int tmpNode = getFromNode();
+        cachedNodes.add(tmpNode);
+        int len = edgeIds.size();
         for (int i = 0; i < len; i++) {
-            list.add(node(i));
+            EdgeIterator iter = graph.getEdgeProps(edgeIds.get(i), tmpNode);
+            cachedNodes.add(tmpNode = iter.baseNode());
         }
-        return list;
+        return cachedNodes;
+    }
+
+    public PointList points() {
+        if (cachedPoints == null)
+            calcPoints();
+        return cachedPoints;
+    }
+
+    private PointList calcPoints() {
+        cachedPoints = new PointList(edgeIds.size() + 1);
+        int tmpNode = getFromNode();
+        cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
+        int len = edgeIds.size();
+        for (int i = 0; i < len; i++) {
+            int edgeId = edgeIds.get(i);
+            EdgeIterator iter = graph.getEdgeProps(edgeId, tmpNode);
+            PointList pl = iter.pillarNodes();            
+            pl.reverse();
+            for (int j = 0; j < pl.size(); j++) {
+                cachedPoints.add(pl.latitude(j), pl.longitude(j));
+            }
+            tmpNode = iter.baseNode();
+            cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
+        }
+        return cachedPoints;
     }
 
     public int simplify(DouglasPeucker algo) {
-        int deleted = algo.simplify(nodeIds);
-        if (deleted == 0)
-            return 0;
-        TIntArrayList res = new TIntArrayList(nodeIds.size() - deleted);
-        int tmp = nodeIds.size();
-        for (int i = 0; i < tmp; i++) {
-            int n = nodeIds.get(i);
-            if (n != DouglasPeucker.EMPTY)
-                res.add(n);
+        return algo.simplify(points());
+    }
+
+    public TIntSet calculateIdenticalNodes(Path p2) {
+        TIntHashSet thisSet = new TIntHashSet();
+        TIntHashSet retSet = new TIntHashSet();
+        TIntList nodes = nodes();
+        int max = nodes.size();
+        for (int i = 0; i < max; i++) {
+            thisSet.add(nodes.get(i));
         }
-        nodeIds = res;
-        return deleted;
+
+        nodes = p2.nodes();
+        max = nodes.size();
+        for (int i = 0; i < max; i++) {
+            if (thisSet.contains(nodes.get(i)))
+                retSet.add(nodes.get(i));
+        }
+        return retSet;
+    }
+
+    /**
+     * We need to remember fromNode explicitely as its not saved in one edgeId
+     * of edgeIds.
+     */
+    protected void setFromNode(int node) {
+        fromNode = node;
     }
 }

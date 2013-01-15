@@ -20,11 +20,9 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Helper7;
+import com.graphhopper.util.PointList;
 import gnu.trove.list.TLongList;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TLongArrayList;
-import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TLongIntHashMap;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -37,44 +35,64 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This helper requires less memory but parses the osm file twice. After the first parse process it
- * knows which nodes are involved in ways and only memorizes the lat,lon of those node. Afterwards
- * the deletion process is also not that memory intensive.
+ * This helper requires less memory but parses the osm file twice. After the
+ * first parse process it knows which nodes are involved in ways and only
+ * memorizes the lat,lon of those node. Only tower nodes are kept directly in
+ * the graph, pillar nodes (nodes with degree of exactly 2) are just stored as
+ * geometry for an edge for later usage e.g. in a UI.
  *
  * @author Peter Karich
  */
 public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 
+    private static final int EMPTY = -1;
+    private static final int PILLAR_NODE = 1;
+    private static final int TOWER_NODE = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private TLongIntHashMap osmIdToIndexMap;
     // very slow: private SparseLongLongArray osmIdToIndexMap;
-    // not applicable as ways introduces the nodes in 'wrong' order: new OSMIDSegmentedMap
-    private int internalId = 0;
+    // not applicable as ways introduces the nodes in 'wrong' order: new OSMIDSegmentedMap        
+    private int towerId = 0;
+    private int pillarId = 0;
     private final TLongArrayList tmpLocs = new TLongArrayList(10);
     // remember how many times a node was used to identify tower nodes
-    private DataAccess indexToCount;
+    private DataAccess pillarLats, pillarLons;
     private final Directory dir;
 
     public OSMReaderHelperDoubleParse(GraphStorage storage, int expectedNodes) {
         super(storage, expectedNodes);
         dir = storage.getDirectory();
-        indexToCount = dir.findCreate("tmpOSMReaderMap");
-        // we expect 4 nodes between two tower nodes => 2/6 => 1/3
-        osmIdToIndexMap = new TLongIntHashMap(expectedNodes / 3, 1.4f, -1, -1);
+        pillarLats = dir.findCreate("tmpLatitudes");
+        pillarLons = dir.findCreate("tmpLongitudes");
+        osmIdToIndexMap = new TLongIntHashMap(expectedNodes, 1.4f, -1L, EMPTY);
     }
 
     @Override
     public boolean addNode(long osmId, double lat, double lon) {
-        int count = osmIdToIndexMap.get(osmId);
-        if (count > FILLED)
+        int nodeType = osmIdToIndexMap.get(osmId);
+        if (nodeType == EMPTY)
             return false;
 
-        g.setNode(internalId, lat, lon);
-        indexToCount.ensureCapacity(4 * (internalId + 1));
-        indexToCount.setInt(internalId, 1 - (count - FILLED));
-        osmIdToIndexMap.put(osmId, internalId);
-        internalId++;
+        if (nodeType == TOWER_NODE) {
+            addTowerNode(osmId, lat, lon);
+        } else if (nodeType == PILLAR_NODE) {
+            int tmp = (nodeType + 1) * 4;
+            pillarLats.ensureCapacity(tmp);
+            pillarLats.setInt(pillarId, Helper.degreeToInt(lat));
+            pillarLons.ensureCapacity(tmp);
+            pillarLons.setInt(pillarId, Helper.degreeToInt(lon));
+            osmIdToIndexMap.put(osmId, pillarId + 3);
+            pillarId++;
+        }
         return true;
+    }
+
+    private int addTowerNode(long osmId, double lat, double lon) {
+        g.setNode(towerId, lat, lon);
+        int id = -(towerId + 3);
+        osmIdToIndexMap.put(osmId, id);
+        towerId++;
+        return id;
     }
 
     @Override
@@ -84,34 +102,71 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 
     @Override
     public int addEdge(TLongList nodes, int flags) {
-        TDoubleArrayList longitudes = new TDoubleArrayList(nodes.size());
-        TDoubleArrayList latitudes = new TDoubleArrayList(nodes.size());
-        TIntArrayList allNodes = new TIntArrayList(nodes.size());
+        PointList pointList = new PointList(nodes.size());
         int successfullyAdded = 0;
+        int firstIndex = -1;
+        int lastIndex = nodes.size() - 1;
         for (int i = 0; i < nodes.size(); i++) {
-            int tmpNode = osmIdToIndexMap.get(nodes.get(i));
-            if (tmpNode < 0)
+            long osmId = nodes.get(i);
+            int tmpNode = osmIdToIndexMap.get(osmId);
+            if (tmpNode == EMPTY)
                 continue;
+            // skip osmIds with no associated pillar or tower id (e.g. !OSMReader.isBounds)
+            if (tmpNode == TOWER_NODE)
+                continue;
+            if (tmpNode == PILLAR_NODE) {
+                // add part of the way which are in bounds, but force the last 
+                // node to be a tower node
+                if (i == lastIndex && pointList.size() > 1) {
+                    tmpNode = osmIdToIndexMap.get(nodes.get(i - 1));
+                    // force creating tower node from pillar node
+                    tmpNode = handlePillarNode(tmpNode, osmId, pointList, true);
+                    tmpNode = -tmpNode - 3;
+                    successfullyAdded += addEdge(firstIndex, tmpNode, pointList, flags);
+                }
+                continue;
+            }
 
-            allNodes.add(tmpNode);
-            latitudes.add(g.getLatitude(tmpNode));
-            longitudes.add(g.getLongitude(tmpNode));
-            // split way into more than one edge!
-            if (allNodes.size() > 1 && indexToCount.getInt(tmpNode) > 1) {
-                successfullyAdded += addEdge(latitudes, longitudes, allNodes, flags);
-                latitudes.clear();
-                longitudes.clear();
-                allNodes.clear();
-                allNodes.add(tmpNode);
-                latitudes.add(g.getLatitude(tmpNode));
-                longitudes.add(g.getLongitude(tmpNode));
+            if (tmpNode > EMPTY) {
+                // PILLAR node, but convert to towerNode if end-standing
+                tmpNode = handlePillarNode(tmpNode, osmId, pointList, i == 0 || i == lastIndex);
+            }
+
+            if (tmpNode < EMPTY) {
+                // TOWER node
+                tmpNode = -tmpNode - 3;
+                pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
+                if (firstIndex >= 0) {
+                    successfullyAdded += addEdge(firstIndex, tmpNode, pointList, flags);
+                    pointList.clear();
+                    pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
+                }
+                firstIndex = tmpNode;
             }
         }
-        if (allNodes.size() > 1)
-            successfullyAdded += addEdge(latitudes, longitudes, allNodes, flags);
         return successfullyAdded;
-//       throw new RuntimeException("Problem to add edge! with node "
-//              + fromIndex + "->" + toIndex + " osm:" + nodeIdFrom + "->" + nodeIdTo, ex);        
+    }
+
+    /**
+     * @return if power node
+     */
+    private int handlePillarNode(int tmpNode, long osmId, PointList pointList, boolean towerNode) {
+        tmpNode = tmpNode - 3;
+        double tmpLatInt = Helper.intToDegree(pillarLats.getInt(tmpNode));
+        double tmpLonInt = Helper.intToDegree(pillarLons.getInt(tmpNode));
+        if (tmpLatInt < 0 || tmpLonInt < 0)
+            throw new AssertionError("Conversation pillarNode to towerNode already happended!? "
+                    + "osmId:" + osmId + " pillarIndex:" + tmpNode);
+
+        if (towerNode) {
+            // convert pillarNode type to towerNode
+            pillarLons.setInt(tmpNode, -1);
+            pillarLats.setInt(tmpNode, -1);
+            tmpNode = addTowerNode(osmId, tmpLatInt, tmpLonInt);
+        } else
+            pointList.add(tmpLatInt, tmpLonInt);
+
+        return tmpNode;
     }
 
     @Override
@@ -122,15 +177,24 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 
     @Override
     public void cleanup() {
+        dir.remove(pillarLats);
+        dir.remove(pillarLons);
+        pillarLons = null;
+        pillarLats = null;
         osmIdToIndexMap = null;
-        dir.remove(indexToCount);
-        indexToCount = null;
     }
 
     public void setHasHighways(long osmId) {
-        int ret = osmIdToIndexMap.put((int) osmId, FILLED);
-        if (ret <= FILLED)
-            osmIdToIndexMap.put((int) osmId, ret - 1);
+        int tmpIndex = osmIdToIndexMap.get(osmId);
+        if (tmpIndex == EMPTY) {
+            // unused osmId
+            osmIdToIndexMap.put(osmId, PILLAR_NODE);
+        } else if (tmpIndex > EMPTY) {
+            // mark node as tower node as it occured at least twice times
+            osmIdToIndexMap.put(osmId, TOWER_NODE);
+        } else {
+            // tmpIndex is already negative (already tower node)
+        }
     }
 
     @Override
@@ -139,12 +203,13 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     /**
-     * Preprocessing of OSM file to select nodes which are used for highways. This allows a more
-     * compact graph data structure.
+     * Preprocessing of OSM file to select nodes which are used for highways.
+     * This allows a more compact graph data structure.
      */
     @Override
     public void preProcess(InputStream osmXml) {
-        indexToCount.createNew(expectedNodes);
+        pillarLats.createNew(expectedNodes / 10);
+        pillarLons.createNew(expectedNodes / 10);
         if (osmXml == null)
             throw new IllegalStateException("Stream cannot be empty");
 

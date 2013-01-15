@@ -76,7 +76,7 @@ public class RAMDataAccess extends AbstractDataAccess {
 
         // initialize transient values
         setSegmentSize(segmentSizeInBytes);
-        ensureCapacity(Math.max(10, bytes));
+        ensureCapacity(Math.max(10 * 4, bytes));
     }
 
     @Override

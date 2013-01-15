@@ -33,11 +33,8 @@ import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Main wrapper of the offline API for a simple and efficient usage.
@@ -55,6 +52,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean memoryMapped;
     private boolean levelGraph;
     private String ghLocation = "";
+    private boolean simplify = true;
 
     public GraphHopper() {
     }
@@ -99,6 +97,11 @@ public class GraphHopper implements GraphHopperAPI {
 
     public GraphHopper levelGraph() {
         levelGraph = true;
+        return this;
+    }
+
+    public GraphHopper simplify(boolean doSimplify) {
+        this.simplify = doSimplify;
         return this;
     }
 
@@ -194,7 +197,7 @@ public class GraphHopper implements GraphHopperAPI {
         } else
             prepare = Helper.createAlgoPrepare(request.algorithm());
 
-        request.check();        
+        request.check();
         StopWatch sw = new StopWatch().start();
         int from = index.findID(request.from().lat, request.from().lon);
         int to = index.findID(request.to().lat, request.to().lon);
@@ -206,20 +209,12 @@ public class GraphHopper implements GraphHopperAPI {
         Path path = algo.calcPath(from, to);
         debug += " routing (" + algo.name() + "):" + sw.stop().getSeconds() + "s";
 
-        sw = new StopWatch().start();
-        path.simplify(new DouglasPeucker(graph).setMaxDist(request.minPathPrecision()));
-        debug += " simplify:" + sw.stop().getSeconds() + "s";
-
-        int nodes = path.nodes();
-        List<GHPoint> list = new ArrayList<GHPoint>(nodes);
-        if (path.found()) {
+        if (simplify) {
             sw = new StopWatch().start();
-            for (int i = 0; i < nodes; i++) {
-                list.add(new GHPoint(graph.getLatitude(path.node(i)), graph.getLongitude(path.node(i))));
-            }
-            debug += " createList:" + sw.stop().getSeconds() + "s";
+            path.simplify(new DouglasPeucker().setMaxDist(request.minPathPrecision()));
+            debug += " simplify:" + sw.stop().getSeconds() + "s";
         }
-        return new GHResponse(list).distance(path.distance()).time(path.time()).debugInfo(debug);
+        return new GHResponse(path.points()).distance(path.distance()).time(path.time()).debugInfo(debug);
     }
 
     private void initIndex(Directory dir) {

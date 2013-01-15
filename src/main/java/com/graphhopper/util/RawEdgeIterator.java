@@ -1,5 +1,5 @@
 /*
- *  Copyright 2013 Peter Karich
+ *  Copyright 2012-2013 Peter Karich
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.

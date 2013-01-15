@@ -29,7 +29,8 @@ import java.util.PriorityQueue;
 /**
  * Calculates shortest path in bidirectional way.
  *
- * 'Ref' stands for reference implementation and is using the normal Java-'reference'-way.
+ * 'Ref' stands for reference implementation and is using the normal
+ * Java-'reference'-way.
  *
  * @see DijkstraBidirection for an optimized but more complicated version
  * @author Peter Karich,
@@ -95,7 +96,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     public DijkstraBidirectionRef initFrom(int from) {
         this.from = from;
-        currFrom = new EdgeEntry(-1, from, 0);
+        currFrom = new EdgeEntry(EdgeIterator.NO_EDGE, from, 0);
         shortestWeightMapFrom.put(from, currFrom);
         visitedFrom.add(from);
         return this;
@@ -103,7 +104,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     public DijkstraBidirectionRef initTo(int to) {
         this.to = to;
-        currTo = new EdgeEntry(-1, to, 0);
+        currTo = new EdgeEntry(EdgeIterator.NO_EDGE, to, 0);
         shortestWeightMapTo.put(to, currTo);
         visitedTo.add(to);
         return this;
@@ -193,8 +194,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         // update μ
         double newShortest = shortestDE.weight + entryOther.weight;
         if (newShortest < shortest.weight) {
-            shortest.switchWrapper = shortestWeightMapFrom == shortestWeightMapOther;
-            shortest.edgeFrom = shortestDE;
+            shortest.switchToFrom(shortestWeightMapFrom == shortestWeightMapOther);
+            shortest.edgeEntry = shortestDE;
             shortest.edgeTo = entryOther;
             shortest.weight = newShortest;
         }
@@ -237,11 +238,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     }
 
     private Path checkIndenticalFromAndTo() {
-        if (from == to) {
-            Path p = new Path(graph, weightCalc);
-            p.addFrom(from);
-            return p;
-        }
+        if (from == to)
+            return new Path(graph, weightCalc);
         return null;
     }
 

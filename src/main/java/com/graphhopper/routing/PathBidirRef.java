@@ -22,18 +22,28 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 
 /**
- * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
+ * This class creates a DijkstraPath from two Edge's resulting from a
+ * BidirectionalDijkstra
  *
  * @author Peter Karich,
  */
 public class PathBidirRef extends Path {
 
-    public EdgeEntry edgeFrom;
-    public EdgeEntry edgeTo;
-    public boolean switchWrapper = false;
+    protected EdgeEntry edgeTo;
+    private boolean switchWrapper = false;
 
     public PathBidirRef(Graph g, WeightCalculation weightCalculation) {
         super(g, weightCalculation);
+    }
+
+    public PathBidirRef switchToFrom(boolean b) {
+        switchWrapper = b;
+        return this;
+    }
+
+    public PathBidirRef edgeEntryTo(EdgeEntry edgeTo) {
+        this.edgeTo = edgeTo;
+        return this;
     }
 
     /**
@@ -42,34 +52,32 @@ public class PathBidirRef extends Path {
     @Override
     public Path extract() {
         weight = 0;
-        if (edgeFrom == null || edgeTo == null)
+        if (edgeEntry == null || edgeTo == null)
             return this;
 
-        int from = GraphUtility.getToNode(g, edgeFrom.edge, edgeFrom.endNode);
-        int to = GraphUtility.getToNode(g, edgeTo.edge, edgeTo.endNode);
+        int from = GraphUtility.getToNode(graph, edgeEntry.edge, edgeEntry.endNode);
+        int to = GraphUtility.getToNode(graph, edgeTo.edge, edgeTo.endNode);
         if (from != to)
             throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());
 
         if (switchWrapper) {
-            EdgeEntry ee = edgeFrom;
-            edgeFrom = edgeTo;
+            EdgeEntry ee = edgeEntry;
+            edgeEntry = edgeTo;
             edgeTo = ee;
         }
 
-        EdgeEntry currEdge = edgeFrom;
-        while (currEdge.edge != EdgeIterator.NO_EDGE) {
-            add(currEdge.endNode);
-            calcWeight(g.getEdgeProps(currEdge.edge, currEdge.endNode));
+        EdgeEntry currEdge = edgeEntry;
+        while (EdgeIterator.Edge.isValid(currEdge.edge)) {
+            processWeight(currEdge.edge, currEdge.endNode);
             currEdge = currEdge.parent;
         }
-        addFrom(currEdge.endNode);
+        setFromNode(currEdge.endNode);
         reverseOrder();
         currEdge = edgeTo;
         int tmpEdge = currEdge.edge;
-        while (tmpEdge != EdgeIterator.NO_EDGE) {
+        while (EdgeIterator.Edge.isValid(tmpEdge)) {
             currEdge = currEdge.parent;
-            calcWeight(g.getEdgeProps(tmpEdge, currEdge.endNode));
-            add(currEdge.endNode);
+            processWeight(tmpEdge, currEdge.endNode);
             tmpEdge = currEdge.edge;
         }
         return found(true);
