@@ -48,21 +48,46 @@ public class DouglasPeucker {
      */
     public int simplify(PointList points) {
         int deleted = simplify(points, 0, points.size() - 1);
-        // compress list: move points into EMPTY slots
-        int freeIndex = -1;
+        compressNew(points, deleted);
+        return deleted;
+    }
+
+    /**
+     * compress list: move points into EMPTY slots
+     */
+    void compress(PointList list) {
+        PointList pl = new PointList(list.size());
+        for (int i = 0; i < list.size(); i++) {
+            if (Double.isNaN(list.latitude(i)))
+                continue;
+            pl.add(list.latitude(i), list.longitude(i));
+        }
+        list.clear();
+        for (int i = 0; i < pl.size(); i++) {
+            list.add(pl.latitude(i), pl.longitude(i));
+        }
+    }
+
+    /**
+     * compress list: move points into EMPTY slots
+     */
+    void compressNew(PointList points, int deleted) {
+        int freeIndex = -1;        
         for (int currentIndex = 0; currentIndex < points.size(); currentIndex++) {
             if (Double.isNaN(points.latitude(currentIndex))) {
                 if (freeIndex < 0)
                     freeIndex = currentIndex;
                 continue;
-            }
-
-            if (freeIndex < 0)
+            } else if (freeIndex < 0)
                 continue;
+            
             points.set(freeIndex, points.latitude(currentIndex), points.longitude(currentIndex));
+            points.set(currentIndex, Double.NaN, Double.NaN);
             // find next free index
             int max = currentIndex;
-            for (int searchIndex = freeIndex; searchIndex < max; searchIndex++) {
+            int searchIndex = freeIndex + 1;
+            freeIndex = currentIndex;
+            for (; searchIndex < max; searchIndex++) {
                 if (Double.isNaN(points.latitude(searchIndex))) {
                     freeIndex = searchIndex;
                     break;
@@ -70,9 +95,9 @@ public class DouglasPeucker {
             }
         }
         points.setSize(points.size() - deleted);
-        return deleted;
     }
 
+    // keep the points of fromIndex and lastIndex
     int simplify(PointList points, int fromIndex, int lastIndex) {
         if (lastIndex - fromIndex < 2)
             return 0;

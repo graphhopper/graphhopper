@@ -24,6 +24,7 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FastestCarCalc;
+import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -37,7 +38,6 @@ import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
-import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
 
@@ -55,9 +55,10 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean inMemory = true;
     private boolean storeOnFlush = true;
     private boolean memoryMapped;
-    private boolean levelGraph;
+    private boolean chUsage = false;
     private String ghLocation = "";
     private boolean simplify = true;
+    private boolean chFast = true;
 
     public GraphHopper() {
     }
@@ -102,8 +103,14 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public GraphHopper levelGraph() {
-        levelGraph = true;
+    /**
+     * Enables the use of contraction hierarchies to reduce query times.
+     *
+     * @param true if fastest route should be calculated (instead of shortest)
+     */
+    public GraphHopper contractionHierarchies(boolean fast) {
+        chUsage = true;
+        chFast = fast;
         return this;
     }
 
@@ -132,14 +139,14 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("No file end and no existing osm or gh file found for " + graphHopperFile);
         }
 
-        String tmp = graphHopperFile.toLowerCase();
-        if (tmp.endsWith("-gh") || tmp.endsWith(".ghz")) {
-            if (tmp.endsWith(".ghz")) {
-                String to = Helper.pruneFileEnd(tmp) + "-gh";
+        String tmpGHFile = graphHopperFile.toLowerCase();
+        if (tmpGHFile.endsWith("-gh") || tmpGHFile.endsWith(".ghz")) {
+            if (tmpGHFile.endsWith(".ghz")) {
+                String to = Helper.pruneFileEnd(tmpGHFile) + "-gh";
                 try {
-                    Helper.unzip(tmp, to, true);
+                    Helper.unzip(tmpGHFile, to, true);
                 } catch (IOException ex) {
-                    throw new IllegalStateException("Couldn't extract file " + tmp + " to " + to, ex);
+                    throw new IllegalStateException("Couldn't extract file " + tmpGHFile + " to " + to, ex);
                 }
             }
 
@@ -152,9 +159,14 @@ public class GraphHopper implements GraphHopperAPI {
             } else
                 throw new IllegalStateException("either memory mapped or in-memory!");
 
-            if (levelGraph) {
+            if (chUsage) {
                 storage = new LevelGraphStorage(dir);
-                prepare = new PrepareContractionHierarchies().setType(FastestCarCalc.DEFAULT);
+                PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
+                if (chFast)
+                    tmpPrepareCH.setType(FastestCarCalc.DEFAULT);
+                else
+                    tmpPrepareCH.setType(ShortestCarCalc.DEFAULT);
+                prepare = tmpPrepareCH;
             } else
                 storage = new GraphStorage(dir);
 
@@ -163,7 +175,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             graph = storage;
             initIndex(dir);
-        } else if (tmp.endsWith(".osm") || tmp.endsWith(".xml")) {
+        } else if (tmpGHFile.endsWith(".osm") || tmpGHFile.endsWith(".xml")) {
             if (ghLocation.isEmpty())
                 ghLocation = Helper.pruneFileEnd(graphHopperFile) + "-gh";
             CmdArgs args = new CmdArgs().put("osmreader.osm", graphHopperFile).
@@ -176,7 +188,7 @@ public class GraphHopper implements GraphHopperAPI {
                 } else
                     args.put("osmreader.dataaccess", "inmemory");
             }
-            if (levelGraph) {
+            if (chUsage) {
                 args.put("osmreader.levelgraph", "true");
                 args.put("osmreader.chShortcuts", "fastest");
             }
@@ -197,7 +209,7 @@ public class GraphHopper implements GraphHopperAPI {
 
     @Override
     public GHResponse route(GHRequest request) {
-        if (levelGraph) {
+        if (chUsage) {
             if (!request.algorithm().equals("dijkstrabi"))
                 throw new IllegalStateException("Only dijkstrabi is supported for levelgraph/CH! "
                         + "TODO we could allow bidirectional astar");
