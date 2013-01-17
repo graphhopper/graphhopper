@@ -116,11 +116,10 @@ public class GraphStorage implements Graph, Storable {
     }
 
     public GraphStorage createNew(int nodeCount) {
-        nodes.createNew((long) nodeCount * 4 * nodeEntrySize);
-
-        // approximative
-        edges.createNew((long) nodeCount * 4 * edgeEntrySize);
-        geometry.createNew((long) nodeCount / 10);
+        int initBytes = Math.max(nodeCount * 4 / 50, 100);
+        nodes.createNew((long) initBytes * nodeEntrySize);
+        edges.createNew((long) initBytes * edgeEntrySize);
+        geometry.createNew((long) initBytes);
         return this;
     }
 

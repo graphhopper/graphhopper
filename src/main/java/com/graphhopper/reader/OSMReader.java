@@ -21,7 +21,6 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FastestCarCalc;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
-import com.graphhopper.routing.util.PrepareTowerNodesShortcuts;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
