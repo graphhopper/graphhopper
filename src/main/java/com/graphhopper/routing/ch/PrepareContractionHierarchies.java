@@ -42,9 +42,7 @@ import com.graphhopper.util.StopWatch;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,12 +80,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     @Override
-    public PrepareContractionHierarchies setGraph(Graph g) {
+    public PrepareContractionHierarchies graph(Graph g) {
         this.g = (LevelGraph) g;
         return this;
     }
 
-    public PrepareContractionHierarchies setType(WeightCalculation weightCalc) {
+    public PrepareContractionHierarchies type(WeightCalculation weightCalc) {
         this.prepareWeightCalc = weightCalc;
         return this;
     }
@@ -109,9 +107,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     boolean prepareEdges() {
         // in CH the flags will be ignored (calculating the new flags for the shortcuts is impossible)
-        // also several shortcuts would be necessary with the different modes (e.g. fastest and shortest)
+        // also several shortcuts would be necessary with the different modes (e.g. fastest and extractPath)
         // so calculate the weight and store this as distance, then use only distance instead of getWeight
-        RawEdgeIterator iter = g.getAllEdges();
+        RawEdgeIterator iter = g.allEdges();
         int c = 0;
         while (iter.next()) {
             c++;
@@ -122,7 +120,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     boolean prepareNodes() {
-        int len = g.getNodes();
+        int len = g.nodes();
         // minor idea: 1. sort nodes randomly and 2. pre-init with endNode degree
         for (int node = 0; node < len; node++) {
             refs[node] = new WeightedNode(node, 0);
@@ -152,7 +150,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             if (counter % updateSize == 0) {
                 // periodically update priorities of ALL nodes            
                 if (updateCounter > 0 && updateCounter % 2 == 0) {
-                    int len = g.getNodes();
+                    int len = g.nodes();
                     sw.start();
                     // TODO avoid to traverse all nodes -> via a new sortedNodes.iterator()
                     for (int node = 0; node < len; node++) {
@@ -261,10 +259,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     PrepareContractionHierarchies initFromGraph() {
-        originalEdges = new TIntArrayList(g.getNodes() / 2, -1);
+        originalEdges = new TIntArrayList(g.nodes() / 2, -1);
         edgeFilter = new EdgeLevelFilterCH(this.g);
-        sortedNodes = new MySortedCollection(g.getNodes());
-        refs = new WeightedNode[g.getNodes()];
+        sortedNodes = new MySortedCollection(g.nodes());
+        refs = new WeightedNode[g.nodes()];
         return this;
     }
 
@@ -304,7 +302,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             double v_u_weight = iter1.distance();
 
-            // one-to-many shortest path
+            // one-to-many extractPath path
             goalNodes.clear();
             EdgeIterator iter2 = g.getOutgoing(v);
             double maxWeight = 0;
@@ -442,7 +440,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 return currFrom.weight >= shortest.weight() && currTo.weight >= shortest.weight();
             }
 
-            @Override public RoutingAlgorithm setType(WeightCalculation wc) {
+            @Override public RoutingAlgorithm type(WeightCalculation wc) {
                 throw new IllegalStateException("You'll need to change weightCalculation of preparation instead of algorithm!");
             }
 
@@ -463,11 +461,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     }
 
                     @Override public long getTime(double distance, int flags) {
-                        return prepareWeightCalc.getTime(revert(distance, flags), flags);
+                        return prepareWeightCalc.getTime(revertWeight(distance, flags), flags);
                     }
 
-                    @Override public double revert(double weight, int flags) {
-                        return prepareWeightCalc.revert(weight, flags);
+                    @Override public double revertWeight(double weight, int flags) {
+                        return prepareWeightCalc.revertWeight(weight, flags);
                     }
                 };
                 return new Path4CH(graph, wc);
@@ -477,7 +475,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 return "dijkstraCH";
             }
         };
-        dijkstra.setEdgeFilter(new EdgeLevelFilter(g));
+        dijkstra.edgeFilter(new EdgeLevelFilter(g));
         return dijkstra;
     }
 
@@ -490,7 +488,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         public OneToManyDijkstraCH(Graph graph) {
             super(graph);
-            setType(ShortestCarCalc.DEFAULT);
+            type(ShortestCarCalc.DEFAULT);
         }
 
         public OneToManyDijkstraCH setFilter(EdgeLevelFilter filter) {
@@ -499,8 +497,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         }
 
         @Override
-        protected final EdgeIterator getNeighbors(int neighborNode) {
-            return filter.doFilter(super.getNeighbors(neighborNode));
+        protected final EdgeIterator neighbors(int neighborNode) {
+            return filter.doFilter(super.neighbors(neighborNode));
         }
 
         OneToManyDijkstraCH setLimit(double weight) {

@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -16,8 +19,8 @@
 package com.graphhopper.storage;
 
 /**
- * Provides a way to map realword data "lat,lon" to internal ids/indices of a memory efficient graph
- * - often just implemented as an array.
+ * Provides a way to map realword data "lat,lon" to internal ids/indices of a
+ * memory efficient graph - often just implemented as an array.
  *
  * The implementations of findID needs to be thread safe!
  *
@@ -28,8 +31,8 @@ public interface Location2IDIndex {
     /**
      * Creates this index - to be called once before findID.
      *
-     * @param capacity specifies how many entries will be reserved. More entries means faster and
-     * more precise queries.
+     * @param capacity specifies how many entries will be reserved. More entries
+     * means faster and more precise queries.
      */
     Location2IDIndex prepareIndex(int capacity);
 
@@ -39,9 +42,10 @@ public interface Location2IDIndex {
     int findID(double lat, double lon);
 
     /**
-     * @param approxDist If false this makes initialization and querying faster but less precise.
+     * @param approxDist If false this makes initialization and querying faster
+     * but less precise.
      */
-    Location2IDIndex setPrecision(boolean approxDist);
+    Location2IDIndex precision(boolean approxDist);
 
     float calcMemInMB();
 }

@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -16,10 +19,10 @@
 package com.graphhopper.storage;
 
 /**
- * Abstraction of the underlying datastructure with a unique id and location. To ensure that the id
- * is unique use a Directory.attach or findAttach, if you don't need uniqueness call
- * Directory.create. Current implementations are RAM and memory mapped access. To have a useable
- * instance do the following:
+ * Abstraction of the underlying datastructure with a unique id and location. To
+ * ensure that the id is unique use a Directory.attach or findAttach, if you
+ * don't need uniqueness call Directory.create. Current implementations are RAM
+ * and memory mapped access. To have a useable instance do the following:
  *
  * <pre>
  * if(!storage.loadExisting())
@@ -33,11 +36,11 @@ public interface DataAccess extends Storable {
     /**
      * The logical identification of this object.
      */
-    String getName();
+    String name();
 
     /**
-     * Renames the underlying DataAccess object. (Flushing shouldn't be necessary before or
-     * afterwards)
+     * Renames the underlying DataAccess object. (Flushing shouldn't be
+     * necessary before or afterwards)
      *
      * @throws IllegalStateException if a rename is not possible
      */
@@ -64,8 +67,8 @@ public interface DataAccess extends Storable {
     int getHeader(int index);
 
     /**
-     * The first time you use DataAccess you need to call this in order to allocate space for this
-     * DataAccess object. After that use ensureCapacity
+     * The first time you use DataAccess you need to call this in order to
+     * allocate space for this DataAccess object. After that use ensureCapacity
      */
     void createNew(long bytes);
 
@@ -75,8 +78,8 @@ public interface DataAccess extends Storable {
     void ensureCapacity(long bytes);
 
     /**
-     * Reduces the allocate space to the specified bytes. Warning: it'll free the space even if it
-     * is in use!
+     * Reduces the allocate space to the specified bytes. Warning: it'll free
+     * the space even if it is in use!
      */
     void trimTo(long bytes);
 
@@ -86,17 +89,24 @@ public interface DataAccess extends Storable {
     DataAccess copyTo(DataAccess da);
 
     /**
-     * In order to increase allocated space one needs to layout the underlying storage in segments.
-     * This is how you can customize the size.
+     * In order to increase allocated space one needs to layout the underlying
+     * storage in segments. This is how you can customize the size.
      */
-    DataAccess setSegmentSize(int bytes);
+    DataAccess segmentSize(int bytes);
 
     /**
      * @return the size of one segment in bytes
      */
-    int getSegmentSize();
+    int segmentSize();
 
-    int getSegments();
+    /**
+     * @return the number of segments.
+     */
+    int segments();
 
-    int getVersion();
+    /**
+     * @return the version number of this object to make compatibility issues
+     * detectable.
+     */
+    int version();
 }

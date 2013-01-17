@@ -20,14 +20,11 @@ package com.graphhopper;
 
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.GHPoint;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
@@ -49,7 +46,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private Logger logger = LoggerFactory.getLogger(getClass());
     private String serviceUrl;
 
-    public GraphHopperWeb() {
+    public GraphHopperWeb() {        
     }
 
     /**
@@ -61,13 +58,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
         return this;
     }
 
-    // TODO
-//    public String whatIsHere(GHPoint point) {
-//        return "address";
-//    }
-//    public GHPoint findAddress(String from) {
-//        return new GHPoint(lat, lon);
-//    }
     @Override
     public GHResponse route(GHRequest request) {
         request.check();

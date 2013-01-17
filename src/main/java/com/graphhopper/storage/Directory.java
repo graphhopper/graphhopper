@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -15,8 +18,6 @@
  */
 package com.graphhopper.storage;
 
-import java.util.Collection;
-
 /**
  * Maintains a collection of DataAccess objects stored at the same location. One GraphStorage per
  * Directory as we need one to maintain one DataAccess object for nodes, edges and location2id
@@ -26,7 +27,7 @@ import java.util.Collection;
  */
 public interface Directory {
 
-    String getLocation();
+    String location();
 
     /**
      * Tries to find the object with that name if not existent it creates one and associates the
@@ -43,6 +44,4 @@ public interface Directory {
      * Removes the specified object from the directory.
      */
     void remove(DataAccess da);
-
-    Collection<DataAccess> getAll();
 }

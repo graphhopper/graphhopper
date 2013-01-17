@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -47,32 +50,32 @@ public class DistanceCalcTest {
         DistanceCalc dist = new DistanceCalc();
         double res = 15051;
         assertEquals(res, dist.calcDist(lat, lon, lat - 0.1, lon + 0.1), 1);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 0.1, lon + 0.1), 1);
+        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat - 0.1, lon + 0.1), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat - 0.1, lon + 0.1), 1);
 
         res = 15046;
         assertEquals(res, dist.calcDist(lat, lon, lat + 0.1, lon - 0.1), 1);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 0.1, lon - 0.1), 1);
+        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat + 0.1, lon - 0.1), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat + 0.1, lon - 0.1), 1);
 
         res = 150748;
         assertEquals(res, dist.calcDist(lat, lon, lat - 1, lon + 1), 1);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 1, lon + 1), 1);
+        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat - 1, lon + 1), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat - 1, lon + 1), 10);
 
         res = 150211;
         assertEquals(res, dist.calcDist(lat, lon, lat + 1, lon - 1), 1);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 1, lon - 1), 1);
+        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat + 1, lon - 1), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat + 1, lon - 1), 10);
 
         res = 1527919;
         assertEquals(res, dist.calcDist(lat, lon, lat - 10, lon + 10), 1);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat - 10, lon + 10), 1);
+        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat - 10, lon + 10), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat - 10, lon + 10), 10000);
 
         res = 1474016;
         assertEquals(res, dist.calcDist(lat, lon, lat + 10, lon - 10), 1);
-        assertEquals(dist.normalizeDist(res), dist.calcNormalizedDist(lat, lon, lat + 10, lon - 10), 1);
+        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat + 10, lon - 10), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat + 10, lon - 10), 10000);
     }
 

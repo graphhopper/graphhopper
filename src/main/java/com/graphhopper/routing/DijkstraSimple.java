@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -55,7 +58,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         EdgeEntry currEdge = fromEntry;
         while (true) {
             int neighborNode = currEdge.endNode;
-            EdgeIterator iter = getNeighbors(neighborNode);
+            EdgeIterator iter = neighbors(neighborNode);
             while (iter.next()) {
                 int tmpNode = iter.node();
                 if (visited.contains(tmpNode))
@@ -87,7 +90,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
                 return new Path();
             currEdge = heap.poll();
             if (currEdge == null)
-                throw new IllegalStateException("cannot happen?");
+                throw new AssertionError("cannot happen?");
         }
 
         if (currEdge.endNode != to)
@@ -96,15 +99,15 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         return extractPath(currEdge);
     }
 
-    public boolean finished(EdgeEntry currEdge, int to) {
+    protected boolean finished(EdgeEntry currEdge, int to) {
         return currEdge.endNode == to;
     }
 
     public Path extractPath(EdgeEntry goalEdge) {
         return new Path(graph, weightCalc).edgeEntry(goalEdge).extract();
     }
-
-    protected EdgeIterator getNeighbors(int neighborNode) {
+    
+    protected EdgeIterator neighbors(int neighborNode) {
         return graph.getOutgoing(neighborNode);
     }
 

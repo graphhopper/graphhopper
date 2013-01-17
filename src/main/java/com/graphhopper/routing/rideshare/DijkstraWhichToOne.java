@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -69,18 +72,18 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         destination = index;
     }
 
-    public Path calcShortestPath() {
+    public Path calcPath() {
         // identical
         if (pubTransport.contains(destination))
             return new Path(graph, weightCalc);
 
-        MyBitSet visitedFrom = new MyBitSetImpl(graph.getNodes());
+        MyBitSet visitedFrom = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
         EdgeEntry entryTo = new EdgeEntry(EdgeIterator.NO_EDGE, destination, 0);
         EdgeEntry currTo = entryTo;
-        MyBitSet visitedTo = new MyBitSetImpl(graph.getNodes());
+        MyBitSet visitedTo = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
         shortestDistMapTo.put(destination, entryTo);
@@ -130,13 +133,10 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         Path p = shortest.extract();
         if (!p.found())
             return p;
-        if (!pubTransport.contains(p.getFromNode()))
-            p.reverseOrder();
-
         return p;
     }
 
-    public void fillEdges(PathBidirRef shortest, EdgeEntry curr, MyBitSet visitedMain,
+    void fillEdges(PathBidirRef shortest, EdgeEntry curr, MyBitSet visitedMain,
             PriorityQueue<EdgeEntry> prioQueue,
             TIntObjectMap<EdgeEntry> shortestDistMap, boolean out) {
 
@@ -184,7 +184,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     @Override public Path calcPath(int from, int to) {
         addPubTransportPoint(from);
         setDestination(to);
-        return calcShortestPath();
+        return calcPath();
     }
 
     @Override

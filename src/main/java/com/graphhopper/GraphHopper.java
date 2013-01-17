@@ -163,9 +163,9 @@ public class GraphHopper implements GraphHopperAPI {
                 storage = new LevelGraphStorage(dir);
                 PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
                 if (chFast)
-                    tmpPrepareCH.setType(FastestCarCalc.DEFAULT);
+                    tmpPrepareCH.type(FastestCarCalc.DEFAULT);
                 else
-                    tmpPrepareCH.setType(ShortestCarCalc.DEFAULT);
+                    tmpPrepareCH.type(ShortestCarCalc.DEFAULT);
                 prepare = tmpPrepareCH;
             } else
                 storage = new GraphStorage(dir);
@@ -195,9 +195,9 @@ public class GraphHopper implements GraphHopperAPI {
 
             try {
                 OSMReader reader = OSMReader.osm2Graph(args);
-                graph = reader.getGraph();
-                prepare = reader.getPreparation();
-                index = reader.getLocation2IDIndex();
+                graph = reader.graph();
+                prepare = reader.preparation();
+                index = reader.location2IDIndex();
             } catch (IOException ex) {
                 throw new RuntimeException("Cannot parse file " + graphHopperFile, ex);
             }
@@ -223,14 +223,14 @@ public class GraphHopper implements GraphHopperAPI {
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
         sw = new StopWatch().start();
-        prepare.setGraph(graph);
+        prepare.graph(graph);
         RoutingAlgorithm algo = prepare.createAlgo();
         Path path = algo.calcPath(from, to);
         debug += " routing (" + algo.name() + "):" + sw.stop().getSeconds() + "s";
         PointList points = path.calcPoints();
         if (simplify) {
             sw = new StopWatch().start();
-            int del = new DouglasPeucker().setMaxDist(request.minPathPrecision()).simplify(points);
+            int del = new DouglasPeucker().maxDistance(request.minPathPrecision()).simplify(points);
             debug += " simplify (" + del + "):" + sw.stop().getSeconds() + "s";
         }
         return new GHResponse(points).distance(path.distance()).time(path.time()).debugInfo(debug);
@@ -239,7 +239,7 @@ public class GraphHopper implements GraphHopperAPI {
     private void initIndex(Directory dir) {
         Location2IDQuadtree tmp = new Location2IDQuadtree(graph, dir);
         if (!tmp.loadExisting())
-            tmp.prepareIndex(Helper.calcIndexSize(graph.getBounds()));
+            tmp.prepareIndex(Helper.calcIndexSize(graph.bounds()));
 
         index = tmp;
     }

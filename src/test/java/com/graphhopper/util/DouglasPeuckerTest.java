@@ -63,7 +63,7 @@ public class DouglasPeuckerTest {
         PointList pointList = new PointList();
         parse(pointList, points1);
         assertEquals(32, pointList.size());
-        new DouglasPeucker().setMaxDist(.5).simplify(pointList);
+        new DouglasPeucker().maxDistance(.5).simplify(pointList);
         // Arrays.asList(2, 4, 6, 7, 8, 9, 12, 14, 15, 17, 18, 19, 20, 22, 24, 27, 28, 29, 31, 33),
         assertEquals(20, pointList.size());
     }
@@ -72,7 +72,7 @@ public class DouglasPeuckerTest {
     public void testSimplifyCheckPointCount() {
         PointList pointList = new PointList();
         parse(pointList, points1);
-        DouglasPeucker dp = new DouglasPeucker().setMaxDist(.5);
+        DouglasPeucker dp = new DouglasPeucker().maxDistance(.5);
         assertEquals(32, pointList.size());
         dp.simplify(pointList);
         assertEquals(20, pointList.size());
@@ -86,7 +86,7 @@ public class DouglasPeuckerTest {
         PointList pointList = new PointList();
         parse(pointList, points2);
         assertEquals(13, pointList.size());
-        new DouglasPeucker().setMaxDist(.5).simplify(pointList);
+        new DouglasPeucker().maxDistance(.5).simplify(pointList);
         assertEquals(11, pointList.size());
         assertFalse(pointList.toString(), pointList.toString().contains("NaN"));
         assertEquals("(50.203764443183644,9.961074440801317), (50.20318963087774,9.960999562464645), (50.202952888673984,9.96094144793469), (50.20267889356641,9.96223002587773), (50.201853928011374,9.961859918278305), "

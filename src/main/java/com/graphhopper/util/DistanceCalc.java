@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -55,14 +58,14 @@ public class DistanceCalc {
         return R * 2 * asin(sqrt(normedDist));
     }
 
-    public double denormalizeDist(double normedDist) {
+    public double calcDenormalizedDist(double normedDist) {
         return R * 2 * asin(sqrt(normedDist));
     }
 
     /**
      * in meter
      */
-    public double normalizeDist(double dist) {
+    public double calcNormalizedDist(double dist) {
         double tmp = sin(dist / 2 / R);
         return tmp * tmp;
     }
@@ -77,10 +80,7 @@ public class DistanceCalc {
                 + cos(toRadians(fromLat)) * cos(toRadians(toLat)) * sin(dLon / 2) * sin(dLon / 2);
     }
 
-    /**
-     * @deprecated hmmh seems to be lot slower than calcDist
-     */
-    public double calcCartesianDist(double fromLat, double fromLon, double toLat, double toLon) {
+    double calcCartesianDist(double fromLat, double fromLon, double toLat, double toLon) {
         fromLat = toRadians(fromLat);
         fromLon = toRadians(fromLon);
 
@@ -129,7 +129,7 @@ public class DistanceCalc {
 
     public BBox createBBox(double lat, double lon, double radiusInMeter) {
         if (radiusInMeter <= 0)
-            throw new IllegalArgumentException("Distance cannot be 0 or negative! " + radiusInMeter + " lat,lon:" + lat + "," + lon);
+            throw new IllegalArgumentException("Distance must not be zero or negative! " + radiusInMeter + " lat,lon:" + lat + "," + lon);
 
         // length of a circle at specified lat / dist
         double dLon = (360 / (calcCircumference(lat) / radiusInMeter));

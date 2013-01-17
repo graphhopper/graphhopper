@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -55,7 +58,7 @@ public class LinearKeyAlgo implements KeyAlgo {
     }
 
     @Override
-    public LinearKeyAlgo setInitialBounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit) {
+    public LinearKeyAlgo bounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit) {
         minLon = minLonInit;
         maxLon = maxLonInit;
         minLat = minLatInit;
@@ -66,7 +69,7 @@ public class LinearKeyAlgo implements KeyAlgo {
     }
 
     protected void setWorldBounds() {
-        setInitialBounds(-180, 180, -90, 90);
+        bounds(-180, 180, -90, 90);
     }
 
     @Override

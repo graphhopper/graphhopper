@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -18,8 +21,8 @@ package com.graphhopper.storage;
 import com.graphhopper.util.EdgeSkipIterator;
 
 /**
- * A Graph necessary for shortcut algorithms like Contraction Hierarchies (stores level of nodes and
- * shortcut edge per edge).
+ * A Graph necessary for shortcut algorithms like Contraction Hierarchies
+ * (stores level of nodes and shortcut edge per edge).
  *
  * @author Peter Karich
  */
@@ -79,11 +82,11 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
     @Override
     protected EdgeSkipIterator createEdgeIterable(int baseNode, boolean in, boolean out) {
-        int edge = nodes.getInt((long) baseNode * nodeEntrySize + N_EDGE_REF);        
+        int edge = nodes.getInt((long) baseNode * nodeEntrySize + N_EDGE_REF);
         return new EdgeSkipIteratorImpl(edge, baseNode, in, out);
     }
 
-    public class EdgeSkipIteratorImpl extends EdgeIterable implements EdgeSkipIterator {
+    class EdgeSkipIteratorImpl extends EdgeIterable implements EdgeSkipIterator {
 
         public EdgeSkipIteratorImpl(int edge, int node, boolean in, boolean out) {
             super(edge, node, in, out);
@@ -108,7 +111,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
         return new SingleLevelEdge(edge, nodeId);
     }
 
-    protected class SingleLevelEdge extends SingleEdge implements EdgeSkipIterator {
+    class SingleLevelEdge extends SingleEdge implements EdgeSkipIterator {
 
         public SingleLevelEdge(int edge, int nodeId) {
             super(edge, nodeId);

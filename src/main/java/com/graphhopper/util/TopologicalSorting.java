@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -33,9 +36,9 @@ public class TopologicalSorting {
      */
     public TIntArrayList sort(Graph g) {
         final TIntArrayList list = new TIntArrayList();
-        if (g.getNodes() == 0)
+        if (g.nodes() == 0)
             return list;
-        else if (g.getNodes() == 1) {
+        else if (g.nodes() == 1) {
             list.add(0);
             return list;
         }
@@ -58,7 +61,7 @@ public class TopologicalSorting {
         if (noIncomingEdges.size() == 0)
             throw new IllegalStateException("No beginning nodes found! Only acyclic graphs are allowed");
 
-        MyBitSet visited = new MyBitSetImpl(g.getNodes());
+        MyBitSet visited = new MyBitSetImpl(g.nodes());
         final MyIntDeque noIncomingDeque = new MyIntDeque(noIncomingEdges.size());
         for (TIntIterator iter = noIncomingEdges.iterator(); iter.hasNext();) {
             int tmp = iter.next();

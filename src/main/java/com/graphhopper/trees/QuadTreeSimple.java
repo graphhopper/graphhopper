@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -199,7 +202,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
             return;
         }
 
-        throw new IllegalStateException("Cannot happen? datanode:" + dataNode + " new entry:" + spatialKey + "->" + value);
+        throw new AssertionError("Cannot happen? datanode:" + dataNode + " new entry:" + spatialKey + "->" + value);
     }
 
     @Override
@@ -219,7 +222,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
                 }
             }
         };
-        double err = 1.0 / Math.pow(10, algo.getExactPrecision());
+        double err = 1.0 / Math.pow(10, algo.exactPrecision());
         getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err), root, worker);
         return removedWrapper.get();
     }
@@ -249,7 +252,7 @@ public class QuadTreeSimple<T> implements QuadTree<T> {
                 }
             }
         };
-        double err = 1.0 / Math.pow(10, algo.getExactPrecision());
+        double err = 1.0 / Math.pow(10, algo.exactPrecision());
         getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err), root, worker);
         return nodes;
     }

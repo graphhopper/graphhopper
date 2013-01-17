@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -53,7 +56,7 @@ public class PrepareTowerNodesShortcutsTest {
         // assert additional 0, 5
         assertFalse(GraphUtility.contains(g.getEdges(0), 5));
         assertFalse(GraphUtility.contains(g.getEdges(5), 0));
-        new PrepareTowerNodesShortcuts().setGraph(g).doWork();
+        new PrepareTowerNodesShortcuts().graph(g).doWork();
         assertTrue(GraphUtility.contains(g.getEdges(0), 5));
         EdgeIterator iter = GraphUtility.until(g.getEdges(0), 5);
         assertEquals(11, iter.distance(), 1e-5);
@@ -87,7 +90,7 @@ public class PrepareTowerNodesShortcutsTest {
         // assert 0->5 but not 5->0
         assertFalse(GraphUtility.contains(g.getEdges(0), 5));
         assertFalse(GraphUtility.contains(g.getEdges(5), 0));
-        new PrepareTowerNodesShortcuts().setGraph(g).doWork();
+        new PrepareTowerNodesShortcuts().graph(g).doWork();
         assertTrue(GraphUtility.contains(g.getOutgoing(0), 5));
         assertFalse(GraphUtility.contains(g.getOutgoing(5), 0));
     }
@@ -100,18 +103,18 @@ public class PrepareTowerNodesShortcutsTest {
         g.edge(2, 1, 10, false);
         g.edge(3, 0, 10, false);
 
-        assertFalse(new PrepareTowerNodesShortcuts().setGraph(g).has1InAnd1Out(2));
-        assertTrue(new PrepareTowerNodesShortcuts().setGraph(g).has1InAnd1Out(0));
-        assertFalse(new PrepareTowerNodesShortcuts().setGraph(g).has1InAnd1Out(1));
+        assertFalse(new PrepareTowerNodesShortcuts().graph(g).has1InAnd1Out(2));
+        assertTrue(new PrepareTowerNodesShortcuts().graph(g).has1InAnd1Out(0));
+        assertFalse(new PrepareTowerNodesShortcuts().graph(g).has1InAnd1Out(1));
     }
 
     @Test
     public void testDirectedBug() {
         LevelGraph g = createGraph(30);
         initDirected1(g);
-        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(g);
         prepare.doWork();
-        assertEquals(2, prepare.getShortcuts());
+        assertEquals(2, prepare.shortcuts());
         assertEquals(-1, g.getLevel(5));
         assertEquals(0, g.getLevel(4));
         assertEquals(0, g.getLevel(3));
@@ -128,9 +131,9 @@ public class PrepareTowerNodesShortcutsTest {
         g.edge(0, 1, 4, true);
         g.edge(0, 2, 10, true);
         g.edge(0, 3, 10, true);
-        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(g);
         prepare.doWork();
-        assertEquals(0, prepare.getShortcuts());
+        assertEquals(0, prepare.shortcuts());
     }
 
     @Test
@@ -138,9 +141,9 @@ public class PrepareTowerNodesShortcutsTest {
         LevelGraph g = createGraph(20);
         initBiGraph(g);
 
-        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(g);
         prepare.doWork();
-        assertEquals(1, prepare.getShortcuts());
+        assertEquals(1, prepare.shortcuts());
         EdgeSkipIterator iter = (EdgeSkipIterator) GraphUtility.until(g.getEdges(6), 3);
         assertEquals(40, iter.distance(), 1e-4);
         assertEquals(9, iter.skippedEdge());
@@ -222,9 +225,9 @@ public class PrepareTowerNodesShortcutsTest {
         g.edge(4, 3, 20, CarStreetType.flags(120, true));
         g.edge(3, 11, 1, CarStreetType.flags(30, true));
 
-        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(g);
         prepare.doWork();
-        assertEquals(2, prepare.getShortcuts());
+        assertEquals(2, prepare.shortcuts());
 
         EdgeIterator iter = GraphUtility.until(g.getEdges(0), 3);
         assertEquals(30, iter.distance(), 1e-4);
@@ -264,9 +267,9 @@ public class PrepareTowerNodesShortcutsTest {
     @Test
     public void testIntroduceShortcuts() {
         LevelGraph g = createShortcutsGraph();
-        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(g);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(g);
         prepare.doWork();
-        assertEquals(4, prepare.getShortcuts());
+        assertEquals(4, prepare.shortcuts());
 
         assertTrue(GraphUtility.contains(g.getOutgoing(12), 16));
         EdgeIterator iter = GraphUtility.until(g.getOutgoing(12), 16);
@@ -286,7 +289,7 @@ public class PrepareTowerNodesShortcutsTest {
     }
 
     public static void printEdges(LevelGraph g) {
-        RawEdgeIterator iter = g.getAllEdges();
+        RawEdgeIterator iter = g.allEdges();
         while (iter.next()) {
             System.out.println(iter.nodeA() + "<->" + iter.nodeB()
                     + ", dist: " + (float) iter.distance()

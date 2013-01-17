@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -52,7 +55,7 @@ public class GraphUtility {
      */
     public static List<String> getProblems(Graph g) {
         List<String> problems = new ArrayList<String>();
-        int nodes = g.getNodes();
+        int nodes = g.nodes();
         int nodeIndex = 0;
         try {
             for (; nodeIndex < nodes; nodeIndex++) {
@@ -94,7 +97,7 @@ public class GraphUtility {
      */
     public static int countEdges(Graph g) {
         int counter = 0;
-        int nodes = g.getNodes();
+        int nodes = g.nodes();
         for (int i = 0; i < nodes; i++) {
             EdgeIterator iter = g.getOutgoing(i);
             while (iter.next()) {
@@ -200,14 +203,14 @@ public class GraphUtility {
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next()) {
             str += "  ->" + iter.node() + " (" + iter.distance() + ") pillars:"
-                    + iter.pillarNodes().size() + ", edgeId:" + iter.edge()
+                    + iter.wayGeometry().size() + ", edgeId:" + iter.edge()
                     + "\t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
         }
         return str;
     }
 
     public static Graph shuffle(Graph g, Graph sortedGraph) {
-        int len = g.getNodes();
+        int len = g.nodes();
         TIntList list = new TIntArrayList(len, -1);
         list.fill(0, len, -1);
         for (int i = 0; i < len; i++) {
@@ -223,8 +226,8 @@ public class GraphUtility {
      * are worse (see sort).
      */
     public static Graph sortDFS(Graph g, Graph sortedGraph) {
-        final TIntList list = new TIntArrayList(g.getNodes(), -1);
-        list.fill(0, g.getNodes(), -1);
+        final TIntList list = new TIntArrayList(g.nodes(), -1);
+        list.fill(0, g.nodes(), -1);
         new XFirstSearch() {
             int counter = 0;
 
@@ -261,11 +264,11 @@ public class GraphUtility {
         };
         index.setCalcEdgeDistance(false);
         Location2IDPreciseIndex.InMemConstructionIndex idx = index.prepareInMemoryIndex(capacity);
-        final TIntList nodeMappingList = new TIntArrayList(g.getNodes(), -1);
-        nodeMappingList.fill(0, g.getNodes(), -1);
+        final TIntList nodeMappingList = new TIntArrayList(g.nodes(), -1);
+        nodeMappingList.fill(0, g.nodes(), -1);
         int counter = 0;
         int tmp = 0;
-        for (int ti = 0; ti < idx.getLength(); ti++) {
+        for (int ti = 0; ti < idx.length(); ti++) {
             TIntArrayList list = idx.getNodes(ti);
             if (list == null)
                 continue;
@@ -305,14 +308,14 @@ public class GraphUtility {
     }
 
     static Directory guessDirectory(GraphStorage store) {
-        String location = store.getDirectory().getLocation();
+        String location = store.directory().location();
         Directory outdir;
-        if (store.getDirectory() instanceof MMapDirectory) {
+        if (store.directory() instanceof MMapDirectory) {
             // TODO mmap will overwrite existing storage at the same location!                
             throw new IllegalStateException("not supported yet");
             // outdir = new MMapDirectory(location);                
         } else {
-            boolean isStoring = ((RAMDirectory) store.getDirectory()).isStoring();
+            boolean isStoring = ((RAMDirectory) store.directory()).isStoring();
             outdir = new RAMDirectory(location, isStoring);
         }
         return outdir;
@@ -331,7 +334,7 @@ public class GraphUtility {
      * Create a new storage from the specified one without copying the data.
      */
     public static GraphStorage newStorage(GraphStorage store) {
-        return guessStorage(store, guessDirectory(store)).createNew(store.getNodes());
+        return guessStorage(store, guessDirectory(store)).createNew(store.nodes());
     }
 
     /**
@@ -348,7 +351,7 @@ public class GraphUtility {
      * @return the graph outGraph
      */
     public static Graph clone(Graph g, GraphStorage outGraph) {
-        return g.copyTo(outGraph.createNew(g.getNodes()));
+        return g.copyTo(outGraph.createNew(g.nodes()));
     }
 
     /**
@@ -356,7 +359,7 @@ public class GraphUtility {
      */
     // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
     public static Graph copyTo(Graph from, Graph to) {
-        int len = from.getNodes();
+        int len = from.nodes();
         // important to avoid creating two edges for edges with both directions        
         MyBitSet bitset = new MyBitSetImpl(len);
         for (int oldNode = 0; oldNode < len; oldNode++) {
@@ -367,7 +370,7 @@ public class GraphUtility {
                 int adjacentNodeIndex = eIter.node();
                 if (bitset.contains(adjacentNodeIndex))
                     continue;
-                to.edge(oldNode, adjacentNodeIndex, eIter.distance(), eIter.flags()).pillarNodes(eIter.pillarNodes());
+                to.edge(oldNode, adjacentNodeIndex, eIter.distance(), eIter.flags()).wayGeometry(eIter.wayGeometry());
             }
         }
         return to;
@@ -421,11 +424,11 @@ public class GraphUtility {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
-        @Override public PointList pillarNodes() {
+        @Override public PointList wayGeometry() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
-        @Override public void pillarNodes(PointList list) {
+        @Override public void wayGeometry(PointList list) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

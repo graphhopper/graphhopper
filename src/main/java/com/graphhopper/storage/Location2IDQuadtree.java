@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -57,7 +60,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     }
 
     @Override
-    public Location2IDIndex setPrecision(boolean approxDist) {
+    public Location2IDIndex precision(boolean approxDist) {
         if (approxDist)
             dist = new DistanceCosProjection();
         else
@@ -65,7 +68,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return this;
     }
 
-    public int getCapacity() {
+    public int capacity() {
         return (int) (index.capacity() / 4);
     }
 
@@ -82,9 +85,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
             int lat = index.getHeader(1);
             int lon = index.getHeader(2);
             int checksum = index.getHeader(3);
-            if (checksum != g.getNodes())
+            if (checksum != g.nodes())
                 throw new IllegalStateException("index was created from a different graph with "
-                        + checksum + ". Current nodes:" + g.getNodes());
+                        + checksum + ". Current nodes:" + g.nodes());
 
             initAlgo(lat, lon);
             return true;
@@ -107,11 +110,11 @@ public class Location2IDQuadtree implements Location2IDIndex {
         initAlgo(latSize, lonSize);
         StopWatch sw = new StopWatch().start();
         MyBitSet filledIndices = fillQuadtree(latSize * lonSize);
-        int fillQT = filledIndices.getCardinality();
+        int fillQT = filledIndices.cardinality();
         float res1 = sw.stop().getSeconds();
         sw = new StopWatch().start();
         int counter = fillEmptyIndices(filledIndices);
-        logger.info("filled quadtree index array in " + res1 + "s. size is " + getCapacity()
+        logger.info("filled quadtree index array in " + res1 + "s. size is " + capacity()
                 + " (" + fillQT + "). filled empty " + counter + " in " + sw.stop().getSeconds() + "s");
         return this;
     }
@@ -122,28 +125,28 @@ public class Location2IDQuadtree implements Location2IDIndex {
             lonSize++;
 
         // avoid default big segment size and use one segment only:
-        index.setSegmentSize(latSize * lonSize * 4);
+        index.segmentSize(latSize * lonSize * 4);
         index.createNew(latSize * lonSize * 4);
     }
 
     void initAlgo(int lat, int lon) {
         this.latSize = lat;
         this.lonSize = lon;
-        BBox b = g.getBounds();
-        algo = new LinearKeyAlgo(lat, lon).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
-        maxNormRasterWidthKm = dist.normalizeDist(Math.max(dist.calcDist(b.minLat, b.minLon, b.minLat, b.maxLon),
-                dist.calcDist(b.minLat, b.minLon, b.maxLat, b.minLon)) / Math.sqrt(getCapacity()));
+        BBox b = g.bounds();
+        algo = new LinearKeyAlgo(lat, lon).bounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
+        maxNormRasterWidthKm = dist.calcNormalizedDist(Math.max(dist.calcDist(b.minLat, b.minLon, b.minLat, b.maxLon),
+                dist.calcDist(b.minLat, b.minLon, b.maxLat, b.minLon)) / Math.sqrt(capacity()));
 
         // as long as we have "dist < PI*R/2" it is save to compare the normalized distances instead of the real
         // distances. because sin(x) is only monotonic increasing for x <= PI/2 (and positive for x >= 0)
     }
 
     protected double getMaxRasterWidthKm() {
-        return dist.denormalizeDist(maxNormRasterWidthKm);
+        return dist.calcDenormalizedDist(maxNormRasterWidthKm);
     }
 
     private MyBitSet fillQuadtree(int size) {
-        int locs = g.getNodes();
+        int locs = g.nodes();
         if (locs <= 0)
             throw new IllegalStateException("check your graph - it is empty!");
 
@@ -177,7 +180,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         DataAccess indexCopy = new RAMDataAccess();
         indexCopy.createNew(index.capacity());
         MyBitSet indicesCopy = new MyBitSetImpl(len);
-        int initializedCounter = filledIndices.getCardinality();
+        int initializedCounter = filledIndices.cardinality();
         // fan out initialized entries to avoid "nose-artifacts"
         // we 1. do not use the same index for check and set and iterate until all indices are set
         // and 2. use a taken-from array to decide which of the colliding should be prefered
@@ -192,7 +195,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         while (initializedCounter < len) {
             index.copyTo(indexCopy);
             filledIndices.copyTo(indicesCopy);
-            initializedCounter = filledIndices.getCardinality();
+            initializedCounter = filledIndices.cardinality();
             for (int i = 0; i < len; i++) {
                 int to = -1, from = -1;
                 if (indicesCopy.contains(i)) {
@@ -307,7 +310,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         index.setHeader(0, MAGIC_INT);
         index.setHeader(1, latSize);
         index.setHeader(2, lonSize);
-        index.setHeader(3, g.getNodes());
+        index.setHeader(3, g.nodes());
         index.flush();
     }
 

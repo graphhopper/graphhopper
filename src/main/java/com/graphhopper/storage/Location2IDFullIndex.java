@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -34,7 +37,7 @@ public class Location2IDFullIndex implements Location2IDIndex {
     }
 
     @Override
-    public Location2IDIndex setPrecision(boolean approxDist) {
+    public Location2IDIndex precision(boolean approxDist) {
         if (approxDist)
             calc = new DistanceCosProjection();
         else
@@ -48,7 +51,7 @@ public class Location2IDFullIndex implements Location2IDIndex {
     }
 
     @Override public int findID(double lat, double lon) {
-        int locs = g.getNodes();
+        int locs = g.nodes();
         int id = -1;
         Circle circle = null;
         for (int i = 0; i < locs; i++) {

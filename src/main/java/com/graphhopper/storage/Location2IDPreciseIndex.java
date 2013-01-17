@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -75,9 +78,9 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             lonSizeI = index.getHeader(1);
             calcEdgeDistance = index.getHeader(2) == 1;
             int checksum = index.getHeader(3);
-            if (checksum != g.getNodes())
+            if (checksum != g.nodes())
                 throw new IllegalStateException("index was created from a different graph with "
-                        + checksum + ". Current nodes:" + g.getNodes());
+                        + checksum + ". Current nodes:" + g.nodes());
             prepareAlgo();
             return true;
         }
@@ -93,7 +96,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
     }
 
     @Override
-    public Location2IDIndex setPrecision(boolean approxDist) {
+    public Location2IDIndex precision(boolean approxDist) {
         if (approxDist)
             calc = new DistanceCosProjection();
         else
@@ -138,8 +141,8 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
     }
 
     private void prepareAlgo() {
-        BBox b = g.getBounds();
-        algo = createKeyAlgo(latSizeI, lonSizeI).setInitialBounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
+        BBox b = g.bounds();
+        algo = createKeyAlgo(latSizeI, lonSizeI).bounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
         latWidth = (b.maxLat - b.minLat) / latSizeI;
         lonWidth = (b.maxLon - b.minLon) / lonSizeI;
     }
@@ -154,7 +157,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         StopWatch sw = new StopWatch();
 
         void initIndex() {
-            int nodes = g.getNodes();
+            int nodes = g.nodes();
             MyBitSet alreadyDone = new MyBitSetImpl(nodes);
             int added = 0;
             StopWatch swWhile = new StopWatch();
@@ -290,7 +293,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             }
         }
 
-        public int getLength() {
+        public int length() {
             return inMemIndex.length;
         }
 
@@ -398,7 +401,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         index.setHeader(0, latSizeI);
         index.setHeader(1, lonSizeI);
         index.setHeader(2, calcEdgeDistance ? 1 : 0);
-        index.setHeader(3, g.getNodes());
+        index.setHeader(3, g.nodes());
         index.flush();
     }
 

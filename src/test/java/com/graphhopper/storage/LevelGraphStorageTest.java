@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -61,11 +64,11 @@ public class LevelGraphStorageTest extends GraphStorageTest {
         for (int i = 0; i < 20; i++) {
             g.setLevel(i, i);
         }
-        g.markNodeDeleted(10);
+        g.markNodeRemoved(10);
         g.optimize();
         assertEquals(9, g.getLevel(9));
         assertNotSame(10, g.getLevel(10));
-        assertEquals(19, g.getNodes());
+        assertEquals(19, g.nodes());
     }
 
     @Test

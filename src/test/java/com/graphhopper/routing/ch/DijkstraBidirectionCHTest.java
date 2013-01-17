@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -42,7 +45,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
     @Override public Graph getMatrixGraph() {
         if (preparedMatrixGraph == null) {
-            LevelGraph lg = createGraph(getMatrixAlikeGraph().getNodes());
+            LevelGraph lg = createGraph(getMatrixAlikeGraph().nodes());
             getMatrixAlikeGraph().copyTo(lg);
             prepareGraph(lg);
             preparedMatrixGraph = lg;
@@ -59,8 +62,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
     @Override
     public PrepareContractionHierarchies prepareGraph(Graph g, WeightCalculation calc) {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies().
-                setGraph(g).setType(calc);
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies().graph(g).type(calc);
         // prepare matrixgraph only once
         if (g != preparedMatrixGraph)
             ch.doWork();
@@ -110,7 +112,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.setLevel(7, 6);
         g2.setLevel(0, 7);
 
-        Path p = new PrepareContractionHierarchies().setGraph(g2).createAlgo().calcPath(0, 7);
+        Path p = new PrepareContractionHierarchies().graph(g2).createAlgo().calcPath(0, 7);
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
         assertEquals(4, p.calcNodes().size());
         assertEquals(4.2, p.distance(), 1e-5);

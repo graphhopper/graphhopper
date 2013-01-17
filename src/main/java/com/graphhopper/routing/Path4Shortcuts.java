@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -53,7 +56,7 @@ public class Path4Shortcuts extends PathBidirRef {
         }
     }
 
-    protected void handleSkippedEdge(EdgeSkipIterator iter) {
+    private void handleSkippedEdge(EdgeSkipIterator iter) {
         int from = iter.baseNode();
         int to = iter.node();
         if (reverse) {
@@ -73,7 +76,7 @@ public class Path4Shortcuts extends PathBidirRef {
         }
     }
 
-    protected boolean expandEdge(int from, int to, int skippedEdge, boolean reverse) {
+    private boolean expandEdge(int from, int to, int skippedEdge, boolean reverse) {
         int avoidNode = from;
         EdgeIterator tmpIter = graph.getEdgeProps(skippedEdge, from);
         if (tmpIter.isEmpty())

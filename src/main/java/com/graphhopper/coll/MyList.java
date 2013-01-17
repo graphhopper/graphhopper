@@ -21,7 +21,8 @@ package com.graphhopper.coll;
 import java.util.Arrays;
 
 /**
- * Oh why can't I set the size of an ArrayList?
+ * A list where it is allowed to set the size. Oh why can't I set the size of an
+ * ArrayList?
  *
  * @author Peter Karich
  */
@@ -79,8 +80,9 @@ public class MyList<T> {
     }
 
     /**
-     * Sets the size accordingly and if toSize is too big then ensureCapacity. Problem: if current
-     * size will be expanded the elements stay always 'null'!
+     * Sets the size accordingly and if toSize is too big then ensureCapacity.
+     * Problem: if current size will be expanded the elements stay always
+     * 'null'!
      */
     private void trimTo(int toSize) {
         // TODO should we shrink the array if toSize is too low?        

@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -52,9 +55,9 @@ public class RoutingAlgorithmSpecialAreaTests {
     private final Location2IDIndex idx;
 
     public RoutingAlgorithmSpecialAreaTests(OSMReader reader) {
-        this.unterfrankenGraph = reader.getGraph();
+        this.unterfrankenGraph = reader.graph();
         StopWatch sw = new StopWatch().start();
-        idx = reader.getLocation2IDIndex();
+        idx = reader.location2IDIndex();
         logger.info(idx.getClass().getSimpleName() + " index. Size:" + idx.calcMemInMB() + " MB, took:" + sw.stop().getSeconds());
     }
 
@@ -93,7 +96,7 @@ public class RoutingAlgorithmSpecialAreaTests {
 
     public static Collection<RoutingAlgorithm> createAlgos(Graph g, boolean withCh) {
         LevelGraph graphTowerNodesSC = (LevelGraph) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
-        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().setGraph(graphTowerNodesSC);
+        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(graphTowerNodesSC);
         prepare.doWork();
         AStarBidirection astarSimpleSC = (AStarBidirection) prepare.createAStar();
         astarSimpleSC.setApproximation(false);
@@ -102,7 +105,7 @@ public class RoutingAlgorithmSpecialAreaTests {
                 new DijkstraBidirection(g), new DijkstraSimple(g), prepare.createAlgo(), astarSimpleSC));
         if (withCh) {
             LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
-            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().setGraph(graphCH);
+            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().graph(graphCH);
             prepareCH.doWork();
             algos.add(prepareCH.createAlgo());
         }
@@ -110,15 +113,15 @@ public class RoutingAlgorithmSpecialAreaTests {
     }
 
     public void runShortestPathPerf(int runs, RoutingAlgorithm algo) throws Exception {
-        BBox bbox = unterfrankenGraph.getBounds();
+        BBox bbox = unterfrankenGraph.bounds();
         double minLat = bbox.minLat, minLon = bbox.minLon;
         double maxLat = bbox.maxLat, maxLon = bbox.maxLon;
         if (unterfrankenGraph instanceof LevelGraph) {
             if (algo instanceof DijkstraBidirectionRef)
-                algo = new PrepareContractionHierarchies().setGraph(unterfrankenGraph).createAlgo();
-//                algo = new PrepareTowerNodesShortcuts().setGraph(unterfrankenGraph).createAlgo();
+                algo = new PrepareContractionHierarchies().graph(unterfrankenGraph).createAlgo();
+//                algo = new PrepareTowerNodesShortcuts().graph(unterfrankenGraph).createAlgo();
             else if (algo instanceof AStarBidirection)
-                algo = new PrepareTowerNodesShortcuts().setGraph(unterfrankenGraph).createAStar();
+                algo = new PrepareTowerNodesShortcuts().graph(unterfrankenGraph).createAStar();
             else
                 // level graph accepts all algorithms but normally we want to use an optimized one
                 throw new IllegalStateException("algorithm which boosts query time for levelgraph not found " + algo);

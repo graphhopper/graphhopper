@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -18,8 +21,9 @@ package com.graphhopper.util.shapes;
 import com.graphhopper.util.NumHelper;
 
 /**
- * A simple bounding box defined as follows: minLon, maxLon followed by minLat which is south(!) and
- * maxLat. Equally to EX_GeographicBoundingBox in the ISO 19115 standard see
+ * A simple bounding box defined as follows: minLon, maxLon followed by minLat
+ * which is south(!) and maxLat. Equally to EX_GeographicBoundingBox in the ISO
+ * 19115 standard see
  * http://osgeo-org.1560.n6.nabble.com/Boundingbox-issue-for-discussion-td3875533.html
  *
  * Nice German overview:
@@ -114,7 +118,7 @@ public class BBox implements Shape, Cloneable {
     }
 
     public boolean contains(Circle c) {
-        return contains(c.getBBox());
+        return contains(c.boundingBox());
     }
 
     @Override
@@ -127,7 +131,7 @@ public class BBox implements Shape, Cloneable {
     }
 
     @Override
-    public BBox getBBox() {
+    public BBox boundingBox() {
         return this;
     }
 

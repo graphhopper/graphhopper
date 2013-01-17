@@ -19,10 +19,11 @@
 package com.graphhopper.util;
 
 /**
- * This class implements a rather quick solution to calculate 3D distances on earth using euclidean
- * geometry mixed with Haversine formula used for the on earth distance. The haversine formula makes
- * not so much sense as it is only important for large distances where then the rather smallish
- * heights would becomes neglectable.
+ * This class implements a rather quick solution to calculate 3D distances on
+ * earth using euclidean geometry mixed with Haversine formula used for the on
+ * earth distance. The haversine formula makes not so much sense as it is only
+ * important for large distances where then the rather smallish heights would
+ * becomes neglectable.
  *
  * @author Peter Karich
  */
@@ -37,5 +38,10 @@ public class DistanceCalc3D extends DistanceCalc {
         double len = super.calcDist(fromLat, fromLon, toLat, toLon);
         double delta = Math.abs(toHeight - fromHeight);
         return Math.sqrt(delta * delta + len * len);
+    }
+
+    @Override
+    public String toString() {
+        return "EXACT3D";
     }
 }

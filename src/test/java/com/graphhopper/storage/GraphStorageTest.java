@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -33,7 +36,7 @@ public class GraphStorageTest extends AbstractGraphTester {
     @Override
     public GraphStorage createGraph(String location, int size) {
         // reduce segment size in order to test the case where multiple segments come into the game
-        return newGraph(new RAMDirectory(location)).setSegmentSize(size / 2).createNew(size);
+        return newGraph(new RAMDirectory(location)).segmentSize(size / 2).createNew(size);
     }
 
     public GraphStorage newGraph(Directory dir) {
@@ -47,7 +50,7 @@ public class GraphStorageTest extends AbstractGraphTester {
         graph.setNode(1, 11, 20);
         graph.setNode(2, 12, 12);
 
-        graph.edge(0, 1, 100, true).pillarNodes(Helper.createPointList(1, 1, 2, 3));
+        graph.edge(0, 1, 100, true).wayGeometry(Helper.createPointList(1, 1, 2, 3));
         graph.edge(0, 2, 200, true);
         graph.edge(1, 2, 120, false);
 
@@ -56,8 +59,8 @@ public class GraphStorageTest extends AbstractGraphTester {
 
         graph = newGraph(new MMapDirectory(defaultGraph));
         assertTrue(graph.loadExisting());
-        assertEquals(3, graph.getNodes());
-        assertEquals(3, graph.getNodes());
+        assertEquals(3, graph.nodes());
+        assertEquals(3, graph.nodes());
         checkGraph(graph);
 
         graph.edge(3, 4, 123, true);
@@ -65,7 +68,7 @@ public class GraphStorageTest extends AbstractGraphTester {
     }
 
     protected void checkGraph(Graph g) {
-        assertEquals(new BBox(10, 20, 10, 12), g.getBounds());
+        assertEquals(new BBox(10, 20, 10, 12), g.bounds());
         assertEquals(10, g.getLatitude(0), 1e-2);
         assertEquals(10, g.getLongitude(0), 1e-2);
         assertEquals(2, GraphUtility.count(g.getOutgoing(0)));
@@ -73,7 +76,7 @@ public class GraphStorageTest extends AbstractGraphTester {
 
         EdgeIterator iter = g.getOutgoing(0);
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList(1, 1, 2, 3), iter.pillarNodes());
+        assertEquals(Helper.createPointList(1, 1, 2, 3), iter.wayGeometry());
 
         assertEquals(11, g.getLatitude(1), 1e-2);
         assertEquals(20, g.getLongitude(1), 1e-2);
@@ -93,7 +96,7 @@ public class GraphStorageTest extends AbstractGraphTester {
         g.edge(3, 1, 1, false);
         g.edge(3, 2, 1, false);
 
-        RawEdgeIterator iter = g.getAllEdges();
+        RawEdgeIterator iter = g.allEdges();
         assertTrue(iter.next());
         int edgeId = iter.edge();
         assertEquals(0, iter.nodeA());

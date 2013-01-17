@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -44,7 +47,7 @@ public class OSMReaderTest {
     }
 
     @After public void tearDown() {
-        Helper.deleteDir(new File(dir));
+        Helper.removeDir(new File(dir));
     }
 
     GraphStorage createGraph(String directory) {
@@ -53,13 +56,13 @@ public class OSMReaderTest {
 
     OSMReader init(OSMReader osmreader) {
         // make index creation fast
-        osmreader.setIndexCapacity(1000);
+        osmreader.indexCapacity(1000);
         return osmreader;
     }
 
     OSMReader preProcess(OSMReader osmreader) {
         osmreader.setDoubleParse(true);
-        osmreader.getHelper().preProcess(getClass().getResourceAsStream("test-osm.xml"));
+        osmreader.helper().preProcess(getClass().getResourceAsStream("test-osm.xml"));
         return osmreader;
     }
 
@@ -68,8 +71,8 @@ public class OSMReaderTest {
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.optimize();
         reader.flush();
-        Graph graph = reader.getGraph();
-        assertEquals(4, graph.getNodes());
+        Graph graph = reader.graph();
+        assertEquals(4, graph.nodes());
         int internalIdMain = AbstractGraphTester.getIdOf(graph, 52);
         int internalId1 = AbstractGraphTester.getIdOf(graph, 51.2492152);
         int internalId2 = AbstractGraphTester.getIdOf(graph, 51.2);
@@ -91,7 +94,7 @@ public class OSMReaderTest {
         assertTrue(flags.isBackward());
         assertTrue(iter.next());
         assertEquals(internalId3, iter.node());
-        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.pillarNodes());
+        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.wayGeometry());
         flags = new CarStreetType(iter.flags());
         assertTrue(flags.isService());
         assertTrue(flags.isForward());
@@ -103,20 +106,20 @@ public class OSMReaderTest {
         assertEquals(internalIdMain, iter.node());
         assertEquals(93146.888, iter.distance(), 1);
 
-        assertEquals(9.431, graph.getLongitude(reader.getLocation2IDIndex().findID(51.25, 9.43)), 1e-3);
-        assertEquals(9.4, graph.getLongitude(reader.getLocation2IDIndex().findID(51.2, 9.4)), 1e-3);
-        assertEquals(10, graph.getLongitude(reader.getLocation2IDIndex().findID(49, 10)), 1e-3);
-        assertEquals(51.249, graph.getLatitude(reader.getLocation2IDIndex().findID(51.2492152, 9.4317166)), 1e-3);
+        assertEquals(9.431, graph.getLongitude(reader.location2IDIndex().findID(51.25, 9.43)), 1e-3);
+        assertEquals(9.4, graph.getLongitude(reader.location2IDIndex().findID(51.2, 9.4)), 1e-3);
+        assertEquals(10, graph.getLongitude(reader.location2IDIndex().findID(49, 10)), 1e-3);
+        assertEquals(51.249, graph.getLatitude(reader.location2IDIndex().findID(51.2492152, 9.4317166)), 1e-3);
     }
 
     @Test public void testSort() {
-        OSMReader reader = preProcess(init(new OSMReader(createGraph(dir), 1000).setSort(true)));
+        OSMReader reader = preProcess(init(new OSMReader(createGraph(dir), 1000).sort(true)));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.optimize();
         reader.flush();
-        Graph graph = reader.getGraph();
-        assertEquals(10, graph.getLongitude(reader.getLocation2IDIndex().findID(49, 10)), 1e-3);
-        assertEquals(51.249, graph.getLatitude(reader.getLocation2IDIndex().findID(51.2492152, 9.4317166)), 1e-3);
+        Graph graph = reader.graph();
+        assertEquals(10, graph.getLongitude(reader.location2IDIndex().findID(49, 10)), 1e-3);
+        assertEquals(51.249, graph.getLatitude(reader.location2IDIndex().findID(51.2492152, 9.4317166)), 1e-3);
     }
 
     @Test public void testWithBounds() {
@@ -127,8 +130,8 @@ public class OSMReaderTest {
         }));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.flush();
-        Graph graph = reader.getGraph();
-        assertEquals(4, graph.getNodes());
+        Graph graph = reader.graph();
+        assertEquals(4, graph.nodes());
         int internalId1 = AbstractGraphTester.getIdOf(graph, 51.2492152); // 10
         int internalIdMain = AbstractGraphTester.getIdOf(graph, 52); // 20
         int internalId2 = AbstractGraphTester.getIdOf(graph, 51.2);  // 30
@@ -147,7 +150,7 @@ public class OSMReaderTest {
         assertEquals(93146.888, iter.distance(), 1);
         assertTrue(iter.next());
         assertEquals(internalId4, iter.node());
-        AbstractGraphTester.assertPList(Helper.createPointList(), iter.pillarNodes());
+        AbstractGraphTester.assertPList(Helper.createPointList(), iter.wayGeometry());
 
         // get third added location => 2
         iter = graph.getOutgoing(internalId2);
@@ -161,7 +164,7 @@ public class OSMReaderTest {
         OSMReader reader = preProcess(init(new OSMReader(createGraph(dir), 1000)));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm2.xml"));
         reader.flush();
-        Graph graph = reader.getGraph();
+        Graph graph = reader.graph();
 
         int internalIdMain = AbstractGraphTester.getIdOf(graph, 52);
         int internalId1 = AbstractGraphTester.getIdOf(graph, 51.2492152);

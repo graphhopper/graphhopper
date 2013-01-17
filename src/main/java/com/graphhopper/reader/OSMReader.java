@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -58,7 +61,7 @@ public class OSMReader {
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
         OSMReader reader = osm2Graph(args);
-        Graph g = reader.getGraph();
+        Graph g = reader.graph();
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(reader);
         if (args.getBool("osmreader.test", false))
             tests.start();
@@ -110,8 +113,8 @@ public class OSMReader {
 
         File compressed = new File(graphLocation + ".gh");
         if (compressed.exists() && !compressed.isDirectory()) {
-            boolean deleteZipped = args.getBool("osmreader.graph.removeZipped", true);
-            Helper.unzip(compressed.getAbsolutePath(), graphLocation, deleteZipped);
+            boolean removeZipped = args.getBool("osmreader.graph.removeZipped", true);
+            Helper.unzip(compressed.getAbsolutePath(), graphLocation, removeZipped);
         }
 
         int size = (int) args.getLong("osmreader.size", 10 * 1000);
@@ -138,15 +141,18 @@ public class OSMReader {
         return osm2Graph(new OSMReader(storage, size), args);
     }
 
+    /**
+     * Initializes the specified osmReader with arguments from the args object.
+     */
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
-        osmReader.setIndexCapacity(args.getInt("osmreader.locationIndexCapacity", -1));
+        osmReader.indexCapacity(args.getInt("osmreader.locationIndexCapacity", -1));
         String type = args.get("osmreader.type", "CAR");
-        osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
+        osmReader.acceptStreet(new AcceptStreet(type.contains("CAR"),
                 type.contains("PUBLIC_TRANSPORT"),
                 type.contains("BIKE"), type.contains("FOOT")));
         final String algoStr = args.get("osmreader.algo", "astar");
-        osmReader.setDefaultAlgoPrepare(Helper.createAlgoPrepare(algoStr));
-        osmReader.setSort(args.getBool("osmreader.sortGraph", false));
+        osmReader.defaultAlgoPrepare(Helper.createAlgoPrepare(algoStr));
+        osmReader.sort(args.getBool("osmreader.sortGraph", false));
 
         // TODO LATER make this configurable in OSMReaderHelper
         if (args.getBool("osmreader.towerNodesShortcuts", false))
@@ -164,12 +170,12 @@ public class OSMReader {
             logger.info("start creating graph from " + osmXmlFile);
             osmReader.osm2Graph(osmXmlFile);
         }
-        logger.info("graph " + osmReader.getGraph().toString());
+        logger.info("graph " + osmReader.graph().toString());
         return osmReader;
     }
 
-    public OSMReader(String storageLocation, int size) {
-        this(new GraphStorage(new RAMDirectory(storageLocation, true)), size);
+    public OSMReader(String storageLocation, int expectedSize) {
+        this(new GraphStorage(new RAMDirectory(storageLocation, true)), expectedSize);
     }
 
     public OSMReader(GraphStorage storage, int expectedNodes) {
@@ -179,12 +185,12 @@ public class OSMReader {
         logger.info("using " + helper.getStorageInfo(storage) + ", memory:" + Helper.getMemInfo());
     }
 
-    public boolean loadExisting() {
+    boolean loadExisting() {
         if (!graphStorage.loadExisting())
             return false;
 
         // init
-        getLocation2IDIndex();
+        location2IDIndex();
         // load index afterwards
         if (!index.loadExisting())
             throw new IllegalStateException("couldn't load location index");
@@ -201,11 +207,7 @@ public class OSMReader {
         return fi;
     }
 
-    public AlgorithmPreparation getPreparation() {
-        return prepare;
-    }
-
-    public void osm2Graph(File osmXmlFile) throws IOException {
+    void osm2Graph(File osmXmlFile) throws IOException {
         helper.preProcess(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
         cleanUp();
@@ -213,7 +215,7 @@ public class OSMReader {
         flush();
     }
 
-    public void optimize() {
+    void optimize() {
         logger.info("optimizing ... (" + Helper.getMemInfo() + ")");
         graphStorage.optimize();
         // move this into the GraphStorage.optimize method?
@@ -226,31 +228,31 @@ public class OSMReader {
 
         // TODO at the moment a prepared levelgraph cannot be sorted, as otherwise edgeIds won't be copied+recognized
         if (prepare == null)
-            setDefaultAlgoPrepare(Helper.createAlgoPrepare("astar"));
+            defaultAlgoPrepare(Helper.createAlgoPrepare("astar"));
         else
             prepare.doWork();
     }
 
-    public void cleanUp() {
+    private void cleanUp() {
         helper.cleanup();
-        int prev = graphStorage.getNodes();
+        int prev = graphStorage.nodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graphStorage);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
-        int n = graphStorage.getNodes();
-        logger.info("nodes " + n + ", there were " + preparation.getSubNetworks()
+        int n = graphStorage.nodes();
+        logger.info("nodes " + n + ", there were " + preparation.subNetworks()
                 + " sub-networks. removed them => " + (prev - n)
                 + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
     }
 
-    public void flush() {
-        logger.info("flushing graph with " + graphStorage.getNodes() + " nodes ... (" + Helper.getMemInfo() + ")");
+    void flush() {
+        logger.info("flushing graph with " + graphStorage.nodes() + " nodes ... (" + Helper.getMemInfo() + ")");
         graphStorage.flush();
 
         if (indexCapacity < 0)
-            indexCapacity = Helper.calcIndexSize(graphStorage.getBounds());
+            indexCapacity = Helper.calcIndexSize(graphStorage.bounds());
         logger.info("initializing and flushing location index with " + indexCapacity);
-        getLocation2IDIndex().prepareIndex(indexCapacity);
+        location2IDIndex().prepareIndex(indexCapacity);
         index.flush();
     }
 
@@ -258,12 +260,12 @@ public class OSMReader {
      * Creates the edges and nodes files from the specified inputstream (osm xml
      * file).
      */
-    public void writeOsm2Graph(InputStream is) {
+    void writeOsm2Graph(InputStream is) {
         if (is == null)
             throw new IllegalStateException("Stream cannot be empty");
 
-        logger.info("creating graph with expected nodes:" + helper.getExpectedNodes());
-        graphStorage.createNew(helper.getExpectedNodes());
+        logger.info("creating graph with expected nodes:" + helper.expectedNodes());
+        graphStorage.createNew(helper.expectedNodes());
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         int wayStart = -1;
@@ -304,7 +306,7 @@ public class OSMReader {
                         break;
                 }
             }
-            // logger.info("storage nodes:" + storage.getNodes() + " vs. graph nodes:" + storage.getGraph().getNodes());
+            // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
         } catch (XMLStreamException ex) {
             throw new RuntimeException("Couldn't process file", ex);
         } finally {
@@ -312,7 +314,7 @@ public class OSMReader {
         }
     }
 
-    public void processNode(XMLStreamReader sReader) throws XMLStreamException {
+    private void processNode(XMLStreamReader sReader) throws XMLStreamException {
         long osmId;
         try {
             osmId = Long.parseLong(sReader.getAttributeValue(null, "id"));
@@ -337,7 +339,7 @@ public class OSMReader {
         }
     }
 
-    public boolean isInBounds(double lat, double lon) {
+    boolean isInBounds(double lat, double lon) {
         return true;
     }
 
@@ -388,45 +390,61 @@ public class OSMReader {
         return handled;
     }
 
-    public boolean isHighway(XMLStreamReader sReader) throws XMLStreamException {
+    boolean isHighway(XMLStreamReader sReader) throws XMLStreamException {
         return parseWay(tmpLocs, properties, sReader);
     }
 
-    public void processHighway(XMLStreamReader sReader) throws XMLStreamException {
+    private void processHighway(XMLStreamReader sReader) throws XMLStreamException {
         if (isHighway(sReader) && tmpLocs.size() > 1) {
-            int all = tmpLocs.size();
             int flags = acceptStreets.toFlags(properties);
             int successfullAdded = helper.addEdge(tmpLocs, flags);
             edgeCount += successfullAdded;
         }
     }
 
-    public Graph getGraph() {
+    /**
+     * @return the initialized graph. Invalid if called before osm2Graph.
+     */
+    public Graph graph() {
         return graphStorage;
     }
 
-    public OSMReader setAcceptStreet(AcceptStreet acceptStr) {
+    /**
+     * Specify the type of the path calculation (car, bike, ...).
+     */
+    public OSMReader acceptStreet(AcceptStreet acceptStr) {
         this.acceptStreets = acceptStr;
         return this;
     }
 
+    public AlgorithmPreparation preparation() {
+        return prepare;
+    }
+
+    /**
+     * Specifies if shortcuts should be introduced (contraction hierarchies) to
+     * improve query speed.
+     *
+     * @param chShortcuts fastest, shortest or false
+     */
     public OSMReader setCHShortcuts(String chShortcuts) {
         if (chShortcuts.isEmpty() || "no".equals(chShortcuts) || "false".equals(chShortcuts))
             return this;
         if ("true".equals(chShortcuts) || "fastest".equals(chShortcuts)) {
-            prepare = new PrepareContractionHierarchies().setType(FastestCarCalc.DEFAULT);
+            prepare = new PrepareContractionHierarchies().type(FastestCarCalc.DEFAULT);
         } else if ("shortest".equals(chShortcuts)) {
             prepare = new PrepareContractionHierarchies();
         } else
             throw new IllegalArgumentException("Value " + chShortcuts + " not valid for configuring "
                     + "contraction hierarchies algorithm preparation");
-        prepare.setGraph(graphStorage);
+        prepare.graph(graphStorage);
         return this;
     }
 
-    private void setDefaultAlgoPrepare(AlgorithmPreparation defaultPrepare) {
+    private OSMReader defaultAlgoPrepare(AlgorithmPreparation defaultPrepare) {
         prepare = defaultPrepare;
-        prepare.setGraph(graphStorage);
+        prepare.graph(graphStorage);
+        return this;
     }
 
     OSMReader setDoubleParse(boolean doubleParse) {
@@ -447,22 +465,31 @@ public class OSMReader {
         };
     }
 
-    OSMReaderHelper getHelper() {
+    OSMReaderHelper helper() {
         return helper;
     }
 
-    public Location2IDIndex getLocation2IDIndex() {
+    public Location2IDIndex location2IDIndex() {
         if (index == null)
-            index = new Location2IDQuadtree(graphStorage, graphStorage.getDirectory());
+            index = new Location2IDQuadtree(graphStorage, graphStorage.directory());
         return index;
     }
 
-    public OSMReader setIndexCapacity(int cap) {
-        indexCapacity = cap;
+    /**
+     * Changes the default (and automatically calculated) index size of the
+     * location2id index to the specified value.
+     */
+    public OSMReader indexCapacity(int val) {
+        indexCapacity = val;
         return this;
     }
 
-    public OSMReader setSort(boolean bool) {
+    /**
+     * Sets if the graph should be sorted to improve query speed. Often not
+     * appropriated if graph is huge as sorting is done via copying into a new
+     * instance.
+     */
+    public OSMReader sort(boolean bool) {
         sortGraph = bool;
         return this;
     }

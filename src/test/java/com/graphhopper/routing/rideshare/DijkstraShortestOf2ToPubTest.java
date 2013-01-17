@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -45,9 +48,9 @@ public class DijkstraShortestOf2ToPubTest {
         d.addPubTransportPoints(DijkstraWhichToOneTest.pubTransportPath);
         int from = 13;
         int dest = 65;
-        d.setFrom(from);
-        d.setTo(dest);
-        Path path = d.calcShortestPath();
+        d.from(from);
+        d.to(dest);
+        Path path = d.calcPath();
         assertWithBiDijkstra(DijkstraWhichToOneTest.pubTransportPath, path, from, dest, g);
     }
 
@@ -58,10 +61,10 @@ public class DijkstraShortestOf2ToPubTest {
         d.addPubTransportPoints(DijkstraWhichToOneTest.pubTransportPath);
         int from = 13;
         int dest = 70;
-        d.setFrom(from);
-        d.setTo(dest);
+        d.from(from);
+        d.to(dest);
 
-        Path path = d.calcShortestPath();
+        Path path = d.calcPath();
         assertWithBiDijkstra(DijkstraWhichToOneTest.pubTransportPath, path, from, dest, g);
     }
 
@@ -77,9 +80,9 @@ public class DijkstraShortestOf2ToPubTest {
         d.addPubTransportPoints(pubTransport);
         int from = 1;
         int dest = 53;
-        d.setFrom(from);
-        d.setTo(dest);
-        Path path = d.calcShortestPath();
+        d.from(from);
+        d.to(dest);
+        Path path = d.calcPath();
         assertWithBiDijkstra(pubTransport, path, from, dest, g);
     }
 

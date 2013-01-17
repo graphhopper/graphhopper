@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -74,26 +77,28 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
             pubTransport.add(index);
     }
 
-    public void setFrom(int from) {
+    public DijkstraShortestOf2ToPub from(int from) {
         fromP1 = from;
+        return this;
     }
-
-    public void setTo(int to) {
+    
+    public DijkstraShortestOf2ToPub to(int to) {
         toP2 = to;
+        return this;
     }
 
-    public Path calcShortestPath() {
+    public Path calcPath() {
         // identical
         if (pubTransport.contains(fromP1) || pubTransport.contains(toP2))
             return new DijkstraBidirection(graph).calcPath(fromP1, toP2);
 
-        MyBitSet visitedFrom = new MyBitSetImpl(graph.getNodes());
+        MyBitSet visitedFrom = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
         EdgeEntry entryTo = new EdgeEntry(EdgeIterator.NO_EDGE, toP2, 0);
         currTo = entryTo;
-        MyBitSet visitedTo = new MyBitSetImpl(graph.getNodes());
+        MyBitSet visitedTo = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
 
@@ -144,7 +149,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
     // example: P1 to M is long, also P2 to M - in sum they can be longer than the shortest.
     // But even now it could be that there is an undiscovered M' from P1 which results in a very short 
     // (and already discovered) back path M'-P2. See test testCalculateShortestPathWithSpecialFinishCondition
-    public boolean checkFinishCondition() {
+    boolean checkFinishCondition() {
         if (currFrom == null) {
             if (currTo == null)
                 throw new IllegalStateException("no shortest path!?");
@@ -156,7 +161,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
             return Math.min(currFrom.weight, currTo.weight) >= shortest.weight();
     }
 
-    public void fillEdges(EdgeEntry curr, MyBitSet visitedMain,
+    void fillEdges(EdgeEntry curr, MyBitSet visitedMain,
             PriorityQueue<EdgeEntry> prioQueue, TIntObjectMap<EdgeEntry> shortestDistMap) {
 
         int currVertexFrom = curr.endNode;
@@ -186,7 +191,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
     }
 
     @Override
-    public void updateShortest(EdgeEntry shortestDE, int currLoc) {
+    protected void updateShortest(EdgeEntry shortestDE, int currLoc) {
         if (pubTransport.contains(currLoc)) {
             EdgeEntry entryOther = shortestDistMapOther.get(currLoc);
             if (entryOther != null) {
@@ -204,9 +209,9 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
 
     @Override public Path calcPath(int from, int to) {
         addPubTransportPoint(from);
-        setFrom(from);
-        setTo(to);
-        return calcShortestPath();
+        from(from);
+        to(to);
+        return calcPath();
     }
 
     @Override

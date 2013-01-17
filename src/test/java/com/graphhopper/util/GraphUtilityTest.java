@@ -60,7 +60,7 @@ public class GraphUtilityTest {
     public void testSort() {
         Graph g = initUnsorted(createGraph());
         Graph newG = GraphUtility.sort(g, createGraph(), 16);
-        assertEquals(g.getNodes(), newG.getNodes());
+        assertEquals(g.nodes(), newG.nodes());
         assertEquals(0, newG.getLatitude(0), 1e-4); // 0
         assertEquals(2.3, newG.getLatitude(1), 1e-4); // 6
         assertEquals(2.5, newG.getLatitude(2), 1e-4); // 1
@@ -75,7 +75,7 @@ public class GraphUtilityTest {
         Graph g = initUnsorted(createGraph());
         Graph newG = GraphUtility.sortDFS(g, createGraph());
         // TODO does not handle subnetworks
-        // assertEquals(g.getNodes(), newG.getNodes());
+        // assertEquals(g.nodes(), newG.nodes());
         assertEquals(0, newG.getLatitude(0), 1e-4); // 0
         assertEquals(2.5, newG.getLatitude(1), 1e-4); // 1        
         assertEquals(4.5, newG.getLatitude(2), 1e-4); // 2
@@ -97,18 +97,18 @@ public class GraphUtilityTest {
     public void testCopy() {
         Graph g = initUnsorted(createGraph());
         EdgeIterator iter = g.edge(6, 5, 11, true);
-        iter.pillarNodes(Helper.createPointList(12, 10, -1, 3));
+        iter.wayGeometry(Helper.createPointList(12, 10, -1, 3));
         LevelGraph lg = (LevelGraph) new LevelGraphStorage(new RAMDirectory()).createNew(10);
         GraphUtility.copyTo(g, lg);
         iter = lg.getEdgeProps(iter.edge(), 6);
-        assertEquals(Helper.createPointList(-1, 3, 12, 10), iter.pillarNodes());
+        assertEquals(Helper.createPointList(-1, 3, 12, 10), iter.wayGeometry());
         assertEquals(0, lg.getLevel(0));
         assertEquals(0, lg.getLevel(1));
         assertEquals(0, lg.getLatitude(0), 1e-6);
         assertEquals(1, lg.getLongitude(0), 1e-6);
         assertEquals(2.5, lg.getLatitude(1), 1e-6);
         assertEquals(4.5, lg.getLongitude(1), 1e-6);
-        assertEquals(9, lg.getNodes());
+        assertEquals(9, lg.nodes());
         iter = lg.getOutgoing(8);
         iter.next();
         assertEquals(2.05, iter.distance(), 1e-6);

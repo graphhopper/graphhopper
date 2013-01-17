@@ -98,7 +98,7 @@ public class SparseLongLongArray {
     /**
      * Removes the mapping from the specified key, if there was any.
      */
-    public void delete(long key) {
+    public void remove(long key) {
         int i = binarySearch(mKeys, 0, mSize, key);
 
         if (i >= 0) {
@@ -107,13 +107,6 @@ public class SparseLongLongArray {
                 mGarbage = true;
             }
         }
-    }
-
-    /**
-     * Alias for {@link #delete(long)}.
-     */
-    public void remove(long key) {
-        delete(key);
     }
 
     private void gc() {

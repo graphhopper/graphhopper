@@ -93,8 +93,8 @@ public class CompressedArray {
                 return null;
             byte[] bytes = segments.get(segmentNo);
             VLongStorage store = new VLongStorage(decompress(bytes));
-            long len = store.getLength();
-            for (int i = 0; store.getPosition() < len; i++) {
+            long len = store.length();
+            for (int i = 0; store.position() < len; i++) {
                 long latlon = store.readVLong();
                 if (i == entry) {
                     CoordTrig coord = new CoordTrig();
@@ -117,7 +117,7 @@ public class CompressedArray {
             return;
         try {
             currentWriter.trimToSize();
-            byte[] input = currentWriter.getBytes();
+            byte[] input = currentWriter.bytes();
             segments.add(compress(input, 0, input.length, compressionLevel));
             currentWriter = null;
             currentEntry = 0;

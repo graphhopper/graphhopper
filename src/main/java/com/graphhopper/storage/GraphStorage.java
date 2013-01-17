@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -62,7 +65,7 @@ public class GraphStorage implements Graph, Storable {
     private int nodeCount;
     private BBox bounds;
     // remove markers are not yet persistent!
-    private MyBitSet deletedNodes;
+    private MyBitSet removedNodes;
     private int edgeEntryIndex = -1, nodeEntryIndex = -1;
     // length | nodeA | nextNode | ... | nodeB
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 2GB
@@ -105,13 +108,16 @@ public class GraphStorage implements Graph, Storable {
         edgeEntrySize = edgeEntryIndex + 1;
     }
 
-    public Directory getDirectory() {
+    /**
+     * @return the directory where this graph is stored.
+     */
+    public Directory directory() {
         return dir;
     }
 
-    public GraphStorage setSegmentSize(int bytes) {
-        nodes.setSegmentSize(bytes);
-        edges.setSegmentSize(bytes);
+    GraphStorage segmentSize(int bytes) {
+        nodes.segmentSize(bytes);
+        edges.segmentSize(bytes);
         return this;
     }
 
@@ -124,7 +130,7 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public int getNodes() {
+    public int nodes() {
         return nodeCount;
     }
 
@@ -154,7 +160,7 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public BBox getBounds() {
+    public BBox bounds() {
         return bounds;
     }
 
@@ -174,10 +180,10 @@ public class GraphStorage implements Graph, Storable {
     }
 
     private long incCapacity(DataAccess da, long deltaCap) {
-        long newSeg = deltaCap / da.getSegmentSize();
-        if (deltaCap % da.getSegmentSize() != 0)
+        long newSeg = deltaCap / da.segmentSize();
+        if (deltaCap % da.segmentSize() != 0)
             newSeg++;
-        long cap = da.capacity() + newSeg * da.getSegmentSize();
+        long cap = da.capacity() + newSeg * da.segmentSize();
         da.ensureCapacity(cap);
         return cap;
     }
@@ -192,8 +198,8 @@ public class GraphStorage implements Graph, Storable {
             return;
 
         long newCapacity = incCapacity(nodes, deltaCap);
-        if (deletedNodes != null)
-            getDeletedNodes().ensureCapacity((int) newCapacity);
+        if (removedNodes != null)
+            removedNodes().ensureCapacity((int) newCapacity);
     }
 
     private void ensureEdgeIndex(int edgeIndex) {
@@ -320,7 +326,7 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public RawEdgeIterator getAllEdges() {
+    public RawEdgeIterator allEdges() {
         return new AllEdgeIterator();
     }
 
@@ -529,7 +535,7 @@ public class GraphStorage implements Graph, Storable {
             return baseNode;
         }
 
-        @Override public void pillarNodes(PointList pillarNodes) {
+        @Override public void wayGeometry(PointList pillarNodes) {
             if (pillarNodes != null && !pillarNodes.isEmpty()) {
                 int len = pillarNodes.size();
                 int geoRef = nextGeoRef(len * 2);
@@ -548,7 +554,7 @@ public class GraphStorage implements Graph, Storable {
                 edges.setInt(edgePointer + E_GEO, EMPTY_LINK);
         }
 
-        @Override public PointList pillarNodes() {
+        @Override public PointList wayGeometry() {
             final int geoRef = edges.getInt(edgePointer + E_GEO);
             final int count = geometry.getInt(geoRef);
             PointList pillarNodes = new PointList(count);
@@ -607,34 +613,34 @@ public class GraphStorage implements Graph, Storable {
         clonedG.maxGeoRef = maxGeoRef;
 
         clonedG.bounds = bounds;
-        if (deletedNodes == null)
-            clonedG.deletedNodes = null;
+        if (removedNodes == null)
+            clonedG.removedNodes = null;
         else
-            clonedG.deletedNodes = deletedNodes.copyTo(new MyBitSetImpl());
+            clonedG.removedNodes = removedNodes.copyTo(new MyBitSetImpl());
         return clonedG;
     }
 
-    private MyBitSet getDeletedNodes() {
-        if (deletedNodes == null)
-            deletedNodes = new MyBitSetImpl((int) (nodes.capacity() / 4));
-        return deletedNodes;
+    private MyBitSet removedNodes() {
+        if (removedNodes == null)
+            removedNodes = new MyBitSetImpl((int) (nodes.capacity() / 4));
+        return removedNodes;
     }
 
     @Override
-    public void markNodeDeleted(int index) {
-        getDeletedNodes().add(index);
+    public void markNodeRemoved(int index) {
+        removedNodes().add(index);
     }
 
     @Override
-    public boolean isNodeDeleted(int index) {
-        return getDeletedNodes().contains(index);
+    public boolean isNodeRemoved(int index) {
+        return removedNodes().contains(index);
     }
 
     @Override
     public void optimize() {
         // Deletes only nodes. 
         // It reduces the fragmentation of the node space but introduces new unused edges.
-        inPlaceNodeDelete(getDeletedNodes().getCardinality());
+        inPlaceNodeRemove(removedNodes().cardinality());
 
         // Reduce memory usage
         trimToSize();
@@ -655,11 +661,11 @@ public class GraphStorage implements Graph, Storable {
      * refToEdges
      */
     private void internalEdgeDisconnect(int edge, long edgeToUpdatePointer, int node) {
-        long edgeToDeletePointer = (long) edge * edgeEntrySize;
+        long edgeToRemovePointer = (long) edge * edgeEntrySize;
         // an edge is shared across the two nodes even if the edge is not in both directions
         // so we need to know two edge-pointers pointing to the edge before edgeToDeletePointer
-        int otherNode = getOtherNode(node, edgeToDeletePointer);
-        long linkPos = getLinkPosInEdgeArea(node, otherNode, edgeToDeletePointer);
+        int otherNode = getOtherNode(node, edgeToRemovePointer);
+        long linkPos = getLinkPosInEdgeArea(node, otherNode, edgeToRemovePointer);
         int nextEdge = edges.getInt(linkPos);
         if (edgeToUpdatePointer < 0) {
             nodes.setInt((long) node * nodeEntrySize, nextEdge);
@@ -674,22 +680,22 @@ public class GraphStorage implements Graph, Storable {
      * compaction. Then it moves the last nodes into the deleted nodes, where it
      * needs to update the node ids in every edge.
      */
-    private void inPlaceNodeDelete(int deletedNodeCount) {
-        if (deletedNodeCount <= 0)
+    private void inPlaceNodeRemove(int removeNodeCount) {
+        if (removeNodeCount <= 0)
             return;
 
         // Prepare edge-update of nodes which are connected to deleted nodes        
-        int toMoveNode = getNodes();
+        int toMoveNode = nodes();
         int itemsToMove = 0;
 
         // sorted map when we access it via keyAt and valueAt - see below!
-        final SparseIntIntArray oldToNewMap = new SparseIntIntArray(deletedNodeCount);
-        MyBitSetImpl toUpdatedSet = new MyBitSetImpl(deletedNodeCount * 3);
-        for (int delNode = deletedNodes.next(0); delNode >= 0; delNode = deletedNodes.next(delNode + 1)) {
+        final SparseIntIntArray oldToNewMap = new SparseIntIntArray(removeNodeCount);
+        MyBitSetImpl toUpdatedSet = new MyBitSetImpl(removeNodeCount * 3);
+        for (int delNode = removedNodes.next(0); delNode >= 0; delNode = removedNodes.next(delNode + 1)) {
             EdgeIterator delEdgesIter = getEdges(delNode);
             while (delEdgesIter.next()) {
                 int currNode = delEdgesIter.node();
-                if (deletedNodes.contains(currNode))
+                if (removedNodes.contains(currNode))
                     continue;
 
                 toUpdatedSet.add(currNode);
@@ -697,7 +703,7 @@ public class GraphStorage implements Graph, Storable {
 
             toMoveNode--;
             for (; toMoveNode >= 0; toMoveNode--) {
-                if (!deletedNodes.contains(toMoveNode))
+                if (!removedNodes.contains(toMoveNode))
                     break;
             }
 
@@ -716,9 +722,9 @@ public class GraphStorage implements Graph, Storable {
             long prev = -1;
             while (nodesConnectedToDelIter.next()) {
                 int nodeId = nodesConnectedToDelIter.node();
-                if (deletedNodes.contains(nodeId)) {
-                    int edgeToDelete = nodesConnectedToDelIter.edge();
-                    internalEdgeDisconnect(edgeToDelete, prev, toUpdateNode);
+                if (removedNodes.contains(nodeId)) {
+                    int edgeToRemove = nodesConnectedToDelIter.edge();
+                    internalEdgeDisconnect(edgeToRemove, prev, toUpdateNode);
                 } else
                     prev = nodesConnectedToDelIter.edgePointer();
             }
@@ -730,8 +736,9 @@ public class GraphStorage implements Graph, Storable {
             int oldI = oldToNewMap.keyAt(i);
             EdgeIterator movedEdgeIter = getEdges(oldI);
             while (movedEdgeIter.next()) {
-                if (deletedNodes.contains(movedEdgeIter.node()))
-                    throw new IllegalStateException("shouldn't happen the edge to the node " + movedEdgeIter.node() + " should be already deleted. " + oldI);
+                if (removedNodes.contains(movedEdgeIter.node()))
+                    throw new IllegalStateException("shouldn't happen the edge to the node "
+                            + movedEdgeIter.node() + " should be already deleted. " + oldI);
 
                 toUpdatedSet.add(movedEdgeIter.node());
             }
@@ -751,7 +758,7 @@ public class GraphStorage implements Graph, Storable {
         // *rewrites* all edges connected to moved nodes
         // go through all edges and pick the necessary ... <- this is easier to implement then
         // a more efficient (?) breadth-first search
-        RawEdgeIterator iter = getAllEdges();
+        RawEdgeIterator iter = allEdges();
         while (iter.next()) {
             int edge = iter.edge();
             long edgePointer = (long) edge * edgeEntrySize;
@@ -778,8 +785,8 @@ public class GraphStorage implements Graph, Storable {
         }
 
         // edgeCount stays!
-        nodeCount -= deletedNodeCount;
-        deletedNodes = null;
+        nodeCount -= removeNodeCount;
+        removedNodes = null;
     }
 
     @Override
@@ -789,7 +796,7 @@ public class GraphStorage implements Graph, Storable {
                 throw new IllegalStateException("cannot load nodes. corrupt file or directory? " + dir);
             if (!geometry.loadExisting())
                 throw new IllegalStateException("cannot load geometry. corrupt file or directory? " + dir);
-            if (nodes.getVersion() != edges.getVersion())
+            if (nodes.version() != edges.version())
                 throw new IllegalStateException("nodes and edges files have different versions!? " + dir);
             // nodes
             int hash = nodes.getHeader(0);
@@ -849,8 +856,8 @@ public class GraphStorage implements Graph, Storable {
         return edges.capacity() + nodes.capacity();
     }
 
-    public int getVersion() {
-        return nodes.getVersion();
+    public int version() {
+        return nodes.version();
     }
 
     @Override public String toString() {

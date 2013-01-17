@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -101,7 +104,7 @@ public abstract class AbstractMyBitSetTest {
         assertFalse(bs.contains(1));
         assertFalse(bs.contains(2));
         assertFalse(bs.contains(12));
-        assertEquals(0, bs.getCardinality());
+        assertEquals(0, bs.cardinality());
         bs.add(12);
         bs.add(1);
         assertTrue(bs.contains(1));

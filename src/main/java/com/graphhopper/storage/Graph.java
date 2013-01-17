@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -21,8 +24,8 @@ import com.graphhopper.util.shapes.BBox;
 
 /**
  * An interface to represent a (geo) graph - suited for efficient storage as it
- * can be requested via ids. Querying via lat,lon can be done via with a
- * Location2IDIndex implementation.
+ * can be requested via indices called node IDs. To get the lat,lon point you
+ * need to set up a Location2IDIndex instance.
  *
  * @author Peter Karich,
  */
@@ -31,24 +34,27 @@ public interface Graph {
     /**
      * @return the number of created locations - via setNode() or edge()
      */
-    int getNodes();
+    int nodes();
 
     /**
      * This method ensures that the node with the specified index exists and
      * sets the lat+lon to the specified values. The index goes from 0
-     * (inclusive) to getNodes() (exclusive)
+     * (inclusive) to nodes() (exclusive)
      */
-    void setNode(int index, double lat, double lon);
+    void setNode(int node, double lat, double lon);
 
-    double getLatitude(int index);
+    /**
+     * @return the latitude at the specified index
+     */
+    double getLatitude(int node);
 
-    double getLongitude(int index);
+    double getLongitude(int node);
 
     /**
      * Returns the implicit bounds of this graph calculated from the lat,lon
      * input of setNode
      */
-    BBox getBounds();
+    BBox bounds();
 
     /**
      * Creates an edge between the nodes a and b.
@@ -76,7 +82,7 @@ public interface Graph {
     /**
      * @return all edges in this graph
      */
-    RawEdgeIterator getAllEdges();
+    RawEdgeIterator allEdges();
 
     /**
      * Returns an iterator which makes it possible to traverse all edges of the
@@ -98,9 +104,9 @@ public interface Graph {
      * Schedule the deletion of the specified node until an optimize() call
      * happens
      */
-    void markNodeDeleted(int index);
+    void markNodeRemoved(int index);
 
-    boolean isNodeDeleted(int index);
+    boolean isNodeRemoved(int index);
 
     /**
      * Performs optimization routines like deletion or node rearrangements.

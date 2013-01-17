@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -41,12 +44,12 @@ public class Location2IDPreciseIndexTest {
 
     @Before
     public void setUp() {
-        Helper.deleteDir(new File(location));
+        Helper.removeDir(new File(location));
     }
 
     @After
     public void tearDown() {
-        Helper.deleteDir(new File(location));
+        Helper.removeDir(new File(location));
     }
 
     @Test
@@ -95,7 +98,7 @@ public class Location2IDPreciseIndexTest {
     @Test
     public void testGrid() {
         Graph g = createSampleGraph();
-        int locs = g.getNodes();
+        int locs = g.nodes();
 
         Location2IDIndex memoryEfficientIndex = createIndex(g, 32);
         // if we would use less array entries then some points gets the same key so avoid that for this test
@@ -179,7 +182,7 @@ public class Location2IDPreciseIndexTest {
         assertIndex(idx);
 
         // throw exception if load is made with a wrong graph => store node count into header as check sum
-        g.setNode(g.getNodes(), 12, 23);
+        g.setNode(g.nodes(), 12, 23);
         idx = new Location2IDPreciseIndex(g, new RAMDirectory(location, true));
         try {
             idx.loadExisting();

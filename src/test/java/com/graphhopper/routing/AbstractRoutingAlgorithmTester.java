@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -311,11 +314,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.setNode(3, 1.5, 2.5);
         graph.setNode(4, 0.5, 4.5);
 
-        graph.edge(0, 1, 2, true).pillarNodes(Helper.createPointList(0, 3));
+        graph.edge(0, 1, 2, true).wayGeometry(Helper.createPointList(0, 3));
         graph.edge(2, 3, 2, true);
-        graph.edge(3, 4, 2, true).pillarNodes(Helper.createPointList(1, 3.5));
+        graph.edge(3, 4, 2, true).wayGeometry(Helper.createPointList(1, 3.5));
 
-        graph.edge(0, 2, 0.8, true).pillarNodes(Helper.createPointList(0, 1.6, 0, 0, 1, 0));
+        graph.edge(0, 2, 0.8, true).wayGeometry(Helper.createPointList(0, 1.6, 0, 0, 1, 0));
         graph.edge(0, 2, 1.2, true);
         graph.edge(1, 3, 1.3, true);
         graph.edge(1, 4, 1, true);
@@ -340,12 +343,12 @@ public abstract class AbstractRoutingAlgorithmTester {
         Graph graph = createGraph(10000);
 
         String bigFile = "10000EWD.txt.gz";
-        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
+        new PrinctonReader(graph).stream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
         AlgorithmPreparation prepare = prepareGraph(graph);
         StopWatch sw = new StopWatch();
         for (int i = 0; i < N; i++) {
-            int index1 = Math.abs(rand.nextInt(graph.getNodes()));
-            int index2 = Math.abs(rand.nextInt(graph.getNodes()));
+            int index1 = Math.abs(rand.nextInt(graph.nodes()));
+            int index2 = Math.abs(rand.nextInt(graph.nodes()));
             RoutingAlgorithm d = prepare.createAlgo();
             if (i >= noJvmWarming)
                 sw.start();

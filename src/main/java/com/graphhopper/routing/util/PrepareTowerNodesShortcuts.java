@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -44,12 +47,12 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
     public PrepareTowerNodesShortcuts() {
     }
 
-    @Override public PrepareTowerNodesShortcuts setGraph(Graph lg) {
+    @Override public PrepareTowerNodesShortcuts graph(Graph lg) {
         g = (LevelGraph) lg;
         return this;
     }
 
-    public int getShortcuts() {
+    public int shortcuts() {
         return newShortcuts;
     }
 
@@ -60,7 +63,7 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
     public PrepareTowerNodesShortcuts doWork() {
         super.doWork();
         newShortcuts = 0;
-        int nodes = g.getNodes();
+        int nodes = g.nodes();
         int maxSkipped = Integer.MIN_VALUE;
         int sumSkipped = 0;
         StopWatch sw = new StopWatch().start();
@@ -114,7 +117,7 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
                     continue;
 
                 // found shortcut but check if an edge already exists which is shorter than the shortcut
-                // -> TODO run shortest path algorithm like in CH (instead a simple edge check)
+                // -> TODO run extractPath path algorithm like in CH (instead a simple edge check)
                 EdgeSkipIterator tmpIter = g.getOutgoing(startNode);
                 EdgeIterator tmpIter2 = GraphUtility.until(tmpIter, currentNode, flags);
                 if (!tmpIter2.isEmpty()) {
@@ -179,7 +182,7 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
             @Override protected PathBidirRef createPath() {
                 return new Path4Shortcuts(graph, weightCalc);
             }
-        }.setEdgeFilter(new EdgeLevelFilter(g));
+        }.edgeFilter(new EdgeLevelFilter(g));
     }
 
     public RoutingAlgorithm createAStar() {

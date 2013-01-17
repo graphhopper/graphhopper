@@ -90,22 +90,14 @@ public class SparseArray<E> implements Cloneable {
     /**
      * Removes the mapping from the specified key, if there was any.
      */
-    public void delete(int key) {
+    public void remove(int key) {
         int i = binarySearch(mKeys, 0, mSize, key);
-
         if (i >= 0) {
             if (mValues[i] != DELETED) {
                 mValues[i] = DELETED;
                 mGarbage = true;
             }
         }
-    }
-
-    /**
-     * Alias for {@link #delete(int)}.
-     */
-    public void remove(int key) {
-        delete(key);
     }
 
     /**

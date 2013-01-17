@@ -45,11 +45,11 @@ public abstract class OSMReaderHelper {
         this.expectedNodes = expectedNodes;
     }
 
-    public void setCallback(DistanceCalc callback) {
+    public void callback(DistanceCalc callback) {
         this.callback = callback;
     }
 
-    public int getExpectedNodes() {
+    public int expectedNodes() {
         return expectedNodes;
     }
 
@@ -60,7 +60,7 @@ public abstract class OSMReaderHelper {
 
     public abstract int addEdge(TLongList nodes, int flags);
 
-    public int addEdge(int fromIndex, int toIndex, PointList pointList, int flags) {
+    int addEdge(int fromIndex, int toIndex, PointList pointList, int flags) {
         double towerNodeDistance = 0;
         double prevLat = pointList.latitude(0);
         double prevLon = pointList.longitude(0);
@@ -87,22 +87,22 @@ public abstract class OSMReaderHelper {
 
         EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
         if (nodes > 2)
-            iter.pillarNodes(pillarNodes);
+            iter.wayGeometry(pillarNodes);
         return nodes;
     }
 
-    public String getInfo() {
+    String getInfo() {
         return "Found " + zeroCounter + " zero and " + counter + " negative distances.";
     }
 
-    public String getStorageInfo(GraphStorage storage) {
-        return storage.getClass().getSimpleName() + "|" + storage.getDirectory().getClass().getSimpleName()
-                + "|" + storage.getVersion();
+    String getStorageInfo(GraphStorage storage) {
+        return storage.getClass().getSimpleName() + "|" + storage.directory().getClass().getSimpleName()
+                + "|" + storage.version();
     }
 
-    public void cleanup() {
+    void cleanup() {
     }
 
-    public void startWayProcessing() {
+    void startWayProcessing() {
     }
 }

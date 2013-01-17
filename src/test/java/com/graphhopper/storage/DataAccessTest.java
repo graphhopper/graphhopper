@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -36,14 +39,14 @@ public abstract class DataAccessTest {
 
     @Before
     public void setUp() {
-        Helper.deleteDir(folder);
+        Helper.removeDir(folder);
         folder.mkdirs();
         directory = folder.getAbsolutePath() + "/";
     }
 
     @After
     public void tearDown() {
-        Helper.deleteDir(folder);
+        Helper.removeDir(folder);
     }
 
     @Test
@@ -159,11 +162,11 @@ public abstract class DataAccessTest {
     @Test
     public void testSegments() {
         DataAccess da = createDataAccess(name);
-        da.setSegmentSize(128);
+        da.segmentSize(128);
         da.createNew(10);
-        assertEquals(1, da.getSegments());
+        assertEquals(1, da.segments());
         da.ensureCapacity(500);
-        int olds = da.getSegments();
+        int olds = da.segments();
         assertTrue(olds > 3);
 
         da.setInt(400 / 4, 321);
@@ -172,14 +175,14 @@ public abstract class DataAccessTest {
 
         da = createDataAccess(name);
         assertTrue(da.loadExisting());
-        assertEquals(olds, da.getSegments());
+        assertEquals(olds, da.segments());
         assertEquals(321, da.getInt(400 / 4));
     }
 
     @Test
     public void testTrimTo() {
         DataAccess da = createDataAccess(name);
-        da.setSegmentSize(128);
+        da.segmentSize(128);
         da.createNew(128 * 11);
         da.setInt(1, 10);
         da.setInt(27, 200);
@@ -188,22 +191,22 @@ public abstract class DataAccessTest {
         da.setInt(337, 4000);
 
         // now 11 segments: (337 + 1) * 4 = 1352
-        assertEquals(11, da.getSegments());
+        assertEquals(11, da.segments());
         assertEquals(11 * 128, da.capacity());
 
         // now 3 segments
         da.trimTo(128 * 2 + 1);
-        assertEquals(3, da.getSegments());
+        assertEquals(3, da.segments());
 
         // now 2 segments
         da.trimTo(128 * 2);
-        assertEquals(2, da.getSegments());
+        assertEquals(2, da.segments());
         assertEquals(301, da.getInt(31));
         assertEquals(302, da.getInt(32));
 
         // now only one segment
         da.trimTo(128 * 1);
-        assertEquals(1, da.getSegments());
+        assertEquals(1, da.segments());
         assertEquals(301, da.getInt(31));
         try {
             assertEquals(302, da.getInt(32));
@@ -213,14 +216,14 @@ public abstract class DataAccessTest {
 
         // at least one segment
         da.trimTo(0);
-        assertEquals(1, da.getSegments());
+        assertEquals(1, da.segments());
     }
 
     @Test
     public void testSegmentSize() {
         DataAccess da = createDataAccess(name);
-        da.setSegmentSize(20);
-        assertEquals(128, da.getSegmentSize());
+        da.segmentSize(20);
+        assertEquals(128, da.segmentSize());
     }
 
     @Test

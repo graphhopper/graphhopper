@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -22,7 +25,8 @@ import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 /**
- * This is an in-memory data structure but with the possibility to be stored on flush().
+ * This is an in-memory data structure but with the possibility to be stored on
+ * flush().
  *
  * @author Peter Karich
  */
@@ -47,7 +51,10 @@ public class RAMDataAccess extends AbstractDataAccess {
         this.store = store;
     }
 
-    public RAMDataAccess setStore(boolean store) {
+    /**
+     * @param store true if in-memory data should be saved when calling flush
+     */
+    public RAMDataAccess store(boolean store) {
         this.store = store;
         return this;
     }
@@ -61,8 +68,8 @@ public class RAMDataAccess extends AbstractDataAccess {
             for (int i = 0; i < segments.length; i++) {
                 int[] area = segments[i];
                 rda.segments[i] = Arrays.copyOf(area, area.length);
-            }            
-            rda.setSegmentSize(segmentSizeInBytes);
+            }
+            rda.segmentSize(segmentSizeInBytes);
             // leave id, store and close unchanged
             return da;
         } else
@@ -75,7 +82,7 @@ public class RAMDataAccess extends AbstractDataAccess {
             throw new IllegalThreadStateException("already created");
 
         // initialize transient values
-        setSegmentSize(segmentSizeInBytes);
+        segmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10 * 4, bytes));
     }
 
@@ -102,11 +109,11 @@ public class RAMDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (!store || closed)
             return false;
-        File file = new File(getFullName());
+        File file = new File(fullName());
         if (!file.exists() || file.length() == 0)
             return false;
         try {
-            RandomAccessFile raFile = new RandomAccessFile(getFullName(), "r");
+            RandomAccessFile raFile = new RandomAccessFile(fullName(), "r");
             try {
                 long byteCount = readHeader(raFile) - HEADER_OFFSET;
                 if (byteCount < 0)
@@ -132,7 +139,7 @@ public class RAMDataAccess extends AbstractDataAccess {
                 raFile.close();
             }
         } catch (IOException ex) {
-            throw new RuntimeException("Problem while loading " + getFullName(), ex);
+            throw new RuntimeException("Problem while loading " + fullName(), ex);
         }
     }
 
@@ -143,7 +150,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (!store)
             return;
         try {
-            RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw");
+            RandomAccessFile raFile = new RandomAccessFile(fullName(), "rw");
             try {
                 long len = capacity();
                 writeHeader(raFile, len, segmentSizeInBytes);
@@ -190,17 +197,17 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public long capacity() {
-        return getSegments() * segmentSizeInBytes;
+        return segments() * segmentSizeInBytes;
     }
 
     @Override
-    public int getSegments() {
+    public int segments() {
         return segments.length;
     }
 
     @Override
-    public DataAccess setSegmentSize(int bytes) {
-        super.setSegmentSize(bytes);
+    public DataAccess segmentSize(int bytes) {
+        super.segmentSize(bytes);
         segmentSizeIntsPower = (int) (Math.log(segmentSizeInBytes / 4) / Math.log(2));
         indexDivisor = segmentSizeInBytes / 4 - 1;
         return this;

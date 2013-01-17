@@ -1,17 +1,20 @@
 /*
- *  Copyright 2012 Peter Karich 
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
+ * 
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
+ * 
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package com.graphhopper.coll;
 
@@ -20,8 +23,9 @@ import com.graphhopper.util.Helper;
 import java.util.Arrays;
 
 /**
- * This is a special purpose map for writing increasing OSM IDs with consecutive values. It stores
- * the keys in vlong format and values are determined by the resulting index.
+ * This is a special purpose map for writing increasing OSM IDs with consecutive
+ * values. It stores the keys in vlong format and values are determined by the
+ * resulting index.
  *
  * @author Peter Karich
  */
@@ -90,7 +94,7 @@ public class OSMIDSegmentedMap {
                 return (long) retBucket * bucketSize;
 
             VLongStorage buck = buckets[retBucket];
-            long tmp = buck.getPosition();
+            long tmp = buck.position();
             buck.seek(0);
             int max = currentBucket == retBucket ? currentIndex + 1 : bucketSize;
             long ret = getNoEntryValue();
@@ -121,7 +125,7 @@ public class OSMIDSegmentedMap {
         long bytes = 0;
         for (int i = 0; i < buckets.length; i++) {
             if (buckets[i] != null)
-                bytes += buckets[i].getLength();
+                bytes += buckets[i].length();
         }
         return (float) (keys.length * 4 + bytes) / Helper.MB;
     }

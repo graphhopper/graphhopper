@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -70,15 +73,15 @@ public class MiniGraphUI {
     private boolean fastPaint = false;
 
     public MiniGraphUI(OSMReader reader, boolean debug) {
-        this.graph = reader.getGraph();
-        AlgorithmPreparation prepare = reader.getPreparation();
+        this.graph = reader.graph();
+        AlgorithmPreparation prepare = reader.preparation();
         this.algo = prepare.createAlgo();
-        logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algo:" + algo.name());
+        logger.info("locations:" + graph.nodes() + ", debug:" + debug + ", algo:" + algo.name());
         mg = new MyGraphics(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
-        this.index = reader.getLocation2IDIndex();
+        this.index = reader.location2IDIndex();
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
 //        this.algo = new DebugAStar(graph, mg);
@@ -103,13 +106,13 @@ public class MiniGraphUI {
         mainPanel = new MyLayerPanel();
 
         // TODO make it correct with bitset-skipping too
-        final MyBitSet bitset = new MyTBitSet(graph.getNodes());
+        final MyBitSet bitset = new MyTBitSet(graph.nodes());
         mainPanel.addLayer(roadsLayer = new DefaultMapLayer() {
             Random rand = new Random();
 
             @Override public void paintComponent(Graphics2D g2) {
                 clearGraphics(g2);
-                int locs = graph.getNodes();
+                int locs = graph.nodes();
                 Rectangle d = getBounds();
                 BBox b = mg.setBounds(0, d.width, 0, d.height);
                 if (fastPaint) {
@@ -175,7 +178,7 @@ public class MiniGraphUI {
 
                 StopWatch sw = new StopWatch().start();
                 logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + wCalc);
-                path = algo.clear().setType(wCalc).calcPath(dijkstraFromId, dijkstraToId);
+                path = algo.clear().type(wCalc).calcPath(dijkstraFromId, dijkstraToId);
                 sw.stop();
 
                 // if directed edges
@@ -342,8 +345,8 @@ public class MiniGraphUI {
                     mainPanel.addMouseMotionListener(ml);
 
                     // just for fun
-//                    mainPanel.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), "deleteNodes");
-//                    mainPanel.getActionMap().put("deleteNodes", new AbstractAction() {
+//                    mainPanel.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), "removedNodes");
+//                    mainPanel.getActionMap().put("removedNodes", new AbstractAction() {
 //                        @Override public void actionPerformed(ActionEvent e) {
 //                            int counter = 0;
 //                            for (CoordTrig<Long> coord : quadTreeNodes) {
@@ -354,7 +357,7 @@ public class MiniGraphUI {
 //                                } else
 //                                    counter += ret;
 //                            }
-//                            logger.info("Deleted " + counter + " of " + quadTreeNodes.size() + " nodes");
+//                            logger.info("Removed " + counter + " of " + quadTreeNodes.size() + " nodes");
 //                        }
 //                    });
 

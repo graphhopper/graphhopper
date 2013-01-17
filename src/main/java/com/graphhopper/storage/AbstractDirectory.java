@@ -60,7 +60,7 @@ public abstract class AbstractDirectory implements Directory {
 
     @Override
     public DataAccess rename(DataAccess da, String newName) {
-        String oldName = da.getName();
+        String oldName = da.name();
         da.rename(newName);
         removeByName(oldName);
         map.put(newName, da);
@@ -69,32 +69,31 @@ public abstract class AbstractDirectory implements Directory {
 
     @Override
     public void remove(DataAccess da) {
-        removeByName(da.getName());
+        removeByName(da.name());
     }
 
     void removeByName(String name) {
         if (map.remove(name) == null)
             throw new IllegalStateException("Couldn't remove dataAccess object:" + name);
 
-        Helper.deleteDir(new File(location + name));
+        Helper.removeDir(new File(location + name));
     }
 
     protected void mkdirs() {
         new File(location).mkdirs();
     }
 
-    @Override
-    public Collection<DataAccess> getAll() {
+    Collection<DataAccess> getAll() {
         return map.values();
     }
 
     @Override
     public String toString() {
-        return getLocation();
+        return location();
     }
 
     @Override
-    public String getLocation() {
+    public String location() {
         return location;
     }
 }

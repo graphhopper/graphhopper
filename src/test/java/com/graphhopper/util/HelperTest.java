@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -29,32 +32,14 @@ public class HelperTest {
 
     @Before
     public void setUp() {
-        Helper.deleteDir(new File("test"));
+        Helper.removeDir(new File("test"));
     }
 
     @After
     public void tearDown() {
-        Helper.deleteDir(new File("test"));
+        Helper.removeDir(new File("test"));
     }
-
-    @Test
-    public void testStoreFloats() throws Exception {
-        float[] floats = new float[]{1.2f, 1.7f, -129f};
-        Helper.writeFloats("test", floats);
-
-        float[] newFloats = Helper.readFloats("test");
-        assertArrayEquals(floats, newFloats, 1e-6f);
-    }
-
-    @Test
-    public void testStoreInt() throws Exception {
-        int[] ints = new int[]{12, 17, -129};
-        Helper.writeInts("test", ints);
-
-        int[] newInts = Helper.readInts("test");
-        assertArrayEquals(ints, newInts);
-    }
-
+    
     @Test
     public void testVERSION() throws Exception {
         // assertTrue(Helper.SNAPSHOT);
@@ -62,22 +47,13 @@ public class HelperTest {
     }
 
     @Test
-    public void testStoreSettings() throws Exception {
-        Object[] settings = new Object[]{12, "test", true};
-        Helper.writeSettings("test", settings);
-
-        Object[] newSett = Helper.readSettings("test");
-        assertArrayEquals(settings, newSett);
-    }
-
-    @Test
     public void testUnzip() throws Exception {
         String to = "./target/tmp/test";
-        Helper.deleteDir(new File(to));
+        Helper.removeDir(new File(to));
         Helper.unzip("./src/test/resources/com/graphhopper/util/test.zip", to, false);
         assertTrue(new File("./target/tmp/test/file2 bäh").exists());
         assertTrue(new File("./target/tmp/test/folder1").isDirectory());
         assertTrue(new File("./target/tmp/test/folder1/folder 3").isDirectory());
-        Helper.deleteDir(new File(to));
+        Helper.removeDir(new File(to));
     }
 }

@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -78,13 +81,13 @@ public class RoutingAlgorithmIntegrationTest {
             String graphFile, List<OneRun> forEveryAlgo) {
         try {
             // make sure we are using the latest file format
-            Helper.deleteDir(new File(graphFile));
+            Helper.removeDir(new File(graphFile));
             OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
                     put("osmreader.graph-location", graphFile).
                     put("osmreader.dataaccess", "inmemory"));
-            Graph g = osm.getGraph();
+            Graph g = osm.graph();
             // System.out.println("nodes:" + g.getNodes());
-            Location2IDIndex idx = osm.getLocation2IDIndex();
+            Location2IDIndex idx = osm.location2IDIndex();
             Collection<RoutingAlgorithm> algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g, true);
             for (RoutingAlgorithm algo : algos) {
                 for (OneRun or : forEveryAlgo) {
@@ -96,7 +99,7 @@ public class RoutingAlgorithmIntegrationTest {
         } catch (Exception ex) {
             throw new RuntimeException("cannot handle osm file " + osmFile, ex);
         } finally {
-            Helper.deleteDir(new File(graphFile));
+            Helper.removeDir(new File(graphFile));
         }
     }
 
@@ -104,12 +107,12 @@ public class RoutingAlgorithmIntegrationTest {
     public void testMonacoParallel() throws IOException {
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/graph-monaco";
-        Helper.deleteDir(new File(graphFile));
+        Helper.removeDir(new File(graphFile));
         OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", "files/monaco.osm.gz").
                 put("osmreader.graph-location", graphFile).
                 put("osmreader.dataaccess", "inmemory"));
-        final Graph g = osm.getGraph();
-        final Location2IDIndex idx = osm.getLocation2IDIndex();
+        final Graph g = osm.graph();
+        final Location2IDIndex idx = osm.location2IDIndex();
         final List<OneRun> instances = createMonacoInstances();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);

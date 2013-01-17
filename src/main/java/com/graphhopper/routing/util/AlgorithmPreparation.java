@@ -38,7 +38,7 @@ public interface AlgorithmPreparation {
      */
     boolean isPrepared();
 
-    AlgorithmPreparation setGraph(Graph g);
+    AlgorithmPreparation graph(Graph g);
 
     RoutingAlgorithm createAlgo();
 }

@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -57,7 +60,7 @@ public class MMapDataAccess extends AbstractDataAccess {
 
         try {
             // raFile necessary for loadExisting and createNew
-            raFile = new RandomAccessFile(getFullName(), "rw");
+            raFile = new RandomAccessFile(fullName(), "rw");
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -86,7 +89,7 @@ public class MMapDataAccess extends AbstractDataAccess {
      * Makes it possible to force the order. E.g. if we create the file on a host system and copy it
      * to a different like android. http://en.wikipedia.org/wiki/Endianness
      */
-    public MMapDataAccess setByteOrder(ByteOrder order) {
+    public MMapDataAccess byteOrder(ByteOrder order) {
         this.order = order;
         return this;
     }
@@ -186,7 +189,7 @@ public class MMapDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (closed)
             return false;
-        File file = new File(getFullName());
+        File file = new File(fullName());
         if (!file.exists() || file.length() == 0)
             return false;
         initRandomAccessFile();
@@ -197,7 +200,7 @@ public class MMapDataAccess extends AbstractDataAccess {
             mapIt(HEADER_OFFSET, byteCount - HEADER_OFFSET, false);
             return true;
         } catch (IOException ex) {
-            throw new RuntimeException("Problem while loading " + getFullName(), ex);
+            throw new RuntimeException("Problem while loading " + fullName(), ex);
         }
     }
 
@@ -261,7 +264,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public int getSegments() {
+    public int segments() {
         return segments.size();
     }
 

@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -59,7 +62,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
     public DijkstraBidirection(Graph graph) {
         super(graph);
-        int locs = Math.max(20, graph.getNodes());
+        int locs = Math.max(20, graph.nodes());
         visitedFrom = new MyBitSetImpl(locs);
         openSetFrom = new IntDoubleBinHeap(locs / 10);
         wrapperFrom = new EdgeWrapper(locs / 10);
@@ -82,12 +85,12 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         return this;
     }
 
-    public void addSkipNode(int node) {
+    void addSkipNode(int node) {
         visitedFrom.add(node);
         visitedTo.add(node);
     }
 
-    public DijkstraBidirection initFrom(int from) {
+    DijkstraBidirection initFrom(int from) {
         this.from = from;
         currFrom = from;
         currFromWeight = 0;
@@ -95,7 +98,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         return this;
     }
 
-    public DijkstraBidirection initTo(int to) {
+    DijkstraBidirection initTo(int to) {
         this.to = to;
         currTo = to;
         currToWeight = 0;
@@ -129,7 +132,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         return shortest.extract();
     }
 
-    public void initPath() {
+    void initPath() {
         shortest = new PathBidir(graph, weightCalc, wrapperFrom, wrapperTo);
         shortest.initWeight();
     }
@@ -138,11 +141,11 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     // a node from overlap may not be on the shortest path!!
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverse 
     //    search, update shortest = μ if df (v) + (v, w) + dr (w) < μ            
-    public boolean checkFinishCondition() {
+    boolean checkFinishCondition() {
         return currFromWeight + currToWeight >= shortest.weight;
     }
 
-    public void fillEdges(int currNode, double currWeight, int currRef, MyBitSet visitedMain,
+    void fillEdges(int currNode, double currWeight, int currRef, MyBitSet visitedMain,
             IntDoubleBinHeap prioQueue, EdgeWrapper wrapper, boolean out) {
 
         EdgeIterator iter = GraphUtility.getEdges(graph, currNode, out);
@@ -171,7 +174,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         }
     }
 
-    public void updateShortest(int nodeId, int ref, double weight) {
+    void updateShortest(int nodeId, int ref, double weight) {
         int otherRef = wrapperOther.getRef(nodeId);
         if (otherRef < 0)
             return;
@@ -186,7 +189,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         }
     }
 
-    public boolean fillEdgesFrom() {
+    boolean fillEdgesFrom() {
         wrapperOther = wrapperTo;
         fillEdges(currFrom, currFromWeight, currFromRef, visitedFrom, openSetFrom, wrapperFrom, true);
         if (openSetFrom.isEmpty())
@@ -201,7 +204,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         return true;
     }
 
-    public boolean fillEdgesTo() {
+    boolean fillEdgesTo() {
         wrapperOther = wrapperFrom;
         fillEdges(currTo, currToWeight, currToRef, visitedTo, openSetTo, wrapperTo, false);
         if (openSetTo.isEmpty())
@@ -216,8 +219,8 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         return true;
     }
 
-    public int getVisited() {
-        return visitedFrom.getCardinality() + visitedTo.getCardinality();
+    int getVisited() {
+        return visitedFrom.cardinality() + visitedTo.cardinality();
     }
 
     private Path checkIndenticalFromAndTo() {

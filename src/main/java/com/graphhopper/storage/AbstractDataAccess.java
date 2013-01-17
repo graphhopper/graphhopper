@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -43,11 +46,11 @@ public abstract class AbstractDataAccess implements DataAccess {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return name;
     }
 
-    protected String getFullName() {
+    protected String fullName() {
         return location + name;
     }
 
@@ -72,7 +75,7 @@ public abstract class AbstractDataAccess implements DataAccess {
         file.seek(0);
         file.writeUTF("GH");
         // make changes to file format only with major version changes
-        file.writeInt(getVersion());
+        file.writeInt(version());
         file.writeLong(length);
         file.writeInt(segmentSize);
         for (int i = 0; i < header.length; i++) {
@@ -81,7 +84,7 @@ public abstract class AbstractDataAccess implements DataAccess {
     }
 
     @Override
-    public int getVersion() {
+    public int version() {
         return Helper.VERSION_FILE;
     }
 
@@ -94,11 +97,11 @@ public abstract class AbstractDataAccess implements DataAccess {
             throw new IllegalArgumentException("Not a GraphHopper file! Expected 'GH' as file marker but was " + versionHint);
         // use a separate version field
         int majorVersion = raFile.readInt();
-        if (majorVersion != getVersion())
+        if (majorVersion != version())
             throw new IllegalArgumentException("This GraphHopper file has the wrong version! "
-                    + "Expected " + getVersion() + " but was " + majorVersion);
+                    + "Expected " + version() + " but was " + majorVersion);
         long bytes = raFile.readLong();
-        setSegmentSize(raFile.readInt());
+        segmentSize(raFile.readInt());
         for (int i = 0; i < header.length; i++) {
             header[i] = raFile.readInt();
         }
@@ -119,20 +122,20 @@ public abstract class AbstractDataAccess implements DataAccess {
     }
 
     @Override
-    public DataAccess setSegmentSize(int bytes) {
+    public DataAccess segmentSize(int bytes) {
         int tmp = (int) (Math.log(bytes) / Math.log(2));
         segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
         return this;
     }
 
     @Override
-    public int getSegmentSize() {
+    public int segmentSize() {
         return segmentSizeInBytes;
     }
 
     @Override
     public String toString() {
-        return getFullName();
+        return fullName();
     }
 
     @Override
@@ -147,7 +150,7 @@ public abstract class AbstractDataAccess implements DataAccess {
                 throw new IllegalStateException("Couldn't rename this RAMDataAccess object!", ex);
             }
         else
-            throw new IllegalStateException("File does not exist!? " + getFullName()
+            throw new IllegalStateException("File does not exist!? " + fullName()
                     + " Make sure that you flushed before renaming. Otherwise it could make problems"
                     + " for memory mapped DataAccess objects");
     }

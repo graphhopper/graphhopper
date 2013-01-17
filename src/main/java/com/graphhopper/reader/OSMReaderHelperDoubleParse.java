@@ -64,7 +64,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 
     public OSMReaderHelperDoubleParse(GraphStorage storage, int expectedNodes) {
         super(storage, expectedNodes);
-        dir = storage.getDirectory();
+        dir = storage.directory();
         pillarLats = dir.findCreate("tmpLatitudes");
         pillarLons = dir.findCreate("tmpLongitudes");
         osmIdToIndexMap = new TLongIntHashMap(expectedNodes, 1.4f, -1L, EMPTY);
@@ -99,7 +99,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     @Override
-    public int getExpectedNodes() {
+    public int expectedNodes() {
         return osmIdToIndexMap.size();
     }
 
@@ -173,13 +173,13 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     @Override
-    public void startWayProcessing() {
+    void startWayProcessing() {
         LoggerFactory.getLogger(getClass()).info("finished node processing. osmIdMap:" + osmIdToIndexMap.size() * 16f / Helper.MB
                 + ", " + Helper.getMemInfo());
     }
 
     @Override
-    public void cleanup() {
+    void cleanup() {
         dir.remove(pillarLats);
         dir.remove(pillarLons);
         pillarLons = null;
@@ -187,7 +187,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         osmIdToIndexMap = null;
     }
 
-    public void setHasHighways(long osmId) {
+    private void setHasHighways(long osmId) {
         int tmpIndex = osmIdToIndexMap.get(osmId);
         if (tmpIndex == EMPTY) {
             // unused osmId
@@ -214,7 +214,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         pillarLats.createNew(Math.max(expectedNodes / 50, 100));
         pillarLons.createNew(Math.max(expectedNodes / 50, 100));
         if (osmXml == null)
-            throw new IllegalStateException("Stream cannot be empty");
+            throw new AssertionError("Stream cannot be empty");
 
         Map<String, Object> empty = new HashMap<String, Object>();
         XMLInputFactory factory = XMLInputFactory.newInstance();

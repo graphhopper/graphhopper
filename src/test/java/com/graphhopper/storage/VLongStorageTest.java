@@ -32,9 +32,9 @@ public class VLongStorageTest {
         store.seek(0);
         store.writeVLong(1);
         store.writeVLong(7);
-        assertEquals(2, store.getPosition());
+        assertEquals(2, store.position());
         store.writeVLong(777666555);
-        assertEquals(7, store.getPosition());
+        assertEquals(7, store.position());
 
         store.seek(0);
         assertEquals(1L, store.readVLong());
@@ -48,13 +48,13 @@ public class VLongStorageTest {
         store.seek(0);
         store.writeVLong(1);
         store.trimToSize();
-        assertEquals(1, store.getPosition());
+        assertEquals(1, store.position());
         store.writeVLong(7);
         store.trimToSize();
-        assertEquals(2, store.getPosition());
+        assertEquals(2, store.position());
         store.writeVLong(777666555);
         store.trimToSize();
-        assertEquals(7, store.getPosition());
+        assertEquals(7, store.position());
 
         store.seek(0);
         assertEquals(1L, store.readVLong());

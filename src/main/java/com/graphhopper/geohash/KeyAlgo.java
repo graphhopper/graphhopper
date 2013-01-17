@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -18,13 +21,17 @@ package com.graphhopper.geohash;
 import com.graphhopper.util.shapes.CoordTrig;
 
 /**
- * Defines the mapping between a one dimensional 'number' and a point (lat, lon).
+ * Defines the mapping between a one dimensional 'number' and a point (lat, lon)
+ * which is limited to a defined bounds.
  *
  * @author Peter Karich
  */
 public interface KeyAlgo {
 
-    KeyAlgo setInitialBounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit);
+    /**
+     * Sets the bounds of the underlying key algorithm.
+     */
+    KeyAlgo bounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit);
 
     long encode(CoordTrig coord);
 

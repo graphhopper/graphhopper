@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -46,10 +49,10 @@ public class AStar extends AbstractRoutingAlgorithm {
     }
 
     /**
-     * @param fast if true it enables approximative distance calculation from
+     * @param fast if true it enables an approximative distance calculation from
      * lat,lon values
      */
-    public AStar setApproximation(boolean approx) {
+    public AStar approximation(boolean approx) {
         if (approx)
             dist = new DistanceCosProjection();
         else
@@ -68,7 +71,7 @@ public class AStar extends AbstractRoutingAlgorithm {
         if (alreadyRun)
             throw new IllegalStateException("Call clear before! But this class is not thread safe!");
         alreadyRun = true;
-        closedSet = new MyBitSetImpl(graph.getNodes());
+        closedSet = new MyBitSetImpl(graph.nodes());
         TIntObjectMap<AStarEdge> map = new TIntObjectHashMap<AStarEdge>();
         PriorityQueue<AStarEdge> prioQueueOpenSet = new PriorityQueue<AStarEdge>(1000);
         double toLat = graph.getLatitude(to);
@@ -115,25 +118,25 @@ public class AStar extends AbstractRoutingAlgorithm {
 
             currEdge = prioQueueOpenSet.poll();
             if (currEdge == null)
-                throw new IllegalStateException("cannot happen?");
+                throw new AssertionError("cannot happen?");
         }
 
         return extractPath(currEdge);
     }
 
-    public boolean finished(EdgeEntry currEdge, int to) {
+    boolean finished(EdgeEntry currEdge, int to) {
         return currEdge.endNode == to;
     }
 
-    public int getVisited() {
-        return closedSet.getCardinality();
+    int getVisited() {
+        return closedSet.cardinality();
     }
 
     protected EdgeIterator getNeighbors(int currVertex) {
         return graph.getOutgoing(currVertex);
     }
 
-    public Path extractPath(EdgeEntry currEdge) {
+    Path extractPath(EdgeEntry currEdge) {
         return new Path(graph, weightCalc).edgeEntry(currEdge).extract();
     }
 

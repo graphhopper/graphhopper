@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -34,7 +37,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
     }
 
     @Override
-    public Location2IDIndex setPrecision(boolean approxDist) {
+    public Location2IDIndex precision(boolean approxDist) {
         if (approxDist)
             calc = new DistanceCosProjection();
         else
@@ -48,7 +51,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
     }
 
     @Override public int findID(double queryLat, double queryLon) {
-        int locs = g.getNodes();
+        int locs = g.nodes();
         int id = -1;
         double foundDist = Double.MAX_VALUE;
         for (int fromNode = 0; fromNode < locs; fromNode++) {
@@ -70,7 +73,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
 
                 if (calc.validEdgeDistance(queryLat, queryLon,
                         fromLat, fromLon, toLat, toLon)) {
-                    double distEdge = calc.denormalizeDist(calc.calcNormalizedEdgeDistance(queryLat, queryLon,
+                    double distEdge = calc.calcDenormalizedDist(calc.calcNormalizedEdgeDistance(queryLat, queryLon,
                             fromLat, fromLon, toLat, toLon));
                     if (distEdge < foundDist) {
                         if (fromDist < calc.calcDist(toLat, toLon, queryLat, queryLon))

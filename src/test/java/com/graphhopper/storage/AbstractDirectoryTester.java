@@ -37,7 +37,7 @@ public abstract class AbstractDirectoryTester {
     @After
     @Before
     public void setUp() {
-        Helper.deleteDir(new File(location));
+        Helper.removeDir(new File(location));
     }
 
     @Test

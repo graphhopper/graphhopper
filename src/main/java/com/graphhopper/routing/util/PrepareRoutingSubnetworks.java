@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -43,25 +46,25 @@ public class PrepareRoutingSubnetworks {
     }
 
     public void doWork() {
-        int del = deleteZeroDegreeNodes();
+        int del = removeZeroDegreeNodes();
         Map<Integer, Integer> map = findSubnetworks();
         keepLargestNetwork(map);
-        logger.info("optimize to delete: subnetworks(" + map.size() + "), zero-degree-nodes(" + del + ")");
+        logger.info("optimize to remove subnetworks(" + map.size() + "), zero-degree-nodes(" + del + ")");
         g.optimize();
         subNetworks = map.size();
     }
 
-    public int getSubNetworks() {
+    public int subNetworks() {
         return subNetworks;
     }
 
     public Map<Integer, Integer> findSubnetworks() {
         Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         final AtomicInteger integ = new AtomicInteger(0);
-        int locs = g.getNodes();
+        int locs = g.nodes();
         final MyBitSet bs = new MyBitSetImpl(locs);
         for (int start = 0; start < locs; start++) {
-            if (g.isNodeDeleted(start) || bs.contains(start))
+            if (g.isNodeRemoved(start) || bs.contains(start))
                 continue;
 
             new XFirstSearch() {
@@ -90,13 +93,13 @@ public class PrepareRoutingSubnetworks {
     /**
      * Deletes all but the larges subnetworks.
      */
-    public void keepLargestNetwork(Map<Integer, Integer> map) {
+    void keepLargestNetwork(Map<Integer, Integer> map) {
         if (map.size() < 2)
             return;
 
         int biggestStart = -1;
         int count = -1;
-        MyBitSetImpl bs = new MyBitSetImpl(g.getNodes());
+        MyBitSetImpl bs = new MyBitSetImpl(g.nodes());
         for (Entry<Integer, Integer> e : map.entrySet()) {
             if (biggestStart < 0) {
                 biggestStart = e.getKey();
@@ -105,19 +108,19 @@ public class PrepareRoutingSubnetworks {
             }
 
             if (count < e.getValue()) {
-                deleteNetwork(biggestStart, e.getValue(), bs);
+                removeNetwork(biggestStart, e.getValue(), bs);
 
                 biggestStart = e.getKey();
                 count = e.getValue();
             } else
-                deleteNetwork(e.getKey(), e.getValue(), bs);
+                removeNetwork(e.getKey(), e.getValue(), bs);
         }
     }
 
     /**
      * Deletes the complete subnetwork reachable through start
      */
-    public void deleteNetwork(int start, int entries, final MyBitSet bs) {
+    void removeNetwork(int start, int entries, final MyBitSet bs) {
         new XFirstSearch() {
             @Override protected MyBitSet createBitSet(int size) {
                 return bs;
@@ -128,7 +131,7 @@ public class PrepareRoutingSubnetworks {
             }
 
             @Override protected boolean goFurther(int nodeId) {
-                g.markNodeDeleted(nodeId);
+                g.markNodeRemoved(nodeId);
                 return super.goFurther(nodeId);
             }
         }.start(g, start, true);
@@ -137,17 +140,17 @@ public class PrepareRoutingSubnetworks {
     /**
      * To avoid large processing and a large HashMap remove nodes with no edges up front
      *
-     * @return deleted nodes
+     * @return removed nodes
      */
-    public int deleteZeroDegreeNodes() {
-        int deleted = 0;
-        int locs = g.getNodes();
+    int removeZeroDegreeNodes() {
+        int removed = 0;
+        int locs = g.nodes();
         for (int start = 0; start < locs; start++) {
             if (!g.getEdges(start).next()) {
-                deleted++;
-                g.markNodeDeleted(start);
+                removed++;
+                g.markNodeRemoved(start);
             }
         }
-        return deleted;
+        return removed;
     }
 }

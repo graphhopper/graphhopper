@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -47,9 +50,9 @@ public class DijkstraTwoDrivers {
         this.toB = toB;
     }
 
-    public void calcShortestPath() {
+    public void calcPath() {
         // There are two bidirectional dijkstras going on: two for driver A and two for B.
-        // Now update the overall shortest path only when all 4 shortest-path-trees (spt's) contain the vertex (from the relaxed edges of the current spt).
+        // Now update the overall extractPath path only when all 4 extractPath-path-trees (spt's) contain the vertex (from the relaxed edges of the current spt).
         // The breaking condition is different to normal bi-dijkstra - see **
         //
         // The meeting point is M and not N where all 4 spt's have minimal values:
@@ -61,7 +64,7 @@ public class DijkstraTwoDrivers {
         //        
         // And so the A1-spt needs to reach not only the A2-spt but even the point M
         //  ** break search only 
-        // if max(A1-shortest-path-tree, A2-spt) + max(B1-spt, B2-spt) + DELTA >= last shortest path
+        // if max(A1-extractPath-path-tree, A2-spt) + max(B1-spt, B2-spt) + DELTA >= last extractPath path
 
         // But problem regarding the DELTA: distanceA + distanceB can be of very different length. e.g. 7+1==4+4
         // Should we add e.g. the difference of both detours or different of percentage to the distance?
@@ -69,7 +72,7 @@ public class DijkstraTwoDrivers {
         // But the DELTA is not monotonically increasing! => we cannot easily break. 
         // Hmmh but this is not really working also because the max+max is not really correct
 
-        // And the more I think about it. it is more: max(A1-shortest-path-tree, A2-spt, B1-spt, B2-spt) + DELTA >= last shortest path
+        // And the more I think about it. it is more: max(A1-extractPath-path-tree, A2-spt, B1-spt, B2-spt) + DELTA >= last extractPath path
         // As the newly discovered point M (from A1-spt) needs old information of the spt's from A2,B1 and B2
         // We can use a heuristical value which assumes the sp of both direct paths are found:
         // break if max(currA1+currA2, currB1+currB2) > 1.1 * max(sp-A,sp-B)        
@@ -105,11 +108,11 @@ public class DijkstraTwoDrivers {
     }
 
     public Path getBestForA() {
-        return driverA.getShortest();
+        return driverA.extractPath();
     }
 
     public Path getBestForB() {
-        return driverB.getShortest();
+        return driverB.extractPath();
     }
 
     public int getMeetingPoint() {
@@ -133,9 +136,9 @@ public class DijkstraTwoDrivers {
             return Math.min(currFrom.weight, currTo.weight) >= shortest.weight();
         }
 
-        @Override public void updateShortest(EdgeEntry shortestDE, int currLoc) {
-            EdgeEntry fromOther = getOtherDriver().getShortestWeightFrom(currLoc);
-            EdgeEntry toOther = getOtherDriver().getShortestWeightTo(currLoc);
+        @Override protected void updateShortest(EdgeEntry shortestDE, int currLoc) {
+            EdgeEntry fromOther = getOtherDriver().shortestWeightFrom(currLoc);
+            EdgeEntry toOther = getOtherDriver().shortestWeightTo(currLoc);
             EdgeEntry entryOther = shortestWeightMapOther.get(currLoc);
             if (fromOther == null || toOther == null || entryOther == null)
                 return;

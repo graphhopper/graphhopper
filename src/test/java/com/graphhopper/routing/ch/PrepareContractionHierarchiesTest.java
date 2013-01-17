@@ -120,19 +120,19 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testAddShortcuts() {
         LevelGraph g = createExampleGraph();
-        int old = GraphUtility.count(g.getAllEdges());
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
+        int old = GraphUtility.count(g.allEdges());
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old, GraphUtility.count(g.getAllEdges()));
+        assertEquals(old, GraphUtility.count(g.allEdges()));
     }
 
     @Test
     public void testMoreComplexGraph() {
         LevelGraph g = PrepareTowerNodesShortcutsTest.createShortcutsGraph();
-        int old = GraphUtility.count(g.getAllEdges());
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
+        int old = GraphUtility.count(g.allEdges());
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old + 7, GraphUtility.count(g.getAllEdges()));
+        assertEquals(old + 7, GraphUtility.count(g.allEdges()));
     }
 
     @Test
@@ -144,11 +144,11 @@ public class PrepareContractionHierarchiesTest {
         g.edge(5, 2, 1, false);
         g.edge(3, 5, 1, false);
         g.edge(4, 3, 1, false);
-        int old = GraphUtility.count(g.getAllEdges());
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
+        int old = GraphUtility.count(g.allEdges());
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
-        assertEquals(old + 2, GraphUtility.count(g.getAllEdges()));
+        assertEquals(old + 2, GraphUtility.count(g.allEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.clear().calcPath(4, 2);
         assertEquals(3, p.distance(), 1e-6);
@@ -159,11 +159,11 @@ public class PrepareContractionHierarchiesTest {
     public void testDirectedGraph2() {
         LevelGraph g = createGraph();
         PrepareTowerNodesShortcutsTest.initDirected2(g);
-        int old = GraphUtility.count(g.getAllEdges());
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
+        int old = GraphUtility.count(g.allEdges());
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
-        assertEquals(old + 14, GraphUtility.count(g.getAllEdges()));
+        assertEquals(old + 14, GraphUtility.count(g.allEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
 
         Path p = algo.clear().calcPath(0, 10);
@@ -187,7 +187,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(3, 6, 2, true);
         g.edge(3, 7, 2, true);
 
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.initFromGraph();
         // find all shortcuts if we contract node 1
         Collection<Shortcut> scs = prepare.findShortcuts(1);
@@ -263,11 +263,11 @@ public class PrepareContractionHierarchiesTest {
     public void testRoundaboutUnpacking() {
         LevelGraph g = createGraph();
         initRoundaboutGraph(g);
-        int old = GraphUtility.count(g.getAllEdges());
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
+        int old = GraphUtility.count(g.allEdges());
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
-        assertEquals(old + 19, GraphUtility.count(g.getAllEdges()));
+        assertEquals(old + 19, GraphUtility.count(g.allEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.clear().calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());
@@ -293,7 +293,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(4, 6, 2, f).skippedEdge(iter2.edge());
         g.edge(6, 4, 3, f).skippedEdge(iter3.edge());
 
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g).initFromGraph();
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g).initFromGraph();
         // there should be two different shortcuts for both directions!
         Collection<Shortcut> sc = prepare.findShortcuts(4);
         assertEquals(2, sc.size());
@@ -341,8 +341,8 @@ public class PrepareContractionHierarchiesTest {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
         WeightCalculation calc = ShortestCarCalc.DEFAULT;
         initUnpackingGraph(g, calc);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
-        RoutingAlgorithm algo = prepare.setType(calc).createAlgo();
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
+        RoutingAlgorithm algo = prepare.type(calc).createAlgo();
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.distance(), 1e-5);
         assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());
@@ -351,10 +351,10 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testUnpackingOrder_Fastest() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         WeightCalculation calc = FastestCarCalc.DEFAULT;
         initUnpackingGraph(g, calc);
-        RoutingAlgorithm algo = prepare.setType(calc).createAlgo();
+        RoutingAlgorithm algo = prepare.type(calc).createAlgo();
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.distance(), 1e-1);
         assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());

@@ -29,14 +29,14 @@ public class DouglasPeucker {
     public DouglasPeucker() {
         calc = new DistanceCalc();
         // 1m
-        setMaxDist(1);
+        maxDistance(1);
     }
 
     /**
-     * distance in meter
+     * maximum distance of discrepancy (from the normal way) in meter
      */
-    public DouglasPeucker setMaxDist(double dist) {
-        this.normedMaxDist = calc.normalizeDist(dist);
+    public DouglasPeucker maxDistance(double dist) {
+        this.normedMaxDist = calc.calcNormalizedDist(dist);
         return this;
     }
 
@@ -44,12 +44,12 @@ public class DouglasPeucker {
      * This method removes points which are close to the line (defined by
      * maxDist).
      *
-     * @return deleted nodes
+     * @return removed nodes
      */
     public int simplify(PointList points) {
-        int deleted = simplify(points, 0, points.size() - 1);
-        compressNew(points, deleted);
-        return deleted;
+        int removed = simplify(points, 0, points.size() - 1);
+        compressNew(points, removed);
+        return removed;
     }
 
     /**
@@ -71,7 +71,7 @@ public class DouglasPeucker {
     /**
      * compress list: move points into EMPTY slots
      */
-    void compressNew(PointList points, int deleted) {
+    void compressNew(PointList points, int removed) {
         int freeIndex = -1;        
         for (int currentIndex = 0; currentIndex < points.size(); currentIndex++) {
             if (Double.isNaN(points.latitude(currentIndex))) {
@@ -94,7 +94,7 @@ public class DouglasPeucker {
                 }
             }
         }
-        points.setSize(points.size() - deleted);
+        points.setSize(points.size() - removed);
     }
 
     // keep the points of fromIndex and lastIndex

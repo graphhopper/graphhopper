@@ -52,7 +52,7 @@ public class OSMReaderHelperSingleParse extends OSMReaderHelper {
     }
 
     @Override
-    public void startWayProcessing() {
+    void startWayProcessing() {
         arr.flush();
         LoggerFactory.getLogger(getClass()).info("osmIdMap:" + osmIdToIndexMap.calcMemInMB()
                 + ", compressedArray:" + arr.calcMemInMB() + ", " + Helper.getMemInfo());
@@ -82,7 +82,7 @@ public class OSMReaderHelperSingleParse extends OSMReaderHelper {
     }
 
     @Override
-    public void cleanup() {
+    void cleanup() {
         osmIdToIndexMap = null;
     }
 }

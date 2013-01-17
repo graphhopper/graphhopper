@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -182,7 +185,7 @@ public class SpatialKeyAlgoTest {
 
     @Test
     public void testNoFurtherIterationIfBitsIs1() {
-        SpatialKeyAlgo algo = new SpatialKeyAlgo(4).setInitialBounds(0, 5, 0, 5);
+        SpatialKeyAlgo algo = new SpatialKeyAlgo(4).bounds(0, 5, 0, 5);
         // 1001
         CoordTrig coord = new CoordTrig();
         algo.decode(9, coord);
@@ -211,7 +214,7 @@ public class SpatialKeyAlgoTest {
 
     @Test
     public void testDifferentInitialBounds() {
-        SpatialKeyAlgo algo = new SpatialKeyAlgo(8).setInitialBounds(0, 5, 0, 5);
+        SpatialKeyAlgo algo = new SpatialKeyAlgo(8).bounds(0, 5, 0, 5);
         assertEquals(1, algo.encode(0, 0.5));
         assertEquals(5, algo.encode(0, 1));
 

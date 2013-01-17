@@ -29,23 +29,17 @@ package com.graphhopper;
  * gh.load("graph-hopper-folder");
  *
  * // online
- * GraphHopperAPI gh = new GraphHopper();
+ * GraphHopperAPI gh = new GraphHopperWeb();
  * gh.load("http://your-graphhopper-service.com/api");
  *
  * gh.algorithm("astar");
  * GHResponse ph = gh.route(new GeoPoint(fromLat, fromLon), new GeoPoint(toLat, toLon));
  * print(ph.distance() + " " + ph.time());
- * for(GeoPoint point : ph.points()) {
- *    add(point.lat, point.lon);
+ * PointList points = response.createPoints();
+ * for(int i = 0; i &lt; points.size(); i++) {
+ *    add(point.latitude(i), point.longitude(i));
  * }
- *
- * // TODO LATER provide this
- * for(PathSegment ps : ph.segments()) {
- *   print(ps.instructions().text() + " " + ps.distance() + " " + ps.time());
- *   for(GeoPoint p : ps.extractPoints()) {
- *      addToRoute(p.lat, p.lon);
- *   }
- * }
+ * 
  * </pre>
  *
  * @author Peter Karich

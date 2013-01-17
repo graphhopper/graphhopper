@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -64,7 +67,7 @@ public class Path {
     /**
      * Populates an unextracted path instances from the specified path p.
      */
-    public Path(Path p) {
+    Path(Path p) {
         this(p.graph, p.weightCalculation);
         weight = p.weight;
         edgeIds = new TIntArrayList(edgeIds);
@@ -84,11 +87,15 @@ public class Path {
      * We need to remember fromNode explicitely as its not saved in one edgeId
      * of edgeIds.
      */
-    protected void setFromNode(int node) {
+    protected Path fromNode(int node) {
         fromNode = node;
+        return this;
     }
 
-    public int getFromNode() {
+    /**
+     * @return the first node of this Path.
+     */
+    public int fromNode() {
         if (!EdgeIterator.Edge.isValid(fromNode))
             throw new IllegalStateException("Call extract() before retrieving fromNode");
         return fromNode;
@@ -103,7 +110,7 @@ public class Path {
         return this;
     }
 
-    public void reverseOrder() {
+    void reverseOrder() {
         reverse = !reverse;
         edgeIds.reverse();
     }
@@ -143,7 +150,7 @@ public class Path {
             goalEdge = goalEdge.parent;
         }
 
-        setFromNode(goalEdge.endNode);
+        fromNode(goalEdge.endNode);
         reverseOrder();
         return found(true);
     }
@@ -180,7 +187,7 @@ public class Path {
      * Iterates over all edges in this path and calls the visitor for it.
      */
     public void forEveryEdge(EdgeVisitor visitor) {
-        int tmpNode = getFromNode();
+        int tmpNode = fromNode();
         int len = edgeIds.size();
         for (int i = 0; i < len; i++) {
             EdgeIterator iter = graph.getEdgeProps(edgeIds.get(i), tmpNode);
@@ -201,7 +208,7 @@ public class Path {
         if (edgeIds.isEmpty())
             return nodes;
 
-        int tmpNode = getFromNode();
+        int tmpNode = fromNode();
         nodes.add(tmpNode);
         forEveryEdge(new EdgeVisitor() {
             @Override public void next(EdgeIterator iter) {
@@ -220,11 +227,11 @@ public class Path {
         cachedPoints = new PointList(edgeIds.size() + 1);
         if (edgeIds.isEmpty())
             return cachedPoints;
-        int tmpNode = getFromNode();
+        int tmpNode = fromNode();
         cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
         forEveryEdge(new EdgeVisitor() {
             @Override public void next(EdgeIterator iter) {
-                PointList pl = iter.pillarNodes();
+                PointList pl = iter.wayGeometry();
                 pl.reverse();
                 for (int j = 0; j < pl.size(); j++) {
                     cachedPoints.add(pl.latitude(j), pl.longitude(j));

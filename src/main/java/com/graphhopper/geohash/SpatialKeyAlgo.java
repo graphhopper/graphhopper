@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich 
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -18,38 +21,41 @@ package com.graphhopper.geohash;
 import com.graphhopper.util.shapes.CoordTrig;
 
 /**
- * This class implements the idea of a geohash but in 'binary form' - to avoid confusion this is
- * called 'spatial key'. The idea of mixing the latitude and longitude is also taken to allow
- * removing the insignificant (right side) bits to make a geo-query or the coordinate less precise.
- * E.g. for a 3 bit precision the spatial key would need 6 bits and look like:
+ * This class implements the idea of a geohash but in 'binary form' - to avoid
+ * confusion this is called 'spatial key'. The idea of mixing the latitude and
+ * longitude is also taken to allow removing the insignificant (right side) bits
+ * to make a geo-query or the coordinate less precise. E.g. for a 3 bit
+ * precision the spatial key would need 6 bits and look like:
  *
  * lat0 lon0 | lat1 lon1 | lat2 lon2
  *
  * Detailed information is available in this blog post:
  * http://karussell.wordpress.com/2012/05/23/spatial-keys-memory-efficient-geohashes/
  *
- * The bits are usable as key for hash tables like our SpatialKeyHashtable or for a spatial tree
- * like QuadTreeSimple. Also the binary form makes it relative simple for implementations using this
- * encoding scheme to expand to arbitrary dimension (e.g. shifting n-times if n would be the
- * dimension).
+ * The bits are usable as key for hash tables like our SpatialKeyHashtable or
+ * for a spatial tree like QuadTreeSimple. Also the binary form makes it
+ * relative simple for implementations using this encoding scheme to expand to
+ * arbitrary dimension (e.g. shifting n-times if n would be the dimension).
  *
  * A 32 bit representation has a precision of approx 600 meters = 40000/2^16
  *
- * There are different possibilities how to handle different precision and order of bits. Either:
+ * There are different possibilities how to handle different precision and order
+ * of bits. Either:
  *
  * lat0 lon0 | lat1 lon1 | lat2 lon2
  *
  * 0 0 | lat0 lon0 | lat1 lon1
  *
- * as it is done now. Advantage: A single shift is only necessary to make it less precise. Or:
+ * as it is done now. Advantage: A single shift is only necessary to make it
+ * less precise. Or:
  *
  * lat2 lon2 | lat1 lon1 | lat0 lon0
  *
  * 0 0 | lat1 lon1 | lat0 lon0
  *
- * Advantage: the bit mask to get lat0 lon0 is simple: 000..0011 and independent of the precision!
- * But when stored e.g. as int one would need to (left) shift several times if precision is only
- * 3bits.
+ * Advantage: the bit mask to get lat0 lon0 is simple: 000..0011 and independent
+ * of the precision! But when stored e.g. as int one would need to (left) shift
+ * several times if precision is only 3bits.
  *
  * @author Peter Karich,
  */
@@ -81,7 +87,8 @@ public class SpatialKeyAlgo implements KeyAlgo {
     private long initialBits;
 
     /**
-     * @param allBits how many bits should be used for the spatial key when encoding/decoding
+     * @param allBits how many bits should be used for the spatial key when
+     * encoding/decoding
      */
     public SpatialKeyAlgo(int allBits) {
         myinit(allBits);
@@ -102,11 +109,14 @@ public class SpatialKeyAlgo implements KeyAlgo {
         setWorldBounds();
     }
 
-    public int getBits() {
+    /**
+     * @return the number of involved bits
+     */
+    public int bits() {
         return allBits;
     }
 
-    public int getExactPrecision() {
+    public int exactPrecision() {
         // 360 / 2^(allBits/2) = 1/precision
         int p = (int) (Math.pow(2, allBits) / 360);
         // no rounding error
@@ -115,7 +125,7 @@ public class SpatialKeyAlgo implements KeyAlgo {
     }
 
     @Override
-    public SpatialKeyAlgo setInitialBounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit) {
+    public SpatialKeyAlgo bounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit) {
         minLonI = minLonInit;
         maxLonI = maxLonInit;
         minLatI = minLatInit;
@@ -124,7 +134,7 @@ public class SpatialKeyAlgo implements KeyAlgo {
     }
 
     protected void setWorldBounds() {
-        setInitialBounds(-180, 180, -90, 90);
+        bounds(-180, 180, -90, 90);
     }
 
     @Override
@@ -182,7 +192,8 @@ public class SpatialKeyAlgo implements KeyAlgo {
     }
 
     /**
-     * This method returns latitude and longitude via latLon - calculated from specified spatialKey
+     * This method returns latitude and longitude via latLon - calculated from
+     * specified spatialKey
      *
      * @param spatialKey is the input
      */
