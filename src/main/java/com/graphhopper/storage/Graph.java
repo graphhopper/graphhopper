@@ -65,8 +65,7 @@ public interface Graph {
     EdgeIterator edge(int a, int b, double distance, boolean bothDirections);
 
     /**
-     * The returned EdgeIterator will return endNode for node() or if endNode is
-     * negative node() will return the bigger node (nodeB).
+     * The returned EdgeIterator will return endNode as node().
      *
      * @return an edge iterator over one element where the method next() has no
      * meaning and will return false.

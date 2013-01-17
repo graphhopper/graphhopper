@@ -375,12 +375,14 @@ public class GraphStorage implements Graph, Storable {
     public EdgeIterator getEdgeProps(int edgeId, final int endNode) {
         if (edgeId < 1 || edgeId > edgeCount)
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + edgeCount + "]");
+        if (endNode < 0)
+            throw new IllegalStateException("endNode " + endNode + " out of bounds [0," + nodeCount + "]");
         long edgePointer = (long) edgeId * edgeEntrySize;
         // a bit complex but faster
         int nodeA = edges.getInt(edgePointer + E_NODEA);
         int nodeB = edges.getInt(edgePointer + E_NODEB);
         SingleEdge edge;
-        if (endNode < 0 || endNode == nodeB) {
+        if (endNode == nodeB) {
             edge = createSingleEdge(edgeId, nodeA);
             edge.node = nodeB;
             return edge;

@@ -612,10 +612,11 @@ public abstract class AbstractGraphTester {
         assertEquals(2, iter.node());
         assertEquals(20, iter.distance(), 1e-5);
 
-        iter = someGraphImpl.getEdgeProps(edgeId, -1);
-        assertEquals(0, iter.baseNode());
-        assertEquals(2, iter.node());
-        assertEquals(20, iter.distance(), 1e-5);
+        try {
+            someGraphImpl.getEdgeProps(edgeId, -1);
+            assertTrue(false);
+        } catch (Exception ex) {
+        }
 
         iter = someGraphImpl.getEdgeProps(edgeId, 1);
         assertTrue(iter.isEmpty());
