@@ -95,7 +95,7 @@ public class OSMReader {
      * reallocation (default is 5mio)
      */
     public static OSMReader osm2Graph(final CmdArgs args) throws IOException {
-         if (!args.get("config", "").isEmpty()) {
+        if (!args.get("config", "").isEmpty()) {
             CmdArgs tmp = CmdArgs.readFromConfig(args.get("config", ""));
             // overwrite command line configuration
             args.merge(tmp);
@@ -128,10 +128,13 @@ public class OSMReader {
                 dir = new RAMDirectory(graphLocation, false);
         }
 
-        if (args.getBool("osmreader.levelgraph", false))
+        String chShortcuts = args.get("osmreader.chShortcuts", "no");
+        boolean levelGraph = "true".equals(chShortcuts)
+                || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
+        if (levelGraph)
+            // necessary for simple or CH shortcuts
             storage = new LevelGraphStorage(dir);
         else
-            // necessary for simple or CH shortcuts
             storage = new GraphStorage(dir);
         return osm2Graph(new OSMReader(storage, size), args);
     }
@@ -221,7 +224,7 @@ public class OSMReader {
             GraphUtility.sortDFS(graphStorage, newGraph);
             graphStorage = newGraph;
         }
-        
+
         // TODO at the moment a prepared levelgraph cannot be sorted, as otherwise edgeIds won't be copied+recognized
         if (prepare == null)
             setDefaultAlgoPrepare(Helper.createAlgoPrepare("astar"));

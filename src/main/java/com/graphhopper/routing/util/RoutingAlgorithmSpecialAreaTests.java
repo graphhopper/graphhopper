@@ -65,7 +65,8 @@ public class RoutingAlgorithmSpecialAreaTests {
 
     void testAlgos() {
         if (unterfrankenGraph instanceof LevelGraph)
-            throw new IllegalStateException("run testAlgos only with a none-LevelGraph. Use osmreader.levelgraph=false");
+            throw new IllegalStateException("run testAlgos only with a none-LevelGraph. Use osmreader.chShortcuts=false "
+                    + "Or use osmreader.chShortcuts=shortest and avoid the preparation");
 
         TestAlgoCollector testCollector = new TestAlgoCollector();
         Collection<RoutingAlgorithm> algos = createAlgos(unterfrankenGraph, false);
