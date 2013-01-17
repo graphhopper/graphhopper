@@ -25,6 +25,7 @@ import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.Assert.*;
@@ -84,7 +85,7 @@ public class RoutingAlgorithmIntegrationTest {
             Graph g = osm.getGraph();
             // System.out.println("nodes:" + g.getNodes());
             Location2IDIndex idx = osm.getLocation2IDIndex();
-            RoutingAlgorithm[] algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g);
+            Collection<RoutingAlgorithm> algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g, true);
             for (RoutingAlgorithm algo : algos) {
                 for (OneRun or : forEveryAlgo) {
                     int from = idx.findID(or.fromLat, or.fromLon);

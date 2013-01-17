@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FastestCarCalc;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
+import com.graphhopper.routing.util.PrepareTowerNodesShortcuts;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -48,8 +49,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class parses an OSM xml file and creates a graph from it. See run.sh on how to use it from
- * command line.
+ * This class parses an OSM xml file and creates a graph from it. See run.sh on
+ * how to use it from command line.
  *
  * @author Peter Karich,
  */
@@ -57,20 +58,11 @@ public class OSMReader {
 
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
-        if (!args.get("config", "").isEmpty()) {
-            args = CmdArgs.readFromConfig(args.get("config", ""));
-            // overwrite from command line
-            args.merge(CmdArgs.read(strs));
-        }
-
         OSMReader reader = osm2Graph(args);
         Graph g = reader.getGraph();
-        // only possible for smaller graphs as we need to have two graphs + an array laying around
-        // g = GraphUtility.sortDFS(g, new RAMDirectory());
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(reader);
-        if (args.getBool("osmreader.test", false)) {
+        if (args.getBool("osmreader.test", false))
             tests.start();
-        }
 
         if (args.getBool("osmreader.runshortestpath", false)) {
             RoutingAlgorithm algo = Helper.createAlgoFromString(g, args.get("osmreader.algo", "dijkstra"));
@@ -97,12 +89,18 @@ public class OSMReader {
     private boolean sortGraph = false;
 
     /**
-     * Opens or creates a graph. The specified args need a property 'graph' (a folder) and if no
-     * such folder exist it'll create a graph from the provided osm file (property 'osm'). A
-     * property 'size' is used to preinstantiate a datastructure/graph to avoid over-memory
-     * allocation or reallocation (default is 5mio)
+     * Opens or creates a graph. The specified args need a property 'graph' (a
+     * folder) and if no such folder exist it'll create a graph from the
+     * provided osm file (property 'osm'). A property 'size' is used to
+     * preinstantiate a datastructure/graph to avoid over-memory allocation or
+     * reallocation (default is 5mio)
      */
     public static OSMReader osm2Graph(final CmdArgs args) throws IOException {
+         if (!args.get("config", "").isEmpty()) {
+            CmdArgs tmp = CmdArgs.readFromConfig(args.get("config", ""));
+            // overwrite command line configuration
+            args.merge(tmp);
+        }
         String graphLocation = args.get("osmreader.graph-location", "");
         if (Helper.isEmpty(graphLocation)) {
             String strOsm = args.get("osmreader.osm", "");
@@ -140,7 +138,7 @@ public class OSMReader {
     }
 
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
-        osmReader.setIndexCapacity(args.getInt("osmreader.locationIndexCapacity", 2000));
+        osmReader.setIndexCapacity(args.getInt("osmreader.locationIndexCapacity", -1));
         String type = args.get("osmreader.type", "CAR");
         osmReader.setAcceptStreet(new AcceptStreet(type.contains("CAR"),
                 type.contains("PUBLIC_TRANSPORT"),
@@ -148,7 +146,7 @@ public class OSMReader {
         final String algoStr = args.get("osmreader.algo", "astar");
         osmReader.setDefaultAlgoPrepare(Helper.createAlgoPrepare(algoStr));
         osmReader.setSort(args.getBool("osmreader.sortGraph", false));
-        
+
         // TODO LATER make this configurable in OSMReaderHelper
         if (args.getBool("osmreader.towerNodesShortcuts", false))
             throw new IllegalArgumentException("towerNodes are always automatically created");
@@ -224,7 +222,7 @@ public class OSMReader {
             GraphUtility.sortDFS(graphStorage, newGraph);
             graphStorage = newGraph;
         }
-
+        
         // TODO at the moment a prepared levelgraph cannot be sorted, as otherwise edgeIds won't be copied+recognized
         if (prepare == null)
             setDefaultAlgoPrepare(Helper.createAlgoPrepare("astar"));
@@ -250,13 +248,14 @@ public class OSMReader {
 
         if (indexCapacity < 0)
             indexCapacity = Helper.calcIndexSize(graphStorage.getBounds());
-        logger.info("now initializing and flushing index with " + indexCapacity);
+        logger.info("initializing and flushing location index with " + indexCapacity);
         getLocation2IDIndex().prepareIndex(indexCapacity);
         index.flush();
     }
 
     /**
-     * Creates the edges and nodes files from the specified inputstream (osm xml file).
+     * Creates the edges and nodes files from the specified inputstream (osm xml
+     * file).
      */
     public void writeOsm2Graph(InputStream is) {
         if (is == null)

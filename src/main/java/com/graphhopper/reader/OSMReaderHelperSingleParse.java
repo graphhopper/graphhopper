@@ -18,16 +18,14 @@ package com.graphhopper.reader;
 import com.graphhopper.coll.CompressedArray;
 import com.graphhopper.coll.OSMIDSegmentedMap;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.CoordTrig;
 import gnu.trove.list.TLongList;
 import org.slf4j.LoggerFactory;
 
 /**
- * This helper does not require the osm to be parsed twice but is potentially more memory intensive
- * (and also slower!?) as it stores all occuring nodes and its lat,lon. Only useful for smaller
- * (&lt; 150km) graphs.
+ * This helper does not require the osm to be parsed twice but is potentially
+ * more memory intensive (and also slower!?) as it stores all occuring nodes and
+ * its lat,lon. Only useful for smaller (&lt; 150km) graphs.
  *
  * @deprecated until we fix the memory and speed problem
  * @author Peter Karich

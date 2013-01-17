@@ -533,7 +533,7 @@ public class GraphStorage implements Graph, Storable {
                 int len = pillarNodes.size();
                 int geoRef = nextGeoRef(len * 2);
                 edges.setInt(edgePointer + E_GEO, geoRef);
-                ensureGeometry(geoRef, len * 2);
+                ensureGeometry(geoRef, len * 2 + 1);
                 geometry.setInt(geoRef, len);
                 geoRef++;
                 if (baseNode > node)
@@ -784,8 +784,10 @@ public class GraphStorage implements Graph, Storable {
     @Override
     public boolean loadExisting() {
         if (edges.loadExisting()) {
-            if (!nodes.loadExisting() || !geometry.loadExisting())
-                throw new IllegalStateException("corrupt file or directory? " + dir);
+            if (!nodes.loadExisting())
+                throw new IllegalStateException("cannot load nodes. corrupt file or directory? " + dir);
+            if (!geometry.loadExisting())
+                throw new IllegalStateException("cannot load geometry. corrupt file or directory? " + dir);
             if (nodes.getVersion() != edges.getVersion())
                 throw new IllegalStateException("nodes and edges files have different versions!? " + dir);
             // nodes

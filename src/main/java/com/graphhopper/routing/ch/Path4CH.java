@@ -33,6 +33,10 @@ public class Path4CH extends PathBidirRef {
         super(g, weightCalculation);
     }
 
+    public Path4CH(PathBidirRef p) {
+        super(p);
+    }
+
     @Override
     protected void processWeight(int tmpEdge, int endNode) {
         EdgeIterator mainIter = graph.getEdgeProps(tmpEdge, endNode);
@@ -72,21 +76,19 @@ public class Path4CH extends PathBidirRef {
             to = tmp;
         }
 
-        // 2 things:
-        // - one edge needs to be determined explicitely because we store only one -> one futher branch necessary :/
-        // - getEdgeProps can return an empty edge if the shortcuts is available for both directions
+        // 2 things => 2*2=4 sitations
+        // - one edge needs to be determined explicitely because we store only one as skippedEdge
+        // - getEdgeProps could possibly return an empty edge if the shortcuts is available for both directions
         if (reverse) {
             EdgeSkipIterator iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge, from);
             if (iter.isEmpty()) {
                 iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge, to);
                 int skippedNode = iter.baseNode();
                 expandEdge(iter, false);
-                // addEdge(iter.edge());
                 findSkippedEdge(from, skippedNode);
             } else {
                 int skippedNode = iter.baseNode();
                 findSkippedEdge(skippedNode, to);
-                // addEdge(iter.edge());
                 expandEdge(iter, true);
             }
         } else {
@@ -95,12 +97,10 @@ public class Path4CH extends PathBidirRef {
                 iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge, from);
                 int skippedNode = iter.baseNode();
                 expandEdge(iter, true);
-                // addEdge(iter.edge());
                 findSkippedEdge(skippedNode, to);
             } else {
                 int skippedNode = iter.baseNode();
                 findSkippedEdge(from, skippedNode);
-                // addEdge(iter.edge());
                 expandEdge(iter, false);
             }
         }

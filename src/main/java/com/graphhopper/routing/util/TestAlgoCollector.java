@@ -37,21 +37,22 @@ public class TestAlgoCollector {
         return this;
     }
 
-    public TestAlgoCollector assertDistance(RoutingAlgorithm algo, int from, int to, double distance, int locations) {
-        Path p = algo.clear().calcPath(from, to);
-        if (!p.found()) {
+    public TestAlgoCollector assertDistance(RoutingAlgorithm algo,
+            int from, int to, double distance, int points) {
+        Path path = algo.clear().calcPath(from, to);
+        if (!path.found()) {
             list.add(algo + " returns no path. from:" + from + ", to:" + to);
             return this;
-        } else if (Math.abs(p.distance() - distance) > 10)
-            list.add(algo + " returns path not matching the expected " + "distance of " + distance
-                    + "\t Returned was " + p.distance() + "\t (expected locations " + locations
-                    + ", was " + p.nodes().size() + ") " + "from:" + from + ", to:" + to);
+        } else if (Math.abs(path.distance() - distance) > 10)
+            list.add(algo + " returns path not matching the expected distance of " + distance
+                    + "\t Returned was " + path.distance() + "\t (expected points " + points
+                    + ", was " + path.points().size() + ") from:" + from + ", to:" + to);
         // Yes, there are indeed real world instances where A-B-C is identical to A-C (in meter precision).
         // And for from:501620, to:155552 the node difference of astar to bi-dijkstra gets even bigger (7!).
-        if (Math.abs(p.points().size() - locations) > 7)
-            list.add(algo + " returns path not matching the expected " + "locations of " + locations
-                    + "\t Returned was " + p.points().size() + "\t (expected distance " + distance
-                    + ", was " + p.distance() + ") " + "from:" + from + ", to:" + to);
+        if (Math.abs(path.points().size() - points) > 7)
+            list.add(algo + " returns path not matching the expected points of " + points
+                    + "\t Returned was " + path.points().size() + "\t (expected distance " + distance
+                    + ", was " + path.distance() + ") from:" + from + ", to:" + to);
         return this;
     }
 

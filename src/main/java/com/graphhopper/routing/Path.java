@@ -19,10 +19,11 @@ import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
+import gnu.trove.list.TDoubleList;
 import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -47,7 +48,7 @@ public class Path {
     protected boolean reverse = true;
     protected EdgeEntry edgeEntry;
     private int fromNode = EdgeIterator.NO_EDGE;
-    private TIntList edgeIds = new TIntArrayList();
+    private TIntList edgeIds;
     private PointList cachedPoints;
     private TIntList cachedNodes;
 
@@ -58,6 +59,17 @@ public class Path {
     public Path(Graph graph, WeightCalculation weightCalculation) {
         this.graph = graph;
         this.weightCalculation = weightCalculation;
+        this.edgeIds = new TIntArrayList();
+    }
+
+    /**
+     * Populates an unextracted path instances from the specified path p.
+     */
+    public Path(Path p) {
+        this(p.graph, p.weightCalculation);
+        weight = p.weight;
+        edgeIds = new TIntArrayList(edgeIds);  
+        edgeEntry = p.edgeEntry;
     }
 
     public Path edgeEntry(EdgeEntry edgeEntry) {
@@ -119,7 +131,7 @@ public class Path {
     }
 
     @Override public String toString() {
-        return "weight:" + weight() + ", edges:" + edgeIds.size();
+        return "weight:" + weight() + ", edges:" + edgeIds;
     }
 
     public String toDetailsString() {
@@ -174,6 +186,25 @@ public class Path {
             calcNodes();
         return cachedNodes;
     }
+    
+    public TDoubleList calcDistances() {
+        TDoubleList distances = new TDoubleArrayList(edgeIds.size());
+        if (edgeIds.isEmpty())
+            return distances;
+
+        int tmpNode = getFromNode();
+        int len = edgeIds.size();
+        for (int i = 0; i < len; i++) {
+            EdgeIterator iter = graph.getEdgeProps(edgeIds.get(i), tmpNode);
+            if (iter.isEmpty())
+                throw new IllegalStateException("Edge " + edgeIds.get(i)
+                        + " was empty when requested with node " + tmpNode
+                        + ", edgeIndex:" + i + ", edges:" + edgeIds.size());
+            tmpNode = iter.baseNode();
+            distances.add(iter.distance());
+        }
+        return distances;
+    }
 
     private TIntList calcNodes() {
         cachedNodes = new TIntArrayList(edgeIds.size() + 1);
@@ -185,6 +216,10 @@ public class Path {
         int len = edgeIds.size();
         for (int i = 0; i < len; i++) {
             EdgeIterator iter = graph.getEdgeProps(edgeIds.get(i), tmpNode);
+            if (iter.isEmpty())
+                throw new IllegalStateException("Edge " + edgeIds.get(i)
+                        + " was empty when requested with node " + tmpNode
+                        + ", edgeIndex:" + i + ", edges:" + edgeIds.size());
             cachedNodes.add(tmpNode = iter.baseNode());
         }
         return cachedNodes;
@@ -204,19 +239,19 @@ public class Path {
         for (int i = 0; i < len; i++) {
             int edgeId = edgeIds.get(i);
             EdgeIterator iter = graph.getEdgeProps(edgeId, tmpNode);
-            PointList pl = iter.pillarNodes();            
+            if (iter.isEmpty())
+                throw new IllegalStateException("Edge " + edgeId
+                        + " was empty when requested with node " + tmpNode
+                        + ", edgeIndex:" + i + ", edges:" + edgeIds.size());
+            tmpNode = iter.baseNode();            
+            PointList pl = iter.pillarNodes();
             pl.reverse();
             for (int j = 0; j < pl.size(); j++) {
                 cachedPoints.add(pl.latitude(j), pl.longitude(j));
-            }
-            tmpNode = iter.baseNode();
+            }            
             cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
         }
         return cachedPoints;
-    }
-
-    public int simplify(DouglasPeucker algo) {
-        return algo.simplify(points());
     }
 
     public TIntSet calculateIdenticalNodes(Path p2) {

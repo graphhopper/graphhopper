@@ -34,6 +34,13 @@ public class PathBidirRef extends Path {
 
     public PathBidirRef(Graph g, WeightCalculation weightCalculation) {
         super(g, weightCalculation);
+        weight = INIT_VALUE;
+    }
+
+    public PathBidirRef(PathBidirRef p) {
+        super(p);
+        edgeTo = p.edgeTo;
+        switchWrapper = p.switchWrapper;
     }
 
     public PathBidirRef switchToFrom(boolean b) {
@@ -81,9 +88,5 @@ public class PathBidirRef extends Path {
             tmpEdge = currEdge.edge;
         }
         return found(true);
-    }
-
-    public void initWeight() {
-        weight = INIT_VALUE;
     }
 }

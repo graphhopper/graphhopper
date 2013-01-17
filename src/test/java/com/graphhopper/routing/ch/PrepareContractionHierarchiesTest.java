@@ -34,6 +34,7 @@ import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -84,7 +85,7 @@ public class PrepareContractionHierarchiesTest {
         LevelGraph g = createExampleGraph();
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
-                .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(3));
+                .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setAvoidNode(3));
         List<NodeCH> gs = createGoals(2);
         algo.clear().setLimit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(0).entry);
@@ -96,7 +97,7 @@ public class PrepareContractionHierarchiesTest {
         LevelGraph g = createExampleGraph();
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g).
-                setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(3));
+                setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setAvoidNode(3));
         List<NodeCH> gs = createGoals(1, 2);
         algo.clear().setLimit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(1).entry);
@@ -107,7 +108,7 @@ public class PrepareContractionHierarchiesTest {
     public void testShortestPathLimit() {
         LevelGraph g = createExampleGraph();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
-                .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setSkipNode(0));
+                .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setAvoidNode(0));
         List<NodeCH> gs = createGoals(1);
         algo.clear().setLimit(2).calcPath(4, gs);
         assertNull(gs.get(0).entry);
@@ -165,6 +166,43 @@ public class PrepareContractionHierarchiesTest {
         Path p = algo.clear().calcPath(0, 10);
         assertEquals(10, p.distance(), 1e-6);
         assertEquals(Helper.createTList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.nodes());
+    }
+
+    @Test
+    public void testDirectedGraph3() {
+        LevelGraph g = createGraph();
+        g.edge(0, 2, 2, true);
+        g.edge(10, 2, 2, true);
+        g.edge(11, 2, 2, true);
+        // create a longer one directional edge => no longish one-dir shortcut should be created        
+        g.edge(2, 1, 2, true);
+        g.edge(2, 1, 10, false);
+
+        g.edge(1, 3, 2, true);
+        g.edge(3, 4, 2, true);
+        g.edge(3, 5, 2, true);
+        g.edge(3, 6, 2, true);
+        g.edge(3, 7, 2, true);
+
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setGraph(g);
+        prepare.initFromGraph();
+        // find all shortcuts if we contract node 1
+        Collection<Shortcut> scs = prepare.findShortcuts(1);
+        assertEquals(2, scs.size());
+        Iterator<Shortcut> iter = scs.iterator();
+        Shortcut sc1 = iter.next();
+        Shortcut sc2 = iter.next();
+        if (sc1.distance > sc2.distance) {
+            Shortcut tmp = sc1;
+            sc1 = sc2;
+            sc2 = tmp;
+        }
+
+        assertTrue(sc1.toString(), sc1.from == 2 && sc1.to == 3);
+        assertTrue(sc2.toString(), sc2.from == 2 && sc2.to == 3);
+
+        assertEquals(sc1.toString(), 4, sc1.distance, 1e-4);
+        assertEquals(sc2.toString(), 12, sc2.distance, 1e-4);
     }
 
     void initRoundaboutGraph(Graph g) {

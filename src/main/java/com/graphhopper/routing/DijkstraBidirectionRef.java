@@ -17,6 +17,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
+import com.graphhopper.routing.ch.Path4CH;
 import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
@@ -133,7 +134,6 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
                 finish++;
         }
 
-        // System.out.println(toString() + " visited nodes:" + (visitedFrom.getCardinality() + visitedTo.getCardinality()));
         return getShortest();
     }
 
@@ -156,11 +156,11 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     public void fillEdges(EdgeEntry curr, MyBitSet visitedMain, PriorityQueue<EdgeEntry> prioQueue,
             TIntObjectMap<EdgeEntry> shortestWeightMap, boolean out) {
 
-        int currNodeFrom = curr.endNode;
+        int currNodeFrom = curr.endNode;                
         EdgeIterator iter = GraphUtility.getEdges(graph, currNodeFrom, out);
         if (edgeFilter != null)
             iter = edgeFilter.doFilter(iter);
-
+        
         while (iter.next()) {
             int neighborNode = iter.node();
             if (visitedMain.contains(neighborNode))
@@ -257,7 +257,6 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     public DijkstraBidirectionRef initPath() {
         shortest = createPath();
-        shortest.initWeight();
         return this;
     }
 

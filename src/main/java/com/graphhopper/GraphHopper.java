@@ -32,7 +32,9 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
+import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
 
@@ -208,13 +210,13 @@ public class GraphHopper implements GraphHopperAPI {
         RoutingAlgorithm algo = prepare.createAlgo();
         Path path = algo.calcPath(from, to);
         debug += " routing (" + algo.name() + "):" + sw.stop().getSeconds() + "s";
-
+        PointList points = path.points();
         if (simplify) {
             sw = new StopWatch().start();
-            path.simplify(new DouglasPeucker().setMaxDist(request.minPathPrecision()));
-            debug += " simplify:" + sw.stop().getSeconds() + "s";
+            int del = new DouglasPeucker().setMaxDist(request.minPathPrecision()).simplify(points);
+            debug += " simplify (" + del + "):" + sw.stop().getSeconds() + "s";
         }
-        return new GHResponse(path.points()).distance(path.distance()).time(path.time()).debugInfo(debug);
+        return new GHResponse(points).distance(path.distance()).time(path.time()).debugInfo(debug);
     }
 
     private void initIndex(Directory dir) {

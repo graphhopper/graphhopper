@@ -163,7 +163,6 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
     public void initPath() {
         shortest = createPath();
-        shortest.initWeight();
         // pi_r_of_t = dist.calcDist(fromCoord.lat, fromCoord.lon, toCoord.lat, toCoord.lon);
     }
 

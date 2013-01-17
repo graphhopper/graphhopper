@@ -51,7 +51,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private TLongIntHashMap osmIdToIndexMap;
     // very slow: private SparseLongLongArray osmIdToIndexMap;
-    // not applicable as ways introduces the nodes in 'wrong' order: new OSMIDSegmentedMap        
+    // not applicable as ways introduces the nodes in 'wrong' order: private OSMIDSegmentedMap
     private int towerId = 0;
     private int pillarId = 0;
     private final TLongArrayList tmpLocs = new TLongArrayList(10);
@@ -76,7 +76,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         if (nodeType == TOWER_NODE) {
             addTowerNode(osmId, lat, lon);
         } else if (nodeType == PILLAR_NODE) {
-            int tmp = (nodeType + 1) * 4;
+            int tmp = (pillarId + 1) * 4;
             pillarLats.ensureCapacity(tmp);
             pillarLats.setInt(pillarId, Helper.degreeToInt(lat));
             pillarLons.ensureCapacity(tmp);

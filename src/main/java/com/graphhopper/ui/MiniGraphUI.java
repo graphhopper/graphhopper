@@ -18,7 +18,6 @@ package com.graphhopper.ui;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.reader.OSMReader;
-import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
@@ -146,15 +145,13 @@ public class MiniGraphUI {
                     }
                 }
 
+//                mg.plotNode(g2, 14304, Color.red);
+
                 g2.setColor(Color.red);
-                DijkstraSimple dijkstra = new DijkstraSimple(graph);
-                Path p1 = calcPath(dijkstra);
+                Path p1 = calcPath(algo.clear());
                 plotPath(p1, g2, 5);
 
-//                g2.setColor(Color.blue);
-//                DijkstraBidirectionRef dbi = new DijkstraBidirectionRef(graph);
-//                Path p2 = calcPath(dbi);
-//                plotPath(p2, g2, 5);
+                g2.setColor(Color.black);
 
 //                if (quadTreeNodes != null) {
 //                    logger.info("found neighbors:" + quadTreeNodes.size());
@@ -214,11 +211,12 @@ public class MiniGraphUI {
 
     // for debugging
     private Path calcPath(RoutingAlgorithm algo) {
-        int from = index.findID(43.730729, 7.421288);
-        int to = index.findID(43.727687, 7.418737);
-//        System.out.println("path " + from + "->" + to);
-        return algo.calcPath(from, to);
-//        return algo.calcPath(1510, 368);
+//        int from = index.findID(50.04216762596695, 10.226328504631237);
+//        int to = index.findID(50.04921956887818, 10.231340037664596);
+//
+////        System.out.println("path " + from + "->" + to);
+//        return algo.calcPath(from, to);
+        return algo.calcPath(43548, 14370);
     }
 
     private Path plotPath(Path tmpPath, Graphics2D g2, int w) {
@@ -226,6 +224,7 @@ public class MiniGraphUI {
             System.out.println("nothing found " + w);
             return tmpPath;
         }
+
         double lastLat = Double.NaN;
         double lastLon = Double.NaN;
         for (int i = 0; i < tmpPath.points().size(); i++) {
@@ -238,7 +237,7 @@ public class MiniGraphUI {
             lastLat = lat;
             lastLon = lon;
         }
-        logger.info(tmpPath.toString());
+        logger.info("dist:" + tmpPath.distance() + ", path points:" + tmpPath.points().size());
         return tmpPath;
     }
     private int dijkstraFromId = -1;

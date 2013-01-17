@@ -199,7 +199,9 @@ public class GraphUtility {
         EdgeIterator iter = g.getOutgoing(nodeId);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next()) {
-            str += "  ->" + iter.node() + "\t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
+            str += "  ->" + iter.node() + " (" + iter.distance() + ") pillars:"
+                    + iter.pillarNodes().size() + ", edgeId:" + iter.edge()
+                    + "\t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
         }
         return str;
     }

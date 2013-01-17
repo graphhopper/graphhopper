@@ -56,8 +56,6 @@ public class Path4Shortcuts extends PathBidirRef {
     protected void handleSkippedEdge(EdgeSkipIterator iter) {
         int from = iter.baseNode();
         int to = iter.node();
-
-        // TODO move this swapping to expand where it belongs (necessary because of usage 'getOutgoing')
         if (reverse) {
             int tmp = from;
             from = to;
@@ -85,6 +83,10 @@ public class Path4Shortcuts extends PathBidirRef {
         TIntArrayList tmpEdgeList = new TIntArrayList();
         tmpEdgeList.add(tmpIter.edge());
         while (true) {            
+            // TODO PrepareTowerNodesShortcuts has a bug where exactly one edge is skipped
+            if (((LevelGraph) graph).getLevel(node) >= 0 || node == to)
+                break;
+            
             tmpIter = graph.getEdges(node);
             tmpIter.next();
             if (tmpIter.node() == avoidNode) {
@@ -93,10 +95,7 @@ public class Path4Shortcuts extends PathBidirRef {
             }
             avoidNode = tmpIter.baseNode();
             node = tmpIter.node();
-            tmpEdgeList.add(tmpIter.edge());
-            // TODO introduce edge filter here too?
-            if (((LevelGraph) graph).getLevel(node) >= 0 || node == to)
-                break;            
+            tmpEdgeList.add(tmpIter.edge());            
         }
 
         if (reverse)

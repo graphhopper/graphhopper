@@ -46,7 +46,7 @@ public class PrepareRoutingSubnetworks {
         int del = deleteZeroDegreeNodes();
         Map<Integer, Integer> map = findSubnetworks();
         keepLargestNetwork(map);
-        logger.info("optimize to delete: subnetworks(" + map.size() + "), 0degreeNodes(" + del + ")");
+        logger.info("optimize to delete: subnetworks(" + map.size() + "), zero-degree-nodes(" + del + ")");
         g.optimize();
         subNetworks = map.size();
     }

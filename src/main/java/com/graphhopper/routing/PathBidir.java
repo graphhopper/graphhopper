@@ -39,7 +39,7 @@ public class PathBidir extends Path {
         this.edgeWFrom = edgesFrom;
         this.edgeWTo = edgesTo;
     }
-
+    
     /**
      * Extracts path from two shortest-path-tree
      */
