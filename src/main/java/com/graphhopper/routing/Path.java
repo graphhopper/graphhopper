@@ -50,7 +50,6 @@ public class Path {
     private int fromNode = EdgeIterator.NO_EDGE;
     private TIntList edgeIds;
     private PointList cachedPoints;
-    private TIntList cachedNodes;
 
     Path() {
         this(null, ShortestCarCalc.DEFAULT);
@@ -68,7 +67,7 @@ public class Path {
     public Path(Path p) {
         this(p.graph, p.weightCalculation);
         weight = p.weight;
-        edgeIds = new TIntArrayList(edgeIds);  
+        edgeIds = new TIntArrayList(edgeIds);
         edgeEntry = p.edgeEntry;
     }
 
@@ -81,8 +80,12 @@ public class Path {
         edgeIds.add(edge);
     }
 
-    public void setFound(boolean found) {
-        this.found = found;
+    /**
+     * We need to remember fromNode explicitely as its not saved in one edgeId
+     * of edgeIds.
+     */
+    protected void setFromNode(int node) {
+        fromNode = node;
     }
 
     public int getFromNode() {
@@ -130,24 +133,8 @@ public class Path {
         this.weight = weight;
     }
 
-    @Override public String toString() {
-        return "weight:" + weight() + ", edges:" + edgeIds;
-    }
-
-    public String toDetailsString() {
-        String str = "";
-        TIntList nodes = nodes();
-        for (int i = 0; i < nodes.size(); i++) {
-            if (i > 0)
-                str += "->";
-
-            str += nodes.get(i);
-        }
-        return toString() + ", " + str;
-    }
-
     /**
-     * Extract path from shortest-path-tree.
+     * Extracts the Path from the shortest-path-tree determined by edgeEntry.
      */
     public Path extract() {
         EdgeEntry goalEdge = edgeEntry;
@@ -161,14 +148,17 @@ public class Path {
         return found(true);
     }
 
-    protected void processWeight(int tmpEdge, int endNode) {
-        calcWeight(graph.getEdgeProps(tmpEdge, endNode));
-        addEdge(tmpEdge);
+    /**
+     * Calls calcWeight and adds the edgeId.
+     */
+    protected void processWeight(int edgeId, int endNode) {
+        calcWeight(graph.getEdgeProps(edgeId, endNode));
+        addEdge(edgeId);
     }
 
     /**
      * This method calculates not only the weight but also the distance in
-     * kilometer.
+     * kilometer for the specified edge.
      */
     public void calcWeight(EdgeIterator iter) {
         double dist = iter.distance();
@@ -179,19 +169,17 @@ public class Path {
     }
 
     /**
-     * @return the node indices of the tower nodes in this path.
+     * Used in combination with forEveryEdge.
      */
-    public TIntList nodes() {
-        if (cachedNodes == null)
-            calcNodes();
-        return cachedNodes;
-    }
-    
-    public TDoubleList calcDistances() {
-        TDoubleList distances = new TDoubleArrayList(edgeIds.size());
-        if (edgeIds.isEmpty())
-            return distances;
+    public static interface EdgeVisitor {
 
+        void next(EdgeIterator iter);
+    }
+
+    /**
+     * Iterates over all edges in this path and calls the visitor for it.
+     */
+    public void forEveryEdge(EdgeVisitor visitor) {
         int tmpNode = getFromNode();
         int len = edgeIds.size();
         for (int i = 0; i < len; i++) {
@@ -201,69 +189,76 @@ public class Path {
                         + " was empty when requested with node " + tmpNode
                         + ", edgeIndex:" + i + ", edges:" + edgeIds.size());
             tmpNode = iter.baseNode();
-            distances.add(iter.distance());
+            visitor.next(iter);
         }
-        return distances;
     }
 
-    private TIntList calcNodes() {
-        cachedNodes = new TIntArrayList(edgeIds.size() + 1);
+    /**
+     * @return the uncached node indices of the tower nodes in this path.
+     */
+    public TIntList calcNodes() {
+        final TIntArrayList nodes = new TIntArrayList(edgeIds.size() + 1);
         if (edgeIds.isEmpty())
-            return cachedNodes;
+            return nodes;
 
         int tmpNode = getFromNode();
-        cachedNodes.add(tmpNode);
-        int len = edgeIds.size();
-        for (int i = 0; i < len; i++) {
-            EdgeIterator iter = graph.getEdgeProps(edgeIds.get(i), tmpNode);
-            if (iter.isEmpty())
-                throw new IllegalStateException("Edge " + edgeIds.get(i)
-                        + " was empty when requested with node " + tmpNode
-                        + ", edgeIndex:" + i + ", edges:" + edgeIds.size());
-            cachedNodes.add(tmpNode = iter.baseNode());
-        }
-        return cachedNodes;
+        nodes.add(tmpNode);
+        forEveryEdge(new EdgeVisitor() {
+            @Override public void next(EdgeIterator iter) {
+                nodes.add(iter.baseNode());
+            }
+        });
+        return nodes;
     }
 
-    public PointList points() {
-        if (cachedPoints == null)
-            calcPoints();
-        return cachedPoints;
-    }
-
-    private PointList calcPoints() {
+    /**
+     * @return the cached list of lat,lon for this path
+     */
+    public PointList calcPoints() {
+        if (cachedPoints != null)
+            return cachedPoints;
         cachedPoints = new PointList(edgeIds.size() + 1);
+        if (edgeIds.isEmpty())
+            return cachedPoints;
         int tmpNode = getFromNode();
         cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
-        int len = edgeIds.size();
-        for (int i = 0; i < len; i++) {
-            int edgeId = edgeIds.get(i);
-            EdgeIterator iter = graph.getEdgeProps(edgeId, tmpNode);
-            if (iter.isEmpty())
-                throw new IllegalStateException("Edge " + edgeId
-                        + " was empty when requested with node " + tmpNode
-                        + ", edgeIndex:" + i + ", edges:" + edgeIds.size());
-            tmpNode = iter.baseNode();            
-            PointList pl = iter.pillarNodes();
-            pl.reverse();
-            for (int j = 0; j < pl.size(); j++) {
-                cachedPoints.add(pl.latitude(j), pl.longitude(j));
-            }            
-            cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
-        }
+        forEveryEdge(new EdgeVisitor() {
+            @Override public void next(EdgeIterator iter) {
+                PointList pl = iter.pillarNodes();
+                pl.reverse();
+                for (int j = 0; j < pl.size(); j++) {
+                    cachedPoints.add(pl.latitude(j), pl.longitude(j));
+                }
+                int baseNode = iter.baseNode();
+                cachedPoints.add(graph.getLatitude(baseNode), graph.getLongitude(baseNode));
+            }
+        });
         return cachedPoints;
+    }
+
+    public TDoubleList calcDistances() {
+        final TDoubleList distances = new TDoubleArrayList(edgeIds.size());
+        if (edgeIds.isEmpty())
+            return distances;
+
+        forEveryEdge(new EdgeVisitor() {
+            @Override public void next(EdgeIterator iter) {
+                distances.add(iter.distance());
+            }
+        });
+        return distances;
     }
 
     public TIntSet calculateIdenticalNodes(Path p2) {
         TIntHashSet thisSet = new TIntHashSet();
         TIntHashSet retSet = new TIntHashSet();
-        TIntList nodes = nodes();
+        TIntList nodes = calcNodes();
         int max = nodes.size();
         for (int i = 0; i < max; i++) {
             thisSet.add(nodes.get(i));
         }
 
-        nodes = p2.nodes();
+        nodes = p2.calcNodes();
         max = nodes.size();
         for (int i = 0; i < max; i++) {
             if (thisSet.contains(nodes.get(i)))
@@ -272,11 +267,19 @@ public class Path {
         return retSet;
     }
 
-    /**
-     * We need to remember fromNode explicitely as its not saved in one edgeId
-     * of edgeIds.
-     */
-    protected void setFromNode(int node) {
-        fromNode = node;
+    @Override public String toString() {
+        return "weight:" + weight() + ", edges:" + edgeIds.size();
+    }
+
+    public String toDetailsString() {
+        String str = "";
+        TIntList nodes = calcNodes();
+        for (int i = 0; i < nodes.size(); i++) {
+            if (i > 0)
+                str += "->";
+
+            str += nodes.get(i);
+        }
+        return toString() + ", " + str;
     }
 }

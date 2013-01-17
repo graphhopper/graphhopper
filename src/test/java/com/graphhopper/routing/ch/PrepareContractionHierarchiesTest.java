@@ -152,7 +152,7 @@ public class PrepareContractionHierarchiesTest {
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.clear().calcPath(4, 2);
         assertEquals(3, p.distance(), 1e-6);
-        assertEquals(Helper.createTList(4, 3, 5, 2), p.nodes());
+        assertEquals(Helper.createTList(4, 3, 5, 2), p.calcNodes());
     }
 
     @Test
@@ -168,7 +168,7 @@ public class PrepareContractionHierarchiesTest {
 
         Path p = algo.clear().calcPath(0, 10);
         assertEquals(10, p.distance(), 1e-6);
-        assertEquals(Helper.createTList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.nodes());
+        assertEquals(Helper.createTList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.calcNodes());
     }
 
     @Test
@@ -270,7 +270,7 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(old + 19, GraphUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.clear().calcPath(4, 7);
-        assertEquals(Helper.createTList(4, 5, 6, 7), p.nodes());
+        assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());
     }
 
     @Test
@@ -345,7 +345,7 @@ public class PrepareContractionHierarchiesTest {
         RoutingAlgorithm algo = prepare.setType(calc).createAlgo();
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.distance(), 1e-5);
-        assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.nodes());
+        assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());
     }
 
     @Test
@@ -357,6 +357,6 @@ public class PrepareContractionHierarchiesTest {
         RoutingAlgorithm algo = prepare.setType(calc).createAlgo();
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.distance(), 1e-1);
-        assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.nodes());
+        assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());
     }
 }

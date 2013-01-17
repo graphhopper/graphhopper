@@ -28,6 +28,6 @@ public class PathTest {
         Path p = new Path();
         assertFalse(p.found());
         assertEquals(0, p.distance(), 1e-7);
-        assertEquals(0, p.nodes().size());
+        assertEquals(0, p.calcNodes().size());
     }
 }

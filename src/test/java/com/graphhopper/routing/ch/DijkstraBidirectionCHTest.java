@@ -73,7 +73,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
         Path p = prepareGraph(g2).createAlgo().calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-4);
-        assertEquals(p.toString(), 6, p.nodes().size());
+        assertEquals(p.toString(), 6, p.calcNodes().size());
     }
 
     @Test @Override public void testPerformance() throws IOException {
@@ -111,8 +111,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.setLevel(0, 7);
 
         Path p = new PrepareContractionHierarchies().setGraph(g2).createAlgo().calcPath(0, 7);
-        assertEquals(Helper.createTList(0, 2, 5, 7), p.nodes());
-        assertEquals(4, p.nodes().size());
+        assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
+        assertEquals(4, p.calcNodes().size());
         assertEquals(4.2, p.distance(), 1e-5);
     }
 }

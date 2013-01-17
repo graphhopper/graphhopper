@@ -80,6 +80,8 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public GraphHopper forAndroid() {
+        // no need to simplify as no IO and simplifying costs a bit CPU
+        simplify = false;
         return memoryMapped();
     }
 
@@ -213,7 +215,7 @@ public class GraphHopper implements GraphHopperAPI {
         RoutingAlgorithm algo = prepare.createAlgo();
         Path path = algo.calcPath(from, to);
         debug += " routing (" + algo.name() + "):" + sw.stop().getSeconds() + "s";
-        PointList points = path.points();
+        PointList points = path.calcPoints();
         if (simplify) {
             sw = new StopWatch().start();
             int del = new DouglasPeucker().setMaxDist(request.minPathPrecision()).simplify(points);

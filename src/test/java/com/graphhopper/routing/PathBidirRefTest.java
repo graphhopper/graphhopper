@@ -45,7 +45,7 @@ public class PathBidirRefTest {
         pw.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 10);
         pw.edgeTo = new EdgeEntry(EdgeIterator.NO_EDGE, 2, 0);
         Path p = pw.extract();
-        assertEquals(Helper.createTList(1, 2), p.nodes());
+        assertEquals(Helper.createTList(1, 2), p.calcNodes());
         assertEquals(10, p.weight(), 1e-4);
     }
 
@@ -65,7 +65,7 @@ public class PathBidirRefTest {
         pw.edgeTo = new EdgeEntry(iter.edge(), 2, 20);
         pw.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 3, 0);
         Path p = pw.extract();
-        assertEquals(Helper.createTList(1, 2, 3), p.nodes());
+        assertEquals(Helper.createTList(1, 2, 3), p.calcNodes());
         assertEquals(30, p.weight(), 1e-4);
     }
 }

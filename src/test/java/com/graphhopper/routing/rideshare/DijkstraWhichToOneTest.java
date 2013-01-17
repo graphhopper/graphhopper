@@ -87,6 +87,6 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
         }
 
         assertEquals(bestManualPath.weight(), path.weight(), 1e-3);
-        assertEquals(bestManualPath.nodes(), path.nodes());
+        assertEquals(bestManualPath.calcNodes(), path.calcNodes());
     }
 }

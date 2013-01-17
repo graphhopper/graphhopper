@@ -43,13 +43,13 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
         Graph g = createWikipediaTestGraph();
         Path p = prepareGraph(g).createAlgo().calcPath(0, 4);
         assertEquals(p.toString(), 20, p.weight(), 1e-6);
-        assertTrue(p.toString(), p.nodes().contains(5));
+        assertTrue(p.toString(), p.calcNodes().contains(5));
 
         DijkstraBidirectionRef db = new DijkstraBidirectionRef(g);
         db.addSkipNode(5);
         p = db.calcPath(0, 4);
-        assertFalse(p.toString(), p.nodes().contains(5));
-        assertEquals(Helper.createTList(0, 2, 3, 4), p.nodes());
+        assertFalse(p.toString(), p.calcNodes().contains(5));
+        assertEquals(Helper.createTList(0, 2, 3, 4), p.calcNodes());
     }
 
     @Test

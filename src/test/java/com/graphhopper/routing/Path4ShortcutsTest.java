@@ -56,8 +56,8 @@ public class Path4ShortcutsTest {
         path.edgeTo = new EdgeEntry(4, 3, 10);
         path.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 4, 0);
         Path p = path.extract();
-        assertEquals(5, p.nodes().size());
-        assertEquals(Helper.createTList(0, 1, 2, 3, 4), p.nodes());
+        assertEquals(5, p.calcNodes().size());
+        assertEquals(Helper.createTList(0, 1, 2, 3, 4), p.calcNodes());
     }
 
     @Test
@@ -78,8 +78,8 @@ public class Path4ShortcutsTest {
         path.edgeTo = new EdgeEntry(iter3.edge(), 2, 10);
         path.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 3, 0);
         Path p = path.extract();
-        assertEquals(Helper.createTList(0, 1, 2, 3), p.nodes());
-        assertEquals(4, p.nodes().size());
+        assertEquals(Helper.createTList(0, 1, 2, 3), p.calcNodes());
+        assertEquals(4, p.calcNodes().size());
     }
 
     @Test
@@ -100,6 +100,6 @@ public class Path4ShortcutsTest {
         path.edgeTo = new EdgeEntry(4, 3, 10);
         path.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 4, 0);
         Path p = path.extract();
-        assertEquals(Helper.createTList(0, 1, 2, 3, 4), p.nodes());
+        assertEquals(Helper.createTList(0, 1, 2, 3, 4), p.calcNodes());
     }
 }

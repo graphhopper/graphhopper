@@ -184,15 +184,15 @@ public class MiniGraphUI {
                     return;
                 }
 
-                logger.info("found path in " + sw.getSeconds() + "s with " + path.nodes() + " nodes: " + path);
+                logger.info("found path in " + sw.getSeconds() + "s with " + path.calcNodes().size() + " nodes: " + path);
                 g2.setColor(Color.BLUE.brighter().brighter());
-                PointList list = path.points();
+                PointList list = path.calcPoints();
                 double prevLat = Double.NaN;
                 double prevLon = Double.NaN;
                 for (int i = 0; i < list.size(); i++) {
                     double lat = list.latitude(i);
                     double lon = list.longitude(i);
-                    if (Double.isNaN(prevLat))
+                    if (!Double.isNaN(prevLat))
                         mg.plotEdge(g2, prevLat, prevLon, lat, lon, 3);
 
                     prevLat = lat;
@@ -227,9 +227,9 @@ public class MiniGraphUI {
 
         double lastLat = Double.NaN;
         double lastLon = Double.NaN;
-        for (int i = 0; i < tmpPath.points().size(); i++) {
-            double lat = tmpPath.points().latitude(i);
-            double lon = tmpPath.points().longitude(i);
+        for (int i = 0; i < tmpPath.calcPoints().size(); i++) {
+            double lat = tmpPath.calcPoints().latitude(i);
+            double lon = tmpPath.calcPoints().longitude(i);
             if (!Double.isNaN(lastLat))
                 mg.plotEdge(g2, lastLat, lastLon, lat, lon, w);
             else
@@ -237,7 +237,7 @@ public class MiniGraphUI {
             lastLat = lat;
             lastLon = lon;
         }
-        logger.info("dist:" + tmpPath.distance() + ", path points:" + tmpPath.points().size());
+        logger.info("dist:" + tmpPath.distance() + ", path points:" + tmpPath.calcPoints().size());
         return tmpPath;
     }
     private int dijkstraFromId = -1;
