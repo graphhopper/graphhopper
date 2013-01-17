@@ -75,7 +75,6 @@ public class OSMReader {
     private int locations;
     private int skippedLocations;
     private int edgeCount;
-    private int skippedEdges;
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
     private int expectedNodes;
@@ -281,7 +280,7 @@ public class OSMReader {
                             processNode(sReader);
                             if (counter % 10000000 == 0) {
                                 logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + edgeCount
-                                        + " (" + skippedEdges + "), " + Helper.getMemInfo());
+                                        + " " + Helper.getMemInfo());
                             }
                         } else if ("way".equals(sReader.getLocalName())) {
                             if (wayStart < 0) {
@@ -298,7 +297,7 @@ public class OSMReader {
                             // counter does +=2 until the next loop
                             if ((counter / 2) % 1000000 == 0) {
                                 logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + edgeCount
-                                        + " (" + skippedEdges + "), " + Helper.getMemInfo());
+                                        + " " + Helper.getMemInfo());
                             }
                         }
 
@@ -399,7 +398,6 @@ public class OSMReader {
             int flags = acceptStreets.toFlags(properties);
             int successfullAdded = helper.addEdge(tmpLocs, flags);
             edgeCount += successfullAdded;
-            skippedEdges += all - successfullAdded;
         }
     }
 
