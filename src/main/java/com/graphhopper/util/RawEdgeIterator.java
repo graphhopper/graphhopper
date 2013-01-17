@@ -1,10 +1,13 @@
 /*
- *  Copyright 2012-2013 Peter Karich
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- * 
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
  *  Unless required by applicable law or agreed to in writing, software
@@ -16,8 +19,9 @@
 package com.graphhopper.util;
 
 /**
- * Used as return value for Graph.getAllEdges. Different to EdgeIterator as we don't have an access
- * direction (where we could say 'base' versus 'adjacent' node).
+ * Used as return value for Graph.getAllEdges. Different to EdgeIterator as we
+ * don't have an access direction (where we could say 'base' versus 'adjacent'
+ * node).
  *
  * @see com.graphhopper.storage.Graph
  * @author Peter Karich

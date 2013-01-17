@@ -9,3 +9,4 @@ docs/
 loc2idIndex/
 nbactions-*.xml
 config.properties
+build.xml

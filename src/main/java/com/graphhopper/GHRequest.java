@@ -1,9 +1,12 @@
 /*
- *  Copyright 2012 Peter Karich
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
  * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -30,7 +33,8 @@ public class GHRequest {
     private double precision = 1;
 
     /**
-     * Calculate the path from specified startPoint (fromLat, fromLon) to endPoint (toLat, toLon).
+     * Calculate the path from specified startPoint (fromLat, fromLon) to
+     * endPoint (toLat, toLon).
      */
     public GHRequest(double fromLat, double fromLon, double toLat, double toLon) {
         this(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon));
@@ -52,8 +56,9 @@ public class GHRequest {
     }
 
     /**
-     * Possible values: astar (A* algorithm, default), astarbi (bidirectional A*) dijkstra
-     * (Dijkstra), dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
+     * Possible values: astar (A* algorithm, default), astarbi (bidirectional
+     * A*) dijkstra (Dijkstra), dijkstrabi and dijkstraNative (a bit faster
+     * bidirectional Dijkstra).
      */
     public GHRequest algorithm(String algo) {
         this.algo = algo;
@@ -73,9 +78,10 @@ public class GHRequest {
     }
 
     /**
-     * Reduces the node count of the resulting path, default is 1. Useful for performance or if
-     * you're using the web version for network latency. If a high value in meter is specified the
-     * route will be less precise along the real networks.
+     * Reduces the node count of the resulting path, default is 1. Useful for
+     * performance or if you're using the web version for network latency. If a
+     * high value in meter is specified the route will be less precise along the
+     * real networks.
      */
     public GHRequest minPathPrecision(double precision) {
         this.precision = precision;
