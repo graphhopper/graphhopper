@@ -157,9 +157,6 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         tmpNode = tmpNode - 3;
         double tmpLatInt = Helper.intToDegree(pillarLats.getInt(tmpNode));
         double tmpLonInt = Helper.intToDegree(pillarLons.getInt(tmpNode));
-        if (tmpLatInt < 0 || tmpLonInt < 0)
-            throw new AssertionError("Conversation pillarNode to towerNode already happended!? "
-                    + "osmId:" + osmId + " pillarIndex:" + tmpNode);
 
         if (towerNode) {
             // convert pillarNode type to towerNode
