@@ -28,7 +28,7 @@ import java.io.RandomAccessFile;
  */
 public abstract class AbstractDataAccess implements DataAccess {
 
-    private static final int SEGMENT_SIZE_MIN = 1 << 7;
+    protected static final int SEGMENT_SIZE_MIN = 1 << 7;
     private static final int SEGMENT_SIZE_DEFAULT = 1 << 20;
     // reserve some space for downstream usage (in classes using/exting this)
     protected static final int HEADER_OFFSET = 20 * 4 + 20;
@@ -36,7 +36,7 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
     private final String location;
     protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
-    protected String name;
+    protected String name;    
 
     public AbstractDataAccess(String name, String location) {
         this.name = name;
@@ -117,14 +117,15 @@ public abstract class AbstractDataAccess implements DataAccess {
         long max = capacity() / 4;
         for (long l = 0; l < max; l++) {
             da.setInt(l, getInt(l));
-        }        
+        }
         return da;
     }
 
     @Override
     public DataAccess segmentSize(int bytes) {
+        // segment size should be a power of 2
         int tmp = (int) (Math.log(bytes) / Math.log(2));
-        segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
+        segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);        
         return this;
     }
 

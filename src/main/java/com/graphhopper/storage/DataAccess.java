@@ -68,7 +68,8 @@ public interface DataAccess extends Storable {
 
     /**
      * The first time you use DataAccess you need to call this in order to
-     * allocate space for this DataAccess object. After that use ensureCapacity
+     * allocate space for this DataAccess object. After that first call use
+     * ensureCapacity.
      */
     void createNew(long bytes);
 

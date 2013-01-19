@@ -88,19 +88,25 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public void ensureCapacity(long bytes) {
-        long todoBytes = bytes - capacity();
+        long cap = capacity();
+        long todoBytes = bytes - cap;
         if (todoBytes <= 0)
             return;
 
         int segmentsToCreate = (int) (todoBytes / segmentSizeInBytes);
         if (todoBytes % segmentSizeInBytes != 0)
             segmentsToCreate++;
-        // System.out.println(id + " new segs:" + segmentsToCreate);
-        int[][] newSegs = Arrays.copyOf(segments, segments.length + segmentsToCreate);
-        for (int i = segments.length; i < newSegs.length; i++) {
-            newSegs[i] = new int[1 << segmentSizeIntsPower];
+
+        try {
+            int[][] newSegs = Arrays.copyOf(segments, segments.length + segmentsToCreate);
+            for (int i = segments.length; i < newSegs.length; i++) {
+                newSegs[i] = new int[1 << segmentSizeIntsPower];
+            }
+            segments = newSegs;
+        } catch (OutOfMemoryError err) {
+            throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Current bytes "
+                    + cap + " requested new bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizeIntsPower);
         }
-        segments = newSegs;
     }
 
     @Override

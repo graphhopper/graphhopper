@@ -83,6 +83,7 @@ public abstract class DataAccessTest {
         // throw some undefined exception if no ensureCapacity was called
         try {
             da.setInt(2, 321);
+            assertTrue(false);
         } catch (Exception ex) {
         }
 

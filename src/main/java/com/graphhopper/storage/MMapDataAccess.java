@@ -19,7 +19,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Helper7;
 import com.graphhopper.util.NotThreadSafe;
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This is a data structure which uses the operating system to synchronize between disc and memory.
+ * This is a data structure which uses the operating system to synchronize
+ * between disc and memory.
  *
  * @author Peter Karich
  */
@@ -42,8 +42,10 @@ public class MMapDataAccess extends AbstractDataAccess {
     private RandomAccessFile raFile;
     private List<ByteBuffer> segments = new ArrayList<ByteBuffer>();
     private ByteOrder order;
-    private transient boolean closed = false;
     private boolean cleanAndRemap = true;
+    private transient boolean closed = false;
+    private transient int segmentSizePower;
+    private transient int indexDivisor;
 
     MMapDataAccess() {
         this(null, null);
@@ -72,6 +74,7 @@ public class MMapDataAccess extends AbstractDataAccess {
             throw new IllegalThreadStateException("already created");
         initRandomAccessFile();
         bytes = Math.max(10 * 4, bytes);
+        segmentSize(segmentSizeInBytes);
         ensureCapacity(bytes);
     }
 
@@ -86,8 +89,9 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     /**
-     * Makes it possible to force the order. E.g. if we create the file on a host system and copy it
-     * to a different like android. http://en.wikipedia.org/wiki/Endianness
+     * Makes it possible to force the order. E.g. if we create the file on a
+     * host system and copy it to a different like android.
+     * http://en.wikipedia.org/wiki/Endianness
      */
     public MMapDataAccess byteOrder(ByteOrder order) {
         this.order = order;
@@ -142,9 +146,9 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     private ByteBuffer newByteBuffer(long offset, long byteCount) throws IOException {
-        // if we request a buffer larger than the file length, it will automatically increase the file length!
-        // will this cause problems? http://stackoverflow.com/q/14011919/194609
-        // so for trimTo we need to reset the file length later on to reduce that size
+        // If we request a buffer larger than the file length, it will automatically increase the file length!
+        // Will this cause problems? http://stackoverflow.com/q/14011919/194609
+        // For trimTo we need to reset the file length later to reduce that size
         ByteBuffer buf = null;
         IOException ioex = null;
         // One retry if it fails. It could fail e.g. if previously buffer wasn't yet unmapped from the jvm
@@ -164,7 +168,7 @@ public class MMapDataAccess extends AbstractDataAccess {
         }
         if (buf == null) {
             if (ioex == null)
-                throw new IllegalStateException("internal problem as ioex shouldn't be null");
+                throw new AssertionError("internal problem as ioex shouldn't be null");
             throw ioex;
         }
         if (order != null)
@@ -214,11 +218,12 @@ public class MMapDataAccess extends AbstractDataAccess {
                     ((MappedByteBuffer) bb).force();
                 }
             }
+            writeHeader(raFile, raFile.length(), segmentSizeInBytes);
+
             // this could be necessary too
             // http://stackoverflow.com/q/14011398/194609
             raFile.getFD().sync();
             // equivalent to raFile.getChannel().force(true);
-            writeHeader(raFile, raFile.length(), segmentSizeInBytes);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -239,19 +244,27 @@ public class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void setInt(long longIndex, int value) {
-        longIndex *= 4;
-        // TODO improve via bit operations! see RAMDataAccess
-        int bufferIndex = (int) (longIndex / segmentSizeInBytes);
-        int index = (int) (longIndex % segmentSizeInBytes);
+        // convert longIndex to byte index => *4
+        longIndex <<= 2;
+        int bufferIndex = (int) (longIndex >>> segmentSizePower);
+        int index = (int) (longIndex & indexDivisor);
         segments.get(bufferIndex).putInt(index, value);
     }
 
     @Override
     public int getInt(long longIndex) {
-        longIndex *= 4;
-        int bufferIndex = (int) (longIndex / segmentSizeInBytes);
-        int index = (int) (longIndex % segmentSizeInBytes);
+        longIndex <<= 2;
+        int bufferIndex = (int) (longIndex >>> segmentSizePower);
+        int index = (int) (longIndex & indexDivisor);
         return segments.get(bufferIndex).getInt(index);
+    }
+
+    @Override
+    public DataAccess segmentSize(int bytes) {
+        super.segmentSize(bytes);
+        segmentSizePower = (int) (Math.log(segmentSizeInBytes) / Math.log(2));
+        indexDivisor = segmentSizeInBytes - 1;
+        return this;
     }
 
     @Override
@@ -269,8 +282,8 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     /**
-     * Cleans up MappedByteBuffers. Be sure you bring the segments list in a consistent state
-     * afterwards.
+     * Cleans up MappedByteBuffers. Be sure you bring the segments list in a
+     * consistent state afterwards.
      *
      * @param from inclusive
      * @param to exclusive
