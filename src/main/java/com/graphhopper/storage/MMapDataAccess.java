@@ -278,7 +278,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     private void clean(int from, int to) {
         for (int i = from; i < to; i++) {
             ByteBuffer bb = segments.get(i);
-            Helper7.cleanMappedByteBuffer(bb);
+            Helper.cleanMappedByteBuffer(bb);
             segments.set(i, null);
         }
         cleanHack();
@@ -309,7 +309,7 @@ public class MMapDataAccess extends AbstractDataAccess {
         if (segment instanceof MappedByteBuffer)
             ((MappedByteBuffer) segment).force();
 
-        Helper7.cleanMappedByteBuffer(segment);
+        Helper.cleanMappedByteBuffer(segment);
         segments.set(segNumber, null);
         cleanHack();
         return true;

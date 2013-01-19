@@ -61,6 +61,10 @@ public abstract class OSMReaderHelper {
     public abstract int addEdge(TLongList nodes, int flags);
 
     int addEdge(int fromIndex, int toIndex, PointList pointList, int flags) {
+        if (fromIndex < 0 || toIndex < 0)
+            throw new AssertionError("to or from index is invalid for this edge "
+                    + fromIndex + "->" + toIndex + ", points:" + pointList);
+
         double towerNodeDistance = 0;
         double prevLat = pointList.latitude(0);
         double prevLon = pointList.longitude(0);

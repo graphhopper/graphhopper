@@ -251,7 +251,7 @@ public class OSMReader {
 
         if (indexCapacity < 0)
             indexCapacity = Helper.calcIndexSize(graphStorage.bounds());
-        logger.info("initializing and flushing location index with " + indexCapacity);
+        logger.info("initializing and flushing location index with " + indexCapacity + " bounds:" + graphStorage.bounds());
         location2IDIndex().prepareIndex(indexCapacity);
         index.flush();
     }

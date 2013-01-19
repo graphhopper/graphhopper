@@ -107,8 +107,9 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     public int addEdge(TLongList nodes, int flags) {
         PointList pointList = new PointList(nodes.size());
         int successfullyAdded = 0;
-        int firstIndex = -1;
+        int firstNode = -1;
         int lastIndex = nodes.size() - 1;
+        int lastInBoundsPillarNode = -1;
         for (int i = 0; i < nodes.size(); i++) {
             long osmId = nodes.get(i);
             int tmpNode = osmIdToIndexMap.get(osmId);
@@ -118,33 +119,44 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
             if (tmpNode == TOWER_NODE)
                 continue;
             if (tmpNode == PILLAR_NODE) {
-                // add part of the way which are in bounds, but force the last 
-                // node to be a tower node
-                if (i == lastIndex && pointList.size() > 1) {
-                    tmpNode = osmIdToIndexMap.get(nodes.get(i - 1));
-                    // force creating tower node from pillar node
-                    tmpNode = handlePillarNode(tmpNode, osmId, pointList, true);
+                // no pillarLats,pillarLons was saved for tmpNode
+                // so if there are any existing pillar nodes we need to create an edge out of them
+                if (!pointList.isEmpty() && lastInBoundsPillarNode >= 3) {
+                    // transform the pillar node to a tower node
+                    tmpNode = lastInBoundsPillarNode;
+                    tmpNode = handlePillarNode(tmpNode, osmId, null, true);
                     tmpNode = -tmpNode - 3;
-                    successfullyAdded += addEdge(firstIndex, tmpNode, pointList, flags);
+                    if (pointList.size() > 1 && firstNode >= 0) {
+                        // TOWER node                        
+                        successfullyAdded += addEdge(firstNode, tmpNode, pointList, flags);
+                        pointList.clear();
+                        pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
+                    }
+                    firstNode = tmpNode;
+                    lastInBoundsPillarNode = -1;
                 }
                 continue;
-            }
+            }            
 
-            if (tmpNode > EMPTY) {
+            if (tmpNode <= -TOWER_NODE && tmpNode >= TOWER_NODE)
+                throw new AssertionError("Mapped index not in correct bounds " + tmpNode);
+
+            if (tmpNode > -TOWER_NODE) {
+                lastInBoundsPillarNode = tmpNode;
                 // PILLAR node, but convert to towerNode if end-standing
                 tmpNode = handlePillarNode(tmpNode, osmId, pointList, i == 0 || i == lastIndex);
             }
 
-            if (tmpNode < EMPTY) {
+            if (tmpNode < TOWER_NODE) {
                 // TOWER node
                 tmpNode = -tmpNode - 3;
                 pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
-                if (firstIndex >= 0) {
-                    successfullyAdded += addEdge(firstIndex, tmpNode, pointList, flags);
+                if (firstNode >= 0) {
+                    successfullyAdded += addEdge(firstNode, tmpNode, pointList, flags);
                     pointList.clear();
                     pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
                 }
-                firstIndex = tmpNode;
+                firstNode = tmpNode;
             }
         }
         return successfullyAdded;
@@ -155,19 +167,22 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
      */
     private int handlePillarNode(int tmpNode, long osmId, PointList pointList, boolean towerNode) {
         tmpNode = tmpNode - 3;
-        double tmpLatInt = Helper.intToDegree(pillarLats.getInt(tmpNode));
-        double tmpLonInt = Helper.intToDegree(pillarLons.getInt(tmpNode));
-        if (tmpLatInt < 0 || tmpLonInt < 0)
+        int intlat = pillarLats.getInt(tmpNode);
+        int intlon = pillarLons.getInt(tmpNode);
+        if (intlat == Integer.MAX_VALUE || intlon == Integer.MAX_VALUE)
             throw new AssertionError("Conversation pillarNode to towerNode already happended!? "
                     + "osmId:" + osmId + " pillarIndex:" + tmpNode);
 
+        double tmpLat = Helper.intToDegree(intlat);
+        double tmpLon = Helper.intToDegree(intlon);
+
         if (towerNode) {
             // convert pillarNode type to towerNode
-            pillarLons.setInt(tmpNode, -1);
-            pillarLats.setInt(tmpNode, -1);
-            tmpNode = addTowerNode(osmId, tmpLatInt, tmpLonInt);
+            pillarLons.setInt(tmpNode, Integer.MAX_VALUE);
+            pillarLats.setInt(tmpNode, Integer.MAX_VALUE);
+            tmpNode = addTowerNode(osmId, tmpLat, tmpLon);
         } else
-            pointList.add(tmpLatInt, tmpLonInt);
+            pointList.add(tmpLat, tmpLon);
 
         return tmpNode;
     }

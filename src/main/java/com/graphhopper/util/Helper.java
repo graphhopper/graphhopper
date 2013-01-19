@@ -28,10 +28,13 @@ import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.*;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.slf4j.Logger;
@@ -256,7 +259,10 @@ public class Helper {
     }
 
     public static int calcIndexSize(BBox graphBounds) {
-        double dist = new DistanceCalc().calcDist(graphBounds.maxLat, graphBounds.minLon, graphBounds.minLat, graphBounds.maxLon);
+        if (!graphBounds.isValid())
+            throw new IllegalArgumentException("Bounding box is not valid to calculate index size: " + graphBounds);
+        double dist = new DistanceCalc().calcDist(graphBounds.maxLat, graphBounds.minLon,
+                graphBounds.minLat, graphBounds.maxLon);
         // convert to km and maximum 5000km => 25mio capacity, minimum capacity is 2000
         dist = Math.min(dist / 1000, 5000);
         return Math.max(2000, (int) (dist * dist));
@@ -368,6 +374,25 @@ public class Helper {
             }
             SNAPSHOT = version.toLowerCase().contains("-snapshot");
             VERSION = major + "." + minor;
+        }
+    }
+
+    public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
+        try {
+            AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
+                @Override public Object run() throws Exception {
+                    final Method getCleanerMethod = buffer.getClass().getMethod("cleaner");
+                    getCleanerMethod.setAccessible(true);
+                    final Object cleaner = getCleanerMethod.invoke(buffer);
+                    if (cleaner != null)
+                        cleaner.getClass().getMethod("clean").invoke(cleaner);
+                    return null;
+                }
+            });
+        } catch (PrivilegedActionException e) {
+            final RuntimeException ioe = new RuntimeException("unable to unmap the mapped buffer");
+            ioe.initCause(e.getCause());
+            throw ioe;
         }
     }
 }

@@ -539,7 +539,7 @@ public abstract class AbstractGraphTester {
     public void testBounds() {
         Graph graph = createGraph(4);
         BBox b = graph.bounds();
-        assertEquals(0, b.maxLat, 1e-6);
+        assertEquals(BBox.INVERSE.maxLat, b.maxLat, 1e-6);
 
         graph.setNode(0, 10, 20);
         assertEquals(10, b.maxLat, 1e-6);

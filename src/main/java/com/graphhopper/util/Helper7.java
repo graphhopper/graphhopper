@@ -51,26 +51,7 @@ public class Helper7 {
         }
         UNMAP_SUPPORTED = v;
     }
-
-    public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
-        try {
-            AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-                @Override public Object run() throws Exception {
-                    final Method getCleanerMethod = buffer.getClass().getMethod("cleaner");
-                    getCleanerMethod.setAccessible(true);
-                    final Object cleaner = getCleanerMethod.invoke(buffer);
-                    if (cleaner != null)
-                        cleaner.getClass().getMethod("clean").invoke(cleaner);
-                    return null;
-                }
-            });
-        } catch (PrivilegedActionException e) {
-            final RuntimeException ioe = new RuntimeException("unable to unmap the mapped buffer");
-            ioe.initCause(e.getCause());
-            throw ioe;
-        }
-    }
-
+    
     public static String getBeanMemInfo() {
         java.lang.management.OperatingSystemMXBean mxbean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
         com.sun.management.OperatingSystemMXBean sunmxbean = (com.sun.management.OperatingSystemMXBean) mxbean;

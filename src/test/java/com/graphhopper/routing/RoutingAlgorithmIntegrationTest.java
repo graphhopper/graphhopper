@@ -62,7 +62,7 @@ public class RoutingAlgorithmIntegrationTest {
 
     @Test
     public void testMonaco() {
-        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco", createMonacoInstances());
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco", createMonacoInstances(), true);
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
     }
 
@@ -73,12 +73,27 @@ public class RoutingAlgorithmIntegrationTest {
         // if id2location is created a bit different: list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 24.101, 992));
         list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16256, 604));
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
-        runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list);
+        runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list, true);
+        assertEquals(testCollector.toString(), 0, testCollector.list.size());
+    }
+
+    @Test
+    public void testCampoGrande() {
+        // test not only NE quadrant of earth!
+
+        // bzcat campo-grande.osm.bz2 
+        //   | ./bin/osmosis --read-xml enableDateParsing=no file=- --bounding-box top=-20.4 left=-54.6 bottom=-20.6 right=-54.5 --write-xml file=- 
+        //   | bzip2 > campo-grande.extracted.osm.bz2
+
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(-20.4, -54.6, -20.6, -54.5, 25515, 271));
+        list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 17035, 228));
+        runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list, false);
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
     }
 
     void runAlgo(TestAlgoCollector testCollector, String osmFile,
-            String graphFile, List<OneRun> forEveryAlgo) {
+            String graphFile, List<OneRun> forEveryAlgo, boolean ch) {
         try {
             // make sure we are using the latest file format
             Helper.removeDir(new File(graphFile));
@@ -88,7 +103,7 @@ public class RoutingAlgorithmIntegrationTest {
             Graph g = osm.graph();
             // System.out.println("nodes:" + g.getNodes());
             Location2IDIndex idx = osm.location2IDIndex();
-            Collection<RoutingAlgorithm> algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g, true);
+            Collection<RoutingAlgorithm> algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g, ch);
             for (RoutingAlgorithm algo : algos) {
                 for (OneRun or : forEveryAlgo) {
                     int from = idx.findID(or.fromLat, or.fromLon);

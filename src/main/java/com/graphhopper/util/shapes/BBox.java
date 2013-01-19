@@ -37,9 +37,9 @@ public class BBox implements Shape, Cloneable {
 
     static {
         INVERSE.minLon = Double.MAX_VALUE;
-        INVERSE.maxLon = Double.MIN_VALUE;
+        INVERSE.maxLon = -Double.MAX_VALUE;
         INVERSE.minLat = Double.MAX_VALUE;
-        INVERSE.maxLat = Double.MIN_VALUE;
+        INVERSE.maxLat = -Double.MAX_VALUE;
     }
     // longitude (theta) = x, latitude (phi) = y
     public double minLon;
@@ -152,5 +152,12 @@ public class BBox implements Shape, Cloneable {
         hash = 17 * hash + (int) (Double.doubleToLongBits(this.minLat) ^ (Double.doubleToLongBits(this.minLat) >>> 32));
         hash = 17 * hash + (int) (Double.doubleToLongBits(this.maxLat) ^ (Double.doubleToLongBits(this.maxLat) >>> 32));
         return hash;
+    }
+
+    public boolean isValid() {
+        return Double.doubleToLongBits(maxLat) != Double.doubleToLongBits(INVERSE.maxLat)
+                && Double.doubleToLongBits(minLat) != Double.doubleToLongBits(INVERSE.minLat)
+                && Double.doubleToLongBits(maxLon) != Double.doubleToLongBits(INVERSE.maxLon)
+                && Double.doubleToLongBits(minLon) != Double.doubleToLongBits(INVERSE.minLon);
     }
 }
