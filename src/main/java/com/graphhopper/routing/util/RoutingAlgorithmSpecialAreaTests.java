@@ -32,7 +32,6 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
@@ -77,13 +76,13 @@ public class RoutingAlgorithmSpecialAreaTests {
         for (RoutingAlgorithm algo : algos) {
             int failed = testCollector.list.size();
             testCollector.assertDistance(algo, idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 561.3, 20);
-            testCollector.assertDistance(algo, idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107960.26, 1673);
-            testCollector.assertDistance(algo, idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 93949.18, 1293);
-            testCollector.assertDistance(algo, idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 78045.5, 1255);
-            testCollector.assertDistance(algo, idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125012.1, 2135);
+            testCollector.assertDistance(algo, idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107984.2, 1751);
+            testCollector.assertDistance(algo, idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 92535.4, 1335);
+            testCollector.assertDistance(algo, idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77703.5, 1305);
+            testCollector.assertDistance(algo, idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125195.1, 2323);
             //different id2location init order: testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 130815.9, 2115);
-            testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 132489.8, 2138);
-            testCollector.assertDistance(algo, idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73235.691, 1229);
+            testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 131362.6, 2229);
+            testCollector.assertDistance(algo, idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73170.2, 1417);
 
             System.out.println("unterfranken " + algo + ": " + (testCollector.list.size() - failed) + " failed");
         }
