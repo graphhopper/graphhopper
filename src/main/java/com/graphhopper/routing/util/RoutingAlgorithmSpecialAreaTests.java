@@ -28,6 +28,7 @@ import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -95,7 +96,7 @@ public class RoutingAlgorithmSpecialAreaTests {
     }
 
     public static Collection<RoutingAlgorithm> createAlgos(Graph g, boolean withCh) {
-        LevelGraph graphTowerNodesSC = (LevelGraph) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
+        LevelGraph graphTowerNodesSC = (LevelGraph) g.copyTo(new GraphBuilder().levelGraphCreate());
         PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(graphTowerNodesSC);
         prepare.doWork();
         AStarBidirection astarSimpleSC = (AStarBidirection) prepare.createAStar();
@@ -104,7 +105,7 @@ public class RoutingAlgorithmSpecialAreaTests {
                 new AStar(g), new AStarBidirection(g), new DijkstraBidirectionRef(g),
                 new DijkstraBidirection(g), new DijkstraSimple(g), prepare.createAlgo(), astarSimpleSC));
         if (withCh) {
-            LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new LevelGraphStorage(new RAMDirectory()).createNew(10));
+            LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder().levelGraphCreate());
             PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().graph(graphCH);
             prepareCH.doWork();
             algos.add(prepareCH.createAlgo());

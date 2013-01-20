@@ -20,6 +20,7 @@ package com.graphhopper;
 
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import org.junit.Test;
@@ -33,7 +34,7 @@ public class GraphHopperAPITest {
 
     @Test
     public void testLoad() {
-        GraphStorage graph = new GraphStorage(new RAMDirectory()).createNew(100);
+        GraphStorage graph = new GraphBuilder().create();
         graph.setNode(0, 42, 10);
         graph.setNode(1, 42.1, 10.1);
         graph.setNode(2, 42.1, 10.2);

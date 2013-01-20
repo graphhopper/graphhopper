@@ -25,16 +25,17 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.Helper;
 import java.io.IOException;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
- * Tests if a graph optimized by contraction hierarchies returns the same results as a none
- * optimized one. Additionally fine grained path unpacking is tested.
+ * Tests if a graph optimized by contraction hierarchies returns the same
+ * results as a none optimized one. Additionally fine grained path unpacking is
+ * tested.
  *
  * @author Peter Karich
  */
@@ -45,7 +46,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
     @Override public Graph getMatrixGraph() {
         if (preparedMatrixGraph == null) {
-            LevelGraph lg = createGraph(getMatrixAlikeGraph().nodes());
+            LevelGraph lg = createGraph();
             getMatrixAlikeGraph().copyTo(lg);
             prepareGraph(lg);
             preparedMatrixGraph = lg;
@@ -54,10 +55,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Override
-    protected LevelGraph createGraph(int size) {
-        LevelGraphStorage lg = new LevelGraphStorage(new RAMDirectory());
-        lg.createNew(size);
-        return lg;
+    protected LevelGraph createGraph() {
+        return new GraphBuilder().levelGraphCreate();
     }
 
     @Override
@@ -71,7 +70,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
     @Test
     public void testShortcutUnpacking() {
-        LevelGraph g2 = createGraph(6);
+        LevelGraph g2 = createGraph();
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
         Path p = prepareGraph(g2).createAlgo().calcPath(0, 4);
         assertEquals(p.toString(), 51, p.weight(), 1e-4);
@@ -85,7 +84,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
     @Test
     public void testPathRecursiveUnpacking() {
-        LevelGraphStorage g2 = (LevelGraphStorage) createGraph(6);
+        LevelGraphStorage g2 = (LevelGraphStorage) createGraph();
         g2.edge(0, 1, 1, true);
         EdgeSkipIterator iter = g2.edge(0, 2, 1.4, true);
         g2.edge(1, 2, 1, true);

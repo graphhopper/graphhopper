@@ -41,10 +41,11 @@ import org.junit.Test;
 public abstract class AbstractGraphTester {
 
     private String location = "./target/graphstorage";
+    protected int defaultSize = 100;
     protected String defaultGraph = "./target/graphstorage/default";
 
-    protected Graph createGraph(int size) {
-        return createGraph(defaultGraph, size);
+    protected Graph createGraph() {
+        return createGraph(defaultGraph, defaultSize);
     }
 
     abstract Graph createGraph(String location, int size);
@@ -60,8 +61,19 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
+    public void testSetNodes() {
+        Graph graph = createGraph();
+        for (int i = 0; i < defaultSize * 2; i++) {
+            graph.setNode(i, 2 * i, 3 * i);
+        }
+        graph.edge(defaultSize + 1, defaultSize + 2, 10, true);
+        graph.edge(defaultSize + 1, defaultSize + 3, 10, true);
+        assertEquals(2, GraphUtility.count(graph.getEdges(defaultSize + 1)));
+    }
+
+    @Test
     public void testCreateLocation() {
-        Graph graph = createGraph(4);
+        Graph graph = createGraph();
         graph.edge(3, 1, 50, true);
         assertEquals(1, count(graph.getOutgoing(1)));
 
@@ -71,8 +83,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testEdges() {
-        Graph graph = createGraph(5);
-
+        Graph graph = createGraph();
         graph.edge(2, 1, 12, true);
         assertEquals(1, count(graph.getOutgoing(2)));
 
@@ -84,7 +95,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testUnidirectional() {
-        Graph g = createGraph(14);
+        Graph g = createGraph();
 
         g.edge(1, 2, 12, false);
         g.edge(1, 11, 12, false);
@@ -117,7 +128,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testUnidirectionalEdgeFilter() {
-        Graph g = createGraph(14);
+        Graph g = createGraph();
 
         g.edge(1, 2, 12, false);
         g.edge(1, 11, 12, false);
@@ -150,7 +161,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testUpdateUnidirectional() {
-        Graph g = createGraph(4);
+        Graph g = createGraph();
 
         g.edge(1, 2, 12, false);
         g.edge(3, 2, 112, false);
@@ -173,7 +184,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testClone() {
-        Graph g = createGraph(11);
+        Graph g = createGraph();
         g.edge(1, 2, 10, true);
         g.setNode(0, 12, 23);
         g.setNode(1, 8, 13);
@@ -181,7 +192,7 @@ public abstract class AbstractGraphTester {
         g.setNode(3, 5, 9);
         g.edge(1, 3, 10, true);
 
-        Graph clone = g.copyTo(createGraph(location + "/clone", 5));
+        Graph clone = g.copyTo(createGraph(location + "/clone", defaultSize));
         assertEquals(g.nodes(), clone.nodes());
         assertEquals(count(g.getOutgoing(1)), count(clone.getOutgoing(1)));
         clone.edge(1, 4, 10, true);
@@ -191,7 +202,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testGetLocations() {
-        Graph g = createGraph(11);
+        Graph g = createGraph();
         g.setNode(0, 12, 23);
         g.setNode(1, 22, 23);
         assertEquals(2, g.nodes());
@@ -202,7 +213,7 @@ public abstract class AbstractGraphTester {
         g.edge(0, 2, 10, true);
         assertEquals(3, g.nodes());
 
-        g = createGraph(11);
+        g = createGraph();
         assertEquals(0, g.nodes());
     }
 
@@ -222,7 +233,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testAddLocation() {
-        Graph g = createGraph(11);
+        Graph g = createGraph();
         initExampleGraph(g);
 
         assertEquals(12f, g.getLatitude(0), 1e-6);
@@ -249,7 +260,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testDirectional() {
-        Graph g = createGraph(11);
+        Graph g = createGraph();
         g.edge(1, 2, 12, true);
         g.edge(2, 3, 12, false);
         g.edge(3, 4, 12, false);
@@ -279,7 +290,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testDozendEdges() {
-        Graph g = createGraph(11);
+        Graph g = createGraph();
         g.edge(1, 2, 12, true);
         assertEquals(1, count(g.getEdges(1)));
 
@@ -310,7 +321,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testCheckFirstNode() {
-        Graph g = createGraph(2);
+        Graph g = createGraph();
         assertEquals(0, count(g.getEdges(1)));
         g.edge(0, 1, 12, true);
         assertEquals(1, count(g.getEdges(1)));
@@ -318,7 +329,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testDeleteNodeForUnidir() {
-        Graph g = createGraph(11);
+        Graph g = createGraph();
         g.setNode(10, 10, 1);
         g.setNode(6, 6, 1);
         g.setNode(20, 20, 1);
@@ -357,7 +368,7 @@ public abstract class AbstractGraphTester {
     }
 
     public void testDeleteNodes(int fillToSize) {
-        Graph g = createGraph(11);
+        Graph g = createGraph();
         g.setNode(0, 12, 23);
         g.setNode(1, 38.33f, 135.3f);
         g.setNode(2, 3, 3);
@@ -440,7 +451,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testSimpleDelete() {
-        Graph g = createGraph(11);
+        Graph g = createGraph();
         g.setNode(0, 12, 23);
         g.setNode(1, 38.33f, 135.3f);
         g.setNode(2, 3, 3);
@@ -469,7 +480,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testSimpleDelete2() {
-        Graph g = createGraph(11);
+        Graph g = createGraph();
         g.setNode(9, 9, 1);
         g.setNode(11, 11, 1);
         g.setNode(12, 12, 1);
@@ -497,7 +508,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testSimpleDelete3() {
-        Graph g = createGraph(11);
+        Graph g = createGraph();
         g.setNode(7, 7, 1);
         g.setNode(8, 8, 1);
         g.setNode(9, 9, 1);
@@ -527,7 +538,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testDeleteAndOptimize() {
-        Graph g = createGraph(20);
+        Graph g = createGraph();
         g.setNode(20, 10, 10);
         g.setNode(21, 10, 11);
         g.markNodeRemoved(20);
@@ -537,7 +548,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testBounds() {
-        Graph graph = createGraph(4);
+        Graph graph = createGraph();
         BBox b = graph.bounds();
         assertEquals(BBox.INVERSE.maxLat, b.maxLat, 1e-6);
 
@@ -554,7 +565,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testFlags() {
-        Graph graph = createGraph(4);
+        Graph graph = createGraph();
         graph.edge(0, 1, 10, CarStreetType.flags(120, true));
         graph.edge(2, 3, 10, CarStreetType.flags(10, false));
 
@@ -569,9 +580,9 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testCopyTo() {
-        Graph someGraphImpl = createGraph(20);
-        Graph gs = new GraphStorage(new RAMDirectory()).segmentSize(8000).createNew(200);
+        Graph someGraphImpl = createGraph();        
         initExampleGraph(someGraphImpl);
+        Graph gs = new GraphStorage(new RAMDirectory()).segmentSize(8000).createNew(10);
         try {
             someGraphImpl.copyTo(gs);
         } catch (Exception ex) {
@@ -588,23 +599,22 @@ public abstract class AbstractGraphTester {
     @Test
     public void testEnsureSize() {
         Directory dir = new RAMDirectory();
-        Graph gs = new GraphStorage(dir).createNew(200);
+        Graph gs = new GraphStorage(dir).createNew(defaultSize);
         int testIndex = dir.findCreate("edges").segmentSize() * 3;
         gs.edge(0, testIndex, 10, true);
     }
 
     @Test
     public void testEdgeProperties() {
-        Graph someGraphImpl = createGraph(20);
-        someGraphImpl.edge(0, 1, 10, true);
-        someGraphImpl.edge(0, 2, 20, true);
+        Graph someGraphImpl = createGraph();
+        EdgeIterator iter1 = someGraphImpl.edge(0, 1, 10, true);
+        EdgeIterator iter2 = someGraphImpl.edge(0, 2, 20, true);
 
-        // TODO edge creation should return the EdgeIterator like we do in LevelGraphStorage
-        int edgeId = 1;
+        int edgeId = iter1.edge();
         EdgeIterator iter = someGraphImpl.getEdgeProps(edgeId, 0);
         assertEquals(10, iter.distance(), 1e-5);
 
-        edgeId = 2;
+        edgeId = iter2.edge();
         iter = someGraphImpl.getEdgeProps(edgeId, 0);
         assertEquals(2, iter.baseNode());
         assertEquals(0, iter.node());
@@ -627,7 +637,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testCreateDuplicateEdges() {
-        Graph graph = createGraph(10);
+        Graph graph = createGraph();
         graph.edge(2, 1, 12, true);
         graph.edge(2, 3, 12, true);
         graph.edge(2, 3, 13, false);
@@ -635,14 +645,16 @@ public abstract class AbstractGraphTester {
 
         // no exception        
         graph.getEdgeProps(1, 3);
+
+        // raise exception
         try {
             graph.getEdgeProps(4, 3);
-            assertFalse(true);
+            assertTrue(false);
         } catch (Exception ex) {
         }
         try {
-            graph.getEdgeProps(0, 3);
-            assertFalse(true);
+            graph.getEdgeProps(-1, 3);
+            assertTrue(false);
         } catch (Exception ex) {
         }
 
@@ -668,14 +680,14 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testIdenticalNodes() {
-        Graph g = createGraph(2);
+        Graph g = createGraph();
         g.edge(0, 0, 100, true);
         assertEquals(1, GraphUtility.count(g.getEdges(0)));
     }
 
     @Test
     public void testIdenticalNodes2() {
-        Graph g = createGraph(2);
+        Graph g = createGraph();
         g.edge(0, 0, 100, false);
         g.edge(0, 0, 100, false);
         assertEquals(2, GraphUtility.count(g.getEdges(0)));
@@ -683,7 +695,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testEdgeReturn() {
-        Graph g = createGraph(2);
+        Graph g = createGraph();
         EdgeIterator iter = g.edge(4, 10, 100, CarStreetType.flags(10, false));
         assertEquals(4, iter.baseNode());
         assertEquals(10, iter.node());
@@ -694,7 +706,7 @@ public abstract class AbstractGraphTester {
 
     @Test
     public void testPillarNodes() {
-        Graph g = createGraph(2);
+        Graph g = createGraph();
         PointList pointList = Helper.createPointList(1, 1, 1, 2, 1, 3);
         g.edge(0, 4, 100, CarStreetType.flags(10, false)).wayGeometry(pointList);
         pointList = Helper.createPointList(1, 5, 1, 6, 1, 7, 1, 8, 1, 9);

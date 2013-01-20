@@ -56,7 +56,7 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
 
     @Test
     public void testCannotCalculateSP2() {
-        Graph g = createGraph(10);
+        Graph g = createGraph();
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
 

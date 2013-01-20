@@ -338,7 +338,7 @@ public class Helper {
      * The file version is independent of the real world version. E.g. to make
      * major version jumps without the need to change the file version.
      */
-    public static final int VERSION_FILE = 3;
+    public static final int VERSION_FILE = 4;
     /**
      * The version without the snapshot string
      */

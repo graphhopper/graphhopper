@@ -18,6 +18,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -31,15 +32,13 @@ import org.junit.Test;
  */
 public class EdgeSkipIteratorTest {
 
-    LevelGraph createGraph(int size) {
-        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("levelgraph", false));
-        g.createNew(size);
-        return g;
+    LevelGraph createGraph() {
+        return new GraphBuilder().levelGraphCreate();
     }
 
     @Test
     public void testUpdateFlags() {
-        LevelGraph g = createGraph(20);
+        LevelGraph g = createGraph();
         g.edge(0, 1, 12, CarStreetType.flags(10, true));
         g.edge(0, 2, 13, CarStreetType.flags(20, true));
 

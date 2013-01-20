@@ -36,7 +36,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Try algorithms with real data => slowish setup
+ * Try algorithms, indices and graph storages with real data
  *
  * @author Peter Karich
  */

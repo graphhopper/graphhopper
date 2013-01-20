@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.FastestCarCalc;
 import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
@@ -32,8 +33,6 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import gnu.trove.list.TIntList;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import static org.junit.Assert.*;
@@ -48,8 +47,8 @@ public abstract class AbstractRoutingAlgorithmTester {
     // problem is: matrix graph is expensive to create to cache it in a static variable
     private static Graph matrixGraph;
 
-    protected Graph createGraph(int size) {
-        return new GraphStorage(new RAMDirectory()).createNew(size);
+    protected Graph createGraph() {
+        return new GraphBuilder().create();
     }
 
     public AlgorithmPreparation prepareGraph(Graph g) {
@@ -67,7 +66,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     // see calc-fastest-graph.svg
     @Test public void testCalcFastestPath() {
-        Graph graphShortest = createGraph(20);
+        Graph graphShortest = createGraph();
         initFastVsShort(graphShortest);
         Path p1 = prepareGraph(graphShortest, ShortestCarCalc.DEFAULT).createAlgo().calcPath(0, 3);
         assertEquals(p1.toString(), 24000, p1.weight(), 1e-6);
@@ -76,7 +75,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p1.toString(), 5, p1.calcNodes().size());
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
 
-        Graph graphFastest = createGraph(20);
+        Graph graphFastest = createGraph();
         initFastVsShort(graphFastest);
         Path p2 = prepareGraph(graphFastest, FastestCarCalc.DEFAULT).createAlgo().calcPath(0, 3);
         assertEquals(p2.toString(), 3100, p2.weight(), 1e-6);
@@ -110,7 +109,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     // see test-graph.svg !
     protected Graph createTestGraph() {
-        Graph graph = createGraph(20);
+        Graph graph = createGraph();
 
         graph.edge(0, 1, 7, true);
         graph.edge(0, 4, 6, true);
@@ -136,7 +135,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
 
     @Test public void testNoPathFound() {
-        Graph graph = createGraph(10);
+        Graph graph = createGraph();
         assertFalse(prepareGraph(graph).createAlgo().calcPath(0, 1).found());
     }
 
@@ -163,7 +162,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     // see wikipedia-graph.svg !
     protected Graph createWikipediaTestGraph() {
-        Graph graph = createGraph(6);
+        Graph graph = createGraph();
         graph.edge(0, 1, 7, true);
         graph.edge(0, 2, 9, true);
         graph.edge(0, 5, 14, true);
@@ -195,7 +194,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
 
     @Test public void testBidirectional() {
-        Graph graph = createGraph(6);
+        Graph graph = createGraph();
         initBiGraph(graph);
 
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 4);
@@ -215,7 +214,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     // \   /   /
     //  8-7-6-/
     @Test public void testBidirectional2() {
-        Graph graph = createGraph(20);
+        Graph graph = createGraph();
 
         graph.edge(0, 1, 100, true);
         graph.edge(1, 2, 1, true);
@@ -264,7 +263,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     @Test
     public void testCannotCalculateSP() {
-        Graph graph = createGraph(10);
+        Graph graph = createGraph();
         graph.edge(0, 1, 1, false);
         graph.edge(1, 2, 1, false);
 
@@ -274,7 +273,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     @Test
     public void testDirectedGraphBug1() {
-        Graph graph = createGraph(10);
+        Graph graph = createGraph();
         graph.edge(0, 1, 3, false);
         graph.edge(1, 2, 2.99, false);
 
@@ -290,7 +289,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     @Test
     public void testDirectedGraphBug2() {
-        Graph graph = createGraph(10);
+        Graph graph = createGraph();
         graph.edge(0, 1, 1, false);
         graph.edge(1, 2, 1, false);
         graph.edge(2, 3, 1, false);
@@ -307,7 +306,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     // d-2--3-e-4
     @Test
     public void testWithCoordinates() {
-        Graph graph = createGraph(10);
+        Graph graph = createGraph();
         graph.setNode(0, 0, 2);
         graph.setNode(1, 0, 3.5);
         graph.setNode(2, 1, 1);
@@ -340,7 +339,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         String name = getClass().getSimpleName();
         Random rand = new Random(0);
-        Graph graph = createGraph(10000);
+        Graph graph = createGraph();
 
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).stream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
@@ -378,7 +377,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     private static Graph createMatrixAlikeGraph() {
         int WIDTH = 10;
         int HEIGHT = 15;
-        Graph tmp = new GraphStorage(new RAMDirectory()).createNew(WIDTH * HEIGHT);
+        Graph tmp = new GraphBuilder().create();
         int[][] matrix = new int[WIDTH][HEIGHT];
         int counter = 0;
         Random rand = new Random(12);

@@ -32,35 +32,40 @@ import org.junit.Test;
 public class LevelGraphStorageTest extends GraphStorageTest {
 
     @Override
+    protected LevelGraph createGraph() {
+        return (LevelGraph) super.createGraph();
+    }
+
+    @Override
+    protected LevelGraphStorage createGraphStorage(Directory dir) {
+        return (LevelGraphStorage) super.createGraphStorage(dir);
+    }
+
+    @Override
     public GraphStorage newGraph(Directory dir) {
         return new LevelGraphStorage(dir);
     }
 
     @Test
     public void testCannotBeLoadedViaDifferentClass() {
-        LevelGraphStorage lg = new LevelGraphStorage(new RAMDirectory(defaultGraph, true));
-        lg.createNew(10);
-        lg.flush();
-        lg.close();
+        GraphStorage g = createGraphStorage(new RAMDirectory(defaultGraph, true));
+        g.flush();
+        g.close();
 
-        GraphStorage g = new GraphStorage(new RAMDirectory(defaultGraph, true));
+        g = new GraphBuilder().location(defaultGraph).mmap(false).store(true).create();
         try {
             g.loadExisting();
             assertTrue(false);
         } catch (Exception ex) {
         }
 
-        g = new LevelGraphStorage(new RAMDirectory(defaultGraph, true));
-        try {
-            assertTrue(g.loadExisting());
-        } catch (Exception ex) {
-            assertTrue(false);
-        }
+        g = newGraph(new RAMDirectory(defaultGraph, true));
+        assertTrue(g.loadExisting());
     }
 
     @Test
     public void testPriosWhileDeleting() {
-        LevelGraph g = (LevelGraph) createGraph(11);
+        LevelGraph g = createGraph();
         for (int i = 0; i < 20; i++) {
             g.setLevel(i, i);
         }
@@ -73,7 +78,7 @@ public class LevelGraphStorageTest extends GraphStorageTest {
 
     @Test
     public void testPrios() {
-        LevelGraph g = (LevelGraph) createGraph(20);
+        LevelGraph g = createGraph();
         assertEquals(0, g.getLevel(10));
 
         g.setLevel(10, 100);
@@ -85,7 +90,7 @@ public class LevelGraphStorageTest extends GraphStorageTest {
 
     @Test
     public void testEdgeFilter() {
-        final LevelGraph g = (LevelGraph) createGraph(20);
+        LevelGraph g = createGraph();
         g.edge(0, 1, 10, true);
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);

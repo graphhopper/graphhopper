@@ -31,8 +31,8 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import java.util.ArrayList;
@@ -49,9 +49,7 @@ import org.junit.Test;
 public class PrepareContractionHierarchiesTest {
 
     LevelGraph createGraph() {
-        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory());
-        g.createNew(100);
-        return g;
+        return new GraphBuilder().levelGraphCreate();
     }
 
     LevelGraph createExampleGraph() {

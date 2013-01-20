@@ -200,7 +200,7 @@ public class Location2IDQuadtreeTest {
     @Test
     public void testNoErrorOnEdgeCase_lastIndex() {
         int locs = 10000;
-        Graph g = new GraphStorage(new MMapDirectory(location)).createNew(locs);
+        Graph g = new GraphBuilder().location(location).mmap(true).create();
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++) {
             g.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
@@ -210,8 +210,7 @@ public class Location2IDQuadtreeTest {
     }
 
     public static Graph createGraph() {
-        return new GraphStorage(new RAMDirectory()).createNew(200);
-        // return new MMapGraph(200).createNew();
+        return new GraphBuilder().create();
     }
 
     public static Graph createSampleGraph() {

@@ -35,11 +35,16 @@ import com.graphhopper.util.shapes.BBox;
  * read-thread safe usage which can be flushed to disc or via MMapDirectory for
  * virtual-memory and not thread safe usage.
  *
+ * Life cycle: (1) object creation, (2) configuration, (3) createNew or
+ * loadExisting, (4) usage, (5) close
+ *
+ * @see GraphBuilder The GraphBuilder class to easily create a
+ * (Level)GraphStorage
+ * @see LevelGraphStorage
  * @author Peter Karich
  */
 public class GraphStorage implements Graph, Storable {
 
-    protected static final int EMPTY_LINK = 0;
     // distance of around +-1000 000 meter are ok
     private static final float INT_DIST_FACTOR = 1000f;
     private Directory dir;
@@ -51,7 +56,7 @@ public class GraphStorage implements Graph, Storable {
      * specified how many entries (integers) are used per edge. starting from 1
      * => fresh int arrays do not need to be initialized with -1
      */
-    private int edgeCount;
+    private int edgeCount = 0;
     // node memory layout: edgeRef,lat,lon
     protected final int N_EDGE_REF, N_LAT, N_LON;
     /**
@@ -72,6 +77,7 @@ public class GraphStorage implements Graph, Storable {
     private DataAccess geometry;
     // 0 stands for no separate geoRef
     private int maxGeoRef = 1;
+    private boolean initialized = false;
 
     public GraphStorage(Directory dir) {
         this.dir = dir;
@@ -116,16 +122,26 @@ public class GraphStorage implements Graph, Storable {
     }
 
     GraphStorage segmentSize(int bytes) {
+        if (initialized)
+            throw new IllegalStateException("You cannot configure this GraphStorage after calling createNew.");
         nodes.segmentSize(bytes);
         edges.segmentSize(bytes);
+        geometry.segmentSize(bytes);
         return this;
     }
 
+    /**
+     * After configuring this storage you need to create it explicitly.
+     */
     public GraphStorage createNew(int nodeCount) {
+        checkAlreadyInitialized();
         int initBytes = Math.max(nodeCount * 4 / 50, 100);
         nodes.createNew((long) initBytes * nodeEntrySize);
+        initNodeRefs(0, nodes.capacity() / 4);
+
         edges.createNew((long) initBytes * edgeEntrySize);
         geometry.createNew((long) initBytes);
+        initialized = true;
         return this;
     }
 
@@ -145,17 +161,17 @@ public class GraphStorage implements Graph, Storable {
     }
 
     /**
-     * translates double VALUE to integer in order to save it in a DataAccess
+     * Translates double VALUE to integer in order to save it in a DataAccess
      * object
      */
-    protected int distToInt(double f) {
+    private int distToInt(double f) {
         return (int) (f * INT_DIST_FACTOR);
     }
 
     /**
      * returns distance (already translated from integer to double)
      */
-    protected double getDist(long pointer) {
+    private double getDist(long pointer) {
         return (double) edges.getInt(pointer + E_DIST) / INT_DIST_FACTOR;
     }
 
@@ -167,8 +183,9 @@ public class GraphStorage implements Graph, Storable {
     @Override
     public void setNode(int index, double lat, double lon) {
         ensureNodeIndex(index);
-        nodes.setInt((long) index * nodeEntrySize + N_LAT, Helper.degreeToInt(lat));
-        nodes.setInt((long) index * nodeEntrySize + N_LON, Helper.degreeToInt(lon));
+        long tmp = (long) index * nodeEntrySize;
+        nodes.setInt(tmp + N_LAT, Helper.degreeToInt(lat));
+        nodes.setInt(tmp + N_LON, Helper.degreeToInt(lon));
         if (lat > bounds.maxLat)
             bounds.maxLat = lat;
         if (lat < bounds.minLat)
@@ -180,6 +197,8 @@ public class GraphStorage implements Graph, Storable {
     }
 
     private long incCapacity(DataAccess da, long deltaCap) {
+        if (!initialized)
+            throw new IllegalStateException("Call createNew before or use the GraphBuilder class");
         long newSeg = deltaCap / da.segmentSize();
         if (deltaCap % da.segmentSize() != 0)
             newSeg++;
@@ -188,18 +207,29 @@ public class GraphStorage implements Graph, Storable {
         return cap;
     }
 
-    public void ensureNodeIndex(int nodeIndex) {
+    void ensureNodeIndex(int nodeIndex) {
         if (nodeIndex < nodeCount)
             return;
 
+        long oldNodes = nodeCount;
         nodeCount = nodeIndex + 1;
         long deltaCap = (long) nodeCount * nodeEntrySize * 4 - nodes.capacity();
         if (deltaCap <= 0)
             return;
 
-        long newCapacity = incCapacity(nodes, deltaCap);
+        long newBytesCapacity = incCapacity(nodes, deltaCap);
+        initNodeRefs(oldNodes * nodeEntrySize, newBytesCapacity / 4);
         if (removedNodes != null)
-            removedNodes().ensureCapacity((int) newCapacity);
+            removedNodes().ensureCapacity((int) (newBytesCapacity / 4 / nodeEntrySize));
+    }
+
+    /**
+     * Initializes the node area with the empty edge value.
+     */
+    private void initNodeRefs(long oldCapacity, long newCapacity) {
+        for (long pointer = oldCapacity + N_EDGE_REF; pointer < newCapacity; pointer += nodeEntrySize) {
+            nodes.setInt(pointer, EdgeIterator.NO_EDGE);
+        }
     }
 
     private void ensureEdgeIndex(int edgeIndex) {
@@ -232,7 +262,7 @@ public class GraphStorage implements Graph, Storable {
         return iter;
     }
 
-    protected int nextGeoRef(int arrayLength) {
+    private int nextGeoRef(int arrayLength) {
         int tmp = maxGeoRef;
         // one more integer to store also the size itself
         maxGeoRef += arrayLength + 1;
@@ -242,26 +272,28 @@ public class GraphStorage implements Graph, Storable {
     /**
      * @return edgeIdPointer which is edgeId * edgeEntrySize
      */
-    protected int internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags) {
+    int internalEdgeAdd(int fromNodeId, int toNodeId, double dist, int flags) {
         int newOrExistingEdge = nextEdge();
         connectNewEdge(fromNodeId, newOrExistingEdge);
-        connectNewEdge(toNodeId, newOrExistingEdge);
-        writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EMPTY_LINK, EMPTY_LINK, dist, flags);
+        if (fromNodeId != toNodeId)
+            connectNewEdge(toNodeId, newOrExistingEdge);
+        writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE, dist, flags);
         return newOrExistingEdge;
     }
 
-    protected int nextEdge() {
+    private int nextEdge() {
+        int nextEdge = edgeCount;
         edgeCount++;
         if (edgeCount < 0)
-            throw new IllegalStateException("too many edges. new edge pointer would be negative.");
-        ensureEdgeIndex(edgeCount + 1);
-        return edgeCount;
+            throw new IllegalStateException("too many edges. new edge id would be negative.");
+        ensureEdgeIndex(edgeCount);
+        return nextEdge;
     }
 
-    protected void connectNewEdge(int fromNodeId, int newOrExistingEdge) {
+    private void connectNewEdge(int fromNodeId, int newOrExistingEdge) {
         long nodePointer = (long) fromNodeId * nodeEntrySize;
         int edge = nodes.getInt(nodePointer + N_EDGE_REF);
-        if (edge > 0) {
+        if (edge > EdgeIterator.NO_EDGE) {
             // append edge and overwrite EMPTY_LINK
             long lastEdge = getLastEdge(fromNodeId, edge);
             edges.setInt(lastEdge, newOrExistingEdge);
@@ -270,7 +302,7 @@ public class GraphStorage implements Graph, Storable {
         }
     }
 
-    protected long writeEdge(int edge, int nodeThis, int nodeOther, int nextEdge, int nextEdgeOther,
+    private long writeEdge(int edge, int nodeThis, int nodeOther, int nextEdge, int nextEdgeOther,
             double distance, int flags) {
         if (nodeThis > nodeOther) {
             int tmp = nodeThis;
@@ -301,18 +333,20 @@ public class GraphStorage implements Graph, Storable {
     private long getLastEdge(int nodeThis, long edgePointer) {
         long lastLink = -1;
         int i = 0;
-        int otherNode;
+        int otherNode = -1;
         for (; i < 1000; i++) {
             edgePointer *= edgeEntrySize;
             otherNode = getOtherNode(nodeThis, edgePointer);
             lastLink = getLinkPosInEdgeArea(nodeThis, otherNode, edgePointer);
             edgePointer = edges.getInt(lastLink);
-            if (edgePointer == EMPTY_LINK)
+            if (edgePointer == EdgeIterator.NO_EDGE)
                 break;
         }
 
         if (i >= 1000)
-            throw new IllegalStateException("endless loop? edge count is probably not higher than " + i);
+            throw new IllegalStateException("endless loop? edge count of " + nodeThis
+                    + " is probably not higher than " + i
+                    + ", edgePointer:" + edgePointer + ", otherNode:" + otherNode);
         return lastLink;
     }
 
@@ -335,8 +369,8 @@ public class GraphStorage implements Graph, Storable {
      */
     protected class AllEdgeIterator implements RawEdgeIterator {
 
-        protected long edgePointer = 0;
-        private int maxEdges = (edgeCount + 1) * edgeEntrySize;
+        protected long edgePointer = -edgeEntrySize;
+        private int maxEdges = edgeCount * edgeEntrySize;
 
         @Override public boolean next() {
             edgePointer += edgeEntrySize;
@@ -378,7 +412,7 @@ public class GraphStorage implements Graph, Storable {
 
     @Override
     public EdgeIterator getEdgeProps(int edgeId, final int endNode) {
-        if (edgeId < 1 || edgeId > edgeCount)
+        if (edgeId <= EdgeIterator.NO_EDGE || edgeId > edgeCount)
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + edgeCount + "]");
         if (endNode < 0)
             throw new IllegalStateException("endNode " + endNode + " out of bounds [0," + nodeCount + "]");
@@ -419,7 +453,7 @@ public class GraphStorage implements Graph, Storable {
         }
 
         @Override public int flags() {
-            int flags = edges.getInt(edgePointer + E_FLAGS);
+            flags = edges.getInt(edgePointer + E_FLAGS);
             if (switchFlags)
                 return CarStreetType.swapDirection(flags);
             return flags;
@@ -474,6 +508,9 @@ public class GraphStorage implements Graph, Storable {
 
             // position to next edge
             nextEdge = edges.getInt(getLinkPosInEdgeArea(baseNode, node, edgePointer));
+            if (nextEdge == edgeId)
+                throw new AssertionError("endless loop detected for " + baseNode + "," + node + "," + edgePointer);
+
             flags = edges.getInt(edgePointer + E_FLAGS);
 
             // switch direction flags if necessary
@@ -496,7 +533,7 @@ public class GraphStorage implements Graph, Storable {
             int i = 0;
             boolean foundNext = false;
             for (; i < 1000; i++) {
-                if (nextEdge == EMPTY_LINK)
+                if (nextEdge == EdgeIterator.NO_EDGE)
                     break;
                 foundNext = readNext();
                 if (foundNext)
@@ -551,12 +588,14 @@ public class GraphStorage implements Graph, Storable {
                     geometry.setInt(geoRef + 1, Helper.degreeToInt(pillarNodes.longitude(i)));
                 }
             } else
-                edges.setInt(edgePointer + E_GEO, EMPTY_LINK);
+                edges.setInt(edgePointer + E_GEO, EdgeIterator.NO_EDGE);
         }
 
         @Override public PointList wayGeometry() {
-            final int geoRef = edges.getInt(edgePointer + E_GEO);
-            final int count = geometry.getInt(geoRef);
+            int geoRef = edges.getInt(edgePointer + E_GEO);
+            int count = 0;
+            if (geoRef > EdgeIterator.NO_EDGE)
+                count = geometry.getInt(geoRef);
             PointList pillarNodes = new PointList(count);
             for (int i = 0; i < count; i++) {
                 double lat = Helper.intToDegree(geometry.getInt(geoRef + i * 2 + 1));
@@ -719,7 +758,7 @@ public class GraphStorage implements Graph, Storable {
         for (int toUpdateNode = toUpdatedSet.next(0); toUpdateNode >= 0; toUpdateNode = toUpdatedSet.next(toUpdateNode + 1)) {
             // remove all edges connected to the deleted nodes
             EdgeIterable nodesConnectedToDelIter = (EdgeIterable) getEdges(toUpdateNode);
-            long prev = -1;
+            long prev = EdgeIterator.NO_EDGE;
             while (nodesConnectedToDelIter.next()) {
                 int nodeId = nodesConnectedToDelIter.node();
                 if (removedNodes.contains(nodeId)) {
@@ -789,8 +828,14 @@ public class GraphStorage implements Graph, Storable {
         removedNodes = null;
     }
 
+    private void checkAlreadyInitialized() {
+        if (initialized)
+            throw new IllegalStateException("Already initialized GraphStorage.");
+    }
+
     @Override
     public boolean loadExisting() {
+        checkAlreadyInitialized();
         if (edges.loadExisting()) {
             if (!nodes.loadExisting())
                 throw new IllegalStateException("cannot load nodes. corrupt file or directory? " + dir);
@@ -817,6 +862,7 @@ public class GraphStorage implements Graph, Storable {
 
             // geometry
             maxGeoRef = edges.getHeader(0);
+            initialized = true;
             return true;
         }
         return false;

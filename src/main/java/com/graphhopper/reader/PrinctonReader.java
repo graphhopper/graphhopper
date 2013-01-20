@@ -71,7 +71,6 @@ public class PrinctonReader {
                         dist = Double.parseDouble(args[j]);
 
                     counter++;
-                    continue;
                 }
                 if (counter != 3)
                     throw new RuntimeException("incorrect read!? from:" + from + ", to:" + to + ", dist:" + dist);

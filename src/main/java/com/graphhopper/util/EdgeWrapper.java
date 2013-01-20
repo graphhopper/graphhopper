@@ -23,7 +23,7 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import java.util.Arrays;
 
 /**
- * Used to implement references for a none-java way dijkstra.
+ * Used to implement references for a dijkstra written the "none-java" way.
  *
  * @see DijkstraBidirection
  * @author Peter Karich
@@ -37,7 +37,7 @@ public class EdgeWrapper {
     private int[] edgeIds;
     private int[] parents;
     private float[] weights;
-    protected TIntIntHashMap node2edge;
+    protected TIntIntHashMap node2ref;
 
     public EdgeWrapper() {
         this(10);
@@ -48,7 +48,7 @@ public class EdgeWrapper {
         parents = new int[size];
         edgeIds = new int[size];
         weights = new float[size];
-        node2edge = new TIntIntHashMap(size, GROW_FACTOR, -1, -1);
+        node2ref = new TIntIntHashMap(size, GROW_FACTOR, -1, -1);
     }
 
     /**
@@ -57,7 +57,7 @@ public class EdgeWrapper {
     public int add(int nodeId, double distance, int edgeId) {
         int ref = refCounter;
         refCounter++;
-        node2edge.put(nodeId, ref);
+        node2ref.put(nodeId, ref);
         ensureCapacity(ref);
         weights[ref] = (float) distance;
         nodes[ref] = nodeId;
@@ -112,7 +112,7 @@ public class EdgeWrapper {
         nodes = Arrays.copyOf(nodes, cap);
         parents = Arrays.copyOf(parents, cap);
         edgeIds = Arrays.copyOf(edgeIds, cap);
-        node2edge.ensureCapacity(cap);
+        node2ref.ensureCapacity(cap);
     }
 
     public void clear() {
@@ -120,11 +120,11 @@ public class EdgeWrapper {
         Arrays.fill(weights, 0);
         Arrays.fill(nodes, 0);
         Arrays.fill(parents, 0);
-        Arrays.fill(edgeIds, 0);
-        node2edge.clear();
+        Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
+        node2ref.clear();
     }
 
     public int getRef(int node) {
-        return node2edge.get(node);
+        return node2ref.get(node);
     }
 }

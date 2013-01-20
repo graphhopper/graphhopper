@@ -50,8 +50,8 @@ public class OSMReaderTest {
         Helper.removeDir(new File(dir));
     }
 
-    GraphStorage createGraph(String directory) {
-        return new GraphStorage(new RAMDirectory(dir, false));
+    GraphStorage buildGraph(String directory) {
+        return new GraphStorage(new RAMDirectory(directory, false));
     }
 
     OSMReader init(OSMReader osmreader) {
@@ -67,7 +67,7 @@ public class OSMReaderTest {
     }
 
     @Test public void testMain() {
-        OSMReader reader = preProcess(init(new OSMReader(createGraph(dir), 1000)));
+        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000)));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.optimize();
         reader.flush();
@@ -113,7 +113,7 @@ public class OSMReaderTest {
     }
 
     @Test public void testSort() {
-        OSMReader reader = preProcess(init(new OSMReader(createGraph(dir), 1000).sort(true)));
+        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000).sort(true)));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
         reader.optimize();
         reader.flush();
@@ -123,7 +123,7 @@ public class OSMReaderTest {
     }
 
     @Test public void testWithBounds() {
-        OSMReader reader = preProcess(init(new OSMReader(createGraph(dir), 1000) {
+        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000) {
             @Override public boolean isInBounds(double lat, double lon) {
                 return lat > 49 && lon > 8;
             }
@@ -161,7 +161,7 @@ public class OSMReaderTest {
     }
 
     @Test public void testOneWay() {
-        OSMReader reader = preProcess(init(new OSMReader(createGraph(dir), 1000)));
+        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000)));
         reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm2.xml"));
         reader.flush();
         Graph graph = reader.graph();

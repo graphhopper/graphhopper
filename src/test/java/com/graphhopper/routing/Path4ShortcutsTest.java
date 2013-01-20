@@ -23,11 +23,10 @@ import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.Helper;
-import java.util.Arrays;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -37,26 +36,24 @@ import org.junit.Test;
  */
 public class Path4ShortcutsTest {
 
-    LevelGraph createGraph(int size) {
-        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("levelgraph", false));
-        g.createNew(size);
-        return g;
+    LevelGraphStorage createGraph() {
+        return new GraphBuilder().levelGraphCreate();
     }
 
     @Test
     public void testNoExpand() {
-        LevelGraph g = createGraph(20);
-        g.edge(0, 1, 10, true); // 1
-        g.edge(1, 2, 10, true); // 2
-        g.edge(2, 3, 10, true); // 3
-        g.edge(3, 4, 10, true); // 4
+        LevelGraph g = createGraph();
+        int e1 = g.edge(0, 1, 10, true).edge();
+        int e2 = g.edge(1, 2, 10, true).edge();
+        int e3 = g.edge(2, 3, 10, true).edge();
+        int e4 = g.edge(3, 4, 10, true).edge();
 
         Path4Shortcuts path = new Path4Shortcuts(g, ShortestCarCalc.DEFAULT);
-        path.edgeEntry = new EdgeEntry(3, 3, 10);
-        path.edgeEntry.parent = new EdgeEntry(2, 2, 10);
-        path.edgeEntry.parent.parent = new EdgeEntry(1, 1, 10);
+        path.edgeEntry = new EdgeEntry(e3, 3, 10);
+        path.edgeEntry.parent = new EdgeEntry(e2, 2, 10);
+        path.edgeEntry.parent.parent = new EdgeEntry(e1, 1, 10);
         path.edgeEntry.parent.parent.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 0, 0);
-        path.edgeTo = new EdgeEntry(4, 3, 10);
+        path.edgeTo = new EdgeEntry(e4, 3, 10);
         path.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 4, 0);
         Path p = path.extract();
         assertEquals(5, p.calcNodes().size());
@@ -65,7 +62,7 @@ public class Path4ShortcutsTest {
 
     @Test
     public void testExpand() {
-        LevelGraphStorage g = (LevelGraphStorage) createGraph(20);
+        LevelGraphStorage g = createGraph();
         EdgeSkipIterator iter = g.edge(0, 1, 10, true); // 1
         g.edge(1, 2, 10, true); // 2
         EdgeSkipIterator iter3 = g.edge(2, 3, 10, true); // 3
@@ -87,20 +84,22 @@ public class Path4ShortcutsTest {
 
     @Test
     public void testExpandMultipleSkippedNodes() {
-        LevelGraphStorage g = (LevelGraphStorage) createGraph(20);
-        EdgeSkipIterator iter = g.edge(0, 1, 10, true); // 1
-        g.edge(1, 2, 10, true); // 2
-        g.edge(2, 3, 10, true); // 3
-        g.edge(3, 4, 10, true); // 4
+        LevelGraphStorage g = createGraph();
+        int e1 = g.edge(0, 1, 10, true).edge();
+        int e2 = g.edge(1, 2, 10, true).edge();
+        int e3 = g.edge(2, 3, 10, true).edge();
+        int e4 = g.edge(3, 4, 10, true).edge();
 
         g.setLevel(1, -1);
         g.setLevel(2, -1);
-        g.edge(0, 3, 30, CarStreetType.flagsDefault(true)).skippedEdge(iter.edge()); // 5
+        EdgeSkipIterator iter = g.edge(0, 3, 30, CarStreetType.flagsDefault(true));
+        iter.skippedEdge(e1);
+        int e5 = iter.edge();
 
         Path4Shortcuts path = new Path4Shortcuts(g, ShortestCarCalc.DEFAULT);
-        path.edgeEntry = new EdgeEntry(5, 3, 30);
-        path.edgeEntry.parent = new EdgeEntry(-1, 0, 0);
-        path.edgeTo = new EdgeEntry(4, 3, 10);
+        path.edgeEntry = new EdgeEntry(e5, 3, 30);
+        path.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 0, 0);
+        path.edgeTo = new EdgeEntry(e4, 3, 10);
         path.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 4, 0);
         Path p = path.extract();
         assertEquals(Helper.createTList(0, 1, 2, 3, 4), p.calcNodes());

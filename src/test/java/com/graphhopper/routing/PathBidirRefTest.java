@@ -21,8 +21,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import static org.junit.Assert.*;
@@ -34,7 +33,7 @@ import org.junit.Test;
 public class PathBidirRefTest {
 
     Graph createGraph() {
-        return new GraphStorage(new RAMDirectory()).createNew(10);
+        return new GraphBuilder().create();
     }
 
     @Test

@@ -22,12 +22,10 @@ package com.graphhopper.storage;
  * Abstraction of the underlying datastructure with a unique id and location. To
  * ensure that the id is unique use a Directory.attach or findAttach, if you
  * don't need uniqueness call Directory.create. Current implementations are RAM
- * and memory mapped access. To have a useable instance do the following:
+ * and memory mapped access.
  *
- * <pre>
- * if(!storage.loadExisting())
- *    storage.createNew(bytes)
- * </pre>
+ * Life cycle: (1) object creation, (2) configuration (e.g. segment size), (3)
+ * createNew or loadExisting, (4) usage, (5) close
  *
  * @author Peter Karich
  */
@@ -67,14 +65,15 @@ public interface DataAccess extends Storable {
     int getHeader(int index);
 
     /**
-     * The first time you use DataAccess you need to call this in order to
-     * allocate space for this DataAccess object. After that first call use
-     * ensureCapacity.
+     * The first time you use a DataAccess object after configuring it you need
+     * to call this. After that first call you have to use ensureCapacity to
+     * ensure that enough space is reserved.
      */
     void createNew(long bytes);
 
     /**
-     * Ensures the specified capacity. The first time call createNew.
+     * Ensures the specified capacity. The first time you have to call createNew
+     * instead.
      */
     void ensureCapacity(long bytes);
 

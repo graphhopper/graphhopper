@@ -94,7 +94,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         this.from = from;
         currFrom = from;
         currFromWeight = 0;
-        currFromRef = wrapperFrom.add(from, 0, -1);
+        currFromRef = wrapperFrom.add(from, 0, EdgeIterator.NO_EDGE);
         return this;
     }
 
@@ -102,7 +102,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         this.to = to;
         currTo = to;
         currToWeight = 0;
-        currToRef = wrapperTo.add(to, 0, -1);
+        currToRef = wrapperTo.add(to, 0, EdgeIterator.NO_EDGE);
         return this;
     }
 

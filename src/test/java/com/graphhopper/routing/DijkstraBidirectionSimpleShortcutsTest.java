@@ -22,9 +22,9 @@ import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.routing.util.PrepareTowerNodesShortcuts;
 import com.graphhopper.routing.util.PrepareTowerNodesShortcutsTest;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
@@ -46,19 +46,16 @@ public class DijkstraBidirectionSimpleShortcutsTest {
         return new PrepareTowerNodesShortcuts().graph(lg).createAlgo();
     }
 
-    LevelGraph createGraph(int size) {
-        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("levelg", false));
-        g.createNew(size);
-        return g;
+    LevelGraph createGraph() {
+        return new GraphBuilder().levelGraphCreate();
     }
 
     @Test
     public void testShortcutUnpacking() {
-        LevelGraph g2 = createGraph(6);
+        LevelGraph g2 = createGraph();
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
         // store skipped first node along with the shortcut
         PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(g2).doWork();
-        // TODO NOW why only one shortcut? 
         assertEquals(1, prepare.shortcuts());
         // use that node to correctly unpack the shortcut
         Path p = createAlgoWithFilterAndPathUnpacking(g2).calcPath(0, 4);
@@ -68,7 +65,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
 
     @Test
     public void testShortcutNoUnpacking() {
-        LevelGraph g2 = createGraph(6);
+        LevelGraph g2 = createGraph();
         AbstractRoutingAlgorithmTester.initBiGraph(g2);
         new PrepareTowerNodesShortcuts().graph(g2).doWork();
         Path p = createAlgoWithFilter(g2).calcPath(0, 4);
@@ -78,7 +75,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
 
     @Test
     public void testDirected() {
-        LevelGraphStorage g = (LevelGraphStorage) createGraph(30);
+        LevelGraphStorage g = (LevelGraphStorage) createGraph();
         // see 49.9052,10.35491
         //
         // =19-20-21-22=
@@ -108,7 +105,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
 
     @Test
     public void testDirected1() {
-        LevelGraph g = createGraph(30);
+        LevelGraph g = createGraph();
         PrepareTowerNodesShortcutsTest.initDirected1(g);
         PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(g);
         prepare.doWork();
@@ -122,7 +119,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
 
     @Test
     public void testDirected2() {
-        LevelGraph g = createGraph(30);
+        LevelGraph g = createGraph();
         PrepareTowerNodesShortcutsTest.initDirected2(g);
         PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(g);
         prepare.doWork();
@@ -136,7 +133,7 @@ public class DijkstraBidirectionSimpleShortcutsTest {
 
     @Test
     public void testTwoEdgesWithDifferentSpeed() {
-        LevelGraph g = createGraph(30);
+        LevelGraph g = createGraph();
         // see 49.894653,9.309765
         //
         //         10

@@ -20,10 +20,9 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.RawEdgeIterator;
 import org.junit.*;
@@ -35,15 +34,13 @@ import static org.junit.Assert.*;
  */
 public class PrepareTowerNodesShortcutsTest {
 
-    static LevelGraph createGraph(int size) {
-        LevelGraphStorage g = new LevelGraphStorage(new RAMDirectory("priog", false));
-        g.createNew(size);
-        return g;
+    static LevelGraph createGraph() {
+        return new GraphBuilder().levelGraphCreate();
     }
 
     @Test
     public void testSimpleShortcuts() {
-        LevelGraph g = createGraph(20);
+        LevelGraph g = createGraph();
         // 1
         // 0-2-4-5
         // 3
@@ -66,7 +63,7 @@ public class PrepareTowerNodesShortcutsTest {
         // 1
         // 0->2->4->5
         // 3
-        g = createGraph(20);
+        g = createGraph();
         g.edge(0, 1, 1, false);
         g.edge(0, 2, 2, false);
         g.edge(0, 3, 3, false);
@@ -75,7 +72,7 @@ public class PrepareTowerNodesShortcutsTest {
         assertDirected0_5(g);
         assertEquals(5 + 1, GraphUtility.countEdges(g));
 
-        g = createGraph(20);
+        g = createGraph();
         g.edge(0, 1, 1, false);
         g.edge(0, 2, 2, false);
         g.edge(0, 3, 3, false);
@@ -97,7 +94,7 @@ public class PrepareTowerNodesShortcutsTest {
 
     @Test
     public void testDirected() {
-        LevelGraph g = createGraph(20);
+        LevelGraph g = createGraph();
         // 3->0->1<-2
         g.edge(0, 1, 10, false);
         g.edge(2, 1, 10, false);
@@ -110,7 +107,7 @@ public class PrepareTowerNodesShortcutsTest {
 
     @Test
     public void testDirectedBug() {
-        LevelGraph g = createGraph(30);
+        LevelGraph g = createGraph();
         initDirected1(g);
         PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(g);
         prepare.doWork();
@@ -123,7 +120,7 @@ public class PrepareTowerNodesShortcutsTest {
 
     @Test
     public void testCircleBug() {
-        LevelGraph g = createGraph(30);
+        LevelGraph g = createGraph();
         //  /--1
         // -0--/
         //  |
@@ -138,7 +135,7 @@ public class PrepareTowerNodesShortcutsTest {
 
     @Test
     public void testChangeExistingShortcut() {
-        LevelGraph g = createGraph(20);
+        LevelGraph g = createGraph();
         initBiGraph(g);
 
         PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(g);
@@ -146,7 +143,7 @@ public class PrepareTowerNodesShortcutsTest {
         assertEquals(1, prepare.shortcuts());
         EdgeSkipIterator iter = (EdgeSkipIterator) GraphUtility.until(g.getEdges(6), 3);
         assertEquals(40, iter.distance(), 1e-4);
-        assertEquals(9, iter.skippedEdge());
+        assertEquals(8, iter.skippedEdge());
     }
 
     // 0-1-2-3-4
@@ -216,7 +213,7 @@ public class PrepareTowerNodesShortcutsTest {
 
     @Test
     public void testMultiTypeShortcuts() {
-        LevelGraph g = createGraph(20);
+        LevelGraph g = createGraph();
         g.edge(0, 10, 1, CarStreetType.flags(30, true));
         g.edge(0, 1, 10, CarStreetType.flags(30, true));
         g.edge(1, 2, 10, CarStreetType.flags(30, true));
@@ -238,7 +235,7 @@ public class PrepareTowerNodesShortcutsTest {
 
     // prepare-routing.svg
     public static LevelGraph createShortcutsGraph() {
-        final LevelGraph g = createGraph(20);
+        final LevelGraph g = createGraph();
         g.edge(0, 1, 1, true);
         g.edge(0, 2, 1, true);
         g.edge(1, 2, 1, true);

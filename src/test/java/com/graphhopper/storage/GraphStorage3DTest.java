@@ -33,8 +33,7 @@ public class GraphStorage3DTest {
 
     @Test
     public void testGetHeight() {
-        GraphStorage3D g = new GraphStorage3D(new RAMDirectory());
-        g.createNew(10);
+        GraphStorage3D g = new GraphStorage3D(new RAMDirectory()).createNew(100);
         g.setNode(0, 50, 20000.00, 100);
         g.setNode(1, 50, 20000.02, 100);
 

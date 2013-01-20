@@ -18,12 +18,9 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.RAMDirectory;
-import gnu.trove.list.array.TIntArrayList;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -34,7 +31,7 @@ import org.junit.Test;
 public class GraphUtilityTest {
 
     Graph createGraph() {
-        return new GraphStorage(new RAMDirectory()).createNew(10);
+        return new GraphBuilder().create();
     }
 
     Graph initUnsorted(Graph g) {
@@ -98,7 +95,7 @@ public class GraphUtilityTest {
         Graph g = initUnsorted(createGraph());
         EdgeIterator iter = g.edge(6, 5, 11, true);
         iter.wayGeometry(Helper.createPointList(12, 10, -1, 3));
-        LevelGraph lg = (LevelGraph) new LevelGraphStorage(new RAMDirectory()).createNew(10);
+        LevelGraph lg = new GraphBuilder().levelGraphCreate();
         GraphUtility.copyTo(g, lg);
         iter = lg.getEdgeProps(iter.edge(), 6);
         assertEquals(Helper.createPointList(-1, 3, 12, 10), iter.wayGeometry());

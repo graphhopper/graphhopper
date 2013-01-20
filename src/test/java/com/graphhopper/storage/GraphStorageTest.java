@@ -39,13 +39,30 @@ public class GraphStorageTest extends AbstractGraphTester {
         return newGraph(new RAMDirectory(location)).segmentSize(size / 2).createNew(size);
     }
 
-    public GraphStorage newGraph(Directory dir) {
+    protected GraphStorage newGraph(Directory dir) {
         return new GraphStorage(dir);
+    }
+
+    protected GraphStorage createGraphStorage(Directory dir) {
+        return newGraph(dir).createNew(defaultSize);
+    }
+
+    @Test
+    public void testNoCreateCalled() throws IOException {
+        GraphStorage gs = new GraphBuilder().build();
+        try {
+            gs.ensureNodeIndex(123);
+            assertFalse("IllegalStateException should be raised", true);
+        } catch (IllegalStateException ex) {
+            assertTrue(true);
+        } catch (Exception ex) {
+            assertFalse("IllegalStateException should be raised", true);
+        }
     }
 
     @Test
     public void testSave_and_fileFormat() throws IOException {
-        GraphStorage graph = newGraph(new RAMDirectory(defaultGraph, true)).createNew(10);
+        GraphStorage graph = createGraphStorage(new RAMDirectory(defaultGraph, true));
         graph.setNode(0, 10, 10);
         graph.setNode(1, 11, 20);
         graph.setNode(2, 12, 12);
@@ -91,7 +108,7 @@ public class GraphStorageTest extends AbstractGraphTester {
 
     @Test
     public void testGetAllEdges() {
-        GraphStorage g = newGraph(new RAMDirectory()).createNew(10);
+        Graph g = createGraph();
         g.edge(0, 1, 2, true);
         g.edge(3, 1, 1, false);
         g.edge(3, 2, 1, false);

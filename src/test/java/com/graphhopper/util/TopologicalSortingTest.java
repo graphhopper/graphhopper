@@ -19,8 +19,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.GraphBuilder;
 import gnu.trove.list.array.TIntArrayList;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -31,13 +30,13 @@ import static org.junit.Assert.*;
  */
 public class TopologicalSortingTest {
 
-    Graph createGraph(int size) {
-        return new GraphStorage(new RAMDirectory()).createNew(size);
+    Graph createGraph() {
+        return new GraphBuilder().create();
     }
 
     @Test
     public void testSort() {
-        Graph g = createGraph(20);
+        Graph g = createGraph();
         g.edge(7, 11, 1, false);
         g.edge(7, 8, 1, false);
         g.edge(5, 11, 1, false);
@@ -61,7 +60,7 @@ public class TopologicalSortingTest {
 
     @Test
     public void testSort2() {
-        Graph g = createGraph(20);
+        Graph g = createGraph();
         g.edge(1, 2, 1, false);
         g.edge(7, 2, 1, false);
         g.edge(2, 0, 1, false);
@@ -88,7 +87,7 @@ public class TopologicalSortingTest {
 
     @Test
     public void testSortWithCycle() {
-        Graph g = createGraph(20);
+        Graph g = createGraph();
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
         g.edge(2, 0, 1, false);
