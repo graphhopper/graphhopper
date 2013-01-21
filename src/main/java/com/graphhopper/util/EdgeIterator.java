@@ -44,9 +44,9 @@ public interface EdgeIterator {
     boolean next();
 
     /**
-     * @return the edge id of the current edge. Although the current
-     * implementation uses an index starting from 1, do not make any assumptions
-     * about it.
+     * @return the edge id of the current edge. Do not make any assumptions
+     * about the concrete values, except that for an implemention it is
+     * recommended that they'll be contiguous.
      */
     int edge();
 
