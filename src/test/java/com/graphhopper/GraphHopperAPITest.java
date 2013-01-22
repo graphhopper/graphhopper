@@ -62,7 +62,7 @@ public class GraphHopperAPITest {
     public void testLoadOSM() {
         String str = "./target/tmp/ghosm";
         Helper.removeDir(new File(str));
-        GraphHopperAPI instance = new GraphHopper().setGraphHopperLocation(str);
+        GraphHopperAPI instance = new GraphHopper().graphHopperLocation(str);
         instance.load("./src/test/resources/com/graphhopper/reader/test-osm.xml");
         GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.found());

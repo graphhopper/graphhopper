@@ -106,7 +106,7 @@ public class PointList {
         size = 0;
     }
 
-    public void setSize(int newSize) {
+    public void trimToSize(int newSize) {
         if (newSize > size)
             throw new IllegalArgumentException("new size needs be smaller than old size");
         size = newSize;

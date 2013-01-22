@@ -119,7 +119,7 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public GraphHopper setGraphHopperLocation(String ghLocation) {
+    public GraphHopper graphHopperLocation(String ghLocation) {
         if (ghLocation != null)
             this.ghLocation = ghLocation;
         return this;
@@ -226,12 +226,13 @@ public class GraphHopper implements GraphHopperAPI {
         prepare.graph(graph);
         RoutingAlgorithm algo = prepare.createAlgo();
         Path path = algo.calcPath(from, to);
-        debug += " routing (" + algo.name() + "):" + sw.stop().getSeconds() + "s";
+        debug += ", routing (" + algo.name() + "):" + sw.stop().getSeconds() + "s";
         PointList points = path.calcPoints();
         if (simplify) {
             sw = new StopWatch().start();
-            int del = new DouglasPeucker().maxDistance(request.minPathPrecision()).simplify(points);
-            debug += " simplify (" + del + "):" + sw.stop().getSeconds() + "s";
+            int orig = points.size();
+            new DouglasPeucker().maxDistance(request.minPathPrecision()).simplify(points);
+            debug += ", simplify (" + orig + "->" + points.size() + "):" + sw.stop().getSeconds() + "s";
         }
         return new GHResponse(points).distance(path.distance()).time(path.time()).debugInfo(debug);
     }
