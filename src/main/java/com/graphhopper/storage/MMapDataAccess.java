@@ -42,7 +42,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     private RandomAccessFile raFile;
     private List<ByteBuffer> segments = new ArrayList<ByteBuffer>();
     private ByteOrder order;
-    private boolean cleanAndRemap = true;
+    private boolean cleanAndRemap = false;
     private transient boolean closed = false;
     private transient int segmentSizePower;
     private transient int indexDivisor;
@@ -55,6 +55,11 @@ public class MMapDataAccess extends AbstractDataAccess {
     MMapDataAccess(String name, String location) {
         super(name, location);
     }
+
+    MMapDataAccess cleanAndRemap(boolean cleanAndRemap) {
+        this.cleanAndRemap = cleanAndRemap;
+        return this;
+    }        
 
     private void initRandomAccessFile() {
         if (raFile != null)
@@ -127,8 +132,9 @@ public class MMapDataAccess extends AbstractDataAccess {
                 clean(0, segments.size());
                 segments.clear();
             } else {
-                // This approach is more problematic, as we rely on the OS+file system that 
-                // increasing the file size has no effect on the old mappings!
+                // This approach is probably problematic but a bit faster if done often.
+                // Here we rely on the OS+file system that increasing the file 
+                // size has no effect on the old mappings!
                 bufferStart += segments.size() * segmentSizeInBytes;
                 newSegments = segmentsToMap - segments.size();
             }

@@ -19,7 +19,6 @@
 package com.graphhopper;
 
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.Helper;
 import java.io.File;
