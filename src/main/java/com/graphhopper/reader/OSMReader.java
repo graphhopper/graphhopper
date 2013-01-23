@@ -268,11 +268,11 @@ public class OSMReader {
         graphStorage.createNew(helper.expectedNodes());
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
-        int wayStart = -1;
+        long wayStart = -1;
         StopWatch sw = new StopWatch();
         try {
             sReader = factory.createXMLStreamReader(is, "UTF-8");
-            int counter = 1;
+            long counter = 1;
             for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
                     event = sReader.next(), counter++) {
 
@@ -355,7 +355,7 @@ public class OSMReader {
                 if ("nd".equals(sReader.getLocalName())) {
                     String ref = sReader.getAttributeValue(null, "ref");
                     try {
-                        tmpLocs.add(Integer.parseInt(ref));
+                        tmpLocs.add(Long.parseLong(ref));
                     } catch (Exception ex) {
                         logger.error("cannot get ref from way. ref:" + ref, ex);
                     }
