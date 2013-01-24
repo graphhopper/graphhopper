@@ -36,10 +36,10 @@ public abstract class OSMReaderHelper {
     private final Logger logger = LoggerFactory.getLogger(getClass());    
     protected long zeroCounter = 0;
     protected final Graph g;
-    protected final int expectedNodes;
+    protected final long expectedNodes;
     private DistanceCalc callback = new DistanceCalc();
 
-    public OSMReaderHelper(Graph g, int expectedNodes) {
+    public OSMReaderHelper(Graph g, long expectedNodes) {
         this.g = g;
         this.expectedNodes = expectedNodes;
     }
@@ -48,7 +48,7 @@ public abstract class OSMReaderHelper {
         this.callback = callback;
     }
 
-    public int expectedNodes() {
+    public long expectedNodes() {
         return expectedNodes;
     }
 

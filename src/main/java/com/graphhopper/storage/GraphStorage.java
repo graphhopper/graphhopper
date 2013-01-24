@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
+import static com.graphhopper.util.Helper.*;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
@@ -135,7 +136,7 @@ public class GraphStorage implements Graph, Storable {
      */
     public GraphStorage createNew(int nodeCount) {
         checkAlreadyInitialized();
-        int initBytes = Math.max(nodeCount * 4 / 50, 100);
+        int initBytes = Math.max(nodeCount * 4, 100);
         nodes.createNew((long) initBytes * nodeEntrySize);
         initNodeRefs(0, nodes.capacity() / 4);
 
@@ -285,7 +286,7 @@ public class GraphStorage implements Graph, Storable {
         int nextEdge = edgeCount;
         edgeCount++;
         if (edgeCount < 0)
-            throw new IllegalStateException("too many edges. new edge id would be negative.");
+            throw new IllegalStateException("too many edges. new edge id would be negative. " + toString());
         ensureEdgeIndex(edgeCount);
         return nextEdge;
     }
@@ -413,9 +414,9 @@ public class GraphStorage implements Graph, Storable {
     @Override
     public EdgeIterator getEdgeProps(int edgeId, final int endNode) {
         if (edgeId <= EdgeIterator.NO_EDGE || edgeId > edgeCount)
-            throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + edgeCount + "]");
+            throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + nf(edgeCount) + "]");
         if (endNode < 0)
-            throw new IllegalStateException("endNode " + endNode + " out of bounds [0," + nodeCount + "]");
+            throw new IllegalStateException("endNode " + endNode + " out of bounds [0," + nf(nodeCount) + "]");
         long edgePointer = (long) edgeId * edgeEntrySize;
         // a bit complex but faster
         int nodeA = edges.getInt(edgePointer + E_NODEA);
@@ -907,9 +908,9 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override public String toString() {
-        return "edges:" + edgeCount + "(" + edges.capacity() / Helper.MB + "), "
-                + "nodes:" + nodeCount + "(" + nodes.capacity() / Helper.MB + "), "
-                + "geo:" + maxGeoRef + "(" + geometry.capacity() / Helper.MB + "), "
+        return "edges:" + nf(edgeCount) + "(" + edges.capacity() / Helper.MB + "), "
+                + "nodes:" + nf(nodeCount) + "(" + nodes.capacity() / Helper.MB + "), "
+                + "geo:" + nf(maxGeoRef) + "(" + geometry.capacity() / Helper.MB + "), "
                 + "bounds:" + bounds;
     }
 }

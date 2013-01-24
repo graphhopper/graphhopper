@@ -36,6 +36,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
+import static com.graphhopper.util.Helper.*;
 import com.graphhopper.util.Helper7;
 import com.graphhopper.util.StopWatch;
 import gnu.trove.list.array.TLongArrayList;
@@ -75,12 +76,12 @@ public class OSMReader {
         }
     }
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
-    private int locations;
-    private int skippedLocations;
-    private int edgeCount;
+    private long locations;
+    private long skippedLocations;
+    private long edgeCount;
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
-    private int expectedNodes;
+    private long expectedNodes;
     private TLongArrayList tmpLocs = new TLongArrayList(10);
     private Map<String, Object> properties = new HashMap<String, Object>();
     private AcceptStreet acceptStreets = new AcceptStreet(true, false, false, false);
@@ -117,9 +118,7 @@ public class OSMReader {
             Helper.unzip(compressed.getAbsolutePath(), graphLocation, removeZipped);
         }
 
-        int size = (int) args.getLong("osmreader.size", 10 * 1000);
-        if (size < 1)
-            throw new IllegalArgumentException("Invalid osmreader.size value " + size);
+        long size = args.getLong("osmreader.size", 10 * 1000);
         GraphStorage storage;
         String dataAccess = args.get("osmreader.dataaccess", "inmemory+save");
         Directory dir;
@@ -176,11 +175,11 @@ public class OSMReader {
         return osmReader;
     }
 
-    public OSMReader(String storageLocation, int expectedSize) {
+    public OSMReader(String storageLocation, long expectedSize) {
         this(new GraphStorage(new RAMDirectory(storageLocation, true)), expectedSize);
     }
 
-    public OSMReader(GraphStorage storage, int expectedNodes) {
+    public OSMReader(GraphStorage storage, long expectedNodes) {
         this.graphStorage = storage;
         this.expectedNodes = expectedNodes;
         this.helper = createDoubleParseHelper();
@@ -220,6 +219,8 @@ public class OSMReader {
     void optimize() {
         logger.info("optimizing ... (" + Helper.getMemInfo() + ")");
         graphStorage.optimize();
+        logger.info("finished optimize (" + Helper.getMemInfo() + ")");
+
         // move this into the GraphStorage.optimize method?
         if (sortGraph) {
             logger.info("sorting ... (" + Helper.getMemInfo() + ")");
@@ -228,6 +229,7 @@ public class OSMReader {
             graphStorage = newGraph;
         }
 
+        logger.info("calling prepare.doWork ... (" + Helper.getMemInfo() + ")");
         // TODO at the moment a prepared levelgraph cannot be sorted, as otherwise edgeIds won't be copied+recognized
         if (prepare == null)
             defaultAlgoPrepare(Helper.createAlgoPrepare("astar"));
@@ -266,8 +268,13 @@ public class OSMReader {
         if (is == null)
             throw new IllegalStateException("Stream cannot be empty");
 
-        logger.info("creating graph with expected nodes:" + helper.expectedNodes());
-        graphStorage.createNew(helper.expectedNodes());
+        // detected nodes means inclusive pillar nodes where we don't need to reserver space for
+        int tmp = (int) (helper.expectedNodes() / 50);
+        if (tmp < 0 || helper.expectedNodes() == 0)
+            throw new IllegalStateException("Expected nodes not in bounds: " + nf(helper.expectedNodes()));
+
+        logger.info("creating graph with expected nodes:" + nf(helper.expectedNodes()));
+        graphStorage.createNew(tmp);
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         long wayStart = -1;
@@ -283,13 +290,14 @@ public class OSMReader {
                         if ("node".equals(sReader.getLocalName())) {
                             processNode(sReader);
                             if (counter % 10000000 == 0) {
-                                logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + edgeCount
+                                logger.info(nf(counter) + ", locs:" + nf(locations)
+                                        + " (" + skippedLocations + "), edges:" + nf(edgeCount)
                                         + " " + Helper.getMemInfo());
                             }
                         } else if ("way".equals(sReader.getLocalName())) {
                             if (wayStart < 0) {
                                 helper.startWayProcessing();
-                                logger.info("parsing ways");
+                                logger.info(nf(counter) + ", now parsing ways");
                                 wayStart = counter;
                                 sw.start();
                             }
@@ -298,9 +306,10 @@ public class OSMReader {
                                 logger.warn("Something is wrong! Processing ways takes too long! "
                                         + sw.getSeconds() + "sec for only " + (counter - wayStart) + " docs");
                             }
-                            // counter does +=2 until the next loop
+                            // hmmh a bit hacky: counter does +=2 until the next loop
                             if ((counter / 2) % 1000000 == 0) {
-                                logger.info(counter + ", locs:" + locations + " (" + skippedLocations + "), edges:" + edgeCount
+                                logger.info(nf(counter) + ", locs:" + nf(locations)
+                                        + " (" + skippedLocations + "), edges:" + nf(edgeCount)
                                         + " " + Helper.getMemInfo());
                             }
                         }

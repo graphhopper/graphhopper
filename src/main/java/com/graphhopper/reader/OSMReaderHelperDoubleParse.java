@@ -18,10 +18,12 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.coll.BigLongIntMap;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.Helper;
+import static com.graphhopper.util.Helper.*;
 import com.graphhopper.util.Helper7;
 import com.graphhopper.util.PointList;
 import gnu.trove.list.TLongList;
@@ -52,7 +54,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     private static final int PILLAR_NODE = 1;
     private static final int TOWER_NODE = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private TLongIntHashMap osmIdToIndexMap;
+    private BigLongIntMap osmIdToIndexMap;
     // very slow: private SparseLongLongArray osmIdToIndexMap;
     // not applicable as ways introduces the nodes in 'wrong' order: private OSMIDSegmentedMap
     private int towerId = 0;
@@ -62,12 +64,12 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     private DataAccess pillarLats, pillarLons;
     private final Directory dir;
 
-    public OSMReaderHelperDoubleParse(GraphStorage storage, int expectedNodes) {
+    public OSMReaderHelperDoubleParse(GraphStorage storage, long expectedNodes) {
         super(storage, expectedNodes);
         dir = storage.directory();
         pillarLats = dir.findCreate("tmpLatitudes");
         pillarLons = dir.findCreate("tmpLongitudes");
-        osmIdToIndexMap = new TLongIntHashMap(expectedNodes, 1.4f, -1L, EMPTY);
+        osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
     }
 
     @Override
@@ -99,7 +101,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     @Override
-    public int expectedNodes() {
+    public long expectedNodes() {
         return osmIdToIndexMap.size();
     }
 
@@ -136,7 +138,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                     lastInBoundsPillarNode = -1;
                 }
                 continue;
-            }            
+            }
 
             if (tmpNode <= -TOWER_NODE && tmpNode >= TOWER_NODE)
                 throw new AssertionError("Mapped index not in correct bounds " + tmpNode);
@@ -189,8 +191,8 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 
     @Override
     void startWayProcessing() {
-        LoggerFactory.getLogger(getClass()).info("finished node processing. osmIdMap:" + osmIdToIndexMap.size() * 16f / Helper.MB
-                + ", " + Helper.getMemInfo());
+        LoggerFactory.getLogger(getClass()).info("finished node processing. osmIdMap:"
+                + osmIdToIndexMap.capacity() * (12f + 1) / Helper.MB + ", " + Helper.getMemInfo());
     }
 
     @Override
@@ -239,8 +241,10 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
             long tmpCounter = 1;
             for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
                     event = sReader.next(), tmpCounter++) {
-                if (tmpCounter % 20000000 == 0)
-                    logger.info(tmpCounter + " (preprocess) " + Helper.getMemInfo());
+                if (tmpCounter % 50000000 == 0)
+                    logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
+                            + nf(osmIdToIndexMap.size()) + "(" + nf(osmIdToIndexMap.capacity()) + ")"
+                            + Helper.getMemInfo());
 
                 switch (event) {
                     case XMLStreamConstants.START_ELEMENT:

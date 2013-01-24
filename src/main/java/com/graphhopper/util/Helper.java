@@ -34,6 +34,8 @@ import java.nio.MappedByteBuffer;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -390,9 +392,14 @@ public class Helper {
                 }
             });
         } catch (PrivilegedActionException e) {
-            final RuntimeException ioe = new RuntimeException("unable to unmap the mapped buffer");
-            ioe.initCause(e.getCause());
-            throw ioe;
+            throw new RuntimeException("unable to unmap the mapped buffer", e);
         }
+    }
+
+    public static String nf(long no) {
+        // I like french localization the most: 123654 will be 123 654 instead
+        // of comma vs. point confusion for english/german guys.
+        // NumberFormat is not thread safe => but getInstance looks like it's cached
+        return NumberFormat.getInstance(Locale.FRANCE).format(no);
     }
 }

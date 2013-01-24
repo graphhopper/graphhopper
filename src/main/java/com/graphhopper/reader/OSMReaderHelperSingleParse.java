@@ -38,9 +38,9 @@ public class OSMReaderHelperSingleParse extends OSMReaderHelper {
     private OSMIDSegmentedMap osmIdToIndexMap;
     private CompressedArray arr;
 
-    public OSMReaderHelperSingleParse(Graph g, int expectedNodes) {
+    public OSMReaderHelperSingleParse(Graph g, long expectedNodes) {
         super(g, expectedNodes);
-        osmIdToIndexMap = new OSMIDSegmentedMap(expectedNodes, 100);
+        osmIdToIndexMap = new OSMIDSegmentedMap((int) expectedNodes, 100);
         arr = new CompressedArray();
     }
 
