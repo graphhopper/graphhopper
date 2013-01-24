@@ -33,9 +33,8 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class OSMReaderHelper {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    protected int counter = 0;
-    protected int zeroCounter = 0;
+    private final Logger logger = LoggerFactory.getLogger(getClass());    
+    protected long zeroCounter = 0;
     protected final Graph g;
     protected final int expectedNodes;
     private DistanceCalc callback = new DistanceCalc();
@@ -96,7 +95,7 @@ public abstract class OSMReaderHelper {
     }
 
     String getInfo() {
-        return "Found " + zeroCounter + " zero and " + counter + " negative distances.";
+        return "Found " + zeroCounter + " zero distances.";
     }
 
     String getStorageInfo(GraphStorage storage) {

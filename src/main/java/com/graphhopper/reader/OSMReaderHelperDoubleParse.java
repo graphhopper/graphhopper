@@ -236,7 +236,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         XMLStreamReader sReader = null;
         try {
             sReader = factory.createXMLStreamReader(osmXml, "UTF-8");
-            int tmpCounter = 1;
+            long tmpCounter = 1;
             for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
                     event = sReader.next(), tmpCounter++) {
                 if (tmpCounter % 20000000 == 0)

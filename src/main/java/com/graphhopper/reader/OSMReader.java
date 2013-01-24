@@ -118,6 +118,8 @@ public class OSMReader {
         }
 
         int size = (int) args.getLong("osmreader.size", 10 * 1000);
+        if (size < 1)
+            throw new IllegalArgumentException("Invalid osmreader.size value " + size);
         GraphStorage storage;
         String dataAccess = args.get("osmreader.dataaccess", "inmemory+save");
         Directory dir;
