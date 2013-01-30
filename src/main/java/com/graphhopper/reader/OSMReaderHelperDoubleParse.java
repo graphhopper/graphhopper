@@ -243,7 +243,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                     event = sReader.next(), tmpCounter++) {
                 if (tmpCounter % 50000000 == 0)
                     logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
-                            + nf(osmIdToIndexMap.size()) + "(" + nf(osmIdToIndexMap.capacity()) + ")"
+                            + nf(osmIdToIndexMap.size()) + " (" + nf(osmIdToIndexMap.capacity()) + ") "
                             + Helper.getMemInfo());
 
                 switch (event) {

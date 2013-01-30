@@ -335,7 +335,7 @@ public class GraphStorage implements Graph, Storable {
         long lastLink = -1;
         int i = 0;
         int otherNode = -1;
-        for (; i < 1000; i++) {
+        for (; i < 10000; i++) {
             edgePointer *= edgeEntrySize;
             otherNode = getOtherNode(nodeThis, edgePointer);
             lastLink = getLinkPosInEdgeArea(nodeThis, otherNode, edgePointer);
@@ -344,11 +344,46 @@ public class GraphStorage implements Graph, Storable {
                 break;
         }
 
-        if (i >= 1000)
+        if (i >= 10000)
             throw new IllegalStateException("endless loop? edge count of " + nodeThis
                     + " is probably not higher than " + i
-                    + ", edgePointer:" + edgePointer + ", otherNode:" + otherNode);
+                    + ", edgePointer:" + edgePointer + ", otherNode:" + otherNode
+                    + "\n" + debug(nodeThis, 10));
         return lastLink;
+    }
+
+    String debug(int node, int area) {
+        String str = "--- node " + node + " ---";
+        int min = Math.max(0, node - area / 2);
+        int max = Math.max(nodeCount, node + area / 2);
+        for (int i = min; i < max; i++) {
+            str += "\n" + i + ": ";
+            for (int j = 0; j < nodeEntrySize; j++) {
+                if (j > 0)
+                    str += ",\t";
+                str += nodes.getInt((long) node * nodeEntrySize + j);
+            }
+        }
+        int edge = nodes.getInt((long) node * nodeEntrySize);
+        str += "\n--- edges " + edge + " ---";
+        int otherNode;
+        for (int i = 0; i < 1000; i++) {
+            str += "\n";
+            if (edge == EdgeIterator.NO_EDGE)
+                break;
+            str += edge + ": ";
+            long edgePointer = (long) edge * edgeEntrySize;
+            for (int j = 0; j < edgeEntrySize; j++) {
+                if (j > 0)
+                    str += ",\t";
+                str += edges.getInt(edgePointer + j);
+            }
+
+            otherNode = getOtherNode(node, edgePointer);
+            long lastLink = getLinkPosInEdgeArea(node, otherNode, edgePointer);
+            edge = edges.getInt(lastLink);
+        }
+        return str;
     }
 
     private int getOtherNode(int nodeThis, long edgePointer) {
