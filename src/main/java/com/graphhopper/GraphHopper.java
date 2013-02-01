@@ -226,7 +226,8 @@ public class GraphHopper implements GraphHopperAPI {
         prepare.graph(graph);
         RoutingAlgorithm algo = prepare.createAlgo();
         Path path = algo.calcPath(from, to);
-        debug += ", routing (" + algo.name() + "):" + sw.stop().getSeconds() + "s";
+        debug += ", routing (" + algo.name() + "):" + sw.stop().getSeconds() + "s" 
+                + ", " + path.debugInfo();
         PointList points = path.calcPoints();
         if (simplify) {
             sw = new StopWatch().start();

@@ -34,7 +34,6 @@ import java.nio.MappedByteBuffer;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.zip.ZipEntry;

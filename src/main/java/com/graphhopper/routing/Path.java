@@ -24,6 +24,7 @@ import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.StopWatch;
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -50,9 +51,10 @@ public class Path {
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverse = true;
     protected EdgeEntry edgeEntry;
+    protected StopWatch sw = new StopWatch("extract");
     private int fromNode = EdgeIterator.NO_EDGE;
     private TIntList edgeIds;
-    private PointList cachedPoints;
+    private PointList cachedPoints;    
 
     Path() {
         this(null, ShortestCarCalc.DEFAULT);
@@ -144,6 +146,7 @@ public class Path {
      * Extracts the Path from the shortest-path-tree determined by edgeEntry.
      */
     public Path extract() {
+        sw.start();
         EdgeEntry goalEdge = edgeEntry;
         while (EdgeIterator.Edge.isValid(goalEdge.edge)) {
             processWeight(goalEdge.edge, goalEdge.endNode);
@@ -152,7 +155,12 @@ public class Path {
 
         fromNode(goalEdge.endNode);
         reverseOrder();
+        sw.stop();
         return found(true);
+    }
+    
+    public String debugInfo() {
+        return sw.toString();
     }
 
     /**
