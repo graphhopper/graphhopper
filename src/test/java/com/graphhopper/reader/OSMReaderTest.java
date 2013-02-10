@@ -61,7 +61,7 @@ public class OSMReaderTest {
     }
 
     OSMReader preProcess(OSMReader osmreader) {
-        osmreader.setDoubleParse(true);
+        // default osmreader.setDoubleParse(true);
         osmreader.helper().preProcess(getClass().getResourceAsStream("test-osm.xml"));
         return osmreader;
     }

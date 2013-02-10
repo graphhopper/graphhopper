@@ -452,14 +452,6 @@ public class OSMReader {
         return this;
     }
 
-    OSMReader setDoubleParse(boolean doubleParse) {
-        if (doubleParse) {
-            helper = createDoubleParseHelper();
-        } else
-            helper = new OSMReaderHelperSingleParse(graphStorage, expectedNodes);
-        return this;
-    }
-
     OSMReaderHelper createDoubleParseHelper() {
         return new OSMReaderHelperDoubleParse(graphStorage, expectedNodes) {
             @Override
