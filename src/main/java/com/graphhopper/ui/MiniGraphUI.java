@@ -224,7 +224,7 @@ public class MiniGraphUI {
 
     private Path plotPath(Path tmpPath, Graphics2D g2, int w) {
         if (!tmpPath.found()) {
-            System.out.println("nothing found " + w);
+            logger.info("nothing found " + w);
             return tmpPath;
         }
 

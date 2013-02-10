@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.Path4Shortcuts;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Graph;
@@ -76,10 +75,11 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
             MAIN:
             while (iter.next()) {
                 // while iterating new shortcuts could have been introduced. ignore them!
-                if (iter.skippedEdge() >= 0)
+                if (iter.isShortcut())
                     continue;
 
                 int firstSkippedEdge = iter.edge();
+                int secSkippedEdge = EdgeIterator.NO_EDGE;
                 int flags = iter.flags();
                 int skip = startNode;
                 int currentNode = iter.node();
@@ -104,9 +104,10 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
                         throw new IllegalStateException("next node shouldn't be identical to skip "
                                 + "(" + skip + ") for " + currentNode + ", startNode=" + startNode);
 
+                    secSkippedEdge = twoDegreeIter.edge();
                     if (flags != twoDegreeIter.flags())
                         break;
-
+                    
                     g.setLevel(currentNode, -1);
                     distance += twoDegreeIter.distance();
                     skip = currentNode;
@@ -116,6 +117,8 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
                 if (currentNode == startNode)
                     continue;
 
+                if(secSkippedEdge < 0)
+                    secSkippedEdge = firstSkippedEdge;
                 // found shortcut but check if an edge already exists which is shorter than the shortcut
                 // -> TODO run extractPath path algorithm like in CH (instead a simple edge check)
                 EdgeSkipIterator tmpIter = g.getOutgoing(startNode);
@@ -125,11 +128,11 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
                     if (tmpIter.distance() > distance) {
                         // update the distance
                         tmpIter.distance(distance);
-                        tmpIter.skippedEdge(firstSkippedEdge);
+                        tmpIter.skippedEdges(firstSkippedEdge, secSkippedEdge);
                     }
                 } else {
                     // finally create the shortcut
-                    g.edge(startNode, currentNode, distance, flags).skippedEdge(firstSkippedEdge);
+                    g.edge(startNode, currentNode, distance, flags).skippedEdges(firstSkippedEdge, secSkippedEdge);
                     newShortcuts++;
                     countSkipped--;
                     sumSkipped += countSkipped;
@@ -180,7 +183,8 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
             }
 
             @Override protected PathBidirRef createPath() {
-                return new Path4Shortcuts(graph, weightCalc);
+                throw new UnsupportedOperationException("TODO");
+                // return new Path4Shortcuts(graph, weightCalc);
             }
         }.edgeFilter(new EdgeLevelFilter(g));
     }
@@ -192,8 +196,9 @@ public class PrepareTowerNodesShortcuts extends AbstractAlgoPreparation<PrepareT
             }
 
             @Override protected PathBidirRef createPath() {
+                throw new UnsupportedOperationException("TODO");
                 // expand skipped nodes
-                return new Path4Shortcuts(graph, weightCalc);
+                // return new Path4Shortcuts(graph, weightCalc);
             }
         }.setApproximation(true);
         astar.setEdgeFilter(new EdgeLevelFilter(g));

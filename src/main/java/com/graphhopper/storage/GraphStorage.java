@@ -444,6 +444,10 @@ public class GraphStorage implements Graph, Storable {
         @Override public boolean isEmpty() {
             return false;
         }
+
+        @Override public String toString() {
+            return edge() + " " + nodeA() + "-" + nodeB();
+        }
     }
 
     @Override
@@ -480,8 +484,6 @@ public class GraphStorage implements Graph, Storable {
 
         public SingleEdge(int edgeId, int nodeId) {
             super(edgeId, nodeId, false, false);
-            edgePointer = edgeId * edgeEntrySize;
-            flags = flags();
         }
 
         @Override public boolean next() {
@@ -518,14 +520,14 @@ public class GraphStorage implements Graph, Storable {
 
     protected class EdgeIterable implements EdgeIterator {
 
-        long edgePointer;
-        boolean in;
-        boolean out;
+        final boolean in;
+        final boolean out;
+        final int baseNode;
         // edge properties
         int flags;
         int node;
-        final int baseNode;
         int edgeId;
+        long edgePointer;
         int nextEdge;
 
         // used for SingleEdge and as return value of edge()
@@ -650,6 +652,10 @@ public class GraphStorage implements Graph, Storable {
         @Override public boolean isEmpty() {
             return false;
         }
+
+        @Override public String toString() {
+            return edge() + " " + baseNode() + "-" + node();
+        }
     }
 
     protected GraphStorage newThis(Directory dir) {
@@ -732,21 +738,21 @@ public class GraphStorage implements Graph, Storable {
      * This method disconnects the specified edge from the list of edges of the
      * specified node. It does not release the freed space to be reused.
      *
-     * @param edgeToUpdatePointer if it is negative then it will be saved to
-     * refToEdges
+     * @param edgeToUpdatePointer if it is negative then the nextEdgeId will be
+     * saved to refToEdges of nodes
      */
-    private void internalEdgeDisconnect(int edge, long edgeToUpdatePointer, int node) {
+    void internalEdgeDisconnect(int edge, long edgeToUpdatePointer, int baseNode, int adjNode) {
         long edgeToRemovePointer = (long) edge * edgeEntrySize;
         // an edge is shared across the two nodes even if the edge is not in both directions
-        // so we need to know two edge-pointers pointing to the edge before edgeToDeletePointer
-        int otherNode = getOtherNode(node, edgeToRemovePointer);
-        long linkPos = getLinkPosInEdgeArea(node, otherNode, edgeToRemovePointer);
-        int nextEdge = edges.getInt(linkPos);
+        // so we need to know two edge-pointers pointing to the edge before edgeToRemovePointer
+        int nextEdgeId = edges.getInt(getLinkPosInEdgeArea(baseNode, adjNode, edgeToRemovePointer));
         if (edgeToUpdatePointer < 0) {
-            nodes.setInt((long) node * nodeEntrySize, nextEdge);
+            nodes.setInt((long) baseNode * nodeEntrySize, nextEdgeId);
         } else {
-            long link = getLinkPosInEdgeArea(node, otherNode, edgeToUpdatePointer);
-            edges.setInt(link, nextEdge);
+            // adjNode is different for the edge we want to update with the new link
+            long link = edges.getInt(edgeToUpdatePointer + E_NODEA) == baseNode
+                    ? edgeToUpdatePointer + E_LINKA : edgeToUpdatePointer + E_LINKB;
+            edges.setInt(link, nextEdgeId);
         }
     }
 
@@ -793,15 +799,15 @@ public class GraphStorage implements Graph, Storable {
         // all deleted nodes could be connected to existing. remove the connections
         for (int toUpdateNode = toUpdatedSet.next(0); toUpdateNode >= 0; toUpdateNode = toUpdatedSet.next(toUpdateNode + 1)) {
             // remove all edges connected to the deleted nodes
-            EdgeIterable nodesConnectedToDelIter = (EdgeIterable) getEdges(toUpdateNode);
+            EdgeIterable adjNodesToDelIter = (EdgeIterable) getEdges(toUpdateNode);
             long prev = EdgeIterator.NO_EDGE;
-            while (nodesConnectedToDelIter.next()) {
-                int nodeId = nodesConnectedToDelIter.node();
+            while (adjNodesToDelIter.next()) {
+                int nodeId = adjNodesToDelIter.node();
                 if (removedNodes.contains(nodeId)) {
-                    int edgeToRemove = nodesConnectedToDelIter.edge();
-                    internalEdgeDisconnect(edgeToRemove, prev, toUpdateNode);
+                    int edgeToRemove = adjNodesToDelIter.edge();
+                    internalEdgeDisconnect(edgeToRemove, prev, toUpdateNode, adjNodesToDelIter.node());
                 } else
-                    prev = nodesConnectedToDelIter.edgePointer();
+                    prev = adjNodesToDelIter.edgePointer();
             }
         }
         toUpdatedSet.clear();

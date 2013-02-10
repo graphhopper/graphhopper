@@ -95,14 +95,14 @@ public class RoutingAlgorithmSpecialAreaTests {
     }
 
     public static Collection<RoutingAlgorithm> createAlgos(Graph g, boolean withCh) {
-        LevelGraph graphTowerNodesSC = (LevelGraph) g.copyTo(new GraphBuilder().levelGraphCreate());
-        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(graphTowerNodesSC);
-        prepare.doWork();
-        AStarBidirection astarSimpleSC = (AStarBidirection) prepare.createAStar();
-        astarSimpleSC.setApproximation(false);
+//        LevelGraph graphTowerNodesSC = (LevelGraph) g.copyTo(new GraphBuilder().levelGraphCreate());
+//        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(graphTowerNodesSC);
+//        prepare.doWork();
+//        AStarBidirection astarSimpleSC = (AStarBidirection) prepare.createAStar();
+//        astarSimpleSC.setApproximation(false);
         List<RoutingAlgorithm> algos = new ArrayList<RoutingAlgorithm>(Arrays.<RoutingAlgorithm>asList(
                 new AStar(g), new AStarBidirection(g), new DijkstraBidirectionRef(g),
-                new DijkstraBidirection(g), new DijkstraSimple(g), prepare.createAlgo(), astarSimpleSC));
+                new DijkstraBidirection(g), new DijkstraSimple(g)));
         if (withCh) {
             LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder().levelGraphCreate());
             PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().graph(graphCH);

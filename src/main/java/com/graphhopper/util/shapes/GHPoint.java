@@ -21,7 +21,7 @@ package com.graphhopper.util.shapes;
 /**
  * Yet another point class.
  *
- * @see CoordTrig <-- TODO remove this? -->
+ * @see CoordTrig remove this?
  * @author Peter Karich
  */
 public class GHPoint {

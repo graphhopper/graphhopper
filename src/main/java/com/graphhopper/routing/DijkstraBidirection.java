@@ -139,7 +139,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
     // a node from overlap may not be on the shortest path!!
-    // => when scanning an arc (v, w) in the forward search and w is scanned in the reverse 
+    // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder 
     //    search, update shortest = μ if df (v) + (v, w) + dr (w) < μ            
     boolean checkFinishCondition() {
         return currFromWeight + currToWeight >= shortest.weight;

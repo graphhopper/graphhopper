@@ -192,8 +192,8 @@ public class GraphUtility {
         EdgeSkipIterator iter = g.getOutgoing(nodeId);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next()) {
-            str += "  ->" + iter.node() + "(" + iter.skippedEdge() + " " + iter.edge() + ") \t"
-                    + BitUtil.toBitString(iter.flags(), 8) + "\n";
+            str += "  ->" + iter.node() + "(" + iter.skippedEdge1() + "," + iter.skippedEdge2() + ") "
+                    + iter.edge() + " \t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
         }
         return str;
     }
@@ -384,11 +384,19 @@ public class GraphUtility {
         return endNode;
     }
     public static final EdgeSkipIterator EMPTY = new EdgeSkipIterator() {
-        @Override public int skippedEdge() {
+        @Override public boolean isShortcut() {
+            return false;
+        }
+
+        @Override public int skippedEdge1() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
-        @Override public void skippedEdge(int node) {
+        @Override public int skippedEdge2() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override public void skippedEdges(int edge1, int edge2) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

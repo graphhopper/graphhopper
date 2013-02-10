@@ -18,7 +18,9 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.GraphUtility;
 
 /**
  * A Graph necessary for shortcut algorithms like Contraction Hierarchies. This
@@ -30,12 +32,14 @@ import com.graphhopper.util.EdgeSkipIterator;
  */
 public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
-    private final int I_SKIP_EDGE;
+    private final int I_SKIP_EDGE1;
+    private final int I_SKIP_EDGE2;
     private final int I_LEVEL;
 
     public LevelGraphStorage(Directory dir) {
         super(dir);
-        I_SKIP_EDGE = nextEdgeEntryIndex();
+        I_SKIP_EDGE1 = nextEdgeEntryIndex();
+        I_SKIP_EDGE2 = nextEdgeEntryIndex();
         I_LEVEL = nextNodeEntryIndex();
         initNodeAndEdgeEntrySize();
     }
@@ -61,9 +65,9 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     @Override public EdgeSkipIterator edge(int a, int b, double distance, int flags) {
         ensureNodeIndex(Math.max(a, b));
         int edgeId = internalEdgeAdd(a, b, distance, flags);
-        EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(edgeId, a, false, false);
+        EdgeSkipIterator iter = new EdgeSkipIteratorImpl(edgeId, a, false, false);
         iter.next();
-        iter.skippedEdge(-1);
+        iter.skippedEdges(EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
         return iter;
     }
 
@@ -94,13 +98,54 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
             super(edge, node, in, out);
         }
 
-        @Override public void skippedEdge(int edgeId) {
-            edges.setInt(edgePointer + I_SKIP_EDGE, edgeId);
+        @Override public void skippedEdges(int edge1, int edge2) {
+            if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2))
+                throw new IllegalStateException("Skipped edges of a shortcuts needs "
+                        + "to be both valid but wasn't " + edge1 + ", " + edge2);
+            edges.setInt(edgePointer + I_SKIP_EDGE1, edge1);
+            edges.setInt(edgePointer + I_SKIP_EDGE2, edge2);
         }
 
-        @Override public int skippedEdge() {
-            return edges.getInt(edgePointer + I_SKIP_EDGE);
+        @Override public int skippedEdge1() {
+            return edges.getInt(edgePointer + I_SKIP_EDGE1);
         }
+
+        @Override public int skippedEdge2() {
+            return edges.getInt(edgePointer + I_SKIP_EDGE2);
+        }
+
+        @Override public boolean isShortcut() {
+            return EdgeIterator.Edge.isValid(skippedEdge1());
+        }
+    }
+
+    /**
+     * Removes the edge in one direction. TODO hide this lower level API somehow
+     */
+    public int disconnect(EdgeIterator iter, long prevEdgePointer, boolean sameDirection) {
+        // open up package protected API for now ...
+        if (sameDirection)
+            internalEdgeDisconnect(iter.edge(), prevEdgePointer, iter.baseNode(), iter.node());
+        else {
+            // prevEdgePointer belongs to baseNode ... but now we need it for node()!
+            EdgeSkipIterator tmpIter = getEdges(iter.node());
+            int tmpPrevEdge = EdgeIterator.NO_EDGE;
+            boolean found = false;
+            while (tmpIter.next()) {
+                if (tmpIter.edge() == iter.edge()) {
+                    found = true;
+                    break;
+                }
+
+                tmpPrevEdge = tmpIter.edge();
+            }
+            if (found) {
+                // System.out.println("disconnect " + iter.node() + "->" + iter.baseNode() + " (" + iter.edge() + ") " + GraphUtility.count(getEdges(iter.node())));
+                internalEdgeDisconnect(iter.edge(), (long) tmpPrevEdge * edgeEntrySize, iter.node(), iter.baseNode());
+                // System.out.println(" .. " + GraphUtility.count(getEdges(iter.node())));
+            }
+        }
+        return iter.edge();
     }
 
     @Override
@@ -119,12 +164,21 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
             super(edge, nodeId);
         }
 
-        @Override public void skippedEdge(int node) {
-            edges.setInt(edgePointer + I_SKIP_EDGE, node);
+        @Override public void skippedEdges(int edge1, int edge2) {
+            edges.setInt(edgePointer + I_SKIP_EDGE1, edge1);
+            edges.setInt(edgePointer + I_SKIP_EDGE2, edge2);
         }
 
-        @Override public int skippedEdge() {
-            return edges.getInt(edgePointer + I_SKIP_EDGE);
+        @Override public int skippedEdge1() {
+            return edges.getInt(edgePointer + I_SKIP_EDGE1);
+        }
+
+        @Override public int skippedEdge2() {
+            return edges.getInt(edgePointer + I_SKIP_EDGE2);
+        }
+
+        @Override public boolean isShortcut() {
+            return EdgeIterator.Edge.isValid(skippedEdge1());
         }
     }
 }

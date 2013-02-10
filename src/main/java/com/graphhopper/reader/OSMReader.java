@@ -154,11 +154,6 @@ public class OSMReader {
         final String algoStr = args.get("osmreader.algo", "astar");
         osmReader.defaultAlgoPrepare(Helper.createAlgoPrepare(algoStr));
         osmReader.sort(args.getBool("osmreader.sortGraph", false));
-
-        // TODO LATER make this configurable in OSMReaderHelper
-        if (args.getBool("osmreader.towerNodesShortcuts", false))
-            throw new IllegalArgumentException("towerNodes are always automatically created");
-
         osmReader.setCHShortcuts(args.get("osmreader.chShortcuts", "no"));
         if (!osmReader.loadExisting()) {
             String strOsm = args.get("osmreader.osm", "");
@@ -230,7 +225,6 @@ public class OSMReader {
         }
 
         logger.info("calling prepare.doWork ... (" + Helper.getMemInfo() + ")");
-        // TODO at the moment a prepared levelgraph cannot be sorted, as otherwise edgeIds won't be copied+recognized
         if (prepare == null)
             defaultAlgoPrepare(Helper.createAlgoPrepare("astar"));
         else

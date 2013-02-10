@@ -44,7 +44,7 @@ public class TopologicalSorting {
         }
 
         int startingNode = 0;
-        // TODO in worst case 2*(|V|+|E|) traversals necessary. I feel it can be done more efficient
+        // In worst case 2*(|V|+|E|) traversals necessary. I feel it can be done more efficient
         // there was a solution with black and white markers ...
 
         final TIntHashSet noIncomingEdges = new TIntHashSet();

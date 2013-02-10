@@ -52,5 +52,5 @@ public interface LevelGraph extends Graph {
     EdgeSkipIterator getOutgoing(int nodeId);
 
     @Override
-    RawEdgeIterator allEdges();
+    RawEdgeIterator allEdges();    
 }

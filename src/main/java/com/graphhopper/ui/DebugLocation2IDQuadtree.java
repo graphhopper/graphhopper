@@ -40,7 +40,7 @@ class DebugLocation2IDQuadtree extends Location2IDQuadtree {
     public void setGraphics(Graphics2D g2) {
         this.g2 = g2;
         double w = getMaxRasterWidthKm();
-        System.out.println("w:" + w);
+        // System.out.println("w:" + w);
         double startLon = mg.getLon(0);
         double lat1 = mg.getLat(0);
         double lat2 = mg.getLat(500);

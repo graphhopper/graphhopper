@@ -24,6 +24,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
 import java.io.IOException;
+import java.util.Arrays;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -131,5 +132,21 @@ public class GraphStorageTest extends AbstractGraphTester {
         assertEquals(3, iter.nodeB());
 
         assertFalse(iter.next());
+    }
+
+    @Test
+    public void internalDisconnect() {
+        GraphStorage g = (GraphStorage) createGraph();
+        EdgeIterator iter0 = g.edge(0, 1, 10, true);
+        EdgeIterator iter1 = g.edge(1, 2, 10, true);
+        g.edge(0, 3, 10, true);
+
+        assertEquals(Arrays.asList(1, 3), GraphUtility.neighbors(g.getEdges(0)));
+        assertEquals(Arrays.asList(0, 2), GraphUtility.neighbors(g.getEdges(1)));
+        // remove edge "1-2" but only from 1
+        g.internalEdgeDisconnect(iter1.edge(), (long) iter0.edge() * g.edgeEntrySize, iter1.baseNode(), iter1.node());        
+        assertEquals(Arrays.asList(0), GraphUtility.neighbors(g.getEdges(1)));
+        // let 0 unchanged -> no side effects
+        assertEquals(Arrays.asList(1, 3), GraphUtility.neighbors(g.getEdges(0)));
     }
 }

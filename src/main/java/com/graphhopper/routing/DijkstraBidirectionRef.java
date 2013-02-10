@@ -23,11 +23,13 @@ import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
+import java.util.logging.Level;
 
 /**
  * Calculates extractPath path in bidirectional way.
@@ -145,7 +147,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
     // a node from overlap may not be on the extractPath path!!
-    // => when scanning an arc (v, w) in the forward search and w is scanned in the reverse 
+    // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder 
     //    search, update extractPath = μ if df (v) + (v, w) + dr (w) < μ            
     public boolean checkFinishCondition() {
         if (currFrom == null)

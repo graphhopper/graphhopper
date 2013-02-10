@@ -22,8 +22,10 @@ import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.StopWatch;
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.TIntList;
@@ -49,12 +51,12 @@ public class Path {
     protected long time;
     protected boolean found;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
-    protected boolean reverse = true;
+    protected boolean reverseOrder = true;
     protected EdgeEntry edgeEntry;
     protected StopWatch sw = new StopWatch("extract");
     private int fromNode = EdgeIterator.NO_EDGE;
     private TIntList edgeIds;
-    private PointList cachedPoints;    
+    private PointList cachedPoints;
 
     Path() {
         this(null, ShortestCarCalc.DEFAULT);
@@ -113,7 +115,7 @@ public class Path {
     }
 
     void reverseOrder() {
-        reverse = !reverse;
+        reverseOrder = !reverseOrder;
         edgeIds.reverse();
     }
 
@@ -158,7 +160,7 @@ public class Path {
         sw.stop();
         return found(true);
     }
-    
+
     public String debugInfo() {
         return sw.toString();
     }
@@ -202,7 +204,7 @@ public class Path {
             if (iter.isEmpty())
                 throw new IllegalStateException("Edge " + edgeIds.get(i)
                         + " was empty when requested with node " + tmpNode
-                        + ", edgeIndex:" + i + ", edges:" + edgeIds.size());
+                        + ", array index:" + i + ", edges:" + edgeIds.size());
             tmpNode = iter.baseNode();
             visitor.next(iter);
         }
@@ -288,12 +290,11 @@ public class Path {
 
     public String toDetailsString() {
         String str = "";
-        TIntList nodes = calcNodes();
-        for (int i = 0; i < nodes.size(); i++) {
+        for (int i = 0; i < edgeIds.size(); i++) {
             if (i > 0)
                 str += "->";
 
-            str += nodes.get(i);
+            str += edgeIds.get(i);
         }
         return toString() + ", " + str;
     }

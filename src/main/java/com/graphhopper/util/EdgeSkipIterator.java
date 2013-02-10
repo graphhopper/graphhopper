@@ -28,7 +28,11 @@ import com.graphhopper.storage.LevelGraph;
  */
 public interface EdgeSkipIterator extends EdgeIterator {
 
-    int skippedEdge();
+    int skippedEdge1();
 
-    void skippedEdge(int node);
+    int skippedEdge2();
+
+    void skippedEdges(int edge1, int edge2);
+
+    boolean isShortcut();
 }

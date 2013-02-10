@@ -85,7 +85,7 @@ public class MyList<T> {
      * 'null'!
      */
     private void trimTo(int toSize) {
-        // TODO should we shrink the array if toSize is too low?        
+        // should we shrink the array if toSize is too low?        
         ensureCapacity(toSize);
         // let the gc do its work
         for (int i = toSize; i < size; i++) {

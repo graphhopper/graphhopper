@@ -32,6 +32,7 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
@@ -54,8 +55,8 @@ import org.slf4j.LoggerFactory;
  * following is one of the more detailed:
  * http://web.cs.du.edu/~sturtevant/papers/highlevelpathfinding.pdf
  *
- * The only difference is that we use a skipped edgeId instead of skipped nodes
- * for faster unpacking.
+ * The only difference is that we use two skipped edges instead of one skipped
+ * node for faster unpacking.
  *
  * @author Peter Karich
  */
@@ -94,8 +95,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public PrepareContractionHierarchies doWork() {
         super.doWork();
         initFromGraph();
-        // TODO integrate PrepareRoutingShortcuts -> so avoid all nodes with negative level in the other methods        
-        // in PrepareShortcuts level 0 and -1 is already used move that to level 1 and 2 so that level 0 stays as uncontracted
         if (!prepareEdges())
             return this;
 
@@ -119,9 +118,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return c > 0;
     }
 
+    // TODO we can avoid node level if we store this into a temporary array and 
+    // disconnect all edges which goes from higher to lower level 
+    // => should already be satisfied => no edgeFilter necessary    
+    // uninitialized nodes have a level of 0
+    // TODO we could avoid the second storage for skippedEdge as we could store that info into linkB or A if it is disconnected
     boolean prepareNodes() {
         int len = g.nodes();
-        // minor idea: 1. sort nodes randomly and 2. pre-init with endNode degree
         for (int node = 0; node < len; node++) {
             refs[node] = new WeightedNode(node, 0);
         }
@@ -134,7 +137,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         if (sortedNodes.isEmpty())
             return false;
-
         return true;
     }
 
@@ -199,6 +201,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 if (neighborWn.priority != tmpOld) {
                     sortedNodes.update(nn, tmpOld, neighborWn.priority);
                 }
+                ((LevelGraphStorage) g).disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
             }
         }
         logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc + ", prioNodeCollection:" + sortedNodes);
@@ -243,7 +246,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         int contractedNeighbors = 0;
         EdgeSkipIterator iter = g.getEdges(v);
         while (iter.next()) {
-            if (EdgeIterator.Edge.isValid(iter.skippedEdge()))
+            if (iter.isShortcut())
                 contractedNeighbors++;
         }
 
@@ -254,7 +257,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return 10 * edgeDifference + 50 * originalEdgesCount + contractedNeighbors;
     }
 
-    Collection<Shortcut> getShortcuts() {
+    Collection<Shortcut> shortcuts() {
         return shortcuts;
     }
 
@@ -316,6 +319,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 n.endNode = w;
                 n.originalEdges = getOrigEdgeCount(iter2.edge());
                 n.distance = v_u_weight + iter2.distance();
+                n.edge = iter2.edge();
                 goalNodes.add(n);
 
                 if (maxWeight < n.distance)
@@ -334,8 +338,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return shortcuts;
     }
 
-    void internalFindShortcuts(List<NodeCH> goalNodes, int u, int skippedEdge) {
-        int uOrigEdgeCount = getOrigEdgeCount(skippedEdge);
+    void internalFindShortcuts(List<NodeCH> goalNodes, int u, int skippedEdge1) {
+        int uOrigEdgeCount = getOrigEdgeCount(skippedEdge1);
         for (NodeCH n : goalNodes) {
             if (n.entry != null) {
                 Path path = algo.extractPath(n.entry);
@@ -360,11 +364,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     if (tmp.from == u && tmp.to == n.endNode) {
                         found = true;
                         break;
-                    // different direction -> no shortcut, update
+                        // different direction -> no shortcut, update
                     } else if (tmp.from == n.endNode && tmp.to == u) {
                         tmp.flags = scBothDir;
                         found = true;
-                        break;                        
+                        break;
                     }
                     // new shortcut
                 }
@@ -373,7 +377,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 continue;
             Shortcut sc = new Shortcut(u, n.endNode, n.distance);
             shortcuts.add(sc);
-            sc.skippedEdge = skippedEdge;
+            sc.skippedEdge1 = skippedEdge1;
+            sc.skippedEdge2 = n.edge;
             sc.originalEdges = uOrigEdgeCount + n.originalEdges;
         }
     }
@@ -389,12 +394,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // check if we need to update some existing shortcut in the graph
             EdgeSkipIterator iter = g.getOutgoing(sc.from);
             while (iter.next()) {
-                if (EdgeIterator.Edge.isValid(iter.skippedEdge())
-                        && iter.node() == sc.to
+                if (iter.isShortcut() && iter.node() == sc.to
                         && CarStreetType.canBeOverwritten(iter.flags(), sc.flags)
                         && iter.distance() > sc.distance) {
                     iter.flags(sc.flags);
-                    iter.skippedEdge(sc.skippedEdge);
+                    iter.skippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                     iter.distance(sc.distance);
                     setOrigEdgeCount(iter.edge(), sc.originalEdges);
                     updatedInGraph = true;
@@ -404,7 +408,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             if (!updatedInGraph) {
                 iter = g.edge(sc.from, sc.to, sc.distance, sc.flags);
-                iter.skippedEdge(sc.skippedEdge);
+                iter.skippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                 setOrigEdgeCount(iter.edge(), sc.originalEdges);
                 newShortcuts++;
             }
@@ -560,7 +564,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         int from;
         int to;
-        int skippedEdge;
+        int skippedEdge1;
+        int skippedEdge2;
         double distance;
         int originalEdges;
         int flags = scOneDir;
@@ -580,8 +585,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         int endNode;
         int originalEdges;
+        int edge;
         EdgeEntry entry;
-        double distance;
+        double distance;        
 
         @Override public String toString() {
             return "" + endNode;

@@ -95,7 +95,8 @@ public class LevelGraphStorageTest extends GraphStorageTest {
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);
         EdgeSkipIterator tmpIter = g.edge(3, 4, 40, true);
-        assertEquals(-1, tmpIter.skippedEdge());
+        assertEquals(EdgeIterator.NO_EDGE, tmpIter.skippedEdge1());
+        assertEquals(EdgeIterator.NO_EDGE, tmpIter.skippedEdge2());
 
         // shortcut
         g.edge(0, 4, 40, true);
@@ -106,5 +107,32 @@ public class LevelGraphStorageTest extends GraphStorageTest {
         assertEquals(1, GraphUtility.count(iter));
         iter = g.getEdges(2);
         assertEquals(2, GraphUtility.count(iter));
+    }
+
+    @Test
+    public void testDisconnectEdge() {
+        LevelGraphStorage g = (LevelGraphStorage) createGraph();
+        g.edge(1, 2, 10, true);
+        g.edge(1, 0, 20, false);
+        g.edge(3, 1, 30, false);
+        EdgeIterator iter = g.getEdges(1);
+        iter.next();
+        assertEquals(2, iter.node());
+        assertEquals(1, GraphUtility.count(g.getOutgoing(2)));
+        g.disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
+        assertEquals(0, GraphUtility.count(g.getOutgoing(2)));
+
+        // even directed ways change!
+        assertTrue(iter.next());
+        assertEquals(0, iter.node());        
+        assertEquals(1, GraphUtility.count(g.getIncoming(0)));
+        g.disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
+        assertEquals(0, GraphUtility.count(g.getIncoming(0)));
+
+        iter.next();
+        assertEquals(3, iter.node());
+        assertEquals(1, GraphUtility.count(g.getOutgoing(3)));
+        g.disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
+        assertEquals(0, GraphUtility.count(g.getOutgoing(3)));        
     }
 }

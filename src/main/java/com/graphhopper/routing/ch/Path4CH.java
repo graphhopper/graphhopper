@@ -42,14 +42,7 @@ public class Path4CH extends PathBidirRef {
 
         // Shortcuts do only contain valid weight so first expand before adding
         // to distance and time
-        EdgeSkipIterator iter = (EdgeSkipIterator) mainIter;
-        if (EdgeIterator.Edge.isValid(iter.skippedEdge())) {
-            expandEdge(iter, false);
-        } else {
-            // only add if it is not a shortcut
-            calcWeight(mainIter);
-            addEdge(mainIter.edge());
-        }
+        expandEdge((EdgeSkipIterator) mainIter, false);
     }
 
     @Override
@@ -62,12 +55,14 @@ public class Path4CH extends PathBidirRef {
     }
 
     private void expandEdge(EdgeSkipIterator mainIter, boolean revert) {
-        int skippedEdge = mainIter.skippedEdge();
-        if (!EdgeIterator.Edge.isValid(skippedEdge)) {
+        if (!mainIter.isShortcut()) {
             calcWeight(mainIter);
             addEdge(mainIter.edge());
             return;
         }
+
+        int skippedEdge1 = mainIter.skippedEdge1();
+        int skippedEdge2 = mainIter.skippedEdge2();
         int from = mainIter.baseNode(), to = mainIter.node();
         if (revert) {
             int tmp = from;
@@ -75,47 +70,54 @@ public class Path4CH extends PathBidirRef {
             to = tmp;
         }
 
-        // 2 things => 2*2=4 sitations
-        // - one edge needs to be determined explicitely because we store only one as skippedEdge
-        // - getEdgeProps could possibly return an empty edge if the shortcuts is available for both directions
-        if (reverse) {
-            EdgeSkipIterator iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge, from);
-            if (iter.isEmpty()) {
-                iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge, to);
-                int skippedNode = iter.baseNode();
-                expandEdge(iter, false);
-                findSkippedEdge(from, skippedNode);
-            } else {
-                int skippedNode = iter.baseNode();
-                findSkippedEdge(skippedNode, to);
-                expandEdge(iter, true);
-            }
+        // - getEdgeProps could possibly return an empty edge if the shortcut is available for both directions
+        if (reverseOrder) {
+            EdgeSkipIterator iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge1, to);
+            boolean empty = iter.isEmpty();
+            if (empty)
+                iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge2, to);
+            expandEdge(iter, false);
+
+            if (empty)
+                iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge1, from);
+            else
+                iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge2, from);
+            expandEdge(iter, true);
         } else {
-            EdgeSkipIterator iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge, to);
-            if (iter.isEmpty()) {
-                iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge, from);
-                int skippedNode = iter.baseNode();
-                expandEdge(iter, true);
-                findSkippedEdge(skippedNode, to);
-            } else {
-                int skippedNode = iter.baseNode();
-                findSkippedEdge(from, skippedNode);
-                expandEdge(iter, false);
-            }
+            EdgeSkipIterator iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge1, from);
+            boolean empty = iter.isEmpty();
+            if (empty)
+                iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge2, from);
+            expandEdge(iter, true);
+
+            if (empty)
+                iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge1, to);
+            else
+                iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge2, to);
+            expandEdge(iter, false);
         }
     }
 
+    // No need for this method as long as we store both edges instead of just one
+    //
+    // The edge 5-9 contains the right edge as skipped edge => find the left one!
+    // @params are from=5 and to=7, keep in mind that we can get edges only upwards (level-wise)
+    //     _ 9
+    // 5 -/  /
+    //  \   /
+    //   \ /
+    //    7
     private void findSkippedEdge(int from, int to) {
-        EdgeSkipIterator iter = (EdgeSkipIterator) graph.getOutgoing(from);
+        EdgeSkipIterator iter = (EdgeSkipIterator) graph.getIncoming(to);
         double lowest = Double.MAX_VALUE;
         int edge = EdgeIterator.NO_EDGE;
         while (iter.next()) {
-            if (iter.node() == to && iter.distance() < lowest) {
+            if (iter.node() == from && iter.distance() < lowest) {
                 lowest = iter.distance();
                 edge = iter.edge();
             }
         }
         if (EdgeIterator.Edge.isValid(edge))
-            expandEdge((EdgeSkipIterator) graph.getEdgeProps(edge, to), false);
+            expandEdge((EdgeSkipIterator) graph.getEdgeProps(edge, from), false);
     }
 }

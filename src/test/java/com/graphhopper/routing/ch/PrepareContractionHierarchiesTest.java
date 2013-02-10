@@ -43,7 +43,6 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
- *
  * @author Peter Karich
  */
 public class PrepareContractionHierarchiesTest {
@@ -264,8 +263,7 @@ public class PrepareContractionHierarchiesTest {
         int old = GraphUtility.count(g.allEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        // PrepareTowerNodesShortcutsTest.printEdges(g);
-        assertEquals(old + 19, GraphUtility.count(g.allEdges()));
+        assertEquals(old + 20, GraphUtility.count(g.allEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.clear().calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());
@@ -274,22 +272,22 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testFindShortcuts_Roundabout() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
-        EdgeSkipIterator iter = g.edge(1, 3, 1, true);
-        g.edge(3, 4, 1, true);
-        EdgeSkipIterator iter2 = g.edge(4, 5, 1, false);
-        g.edge(5, 6, 1, false);
-        g.edge(6, 7, 1, true);
-        EdgeSkipIterator iter3 = g.edge(6, 8, 2, false);
+        EdgeSkipIterator iter1_1 = g.edge(1, 3, 1, true);
+        EdgeSkipIterator iter1_2 = g.edge(3, 4, 1, true);
+        EdgeSkipIterator iter2_1 = g.edge(4, 5, 1, false);
+        EdgeSkipIterator iter2_2 = g.edge(5, 6, 1, false);
+        EdgeSkipIterator iter3_1 = g.edge(6, 7, 1, true);
+        EdgeSkipIterator iter3_2 = g.edge(6, 8, 2, false);
         g.edge(8, 4, 1, false);
         g.setLevel(3, 3);
         g.setLevel(5, 5);
         g.setLevel(7, 7);
         g.setLevel(8, 8);
 
-        g.edge(1, 4, 2, PrepareContractionHierarchies.scBothDir).skippedEdge(iter.edge());
+        g.edge(1, 4, 2, PrepareContractionHierarchies.scBothDir).skippedEdges(iter1_1.edge(), iter1_2.edge());
         int f = PrepareContractionHierarchies.scOneDir;
-        g.edge(4, 6, 2, f).skippedEdge(iter2.edge());
-        g.edge(6, 4, 3, f).skippedEdge(iter3.edge());
+        g.edge(4, 6, 2, f).skippedEdges(iter2_1.edge(), iter2_2.edge());
+        g.edge(6, 4, 3, f).skippedEdges(iter3_1.edge(), iter3_2.edge());
 
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g).initFromGraph();
         // there should be two different shortcuts for both directions!
@@ -301,29 +299,29 @@ public class PrepareContractionHierarchiesTest {
         double dist = 1;
         int flags = CarStreetType.flags(30, false);
         g.edge(10, 0, w.getWeight(dist, flags), flags);
-        EdgeSkipIterator iter = g.edge(0, 1, w.getWeight(dist, flags), flags);
-        g.edge(1, 2, w.getWeight(dist, flags), flags);
-        g.edge(2, 3, w.getWeight(dist, flags), flags);
-        g.edge(3, 4, w.getWeight(dist, flags), flags);
-        g.edge(4, 5, w.getWeight(dist, flags), flags);
-        g.edge(5, 6, w.getWeight(dist, flags), flags);
+        EdgeSkipIterator iter1 = g.edge(0, 1, w.getWeight(dist, flags), flags);
+        EdgeSkipIterator iter2 = g.edge(1, 2, w.getWeight(dist, flags), flags);
+        EdgeSkipIterator iter3 = g.edge(2, 3, w.getWeight(dist, flags), flags);
+        EdgeSkipIterator iter4 = g.edge(3, 4, w.getWeight(dist, flags), flags);
+        EdgeSkipIterator iter5 = g.edge(4, 5, w.getWeight(dist, flags), flags);
+        EdgeSkipIterator iter6 = g.edge(5, 6, w.getWeight(dist, flags), flags);
         int f = PrepareContractionHierarchies.scOneDir;
 
-        int tmp = iter.edge();
-        iter = g.edge(0, 2, 2, f);
-        iter.skippedEdge(tmp);
-        tmp = iter.edge();
-        iter = g.edge(0, 3, 3, f);
-        iter.skippedEdge(tmp);
-        tmp = iter.edge();
-        iter = g.edge(0, 4, 4, f);
-        iter.skippedEdge(tmp);
-        tmp = iter.edge();
-        iter = g.edge(0, 5, 5, f);
-        iter.skippedEdge(tmp);
-        tmp = iter.edge();
-        iter = g.edge(0, 6, 6, f);
-        iter.skippedEdge(tmp);
+        int tmp = iter1.edge();
+        iter1 = g.edge(0, 2, 2, f);
+        iter1.skippedEdges(tmp, iter2.edge());
+        tmp = iter1.edge();
+        iter1 = g.edge(0, 3, 3, f);
+        iter1.skippedEdges(tmp, iter3.edge());
+        tmp = iter1.edge();
+        iter1 = g.edge(0, 4, 4, f);
+        iter1.skippedEdges(tmp, iter4.edge());
+        tmp = iter1.edge();
+        iter1 = g.edge(0, 5, 5, f);
+        iter1.skippedEdges(tmp, iter5.edge());
+        tmp = iter1.edge();
+        iter1 = g.edge(0, 6, 6, f);
+        iter1.skippedEdges(tmp, iter6.edge());
         g.setLevel(0, 10);
         g.setLevel(6, 9);
         g.setLevel(5, 8);
@@ -356,5 +354,20 @@ public class PrepareContractionHierarchiesTest {
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.distance(), 1e-1);
         assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());
+    }
+
+    @Test
+    public void testCircleBug() {
+        LevelGraph g = createGraph();
+        //  /--1
+        // -0--/
+        //  |
+        g.edge(0, 1, 10, true);
+        g.edge(0, 1, 4, true);
+        g.edge(0, 2, 10, true);
+        g.edge(0, 3, 10, true);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
+        prepare.doWork();
+        assertEquals(0, prepare.shortcuts().size());
     }
 }

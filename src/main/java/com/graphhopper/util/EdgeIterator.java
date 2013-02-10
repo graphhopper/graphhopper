@@ -51,10 +51,10 @@ public interface EdgeIterator {
     int edge();
 
     /**
-     * If you retrieve edges via "edgeIterator = graph.getEdges(nodeId)" then
-     * the returned node is identical to nodeId. Often only used instead of
-     * nodeId for convenience reasons. Do not confuse this with <i>source</i>
-     * node of a directed edge.
+     * Returns the node used to instantiate the EdgeIterator. Example:
+     * "EdgeIterator iter = graph.getEdges(baseNode)". Often only used for
+     * convenience reasons. Do not confuse this with a <i>source node</i> of a
+     * directed edge.
      *
      * @return the requested node itself
      * @see EdgeIterator
@@ -62,8 +62,7 @@ public interface EdgeIterator {
     int baseNode();
 
     /**
-     * @return the node id of the adjacent node (to baseNode) for the current
-     * edge.
+     * @return the adjacent node of baseNode for the current edge.
      * @see EdgeIterator
      */
     int node();
