@@ -23,13 +23,11 @@ import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
-import java.util.logging.Level;
 
 /**
  * Calculates extractPath path in bidirectional way.
@@ -160,11 +158,11 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     void fillEdges(EdgeEntry curr, MyBitSet visitedMain, PriorityQueue<EdgeEntry> prioQueue,
             TIntObjectMap<EdgeEntry> shortestWeightMap, boolean out) {
 
-        int currNodeFrom = curr.endNode;                
+        int currNodeFrom = curr.endNode;
         EdgeIterator iter = GraphUtility.getEdges(graph, currNodeFrom, out);
         if (edgeFilter != null)
             iter = edgeFilter.doFilter(iter);
-        
+
         while (iter.next()) {
             int neighborNode = iter.node();
             if (visitedMain.contains(neighborNode))
@@ -267,7 +265,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     /**
      * @return number of visited nodes.
      */
-    int calcVisited() {
+    int calcVisitedNodes() {
         return visitedFrom.cardinality() + visitedTo.cardinality();
     }
 

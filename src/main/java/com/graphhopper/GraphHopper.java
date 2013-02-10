@@ -209,13 +209,6 @@ public class GraphHopper implements GraphHopperAPI {
 
     @Override
     public GHResponse route(GHRequest request) {
-        if (chUsage) {
-            if (!request.algorithm().equals("dijkstrabi"))
-                throw new IllegalStateException("Only dijkstrabi is supported for levelgraph/CH! "
-                        + "TODO we could allow bidirectional astar");
-        } else
-            prepare = Helper.createAlgoPrepare(request.algorithm());
-
         request.check();
         StopWatch sw = new StopWatch().start();
         int from = index.findID(request.from().lat, request.from().lon);
@@ -223,10 +216,24 @@ public class GraphHopper implements GraphHopperAPI {
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
         sw = new StopWatch().start();
-        prepare.graph(graph);
-        RoutingAlgorithm algo = prepare.createAlgo();
+        RoutingAlgorithm algo;
+        if (chUsage) {
+            if (request.algorithm().equals("dijkstrabi"))
+                algo = prepare.createAlgo();
+            else if (request.algorithm().equals("astarbi"))
+                algo = ((PrepareContractionHierarchies) prepare).createAStar();
+            else
+                throw new IllegalStateException("Only dijkstrabi and astarbi is supported for levelgraph/CH!");
+        } else {
+            prepare = Helper.createAlgoPrepare(request.algorithm());
+            prepare.graph(graph);
+            algo = prepare.createAlgo();
+        }
+        debug += ", algoInit:" + sw.stop().getSeconds() + "s";
+
+        sw = new StopWatch().start();
         Path path = algo.calcPath(from, to);
-        debug += ", routing (" + algo.name() + "):" + sw.stop().getSeconds() + "s" 
+        debug += ", routing (" + algo.name() + "):" + sw.stop().getSeconds() + "s"
                 + ", " + path.debugInfo();
         PointList points = path.calcPoints();
         if (simplify) {

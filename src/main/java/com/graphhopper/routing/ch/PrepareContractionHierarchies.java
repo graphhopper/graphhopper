@@ -19,6 +19,7 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.coll.MySortedCollection;
+import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
@@ -482,6 +483,62 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // We disconnect a contracted node to a higher level one so no need for this filter
         // dijkstra.edgeFilter(new EdgeLevelFilter(g));
         return dijkstra;
+    }
+
+    public AStarBidirection createAStar() {
+        // do not change weight within AStarBidirection => so use ShortestCalc
+        AStarBidirection astar = new AStarBidirection(g) {
+            @Override protected void initCollections(int nodes) {
+                // algorithm with CH does not need that much memory pre allocated
+                super.initCollections(Math.min(10000, nodes));
+            }
+
+            @Override public boolean checkFinishCondition() {
+                // changed finish condition for CH
+                double tmp = shortest.weight() * approximationFactor;
+                if (currFrom == null)
+                    return currTo.weight >= tmp;
+                else if (currTo == null)
+                    return currFrom.weight >= tmp;
+                return currFrom.weight >= tmp && currTo.weight >= tmp;
+            }
+
+            @Override public RoutingAlgorithm type(WeightCalculation wc) {
+                throw new IllegalStateException("You'll need to change weightCalculation of preparation instead of algorithm!");
+            }
+
+            @Override protected PathBidirRef createPath() {
+                // CH changes the distance in prepareEdges to the weight
+                // now we need to transform it back to the real distance
+                WeightCalculation wc = new WeightCalculation() {
+                    @Override public String toString() {
+                        return "INVERSE";
+                    }
+
+                    @Override public double getMinWeight(double distance) {
+                        throw new IllegalStateException("getMinWeight not supported yet");
+                    }
+
+                    @Override public double getWeight(double distance, int flags) {
+                        return distance;
+                    }
+
+                    @Override public long getTime(double distance, int flags) {
+                        return prepareWeightCalc.getTime(revertWeight(distance, flags), flags);
+                    }
+
+                    @Override public double revertWeight(double weight, int flags) {
+                        return prepareWeightCalc.revertWeight(weight, flags);
+                    }
+                };
+                return new Path4CH(graph, wc);
+            }
+
+            @Override public String name() {
+                return "astarCH";
+            }
+        };
+        return astar;
     }
 
     // we need to use DijkstraSimple as AStar or DijkstraBidirection cannot be efficiently used with multiple goals

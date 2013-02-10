@@ -18,6 +18,9 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.AStarBidirection;
+import com.graphhopper.routing.DijkstraBidirection;
+import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.util.PointList;
@@ -47,11 +50,9 @@ public class TestAlgoCollector {
         if (!path.found()) {
             list.add(algo + " returns no path. from:" + from + ", to:" + to);
             return this;
-
-
         }
-        
-        PointList pointList = path.calcPoints();        
+
+        PointList pointList = path.calcPoints();
         // Yes, there are indeed real world instances where A-B-C is identical to A-C (in meter precision).
         // And for from:501620, to:155552 the node difference of astar to bi-dijkstra gets even bigger (7!).
         if (Math.abs(path.distance() - distance) > 10)

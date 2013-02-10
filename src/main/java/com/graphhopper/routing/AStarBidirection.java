@@ -33,11 +33,12 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 /**
- * This class implements a bidirectional A* algorithm. It is interesting to note that a
- * bidirectional dijkstra is far more efficient than a single direction one. The same does not hold
- * for a bidirectional A* as the finish condition can not be so strict which leads to either
- * suboptimal paths or suboptimal node exploration (too many nodes). Still very good approximations
- * with a rougly twice times faster running time than the normal A* can be reached.
+ * This class implements a bidirectional A* algorithm. It is interesting to note
+ * that a bidirectional dijkstra is far more efficient than a single direction
+ * one. The same does not hold for a bidirectional A* as the finish condition
+ * can not be so strict which leads to either suboptimal paths or suboptimal
+ * node exploration (too many nodes). Still very good approximations with a
+ * rougly twice times faster running time than the normal A* can be reached.
  *
  * Computing the Shortest Path: A∗ Search Meets Graph Theory ->
  * http://research.microsoft.com/apps/pubs/default.aspx?id=64511
@@ -47,12 +48,12 @@ import java.util.PriorityQueue;
  *
  * better stop condition
  *
- * 1. Ikeda, T., Hsu, M.-Y., Imai, H., Nishimura, S., Shimoura, H., Hashimoto, T., Tenmoku, K., and
- * Mitoh, K. (1994). A fast algorithm for finding better routes by ai search techniques. In VNIS,
- * pages 291–296.
+ * 1. Ikeda, T., Hsu, M.-Y., Imai, H., Nishimura, S., Shimoura, H., Hashimoto,
+ * T., Tenmoku, K., and Mitoh, K. (1994). A fast algorithm for finding better
+ * routes by ai search techniques. In VNIS, pages 291–296.
  *
- * 2. Whangbo, T. K. (2007). Efficient modified bidirectional a* algorithm for optimal route-
- * finding. In IEA/AIE, volume 4570, pages 344–353. Springer.
+ * 2. Whangbo, T. K. (2007). Efficient modified bidirectional a* algorithm for
+ * optimal route- finding. In IEA/AIE, volume 4570, pages 344–353. Springer.
  *
  * or could we even use this three phase approach?
  * www.lix.polytechnique.fr/~giacomon/papers/bidirtimedep.pdf
@@ -70,49 +71,55 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     private PriorityQueue<AStarEdge> prioQueueOpenSetTo;
     private TIntObjectMap<AStarEdge> shortestWeightMapTo;
     private boolean alreadyRun;
-    private AStarEdge currFrom;
-    private AStarEdge currTo;
+    protected AStarEdge currFrom;
+    protected AStarEdge currTo;
     private TIntObjectMap<AStarEdge> shortestWeightMapOther;
     private EdgeLevelFilter edgeFilter;
     public PathBidirRef shortest;
     private CoordTrig fromCoord;
     private CoordTrig toCoord;
-    private double approxFactor;
+    protected double approximationFactor;
 
     public AStarBidirection(Graph graph) {
         super(graph);
-        int locs = Math.max(20, graph.nodes());
-        visitedFrom = new MyBitSetImpl(locs);
-        prioQueueOpenSetFrom = new PriorityQueue<AStarEdge>(locs / 10);
-        shortestWeightMapFrom = new TIntObjectHashMap<AStarEdge>(locs / 10);
-
-        visitedTo = new MyBitSetImpl(locs);
-        prioQueueOpenSetTo = new PriorityQueue<AStarEdge>(locs / 10);
-        shortestWeightMapTo = new TIntObjectHashMap<AStarEdge>(locs / 10);
+        int nodes = Math.max(20, graph.nodes());
+        initCollections(nodes);
 
         clear();
         setApproximation(false);
     }
 
+    protected void initCollections(int size) {
+        visitedFrom = new MyBitSetImpl(size);
+        prioQueueOpenSetFrom = new PriorityQueue<AStarEdge>(size / 10);
+        shortestWeightMapFrom = new TIntObjectHashMap<AStarEdge>(size / 10);
+
+        visitedTo = new MyBitSetImpl(size);
+        prioQueueOpenSetTo = new PriorityQueue<AStarEdge>(size / 10);
+        shortestWeightMapTo = new TIntObjectHashMap<AStarEdge>(size / 10);
+    }
+
     /**
-     * @param fast if true it enables approximative distance calculation from lat,lon values
+     * @param fast if true it enables approximative distance calculation from
+     * lat,lon values
      */
     public AStarBidirection setApproximation(boolean approx) {
         if (approx) {
             dist = new DistanceCosProjection();
-            approxFactor = 0.5;
+            approximationFactor = 0.5;
         } else {
             dist = new DistanceCalc();
-            approxFactor = 1.15;
+            approximationFactor = 1.15;
         }
         return this;
     }
 
     /**
-     * Specify a low value like 0.5 for worse but faster results. Or over 1.1 for more precise.
+     * Specify a low value like 0.5 for worse but faster results. Or over 1.1
+     * for more precise.
      */
     public AStarBidirection setApproximationFactor(double approxFactor) {
-        this.approxFactor = approxFactor;
+        this.approximationFactor = approxFactor;
         return this;
     }
 
@@ -155,8 +162,8 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     }
 
     private Path checkIndenticalFromAndTo() {
-        if (from == to) 
-            return new Path(graph, weightCalc);        
+        if (from == to)
+            return new Path(graph, weightCalc);
         return null;
     }
 
@@ -201,7 +208,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     // d_f (v) + (v, w) + d_r (w) < μ + p_r(t)
     // where pi_r_of_t = p_r(t) = 1/2(pi_r(t) - pi_f(t) + pi_f(s)), and pi_f(t)=0
     public boolean checkFinishCondition() {
-        double tmp = shortest.weight * approxFactor;
+        double tmp = shortest.weight * approximationFactor;
         if (currFrom == null)
             return currTo.weightToCompare >= tmp;
         else if (currTo == null)
@@ -302,8 +309,12 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
             shortest.weight = newShortest;
         }
     }
-    
+
     @Override public String name() {
         return "astarbi";
+    }
+
+    int calcVisitedNodes() {
+        return visitedFrom.cardinality() + visitedTo.cardinality();
     }
 }
