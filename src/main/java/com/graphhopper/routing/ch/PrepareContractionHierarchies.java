@@ -479,7 +479,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 return "dijkstraCH";
             }
         };
-        dijkstra.edgeFilter(new EdgeLevelFilter(g));
+        // We disconnect a contracted node to a higher level one so no need for this filter
+        // dijkstra.edgeFilter(new EdgeLevelFilter(g));
         return dijkstra;
     }
 
@@ -587,7 +588,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         int originalEdges;
         int edge;
         EdgeEntry entry;
-        double distance;        
+        double distance;
 
         @Override public String toString() {
             return "" + endNode;

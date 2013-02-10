@@ -119,7 +119,8 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     }
 
     /**
-     * Removes the edge in one direction. TODO hide this lower level API somehow
+     * TODO hide this lower level API somehow. Removes the edge in one
+     * direction.
      */
     public int disconnect(EdgeIterator iter, long prevEdgePointer, boolean sameDirection) {
         // open up package protected API for now ...
