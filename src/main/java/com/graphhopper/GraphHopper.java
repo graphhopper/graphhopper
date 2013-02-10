@@ -218,6 +218,7 @@ public class GraphHopper implements GraphHopperAPI {
         sw = new StopWatch().start();
         RoutingAlgorithm algo;
         if (chUsage) {
+            prepare.graph(graph);
             if (request.algorithm().equals("dijkstrabi"))
                 algo = prepare.createAlgo();
             else if (request.algorithm().equals("astarbi"))

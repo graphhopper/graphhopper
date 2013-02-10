@@ -284,7 +284,7 @@ public class GraphUtility {
     }
 
     static Graph createSortedGraph(Graph g, Graph sortedGraph, final TIntList oldToNewNodeList) {
-        int len = oldToNewNodeList.size();
+        int len = oldToNewNodeList.size();        
         // important to avoid creating two edges for edges with both directions
         MyBitSet bitset = new MyBitSetImpl(len);
         for (int old = 0; old < len; old++) {
@@ -301,7 +301,8 @@ public class GraphUtility {
                     throw new IllegalStateException("empty entries should be connected to the others");
                 if (bitset.contains(newNodeIndex))
                     continue;
-                sortedGraph.edge(newIndex, newNodeIndex, eIter.distance(), eIter.flags());
+                sortedGraph.edge(newIndex, newNodeIndex, eIter.distance(), eIter.flags()).
+                        wayGeometry(eIter.wayGeometry());
             }
         }
         return sortedGraph;

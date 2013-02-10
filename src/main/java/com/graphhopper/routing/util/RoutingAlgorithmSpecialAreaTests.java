@@ -72,7 +72,7 @@ public class RoutingAlgorithmSpecialAreaTests {
                     + "Or use osmreader.chShortcuts=shortest and avoid the preparation");
 
         TestAlgoCollector testCollector = new TestAlgoCollector();
-        Collection<RoutingAlgorithm> algos = createAlgos(unterfrankenGraph, false);
+        Collection<RoutingAlgorithm> algos = createAlgos(unterfrankenGraph, true);
         for (RoutingAlgorithm algo : algos) {
             int failed = testCollector.list.size();
             testCollector.assertDistance(algo, idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 561.3, 20);
