@@ -120,8 +120,8 @@ public class RoutingAlgorithmSpecialAreaTests {
             if (algo instanceof DijkstraBidirectionRef)
                 algo = new PrepareContractionHierarchies().graph(unterfrankenGraph).createAlgo();
 //                algo = new PrepareTowerNodesShortcuts().graph(unterfrankenGraph).createAlgo();
-            else if (algo instanceof AStarBidirection)
-                algo = new PrepareTowerNodesShortcuts().graph(unterfrankenGraph).createAStar();
+//            else if (algo instanceof AStarBidirection)
+//                algo = new PrepareContractionHierarchies().graph(unterfrankenGraph).createAStar();
             else
                 // level graph accepts all algorithms but normally we want to use an optimized one
                 throw new IllegalStateException("algorithm which boosts query time for levelgraph not found " + algo);

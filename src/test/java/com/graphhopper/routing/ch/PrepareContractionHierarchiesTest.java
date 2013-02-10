@@ -25,7 +25,6 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies.NodeCH;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
 import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.FastestCarCalc;
-import com.graphhopper.routing.util.PrepareTowerNodesShortcutsTest;
 import com.graphhopper.routing.util.ShortestCarCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -35,6 +34,7 @@ import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.RawEdgeIterator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -125,7 +125,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testMoreComplexGraph() {
-        LevelGraph g = PrepareTowerNodesShortcutsTest.createShortcutsGraph();
+        LevelGraph g = initShortcutsGraph(createGraph());
         int old = GraphUtility.count(g.allEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
@@ -155,7 +155,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testDirectedGraph2() {
         LevelGraph g = createGraph();
-        PrepareTowerNodesShortcutsTest.initDirected2(g);
+        initDirected2(g);
         int old = GraphUtility.count(g.allEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
@@ -369,5 +369,110 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
         assertEquals(0, prepare.shortcuts().size());
+    }
+
+    // 0-1-2-3-4
+    // |     / |
+    // |    8  |
+    // \   /   /
+    //  7-6-5-/
+    void initBiGraph(Graph graph) {
+        graph.edge(0, 1, 100, true);
+        graph.edge(1, 2, 1, true);
+        graph.edge(2, 3, 1, true);
+        graph.edge(3, 4, 1, true);
+        graph.edge(4, 5, 25, true);
+        graph.edge(5, 6, 25, true);
+        graph.edge(6, 7, 5, true);
+        graph.edge(7, 0, 5, true);
+        graph.edge(3, 8, 20, true);
+        graph.edge(8, 6, 20, true);
+    }
+
+    // 0-1-.....-9-10
+    // |         ^   \
+    // |         |    |
+    // 17-16-...-11<-/
+    public static void initDirected2(Graph g) {
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(4, 5, 1, true);
+        g.edge(5, 6, 1, true);
+        g.edge(6, 7, 1, true);
+        g.edge(7, 8, 1, true);
+        g.edge(8, 9, 1, true);
+        g.edge(9, 10, 1, true);
+        g.edge(10, 11, 1, false);
+        g.edge(11, 12, 1, true);
+        g.edge(11, 9, 3, false);
+        g.edge(12, 13, 1, true);
+        g.edge(13, 14, 1, true);
+        g.edge(14, 15, 1, true);
+        g.edge(15, 16, 1, true);
+        g.edge(16, 17, 1, true);
+        g.edge(17, 0, 1, true);
+    }
+
+    //       8
+    //       |
+    //    6->0->1->3->7
+    //    |        |
+    //    |        v
+    //10<-2---4<---5
+    //    9
+    public static void initDirected1(Graph g) {
+        g.edge(0, 8, 1, true);
+        g.edge(0, 1, 1, false);
+        g.edge(1, 3, 1, false);
+        g.edge(3, 7, 1, false);
+        g.edge(3, 5, 1, false);
+        g.edge(5, 4, 1, false);
+        g.edge(4, 2, 1, true);
+        g.edge(2, 9, 1, false);
+        g.edge(2, 10, 1, false);
+        g.edge(2, 6, 1, true);
+        g.edge(6, 0, 1, false);
+    }
+
+    // prepare-routing.svg
+    public static LevelGraph initShortcutsGraph(LevelGraph g) {
+        g.edge(0, 1, 1, true);
+        g.edge(0, 2, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1, true);
+        g.edge(1, 4, 1, true);
+        g.edge(2, 9, 1, true);
+        g.edge(9, 3, 1, true);
+        g.edge(10, 3, 1, true);
+        g.edge(4, 5, 1, true);
+        g.edge(5, 6, 1, true);
+        g.edge(6, 7, 1, true);
+        g.edge(7, 8, 1, true);
+        g.edge(8, 9, 1, true);
+        g.edge(4, 11, 1, true);
+        g.edge(9, 14, 1, true);
+        g.edge(10, 14, 1, true);
+        g.edge(11, 12, 1, true);
+        g.edge(12, 15, 1, true);
+        g.edge(12, 13, 1, true);
+        g.edge(13, 16, 1, true);
+        g.edge(15, 16, 2, true);
+        g.edge(14, 16, 1, true);
+        return g;
+    }
+
+    public static void printEdges(LevelGraph g) {
+        RawEdgeIterator iter = g.allEdges();
+        while (iter.next()) {
+            EdgeSkipIterator single = g.getEdgeProps(iter.edge(), iter.nodeB());
+            System.out.println(iter.nodeA() + "<->" + iter.nodeB() + " \\"
+                    + single.skippedEdge1() + "," + single.skippedEdge2() + " (" + iter.edge() + ")"
+                    + ", dist: " + (float) iter.distance()
+                    + ", level:" + g.getLevel(iter.nodeA()) + "<->" + g.getLevel(iter.nodeB())
+                    + ", bothDir:" + CarStreetType.isBoth(iter.flags()));
+        }
+        System.out.println("---");
     }
 }

@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
-import com.graphhopper.util.GraphUtility;
 
 /**
  * A Graph necessary for shortcut algorithms like Contraction Hierarchies. This
