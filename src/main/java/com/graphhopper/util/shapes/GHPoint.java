@@ -24,7 +24,7 @@ package com.graphhopper.util.shapes;
  * @see CoordTrig remove this?
  * @author Peter Karich
  */
-public class GHPoint {
+ public class GHPoint {
 
     public double lat;
     public double lon;
