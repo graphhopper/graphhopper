@@ -48,7 +48,7 @@ public class GHRequest {
         this.to = endPoint;
     }
 
-    void check() {
+    public void check() {
         if (from == null)
             throw new IllegalStateException("the 'from' point needs to be initialized but was null");
         if (to == null)

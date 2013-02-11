@@ -45,8 +45,8 @@ public class GHResponse {
         return distance;
     }
 
-    public GHResponse time(long time) {
-        this.time = time;
+    public GHResponse time(long timeInMillis) {
+        this.time = timeInMillis;
         return this;
     }
 

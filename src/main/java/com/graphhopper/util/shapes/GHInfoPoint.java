@@ -5,7 +5,7 @@ package com.graphhopper.util.shapes;
  */
 public class GHInfoPoint extends GHPoint {
 
-    private String name;
+    private String name = "";
 
     public GHInfoPoint(double lat, double lon) {
         super(lat, lon);
