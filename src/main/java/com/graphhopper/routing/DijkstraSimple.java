@@ -106,12 +106,17 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
     public Path extractPath(EdgeEntry goalEdge) {
         return new Path(graph, weightCalc).edgeEntry(goalEdge).extract();
     }
-    
+
     protected EdgeIterator neighbors(int neighborNode) {
         return graph.getOutgoing(neighborNode);
     }
 
     @Override public String name() {
         return "dijkstra";
+    }
+
+    @Override
+    public int calcVisitedNodes() {
+        return visited.cardinality();
     }
 }

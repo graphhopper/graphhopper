@@ -128,7 +128,8 @@ public class AStar extends AbstractRoutingAlgorithm {
         return currEdge.endNode == to;
     }
 
-    int getVisited() {
+    @Override
+    public int calcVisitedNodes() {
         return closedSet.cardinality();
     }
 

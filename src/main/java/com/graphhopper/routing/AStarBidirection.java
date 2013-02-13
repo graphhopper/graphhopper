@@ -314,7 +314,8 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         return "astarbi";
     }
 
-    int calcVisitedNodes() {
+    @Override
+    public int calcVisitedNodes() {
         return visitedFrom.cardinality() + visitedTo.cardinality();
     }
 }

@@ -219,7 +219,8 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         return true;
     }
 
-    int getVisited() {
+    @Override
+    public int calcVisitedNodes() {
         return visitedFrom.cardinality() + visitedTo.cardinality();
     }
 

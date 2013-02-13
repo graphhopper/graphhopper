@@ -265,7 +265,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     /**
      * @return number of visited nodes.
      */
-    int calcVisitedNodes() {
+    @Override
+    public int calcVisitedNodes() {
         return visitedFrom.cardinality() + visitedTo.cardinality();
     }
 

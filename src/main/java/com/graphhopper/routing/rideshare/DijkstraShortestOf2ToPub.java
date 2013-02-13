@@ -58,6 +58,8 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
     private TIntObjectMap<EdgeEntry> shortestDistMapOther;
     private TIntObjectMap<EdgeEntry> shortestDistMapFrom;
     private TIntObjectMap<EdgeEntry> shortestDistMapTo;
+    private MyBitSet visitedFrom;
+    private MyBitSet visitedTo;
 
     public DijkstraShortestOf2ToPub(Graph graph) {
         super(graph);
@@ -81,7 +83,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         fromP1 = from;
         return this;
     }
-    
+
     public DijkstraShortestOf2ToPub to(int to) {
         toP2 = to;
         return this;
@@ -92,13 +94,13 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         if (pubTransport.contains(fromP1) || pubTransport.contains(toP2))
             return new DijkstraBidirection(graph).calcPath(fromP1, toP2);
 
-        MyBitSet visitedFrom = new MyBitSetImpl(graph.nodes());
+        visitedFrom = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
         EdgeEntry entryTo = new EdgeEntry(EdgeIterator.NO_EDGE, toP2, 0);
         currTo = entryTo;
-        MyBitSet visitedTo = new MyBitSetImpl(graph.nodes());
+        visitedTo = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
 
@@ -139,7 +141,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
                 throw new IllegalStateException("Shortest Path not found? " + fromP1 + " " + toP2);
         }
 
-        Path p = shortest.extract();        
+        Path p = shortest.extract();
         // TODO if path directly from P1 to P2 is shorter
         return p;
     }
@@ -217,5 +219,10 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
     @Override
     public RoutingAlgorithm clear() {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public int calcVisitedNodes() {
+        return visitedFrom.cardinality() + visitedTo.cardinality();
     }
 }

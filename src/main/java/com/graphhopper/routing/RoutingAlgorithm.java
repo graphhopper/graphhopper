@@ -53,4 +53,9 @@ public interface RoutingAlgorithm {
      * @return name of this algorithm
      */
     String name();
+
+    /**
+     * Returns the visited nodes after searching. Useful for debugging.
+     */
+    int calcVisitedNodes();
 }

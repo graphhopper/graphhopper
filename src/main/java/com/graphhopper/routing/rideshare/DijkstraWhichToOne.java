@@ -34,10 +34,11 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 /**
- * Public transport represents a collection of Locations. Now it is the aim to find the shortest
- * path of a path ('the public transport') to the destination. In contrast to manyToOne this class
- * only find one shortest path and not all, but it it more memory efficient (ie. the
- * shortest-path-trees do not overlap here)
+ * Public transport represents a collection of Locations. Now it is the aim to
+ * find the shortest path of a path ('the public transport') to the destination.
+ * In contrast to manyToOne this class only find one shortest path and not all,
+ * but it it more memory efficient (ie. the shortest-path-trees do not overlap
+ * here)
  *
  * @author Peter Karich,
  */
@@ -49,6 +50,8 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     private TIntObjectMap<EdgeEntry> shortestDistMapTo;
     private TIntArrayList pubTransport = new TIntArrayList();
     private int destination;
+    private MyBitSet visitedFrom;
+    private MyBitSet visitedTo;
 
     public DijkstraWhichToOne(Graph graph) {
         super(graph);
@@ -77,13 +80,13 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         if (pubTransport.contains(destination))
             return new Path(graph, weightCalc);
 
-        MyBitSet visitedFrom = new MyBitSetImpl(graph.nodes());
+        visitedFrom = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
         EdgeEntry entryTo = new EdgeEntry(EdgeIterator.NO_EDGE, destination, 0);
         EdgeEntry currTo = entryTo;
-        MyBitSet visitedTo = new MyBitSetImpl(graph.nodes());
+        visitedTo = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
         shortestDistMapTo.put(destination, entryTo);
@@ -191,5 +194,10 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     public RoutingAlgorithm clear() {
         throw new UnsupportedOperationException("Not supported yet.");
         // shortest = new PathWrapperRef();
+    }
+
+    @Override
+    public int calcVisitedNodes() {
+        return visitedFrom.cardinality() + visitedTo.cardinality();
     }
 }
