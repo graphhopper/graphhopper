@@ -366,15 +366,9 @@ public class Helper {
             System.err.println("GraphHopper Initialization WARNING: cannot get version!?");
         } else {
             // throw away the "-SNAPSHOT"
-            int major = -1, minor = -1;
-            try {
-                major = Integer.parseInt(version.substring(0, indexP));
-                minor = Integer.parseInt(version.substring(indexP + 1, indexM));
-            } catch (Exception ex) {
-                System.err.println("GraphHopper Initialization WARNING: cannot parse version!? " + ex.getMessage());
-            }
+            String tmp = version.substring(0, indexM);            
             SNAPSHOT = version.toLowerCase().contains("-snapshot");
-            VERSION = major + "." + minor;
+            VERSION = tmp;
         }
     }
 
