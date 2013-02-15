@@ -202,6 +202,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 if (neighborWn.priority != tmpOld) {
                     sortedNodes.update(nn, tmpOld, neighborWn.priority);
                 }
+                
+                // Disconnect is very important to massivly speed up query time on mobile devices
+                // It removes the edge going from the higher level node iter.node() to the current contracted one wn.node
                 ((LevelGraphStorage) g).disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
             }
         }
