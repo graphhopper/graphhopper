@@ -287,7 +287,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         @Override public boolean accept() {
             // ignore if it is skipNode or a endNode already contracted
-            return avoidNode != node() && graph.getLevel(node()) == 0;
+            int node = node();
+            return avoidNode != node && graph.getLevel(node) == 0;
         }
     }
 
@@ -601,7 +602,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         }
 
         @Override public String name() {
-            return "dijkstra12Many";
+            return "dijkstraOne2Many";
         }
     }
 
