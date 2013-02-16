@@ -32,6 +32,7 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.RawEdgeIterator;
@@ -368,7 +369,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(0, 3, 10, true);
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(0, prepare.shortcuts().size());
+        assertEquals(0, prepare.shortcuts());
     }
 
     // 0-1-2-3-4
@@ -474,5 +475,15 @@ public class PrepareContractionHierarchiesTest {
                     + ", bothDir:" + CarStreetType.isBoth(iter.flags()));
         }
         System.out.println("---");
+    }
+
+    @Test
+    public void testBits() {
+        int fromNode = Integer.MAX_VALUE / 3 * 2;
+        int endNode = Integer.MAX_VALUE / 37 * 17;
+
+        long edgeId = (long) fromNode << 32 | endNode;
+        assertEquals((BitUtil.toBitString(edgeId)),
+                BitUtil.toBitString(fromNode, 32) + BitUtil.toBitString(endNode, 32));
     }
 }

@@ -108,7 +108,7 @@ public class RoutingAlgorithmSpecialAreaTests {
             PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().graph(graphCH);
             prepareCH.doWork();
             algos.add(prepareCH.createAlgo());
-            algos.add(prepareCH.createAStar().setApproximation(true).setApproximationFactor(0.1));
+            algos.add(prepareCH.createAStar().setApproximation(true).setApproximationFactor(.9));
         }
         return algos;
     }

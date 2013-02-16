@@ -38,13 +38,14 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.StopWatch;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,11 +74,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
     static final int scOneDir = CarStreetType.flags(0, false);
     static final int scBothDir = CarStreetType.flags(0, true);
-    private Collection<Shortcut> shortcuts = new ArrayList<Shortcut>();
+    private Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
+    private List<NodeCH> goalNodes = new ArrayList<NodeCH>();
     private EdgeLevelFilterCH edgeFilter;
     private OneToManyDijkstraCH algo;
     private int updateSize;
     private boolean removesHigher2LowerEdges = true;
+    private long visitedNodes = 0;
+    private long counter;
+    private int newShortcuts;
 
     public PrepareContractionHierarchies() {
         prepareWeightCalc = ShortestCarCalc.DEFAULT;
@@ -162,10 +167,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     void contractNodes() {
         int level = 1;
-        int newShortcuts = 0;
+        counter = 0;
         if (updateSize <= 0)
             updateSize = Math.max(10, sortedNodes.size() / 10);
-        int counter = 0;
+
         int updateCounter = 0;
         StopWatch sw = new StopWatch();
         // no update all => 600k shortcuts and 3min
@@ -205,6 +210,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             // contract!            
             newShortcuts += addShortcuts(wn.node);
+
+//            logger.info(counter + " level:" + level
+//                    + ", sc:" + newShortcuts
+//                    + ", visited:" + visitedNodes
+//                    + ", prio:" + wn.priority
+//                    + ", goalSum:" + goalSum + ", goalCounter:" + goalCounter
+//                    + ", peekVal:" + (!sortedNodes.isEmpty() ? sortedNodes.peekValue() : -1)
+//                    + ", size:" + sortedNodes.size());
+
             g.setLevel(wn.node, level);
             level++;
 
@@ -228,6 +242,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
         }
         logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc);
+    }
+
+    int shortcuts() {
+        return newShortcuts;
     }
 
     /**
@@ -279,10 +297,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return 10 * edgeDifference + 50 * originalEdgesCount + contractedNeighbors;
     }
 
-    Collection<Shortcut> shortcuts() {
-        return shortcuts;
-    }
-
     PrepareContractionHierarchies initFromGraph() {
         originalEdges = new TIntArrayList(g.nodes() / 2, -1);
         edgeFilter = new EdgeLevelFilterCH(this.g);
@@ -316,7 +330,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
      */
     Collection<Shortcut> findShortcuts(int v) {
         // we can use distance instead of weight, see prepareEdges where distance is overwritten by weight!
-        List<NodeCH> goalNodes = new ArrayList<NodeCH>();
+        goalNodes.clear();
         shortcuts.clear();
         EdgeIterator iter1 = g.getIncoming(v);
         // TODO PERFORMANCE collect outgoing nodes (goal-nodes) only once and just skip u
@@ -327,7 +341,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 continue;
 
             double v_u_weight = iter1.distance();
-
             // one-to-many extractPath path
             goalNodes.clear();
             EdgeIterator iter2 = g.getOutgoing(v);
@@ -358,10 +371,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             algo.setLimit(maxWeight).calcPath(u, goalNodes);
             internalFindShortcuts(goalNodes, u, iter1.edge());
         }
-        return shortcuts;
+        return shortcuts.keySet();
     }
 
-    void internalFindShortcuts(List<NodeCH> goalNodes, int u, int skippedEdge1) {
+    void internalFindShortcuts(List<NodeCH> goalNodes, int fromNode, int skippedEdge1) {
         int uOrigEdgeCount = getOrigEdgeCount(skippedEdge1);
         for (NodeCH n : goalNodes) {
             if (n.entry != null) {
@@ -380,26 +393,19 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // minor improvement: if (shortcuts.containsKey((long) n.endNode * refs.length + u)) 
             // then two shortcuts with the same nodes (u<->n.endNode) exists => check current shortcut against both
 
-            boolean found = false;
-            for (Shortcut tmp : shortcuts) {
-                if (NumHelper.equals(n.distance, tmp.distance)) {
-                    // same direction -> no shortcut, no update
-                    if (tmp.from == u && tmp.to == n.endNode) {
-                        found = true;
-                        break;
-                        // different direction -> no shortcut, update
-                    } else if (tmp.from == n.endNode && tmp.to == u) {
-                        tmp.flags = scBothDir;
-                        found = true;
-                        break;
-                    }
-                    // new shortcut
+            Shortcut sc = new Shortcut(fromNode, n.endNode, n.distance);
+            if (shortcuts.containsKey(sc))
+                continue;
+            else {
+                Shortcut tmpSc = new Shortcut(n.endNode, fromNode, n.distance);
+                Shortcut tmpRetSc = shortcuts.get(tmpSc);
+                if (tmpRetSc != null) {
+                    tmpRetSc.flags = scBothDir;
+                    continue;
                 }
             }
-            if (found)
-                continue;
-            Shortcut sc = new Shortcut(u, n.endNode, n.distance);
-            shortcuts.add(sc);
+
+            shortcuts.put(sc, sc);
             sc.skippedEdge1 = skippedEdge1;
             sc.skippedEdge2 = n.edge;
             sc.originalEdges = uOrigEdgeCount + n.originalEdges;
@@ -411,7 +417,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
      */
     int addShortcuts(int v) {
         Collection<Shortcut> foundShortcuts = findShortcuts(v);
-        int newShortcuts = 0;
+        int tmpNewShortcuts = 0;
         for (Shortcut sc : foundShortcuts) {
             boolean updatedInGraph = false;
             // check if we need to update some existing shortcut in the graph
@@ -433,10 +439,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 iter = g.edge(sc.from, sc.to, sc.distance, sc.flags);
                 iter.skippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                 setOrigEdgeCount(iter.edge(), sc.originalEdges);
-                newShortcuts++;
+                tmpNewShortcuts++;
             }
         }
-        return newShortcuts;
+        return tmpNewShortcuts;
     }
 
     private void setOrigEdgeCount(int index, int value) {
@@ -658,6 +664,26 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             this.from = from;
             this.to = to;
             this.distance = dist;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 23 * hash + from;
+            hash = 23 * hash + to;
+            return 23 * hash
+                    + (int) (Double.doubleToLongBits(this.distance) ^ (Double.doubleToLongBits(this.distance) >>> 32));
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null || getClass() != obj.getClass())
+                return false;
+            final Shortcut other = (Shortcut) obj;
+            if (this.from != other.from || this.to != other.to)
+                return false;
+
+            return Double.doubleToLongBits(this.distance) == Double.doubleToLongBits(other.distance);
         }
 
         @Override public String toString() {
