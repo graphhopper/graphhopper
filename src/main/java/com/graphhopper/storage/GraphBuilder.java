@@ -102,4 +102,14 @@ public class GraphBuilder {
     public GraphStorage create() {
         return build().createNew(size);
     }
+
+    /**
+     * @throws IllegalStateException if not loadable.
+     */
+    public GraphStorage load() {
+        GraphStorage gs = build();
+        if (!gs.loadExisting())
+            throw new IllegalStateException("Cannot load graph " + location);
+        return gs;
+    }
 }

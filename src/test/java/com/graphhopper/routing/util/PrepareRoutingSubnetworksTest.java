@@ -81,7 +81,7 @@ public class PrepareRoutingSubnetworksTest {
         Graph g = createSubnetworkTestGraph();
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g);
         Map<Integer, Integer> map = instance.findSubnetworks();
-        instance.keepLargestNetwork(map);
+        instance.keepLargeNetwork(map);
         g.optimize();
 
         assertEquals(7, g.nodes());

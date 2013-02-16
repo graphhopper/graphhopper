@@ -30,8 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Removes nodes which are not part of the largest network. Ie. mostly nodes with no edges at all
- * but also small subnetworks which are nearly always bugs in OSM data.
+ * Removes nodes which are not part of the largest network. Ie. mostly nodes
+ * with no edges at all but also small subnetworks which are nearly always bugs
+ * in OSM data.
  *
  * @author Peter Karich
  */
@@ -39,16 +40,22 @@ public class PrepareRoutingSubnetworks {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final Graph g;
+    private int minNetworkSize = 10000;
     private int subNetworks = -1;
 
     public PrepareRoutingSubnetworks(Graph g) {
         this.g = g;
     }
 
+    public PrepareRoutingSubnetworks minNetworkSize(int minNetworkSize) {
+        this.minNetworkSize = minNetworkSize;
+        return this;
+    }       
+
     public void doWork() {
         int del = removeZeroDegreeNodes();
         Map<Integer, Integer> map = findSubnetworks();
-        keepLargestNetwork(map);
+        keepLargeNetwork(map);
         logger.info("optimize to remove subnetworks(" + map.size() + "), zero-degree-nodes(" + del + ")");
         g.optimize();
         subNetworks = map.size();
@@ -93,25 +100,26 @@ public class PrepareRoutingSubnetworks {
     /**
      * Deletes all but the larges subnetworks.
      */
-    void keepLargestNetwork(Map<Integer, Integer> map) {
+    void keepLargeNetwork(Map<Integer, Integer> map) {
         if (map.size() < 2)
             return;
 
         int biggestStart = -1;
-        int count = -1;
+        int maxCount = -1;
         MyBitSetImpl bs = new MyBitSetImpl(g.nodes());
         for (Entry<Integer, Integer> e : map.entrySet()) {
             if (biggestStart < 0) {
                 biggestStart = e.getKey();
-                count = e.getValue();
+                maxCount = e.getValue();
                 continue;
             }
 
-            if (count < e.getValue()) {
-                removeNetwork(biggestStart, e.getValue(), bs);
+            if (maxCount < e.getValue()) {
+                // new biggest area found. remove old
+                removeNetwork(biggestStart, maxCount, bs);
 
                 biggestStart = e.getKey();
-                count = e.getValue();
+                maxCount = e.getValue();
             } else
                 removeNetwork(e.getKey(), e.getValue(), bs);
         }
@@ -121,6 +129,10 @@ public class PrepareRoutingSubnetworks {
      * Deletes the complete subnetwork reachable through start
      */
     void removeNetwork(int start, int entries, final MyBitSet bs) {
+        if (entries > minNetworkSize) {
+            logger.info("did not remove large network (" + entries + ")");
+            return;
+        }
         new XFirstSearch() {
             @Override protected MyBitSet createBitSet(int size) {
                 return bs;
@@ -138,7 +150,8 @@ public class PrepareRoutingSubnetworks {
     }
 
     /**
-     * To avoid large processing and a large HashMap remove nodes with no edges up front
+     * To avoid large processing and a large HashMap remove nodes with no edges
+     * up front
      *
      * @return removed nodes
      */
