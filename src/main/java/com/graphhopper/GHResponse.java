@@ -45,11 +45,14 @@ public class GHResponse {
         return distance;
     }
 
-    public GHResponse time(long timeInMillis) {
-        this.time = timeInMillis;
+    public GHResponse time(long timeInSec) {
+        this.time = timeInSec;
         return this;
     }
 
+    /**
+     * @return time in seconds
+     */
     public long time() {
         return time;
     }

@@ -76,6 +76,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private Collection<Shortcut> shortcuts = new ArrayList<Shortcut>();
     private EdgeLevelFilterCH edgeFilter;
     private OneToManyDijkstraCH algo;
+    private int updateSize;
+    private boolean removesHigher2LowerEdges = true;
 
     public PrepareContractionHierarchies() {
         prepareWeightCalc = ShortestCarCalc.DEFAULT;
@@ -89,6 +91,23 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     public PrepareContractionHierarchies type(WeightCalculation weightCalc) {
         this.prepareWeightCalc = weightCalc;
+        return this;
+    }
+
+    public PrepareContractionHierarchies updateSize(int updateSize) {
+        this.updateSize = updateSize;
+        return this;
+    }
+
+    /**
+     * Disconnect is very important to massivly speed up query time on mobile
+     * devices. If enabled it will remove the edge going from the higher level
+     * node to the currently contracted one. If enabled the original graph is no
+     * longer available, so it is only useful for bidirectional CH algorithms.
+     * Default is true.
+     */
+    public PrepareContractionHierarchies removeHigher2LowerEdges(boolean removeHigher2LowerEdges) {
+        this.removesHigher2LowerEdges = removeHigher2LowerEdges;
         return this;
     }
 
@@ -144,7 +163,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     void contractNodes() {
         int level = 1;
         int newShortcuts = 0;
-        final int updateSize = Math.max(10, sortedNodes.size() / 10);
+        if (updateSize <= 0)
+            updateSize = Math.max(10, sortedNodes.size() / 10);
         int counter = 0;
         int updateCounter = 0;
         StopWatch sw = new StopWatch();
@@ -202,10 +222,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 if (neighborWn.priority != tmpOld) {
                     sortedNodes.update(nn, tmpOld, neighborWn.priority);
                 }
-                
-                // Disconnect is very important to massivly speed up query time on mobile devices
-                // It removes the edge going from the higher level node iter.node() to the current contracted one wn.node
-                ((LevelGraphStorage) g).disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
+
+                if (removesHigher2LowerEdges)
+                    ((LevelGraphStorage) g).disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
             }
         }
         logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc);
@@ -483,8 +502,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 return "dijkstraCH";
             }
         };
-        // We disconnect a contracted node to a higher level one so no need for this filter
-        // dijkstra.edgeFilter(new EdgeLevelFilter(g));
+        if (!removesHigher2LowerEdges)
+            dijkstra.edgeFilter(new EdgeLevelFilter(g));
         return dijkstra;
     }
 
@@ -544,7 +563,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return astar;
     }
 
-    // we need to use DijkstraSimple as AStar or DijkstraBidirection cannot be efficiently used with multiple goals
+    /**
+     * Use an one-to-many algorithm to make preparation faster. We need to use
+     * DijkstraSimple as AStar or DijkstraBidirection cannot be efficiently used
+     * with multiple goals
+     */
     static class OneToManyDijkstraCH extends DijkstraSimple {
 
         EdgeLevelFilter filter;

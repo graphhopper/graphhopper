@@ -59,7 +59,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     MMapDataAccess cleanAndRemap(boolean cleanAndRemap) {
         this.cleanAndRemap = cleanAndRemap;
         return this;
-    }        
+    }
 
     private void initRandomAccessFile() {
         if (raFile != null)
@@ -206,7 +206,7 @@ public class MMapDataAccess extends AbstractDataAccess {
         try {
             long byteCount = readHeader(raFile);
             if (byteCount < 0)
-                return false;
+                return false;            
             mapIt(HEADER_OFFSET, byteCount - HEADER_OFFSET, false);
             return true;
         } catch (IOException ex) {
