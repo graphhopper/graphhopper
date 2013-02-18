@@ -27,7 +27,8 @@ public class DouglasPeucker {
     private DistanceCalc calc;
 
     public DouglasPeucker() {
-        calc = new DistanceCalc();
+        // calc = new DistanceCalc();
+        calc = new DistanceCosProjection();
         // 1m
         maxDistance(1);
     }
@@ -48,16 +49,7 @@ public class DouglasPeucker {
      */
     public int simplify(PointList points) {
         int size = points.size();
-        int removed = 0;
-        int delta = 500;
-        int segments = size / delta + 1;
-        int start = 0;
-        for (int i = 0; i < segments; i++) {
-            // start of next is end of last segment, except for the last
-            removed += simplify(points, start, Math.min(size - 1, start + delta));
-            start += delta;
-        }
-
+        int removed = simplify(points, 0, size - 1);
         compressNew(points, removed);
         return removed;
     }
