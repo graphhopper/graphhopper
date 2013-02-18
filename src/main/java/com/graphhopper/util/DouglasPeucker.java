@@ -47,7 +47,17 @@ public class DouglasPeucker {
      * @return removed nodes
      */
     public int simplify(PointList points) {
-        int removed = simplify(points, 0, points.size() - 1);
+        int size = points.size();
+        int removed = 0;
+        int delta = 500;
+        int segments = size / delta + 1;
+        int start = 0;
+        for (int i = 0; i < segments; i++) {
+            // start of next is end of last segment, except for the last
+            removed += simplify(points, start, Math.min(size - 1, start + delta));
+            start += delta;
+        }
+
         compressNew(points, removed);
         return removed;
     }
@@ -72,7 +82,7 @@ public class DouglasPeucker {
      * compress list: move points into EMPTY slots
      */
     void compressNew(PointList points, int removed) {
-        int freeIndex = -1;        
+        int freeIndex = -1;
         for (int currentIndex = 0; currentIndex < points.size(); currentIndex++) {
             if (Double.isNaN(points.latitude(currentIndex))) {
                 if (freeIndex < 0)
@@ -80,7 +90,7 @@ public class DouglasPeucker {
                 continue;
             } else if (freeIndex < 0)
                 continue;
-            
+
             points.set(freeIndex, points.latitude(currentIndex), points.longitude(currentIndex));
             points.set(currentIndex, Double.NaN, Double.NaN);
             // find next free index
