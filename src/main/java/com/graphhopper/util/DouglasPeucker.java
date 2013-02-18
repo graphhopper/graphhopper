@@ -25,12 +25,20 @@ public class DouglasPeucker {
 
     private double normedMaxDist;
     private DistanceCalc calc;
+    private boolean approx;
 
     public DouglasPeucker() {
-        calc = new DistanceCalc();
-        // calc = new DistanceCosProjection();
+        approximate(true);
         // 1m
         maxDistance(1);
+    }
+
+    public void approximate(boolean a) {
+        approx = a;
+        if (approx)
+            calc = new DistanceCosProjection();
+        else
+            calc = new DistanceCalc();
     }
 
     /**
@@ -48,16 +56,19 @@ public class DouglasPeucker {
      * @return removed nodes
      */
     public int simplify(PointList points) {
-        int size = points.size();
         int removed = 0;
-        int delta = 500;
-        int segments = size / delta + 1;
-        int start = 0;
-        for (int i = 0; i < segments; i++) {
-            // start of next is end of last segment, except for the last
-            removed += simplify(points, start, Math.min(size - 1, start + delta));
-            start += delta;
-        }
+        int size = points.size();
+        if (approx) {
+            int delta = 500;
+            int segments = size / delta + 1;
+            int start = 0;
+            for (int i = 0; i < segments; i++) {
+                // start of next is end of last segment, except for the last
+                removed += simplify(points, start, Math.min(size - 1, start + delta));
+                start += delta;
+            }
+        } else
+            removed = simplify(points, 0, size - 1);
 
         compressNew(points, removed);
         return removed;
