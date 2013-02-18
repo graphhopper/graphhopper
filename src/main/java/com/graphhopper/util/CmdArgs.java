@@ -101,7 +101,10 @@ public class CmdArgs {
     String get(String key) {
         if (Helper.isEmpty(key))
             return "";
-        return map.get(key.toLowerCase());
+        String val = map.get(key.toLowerCase());
+        if (val == null)
+            return "";
+        return val;
     }
 
     public static CmdArgs readFromConfig(String fileStr) throws IOException {
@@ -115,19 +118,19 @@ public class CmdArgs {
     public static CmdArgs read(String[] args) {
         Map<String, String> map = new LinkedHashMap<String, String>();
         for (String arg : args) {
-            String strs[] = arg.split("\\=");
-            if (strs.length != 2)
+            int index = arg.indexOf("=");
+            if (index <= 0)
                 continue;
 
-            String key = strs[0];
-            if (key.startsWith("-")) {
+            String key = arg.substring(0, index);
+            if (key.startsWith("-")) 
                 key = key.substring(1);
-            }
-            if (key.startsWith("-")) {
+            
+            if (key.startsWith("-"))
                 key = key.substring(1);
-            }
-            String value = strs[1];
-            map.put(key, value);
+            
+            String value = arg.substring(index + 1);
+            map.put(key.toLowerCase(), value);        
         }
 
         return new CmdArgs(map);
