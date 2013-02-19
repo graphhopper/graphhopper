@@ -24,7 +24,7 @@ import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.LinearKeyAlgo;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCosProjection;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
@@ -48,7 +48,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     private final static int MAGIC_INT = Integer.MAX_VALUE / 12306;
     private Logger logger = LoggerFactory.getLogger(getClass());
     private KeyAlgo algo;
-    protected DistanceCalc dist = new DistanceCosProjection();
+    protected DistanceCalc dist = new DistancePlaneProjection();
     private DataAccess index;
     private double maxNormRasterWidthKm;
     private Graph g;
@@ -62,7 +62,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     @Override
     public Location2IDIndex precision(boolean approxDist) {
         if (approxDist)
-            dist = new DistanceCosProjection();
+            dist = new DistancePlaneProjection();
         else
             dist = new DistanceCalc();
         return this;

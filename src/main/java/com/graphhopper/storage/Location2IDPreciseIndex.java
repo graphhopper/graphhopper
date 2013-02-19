@@ -24,7 +24,7 @@ import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.LinearKeyAlgo;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCosProjection;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.StopWatch;
@@ -98,7 +98,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
     @Override
     public Location2IDIndex precision(boolean approxDist) {
         if (approxDist)
-            calc = new DistanceCosProjection();
+            calc = new DistancePlaneProjection();
         else
             calc = new DistanceCalc();
         return this;

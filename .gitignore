@@ -10,3 +10,4 @@ loc2idIndex/
 nbactions-*.xml
 config.properties
 build.xml
+queries.sh

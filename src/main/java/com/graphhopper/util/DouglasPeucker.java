@@ -36,7 +36,7 @@ public class DouglasPeucker {
     public void approximate(boolean a) {
         approx = a;
         if (approx)
-            calc = new DistanceCosProjection();
+            calc = new DistancePlaneProjection();
         else
             calc = new DistanceCalc();
     }

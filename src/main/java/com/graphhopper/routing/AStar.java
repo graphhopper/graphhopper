@@ -23,7 +23,7 @@ import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCosProjection;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -39,7 +39,7 @@ import java.util.PriorityQueue;
  */
 public class AStar extends AbstractRoutingAlgorithm {
 
-    private DistanceCalc dist = new DistanceCosProjection();
+    private DistanceCalc dist = new DistancePlaneProjection();
     private boolean alreadyRun;
     private MyBitSet closedSet;
     private int from;
@@ -54,7 +54,7 @@ public class AStar extends AbstractRoutingAlgorithm {
      */
     public AStar approximation(boolean approx) {
         if (approx)
-            dist = new DistanceCosProjection();
+            dist = new DistancePlaneProjection();
         else
             dist = new DistanceCalc();
         return this;

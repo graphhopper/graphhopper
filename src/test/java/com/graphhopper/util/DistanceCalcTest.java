@@ -46,7 +46,7 @@ public class DistanceCalcTest {
     public void testDistance() {
         float lat = 24.235f;
         float lon = 47.234f;
-        DistanceCalc approxDist = new DistanceCosProjection();
+        DistanceCalc approxDist = new DistancePlaneProjection();
         DistanceCalc dist = new DistanceCalc();
         double res = 15051;
         assertEquals(res, dist.calcDist(lat, lon, lat - 0.1, lon + 0.1), 1);

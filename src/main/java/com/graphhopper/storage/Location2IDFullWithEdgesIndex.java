@@ -18,7 +18,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.DistanceCosProjection;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
 
@@ -39,7 +39,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
     @Override
     public Location2IDIndex precision(boolean approxDist) {
         if (approxDist)
-            calc = new DistanceCosProjection();
+            calc = new DistancePlaneProjection();
         else
             calc = new DistanceCalc();
         return this;

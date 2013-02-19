@@ -24,7 +24,7 @@ import com.graphhopper.routing.AStar.AStarEdge;
 import com.graphhopper.routing.util.EdgeLevelFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCosProjection;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.shapes.CoordTrig;
@@ -105,7 +105,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
      */
     public AStarBidirection setApproximation(boolean approx) {
         if (approx) {
-            dist = new DistanceCosProjection();
+            dist = new DistancePlaneProjection();
             approximationFactor = 0.5;
         } else {
             dist = new DistanceCalc();

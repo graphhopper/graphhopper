@@ -22,9 +22,10 @@ import com.graphhopper.util.shapes.BBox;
 import static java.lang.Math.*;
 
 /**
- * Calculates the distance of two points or one point and an edge on earth. Allow subclasses to
- * implement less or more precise calculations (so: do not use static methods!).
- * 
+ * Calculates the distance of two points or one point and an edge on earth.
+ * Allow subclasses to implement less or more precise calculations (so: do not
+ * use static methods!).
+ *
  * http://en.wikipedia.org/wiki/Haversine_formula
  *
  * @author Peter Karich,
@@ -51,10 +52,10 @@ public class DistanceCalc {
      * cos(lat1).cos(lat2).sin²(Δlong/2) c = 2.atan2(√a, √(1−a)) d = R.c
      */
     public double calcDist(double fromLat, double fromLon, double toLat, double toLon) {
-        double dLat = toRadians(toLat - fromLat);
-        double dLon = toRadians(toLon - fromLon);
-        double normedDist = sin(dLat / 2) * sin(dLat / 2)
-                + cos(toRadians(fromLat)) * cos(toRadians(toLat)) * sin(dLon / 2) * sin(dLon / 2);
+        double sinDeltaLat = sin(toRadians(toLat - fromLat) / 2);
+        double sinDeltaLon = sin(toRadians(toLon - fromLon) / 2);
+        double normedDist = sinDeltaLat * sinDeltaLat
+                + sinDeltaLon * sinDeltaLon * cos(toRadians(fromLat)) * cos(toRadians(toLat));
         return R * 2 * asin(sqrt(normedDist));
     }
 
@@ -74,10 +75,10 @@ public class DistanceCalc {
      * Calculates in normalized meter
      */
     public double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
-        double dLat = toRadians(toLat - fromLat);
-        double dLon = toRadians(toLon - fromLon);
-        return sin(dLat / 2) * sin(dLat / 2)
-                + cos(toRadians(fromLat)) * cos(toRadians(toLat)) * sin(dLon / 2) * sin(dLon / 2);
+        double sinDeltaLat = sin(toRadians(toLat - fromLat) / 2);
+        double sinDeltaLon = sin(toRadians(toLon - fromLon) / 2);
+        return sinDeltaLat * sinDeltaLat
+                + sinDeltaLon * sinDeltaLon * cos(toRadians(fromLat)) * cos(toRadians(toLat));
     }
 
     double calcCartesianDist(double fromLat, double fromLon, double toLat, double toLon) {
@@ -142,7 +143,8 @@ public class DistanceCalc {
     }
 
     /**
-     * This method calculates the distance from r to edge g=(a to b) where the crossing point is t
+     * This method calculates the distance from r to edge g=(a to b) where the
+     * crossing point is t
      *
      * @return the normalized distance in meter
      */
@@ -173,8 +175,9 @@ public class DistanceCalc {
     }
 
     /**
-     * This method decides case 1: if we should use distance(r to edge) where r=(lat,lon) or case 2:
-     * min(distance(r to a), distance(r to b)) where edge=(a to b)
+     * This method decides case 1: if we should use distance(r to edge) where
+     * r=(lat,lon) or case 2: min(distance(r to a), distance(r to b)) where
+     * edge=(a to b)
      */
     // case 1:
     //   r
