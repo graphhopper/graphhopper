@@ -22,9 +22,10 @@ import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.FastestCarCalc;
-import com.graphhopper.routing.util.ShortestCarCalc;
+import com.graphhopper.routing.util.FastestCalc;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -59,6 +60,7 @@ public class GraphHopper implements GraphHopperAPI {
     private String ghLocation = "";
     private boolean simplify = true;
     private boolean chFast = true;
+    private AcceptWay acceptWay = new AcceptWay(true, false, false, false);    
 
     public GraphHopper() {
     }
@@ -72,6 +74,10 @@ public class GraphHopper implements GraphHopperAPI {
         initIndex(new RAMDirectory());
     }
 
+    public AcceptWay acceptWay() {
+        return acceptWay;        
+    }
+   
     public GraphHopper forDesktop() {
         return setInMemory(true, true);
     }
@@ -162,10 +168,12 @@ public class GraphHopper implements GraphHopperAPI {
             if (chUsage) {
                 storage = new LevelGraphStorage(dir);
                 PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
-                if (chFast)
-                    tmpPrepareCH.type(FastestCarCalc.DEFAULT);
-                else
-                    tmpPrepareCH.type(ShortestCarCalc.DEFAULT);
+                // TODO NOW foot or car
+                if (chFast) {
+                    tmpPrepareCH.type(FastestCalc.CAR);
+                } else {
+                    tmpPrepareCH.type(ShortestCalc.CAR);
+                }
                 prepare = tmpPrepareCH;
             } else
                 storage = new GraphStorage(dir);

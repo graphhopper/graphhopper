@@ -18,7 +18,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.CarStreetType;
+import com.graphhopper.routing.util.CarFlagsEncoder;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import static com.graphhopper.util.GraphUtility.*;
@@ -43,6 +43,7 @@ public abstract class AbstractGraphTester {
     private String location = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraph = "./target/graphstorage/default";
+    CarFlagsEncoder carFlagsEncoder = new CarFlagsEncoder();
 
     protected Graph createGraph() {
         return createGraph(defaultGraph, defaultSize);
@@ -566,16 +567,16 @@ public abstract class AbstractGraphTester {
     @Test
     public void testFlags() {
         Graph graph = createGraph();
-        graph.edge(0, 1, 10, CarStreetType.flags(120, true));
-        graph.edge(2, 3, 10, CarStreetType.flags(10, false));
+        graph.edge(0, 1, 10, carFlagsEncoder.flags(120, true));
+        graph.edge(2, 3, 10, carFlagsEncoder.flags(10, false));
 
         EdgeIterator iter = graph.getEdges(0);
         assertTrue(iter.next());
-        assertEquals(CarStreetType.flags(120, true), iter.flags());
+        assertEquals(carFlagsEncoder.flags(120, true), iter.flags());
 
         iter = graph.getEdges(2);
         assertTrue(iter.next());
-        assertEquals(CarStreetType.flags(10, false), iter.flags());
+        assertEquals(carFlagsEncoder.flags(10, false), iter.flags());
     }
 
     @Test
@@ -665,14 +666,14 @@ public abstract class AbstractGraphTester {
         EdgeIterator oneIter = graph.getEdgeProps(iter.edge(), 3);
         assertEquals(13, oneIter.distance(), 1e-6);
         assertEquals(2, oneIter.baseNode());
-        assertTrue(CarStreetType.isForward(oneIter.flags()));
-        assertFalse(CarStreetType.isBoth(oneIter.flags()));
+        assertTrue(carFlagsEncoder.isForward(oneIter.flags()));
+        assertFalse(carFlagsEncoder.isBoth(oneIter.flags()));
 
         oneIter = graph.getEdgeProps(iter.edge(), 2);
         assertEquals(13, oneIter.distance(), 1e-6);
         assertEquals(3, oneIter.baseNode());
-        assertTrue(CarStreetType.isBackward(oneIter.flags()));
-        assertFalse(CarStreetType.isBoth(oneIter.flags()));
+        assertTrue(carFlagsEncoder.isBackward(oneIter.flags()));
+        assertFalse(carFlagsEncoder.isBoth(oneIter.flags()));
 
         graph.edge(3, 2, 14, true);
         assertEquals(4, GraphUtility.count(graph.getOutgoing(2)));
@@ -696,10 +697,10 @@ public abstract class AbstractGraphTester {
     @Test
     public void testEdgeReturn() {
         Graph g = createGraph();
-        EdgeIterator iter = g.edge(4, 10, 100, CarStreetType.flags(10, false));
+        EdgeIterator iter = g.edge(4, 10, 100, carFlagsEncoder.flags(10, false));
         assertEquals(4, iter.baseNode());
         assertEquals(10, iter.node());
-        iter = g.edge(14, 10, 100, CarStreetType.flags(10, false));
+        iter = g.edge(14, 10, 100, carFlagsEncoder.flags(10, false));
         assertEquals(14, iter.baseNode());
         assertEquals(10, iter.node());
     }
@@ -708,11 +709,11 @@ public abstract class AbstractGraphTester {
     public void testPillarNodes() {
         Graph g = createGraph();
         PointList pointList = Helper.createPointList(1, 1, 1, 2, 1, 3);
-        g.edge(0, 4, 100, CarStreetType.flags(10, false)).wayGeometry(pointList);
+        g.edge(0, 4, 100, carFlagsEncoder.flags(10, false)).wayGeometry(pointList);
         pointList = Helper.createPointList(1, 5, 1, 6, 1, 7, 1, 8, 1, 9);
-        g.edge(4, 10, 100, CarStreetType.flags(10, false)).wayGeometry(pointList);
+        g.edge(4, 10, 100, carFlagsEncoder.flags(10, false)).wayGeometry(pointList);
         pointList = Helper.createPointList(1, 13, 1, 12, 1, 11);
-        g.edge(14, 0, 100, CarStreetType.flags(10, false)).wayGeometry(pointList);
+        g.edge(14, 0, 100, carFlagsEncoder.flags(10, false)).wayGeometry(pointList);
 
         // if tower node requested => return only tower nodes
         EdgeIterator iter = g.getEdges(0);

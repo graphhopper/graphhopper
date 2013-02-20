@@ -18,7 +18,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.EdgeLevelFilter;
+import com.graphhopper.routing.util.EdgeLevelFilterOld;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GraphUtility;
@@ -103,7 +103,7 @@ public class LevelGraphStorageTest extends GraphStorageTest {
         g.setLevel(0, 1);
         g.setLevel(4, 1);
 
-        EdgeIterator iter = new EdgeLevelFilter(g).doFilter(g.getEdges(0));
+        EdgeIterator iter = new EdgeLevelFilterOld(g).doFilter(g.getEdges(0));
         assertEquals(1, GraphUtility.count(iter));
         iter = g.getEdges(2);
         assertEquals(2, GraphUtility.count(iter));

@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
 public class PathTest {
 
     @Test public void testFound() {
-        Path p = new Path();
+        Path p = new Path(null, null);
         assertFalse(p.found());
         assertEquals(0, p.distance(), 1e-7);
         assertEquals(0, p.calcNodes().size());

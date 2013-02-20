@@ -26,9 +26,11 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.CarStreetType;
-import com.graphhopper.routing.util.EdgeLevelFilter;
-import com.graphhopper.routing.util.ShortestCarCalc;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EdgeLevelFilterOld;
+import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
@@ -65,15 +67,19 @@ import org.slf4j.LoggerFactory;
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation<PrepareContractionHierarchies> {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
+    private WeightCalculation shortestCalc;
     private WeightCalculation prepareWeightCalc;
+    private FlagsEncoder flagsEncoder;
+    private EdgeFilter inFilter;
+    private EdgeFilter outFilter;
     private LevelGraph g;
     // the most important nodes comes last
     private MySortedCollection sortedNodes;
     private WeightedNode refs[];
     private TIntArrayList originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
-    static final int scOneDir = CarStreetType.flags(0, false);
-    static final int scBothDir = CarStreetType.flags(0, true);
+    private int scOneDir;
+    private int scBothDir;
     private Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private List<NodeCH> goalNodes = new ArrayList<NodeCH>();
     private EdgeLevelFilterCH edgeFilter;
@@ -85,7 +91,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private int newShortcuts;
 
     public PrepareContractionHierarchies() {
-        prepareWeightCalc = ShortestCarCalc.DEFAULT;
+        type(ShortestCalc.CAR);
     }
 
     @Override
@@ -94,8 +100,22 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return this;
     }
 
+    int scBothDir() {
+        return scBothDir;
+    }
+
+    int scOneDir() {
+        return scOneDir;
+    }
+
     public PrepareContractionHierarchies type(WeightCalculation weightCalc) {
-        this.prepareWeightCalc = weightCalc;
+        prepareWeightCalc = weightCalc;
+        flagsEncoder = prepareWeightCalc.flagsEncoder();
+        shortestCalc = new ShortestCalc(flagsEncoder);
+        inFilter = new DefaultEdgeFilter(flagsEncoder).direction(true, false);
+        outFilter = new DefaultEdgeFilter(flagsEncoder).direction(false, true);
+        scOneDir = flagsEncoder.flags(0, false);
+        scBothDir = flagsEncoder.flags(0, true);
         return this;
     }
 
@@ -305,7 +325,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return this;
     }
 
-    static class EdgeLevelFilterCH extends EdgeLevelFilter {
+    static class EdgeLevelFilterCH extends EdgeLevelFilterOld {
 
         int avoidNode;
 
@@ -332,8 +352,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // we can use distance instead of weight, see prepareEdges where distance is overwritten by weight!
         goalNodes.clear();
         shortcuts.clear();
-        EdgeIterator iter1 = g.getIncoming(v);
-        // TODO PERFORMANCE collect outgoing nodes (goal-nodes) only once and just skip u
+        EdgeIterator iter1 = g.getEdges(v, inFilter);
+        // TODO PERFORMANCE collect outEdgeFilter nodes (goal-nodes) only once and just skip u
         while (iter1.next()) {
             int u = iter1.node();
             int lu = g.getLevel(u);
@@ -343,7 +363,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             double v_u_weight = iter1.distance();
             // one-to-many extractPath path
             goalNodes.clear();
-            EdgeIterator iter2 = g.getOutgoing(v);
+            EdgeIterator iter2 = g.getEdges(v, outFilter);
             double maxWeight = 0;
             while (iter2.next()) {
                 int w = iter2.node();
@@ -368,6 +388,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // TODO instead of a weight-limit we could use a hop-limit 
             // and successively increasing it when mean-degree of graph increases
             algo = new OneToManyDijkstraCH(g).setFilter(edgeFilter.setAvoidNode(v));
+            algo.type(shortestCalc);
             algo.setLimit(maxWeight).calcPath(u, goalNodes);
             internalFindShortcuts(goalNodes, u, iter1.edge());
         }
@@ -421,10 +442,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         for (Shortcut sc : foundShortcuts) {
             boolean updatedInGraph = false;
             // check if we need to update some existing shortcut in the graph
-            EdgeSkipIterator iter = g.getOutgoing(sc.from);
+            EdgeSkipIterator iter = g.getEdges(sc.from, outFilter);
             while (iter.next()) {
                 if (iter.isShortcut() && iter.node() == sc.to
-                        && CarStreetType.canBeOverwritten(iter.flags(), sc.flags)
+                        && flagsEncoder.canBeOverwritten(iter.flags(), sc.flags)
                         && iter.distance() > sc.distance) {
                     iter.flags(sc.flags);
                     iter.skippedEdges(sc.skippedEdge1, sc.skippedEdge2);
@@ -474,33 +495,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             @Override public RoutingAlgorithm type(WeightCalculation wc) {
-                throw new IllegalStateException("You'll need to change weightCalculation of preparation instead of algorithm!");
+                // allow only initial configuration
+                if (weightCalc != null)
+                    throw new IllegalStateException("You'll need to change weightCalculation of preparation instead of algorithm!");
+                return super.type(wc);
             }
 
             @Override protected PathBidirRef createPath() {
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
-                WeightCalculation wc = new WeightCalculation() {
-                    @Override public String toString() {
-                        return "INVERSE";
-                    }
-
-                    @Override public double getMinWeight(double distance) {
-                        throw new IllegalStateException("getMinWeight not supported yet");
-                    }
-
-                    @Override public double getWeight(double distance, int flags) {
-                        return distance;
-                    }
-
-                    @Override public long getTime(double distance, int flags) {
-                        return prepareWeightCalc.getTime(revertWeight(distance, flags), flags);
-                    }
-
-                    @Override public double revertWeight(double weight, int flags) {
-                        return prepareWeightCalc.revertWeight(weight, flags);
-                    }
-                };
+                WeightCalculation wc = createWeightCalculation();
                 return new Path4CH(graph, wc);
             }
 
@@ -509,7 +513,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
         };
         if (!removesHigher2LowerEdges)
-            dijkstra.edgeFilter(new EdgeLevelFilter(g));
+            dijkstra.edgeFilter(new EdgeLevelFilterOld(g));
         return dijkstra;
     }
 
@@ -532,33 +536,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             @Override public RoutingAlgorithm type(WeightCalculation wc) {
-                throw new IllegalStateException("You'll need to change weightCalculation of preparation instead of algorithm!");
+                // allow only initial configuration
+                if (weightCalc != null)
+                    throw new IllegalStateException("You'll need to change weightCalculation of preparation instead of algorithm!");
+                return super.type(wc);
             }
 
             @Override protected PathBidirRef createPath() {
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
-                WeightCalculation wc = new WeightCalculation() {
-                    @Override public String toString() {
-                        return "INVERSE";
-                    }
-
-                    @Override public double getMinWeight(double distance) {
-                        throw new IllegalStateException("getMinWeight not supported yet");
-                    }
-
-                    @Override public double getWeight(double distance, int flags) {
-                        return distance;
-                    }
-
-                    @Override public long getTime(double distance, int flags) {
-                        return prepareWeightCalc.getTime(revertWeight(distance, flags), flags);
-                    }
-
-                    @Override public double revertWeight(double weight, int flags) {
-                        return prepareWeightCalc.revertWeight(weight, flags);
-                    }
-                };
+                WeightCalculation wc = createWeightCalculation();
                 return new Path4CH(graph, wc);
             }
 
@@ -569,6 +556,34 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return astar;
     }
 
+    WeightCalculation createWeightCalculation() {
+        return new WeightCalculation() {
+            @Override public String toString() {
+                return "INVERSE";
+            }
+
+            @Override public double getMinWeight(double distance) {
+                throw new IllegalStateException("getMinWeight not supported yet");
+            }
+
+            @Override public double getWeight(double distance, int flags) {
+                return distance;
+            }
+
+            @Override public long getTime(double distance, int flags) {
+                return prepareWeightCalc.getTime(revertWeight(distance, flags), flags);
+            }
+
+            @Override public double revertWeight(double weight, int flags) {
+                return prepareWeightCalc.revertWeight(weight, flags);
+            }
+
+            @Override public FlagsEncoder flagsEncoder() {
+                return flagsEncoder;
+            }
+        };
+    }
+
     /**
      * Use an one-to-many algorithm to make preparation faster. We need to use
      * DijkstraSimple as AStar or DijkstraBidirection cannot be efficiently used
@@ -576,16 +591,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
      */
     static class OneToManyDijkstraCH extends DijkstraSimple {
 
-        EdgeLevelFilter filter;
+        EdgeLevelFilterOld filter;
         double limit;
         Collection<NodeCH> goals;
 
         public OneToManyDijkstraCH(Graph graph) {
             super(graph);
-            type(ShortestCarCalc.DEFAULT);
         }
 
-        public OneToManyDijkstraCH setFilter(EdgeLevelFilter filter) {
+        public OneToManyDijkstraCH setFilter(EdgeLevelFilterOld filter) {
             this.filter = filter;
             return this;
         }
@@ -650,7 +664,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         }
     }
 
-    static class Shortcut {
+    class Shortcut {
 
         int from;
         int to;

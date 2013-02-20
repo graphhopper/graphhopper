@@ -20,7 +20,6 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.CarStreetType;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -91,10 +90,10 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.edge(6, 7, 1, true);
 
         // simulate preparation
-        EdgeSkipIterator iter2_1 = g2.edge(0, 5, 2.8, CarStreetType.flags(0, true));
+        EdgeSkipIterator iter2_1 = g2.edge(0, 5, 2.8, flagsEncoder.flags(0, true));
         iter2_1.skippedEdges(iter1_1.edge(), iter1_2.edge());
-        EdgeSkipIterator iter2_2 = g2.edge(5, 7, 1.4, CarStreetType.flags(0, true));
-        g2.edge(0, 7, 4.2, CarStreetType.flags(0, true)).skippedEdges(iter2_1.edge(), iter2_2.edge());
+        EdgeSkipIterator iter2_2 = g2.edge(5, 7, 1.4, flagsEncoder.flags(0, true));
+        g2.edge(0, 7, 4.2, flagsEncoder.flags(0, true)).skippedEdges(iter2_1.edge(), iter2_2.edge());
         g2.setLevel(1, 0);
         g2.setLevel(3, 1);
         g2.setLevel(4, 2);

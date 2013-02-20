@@ -19,11 +19,18 @@
 package com.graphhopper.routing.util;
 
 /**
+ * Calculates the shortest route with the specified vehicle (FlagsEncoder).
+ *
  * @author Peter Karich
  */
-public class ShortestCarCalc implements WeightCalculation {
+public class ShortestCalc implements WeightCalculation {
 
-    public final static ShortestCarCalc DEFAULT = new ShortestCarCalc();
+    public final static ShortestCalc CAR = new ShortestCalc(new CarFlagsEncoder());
+    private final FlagsEncoder encoder;
+
+    public ShortestCalc(FlagsEncoder encoder) {
+        this.encoder = encoder;
+    }
 
     @Override public double getMinWeight(double currDistToGoal) {
         return currDistToGoal;
@@ -31,7 +38,7 @@ public class ShortestCarCalc implements WeightCalculation {
 
     @Override
     public long getTime(double distance, int flags) {
-        return (long) (distance * 3.6 / CarStreetType.getSpeed(flags));
+        return (long) (distance * 3.6 / encoder.getSpeed(flags));
     }
 
     @Override public double getWeight(double distance, int flags) {
@@ -40,6 +47,11 @@ public class ShortestCarCalc implements WeightCalculation {
 
     @Override public double revertWeight(double weight, int flags) {
         return weight;
+    }
+
+    @Override
+    public FlagsEncoder flagsEncoder() {
+        return encoder;
     }
 
     @Override public String toString() {

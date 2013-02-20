@@ -19,6 +19,8 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.PathBidirRef;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -31,9 +33,12 @@ import com.graphhopper.util.EdgeSkipIterator;
  * @author Peter Karich,
  */
 public class Path4CH extends PathBidirRef {
+    
+    private EdgeFilter in;
 
     public Path4CH(Graph g, WeightCalculation weightCalculation) {
         super(g, weightCalculation);
+        in = new DefaultEdgeFilter(weightCalculation.flagsEncoder()).direction(true, false);
     }
 
     @Override
@@ -108,7 +113,7 @@ public class Path4CH extends PathBidirRef {
     //   \ /
     //    7
     private void findSkippedEdge(int from, int to) {
-        EdgeSkipIterator iter = (EdgeSkipIterator) graph.getIncoming(to);
+        EdgeSkipIterator iter = (EdgeSkipIterator) graph.getEdges(to, in);
         double lowest = Double.MAX_VALUE;
         int edge = EdgeIterator.NO_EDGE;
         while (iter.next()) {

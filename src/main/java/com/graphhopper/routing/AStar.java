@@ -42,8 +42,7 @@ public class AStar extends AbstractRoutingAlgorithm {
     private DistanceCalc dist = new DistancePlaneProjection();
     private boolean alreadyRun;
     private MyBitSet closedSet;
-    private int from;
-
+    
     public AStar(Graph g) {
         super(g);
     }
@@ -63,7 +62,6 @@ public class AStar extends AbstractRoutingAlgorithm {
     @Override
     public RoutingAlgorithm clear() {
         alreadyRun = false;
-        from = -1;
         return this;
     }
 
@@ -77,7 +75,7 @@ public class AStar extends AbstractRoutingAlgorithm {
         double toLat = graph.getLatitude(to);
         double toLon = graph.getLongitude(to);
         double currWeightToGoal, distEstimation, tmpLat, tmpLon;
-        AStarEdge fromEntry = new AStarEdge(EdgeIterator.NO_EDGE, this.from = from, 0, 0);
+        AStarEdge fromEntry = new AStarEdge(EdgeIterator.NO_EDGE, from, 0, 0);
         AStarEdge currEdge = fromEntry;
         while (true) {
             int currVertex = currEdge.endNode;
@@ -114,7 +112,7 @@ public class AStar extends AbstractRoutingAlgorithm {
             if (finished(currEdge, to))
                 break;
             if (prioQueueOpenSet.isEmpty())
-                return new Path();
+                return new Path(graph, weightCalc);
 
             currEdge = prioQueueOpenSet.poll();
             if (currEdge == null)
@@ -133,8 +131,8 @@ public class AStar extends AbstractRoutingAlgorithm {
         return closedSet.cardinality();
     }
 
-    protected EdgeIterator getNeighbors(int currVertex) {
-        return graph.getOutgoing(currVertex);
+    protected EdgeIterator getNeighbors(int node) {
+        return graph.getEdges(node, outEdgeFilter);
     }
 
     Path extractPath(EdgeEntry currEdge) {

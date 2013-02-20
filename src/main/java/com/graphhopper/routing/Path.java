@@ -18,14 +18,12 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.ShortestCarCalc;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.StopWatch;
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.TIntList;
@@ -58,8 +56,8 @@ public class Path {
     private TIntList edgeIds;
     private PointList cachedPoints;
 
-    Path() {
-        this(null, ShortestCarCalc.DEFAULT);
+    private Path() {
+        this(null, ShortestCalc.CAR);
     }
 
     public Path(Graph graph, WeightCalculation weightCalculation) {

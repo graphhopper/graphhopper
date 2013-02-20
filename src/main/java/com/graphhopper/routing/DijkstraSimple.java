@@ -87,14 +87,14 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
                 break;
 
             if (heap.isEmpty())
-                return new Path();
+                return new Path(graph, weightCalc);
             currEdge = heap.poll();
             if (currEdge == null)
                 throw new AssertionError("cannot happen?");
         }
 
         if (currEdge.endNode != to)
-            return new Path();
+            return new Path(graph, weightCalc);
 
         return extractPath(currEdge);
     }
@@ -108,7 +108,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
     }
 
     protected EdgeIterator neighbors(int neighborNode) {
-        return graph.getOutgoing(neighborNode);
+        return graph.getEdges(neighborNode, outEdgeFilter);
     }
 
     @Override public String name() {

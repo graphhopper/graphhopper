@@ -21,7 +21,7 @@ package com.graphhopper.routing;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.AStar.AStarEdge;
-import com.graphhopper.routing.util.EdgeLevelFilter;
+import com.graphhopper.routing.util.EdgeLevelFilterOld;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
@@ -74,7 +74,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     protected AStarEdge currFrom;
     protected AStarEdge currTo;
     private TIntObjectMap<AStarEdge> shortestWeightMapOther;
-    private EdgeLevelFilter edgeFilter;
+    private EdgeLevelFilterOld edgeFilter;
     public PathBidirRef shortest;
     private CoordTrig fromCoord;
     private CoordTrig toCoord;
@@ -123,12 +123,12 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         return this;
     }
 
-    public RoutingAlgorithm setEdgeFilter(EdgeLevelFilter edgeFilter) {
+    public RoutingAlgorithm setEdgeFilter(EdgeLevelFilterOld edgeFilter) {
         this.edgeFilter = edgeFilter;
         return this;
     }
 
-    public EdgeLevelFilter getEdgeFilter() {
+    public EdgeLevelFilterOld getEdgeFilter() {
         return edgeFilter;
     }
 
@@ -254,7 +254,8 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         return true;
     }
 
-    private void fillEdges(AStarEdge curr, CoordTrig goal, MyBitSet closedSet, PriorityQueue<AStarEdge> prioQueueOpenSet,
+    private void fillEdges(AStarEdge curr, CoordTrig goal, MyBitSet closedSet,
+            PriorityQueue<AStarEdge> prioQueueOpenSet,
             TIntObjectMap<AStarEdge> shortestWeightMap, boolean out) {
 
         int currNodeFrom = curr.endNode;

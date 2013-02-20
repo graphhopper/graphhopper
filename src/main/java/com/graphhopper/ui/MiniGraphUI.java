@@ -24,7 +24,7 @@ import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.ShortestCarCalc;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.Location2IDIndex;
@@ -166,7 +166,7 @@ public class MiniGraphUI {
         });
 
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
-            WeightCalculation wCalc = ShortestCarCalc.DEFAULT;
+            WeightCalculation wCalc = ShortestCalc.CAR;
 
             @Override public void paintComponent(Graphics2D g2) {
                 if (dijkstraFromId < 0 || dijkstraToId < 0)

@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 
@@ -53,10 +54,9 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
         return nodes.getInt((long) index * nodeEntrySize + I_LEVEL);
     }
 
-    @Override protected GraphStorage newThis(Directory dir) {
-        return new LevelGraphStorage(dir);
-    }
-
+//    @Override protected GraphStorage newThis(Directory dir) {
+//        return new LevelGraphStorage(dir);
+//    }
     @Override public EdgeSkipIterator edge(int a, int b, double distance, boolean bothDir) {
         return (EdgeSkipIterator) super.edge(a, b, distance, bothDir);
     }
@@ -64,7 +64,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     @Override public EdgeSkipIterator edge(int a, int b, double distance, int flags) {
         ensureNodeIndex(Math.max(a, b));
         int edgeId = internalEdgeAdd(a, b, distance, flags);
-        EdgeSkipIterator iter = new EdgeSkipIteratorImpl(edgeId, a, false, false);
+        EdgeSkipIterator iter = new EdgeSkipIteratorImpl(edgeId, a, noEdgesFilter);
         iter.next();
         iter.skippedEdges(EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
         return iter;
@@ -72,29 +72,34 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
     @Override
     public EdgeSkipIterator getEdges(int node) {
-        return createEdgeIterable(node, true, true);
+        return createEdgeIterable(node, bothEdgesFilter);
     }
 
     @Override
-    public EdgeSkipIterator getIncoming(int node) {
-        return createEdgeIterable(node, true, false);
+    public EdgeSkipIterator getEdges(int node, EdgeFilter filter) {
+        return createEdgeIterable(node, filter);
     }
 
     @Override
     public EdgeSkipIterator getOutgoing(int node) {
-        return createEdgeIterable(node, false, true);
+        return createEdgeIterable(node, outEdgesFilter);
     }
 
     @Override
-    protected EdgeSkipIterator createEdgeIterable(int baseNode, boolean in, boolean out) {
+    public EdgeSkipIterator getIncoming(int node) {
+        return createEdgeIterable(node, inEdgesFilter);
+    }
+
+    @Override
+    protected EdgeSkipIterator createEdgeIterable(int baseNode, EdgeFilter filter) {
         int edge = nodes.getInt((long) baseNode * nodeEntrySize + N_EDGE_REF);
-        return new EdgeSkipIteratorImpl(edge, baseNode, in, out);
+        return new EdgeSkipIteratorImpl(edge, baseNode, filter);
     }
 
     class EdgeSkipIteratorImpl extends EdgeIterable implements EdgeSkipIterator {
 
-        public EdgeSkipIteratorImpl(int edge, int node, boolean in, boolean out) {
-            super(edge, node, in, out);
+        public EdgeSkipIteratorImpl(int edge, int node, EdgeFilter filter) {
+            super(edge, node, filter);
         }
 
         @Override public void skippedEdges(int edge1, int edge2) {

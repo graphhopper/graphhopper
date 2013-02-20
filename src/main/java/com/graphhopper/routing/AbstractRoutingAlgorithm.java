@@ -18,7 +18,9 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.ShortestCarCalc;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
@@ -29,14 +31,17 @@ import com.graphhopper.storage.Graph;
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
 
     protected Graph graph;
-    protected WeightCalculation weightCalc = ShortestCarCalc.DEFAULT;
+    protected WeightCalculation weightCalc;
+    protected EdgeFilter outEdgeFilter;
 
     public AbstractRoutingAlgorithm(Graph graph) {
         this.graph = graph;
+        type(ShortestCalc.CAR);
     }
 
     @Override public RoutingAlgorithm type(WeightCalculation wc) {
         this.weightCalc = wc;
+        outEdgeFilter = new DefaultEdgeFilter(weightCalc.flagsEncoder()).direction(false, true);
         return this;
     }
 

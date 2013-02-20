@@ -18,7 +18,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.DistanceCalc;
 import gnu.trove.list.array.TLongArrayList;
 import java.util.Map;
 
@@ -27,6 +26,7 @@ import java.util.Map;
  */
 public class AcceptWay {
 
+    private CarFlagsEncoder carEncoder = new CarFlagsEncoder();
     private boolean car;
     private boolean publicTransport;
     private boolean bike;
@@ -38,6 +38,26 @@ public class AcceptWay {
         this.bike = bike;
         this.foot = foot;
     }
+
+    public AcceptWay foot(boolean foot) {
+        this.foot = foot;
+        return this;
+    }
+
+    public AcceptWay car(boolean car) {
+        this.car = car;
+        return this;
+    }
+
+//    public AcceptWay publicTransport(boolean publicTransport) {
+//        this.publicTransport = publicTransport;
+//        return this;
+//    }
+
+//    public AcceptWay bike(boolean bike) {
+//        this.bike = bike;
+//        return this;
+//    }
 
     public boolean acceptsCar() {
         return car;
@@ -100,9 +120,9 @@ public class AcceptWay {
             }
 
             if (car) {
-                Integer integ = CarStreetType.SPEED.get((String) highwayValue);
+                Integer integ = carEncoder.getSpeed((String) highwayValue);
                 if (integ != null) {
-                    int maxspeed = parseSpeed((String) outProperties.get("maxspeed")) / CarStreetType.FACTOR;
+                    int maxspeed = parseSpeed((String) outProperties.get("maxspeed"));
                     includeWay = true;
                     if (maxspeed > 0 && integ > maxspeed)
                         outProperties.put("car", maxspeed);
@@ -127,7 +147,7 @@ public class AcceptWay {
 
                 includeWay = true;
                 if (car)
-                    outProperties.put("car", velo / CarStreetType.FACTOR);
+                    outProperties.put("car", velo);
                 if (bike)
                     outProperties.put("bike", velo);
                 if (foot)
@@ -199,11 +219,8 @@ public class AcceptWay {
         Integer integ;
         if (car) {
             integ = (Integer) properties.get("car");
-            if (integ != null) {
-                // TODO avoid this second conversion
-                integ *= CarStreetType.FACTOR;
-                flags = CarStreetType.flags(integ, bothways);
-            }
+            if (integ != null)
+                flags = carEncoder.flags(integ, bothways);
         }
         // TODO if(publicTransport)
         if (bike) {

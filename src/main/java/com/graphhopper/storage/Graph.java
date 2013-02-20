@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
@@ -84,12 +85,15 @@ public interface Graph {
      */
     RawEdgeIterator allEdges();
 
+    EdgeIterator getEdges(int index);
+
     /**
      * Returns an iterator which makes it possible to traverse all edges of the
-     * specified node index. Hint: use GraphUtility to go straight to certain
-     * neighbor nodes. Hint: edges with both directions will returned only once!
+     * specified node if the filter accepts the edge. Hint 1: use GraphUtility to
+     * go straight to certain neighbor nodes. Hint 2: edges with both directions
+     * will be returned only once!
      */
-    EdgeIterator getEdges(int index);
+    EdgeIterator getEdges(int index, EdgeFilter filter);
 
     EdgeIterator getIncoming(int index);
 

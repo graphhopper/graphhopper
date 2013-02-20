@@ -21,7 +21,7 @@ package com.graphhopper.reader;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.FastestCarCalc;
+import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
@@ -371,8 +371,10 @@ public class OSMReader {
     public OSMReader setCHShortcuts(String chShortcuts) {
         if (chShortcuts.isEmpty() || "no".equals(chShortcuts) || "false".equals(chShortcuts))
             return this;
+        
+        // TODO NOW car or foot
         if ("true".equals(chShortcuts) || "fastest".equals(chShortcuts)) {
-            prepare = new PrepareContractionHierarchies().type(FastestCarCalc.DEFAULT);
+            prepare = new PrepareContractionHierarchies().type(FastestCalc.CAR);
         } else if ("shortest".equals(chShortcuts)) {
             prepare = new PrepareContractionHierarchies();
         } else

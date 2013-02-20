@@ -21,7 +21,10 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.util.CarStreetType;
+import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagsEncoder;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
@@ -54,8 +57,7 @@ public class GraphStorage implements Graph, Storable {
     protected int edgeEntrySize;
     protected DataAccess edges;
     /**
-     * specified how many entries (integers) are used per edge. starting from 1
-     * => fresh int arrays do not need to be initialized with -1
+     * Specified how many entries (integers) are used per edge. interval [0,n)
      */
     private int edgeCount = 0;
     // node memory layout: edgeRef,lat,lon
@@ -65,9 +67,9 @@ public class GraphStorage implements Graph, Storable {
      */
     protected int nodeEntrySize;
     protected DataAccess nodes;
-    // starting from 0 (inconsistent :/) => normal iteration and no internal correction is necessary.
-    // problem: we exported this to external API => or should we change the edge count in order to 
-    // have [0,n) based edge indices in outside API?
+    /**
+     * interval [0,n)
+     */
     private int nodeCount;
     private BBox bounds;
     // remove markers are not yet persistent!
@@ -79,8 +81,14 @@ public class GraphStorage implements Graph, Storable {
     // 0 stands for no separate geoRef
     private int maxGeoRef = 1;
     private boolean initialized = false;
+    private FlagsEncoder defaultEncoder;
+    protected EdgeFilter noEdgesFilter;
+    protected EdgeFilter bothEdgesFilter;
+    protected EdgeFilter inEdgesFilter;
+    protected EdgeFilter outEdgesFilter;
 
     public GraphStorage(Directory dir) {
+        flagsEncoder(new CarFlagsEncoder());
         this.dir = dir;
         this.nodes = dir.findCreate("nodes");
         this.edges = dir.findCreate("egdes");
@@ -98,6 +106,23 @@ public class GraphStorage implements Graph, Storable {
         N_LAT = nextNodeEntryIndex();
         N_LON = nextNodeEntryIndex();
         initNodeAndEdgeEntrySize();
+    }
+
+    
+    public GraphStorage flagsEncoder(FlagsEncoder encoder) {
+        checkInit();
+        this.defaultEncoder = encoder;
+        this.noEdgesFilter = new DefaultEdgeFilter(encoder).direction(false, false);
+        this.inEdgesFilter = new DefaultEdgeFilter(encoder).direction(true, false);
+        this.outEdgesFilter = new DefaultEdgeFilter(encoder).direction(false, true);
+        this.bothEdgesFilter = new DefaultEdgeFilter(encoder);
+        return this;
+    }
+
+    void checkInit() {
+        if (initialized)
+            throw new IllegalStateException("You cannot configure this GraphStorage "
+                    + "after calling createNew or loadExisting. Or call one of the methods twice.");
     }
 
     protected final int nextEdgeEntryIndex() {
@@ -123,8 +148,7 @@ public class GraphStorage implements Graph, Storable {
     }
 
     GraphStorage segmentSize(int bytes) {
-        if (initialized)
-            throw new IllegalStateException("You cannot configure this GraphStorage after calling createNew.");
+        checkInit();
         nodes.segmentSize(bytes);
         edges.segmentSize(bytes);
         geometry.segmentSize(bytes);
@@ -135,7 +159,7 @@ public class GraphStorage implements Graph, Storable {
      * After configuring this storage you need to create it explicitly.
      */
     public GraphStorage createNew(int nodeCount) {
-        checkAlreadyInitialized();
+        checkInit();
         int initBytes = Math.max(nodeCount * 4, 100);
         nodes.createNew((long) initBytes * nodeEntrySize);
         initNodeRefs(0, nodes.capacity() / 4);
@@ -251,14 +275,14 @@ public class GraphStorage implements Graph, Storable {
 
     @Override
     public EdgeIterator edge(int a, int b, double distance, boolean bothDirections) {
-        return edge(a, b, distance, CarStreetType.flagsDefault(bothDirections));
+        return edge(a, b, distance, defaultEncoder.flagsDefault(bothDirections));
     }
 
     @Override
     public EdgeIterator edge(int a, int b, double distance, int flags) {
         ensureNodeIndex(Math.max(a, b));
         int edge = internalEdgeAdd(a, b, distance, flags);
-        EdgeIterable iter = new EdgeIterable(edge, a, false, false);
+        EdgeIterable iter = new EdgeIterable(edge, a, noEdgesFilter);
         iter.next();
         return iter;
     }
@@ -314,7 +338,7 @@ public class GraphStorage implements Graph, Storable {
             nextEdge = nextEdgeOther;
             nextEdgeOther = tmp;
 
-            flags = CarStreetType.swapDirection(flags);
+            flags = defaultEncoder.swapDirection(flags);
         }
 
         long edgePointer = (long) edge * edgeEntrySize;
@@ -483,7 +507,7 @@ public class GraphStorage implements Graph, Storable {
         protected boolean switchFlags;
 
         public SingleEdge(int edgeId, int nodeId) {
-            super(edgeId, nodeId, false, false);
+            super(edgeId, nodeId, null);
         }
 
         @Override public boolean next() {
@@ -493,35 +517,39 @@ public class GraphStorage implements Graph, Storable {
         @Override public int flags() {
             flags = edges.getInt(edgePointer + E_FLAGS);
             if (switchFlags)
-                return CarStreetType.swapDirection(flags);
+                return defaultEncoder.swapDirection(flags);
             return flags;
         }
     }
 
     @Override
+    public EdgeIterator getEdges(int node, EdgeFilter filter) {
+        return createEdgeIterable(node, filter);
+    }
+
+    @Override
     public EdgeIterator getEdges(int node) {
-        return createEdgeIterable(node, true, true);
+        return createEdgeIterable(node, bothEdgesFilter);
     }
 
     @Override
     public EdgeIterator getIncoming(int node) {
-        return createEdgeIterable(node, true, false);
+        return createEdgeIterable(node, inEdgesFilter);
     }
 
     @Override
     public EdgeIterator getOutgoing(int node) {
-        return createEdgeIterable(node, false, true);
+        return createEdgeIterable(node, outEdgesFilter);
     }
 
-    protected EdgeIterator createEdgeIterable(int baseNode, boolean in, boolean out) {
+    protected EdgeIterator createEdgeIterable(int baseNode, EdgeFilter filter) {
         int edge = nodes.getInt((long) baseNode * nodeEntrySize + N_EDGE_REF);
-        return new EdgeIterable(edge, baseNode, in, out);
+        return new EdgeIterable(edge, baseNode, filter);
     }
 
     protected class EdgeIterable implements EdgeIterator {
 
-        final boolean in;
-        final boolean out;
+        final EdgeFilter filter;
         final int baseNode;
         // edge properties
         int flags;
@@ -531,12 +559,11 @@ public class GraphStorage implements Graph, Storable {
         int nextEdge;
 
         // used for SingleEdge and as return value of edge()
-        public EdgeIterable(int edge, int baseNode, boolean in, boolean out) {
+        public EdgeIterable(int edge, int baseNode, EdgeFilter filter) {
             this.nextEdge = this.edgeId = edge;
             this.edgePointer = (long) nextEdge * edgeEntrySize;
             this.baseNode = baseNode;
-            this.in = in;
-            this.out = out;
+            this.filter = filter;
         }
 
         boolean readNext() {
@@ -553,14 +580,9 @@ public class GraphStorage implements Graph, Storable {
 
             // switch direction flags if necessary
             if (baseNode > node)
-                flags = CarStreetType.swapDirection(flags);
+                flags = defaultEncoder.swapDirection(flags);
 
-            if (!in && !CarStreetType.isForward(flags) || !out && !CarStreetType.isBackward(flags)) {
-                // skip this edge as it does not fit to defined filter
-                return false;
-            } else {
-                return true;
-            }
+            return filter.accept(this);
         }
 
         long edgePointer() {
@@ -658,11 +680,10 @@ public class GraphStorage implements Graph, Storable {
         }
     }
 
-    protected GraphStorage newThis(Directory dir) {
-        // no storage.create here!
-        return new GraphStorage(dir);
-    }
-
+//    protected GraphStorage newThis(Directory dir) {
+//        // no storage.create here!
+//        return new GraphStorage(dir, defaultEncoder.clone());
+//    }
     @Override
     public Graph copyTo(Graph g) {
         if (g.getClass().equals(getClass())) {
@@ -671,13 +692,12 @@ public class GraphStorage implements Graph, Storable {
             return GraphUtility.copyTo(this, g);
     }
 
-    public Graph copyTo(Directory dir) {
-        if (this.dir == dir)
-            throw new IllegalStateException("cannot copy graph into the same directory!");
-
-        return _copyTo(newThis(dir));
-    }
-
+//    public Graph copyTo(Directory dir) {
+//        if (this.dir == dir)
+//            throw new IllegalStateException("cannot copy graph into the same directory!");
+//
+//        return _copyTo(newThis(dir));
+//    }
     Graph _copyTo(GraphStorage clonedG) {
         if (clonedG.edgeEntrySize != edgeEntrySize)
             throw new IllegalStateException("edgeEntrySize cannot be different for cloned graph");
@@ -870,14 +890,9 @@ public class GraphStorage implements Graph, Storable {
         removedNodes = null;
     }
 
-    private void checkAlreadyInitialized() {
-        if (initialized)
-            throw new IllegalStateException("Already initialized GraphStorage.");
-    }
-
     @Override
     public boolean loadExisting() {
-        checkAlreadyInitialized();
+        checkInit();
         if (edges.loadExisting()) {
             if (!nodes.loadExisting())
                 throw new IllegalStateException("cannot load nodes. corrupt file or directory? " + dir);

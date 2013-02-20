@@ -20,9 +20,9 @@ package com.graphhopper.routing;
 
 import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.CarStreetType;
-import com.graphhopper.routing.util.FastestCarCalc;
-import com.graphhopper.routing.util.ShortestCarCalc;
+import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.FastestCalc;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -44,13 +44,14 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     // problem is: matrix graph is expensive to create to cache it in a static variable
     private static Graph matrixGraph;
+    protected CarFlagsEncoder flagsEncoder = new CarFlagsEncoder();
 
     protected Graph createGraph() {
         return new GraphBuilder().create();
     }
 
     public AlgorithmPreparation prepareGraph(Graph g) {
-        return prepareGraph(g, ShortestCarCalc.DEFAULT);
+        return prepareGraph(g, ShortestCalc.CAR);
     }
 
     public abstract AlgorithmPreparation prepareGraph(Graph g, WeightCalculation calc);
@@ -66,7 +67,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test public void testCalcFastestPath() {
         Graph graphShortest = createGraph();
         initFastVsShort(graphShortest);
-        Path p1 = prepareGraph(graphShortest, ShortestCarCalc.DEFAULT).createAlgo().calcPath(0, 3);
+        Path p1 = prepareGraph(graphShortest, ShortestCalc.CAR).createAlgo().calcPath(0, 3);
         assertEquals(p1.toString(), 24000, p1.weight(), 1e-6);
         assertEquals(p1.toString(), 24000, p1.distance(), 1e-6);
         assertEquals(p1.toString(), 8640, p1.time());
@@ -75,34 +76,34 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         Graph graphFastest = createGraph();
         initFastVsShort(graphFastest);
-        Path p2 = prepareGraph(graphFastest, FastestCarCalc.DEFAULT).createAlgo().calcPath(0, 3);
-        assertEquals(p2.toString(), 3100, p2.weight(), 1e-6);
+        Path p2 = prepareGraph(graphFastest, FastestCalc.CAR).createAlgo().calcPath(0, 3);
+        assertEquals(p2.toString(), 1550, p2.weight(), 1e-6);
         assertEquals(p2.toString(), 31000, p2.distance(), 1e-6);
         assertEquals(p2.toString(), 5580, p2.time());
         assertEquals(p2.toString(), 6, p2.calcNodes().size());
     }
 
     void initFastVsShort(Graph graph) {
-        graph.edge(0, 1, 7000, CarStreetType.flags(10, false));
-        graph.edge(0, 4, 5000, CarStreetType.flags(20, false));
+        graph.edge(0, 1, 7000, flagsEncoder.flags(10, false));
+        graph.edge(0, 4, 5000, flagsEncoder.flags(20, false));
 
-        graph.edge(1, 4, 7000, CarStreetType.flags(10, true));
-        graph.edge(1, 5, 7000, CarStreetType.flags(10, true));
-        graph.edge(1, 2, 20000, CarStreetType.flags(10, true));
+        graph.edge(1, 4, 7000, flagsEncoder.flags(10, true));
+        graph.edge(1, 5, 7000, flagsEncoder.flags(10, true));
+        graph.edge(1, 2, 20000, flagsEncoder.flags(10, true));
 
-        graph.edge(5, 2, 5000, CarStreetType.flags(10, false));
-        graph.edge(2, 3, 5000, CarStreetType.flags(10, false));
+        graph.edge(5, 2, 5000, flagsEncoder.flags(10, false));
+        graph.edge(2, 3, 5000, flagsEncoder.flags(10, false));
 
-        graph.edge(5, 3, 11000, CarStreetType.flags(20, false));
-        graph.edge(3, 7, 7000, CarStreetType.flags(10, false));
+        graph.edge(5, 3, 11000, flagsEncoder.flags(20, false));
+        graph.edge(3, 7, 7000, flagsEncoder.flags(10, false));
 
-        graph.edge(4, 6, 5000, CarStreetType.flags(20, false));
-        graph.edge(5, 4, 7000, CarStreetType.flags(10, false));
+        graph.edge(4, 6, 5000, flagsEncoder.flags(20, false));
+        graph.edge(5, 4, 7000, flagsEncoder.flags(10, false));
 
-        graph.edge(5, 6, 7000, CarStreetType.flags(10, false));
-        graph.edge(7, 5, 5000, CarStreetType.flags(20, false));
+        graph.edge(5, 6, 7000, flagsEncoder.flags(10, false));
+        graph.edge(7, 5, 5000, flagsEncoder.flags(20, false));
 
-        graph.edge(6, 7, 5000, CarStreetType.flags(20, true));
+        graph.edge(6, 7, 5000, flagsEncoder.flags(20, true));
     }
 
     // see test-graph.svg !

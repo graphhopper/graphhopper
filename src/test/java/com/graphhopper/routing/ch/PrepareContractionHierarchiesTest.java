@@ -23,9 +23,9 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.NodeCH;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
-import com.graphhopper.routing.util.CarStreetType;
-import com.graphhopper.routing.util.FastestCarCalc;
-import com.graphhopper.routing.util.ShortestCarCalc;
+import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.FastestCalc;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -35,7 +35,6 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.GraphUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.RawEdgeIterator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -48,6 +47,7 @@ import org.junit.Test;
  */
 public class PrepareContractionHierarchiesTest {
 
+    CarFlagsEncoder carFlagsEncoder = new CarFlagsEncoder();
     LevelGraph createGraph() {
         return new GraphBuilder().levelGraphCreate();
     }
@@ -84,8 +84,9 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testShortestPathSkipNode() {
         LevelGraph g = createExampleGraph();
-        double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
+        double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();        
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo
+                = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
                 .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setAvoidNode(3));
         List<NodeCH> gs = createGoals(2);
         algo.clear().setLimit(10).calcPath(4, gs);
@@ -285,20 +286,21 @@ public class PrepareContractionHierarchiesTest {
         g.setLevel(7, 7);
         g.setLevel(8, 8);
 
-        g.edge(1, 4, 2, PrepareContractionHierarchies.scBothDir).skippedEdges(iter1_1.edge(), iter1_2.edge());
-        int f = PrepareContractionHierarchies.scOneDir;
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
+        g.edge(1, 4, 2, prepare.scBothDir()).skippedEdges(iter1_1.edge(), iter1_2.edge());
+        int f = prepare.scOneDir();
         g.edge(4, 6, 2, f).skippedEdges(iter2_1.edge(), iter2_2.edge());
         g.edge(6, 4, 3, f).skippedEdges(iter3_1.edge(), iter3_2.edge());
 
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g).initFromGraph();
+        prepare.initFromGraph();
         // there should be two different shortcuts for both directions!
         Collection<Shortcut> sc = prepare.findShortcuts(4);
         assertEquals(2, sc.size());
     }
 
     void initUnpackingGraph(LevelGraphStorage g, WeightCalculation w) {
-        double dist = 1;
-        int flags = CarStreetType.flags(30, false);
+        double dist = 1;        
+        int flags = carFlagsEncoder.flags(30, false);
         g.edge(10, 0, w.getWeight(dist, flags), flags);
         EdgeSkipIterator iter1 = g.edge(0, 1, w.getWeight(dist, flags), flags);
         EdgeSkipIterator iter2 = g.edge(1, 2, w.getWeight(dist, flags), flags);
@@ -306,22 +308,22 @@ public class PrepareContractionHierarchiesTest {
         EdgeSkipIterator iter4 = g.edge(3, 4, w.getWeight(dist, flags), flags);
         EdgeSkipIterator iter5 = g.edge(4, 5, w.getWeight(dist, flags), flags);
         EdgeSkipIterator iter6 = g.edge(5, 6, w.getWeight(dist, flags), flags);
-        int f = PrepareContractionHierarchies.scOneDir;
+        int oneDirFlags = new PrepareContractionHierarchies().scOneDir();
 
         int tmp = iter1.edge();
-        iter1 = g.edge(0, 2, 2, f);
+        iter1 = g.edge(0, 2, 2, oneDirFlags);
         iter1.skippedEdges(tmp, iter2.edge());
         tmp = iter1.edge();
-        iter1 = g.edge(0, 3, 3, f);
+        iter1 = g.edge(0, 3, 3, oneDirFlags);
         iter1.skippedEdges(tmp, iter3.edge());
         tmp = iter1.edge();
-        iter1 = g.edge(0, 4, 4, f);
+        iter1 = g.edge(0, 4, 4, oneDirFlags);
         iter1.skippedEdges(tmp, iter4.edge());
         tmp = iter1.edge();
-        iter1 = g.edge(0, 5, 5, f);
+        iter1 = g.edge(0, 5, 5, oneDirFlags);
         iter1.skippedEdges(tmp, iter5.edge());
         tmp = iter1.edge();
-        iter1 = g.edge(0, 6, 6, f);
+        iter1 = g.edge(0, 6, 6, oneDirFlags);
         iter1.skippedEdges(tmp, iter6.edge());
         g.setLevel(0, 10);
         g.setLevel(6, 9);
@@ -336,7 +338,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testUnpackingOrder() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
-        WeightCalculation calc = ShortestCarCalc.DEFAULT;
+        WeightCalculation calc = ShortestCalc.CAR;
         initUnpackingGraph(g, calc);
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         RoutingAlgorithm algo = prepare.type(calc).createAlgo();
@@ -349,7 +351,7 @@ public class PrepareContractionHierarchiesTest {
     public void testUnpackingOrder_Fastest() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
-        WeightCalculation calc = FastestCarCalc.DEFAULT;
+        WeightCalculation calc = FastestCalc.CAR;
         initUnpackingGraph(g, calc);
         RoutingAlgorithm algo = prepare.type(calc).createAlgo();
         Path p = algo.calcPath(10, 6);
@@ -464,18 +466,18 @@ public class PrepareContractionHierarchiesTest {
         return g;
     }
 
-    public static void printEdges(LevelGraph g) {
-        RawEdgeIterator iter = g.allEdges();
-        while (iter.next()) {
-            EdgeSkipIterator single = g.getEdgeProps(iter.edge(), iter.nodeB());
-            System.out.println(iter.nodeA() + "<->" + iter.nodeB() + " \\"
-                    + single.skippedEdge1() + "," + single.skippedEdge2() + " (" + iter.edge() + ")"
-                    + ", dist: " + (float) iter.distance()
-                    + ", level:" + g.getLevel(iter.nodeA()) + "<->" + g.getLevel(iter.nodeB())
-                    + ", bothDir:" + CarStreetType.isBoth(iter.flags()));
-        }
-        System.out.println("---");
-    }
+//    public static void printEdges(LevelGraph g) {
+//        RawEdgeIterator iter = g.allEdges();
+//        while (iter.next()) {
+//            EdgeSkipIterator single = g.getEdgeProps(iter.edge(), iter.nodeB());
+//            System.out.println(iter.nodeA() + "<->" + iter.nodeB() + " \\"
+//                    + single.skippedEdge1() + "," + single.skippedEdge2() + " (" + iter.edge() + ")"
+//                    + ", dist: " + (float) iter.distance()
+//                    + ", level:" + g.getLevel(iter.nodeA()) + "<->" + g.getLevel(iter.nodeB())
+//                    + ", bothDir:" + CarFlagsEncoder.isBoth(iter.flags()));
+//        }
+//        System.out.println("---");
+//    }
 
     @Test
     public void testBits() {

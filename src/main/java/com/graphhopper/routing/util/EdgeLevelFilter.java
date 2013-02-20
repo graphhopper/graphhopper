@@ -27,70 +27,22 @@ import com.graphhopper.util.PointList;
  *
  * @author Peter Karich
  */
-public class EdgeLevelFilter implements EdgeIterator {
+public class EdgeLevelFilter implements EdgeFilter {
 
-    private EdgeIterator edgeIter;
     protected LevelGraph graph;
 
     public EdgeLevelFilter(LevelGraph g) {
         graph = g;
     }
 
-    public EdgeIterator doFilter(EdgeIterator iter) {
-        this.edgeIter = iter;
-        return this;
+    @Override
+    public EdgeFilter direction(boolean in, boolean out) {
+        // TODO extends from DefaultEdgeFilter?
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override public int baseNode() {
-        return edgeIter.baseNode();
-    }
-
-    @Override public final int node() {
-        return edgeIter.node();
-    }
-
-    @Override public final double distance() {
-        return edgeIter.distance();
-    }
-
-    @Override public final int flags() {
-        return edgeIter.flags();
-    }
-
-    @Override public final boolean next() {
-        while (edgeIter.next()) {
-            if (!accept())
-                continue;
-            return true;
-        }
-        return false;
-    }
-
-    public boolean accept() {
+    @Override
+    public boolean accept(EdgeIterator edgeIter) {
         return graph.getLevel(edgeIter.baseNode()) <= graph.getLevel(edgeIter.node());
-    }
-
-    @Override public int edge() {
-        return edgeIter.edge();
-    }
-
-    @Override public boolean isEmpty() {
-        return false;
-    }
-
-    @Override public PointList wayGeometry() {
-        return edgeIter.wayGeometry();
-    }
-
-    @Override public void wayGeometry(PointList pillarNodes) {
-        edgeIter.wayGeometry(pillarNodes);
-    }
-
-    @Override public void distance(double dist) {
-        edgeIter.distance(dist);
-    }
-
-    @Override public void flags(int flags) {
-        edgeIter.flags(flags);
     }
 }

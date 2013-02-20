@@ -19,35 +19,46 @@
 package com.graphhopper.routing.util;
 
 /**
+ * Calculates the fastest route with the specified vehicle (FlagsEncoder).
+ *
  * @author Peter Karich
  */
-public class FastestCarCalc implements WeightCalculation {
+public class FastestCalc implements WeightCalculation {
 
-    public final static FastestCarCalc DEFAULT = new FastestCarCalc();
+    public final static FastestCalc CAR = new FastestCalc(new CarFlagsEncoder());
+    private final FlagsEncoder encoder;
+    private final double maxSpeed;
 
-    private FastestCarCalc() {
+    public FastestCalc(FlagsEncoder encoder) {
+        this.encoder = encoder;
+        maxSpeed = encoder.getMaxSpeed();
     }
 
     @Override
     public double getMinWeight(double distance) {
-        return distance / CarStreetType.MAX_SPEED;
+        return distance * 3.6 / maxSpeed;
     }
 
     @Override
     public long getTime(double distance, int flags) {
-        return (long) (distance * 3.6 / CarStreetType.getSpeed(flags));
+        return (long) (distance * 3.6 / encoder.getSpeed(flags));
     }
 
     @Override
     public double getWeight(double distance, int flags) {
-        return distance / CarStreetType.getSpeedPart(flags);
+        return distance / encoder.getSpeed(flags);
     }
 
     @Override public double revertWeight(double weight, int flags) {
-        return weight * CarStreetType.getSpeedPart(flags);
+        return weight * encoder.getSpeed(flags);
+    }
+
+    @Override
+    public FlagsEncoder flagsEncoder() {
+        return encoder;
     }
 
     @Override public String toString() {
-        return "FASTEST";
+        return "FASTEST|" + encoder;
     }
 }

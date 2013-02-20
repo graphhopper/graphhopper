@@ -33,6 +33,10 @@ import com.graphhopper.util.NumHelper;
  */
 public class BBox implements Shape, Cloneable {
 
+    /**
+     * A bounding box which prefills the values with minimum values so that it
+     * can increase.
+     */
     public static final BBox INVERSE = new BBox();
 
     static {

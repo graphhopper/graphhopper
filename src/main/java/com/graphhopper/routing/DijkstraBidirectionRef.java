@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
-import com.graphhopper.routing.util.EdgeLevelFilter;
+import com.graphhopper.routing.util.EdgeLevelFilterOld;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -52,7 +52,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     protected EdgeEntry currTo;
     protected TIntObjectMap<EdgeEntry> shortestWeightMapOther;
     public PathBidirRef shortest;
-    private EdgeLevelFilter edgeFilter;
+    private EdgeLevelFilterOld edgeFilter;
 
     public DijkstraBidirectionRef(Graph graph) {
         super(graph);
@@ -70,12 +70,12 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         shortestWeightMapTo = new TIntObjectHashMap<EdgeEntry>(nodes / 10);
     }
 
-    public RoutingAlgorithm edgeFilter(EdgeLevelFilter edgeFilter) {
+    public RoutingAlgorithm edgeFilter(EdgeLevelFilterOld edgeFilter) {
         this.edgeFilter = edgeFilter;
         return this;
     }
 
-    protected EdgeLevelFilter edgeFilter() {
+    protected EdgeLevelFilterOld edgeFilter() {
         return edgeFilter;
     }
 

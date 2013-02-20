@@ -18,7 +18,7 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.routing.util.CarStreetType;
+import com.graphhopper.routing.util.CarFlagsEncoder;
 import com.graphhopper.storage.AbstractGraphTester;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -90,17 +90,16 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(internalId2, iter.node());
         assertEquals(93147, iter.distance(), 1);
-        CarStreetType flags = new CarStreetType(iter.flags());
-        assertTrue(flags.isMotorway());
-        assertTrue(flags.isForward());
-        assertTrue(flags.isBackward());
+        CarFlagsEncoder flags = new CarFlagsEncoder();
+        assertTrue(flags.isMotorway(iter.flags()));
+        assertTrue(flags.isForward(iter.flags()));
+        assertTrue(flags.isBackward(iter.flags()));
         assertTrue(iter.next());
         assertEquals(internalId3, iter.node());
-        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.wayGeometry());
-        flags = new CarStreetType(iter.flags());
-        assertTrue(flags.isService());
-        assertTrue(flags.isForward());
-        assertTrue(flags.isBackward());
+        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.wayGeometry());        
+        assertTrue(flags.isService(iter.flags()));
+        assertTrue(flags.isForward(iter.flags()));
+        assertTrue(flags.isBackward(iter.flags()));
 
         // get third added location id=30
         iter = graph.getOutgoing(internalId2);
@@ -182,16 +181,16 @@ public class OSMReaderTest {
         iter = graph.getEdges(internalIdMain);
         assertTrue(iter.next());
         assertEquals(internalId1, iter.node());
-        CarStreetType flags = new CarStreetType(iter.flags());
-        assertTrue(flags.isMotorway());
-        assertFalse(flags.isForward());
-        assertTrue(flags.isBackward());
+        CarFlagsEncoder flags = new CarFlagsEncoder();
+        assertTrue(flags.isMotorway(iter.flags()));
+        assertFalse(flags.isForward(iter.flags()));
+        assertTrue(flags.isBackward(iter.flags()));
 
         assertTrue(iter.next());
-        flags = new CarStreetType(iter.flags());
-        assertTrue(flags.isMotorway());
-        assertTrue(flags.isForward());
-        assertFalse(flags.isBackward());
+        flags = new CarFlagsEncoder();
+        assertTrue(flags.isMotorway(iter.flags()));
+        assertTrue(flags.isForward(iter.flags()));
+        assertFalse(flags.isBackward(iter.flags()));
     }
 
     @Test public void testFerry() {
@@ -212,6 +211,6 @@ public class OSMReaderTest {
         int internalId6 = AbstractGraphTester.getIdOf(graph, 56.0);
         EdgeIterator iter = graph.getEdges(internalId6);
         iter.next();
-        assertEquals(40, CarStreetType.getSpeed(iter.flags()));
+        assertEquals(40, new CarFlagsEncoder().getSpeed(iter.flags()));
     }
 }

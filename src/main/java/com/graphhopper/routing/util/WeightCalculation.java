@@ -44,4 +44,6 @@ public interface WeightCalculation {
      * @return distance from specified weight
      */
     double revertWeight(double weight, int flags);
+    
+    FlagsEncoder flagsEncoder();
 }
