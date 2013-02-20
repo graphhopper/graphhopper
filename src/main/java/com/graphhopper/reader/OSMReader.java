@@ -19,7 +19,7 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.util.AcceptStreet;
+import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FastestCarCalc;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -39,9 +39,7 @@ import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
 import com.graphhopper.util.Helper7;
 import com.graphhopper.util.StopWatch;
-import gnu.trove.list.array.TLongArrayList;
 import java.io.*;
-import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
 import javax.xml.stream.XMLInputFactory;
@@ -77,14 +75,10 @@ public class OSMReader {
     }
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
     private long locations;
-    private long skippedLocations;
-    private long edgeCount;
+    private long skippedLocations;    
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
     private long expectedNodes;
-    private TLongArrayList tmpLocs = new TLongArrayList(10);
-    private Map<String, Object> properties = new HashMap<String, Object>();
-    private AcceptStreet acceptStreets = new AcceptStreet(true, false, false, false);
     private AlgorithmPreparation prepare;
     private Location2IDQuadtree index;
     private int indexCapacity = -1;
@@ -148,7 +142,7 @@ public class OSMReader {
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
         osmReader.indexCapacity(args.getInt("osmreader.locationIndexCapacity", -1));
         String type = args.get("osmreader.type", "CAR");
-        osmReader.acceptStreet(new AcceptStreet(type.contains("CAR"),
+        osmReader.acceptStreet(new AcceptWay(type.contains("CAR"),
                 type.contains("PUBLIC_TRANSPORT"),
                 type.contains("BIKE"), type.contains("FOOT")));
         final String algoStr = args.get("osmreader.algo", "astar");
@@ -177,7 +171,8 @@ public class OSMReader {
     public OSMReader(GraphStorage storage, long expectedNodes) {
         this.graphStorage = storage;
         this.expectedNodes = expectedNodes;
-        this.helper = createDoubleParseHelper();
+        helper = createDoubleParseHelper();
+        helper.acceptWays(new AcceptWay(true, false, false, false));
         logger.info("using " + helper.getStorageInfo(storage) + ", memory:" + Helper.getMemInfo());
     }
 
@@ -285,7 +280,7 @@ public class OSMReader {
                             processNode(sReader);
                             if (counter % 10000000 == 0) {
                                 logger.info(nf(counter) + ", locs:" + nf(locations)
-                                        + " (" + skippedLocations + "), edges:" + nf(edgeCount)
+                                        + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
                                         + " " + Helper.getMemInfo());
                             }
                         } else if ("way".equals(sReader.getLocalName())) {
@@ -295,7 +290,7 @@ public class OSMReader {
                                 wayStart = counter;
                                 sw.start();
                             }
-                            processHighway(sReader);
+                            helper.processWay(sReader);
                             if (counter - wayStart == 10000 && sw.stop().getSeconds() > 1) {
                                 logger.warn("Something is wrong! Processing ways takes too long! "
                                         + sw.getSeconds() + "sec for only " + (counter - wayStart) + " docs");
@@ -303,7 +298,7 @@ public class OSMReader {
                             // hmmh a bit hacky: counter does +=2 until the next loop
                             if ((counter / 2) % 1000000 == 0) {
                                 logger.info(nf(counter) + ", locs:" + nf(locations)
-                                        + " (" + skippedLocations + "), edges:" + nf(edgeCount)
+                                        + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
                                         + " " + Helper.getMemInfo());
                             }
                         }
@@ -348,65 +343,6 @@ public class OSMReader {
         return true;
     }
 
-    boolean parseWay(TLongArrayList tmpLocs, Map<String, Object> properties, XMLStreamReader sReader)
-            throws XMLStreamException {
-
-        boolean handled = false;
-        tmpLocs.clear();
-        properties.clear();
-        for (int tmpE = sReader.nextTag(); tmpE != XMLStreamConstants.END_ELEMENT;
-                tmpE = sReader.nextTag()) {
-            if (tmpE == XMLStreamConstants.START_ELEMENT) {
-                if ("nd".equals(sReader.getLocalName())) {
-                    String ref = sReader.getAttributeValue(null, "ref");
-                    try {
-                        tmpLocs.add(Long.parseLong(ref));
-                    } catch (Exception ex) {
-                        logger.error("cannot get ref from way. ref:" + ref, ex);
-                    }
-                } else if ("tag".equals(sReader.getLocalName())) {
-                    String key = sReader.getAttributeValue(null, "k");
-                    if (key != null && !key.isEmpty()) {
-                        String val = sReader.getAttributeValue(null, "v");
-                        if ("highway".equals(key)) {
-                            handled = acceptStreets.handleWay(properties, val);
-//                            if ("proposed".equals(val) || "preproposed".equals(val)
-//                                    || "platform".equals(val) || "raceway".equals(val)
-//                                    || "bus_stop".equals(val) || "bridleway".equals(val)
-//                                    || "construction".equals(val) || "no".equals(val) || "centre_line".equals(val))
-//                                // ignore
-//                                val = val;
-//                            else
-//                                logger.warn("unknown highway type:" + val);
-                        } else if ("oneway".equals(key)) {
-                            if ("yes".equals(val) || "true".equals(val) || "1".equals(val))
-                                properties.put("oneway", "yes");
-                        } else if ("junction".equals(key)) {
-                            // abzweigung
-                            if ("roundabout".equals(val))
-                                properties.put("oneway", "yes");
-                        }
-                    }
-                }
-
-                sReader.next();
-            }
-        }
-        return handled;
-    }
-
-    boolean isHighway(XMLStreamReader sReader) throws XMLStreamException {
-        return parseWay(tmpLocs, properties, sReader);
-    }
-
-    private void processHighway(XMLStreamReader sReader) throws XMLStreamException {
-        if (isHighway(sReader) && tmpLocs.size() > 1) {
-            int flags = acceptStreets.toFlags(properties);
-            int successfullAdded = helper.addEdge(tmpLocs, flags);
-            edgeCount += successfullAdded;
-        }
-    }
-
     /**
      * @return the initialized graph. Invalid if called before osm2Graph.
      */
@@ -417,8 +353,8 @@ public class OSMReader {
     /**
      * Specify the type of the path calculation (car, bike, ...).
      */
-    public OSMReader acceptStreet(AcceptStreet acceptStr) {
-        this.acceptStreets = acceptStr;
+    public OSMReader acceptStreet(AcceptWay acceptWays) {
+        helper.acceptWays(acceptWays);
         return this;
     }
 
@@ -453,13 +389,7 @@ public class OSMReader {
     }
 
     OSMReaderHelper createDoubleParseHelper() {
-        return new OSMReaderHelperDoubleParse(graphStorage, expectedNodes) {
-            @Override
-            boolean parseWay(TLongArrayList tmpLocs, Map<String, Object> properties,
-                    XMLStreamReader sReader) throws XMLStreamException {
-                return OSMReader.this.parseWay(tmpLocs, properties, sReader);
-            }
-        };
+        return new OSMReaderHelperDoubleParse(graphStorage, expectedNodes);
     }
 
     OSMReaderHelper helper() {

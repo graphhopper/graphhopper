@@ -58,7 +58,7 @@ public class CarStreetTypeTest {
     public void testService() {
         Map<String, Object> p = new HashMap<String, Object>();
         p.put("car", CarStreetType.SPEED.get("service"));
-        CarStreetType fl = new CarStreetType(new AcceptStreet(true, false, false, false).toFlags(p));
+        CarStreetType fl = new CarStreetType(new AcceptWay(true, false, false, false).toFlags(p));
         assertTrue(fl.isForward());
         assertTrue(fl.isBackward());
         assertTrue(fl.isService());

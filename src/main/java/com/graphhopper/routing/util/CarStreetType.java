@@ -66,7 +66,7 @@ public class CarStreetType {
     }
 
     public int getSpeed() {
-        return getSpeedPart() * 10;
+        return getSpeedPart() * FACTOR;
     }
 
     @Override

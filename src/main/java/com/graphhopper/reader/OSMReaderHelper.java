@@ -18,13 +18,20 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
 import gnu.trove.list.TLongList;
+import gnu.trove.list.array.TLongArrayList;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,16 +40,25 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class OSMReaderHelper {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());    
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     protected long zeroCounter = 0;
+    private long edgeCount;
     protected final Graph g;
     protected final long expectedNodes;
     private DistanceCalc callback = new DistanceCalc();
+    private AcceptWay acceptWays;
+    protected TLongArrayList wayNodes = new TLongArrayList(10);
+    private Map<String, Object> wayProperties = new HashMap<String, Object>();
 
     public OSMReaderHelper(Graph g, long expectedNodes) {
         this.g = g;
         this.expectedNodes = expectedNodes;
     }
+
+    public OSMReaderHelper acceptWays(AcceptWay acceptWays) {
+        this.acceptWays = acceptWays;
+        return this;
+    }        
 
     public void callback(DistanceCalc callback) {
         this.callback = callback;
@@ -50,6 +66,10 @@ public abstract class OSMReaderHelper {
 
     public long expectedNodes() {
         return expectedNodes;
+    }
+
+    public long edgeCount() {
+        return edgeCount;
     }
 
     public void preProcess(InputStream osmXml) {
@@ -107,5 +127,48 @@ public abstract class OSMReaderHelper {
     }
 
     void startWayProcessing() {
+    }
+
+    public void processWay(XMLStreamReader sReader) throws XMLStreamException {
+        boolean isWay = parseWay(sReader);
+        boolean hasNodes = wayNodes.size() > 1;
+        if (isWay && hasNodes) {
+            int flags = acceptWays.toFlags(wayProperties);
+            int successfullAdded = addEdge(wayNodes, flags);
+            edgeCount += successfullAdded;
+        }
+    }
+
+    /**
+     *
+     * @param wayNodes will be filled with participating node ids
+     * @param outProperties will be filled with way information after calling
+     * this method
+     */
+    boolean parseWay(XMLStreamReader sReader) throws XMLStreamException {
+        wayNodes.clear();
+        wayProperties.clear();
+        for (int tmpE = sReader.nextTag(); tmpE != XMLStreamConstants.END_ELEMENT;
+                tmpE = sReader.nextTag()) {
+            if (tmpE == XMLStreamConstants.START_ELEMENT) {
+                if ("nd".equals(sReader.getLocalName())) {
+                    String ref = sReader.getAttributeValue(null, "ref");
+                    try {
+                        wayNodes.add(Long.parseLong(ref));
+                    } catch (Exception ex) {
+                        logger.error("cannot get ref from way. ref:" + ref, ex);
+                    }
+                } else if ("tag".equals(sReader.getLocalName())) {
+                    String tagKey = sReader.getAttributeValue(null, "k");
+                    if (tagKey != null && !tagKey.isEmpty()) {
+                        String tagValue = sReader.getAttributeValue(null, "v");
+                        wayProperties.put(tagKey, tagValue);                        
+                    }
+                }
+                sReader.next();
+            }
+        }
+        
+        return acceptWays.handleTags(wayProperties, wayNodes);
     }
 }

@@ -40,6 +40,8 @@ import org.junit.Test;
  */
 public class OSMReaderTest {
 
+    private String file1 = "test-osm.xml";
+    private String file2 = "test-osm2.xml";
     private String dir = "./target/tmp/test-db";
 
     @Before public void setUp() {
@@ -60,15 +62,15 @@ public class OSMReaderTest {
         return osmreader;
     }
 
-    OSMReader preProcess(OSMReader osmreader) {
+    OSMReader preProcess(OSMReader osmreader, String file) {
         // default osmreader.setDoubleParse(true);
-        osmreader.helper().preProcess(getClass().getResourceAsStream("test-osm.xml"));
+        osmreader.helper().preProcess(getClass().getResourceAsStream(file));
         return osmreader;
     }
 
-    @Test public void testMain() {
-        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000)));
-        reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
+    @Test public void testMain() {        
+        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000)), file1);
+        reader.writeOsm2Graph(getClass().getResourceAsStream(file1));
         reader.optimize();
         reader.flush();
         Graph graph = reader.graph();
@@ -113,8 +115,8 @@ public class OSMReaderTest {
     }
 
     @Test public void testSort() {
-        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000).sort(true)));
-        reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
+        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000).sort(true)), file1);
+        reader.writeOsm2Graph(getClass().getResourceAsStream(file1));
         reader.optimize();
         reader.flush();
         Graph graph = reader.graph();
@@ -127,8 +129,8 @@ public class OSMReaderTest {
             @Override public boolean isInBounds(double lat, double lon) {
                 return lat > 49 && lon > 8;
             }
-        }));
-        reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm.xml"));
+        }), file1);
+        reader.writeOsm2Graph(getClass().getResourceAsStream(file1));
         reader.flush();
         Graph graph = reader.graph();
         assertEquals(4, graph.nodes());
@@ -161,12 +163,12 @@ public class OSMReaderTest {
     }
 
     @Test public void testOneWay() {
-        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000)));
-        reader.writeOsm2Graph(getClass().getResourceAsStream("test-osm2.xml"));
+        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000)), file2);
+        reader.writeOsm2Graph(getClass().getResourceAsStream(file2));
         reader.flush();
         Graph graph = reader.graph();
 
-        int internalIdMain = AbstractGraphTester.getIdOf(graph, 52);
+        int internalIdMain = AbstractGraphTester.getIdOf(graph, 52.0);
         int internalId1 = AbstractGraphTester.getIdOf(graph, 51.2492152);
         int internalId2 = AbstractGraphTester.getIdOf(graph, 51.2);
         assertEquals(1, GraphUtility.count(graph.getOutgoing(internalId1)));
@@ -190,5 +192,26 @@ public class OSMReaderTest {
         assertTrue(flags.isMotorway());
         assertTrue(flags.isForward());
         assertFalse(flags.isBackward());
+    }
+
+    @Test public void testFerry() {
+        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000)), file2);
+        reader.writeOsm2Graph(getClass().getResourceAsStream(file2));
+        Graph graph = reader.graph();
+
+        int internalId4 = AbstractGraphTester.getIdOf(graph, 54.0);
+        int internalId5 = AbstractGraphTester.getIdOf(graph, 55.0);
+        assertEquals(Arrays.asList(internalId4), GraphUtility.neighbors(graph.getEdges(internalId5)));
+    }
+
+    @Test public void testMaxspeed() {
+        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000)), file2);
+        reader.writeOsm2Graph(getClass().getResourceAsStream(file2));
+        Graph graph = reader.graph();
+
+        int internalId6 = AbstractGraphTester.getIdOf(graph, 56.0);
+        EdgeIterator iter = graph.getEdges(internalId6);
+        iter.next();
+        assertEquals(40, CarStreetType.getSpeed(iter.flags()));
     }
 }

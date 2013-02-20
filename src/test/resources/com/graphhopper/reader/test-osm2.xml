@@ -5,12 +5,32 @@
         <tag k="name" v="Wiesbaden-Naurod" />
         <tag k="place" v="village" />
     </node>
-    <node id="20" lat="52" lon="9" uid="24854">
+    <node id="20" lat="52.0" lon="9" uid="24854">
         <tag k="name" v="Halbendorf-Spree" />
     </node>
     <node id="30" lat="51.2" lon="9.4" uid="24855">
         <tag k="name" v="Dresden" />
-    </node>    
+    </node>
+    <node id="21" lat="52.1" lon="9.1" uid="24854">
+        <tag k="name" v="Next-Halbendorf-Spree" />
+    </node>
+    
+    <!-- -->
+    <node id="40" lat="54.0" lon="10.1">
+        <tag k="name" v="Ferry End" />
+    </node>  
+    <node id="50" lat="55.0" lon="10.2">
+        <tag k="name" v="Ferry Start" />
+    </node>
+    
+    <!-- -->
+    <node id="60" lat="56.0" lon="10.1">
+        <tag k="name" v="Start" />
+    </node>  
+    <node id="70" lat="57.0" lon="10.2">
+        <tag k="name" v="End" />
+    </node>
+                      
     
     <way id="10" uid="85761">
         <!-- 0-1, 1-2 -->
@@ -20,4 +40,27 @@
         <tag k="oneway" v="true" />
         <tag k="highway" v="motorway" />
     </way>    
+    
+    <way id="11" uid="85761">
+        <nd ref="21"/>
+        <nd ref="20"/>
+        <tag k="oneway" v="true" />
+        <tag k="highway" v="motorway" />
+    </way>    
+    
+    <way id="15" uid="85762">          
+        <nd ref="50"/>        
+        <nd ref="40"/>
+        <tag k="route" v="ferry"/>
+        <tag k="motorcar" v="yes"/>         
+        <tag k="foot" v="yes"/>
+        <tag k="duration" v="00:30"/>        
+    </way>
+    
+    <way id="20">          
+        <nd ref="60"/>
+        <nd ref="70"/>  
+        <tag k="highway" v="motorway" />
+        <tag k="maxspeed" v="40" />
+    </way>
 </osm>

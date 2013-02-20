@@ -27,11 +27,7 @@ import static com.graphhopper.util.Helper.*;
 import com.graphhopper.util.Helper7;
 import com.graphhopper.util.PointList;
 import gnu.trove.list.TLongList;
-import gnu.trove.list.array.TLongArrayList;
-import gnu.trove.map.hash.TLongIntHashMap;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -58,8 +54,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     // very slow: private SparseLongLongArray osmIdToIndexMap;
     // not applicable as ways introduces the nodes in 'wrong' order: private OSMIDSegmentedMap
     private int towerId = 0;
-    private int pillarId = 0;
-    private final TLongArrayList tmpLocs = new TLongArrayList(10);
+    private int pillarId = 0;    
     // remember how many times a node was used to identify tower nodes
     private DataAccess pillarLats, pillarLons;
     private final Directory dir;
@@ -207,7 +202,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     private void setHasHighways(long osmId) {
         int tmpIndex = osmIdToIndexMap.get(osmId);
         if (tmpIndex == EMPTY) {
-            // unused osmId
+            // osmId is used exactly once
             osmIdToIndexMap.put(osmId, PILLAR_NODE);
         } else if (tmpIndex > EMPTY) {
             // mark node as tower node as it occured at least twice times
@@ -232,8 +227,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         pillarLons.createNew(Math.max(expectedNodes / 50, 100));
         if (osmXml == null)
             throw new AssertionError("Stream cannot be empty");
-
-        Map<String, Object> empty = new HashMap<String, Object>();
+        
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         try {
@@ -249,11 +243,11 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                 switch (event) {
                     case XMLStreamConstants.START_ELEMENT:
                         if ("way".equals(sReader.getLocalName())) {
-                            boolean isHighway = parseWay(tmpLocs, empty, sReader);
-                            if (isHighway && tmpLocs.size() > 1) {
-                                int s = tmpLocs.size();
+                            boolean isHighway = parseWay(sReader);
+                            if (isHighway && wayNodes.size() > 1) {
+                                int s = wayNodes.size();
                                 for (int index = 0; index < s; index++) {
-                                    setHasHighways(tmpLocs.get(index));
+                                    setHasHighways(wayNodes.get(index));
                                 }
                             }
                         }
@@ -265,10 +259,5 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         } finally {
             Helper7.close(sReader);
         }
-    }
-
-    boolean parseWay(TLongArrayList tmpLocs, Map<String, Object> properties, XMLStreamReader sReader)
-            throws XMLStreamException {
-        return true;
     }
 }
