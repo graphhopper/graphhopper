@@ -28,13 +28,11 @@ public class AcceptWay {
 
     private CarFlagsEncoder carEncoder = new CarFlagsEncoder();
     private boolean car;
-    private boolean publicTransport;
     private boolean bike;
     private boolean foot;
 
-    public AcceptWay(boolean car, boolean publicTransport, boolean bike, boolean foot) {
+    public AcceptWay(boolean car, boolean bike, boolean foot) {
         this.car = car;
-        this.publicTransport = publicTransport;
         this.bike = bike;
         this.foot = foot;
     }
@@ -53,20 +51,17 @@ public class AcceptWay {
 //        this.publicTransport = publicTransport;
 //        return this;
 //    }
-
 //    public AcceptWay bike(boolean bike) {
 //        this.bike = bike;
 //        return this;
 //    }
-
     public boolean acceptsCar() {
         return car;
     }
 
-    public boolean acceptsPublicTransport() {
-        return publicTransport;
-    }
-
+//    public boolean acceptsPublicTransport() {
+//        return publicTransport;
+//    }
     public boolean acceptsBike() {
         return bike;
     }
@@ -114,9 +109,6 @@ public class AcceptWay {
                     includeWay = true;
                     outProperties.put("bike", 10);
                 }
-            }
-
-            if (publicTransport) {
             }
 
             if (car) {
@@ -232,5 +224,17 @@ public class AcceptWay {
         }
         // TODO if(foot)
         return flags;
+    }
+
+    @Override
+    public String toString() {
+        String str = "";
+        if (acceptsCar())
+            str += "CAR,";
+        if (acceptsBike())
+            str += "BIKE,";
+        if (acceptsFoot())
+            str += "FOOT";
+        return str;
     }
 }

@@ -64,6 +64,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         dir = storage.directory();
         pillarLats = dir.findCreate("tmpLatitudes");
         pillarLons = dir.findCreate("tmpLongitudes");
+        // TODO check out if we better should use http://en.wikipedia.org/wiki/Segment_tree
         osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
     }
 

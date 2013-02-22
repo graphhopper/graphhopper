@@ -59,15 +59,9 @@ public class CarFlagsEncoderTest {
         Map<String, Object> p = new HashMap<String, Object>();        
         CarFlagsEncoder fl = new CarFlagsEncoder();
         p.put("car", fl.getSpeed("service"));
-        int flags = new AcceptWay(true, false, false, false).toFlags(p);
+        int flags = new AcceptWay(true, false, false).toFlags(p);
         assertTrue(fl.isForward(flags));
         assertTrue(fl.isBackward(flags));
         assertTrue(fl.isService(flags));
-    }
-
-    @Test
-    public void testTime() {
-        WeightCalculation wc = FastestCalc.CAR;
-        assertEquals(60 * 60, wc.getTime(100000, new CarFlagsEncoder().flags(100, true)));
-    }
+    }    
 }

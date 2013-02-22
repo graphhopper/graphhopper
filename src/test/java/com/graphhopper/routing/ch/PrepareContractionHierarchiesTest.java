@@ -48,6 +48,7 @@ import org.junit.Test;
 public class PrepareContractionHierarchiesTest {
 
     CarFlagsEncoder carFlagsEncoder = new CarFlagsEncoder();
+
     LevelGraph createGraph() {
         return new GraphBuilder().levelGraphCreate();
     }
@@ -84,12 +85,11 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testShortestPathSkipNode() {
         LevelGraph g = createExampleGraph();
-        double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();        
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo
-                = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
-                .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setAvoidNode(3));
+        double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
+                .filter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).avoidNode(3));
         List<NodeCH> gs = createGoals(2);
-        algo.clear().setLimit(10).calcPath(4, gs);
+        algo.setLimit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(0).entry);
         assertTrue(p.distance() > normalDist);
     }
@@ -99,9 +99,9 @@ public class PrepareContractionHierarchiesTest {
         LevelGraph g = createExampleGraph();
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g).
-                setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setAvoidNode(3));
+                filter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).avoidNode(3));
         List<NodeCH> gs = createGoals(1, 2);
-        algo.clear().setLimit(10).calcPath(4, gs);
+        algo.setLimit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(1).entry);
         assertTrue(p.distance() > normalDist);
     }
@@ -110,9 +110,9 @@ public class PrepareContractionHierarchiesTest {
     public void testShortestPathLimit() {
         LevelGraph g = createExampleGraph();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
-                .setFilter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).setAvoidNode(0));
+                .filter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).avoidNode(0));
         List<NodeCH> gs = createGoals(1);
-        algo.clear().setLimit(2).calcPath(4, gs);
+        algo.setLimit(2).calcPath(4, gs);
         assertNull(gs.get(0).entry);
     }
 
@@ -149,7 +149,7 @@ public class PrepareContractionHierarchiesTest {
         // PrepareTowerNodesShortcutsTest.printEdges(g);
         assertEquals(old + 2, GraphUtility.count(g.allEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
-        Path p = algo.clear().calcPath(4, 2);
+        Path p = algo.calcPath(4, 2);
         assertEquals(3, p.distance(), 1e-6);
         assertEquals(Helper.createTList(4, 3, 5, 2), p.calcNodes());
     }
@@ -165,7 +165,7 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(old + 14, GraphUtility.count(g.allEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
 
-        Path p = algo.clear().calcPath(0, 10);
+        Path p = algo.calcPath(0, 10);
         assertEquals(10, p.distance(), 1e-6);
         assertEquals(Helper.createTList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.calcNodes());
     }
@@ -267,7 +267,7 @@ public class PrepareContractionHierarchiesTest {
         prepare.doWork();
         assertEquals(old + 20, GraphUtility.count(g.allEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
-        Path p = algo.clear().calcPath(4, 7);
+        Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());
     }
 
@@ -299,7 +299,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     void initUnpackingGraph(LevelGraphStorage g, WeightCalculation w) {
-        double dist = 1;        
+        double dist = 1;
         int flags = carFlagsEncoder.flags(30, false);
         g.edge(10, 0, w.getWeight(dist, flags), flags);
         EdgeSkipIterator iter1 = g.edge(0, 1, w.getWeight(dist, flags), flags);
@@ -338,10 +338,10 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testUnpackingOrder() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
-        WeightCalculation calc = ShortestCalc.CAR;
+        WeightCalculation calc = new ShortestCalc();
         initUnpackingGraph(g, calc);
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
-        RoutingAlgorithm algo = prepare.type(calc).createAlgo();
+        RoutingAlgorithm algo = prepare.type(calc).vehicle(carFlagsEncoder).createAlgo();
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.distance(), 1e-5);
         assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());
@@ -351,9 +351,9 @@ public class PrepareContractionHierarchiesTest {
     public void testUnpackingOrder_Fastest() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
-        WeightCalculation calc = FastestCalc.CAR;
+        WeightCalculation calc = new FastestCalc(carFlagsEncoder);
         initUnpackingGraph(g, calc);
-        RoutingAlgorithm algo = prepare.type(calc).createAlgo();
+        RoutingAlgorithm algo = prepare.type(calc).vehicle(carFlagsEncoder).createAlgo();
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.distance(), 1e-1);
         assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());
@@ -478,7 +478,6 @@ public class PrepareContractionHierarchiesTest {
 //        }
 //        System.out.println("---");
 //    }
-
     @Test
     public void testBits() {
         int fromNode = Integer.MAX_VALUE / 3 * 2;

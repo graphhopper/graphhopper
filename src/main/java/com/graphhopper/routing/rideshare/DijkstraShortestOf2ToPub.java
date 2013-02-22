@@ -104,8 +104,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
 
-        shortest = new PathBidirRef(graph, weightCalc);
-        shortest.weight(Double.MAX_VALUE);
+        shortest = new PathBidirRef(graph, flagsEncoder);
 
         // create several starting points
         if (pubTransport.isEmpty())
@@ -194,17 +193,18 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
 
     @Override
     protected void updateShortest(EdgeEntry shortestDE, int currLoc) {
-        if (pubTransport.contains(currLoc)) {
-            EdgeEntry entryOther = shortestDistMapOther.get(currLoc);
-            if (entryOther != null) {
-                // update μ
-                double newShortest = shortestDE.weight + entryOther.weight;
-                if (newShortest < shortest.weight()) {
-                    shortest.switchToFrom(shortestDistMapFrom == shortestDistMapOther);
-                    shortest.edgeEntry(shortestDE);
-                    shortest.edgeEntryTo(entryOther);
-                    shortest.weight(newShortest);
-                }
+        if (!pubTransport.contains(currLoc))
+            return;
+
+        EdgeEntry entryOther = shortestDistMapOther.get(currLoc);
+        if (entryOther != null) {
+            // update μ
+            double newShortest = shortestDE.weight + entryOther.weight;
+            if (newShortest < shortest.weight()) {
+                shortest.switchToFrom(shortestDistMapFrom == shortestDistMapOther);
+                shortest.edgeEntry(shortestDE);
+                shortest.edgeEntryTo(entryOther);
+                shortest.weight(newShortest);
             }
         }
     }
@@ -214,11 +214,6 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         from(from);
         to(to);
         return calcPath();
-    }
-
-    @Override
-    public RoutingAlgorithm clear() {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override

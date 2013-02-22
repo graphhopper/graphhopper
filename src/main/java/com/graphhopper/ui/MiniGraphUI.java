@@ -24,6 +24,8 @@ import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.FlagsEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -61,7 +63,7 @@ public class MiniGraphUI {
 //    private QuadTree<Long> quadTree;
 //    private Collection<CoordTrig<Long>> quadTreeNodes;
     private Path path;
-    private RoutingAlgorithm algo;
+    private AlgorithmPreparation prepare;
     private final Graph graph;
     private Location2IDIndex index;
     private String latLon = "";
@@ -74,9 +76,8 @@ public class MiniGraphUI {
 
     public MiniGraphUI(OSMReader reader, boolean debug) {
         this.graph = reader.graph();
-        AlgorithmPreparation prepare = reader.preparation();
-        this.algo = prepare.createAlgo();
-        logger.info("locations:" + graph.nodes() + ", debug:" + debug + ", algo:" + algo.name());
+        prepare = reader.preparation();
+        logger.info("locations:" + graph.nodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().name());
         mg = new MyGraphics(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
@@ -151,7 +152,7 @@ public class MiniGraphUI {
 //                mg.plotNode(g2, 14304, Color.red);
 
                 g2.setColor(Color.red);
-                Path p1 = calcPath(algo.clear());
+                Path p1 = calcPath(prepare.createAlgo());
                 plotPath(p1, g2, 5);
 
                 g2.setColor(Color.black);
@@ -166,19 +167,21 @@ public class MiniGraphUI {
         });
 
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
-            WeightCalculation wCalc = ShortestCalc.CAR;
+            WeightCalculation wCalc = new ShortestCalc();
+            FlagsEncoder encoder = new CarFlagsEncoder();
 
             @Override public void paintComponent(Graphics2D g2) {
                 if (dijkstraFromId < 0 || dijkstraToId < 0)
                     return;
 
                 makeTransparent(g2);
+                RoutingAlgorithm algo = prepare.createAlgo();
                 if (algo instanceof DebugAlgo)
                     ((DebugAlgo) algo).setGraphics2D(g2);
 
                 StopWatch sw = new StopWatch().start();
                 logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + wCalc);
-                path = algo.clear().type(wCalc).calcPath(dijkstraFromId, dijkstraToId);
+                path = algo.type(wCalc).vehicle(encoder).calcPath(dijkstraFromId, dijkstraToId);
                 sw.stop();
 
                 // if directed edges

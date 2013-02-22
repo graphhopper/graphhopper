@@ -84,9 +84,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         super(graph);
         int nodes = Math.max(20, graph.nodes());
         initCollections(nodes);
-
-        clear();
-        setApproximation(false);
+        approximation(false);
     }
 
     protected void initCollections(int size) {
@@ -103,7 +101,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
      * @param fast if true it enables approximative distance calculation from
      * lat,lon values
      */
-    public AStarBidirection setApproximation(boolean approx) {
+    public AStarBidirection approximation(boolean approx) {
         if (approx) {
             dist = new DistancePlaneProjection();
             approximationFactor = 0.5;
@@ -118,31 +116,18 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
      * Specify a low value like 0.5 for worse but faster results. Or over 1.1
      * for more precise.
      */
-    public AStarBidirection setApproximationFactor(double approxFactor) {
+    public AStarBidirection approximationFactor(double approxFactor) {
         this.approximationFactor = approxFactor;
         return this;
     }
 
-    public RoutingAlgorithm setEdgeFilter(EdgeLevelFilterOld edgeFilter) {
+    public RoutingAlgorithm edgeFilter(EdgeLevelFilterOld edgeFilter) {
         this.edgeFilter = edgeFilter;
         return this;
     }
 
-    public EdgeLevelFilterOld getEdgeFilter() {
+    public EdgeLevelFilterOld edgeFilter() {
         return edgeFilter;
-    }
-
-    @Override
-    public RoutingAlgorithm clear() {
-        alreadyRun = false;
-        visitedFrom.clear();
-        prioQueueOpenSetFrom.clear();
-        shortestWeightMapFrom.clear();
-
-        visitedTo.clear();
-        prioQueueOpenSetTo.clear();
-        shortestWeightMapTo.clear();
-        return this;
     }
 
     public void initFrom(int from) {
@@ -163,12 +148,12 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
     private Path checkIndenticalFromAndTo() {
         if (from == to)
-            return new Path(graph, weightCalc);
+            return new Path(graph, flagsEncoder);
         return null;
     }
 
     protected PathBidirRef createPath() {
-        return new PathBidirRef(graph, weightCalc);
+        return new PathBidirRef(graph, flagsEncoder);
     }
 
     public void initPath() {
@@ -208,7 +193,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     // d_f (v) + (v, w) + d_r (w) < μ + p_r(t)
     // where pi_r_of_t = p_r(t) = 1/2(pi_r(t) - pi_f(t) + pi_f(s)), and pi_f(t)=0
     public boolean checkFinishCondition() {
-        double tmp = shortest.weight * approximationFactor;
+        double tmp = shortest.weight() * approximationFactor;
         if (currFrom == null)
             return currTo.weightToCompare >= tmp;
         else if (currTo == null)
@@ -303,11 +288,11 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
         // update μ
         double newShortest = shortestDE.weightToCompare + entryOther.weightToCompare;
-        if (newShortest < shortest.weight) {
+        if (newShortest < shortest.weight()) {
             shortest.switchToFrom(shortestWeightMapFrom == shortestWeightMapOther);
             shortest.edgeEntry = shortestDE;
             shortest.edgeTo = entryOther;
-            shortest.weight = newShortest;
+            shortest.weight(newShortest);
         }
     }
 

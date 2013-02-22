@@ -23,7 +23,6 @@ import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
-import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -78,7 +77,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     public Path calcPath() {
         // identical
         if (pubTransport.contains(destination))
-            return new Path(graph, weightCalc);
+            return new Path(graph, flagsEncoder);
 
         visitedFrom = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
@@ -91,8 +90,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
         shortestDistMapTo.put(destination, entryTo);
 
-        shortest = new PathBidirRef(graph, weightCalc);
-        shortest.weight(Double.MAX_VALUE);
+        shortest = new PathBidirRef(graph, flagsEncoder);
 
         // create several starting points
         if (pubTransport.isEmpty())
@@ -188,12 +186,6 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         addPubTransportPoint(from);
         setDestination(to);
         return calcPath();
-    }
-
-    @Override
-    public RoutingAlgorithm clear() {
-        throw new UnsupportedOperationException("Not supported yet.");
-        // shortest = new PathWrapperRef();
     }
 
     @Override

@@ -72,19 +72,6 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         wrapperTo = new EdgeWrapper(locs / 10);
     }
 
-    @Override
-    public RoutingAlgorithm clear() {
-        alreadyRun = false;
-        visitedFrom.clear();
-        openSetFrom.clear();
-        wrapperFrom.clear();
-
-        visitedTo.clear();
-        openSetTo.clear();
-        wrapperTo.clear();
-        return this;
-    }
-
     void addSkipNode(int node) {
         visitedFrom.add(node);
         visitedTo.add(node);
@@ -133,8 +120,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     }
 
     void initPath() {
-        shortest = new PathBidir(graph, weightCalc, wrapperFrom, wrapperTo);
-        shortest.initWeight();
+        shortest = new PathBidir(graph, flagsEncoder, wrapperFrom, wrapperTo);
     }
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
@@ -142,7 +128,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder 
     //    search, update shortest = μ if df (v) + (v, w) + dr (w) < μ            
     boolean checkFinishCondition() {
-        return currFromWeight + currToWeight >= shortest.weight;
+        return currFromWeight + currToWeight >= shortest.weight();
     }
 
     void fillEdges(int currNode, double currWeight, int currRef, MyBitSet visitedMain,
@@ -181,11 +167,11 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
         // update μ
         double newWeight = weight + wrapperOther.getWeight(otherRef);
-        if (newWeight < shortest.weight) {
+        if (newWeight < shortest.weight()) {
             shortest.switchWrapper = wrapperFrom == wrapperOther;
             shortest.fromRef = ref;
             shortest.toRef = otherRef;
-            shortest.weight = newWeight;
+            shortest.weight(newWeight);
         }
     }
 
@@ -226,7 +212,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
     private Path checkIndenticalFromAndTo() {
         if (from == to)
-            return new Path(graph, weightCalc);
+            return new Path(graph, flagsEncoder);
         return null;
     }
 

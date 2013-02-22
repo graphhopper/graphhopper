@@ -33,7 +33,7 @@ public class FootFlagsEncoder implements FlagsEncoder {
     private static final int FORWARD = 1;
     private static final int BACKWARD = 2;
     
-    // TODO NOW SHIFT 16 bits to avoid conflict with car and preserve bike
+    // TODO NOW shift 16 bits left to avoid conflict with car and preserve bike
 
     @Override
     public boolean isForward(int flags) {

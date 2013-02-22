@@ -60,7 +60,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
     @Override
     public PrepareContractionHierarchies prepareGraph(Graph g, WeightCalculation calc) {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies().graph(g).type(calc);
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies().graph(g).
+                type(calc).vehicle(defaultFlagsEncoder);
         // hack: prepare matrixgraph only once
         if (g != preparedMatrixGraph)
             ch.doWork();
@@ -90,10 +91,10 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.edge(6, 7, 1, true);
 
         // simulate preparation
-        EdgeSkipIterator iter2_1 = g2.edge(0, 5, 2.8, flagsEncoder.flags(0, true));
+        EdgeSkipIterator iter2_1 = g2.edge(0, 5, 2.8, defaultFlagsEncoder.flags(0, true));
         iter2_1.skippedEdges(iter1_1.edge(), iter1_2.edge());
-        EdgeSkipIterator iter2_2 = g2.edge(5, 7, 1.4, flagsEncoder.flags(0, true));
-        g2.edge(0, 7, 4.2, flagsEncoder.flags(0, true)).skippedEdges(iter2_1.edge(), iter2_2.edge());
+        EdgeSkipIterator iter2_2 = g2.edge(5, 7, 1.4, defaultFlagsEncoder.flags(0, true));
+        g2.edge(0, 7, 4.2, defaultFlagsEncoder.flags(0, true)).skippedEdges(iter2_1.edge(), iter2_2.edge());
         g2.setLevel(1, 0);
         g2.setLevel(3, 1);
         g2.setLevel(4, 2);

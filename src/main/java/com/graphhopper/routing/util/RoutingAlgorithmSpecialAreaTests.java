@@ -26,7 +26,6 @@ import com.graphhopper.routing.DijkstraBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.Location2IDIndex;
@@ -35,6 +34,7 @@ import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
+import static com.graphhopper.routing.util.NoOpAlgorithmPreparation.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -72,19 +72,19 @@ public class RoutingAlgorithmSpecialAreaTests {
                     + "Or use osmreader.chShortcuts=shortest and avoid the preparation");
 
         TestAlgoCollector testCollector = new TestAlgoCollector();
-        Collection<RoutingAlgorithm> algos = createAlgos(unterfrankenGraph, true);
-        for (RoutingAlgorithm algo : algos) {
+        Collection<AlgorithmPreparation> prepares = createAlgos(unterfrankenGraph, true);
+        for (AlgorithmPreparation prepare : prepares) {
             int failed = testCollector.list.size();
-            testCollector.assertDistance(algo, idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 561.3, 20);
-            testCollector.assertDistance(algo, idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107984.2, 1751);
-            testCollector.assertDistance(algo, idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 92535.4, 1335);
-            testCollector.assertDistance(algo, idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77703.5, 1305);
-            testCollector.assertDistance(algo, idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125195.1, 2323);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 561.3, 20);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107984.2, 1751);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 92535.4, 1335);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77703.5, 1305);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125195.1, 2323);
             //different id2location init order: testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 130815.9, 2115);
-            testCollector.assertDistance(algo, idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 131362.6, 2229);
-            testCollector.assertDistance(algo, idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73170.2, 1417);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 131299.2, 2220);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73170.2, 1417);
 
-            System.out.println("unterfranken " + algo + ": " + (testCollector.list.size() - failed) + " failed");
+            System.out.println("unterfranken " + prepare.createAlgo() + ": " + (testCollector.list.size() - failed) + " failed");
         }
 
         if (testCollector.list.size() > 0) {
@@ -94,42 +94,26 @@ public class RoutingAlgorithmSpecialAreaTests {
             System.out.println("SUCCESS!");
     }
 
-    public static Collection<RoutingAlgorithm> createAlgos(Graph g, boolean withCh) {
-//        LevelGraph graphTowerNodesSC = (LevelGraph) g.copyTo(new GraphBuilder().levelGraphCreate());
-//        PrepareTowerNodesShortcuts prepare = new PrepareTowerNodesShortcuts().graph(graphTowerNodesSC);
-//        prepare.doWork();
-//        AStarBidirection astarSimpleSC = (AStarBidirection) prepare.createAStar();
-//        astarSimpleSC.setApproximation(false);
-        List<RoutingAlgorithm> algos = new ArrayList<RoutingAlgorithm>(Arrays.<RoutingAlgorithm>asList(
-                new AStar(g), new AStarBidirection(g), new DijkstraBidirectionRef(g),
-                new DijkstraBidirection(g), new DijkstraSimple(g)));
+    public static Collection<AlgorithmPreparation> createAlgos(Graph g, boolean withCh) {
+        List<AlgorithmPreparation> prepare = new ArrayList<AlgorithmPreparation>(Arrays.<AlgorithmPreparation>asList(
+                p(g, AStar.class), p(g, AStarBidirection.class), p(g, DijkstraBidirectionRef.class),
+                p(g, DijkstraBidirection.class), p(g, DijkstraSimple.class)));
         if (withCh) {
             LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder().levelGraphCreate());
             PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().graph(graphCH);
             prepareCH.doWork();
-            algos.add(prepareCH.createAlgo());
-            algos.add(prepareCH.createAStar().setApproximation(true).setApproximationFactor(.9));
+            prepare.add(prepareCH);
+            // TODO prepare.add(prepareCH.createAStar().approximation(true).approximationFactor(.9));
         }
-        return algos;
+        return prepare;
     }
 
-    public void runShortestPathPerf(int runs, RoutingAlgorithm algo) throws Exception {
+    public void runShortestPathPerf(int runs, AlgorithmPreparation prepare) throws Exception {
         BBox bbox = unterfrankenGraph.bounds();
         double minLat = bbox.minLat, minLon = bbox.minLon;
         double maxLat = bbox.maxLat, maxLon = bbox.maxLon;
-        if (unterfrankenGraph instanceof LevelGraph) {
-            if (algo instanceof DijkstraBidirectionRef)
-                algo = new PrepareContractionHierarchies().graph(unterfrankenGraph).createAlgo();
-//                algo = new PrepareTowerNodesShortcuts().graph(unterfrankenGraph).createAlgo();
-//            else if (algo instanceof AStarBidirection)
-//                algo = new PrepareContractionHierarchies().graph(unterfrankenGraph).createAStar();
-            else
-                // level graph accepts all algorithms but normally we want to use an optimized one
-                throw new IllegalStateException("algorithm which boosts query time for levelgraph not found " + algo);
-            logger.info("[experimental] using shortcuts with " + algo);
-        } else
-            logger.info("running " + algo);
 
+        logger.info("running " + prepare.createAlgo());
         Random rand = new Random(123);
         StopWatch sw = new StopWatch();
 
@@ -149,9 +133,8 @@ public class RoutingAlgorithmSpecialAreaTests {
                 continue;
             }
 
-            algo.clear();
             sw.start();
-            Path p = algo.calcPath(from, to);
+            Path p = prepare.graph(unterfrankenGraph).createAlgo().calcPath(from, to);
             sw.stop();
             if (!p.found()) {
                 // there are still paths not found cause of oneway motorways => only routable in one direction

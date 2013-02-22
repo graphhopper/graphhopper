@@ -24,7 +24,11 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.CarFlagsEncoder;
 import com.graphhopper.routing.util.FastestCalc;
+import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.FootFlagsEncoder;
+import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -60,7 +64,7 @@ public class GraphHopper implements GraphHopperAPI {
     private String ghLocation = "";
     private boolean simplify = true;
     private boolean chFast = true;
-    private AcceptWay acceptWay = new AcceptWay(true, false, false, false);    
+    private AcceptWay acceptWay = new AcceptWay(true, false, false);
 
     public GraphHopper() {
     }
@@ -75,9 +79,9 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public AcceptWay acceptWay() {
-        return acceptWay;        
+        return acceptWay;
     }
-   
+
     public GraphHopper forDesktop() {
         return setInMemory(true, true);
     }
@@ -168,11 +172,16 @@ public class GraphHopper implements GraphHopperAPI {
             if (chUsage) {
                 storage = new LevelGraphStorage(dir);
                 PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
-                // TODO NOW foot or car
+
+                FlagsEncoder encoder;
+                if (acceptWay.acceptsCar())
+                    encoder = new CarFlagsEncoder();
+                else
+                    encoder = new FootFlagsEncoder();
                 if (chFast) {
-                    tmpPrepareCH.type(FastestCalc.CAR);
+                    tmpPrepareCH.type(new FastestCalc(encoder)).vehicle(encoder);
                 } else {
-                    tmpPrepareCH.type(ShortestCalc.CAR);
+                    tmpPrepareCH.type(new ShortestCalc()).vehicle(encoder);
                 }
                 prepare = tmpPrepareCH;
             } else
@@ -196,9 +205,12 @@ public class GraphHopper implements GraphHopperAPI {
                 } else
                     args.put("osmreader.dataaccess", "inmemory");
             }
+
+            args.put("osmreader.type", acceptWay.toString());
+
             if (chUsage) {
                 args.put("osmreader.levelgraph", "true");
-                args.put("osmreader.chShortcuts", "fastest");
+                args.put("osmreader.chShortcuts", chFast ? "fastest" : "shortest");
             }
 
             try {
@@ -234,8 +246,7 @@ public class GraphHopper implements GraphHopperAPI {
             else
                 throw new IllegalStateException("Only dijkstrabi and astarbi is supported for levelgraph/CH!");
         } else {
-            prepare = Helper.createAlgoPrepare(request.algorithm());
-            prepare.graph(graph);
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm());
             algo = prepare.createAlgo();
         }
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";

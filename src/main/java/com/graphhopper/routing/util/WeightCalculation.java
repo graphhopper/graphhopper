@@ -26,11 +26,6 @@ package com.graphhopper.routing.util;
 public interface WeightCalculation {
 
     /**
-     * @return time in seconds for the specified edge
-     */
-    long getTime(double distance, int flags);
-
-    /**
      * @return the calculated weight with the maximum velocity
      */
     double getMinWeight(double distance);
@@ -44,6 +39,4 @@ public interface WeightCalculation {
      * @return distance from specified weight
      */
     double revertWeight(double weight, int flags);
-    
-    FlagsEncoder flagsEncoder();
 }

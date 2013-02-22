@@ -18,8 +18,10 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.CarFlagsEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagsEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
@@ -33,23 +35,25 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected Graph graph;
     protected WeightCalculation weightCalc;
     protected EdgeFilter outEdgeFilter;
+    protected FlagsEncoder flagsEncoder;
 
     public AbstractRoutingAlgorithm(Graph graph) {
         this.graph = graph;
-        type(ShortestCalc.CAR);
+        type(new ShortestCalc()).vehicle(new CarFlagsEncoder());
+    }
+
+    @Override public RoutingAlgorithm vehicle(FlagsEncoder encoder) {
+        this.flagsEncoder = encoder;
+        outEdgeFilter = new DefaultEdgeFilter(encoder).direction(false, true);
+        return this;
     }
 
     @Override public RoutingAlgorithm type(WeightCalculation wc) {
         this.weightCalc = wc;
-        outEdgeFilter = new DefaultEdgeFilter(weightCalc.flagsEncoder()).direction(false, true);
         return this;
     }
 
-    protected void updateShortest(EdgeEntry shortestDE, int currLoc) {
-    }
-
-    @Override public RoutingAlgorithm clear() {
-        return this;
+    protected void updateShortest(EdgeEntry shortestDE, int currLoc) {        
     }
 
     @Override public String toString() {

@@ -18,8 +18,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.ShortestCalc;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.FlagsEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -41,28 +40,24 @@ import gnu.trove.set.hash.TIntHashSet;
  */
 public class Path {
 
-    protected final static double INIT_VALUE = Double.MAX_VALUE;
     protected Graph graph;
-    protected WeightCalculation weightCalculation;
-    protected double weight;
+    protected FlagsEncoder encoder;
     protected double distance;
-    protected long time;
-    protected boolean found;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
+    private long time;
+    private boolean found;
     protected EdgeEntry edgeEntry;
-    protected StopWatch sw = new StopWatch("extract");
+    StopWatch sw = new StopWatch("extract");
     private int fromNode = EdgeIterator.NO_EDGE;
     private TIntList edgeIds;
     private PointList cachedPoints;
+    private double weight;
 
-    private Path() {
-        this(null, ShortestCalc.CAR);
-    }
-
-    public Path(Graph graph, WeightCalculation weightCalculation) {
+    public Path(Graph graph, FlagsEncoder encoder) {
+        this.weight = Double.MAX_VALUE;
         this.graph = graph;
-        this.weightCalculation = weightCalculation;
+        this.encoder = encoder;
         this.edgeIds = new TIntArrayList();
     }
 
@@ -70,7 +65,7 @@ public class Path {
      * Populates an unextracted path instances from the specified path p.
      */
     Path(Path p) {
-        this(p.graph, p.weightCalculation);
+        this(p.graph, p.encoder);
         weight = p.weight;
         edgeIds = new TIntArrayList(edgeIds);
         edgeEntry = p.edgeEntry;
@@ -132,14 +127,15 @@ public class Path {
     }
 
     /**
-     * The final weight which is the sum from the weights of the used edges.
+     * This weight will be updated during the algorithm. The initial value is
+     * maximum double.
      */
     public double weight() {
         return weight;
     }
 
-    public void weight(double weight) {
-        this.weight = weight;
+    public void weight(double w) {
+        this.weight = w;
     }
 
     /**
@@ -149,7 +145,7 @@ public class Path {
         sw.start();
         EdgeEntry goalEdge = edgeEntry;
         while (EdgeIterator.Edge.isValid(goalEdge.edge)) {
-            processWeight(goalEdge.edge, goalEdge.endNode);
+            processDistance(goalEdge.edge, goalEdge.endNode);
             goalEdge = goalEdge.parent;
         }
 
@@ -164,10 +160,12 @@ public class Path {
     }
 
     /**
-     * Calls calcWeight and adds the edgeId.
+     * Calls calcDistance and adds the edgeId.
      */
-    protected void processWeight(int edgeId, int endNode) {
-        calcWeight(graph.getEdgeProps(edgeId, endNode));
+    protected void processDistance(int edgeId, int endNode) {
+        EdgeIterator iter = graph.getEdgeProps(edgeId, endNode);
+        calcDistance(iter);
+        calcTime(iter.distance(), iter.flags());
         addEdge(edgeId);
     }
 
@@ -175,12 +173,12 @@ public class Path {
      * This method calculates not only the weight but also the distance in
      * kilometer for the specified edge.
      */
-    public void calcWeight(EdgeIterator iter) {
-        double dist = iter.distance();
-        int fl = iter.flags();
-        weight += weightCalculation.getWeight(dist, fl);
-        distance += dist;
-        time += weightCalculation.getTime(dist, fl);
+    protected void calcDistance(EdgeIterator iter) {
+        distance += iter.distance();
+    }
+
+    protected void calcTime(double distance, int flags) {
+        time += (long) (distance * 3.6 / encoder.getSpeed(flags));
     }
 
     /**
@@ -283,7 +281,7 @@ public class Path {
     }
 
     @Override public String toString() {
-        return "weight:" + weight() + ", edges:" + edgeIds.size();
+        return "distance:" + distance() + ", edges:" + edgeIds.size();
     }
 
     public String toDetailsString() {

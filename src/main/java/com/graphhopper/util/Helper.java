@@ -22,6 +22,9 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.FootFlagsEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.shapes.BBox;
@@ -160,43 +163,30 @@ public class Helper {
     }
 
     /**
-     * Creates a preparation wrapper for the specified algorithm. Warning/TODO:
-     * set the _graph for the instance otherwise you'll get NPE when calling
-     * createAlgo. Possible values for algorithmStr: astar (A* algorithm),
-     * astarbi (bidirectional A*) dijkstra (Dijkstra), dijkstrabi and
-     * dijkstraNative (a bit faster bidirectional Dijkstra).
-     */
-    public static AlgorithmPreparation createAlgoPrepare(final String algorithmStr) {
-        return new NoOpAlgorithmPreparation() {
-            @Override
-            public RoutingAlgorithm createAlgo() {
-                return createAlgoFromString(_graph, algorithmStr);
-            }
-        };
-    }
-
-    /**
      * Possible values: astar (A* algorithm), astarbi (bidirectional A*)
      * dijkstra (Dijkstra), dijkstrabi and dijkstraNative (a bit faster
      * bidirectional Dijkstra).
      */
-    public static RoutingAlgorithm createAlgoFromString(Graph g, String algorithmStr) {
-        if (g == null) {
-            throw new NullPointerException("You have to specify a graph different from null!");
-        }
-        RoutingAlgorithm algo;
+    public static Class<? extends RoutingAlgorithm> getAlgoFromString(String algorithmStr) {
         if ("dijkstrabi".equalsIgnoreCase(algorithmStr)) {
-            algo = new DijkstraBidirectionRef(g);
+            return DijkstraBidirectionRef.class;
         } else if ("dijkstraNative".equalsIgnoreCase(algorithmStr)) {
-            algo = new DijkstraBidirection(g);
+            return DijkstraBidirection.class;
         } else if ("dijkstra".equalsIgnoreCase(algorithmStr)) {
-            algo = new DijkstraSimple(g);
+            return DijkstraSimple.class;
         } else if ("astarbi".equalsIgnoreCase(algorithmStr)) {
-            algo = new AStarBidirection(g).setApproximation(true);
-        } else {
-            algo = new AStar(g);
-        }
-        return algo;
+            return AStarBidirection.class;
+            // TODO (g).approximation(true);
+        } else
+            return AStar.class;
+    }
+
+    public static FlagsEncoder getEncoder(String str) {
+        if ("CAR".equalsIgnoreCase(str))
+            return new CarFlagsEncoder();
+        else if ("CAR".equalsIgnoreCase(str))
+            return new FootFlagsEncoder();
+        throw new RuntimeException("Not found " + str);
     }
 
     /**
@@ -366,7 +356,7 @@ public class Helper {
             System.err.println("GraphHopper Initialization WARNING: cannot get version!?");
         } else {
             // throw away the "-SNAPSHOT"
-            String tmp = version.substring(0, indexM);            
+            String tmp = version.substring(0, indexM);
             SNAPSHOT = version.toLowerCase().contains("-snapshot");
             VERSION = tmp;
         }

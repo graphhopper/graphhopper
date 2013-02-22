@@ -26,6 +26,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
+import com.graphhopper.routing.util.CarFlagsEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EdgeLevelFilterOld;
@@ -69,13 +70,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private Logger logger = LoggerFactory.getLogger(getClass());
     private WeightCalculation shortestCalc;
     private WeightCalculation prepareWeightCalc;
-    private FlagsEncoder flagsEncoder;
+    private FlagsEncoder prepareEncoder;
     private EdgeFilter inFilter;
     private EdgeFilter outFilter;
     private LevelGraph g;
     // the most important nodes comes last
     private MySortedCollection sortedNodes;
-    private WeightedNode refs[];
+    private PriorityNode refs[];
     private TIntArrayList originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
     private int scOneDir;
@@ -91,7 +92,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private int newShortcuts;
 
     public PrepareContractionHierarchies() {
-        type(ShortestCalc.CAR);
+        type(new ShortestCalc()).vehicle(new CarFlagsEncoder());
     }
 
     @Override
@@ -110,12 +111,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     public PrepareContractionHierarchies type(WeightCalculation weightCalc) {
         prepareWeightCalc = weightCalc;
-        flagsEncoder = prepareWeightCalc.flagsEncoder();
-        shortestCalc = new ShortestCalc(flagsEncoder);
-        inFilter = new DefaultEdgeFilter(flagsEncoder).direction(true, false);
-        outFilter = new DefaultEdgeFilter(flagsEncoder).direction(false, true);
-        scOneDir = flagsEncoder.flags(0, false);
-        scBothDir = flagsEncoder.flags(0, true);
+        shortestCalc = new ShortestCalc();
+        return this;
+    }
+    
+    public PrepareContractionHierarchies vehicle(FlagsEncoder encoder) {
+        this.prepareEncoder = encoder;
+        inFilter = new DefaultEdgeFilter(encoder).direction(true, false);
+        outFilter = new DefaultEdgeFilter(encoder).direction(false, true);
+        scOneDir = encoder.flags(0, false);
+        scBothDir = encoder.flags(0, true);
         return this;
     }
 
@@ -171,11 +176,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     boolean prepareNodes() {
         int len = g.nodes();
         for (int node = 0; node < len; node++) {
-            refs[node] = new WeightedNode(node, 0);
+            refs[node] = new PriorityNode(node, 0);
         }
 
         for (int node = 0; node < len; node++) {
-            WeightedNode wn = refs[node];
+            PriorityNode wn = refs[node];
             wn.priority = calculatePriority(node);
             sortedNodes.insert(wn.node, wn.priority);
         }
@@ -202,12 +207,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     sw.start();
                     // TODO avoid to traverse all nodes -> via a new sortedNodes.iterator()
                     for (int node = 0; node < len; node++) {
-                        WeightedNode wNode = refs[node];
+                        PriorityNode pNode = refs[node];
                         if (g.getLevel(node) != 0)
                             continue;
-                        int old = wNode.priority;
-                        wNode.priority = calculatePriority(node);
-                        sortedNodes.update(node, old, wNode.priority);
+                        int old = pNode.priority;
+                        pNode.priority = calculatePriority(node);
+                        sortedNodes.update(node, old, pNode.priority);
                     }
                     sw.stop();
                 }
@@ -218,7 +223,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             counter++;
-            WeightedNode wn = refs[sortedNodes.pollKey()];
+            PriorityNode wn = refs[sortedNodes.pollKey()];
 
             // update priority of current endNode via simulating 'addShortcuts'
             wn.priority = calculatePriority(wn.node);
@@ -250,18 +255,17 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     continue;
 
                 int nn = iter.node();
-                WeightedNode neighborWn = refs[nn];
+                PriorityNode neighborWn = refs[nn];
                 int tmpOld = neighborWn.priority;
                 neighborWn.priority = calculatePriority(nn);
-                if (neighborWn.priority != tmpOld) {
+                if (neighborWn.priority != tmpOld)
                     sortedNodes.update(nn, tmpOld, neighborWn.priority);
-                }
 
                 if (removesHigher2LowerEdges)
                     ((LevelGraphStorage) g).disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
             }
         }
-        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc);
+        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc + ", " + prepareEncoder);
     }
 
     int shortcuts() {
@@ -321,7 +325,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         originalEdges = new TIntArrayList(g.nodes() / 2, -1);
         edgeFilter = new EdgeLevelFilterCH(this.g);
         sortedNodes = new MySortedCollection(g.nodes());
-        refs = new WeightedNode[g.nodes()];
+        refs = new PriorityNode[g.nodes()];
         return this;
     }
 
@@ -333,7 +337,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             super(g);
         }
 
-        public EdgeLevelFilterCH setAvoidNode(int node) {
+        public EdgeLevelFilterCH avoidNode(int node) {
             this.avoidNode = node;
             return this;
         }
@@ -387,8 +391,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             // TODO instead of a weight-limit we could use a hop-limit 
             // and successively increasing it when mean-degree of graph increases
-            algo = new OneToManyDijkstraCH(g).setFilter(edgeFilter.setAvoidNode(v));
-            algo.type(shortestCalc);
+            algo = new OneToManyDijkstraCH(g).filter(edgeFilter.avoidNode(v));
+            algo.type(shortestCalc).vehicle(prepareEncoder);
             algo.setLimit(maxWeight).calcPath(u, goalNodes);
             internalFindShortcuts(goalNodes, u, iter1.edge());
         }
@@ -400,7 +404,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         for (NodeCH n : goalNodes) {
             if (n.entry != null) {
                 Path path = algo.extractPath(n.entry);
-                if (path.found() && path.weight() <= n.distance) {
+                if (path.found() && path.distance() <= n.distance) {
                     // FOUND witness path, so do not add shortcut
                     continue;
                 }
@@ -445,7 +449,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             EdgeSkipIterator iter = g.getEdges(sc.from, outFilter);
             while (iter.next()) {
                 if (iter.isShortcut() && iter.node() == sc.to
-                        && flagsEncoder.canBeOverwritten(iter.flags(), sc.flags)
+                        && prepareEncoder.canBeOverwritten(iter.flags(), sc.flags)
                         && iter.distance() > sc.distance) {
                     iter.flags(sc.flags);
                     iter.skippedEdges(sc.skippedEdge1, sc.skippedEdge2);
@@ -477,7 +481,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     @Override
-    public DijkstraBidirectionRef createAlgo() {
+    public RoutingAlgorithm createAlgo() {
         // do not change weight within DijkstraBidirectionRef => so use ShortestCalc
         DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g) {
             @Override protected void initCollections(int nodes) {
@@ -496,7 +500,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             @Override public RoutingAlgorithm type(WeightCalculation wc) {
                 // allow only initial configuration
-                if (weightCalc != null)
+                if (super.weightCalc != null)
                     throw new IllegalStateException("You'll need to change weightCalculation of preparation instead of algorithm!");
                 return super.type(wc);
             }
@@ -505,20 +509,20 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
                 WeightCalculation wc = createWeightCalculation();
-                return new Path4CH(graph, wc);
+                return new Path4CH(graph, flagsEncoder, wc);
             }
 
             @Override public String name() {
                 return "dijkstraCH";
             }
         };
+        dijkstra.vehicle(prepareEncoder);
         if (!removesHigher2LowerEdges)
             dijkstra.edgeFilter(new EdgeLevelFilterOld(g));
         return dijkstra;
     }
 
-    public AStarBidirection createAStar() {
-        // do not change weight within AStarBidirection => so use ShortestCalc
+    public RoutingAlgorithm createAStar() {
         AStarBidirection astar = new AStarBidirection(g) {
             @Override protected void initCollections(int nodes) {
                 // algorithm with CH does not need that much memory pre allocated
@@ -546,13 +550,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
                 WeightCalculation wc = createWeightCalculation();
-                return new Path4CH(graph, wc);
+                return new Path4CH(graph, flagsEncoder, wc);
             }
 
             @Override public String name() {
                 return "astarCH";
             }
         };
+        astar.vehicle(prepareEncoder);
+        if (!removesHigher2LowerEdges)
+            astar.edgeFilter(new EdgeLevelFilterOld(g));
         return astar;
     }
 
@@ -570,16 +577,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 return distance;
             }
 
-            @Override public long getTime(double distance, int flags) {
-                return prepareWeightCalc.getTime(revertWeight(distance, flags), flags);
-            }
-
             @Override public double revertWeight(double weight, int flags) {
                 return prepareWeightCalc.revertWeight(weight, flags);
-            }
-
-            @Override public FlagsEncoder flagsEncoder() {
-                return flagsEncoder;
             }
         };
     }
@@ -599,7 +598,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             super(graph);
         }
 
-        public OneToManyDijkstraCH setFilter(EdgeLevelFilterOld filter) {
+        public OneToManyDijkstraCH filter(EdgeLevelFilterOld filter) {
             this.filter = filter;
             return this;
         }
@@ -611,11 +610,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         OneToManyDijkstraCH setLimit(double weight) {
             limit = weight;
-            return this;
-        }
-
-        @Override public OneToManyDijkstraCH clear() {
-            super.clear();
             return this;
         }
 
@@ -649,12 +643,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         }
     }
 
-    private static class WeightedNode {
+    private static class PriorityNode {
 
         int node;
         int priority;
 
-        public WeightedNode(int node, int priority) {
+        public PriorityNode(int node, int priority) {
             this.node = node;
             this.priority = priority;
         }

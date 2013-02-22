@@ -33,7 +33,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
     public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
-                return new AStarBidirection(_graph).type(calc);
+                return new AStarBidirection(_graph).type(calc).vehicle(defaultFlagsEncoder);
             }
         }.graph(g);
     }

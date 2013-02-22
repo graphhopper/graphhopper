@@ -18,13 +18,16 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -66,16 +69,17 @@ public class OSMReader {
             tests.start();
 
         if (args.getBool("osmreader.runshortestpath", false)) {
-            RoutingAlgorithm algo = Helper.createAlgoFromString(g, args.get("osmreader.algo", "dijkstra"));
+
+            String algo = args.get("osmreader.algo", "dijkstra");
             int iters = args.getInt("osmreader.algoIterations", 50);
             //warmup
-            tests.runShortestPathPerf(iters / 10, algo);
-            tests.runShortestPathPerf(iters, algo);
+            tests.runShortestPathPerf(iters / 10, NoOpAlgorithmPreparation.createAlgoPrepare(g, algo));
+            tests.runShortestPathPerf(iters, NoOpAlgorithmPreparation.createAlgoPrepare(g, algo));
         }
     }
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
     private long locations;
-    private long skippedLocations;    
+    private long skippedLocations;
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
     private long expectedNodes;
@@ -143,10 +147,9 @@ public class OSMReader {
         osmReader.indexCapacity(args.getInt("osmreader.locationIndexCapacity", -1));
         String type = args.get("osmreader.type", "CAR");
         osmReader.acceptStreet(new AcceptWay(type.contains("CAR"),
-                type.contains("PUBLIC_TRANSPORT"),
                 type.contains("BIKE"), type.contains("FOOT")));
         final String algoStr = args.get("osmreader.algo", "astar");
-        osmReader.defaultAlgoPrepare(Helper.createAlgoPrepare(algoStr));
+        osmReader.defaultAlgoPrepare(NoOpAlgorithmPreparation.createAlgoPrepare(algoStr));
         osmReader.sort(args.getBool("osmreader.sortGraph", false));
         osmReader.setCHShortcuts(args.get("osmreader.chShortcuts", "no"));
         if (!osmReader.loadExisting()) {
@@ -172,7 +175,7 @@ public class OSMReader {
         this.graphStorage = storage;
         this.expectedNodes = expectedNodes;
         helper = createDoubleParseHelper();
-        helper.acceptWays(new AcceptWay(true, false, false, false));
+        helper.acceptWays(new AcceptWay(true, false, false));
         logger.info("using " + helper.getStorageInfo(storage) + ", memory:" + Helper.getMemInfo());
     }
 
@@ -221,7 +224,7 @@ public class OSMReader {
 
         logger.info("calling prepare.doWork ... (" + Helper.getMemInfo() + ")");
         if (prepare == null)
-            defaultAlgoPrepare(Helper.createAlgoPrepare("astar"));
+            defaultAlgoPrepare(NoOpAlgorithmPreparation.createAlgoPrepare("astar"));
         else
             prepare.doWork();
     }
@@ -371,12 +374,15 @@ public class OSMReader {
     public OSMReader setCHShortcuts(String chShortcuts) {
         if (chShortcuts.isEmpty() || "no".equals(chShortcuts) || "false".equals(chShortcuts))
             return this;
-        
-        // TODO NOW car or foot
+
+        FlagsEncoder encoder = new CarFlagsEncoder();
+        int tmpIndex = chShortcuts.indexOf(",");
+        if (tmpIndex >= 0)
+            encoder = Helper.getEncoder(chShortcuts.substring(tmpIndex + 1).trim());
         if ("true".equals(chShortcuts) || "fastest".equals(chShortcuts)) {
-            prepare = new PrepareContractionHierarchies().type(FastestCalc.CAR);
+            prepare = new PrepareContractionHierarchies().type(new FastestCalc(encoder)).vehicle(encoder);
         } else if ("shortest".equals(chShortcuts)) {
-            prepare = new PrepareContractionHierarchies();
+            prepare = new PrepareContractionHierarchies().type(new ShortestCalc()).vehicle(encoder);
         } else
             throw new IllegalArgumentException("Value " + chShortcuts + " not valid for configuring "
                     + "contraction hierarchies algorithm preparation");

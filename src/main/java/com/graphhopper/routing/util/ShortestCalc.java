@@ -24,34 +24,23 @@ package com.graphhopper.routing.util;
  * @author Peter Karich
  */
 public class ShortestCalc implements WeightCalculation {
-
-    public final static ShortestCalc CAR = new ShortestCalc(new CarFlagsEncoder());
-    private final FlagsEncoder encoder;
-
-    public ShortestCalc(FlagsEncoder encoder) {
-        this.encoder = encoder;
+    
+    public ShortestCalc() {        
     }
 
-    @Override public double getMinWeight(double currDistToGoal) {
+    @Override 
+    public double getMinWeight(double currDistToGoal) {
         return currDistToGoal;
     }
 
-    @Override
-    public long getTime(double distance, int flags) {
-        return (long) (distance * 3.6 / encoder.getSpeed(flags));
-    }
-
-    @Override public double getWeight(double distance, int flags) {
+    @Override 
+    public double getWeight(double distance, int flags) {
         return distance;
     }
 
-    @Override public double revertWeight(double weight, int flags) {
+    @Override 
+    public double revertWeight(double weight, int flags) {
         return weight;
-    }
-
-    @Override
-    public FlagsEncoder flagsEncoder() {
-        return encoder;
     }
 
     @Override public String toString() {

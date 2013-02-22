@@ -18,9 +18,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.AStarBidirection;
-import com.graphhopper.routing.DijkstraBidirection;
-import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.util.PointList;
@@ -34,19 +31,9 @@ public class TestAlgoCollector {
 
     public List<String> list = new ArrayList<String>();
 
-    public TestAlgoCollector assertNotFound(RoutingAlgorithm algo, int from, int to) {
-        Path p = algo.clear().calcPath(from, to);
-        if (p.found()) {
-            synchronized (this) {
-                list.add(algo + " returns value where null is expected. " + "from:" + from + ", to:" + to);
-            }
-        }
-        return this;
-    }
-
     public TestAlgoCollector assertDistance(RoutingAlgorithm algo,
             int from, int to, double distance, int pointCount) {
-        Path path = algo.clear().calcPath(from, to);
+        Path path = algo.calcPath(from, to);
         if (!path.found()) {
             list.add(algo + " returns no path. from:" + from + ", to:" + to);
             return this;

@@ -18,6 +18,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.EdgeIterator;
+
 /**
  * This class provides methods to define how a value (like speed or direction)
  * converts to a flag (currently an integer value).

@@ -56,8 +56,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     public DijkstraBidirectionRef(Graph graph) {
         super(graph);
-        initCollections(Math.max(20, graph.nodes()));
-        clear();
+        initCollections(Math.max(20, graph.nodes()));        
     }
 
     protected void initCollections(int nodes) {
@@ -77,19 +76,6 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     protected EdgeLevelFilterOld edgeFilter() {
         return edgeFilter;
-    }
-
-    @Override
-    public RoutingAlgorithm clear() {
-        alreadyRun = false;
-        visitedFrom.clear();
-        openSetFrom.clear();
-        shortestWeightMapFrom.clear();
-
-        visitedTo.clear();
-        openSetTo.clear();
-        shortestWeightMapTo.clear();
-        return this;
     }
 
     void addSkipNode(int node) {
@@ -149,10 +135,10 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     //    search, update extractPath = μ if df (v) + (v, w) + dr (w) < μ            
     public boolean checkFinishCondition() {
         if (currFrom == null)
-            return currTo.weight >= shortest.weight;
+            return currTo.weight >= shortest.weight();
         else if (currTo == null)
-            return currFrom.weight >= shortest.weight;
-        return currFrom.weight + currTo.weight >= shortest.weight;
+            return currFrom.weight >= shortest.weight();
+        return currFrom.weight + currTo.weight >= shortest.weight();
     }
 
     void fillEdges(EdgeEntry curr, MyBitSet visitedMain, PriorityQueue<EdgeEntry> prioQueue,
@@ -195,11 +181,11 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
         // update μ
         double newShortest = shortestDE.weight + entryOther.weight;
-        if (newShortest < shortest.weight) {
+        if (newShortest < shortest.weight()) {
             shortest.switchToFrom(shortestWeightMapFrom == shortestWeightMapOther);
             shortest.edgeEntry = shortestDE;
             shortest.edgeTo = entryOther;
-            shortest.weight = newShortest;
+            shortest.weight(newShortest);
         }
     }
 
@@ -241,7 +227,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     private Path checkIndenticalFromAndTo() {
         if (from == to)
-            return new Path(graph, weightCalc);
+            return new Path(graph, flagsEncoder);
         return null;
     }
 
@@ -254,7 +240,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     }
 
     protected PathBidirRef createPath() {
-        return new PathBidirRef(graph, weightCalc);
+        return new PathBidirRef(graph, flagsEncoder);
     }
 
     public DijkstraBidirectionRef initPath() {

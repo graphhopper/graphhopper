@@ -105,7 +105,7 @@ public class RAMDataAccess extends AbstractDataAccess {
             segments = newSegs;
         } catch (OutOfMemoryError err) {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
-                    + cap + ", requested bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizeIntsPower
+                    + cap + ", new bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizeIntsPower
                     + ", new segments:" + segmentsToCreate + ", existing:" + segments.length);
         }
     }

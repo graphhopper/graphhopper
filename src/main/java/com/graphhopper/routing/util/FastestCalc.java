@@ -24,8 +24,7 @@ package com.graphhopper.routing.util;
  * @author Peter Karich
  */
 public class FastestCalc implements WeightCalculation {
-
-    public final static FastestCalc CAR = new FastestCalc(new CarFlagsEncoder());
+    
     private final FlagsEncoder encoder;
     private final double maxSpeed;
 
@@ -40,22 +39,12 @@ public class FastestCalc implements WeightCalculation {
     }
 
     @Override
-    public long getTime(double distance, int flags) {
-        return (long) (distance * 3.6 / encoder.getSpeed(flags));
-    }
-
-    @Override
     public double getWeight(double distance, int flags) {
         return distance / encoder.getSpeed(flags);
     }
 
     @Override public double revertWeight(double weight, int flags) {
         return weight * encoder.getSpeed(flags);
-    }
-
-    @Override
-    public FlagsEncoder flagsEncoder() {
-        return encoder;
     }
 
     @Override public String toString() {

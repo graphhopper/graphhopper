@@ -18,11 +18,46 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.util.Helper;
+
 /**
  * @author Peter Karich
  */
 public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<NoOpAlgorithmPreparation> {
 
-    public NoOpAlgorithmPreparation() {        
+    public NoOpAlgorithmPreparation() {
+    }
+
+    /**
+     * Creates a preparation wrapper for the specified algorithm. Warning/TODO:
+     * set the _graph for the instance otherwise you'll get NPE when calling
+     * createAlgo. Possible values for algorithmStr: astar (A* algorithm),
+     * astarbi (bidirectional A*) dijkstra (Dijkstra), dijkstrabi and
+     * dijkstraNative (a bit faster bidirectional Dijkstra).
+     */
+    public static AlgorithmPreparation createAlgoPrepare(Graph g, final String algorithmStr) {
+        return p(g, Helper.getAlgoFromString(algorithmStr));
+    }
+
+    public static AlgorithmPreparation createAlgoPrepare(final String algorithmStr) {
+        return p(Helper.getAlgoFromString(algorithmStr));
+    }
+
+    public static AlgorithmPreparation p(Graph g, final Class<? extends RoutingAlgorithm> a) {
+        return p(a).graph(g);
+    }
+
+    public static AlgorithmPreparation p(final Class<? extends RoutingAlgorithm> a) {
+        return new NoOpAlgorithmPreparation() {
+            @Override public RoutingAlgorithm createAlgo() {
+                try {
+                    return a.getConstructor(Graph.class).newInstance(_graph);
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        };
     }
 }

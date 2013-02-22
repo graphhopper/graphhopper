@@ -42,7 +42,7 @@ public class AStar extends AbstractRoutingAlgorithm {
     private DistanceCalc dist = new DistancePlaneProjection();
     private boolean alreadyRun;
     private MyBitSet closedSet;
-    
+
     public AStar(Graph g) {
         super(g);
     }
@@ -56,12 +56,6 @@ public class AStar extends AbstractRoutingAlgorithm {
             dist = new DistancePlaneProjection();
         else
             dist = new DistanceCalc();
-        return this;
-    }
-
-    @Override
-    public RoutingAlgorithm clear() {
-        alreadyRun = false;
         return this;
     }
 
@@ -112,7 +106,7 @@ public class AStar extends AbstractRoutingAlgorithm {
             if (finished(currEdge, to))
                 break;
             if (prioQueueOpenSet.isEmpty())
-                return new Path(graph, weightCalc);
+                return new Path(graph, flagsEncoder);
 
             currEdge = prioQueueOpenSet.poll();
             if (currEdge == null)
@@ -136,7 +130,7 @@ public class AStar extends AbstractRoutingAlgorithm {
     }
 
     Path extractPath(EdgeEntry currEdge) {
-        return new Path(graph, weightCalc).edgeEntry(currEdge).extract();
+        return new Path(graph, flagsEncoder).edgeEntry(currEdge).extract();
     }
 
     public static class AStarEdge extends EdgeEntry {

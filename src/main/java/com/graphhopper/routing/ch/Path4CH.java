@@ -19,8 +19,7 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.PathBidirRef;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagsEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -33,16 +32,16 @@ import com.graphhopper.util.EdgeSkipIterator;
  * @author Peter Karich,
  */
 public class Path4CH extends PathBidirRef {
-    
-    private EdgeFilter in;
 
-    public Path4CH(Graph g, WeightCalculation weightCalculation) {
-        super(g, weightCalculation);
-        in = new DefaultEdgeFilter(weightCalculation.flagsEncoder()).direction(true, false);
+    private WeightCalculation calc;
+
+    public Path4CH(Graph g, FlagsEncoder encoder, WeightCalculation calc) {
+        super(g, encoder);
+        this.calc = calc;
     }
 
     @Override
-    protected void processWeight(int tmpEdge, int endNode) {
+    protected void processDistance(int tmpEdge, int endNode) {
         EdgeIterator mainIter = graph.getEdgeProps(tmpEdge, endNode);
 
         // Shortcuts do only contain valid weight so first expand before adding
@@ -51,17 +50,15 @@ public class Path4CH extends PathBidirRef {
     }
 
     @Override
-    public void calcWeight(EdgeIterator mainIter) {
-        double dist = mainIter.distance();
-        int flags = mainIter.flags();
-        weight += weightCalculation.getWeight(dist, flags);
-        distance += weightCalculation.revertWeight(dist, flags);
-        time += weightCalculation.getTime(dist, flags);
+    public void calcDistance(EdgeIterator mainIter) {
+        distance += calc.revertWeight(mainIter.distance(), mainIter.flags());
     }
 
     private void expandEdge(EdgeSkipIterator mainIter, boolean revert) {
         if (!mainIter.isShortcut()) {
-            calcWeight(mainIter);
+            calcDistance(mainIter);
+            int flags = mainIter.flags();
+            calcTime(calc.revertWeight(mainIter.distance(), flags), flags);
             addEdge(mainIter.edge());
             return;
         }
@@ -75,7 +72,7 @@ public class Path4CH extends PathBidirRef {
             to = tmp;
         }
 
-        // - getEdgeProps could possibly return an empty edge if the shortcut is available for both directions
+        // getEdgeProps could possibly return an empty edge if the shortcut is available for both directions
         if (reverseOrder) {
             EdgeSkipIterator iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge1, to);
             boolean empty = iter.isEmpty();
@@ -101,28 +98,5 @@ public class Path4CH extends PathBidirRef {
                 iter = (EdgeSkipIterator) graph.getEdgeProps(skippedEdge2, to);
             expandEdge(iter, false);
         }
-    }
-
-    // No need for this method as long as we store both edges instead of just one
-    //
-    // The edge 5-9 contains the right edge as skipped edge => find the left one!
-    // @params are from=5 and to=7, keep in mind that we can get edges only upwards (level-wise)
-    //     _ 9
-    // 5 -/  /
-    //  \   /
-    //   \ /
-    //    7
-    private void findSkippedEdge(int from, int to) {
-        EdgeSkipIterator iter = (EdgeSkipIterator) graph.getEdges(to, in);
-        double lowest = Double.MAX_VALUE;
-        int edge = EdgeIterator.NO_EDGE;
-        while (iter.next()) {
-            if (iter.node() == from && iter.distance() < lowest) {
-                lowest = iter.distance();
-                edge = iter.edge();
-            }
-        }
-        if (EdgeIterator.Edge.isValid(edge))
-            expandEdge((EdgeSkipIterator) graph.getEdgeProps(edge, from), false);
     }
 }

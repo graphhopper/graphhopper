@@ -33,7 +33,7 @@ public class DijkstraSimpleTest extends AbstractRoutingAlgorithmTester {
     public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
-                return new DijkstraSimple(_graph).type(calc);
+                return new DijkstraSimple(_graph).type(calc).vehicle(defaultFlagsEncoder);
             }
         }.graph(g);
     }

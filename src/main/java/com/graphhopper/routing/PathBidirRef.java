@@ -18,7 +18,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.FlagsEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -35,9 +35,8 @@ public class PathBidirRef extends Path {
     protected EdgeEntry edgeTo;
     private boolean switchWrapper = false;
 
-    public PathBidirRef(Graph g, WeightCalculation weightCalculation) {
-        super(g, weightCalculation);
-        weight = INIT_VALUE;
+    public PathBidirRef(Graph g, FlagsEncoder encoder) {
+        super(g, encoder);
     }
 
     PathBidirRef(PathBidirRef p) {
@@ -61,7 +60,6 @@ public class PathBidirRef extends Path {
      */
     @Override
     public Path extract() {
-        weight = 0;
         if (edgeEntry == null || edgeTo == null)
             return this;
 
@@ -79,7 +77,7 @@ public class PathBidirRef extends Path {
 
         EdgeEntry currEdge = edgeEntry;
         while (EdgeIterator.Edge.isValid(currEdge.edge)) {
-            processWeight(currEdge.edge, currEdge.endNode);
+            processDistance(currEdge.edge, currEdge.endNode);
             currEdge = currEdge.parent;
         }
         fromNode(currEdge.endNode);
@@ -88,7 +86,7 @@ public class PathBidirRef extends Path {
         int tmpEdge = currEdge.edge;
         while (EdgeIterator.Edge.isValid(tmpEdge)) {
             currEdge = currEdge.parent;
-            processWeight(tmpEdge, currEdge.endNode);
+            processDistance(tmpEdge, currEdge.endNode);
             tmpEdge = currEdge.edge;
         }
         sw.stop();

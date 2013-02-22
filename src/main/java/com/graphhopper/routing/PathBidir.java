@@ -18,7 +18,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.FlagsEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeWrapper;
 
@@ -36,19 +36,18 @@ public class PathBidir extends Path {
     private EdgeWrapper edgeWFrom;
     private EdgeWrapper edgeWTo;
 
-    public PathBidir(Graph g, WeightCalculation weightCalculation,
+    public PathBidir(Graph g, FlagsEncoder encoder,
             EdgeWrapper edgesFrom, EdgeWrapper edgesTo) {
-        super(g, weightCalculation);
+        super(g, encoder);
         this.edgeWFrom = edgesFrom;
         this.edgeWTo = edgesTo;
     }
-    
+
     /**
      * Extracts path from two shortest-path-tree
      */
     @Override
     public Path extract() {
-        weight = 0;
         if (fromRef < 0 || toRef < 0)
             return this;
 
@@ -68,7 +67,7 @@ public class PathBidir extends Path {
             int edgeId = edgeWFrom.getEdgeId(currRef);
             if (edgeId < 0)
                 break;
-            processWeight(edgeId, nodeFrom);
+            processDistance(edgeId, nodeFrom);
             currRef = edgeWFrom.getParent(currRef);
             nodeFrom = edgeWFrom.getNode(currRef);
         }
@@ -81,15 +80,11 @@ public class PathBidir extends Path {
             int edgeId = edgeWTo.getEdgeId(currRef);
             if (edgeId < 0)
                 break;
-            processWeight(edgeId, nodeTo);
+            processDistance(edgeId, nodeTo);
             int tmpRef = edgeWTo.getParent(currRef);
-            nodeTo = edgeWTo.getNode(tmpRef);            
+            nodeTo = edgeWTo.getNode(tmpRef);
             currRef = tmpRef;
-        }        
+        }
         return found(true);
-    }
-
-    public void initWeight() {
-        weight = INIT_VALUE;
     }
 }

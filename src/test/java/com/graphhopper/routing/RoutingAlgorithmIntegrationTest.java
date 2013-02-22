@@ -19,6 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.OSMReader;
+import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.storage.Graph;
@@ -103,12 +104,12 @@ public class RoutingAlgorithmIntegrationTest {
             Graph g = osm.graph();
             // System.out.println("nodes:" + g.getNodes());
             Location2IDIndex idx = osm.location2IDIndex();
-            Collection<RoutingAlgorithm> algos = RoutingAlgorithmSpecialAreaTests.createAlgos(g, ch);
-            for (RoutingAlgorithm algo : algos) {
+            Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.createAlgos(g, ch);
+            for (AlgorithmPreparation prepare : prepares) {
                 for (OneRun or : forEveryAlgo) {
                     int from = idx.findID(or.fromLat, or.fromLon);
                     int to = idx.findID(or.toLat, or.toLon);
-                    testCollector.assertDistance(algo, from, to, or.dist, or.locs);
+                    testCollector.assertDistance(prepare.createAlgo(), from, to, or.dist, or.locs);
                 }
             }
         } catch (Exception ex) {

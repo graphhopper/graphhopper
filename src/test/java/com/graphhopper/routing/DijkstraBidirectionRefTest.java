@@ -36,7 +36,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
     public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
-                return new DijkstraBidirectionRef(_graph).type(calc);
+                return new DijkstraBidirectionRef(_graph).type(calc).vehicle(defaultFlagsEncoder);
             }
         }.graph(g);
     }
@@ -45,7 +45,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
     public void testAddSkipNodes() {
         Graph g = createWikipediaTestGraph();
         Path p = prepareGraph(g).createAlgo().calcPath(0, 4);
-        assertEquals(p.toString(), 20, p.weight(), 1e-6);
+        assertEquals(p.toString(), 20, p.distance(), 1e-6);
         assertTrue(p.toString(), p.calcNodes().contains(5));
 
         DijkstraBidirectionRef db = new DijkstraBidirectionRef(g);

@@ -679,11 +679,7 @@ public class GraphStorage implements Graph, Storable {
             return edge() + " " + baseNode() + "-" + node();
         }
     }
-
-//    protected GraphStorage newThis(Directory dir) {
-//        // no storage.create here!
-//        return new GraphStorage(dir, defaultEncoder.clone());
-//    }
+    
     @Override
     public Graph copyTo(Graph g) {
         if (g.getClass().equals(getClass())) {
@@ -692,12 +688,6 @@ public class GraphStorage implements Graph, Storable {
             return GraphUtility.copyTo(this, g);
     }
 
-//    public Graph copyTo(Directory dir) {
-//        if (this.dir == dir)
-//            throw new IllegalStateException("cannot copy graph into the same directory!");
-//
-//        return _copyTo(newThis(dir));
-//    }
     Graph _copyTo(GraphStorage clonedG) {
         if (clonedG.edgeEntrySize != edgeEntrySize)
             throw new IllegalStateException("edgeEntrySize cannot be different for cloned graph");

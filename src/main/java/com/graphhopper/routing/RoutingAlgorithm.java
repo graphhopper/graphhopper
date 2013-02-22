@@ -18,12 +18,13 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.FlagsEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.NotThreadSafe;
 
 /**
- * Calculates the shortest path from the specified node ids. The implementation
- * does not need to be thread safe.
+ * Calculates the shortest path from the specified node ids. Can be used only
+ * once.
  *
  * @author Peter Karich,
  */
@@ -39,15 +40,16 @@ public interface RoutingAlgorithm {
     Path calcPath(int from, int to);
 
     /**
-     * Changes the used weight calculation (e.g. fastest, shortest)
+     * Changes the used weight calculation (e.g. fastest, shortest). Default is
+     * shortest.
      */
     RoutingAlgorithm type(WeightCalculation calc);
 
     /**
-     * Resets the current algorithm instance. TODO should we remove it in order
-     * to avoid that it is called on different threads!!
+     * Specify which vehicle should be used to calculate the path. Default is
+     * car.
      */
-    RoutingAlgorithm clear();
+    RoutingAlgorithm vehicle(FlagsEncoder encoder);
 
     /**
      * @return name of this algorithm
