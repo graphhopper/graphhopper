@@ -29,39 +29,57 @@ import org.junit.Test;
  */
 public class CarFlagsEncoderTest {
 
+    private CarFlagsEncoder encoder = new CarFlagsEncoder();
+
     @Test
     public void testBasics() {
-        CarFlagsEncoder encoder = new CarFlagsEncoder();
-        
         assertTrue(encoder.isForward(encoder.flagsDefault(true)));
         assertTrue(encoder.isBackward(encoder.flagsDefault(true)));
+        assertTrue(encoder.isBoth(encoder.flagsDefault(true)));
 
-        encoder = new CarFlagsEncoder();
         assertTrue(encoder.isForward(encoder.flagsDefault(false)));
-        assertFalse(encoder.isBackward(encoder.flagsDefault(false)));        
+        assertFalse(encoder.isBackward(encoder.flagsDefault(false)));
+        assertFalse(encoder.isBoth(encoder.flagsDefault(false)));
+    }
+
+    @Test
+    public void testOverwrite() {
+        int forward = encoder.flags(10, false);
+        int backward = encoder.swapDirection(forward);
+        int both = encoder.flags(20, true);
+        assertTrue(encoder.canBeOverwritten(forward, forward));
+        assertTrue(encoder.canBeOverwritten(backward, backward));
+        assertTrue(encoder.canBeOverwritten(forward, both));
+        assertTrue(encoder.canBeOverwritten(backward, both));
+
+        assertTrue(encoder.canBeOverwritten(both, both));
+        assertFalse(encoder.canBeOverwritten(both, forward));
+        assertFalse(encoder.canBeOverwritten(both, backward));
+        assertFalse(encoder.canBeOverwritten(forward, backward));
+        assertFalse(encoder.canBeOverwritten(backward, forward));
     }
 
     @Test
     public void testSwapDir() {
-        CarFlagsEncoder fl = new CarFlagsEncoder();
-        int swappedFlags = fl.swapDirection(fl.flagsDefault(true));
-        assertTrue(fl.isForward(swappedFlags));
-        assertTrue(fl.isBackward(swappedFlags));
+        int swappedFlags = encoder.swapDirection(encoder.flagsDefault(true));
+        assertTrue(encoder.isForward(swappedFlags));
+        assertTrue(encoder.isBackward(swappedFlags));
 
-        swappedFlags = fl.swapDirection(fl.flagsDefault(false));
-        fl = new CarFlagsEncoder();
-        assertFalse(fl.isForward(swappedFlags));
-        assertTrue(fl.isBackward(swappedFlags));
+        swappedFlags = encoder.swapDirection(encoder.flagsDefault(false));
+
+        assertFalse(encoder.isForward(swappedFlags));
+        assertTrue(encoder.isBackward(swappedFlags));
+        
+        assertEquals(0, encoder.swapDirection(0));
     }
 
     @Test
     public void testService() {
-        Map<String, Object> p = new HashMap<String, Object>();        
-        CarFlagsEncoder fl = new CarFlagsEncoder();
-        p.put("car", fl.getSpeed("service"));
+        Map<String, Object> p = new HashMap<String, Object>();
+        p.put("car", encoder.getSpeed("service"));
         int flags = new AcceptWay(true, false, false).toFlags(p);
-        assertTrue(fl.isForward(flags));
-        assertTrue(fl.isBackward(flags));
-        assertTrue(fl.isService(flags));
-    }    
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        assertTrue(encoder.isService(flags));
+    }
 }

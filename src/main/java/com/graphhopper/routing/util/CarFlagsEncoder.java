@@ -24,87 +24,24 @@ import java.util.Map;
 /**
  * @author Peter Karich
  */
-public class CarFlagsEncoder implements FlagsEncoder {
+public class CarFlagsEncoder extends AbstractFlagEncoder {
 
     private static final Map<String, Integer> SPEED = new CarSpeed();
-    private static final int MAX_SPEED = SPEED.get("motorway");
-    private static final int FACTOR = 2;
-    private static final int DEFAULT_SPEED_PART = SPEED.get("secondary") / FACTOR;
-    private static final int FORWARD = 1;
-    private static final int BACKWARD = 2;
+
+    public CarFlagsEncoder() {
+        super(0, 2, SPEED.get("secondary"), SPEED.get("motorway"));
+    }
 
     public boolean isMotorway(int flags) {
-        return getSpeedPart(flags) * FACTOR == SPEED.get("motorway");
+        return getSpeedPart(flags) * factor == SPEED.get("motorway");
     }
 
     public boolean isService(int flags) {
-        return getSpeedPart(flags) * FACTOR == SPEED.get("service");
-    }
-
-    @Override
-    public boolean isForward(int flags) {
-        return (flags & 1) == FORWARD;
-    }
-
-    @Override
-    public boolean isBackward(int flags) {
-        return (flags & 2) == BACKWARD;
-    }
-
-    public boolean isBoth(int flags) {
-        return (flags & 3) == (FORWARD | BACKWARD);
-    }
-
-    @Override
-    public boolean canBeOverwritten(int flags1, int flags2) {
-        return isBoth(flags2) || (flags1 & 3) == (flags2 & 3);
-    }
-
-    @Override
-    public int swapDirection(int flags) {
-        if ((flags & 3) == 3)
-            return flags;
-
-        int speed = flags >>> 2;
-        return (speed << 2) | (~flags) & 3;
+        return getSpeedPart(flags) * factor == SPEED.get("service");
     }
 
     public Integer getSpeed(String string) {
         return SPEED.get(string);
-    }
-
-    private int getSpeedPart(int flags) {
-        int v = flags >>> 2;
-        if (v == 0)
-            v = DEFAULT_SPEED_PART;
-        return v;
-    }
-
-    @Override
-    public int getSpeed(int flags) {
-        return getSpeedPart(flags) * FACTOR;
-    }
-
-    @Override
-    public int getMaxSpeed() {
-        return MAX_SPEED;
-    }
-
-    @Override
-    public int flagsDefault(boolean bothDirections) {
-        if (bothDirections)
-            return DEFAULT_SPEED_PART << 2 | BACKWARD | FORWARD;
-        return DEFAULT_SPEED_PART << 2 | FORWARD;
-    }
-
-    @Override
-    public int flags(int speed, boolean bothDir) {
-        int flags = speed / FACTOR;
-        flags <<= 2;
-        flags |= FORWARD;
-        if (bothDir)
-            flags |= BACKWARD;
-        return flags;
     }
 
     @Override public String toString() {

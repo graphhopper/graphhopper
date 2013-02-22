@@ -24,81 +24,16 @@ import java.util.Map;
 /**
  * @author Peter Karich
  */
-public class FootFlagsEncoder implements FlagsEncoder {
+public class FootFlagsEncoder extends AbstractFlagEncoder {
 
-    private static final Map<String, Integer> SPEED = new FootSpeed();
-    private static final int MAX_SPEED = SPEED.get("max");
-    private static final int FACTOR = 2;
-    private static final int DEFAULT_SPEED_PART = SPEED.get("mean") / FACTOR;
-    private static final int FORWARD = 1;
-    private static final int BACKWARD = 2;
-    
-    // TODO NOW shift 16 bits left to avoid conflict with car and preserve bike
+    private static final Map<String, Integer> SPEED = new FootSpeed();    
 
-    @Override
-    public boolean isForward(int flags) {
-        return (flags & 1) == FORWARD;
-    }
-
-    @Override
-    public boolean isBackward(int flags) {
-        return (flags & 2) == BACKWARD;
-    }
-
-    public boolean isBoth(int flags) {
-        return (flags & 3) == (FORWARD | BACKWARD);
-    }
-
-    @Override
-    public boolean canBeOverwritten(int flags1, int flags2) {
-        return isBoth(flags2) || (flags1 & 3) == (flags2 & 3);
-    }
-
-    @Override
-    public int swapDirection(int flags) {
-        if ((flags & 3) == 3)
-            return flags;
-
-        int speed = flags >>> 2;
-        return (speed << 2) | (~flags) & 3;
+    public FootFlagsEncoder() {
+        super(16, 2, SPEED.get("mean"), SPEED.get("max"));
     }
 
     public Integer getSpeed(String string) {
         return SPEED.get(string);
-    }
-
-    private int getSpeedPart(int flags) {
-        int v = flags >>> 2;
-        if (v == 0)
-            v = DEFAULT_SPEED_PART;
-        return v;
-    }
-
-    @Override
-    public int getSpeed(int flags) {
-        return getSpeedPart(flags) * FACTOR;
-    }
-
-    @Override
-    public int getMaxSpeed() {
-        return MAX_SPEED;
-    }
-
-    @Override
-    public int flagsDefault(boolean bothDirections) {
-        if (bothDirections)
-            return DEFAULT_SPEED_PART << 2 | BACKWARD | FORWARD;
-        return DEFAULT_SPEED_PART << 2 | FORWARD;
-    }
-
-    @Override
-    public int flags(int speed, boolean bothDir) {
-        int flags = speed / FACTOR;
-        flags <<= 2;
-        flags |= FORWARD;
-        if (bothDir)
-            flags |= BACKWARD;
-        return flags;
     }
 
     @Override public String toString() {
@@ -112,7 +47,7 @@ public class FootFlagsEncoder implements FlagsEncoder {
             put("slow", 4);
             put("mean", 6);
             put("fast", 10);
-            put("max", 15);
+            put("max", 16);
         }
     }
 }
