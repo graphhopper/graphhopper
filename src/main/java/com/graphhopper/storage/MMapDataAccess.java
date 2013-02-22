@@ -112,18 +112,20 @@ public class MMapDataAccess extends AbstractDataAccess {
         if (byteCount <= capacity())
             return;
 
-        int i = 0;
-        int segmentsToMap = (int) (byteCount / segmentSizeInBytes);
+        long longSegmentSize = segmentSizeInBytes;
+        int segmentsToMap = (int) (byteCount / longSegmentSize);
         if (segmentsToMap < 0)
             throw new IllegalStateException("Too many segments needs to be allocated. Increase segmentSize.");
 
-        if (byteCount % segmentSizeInBytes != 0)
+        if (byteCount % longSegmentSize != 0)
             segmentsToMap++;
         if (segmentsToMap == 0)
             throw new IllegalStateException("0 segments are not allowed.");
 
         long bufferStart = offset;
         int newSegments;
+        int i = 0;
+        long newFileLength = offset + segmentsToMap * longSegmentSize;
         try {
             // ugly remapping
             // http://stackoverflow.com/q/14011919/194609
@@ -135,19 +137,20 @@ public class MMapDataAccess extends AbstractDataAccess {
                 // This approach is probably problematic but a bit faster if done often.
                 // Here we rely on the OS+file system that increasing the file 
                 // size has no effect on the old mappings!
-                bufferStart += segments.size() * segmentSizeInBytes;
+                bufferStart += segments.size() * longSegmentSize;
                 newSegments = segmentsToMap - segments.size();
             }
-            raFile.setLength(offset + segmentsToMap * segmentSizeInBytes);
+            raFile.setLength(newFileLength);
             for (; i < newSegments; i++) {
-                segments.add(newByteBuffer(bufferStart, segmentSizeInBytes));
-                bufferStart += segmentSizeInBytes;
+                segments.add(newByteBuffer(bufferStart, longSegmentSize));
+                bufferStart += longSegmentSize;
             }
         } catch (IOException ex) {
             // we could get an exception here if buffer is too small and area too large
             // e.g. I got an exception for the 65421th buffer (probably around 2**16 == 65536)
             throw new RuntimeException("Couldn't map buffer " + i + " of " + segmentsToMap
-                    + " at position " + bufferStart + " for " + byteCount + " bytes with offset " + offset, ex);
+                    + " at position " + bufferStart + " for " + byteCount
+                    + " bytes with offset " + offset + ", new fileLength:" + newFileLength, ex);
         }
     }
 
@@ -206,7 +209,7 @@ public class MMapDataAccess extends AbstractDataAccess {
         try {
             long byteCount = readHeader(raFile);
             if (byteCount < 0)
-                return false;            
+                return false;
             mapIt(HEADER_OFFSET, byteCount - HEADER_OFFSET, false);
             return true;
         } catch (IOException ex) {
