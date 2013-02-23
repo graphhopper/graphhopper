@@ -30,7 +30,7 @@ public class CarFlagsEncoder extends AbstractFlagEncoder {
 
     public CarFlagsEncoder() {
         super(0, 2, SPEED.get("secondary"), SPEED.get("motorway"));
-    }
+    }       
 
     public boolean isMotorway(int flags) {
         return getSpeedPart(flags) * factor == SPEED.get("motorway");

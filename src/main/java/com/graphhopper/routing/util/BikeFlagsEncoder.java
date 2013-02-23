@@ -26,16 +26,14 @@ import java.util.Set;
 /**
  * @author Peter Karich
  */
-public class FootFlagsEncoder extends AbstractFlagEncoder {
+public class BikeFlagsEncoder extends AbstractFlagEncoder {
 
     private final Set<String> saveHighwayTags = new HashSet<String>() {
         {
-            add("footway");
+            add("cycleway");
             add("path");
-            add("steps");
-            add("pedestrian");
-            add("foot");
-            add("living_street");            
+            add("road");
+            add("living_street");
             add("track");
         }
     };
@@ -53,8 +51,8 @@ public class FootFlagsEncoder extends AbstractFlagEncoder {
     };
     private static final Map<String, Integer> SPEED = new FootSpeed();
 
-    public FootFlagsEncoder() {
-        super(16, 2, SPEED.get("mean"), SPEED.get("max"));
+    public BikeFlagsEncoder() {
+        super(8, 2, SPEED.get("mean"), SPEED.get("max"));
     }
 
     public Integer getSpeed(String string) {
@@ -62,7 +60,7 @@ public class FootFlagsEncoder extends AbstractFlagEncoder {
     }
 
     @Override public String toString() {
-        return "FOOT";
+        return "BIKE";
     }
 
     /**
@@ -79,14 +77,19 @@ public class FootFlagsEncoder extends AbstractFlagEncoder {
         return saveHighwayTags.contains(highwayValue);
     }
 
+    public boolean isOpposite(String cycleway) {
+        return "opposite".equals(cycleway) || "opposite_lane".equals(cycleway)
+                || "opposite_track".equals(cycleway);
+    }
+
     private static class FootSpeed extends HashMap<String, Integer> {
 
         {
-            put("min", 2);
-            put("slow", 4);
-            put("mean", 6);
-            put("fast", 10);
-            put("max", 16);
+            put("min", 4);
+            put("slow", 10);
+            put("mean", 16);
+            put("fast", 20);
+            put("max", 26);
         }
     }
 }
