@@ -21,6 +21,7 @@ package com.graphhopper.reader;
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
@@ -48,7 +49,8 @@ public abstract class OSMReaderHelper {
     private DistanceCalc callback = new DistanceCalc();
     private AcceptWay acceptWays;
     protected TLongArrayList wayNodes = new TLongArrayList(10);
-    private Map<String, Object> wayProperties = new HashMap<String, Object>();
+    private Map<String, Object> osmProperties = new HashMap<String, Object>();
+    private Map<String, Object> outProperties = new HashMap<String, Object>();
 
     public OSMReaderHelper(Graph g, long expectedNodes) {
         this.g = g;
@@ -58,7 +60,11 @@ public abstract class OSMReaderHelper {
     public OSMReaderHelper acceptWays(AcceptWay acceptWays) {
         this.acceptWays = acceptWays;
         return this;
-    }        
+    }
+
+    public AcceptWay acceptWays() {
+        return acceptWays;
+    }
 
     public void callback(DistanceCalc callback) {
         this.callback = callback;
@@ -102,8 +108,7 @@ public abstract class OSMReaderHelper {
         }
         if (towerNodeDistance == 0) {
             // As investigation shows often two paths should have crossed via one identical point 
-            // but end up in two very close points. later this will be removed/fixed while 
-            // removing short edges where one node is of degree 2
+            // but end up in two very close points.
             zeroCounter++;
             towerNodeDistance = 0.0001;
         }
@@ -130,24 +135,24 @@ public abstract class OSMReaderHelper {
     }
 
     public void processWay(XMLStreamReader sReader) throws XMLStreamException {
-        boolean isWay = parseWay(sReader);
-        boolean hasNodes = wayNodes.size() > 1;
-        if (isWay && hasNodes) {
-            int flags = acceptWays.toFlags(wayProperties);
+        boolean valid = parseWay(sReader);
+        if (valid) {
+            int flags = acceptWays.toFlags(outProperties);
             int successfullAdded = addEdge(wayNodes, flags);
             edgeCount += successfullAdded;
         }
     }
 
     /**
+     * wayNodes will be filled with participating node ids. outProperties will
+     * be filled with way information after calling this method.
      *
-     * @param wayNodes will be filled with participating node ids
-     * @param outProperties will be filled with way information after calling
-     * this method
+     * @return true the current xml entry is a way entry and has nodes
      */
     boolean parseWay(XMLStreamReader sReader) throws XMLStreamException {
         wayNodes.clear();
-        wayProperties.clear();
+        osmProperties.clear();
+        outProperties.clear();
         for (int tmpE = sReader.nextTag(); tmpE != XMLStreamConstants.END_ELEMENT;
                 tmpE = sReader.nextTag()) {
             if (tmpE == XMLStreamConstants.START_ELEMENT) {
@@ -162,13 +167,15 @@ public abstract class OSMReaderHelper {
                     String tagKey = sReader.getAttributeValue(null, "k");
                     if (tagKey != null && !tagKey.isEmpty()) {
                         String tagValue = sReader.getAttributeValue(null, "v");
-                        wayProperties.put(tagKey, tagValue);                        
+                        osmProperties.put(tagKey, tagValue);
                     }
                 }
                 sReader.next();
             }
         }
-        
-        return acceptWays.handleTags(wayProperties, wayNodes);
+
+        boolean isWay = acceptWays.handleTags(outProperties, osmProperties, wayNodes);
+        boolean hasNodes = wayNodes.size() > 1;
+        return isWay && hasNodes;
     }
 }

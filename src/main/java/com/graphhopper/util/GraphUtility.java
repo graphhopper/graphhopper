@@ -22,6 +22,9 @@ import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.SpatialKeyAlgo;
+import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -164,23 +167,12 @@ public class GraphUtility {
         return EMPTY;
     }
 
-    /**
-     * Added this helper method to avoid cluttering the graph interface. Good
-     * idea?
-     */
-    public static EdgeIterator getEdges(Graph graph, int index, boolean out) {
-        if (out)
-            return graph.getOutgoing(index);
-        else
-            return graph.getIncoming(index);
-    }
-
-    public static void printInfo(final Graph g, int startNode, final int counts) {
+    public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {
         new XFirstSearch() {
             int counter = 0;
 
             @Override protected boolean goFurther(int nodeId) {
-                System.out.println(getNodeInfo(g, nodeId));
+                System.out.println(getNodeInfo(g, nodeId, filter));
                 if (counter++ > counts)
                     return false;
                 return true;
@@ -188,8 +180,8 @@ public class GraphUtility {
         }.start(g, startNode, false);
     }
 
-    public static String getNodeInfo(LevelGraph g, int nodeId) {
-        EdgeSkipIterator iter = g.getOutgoing(nodeId);
+    public static String getNodeInfo(LevelGraph g, int nodeId, EdgeFilter filter) {
+        EdgeSkipIterator iter = g.getEdges(nodeId, filter);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next()) {
             str += "  ->" + iter.node() + "(" + iter.skippedEdge1() + "," + iter.skippedEdge2() + ") "
@@ -198,8 +190,8 @@ public class GraphUtility {
         return str;
     }
 
-    public static String getNodeInfo(Graph g, int nodeId) {
-        EdgeIterator iter = g.getOutgoing(nodeId);
+    public static String getNodeInfo(Graph g, int nodeId, EdgeFilter filter) {
+        EdgeIterator iter = g.getEdges(nodeId, filter);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next()) {
             str += "  ->" + iter.node() + " (" + iter.distance() + ") pillars:"
@@ -284,7 +276,7 @@ public class GraphUtility {
     }
 
     static Graph createSortedGraph(Graph g, Graph sortedGraph, final TIntList oldToNewNodeList) {
-        int len = oldToNewNodeList.size();        
+        int len = oldToNewNodeList.size();
         // important to avoid creating two edges for edges with both directions
         MyBitSet bitset = new MyBitSetImpl(len);
         for (int old = 0; old < len; old++) {

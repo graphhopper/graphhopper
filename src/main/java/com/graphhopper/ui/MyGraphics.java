@@ -62,6 +62,10 @@ public class MyGraphics {
         return scaleY;
     }
 
+    public void plotText(Graphics2D g2, double lat, double lon, String text) {
+        g2.drawString(text, (int) getX(lon) + 5, (int) getY(lat) + 5);
+    }
+
     public void plotEdge(Graphics2D g2, double lat, double lon, double lat2, double lon2, int width) {
         g2.setStroke(new BasicStroke(width));
         g2.drawLine((int) getX(lon), (int) getY(lat), (int) getX(lon2), (int) getY(lat2));

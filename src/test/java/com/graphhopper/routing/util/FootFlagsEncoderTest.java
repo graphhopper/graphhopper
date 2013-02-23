@@ -18,6 +18,11 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.Helper;
+import java.util.Arrays;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -34,17 +39,17 @@ public class FootFlagsEncoderTest {
         int fl = encoder.flags(10, true);
         assertEquals(10, encoder.getSpeed(fl));
     }
-    
+
     @Test
     public void testBasics() {
         int fl = encoder.flagsDefault(true);
         assertEquals(encoder.getSpeed("mean").intValue(), encoder.getSpeed(fl));
-        
+
         int fl1 = encoder.flagsDefault(false);
         int fl2 = encoder.swapDirection(fl1);
         assertEquals(encoder.getSpeed(fl2), encoder.getSpeed(fl1));
     }
-    
+
     @Test
     public void testCombined() {
         FlagsEncoder carEncoder = new CarFlagsEncoder();
@@ -52,9 +57,21 @@ public class FootFlagsEncoderTest {
         assertEquals(10, encoder.getSpeed(fl));
         assertTrue(encoder.isForward(fl));
         assertTrue(encoder.isBackward(fl));
-        
-        assertEquals(100, carEncoder.getSpeed(fl));        
+
+        assertEquals(100, carEncoder.getSpeed(fl));
         assertTrue(carEncoder.isForward(fl));
         assertFalse(carEncoder.isBackward(fl));
+    }
+
+    @Test
+    public void testGraph() {
+        Graph g = new GraphBuilder().create();
+        g.edge(0, 1, 10, encoder.flags(10, true));
+        g.edge(0, 2, 10, encoder.flags(5, true));
+        g.edge(1, 3, 10, encoder.flags(10, true));
+        EdgeFilter out = new DefaultEdgeFilter(encoder).direction(false, true);
+        assertEquals(Arrays.asList(1, 2), GraphUtility.neighbors(g.getEdges(0, out)));
+        assertEquals(Arrays.asList(0, 3), GraphUtility.neighbors(g.getEdges(1, out)));
+        assertEquals(Arrays.asList(0), GraphUtility.neighbors(g.getEdges(2, out)));
     }
 }

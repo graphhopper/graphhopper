@@ -20,11 +20,11 @@ package com.graphhopper.routing;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EdgeLevelFilterOld;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GraphUtility;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
@@ -142,10 +142,10 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     }
 
     void fillEdges(EdgeEntry curr, MyBitSet visitedMain, PriorityQueue<EdgeEntry> prioQueue,
-            TIntObjectMap<EdgeEntry> shortestWeightMap, boolean out) {
+            TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeFilter filter) {
 
-        int currNodeFrom = curr.endNode;
-        EdgeIterator iter = GraphUtility.getEdges(graph, currNodeFrom, out);
+        int currNode = curr.endNode;
+        EdgeIterator iter = graph.getEdges(currNode, filter);
         if (edgeFilter != null)
             iter = edgeFilter.doFilter(iter);
 
@@ -192,7 +192,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     public boolean fillEdgesFrom() {
         if (currFrom != null) {
             shortestWeightMapOther = shortestWeightMapTo;
-            fillEdges(currFrom, visitedFrom, openSetFrom, shortestWeightMapFrom, true);
+            fillEdges(currFrom, visitedFrom, openSetFrom, shortestWeightMapFrom, outEdgeFilter);
             if (openSetFrom.isEmpty()) {
                 currFrom = null;
                 return false;
@@ -210,7 +210,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     public boolean fillEdgesTo() {
         if (currTo != null) {
             shortestWeightMapOther = shortestWeightMapFrom;
-            fillEdges(currTo, visitedTo, openSetTo, shortestWeightMapTo, false);
+            fillEdges(currTo, visitedTo, openSetTo, shortestWeightMapTo, inEdgeFilter);
             if (openSetTo.isEmpty()) {
                 currTo = null;
                 return false;

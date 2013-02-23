@@ -18,7 +18,10 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.FootFlagsEncoder;
 import com.graphhopper.storage.AbstractGraphTester;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -42,7 +45,10 @@ public class OSMReaderTest {
 
     private String file1 = "test-osm.xml";
     private String file2 = "test-osm2.xml";
+    private String fileFoot = "test-osm3.xml";
     private String dir = "./target/tmp/test-db";
+    private CarFlagsEncoder carEncoder = new CarFlagsEncoder();
+    private FootFlagsEncoder footEncoder = new FootFlagsEncoder();
 
     @Before public void setUp() {
         new File(dir).mkdirs();
@@ -68,7 +74,7 @@ public class OSMReaderTest {
         return osmreader;
     }
 
-    @Test public void testMain() {        
+    @Test public void testMain() {
         OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000)), file1);
         reader.writeOsm2Graph(getClass().getResourceAsStream(file1));
         reader.optimize();
@@ -90,13 +96,13 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(internalId2, iter.node());
         assertEquals(93147, iter.distance(), 1);
-        CarFlagsEncoder flags = new CarFlagsEncoder();
+        CarFlagsEncoder flags = carEncoder;
         assertTrue(flags.isMotorway(iter.flags()));
         assertTrue(flags.isForward(iter.flags()));
         assertTrue(flags.isBackward(iter.flags()));
         assertTrue(iter.next());
         assertEquals(internalId3, iter.node());
-        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.wayGeometry());        
+        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.wayGeometry());
         assertTrue(flags.isService(iter.flags()));
         assertTrue(flags.isForward(iter.flags()));
         assertTrue(flags.isBackward(iter.flags()));
@@ -181,16 +187,15 @@ public class OSMReaderTest {
         iter = graph.getEdges(internalIdMain);
         assertTrue(iter.next());
         assertEquals(internalId1, iter.node());
-        CarFlagsEncoder flags = new CarFlagsEncoder();
-        assertTrue(flags.isMotorway(iter.flags()));
-        assertFalse(flags.isForward(iter.flags()));
-        assertTrue(flags.isBackward(iter.flags()));
+        CarFlagsEncoder encoder = carEncoder;
+        assertTrue(encoder.isMotorway(iter.flags()));
+        assertFalse(encoder.isForward(iter.flags()));
+        assertTrue(encoder.isBackward(iter.flags()));
 
         assertTrue(iter.next());
-        flags = new CarFlagsEncoder();
-        assertTrue(flags.isMotorway(iter.flags()));
-        assertTrue(flags.isForward(iter.flags()));
-        assertFalse(flags.isBackward(iter.flags()));
+        assertTrue(encoder.isMotorway(iter.flags()));
+        assertTrue(encoder.isForward(iter.flags()));
+        assertFalse(encoder.isBackward(iter.flags()));
     }
 
     @Test public void testFerry() {
@@ -211,6 +216,35 @@ public class OSMReaderTest {
         int internalId6 = AbstractGraphTester.getIdOf(graph, 56.0);
         EdgeIterator iter = graph.getEdges(internalId6);
         iter.next();
-        assertEquals(40, new CarFlagsEncoder().getSpeed(iter.flags()));
+        assertEquals(40, carEncoder.getSpeed(iter.flags()));
+    }
+
+    @Test public void testFoot() {
+        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000).
+                acceptStreet(new AcceptWay(true, false, true))), fileFoot);
+        reader.writeOsm2Graph(getClass().getResourceAsStream(fileFoot));
+        Graph graph = reader.graph();
+
+        int a = AbstractGraphTester.getIdOf(graph, 11.1);
+        int b = AbstractGraphTester.getIdOf(graph, 12);
+        int c = AbstractGraphTester.getIdOf(graph, 11.2);
+        int d = AbstractGraphTester.getIdOf(graph, 11.3);
+        int e = AbstractGraphTester.getIdOf(graph, 10);
+
+        assertEquals(Arrays.asList(b, d), GraphUtility.neighbors(graph.getEdges(a,
+                new DefaultEdgeFilter(carEncoder))));
+        assertEquals(Arrays.asList(), GraphUtility.neighbors(graph.getEdges(c,
+                new DefaultEdgeFilter(carEncoder).direction(false, true))));
+        assertEquals(Arrays.asList(a, c, d), GraphUtility.neighbors(graph.getEdges(b,
+                new DefaultEdgeFilter(carEncoder).direction(true, true))));
+        assertEquals(Arrays.asList(c, d), GraphUtility.neighbors(graph.getEdges(b,
+                new DefaultEdgeFilter(carEncoder).direction(false, true))));
+
+        assertEquals(Arrays.asList(b, e), GraphUtility.neighbors(graph.getEdges(a,
+                new DefaultEdgeFilter(footEncoder).direction(false, true))));
+        assertEquals(Arrays.asList(b, e), GraphUtility.neighbors(graph.getEdges(c,
+                new DefaultEdgeFilter(footEncoder).direction(false, true))));
+        assertEquals(Arrays.asList(a, c), GraphUtility.neighbors(graph.getEdges(b,
+                new DefaultEdgeFilter(footEncoder).direction(false, true))));
     }
 }

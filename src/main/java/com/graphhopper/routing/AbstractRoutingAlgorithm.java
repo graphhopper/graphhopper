@@ -35,6 +35,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected Graph graph;
     protected WeightCalculation weightCalc;
     protected EdgeFilter outEdgeFilter;
+    protected EdgeFilter inEdgeFilter;
     protected FlagsEncoder flagsEncoder;
 
     public AbstractRoutingAlgorithm(Graph graph) {
@@ -45,6 +46,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     @Override public RoutingAlgorithm vehicle(FlagsEncoder encoder) {
         this.flagsEncoder = encoder;
         outEdgeFilter = new DefaultEdgeFilter(encoder).direction(false, true);
+        inEdgeFilter = new DefaultEdgeFilter(encoder).direction(true, false);
         return this;
     }
 

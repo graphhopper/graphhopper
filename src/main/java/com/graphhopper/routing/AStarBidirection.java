@@ -21,6 +21,7 @@ package com.graphhopper.routing;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.AStar.AStarEdge;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EdgeLevelFilterOld;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
@@ -204,7 +205,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     public boolean fillEdgesFrom() {
         if (currFrom != null) {
             shortestWeightMapOther = shortestWeightMapTo;
-            fillEdges(currFrom, toCoord, visitedFrom, prioQueueOpenSetFrom, shortestWeightMapFrom, true);
+            fillEdges(currFrom, toCoord, visitedFrom, prioQueueOpenSetFrom, shortestWeightMapFrom, outEdgeFilter);
             if (prioQueueOpenSetFrom.isEmpty()) {
                 currFrom = null;
                 return false;
@@ -223,7 +224,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     public boolean fillEdgesTo() {
         if (currTo != null) {
             shortestWeightMapOther = shortestWeightMapFrom;
-            fillEdges(currTo, fromCoord, visitedTo, prioQueueOpenSetTo, shortestWeightMapTo, false);
+            fillEdges(currTo, fromCoord, visitedTo, prioQueueOpenSetTo, shortestWeightMapTo, inEdgeFilter);
             if (prioQueueOpenSetTo.isEmpty()) {
                 currTo = null;
                 return false;
@@ -241,10 +242,10 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
     private void fillEdges(AStarEdge curr, CoordTrig goal, MyBitSet closedSet,
             PriorityQueue<AStarEdge> prioQueueOpenSet,
-            TIntObjectMap<AStarEdge> shortestWeightMap, boolean out) {
+            TIntObjectMap<AStarEdge> shortestWeightMap, EdgeFilter filter) {
 
-        int currNodeFrom = curr.endNode;
-        EdgeIterator iter = GraphUtility.getEdges(graph, currNodeFrom, out);
+        int currNode = curr.endNode;
+        EdgeIterator iter = graph.getEdges(currNode, filter);
         if (edgeFilter != null)
             iter = edgeFilter.doFilter(iter);
 

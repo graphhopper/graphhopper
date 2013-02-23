@@ -18,6 +18,10 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
@@ -31,6 +35,8 @@ public class GHRequest {
     private GHPoint from;
     private GHPoint to;
     private double precision = 1;
+    private FlagsEncoder encoder = new CarFlagsEncoder();
+    private WeightCalculation weightCalc = new ShortestCalc();
 
     /**
      * Calculate the path from specified startPoint (fromLat, fromLon) to
@@ -95,5 +101,23 @@ public class GHRequest {
     @Override
     public String toString() {
         return from + " " + to + " (" + algo + ")";
+    }
+
+    public GHRequest type(WeightCalculation weightCalc) {
+        this.weightCalc = weightCalc;
+        return this;
+    }
+
+    public WeightCalculation type() {
+        return weightCalc;
+    }
+
+    public GHRequest vehicle(FlagsEncoder encoder) {
+        this.encoder = encoder;
+        return this;
+    }
+
+    public FlagsEncoder vehicle() {
+        return encoder;
     }
 }

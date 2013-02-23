@@ -19,6 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.FlagsEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -29,10 +30,10 @@ import com.graphhopper.storage.Graph;
 public class AStarTest extends AbstractRoutingAlgorithmTester {
 
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc) {
+    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final FlagsEncoder encoder) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
-                return new AStar(_graph).type(calc).vehicle(defaultFlagsEncoder);               
+                return new AStar(_graph).type(calc).vehicle(encoder);               
             }
         }.graph(g);
     }

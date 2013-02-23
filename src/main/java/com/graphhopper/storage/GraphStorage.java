@@ -108,7 +108,6 @@ public class GraphStorage implements Graph, Storable {
         initNodeAndEdgeEntrySize();
     }
 
-    
     public GraphStorage flagsEncoder(FlagsEncoder encoder) {
         checkInit();
         this.defaultEncoder = encoder;
@@ -122,7 +121,7 @@ public class GraphStorage implements Graph, Storable {
     void checkInit() {
         if (initialized)
             throw new IllegalStateException("You cannot configure this GraphStorage "
-                    + "after calling createNew or loadExisting. Or call one of the methods twice.");
+                    + "after calling createNew or loadExisting. Calling one of the methods twice is also not allowed.");
     }
 
     protected final int nextEdgeEntryIndex() {
@@ -376,19 +375,20 @@ public class GraphStorage implements Graph, Storable {
         return lastLink;
     }
 
-    String debug(int node, int area) {
+    public String debug(int node, int area) {
         String str = "--- node " + node + " ---";
         int min = Math.max(0, node - area / 2);
-        int max = Math.max(nodeCount, node + area / 2);
+        int max = Math.min(nodeCount, node + area / 2);
+        long nodePointer = (long) node * nodeEntrySize;
         for (int i = min; i < max; i++) {
             str += "\n" + i + ": ";
             for (int j = 0; j < nodeEntrySize; j++) {
                 if (j > 0)
                     str += ",\t";
-                str += nodes.getInt((long) node * nodeEntrySize + j);
+                str += nodes.getInt(nodePointer + j);
             }
         }
-        int edge = nodes.getInt((long) node * nodeEntrySize);
+        int edge = nodes.getInt(nodePointer);
         str += "\n--- edges " + edge + " ---";
         int otherNode;
         for (int i = 0; i < 1000; i++) {
@@ -679,7 +679,7 @@ public class GraphStorage implements Graph, Storable {
             return edge() + " " + baseNode() + "-" + node();
         }
     }
-    
+
     @Override
     public Graph copyTo(Graph g) {
         if (g.getClass().equals(getClass())) {

@@ -54,7 +54,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     // very slow: private SparseLongLongArray osmIdToIndexMap;
     // not applicable as ways introduces the nodes in 'wrong' order: private OSMIDSegmentedMap
     private int towerId = 0;
-    private int pillarId = 0;    
+    private int pillarId = 0;
     // remember how many times a node was used to identify tower nodes
     private DataAccess pillarLats, pillarLons;
     private final Directory dir;
@@ -161,9 +161,9 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     /**
-     * @return if power node
+     * @return converted tower node
      */
-    private int handlePillarNode(int tmpNode, long osmId, PointList pointList, boolean towerNode) {
+    private int handlePillarNode(int tmpNode, long osmId, PointList pointList, boolean convertToTowerNode) {
         tmpNode = tmpNode - 3;
         int intlat = pillarLats.getInt(tmpNode);
         int intlon = pillarLons.getInt(tmpNode);
@@ -174,8 +174,8 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         double tmpLat = Helper.intToDegree(intlat);
         double tmpLon = Helper.intToDegree(intlon);
 
-        if (towerNode) {
-            // convert pillarNode type to towerNode
+        if (convertToTowerNode) {
+            // convert pillarNode type to towerNode, make pillar values invalid
             pillarLons.setInt(tmpNode, Integer.MAX_VALUE);
             pillarLats.setInt(tmpNode, Integer.MAX_VALUE);
             tmpNode = addTowerNode(osmId, tmpLat, tmpLon);
@@ -228,7 +228,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         pillarLons.createNew(Math.max(expectedNodes / 50, 100));
         if (osmXml == null)
             throw new AssertionError("Stream cannot be empty");
-        
+
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         try {
@@ -244,8 +244,8 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                 switch (event) {
                     case XMLStreamConstants.START_ELEMENT:
                         if ("way".equals(sReader.getLocalName())) {
-                            boolean isHighway = parseWay(sReader);
-                            if (isHighway && wayNodes.size() > 1) {
+                            boolean valid = parseWay(sReader);
+                            if (valid) {
                                 int s = wayNodes.size();
                                 for (int index = 0; index < s; index++) {
                                     setHasHighways(wayNodes.get(index));

@@ -176,7 +176,6 @@ public class OSMReader {
         this.expectedNodes = expectedNodes;
         helper = createDoubleParseHelper();
         helper.acceptWays(new AcceptWay(true, false, false));
-        logger.info("using " + helper.getStorageInfo(storage) + ", memory:" + Helper.getMemInfo());
     }
 
     boolean loadExisting() {
@@ -202,6 +201,8 @@ public class OSMReader {
     }
 
     void osm2Graph(File osmXmlFile) throws IOException {
+        logger.info("using " + helper.getStorageInfo(graphStorage) + ", accepts:"
+                + helper.acceptWays() + ", memory:" + Helper.getMemInfo());
         helper.preProcess(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
         cleanUp();
@@ -296,7 +297,7 @@ public class OSMReader {
                             helper.processWay(sReader);
                             if (counter - wayStart == 10000 && sw.stop().getSeconds() > 1) {
                                 logger.warn("Something is wrong! Processing ways takes too long! "
-                                        + sw.getSeconds() + "sec for only " + (counter - wayStart) + " docs");
+                                        + sw.getSeconds() + "sec for only " + (counter - wayStart) + " entries");
                             }
                             // hmmh a bit hacky: counter does +=2 until the next loop
                             if ((counter / 2) % 1000000 == 0) {

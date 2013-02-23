@@ -248,6 +248,7 @@ public class GraphHopper implements GraphHopperAPI {
         } else {
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm());
             algo = prepare.createAlgo();
+            algo.type(request.type()).vehicle(request.vehicle());
         }
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 

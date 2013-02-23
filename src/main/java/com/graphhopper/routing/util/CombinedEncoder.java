@@ -18,33 +18,19 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.EdgeIterator;
-
 /**
  * @author Peter Karich
  */
-public class DefaultEdgeFilter implements EdgeFilter {
+public interface CombinedEncoder {
 
-    private boolean in = true;
-    private boolean out = true;
-    private FlagsEncoder encoder;
+    /**
+     * Returns the flags with an opposite direction if not both ways.
+     */
+    int swapDirection(int flags);
 
-    public DefaultEdgeFilter(FlagsEncoder encoder) {
-        this.encoder = encoder;
-    }
-
-    @Override public EdgeFilter direction(boolean in, boolean out) {
-        this.in = in;
-        this.out = out;
-        return this;
-    }
-
-    @Override public boolean accept(EdgeIterator iter) {
-        int flags = iter.flags();
-        return out && encoder.isForward(flags) || in && encoder.isBackward(flags);
-    }
-
-    @Override public String toString() {
-        return encoder.toString() + ", in:" + in + ", out:" + out;
-    }
+    /**
+     * Returns default flags (e.g. with default speed) and the specified
+     * direction restriction.
+     */
+    int flagsDefault(boolean bothDirections);
 }

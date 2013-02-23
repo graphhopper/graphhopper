@@ -21,10 +21,10 @@ package com.graphhopper.routing;
 import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeWrapper;
-import com.graphhopper.util.GraphUtility;
 
 /**
  * Calculates shortest path in bidirectional way. Compared to
@@ -132,9 +132,9 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     }
 
     void fillEdges(int currNode, double currWeight, int currRef, MyBitSet visitedMain,
-            IntDoubleBinHeap prioQueue, EdgeWrapper wrapper, boolean out) {
+            IntDoubleBinHeap prioQueue, EdgeWrapper wrapper, EdgeFilter filter) {
 
-        EdgeIterator iter = GraphUtility.getEdges(graph, currNode, out);
+        EdgeIterator iter = graph.getEdges(currNode, filter);
         while (iter.next()) {
             int neighborNode = iter.node();
             if (visitedMain.contains(neighborNode))
@@ -177,7 +177,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
     boolean fillEdgesFrom() {
         wrapperOther = wrapperTo;
-        fillEdges(currFrom, currFromWeight, currFromRef, visitedFrom, openSetFrom, wrapperFrom, true);
+        fillEdges(currFrom, currFromWeight, currFromRef, visitedFrom, openSetFrom, wrapperFrom, outEdgeFilter);
         if (openSetFrom.isEmpty())
             return false;
 
@@ -192,7 +192,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
     boolean fillEdgesTo() {
         wrapperOther = wrapperFrom;
-        fillEdges(currTo, currToWeight, currToRef, visitedTo, openSetTo, wrapperTo, false);
+        fillEdges(currTo, currToWeight, currToRef, visitedTo, openSetTo, wrapperTo, inEdgeFilter);
         if (openSetTo.isEmpty())
             return false;
 

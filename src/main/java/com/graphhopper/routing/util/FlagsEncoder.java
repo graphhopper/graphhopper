@@ -18,37 +18,13 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.EdgeIterator;
-
 /**
  * This class provides methods to define how a value (like speed or direction)
  * converts to a flag (currently an integer value).
  *
  * @author Peter Karich
  */
-public interface FlagsEncoder {
-
-    /**
-     * Returns true if flags1 can be overwritten by flags2 without restricting
-     * or changing the directions of flags1.
-     */
-    //        \  flags2:
-    // flags1  \ -> | <- | <->
-    // ->         t | f  | t
-    // <-         f | t  | t
-    // <->        f | f  | t
-    boolean canBeOverwritten(int flags1, int flags2);
-
-    /**
-     * Returns the flags with an opposite direction if not both ways.
-     */
-    int swapDirection(int flags);
-
-    /**
-     * Returns default flags (e.g. with default speed) and the specified
-     * direction restriction.
-     */
-    int flagsDefault(boolean bothDirections);
+public interface FlagsEncoder extends CombinedEncoder {
 
     /**
      * @param speed the speed in km/h
@@ -68,4 +44,15 @@ public interface FlagsEncoder {
      * @return the maximum speed in km/h
      */
     int getMaxSpeed();
+
+    /**
+     * Returns true if flags1 can be overwritten by flags2 without restricting
+     * or changing the directions of flags1.
+     */
+    //        \  flags2:
+    // flags1  \ -> | <- | <->
+    // ->         t | f  | t
+    // <-         f | t  | t
+    // <->        f | f  | t
+    boolean canBeOverwritten(int flags1, int flags2);
 }

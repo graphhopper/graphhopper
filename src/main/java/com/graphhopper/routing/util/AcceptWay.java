@@ -70,14 +70,14 @@ public class AcceptWay {
      * @return true if a way (speed attribute) is determined from the specified
      * tag
      */
-    public boolean handleTags(Map<String, Object> outProperties, TLongArrayList osmIds) {
+    public boolean handleTags(Map<String, Object> outProperties, Map<String, Object> osmProperties, TLongArrayList osmIds) {
         boolean includeWay = false;
-        Object value = outProperties.get("highway");
+        Object value = osmProperties.get("highway");
         if (value != null) {
             String highwayValue = (String) value;
             if (foot) {
                 if (footEncoder.isAllowedHighway(highwayValue)
-                        || outProperties.get("sidewalk") != null) {
+                        || osmProperties.get("sidewalk") != null) {
                     includeWay = true;
                     outProperties.put("foot", true);
                     outProperties.put("save", footEncoder.isSaveHighway(highwayValue));
@@ -96,32 +96,32 @@ public class AcceptWay {
             if (car) {
                 Integer integ = carEncoder.getSpeed(highwayValue);
                 if (integ != null) {
-                    int maxspeed = parseSpeed((String) outProperties.get("maxspeed"));
+                    int maxspeed = parseSpeed((String) osmProperties.get("maxspeed"));
                     includeWay = true;
                     if (maxspeed > 0 && integ > maxspeed)
                         outProperties.put("car", maxspeed);
                     else {
-                        if ("city_limit".equals(outProperties.get("traffic_sign")))
+                        if ("city_limit".equals(osmProperties.get("traffic_sign")))
                             integ = 50;
                         outProperties.put("car", integ);
                     }
 
-                    if ("toll_booth".equals(outProperties.get("barrier")))
+                    if ("toll_booth".equals(osmProperties.get("barrier")))
                         outProperties.put("carpaid", true);
                 }
             }
         }
 
-        value = outProperties.get("route");
+        value = osmProperties.get("route");
         if (value != null
                 && ("shuttle_train".equals(value) || "ferry".equals(value))) {
-            if (car && isTrue(outProperties.get("motorcar"))
-                    || bike && isTrue(outProperties.get("bike"))
-                    || foot && isTrue(outProperties.get("foot"))) {
+            if (car && isTrue(osmProperties.get("motorcar"))
+                    || bike && isTrue(osmProperties.get("bike"))
+                    || foot && isTrue(osmProperties.get("foot"))) {
 
                 int velo = 30;
                 // TODO read duration and calculate speed 00:30 for ferry
-                Object duration = outProperties.get("duration");
+                Object duration = osmProperties.get("duration");
                 if (duration != null) {
                 }
 
@@ -137,28 +137,21 @@ public class AcceptWay {
             }
         }
 
-        boolean oneWayForBike = !"no".equals(outProperties.get("oneway:bicycle"));
-        String cycleway = (String) outProperties.get("cycleway");
+        boolean oneWayForBike = !"no".equals(osmProperties.get("oneway:bicycle"));
+        String cycleway = (String) osmProperties.get("cycleway");
         boolean oneWayBikeIsOpposite = bikeEncoder.isOpposite(cycleway);
-        value = outProperties.get("oneway");
+        value = osmProperties.get("oneway");
         if (value != null) {
-            if (isTrue(((String) value))) {
+            if (isTrue(((String) value)))
                 outProperties.put("caroneway", true);
-
-                if (oneWayForBike) {
-                    outProperties.put("bikeoneway", true);
-                    outProperties.put("bikeopposite", oneWayBikeIsOpposite);
-                }
-            }
 
             // Abzweigung
-            if ("roundabout".equals(value)) {
+            if ("roundabout".equals(value))
                 outProperties.put("caroneway", true);
 
-                if (oneWayForBike) {
-                    outProperties.put("bikeoneway", true);
-                    outProperties.put("bikeopposite", oneWayBikeIsOpposite);
-                }
+            if (oneWayForBike && Boolean.TRUE.equals(outProperties.get("caroneway"))) {
+                outProperties.put("bikeoneway", true);
+                outProperties.put("bikeopposite", oneWayBikeIsOpposite);
             }
         }
         return includeWay;
@@ -221,15 +214,17 @@ public class AcceptWay {
         if (bike) {
             integ = (Integer) properties.get("bike");
             if (integ != null) {
-                boolean opposite = Boolean.TRUE.equals(properties.get("bikeopposite"));
                 boolean bothways = !Boolean.TRUE.equals(properties.get("bikeoneway"));
-                flags |= footEncoder.flags(integ, bothways);
+                int tmp = bikeEncoder.flags(integ, bothways);
+                boolean opposite = Boolean.TRUE.equals(properties.get("bikeopposite"));
+                if (!bothways && opposite)
+                    tmp = bikeEncoder.swapDirection(tmp);
+                flags |= tmp;
             }
         }
 
         if (foot && Boolean.TRUE.equals(properties.get("foot")))
             flags |= footEncoder.flagsDefault(true);
-
         return flags;
     }
 
@@ -243,5 +238,30 @@ public class AcceptWay {
         if (acceptsFoot())
             str += "FOOT";
         return str;
+    }
+
+    public CombinedEncoder createCombination() {
+        return new CombinedEncoder() {
+            @Override public int swapDirection(int flags) {
+                if (foot)
+                    flags = footEncoder.swapDirection(flags);
+                if (bike)
+                    flags = bikeEncoder.swapDirection(flags);
+                if (car)
+                    flags = carEncoder.swapDirection(flags);
+                return flags;
+            }
+
+            @Override public int flagsDefault(boolean bothDirections) {
+                int res = 0;
+                if (foot)
+                    res |= footEncoder.flagsDefault(bothDirections);
+                if (bike)
+                    res |= bikeEncoder.flagsDefault(bothDirections);
+                if (car)
+                    res |= carEncoder.flagsDefault(bothDirections);
+                return res;
+            }
+        };
     }
 }

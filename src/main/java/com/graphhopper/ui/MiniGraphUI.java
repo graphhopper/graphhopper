@@ -25,16 +25,20 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.FootFlagsEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
+import gnu.trove.list.TIntList;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Random;
@@ -73,6 +77,10 @@ public class MiniGraphUI {
     private MapLayer roadsLayer;
     private MapLayer pathLayer;
     private boolean fastPaint = false;
+    private WeightCalculation wCalc = new ShortestCalc();
+    private FlagsEncoder carEncoder = new CarFlagsEncoder();
+    private FlagsEncoder footEncoder = new FootFlagsEncoder();
+    private FlagsEncoder encoder = footEncoder;
 
     public MiniGraphUI(OSMReader reader, boolean debug) {
         this.graph = reader.graph();
@@ -126,13 +134,19 @@ public class MiniGraphUI {
                         continue;
                     double lat = graph.getLatitude(nodeIndex);
                     double lon = graph.getLongitude(nodeIndex);
+                    // mg.plotText(g2, lat, lon, "" + nodeIndex);
                     if (lat < b.minLat || lat > b.maxLat || lon < b.minLon || lon > b.maxLon)
                         continue;
 
 //                    int count = MyIteratorable.count(graph.getEdges(nodeIndex));
 //                    mg.plotNode(g2, nodeIndex, Color.RED);                    
 
-                    EdgeIterator iter = graph.getOutgoing(nodeIndex);
+                    EdgeIterator iter = graph.getEdges(nodeIndex, new DefaultEdgeFilter(encoder) {
+                        @Override public boolean accept(EdgeIterator iter) {
+                            int flags = iter.flags();
+                            return footEncoder.isForward(flags);
+                        }
+                    }.direction(false, true));
                     while (iter.next()) {
                         int nodeId = iter.node();
                         int sum = nodeIndex + nodeId;
@@ -152,7 +166,7 @@ public class MiniGraphUI {
 //                mg.plotNode(g2, 14304, Color.red);
 
                 g2.setColor(Color.red);
-                Path p1 = calcPath(prepare.createAlgo());
+                Path p1 = calcPath(prepare.createAlgo().type(wCalc).vehicle(encoder));
                 plotPath(p1, g2, 5);
 
                 g2.setColor(Color.black);
@@ -167,9 +181,6 @@ public class MiniGraphUI {
         });
 
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
-            WeightCalculation wCalc = new ShortestCalc();
-            FlagsEncoder encoder = new CarFlagsEncoder();
-
             @Override public void paintComponent(Graphics2D g2) {
                 if (dijkstraFromId < 0 || dijkstraToId < 0)
                     return;
@@ -192,18 +203,7 @@ public class MiniGraphUI {
 
                 logger.info("found path in " + sw.getSeconds() + "s with " + path.calcNodes().size() + " nodes: " + path);
                 g2.setColor(Color.BLUE.brighter().brighter());
-                PointList list = path.calcPoints();
-                double prevLat = Double.NaN;
-                double prevLon = Double.NaN;
-                for (int i = 0; i < list.size(); i++) {
-                    double lat = list.latitude(i);
-                    double lon = list.longitude(i);
-                    if (!Double.isNaN(prevLat))
-                        mg.plotEdge(g2, prevLat, prevLon, lat, lon, 3);
-
-                    prevLat = lat;
-                    prevLon = lon;
-                }
+                plotPath(path, g2, 1);
             }
         });
 
@@ -217,12 +217,15 @@ public class MiniGraphUI {
 
     // for debugging
     private Path calcPath(RoutingAlgorithm algo) {
-//        int from = index.findID(50.04216762596695, 10.226328504631237);
-//        int to = index.findID(50.04921956887818, 10.231340037664596);
+//        int from = index.findID(50.042, 10.19);
+//        int to = index.findID(50.049, 10.23);
 //
 ////        System.out.println("path " + from + "->" + to);
 //        return algo.calcPath(from, to);
-        return algo.calcPath(43548, 14370);
+        // System.out.println(GraphUtility.getNodeInfo(graph, 60139, new DefaultEdgeFilter(new CarFlagsEncoder()).direction(false, true)));
+        System.out.println(((GraphStorage) graph).debug(202947, 10));
+//        GraphUtility.printInfo(graph, 106511, 10);
+        return algo.calcPath(60139, 202947);
     }
 
     private Path plotPath(Path tmpPath, Graphics2D g2, int w) {
@@ -231,19 +234,29 @@ public class MiniGraphUI {
             return tmpPath;
         }
 
-        double lastLat = Double.NaN;
-        double lastLon = Double.NaN;
-        for (int i = 0; i < tmpPath.calcPoints().size(); i++) {
-            double lat = tmpPath.calcPoints().latitude(i);
-            double lon = tmpPath.calcPoints().longitude(i);
-            if (!Double.isNaN(lastLat))
-                mg.plotEdge(g2, lastLat, lastLon, lat, lon, w);
-            else
-                mg.plot(g2, lat, lon, w);
-            lastLat = lat;
-            lastLon = lon;
+        double prevLat = Double.NaN;
+        double prevLon = Double.NaN;
+        boolean plotNodes = true;
+        TIntList nodes = tmpPath.calcNodes();
+        if (plotNodes) {
+            for (int i = 0; i < nodes.size(); i++) {
+                double lat = graph.getLatitude(nodes.get(i));
+                double lon = graph.getLongitude(nodes.get(i));
+                mg.plotText(g2, lat, lon, "" + nodes.get(i));
+            }
         }
-        logger.info("dist:" + tmpPath.distance() + ", path points:" + tmpPath.calcPoints().size());
+        PointList list = tmpPath.calcPoints();
+        for (int i = 0; i < list.size(); i++) {
+            double lat = list.latitude(i);
+            double lon = list.longitude(i);
+            if (!Double.isNaN(prevLat)) {
+                mg.plotEdge(g2, prevLat, prevLon, lat, lon, w);
+            } else
+                mg.plot(g2, lat, lon, w);
+            prevLat = lat;
+            prevLon = lon;
+        }
+        logger.info("dist:" + tmpPath.distance() + ", path points:" + list + ", nodes:" + nodes);
         return tmpPath;
     }
     private int dijkstraFromId = -1;

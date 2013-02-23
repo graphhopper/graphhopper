@@ -23,6 +23,7 @@ import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -103,7 +104,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
                 currFrom = tmpFrom;
 
             shortestDistMapOther = shortestDistMapTo;
-            fillEdges(shortest, tmpFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom, true);
+            fillEdges(shortest, tmpFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom, outEdgeFilter);
         }
 
         int finish = 0;
@@ -115,7 +116,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
 
             finish = 0;
             shortestDistMapOther = shortestDistMapTo;
-            fillEdges(shortest, currFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom, true);
+            fillEdges(shortest, currFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom, outEdgeFilter);
             if (!prioQueueFrom.isEmpty()) {
                 currFrom = prioQueueFrom.poll();
                 visitedFrom.add(currFrom.endNode);
@@ -123,7 +124,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
                 finish++;
 
             shortestDistMapOther = shortestDistMapFrom;
-            fillEdges(shortest, currTo, visitedTo, prioQueueTo, shortestDistMapTo, false);
+            fillEdges(shortest, currTo, visitedTo, prioQueueTo, shortestDistMapTo, inEdgeFilter);
             if (!prioQueueTo.isEmpty()) {
                 currTo = prioQueueTo.poll();
                 visitedTo.add(currTo.endNode);
@@ -139,10 +140,10 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
 
     void fillEdges(PathBidirRef shortest, EdgeEntry curr, MyBitSet visitedMain,
             PriorityQueue<EdgeEntry> prioQueue,
-            TIntObjectMap<EdgeEntry> shortestDistMap, boolean out) {
+            TIntObjectMap<EdgeEntry> shortestDistMap, EdgeFilter filter) {
 
-        int currVertexFrom = curr.endNode;
-        EdgeIterator iter = GraphUtility.getEdges(graph, currVertexFrom, out);
+        int currNode = curr.endNode;
+        EdgeIterator iter = graph.getEdges(currNode, filter);
         while (iter.next()) {
             int tmpV = iter.node();
             if (visitedMain.contains(tmpV))
