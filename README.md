@@ -18,6 +18,6 @@ Features
  * Memory efficient and fast
  * A small library (~3MB)
  * Works on the [desktop](http://karussell.files.wordpress.com/2012/06/graphhopper.png), 
-   [from the web](https://github.com/graphhopper/graphhopper-web) 
+   [as a web service](https://github.com/graphhopper/graphhopper-web) 
    and even offline [on Android](https://github.com/graphhopper/graphhopper/wiki/Android)
  * Well tested
