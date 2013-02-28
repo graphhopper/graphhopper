@@ -19,16 +19,16 @@
 package com.graphhopper.routing.util;
 
 /**
- * Calculates the fastest route with the specified vehicle (VehicleType).
+ * Calculates the fastest route with the specified vehicle (VehicleFlagEncoder).
  *
  * @author Peter Karich
  */
 public class FastestCalc implements WeightCalculation {
     
-    private final VehicleType encoder;
+    private final VehicleFlagEncoder encoder;
     private final double maxSpeed;
 
-    public FastestCalc(VehicleType encoder) {
+    public FastestCalc(VehicleFlagEncoder encoder) {
         this.encoder = encoder;
         maxSpeed = encoder.getMaxSpeed();
     }

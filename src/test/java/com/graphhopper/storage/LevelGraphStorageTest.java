@@ -18,7 +18,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.EdgeLevelFilterOld;
+import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GHUtility;
@@ -42,7 +42,7 @@ public class LevelGraphStorageTest extends GraphStorageTest {
     }
 
     @Override
-    public GraphStorage newGraph(Directory dir) {        
+    public GraphStorage newGraph(Directory dir) {
         return new LevelGraphStorage(dir);
     }
 
@@ -103,7 +103,7 @@ public class LevelGraphStorageTest extends GraphStorageTest {
         g.setLevel(0, 1);
         g.setLevel(4, 1);
 
-        EdgeIterator iter = new EdgeLevelFilterOld(g).doFilter(g.getEdges(0));
+        EdgeIterator iter = g.getEdges(0, new LevelEdgeFilter(g));
         assertEquals(1, GHUtility.count(iter));
         iter = g.getEdges(2);
         assertEquals(2, GHUtility.count(iter));
@@ -124,7 +124,7 @@ public class LevelGraphStorageTest extends GraphStorageTest {
 
         // even directed ways change!
         assertTrue(iter.next());
-        assertEquals(0, iter.node());        
+        assertEquals(0, iter.node());
         assertEquals(1, GHUtility.count(g.getEdges(0, carInFilter)));
         g.disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
         assertEquals(0, GHUtility.count(g.getEdges(0, carInFilter)));
@@ -133,6 +133,6 @@ public class LevelGraphStorageTest extends GraphStorageTest {
         assertEquals(3, iter.node());
         assertEquals(1, GHUtility.count(g.getEdges(3, carOutFilter)));
         g.disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
-        assertEquals(0, GHUtility.count(g.getEdges(3, carOutFilter)));        
+        assertEquals(0, GHUtility.count(g.getEdges(3, carOutFilter)));
     }
 }

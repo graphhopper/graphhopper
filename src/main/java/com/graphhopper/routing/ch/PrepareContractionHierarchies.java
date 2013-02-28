@@ -26,11 +26,11 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EdgeLevelFilterOld;
-import com.graphhopper.routing.util.VehicleType;
+import com.graphhopper.routing.util.LevelEdgeFilter;
+import com.graphhopper.routing.util.VehicleFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
@@ -70,7 +70,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private Logger logger = LoggerFactory.getLogger(getClass());
     private WeightCalculation shortestCalc;
     private WeightCalculation prepareWeightCalc;
-    private VehicleType prepareEncoder;
+    private VehicleFlagEncoder prepareEncoder;
     private EdgeFilter inFilter;
     private EdgeFilter outFilter;
     private LevelGraph g;
@@ -83,16 +83,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private int scBothDir;
     private Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private List<NodeCH> goalNodes = new ArrayList<NodeCH>();
-    private EdgeLevelFilterCH edgeFilter;
+    private LevelEdgeFilterCH levelEdgeFilter;
     private OneToManyDijkstraCH algo;
     private int updateSize;
-    private boolean removesHigher2LowerEdges = true;
-    private long visitedNodes = 0;
+    private boolean removesHigher2LowerEdges = false;
     private long counter;
     private int newShortcuts;
 
     public PrepareContractionHierarchies() {
-        type(new ShortestCalc()).vehicle(new CarFlagsEncoder());
+        type(new ShortestCalc()).vehicle(new CarFlagEncoder());
     }
 
     @Override
@@ -114,8 +113,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         shortestCalc = new ShortestCalc();
         return this;
     }
-    
-    public PrepareContractionHierarchies vehicle(VehicleType encoder) {
+
+    public PrepareContractionHierarchies vehicle(VehicleFlagEncoder encoder) {
         this.prepareEncoder = encoder;
         inFilter = new DefaultEdgeFilter(encoder, true, false);
         outFilter = new DefaultEdgeFilter(encoder, false, true);
@@ -323,28 +322,31 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     PrepareContractionHierarchies initFromGraph() {
         originalEdges = new TIntArrayList(g.nodes() / 2, -1);
-        edgeFilter = new EdgeLevelFilterCH(this.g);
+        levelEdgeFilter = new LevelEdgeFilterCH(this.g);
         sortedNodes = new MySortedCollection(g.nodes());
         refs = new PriorityNode[g.nodes()];
         return this;
     }
 
-    static class EdgeLevelFilterCH extends EdgeLevelFilterOld {
+    static class LevelEdgeFilterCH extends LevelEdgeFilter {
 
         int avoidNode;
+        LevelGraph g;
 
-        public EdgeLevelFilterCH(LevelGraph g) {
+        public LevelEdgeFilterCH(LevelGraph g) {
             super(g);
         }
 
-        public EdgeLevelFilterCH avoidNode(int node) {
+        public LevelEdgeFilterCH avoidNode(int node) {
             this.avoidNode = node;
             return this;
         }
 
-        @Override public boolean accept() {
+        @Override public boolean accept(EdgeIterator iter) {
+            if (!super.accept(iter))
+                return false;
             // ignore if it is skipNode or a endNode already contracted
-            int node = node();
+            int node = iter.node();
             return avoidNode != node && graph.getLevel(node) == 0;
         }
     }
@@ -391,7 +393,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             // TODO instead of a weight-limit we could use a hop-limit 
             // and successively increasing it when mean-degree of graph increases
-            algo = new OneToManyDijkstraCH(g).filter(edgeFilter.avoidNode(v));
+            algo = new OneToManyDijkstraCH(g);
+            algo.edgeFilter(levelEdgeFilter.avoidNode(v));
             algo.type(shortestCalc).vehicle(prepareEncoder);
             algo.setLimit(maxWeight).calcPath(u, goalNodes);
             internalFindShortcuts(goalNodes, u, iter1.edge());
@@ -509,7 +512,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
                 WeightCalculation wc = createWeightCalculation();
-                return new Path4CH(graph, flagsEncoder, wc);
+                return new Path4CH(graph, flagEncoder, wc);
             }
 
             @Override public String name() {
@@ -518,7 +521,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         };
         dijkstra.vehicle(prepareEncoder);
         if (!removesHigher2LowerEdges)
-            dijkstra.edgeFilter(new EdgeLevelFilterOld(g));
+            dijkstra.edgeFilter(new LevelEdgeFilter(g));
         return dijkstra;
     }
 
@@ -550,7 +553,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
                 WeightCalculation wc = createWeightCalculation();
-                return new Path4CH(graph, flagsEncoder, wc);
+                return new Path4CH(graph, flagEncoder, wc);
             }
 
             @Override public String name() {
@@ -559,7 +562,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         };
         astar.vehicle(prepareEncoder);
         if (!removesHigher2LowerEdges)
-            astar.edgeFilter(new EdgeLevelFilterOld(g));
+            astar.edgeFilter(new LevelEdgeFilter(g));
         return astar;
     }
 
@@ -590,22 +593,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
      */
     static class OneToManyDijkstraCH extends DijkstraSimple {
 
-        EdgeLevelFilterOld filter;
         double limit;
         Collection<NodeCH> goals;
 
         public OneToManyDijkstraCH(Graph graph) {
             super(graph);
-        }
-
-        public OneToManyDijkstraCH filter(EdgeLevelFilterOld filter) {
-            this.filter = filter;
-            return this;
-        }
-
-        @Override
-        protected final EdgeIterator neighbors(int neighborNode) {
-            return filter.doFilter(super.neighbors(neighborNode));
         }
 
         OneToManyDijkstraCH setLimit(double weight) {

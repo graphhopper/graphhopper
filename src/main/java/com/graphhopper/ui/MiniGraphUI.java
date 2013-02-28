@@ -24,10 +24,10 @@ import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.VehicleType;
-import com.graphhopper.routing.util.FootFlagsEncoder;
+import com.graphhopper.routing.util.VehicleFlagEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -78,9 +78,9 @@ public class MiniGraphUI {
     private MapLayer pathLayer;
     private boolean fastPaint = false;
     private WeightCalculation wCalc = new ShortestCalc();
-    private VehicleType carEncoder = new CarFlagsEncoder();
-    private VehicleType footEncoder = new FootFlagsEncoder();
-    private VehicleType encoder = footEncoder;
+    private VehicleFlagEncoder carEncoder = new CarFlagEncoder();
+    private VehicleFlagEncoder footEncoder = new FootFlagEncoder();
+    private VehicleFlagEncoder encoder = footEncoder;
 
     public MiniGraphUI(OSMReader reader, boolean debug) {
         this.graph = reader.graph();
@@ -222,7 +222,7 @@ public class MiniGraphUI {
 //
 ////        System.out.println("path " + from + "->" + to);
 //        return algo.calcPath(from, to);
-        // System.out.println(GraphUtility.getNodeInfo(graph, 60139, new DefaultEdgeFilter(new CarFlagsEncoder()).direction(false, true)));
+        // System.out.println(GraphUtility.getNodeInfo(graph, 60139, new DefaultEdgeFilter(new CarFlagEncoder()).direction(false, true)));
         System.out.println(((GraphStorage) graph).debug(202947, 10));
 //        GraphUtility.printInfo(graph, 106511, 10);
         return algo.calcPath(60139, 202947);

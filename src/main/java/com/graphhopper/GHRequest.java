@@ -18,8 +18,8 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.routing.util.CarFlagsEncoder;
-import com.graphhopper.routing.util.VehicleType;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.VehicleFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.shapes.GHPoint;
@@ -35,7 +35,7 @@ public class GHRequest {
     private GHPoint from;
     private GHPoint to;
     private double precision = 1;
-    private VehicleType encoder = new CarFlagsEncoder();
+    private VehicleFlagEncoder encoder = new CarFlagEncoder();
     private WeightCalculation weightCalc = new ShortestCalc();
 
     /**
@@ -112,12 +112,12 @@ public class GHRequest {
         return weightCalc;
     }
 
-    public GHRequest vehicle(VehicleType encoder) {
+    public GHRequest vehicle(VehicleFlagEncoder encoder) {
         this.encoder = encoder;
         return this;
     }
 
-    public VehicleType vehicle() {
+    public VehicleFlagEncoder vehicle() {
         return encoder;
     }
 }

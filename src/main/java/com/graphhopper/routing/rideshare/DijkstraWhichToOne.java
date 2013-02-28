@@ -78,7 +78,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     public Path calcPath() {
         // identical
         if (pubTransport.contains(destination))
-            return new Path(graph, flagsEncoder);
+            return new Path(graph, flagEncoder);
 
         visitedFrom = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
@@ -91,7 +91,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
         shortestDistMapTo.put(destination, entryTo);
 
-        shortest = new PathBidirRef(graph, flagsEncoder);
+        shortest = new PathBidirRef(graph, flagEncoder);
 
         // create several starting points
         if (pubTransport.isEmpty())

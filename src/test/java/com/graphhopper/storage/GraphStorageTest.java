@@ -90,7 +90,7 @@ public class GraphStorageTest extends AbstractGraphTester {
         assertEquals(10, g.getLatitude(0), 1e-2);
         assertEquals(10, g.getLongitude(0), 1e-2);
         assertEquals(2, GHUtility.count(g.getEdges(0, carOutFilter)));
-        assertTrue(GHUtility.contains(g.getEdges(0, carOutFilter), 1, 2));
+        assertEquals(Arrays.asList(1, 2), GHUtility.neighbors(g.getEdges(0, carOutFilter)));
 
         EdgeIterator iter = g.getEdges(0, carOutFilter);
         assertTrue(iter.next());
@@ -99,12 +99,12 @@ public class GraphStorageTest extends AbstractGraphTester {
         assertEquals(11, g.getLatitude(1), 1e-2);
         assertEquals(20, g.getLongitude(1), 1e-2);
         assertEquals(2, GHUtility.count(g.getEdges(1, carOutFilter)));
-        assertTrue(GHUtility.contains(g.getEdges(1, carOutFilter), 0, 2));
+        assertEquals(Arrays.asList(0, 2), GHUtility.neighbors(g.getEdges(1, carOutFilter)));
 
         assertEquals(12, g.getLatitude(2), 1e-2);
         assertEquals(12, g.getLongitude(2), 1e-2);
         assertEquals(1, GHUtility.count(g.getEdges(2, carOutFilter)));
-        assertTrue(GHUtility.contains(g.getEdges(2, carOutFilter), 0));
+        assertEquals(Arrays.asList(0), GHUtility.neighbors(g.getEdges(2, carOutFilter)));
     }
 
     @Test

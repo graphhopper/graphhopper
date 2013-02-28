@@ -24,11 +24,11 @@ import java.util.Map;
 /**
  * @author Peter Karich
  */
-public class CarFlagsEncoder extends AbstractFlagEncoder {
+public class CarFlagEncoder extends AbstractFlagEncoder {
 
     private static final Map<String, Integer> SPEED = new CarSpeed();
 
-    public CarFlagsEncoder() {
+    public CarFlagEncoder() {
         super(0, 2, SPEED.get("secondary"), SPEED.get("motorway"));
     }       
 

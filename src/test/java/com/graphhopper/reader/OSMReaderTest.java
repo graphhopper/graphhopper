@@ -19,10 +19,10 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.routing.util.AcceptWay;
-import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FootFlagsEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.AbstractGraphTester;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -48,8 +48,8 @@ public class OSMReaderTest {
     private String file2 = "test-osm2.xml";
     private String fileFoot = "test-osm3.xml";
     private String dir = "./target/tmp/test-db";
-    private CarFlagsEncoder carEncoder = new CarFlagsEncoder();
-    private FootFlagsEncoder footEncoder = new FootFlagsEncoder();
+    private CarFlagEncoder carEncoder = new CarFlagEncoder();
+    private FootFlagEncoder footEncoder = new FootFlagEncoder();
     private EdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
 
     @Before public void setUp() {
@@ -98,7 +98,7 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(internalId2, iter.node());
         assertEquals(93147, iter.distance(), 1);
-        CarFlagsEncoder flags = carEncoder;
+        CarFlagEncoder flags = carEncoder;
         assertTrue(flags.isMotorway(iter.flags()));
         assertTrue(flags.isForward(iter.flags()));
         assertTrue(flags.isBackward(iter.flags()));
@@ -189,7 +189,7 @@ public class OSMReaderTest {
         iter = graph.getEdges(internalIdMain);
         assertTrue(iter.next());
         assertEquals(internalId1, iter.node());
-        CarFlagsEncoder encoder = carEncoder;
+        CarFlagEncoder encoder = carEncoder;
         assertTrue(encoder.isMotorway(iter.flags()));
         assertFalse(encoder.isForward(iter.flags()));
         assertTrue(encoder.isBackward(iter.flags()));

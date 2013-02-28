@@ -21,9 +21,9 @@ import com.graphhopper.routing.DijkstraBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.util.CarFlagsEncoder;
-import com.graphhopper.routing.util.VehicleType;
-import com.graphhopper.routing.util.FootFlagsEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.VehicleFlagEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -178,11 +178,11 @@ public class Helper {
             return AStar.class;
     }
 
-    public static VehicleType getEncoder(String str) {
+    public static VehicleFlagEncoder getEncoder(String str) {
         if ("CAR".equalsIgnoreCase(str))
-            return new CarFlagsEncoder();
+            return new CarFlagEncoder();
         else if ("CAR".equalsIgnoreCase(str))
-            return new FootFlagsEncoder();
+            return new FootFlagEncoder();
         throw new RuntimeException("Not found " + str);
     }
 

@@ -120,7 +120,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     }
 
     void initPath() {
-        shortest = new PathBidir(graph, flagsEncoder, wrapperFrom, wrapperTo);
+        shortest = new PathBidir(graph, flagEncoder, wrapperFrom, wrapperTo);
     }
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
@@ -136,6 +136,8 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
         EdgeIterator iter = graph.getEdges(currNode, filter);
         while (iter.next()) {
+            if (!accept(iter))
+                continue;
             int neighborNode = iter.node();
             if (visitedMain.contains(neighborNode))
                 continue;
@@ -212,7 +214,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
     private Path checkIndenticalFromAndTo() {
         if (from == to)
-            return new Path(graph, flagsEncoder);
+            return new Path(graph, flagEncoder);
         return null;
     }
 

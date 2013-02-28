@@ -27,17 +27,17 @@ public class DefaultEdgeFilter implements EdgeFilter {
 
     private final boolean in;
     private final boolean out;
-    private VehicleType encoder;
+    private VehicleFlagEncoder encoder;
 
     /**
      * Creates an edges filter which accepts both direction of the specified
      * vehicle type.
      */
-    public DefaultEdgeFilter(VehicleType encoder) {
+    public DefaultEdgeFilter(VehicleFlagEncoder encoder) {
         this(encoder, true, true);
     }
 
-    public DefaultEdgeFilter(VehicleType encoder, boolean in, boolean out) {
+    public DefaultEdgeFilter(VehicleFlagEncoder encoder, boolean in, boolean out) {
         this.encoder = encoder;
         this.in = in;
         this.out = out;

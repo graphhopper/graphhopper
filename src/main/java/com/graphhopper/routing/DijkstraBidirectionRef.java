@@ -21,7 +21,6 @@ package com.graphhopper.routing;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EdgeLevelFilterOld;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -52,11 +51,10 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     protected EdgeEntry currTo;
     protected TIntObjectMap<EdgeEntry> shortestWeightMapOther;
     public PathBidirRef shortest;
-    private EdgeLevelFilterOld edgeFilter;
 
     public DijkstraBidirectionRef(Graph graph) {
         super(graph);
-        initCollections(Math.max(20, graph.nodes()));        
+        initCollections(Math.max(20, graph.nodes()));
     }
 
     protected void initCollections(int nodes) {
@@ -67,15 +65,6 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         visitedTo = new MyBitSetImpl(nodes);
         openSetTo = new PriorityQueue<EdgeEntry>(nodes / 10);
         shortestWeightMapTo = new TIntObjectHashMap<EdgeEntry>(nodes / 10);
-    }
-
-    public RoutingAlgorithm edgeFilter(EdgeLevelFilterOld edgeFilter) {
-        this.edgeFilter = edgeFilter;
-        return this;
-    }
-
-    protected EdgeLevelFilterOld edgeFilter() {
-        return edgeFilter;
     }
 
     void addSkipNode(int node) {
@@ -146,10 +135,9 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
         int currNode = curr.endNode;
         EdgeIterator iter = graph.getEdges(currNode, filter);
-        if (edgeFilter != null)
-            iter = edgeFilter.doFilter(iter);
-
         while (iter.next()) {
+            if (!accept(iter))
+                continue;
             int neighborNode = iter.node();
             if (visitedMain.contains(neighborNode))
                 continue;
@@ -227,7 +215,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
     private Path checkIndenticalFromAndTo() {
         if (from == to)
-            return new Path(graph, flagsEncoder);
+            return new Path(graph, flagEncoder);
         return null;
     }
 
@@ -240,7 +228,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     }
 
     protected PathBidirRef createPath() {
-        return new PathBidirRef(graph, flagsEncoder);
+        return new PathBidirRef(graph, flagEncoder);
     }
 
     public DijkstraBidirectionRef initPath() {

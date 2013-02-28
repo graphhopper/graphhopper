@@ -18,7 +18,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.EdgeIterator;
@@ -45,7 +45,7 @@ public abstract class AbstractGraphTester {
     private String location = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraph = "./target/graphstorage/default";
-    CarFlagsEncoder carFlagsEncoder = new CarFlagsEncoder();
+    CarFlagEncoder carFlagsEncoder = new CarFlagEncoder();
     EdgeFilter carOutFilter = new DefaultEdgeFilter(carFlagsEncoder, false, true);
     EdgeFilter carInFilter = new DefaultEdgeFilter(carFlagsEncoder, true, false);
 

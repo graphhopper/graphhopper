@@ -103,7 +103,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
 
-        shortest = new PathBidirRef(graph, flagsEncoder);
+        shortest = new PathBidirRef(graph, flagEncoder);
 
         // create several starting points
         if (pubTransport.isEmpty())

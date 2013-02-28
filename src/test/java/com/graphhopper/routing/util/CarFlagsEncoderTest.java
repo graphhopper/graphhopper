@@ -29,7 +29,7 @@ import org.junit.Test;
  */
 public class CarFlagsEncoderTest {
 
-    private CarFlagsEncoder encoder = new CarFlagsEncoder();
+    private CarFlagEncoder encoder = new CarFlagEncoder();
 
     @Test
     public void testBasics() {

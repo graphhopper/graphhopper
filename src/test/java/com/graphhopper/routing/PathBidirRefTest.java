@@ -18,10 +18,10 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.VehicleType;
+import com.graphhopper.routing.util.VehicleFlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -35,7 +35,7 @@ import org.junit.Test;
  */
 public class PathBidirRefTest {
 
-    private VehicleType carEncoder = new CarFlagsEncoder();
+    private VehicleFlagEncoder carEncoder = new CarFlagEncoder();
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
 
     Graph createGraph() {

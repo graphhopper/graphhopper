@@ -19,7 +19,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.LevelGraph;
@@ -32,7 +32,7 @@ import org.junit.Test;
  */
 public class EdgeSkipIteratorTest {
 
-    private CarFlagsEncoder carFlagsEncoder = new CarFlagsEncoder();
+    private CarFlagEncoder carFlagsEncoder = new CarFlagEncoder();
     private EdgeFilter carOutFilter = new DefaultEdgeFilter(carFlagsEncoder, false, true);
 
     LevelGraph createGraph() {
@@ -45,17 +45,17 @@ public class EdgeSkipIteratorTest {
         g.edge(0, 1, 12, carFlagsEncoder.flags(10, true));
         g.edge(0, 2, 13, carFlagsEncoder.flags(20, true));
 
-        assertEquals(2, GHUtility.countEdgesOnce(g));
+        assertEquals(2, GHUtility.count(g.getAllEdges()));
         assertEquals(1, GHUtility.count(g.getEdges(1, carOutFilter)));
         EdgeIterator iter = g.getEdges(0);
         assertTrue(iter.next());
         assertEquals(1, iter.node());
         assertEquals(carFlagsEncoder.flags(10, true), iter.flags());
-        
+
         // update flags
         iter.flags(carFlagsEncoder.flags(20, false));
         assertEquals(12, iter.distance(), 1e-4);
-        
+
         // update distance
         iter.distance(10);
         assertEquals(10, iter.distance(), 1e-4);
@@ -64,6 +64,7 @@ public class EdgeSkipIteratorTest {
         assertTrue(iter.next());
         assertEquals(carFlagsEncoder.flags(20, false), iter.flags());
         assertEquals(10, iter.distance(), 1e-4);
-        assertEquals(3, GHUtility.countEdges(g, carOutFilter));
+        assertEquals(1, GHUtility.neighbors(g.getEdges(1)).size());
+        assertEquals(0, GHUtility.neighbors(g.getEdges(1, carOutFilter)).size());
     }
 }

@@ -24,7 +24,7 @@ package com.graphhopper.routing.util;
  *
  * @author Peter Karich
  */
-public interface VehicleType {
+public interface VehicleFlagEncoder {
 
     /**
      * @param speed the speed in km/h

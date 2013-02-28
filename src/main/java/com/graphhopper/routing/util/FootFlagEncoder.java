@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * @author Peter Karich
  */
-public class FootFlagsEncoder extends AbstractFlagEncoder {
+public class FootFlagEncoder extends AbstractFlagEncoder {
 
     private final Set<String> saveHighwayTags = new HashSet<String>() {
         {
@@ -53,7 +53,7 @@ public class FootFlagsEncoder extends AbstractFlagEncoder {
     };
     private static final Map<String, Integer> SPEED = new FootSpeed();
 
-    public FootFlagsEncoder() {
+    public FootFlagEncoder() {
         super(16, 2, SPEED.get("mean"), SPEED.get("max"));
     }
 

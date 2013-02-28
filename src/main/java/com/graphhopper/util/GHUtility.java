@@ -22,10 +22,10 @@ import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.SpatialKeyAlgo;
-import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.VehicleType;
+import com.graphhopper.routing.util.VehicleFlagEncoder;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
 public class GHUtility {
 
     private static Logger logger = LoggerFactory.getLogger(GHUtility.class);
-    private static final VehicleType carEncoder = new CarFlagsEncoder();
+    private static final VehicleFlagEncoder carEncoder = new CarFlagEncoder();
     private static final EdgeFilter edgesOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
     private static final EdgeFilter edgesInFilter = new DefaultEdgeFilter(carEncoder, true, false);
 
@@ -100,32 +100,12 @@ public class GHUtility {
         return problems;
     }
 
-    /**
-     * This methods counts edges only once
-     */
-    public static int countEdgesOnce(Graph g) {
+    public static int count(EdgeIterator iter) {
         int counter = 0;
-        RawEdgeIterator iter = g.getAllEdges();
         while (iter.next()) {
             counter++;
         }
         return counter;
-    }
-
-    public static int countEdges(Graph g, EdgeFilter filter) {
-        int counter = 0;
-        int nodes = g.nodes();
-        for (int i = 0; i < nodes; i++) {
-            EdgeIterator iter = g.getEdges(i, filter);
-            while (iter.next()) {
-                counter++;
-            }
-        }
-        return counter;
-    }
-
-    public static int count(EdgeIterator iter) {
-        return neighbors(iter).size();
     }
 
     public static List<Integer> neighbors(EdgeIterator iter) {
@@ -142,43 +122,6 @@ public class GHUtility {
             ++counter;
         }
         return counter;
-    }
-
-    public static int count(Iterable<?> iter) {
-        int counter = 0;
-        for (Object o : iter) {
-            ++counter;
-        }
-        return counter;
-    }
-
-    public static boolean contains(EdgeIterator iter, int... locs) {
-        TIntHashSet set = new TIntHashSet();
-
-        while (iter.next()) {
-            set.add(iter.node());
-        }
-        for (int l : locs) {
-            if (!set.contains(l))
-                return false;
-        }
-        return true;
-    }
-
-    public static EdgeIterator until(EdgeIterator edges, int node, int flags) {
-        while (edges.next()) {
-            if (edges.node() == node && edges.flags() == flags)
-                return edges;
-        }
-        return EMPTY;
-    }
-
-    public static EdgeIterator until(EdgeIterator edges, int node) {
-        while (edges.next()) {
-            if (edges.node() == node)
-                return edges;
-        }
-        return EMPTY;
     }
 
     public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {

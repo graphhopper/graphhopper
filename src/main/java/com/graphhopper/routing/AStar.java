@@ -73,8 +73,10 @@ public class AStar extends AbstractRoutingAlgorithm {
         AStarEdge currEdge = fromEntry;
         while (true) {
             int currVertex = currEdge.endNode;
-            EdgeIterator iter = getNeighbors(currVertex);
+            EdgeIterator iter = neighbors(currVertex);
             while (iter.next()) {
+                if (!accept(iter))
+                    continue;
                 int neighborNode = iter.node();
                 if (closedSet.contains(neighborNode))
                     continue;
@@ -106,7 +108,7 @@ public class AStar extends AbstractRoutingAlgorithm {
             if (finished(currEdge, to))
                 break;
             if (prioQueueOpenSet.isEmpty())
-                return new Path(graph, flagsEncoder);
+                return new Path(graph, flagEncoder);
 
             currEdge = prioQueueOpenSet.poll();
             if (currEdge == null)
@@ -125,12 +127,8 @@ public class AStar extends AbstractRoutingAlgorithm {
         return closedSet.cardinality();
     }
 
-    protected EdgeIterator getNeighbors(int node) {
-        return graph.getEdges(node, outEdgeFilter);
-    }
-
     Path extractPath(EdgeEntry currEdge) {
-        return new Path(graph, flagsEncoder).edgeEntry(currEdge).extract();
+        return new Path(graph, flagEncoder).edgeEntry(currEdge).extract();
     }
 
     public static class AStarEdge extends EdgeEntry {

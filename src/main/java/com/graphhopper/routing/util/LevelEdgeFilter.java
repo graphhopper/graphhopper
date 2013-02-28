@@ -22,15 +22,15 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 
 /**
- * Only certain nodes are accepted and therefor the others are filtered out.
+ * Only certain nodes are accepted and therefor the others are ignored.
  *
  * @author Peter Karich
  */
-public class EdgeLevelFilter implements EdgeFilter {
+public class LevelEdgeFilter implements EdgeFilter {
 
     protected LevelGraph graph;
 
-    public EdgeLevelFilter(LevelGraph g) {
+    public LevelEdgeFilter(LevelGraph g) {
         graph = g;
     }
 

@@ -23,9 +23,9 @@ package com.graphhopper.routing.util;
  */
 public class CombinedEncoder {
 
-    CarFlagsEncoder carEncoder = new CarFlagsEncoder();
-    BikeFlagsEncoder bikeEncoder = new BikeFlagsEncoder();
-    FootFlagsEncoder footEncoder = new FootFlagsEncoder();
+    CarFlagEncoder carEncoder = new CarFlagEncoder();
+    BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
+    FootFlagEncoder footEncoder = new FootFlagEncoder();
 
     public int swapDirection(int flags) {
         flags = footEncoder.swapDirection(flags);

@@ -19,26 +19,27 @@
 package com.graphhopper.routing.util;
 
 /**
- * Calculates the shortest route with the specified vehicle (FlagsEncoder).
+ * Calculates the shortest route - independent of a vehicle as the calculation
+ * is based on the distance only.
  *
  * @author Peter Karich
  */
 public class ShortestCalc implements WeightCalculation {
-    
-    public ShortestCalc() {        
+
+    public ShortestCalc() {
     }
 
-    @Override 
+    @Override
     public double getMinWeight(double currDistToGoal) {
         return currDistToGoal;
     }
 
-    @Override 
+    @Override
     public double getWeight(double distance, int flags) {
         return distance;
     }
 
-    @Override 
+    @Override
     public double revertWeight(double weight, int flags) {
         return weight;
     }

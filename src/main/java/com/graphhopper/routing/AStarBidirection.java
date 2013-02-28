@@ -22,12 +22,10 @@ import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.AStar.AStarEdge;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EdgeLevelFilterOld;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.CoordTrig;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -75,7 +73,6 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     protected AStarEdge currFrom;
     protected AStarEdge currTo;
     private TIntObjectMap<AStarEdge> shortestWeightMapOther;
-    private EdgeLevelFilterOld edgeFilter;
     public PathBidirRef shortest;
     private CoordTrig fromCoord;
     private CoordTrig toCoord;
@@ -122,15 +119,6 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         return this;
     }
 
-    public RoutingAlgorithm edgeFilter(EdgeLevelFilterOld edgeFilter) {
-        this.edgeFilter = edgeFilter;
-        return this;
-    }
-
-    public EdgeLevelFilterOld edgeFilter() {
-        return edgeFilter;
-    }
-
     public void initFrom(int from) {
         this.from = from;
         currFrom = new AStarEdge(-1, from, 0, 0);
@@ -149,12 +137,12 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
     private Path checkIndenticalFromAndTo() {
         if (from == to)
-            return new Path(graph, flagsEncoder);
+            return new Path(graph, flagEncoder);
         return null;
     }
 
     protected PathBidirRef createPath() {
-        return new PathBidirRef(graph, flagsEncoder);
+        return new PathBidirRef(graph, flagEncoder);
     }
 
     public void initPath() {
@@ -246,10 +234,9 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
         int currNode = curr.endNode;
         EdgeIterator iter = graph.getEdges(currNode, filter);
-        if (edgeFilter != null)
-            iter = edgeFilter.doFilter(iter);
-
         while (iter.next()) {
+            if (!accept(iter))
+                continue;
             int neighborNode = iter.node();
             if (closedSet.contains(neighborNode))
                 continue;

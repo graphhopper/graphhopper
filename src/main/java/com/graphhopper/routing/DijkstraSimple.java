@@ -47,11 +47,13 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
     public Path calcPath(int from, int to) {
         EdgeEntry fromEntry = new EdgeEntry(EdgeIterator.NO_EDGE, from, 0d);
         visited.add(from);
-        EdgeEntry currEdge = fromEntry;        
+        EdgeEntry currEdge = fromEntry;
         while (true) {
             int neighborNode = currEdge.endNode;
             EdgeIterator iter = neighbors(neighborNode);
             while (iter.next()) {
+                if (!accept(iter))
+                    continue;
                 int tmpNode = iter.node();
                 if (visited.contains(tmpNode))
                     continue;
@@ -79,14 +81,14 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
                 break;
 
             if (heap.isEmpty())
-                return new Path(graph, flagsEncoder);
+                return new Path(graph, flagEncoder);
             currEdge = heap.poll();
             if (currEdge == null)
                 throw new AssertionError("cannot happen?");
         }
 
         if (currEdge.endNode != to)
-            return new Path(graph, flagsEncoder);
+            return new Path(graph, flagEncoder);
 
         return extractPath(currEdge);
     }
@@ -96,11 +98,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
     }
 
     public Path extractPath(EdgeEntry goalEdge) {
-        return new Path(graph, flagsEncoder).edgeEntry(goalEdge).extract();
-    }
-
-    protected EdgeIterator neighbors(int neighborNode) {
-        return graph.getEdges(neighborNode, outEdgeFilter);
+        return new Path(graph, flagEncoder).edgeEntry(goalEdge).extract();
     }
 
     @Override public String name() {

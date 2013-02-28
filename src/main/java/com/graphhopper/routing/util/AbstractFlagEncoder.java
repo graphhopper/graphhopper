@@ -21,7 +21,7 @@ package com.graphhopper.routing.util;
 /**
  * @author Peter Karich
  */
-public class AbstractFlagEncoder implements VehicleType {
+public class AbstractFlagEncoder implements VehicleFlagEncoder {
 
     /**
      * This variable converts the stored value to the speed in km/h or does the

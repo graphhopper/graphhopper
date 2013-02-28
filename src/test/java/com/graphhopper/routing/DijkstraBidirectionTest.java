@@ -19,7 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.VehicleType;
+import com.graphhopper.routing.util.VehicleFlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -33,7 +33,7 @@ import org.junit.Test;
 public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
 
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final VehicleType encoder) {
+    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final VehicleFlagEncoder encoder) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
                 return new DijkstraBidirection(_graph).type(calc).vehicle(encoder);

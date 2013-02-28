@@ -18,7 +18,7 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
@@ -35,7 +35,7 @@ import static org.junit.Assert.*;
  */
 public class PrinctonReaderTest {
     
-    private EdgeFilter carOutEdges = new DefaultEdgeFilter(new CarFlagsEncoder(), false, true);
+    private EdgeFilter carOutEdges = new DefaultEdgeFilter(new CarFlagEncoder(), false, true);
 
     @Test
     public void testRead() {

@@ -18,8 +18,8 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.CarFlagsEncoder;
-import com.graphhopper.routing.util.VehicleType;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.VehicleFlagEncoder;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -38,7 +38,7 @@ public class PathTest {
 
     @Test
     public void testTime() {
-        VehicleType encoder = new CarFlagsEncoder();
+        VehicleFlagEncoder encoder = new CarFlagEncoder();
         Path p = new Path(null, encoder);
         p.calcTime(100000, encoder.flags(100, true));
         assertEquals(60 * 60, p.time());

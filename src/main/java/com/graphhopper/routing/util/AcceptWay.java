@@ -26,9 +26,9 @@ import java.util.Map;
  */
 public class AcceptWay {
 
-    private CarFlagsEncoder carEncoder = new CarFlagsEncoder();
-    private FootFlagsEncoder footEncoder = new FootFlagsEncoder();
-    private BikeFlagsEncoder bikeEncoder = new BikeFlagsEncoder();
+    private CarFlagEncoder carEncoder = new CarFlagEncoder();
+    private FootFlagEncoder footEncoder = new FootFlagEncoder();
+    private BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
     private boolean car;
     private boolean bike;
     private boolean foot;

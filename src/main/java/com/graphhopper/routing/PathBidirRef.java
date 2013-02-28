@@ -18,7 +18,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.VehicleType;
+import com.graphhopper.routing.util.VehicleFlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -35,7 +35,7 @@ public class PathBidirRef extends Path {
     protected EdgeEntry edgeTo;
     private boolean switchWrapper = false;
 
-    public PathBidirRef(Graph g, VehicleType encoder) {
+    public PathBidirRef(Graph g, VehicleFlagEncoder encoder) {
         super(g, encoder);
     }
 

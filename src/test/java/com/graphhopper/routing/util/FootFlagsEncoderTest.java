@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
  */
 public class FootFlagsEncoderTest {
 
-    private FootFlagsEncoder encoder = new FootFlagsEncoder();
+    private FootFlagEncoder encoder = new FootFlagEncoder();
 
     @Test
     public void testGetSpeed() {
@@ -52,7 +52,7 @@ public class FootFlagsEncoderTest {
 
     @Test
     public void testCombined() {
-        VehicleType carEncoder = new CarFlagsEncoder();
+        VehicleFlagEncoder carEncoder = new CarFlagEncoder();
         int fl = encoder.flags(10, true) | carEncoder.flags(100, false);
         assertEquals(10, encoder.getSpeed(fl));
         assertTrue(encoder.isForward(fl));

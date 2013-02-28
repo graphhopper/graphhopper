@@ -44,10 +44,7 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
 
     @Override public void updateShortest(EdgeEntry shortestDE, int currLoc) {
         if (g2 != null) {
-            if (edgeFilter() == null)
-                mg.plotNode(g2, currLoc, Color.ORANGE);
-            else
-                mg.plotNode(g2, currLoc, Color.BLUE);
+            mg.plotNode(g2, currLoc, Color.BLUE);
         }
         // System.out.println("new node:" + currLoc);
         super.updateShortest(shortestDE, currLoc);

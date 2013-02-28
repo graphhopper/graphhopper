@@ -20,8 +20,8 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.CarFlagsEncoder;
-import com.graphhopper.routing.util.VehicleType;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.VehicleFlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -61,7 +61,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Override
-    public PrepareContractionHierarchies prepareGraph(Graph g, WeightCalculation calc, VehicleType encoder) {
+    public PrepareContractionHierarchies prepareGraph(Graph g, WeightCalculation calc, VehicleFlagEncoder encoder) {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies().graph(g).
                 type(calc).vehicle(encoder);
         // hack: prepare matrixgraph only once
@@ -92,7 +92,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.edge(5, 7, 1.4, true);
         g2.edge(6, 7, 1, true);
 
-        VehicleType carEncoder = new CarFlagsEncoder();
+        VehicleFlagEncoder carEncoder = new CarFlagEncoder();
         // simulate preparation
         EdgeSkipIterator iter2_1 = g2.edge(0, 5, 2.8, carEncoder.flags(0, true));
         iter2_1.skippedEdges(iter1_1.edge(), iter1_2.edge());

@@ -23,7 +23,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.NodeCH;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
-import com.graphhopper.routing.util.CarFlagsEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
@@ -47,7 +47,7 @@ import org.junit.Test;
  */
 public class PrepareContractionHierarchiesTest {
 
-    CarFlagsEncoder carFlagsEncoder = new CarFlagsEncoder();
+    CarFlagEncoder carFlagsEncoder = new CarFlagEncoder();
 
     LevelGraph createGraph() {
         return new GraphBuilder().levelGraphCreate();
@@ -86,8 +86,8 @@ public class PrepareContractionHierarchiesTest {
     public void testShortestPathSkipNode() {
         LevelGraph g = createExampleGraph();
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
-                .filter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).avoidNode(3));
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g);
+        algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
         List<NodeCH> gs = createGoals(2);
         algo.setLimit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(0).entry);
@@ -98,8 +98,8 @@ public class PrepareContractionHierarchiesTest {
     public void testShortestPathSkipNode2() {
         LevelGraph g = createExampleGraph();
         double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g).
-                filter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).avoidNode(3));
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g);
+        algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
         List<NodeCH> gs = createGoals(1, 2);
         algo.setLimit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(1).entry);
@@ -109,8 +109,8 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testShortestPathLimit() {
         LevelGraph g = createExampleGraph();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g)
-                .filter(new PrepareContractionHierarchies.EdgeLevelFilterCH(g).avoidNode(0));
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g);
+        algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(0));
         List<NodeCH> gs = createGoals(1);
         algo.setLimit(2).calcPath(4, gs);
         assertNull(gs.get(0).entry);
@@ -265,7 +265,7 @@ public class PrepareContractionHierarchiesTest {
         int old = GHUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old + 20, GHUtility.count(g.getAllEdges()));
+        assertEquals(old + 19, GHUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());
@@ -474,7 +474,7 @@ public class PrepareContractionHierarchiesTest {
 //                    + single.skippedEdge1() + "," + single.skippedEdge2() + " (" + iter.edge() + ")"
 //                    + ", dist: " + (float) iter.distance()
 //                    + ", level:" + g.getLevel(iter.nodeA()) + "<->" + g.getLevel(iter.nodeB())
-//                    + ", bothDir:" + CarFlagsEncoder.isBoth(iter.flags()));
+//                    + ", bothDir:" + CarFlagEncoder.isBoth(iter.flags()));
 //        }
 //        System.out.println("---");
 //    }
