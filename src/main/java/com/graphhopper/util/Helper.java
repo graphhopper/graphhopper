@@ -21,6 +21,7 @@ import com.graphhopper.routing.DijkstraBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.VehicleFlagEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
@@ -181,8 +182,10 @@ public class Helper {
     public static VehicleFlagEncoder getEncoder(String str) {
         if ("CAR".equalsIgnoreCase(str))
             return new CarFlagEncoder();
-        else if ("CAR".equalsIgnoreCase(str))
+        else if ("FOOT".equalsIgnoreCase(str))
             return new FootFlagEncoder();
+        else if ("BIKE".equalsIgnoreCase(str))
+            return new BikeFlagEncoder();
         throw new RuntimeException("Not found " + str);
     }
 
