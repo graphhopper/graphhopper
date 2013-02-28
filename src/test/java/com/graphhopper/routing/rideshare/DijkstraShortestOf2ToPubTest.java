@@ -22,6 +22,7 @@ import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.GHUtility;
 import org.junit.Test;
@@ -33,18 +34,16 @@ import static org.junit.Assert.*;
  */
 public class DijkstraShortestOf2ToPubTest {
 
+    CarFlagEncoder carEncoder = new CarFlagEncoder();
+
     Graph getGraph() {
         return AbstractRoutingAlgorithmTester.getMatrixAlikeGraph();
-    }
-
-    public RoutingAlgorithm createDijkstra(Graph g) {
-        return new DijkstraWhichToOne(g);
     }
 
     @Test
     public void testCalcShortestPath() {
         Graph g = GHUtility.clone(getGraph());
-        DijkstraShortestOf2ToPub d = new DijkstraShortestOf2ToPub(g);
+        DijkstraShortestOf2ToPub d = new DijkstraShortestOf2ToPub(g, carEncoder);
         d.addPubTransportPoints(DijkstraWhichToOneTest.pubTransportPath);
         int from = 13;
         int dest = 65;
@@ -57,7 +56,7 @@ public class DijkstraShortestOf2ToPubTest {
     @Test
     public void testCalcShortestPath2() {
         Graph g = GHUtility.clone(getGraph());
-        DijkstraShortestOf2ToPub d = new DijkstraShortestOf2ToPub(g);
+        DijkstraShortestOf2ToPub d = new DijkstraShortestOf2ToPub(g, carEncoder);
         d.addPubTransportPoints(DijkstraWhichToOneTest.pubTransportPath);
         int from = 13;
         int dest = 70;
@@ -76,7 +75,7 @@ public class DijkstraShortestOf2ToPubTest {
         g.edge(31, 41, 100, true);
         g.edge(41, 51, 100, true);
         g.edge(51, 52, 100, true);
-        DijkstraShortestOf2ToPub d = new DijkstraShortestOf2ToPub(g);
+        DijkstraShortestOf2ToPub d = new DijkstraShortestOf2ToPub(g, carEncoder);
         d.addPubTransportPoints(pubTransport);
         int from = 1;
         int dest = 53;
@@ -90,8 +89,8 @@ public class DijkstraShortestOf2ToPubTest {
         Path bestManualPathFrom = null;
         Path bestManualPathTo = null;
         for (int i = 0; i < points.length; i++) {
-            Path manualFrom = new DijkstraBidirectionRef(g).calcPath(points[i], from);
-            Path manualTo = new DijkstraBidirectionRef(g).calcPath(points[i], to);
+            Path manualFrom = new DijkstraBidirectionRef(g, carEncoder).calcPath(points[i], from);
+            Path manualTo = new DijkstraBidirectionRef(g, carEncoder).calcPath(points[i], to);
             if (bestManualPathFrom == null
                     || manualFrom.weight() + manualTo.weight()
                     < bestManualPathFrom.weight() + bestManualPathTo.weight()) {

@@ -19,12 +19,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMReader;
-import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.AStarBidirection;
-import com.graphhopper.routing.DijkstraBidirection;
-import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.Path;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -72,7 +67,8 @@ public class RoutingAlgorithmSpecialAreaTests {
                     + "Or use osmreader.chShortcuts=shortest and avoid the preparation");
 
         TestAlgoCollector testCollector = new TestAlgoCollector();
-        Collection<AlgorithmPreparation> prepares = createAlgos(unterfrankenGraph, true);
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        Collection<AlgorithmPreparation> prepares = createAlgos(unterfrankenGraph, carEncoder, true);
         for (AlgorithmPreparation prepare : prepares) {
             int failed = testCollector.list.size();
             testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 561.3, 20);
@@ -94,10 +90,14 @@ public class RoutingAlgorithmSpecialAreaTests {
             System.out.println("SUCCESS!");
     }
 
-    public static Collection<AlgorithmPreparation> createAlgos(Graph g, boolean withCh) {
+    public static Collection<AlgorithmPreparation> createAlgos(Graph g,
+            VehicleEncoder encoder, boolean withCh) {
         List<AlgorithmPreparation> prepare = new ArrayList<AlgorithmPreparation>(Arrays.<AlgorithmPreparation>asList(
-                p(g, AStar.class), p(g, AStarBidirection.class), p(g, DijkstraBidirectionRef.class),
-                p(g, DijkstraBidirection.class), p(g, DijkstraSimple.class)));
+                createAlgoPrepare(g, "astar", encoder),
+                createAlgoPrepare(g, "astarbi", encoder),
+                createAlgoPrepare(g, "dijkstraNative", encoder),
+                createAlgoPrepare(g, "dijkstrabi", encoder),
+                createAlgoPrepare(g, "dijkstra", encoder)));
         if (withCh) {
             LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder().levelGraphCreate());
             PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().graph(graphCH);

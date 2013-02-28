@@ -19,6 +19,7 @@
 package com.graphhopper.ui;
 
 import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import java.awt.Color;
@@ -32,8 +33,8 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
     private MyGraphics mg;
     private Graphics2D g2;
 
-    public DebugDijkstraBidirection(Graph graph, MyGraphics mg) {
-        super(graph);
+    public DebugDijkstraBidirection(Graph graph, VehicleEncoder encoder, MyGraphics mg) {
+        super(graph, encoder);
         this.mg = mg;
     }
 

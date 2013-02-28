@@ -19,7 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.VehicleFlagEncoder;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -34,10 +34,10 @@ import static org.junit.Assert.*;
 public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
 
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final VehicleFlagEncoder encoder) {
+    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final VehicleEncoder encoder) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
-                return new DijkstraBidirectionRef(_graph).type(calc).vehicle(encoder);
+                return new DijkstraBidirectionRef(_graph, encoder).type(calc);
             }
         }.graph(g);
     }
@@ -49,7 +49,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), 20, p.distance(), 1e-6);
         assertTrue(p.toString(), p.calcNodes().contains(5));
 
-        DijkstraBidirectionRef db = new DijkstraBidirectionRef(g);
+        DijkstraBidirectionRef db = new DijkstraBidirectionRef(g, carEncoder);
         db.addSkipNode(5);
         p = db.calcPath(0, 4);
         assertFalse(p.toString(), p.calcNodes().contains(5));
@@ -62,7 +62,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
 
-        DijkstraBidirectionRef db = new DijkstraBidirectionRef(g);
+        DijkstraBidirectionRef db = new DijkstraBidirectionRef(g, carEncoder);
         db.addSkipNode(1);
         Path p = db.calcPath(0, 2);
         assertFalse(p.found());

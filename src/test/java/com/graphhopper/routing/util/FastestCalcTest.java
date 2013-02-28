@@ -28,7 +28,7 @@ public class FastestCalcTest {
 
     @Test
     public void testSpeed0() {
-        VehicleFlagEncoder encoder = new CarFlagEncoder();
+        VehicleEncoder encoder = new CarFlagEncoder();
         FastestCalc instance = new FastestCalc(encoder);
         assertEquals(1.0 / 0, instance.getWeight(10, encoder.flags(0, true)), 1e-8);
     }

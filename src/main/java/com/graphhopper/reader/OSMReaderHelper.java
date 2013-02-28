@@ -47,7 +47,7 @@ public abstract class OSMReaderHelper {
     protected final Graph g;
     protected final long expectedNodes;
     private DistanceCalc callback = new DistanceCalc();
-    private AcceptWay acceptWays;
+    private AcceptWay acceptWay;
     protected TLongArrayList wayNodes = new TLongArrayList(10);
     private Map<String, Object> osmProperties = new HashMap<String, Object>();
     private Map<String, Object> outProperties = new HashMap<String, Object>();
@@ -57,13 +57,13 @@ public abstract class OSMReaderHelper {
         this.expectedNodes = expectedNodes;
     }
 
-    public OSMReaderHelper acceptWays(AcceptWay acceptWays) {
-        this.acceptWays = acceptWays;
+    public OSMReaderHelper acceptWay(AcceptWay acceptWay) {
+        this.acceptWay = acceptWay;
         return this;
     }
 
-    public AcceptWay acceptWays() {
-        return acceptWays;
+    public AcceptWay acceptWay() {
+        return acceptWay;
     }
 
     public void callback(DistanceCalc callback) {
@@ -137,7 +137,7 @@ public abstract class OSMReaderHelper {
     public void processWay(XMLStreamReader sReader) throws XMLStreamException {
         boolean valid = parseWay(sReader);
         if (valid) {
-            int flags = acceptWays.toFlags(outProperties);
+            int flags = acceptWay.toFlags(outProperties);
             int successfullAdded = addEdge(wayNodes, flags);
             edgeCount += successfullAdded;
         }
@@ -174,7 +174,7 @@ public abstract class OSMReaderHelper {
             }
         }
 
-        boolean isWay = acceptWays.handleTags(outProperties, osmProperties, wayNodes);
+        boolean isWay = acceptWay.handleTags(outProperties, osmProperties, wayNodes);
         boolean hasNodes = wayNodes.size() > 1;
         return isWay && hasNodes;
     }

@@ -47,7 +47,7 @@ import org.junit.Test;
  */
 public class PrepareContractionHierarchiesTest {
 
-    CarFlagEncoder carFlagsEncoder = new CarFlagEncoder();
+    CarFlagEncoder carEncoder = new CarFlagEncoder();
 
     LevelGraph createGraph() {
         return new GraphBuilder().levelGraphCreate();
@@ -85,8 +85,9 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testShortestPathSkipNode() {
         LevelGraph g = createExampleGraph();
-        double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g);
+        double normalDist = new DijkstraSimple(g, carEncoder).calcPath(4, 2).distance();
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo =
+                new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
         List<NodeCH> gs = createGoals(2);
         algo.setLimit(10).calcPath(4, gs);
@@ -97,8 +98,9 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testShortestPathSkipNode2() {
         LevelGraph g = createExampleGraph();
-        double normalDist = new DijkstraSimple(g).calcPath(4, 2).distance();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g);
+        double normalDist = new DijkstraSimple(g, carEncoder).calcPath(4, 2).distance();
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo =
+                new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
         List<NodeCH> gs = createGoals(1, 2);
         algo.setLimit(10).calcPath(4, gs);
@@ -109,7 +111,8 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testShortestPathLimit() {
         LevelGraph g = createExampleGraph();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo = new PrepareContractionHierarchies.OneToManyDijkstraCH(g);
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo = 
+                new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(0));
         List<NodeCH> gs = createGoals(1);
         algo.setLimit(2).calcPath(4, gs);
@@ -300,7 +303,7 @@ public class PrepareContractionHierarchiesTest {
 
     void initUnpackingGraph(LevelGraphStorage g, WeightCalculation w) {
         double dist = 1;
-        int flags = carFlagsEncoder.flags(30, false);
+        int flags = carEncoder.flags(30, false);
         g.edge(10, 0, w.getWeight(dist, flags), flags);
         EdgeSkipIterator iter1 = g.edge(0, 1, w.getWeight(dist, flags), flags);
         EdgeSkipIterator iter2 = g.edge(1, 2, w.getWeight(dist, flags), flags);
@@ -341,7 +344,7 @@ public class PrepareContractionHierarchiesTest {
         WeightCalculation calc = new ShortestCalc();
         initUnpackingGraph(g, calc);
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
-        RoutingAlgorithm algo = prepare.type(calc).vehicle(carFlagsEncoder).createAlgo();
+        RoutingAlgorithm algo = prepare.type(calc).vehicle(carEncoder).createAlgo();
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.distance(), 1e-5);
         assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());
@@ -351,9 +354,9 @@ public class PrepareContractionHierarchiesTest {
     public void testUnpackingOrder_Fastest() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
-        WeightCalculation calc = new FastestCalc(carFlagsEncoder);
+        WeightCalculation calc = new FastestCalc(carEncoder);
         initUnpackingGraph(g, calc);
-        RoutingAlgorithm algo = prepare.type(calc).vehicle(carFlagsEncoder).createAlgo();
+        RoutingAlgorithm algo = prepare.type(calc).vehicle(carEncoder).createAlgo();
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.distance(), 1e-1);
         assertEquals(Helper.createTList(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());

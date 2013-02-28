@@ -23,11 +23,12 @@ import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -53,8 +54,8 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     private MyBitSet visitedFrom;
     private MyBitSet visitedTo;
 
-    public DijkstraWhichToOne(Graph graph) {
-        super(graph);
+    public DijkstraWhichToOne(Graph graph, VehicleEncoder encoder) {
+        super(graph, encoder);
     }
 
     public void addPubTransportPoints(int... indices) {

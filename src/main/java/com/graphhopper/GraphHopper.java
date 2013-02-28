@@ -26,7 +26,7 @@ import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.VehicleFlagEncoder;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.ShortestCalc;
@@ -173,7 +173,7 @@ public class GraphHopper implements GraphHopperAPI {
                 storage = new LevelGraphStorage(dir);
                 PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
 
-                VehicleFlagEncoder encoder;
+                VehicleEncoder encoder;
                 if (acceptWay.acceptsCar())
                     encoder = new CarFlagEncoder();
                 else
@@ -246,9 +246,9 @@ public class GraphHopper implements GraphHopperAPI {
             else
                 throw new IllegalStateException("Only dijkstrabi and astarbi is supported for levelgraph/CH!");
         } else {
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm());
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm(), request.vehicle());
             algo = prepare.createAlgo();
-            algo.type(request.type()).vehicle(request.vehicle());
+            algo.type(request.type());
         }
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 

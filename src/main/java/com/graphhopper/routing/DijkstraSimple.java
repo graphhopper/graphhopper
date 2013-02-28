@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyTBitSet;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -39,8 +40,8 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
     private TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
     private PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
 
-    public DijkstraSimple(Graph graph) {
-        super(graph);
+    public DijkstraSimple(Graph graph, VehicleEncoder encoder) {
+        super(graph, encoder);
     }
 
     @Override

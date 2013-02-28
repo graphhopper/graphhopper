@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
@@ -43,8 +44,8 @@ public class AStar extends AbstractRoutingAlgorithm {
     private boolean alreadyRun;
     private MyBitSet closedSet;
 
-    public AStar(Graph g) {
-        super(g);
+    public AStar(Graph g, VehicleEncoder encoder) {
+        super(g, encoder);
     }
 
     /**

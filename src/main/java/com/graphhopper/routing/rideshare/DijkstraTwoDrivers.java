@@ -20,6 +20,8 @@ package com.graphhopper.routing.rideshare;
 
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.EdgeEntry;
 
@@ -35,9 +37,11 @@ public class DijkstraTwoDrivers {
     private int fromA, toA;
     private int fromB, toB;
     private double overallDistance = Double.MAX_VALUE;
+    private VehicleEncoder carEncoder;
 
     public DijkstraTwoDrivers(Graph graph) {
         this.graph = graph;
+        this.carEncoder = new CarFlagEncoder();
     }
 
     public void setDriverA(int fromA, int toA) {
@@ -84,13 +88,13 @@ public class DijkstraTwoDrivers {
         // default is personalFactor=1.1?
         // -> hmmh should this be lower to make it faster? because it is min(currA1, currA2) and not currA1+currA2
 
-        driverA = new DijkstraBidirectionCombined(graph) {
+        driverA = new DijkstraBidirectionCombined(graph, carEncoder) {
             @Override public DijkstraBidirectionRef getOtherDriver() {
                 return driverB;
             }
         }.initFrom(fromA).initTo(toA).initPath();
 
-        driverB = new DijkstraBidirectionCombined(graph) {
+        driverB = new DijkstraBidirectionCombined(graph, carEncoder) {
             @Override public DijkstraBidirectionRef getOtherDriver() {
                 return driverA;
             }
@@ -121,8 +125,8 @@ public class DijkstraTwoDrivers {
 
     private abstract class DijkstraBidirectionCombined extends DijkstraBidirectionRef {
 
-        public DijkstraBidirectionCombined(Graph graph) {
-            super(graph);
+        public DijkstraBidirectionCombined(Graph graph, VehicleEncoder encoder) {
+            super(graph, encoder);
         }
 
         public abstract DijkstraBidirectionRef getOtherDriver();

@@ -26,7 +26,7 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.VehicleFlagEncoder;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
@@ -64,8 +64,6 @@ public class MiniGraphUI {
         new MiniGraphUI(osm, debug).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
-//    private QuadTree<Long> quadTree;
-//    private Collection<CoordTrig<Long>> quadTreeNodes;
     private Path path;
     private AlgorithmPreparation prepare;
     private final Graph graph;
@@ -78,10 +76,9 @@ public class MiniGraphUI {
     private MapLayer pathLayer;
     private boolean fastPaint = false;
     private WeightCalculation wCalc = new ShortestCalc();
-    private VehicleFlagEncoder carEncoder = new CarFlagEncoder();
-    private VehicleFlagEncoder footEncoder = new FootFlagEncoder();
-    private VehicleFlagEncoder encoder = footEncoder;
-
+    private VehicleEncoder carEncoder = new CarFlagEncoder();
+    private VehicleEncoder footEncoder = new FootFlagEncoder();
+    
     public MiniGraphUI(OSMReader reader, boolean debug) {
         this.graph = reader.graph();
         prepare = reader.preparation();
@@ -141,7 +138,8 @@ public class MiniGraphUI {
 //                    int count = MyIteratorable.count(graph.getEdges(nodeIndex));
 //                    mg.plotNode(g2, nodeIndex, Color.RED);                    
 
-                    EdgeIterator iter = graph.getEdges(nodeIndex, new DefaultEdgeFilter(encoder, false, true) {
+                    // accept car and foot
+                    EdgeIterator iter = graph.getEdges(nodeIndex, new DefaultEdgeFilter(carEncoder, false, true) {
                         @Override public boolean accept(EdgeIterator iter) {
                             int flags = iter.flags();
                             return footEncoder.isForward(flags);
@@ -166,7 +164,7 @@ public class MiniGraphUI {
 //                mg.plotNode(g2, 14304, Color.red);
 
                 g2.setColor(Color.red);
-                Path p1 = calcPath(prepare.createAlgo().type(wCalc).vehicle(encoder));
+                Path p1 = calcPath(prepare.createAlgo().type(wCalc));
                 plotPath(p1, g2, 5);
 
                 g2.setColor(Color.black);
@@ -192,7 +190,7 @@ public class MiniGraphUI {
 
                 StopWatch sw = new StopWatch().start();
                 logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + wCalc);
-                path = algo.type(wCalc).vehicle(encoder).calcPath(dijkstraFromId, dijkstraToId);
+                path = algo.type(wCalc).calcPath(dijkstraFromId, dijkstraToId);
                 sw.stop();
 
                 // if directed edges

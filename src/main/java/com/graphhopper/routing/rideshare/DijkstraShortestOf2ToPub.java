@@ -24,6 +24,7 @@ import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.DijkstraBidirection;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -60,8 +61,8 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
     private MyBitSet visitedFrom;
     private MyBitSet visitedTo;
 
-    public DijkstraShortestOf2ToPub(Graph graph) {
-        super(graph);
+    public DijkstraShortestOf2ToPub(Graph graph, VehicleEncoder encoder) {
+        super(graph, encoder);
     }
 
     public void addPubTransportPoints(int... indices) {
@@ -91,7 +92,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
     public Path calcPath() {
         // identical
         if (pubTransport.contains(fromP1) || pubTransport.contains(toP2))
-            return new DijkstraBidirection(graph).calcPath(fromP1, toP2);
+            return new DijkstraBidirection(graph, flagEncoder).calcPath(fromP1, toP2);
 
         visitedFrom = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();

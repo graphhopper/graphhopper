@@ -22,6 +22,7 @@ import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeWrapper;
@@ -60,8 +61,8 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     private EdgeWrapper wrapperTo;
     private boolean alreadyRun;
 
-    public DijkstraBidirection(Graph graph) {
-        super(graph);
+    public DijkstraBidirection(Graph graph, VehicleEncoder encoder) {
+        super(graph, encoder);
         int locs = Math.max(20, graph.nodes());
         visitedFrom = new MyBitSetImpl(locs);
         openSetFrom = new IntDoubleBinHeap(locs / 10);

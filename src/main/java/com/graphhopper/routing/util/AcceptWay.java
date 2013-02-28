@@ -32,6 +32,7 @@ public class AcceptWay {
     private boolean car;
     private boolean bike;
     private boolean foot;
+    private VehicleEncoder firstEncoder = carEncoder;
 
     public AcceptWay(boolean car, boolean bike, boolean foot) {
         this.car = car;
@@ -238,5 +239,31 @@ public class AcceptWay {
         if (acceptsFoot())
             str += "FOOT";
         return str.trim().replaceAll("\\ ", ",");
+    }
+
+    public static AcceptWay parse(String type) {
+        VehicleEncoder firstEncoder = getFirstVehicleEncoder(type);
+        return new AcceptWay(type.contains("CAR"), type.contains("BIKE"), type.contains("FOOT")).
+                firstEncoder(firstEncoder);
+    }
+
+    private static VehicleEncoder getFirstVehicleEncoder(String str) {
+        str = str.toLowerCase();
+        if (str.startsWith("car"))
+            return new CarFlagEncoder();
+        else if (str.startsWith("foot"))
+            return new FootFlagEncoder();
+        else if (str.startsWith("bike"))
+            return new BikeFlagEncoder();
+        throw new RuntimeException("Not found " + str);
+    }
+
+    public VehicleEncoder firstEncoder() {
+        return firstEncoder;
+    }
+
+    private AcceptWay firstEncoder(VehicleEncoder firstEncoder) {
+        this.firstEncoder = firstEncoder;
+        return this;
     }
 }

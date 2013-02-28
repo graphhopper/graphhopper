@@ -23,7 +23,7 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.VehicleFlagEncoder;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
@@ -69,12 +69,13 @@ public class OSMReader {
             tests.start();
 
         if (args.getBool("osmreader.runshortestpath", false)) {
-
+            String type = args.get("osmreader.type", "CAR");
+            VehicleEncoder encoder = AcceptWay.parse(type).firstEncoder();
             String algo = args.get("osmreader.algo", "dijkstra");
             int iters = args.getInt("osmreader.algoIterations", 50);
-            //warmup
-            tests.runShortestPathPerf(iters / 10, NoOpAlgorithmPreparation.createAlgoPrepare(g, algo));
-            tests.runShortestPathPerf(iters, NoOpAlgorithmPreparation.createAlgoPrepare(g, algo));
+            //warmup            
+            tests.runShortestPathPerf(iters / 10, NoOpAlgorithmPreparation.createAlgoPrepare(g, algo, encoder));
+            tests.runShortestPathPerf(iters, NoOpAlgorithmPreparation.createAlgoPrepare(g, algo, encoder));
         }
     }
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
@@ -146,10 +147,12 @@ public class OSMReader {
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
         osmReader.indexCapacity(args.getInt("osmreader.locationIndexCapacity", -1));
         String type = args.get("osmreader.type", "CAR");
-        osmReader.acceptStreet(new AcceptWay(type.contains("CAR"),
-                type.contains("BIKE"), type.contains("FOOT")));
+        AcceptWay acceptWay = AcceptWay.parse(type);
+        osmReader.acceptStreet(acceptWay);
         final String algoStr = args.get("osmreader.algo", "astar");
-        osmReader.defaultAlgoPrepare(NoOpAlgorithmPreparation.createAlgoPrepare(algoStr));
+        AlgorithmPreparation algoPrepare = NoOpAlgorithmPreparation.
+                createAlgoPrepare(algoStr, acceptWay.firstEncoder());
+        osmReader.defaultAlgoPrepare(algoPrepare);
         osmReader.sort(args.getBool("osmreader.sortGraph", false));
         osmReader.setCHShortcuts(args.get("osmreader.chShortcuts", "no"));
         if (!osmReader.loadExisting()) {
@@ -175,7 +178,7 @@ public class OSMReader {
         this.graphStorage = storage;
         this.expectedNodes = expectedNodes;
         helper = createDoubleParseHelper();
-        helper.acceptWays(new AcceptWay(true, false, false));
+        helper.acceptWay(new AcceptWay(true, false, false));
     }
 
     boolean loadExisting() {
@@ -202,7 +205,7 @@ public class OSMReader {
 
     void osm2Graph(File osmXmlFile) throws IOException {
         logger.info("using " + helper.getStorageInfo(graphStorage) + ", accepts:"
-                + helper.acceptWays() + ", memory:" + Helper.getMemInfo());
+                + helper.acceptWay() + ", memory:" + Helper.getMemInfo());
         helper.preProcess(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
         cleanUp();
@@ -225,7 +228,8 @@ public class OSMReader {
 
         logger.info("calling prepare.doWork ... (" + Helper.getMemInfo() + ")");
         if (prepare == null)
-            defaultAlgoPrepare(NoOpAlgorithmPreparation.createAlgoPrepare("astar"));
+            defaultAlgoPrepare(NoOpAlgorithmPreparation.createAlgoPrepare("dijkstrabi",
+                    helper.acceptWay().firstEncoder()));
         else
             prepare.doWork();
     }
@@ -358,7 +362,7 @@ public class OSMReader {
      * Specify the type of the path calculation (car, bike, ...).
      */
     public OSMReader acceptStreet(AcceptWay acceptWays) {
-        helper.acceptWays(acceptWays);
+        helper.acceptWay(acceptWays);
         return this;
     }
 
@@ -376,10 +380,10 @@ public class OSMReader {
         if (chShortcuts.isEmpty() || "no".equals(chShortcuts) || "false".equals(chShortcuts))
             return this;
 
-        VehicleFlagEncoder encoder = new CarFlagEncoder();
+        VehicleEncoder encoder = new CarFlagEncoder();
         int tmpIndex = chShortcuts.indexOf(",");
         if (tmpIndex >= 0)
-            encoder = Helper.getEncoder(chShortcuts.substring(tmpIndex + 1).trim());
+            encoder = Helper.getVehicleEncoder(chShortcuts.substring(tmpIndex + 1).trim());
         if ("true".equals(chShortcuts) || "fastest".equals(chShortcuts)) {
             prepare = new PrepareContractionHierarchies().type(new FastestCalc(encoder)).vehicle(encoder);
         } else if ("shortest".equals(chShortcuts)) {

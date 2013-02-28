@@ -19,9 +19,12 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.OSMReader;
+import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.util.CmdArgs;
@@ -102,9 +105,11 @@ public class RoutingAlgorithmIntegrationTest {
                     put("osmreader.graph-location", graphFile).
                     put("osmreader.dataaccess", "inmemory"));
             Graph g = osm.graph();
+            VehicleEncoder carEncoder = new CarFlagEncoder();
             // System.out.println("nodes:" + g.getNodes());
             Location2IDIndex idx = osm.location2IDIndex();
-            Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.createAlgos(g, ch);
+            Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
+                    createAlgos(g, carEncoder, ch);
             for (AlgorithmPreparation prepare : prepares) {
                 for (OneRun or : forEveryAlgo) {
                     int from = idx.findID(or.fromLat, or.fromLon);
@@ -133,13 +138,15 @@ public class RoutingAlgorithmIntegrationTest {
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
+        VehicleEncoder carEncoder = new CarFlagEncoder();
 
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
         for (int no = 0; no < MAX; no++) {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
-                RoutingAlgorithm[] algos = new RoutingAlgorithm[]{new AStar(g), new DijkstraBidirectionRef(g)};
+                RoutingAlgorithm[] algos = new RoutingAlgorithm[]{new AStar(g, carEncoder),
+                    new DijkstraBidirectionRef(g, carEncoder)};
                 for (final RoutingAlgorithm algo : algos) {
                     // an algorithm is not thread safe! reuse via clear() is ONLY appropriated if used from same thread!
                     final int instanceIndex = instanceNo;

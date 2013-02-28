@@ -22,7 +22,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.routing.util.VehicleFlagEncoder;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import static com.graphhopper.util.GHUtility.*;
@@ -747,7 +747,7 @@ public abstract class AbstractGraphTester {
     @Test
     public void footMix() {
         Graph g = createGraph();
-        VehicleFlagEncoder footEncoder = new FootFlagEncoder();
+        VehicleEncoder footEncoder = new FootFlagEncoder();
         g.edge(0, 1, 10, footEncoder.flags(10, true));
         g.edge(0, 2, 10, carEncoder.flags(10, true));
         g.edge(0, 3, 10, footEncoder.flags(10, true) | carEncoder.flags(10, true));

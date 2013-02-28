@@ -25,7 +25,7 @@ import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.VehicleFlagEncoder;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
 public class GHUtility {
 
     private static Logger logger = LoggerFactory.getLogger(GHUtility.class);
-    private static final VehicleFlagEncoder carEncoder = new CarFlagEncoder();
+    private static final VehicleEncoder carEncoder = new CarFlagEncoder();
     private static final EdgeFilter edgesOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
     private static final EdgeFilter edgesInFilter = new DefaultEdgeFilter(carEncoder, true, false);
 

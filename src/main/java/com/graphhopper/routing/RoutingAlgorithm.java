@@ -18,7 +18,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.VehicleFlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.NotThreadSafe;
 
@@ -44,12 +43,6 @@ public interface RoutingAlgorithm {
      * shortest.
      */
     RoutingAlgorithm type(WeightCalculation calc);
-
-    /**
-     * Specify which vehicle should be used to calculate the path. Default is
-     * car.
-     */
-    RoutingAlgorithm vehicle(VehicleFlagEncoder encoder);
 
     /**
      * @return name of this algorithm

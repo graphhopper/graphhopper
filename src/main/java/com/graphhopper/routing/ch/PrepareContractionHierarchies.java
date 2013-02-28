@@ -30,7 +30,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.routing.util.VehicleFlagEncoder;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
@@ -70,7 +70,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private Logger logger = LoggerFactory.getLogger(getClass());
     private WeightCalculation shortestCalc;
     private WeightCalculation prepareWeightCalc;
-    private VehicleFlagEncoder prepareEncoder;
+    private VehicleEncoder prepareEncoder;
     private EdgeFilter vehicleInFilter;
     private EdgeFilter vehicleOutFilter;
     private EdgeFilter vehicleAllFilter;
@@ -115,7 +115,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return this;
     }
 
-    public PrepareContractionHierarchies vehicle(VehicleFlagEncoder encoder) {
+    public PrepareContractionHierarchies vehicle(VehicleEncoder encoder) {
         this.prepareEncoder = encoder;
         vehicleInFilter = new DefaultEdgeFilter(encoder, true, false);
         vehicleOutFilter = new DefaultEdgeFilter(encoder, false, true);
@@ -395,9 +395,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             // TODO instead of a weight-limit we could use a hop-limit 
             // and successively increasing it when mean-degree of graph increases
-            algo = new OneToManyDijkstraCH(g);
+            algo = new OneToManyDijkstraCH(g, prepareEncoder);
             algo.edgeFilter(levelEdgeFilter.avoidNode(v));
-            algo.type(shortestCalc).vehicle(prepareEncoder);
+            algo.type(shortestCalc);
             algo.setLimit(maxWeight).calcPath(u, goalNodes);
             internalFindShortcuts(goalNodes, u, iter1.edge());
         }
@@ -488,7 +488,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     @Override
     public RoutingAlgorithm createAlgo() {
         // do not change weight within DijkstraBidirectionRef => so use ShortestCalc
-        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g) {
+        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g, prepareEncoder) {
             @Override protected void initCollections(int nodes) {
                 // algorithm with CH does not need that much memory pre allocated
                 super.initCollections(Math.min(10000, nodes));
@@ -521,14 +521,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 return "dijkstraCH";
             }
         };
-        dijkstra.vehicle(prepareEncoder);
         if (!removesHigher2LowerEdges)
             dijkstra.edgeFilter(new LevelEdgeFilter(g));
         return dijkstra;
     }
 
     public RoutingAlgorithm createAStar() {
-        AStarBidirection astar = new AStarBidirection(g) {
+        AStarBidirection astar = new AStarBidirection(g, prepareEncoder) {
             @Override protected void initCollections(int nodes) {
                 // algorithm with CH does not need that much memory pre allocated
                 super.initCollections(Math.min(10000, nodes));
@@ -562,7 +561,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 return "astarCH";
             }
         };
-        astar.vehicle(prepareEncoder);
         if (!removesHigher2LowerEdges)
             astar.edgeFilter(new LevelEdgeFilter(g));
         return astar;
@@ -598,8 +596,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         double limit;
         Collection<NodeCH> goals;
 
-        public OneToManyDijkstraCH(Graph graph) {
-            super(graph);
+        public OneToManyDijkstraCH(Graph graph, VehicleEncoder encoder) {
+            super(graph, encoder);
         }
 
         OneToManyDijkstraCH setLimit(double weight) {

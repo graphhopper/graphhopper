@@ -15,15 +15,9 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.AStar;
-import com.graphhopper.routing.AStarBidirection;
-import com.graphhopper.routing.DijkstraBidirection;
-import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.DijkstraSimple;
-import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.VehicleFlagEncoder;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
@@ -160,31 +154,13 @@ public class Helper {
         return strOsm == null || strOsm.trim().isEmpty();
     }
 
-    /**
-     * Possible values: astar (A* algorithm), astarbi (bidirectional A*)
-     * dijkstra (Dijkstra), dijkstrabi and dijkstraNative (a bit faster
-     * bidirectional Dijkstra).
-     */
-    public static Class<? extends RoutingAlgorithm> getAlgoFromString(String algorithmStr) {
-        if ("dijkstrabi".equalsIgnoreCase(algorithmStr)) {
-            return DijkstraBidirectionRef.class;
-        } else if ("dijkstraNative".equalsIgnoreCase(algorithmStr)) {
-            return DijkstraBidirection.class;
-        } else if ("dijkstra".equalsIgnoreCase(algorithmStr)) {
-            return DijkstraSimple.class;
-        } else if ("astarbi".equalsIgnoreCase(algorithmStr)) {
-            return AStarBidirection.class;
-            // TODO (g).approximation(true);
-        } else
-            return AStar.class;
-    }
-
-    public static VehicleFlagEncoder getEncoder(String str) {
-        if ("car".equalsIgnoreCase(str))
+    public static VehicleEncoder getVehicleEncoder(String str) {
+        str = str.toLowerCase();
+        if ("car".equals(str))
             return new CarFlagEncoder();
-        else if ("foot".equalsIgnoreCase(str))
+        else if ("foot".equals(str))
             return new FootFlagEncoder();
-        else if ("bike".equalsIgnoreCase(str))
+        else if ("bike".equals(str))
             return new BikeFlagEncoder();
         throw new RuntimeException("Not found " + str);
     }

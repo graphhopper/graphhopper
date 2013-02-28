@@ -19,7 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.VehicleFlagEncoder;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -33,10 +33,10 @@ import org.junit.Test;
 public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
 
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final VehicleFlagEncoder encoder) {
+    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final VehicleEncoder encoder) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
-                return new DijkstraBidirection(_graph).type(calc).vehicle(encoder);
+                return new DijkstraBidirection(_graph, encoder).type(calc);
             }
         }.graph(g);
     }
@@ -49,7 +49,7 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), 20, p.distance(), 1e-6);
         assertTrue(p.toString(), p.calcNodes().contains(5));
 
-        DijkstraBidirection algo = new DijkstraBidirection(g);
+        DijkstraBidirection algo = new DijkstraBidirection(g, carEncoder);
         algo.addSkipNode(5);
         p = algo.calcPath(0, 4);
         assertFalse(p.toString(), p.calcNodes().contains(5));
@@ -61,7 +61,7 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
         g.edge(0, 1, 1, false);
         g.edge(1, 2, 1, false);
 
-        DijkstraBidirection algo = new DijkstraBidirection(g);
+        DijkstraBidirection algo = new DijkstraBidirection(g, carEncoder);
         algo.addSkipNode(1);
         Path p = algo.calcPath(0, 2);
         assertFalse(p.found());

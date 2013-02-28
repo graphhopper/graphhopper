@@ -21,6 +21,7 @@ package com.graphhopper.routing;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -52,8 +53,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     protected TIntObjectMap<EdgeEntry> shortestWeightMapOther;
     public PathBidirRef shortest;
 
-    public DijkstraBidirectionRef(Graph graph) {
-        super(graph);
+    public DijkstraBidirectionRef(Graph graph, VehicleEncoder encoder) {
+        super(graph, encoder);
         initCollections(Math.max(20, graph.nodes()));
     }
 

@@ -31,7 +31,20 @@ public class AcceptWayTest {
     public void testAcceptsCar() {
         assertEquals(40, AcceptWay.parseSpeed("40 km/h"));
         assertEquals(64, AcceptWay.parseSpeed("40mph"));
-        assertEquals(-1, AcceptWay.parseSpeed(null));        
+        assertEquals(-1, AcceptWay.parseSpeed(null));
         assertEquals(19, AcceptWay.parseSpeed("10 knots"));
+    }
+
+    @Test
+    public void testFirstVehicle() {
+        assertEquals("CAR", AcceptWay.parse("car, foot").firstEncoder().toString());
+        assertEquals("FOOT", AcceptWay.parse("foot").firstEncoder().toString());
+        assertEquals("BIKE", AcceptWay.parse("bike,foot").firstEncoder().toString());
+
+        try {
+            assertEquals("CAR", AcceptWay.parse("").firstEncoder().toString());
+            assertTrue(false);
+        } catch (Exception ex) {
+        }
     }
 }
