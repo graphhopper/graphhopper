@@ -54,7 +54,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     private static final Map<String, Integer> SPEED = new FootSpeed();
 
     public FootFlagEncoder() {
-        super(16, 2, SPEED.get("mean"), SPEED.get("max"));
+        super(16, 1, SPEED.get("mean"), SPEED.get("max"));
     }
 
     public Integer getSpeed(String string) {
@@ -82,11 +82,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     private static class FootSpeed extends HashMap<String, Integer> {
 
         {
-            put("min", 2);
-            put("slow", 4);
-            put("mean", 6);
+            put("min", 1);
+            put("slow", 3);
+            put("mean", 5);
             put("fast", 10);
-            put("max", 16);
+            put("max", 15);
         }
     }
 }

@@ -34,7 +34,7 @@ public class TestAlgoCollector {
     public TestAlgoCollector assertDistance(RoutingAlgorithm algo,
             int from, int to, double distance, int pointCount) {
         Path path = algo.calcPath(from, to);
-        if (!path.found()) {
+        if (!path.found()) {            
             list.add(algo + " returns no path. from:" + from + ", to:" + to);
             return this;
         }

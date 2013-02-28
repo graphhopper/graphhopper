@@ -21,6 +21,8 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.routing.util.VehicleFlagEncoder;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import static com.graphhopper.util.GHUtility.*;
@@ -45,9 +47,9 @@ public abstract class AbstractGraphTester {
     private String location = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraph = "./target/graphstorage/default";
-    CarFlagEncoder carFlagsEncoder = new CarFlagEncoder();
-    EdgeFilter carOutFilter = new DefaultEdgeFilter(carFlagsEncoder, false, true);
-    EdgeFilter carInFilter = new DefaultEdgeFilter(carFlagsEncoder, true, false);
+    CarFlagEncoder carEncoder = new CarFlagEncoder();
+    EdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
+    EdgeFilter carInFilter = new DefaultEdgeFilter(carEncoder, true, false);
 
     protected Graph createGraph() {
         return createGraph(defaultGraph, defaultSize);
@@ -571,21 +573,21 @@ public abstract class AbstractGraphTester {
     @Test
     public void testFlags() {
         Graph graph = createGraph();
-        graph.edge(0, 1, 10, carFlagsEncoder.flags(120, true));
-        graph.edge(2, 3, 10, carFlagsEncoder.flags(10, false));
+        graph.edge(0, 1, 10, carEncoder.flags(120, true));
+        graph.edge(2, 3, 10, carEncoder.flags(10, false));
 
         EdgeIterator iter = graph.getEdges(0);
         assertTrue(iter.next());
-        assertEquals(carFlagsEncoder.flags(120, true), iter.flags());
+        assertEquals(carEncoder.flags(120, true), iter.flags());
 
         iter = graph.getEdges(2);
         assertTrue(iter.next());
-        assertEquals(carFlagsEncoder.flags(10, false), iter.flags());
+        assertEquals(carEncoder.flags(10, false), iter.flags());
     }
 
     @Test
     public void testCopyTo() {
-        Graph someGraphImpl = createGraph();        
+        Graph someGraphImpl = createGraph();
         initExampleGraph(someGraphImpl);
         Graph gs = new GraphStorage(new RAMDirectory()).segmentSize(8000).createNew(10);
         try {
@@ -670,14 +672,14 @@ public abstract class AbstractGraphTester {
         EdgeIterator oneIter = graph.getEdgeProps(iter.edge(), 3);
         assertEquals(13, oneIter.distance(), 1e-6);
         assertEquals(2, oneIter.baseNode());
-        assertTrue(carFlagsEncoder.isForward(oneIter.flags()));
-        assertFalse(carFlagsEncoder.isBoth(oneIter.flags()));
+        assertTrue(carEncoder.isForward(oneIter.flags()));
+        assertFalse(carEncoder.isBoth(oneIter.flags()));
 
         oneIter = graph.getEdgeProps(iter.edge(), 2);
         assertEquals(13, oneIter.distance(), 1e-6);
         assertEquals(3, oneIter.baseNode());
-        assertTrue(carFlagsEncoder.isBackward(oneIter.flags()));
-        assertFalse(carFlagsEncoder.isBoth(oneIter.flags()));
+        assertTrue(carEncoder.isBackward(oneIter.flags()));
+        assertFalse(carEncoder.isBoth(oneIter.flags()));
 
         graph.edge(3, 2, 14, true);
         assertEquals(4, GHUtility.count(graph.getEdges(2, carOutFilter)));
@@ -701,10 +703,10 @@ public abstract class AbstractGraphTester {
     @Test
     public void testEdgeReturn() {
         Graph g = createGraph();
-        EdgeIterator iter = g.edge(4, 10, 100, carFlagsEncoder.flags(10, false));
+        EdgeIterator iter = g.edge(4, 10, 100, carEncoder.flags(10, false));
         assertEquals(4, iter.baseNode());
         assertEquals(10, iter.node());
-        iter = g.edge(14, 10, 100, carFlagsEncoder.flags(10, false));
+        iter = g.edge(14, 10, 100, carEncoder.flags(10, false));
         assertEquals(14, iter.baseNode());
         assertEquals(10, iter.node());
     }
@@ -713,11 +715,11 @@ public abstract class AbstractGraphTester {
     public void testPillarNodes() {
         Graph g = createGraph();
         PointList pointList = Helper.createPointList(1, 1, 1, 2, 1, 3);
-        g.edge(0, 4, 100, carFlagsEncoder.flags(10, false)).wayGeometry(pointList);
+        g.edge(0, 4, 100, carEncoder.flags(10, false)).wayGeometry(pointList);
         pointList = Helper.createPointList(1, 5, 1, 6, 1, 7, 1, 8, 1, 9);
-        g.edge(4, 10, 100, carFlagsEncoder.flags(10, false)).wayGeometry(pointList);
+        g.edge(4, 10, 100, carEncoder.flags(10, false)).wayGeometry(pointList);
         pointList = Helper.createPointList(1, 13, 1, 12, 1, 11);
-        g.edge(14, 0, 100, carFlagsEncoder.flags(10, false)).wayGeometry(pointList);
+        g.edge(14, 0, 100, carEncoder.flags(10, false)).wayGeometry(pointList);
 
         // if tower node requested => return only tower nodes
         EdgeIterator iter = g.getEdges(0);
@@ -740,5 +742,18 @@ public abstract class AbstractGraphTester {
         assertPList(Helper.createPointList(1, 9, 1, 8, 1, 7, 1, 6, 1, 5), iter.wayGeometry());
         assertEquals(4, iter.node());
         assertFalse(iter.next());
+    }
+
+    @Test
+    public void footMix() {
+        Graph g = createGraph();
+        VehicleFlagEncoder footEncoder = new FootFlagEncoder();
+        g.edge(0, 1, 10, footEncoder.flags(10, true));
+        g.edge(0, 2, 10, carEncoder.flags(10, true));
+        g.edge(0, 3, 10, footEncoder.flags(10, true) | carEncoder.flags(10, true));
+        assertEquals(Arrays.asList(1, 3),
+                GHUtility.neighbors(g.getEdges(0, new DefaultEdgeFilter(footEncoder, false, true))));
+        assertEquals(Arrays.asList(2, 3),
+                GHUtility.neighbors(g.getEdges(0, new DefaultEdgeFilter(carEncoder, false, true))));
     }
 }

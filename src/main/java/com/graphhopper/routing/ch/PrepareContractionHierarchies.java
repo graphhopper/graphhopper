@@ -71,8 +71,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private WeightCalculation shortestCalc;
     private WeightCalculation prepareWeightCalc;
     private VehicleFlagEncoder prepareEncoder;
-    private EdgeFilter inFilter;
-    private EdgeFilter outFilter;
+    private EdgeFilter vehicleInFilter;
+    private EdgeFilter vehicleOutFilter;
+    private EdgeFilter vehicleAllFilter;
     private LevelGraph g;
     // the most important nodes comes last
     private MySortedCollection sortedNodes;
@@ -116,8 +117,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     public PrepareContractionHierarchies vehicle(VehicleFlagEncoder encoder) {
         this.prepareEncoder = encoder;
-        inFilter = new DefaultEdgeFilter(encoder, true, false);
-        outFilter = new DefaultEdgeFilter(encoder, false, true);
+        vehicleInFilter = new DefaultEdgeFilter(encoder, true, false);
+        vehicleOutFilter = new DefaultEdgeFilter(encoder, false, true);
+        vehicleAllFilter = new DefaultEdgeFilter(encoder, true, true);
         scOneDir = encoder.flags(0, false);
         scBothDir = encoder.flags(0, true);
         return this;
@@ -153,9 +155,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     boolean prepareEdges() {
-        // in CH the flags will be ignored (calculating the new flags for the shortcuts is impossible)
-        // also several shortcuts would be necessary with the different modes (e.g. fastest and extractPath)
-        // so calculate the weight and store this as distance, then use only distance instead of getWeight
+        // In CH the flags (speed) are ignored as calculating the new flags for a shortcut is often not possible.
+        // Also several shortcuts would be necessary with the different modes (e.g. fastest and shortest)
+        // So calculate the weight and store this as distance, then use only distance instead of getWeight
         RawEdgeIterator iter = g.getAllEdges();
         int c = 0;
         while (iter.next()) {
@@ -246,7 +248,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             level++;
 
             // recompute priority of uncontracted neighbors
-            EdgeIterator iter = g.getEdges(wn.node);
+            EdgeIterator iter = g.getEdges(wn.node, vehicleAllFilter);
             while (iter.next()) {
                 if (g.getLevel(iter.node()) != 0)
                     // already contracted no update necessary
@@ -288,7 +290,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|        
         // meanDegree is used instead of outDegree+inDegree as if one endNode is in both directions
         // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
-        int degree = GHUtility.count(g.getEdges(v));
+        int degree = GHUtility.count(g.getEdges(v, vehicleAllFilter));
         int edgeDifference = tmpShortcuts.size() - degree;
 
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
@@ -307,7 +309,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         //
         // number of already contracted neighbors of v
         int contractedNeighbors = 0;
-        EdgeSkipIterator iter = g.getEdges(v);
+        EdgeSkipIterator iter = g.getEdges(v, vehicleAllFilter);
         while (iter.next()) {
             if (iter.isShortcut())
                 contractedNeighbors++;
@@ -358,7 +360,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // we can use distance instead of weight, see prepareEdges where distance is overwritten by weight!
         goalNodes.clear();
         shortcuts.clear();
-        EdgeIterator iter1 = g.getEdges(v, inFilter);
+        EdgeIterator iter1 = g.getEdges(v, vehicleInFilter);
         // TODO PERFORMANCE collect outEdgeFilter nodes (goal-nodes) only once and just skip u
         while (iter1.next()) {
             int u = iter1.node();
@@ -369,7 +371,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             double v_u_weight = iter1.distance();
             // one-to-many extractPath path
             goalNodes.clear();
-            EdgeIterator iter2 = g.getEdges(v, outFilter);
+            EdgeIterator iter2 = g.getEdges(v, vehicleOutFilter);
             double maxWeight = 0;
             while (iter2.next()) {
                 int w = iter2.node();
@@ -449,7 +451,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         for (Shortcut sc : foundShortcuts) {
             boolean updatedInGraph = false;
             // check if we need to update some existing shortcut in the graph
-            EdgeSkipIterator iter = g.getEdges(sc.from, outFilter);
+            EdgeSkipIterator iter = g.getEdges(sc.from, vehicleOutFilter);
             while (iter.next()) {
                 if (iter.isShortcut() && iter.node() == sc.to
                         && prepareEncoder.canBeOverwritten(iter.flags(), sc.flags)

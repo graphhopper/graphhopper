@@ -180,11 +180,11 @@ public class Helper {
     }
 
     public static VehicleFlagEncoder getEncoder(String str) {
-        if ("CAR".equalsIgnoreCase(str))
+        if ("car".equalsIgnoreCase(str))
             return new CarFlagEncoder();
-        else if ("FOOT".equalsIgnoreCase(str))
+        else if ("foot".equalsIgnoreCase(str))
             return new FootFlagEncoder();
-        else if ("BIKE".equalsIgnoreCase(str))
+        else if ("bike".equalsIgnoreCase(str))
             return new BikeFlagEncoder();
         throw new RuntimeException("Not found " + str);
     }

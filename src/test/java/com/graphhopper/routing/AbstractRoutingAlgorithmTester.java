@@ -118,7 +118,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         initFootVsCar(graphShortest);
         Path p1 = prepareGraph(graphShortest, new ShortestCalc(), footEncoder).createAlgo().calcPath(0, 7);
         assertEquals(p1.toString(), 17000, p1.distance(), 1e-6);
-        assertEquals(p1.toString(), 15300, p1.time());
+        assertEquals(p1.toString(), 12240, p1.time());
         assertEquals(Helper.createTList(0, 4, 5, 7), p1.calcNodes());
     }
 
