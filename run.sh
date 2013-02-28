@@ -1,4 +1,5 @@
 #!/bin/bash
+GH_HOME=$(dirname $0)
 JAVA=$JAVA_HOME/bin/java
 if [ "x$JAVA_HOME" = "x" ]; then
  JAVA=java
@@ -9,7 +10,7 @@ bit64=`$JAVA -version 2>&1 | grep "64-Bit"`
 if [ "x$bit64" != "x" ]; then
   vers="$vers (64bit)"
 fi
-echo "using java $vers from $JAVA_HOME"
+echo "## using java $vers from $JAVA_HOME"
 
 FILE=$1
 ALGO=$2
@@ -41,11 +42,11 @@ JAR=target/graphhopper-$VERSION-jar-with-dependencies.jar
 TMP=$(basename "$FILE")
 TMP="${TMP%.*}"
 #echo $TMP - $FILE - $NAME
-if [ "$TMP" = "unterfranken" ]; then
+if [ "x$TMP" = "xunterfranken" ]; then
  LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
  JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx500m -Xms500m"
  SIZE=3000000
-elif [ "$TMP" = "germany" ]; then
+elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
 
  # For import we need a lot more memory. For the mmap storage you need to lower this in order to use off-heap memory.
@@ -70,15 +71,10 @@ if [ ! -f "$OSM" ]; then
   read -e  
   BZ=$OSM.bz2
   rm $BZ &> /dev/null
+  
   echo "## now downloading OSM file from $LINK"
-
-  # curl or wget
-  DOWNLOADER=`which curl` 
-  if [ "x$DOWNLOADER" = "x" ]; then    
-    wget -O $BZ $LINK
-  else
-    curl -O $LINK
-  fi    
+  wget -O $BZ $LINK
+  
   echo "## extracting $BZ"
   bzip2 -d $BZ
 
@@ -90,10 +86,26 @@ else
   echo "## using existing osm file $OSM"
 fi
 
+MAVEN_HOME=`mvn -v | grep "Maven home" | cut -d' ' -f3`
+if [ "x$MAVEN_HOME" != "x" ]; then
+  # try to detect previous downloaded version
+  MAVEN_HOME="$GH_HOME/maven"
+  if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then
+    echo "No Maven found in the PATH. Now downloading+installing it to $MAVEN_HOME"
+    cd "$GH_HOME"
+    MVN_PACKAGE=apache-maven-3.0.5
+    wget -O maven.zip http://www.eu.apache.org/dist/maven/maven-3/3.0.5/binaries/$MVN_PACKAGE-bin.zip
+    unzip maven.zip
+    mv $MVN_PACKAGE maven
+    rm maven.zip
+  fi
+fi
+
 if [ ! -f "$JAR" ]; then
   echo "## now building graphhopper jar: $JAR"
+  echo "## using maven at $MAVEN_HOME"
   #mvn clean
-  mvn -DskipTests=true install assembly:single > /dev/null
+  $MAVEN_HOME/bin/mvn -DskipTests=true install assembly:single > /dev/null
   returncode=$?
   if [[ $returncode != 0 ]] ; then
       echo "## compilation failed"
