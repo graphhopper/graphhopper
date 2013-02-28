@@ -26,7 +26,7 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagsEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.VehicleType;
 import com.graphhopper.routing.util.FootFlagsEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
@@ -78,9 +78,9 @@ public class MiniGraphUI {
     private MapLayer pathLayer;
     private boolean fastPaint = false;
     private WeightCalculation wCalc = new ShortestCalc();
-    private FlagsEncoder carEncoder = new CarFlagsEncoder();
-    private FlagsEncoder footEncoder = new FootFlagsEncoder();
-    private FlagsEncoder encoder = footEncoder;
+    private VehicleType carEncoder = new CarFlagsEncoder();
+    private VehicleType footEncoder = new FootFlagsEncoder();
+    private VehicleType encoder = footEncoder;
 
     public MiniGraphUI(OSMReader reader, boolean debug) {
         this.graph = reader.graph();
@@ -141,12 +141,12 @@ public class MiniGraphUI {
 //                    int count = MyIteratorable.count(graph.getEdges(nodeIndex));
 //                    mg.plotNode(g2, nodeIndex, Color.RED);                    
 
-                    EdgeIterator iter = graph.getEdges(nodeIndex, new DefaultEdgeFilter(encoder) {
+                    EdgeIterator iter = graph.getEdges(nodeIndex, new DefaultEdgeFilter(encoder, false, true) {
                         @Override public boolean accept(EdgeIterator iter) {
                             int flags = iter.flags();
                             return footEncoder.isForward(flags);
                         }
-                    }.direction(false, true));
+                    });
                     while (iter.next()) {
                         int nodeId = iter.node();
                         int sum = nodeIndex + nodeId;

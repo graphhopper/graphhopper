@@ -18,6 +18,8 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.coll.MyBitSet;
+import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
@@ -51,10 +53,11 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
     }
 
     @Override public int findID(double queryLat, double queryLon) {
-        int locs = g.nodes();
+        int nodes = g.nodes();
         int id = -1;
         double foundDist = Double.MAX_VALUE;
-        for (int fromNode = 0; fromNode < locs; fromNode++) {
+        MyBitSet alreadyDone = new MyBitSetImpl(nodes);
+        for (int fromNode = 0; fromNode < nodes; fromNode++) {
             double fromLat = g.getLatitude(fromNode);
             double fromLon = g.getLongitude(fromNode);
             double fromDist = calc.calcDist(fromLat, fromLon, queryLat, queryLon);
@@ -65,9 +68,12 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
                 id = fromNode;
                 foundDist = fromDist;
             }
-            EdgeIterator iter = g.getOutgoing(fromNode);
+            EdgeIterator iter = g.getEdges(fromNode);
             while (iter.next()) {
                 int toNode = iter.node();
+                if (alreadyDone.contains(toNode))
+                    continue;
+                alreadyDone.add(toNode);
                 double toLat = g.getLatitude(toNode);
                 double toLon = g.getLongitude(toNode);
 

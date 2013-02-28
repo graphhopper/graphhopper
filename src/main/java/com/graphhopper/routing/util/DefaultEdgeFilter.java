@@ -25,18 +25,22 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class DefaultEdgeFilter implements EdgeFilter {
 
-    private boolean in = true;
-    private boolean out = true;
-    private FlagsEncoder encoder;
+    private final boolean in;
+    private final boolean out;
+    private VehicleType encoder;
 
-    public DefaultEdgeFilter(FlagsEncoder encoder) {
-        this.encoder = encoder;
+    /**
+     * Creates an edges filter which accepts both direction of the specified
+     * vehicle type.
+     */
+    public DefaultEdgeFilter(VehicleType encoder) {
+        this(encoder, true, true);
     }
 
-    @Override public EdgeFilter direction(boolean in, boolean out) {
+    public DefaultEdgeFilter(VehicleType encoder, boolean in, boolean out) {
+        this.encoder = encoder;
         this.in = in;
         this.out = out;
-        return this;
     }
 
     @Override public boolean accept(EdgeIterator iter) {

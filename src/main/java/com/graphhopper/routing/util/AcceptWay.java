@@ -239,29 +239,4 @@ public class AcceptWay {
             str += "FOOT";
         return str;
     }
-
-    public CombinedEncoder createCombination() {
-        return new CombinedEncoder() {
-            @Override public int swapDirection(int flags) {
-                if (foot)
-                    flags = footEncoder.swapDirection(flags);
-                if (bike)
-                    flags = bikeEncoder.swapDirection(flags);
-                if (car)
-                    flags = carEncoder.swapDirection(flags);
-                return flags;
-            }
-
-            @Override public int flagsDefault(boolean bothDirections) {
-                int res = 0;
-                if (foot)
-                    res |= footEncoder.flagsDefault(bothDirections);
-                if (bike)
-                    res |= bikeEncoder.flagsDefault(bothDirections);
-                if (car)
-                    res |= carEncoder.flagsDefault(bothDirections);
-                return res;
-            }
-        };
-    }
 }

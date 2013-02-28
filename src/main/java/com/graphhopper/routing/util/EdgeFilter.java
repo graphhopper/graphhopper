@@ -28,11 +28,6 @@ import com.graphhopper.util.EdgeIterator;
 public interface EdgeFilter {
 
     /**
-     * Configures the directions which should be accepted.
-     */
-    EdgeFilter direction(boolean in, boolean out);
-
-    /**
      * @return true if the current edge should be processed and false otherwise.
      */
     boolean accept(EdgeIterator iter);

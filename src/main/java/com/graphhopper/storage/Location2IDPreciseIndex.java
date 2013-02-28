@@ -33,20 +33,21 @@ import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.array.TIntArrayList;
 
 /**
- * More precise index compared to Location2IDQuadtree. Preparation takes longer and it requires a
- * lot more RAM.
+ * More precise index compared to Location2IDQuadtree. Preparation takes longer
+ * and it requires a lot more RAM.
  *
- * 1. use an array organized as quadtree. I.e. you can devide your area into tiles, and per tile you
- * have an array entry.
+ * 1. use an array organized as quadtree. I.e. you can devide your area into
+ * tiles, and per tile you have an array entry.
  *
- * TODO 1 Omit this for now to make querying faster and implementation simpler: 2. now in a
- * preprocessing step you need to find out which subgraphs are necessary to reach all nodes in one
- * tiles.
+ * TODO 1 Omit this for now to make querying faster and implementation simpler:
+ * 2. now in a preprocessing step you need to find out which subgraphs are
+ * necessary to reach all nodes in one tiles.
  *
- * 3. querying on point A=(lat,lon) converting this to the tile number. Then you'll get all
- * necessary subgraphs. Now you'll need to calculate nearest neighbor of the nodes/edges to your
- * point A using euclidean geometry (which should be fine as long as they are not too far away which
- * is the case for nearest neighbor).
+ * 3. querying on point A=(lat,lon) converting this to the tile number. Then
+ * you'll get all necessary subgraphs. Now you'll need to calculate nearest
+ * neighbor of the nodes/edges to your point A using euclidean geometry (which
+ * should be fine as long as they are not too far away which is the case for
+ * nearest neighbor).
  *
  * @author Peter Karich
  */
@@ -56,7 +57,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
     private ListOfArrays index;
     private Graph g;
     private DistanceCalc calc = new DistanceCalc();
-    private KeyAlgo algo;
+    private KeyAlgo keyAlgo;
     private double latWidth, lonWidth;
     private int latSizeI, lonSizeI;
     private boolean calcEdgeDistance = true;
@@ -67,8 +68,8 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
     }
 
     /**
-     * Loads the index from disc if exists. Make sure you are using the identical graph which was
-     * used while flusing this index.
+     * Loads the index from disc if exists. Make sure you are using the
+     * identical graph which was used while flusing this index.
      *
      * @return if loading from file was successfully.
      */
@@ -142,7 +143,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
 
     private void prepareAlgo() {
         BBox b = g.bounds();
-        algo = createKeyAlgo(latSizeI, lonSizeI).bounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
+        keyAlgo = createKeyAlgo(latSizeI, lonSizeI).bounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
         latWidth = (b.maxLat - b.minLat) / latSizeI;
         lonWidth = (b.maxLon - b.minLon) / lonSizeI;
     }
@@ -166,11 +167,11 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
                 double lat = g.getLatitude(node);
                 double lon = g.getLongitude(node);
                 added++;
-                add((int) algo.encode(lat, lon), node);
+                add((int) keyAlgo.encode(lat, lon), node);
 
                 if (calcEdgeDistance) {
                     swWhile.start();
-                    EdgeIterator iter = g.getOutgoing(node);
+                    EdgeIterator iter = g.getEdges(node);
                     while (iter.next()) {
                         int connNode = iter.node();
                         if (alreadyDone.contains(connNode))
@@ -202,7 +203,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
                                         || NumHelper.equals(tryLon, connLon) && NumHelper.equals(tryLat, connLat))
                                     continue;
                                 added++;
-                                add((int) algo.encode(tryLat, tryLon), connNode);
+                                add((int) keyAlgo.encode(tryLat, tryLon), connNode);
                             }
                         }
                     }
@@ -304,7 +305,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
 
     @Override
     public int findID(final double lat, final double lon) {
-        long key = algo.encode(lat, lon);
+        long key = keyAlgo.encode(lat, lon);
         IntIterator iter = index.getIterator((int) key);
         if (!iter.next())
             throw new IllegalStateException("shouldn't happen as all keys should have at least one associated id");
@@ -318,14 +319,16 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
             bs.clear();
             // traverse graph starting at node            
             new XFirstSearch() {
-                @Override protected MyBitSet createBitSet(int size) {
-                    return bs;
-                }
                 double currLat;
                 double currLon;
                 int currNode;
                 double currDist;
                 boolean goFurther = true;
+
+                @Override 
+                protected MyBitSet createBitSet(int size) {
+                    return bs;
+                }
 
                 @Override
                 protected boolean goFurther(int nodeId) {

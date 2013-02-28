@@ -25,6 +25,7 @@ import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.LinearKeyAlgo;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
@@ -34,10 +35,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class is an index mapping lat,lon coordinates to one node id or index of a routing graph.
+ * This class is an index mapping lat,lon coordinates to one node id or index of
+ * a routing graph.
  *
- * This implementation is the most memory efficient representation for indices which maps to a
- * routing graph. But it is not the most efficient one
+ * This implementation is the most memory efficient representation for indices
+ * which maps to a routing graph. But it is not the most efficient one
  *
  * @see Location2IDPreciseIndex for a more precise Location2IDIndex
  *
@@ -47,7 +49,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
     private final static int MAGIC_INT = Integer.MAX_VALUE / 12306;
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private KeyAlgo algo;
+    private KeyAlgo keyAlgo;
     protected DistanceCalc dist = new DistancePlaneProjection();
     private DataAccess index;
     private double maxNormRasterWidthKm;
@@ -73,8 +75,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
     }
 
     /**
-     * Loads the index from disc if exists. Make sure you are using the identical graph which was
-     * used while flusing this index.
+     * Loads the index from disc if exists. Make sure you are using the
+     * identical graph which was used while flusing this index.
      *
      * @return if loading from file was successfully.
      */
@@ -96,13 +98,14 @@ public class Location2IDQuadtree implements Location2IDIndex {
     }
 
     /**
-     * Fill quadtree which will span a raster over the entire specified graph g. But do this in a
-     * pre-defined resolution which is controlled via capacity. This datastructure then uses approx.
-     * capacity * 4 bytes. So maximum capacity is 2^30 where the quadtree would cover the world
-     * boundaries every 1.3km - IMO enough for EU or US networks.
+     * Fill quadtree which will span a raster over the entire specified graph g.
+     * But do this in a pre-defined resolution which is controlled via capacity.
+     * This datastructure then uses approx. capacity * 4 bytes. So maximum
+     * capacity is 2^30 where the quadtree would cover the world boundaries
+     * every 1.3km - IMO enough for EU or US networks.
      *
-     * TODO it should be additionally possible to specify the minimum raster width instead of the
-     * memory usage
+     * TODO it should be additionally possible to specify the minimum raster
+     * width instead of the memory usage
      */
     @Override
     public Location2IDIndex prepareIndex(int _size) {
@@ -133,7 +136,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         this.latSize = lat;
         this.lonSize = lon;
         BBox b = g.bounds();
-        algo = new LinearKeyAlgo(lat, lon).bounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
+        keyAlgo = new LinearKeyAlgo(lat, lon).bounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
         maxNormRasterWidthKm = dist.calcNormalizedDist(Math.max(dist.calcDist(b.minLat, b.minLon, b.minLat, b.maxLon),
                 dist.calcDist(b.minLat, b.minLon, b.maxLat, b.minLon)) / Math.sqrt(capacity()));
 
@@ -155,10 +158,10 @@ public class Location2IDQuadtree implements Location2IDIndex {
         for (int nodeId = 0; nodeId < locs; nodeId++) {
             double lat = g.getLatitude(nodeId);
             double lon = g.getLongitude(nodeId);
-            int key = (int) algo.encode(lat, lon);
+            int key = (int) keyAlgo.encode(lat, lon);
             if (filledIndices.contains(key)) {
                 int oldNodeId = index.getInt(key);
-                algo.decode(key, coord);
+                keyAlgo.decode(key, coord);
                 // decide which one is closer to 'key'
                 double distNew = dist.calcNormalizedDist(coord.lat, coord.lon, lat, lon);
                 double oldLat = g.getLatitude(oldNodeId);
@@ -251,7 +254,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
     }
 
     /**
-     * @return the node id (corresponding to a coordinate) closest to the specified lat,lon.
+     * @return the node id (corresponding to a coordinate) closest to the
+     * specified lat,lon.
      */
     @Override
     public int findID(final double lat, final double lon) {
@@ -270,14 +274,15 @@ public class Location2IDQuadtree implements Location2IDIndex {
          * to reach it via graph traversal:
          */
 
-        long key = algo.encode(lat, lon);
+        long key = keyAlgo.encode(lat, lon);
         final int id = index.getInt((int) key);
         double mainLat = g.getLatitude(id);
         double mainLon = g.getLongitude(id);
         final WeightedNode closestNode = new WeightedNode(id, dist.calcNormalizedDist(lat, lon, mainLat, mainLon));
         goFurtherHook(id);
         new XFirstSearch() {
-            @Override protected MyBitSet createBitSet(int size) {
+            @Override 
+            protected MyBitSet createBitSet(int size) {
                 return new MyTBitSet(10);
             }
 

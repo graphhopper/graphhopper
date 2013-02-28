@@ -83,21 +83,23 @@ public interface Graph {
     /**
      * @return all edges in this graph
      */
-    RawEdgeIterator allEdges();
-
-    EdgeIterator getEdges(int index);
+    RawEdgeIterator getAllEdges();
 
     /**
      * Returns an iterator which makes it possible to traverse all edges of the
-     * specified node if the filter accepts the edge. Hint 1: use GraphUtility to
-     * go straight to certain neighbor nodes. Hint 2: edges with both directions
-     * will be returned only once!
+     * specified node if the filter accepts the edge. There is no getOutgoing or
+     * getIncoming method anylonger as these methods are dependent on the needed
+     * vehicle type. Use GHUtility.getCar* methods as a quick replacement.
      */
     EdgeIterator getEdges(int index, EdgeFilter filter);
 
-    EdgeIterator getIncoming(int index);
-
-    EdgeIterator getOutgoing(int index);
+    /**
+     * Returns all the edges reachable from the specified index. Same behaviour
+     * as graph.getEdges(index, new AllEdgesFilter());
+     *
+     * @return all edges regardless of the vehicle type or direction.
+     */
+    EdgeIterator getEdges(int index);
 
     /**
      * @return the specified graph g
@@ -110,6 +112,9 @@ public interface Graph {
      */
     void markNodeRemoved(int index);
 
+    /**
+     * Checks if the specified node is marked as removed.
+     */
     boolean isNodeRemoved(int index);
 
     /**

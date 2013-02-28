@@ -27,7 +27,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.GHUtility;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;

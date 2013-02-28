@@ -21,7 +21,7 @@ package com.graphhopper.routing.util;
 /**
  * @author Peter Karich
  */
-public class AbstractFlagEncoder implements FlagsEncoder {
+public class AbstractFlagEncoder implements VehicleType {
 
     /**
      * This variable converts the stored value to the speed in km/h or does the
@@ -68,7 +68,6 @@ public class AbstractFlagEncoder implements FlagsEncoder {
         return isBoth(flags2) || (flags1 & BOTH) == (flags2 & BOTH);
     }
 
-    @Override
     public int swapDirection(int flags) {
         int dir = flags & BOTH;
         if (dir == BOTH || dir == 0)
@@ -85,7 +84,6 @@ public class AbstractFlagEncoder implements FlagsEncoder {
         return getSpeedPart(flags) * factor;
     }
 
-    @Override
     public int flagsDefault(boolean bothDirections) {
         if (bothDirections)
             return defaultSpeedPart << speedShift | BOTH;

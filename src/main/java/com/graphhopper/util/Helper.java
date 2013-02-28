@@ -22,7 +22,7 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.CarFlagsEncoder;
-import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.VehicleType;
 import com.graphhopper.routing.util.FootFlagsEncoder;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
@@ -178,7 +178,7 @@ public class Helper {
             return AStar.class;
     }
 
-    public static FlagsEncoder getEncoder(String str) {
+    public static VehicleType getEncoder(String str) {
         if ("CAR".equalsIgnoreCase(str))
             return new CarFlagsEncoder();
         else if ("CAR".equalsIgnoreCase(str))

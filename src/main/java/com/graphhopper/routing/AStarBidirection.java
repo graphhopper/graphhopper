@@ -27,7 +27,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.CoordTrig;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;

@@ -20,7 +20,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.GHUtility;
 import java.util.Arrays;
 import java.util.Map;
 import org.junit.*;
@@ -85,7 +85,7 @@ public class PrepareRoutingSubnetworksTest {
         g.optimize();
 
         assertEquals(7, g.nodes());
-        assertEquals(Arrays.<String>asList(), GraphUtility.getProblems(g));
+        assertEquals(Arrays.<String>asList(), GHUtility.getProblems(g));
         map = instance.findSubnetworks();
         assertEquals(1, map.size());
         assertEquals(7, (int) map.get(0));

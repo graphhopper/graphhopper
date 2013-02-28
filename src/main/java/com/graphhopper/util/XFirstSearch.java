@@ -73,7 +73,7 @@ public class XFirstSearch {
     }
 
     protected EdgeIterator getEdges(Graph g, int current) {
-        return g.getOutgoing(current);
+        return g.getEdges(current);
     }
 
     protected boolean goFurther(int nodeId) {

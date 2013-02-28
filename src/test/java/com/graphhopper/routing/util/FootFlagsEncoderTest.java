@@ -20,7 +20,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import java.util.Arrays;
 import org.junit.Test;
@@ -52,7 +52,7 @@ public class FootFlagsEncoderTest {
 
     @Test
     public void testCombined() {
-        FlagsEncoder carEncoder = new CarFlagsEncoder();
+        VehicleType carEncoder = new CarFlagsEncoder();
         int fl = encoder.flags(10, true) | carEncoder.flags(100, false);
         assertEquals(10, encoder.getSpeed(fl));
         assertTrue(encoder.isForward(fl));
@@ -69,9 +69,9 @@ public class FootFlagsEncoderTest {
         g.edge(0, 1, 10, encoder.flags(10, true));
         g.edge(0, 2, 10, encoder.flags(5, true));
         g.edge(1, 3, 10, encoder.flags(10, true));
-        EdgeFilter out = new DefaultEdgeFilter(encoder).direction(false, true);
-        assertEquals(Arrays.asList(1, 2), GraphUtility.neighbors(g.getEdges(0, out)));
-        assertEquals(Arrays.asList(0, 3), GraphUtility.neighbors(g.getEdges(1, out)));
-        assertEquals(Arrays.asList(0), GraphUtility.neighbors(g.getEdges(2, out)));
+        EdgeFilter out = new DefaultEdgeFilter(encoder, false, true);
+        assertEquals(Arrays.asList(1, 2), GHUtility.neighbors(g.getEdges(0, out)));
+        assertEquals(Arrays.asList(0, 3), GHUtility.neighbors(g.getEdges(1, out)));
+        assertEquals(Arrays.asList(0), GHUtility.neighbors(g.getEdges(2, out)));
     }
 }

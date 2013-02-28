@@ -19,23 +19,40 @@
 package com.graphhopper.routing.util;
 
 /**
+ * This class provides methods to define how a value (like speed or direction)
+ * converts to a flag (currently an integer value).
+ *
  * @author Peter Karich
  */
-public class CombinedEncoder {
+public interface VehicleType {
 
-    CarFlagsEncoder carEncoder = new CarFlagsEncoder();
-    BikeFlagsEncoder bikeEncoder = new BikeFlagsEncoder();
-    FootFlagsEncoder footEncoder = new FootFlagsEncoder();
+    /**
+     * @param speed the speed in km/h
+     */
+    int flags(int speed, boolean bothDir);
 
-    public int swapDirection(int flags) {
-        flags = footEncoder.swapDirection(flags);
-        flags = bikeEncoder.swapDirection(flags);
-        return carEncoder.swapDirection(flags);
-    }
+    /**
+     * @return the speed in km/h
+     */
+    int getSpeed(int flags);
 
-    public int flagsDefault(boolean bothDirections) {
-        int res = footEncoder.flagsDefault(bothDirections);
-        res |= bikeEncoder.flagsDefault(bothDirections);
-        return res | carEncoder.flagsDefault(bothDirections);
-    }
+    boolean isForward(int flags);
+
+    boolean isBackward(int flags);
+
+    /**
+     * @return the maximum speed in km/h
+     */
+    int getMaxSpeed();
+
+    /**
+     * Returns true if flags1 can be overwritten by flags2 without restricting
+     * or changing the directions of flags1.
+     */
+    //        \  flags2:
+    // flags1  \ -> | <- | <->
+    // ->         t | f  | t
+    // <-         f | t  | t
+    // <->        f | f  | t
+    boolean canBeOverwritten(int flags1, int flags2);
 }

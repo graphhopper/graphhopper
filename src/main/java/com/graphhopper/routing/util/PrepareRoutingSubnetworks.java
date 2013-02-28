@@ -79,10 +79,6 @@ public class PrepareRoutingSubnetworks {
                     return bs;
                 }
 
-                @Override protected EdgeIterator getEdges(Graph g, int current) {
-                    return g.getEdges(current);
-                }
-
                 @Override protected boolean goFurther(int nodeId) {
                     boolean ret = super.goFurther(nodeId);
                     if (ret)
@@ -136,10 +132,6 @@ public class PrepareRoutingSubnetworks {
         new XFirstSearch() {
             @Override protected MyBitSet createBitSet(int size) {
                 return bs;
-            }
-
-            @Override protected EdgeIterator getEdges(Graph g, int current) {
-                return g.getEdges(current);
             }
 
             @Override protected boolean goFurther(int nodeId) {

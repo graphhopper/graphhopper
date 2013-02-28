@@ -25,6 +25,7 @@ import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.routing.util.CarFlagsEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.VehicleType;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -43,14 +44,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class is introduced as a helper to avoid cluttering the Graph interface
- * with all the common methods. Most of the methods are useful for unit tests.
+ * A helper class to avoid cluttering the Graph interface with all the common
+ * methods. Most of the methods are useful for unit tests or debugging only.
  *
  * @author Peter Karich,
  */
-public class GraphUtility {
+public class GHUtility {
 
-    private static Logger logger = LoggerFactory.getLogger(GraphUtility.class);
+    private static Logger logger = LoggerFactory.getLogger(GHUtility.class);
+    private static final VehicleType carEncoder = new CarFlagsEncoder();
+    private static final EdgeFilter edgesOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
+    private static final EdgeFilter edgesInFilter = new DefaultEdgeFilter(carEncoder, true, false);
+
+    public static EdgeIterator getCarOutgoing(Graph g, int index) {
+        return g.getEdges(index, edgesOutFilter);
+    }
+
+    public static EdgeIterator getCarIncoming(Graph g, int index) {
+        return g.getEdges(index, edgesInFilter);
+    }
 
     /**
      * @throws could throw exception if uncatched problems like index out of
@@ -68,12 +80,6 @@ public class GraphUtility {
                 double lon = g.getLongitude(nodeIndex);
                 if (lon > 180 || lon < -180)
                     problems.add("longitude is not within its bounds " + lon);
-                int incom = count(g.getIncoming(nodeIndex));
-                int out = count(g.getOutgoing(nodeIndex));
-                int e = count(g.getEdges(nodeIndex));
-                if (Math.max(out, incom) > e)
-                    problems.add("count incoming or outgoing edges should be maximum "
-                            + e + " but were:" + incom + "(in), " + out + "(out)");
 
                 EdgeIterator iter = g.getEdges(nodeIndex);
                 while (iter.next()) {
@@ -95,14 +101,22 @@ public class GraphUtility {
     }
 
     /**
-     * note/todo: this methods counts edges twice if both directions are
-     * available
+     * This methods counts edges only once
      */
-    public static int countEdges(Graph g) {
+    public static int countEdgesOnce(Graph g) {
+        int counter = 0;
+        RawEdgeIterator iter = g.getAllEdges();
+        while (iter.next()) {
+            counter++;
+        }
+        return counter;
+    }
+
+    public static int countEdges(Graph g, EdgeFilter filter) {
         int counter = 0;
         int nodes = g.nodes();
         for (int i = 0; i < nodes; i++) {
-            EdgeIterator iter = g.getOutgoing(i);
+            EdgeIterator iter = g.getEdges(i, filter);
             while (iter.next()) {
                 counter++;
             }
@@ -222,11 +236,6 @@ public class GraphUtility {
         list.fill(0, g.nodes(), -1);
         new XFirstSearch() {
             int counter = 0;
-
-            @Override
-            protected EdgeIterator getEdges(Graph g, int current) {
-                return g.getEdges(current);
-            }
 
             @Override
             protected boolean goFurther(int nodeId) {

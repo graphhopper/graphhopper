@@ -21,7 +21,7 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.EdgeLevelFilterOld;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
-import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.GHUtility;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -104,9 +104,9 @@ public class LevelGraphStorageTest extends GraphStorageTest {
         g.setLevel(4, 1);
 
         EdgeIterator iter = new EdgeLevelFilterOld(g).doFilter(g.getEdges(0));
-        assertEquals(1, GraphUtility.count(iter));
+        assertEquals(1, GHUtility.count(iter));
         iter = g.getEdges(2);
-        assertEquals(2, GraphUtility.count(iter));
+        assertEquals(2, GHUtility.count(iter));
     }
 
     @Test
@@ -118,21 +118,21 @@ public class LevelGraphStorageTest extends GraphStorageTest {
         EdgeIterator iter = g.getEdges(1);
         iter.next();
         assertEquals(2, iter.node());
-        assertEquals(1, GraphUtility.count(g.getOutgoing(2)));
+        assertEquals(1, GHUtility.count(g.getEdges(2, carOutFilter)));
         g.disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
-        assertEquals(0, GraphUtility.count(g.getOutgoing(2)));
+        assertEquals(0, GHUtility.count(g.getEdges(2, carOutFilter)));
 
         // even directed ways change!
         assertTrue(iter.next());
         assertEquals(0, iter.node());        
-        assertEquals(1, GraphUtility.count(g.getIncoming(0)));
+        assertEquals(1, GHUtility.count(g.getEdges(0, carInFilter)));
         g.disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
-        assertEquals(0, GraphUtility.count(g.getIncoming(0)));
+        assertEquals(0, GHUtility.count(g.getEdges(0, carInFilter)));
 
         iter.next();
         assertEquals(3, iter.node());
-        assertEquals(1, GraphUtility.count(g.getOutgoing(3)));
+        assertEquals(1, GHUtility.count(g.getEdges(3, carOutFilter)));
         g.disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
-        assertEquals(0, GraphUtility.count(g.getOutgoing(3)));        
+        assertEquals(0, GHUtility.count(g.getEdges(3, carOutFilter)));        
     }
 }

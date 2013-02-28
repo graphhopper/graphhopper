@@ -26,7 +26,7 @@ import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagsEncoder;
 import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.VehicleType;
 import com.graphhopper.routing.util.FootFlagsEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.ShortestCalc;
@@ -173,7 +173,7 @@ public class GraphHopper implements GraphHopperAPI {
                 storage = new LevelGraphStorage(dir);
                 PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
 
-                FlagsEncoder encoder;
+                VehicleType encoder;
                 if (acceptWay.acceptsCar())
                     encoder = new CarFlagsEncoder();
                 else

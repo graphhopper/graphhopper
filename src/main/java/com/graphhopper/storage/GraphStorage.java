@@ -21,12 +21,11 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.util.CarFlagsEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.AllEdgesFilter;
+import com.graphhopper.routing.util.CombinedEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagsEncoder;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
 import com.graphhopper.util.PointList;
@@ -81,14 +80,12 @@ public class GraphStorage implements Graph, Storable {
     // 0 stands for no separate geoRef
     private int maxGeoRef = 1;
     private boolean initialized = false;
-    private FlagsEncoder defaultEncoder;
-    protected EdgeFilter noEdgesFilter;
-    protected EdgeFilter bothEdgesFilter;
-    protected EdgeFilter inEdgesFilter;
-    protected EdgeFilter outEdgesFilter;
+    private CombinedEncoder combiEncoder;
+    protected final EdgeFilter allEdgesFilter;
 
     public GraphStorage(Directory dir) {
-        flagsEncoder(new CarFlagsEncoder());
+        combiEncoder = new CombinedEncoder();
+        allEdgesFilter = new AllEdgesFilter();
         this.dir = dir;
         this.nodes = dir.findCreate("nodes");
         this.edges = dir.findCreate("egdes");
@@ -108,15 +105,10 @@ public class GraphStorage implements Graph, Storable {
         initNodeAndEdgeEntrySize();
     }
 
-    public GraphStorage flagsEncoder(FlagsEncoder encoder) {
-        checkInit();
-        this.defaultEncoder = encoder;
-        this.noEdgesFilter = new DefaultEdgeFilter(encoder).direction(false, false);
-        this.inEdgesFilter = new DefaultEdgeFilter(encoder).direction(true, false);
-        this.outEdgesFilter = new DefaultEdgeFilter(encoder).direction(false, true);
-        this.bothEdgesFilter = new DefaultEdgeFilter(encoder);
+    public GraphStorage combinedEncoder(CombinedEncoder combiEncoder) {
+        this.combiEncoder = combiEncoder;
         return this;
-    }
+    }        
 
     void checkInit() {
         if (initialized)
@@ -274,14 +266,14 @@ public class GraphStorage implements Graph, Storable {
 
     @Override
     public EdgeIterator edge(int a, int b, double distance, boolean bothDirections) {
-        return edge(a, b, distance, defaultEncoder.flagsDefault(bothDirections));
+        return edge(a, b, distance, combiEncoder.flagsDefault(bothDirections));
     }
 
     @Override
     public EdgeIterator edge(int a, int b, double distance, int flags) {
         ensureNodeIndex(Math.max(a, b));
         int edge = internalEdgeAdd(a, b, distance, flags);
-        EdgeIterable iter = new EdgeIterable(edge, a, noEdgesFilter);
+        EdgeIterable iter = new EdgeIterable(edge, a, null);
         iter.next();
         return iter;
     }
@@ -337,7 +329,7 @@ public class GraphStorage implements Graph, Storable {
             nextEdge = nextEdgeOther;
             nextEdgeOther = tmp;
 
-            flags = defaultEncoder.swapDirection(flags);
+            flags = combiEncoder.swapDirection(flags);
         }
 
         long edgePointer = (long) edge * edgeEntrySize;
@@ -420,7 +412,7 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public RawEdgeIterator allEdges() {
+    public RawEdgeIterator getAllEdges() {
         return new AllEdgeIterator();
     }
 
@@ -495,7 +487,7 @@ public class GraphStorage implements Graph, Storable {
             edge.switchFlags = true;
             return edge;
         } else
-            return GraphUtility.EMPTY;
+            return GHUtility.EMPTY;
     }
 
     protected SingleEdge createSingleEdge(int edgeId, int nodeId) {
@@ -517,7 +509,7 @@ public class GraphStorage implements Graph, Storable {
         @Override public int flags() {
             flags = edges.getInt(edgePointer + E_FLAGS);
             if (switchFlags)
-                return defaultEncoder.swapDirection(flags);
+                return combiEncoder.swapDirection(flags);
             return flags;
         }
     }
@@ -529,17 +521,7 @@ public class GraphStorage implements Graph, Storable {
 
     @Override
     public EdgeIterator getEdges(int node) {
-        return createEdgeIterable(node, bothEdgesFilter);
-    }
-
-    @Override
-    public EdgeIterator getIncoming(int node) {
-        return createEdgeIterable(node, inEdgesFilter);
-    }
-
-    @Override
-    public EdgeIterator getOutgoing(int node) {
-        return createEdgeIterable(node, outEdgesFilter);
+        return createEdgeIterable(node, allEdgesFilter);
     }
 
     protected EdgeIterator createEdgeIterable(int baseNode, EdgeFilter filter) {
@@ -580,9 +562,9 @@ public class GraphStorage implements Graph, Storable {
 
             // switch direction flags if necessary
             if (baseNode > node)
-                flags = defaultEncoder.swapDirection(flags);
+                flags = combiEncoder.swapDirection(flags);
 
-            return filter.accept(this);
+            return filter != null && filter.accept(this);
         }
 
         long edgePointer() {
@@ -685,7 +667,7 @@ public class GraphStorage implements Graph, Storable {
         if (g.getClass().equals(getClass())) {
             return _copyTo((GraphStorage) g);
         } else
-            return GraphUtility.copyTo(this, g);
+            return GHUtility.copyTo(this, g);
     }
 
     Graph _copyTo(GraphStorage clonedG) {
@@ -783,7 +765,7 @@ public class GraphStorage implements Graph, Storable {
         final SparseIntIntArray oldToNewMap = new SparseIntIntArray(removeNodeCount);
         MyBitSetImpl toUpdatedSet = new MyBitSetImpl(removeNodeCount * 3);
         for (int delNode = removedNodes.next(0); delNode >= 0; delNode = removedNodes.next(delNode + 1)) {
-            EdgeIterator delEdgesIter = getEdges(delNode);
+            EdgeIterator delEdgesIter = getEdges(delNode, allEdgesFilter);
             while (delEdgesIter.next()) {
                 int currNode = delEdgesIter.node();
                 if (removedNodes.contains(currNode))
@@ -849,7 +831,7 @@ public class GraphStorage implements Graph, Storable {
         // *rewrites* all edges connected to moved nodes
         // go through all edges and pick the necessary ... <- this is easier to implement then
         // a more efficient (?) breadth-first search
-        RawEdgeIterator iter = allEdges();
+        RawEdgeIterator iter = getAllEdges();
         while (iter.next()) {
             int edge = iter.edge();
             long edgePointer = (long) edge * edgeEntrySize;

@@ -19,7 +19,9 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.CarFlagsEncoder;
-import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.VehicleType;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -33,8 +35,9 @@ import org.junit.Test;
  */
 public class PathBidirRefTest {
 
-    FlagsEncoder encoder = new CarFlagsEncoder();
-    
+    private VehicleType carEncoder = new CarFlagsEncoder();
+    private EdgeFilter carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
+
     Graph createGraph() {
         return new GraphBuilder().create();
     }
@@ -43,8 +46,8 @@ public class PathBidirRefTest {
     public void testExtract() {
         Graph g = createGraph();
         g.edge(1, 2, 10, true);
-        PathBidirRef pw = new PathBidirRef(g, encoder);
-        EdgeIterator iter = g.getOutgoing(1);
+        PathBidirRef pw = new PathBidirRef(g, carEncoder);
+        EdgeIterator iter = g.getEdges(1, carOutEdges);
         iter.next();
         pw.edgeEntry = new EdgeEntry(iter.edge(), 2, 0);
         pw.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 10);
@@ -59,13 +62,13 @@ public class PathBidirRefTest {
         Graph g = createGraph();
         g.edge(1, 2, 10, false);
         g.edge(2, 3, 20, false);
-        EdgeIterator iter = g.getOutgoing(1);
+        EdgeIterator iter = g.getEdges(1, carOutEdges);
         iter.next();
-        PathBidirRef pw = new PathBidirRef(g, encoder);
+        PathBidirRef pw = new PathBidirRef(g, carEncoder);
         pw.edgeEntry = new EdgeEntry(iter.edge(), 2, 10);
         pw.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 0);
 
-        iter = g.getIncoming(3);
+        iter = g.getEdges(3, new DefaultEdgeFilter(carEncoder, true, false));
         iter.next();
         pw.edgeTo = new EdgeEntry(iter.edge(), 2, 20);
         pw.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 3, 0);

@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.PointList;
 
 /**
  * Only certain nodes are accepted and therefor the others are filtered out.
@@ -33,12 +32,6 @@ public class EdgeLevelFilter implements EdgeFilter {
 
     public EdgeLevelFilter(LevelGraph g) {
         graph = g;
-    }
-
-    @Override
-    public EdgeFilter direction(boolean in, boolean out) {
-        // TODO extends from DefaultEdgeFilter?
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override

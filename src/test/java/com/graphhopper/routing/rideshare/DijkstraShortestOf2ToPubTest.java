@@ -23,7 +23,7 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.GHUtility;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -43,7 +43,7 @@ public class DijkstraShortestOf2ToPubTest {
 
     @Test
     public void testCalcShortestPath() {
-        Graph g = GraphUtility.clone(getGraph());
+        Graph g = GHUtility.clone(getGraph());
         DijkstraShortestOf2ToPub d = new DijkstraShortestOf2ToPub(g);
         d.addPubTransportPoints(DijkstraWhichToOneTest.pubTransportPath);
         int from = 13;
@@ -56,7 +56,7 @@ public class DijkstraShortestOf2ToPubTest {
 
     @Test
     public void testCalcShortestPath2() {
-        Graph g = GraphUtility.clone(getGraph());
+        Graph g = GHUtility.clone(getGraph());
         DijkstraShortestOf2ToPub d = new DijkstraShortestOf2ToPub(g);
         d.addPubTransportPoints(DijkstraWhichToOneTest.pubTransportPath);
         int from = 13;
@@ -71,7 +71,7 @@ public class DijkstraShortestOf2ToPubTest {
     @Test
     public void testCalculateShortestPathWithSpecialFinishCondition() {
         int[] pubTransport = new int[]{20, 21, 31, 41, 51, 52, 62, 72};
-        Graph g = GraphUtility.clone(getGraph());
+        Graph g = GHUtility.clone(getGraph());
         g.edge(21, 31, 100, true);
         g.edge(31, 41, 100, true);
         g.edge(41, 51, 100, true);

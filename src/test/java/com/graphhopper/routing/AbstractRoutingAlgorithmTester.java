@@ -22,7 +22,7 @@ import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagsEncoder;
 import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.VehicleType;
 import com.graphhopper.routing.util.FootFlagsEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
@@ -46,8 +46,8 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     // problem is: matrix graph is expensive to create to cache it in a static variable
     private static Graph matrixGraph;
-    private FlagsEncoder carEncoder = new CarFlagsEncoder();
-    private FlagsEncoder footEncoder = new FootFlagsEncoder();
+    private VehicleType carEncoder = new CarFlagsEncoder();
+    private VehicleType footEncoder = new FootFlagsEncoder();
 
     protected Graph createGraph() {
         return new GraphBuilder().create();
@@ -57,7 +57,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         return prepareGraph(g, new ShortestCalc(), carEncoder);
     }
 
-    public abstract AlgorithmPreparation prepareGraph(Graph g, WeightCalculation calc, FlagsEncoder encoder);
+    public abstract AlgorithmPreparation prepareGraph(Graph g, WeightCalculation calc, VehicleType encoder);
 
     @Test public void testCalcShortestPath() {
         Graph graph = createTestGraph();

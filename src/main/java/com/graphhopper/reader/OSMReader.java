@@ -23,7 +23,7 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.CarFlagsEncoder;
-import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.VehicleType;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
@@ -37,7 +37,7 @@ import com.graphhopper.storage.Location2IDIndex;
 import com.graphhopper.storage.Location2IDQuadtree;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
 import com.graphhopper.util.Helper7;
@@ -218,8 +218,8 @@ public class OSMReader {
         // move this into the GraphStorage.optimize method?
         if (sortGraph) {
             logger.info("sorting ... (" + Helper.getMemInfo() + ")");
-            GraphStorage newGraph = GraphUtility.newStorage(graphStorage);
-            GraphUtility.sortDFS(graphStorage, newGraph);
+            GraphStorage newGraph = GHUtility.newStorage(graphStorage);
+            GHUtility.sortDFS(graphStorage, newGraph);
             graphStorage = newGraph;
         }
 
@@ -376,7 +376,7 @@ public class OSMReader {
         if (chShortcuts.isEmpty() || "no".equals(chShortcuts) || "false".equals(chShortcuts))
             return this;
 
-        FlagsEncoder encoder = new CarFlagsEncoder();
+        VehicleType encoder = new CarFlagsEncoder();
         int tmpIndex = chShortcuts.indexOf(",");
         if (tmpIndex >= 0)
             encoder = Helper.getEncoder(chShortcuts.substring(tmpIndex + 1).trim());

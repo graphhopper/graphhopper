@@ -18,11 +18,11 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.VehicleType;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.GHUtility;
 
 /**
  * This class creates a DijkstraPath from two Edge's resulting from a
@@ -35,7 +35,7 @@ public class PathBidirRef extends Path {
     protected EdgeEntry edgeTo;
     private boolean switchWrapper = false;
 
-    public PathBidirRef(Graph g, FlagsEncoder encoder) {
+    public PathBidirRef(Graph g, VehicleType encoder) {
         super(g, encoder);
     }
 
@@ -63,8 +63,8 @@ public class PathBidirRef extends Path {
         if (edgeEntry == null || edgeTo == null)
             return this;
 
-        int from = GraphUtility.getToNode(graph, edgeEntry.edge, edgeEntry.endNode);
-        int to = GraphUtility.getToNode(graph, edgeTo.edge, edgeTo.endNode);
+        int from = GHUtility.getToNode(graph, edgeEntry.edge, edgeEntry.endNode);
+        int to = GHUtility.getToNode(graph, edgeTo.edge, edgeTo.endNode);
         if (from != to)
             throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());
 

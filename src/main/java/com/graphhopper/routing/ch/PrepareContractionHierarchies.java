@@ -30,7 +30,7 @@ import com.graphhopper.routing.util.CarFlagsEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EdgeLevelFilterOld;
-import com.graphhopper.routing.util.FlagsEncoder;
+import com.graphhopper.routing.util.VehicleType;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
@@ -39,7 +39,7 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
-import com.graphhopper.util.GraphUtility;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.StopWatch;
@@ -70,7 +70,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private Logger logger = LoggerFactory.getLogger(getClass());
     private WeightCalculation shortestCalc;
     private WeightCalculation prepareWeightCalc;
-    private FlagsEncoder prepareEncoder;
+    private VehicleType prepareEncoder;
     private EdgeFilter inFilter;
     private EdgeFilter outFilter;
     private LevelGraph g;
@@ -115,10 +115,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return this;
     }
     
-    public PrepareContractionHierarchies vehicle(FlagsEncoder encoder) {
+    public PrepareContractionHierarchies vehicle(VehicleType encoder) {
         this.prepareEncoder = encoder;
-        inFilter = new DefaultEdgeFilter(encoder).direction(true, false);
-        outFilter = new DefaultEdgeFilter(encoder).direction(false, true);
+        inFilter = new DefaultEdgeFilter(encoder, true, false);
+        outFilter = new DefaultEdgeFilter(encoder, false, true);
         scOneDir = encoder.flags(0, false);
         scBothDir = encoder.flags(0, true);
         return this;
@@ -158,7 +158,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // in CH the flags will be ignored (calculating the new flags for the shortcuts is impossible)
         // also several shortcuts would be necessary with the different modes (e.g. fastest and extractPath)
         // so calculate the weight and store this as distance, then use only distance instead of getWeight
-        RawEdgeIterator iter = g.allEdges();
+        RawEdgeIterator iter = g.getAllEdges();
         int c = 0;
         while (iter.next()) {
             c++;
@@ -289,7 +289,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|        
         // meanDegree is used instead of outDegree+inDegree as if one endNode is in both directions
         // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
-        int degree = GraphUtility.count(g.getEdges(v));
+        int degree = GHUtility.count(g.getEdges(v));
         int edgeDifference = tmpShortcuts.size() - degree;
 
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
