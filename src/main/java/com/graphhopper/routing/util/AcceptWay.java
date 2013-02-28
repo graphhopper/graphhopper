@@ -232,11 +232,11 @@ public class AcceptWay {
     public String toString() {
         String str = "";
         if (acceptsCar())
-            str += "CAR,";
+            str += "CAR ";
         if (acceptsBike())
-            str += "BIKE,";
+            str += "BIKE ";
         if (acceptsFoot())
             str += "FOOT";
-        return str;
+        return str.trim().replaceAll("\\ ", ",");
     }
 }

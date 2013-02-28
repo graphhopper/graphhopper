@@ -86,7 +86,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private LevelEdgeFilterCH levelEdgeFilter;
     private OneToManyDijkstraCH algo;
     private int updateSize;
-    private boolean removesHigher2LowerEdges = false;
+    private boolean removesHigher2LowerEdges = true;
     private long counter;
     private int newShortcuts;
 
@@ -129,11 +129,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     /**
-     * Disconnect is very important to massivly speed up query time on mobile
-     * devices. If enabled it will remove the edge going from the higher level
-     * node to the currently contracted one. If enabled the original graph is no
-     * longer available, so it is only useful for bidirectional CH algorithms.
-     * Default is true.
+     * Disconnect is very important to improve query time and preparation if
+     * enabled. It will remove the edge going from the higher level node to the
+     * currently contracted one. But the original graph is no longer available,
+     * so it is only useful for bidirectional CH algorithms. Default is true.
      */
     public PrepareContractionHierarchies removeHigher2LowerEdges(boolean removeHigher2LowerEdges) {
         this.removesHigher2LowerEdges = removeHigher2LowerEdges;
@@ -264,7 +263,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     ((LevelGraphStorage) g).disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
             }
         }
-        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc + ", " + prepareEncoder);
+        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc
+                + ", " + prepareEncoder + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges);
     }
 
     int shortcuts() {
