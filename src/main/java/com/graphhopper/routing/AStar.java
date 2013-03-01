@@ -62,7 +62,7 @@ public class AStar extends AbstractRoutingAlgorithm {
 
     @Override public Path calcPath(int from, int to) {
         if (alreadyRun)
-            throw new IllegalStateException("Call clear before! But this class is not thread safe!");
+            throw new IllegalStateException("Create a new instance per call");
         alreadyRun = true;
         closedSet = new MyBitSetImpl(graph.nodes());
         TIntObjectMap<AStarEdge> map = new TIntObjectHashMap<AStarEdge>();

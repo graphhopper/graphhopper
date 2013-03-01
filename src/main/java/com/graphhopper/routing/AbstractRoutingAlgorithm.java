@@ -37,7 +37,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected WeightCalculation weightCalc;
     protected final EdgeFilter outEdgeFilter;
     protected final EdgeFilter inEdgeFilter;
-    protected final VehicleEncoder flagEncoder;    
+    protected final VehicleEncoder flagEncoder;
 
     public AbstractRoutingAlgorithm(Graph graph, VehicleEncoder encoder) {
         this.graph = graph;

@@ -39,6 +39,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
     protected MyBitSet visited = new MyTBitSet();
     private TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
     private PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
+    private boolean alreadyRun;
 
     public DijkstraSimple(Graph graph, VehicleEncoder encoder) {
         super(graph, encoder);
@@ -46,6 +47,9 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
 
     @Override
     public Path calcPath(int from, int to) {
+        if (alreadyRun)
+            throw new IllegalStateException("Create a new instance per call");
+        alreadyRun = true;
         EdgeEntry fromEntry = new EdgeEntry(EdgeIterator.NO_EDGE, from, 0d);
         visited.add(from);
         EdgeEntry currEdge = fromEntry;
