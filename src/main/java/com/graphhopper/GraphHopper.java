@@ -260,7 +260,8 @@ public class GraphHopper implements GraphHopperAPI {
         if (simplify) {
             sw = new StopWatch().start();
             int orig = points.size();
-            new DouglasPeucker().maxDistance(request.minPathPrecision()).simplify(points);
+            int minPathPrecision = request.getHint("douglas.minprecision", 1);
+            new DouglasPeucker().maxDistance(minPathPrecision).simplify(points);
             debug += ", simplify (" + orig + "->" + points.size() + "):" + sw.stop().getSeconds() + "s";
         }
         return new GHResponse(points).distance(path.distance()).time(path.time()).debugInfo(debug);

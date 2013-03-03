@@ -87,7 +87,7 @@ else
 fi
 
 MAVEN_HOME=`mvn -v | grep "Maven home" | cut -d' ' -f3`
-if [ "x$MAVEN_HOME" != "x" ]; then
+if [ "x$MAVEN_HOME" = "x" ]; then
   # try to detect previous downloaded version
   MAVEN_HOME="$GH_HOME/maven"
   if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then

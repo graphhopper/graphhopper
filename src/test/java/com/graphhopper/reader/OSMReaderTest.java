@@ -31,6 +31,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import org.junit.After;
 import static org.junit.Assert.*;
@@ -235,7 +236,7 @@ public class OSMReaderTest {
 
         assertEquals(Arrays.asList(b, d), GHUtility.neighbors(graph.getEdges(a,
                 new DefaultEdgeFilter(carEncoder))));
-        assertEquals(Arrays.asList(), GHUtility.neighbors(graph.getEdges(c,
+        assertEquals(new ArrayList<Integer>(), GHUtility.neighbors(graph.getEdges(c,
                 carOutFilter)));
         assertEquals(Arrays.asList(a, c, d), GHUtility.neighbors(graph.getEdges(b,
                 new DefaultEdgeFilter(carEncoder))));

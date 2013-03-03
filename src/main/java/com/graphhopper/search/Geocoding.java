@@ -1,17 +1,17 @@
 package com.graphhopper.search;
 
-import com.graphhopper.util.shapes.GHInfoPoint;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPlace;
 import java.util.List;
 
 /**
- * Simple interface to convert between places and points.
+ * Interface to convert from place names to points.
  *
  * @author Peter Karich
  */
 public interface Geocoding {
 
-    List<GHInfoPoint> search(String... place);
-
-    List<GHInfoPoint> reverse(GHPoint... points);
+    /**
+     * Returns a list of matching points for the specified place query string.
+     */
+    List<GHPlace> name2point(GHPlace... place);
 }

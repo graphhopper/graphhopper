@@ -22,7 +22,9 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPlace;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * GraphHopper request wrapper to simplify requesting GraphHopper.
@@ -32,9 +34,9 @@ import com.graphhopper.util.shapes.GHPoint;
 public class GHRequest {
 
     private String algo = "astar";
-    private GHPoint from;
-    private GHPoint to;
-    private double precision = 1;
+    private GHPlace from;
+    private GHPlace to;
+    private Map<String, Object> hints = new HashMap<String, Object>(5);
     private VehicleEncoder encoder = new CarFlagEncoder();
     private WeightCalculation weightCalc = new ShortestCalc();
 
@@ -43,13 +45,13 @@ public class GHRequest {
      * endPoint (toLat, toLon).
      */
     public GHRequest(double fromLat, double fromLon, double toLat, double toLon) {
-        this(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon));
+        this(new GHPlace(fromLat, fromLon), new GHPlace(toLat, toLon));
     }
 
     /**
      * Calculate the path from specified startPoint to endPoint.
      */
-    public GHRequest(GHPoint startPoint, GHPoint endPoint) {
+    public GHRequest(GHPlace startPoint, GHPlace endPoint) {
         this.from = startPoint;
         this.to = endPoint;
     }
@@ -75,27 +77,27 @@ public class GHRequest {
         return algo;
     }
 
-    public GHPoint from() {
+    public GHPlace from() {
         return from;
     }
 
-    public GHPoint to() {
+    public GHPlace to() {
         return to;
     }
 
-    /**
-     * Reduces the node count of the resulting path, default is 1. Useful for
-     * performance or if you're using the web version for network latency. If a
-     * high value in meter is specified the route will be less precise along the
-     * real networks.
-     */
-    public GHRequest minPathPrecision(double precision) {
-        this.precision = precision;
+    public GHRequest putHint(String key, Object value) {
+        Object old = hints.put(key, value);
+        if (old != null)
+            throw new RuntimeException("Key is already associated with " + old + ", your value:" + value);
         return this;
     }
 
-    public double minPathPrecision() {
-        return precision;
+    @SuppressWarnings("unchecked")
+    public <T> T getHint(String key, T defaultValue) {
+        Object obj = hints.get(key);
+        if (obj == null)
+            return defaultValue;
+        return (T) obj;
     }
 
     @Override
