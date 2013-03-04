@@ -86,18 +86,22 @@ else
   echo "## using existing osm file $OSM"
 fi
 
-MAVEN_HOME=`mvn -v | grep "Maven home" | cut -d' ' -f3`
+# maven home existent?
 if [ "x$MAVEN_HOME" = "x" ]; then
-  # try to detect previous downloaded version
-  MAVEN_HOME="$GH_HOME/maven"
-  if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then
-    echo "No Maven found in the PATH. Now downloading+installing it to $MAVEN_HOME"
-    cd "$GH_HOME"
-    MVN_PACKAGE=apache-maven-3.0.5
-    wget -O maven.zip http://www.eu.apache.org/dist/maven/maven-3/3.0.5/binaries/$MVN_PACKAGE-bin.zip
-    unzip maven.zip
-    mv $MVN_PACKAGE maven
-    rm maven.zip
+  # not existent but probably is maven in the path?
+  MAVEN_HOME=`mvn -v | grep "Maven home" | cut -d' ' -f3`
+  if [ "x$MAVEN_HOME" = "x" ]; then
+    # try to detect previous downloaded version
+    MAVEN_HOME="$GH_HOME/maven"
+    if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then
+      echo "No Maven found in the PATH. Now downloading+installing it to $MAVEN_HOME"
+      cd "$GH_HOME"
+      MVN_PACKAGE=apache-maven-3.0.5
+      wget -O maven.zip http://www.eu.apache.org/dist/maven/maven-3/3.0.5/binaries/$MVN_PACKAGE-bin.zip
+      unzip maven.zip
+      mv $MVN_PACKAGE maven
+      rm maven.zip
+    fi
   fi
 fi
 
