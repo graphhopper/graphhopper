@@ -30,7 +30,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.Location2IDPreciseIndex;
+import com.graphhopper.storage.index.Location2IDPreciseIndex;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;

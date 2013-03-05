@@ -26,7 +26,7 @@ import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.Location2IDIndex;
+import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import java.io.File;

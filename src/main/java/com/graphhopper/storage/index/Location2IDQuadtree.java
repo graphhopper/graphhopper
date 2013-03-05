@@ -16,16 +16,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
+package com.graphhopper.storage.index;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.LinearKeyAlgo;
+import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.RAMDataAccess;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
@@ -180,7 +184,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
     private int fillEmptyIndices(MyBitSet filledIndices) {
         int len = latSize * lonSize;
-        DataAccess indexCopy = new RAMDataAccess();
+        DataAccess indexCopy = new RAMDirectory().findCreate("tempIndexCopy");
         indexCopy.createNew(index.capacity());
         MyBitSet indicesCopy = new MyBitSetImpl(len);
         int initializedCounter = filledIndices.cardinality();

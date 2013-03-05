@@ -16,23 +16,24 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
+package com.graphhopper.storage.index;
 
-import org.junit.Test;
+import com.graphhopper.storage.index.Location2IDFullIndex;
+import com.graphhopper.storage.index.Location2IDIndex;
+import org.junit.*;
 import static org.junit.Assert.*;
 
 /**
  *
  * @author Peter Karich
  */
-public class Location2IDFullWithEdgesIndexTest {
+public class Location2IDFullIndexTest {
 
     @Test
     public void testFullIndex() {
-        Location2IDIndex idx = new Location2IDFullWithEdgesIndex(Location2IDQuadtreeTest.createSampleGraph());
+        Location2IDIndex idx = new Location2IDFullIndex(Location2IDQuadtreeTest.createSampleGraph());
         assertEquals(5, idx.findID(2, 3));
         assertEquals(10, idx.findID(4, 1));
-        // 6, 9 or 10
         assertEquals(10, idx.findID(3.6, 1.4));
     }
 }

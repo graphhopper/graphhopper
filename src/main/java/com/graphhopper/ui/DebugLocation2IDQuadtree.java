@@ -20,7 +20,7 @@ package com.graphhopper.ui;
 
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.Location2IDQuadtree;
+import com.graphhopper.storage.index.Location2IDQuadtree;
 import java.awt.Color;
 import java.awt.Graphics2D;
 

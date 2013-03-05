@@ -16,7 +16,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
+package com.graphhopper.storage.index;
 
 /**
  * Helper class used in some Location2IDIndex implementations for findID

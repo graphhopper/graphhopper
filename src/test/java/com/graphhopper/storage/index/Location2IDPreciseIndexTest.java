@@ -16,10 +16,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
+package com.graphhopper.storage.index;
 
-import static com.graphhopper.storage.Location2IDQuadtreeTest.*;
-import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.MMapDirectory;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.index.Location2IDPreciseIndex;
+import com.graphhopper.storage.index.Location2IDIndex;
+import static com.graphhopper.storage.index.Location2IDQuadtreeTest.*;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.util.Random;

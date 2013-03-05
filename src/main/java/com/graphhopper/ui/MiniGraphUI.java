@@ -32,7 +32,7 @@ import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.Location2IDIndex;
+import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
