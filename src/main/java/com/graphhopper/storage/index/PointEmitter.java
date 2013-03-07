@@ -18,13 +18,10 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.util.shapes.GHPlace;
-import gnu.trove.list.TIntList;
-
 /**
  * @author Peter Karich
  */
-public interface Location2EdgesIndex {
+public interface PointEmitter {
 
-    TIntList findEdges(GHPlace point);
+    void set(double lat, double lon);
 }

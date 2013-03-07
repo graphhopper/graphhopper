@@ -18,8 +18,6 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.storage.index.Location2IDFullWithEdgesIndex;
-import com.graphhopper.storage.index.Location2IDIndex;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

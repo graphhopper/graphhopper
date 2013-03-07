@@ -108,7 +108,7 @@ public class GraphStorage implements Graph, Storable {
     public GraphStorage combinedEncoder(CombinedEncoder combiEncoder) {
         this.combiEncoder = combiEncoder;
         return this;
-    }        
+    }
 
     void checkInit() {
         if (initialized)
@@ -461,6 +461,14 @@ public class GraphStorage implements Graph, Storable {
             return false;
         }
 
+        @Override public void wayGeometry(PointList pillarNodes) {
+            GraphStorage.this.wayGeometry(pillarNodes, edgePointer, nodeA() > nodeB());
+        }
+
+        @Override public PointList wayGeometry() {
+            return GraphStorage.this.wayGeometry(edgePointer, nodeA() > nodeB());
+        }
+
         @Override public String toString() {
             return edge() + " " + nodeA() + "-" + nodeB();
         }
@@ -615,38 +623,11 @@ public class GraphStorage implements Graph, Storable {
         }
 
         @Override public void wayGeometry(PointList pillarNodes) {
-            if (pillarNodes != null && !pillarNodes.isEmpty()) {
-                int len = pillarNodes.size();
-                int geoRef = nextGeoRef(len * 2);
-                edges.setInt(edgePointer + E_GEO, geoRef);
-                ensureGeometry(geoRef, len * 2 + 1);
-                geometry.setInt(geoRef, len);
-                geoRef++;
-                if (baseNode > node)
-                    pillarNodes.reverse();
-
-                for (int i = 0; i < len; geoRef += 2, i++) {
-                    geometry.setInt(geoRef, Helper.degreeToInt(pillarNodes.latitude(i)));
-                    geometry.setInt(geoRef + 1, Helper.degreeToInt(pillarNodes.longitude(i)));
-                }
-            } else
-                edges.setInt(edgePointer + E_GEO, EdgeIterator.NO_EDGE);
+            GraphStorage.this.wayGeometry(pillarNodes, edgePointer, baseNode > node);
         }
 
         @Override public PointList wayGeometry() {
-            int geoRef = edges.getInt(edgePointer + E_GEO);
-            int count = 0;
-            if (geoRef > EdgeIterator.NO_EDGE)
-                count = geometry.getInt(geoRef);
-            PointList pillarNodes = new PointList(count);
-            for (int i = 0; i < count; i++) {
-                double lat = Helper.intToDegree(geometry.getInt(geoRef + i * 2 + 1));
-                double lon = Helper.intToDegree(geometry.getInt(geoRef + i * 2 + 2));
-                pillarNodes.add(lat, lon);
-            }
-            if (baseNode > node)
-                pillarNodes.reverse();
-            return pillarNodes;
+            return GraphStorage.this.wayGeometry(edgePointer, baseNode > node);
         }
 
         @Override public int edge() {
@@ -660,6 +641,41 @@ public class GraphStorage implements Graph, Storable {
         @Override public String toString() {
             return edge() + " " + baseNode() + "-" + node();
         }
+    }
+
+    private void wayGeometry(PointList pillarNodes, long edgePointer, boolean reverse) {
+        if (pillarNodes != null && !pillarNodes.isEmpty()) {
+            int len = pillarNodes.size();
+            int geoRef = nextGeoRef(len * 2);
+            edges.setInt(edgePointer + E_GEO, geoRef);
+            ensureGeometry(geoRef, len * 2 + 1);
+            geometry.setInt(geoRef, len);
+            geoRef++;
+            if (reverse)
+                pillarNodes.reverse();
+
+            for (int i = 0; i < len; geoRef += 2, i++) {
+                geometry.setInt(geoRef, Helper.degreeToInt(pillarNodes.latitude(i)));
+                geometry.setInt(geoRef + 1, Helper.degreeToInt(pillarNodes.longitude(i)));
+            }
+        } else
+            edges.setInt(edgePointer + E_GEO, EdgeIterator.NO_EDGE);
+    }
+
+    private PointList wayGeometry(long edgePointer, boolean reverse) {
+        int geoRef = edges.getInt(edgePointer + E_GEO);
+        int count = 0;
+        if (geoRef > EdgeIterator.NO_EDGE)
+            count = geometry.getInt(geoRef);
+        PointList pillarNodes = new PointList(count);
+        for (int i = 0; i < count; i++) {
+            double lat = Helper.intToDegree(geometry.getInt(geoRef + i * 2 + 1));
+            double lon = Helper.intToDegree(geometry.getInt(geoRef + i * 2 + 2));
+            pillarNodes.add(lat, lon);
+        }
+        if (reverse)
+            pillarNodes.reverse();
+        return pillarNodes;
     }
 
     @Override

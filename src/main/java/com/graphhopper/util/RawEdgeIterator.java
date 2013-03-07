@@ -51,4 +51,8 @@ public interface RawEdgeIterator {
     int edge();
 
     boolean isEmpty();
+
+    void wayGeometry(PointList pillarNodes);
+
+    PointList wayGeometry();
 }

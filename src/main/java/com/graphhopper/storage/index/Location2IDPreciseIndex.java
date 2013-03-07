@@ -379,30 +379,7 @@ public class Location2IDPreciseIndex implements Location2IDIndex {
         // logger.info("nodes:" + len + " key:" + key + " lat:" + lat + ",lon:" + lon);
         return closestNode.node;
     }
-
-    // http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-    // or even better: http://en.wikipedia.org/wiki/Xiaolin_Wu%27s_line_algorithm
-    void bresenhamLine(double x0, double y0, double x1, double y1) {
-        double dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-        double dy = Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-        double err = (dx > dy ? dx : -dy) / 2;
-
-        while (true) {
-            // setPixel(x0, y0);
-            if (x0 == x1 && y0 == y1)
-                break;
-            double e2 = err;
-            if (e2 > -dx) {
-                err -= dy;
-                x0 += sx;
-            }
-            if (e2 < dy) {
-                err += dx;
-                y0 += sy;
-            }
-        }
-    }
-
+    
     public void flush() {
         index.setHeader(0, latSizeI);
         index.setHeader(1, lonSizeI);
