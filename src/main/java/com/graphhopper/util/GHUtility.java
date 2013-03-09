@@ -36,7 +36,6 @@ import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.set.hash.TIntHashSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;

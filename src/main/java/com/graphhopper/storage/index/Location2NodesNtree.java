@@ -32,6 +32,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.RawEdgeIterator;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPlace;
 import com.graphhopper.util.shapes.Shape;
@@ -45,7 +46,7 @@ import java.util.Collection;
  *
  * @author Peter Karich
  */
-public class Location2NodesNtree implements Location2NodesIndex, Location2IDIndex, QuadTree<Number> {
+public class Location2NodesNtree implements Location2NodesIndex, Location2IDIndex {
 
     private static final EdgeFilter ALL_EDGES = new EdgeFilter() {
         @Override public boolean accept(EdgeIterator iter) {
@@ -88,25 +89,23 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
     public Location2NodesNtree(Graph g, Directory dir) {
         this.g = g;
-        // 4 * 4 tiles => 2*2^2
-        // 8 * 8 tiles => 2*2^3
-        // 16 * 16 tiles => 2*2^4        
-        n(4);
-        maxDepth = 1;
-        // (4 * 4)^6 = 16mio        
+        // n defines the branches (== tiles) per depth
+        // 2 * 2 tiles => n=2^2, if n=4 then this is a quadtree
+        // 4 * 4 tiles => n=4^2        
+        this.n = 4;
+        // now calculate the necessary maxDepth d for our current bounds
+        // if we assume a minimum resolution like 0.5km for a leaf-tile
+        double minResolutionInKm = 0.5;
+        BBox bounds = g.bounds();
+        double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
+        double maxDistInKm = Math.max(
+                (bounds.maxLat - bounds.minLat) / 360 * DistanceCalc.C,
+                (bounds.maxLon - bounds.minLon) / 360 * dist.calcCircumference(lat));
+        // n^(depth/2) = toKM(dLon) / minResolution
+        int tmpDepth = (int) (2 * Math.log(maxDistInKm / minResolutionInKm) / Math.log(n));
+        maxDepth = Math.min(64 / n, Math.max(0, tmpDepth) + 1);
         dataAccess = dir.findCreate("spatialIndex");
-        keyAlgo = new SpatialKeyAlgo(maxDepth * (2 * n));
-        // bresenham = new BresenhamLine(, );
-    }
-
-    /**
-     * @param n with l=2^n where l is the length of an internal tile. If n=2
-     * then this is a quadtree.
-     */
-    Location2NodesNtree n(int n) {
-        // this.length = 1 << n;
-        this.n = n;
-        return this;
+        keyAlgo = new SpatialKeyAlgo(maxDepth * n);
     }
 
     public boolean loadExisting() {
@@ -203,74 +202,30 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     }
 
     @Override
-    public Location2IDIndex precision(boolean approxDist) {
+    public Location2IDIndex precision(boolean approx) {
+        if (approx)
+            dist = new DistancePlaneProjection();
+        else
+            dist = new DistanceCalc();
         return this;
     }
 
     @Override
     public float calcMemInMB() {
-        return 0;
+        return dataAccess.capacity() / Helper.MB;
     }
 
-    @Override
-    public QuadTree init(long maxItemsHint) {
-        return this;
-    }
-
-    @Override
-    public long size() {
-        return size;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
-    @Override
-    public void add(double lat, double lon, Number value) {
-        addEdge(lat, lon, value.intValue());
-    }
-
-    @Override
-    public int remove(double lat, double lon) {
-        // size--;
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Collection<CoordTrig<Number>> getNodesFromValue(double lat, double lon, Number value) {
-        // resolver.add(result, foundEdgeId);
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Collection<CoordTrig<Number>> getNodes(double lat, double lon, double distanceInKm) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Collection<CoordTrig<Number>> getNodes(Shape boundingBox) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public void clear() {
-        size = 0;
-    }
-
-    @Override
-    public String toDetailString() {
-        return "";
-    }
-
-    @Override
-    public long getMemoryUsageInBytes(int factor) {
-        return dataAccess.capacity();
-    }
-
-    @Override
-    public long getEmptyEntries(boolean onlyBranches) {
-        return -1;
-    }
+    // should we support QuadTree interface?
+//    public Collection<CoordTrig<Number>> getNodesFromValue(double lat, double lon, Number value) {
+//        // resolver.add(result, foundEdgeId);
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
+//
+//    public Collection<CoordTrig<Number>> getNodes(double lat, double lon, double distanceInKm) {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
+//
+//    public Collection<CoordTrig<Number>> getNodes(Shape boundingBox) {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
 }

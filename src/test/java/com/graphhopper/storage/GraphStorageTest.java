@@ -148,5 +148,5 @@ public class GraphStorageTest extends AbstractGraphTester {
         assertEquals(Arrays.asList(0), GHUtility.neighbors(g.getEdges(1)));
         // let 0 unchanged -> no side effects
         assertEquals(Arrays.asList(1, 3), GHUtility.neighbors(g.getEdges(0)));
-    }
+    }    
 }

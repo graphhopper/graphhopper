@@ -475,17 +475,17 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public EdgeIterator getEdgeProps(int edgeId, final int endNode) {
+    public EdgeIterator getEdgeProps(int edgeId, int endNode) {
         if (edgeId <= EdgeIterator.NO_EDGE || edgeId > edgeCount)
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + nf(edgeCount) + "]");
-        if (endNode < 0)
+        if (endNode < 0 && endNode != -1)
             throw new IllegalStateException("endNode " + endNode + " out of bounds [0," + nf(nodeCount) + "]");
         long edgePointer = (long) edgeId * edgeEntrySize;
-        // a bit complex but faster
         int nodeA = edges.getInt(edgePointer + E_NODEA);
         int nodeB = edges.getInt(edgePointer + E_NODEB);
         SingleEdge edge;
-        if (endNode == nodeB) {
+        if (endNode == nodeB || endNode == -1) {
+            // API problem for -1 because then it should be a RawEdgeIterator instead
             edge = createSingleEdge(edgeId, nodeA);
             edge.node = nodeB;
             return edge;
@@ -494,8 +494,8 @@ public class GraphStorage implements Graph, Storable {
             edge.node = nodeA;
             edge.switchFlags = true;
             return edge;
-        } else
-            return GHUtility.EMPTY;
+        }
+        return GHUtility.EMPTY;
     }
 
     protected SingleEdge createSingleEdge(int edgeId, int nodeId) {
