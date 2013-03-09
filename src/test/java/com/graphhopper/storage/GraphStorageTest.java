@@ -21,7 +21,6 @@ package com.graphhopper.storage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
 import java.io.IOException;
 import java.util.Arrays;
@@ -114,22 +113,22 @@ public class GraphStorageTest extends AbstractGraphTester {
         g.edge(3, 1, 1, false);
         g.edge(3, 2, 1, false);
 
-        RawEdgeIterator iter = g.getAllEdges();
+        EdgeIterator iter = g.getAllEdges();
         assertTrue(iter.next());
         int edgeId = iter.edge();
-        assertEquals(0, iter.nodeA());
-        assertEquals(1, iter.nodeB());
+        assertEquals(0, iter.baseNode());
+        assertEquals(1, iter.node());
         assertEquals(2, iter.distance(), 1e-6);
 
         assertTrue(iter.next());
         int edgeId2 = iter.edge();
         assertEquals(1, edgeId2 - edgeId);
-        assertEquals(1, iter.nodeA());
-        assertEquals(3, iter.nodeB());
+        assertEquals(1, iter.baseNode());
+        assertEquals(3, iter.node());
 
         assertTrue(iter.next());
-        assertEquals(2, iter.nodeA());
-        assertEquals(3, iter.nodeB());
+        assertEquals(2, iter.baseNode());
+        assertEquals(3, iter.node());
 
         assertFalse(iter.next());
     }

@@ -22,10 +22,7 @@ import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.SpatialKeyAlgo;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -39,8 +36,6 @@ import gnu.trove.list.array.TIntArrayList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A helper class to avoid cluttering the Graph interface with all the common
@@ -49,20 +44,7 @@ import org.slf4j.LoggerFactory;
  * @author Peter Karich,
  */
 public class GHUtility {
-
-    private static Logger logger = LoggerFactory.getLogger(GHUtility.class);
-    private static final VehicleEncoder carEncoder = new CarFlagEncoder();
-    private static final EdgeFilter edgesOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
-    private static final EdgeFilter edgesInFilter = new DefaultEdgeFilter(carEncoder, true, false);
-
-    public static EdgeIterator getCarOutgoing(Graph g, int index) {
-        return g.getEdges(index, edgesOutFilter);
-    }
-
-    public static EdgeIterator getCarIncoming(Graph g, int index) {
-        return g.getEdges(index, edgesInFilter);
-    }
-
+   
     /**
      * @throws could throw exception if uncatched problems like index out of
      * bounds etc
@@ -113,14 +95,6 @@ public class GHUtility {
             list.add(iter.node());
         }
         return list;
-    }
-
-    public static int count(RawEdgeIterator iter) {
-        int counter = 0;
-        while (iter.next()) {
-            ++counter;
-        }
-        return counter;
     }
 
     public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {

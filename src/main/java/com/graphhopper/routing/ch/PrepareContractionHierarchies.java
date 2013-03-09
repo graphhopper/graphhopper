@@ -41,7 +41,6 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.StopWatch;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.ArrayList;
@@ -158,7 +157,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // In CH the flags (speed) are ignored as calculating the new flags for a shortcut is often not possible.
         // Also several shortcuts would be necessary with the different modes (e.g. fastest and shortest)
         // So calculate the weight and store this as distance, then use only distance instead of getWeight
-        RawEdgeIterator iter = g.getAllEdges();
+        EdgeIterator iter = g.getAllEdges();
         int c = 0;
         while (iter.next()) {
             c++;

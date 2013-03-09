@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -72,24 +71,24 @@ public interface Graph {
     EdgeIterator edge(int a, int b, double distance, boolean bothDirections);
 
     /**
-     * The returned EdgeIterator will return endNode as node().
+     * Returns a wrapper over the specified edgeId.
      *
-     * @return an edge iterator over one element where the method next() has no
-     * meaning and will return false.
+     * @param endNode will be returned via node(). If endNode is -1 then
+     * baseNode() will be the smaller node.
+     * @return an edge iterator over one element where the method next() will
+     * always return false.
      * @throws IllegalStateException if edgeId is not valid
      */
     EdgeIterator getEdgeProps(int edgeId, int endNode);
 
     /**
-     * @return all edges in this graph
+     * @return all edges in this graph, where baseNode will be the smaller node.
      */
-    RawEdgeIterator getAllEdges();
+    EdgeIterator getAllEdges();
 
     /**
      * Returns an iterator which makes it possible to traverse all edges of the
-     * specified node if the filter accepts the edge. There is no getOutgoing or
-     * getIncoming method anylonger as these methods are dependent on the needed
-     * vehicle type. Use GHUtility.getCar* methods as a quick replacement.
+     * specified node if the filter accepts the edge.
      */
     EdgeIterator getEdges(int index, EdgeFilter filter);
 

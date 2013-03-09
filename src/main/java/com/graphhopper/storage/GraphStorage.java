@@ -29,7 +29,6 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -412,14 +411,14 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public RawEdgeIterator getAllEdges() {
+    public EdgeIterator getAllEdges() {
         return new AllEdgeIterator();
     }
 
     /**
      * Include all edges of this storage in the iterator.
      */
-    protected class AllEdgeIterator implements RawEdgeIterator {
+    protected class AllEdgeIterator implements EdgeIterator {
 
         protected long edgePointer = -edgeEntrySize;
         private int maxEdges = edgeCount * edgeEntrySize;
@@ -429,11 +428,11 @@ public class GraphStorage implements Graph, Storable {
             return edgePointer < maxEdges;
         }
 
-        @Override public int nodeA() {
+        @Override public int baseNode() {
             return edges.getInt(edgePointer + E_NODEA);
         }
 
-        @Override public int nodeB() {
+        @Override public int node() {
             return edges.getInt(edgePointer + E_NODEB);
         }
 
@@ -462,15 +461,15 @@ public class GraphStorage implements Graph, Storable {
         }
 
         @Override public void wayGeometry(PointList pillarNodes) {
-            GraphStorage.this.wayGeometry(pillarNodes, edgePointer, nodeA() > nodeB());
+            GraphStorage.this.wayGeometry(pillarNodes, edgePointer, baseNode() > node());
         }
 
         @Override public PointList wayGeometry() {
-            return GraphStorage.this.wayGeometry(edgePointer, nodeA() > nodeB());
+            return GraphStorage.this.wayGeometry(edgePointer, baseNode() > node());
         }
 
         @Override public String toString() {
-            return edge() + " " + nodeA() + "-" + nodeB();
+            return edge() + " " + baseNode() + "-" + node();
         }
     }
 
@@ -847,12 +846,12 @@ public class GraphStorage implements Graph, Storable {
         // *rewrites* all edges connected to moved nodes
         // go through all edges and pick the necessary ... <- this is easier to implement then
         // a more efficient (?) breadth-first search
-        RawEdgeIterator iter = getAllEdges();
+        EdgeIterator iter = getAllEdges();
         while (iter.next()) {
             int edge = iter.edge();
             long edgePointer = (long) edge * edgeEntrySize;
-            int nodeA = iter.nodeA();
-            int nodeB = iter.nodeB();
+            int nodeA = iter.baseNode();
+            int nodeB = iter.node();
             if (!toUpdatedSet.contains(nodeA) && !toUpdatedSet.contains(nodeB))
                 continue;
 

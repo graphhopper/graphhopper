@@ -173,8 +173,6 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
                 finish++;
         }
 
-        // System.out.println(toString() + " visited nodes:" + (visitedTo.getCardinality() + visitedFrom.getCardinality()));
-        // System.out.println(currFrom.weight + " " + currTo.weight + " " + shortest.weight);
         return shortest.extract();
     }
 

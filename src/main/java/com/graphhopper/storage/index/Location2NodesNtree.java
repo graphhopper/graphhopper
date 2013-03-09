@@ -25,17 +25,14 @@ import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.trees.CoordResolver;
-import com.graphhopper.trees.QuadTree;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.RawEdgeIterator;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPlace;
-import com.graphhopper.util.shapes.Shape;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.Collection;
@@ -118,11 +115,11 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
     public Location2NodesNtree prepareIndex() {
         // TODO NOW bresenheim resolution depends on bounds and spatialkey bits
-        RawEdgeIterator iter = g.getAllEdges();
+        EdgeIterator iter = g.getAllEdges();
         while (iter.next()) {
             int edge = iter.edge();
 
-            int nodeA = iter.nodeA();
+            int nodeA = iter.baseNode();
             double lat1 = g.getLatitude(nodeA);
             double lon1 = g.getLongitude(nodeA);
             double lat2;
@@ -136,7 +133,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                 lat1 = lat2;
                 lon1 = lon2;
             }
-            int nodeB = iter.nodeB();
+            int nodeB = iter.node();
             lat2 = g.getLatitude(nodeB);
             lon2 = g.getLongitude(nodeB);
             addEdge(edge, lat1, lon1, lat2, lon2);
