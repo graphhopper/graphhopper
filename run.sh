@@ -109,10 +109,11 @@ if [ ! -f "$JAR" ]; then
   echo "## now building graphhopper jar: $JAR"
   echo "## using maven at $MAVEN_HOME"
   #mvn clean
-  $MAVEN_HOME/bin/mvn -DskipTests=true install assembly:single > /dev/null
+  $MAVEN_HOME/bin/mvn -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
   returncode=$?
   if [[ $returncode != 0 ]] ; then
       echo "## compilation failed"
+      cat /tmp/graphhopper-compile.log
       exit $returncode
   fi      
 else
