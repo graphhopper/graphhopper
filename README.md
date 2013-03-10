@@ -25,6 +25,6 @@ Features
 Get Started & Contribute
 ---------------
 
-Read the information for [Developers](https://github.com/graphhopper/graphhopper/wiki/Developers), sign up to [our mailing list](http://lists.openstreetmap.org/pipermail/graphhopper/), create pull requests or report bugs.
+Read the information for [Developers](https://github.com/graphhopper/graphhopper/wiki/Developers), sign up to [our mailing list](http://lists.openstreetmap.org/listinfo/graphhopper), create [pull requests](https://github.com/graphhopper/graphhopper/pulls) or [report bugs](https://github.com/graphhopper/graphhopper/issues).
 
 There are also subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/wiki/Android) or as a [web service](https://github.com/graphhopper/graphhopper-web).
