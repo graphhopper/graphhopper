@@ -1,6 +1,6 @@
 # GraphHopper [![Build Status](https://secure.travis-ci.org/graphhopper/graphhopper.png?branch=master)](http://travis-ci.org/graphhopper/graphhopper)
 
-Java road routing engine
+A fast and memory efficient Java road routing engine under Apache License 2.0
 
 Purpose
 ---------------
@@ -21,3 +21,10 @@ Features
    [as a web service](https://github.com/graphhopper/graphhopper-web) 
    and even offline [on Android](https://github.com/graphhopper/graphhopper/wiki/Android)
  * Well tested
+
+Get Started & Contribute
+---------------
+
+Read the information for [Developers](https://github.com/graphhopper/graphhopper/wiki/Developers), create pull requests or report bugs.
+
+There are also subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/wiki/Android) or as a [web service](https://github.com/graphhopper/graphhopper-web).
