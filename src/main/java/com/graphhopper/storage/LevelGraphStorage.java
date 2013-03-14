@@ -141,26 +141,26 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     }
 
     @Override
-    public EdgeSkipIterator getAllEdges() {
+    public AllEdgeIterator getAllEdges() {
         return new AllEdgeSkipIterator();
     }
 
-    class AllEdgeSkipIterator extends AllEdgeIterator implements EdgeSkipIterator {
+    class AllEdgeSkipIterator extends AllEdgeIterator {
 
-        @Override public void skippedEdges(int edge1, int edge2) {
+         public void skippedEdges(int edge1, int edge2) {
             edges.setInt(edgePointer + I_SKIP_EDGE1, edge1);
             edges.setInt(edgePointer + I_SKIP_EDGE2, edge2);
         }
 
-        @Override public int skippedEdge1() {
+         public int skippedEdge1() {
             return edges.getInt(edgePointer + I_SKIP_EDGE1);
         }
 
-        @Override public int skippedEdge2() {
+         public int skippedEdge2() {
             return edges.getInt(edgePointer + I_SKIP_EDGE2);
         }
 
-        @Override public boolean isShortcut() {
+         public boolean isShortcut() {
             return EdgeIterator.Edge.isValid(skippedEdge1());
         }
     }

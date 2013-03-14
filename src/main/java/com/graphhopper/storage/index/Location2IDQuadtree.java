@@ -26,7 +26,6 @@ import com.graphhopper.geohash.LinearKeyAlgo;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.RAMDataAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
@@ -56,7 +55,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     private KeyAlgo keyAlgo;
     protected DistanceCalc dist = new DistancePlaneProjection();
     private DataAccess index;
-    private double maxNormRasterWidthKm;
+    private double maxNormRasterWidthInMeter;
     private Graph g;
     private int lonSize, latSize;
 
@@ -141,15 +140,15 @@ public class Location2IDQuadtree implements Location2IDIndex {
         this.lonSize = lon;
         BBox b = g.bounds();
         keyAlgo = new LinearKeyAlgo(lat, lon).bounds(b.minLon, b.maxLon, b.minLat, b.maxLat);
-        maxNormRasterWidthKm = dist.calcNormalizedDist(Math.max(dist.calcDist(b.minLat, b.minLon, b.minLat, b.maxLon),
+        maxNormRasterWidthInMeter = dist.calcNormalizedDist(Math.max(dist.calcDist(b.minLat, b.minLon, b.minLat, b.maxLon),
                 dist.calcDist(b.minLat, b.minLon, b.maxLat, b.minLon)) / Math.sqrt(capacity()));
 
         // as long as we have "dist < PI*R/2" it is save to compare the normalized distances instead of the real
         // distances. because sin(x) is only monotonic increasing for x <= PI/2 (and positive for x >= 0)
     }
 
-    protected double getMaxRasterWidthKm() {
-        return dist.calcDenormalizedDist(maxNormRasterWidthKm);
+    protected double getMaxRasterWidthMeter() {
+        return dist.calcDenormalizedDist(maxNormRasterWidthInMeter);
     }
 
     private MyBitSet fillQuadtree(int size) {
@@ -304,7 +303,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
                     return true;
                 }
 
-                return d < maxNormRasterWidthKm * 2;
+                return d < maxNormRasterWidthInMeter * 2;
             }
         }.start(g, id, false);
 

@@ -24,6 +24,7 @@ import com.graphhopper.coll.SparseIntIntArray;
 import com.graphhopper.routing.util.AllEdgesFilter;
 import com.graphhopper.routing.util.CombinedEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.util.AllEdgesIterator;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
@@ -411,17 +412,21 @@ public class GraphStorage implements Graph, Storable {
     }
 
     @Override
-    public EdgeIterator getAllEdges() {
+    public AllEdgesIterator getAllEdges() {
         return new AllEdgeIterator();
     }
 
     /**
      * Include all edges of this storage in the iterator.
      */
-    protected class AllEdgeIterator implements EdgeIterator {
+    protected class AllEdgeIterator implements AllEdgesIterator {
 
         protected long edgePointer = -edgeEntrySize;
         private int maxEdges = edgeCount * edgeEntrySize;
+        
+        @Override public int count() {
+            return edgeCount;
+        }
 
         @Override public boolean next() {
             edgePointer += edgeEntrySize;

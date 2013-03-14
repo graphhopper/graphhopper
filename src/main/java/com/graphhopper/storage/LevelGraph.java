@@ -19,6 +19,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.util.AllEdgesIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 
 /**
@@ -49,6 +50,6 @@ public interface LevelGraph extends Graph {
     @Override
     EdgeSkipIterator getEdges(int nodeId, EdgeFilter filter);
 
-    @Override
-    EdgeSkipIterator getAllEdges();
+//    @Override
+//    AllEdgesIterator getAllEdges();
 }

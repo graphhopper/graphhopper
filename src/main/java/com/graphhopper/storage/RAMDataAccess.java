@@ -183,6 +183,7 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public void setInt(long longIndex, int value) {
+        // assert segmentSizeIntsPower > 0 : "call createNew or loadExisting before usage!";
         int bufferIndex = (int) (longIndex >>> segmentSizeIntsPower);
         int index = (int) (longIndex & indexDivisor);
         segments[bufferIndex][index] = value;
@@ -190,6 +191,7 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public int getInt(long longIndex) {
+        // assert segmentSizeIntsPower > 0 : "call createNew or loadExisting before usage!";
         int bufferIndex = (int) (longIndex >>> segmentSizeIntsPower);
         int index = (int) (longIndex & indexDivisor);
         return segments[bufferIndex][index];

@@ -38,6 +38,6 @@ class WeightedNode implements Comparable<WeightedNode> {
     }
 
     @Override public String toString() {
-        return node + " distance is " + weight;
+        return node + " weight is " + weight;
     }
 }

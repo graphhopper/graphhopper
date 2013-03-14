@@ -22,13 +22,18 @@ import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.hash.TIntHashSet;
 
 /**
- * Implements the bitset interface via a trove THashSet. More efficient for a few entries.
+ * Implements the bitset interface via a trove THashSet. More efficient for a
+ * few entries.
  *
  * @author Peter Karich,
  */
 public class MyTBitSet implements MyBitSet {
 
     private final TIntHashSet tHash;
+
+    public MyTBitSet(TIntHashSet set) {
+        tHash = set;
+    }
 
     public MyTBitSet(int no) {
         tHash = new TIntHashSet(no, 0.7f, -1);

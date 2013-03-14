@@ -18,6 +18,7 @@
  */
 package com.graphhopper.geohash;
 
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.CoordTrig;
 
 /**
@@ -76,13 +77,13 @@ public class SpatialKeyAlgo implements KeyAlgo {
 
     // private int factorForPrecision;
     // normally -180 degree
-    private double minLonI;
+    private double minLon;
     // normally +180 degree (parallel to equator)
-    private double maxLonI;
+    private double maxLon;
     // normally -90 degree
-    private double minLatI;
+    private double minLat;
     // normally +90 degree (south to nord)
-    private double maxLatI;
+    private double maxLat;
     private int allBits;
     private long initialBits;
 
@@ -124,12 +125,17 @@ public class SpatialKeyAlgo implements KeyAlgo {
         return (int) Math.log10(p);
     }
 
+    public SpatialKeyAlgo bounds(BBox box) {
+        bounds(box.minLon, box.maxLon, box.minLat, box.maxLat);
+        return this;
+    }
+
     @Override
     public SpatialKeyAlgo bounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit) {
-        minLonI = minLonInit;
-        maxLonI = maxLonInit;
-        minLatI = minLatInit;
-        maxLatI = maxLatInit;
+        minLon = minLonInit;
+        maxLon = maxLonInit;
+        minLat = minLatInit;
+        maxLat = maxLatInit;
         return this;
     }
 
@@ -153,19 +159,19 @@ public class SpatialKeyAlgo implements KeyAlgo {
         // but we would need 'long' because 'int factorForPrecision' is not enough (problem: coord!=decode(encode(coord)) see testBijection)
         // and 'long'-ops are more expensive than double (at least on 32bit systems)
         long hash = 0;
-        double minLat = minLatI;
-        double maxLat = maxLatI;
-        double minLon = minLonI;
-        double maxLon = maxLonI;
+        double minLatTmp = minLat;
+        double maxLatTmp = maxLat;
+        double minLonTmp = minLon;
+        double maxLonTmp = maxLon;
         int i = 0;
         while (true) {
-            if (minLat < maxLat) {
-                double midLat = (minLat + maxLat) / 2;
+            if (minLatTmp < maxLatTmp) {
+                double midLat = (minLatTmp + maxLatTmp) / 2;
                 if (lat > midLat) {
                     hash |= 1;
-                    minLat = midLat;
+                    minLatTmp = midLat;
                 } else
-                    maxLat = midLat;
+                    maxLatTmp = midLat;
             }
             i++;
             if (i < allBits)
@@ -174,13 +180,13 @@ public class SpatialKeyAlgo implements KeyAlgo {
             else
                 break;
 
-            if (minLon < maxLon) {
-                double midLon = (minLon + maxLon) / 2;
+            if (minLonTmp < maxLonTmp) {
+                double midLon = (minLonTmp + maxLonTmp) / 2;
                 if (lon > midLon) {
                     hash |= 1;
-                    minLon = midLon;
+                    minLonTmp = midLon;
                 } else
-                    maxLon = midLon;
+                    maxLonTmp = midLon;
             }
             i++;
             if (i < allBits)
@@ -203,10 +209,10 @@ public class SpatialKeyAlgo implements KeyAlgo {
         // precalculated values from arrays and for 'bits' a precalculated array is even slightly slower!
 
         // Use the value in the middle => start from "min" use "max" as initial step-size
-        double midLat = (maxLatI - minLatI) / 2;
-        double midLon = (maxLonI - minLonI) / 2;
-        double lat = minLatI;
-        double lon = minLonI;
+        double midLat = (maxLat - minLat) / 2;
+        double midLon = (maxLon - minLon) / 2;
+        double lat = minLat;
+        double lon = minLon;
         long bits = initialBits;
         while (true) {
             if ((spatialKey & bits) != 0)

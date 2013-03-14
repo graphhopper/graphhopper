@@ -19,6 +19,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.util.AllEdgesIterator;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.shapes.BBox;
 
@@ -84,7 +85,7 @@ public interface Graph {
     /**
      * @return all edges in this graph, where baseNode will be the smaller node.
      */
-    EdgeIterator getAllEdges();
+    AllEdgesIterator getAllEdges();
 
     /**
      * Returns an iterator which makes it possible to traverse all edges of the

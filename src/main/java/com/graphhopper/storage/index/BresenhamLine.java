@@ -26,19 +26,21 @@ package com.graphhopper.storage.index;
  */
 public class BresenhamLine {
 
-    public static void calcPoints(int lat1, int lon1, int lat2, int lon2,
-            PointEmitter emitter, int deltaLat, int deltaLon) {
-        int dLat = Math.abs(lat2 - lat1),
+    public static void calcPoints(double lat1, double lon1, double lat2, double lon2,
+            PointEmitter emitter, double deltaLat, double deltaLon) {
+        double dLat = Math.abs(lat2 - lat1),
                 sLat = lat1 < lat2 ? deltaLat : -deltaLat;
-        int dLon = Math.abs(lon2 - lon1),
+        double dLon = Math.abs(lon2 - lon1),
                 sLon = lon1 < lon2 ? deltaLon : -deltaLon;
-        int err = (dLat > dLon ? dLat : -dLon) / 2;
+        double err = (dLat > dLon ? dLat : -dLon) / 2;
 
         while (true) {
             emitter.set(lat1, lon1);
-            if (lat1 == lat2 && lon1 == lon2)
+            
+            if ((sLat < 0 && lat1 <= lat2 || sLat > 0 && lat1 >= lat2)
+                    && (sLon < 0 && lon1 <= lon2 || sLon > 0 && lon1 >= lon2))
                 break;
-            int e2 = err;
+            double e2 = err;
             if (e2 > -dLat) {
                 err -= dLon;
                 lat1 += sLat;

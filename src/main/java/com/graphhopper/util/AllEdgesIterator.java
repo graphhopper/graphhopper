@@ -16,22 +16,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage.index;
-
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.shapes.GHPlace;
-import gnu.trove.TIntCollection;
+package com.graphhopper.util;
 
 /**
- * Look up ids from gps coordinates.
- *
  * @author Peter Karich
  */
-public interface Location2NodesIndex {
+public interface AllEdgesIterator extends EdgeIterator {
 
-    /**
-     * @return unique but sorted list of node ids. Sorted by distance to the
-     * specified point
-     */
-    TIntCollection findIDs(GHPlace point, EdgeFilter edgeFilter);
+    int count();
 }

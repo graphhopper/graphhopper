@@ -20,7 +20,13 @@ package com.graphhopper.storage.index;
 
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.GHPlace;
+import gnu.trove.list.TIntList;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  *
@@ -34,23 +40,33 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         return new Location2NodesNtree(g, dir).prepareIndex(resolution);
     }
 
-    @Override
-    public void testSimpleGraph() {
-        // TODO
-    }
+    @Test
+    public void testInMemIndex() {
+        Graph graph = new GraphBuilder().create();
+        graph.setNode(0, 0.5, -0.5);
+        graph.setNode(1, -0.5, -0.5);
+        graph.setNode(2, -1, -1);
+        graph.setNode(3, -0.4, 0.9);
+        graph.setNode(4, -0.6, 1.6);
+        graph.edge(0, 1, 1, true);
+        graph.edge(0, 2, 1, true);
+        graph.edge(0, 4, 1, true);
+        graph.edge(1, 3, 1, true);
+        graph.edge(2, 3, 1, true);
+        graph.edge(2, 4, 1, true);
+        graph.edge(3, 4, 1, true);
+        Location2NodesNtree index = new Location2NodesNtree(graph, new RAMDirectory());
+        index.prepareAlgo(500);
+        Location2NodesNtree.InMemConstructionIndex inMemIndex = index.prepareIndex();
 
-    @Override
-    public void testSimpleGraph2() {
-        // TODO
-    }
+        assertEquals(1, inMemIndex.getLayer(0).size());
+        assertEquals(4, inMemIndex.getLayer(1).size());
 
-    @Override
-    public void testSinglePoints120() {
-        // TODO
-    }
+        index.dataAccess.createNew(1024);
+        inMemIndex.store(inMemIndex.root, 0);
+        assertEquals(1.0, index.calcMemInMB(), 0.01);
 
-    @Override
-    public void testSinglePoints32() {
-        // TODO
+        TIntList list = index.findIDs(new GHPlace(-.5, -.5), Location2NodesNtree.ALL_EDGES);
+        assertEquals(Helper.createTList(1), list);
     }
 }
