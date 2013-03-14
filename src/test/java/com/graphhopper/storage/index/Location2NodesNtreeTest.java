@@ -37,7 +37,12 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     @Override
     public Location2IDIndex createIndex(Graph g, int resolution) {
         Directory dir = new RAMDirectory(location);
-        return new Location2NodesNtree(g, dir).prepareIndex(resolution);
+        return new Location2NodesNtree(g, dir).prepareIndex(1000);
+    }
+
+    @Override
+    public boolean hasEdgeSupport() {
+        return true;
     }
 
     @Test
@@ -56,11 +61,16 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         graph.edge(2, 4, 1, true);
         graph.edge(3, 4, 1, true);
         Location2NodesNtree index = new Location2NodesNtree(graph, new RAMDirectory());
-        index.prepareAlgo(500);
+        index.subEntries(4).minResolutionInMeter(1000).prepareAlgo();
         Location2NodesNtree.InMemConstructionIndex inMemIndex = index.prepareIndex();
 
         assertEquals(1, inMemIndex.getLayer(0).size());
-        assertEquals(4, inMemIndex.getLayer(1).size());
+        assertEquals(2 * 2, inMemIndex.getLayer(1).size());
+        assertEquals(4 * 4, inMemIndex.getLayer(2).size());
+        assertEquals(8 * 8, inMemIndex.getLayer(3).size());
+        assertEquals(16 * 16, inMemIndex.getLayer(4).size());
+        // TODO why is the count mismatch so late?
+        assertEquals(953, inMemIndex.getLayer(5).size());
 
         index.dataAccess.createNew(1024);
         inMemIndex.store(inMemIndex.root, 0);

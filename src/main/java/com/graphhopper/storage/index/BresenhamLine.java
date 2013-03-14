@@ -28,15 +28,15 @@ public class BresenhamLine {
 
     public static void calcPoints(double lat1, double lon1, double lat2, double lon2,
             PointEmitter emitter, double deltaLat, double deltaLon) {
-        double dLat = Math.abs(lat2 - lat1),
+        double dLat = Math.abs(lat2 - lat1) / deltaLat,
                 sLat = lat1 < lat2 ? deltaLat : -deltaLat;
-        double dLon = Math.abs(lon2 - lon1),
+        double dLon = Math.abs(lon2 - lon1) / deltaLon,
                 sLon = lon1 < lon2 ? deltaLon : -deltaLon;
         double err = (dLat > dLon ? dLat : -dLon) / 2;
 
         while (true) {
             emitter.set(lat1, lon1);
-            
+
             if ((sLat < 0 && lat1 <= lat2 || sLat > 0 && lat1 >= lat2)
                     && (sLon < 0 && lon1 <= lon2 || sLon > 0 && lon1 >= lon2))
                 break;

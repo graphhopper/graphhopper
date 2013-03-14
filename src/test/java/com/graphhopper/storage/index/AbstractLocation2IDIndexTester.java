@@ -32,60 +32,55 @@ import org.junit.Test;
  * @author Peter Karich
  */
 public abstract class AbstractLocation2IDIndexTester {
-    
+
     String location = "./target/tmp/";
-    
+
     public abstract Location2IDIndex createIndex(Graph g, int resolution);
-    
+
+    public boolean hasEdgeSupport() {
+        return false;
+    }
+
     @Before
     public void setUp() {
         Helper.removeDir(new File(location));
     }
-    
+
     @After
     public void tearDown() {
         Helper.removeDir(new File(location));
     }
-    
+
     @Test
     public void testSimpleGraph() {
         Graph g = createGraph();
-        g.setNode(0, -1, -2);
-        g.setNode(1, 2, -1);
-        g.setNode(2, 0, 1);
-        g.setNode(3, 1, 2);
-        g.setNode(4, 6, 1);
-        g.setNode(5, 4, 4);
-        g.setNode(6, 4.5, -0.5);
-        g.edge(0, 1, 3.5, true);
-        g.edge(0, 2, 2.5, true);
-        g.edge(2, 3, 1, true);
-        g.edge(3, 4, 2.2, true);
-        g.edge(1, 4, 2.4, true);
-        g.edge(3, 5, 1.5, true);
-        
+        initSimpleGraph(g);
+
         Location2IDIndex idx = createIndex(g, 8);
         assertEquals(4, idx.findID(5, 2));
         assertEquals(3, idx.findID(1.5, 2));
         assertEquals(0, idx.findID(-1, -1));
-        // now get the edge 1-4 and not node 6
-        assertEquals(6, idx.findID(4, 0));
+
+        if (hasEdgeSupport())
+            // now get the edge 1-4 and not node 6
+            assertEquals(4, idx.findID(4, 0));
+        else
+            assertEquals(6, idx.findID(4, 0));
     }
-    
-    @Test
-    public void testSimpleGraph2() {
-        //  6         4
-        //  5       
-        //          6
-        //  4                5
-        //  3
-        //  2      1  
-        //  1            3
-        //  0      2      
-        // -1   0
+
+    public void initSimpleGraph(Graph g) {
+        //  6 |       4
+        //  5 |     
+        //    |     6
+        //  4 |              5
+        //  3 |
+        //  2 |    1  
+        //  1 |          3
+        //  0 |    2      
+        // -1 | 0
+        // ---|-------------------
+        //    |-2 -1 0 1 2 3 4
         //
-        //     -2 -1 0 1 2 3 4
-        Graph g = createGraph();
         g.setNode(0, -1, -2);
         g.setNode(1, 2, -1);
         g.setNode(2, 0, 1);
@@ -99,18 +94,31 @@ public abstract class AbstractLocation2IDIndexTester {
         g.edge(3, 4, 3.2, true);
         g.edge(1, 4, 2.4, true);
         g.edge(3, 5, 1.5, true);
-        
+    }
+
+    @Test
+    public void testSimpleGraph2() {
+        Graph g = createGraph();
+        initSimpleGraph(g);
+        // make sure 6 is connected
+        g.edge(6, 4, 1.2, true);
+
         Location2IDIndex idx = createIndex(g, 28);
         assertEquals(4, idx.findID(5, 2));
         assertEquals(3, idx.findID(1.5, 2));
         assertEquals(0, idx.findID(-1, -1));
-        assertEquals(6, idx.findID(4, 0));
+        assertEquals(6, idx.findID(4.5, -0.5));
+        if (hasEdgeSupport()) {
+            assertEquals(4, idx.findID(4, 1));
+            assertEquals(4, idx.findID(4, 0));
+        } else {
+            assertEquals(6, idx.findID(4, 1));
+            assertEquals(6, idx.findID(4, 0));
+        }
         assertEquals(6, idx.findID(4, -2));
-        // 4 is wrong!
-        assertEquals(6, idx.findID(4, 1));
         assertEquals(5, idx.findID(3, 3));
     }
-    
+
     @Test
     public void testSinglePoints120() {
         Graph g = createSampleGraph();
@@ -122,11 +130,11 @@ public abstract class AbstractLocation2IDIndexTester {
         assertEquals(10, idx.findID(3.649, 1.375));
         assertEquals(9, idx.findID(3.3, 2.2));
         assertEquals(6, idx.findID(3.0, 1.5));
-        
+
         assertEquals(10, idx.findID(3.8, 0));
         assertEquals(10, idx.findID(3.8466, 0.021));
     }
-    
+
     @Test
     public void testSinglePoints32() {
         Graph g = createSampleGraph();
@@ -135,10 +143,13 @@ public abstract class AbstractLocation2IDIndexTester {
         // 10 or 6
         assertEquals(10, idx.findID(3.649, 1.375));
         assertEquals(10, idx.findID(3.8465748, 0.021762699));
-        assertEquals(6, idx.findID(2.485, 1.373));
+        if (hasEdgeSupport())
+            assertEquals(4, idx.findID(2.485, 1.373));
+        else
+            assertEquals(6, idx.findID(2.485, 1.373));
         assertEquals(0, idx.findID(0.64628404, 0.53006625));
     }
-    
+
     @Test
     public void testNoErrorOnEdgeCase_lastIndex() {
         int locs = 10000;
@@ -150,11 +161,11 @@ public abstract class AbstractLocation2IDIndexTester {
         createIndex(g, 200);
         Helper.removeDir(new File(location));
     }
-    
+
     public static Graph createGraph() {
         return new GraphBuilder().create();
     }
-    
+
     public static Graph createSampleGraph() {
         Graph graph = createGraph();
         // length does not matter here but lat,lon and outgoing edges do!

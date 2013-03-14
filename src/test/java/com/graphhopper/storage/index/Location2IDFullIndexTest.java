@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.storage.Graph;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -25,7 +26,12 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class Location2IDFullIndexTest {
+public class Location2IDFullIndexTest extends AbstractLocation2IDIndexTester {
+
+    @Override
+    public Location2IDIndex createIndex(Graph g, int resolution) {
+        return new Location2IDFullIndex(g);
+    }
 
     @Test
     public void testFullIndex() {

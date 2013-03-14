@@ -83,9 +83,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
                     double distEdge = calc.calcDenormalizedDist(calc.calcNormalizedEdgeDistance(queryLat, queryLon,
                             fromLat, fromLon, toLat, toLon));
                     if (distEdge < foundDist) {
-                        if (fromDist < calc.calcDist(toLat, toLon, queryLat, queryLon))
-                            id = fromNode;
-                        else
+                        if (fromDist > calc.calcDist(toLat, toLon, queryLat, queryLon))
                             id = toNode;
                         foundDist = distEdge;
                     }

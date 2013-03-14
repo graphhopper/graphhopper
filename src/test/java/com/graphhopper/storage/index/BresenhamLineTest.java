@@ -57,6 +57,13 @@ public class BresenhamLineTest {
     @Test
     public void testBresenhamBug() {
         BresenhamLine.calcPoints(0.5, -0.5, -0.6, 1.6, emitter, 0.75, 1.3);
-        assertEquals(Helper.createPointList(0.5, -0.5, -0.25, 0.8, -0.25, 2.1, -1, 3.4), points);
+        assertEquals(Helper.createPointList(0.5, -0.5, -0.25, 0.8, -1, 2.1), points);
+    }
+
+    @Test
+    public void testBresenhamBug2() {
+        BresenhamLine.calcPoints(6.0, 1.0, 4.5, -0.5, emitter, 0.2, 0.1);
+        assertEquals(Helper.createPointList(6, 1, 6, 0.9, 5.8, 0.8, 5.8, 0.7, 5.6, 0.6, 5.6, 0.5, 5.4, 0.4, 5.4, 0.3,
+                5.2, 0.2, 5.2, 0.1, 5, 0, 5, -0.1, 4.8, -0.2, 4.8, -0.3, 4.6, -0.4, 4.6, -0.5, 4.4, -0.6), points);
     }
 }

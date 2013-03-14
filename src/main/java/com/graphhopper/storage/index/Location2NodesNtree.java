@@ -31,6 +31,7 @@ import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
@@ -79,18 +80,35 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     private long bitmask;
     private KeyAlgo keyAlgo;
     private int minResolutionInMeter;
+    private double deltaLat;
+    private double deltaLon;
+    private int initLeafEntries = 4;
 
     public Location2NodesNtree(Graph g, Directory dir) {
         this.graph = g;
         dataAccess = dir.findCreate("spatialNIndex");
+        subEntries = 4;
+        minResolutionInMeter = 500;
     }
 
-    void prepareAlgo(int minResolutionInMeter) {
+    /**
+     * subEntries is n and defines the branches (== tiles) per depth
+     * <pre>
+     * 2 * 2 tiles => n=2^2, if n=4 then this is a quadtree
+     * 4 * 4 tiles => n=4^2
+     * </pre>
+     */
+    public Location2NodesNtree subEntries(int subEntries) {
+        this.subEntries = subEntries;
+        return this;
+    }
+
+    public Location2NodesNtree minResolutionInMeter(int minResolutionInMeter) {
         this.minResolutionInMeter = minResolutionInMeter;
-        // subEntries is n and defines the branches (== tiles) per depth
-        // 2 * 2 tiles => n=2^2, if n=4 then this is a quadtree
-        // 4 * 4 tiles => n=4^2        
-        this.subEntries = 4;
+        return this;
+    }
+
+    void prepareAlgo() {
         shift = (int) Math.round(Math.sqrt(subEntries));
         bitmask = (1 << shift) - 1;
 
@@ -103,8 +121,11 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                 (bounds.maxLat - bounds.minLat) / 360 * DistanceCalc.C,
                 (bounds.maxLon - bounds.minLon) / 360 * distCalc.calcCircumference(lat));
         int tmpDepth = (int) (2 * Math.log(maxDistInMeter / minResolutionInMeter) / Math.log(subEntries));
-        maxDepth = Math.min(64 / subEntries, Math.max(0, tmpDepth) + 1);
+        maxDepth = Math.min(64 / shift, Math.max(0, tmpDepth) + 1);
         keyAlgo = new SpatialKeyAlgo(maxDepth * shift).bounds(bounds);
+        long parts = Math.round(Math.pow(shift, maxDepth));
+        deltaLat = (graph.bounds().maxLat - graph.bounds().minLat) / parts;
+        deltaLon = (graph.bounds().maxLon - graph.bounds().minLon) / parts;
     }
 
     InMemConstructionIndex prepareIndex() {
@@ -128,11 +149,13 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                 throw new IllegalStateException("incorrect location2id index version");
             if (dataAccess.getHeader(1) != calcChecksum())
                 throw new IllegalStateException("location2id index was opened with incorrect graph");
-            prepareAlgo(dataAccess.getHeader(2));
+            minResolutionInMeter(dataAccess.getHeader(2));
+            subEntries(dataAccess.getHeader(3));
+            prepareAlgo();
         } else {
-            // use this as hint?
-            // minResolutionInMeter = capacity;            
-            prepareAlgo(500);
+            minResolutionInMeter(capacity);
+            subEntries(4);
+            prepareAlgo();
             // in-memory preparation
             InMemConstructionIndex inMem = prepareIndex();
 
@@ -142,6 +165,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             dataAccess.setHeader(0, MAGIC_INT);
             dataAccess.setHeader(1, calcChecksum());
             dataAccess.setHeader(2, minResolutionInMeter);
+            dataAccess.setHeader(3, subEntries);
             dataAccess.flush();
         }
         return this;
@@ -170,14 +194,9 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     class InMemConstructionIndex {
 
         InMemTreeEntry root;
-        double deltaLat;
-        double deltaLon;
 
         public InMemConstructionIndex(int noOfSubEntries) {
             root = new InMemTreeEntry(noOfSubEntries);
-            long parts = Math.round(Math.pow(shift, maxDepth));
-            deltaLat = (graph.bounds().maxLat - graph.bounds().minLat) / parts;
-            deltaLon = (graph.bounds().maxLon - graph.bounds().minLon) / parts;
         }
 
         void prepare() {
@@ -194,24 +213,27 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                 for (int i = 0; i < len; i++) {
                     lat2 = points.latitude(i);
                     lon2 = points.longitude(i);
-                    addNode(nodeA, lat1, lon1, lat2, lon2);
-                    addNode(nodeB, lat1, lon1, lat2, lon2);
+                    addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
                     lat1 = lat2;
                     lon1 = lon2;
                 }
                 lat2 = graph.getLatitude(nodeB);
                 lon2 = graph.getLongitude(nodeB);
-                addNode(nodeA, lat1, lon1, lat2, lon2);
-                addNode(nodeB, lat1, lon1, lat2, lon2);
+                addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
             }
         }
 
-        void addNode(final int nodeId, double lat1, double lon1, double lat2, double lon2) {
+        void addNode(final int nodeA, final int nodeB, double lat1, double lon1, double lat2, double lon2) {
             // TODO inline bresenham?
             PointEmitter pointEmitter = new PointEmitter() {
                 @Override public void set(double lat, double lon) {
                     long key = keyAlgo.encode(lat, lon);
-                    addNode(root, nodeId, 0, key);
+                    // TODO measure distance to avoid pair adding
+                    // if(lat,lon more close to lat1,lon1)
+                    if (NumHelper.equalsEps(lat, 4.5, 0.1) && NumHelper.equalsEps(lon, -0.5, 0.1))
+                        root = root;
+                    addNode(root, nodeA, 0, key);
+                    addNode(root, nodeB, 0, key);
                 }
             };
             BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter, deltaLat, deltaLon);
@@ -228,7 +250,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                 InMemEntry subentry = treeEntry.getSubEntry(index);
                 if (subentry == null) {
                     if (depth == maxDepth)
-                        subentry = new InMemLeafEntry(4);
+                        subentry = new InMemLeafEntry(initLeafEntries);
                     else
                         subentry = new InMemTreeEntry(subEntries);
                     treeEntry.setSubEntry(index, subentry);
@@ -299,14 +321,27 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     }
 
     @Override
-    public TIntList findIDs(final GHPlace point, EdgeFilter edgeFilter) {
-        // TODO a list is returned because we need start AND end node of an edge
-        // and not because of other things!
+    public TIntList findIDs(GHPlace point, final EdgeFilter edgeFilter) {
+        final double queryLat = point.lat;
+        final double queryLon = point.lon;
+        final TIntHashSet storedNetworkEntryIds = new TIntHashSet();
+        boolean simple = true;
+        if (simple) {
+            long key = keyAlgo.encode(queryLat, queryLon);
+            fillIDs(key, 0, 0, storedNetworkEntryIds);
+        } else {
+            // search all rasters around minResolutionInMeter as we did not fill empty entries
+            double maxLat = queryLat + deltaLat;
+            double maxLon = queryLon + deltaLon;
+            for (double tmpLat = queryLat - deltaLat; tmpLat <= maxLat; tmpLat += deltaLat) {
+                for (double tmpLon = queryLon - deltaLon; tmpLon <= maxLon; tmpLon += deltaLon) {
+                    long key = keyAlgo.encode(tmpLat, tmpLon);
+                    System.out.println(point + ", key " + key);
+                    fillIDs(key, 0, 0, storedNetworkEntryIds);
+                }
+            }
+        }
 
-        long key = keyAlgo.encode(point.lat, point.lon);
-        TIntHashSet storedNetworkEntryIds = new TIntHashSet();
-        // TODO search all rasters around minResolutionInMeter!
-        fillIDs(key, 0, 0, storedNetworkEntryIds);
         if (storedNetworkEntryIds.isEmpty())
             return new TIntArrayList(0);
 
@@ -314,63 +349,76 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         double mainLat = graph.getLatitude(mainId);
         double mainLon = graph.getLongitude(mainId);
         final WeightedNode closestNode = new WeightedNode(mainId,
-                distCalc.calcNormalizedDist(mainLat, mainLon, point.lat, point.lon));
+                distCalc.calcNormalizedDist(mainLat, mainLon, queryLat, queryLon));
 
         // clone storedIds to avoid interference with forEach
         final MyBitSet checkBitset = new MyTBitSet(new TIntHashSet(storedNetworkEntryIds));
-        // checkBitset.add(mainId);
-        // find close nodes from the network entries
+
+        // find nodes from the network entries which are close to 'point'
         storedNetworkEntryIds.forEach(new TIntProcedure() {
             @Override public boolean execute(final int networkEntryNodeId) {
                 new XFirstSearch() {
+                    boolean goFurther = true;
+                    double currDist;
+                    double currLat;
+                    double currLon;
+                    int currNode;
+
                     @Override protected MyBitSet createBitSet(int size) {
                         return checkBitset;
                     }
 
-                    @Override protected boolean goFurther(int nodeId) {
-                        if (nodeId == closestNode.node)
-                            return true;
-
-                        double currLat = graph.getLatitude(nodeId);
-                        double currLon = graph.getLongitude(nodeId);
-                        double d = distCalc.calcNormalizedDist(currLat, currLon, point.lat, point.lon);
-                        if (d < closestNode.weight) {
-                            // TODO add only node if edgeFilter accepts an edge of it!
-                            closestNode.weight = d;
-                            closestNode.node = nodeId;
-                            return true;
+                    @Override protected boolean goFurther(int baseNode) {
+//                        if (baseNode == closestNode.node)
+//                            return true;
+                        currNode = baseNode;
+                        currLat = graph.getLatitude(baseNode);
+                        currLon = graph.getLongitude(baseNode);
+                        currDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
+                        // TODO do not use this as we cannot check edgeFilter
+                        if (currDist < closestNode.weight) {
+                            closestNode.weight = currDist;
+                            closestNode.node = baseNode;
                         }
 
-                        return d < minResolutionInMeter * 2;
+                        return goFurther; // && currDist < minResolutionInMeter * 2;
                     }
 
-//                    @Override protected boolean checkConnected(int connectNode) {
-//                        goFurther = false;
-//                        double connLat = g.getLatitude(connectNode);
-//                        double connLon = g.getLongitude(connectNode);
-//
-//                        // while traversing check distance of lat,lon to currNode and to the whole currEdge
-//                        double connectDist = distCalc.calcNormalizedDist(connLat, connLon, lat, lon);
-//                        double d = connectDist;
-//                        int tmpNode = connectNode;
-//                        if (calcEdgeDistance && distCalc.validEdgeDistance(lat, lon, currLat, currLon,
-//                                connLat, connLon)) {
-//                            d = distCalc.calcNormalizedEdgeDistance(lat, lon, currLat, currLon,
-//                                    connLat, connLon);
-//                            if (currDist < connectDist)
-//                                tmpNode = currNode;
+                    @Override protected boolean checkConnected(EdgeIterator currEdge) {
+//                        if (!edgeFilter.accept(currEdge)) {
+//                            goFurther = true;
+//                            return true;
 //                        }
-//
-//                        if (d < closestNode.weight) {
-//                            closestNode.weight = d;
-//                            closestNode.node = tmpNode;
-//                        }
-//                        return true;
-//                    }
+
+                        goFurther = false;
+                        int connNode = currEdge.node();
+                        double connLat = graph.getLatitude(connNode);
+                        double connLon = graph.getLongitude(connNode);
+
+                        // check distance of queryLat, queryLon to connNode and to the currEdge                        
+                        double connectDist = distCalc.calcNormalizedDist(connLat, connLon, queryLat, queryLon);
+                        double dist = connectDist;
+                        int tmpNode = connNode;
+                        if (distCalc.validEdgeDistance(queryLat, queryLon,
+                                currLat, currLon, connLat, connLon)) {
+                            dist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
+                                    currLat, currLon, connLat, connLon);
+                            // if we use distance to edge it could be that we prefer the current node
+                            if (currDist < connectDist)
+                                tmpNode = currNode;
+                        }
+
+                        if (dist < closestNode.weight) {
+                            closestNode.weight = dist;
+                            closestNode.node = tmpNode;
+                        }
+                        return true;
+                    }
                 }.start(graph, networkEntryNodeId, false);
                 return true;
             }
         });
+        // TODO return start AND end node of the shortest edge       
         final TIntList result = new TIntArrayList();
         result.add(closestNode.node);
         return result;
@@ -385,6 +433,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     static class InMemLeafEntry implements InMemEntry {
 
         int subEntries[];
+        // TODO MEMORY avoid this variable via a negative marker in the array
         int size = 0;
 
         public InMemLeafEntry(int count) {
@@ -392,6 +441,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         }
 
         public void addNode(int nodeId, Graph graph) {
+            // TODO PERFORMANCE sort subEntries or insert sorted to make this contains check faster?
             for (int i = 0; i < size; i++) {
                 if (subEntries[i] == nodeId)
                     return;
@@ -407,7 +457,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         }
 
         void doCompress(Graph graph) {
-            // TODO remove node from the same network
+            // TODO NOW remove node from the same network
         }
 
         @Override public final boolean isLeaf() {

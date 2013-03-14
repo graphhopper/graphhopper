@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.storage.Graph;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -25,8 +26,18 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class Location2IDFullWithEdgesIndexTest {
+public class Location2IDFullWithEdgesIndexTest extends AbstractLocation2IDIndexTester {
 
+    @Override 
+    public Location2IDIndex createIndex(Graph g, int resolution) {
+        return new Location2IDFullWithEdgesIndex(g);
+    }
+
+    @Override
+    public boolean hasEdgeSupport() {
+        return true;
+    }
+    
     @Test
     public void testFullIndex() {
         Location2IDIndex idx = new Location2IDFullWithEdgesIndex(Location2IDQuadtreeTest.createSampleGraph());
