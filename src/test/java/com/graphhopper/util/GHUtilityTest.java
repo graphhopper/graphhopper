@@ -28,7 +28,7 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class GraphUtilityTest {
+public class GHUtilityTest {
 
     Graph createGraph() {
         return new GraphBuilder().create();
@@ -56,15 +56,15 @@ public class GraphUtilityTest {
     @Test
     public void testSort() {
         Graph g = initUnsorted(createGraph());
-        Graph newG = GHUtility.sort(g, createGraph(), 16);
+        Graph newG = GHUtility.sortDFS(g, createGraph());
         assertEquals(g.nodes(), newG.nodes());
         assertEquals(0, newG.getLatitude(0), 1e-4); // 0
-        assertEquals(2.3, newG.getLatitude(1), 1e-4); // 6
-        assertEquals(2.5, newG.getLatitude(2), 1e-4); // 1
-        assertEquals(3, newG.getLatitude(3), 1e-4); // 3
-        assertEquals(5, newG.getLatitude(4), 1e-4); // 7
-        assertEquals(4.2, newG.getLatitude(5), 1e-4); // 5
-        assertEquals(2.8, newG.getLatitude(6), 1e-4); // 4
+        assertEquals(2.5, newG.getLatitude(1), 1e-4); // 1
+        assertEquals(4.5, newG.getLatitude(2), 1e-4); // 2        
+        assertEquals(4.6, newG.getLatitude(3), 1e-4); // 8
+        assertEquals(3.0, newG.getLatitude(4), 1e-4); // 3
+        assertEquals(5.0, newG.getLatitude(5), 1e-4); // 7
+        assertEquals(4.2, newG.getLatitude(6), 1e-4); // 5
     }
 
     @Test

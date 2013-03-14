@@ -26,7 +26,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.AllEdgesIterator;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
@@ -64,7 +64,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             return true;
         }
     };
-    private DistanceCalc dist = new DistancePlaneProjection();
+    private DistanceCalc distCalc = new DistancePlaneProjection();
     DataAccess dataAccess;
     private Graph graph;
     /**
@@ -101,7 +101,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
                 (bounds.maxLat - bounds.minLat) / 360 * DistanceCalc.C,
-                (bounds.maxLon - bounds.minLon) / 360 * dist.calcCircumference(lat));
+                (bounds.maxLon - bounds.minLon) / 360 * distCalc.calcCircumference(lat));
         int tmpDepth = (int) (2 * Math.log(maxDistInMeter / minResolutionInMeter) / Math.log(subEntries));
         maxDepth = Math.min(64 / subEntries, Math.max(0, tmpDepth) + 1);
         keyAlgo = new SpatialKeyAlgo(maxDepth * shift).bounds(bounds);
@@ -156,9 +156,9 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     @Override
     public Location2IDIndex precision(boolean approx) {
         if (approx)
-            dist = new DistancePlaneProjection();
+            distCalc = new DistancePlaneProjection();
         else
-            dist = new DistanceCalc();
+            distCalc = new DistanceCalc();
         return this;
     }
 
@@ -314,10 +314,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         double mainLat = graph.getLatitude(mainId);
         double mainLon = graph.getLongitude(mainId);
         final WeightedNode closestNode = new WeightedNode(mainId,
-                dist.calcNormalizedDist(mainLat, mainLon, point.lat, point.lon));
-
-        // final TIntList list = new TIntArrayList();
-        // list.add(mainId);
+                distCalc.calcNormalizedDist(mainLat, mainLon, point.lat, point.lon));
 
         // clone storedIds to avoid interference with forEach
         final MyBitSet checkBitset = new MyTBitSet(new TIntHashSet(storedNetworkEntryIds));
@@ -334,10 +331,9 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                         if (nodeId == closestNode.node)
                             return true;
 
-                        // TODO calculate distance to edges instead - see precise index!
                         double currLat = graph.getLatitude(nodeId);
                         double currLon = graph.getLongitude(nodeId);
-                        double d = dist.calcNormalizedDist(currLat, currLon, point.lat, point.lon);
+                        double d = distCalc.calcNormalizedDist(currLat, currLon, point.lat, point.lon);
                         if (d < closestNode.weight) {
                             // TODO add only node if edgeFilter accepts an edge of it!
                             closestNode.weight = d;
@@ -347,21 +343,36 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
                         return d < minResolutionInMeter * 2;
                     }
+
+//                    @Override protected boolean checkConnected(int connectNode) {
+//                        goFurther = false;
+//                        double connLat = g.getLatitude(connectNode);
+//                        double connLon = g.getLongitude(connectNode);
+//
+//                        // while traversing check distance of lat,lon to currNode and to the whole currEdge
+//                        double connectDist = distCalc.calcNormalizedDist(connLat, connLon, lat, lon);
+//                        double d = connectDist;
+//                        int tmpNode = connectNode;
+//                        if (calcEdgeDistance && distCalc.validEdgeDistance(lat, lon, currLat, currLon,
+//                                connLat, connLon)) {
+//                            d = distCalc.calcNormalizedEdgeDistance(lat, lon, currLat, currLon,
+//                                    connLat, connLon);
+//                            if (currDist < connectDist)
+//                                tmpNode = currNode;
+//                        }
+//
+//                        if (d < closestNode.weight) {
+//                            closestNode.weight = d;
+//                            closestNode.node = tmpNode;
+//                        }
+//                        return true;
+//                    }
                 }.start(graph, networkEntryNodeId, false);
                 return true;
             }
         });
-        // list.reverse();
-        // remove duplicates but preserve order!
         final TIntList result = new TIntArrayList();
         result.add(closestNode.node);
-//        list.forEach(new TIntProcedure() {
-//            @Override public boolean execute(int value) {
-//                if (!result.contains(value))
-//                    result.add(value);
-//                return true;
-//            }
-//        });
         return result;
     }
 
@@ -381,6 +392,10 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         }
 
         public void addNode(int nodeId, Graph graph) {
+            for (int i = 0; i < size; i++) {
+                if (subEntries[i] == nodeId)
+                    return;
+            }
             if (size >= subEntries.length) {
                 doCompress(graph);
                 if (size >= subEntries.length)
@@ -392,12 +407,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         }
 
         void doCompress(Graph graph) {
-            // TODO 1. remove duplicates but keep in mind the size!
-            // Arrays.sort(subEntries);
-            // TODO
-//            for (int i = 0; i < subEntries.length; i++) {                
-//            }
-            // 2. remove node from the same network
+            // TODO remove node from the same network
         }
 
         @Override public final boolean isLeaf() {

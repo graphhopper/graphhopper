@@ -19,7 +19,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.AllEdgesIterator;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 
 /**

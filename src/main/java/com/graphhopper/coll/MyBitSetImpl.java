@@ -56,6 +56,10 @@ public class MyBitSetImpl extends BitSet implements MyBitSet {
         return super.nextSetBit(index);
     }
 
+    public int nextClear(int index) {
+        return super.nextClearBit(index);
+    }
+
     @Override
     public MyBitSet copyTo(MyBitSet bs) {
         bs.clear();

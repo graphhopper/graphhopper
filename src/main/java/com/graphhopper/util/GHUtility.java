@@ -20,14 +20,11 @@ package com.graphhopper.util;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
-import com.graphhopper.geohash.KeyAlgo;
-import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.index.Location2IDPreciseIndex;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
@@ -44,7 +41,7 @@ import java.util.Random;
  * @author Peter Karich,
  */
 public class GHUtility {
-   
+
     /**
      * @throws could throw exception if uncatched problems like index out of
      * bounds etc
@@ -142,62 +139,41 @@ public class GHUtility {
         return createSortedGraph(g, sortedGraph, list);
     }
 
-    /**
-     * Sorts the graph according to depth-first search traversal. Other
-     * traversals have either no significant difference (bfs) for querying or
-     * are worse (see sort).
-     */
-    public static Graph sortDFS(Graph g, Graph sortedGraph) {
-        final TIntList list = new TIntArrayList(g.nodes(), -1);
-        list.fill(0, g.nodes(), -1);
-        new XFirstSearch() {
-            int counter = 0;
+    private static class IntRef {
 
-            @Override
-            protected boolean goFurther(int nodeId) {
-                list.set(nodeId, counter);
-                counter++;
-                return super.goFurther(nodeId);
-            }
-        }.start(g, 0, false);
-        return createSortedGraph(g, sortedGraph, list);
+        int val;
+
+        public IntRef(int val) {
+            this.val = val;
+        }
     }
 
     /**
-     * Sorts the graph according to the z-curve. Better use sortDFS as a lot
-     * memory is necessary.
+     * Sorts the graph according to depth-first search traversal. Other
+     * traversals have either no significant difference (bfs) for querying or
+     * are worse (z-curve).
      */
-    public static Graph sort(Graph g, Graph sortedGraph, int capacity) {
-        // make sure it is a square rootable number -> necessary for spatialkeyalgo
-//        capacity = (int) Math.sqrt(capacity);
-//        capacity *= capacity;
+    public static Graph sortDFS(Graph g, Graph sortedGraph) {
+        final TIntList list = new TIntArrayList(g.nodes(), -1);
+        int nodes = g.nodes();
+        list.fill(0, nodes, -1);
+        final MyBitSetImpl bitset = new MyBitSetImpl(nodes);
+        final IntRef ref = new IntRef(0);
+        for (int startNode = 0; startNode >= 0 && startNode < nodes; 
+                startNode = bitset.nextClear(startNode + 1)) {
+            new XFirstSearch() {
+                @Override protected MyBitSet createBitSet(int size) {
+                    return bitset;
+                }
 
-        int bits = (int) (Math.log(capacity) / Math.log(2));
-        final KeyAlgo algo = new SpatialKeyAlgo(bits);
-        Location2IDPreciseIndex index = new Location2IDPreciseIndex(g, new RAMDirectory()) {
-            @Override protected KeyAlgo createKeyAlgo(int latS, int lonS) {
-                return algo;
-            }
-        };
-        index.setCalcEdgeDistance(false);
-        Location2IDPreciseIndex.InMemConstructionIndex idx = index.prepareInMemoryIndex(capacity);
-        final TIntList nodeMappingList = new TIntArrayList(g.nodes(), -1);
-        nodeMappingList.fill(0, g.nodes(), -1);
-        int counter = 0;
-        int tmp = 0;
-        for (int ti = 0; ti < idx.length(); ti++) {
-            TIntArrayList list = idx.getNodes(ti);
-            if (list == null)
-                continue;
-            tmp++;
-            int s = list.size();
-            for (int ii = 0; ii < s; ii++) {
-                nodeMappingList.set(list.get(ii), counter);
-                counter++;
-            }
+                @Override protected boolean goFurther(int nodeId) {
+                    list.set(nodeId, ref.val);
+                    ref.val++;
+                    return super.goFurther(nodeId);
+                }
+            }.start(g, startNode, false);
         }
-
-        return createSortedGraph(g, sortedGraph, nodeMappingList);
+        return createSortedGraph(g, sortedGraph, list);
     }
 
     static Graph createSortedGraph(Graph g, Graph sortedGraph, final TIntList oldToNewNodeList) {

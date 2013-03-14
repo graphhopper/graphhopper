@@ -63,7 +63,7 @@ public class XFirstSearch {
                 EdgeIterator iter = getEdges(g, current);
                 while (iter.next()) {
                     int connectedId = iter.node();
-                    if (checkConnected(connectedId) && !visited.contains(connectedId)) {
+                    if (checkConnected(iter.edge()) && !visited.contains(connectedId)) {
                         visited.add(connectedId);
                         coll.push(connectedId);
                     }
@@ -80,7 +80,7 @@ public class XFirstSearch {
         return true;
     }
 
-    protected boolean checkConnected(int to) {
+    protected boolean checkConnected(int edgeId) {
         return true;
     }
 

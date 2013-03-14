@@ -40,7 +40,8 @@ public interface MyBitSet {
     void ensureCapacity(int index);
 
     /**
-     * Searches for a bigger or equal entry and returns it.
+     * Searches for a greater or equal entry and returns it.
+     * @return -1 if nothing found
      */
     int next(int index);
 

@@ -24,7 +24,7 @@ import com.graphhopper.coll.SparseIntIntArray;
 import com.graphhopper.routing.util.AllEdgesFilter;
 import com.graphhopper.routing.util.CombinedEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.AllEdgesIterator;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
