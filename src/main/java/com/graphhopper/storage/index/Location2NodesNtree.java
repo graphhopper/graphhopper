@@ -33,6 +33,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
@@ -46,6 +47,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This implementation implements an n-tree to get node ids from GPS location.
@@ -59,6 +62,7 @@ import java.util.List;
  */
 public class Location2NodesNtree implements Location2NodesIndex, Location2IDIndex {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final static int MAGIC_INT = Integer.MAX_VALUE / 22316;
     static final EdgeFilter ALL_EDGES = new EdgeFilter() {
         @Override public boolean accept(EdgeIterator iter) {
@@ -83,6 +87,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     private double deltaLat;
     private double deltaLon;
     private int initLeafEntries = 4;
+    private boolean initialized = false;
 
     public Location2NodesNtree(Graph g, Directory dir) {
         this.graph = g;
@@ -143,31 +148,52 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     }
 
     @Override
-    public Location2IDIndex prepareIndex(int capacity) {
-        if (dataAccess.loadExisting()) {
-            if (dataAccess.getHeader(0) != MAGIC_INT)
-                throw new IllegalStateException("incorrect location2id index version");
-            if (dataAccess.getHeader(1) != calcChecksum())
-                throw new IllegalStateException("location2id index was opened with incorrect graph");
-            minResolutionInMeter(dataAccess.getHeader(2));
-            subEntries(dataAccess.getHeader(3));
-            prepareAlgo();
-        } else {
-            minResolutionInMeter(capacity);
-            subEntries(4);
-            prepareAlgo();
-            // in-memory preparation
-            InMemConstructionIndex inMem = prepareIndex();
+    public boolean loadExisting() {
+        if (initialized)
+            throw new IllegalStateException("Call loadExisting only once");
 
-            // compact & store to dataAccess
-            dataAccess.createNew(64 * 1024);
-            inMem.store(inMem.root, 0);
-            dataAccess.setHeader(0, MAGIC_INT);
-            dataAccess.setHeader(1, calcChecksum());
-            dataAccess.setHeader(2, minResolutionInMeter);
-            dataAccess.setHeader(3, subEntries);
-            dataAccess.flush();
-        }
+        if (!dataAccess.loadExisting())
+            return false;
+
+        if (dataAccess.getHeader(0) != MAGIC_INT)
+            throw new IllegalStateException("incorrect location2id index version");
+        if (dataAccess.getHeader(1) != calcChecksum())
+            throw new IllegalStateException("location2id index was opened with incorrect graph");
+        minResolutionInMeter(dataAccess.getHeader(2));
+        subEntries(dataAccess.getHeader(3));
+        prepareAlgo();
+        initialized = true;
+        return true;
+    }
+
+    @Override
+    public Location2IDIndex prepareIndex(int capacity) {
+        if (initialized)
+            throw new IllegalStateException("Call prepareIndex only once");
+
+        if (capacity <= 0)
+            throw new IllegalStateException("Negative precision is not allowed!");
+
+        StopWatch sw = new StopWatch().start();
+        minResolutionInMeter(capacity);
+        prepareAlgo();
+        // in-memory preparation
+        InMemConstructionIndex inMem = prepareIndex();
+
+        // compact & store to dataAccess
+        dataAccess.createNew(64 * 1024);
+        inMem.store(inMem.root, 0);
+        dataAccess.setHeader(0, MAGIC_INT);
+        dataAccess.setHeader(1, calcChecksum());
+        dataAccess.setHeader(2, minResolutionInMeter);
+        dataAccess.setHeader(3, subEntries);
+        dataAccess.flush();
+
+        initialized = true;
+        logger.info("location index created in " + sw.stop().getSeconds()
+                + ", precision:" + minResolutionInMeter
+                + ", maxDepth:" + maxDepth + ", subEntries:" + subEntries);
+
         return this;
     }
 
@@ -189,6 +215,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     @Override
     public float calcMemInMB() {
         return (float) dataAccess.capacity() / Helper.MB;
+
+
     }
 
     class InMemConstructionIndex {
@@ -367,7 +395,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
         // find nodes from the network entries which are close to 'point'
         storedNetworkEntryIds.forEach(new TIntProcedure() {
-            @Override public boolean execute(final int networkEntryNodeId) {
+            @Override
+            public boolean execute(final int networkEntryNodeId) {
                 new XFirstSearch() {
                     boolean goFurther = true;
                     double currDist;
@@ -395,7 +424,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                         return goFurther; // && currDist < minResolutionInMeter * 2;
                     }
 
-                    @Override protected boolean checkConnected(EdgeIterator currEdge) {
+                    @Override
+                    protected boolean checkConnected(EdgeIterator currEdge) {
 //                        if (!edgeFilter.accept(currEdge)) {
 //                            goFurther = true;
 //                            return true;
@@ -433,6 +463,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         final TIntList result = new TIntArrayList();
         result.add(closestNode.node);
         return result;
+
+
     }
 
     // make entries static as otherwise we get an additional reference to this class (memory waste)

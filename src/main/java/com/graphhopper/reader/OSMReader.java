@@ -34,8 +34,9 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.index.Location2IDIndex;
-import com.graphhopper.storage.index.Location2IDQuadtree;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.index.Location2IDQuadtree;
+import com.graphhopper.storage.index.Location2NodesNtree;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
@@ -85,8 +86,7 @@ public class OSMReader {
     private OSMReaderHelper helper;
     private long expectedNodes;
     private AlgorithmPreparation prepare;
-    private Location2IDQuadtree index;
-    private int indexCapacity = -1;
+    private Location2IDIndex index;
     private boolean sortGraph = false;
 
     /**
@@ -145,7 +145,6 @@ public class OSMReader {
      * Initializes the specified osmReader with arguments from the args object.
      */
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
-        osmReader.indexCapacity(args.getInt("osmreader.locationIndexCapacity", -1));
         String type = args.get("osmreader.type", "CAR");
         AcceptWay acceptWay = AcceptWay.parse(type);
         osmReader.acceptStreet(acceptWay);
@@ -185,11 +184,8 @@ public class OSMReader {
         if (!graphStorage.loadExisting())
             return false;
 
-        // init
-        location2IDIndex();
-        // load index afterwards
-        if (!index.loadExisting())
-            throw new IllegalStateException("couldn't load location index");
+        if (!location2IDIndex().loadExisting())
+            createIndex();
         return true;
     }
 
@@ -211,6 +207,7 @@ public class OSMReader {
         cleanUp();
         optimize();
         flush();
+        createIndex();
     }
 
     void optimize() {
@@ -247,14 +244,15 @@ public class OSMReader {
     }
 
     void flush() {
-        logger.info("flushing graph with " + graphStorage.nodes() + " nodes ... (" + Helper.getMemInfo() + ")");
+        logger.info("flushing graph with " + graphStorage.nodes() + " nodes, bounds:"
+                + graphStorage.bounds() + ", " + Helper.getMemInfo() + ")");
         graphStorage.flush();
+    }
 
-        if (indexCapacity < 0)
-            indexCapacity = Helper.calcIndexSize(graphStorage.bounds());
-        logger.info("initializing and flushing location index with " + indexCapacity + " bounds:" + graphStorage.bounds());
-        location2IDIndex().prepareIndex(indexCapacity);
-        index.flush();
+    void createIndex() {
+        // int precisionInMeter = 500 * 500;
+        int precisionInMeter = 2000;
+        location2IDIndex().prepareIndex(precisionInMeter);
     }
 
     /**
@@ -411,17 +409,9 @@ public class OSMReader {
 
     public Location2IDIndex location2IDIndex() {
         if (index == null)
-            index = new Location2IDQuadtree(graphStorage, graphStorage.directory());
+            index = new Location2NodesNtree(graphStorage, graphStorage.directory());
+//            index = new Location2IDQuadtree(graphStorage, graphStorage.directory());
         return index;
-    }
-
-    /**
-     * Changes the default (and automatically calculated) index size of the
-     * location2id index to the specified value.
-     */
-    public OSMReader indexCapacity(int val) {
-        indexCapacity = val;
-        return this;
     }
 
     /**

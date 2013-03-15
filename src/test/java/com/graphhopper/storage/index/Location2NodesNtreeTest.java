@@ -38,7 +38,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     @Override
     public Location2IDIndex createIndex(Graph g, int resolution) {
         Directory dir = new RAMDirectory(location);
-        return new Location2NodesNtree(g, dir).prepareIndex(10000);
+        return new Location2NodesNtree(g, dir).subEntries(4).prepareIndex(10000);
     }
 
     @Override

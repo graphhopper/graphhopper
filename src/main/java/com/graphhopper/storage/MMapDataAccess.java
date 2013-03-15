@@ -32,7 +32,7 @@ import java.util.List;
 
 /**
  * This is a data structure which uses the operating system to synchronize
- * between disc and memory.
+ * between disc and memory. Do not use this from multiple threads!
  *
  * @author Peter Karich
  */

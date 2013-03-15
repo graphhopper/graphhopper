@@ -67,7 +67,7 @@ public class OSMReaderTest {
 
     OSMReader init(OSMReader osmreader) {
         // make index creation fast
-        osmreader.indexCapacity(1000);
+        // osmreader.indexCapacity(1000);
         return osmreader;
     }
 
@@ -82,6 +82,7 @@ public class OSMReaderTest {
         reader.writeOsm2Graph(getClass().getResourceAsStream(file1));
         reader.optimize();
         reader.flush();
+        reader.createIndex();
         Graph graph = reader.graph();
         assertEquals(4, graph.nodes());
         int internalIdMain = AbstractGraphTester.getIdOf(graph, 52);
@@ -127,6 +128,7 @@ public class OSMReaderTest {
         reader.writeOsm2Graph(getClass().getResourceAsStream(file1));
         reader.optimize();
         reader.flush();
+        reader.createIndex();
         Graph graph = reader.graph();
         assertEquals(10, graph.getLongitude(reader.location2IDIndex().findID(49, 10)), 1e-3);
         assertEquals(51.249, graph.getLatitude(reader.location2IDIndex().findID(51.2492152, 9.4317166)), 1e-3);

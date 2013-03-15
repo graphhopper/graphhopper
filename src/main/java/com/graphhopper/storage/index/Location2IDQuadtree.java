@@ -83,21 +83,22 @@ public class Location2IDQuadtree implements Location2IDIndex {
      *
      * @return if loading from file was successfully.
      */
+    @Override
     public boolean loadExisting() {
-        if (index.loadExisting()) {
-            if (index.getHeader(0) != MAGIC_INT)
-                throw new IllegalStateException("incorrect loc2id index version");
-            int lat = index.getHeader(1);
-            int lon = index.getHeader(2);
-            int checksum = index.getHeader(3);
-            if (checksum != g.nodes())
-                throw new IllegalStateException("index was created from a different graph with "
-                        + checksum + ". Current nodes:" + g.nodes());
+        if (!index.loadExisting())
+            return false;
 
-            initAlgo(lat, lon);
-            return true;
-        }
-        return false;
+        if (index.getHeader(0) != MAGIC_INT)
+            throw new IllegalStateException("incorrect loc2id index version");
+        int lat = index.getHeader(1);
+        int lon = index.getHeader(2);
+        int checksum = index.getHeader(3);
+        if (checksum != g.nodes())
+            throw new IllegalStateException("index was created from a different graph with "
+                    + checksum + ". Current nodes:" + g.nodes());
+
+        initAlgo(lat, lon);
+        return true;
     }
 
     /**
@@ -120,8 +121,10 @@ public class Location2IDQuadtree implements Location2IDIndex {
         float res1 = sw.stop().getSeconds();
         sw = new StopWatch().start();
         int counter = fillEmptyIndices(filledIndices);
+        float fillEmpty = sw.stop().getSeconds();
         logger.info("filled quadtree index array in " + res1 + "s. size is " + capacity()
-                + " (" + fillQT + "). filled empty " + counter + " in " + sw.stop().getSeconds() + "s");
+                + " (" + fillQT + "). filled empty " + counter + " in " + fillEmpty + "s");
+        flush();
         return this;
     }
 
@@ -284,7 +287,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         final WeightedNode closestNode = new WeightedNode(id, dist.calcNormalizedDist(lat, lon, mainLat, mainLon));
         goFurtherHook(id);
         new XFirstSearch() {
-            @Override 
+            @Override
             protected MyBitSet createBitSet(int size) {
                 return new MyTBitSet(10);
             }

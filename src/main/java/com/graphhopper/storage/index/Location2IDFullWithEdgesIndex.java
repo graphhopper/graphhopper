@@ -40,6 +40,11 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
     }
 
     @Override
+    public boolean loadExisting() {
+        return true;
+    }
+
+    @Override
     public Location2IDIndex precision(boolean approxDist) {
         if (approxDist)
             calc = new DistancePlaneProjection();

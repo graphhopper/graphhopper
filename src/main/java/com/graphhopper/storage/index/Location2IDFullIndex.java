@@ -37,6 +37,11 @@ public class Location2IDFullIndex implements Location2IDIndex {
         this.g = g;
     }
 
+    @Override 
+    public boolean loadExisting() {
+        return true;
+    }
+
     @Override
     public Location2IDIndex precision(boolean approxDist) {
         if (approxDist)

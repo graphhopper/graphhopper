@@ -28,6 +28,8 @@ package com.graphhopper.storage.index;
  */
 public interface Location2IDIndex {
 
+    boolean loadExisting();
+
     /**
      * Creates this index - to be called once before findID.
      *
