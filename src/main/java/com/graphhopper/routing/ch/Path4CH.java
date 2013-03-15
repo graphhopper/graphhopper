@@ -65,7 +65,7 @@ public class Path4CH extends PathBidirRef {
 
         int skippedEdge1 = mainIter.skippedEdge1();
         int skippedEdge2 = mainIter.skippedEdge2();
-        int from = mainIter.baseNode(), to = mainIter.node();
+        int from = mainIter.baseNode(), to = mainIter.adjNode();
         if (revert) {
             int tmp = from;
             from = to;

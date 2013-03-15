@@ -61,10 +61,10 @@ public class GHUtility {
 
                 EdgeIterator iter = g.getEdges(nodeIndex);
                 while (iter.next()) {
-                    if (iter.node() >= nodes)
-                        problems.add("edge of " + nodeIndex + " has a node " + iter.node() + " greater or equal to getNodes");
-                    if (iter.node() < 0)
-                        problems.add("edge of " + nodeIndex + " has a negative node " + iter.node());
+                    if (iter.adjNode() >= nodes)
+                        problems.add("edge of " + nodeIndex + " has a node " + iter.adjNode() + " greater or equal to getNodes");
+                    if (iter.adjNode() < 0)
+                        problems.add("edge of " + nodeIndex + " has a negative node " + iter.adjNode());
                 }
             }
         } catch (Exception ex) {
@@ -89,7 +89,7 @@ public class GHUtility {
     public static List<Integer> neighbors(EdgeIterator iter) {
         List<Integer> list = new ArrayList<Integer>();
         while (iter.next()) {
-            list.add(iter.node());
+            list.add(iter.adjNode());
         }
         return list;
     }
@@ -111,7 +111,7 @@ public class GHUtility {
         EdgeSkipIterator iter = g.getEdges(nodeId, filter);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next()) {
-            str += "  ->" + iter.node() + "(" + iter.skippedEdge1() + "," + iter.skippedEdge2() + ") "
+            str += "  ->" + iter.adjNode() + "(" + iter.skippedEdge1() + "," + iter.skippedEdge2() + ") "
                     + iter.edge() + " \t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
         }
         return str;
@@ -121,7 +121,7 @@ public class GHUtility {
         EdgeIterator iter = g.getEdges(nodeId, filter);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next()) {
-            str += "  ->" + iter.node() + " (" + iter.distance() + ") pillars:"
+            str += "  ->" + iter.adjNode() + " (" + iter.distance() + ") pillars:"
                     + iter.wayGeometry().size() + ", edgeId:" + iter.edge()
                     + "\t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
         }
@@ -189,7 +189,7 @@ public class GHUtility {
             sortedGraph.setNode(newIndex, g.getLatitude(old), g.getLongitude(old));
             EdgeIterator eIter = g.getEdges(old);
             while (eIter.next()) {
-                int newNodeIndex = oldToNewNodeList.get(eIter.node());
+                int newNodeIndex = oldToNewNodeList.get(eIter.adjNode());
                 if (newNodeIndex < 0)
                     throw new IllegalStateException("empty entries should be connected to the others");
                 if (bitset.contains(newNodeIndex))
@@ -261,7 +261,7 @@ public class GHUtility {
             to.setNode(oldNode, from.getLatitude(oldNode), from.getLongitude(oldNode));
             EdgeIterator eIter = from.getEdges(oldNode);
             while (eIter.next()) {
-                int adjacentNodeIndex = eIter.node();
+                int adjacentNodeIndex = eIter.adjNode();
                 if (bitset.contains(adjacentNodeIndex))
                     continue;
                 to.edge(oldNode, adjacentNodeIndex, eIter.distance(), eIter.flags()).wayGeometry(eIter.wayGeometry());
@@ -273,7 +273,7 @@ public class GHUtility {
     public static int getToNode(Graph g, int edge, int endNode) {
         if (EdgeIterator.Edge.isValid(edge)) {
             EdgeIterator iterTo = g.getEdgeProps(edge, endNode);
-            return iterTo.node();
+            return iterTo.adjNode();
         }
         return endNode;
     }
@@ -314,7 +314,7 @@ public class GHUtility {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
-        @Override public int node() {
+        @Override public int adjNode() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

@@ -249,11 +249,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // recompute priority of uncontracted neighbors
             EdgeIterator iter = g.getEdges(wn.node, vehicleAllFilter);
             while (iter.next()) {
-                if (g.getLevel(iter.node()) != 0)
+                if (g.getLevel(iter.adjNode()) != 0)
                     // already contracted no update necessary
                     continue;
 
-                int nn = iter.node();
+                int nn = iter.adjNode();
                 PriorityNode neighborWn = refs[nn];
                 int tmpOld = neighborWn.priority;
                 neighborWn.priority = calculatePriority(nn);
@@ -347,7 +347,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             if (!super.accept(iter))
                 return false;
             // ignore if it is skipNode or a endNode already contracted
-            int node = iter.node();
+            int node = iter.adjNode();
             return avoidNode != node && graph.getLevel(node) == 0;
         }
     }
@@ -362,7 +362,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         EdgeIterator iter1 = g.getEdges(v, vehicleInFilter);
         // TODO PERFORMANCE collect outEdgeFilter nodes (goal-nodes) only once and just skip u
         while (iter1.next()) {
-            int u = iter1.node();
+            int u = iter1.adjNode();
             int lu = g.getLevel(u);
             if (lu != 0)
                 continue;
@@ -373,7 +373,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             EdgeIterator iter2 = g.getEdges(v, vehicleOutFilter);
             double maxWeight = 0;
             while (iter2.next()) {
-                int w = iter2.node();
+                int w = iter2.adjNode();
                 int lw = g.getLevel(w);
                 if (w == u || lw != 0)
                     continue;
@@ -452,7 +452,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // check if we need to update some existing shortcut in the graph
             EdgeSkipIterator iter = g.getEdges(sc.from, vehicleOutFilter);
             while (iter.next()) {
-                if (iter.isShortcut() && iter.node() == sc.to
+                if (iter.isShortcut() && iter.adjNode() == sc.to
                         && prepareEncoder.canBeOverwritten(iter.flags(), sc.flags)
                         && iter.distance() > sc.distance) {
                     iter.flags(sc.flags);

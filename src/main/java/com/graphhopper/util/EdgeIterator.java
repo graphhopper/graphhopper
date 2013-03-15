@@ -65,7 +65,7 @@ public interface EdgeIterator {
      * @return the adjacent node of baseNode for the current edge.
      * @see EdgeIterator
      */
-    int node();
+    int adjNode();
 
     /**
      * For OSM a way is often a curve not just a straight line and so nodes

@@ -168,7 +168,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         int currVertexFrom = curr.endNode;
         EdgeIterator iter = graph.getEdges(currVertexFrom, outEdgeFilter);
         while (iter.next()) {
-            int tmpV = iter.node();
+            int tmpV = iter.adjNode();
             if (visitedMain.contains(tmpV))
                 continue;
 

@@ -437,7 +437,7 @@ public class GraphStorage implements Graph, Storable {
             return edges.getInt(edgePointer + E_NODEA);
         }
 
-        @Override public int node() {
+        @Override public int adjNode() {
             return edges.getInt(edgePointer + E_NODEB);
         }
 
@@ -466,15 +466,15 @@ public class GraphStorage implements Graph, Storable {
         }
 
         @Override public void wayGeometry(PointList pillarNodes) {
-            GraphStorage.this.wayGeometry(pillarNodes, edgePointer, baseNode() > node());
+            GraphStorage.this.wayGeometry(pillarNodes, edgePointer, baseNode() > adjNode());
         }
 
         @Override public PointList wayGeometry() {
-            return GraphStorage.this.wayGeometry(edgePointer, baseNode() > node());
+            return GraphStorage.this.wayGeometry(edgePointer, baseNode() > adjNode());
         }
 
         @Override public String toString() {
-            return edge() + " " + baseNode() + "-" + node();
+            return edge() + " " + baseNode() + "-" + adjNode();
         }
     }
 
@@ -599,7 +599,7 @@ public class GraphStorage implements Graph, Storable {
             return foundNext;
         }
 
-        @Override public int node() {
+        @Override public int adjNode() {
             return node;
         }
 
@@ -643,7 +643,7 @@ public class GraphStorage implements Graph, Storable {
         }
 
         @Override public String toString() {
-            return edge() + " " + baseNode() + "-" + node();
+            return edge() + " " + baseNode() + "-" + adjNode();
         }
     }
 
@@ -787,7 +787,7 @@ public class GraphStorage implements Graph, Storable {
         for (int delNode = removedNodes.next(0); delNode >= 0; delNode = removedNodes.next(delNode + 1)) {
             EdgeIterator delEdgesIter = getEdges(delNode, allEdgesFilter);
             while (delEdgesIter.next()) {
-                int currNode = delEdgesIter.node();
+                int currNode = delEdgesIter.adjNode();
                 if (removedNodes.contains(currNode))
                     continue;
 
@@ -814,10 +814,10 @@ public class GraphStorage implements Graph, Storable {
             EdgeIterable adjNodesToDelIter = (EdgeIterable) getEdges(toUpdateNode);
             long prev = EdgeIterator.NO_EDGE;
             while (adjNodesToDelIter.next()) {
-                int nodeId = adjNodesToDelIter.node();
+                int nodeId = adjNodesToDelIter.adjNode();
                 if (removedNodes.contains(nodeId)) {
                     int edgeToRemove = adjNodesToDelIter.edge();
-                    internalEdgeDisconnect(edgeToRemove, prev, toUpdateNode, adjNodesToDelIter.node());
+                    internalEdgeDisconnect(edgeToRemove, prev, toUpdateNode, adjNodesToDelIter.adjNode());
                 } else
                     prev = adjNodesToDelIter.edgePointer();
             }
@@ -829,11 +829,11 @@ public class GraphStorage implements Graph, Storable {
             int oldI = oldToNewMap.keyAt(i);
             EdgeIterator movedEdgeIter = getEdges(oldI);
             while (movedEdgeIter.next()) {
-                if (removedNodes.contains(movedEdgeIter.node()))
+                if (removedNodes.contains(movedEdgeIter.adjNode()))
                     throw new IllegalStateException("shouldn't happen the edge to the node "
-                            + movedEdgeIter.node() + " should be already deleted. " + oldI);
+                            + movedEdgeIter.adjNode() + " should be already deleted. " + oldI);
 
-                toUpdatedSet.add(movedEdgeIter.node());
+                toUpdatedSet.add(movedEdgeIter.adjNode());
             }
         }
 
@@ -856,7 +856,7 @@ public class GraphStorage implements Graph, Storable {
             int edge = iter.edge();
             long edgePointer = (long) edge * edgeEntrySize;
             int nodeA = iter.baseNode();
-            int nodeB = iter.node();
+            int nodeB = iter.adjNode();
             if (!toUpdatedSet.contains(nodeA) && !toUpdatedSet.contains(nodeB))
                 continue;
 

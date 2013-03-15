@@ -59,7 +59,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
             while (iter.next()) {
                 if (!accept(iter))
                     continue;
-                int tmpNode = iter.node();
+                int tmpNode = iter.adjNode();
                 if (visited.contains(tmpNode))
                     continue;
 

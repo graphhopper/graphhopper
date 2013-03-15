@@ -231,7 +231,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             final AllEdgesIterator allIter = graph.getAllEdges();
             while (allIter.next()) {
                 int nodeA = allIter.baseNode();
-                int nodeB = allIter.node();
+                int nodeB = allIter.adjNode();
                 double lat1 = graph.getLatitude(nodeA);
                 double lon1 = graph.getLongitude(nodeA);
                 double lat2;
@@ -432,7 +432,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 //                        }
 
                         goFurther = false;
-                        int connNode = currEdge.node();
+                        int connNode = currEdge.adjNode();
                         double connLat = graph.getLatitude(connNode);
                         double connLon = graph.getLongitude(connNode);
 

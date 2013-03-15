@@ -49,7 +49,7 @@ public class EdgeSkipIteratorTest {
         assertEquals(1, GHUtility.count(g.getEdges(1, carOutFilter)));
         EdgeIterator iter = g.getEdges(0);
         assertTrue(iter.next());
-        assertEquals(1, iter.node());
+        assertEquals(1, iter.adjNode());
         assertEquals(carFlagsEncoder.flags(10, true), iter.flags());
 
         // update flags

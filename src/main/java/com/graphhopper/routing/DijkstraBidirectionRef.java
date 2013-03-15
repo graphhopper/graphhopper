@@ -138,7 +138,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         while (iter.next()) {
             if (!accept(iter))
                 continue;
-            int neighborNode = iter.node();
+            int neighborNode = iter.adjNode();
             if (visitedMain.contains(neighborNode))
                 continue;
 

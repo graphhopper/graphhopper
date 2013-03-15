@@ -146,7 +146,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         int currNode = curr.endNode;
         EdgeIterator iter = graph.getEdges(currNode, filter);
         while (iter.next()) {
-            int tmpV = iter.node();
+            int tmpV = iter.adjNode();
             if (visitedMain.contains(tmpV))
                 continue;
 

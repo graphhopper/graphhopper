@@ -146,7 +146,7 @@ public class MiniGraphUI {
                         }
                     });
                     while (iter.next()) {
-                        int nodeId = iter.node();
+                        int nodeId = iter.adjNode();
                         int sum = nodeIndex + nodeId;
                         if (fastPaint) {
                             if (bitset.contains(sum))

@@ -95,17 +95,17 @@ public class OSMReaderTest {
 
         EdgeIterator iter = graph.getEdges(internalIdMain, carOutFilter);
         assertTrue(iter.next());
-        assertEquals(internalId1, iter.node());
+        assertEquals(internalId1, iter.adjNode());
         assertEquals(88643, iter.distance(), 1);
         assertTrue(iter.next());
-        assertEquals(internalId2, iter.node());
+        assertEquals(internalId2, iter.adjNode());
         assertEquals(93147, iter.distance(), 1);
         CarFlagEncoder flags = carEncoder;
         assertTrue(flags.isMotorway(iter.flags()));
         assertTrue(flags.isForward(iter.flags()));
         assertTrue(flags.isBackward(iter.flags()));
         assertTrue(iter.next());
-        assertEquals(internalId3, iter.node());
+        assertEquals(internalId3, iter.adjNode());
         AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.wayGeometry());
         assertTrue(flags.isService(iter.flags()));
         assertTrue(flags.isForward(iter.flags()));
@@ -114,7 +114,7 @@ public class OSMReaderTest {
         // get third added location id=30
         iter = graph.getEdges(internalId2, carOutFilter);
         assertTrue(iter.next());
-        assertEquals(internalIdMain, iter.node());
+        assertEquals(internalIdMain, iter.adjNode());
         assertEquals(93146.888, iter.distance(), 1);
 
         assertEquals(9.431, graph.getLongitude(reader.location2IDIndex().findID(51.25, 9.43)), 1e-3);
@@ -155,19 +155,19 @@ public class OSMReaderTest {
 
         EdgeIterator iter = graph.getEdges(internalIdMain, carOutFilter);
         assertTrue(iter.next());
-        assertEquals(internalId1, iter.node());
+        assertEquals(internalId1, iter.adjNode());
         assertEquals(88643, iter.distance(), 1);
         assertTrue(iter.next());
-        assertEquals(internalId2, iter.node());
+        assertEquals(internalId2, iter.adjNode());
         assertEquals(93146.888, iter.distance(), 1);
         assertTrue(iter.next());
-        assertEquals(internalId4, iter.node());
+        assertEquals(internalId4, iter.adjNode());
         AbstractGraphTester.assertPList(Helper.createPointList(), iter.wayGeometry());
 
         // get third added location => 2
         iter = graph.getEdges(internalId2, carOutFilter);
         assertTrue(iter.next());
-        assertEquals(internalIdMain, iter.node());
+        assertEquals(internalIdMain, iter.adjNode());
         assertEquals(93146.888, iter.distance(), 1);
         assertFalse(iter.next());
     }
@@ -187,11 +187,11 @@ public class OSMReaderTest {
 
         EdgeIterator iter = graph.getEdges(internalIdMain, carOutFilter);
         assertTrue(iter.next());
-        assertEquals(internalId2, iter.node());
+        assertEquals(internalId2, iter.adjNode());
 
         iter = graph.getEdges(internalIdMain);
         assertTrue(iter.next());
-        assertEquals(internalId1, iter.node());
+        assertEquals(internalId1, iter.adjNode());
         CarFlagEncoder encoder = carEncoder;
         assertTrue(encoder.isMotorway(iter.flags()));
         assertFalse(encoder.isForward(iter.flags()));

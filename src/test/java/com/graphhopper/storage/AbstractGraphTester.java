@@ -121,15 +121,15 @@ public abstract class AbstractGraphTester {
         assertEquals(1, GHUtility.count(g.getEdges(3, carOutFilter)));
         i = g.getEdges(3, carOutFilter);
         i.next();
-        assertEquals(2, i.node());
+        assertEquals(2, i.adjNode());
 
         i = g.getEdges(1, carOutFilter);
         assertTrue(i.next());
-        assertEquals(2, i.node());
+        assertEquals(2, i.adjNode());
         assertTrue(i.next());
-        assertEquals(11, i.node());
+        assertEquals(11, i.adjNode());
         assertTrue(i.next());
-        assertEquals(12, i.node());
+        assertEquals(12, i.adjNode());
         assertFalse(i.next());
     }
 
@@ -154,15 +154,15 @@ public abstract class AbstractGraphTester {
         assertEquals(1, GHUtility.count(g.getEdges(3, carOutFilter)));
         i = g.getEdges(3, carOutFilter);
         i.next();
-        assertEquals(2, i.node());
+        assertEquals(2, i.adjNode());
 
         i = g.getEdges(1, carOutFilter);
         assertTrue(i.next());
-        assertEquals(2, i.node());
+        assertEquals(2, i.adjNode());
         assertTrue(i.next());
-        assertEquals(11, i.node());
+        assertEquals(11, i.adjNode());
         assertTrue(i.next());
-        assertEquals(12, i.node());
+        assertEquals(12, i.adjNode());
         assertFalse(i.next());
     }
 
@@ -176,16 +176,16 @@ public abstract class AbstractGraphTester {
         assertFalse(i.next());
         i = g.getEdges(3, carOutFilter);
         assertTrue(i.next());
-        assertEquals(2, i.node());
+        assertEquals(2, i.adjNode());
         assertFalse(i.next());
 
         g.edge(2, 3, 112, false);
         i = g.getEdges(2, carOutFilter);
         assertTrue(i.next());
-        assertEquals(3, i.node());
+        assertEquals(3, i.adjNode());
         i = g.getEdges(3, carOutFilter);
         i.next();
-        assertEquals(2, i.node());
+        assertEquals(2, i.adjNode());
         assertFalse(i.next());
     }
 
@@ -431,7 +431,7 @@ public abstract class AbstractGraphTester {
 
     public boolean containsLatitude(Graph g, EdgeIterator iter, double latitude) {
         while (iter.next()) {
-            if (Math.abs(g.getLatitude(iter.node()) - latitude) < 1e-4) {
+            if (Math.abs(g.getLatitude(iter.adjNode()) - latitude) < 1e-4) {
                 return true;
             }
         }
@@ -624,19 +624,19 @@ public abstract class AbstractGraphTester {
         edgeId = iter2.edge();
         iter = someGraphImpl.getEdgeProps(edgeId, 0);
         assertEquals(2, iter.baseNode());
-        assertEquals(0, iter.node());
+        assertEquals(0, iter.adjNode());
         assertEquals(20, iter.distance(), 1e-5);
 
         iter = someGraphImpl.getEdgeProps(edgeId, 2);
         assertEquals(0, iter.baseNode());
-        assertEquals(2, iter.node());
+        assertEquals(2, iter.adjNode());
         assertEquals(20, iter.distance(), 1e-5);
 
         // minor API glitch: should be RawEdgeIterator
         iter = someGraphImpl.getEdgeProps(edgeId, -1);
         assertFalse(iter.isEmpty());
         assertEquals(0, iter.baseNode());
-        assertEquals(2, iter.node());
+        assertEquals(2, iter.adjNode());
 
         iter = someGraphImpl.getEdgeProps(edgeId, 1);
         assertTrue(iter.isEmpty());
@@ -705,10 +705,10 @@ public abstract class AbstractGraphTester {
         Graph g = createGraph();
         EdgeIterator iter = g.edge(4, 10, 100, carEncoder.flags(10, false));
         assertEquals(4, iter.baseNode());
-        assertEquals(10, iter.node());
+        assertEquals(10, iter.adjNode());
         iter = g.edge(14, 10, 100, carEncoder.flags(10, false));
         assertEquals(14, iter.baseNode());
-        assertEquals(10, iter.node());
+        assertEquals(10, iter.adjNode());
     }
 
     @Test
@@ -724,23 +724,23 @@ public abstract class AbstractGraphTester {
         // if tower node requested => return only tower nodes
         EdgeIterator iter = g.getEdges(0);
         assertTrue(iter.next());
-        assertEquals(4, iter.node());
+        assertEquals(4, iter.adjNode());
         assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.wayGeometry());
         assertTrue(iter.next());
         assertPList(Helper.createPointList(1, 11, 1, 12, 1, 13.0), iter.wayGeometry());
-        assertEquals(14, iter.node());
+        assertEquals(14, iter.adjNode());
         assertFalse(iter.next());
 
         iter = g.getEdges(0, carOutFilter);
         assertTrue(iter.next());
         assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.wayGeometry());
-        assertEquals(4, iter.node());
+        assertEquals(4, iter.adjNode());
         assertFalse(iter.next());
 
         iter = g.getEdges(10, carInFilter);
         assertTrue(iter.next());
         assertPList(Helper.createPointList(1, 9, 1, 8, 1, 7, 1, 6, 1, 5), iter.wayGeometry());
-        assertEquals(4, iter.node());
+        assertEquals(4, iter.adjNode());
         assertFalse(iter.next());
     }
 

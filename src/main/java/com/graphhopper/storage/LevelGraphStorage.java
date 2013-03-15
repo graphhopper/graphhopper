@@ -117,10 +117,10 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     public int disconnect(EdgeIterator iter, long prevEdgePointer, boolean sameDirection) {
         // open up package protected API for now ...
         if (sameDirection)
-            internalEdgeDisconnect(iter.edge(), prevEdgePointer, iter.baseNode(), iter.node());
+            internalEdgeDisconnect(iter.edge(), prevEdgePointer, iter.baseNode(), iter.adjNode());
         else {
             // prevEdgePointer belongs to baseNode ... but now we need it for node()!
-            EdgeSkipIterator tmpIter = getEdges(iter.node());
+            EdgeSkipIterator tmpIter = getEdges(iter.adjNode());
             int tmpPrevEdge = EdgeIterator.NO_EDGE;
             boolean found = false;
             while (tmpIter.next()) {
@@ -133,7 +133,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
             }
             if (found) {
                 // System.out.println("disconnect " + iter.node() + "->" + iter.baseNode() + " (" + iter.edge() + ") " + GraphUtility.count(getEdges(iter.node())));
-                internalEdgeDisconnect(iter.edge(), (long) tmpPrevEdge * edgeEntrySize, iter.node(), iter.baseNode());
+                internalEdgeDisconnect(iter.edge(), (long) tmpPrevEdge * edgeEntrySize, iter.adjNode(), iter.baseNode());
                 // System.out.println(" .. " + GraphUtility.count(getEdges(iter.node())));
             }
         }

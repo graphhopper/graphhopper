@@ -235,7 +235,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         while (iter.next()) {
             if (!accept(iter))
                 continue;
-            int neighborNode = iter.node();
+            int neighborNode = iter.adjNode();
             if (closedSet.contains(neighborNode))
                 continue;
 
