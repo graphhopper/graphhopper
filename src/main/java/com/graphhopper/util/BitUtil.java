@@ -197,4 +197,33 @@ public class BitUtil {
         }
         return sb.toString();
     }
+
+    /**
+     * Reverses the bits in the specified val
+     *
+     * @see also
+     * http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
+     */
+    public static long reverse(long v, int maxBits) {
+        long r = 0;
+        for (; maxBits > 0; v >>= 1) {
+            r <<= 1;
+            r |= v & 1;
+            maxBits--;
+            if (v == 0) {
+                r <<= maxBits;
+                break;
+            }
+        }
+        return r;
+    }
+
+    /**
+     * Touches only the specified bits - it does not zero out the higher bits
+     * (like reverse does).
+     */
+    public static long reversePart(long v, int maxBits) {
+        long rest = v & (~((1 << maxBits) - 1));
+        return rest | reverse(v, maxBits);
+    }
 }

@@ -20,13 +20,13 @@ package com.graphhopper.storage.index;
 
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyTBitSet;
-import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
@@ -78,7 +78,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     private int shift;
     // convert spatial key to index for subentry of current depth
     private long bitmask;
-    private KeyAlgo keyAlgo;
+    private SpatialKeyAlgo keyAlgo;
     private int minResolutionInMeter;
     private double deltaLat;
     private double deltaLon;
@@ -227,10 +227,10 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             // TODO inline bresenham?
             PointEmitter pointEmitter = new PointEmitter() {
                 @Override public void set(double lat, double lon) {
-                    long key = keyAlgo.encode(lat, lon);
+                    long key = createReverseKey(lat, lon);
                     // TODO measure distance to avoid pair adding
                     // if(lat,lon more close to lat1,lon1)
-                    if (NumHelper.equalsEps(lat, 4.5, 0.1) && NumHelper.equalsEps(lon, -0.5, 0.1))
+                    if (NumHelper.equalsEps(lat, -1, 0.1) && NumHelper.equalsEps(lon, -1, 0.1))
                         root = root;
                     addNode(root, nodeA, 0, key);
                     addNode(root, nodeB, 0, key);
@@ -291,9 +291,11 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             } else {
                 InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
                 pointer += treeEntry.subEntries.length;
+                int counter = 0;
                 for (InMemEntry subEntry : treeEntry.subEntries) {
                     dataAccess.ensureCapacity((pointer + 1) * 4);
                     dataAccess.setInt(refPointer++, -pointer);
+                    counter++;
                     if (subEntry == null)
                         continue;
                     pointer = store(subEntry, pointer);
@@ -301,6 +303,10 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             }
             return pointer;
         }
+    }
+
+    int getMaxDepth() {
+        return maxDepth;
     }
 
     // fillIDs according to how they are stored
@@ -320,14 +326,20 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         }
     }
 
+    // this method returns the spatial key in reverse order for easier right-shifting
+    // TODO PERFORMANCE for index creation is called very often
+    final long createReverseKey(double lat, double lon) {
+        return BitUtil.reverse(keyAlgo.encode(lat, lon), keyAlgo.bits());
+    }
+
     @Override
     public TIntList findIDs(GHPlace point, final EdgeFilter edgeFilter) {
         final double queryLat = point.lat;
         final double queryLon = point.lon;
         final TIntHashSet storedNetworkEntryIds = new TIntHashSet();
-        boolean simple = true;
+        boolean simple = false;
         if (simple) {
-            long key = keyAlgo.encode(queryLat, queryLon);
+            long key = createReverseKey(queryLat, queryLon);
             fillIDs(key, 0, 0, storedNetworkEntryIds);
         } else {
             // search all rasters around minResolutionInMeter as we did not fill empty entries
@@ -335,8 +347,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             double maxLon = queryLon + deltaLon;
             for (double tmpLat = queryLat - deltaLat; tmpLat <= maxLat; tmpLat += deltaLat) {
                 for (double tmpLon = queryLon - deltaLon; tmpLon <= maxLon; tmpLon += deltaLon) {
-                    long key = keyAlgo.encode(tmpLat, tmpLon);
-                    System.out.println(point + ", key " + key);
+                    long key = createReverseKey(tmpLat, tmpLon);
                     fillIDs(key, 0, 0, storedNetworkEntryIds);
                 }
             }
