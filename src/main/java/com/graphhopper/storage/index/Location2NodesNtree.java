@@ -258,8 +258,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                     long key = createReverseKey(lat, lon);
                     // TODO measure distance to avoid pair adding
                     // if(lat,lon more close to lat1,lon1)
-                    if (NumHelper.equalsEps(lat, -1, 0.1) && NumHelper.equalsEps(lon, -1, 0.1))
-                        root = root;
+//                    if (NumHelper.equalsEps(lat, -1, 0.1) && NumHelper.equalsEps(lon, -1, 0.1))
+//                        root = root;
                     addNode(root, nodeA, 0, key);
                     addNode(root, nodeB, 0, key);
                 }
@@ -500,7 +500,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         }
 
         void doCompress(Graph graph) {
-            // TODO NOW remove node from the same network
+            // TODO remove node from the same network
         }
 
         @Override public final boolean isLeaf() {
