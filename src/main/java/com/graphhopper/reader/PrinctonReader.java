@@ -60,7 +60,7 @@ public class PrinctonReader {
                 double dist = -1;
                 int counter = 0;
                 for (int j = 0; j < args.length; j++) {
-                    if (args[j].isEmpty())
+                    if (Helper.isEmpty(args[j]))
                         continue;
 
                     if (counter == 0)

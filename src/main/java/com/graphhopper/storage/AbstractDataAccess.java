@@ -40,7 +40,7 @@ public abstract class AbstractDataAccess implements DataAccess {
 
     public AbstractDataAccess(String name, String location) {
         this.name = name;
-        if (!location.isEmpty() && !location.endsWith("/"))
+        if (!Helper.isEmpty(location) && !location.endsWith("/"))
             throw new IllegalArgumentException("Create DataAccess object via its corresponding Directory!");
         this.location = location;
     }
@@ -157,7 +157,7 @@ public abstract class AbstractDataAccess implements DataAccess {
     }
 
     protected boolean checkBeforeRename(String newName) {
-        if (newName == null || newName.isEmpty())
+        if (Helper.isEmpty(newName))
             throw new IllegalArgumentException("newName mustn't be empty!");
         if (newName.equals(name))
             return false;

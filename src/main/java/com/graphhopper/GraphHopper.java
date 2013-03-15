@@ -193,7 +193,7 @@ public class GraphHopper implements GraphHopperAPI {
             graph = storage;
             initIndex(dir);
         } else if (tmpGHFile.endsWith(".osm") || tmpGHFile.endsWith(".xml")) {
-            if (ghLocation.isEmpty())
+            if (Helper.isEmpty(ghLocation))
                 ghLocation = Helper.pruneFileEnd(graphHopperFile) + "-gh";
             CmdArgs args = new CmdArgs().put("osmreader.osm", graphHopperFile).
                     put("osmreader.graph-location", ghLocation);

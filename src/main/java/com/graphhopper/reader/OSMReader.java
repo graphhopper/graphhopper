@@ -97,7 +97,7 @@ public class OSMReader {
      * reallocation (default is 5mio)
      */
     public static OSMReader osm2Graph(final CmdArgs args) throws IOException {
-        if (!args.get("config", "").isEmpty()) {
+        if (!Helper.isEmpty(args.get("config", ""))) {
             CmdArgs tmp = CmdArgs.readFromConfig(args.get("config", ""));
             // overwrite command line configuration
             args.merge(tmp);
@@ -375,7 +375,7 @@ public class OSMReader {
      * @param chShortcuts fastest, shortest or false
      */
     public OSMReader setCHShortcuts(String chShortcuts) {
-        if (chShortcuts.isEmpty() || "no".equals(chShortcuts) || "false".equals(chShortcuts))
+        if (Helper.isEmpty(chShortcuts) || "no".equals(chShortcuts) || "false".equals(chShortcuts))
             return this;
 
         VehicleEncoder encoder = new CarFlagEncoder();

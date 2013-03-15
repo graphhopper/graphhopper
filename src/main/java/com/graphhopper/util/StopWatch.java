@@ -64,7 +64,7 @@ public class StopWatch {
     @Override
     public String toString() {
         String str = "";
-        if (!name.isEmpty())
+        if (!Helper.isEmpty(name))
             str += name + " ";
 
         return str + "time:" + getSeconds();

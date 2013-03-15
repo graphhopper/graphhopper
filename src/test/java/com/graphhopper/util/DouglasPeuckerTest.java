@@ -38,7 +38,7 @@ public class DouglasPeuckerTest {
 
     void parse(PointList list, String str) {
         for (String latlon : str.split("\\[")) {
-            if (latlon.trim().isEmpty())
+            if (latlon.trim().length() == 0)
                 continue;
 
             String ll[] = latlon.split(",");

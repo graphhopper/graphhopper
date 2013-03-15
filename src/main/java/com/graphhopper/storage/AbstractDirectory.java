@@ -35,7 +35,7 @@ public abstract class AbstractDirectory implements Directory {
     protected final String location;
 
     public AbstractDirectory(String _location) {
-        if (_location == null || _location.isEmpty())
+        if (Helper.isEmpty(_location))
             _location = new File("").getAbsolutePath();
         if (!_location.endsWith("/"))
             _location += "/";

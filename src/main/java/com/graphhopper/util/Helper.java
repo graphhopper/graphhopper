@@ -55,13 +55,11 @@ public class Helper {
         String line;
         try {
             while ((line = reader.readLine()) != null) {
-                if (line.startsWith("//") || line.startsWith("#")) {
+                if (line.startsWith("//") || line.startsWith("#"))
                     continue;
-                }
 
-                if (line.isEmpty()) {
+                if (Helper.isEmpty(line))
                     continue;
-                }
 
                 int index = line.indexOf("=");
                 if (index < 0) {
@@ -151,7 +149,7 @@ public class Helper {
     }
 
     public static boolean isEmpty(String strOsm) {
-        return strOsm == null || strOsm.trim().isEmpty();
+        return strOsm == null || strOsm.trim().length() == 0;
     }
 
     public static VehicleEncoder getVehicleEncoder(String str) {

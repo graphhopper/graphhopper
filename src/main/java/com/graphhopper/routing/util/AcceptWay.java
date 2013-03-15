@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.Helper;
 import gnu.trove.list.array.TLongArrayList;
 import java.util.Map;
 
@@ -162,7 +163,7 @@ public class AcceptWay {
      * @return the speed in km/h
      */
     static int parseSpeed(String str) {
-        if (str == null || str.isEmpty())
+        if (Helper.isEmpty(str))
             return -1;
         int kmInteger = str.indexOf("km");
         if (kmInteger > 0)

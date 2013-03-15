@@ -18,6 +18,8 @@
  */
 package com.graphhopper.util.shapes;
 
+import com.graphhopper.util.Helper;
+
 /**
  * Specifies a place by its coordinates, name and/or node id.
  *
@@ -69,7 +71,7 @@ public class GHPlace {
     }
 
     public boolean isValidName() {
-        return !name.isEmpty();
+        return !Helper.isEmpty(name);
     }
 
     public boolean isValidPoint() {
