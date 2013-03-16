@@ -38,13 +38,28 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     @Override
     public Location2IDIndex createIndex(Graph g, int resolution) {
         Directory dir = new RAMDirectory(location);
-        return new Location2NodesNtree(g, dir).subEntries(4).prepareIndex(10000);
+        return new Location2NodesNtree(g, dir).subEntries(4).prepareIndex(1000000);
     }
 
     @Override
     public boolean hasEdgeSupport() {
         return true;
     }
+
+//    @Test
+//    public void testPrint() {
+//        Graph g = createGraph();
+//        initSimpleGraph(g);
+//
+//        System.out.println(BitUtil.fromBitString2Long("0000100001100111"));        
+//        System.out.println(BitUtil.fromBitString2Long("1011100001100111"));
+//        
+//        Location2NodesNtree index = new Location2NodesNtree(g, new RAMDirectory()).subEntries(16).minResolutionInMeter(10000);
+//        index.prepareAlgo();
+//        Location2NodesNtree.InMemConstructionIndex inMemIndex = index.prepareIndex();
+//        System.out.println("TREE");
+//        System.out.println(inMemIndex.print());
+//    }
 
     private Graph createTestGraph() {
         Graph graph = new GraphBuilder().create();

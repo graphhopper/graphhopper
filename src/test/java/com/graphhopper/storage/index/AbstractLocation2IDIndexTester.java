@@ -56,7 +56,7 @@ public abstract class AbstractLocation2IDIndexTester {
         Graph g = createGraph();
         initSimpleGraph(g);
 
-        Location2IDIndex idx = createIndex(g, 8);
+        Location2IDIndex idx = createIndex(g, 8);        
         assertEquals(4, idx.findID(5, 2));
         assertEquals(3, idx.findID(1.5, 2));
         assertEquals(0, idx.findID(-1, -1));
@@ -70,7 +70,7 @@ public abstract class AbstractLocation2IDIndexTester {
 
     public void initSimpleGraph(Graph g) {
         //  6 |       4
-        //  5 |     
+        //  5 |           
         //    |     6
         //  4 |              5
         //  3 |
