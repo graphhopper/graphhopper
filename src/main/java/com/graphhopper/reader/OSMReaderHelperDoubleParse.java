@@ -188,7 +188,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     @Override
     void startWayProcessing() {
         LoggerFactory.getLogger(getClass()).info("finished node processing. osmIdMap:"
-                + osmIdToIndexMap.capacity() * (12f + 1) / Helper.MB + ", " + Helper.getMemInfo());
+                + (int) (osmIdToIndexMap.capacity() * (12f + 1) / Helper.MB) + "MB, " + Helper.getMemInfo());
     }
 
     @Override

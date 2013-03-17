@@ -94,7 +94,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     public Location2NodesNtree(Graph g, Directory dir) {
         this.graph = g;
         dataAccess = dir.findCreate("spatialNIndex");
-        subEntries = 4;
+        subEntries = 2;
         minResolutionInMeter = 500;
     }
 
@@ -117,6 +117,9 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
     void prepareAlgo() {
         shift = (int) Math.round(Math.log(subEntries) / Math.log(2));
+        // Math.log(1) == 0
+        if (shift < 2)
+            throw new IllegalStateException("Too few subEntries:" + subEntries + ", shift:" + shift);
         bitmask = (1 << shift) - 1;
 
         // now calculate the necessary maxDepth d for our current bounds
@@ -129,6 +132,10 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                 (bounds.maxLon - bounds.minLon) / 360 * distCalc.calcCircumference(lat));
         int tmpDepth = (int) (Math.log(maxDistInMeter / minResolutionInMeter) / Math.log(shift));
         maxDepth = Math.min(64 / shift, Math.max(0, tmpDepth) + 1);
+        if (maxDepth <= 0 || maxDepth * shift > 64)
+            throw new IllegalStateException("Bounds or minimal resolution wrong:"
+                    + bounds + ", resolution:" + minResolutionInMeter
+                    + ", shift:" + shift + ", maxDepth:" + maxDepth + ", tmpDepth:" + tmpDepth);
         keyAlgo = new SpatialKeyAlgo(maxDepth * shift).bounds(bounds);
         long parts = Math.round(Math.pow(shift, maxDepth));
         deltaLat = (graph.bounds().maxLat - graph.bounds().minLat) / parts;

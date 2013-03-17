@@ -251,7 +251,7 @@ public class OSMReader {
 
     void createIndex() {
         // int precisionInMeter = 500 * 500;
-        int precisionInMeter = 2000;
+        int precisionInMeter = 1000;
         location2IDIndex().prepareIndex(precisionInMeter);
     }
 
