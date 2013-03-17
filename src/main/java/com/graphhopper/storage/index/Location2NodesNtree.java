@@ -37,9 +37,6 @@ import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
-import gnu.trove.TIntCollection;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
 import java.util.ArrayList;
@@ -84,6 +81,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     private long bitmask;
     private SpatialKeyAlgo keyAlgo;
     private int minResolutionInMeter;
+    private double minResolutionInMeterNormed;
     private double deltaLat;
     private double deltaLon;
     private int initLeafEntries = 4;
@@ -94,8 +92,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     public Location2NodesNtree(Graph g, Directory dir) {
         this.graph = g;
         dataAccess = dir.findCreate("spatialNIndex");
-        subEntries = 2;
-        minResolutionInMeter = 500;
+        subEntries = 4;
+        minResolutionInMeter(500);
     }
 
     /**
@@ -112,6 +110,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
     public Location2NodesNtree minResolutionInMeter(int minResolutionInMeter) {
         this.minResolutionInMeter = minResolutionInMeter;
+        this.minResolutionInMeterNormed = distCalc.calcNormalizedDist(minResolutionInMeter);
         return this;
     }
 
@@ -150,10 +149,10 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
     @Override
     public int findID(double lat, double lon) {
-        TIntCollection list = findIDs(new GHPlace(lat, lon), ALL_EDGES);
-        if (list.isEmpty())
+        LocationIDResult res = findClosest(new GHPlace(lat, lon), ALL_EDGES);
+        if (res == null)
             return -1;
-        return list.iterator().next();
+        return res.closestNode();
     }
 
     @Override
@@ -191,11 +190,12 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
         // compact & store to dataAccess
         dataAccess.createNew(64 * 1024);
-        inMem.store(inMem.root, START_POINTER);
+        int lastPointer = inMem.store(inMem.root, START_POINTER);
         dataAccess.setHeader(0, MAGIC_INT);
         dataAccess.setHeader(1, calcChecksum());
         dataAccess.setHeader(2, minResolutionInMeter);
         dataAccess.setHeader(3, subEntries);
+        // TODO save a bit more space dataAccess.trimTo((lastPointer + 1) * 4);
         dataAccess.flush();
 
         initialized = true;
@@ -402,7 +402,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     }
 
     @Override
-    public TIntList findIDs(GHPlace point, final EdgeFilter edgeFilter) {
+    public LocationIDResult findClosest(GHPlace point, final EdgeFilter edgeFilter) {
         final double queryLat = point.lat;
         final double queryLon = point.lon;
         final TIntHashSet storedNetworkEntryIds = new TIntHashSet();
@@ -424,17 +424,11 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         }
 
         if (storedNetworkEntryIds.isEmpty())
-            return new TIntArrayList(0);
+            return null;
 
-        int mainId = storedNetworkEntryIds.iterator().next();
-        double mainLat = graph.getLatitude(mainId);
-        double mainLon = graph.getLongitude(mainId);
-        final WeightedNode closestNode = new WeightedNode(mainId,
-                distCalc.calcNormalizedDist(mainLat, mainLon, queryLat, queryLon));
-
+        final LocationIDResult closestNode = new LocationIDResult();
         // clone storedIds to avoid interference with forEach
         final MyBitSet checkBitset = new MyTBitSet(new TIntHashSet(storedNetworkEntryIds));
-
         // find nodes from the network entries which are close to 'point'
         storedNetworkEntryIds.forEach(new TIntProcedure() {
             @Override
@@ -451,62 +445,84 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                     }
 
                     @Override protected boolean goFurther(int baseNode) {
-//                        if (baseNode == closestNode.node)
-//                            return true;
                         currNode = baseNode;
                         currLat = graph.getLatitude(baseNode);
                         currLon = graph.getLongitude(baseNode);
                         currDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
-                        // TODO do not use this as we cannot check edgeFilter
-                        if (currDist < closestNode.weight) {
-                            closestNode.weight = currDist;
-                            closestNode.node = baseNode;
-                        }
-
-                        return goFurther; // && currDist < minResolutionInMeter * 2;
+                        return goFurther;
                     }
 
                     @Override
                     protected boolean checkConnected(EdgeIterator currEdge) {
+                        // TODO
 //                        if (!edgeFilter.accept(currEdge)) {
-//                            goFurther = true;
+//                            // only limit the adjNode to a certain radius as currNode could be the wrong side of a valid edge
+//                            goFurther = currDist < minResolutionInMeterNormed * 2;
 //                            return true;
 //                        }
 
                         goFurther = false;
-                        int connNode = currEdge.adjNode();
-                        double connLat = graph.getLatitude(connNode);
-                        double connLon = graph.getLongitude(connNode);
+                        int tmpNode = currNode;
+                        double tmpLat = currLat;
+                        double tmpLon = currLon;
+                        int adjNode = currEdge.adjNode();
+                        double connLat = graph.getLatitude(adjNode);
+                        double connLon = graph.getLongitude(adjNode);
 
-                        // check distance of queryLat, queryLon to connNode and to the currEdge                        
-                        double connectDist = distCalc.calcNormalizedDist(connLat, connLon, queryLat, queryLon);
-                        double dist = connectDist;
-                        int tmpNode = connNode;
-                        if (distCalc.validEdgeDistance(queryLat, queryLon,
-                                currLat, currLon, connLat, connLon)) {
-                            dist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
-                                    currLat, currLon, connLat, connLon);
-                            // if we use distance to edge it could be that we prefer the current node
-                            if (currDist < connectDist)
-                                tmpNode = currNode;
+                        check(tmpNode, currDist, -adjNode - 2);
+                                                
+                        double adjDist = distCalc.calcNormalizedDist(connLat, connLon, queryLat, queryLon);
+                        // if there are wayPoints this is only an approximation
+                        if (adjDist < distCalc.calcNormalizedDist(currLat, currLon, queryLat, queryLon))
+                            tmpNode = adjNode;
+
+                        double tmpDist;
+                        PointList pointList = currEdge.wayGeometry();
+                        int len = pointList.size();
+                        for (int pointIndex = 0; pointIndex < len; pointIndex++) {
+                            double wayLat = pointList.latitude(pointIndex);
+                            double wayLon = pointList.longitude(pointIndex);
+
+                            if (NumHelper.equalsEps(queryLat, wayLat, 1e-6)
+                                    && NumHelper.equalsEps(queryLon, wayLon, 1e-6)) {
+                                // equal point found
+                                check(tmpNode, 0d, pointIndex);
+                                break;
+                            } else if (distCalc.validEdgeDistance(queryLat, queryLon,
+                                    tmpLat, tmpLon, wayLat, wayLon)) {
+                                tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
+                                        tmpLat, tmpLon, wayLat, wayLon);
+                                check(tmpNode, tmpDist, pointIndex);
+                            }
+
+                            tmpLat = wayLat;
+                            tmpLon = wayLon;
                         }
 
+                        if (distCalc.validEdgeDistance(queryLat, queryLon,
+                                tmpLat, tmpLon, connLat, connLon))
+                            tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
+                                    tmpLat, tmpLon, connLat, connLon);
+                        else
+                            tmpDist = adjDist;
+
+                        check(tmpNode, tmpDist, -currNode - 2);
+                        return closestNode.weight >= 0;
+                    }
+
+                    void check(int node, double dist, int wayIndex) {
                         if (dist < closestNode.weight) {
                             closestNode.weight = dist;
-                            closestNode.node = tmpNode;
+                            closestNode.closestNode(node);
+                            closestNode.wayIndex = wayIndex;
                         }
-                        return true;
                     }
                 }.start(graph, networkEntryNodeId, false);
                 return true;
             }
         });
-        // TODO return start AND end node of the shortest edge       
-        final TIntList result = new TIntArrayList();
-        result.add(closestNode.node);
-        return result;
 
-
+        return closestNode;
     }
 
     // make entries static as otherwise we get an additional reference to this class (memory waste)

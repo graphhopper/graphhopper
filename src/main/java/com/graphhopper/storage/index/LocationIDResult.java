@@ -18,18 +18,30 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.shapes.GHPlace;
-
 /**
- * Look up ids from gps coordinates.
+ * Result of Location2IDIndex lookup
  *
  * @author Peter Karich
  */
-public interface Location2NodesIndex {
+public class LocationIDResult {
 
-    /**
-     * Returns the closest matching result (currently one node only).
-     */
-    LocationIDResult findClosest(GHPlace point, EdgeFilter edgeFilter);
+    double weight = Double.MAX_VALUE;    
+    int wayIndex = -3;
+    private int closestNode = -1;
+
+    public LocationIDResult() {
+    }
+
+    void closestNode(int node) {
+        closestNode = node;
+    }
+
+    public int closestNode() {
+        return closestNode;
+    }
+
+    @Override
+    public String toString() {
+        return closestNode + ", " + weight + ", " + wayIndex;
+    }
 }

@@ -16,20 +16,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage.index;
-
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.shapes.GHPlace;
+package com.graphhopper.util;
 
 /**
- * Look up ids from gps coordinates.
- *
  * @author Peter Karich
  */
-public interface Location2NodesIndex {
+public class IntRef {
 
-    /**
-     * Returns the closest matching result (currently one node only).
-     */
-    LocationIDResult findClosest(GHPlace point, EdgeFilter edgeFilter);
+    public int val;
+
+    public IntRef(int val) {
+        this.val = val;
+    }
 }

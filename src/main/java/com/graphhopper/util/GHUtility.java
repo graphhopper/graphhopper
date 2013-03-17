@@ -139,14 +139,6 @@ public class GHUtility {
         return createSortedGraph(g, sortedGraph, list);
     }
 
-    private static class IntRef {
-
-        int val;
-
-        public IntRef(int val) {
-            this.val = val;
-        }
-    }
 
     /**
      * Sorts the graph according to depth-first search traversal. Other
