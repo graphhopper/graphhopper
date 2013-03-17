@@ -265,12 +265,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             PointEmitter pointEmitter = new PointEmitter() {
                 @Override public void set(double lat, double lon) {
                     long key = createReverseKey(lat, lon);
-                    // TODO measure distance to avoid pair adding
-                    // if(lat,lon more close to lat1,lon1)
-//                    if (NumHelper.equalsEps(lat, -1, 0.1) && NumHelper.equalsEps(lon, -1, 0.1))
-//                        root = root;
+                    // no need to feed both nodes as we search neighbors in findIDs                    
                     addNode(root, nodeA, 0, key);
-                    addNode(root, nodeB, 0, key);
                 }
             };
             BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter, deltaLat, deltaLon);
