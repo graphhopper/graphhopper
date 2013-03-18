@@ -453,7 +453,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                     }
 
                     @Override
-                    protected boolean checkConnected(EdgeIterator currEdge) {
+                    protected boolean checkAdjacent(EdgeIterator currEdge) {
                         // TODO
 //                        if (!edgeFilter.accept(currEdge)) {
 //                            // only limit the adjNode to a certain radius as currNode could be the wrong side of a valid edge
@@ -466,12 +466,12 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                         double tmpLat = currLat;
                         double tmpLon = currLon;
                         int adjNode = currEdge.adjNode();
-                        double connLat = graph.getLatitude(adjNode);
-                        double connLon = graph.getLongitude(adjNode);
+                        double adjLat = graph.getLatitude(adjNode);
+                        double adjLon = graph.getLongitude(adjNode);
 
                         check(tmpNode, currDist, -adjNode - 2);
                                                 
-                        double adjDist = distCalc.calcNormalizedDist(connLat, connLon, queryLat, queryLon);
+                        double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
                         // if there are wayPoints this is only an approximation
                         if (adjDist < distCalc.calcNormalizedDist(currLat, currLon, queryLat, queryLon))
                             tmpNode = adjNode;
@@ -500,9 +500,9 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                         }
 
                         if (distCalc.validEdgeDistance(queryLat, queryLon,
-                                tmpLat, tmpLon, connLat, connLon))
+                                tmpLat, tmpLon, adjLat, adjLon))
                             tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
-                                    tmpLat, tmpLon, connLat, connLon);
+                                    tmpLat, tmpLon, adjLat, adjLon);
                         else
                             tmpDist = adjDist;
 

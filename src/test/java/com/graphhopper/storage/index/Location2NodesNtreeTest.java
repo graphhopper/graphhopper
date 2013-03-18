@@ -143,8 +143,24 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         assertEquals(1, index.findID(0, 0));
         assertEquals(1, index.findID(0, 0.1));
         assertEquals(1, index.findID(0.1, 0.1));
-        
+
         assertEquals(1, index.findID(-0.5, -0.5));
+    }
+
+    @Test
+    public void testMore() {
+        Graph g = createGraph();
+        g.setNode(10, 51.2492152, 9.4317166);
+        g.setNode(20, 52, 9);
+        g.setNode(30, 51.2, 9.4);
+        // g.setNode(40, 51.25, 9.43);
+        g.setNode(50, 49, 10);
+        g.edge(20, 50, 1, true).wayGeometry(Helper.createPointList(51.25, 9.43));
+        g.edge(10, 20, 1, true);
+        g.edge(20, 30, 1, true);
+
+        Location2IDIndex index = createIndex(g, 2000);
+        assertEquals(20, index.findID(51.25, 9.43));
     }
     // TODO
 //    @Test
