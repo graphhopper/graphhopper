@@ -21,7 +21,7 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.util.AllEdgesFilter;
+import com.graphhopper.routing.util.EdgesFilterAcceptAll;
 import com.graphhopper.routing.util.CombinedEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -85,7 +85,7 @@ public class GraphStorage implements Graph, Storable {
 
     public GraphStorage(Directory dir) {
         combiEncoder = new CombinedEncoder();
-        allEdgesFilter = new AllEdgesFilter();
+        allEdgesFilter = new EdgesFilterAcceptAll();
         this.dir = dir;
         this.nodes = dir.findCreate("nodes");
         this.edges = dir.findCreate("egdes");
@@ -423,18 +423,23 @@ public class GraphStorage implements Graph, Storable {
 
         protected long edgePointer = -edgeEntrySize;
         private int maxEdges = edgeCount * edgeEntrySize;
-        
-        @Override public int count() {
+        private int nodeA;
+
+        @Override public int maxId() {
             return edgeCount;
         }
 
         @Override public boolean next() {
-            edgePointer += edgeEntrySize;
+            do {
+                edgePointer += edgeEntrySize;
+                nodeA = edges.getInt(edgePointer + E_NODEA);
+                // some edges are deleted and have a negative node
+            } while (nodeA < 0 && edgePointer < maxEdges);
             return edgePointer < maxEdges;
         }
 
         @Override public int baseNode() {
-            return edges.getInt(edgePointer + E_NODEA);
+            return nodeA;
         }
 
         @Override public int adjNode() {
@@ -486,6 +491,8 @@ public class GraphStorage implements Graph, Storable {
             throw new IllegalStateException("endNode " + endNode + " out of bounds [0," + nf(nodeCount) + "]");
         long edgePointer = (long) edgeId * edgeEntrySize;
         int nodeA = edges.getInt(edgePointer + E_NODEA);
+        if (nodeA < 0)
+            throw new IllegalStateException("edgeId " + edgeId + " is invalid - already removed!");
         int nodeB = edges.getInt(edgePointer + E_NODEB);
         SingleEdge edge;
         if (endNode == nodeB || endNode == -1) {
@@ -753,7 +760,7 @@ public class GraphStorage implements Graph, Storable {
      * @param edgeToUpdatePointer if it is negative then the nextEdgeId will be
      * saved to refToEdges of nodes
      */
-    void internalEdgeDisconnect(int edge, long edgeToUpdatePointer, int baseNode, int adjNode) {
+    void internalEdgeDisconnect(int edge, long edgeToUpdatePointer, int baseNode, int adjNode, boolean markDeleted) {
         long edgeToRemovePointer = (long) edge * edgeEntrySize;
         // an edge is shared across the two nodes even if the edge is not in both directions
         // so we need to know two edge-pointers pointing to the edge before edgeToRemovePointer
@@ -766,6 +773,8 @@ public class GraphStorage implements Graph, Storable {
                     ? edgeToUpdatePointer + E_LINKA : edgeToUpdatePointer + E_LINKB;
             edges.setInt(link, nextEdgeId);
         }
+        if (markDeleted)
+            edges.setInt(edgeToRemovePointer + E_NODEA, -1);
     }
 
     /**
@@ -817,7 +826,7 @@ public class GraphStorage implements Graph, Storable {
                 int nodeId = adjNodesToDelIter.adjNode();
                 if (removedNodes.contains(nodeId)) {
                     int edgeToRemove = adjNodesToDelIter.edge();
-                    internalEdgeDisconnect(edgeToRemove, prev, toUpdateNode, adjNodesToDelIter.adjNode());
+                    internalEdgeDisconnect(edgeToRemove, prev, toUpdateNode, adjNodesToDelIter.adjNode(), true);
                 } else
                     prev = adjNodesToDelIter.edgePointer();
             }

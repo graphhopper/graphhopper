@@ -117,7 +117,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     public int disconnect(EdgeIterator iter, long prevEdgePointer, boolean sameDirection) {
         // open up package protected API for now ...
         if (sameDirection)
-            internalEdgeDisconnect(iter.edge(), prevEdgePointer, iter.baseNode(), iter.adjNode());
+            internalEdgeDisconnect(iter.edge(), prevEdgePointer, iter.baseNode(), iter.adjNode(), false);
         else {
             // prevEdgePointer belongs to baseNode ... but now we need it for node()!
             EdgeSkipIterator tmpIter = getEdges(iter.adjNode());
@@ -131,11 +131,8 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
                 tmpPrevEdge = tmpIter.edge();
             }
-            if (found) {
-                // System.out.println("disconnect " + iter.node() + "->" + iter.baseNode() + " (" + iter.edge() + ") " + GraphUtility.count(getEdges(iter.node())));
-                internalEdgeDisconnect(iter.edge(), (long) tmpPrevEdge * edgeEntrySize, iter.adjNode(), iter.baseNode());
-                // System.out.println(" .. " + GraphUtility.count(getEdges(iter.node())));
-            }
+            if (found) 
+                internalEdgeDisconnect(iter.edge(), (long) tmpPrevEdge * edgeEntrySize, iter.adjNode(), iter.baseNode(), false);
         }
         return iter.edge();
     }
@@ -147,20 +144,20 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
     class AllEdgeSkipIterator extends AllEdgeIterator {
 
-         public void skippedEdges(int edge1, int edge2) {
+        public void skippedEdges(int edge1, int edge2) {
             edges.setInt(edgePointer + I_SKIP_EDGE1, edge1);
             edges.setInt(edgePointer + I_SKIP_EDGE2, edge2);
         }
 
-         public int skippedEdge1() {
+        public int skippedEdge1() {
             return edges.getInt(edgePointer + I_SKIP_EDGE1);
         }
 
-         public int skippedEdge2() {
+        public int skippedEdge2() {
             return edges.getInt(edgePointer + I_SKIP_EDGE2);
         }
 
-         public boolean isShortcut() {
+        public boolean isShortcut() {
             return EdgeIterator.Edge.isValid(skippedEdge1());
         }
     }

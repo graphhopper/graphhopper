@@ -107,33 +107,6 @@ public class GraphStorageTest extends AbstractGraphTester {
     }
 
     @Test
-    public void testGetAllEdges() {
-        Graph g = createGraph();
-        g.edge(0, 1, 2, true);
-        g.edge(3, 1, 1, false);
-        g.edge(3, 2, 1, false);
-
-        EdgeIterator iter = g.getAllEdges();
-        assertTrue(iter.next());
-        int edgeId = iter.edge();
-        assertEquals(0, iter.baseNode());
-        assertEquals(1, iter.adjNode());
-        assertEquals(2, iter.distance(), 1e-6);
-
-        assertTrue(iter.next());
-        int edgeId2 = iter.edge();
-        assertEquals(1, edgeId2 - edgeId);
-        assertEquals(1, iter.baseNode());
-        assertEquals(3, iter.adjNode());
-
-        assertTrue(iter.next());
-        assertEquals(2, iter.baseNode());
-        assertEquals(3, iter.adjNode());
-
-        assertFalse(iter.next());
-    }
-
-    @Test
     public void internalDisconnect() {
         GraphStorage g = (GraphStorage) createGraph();
         EdgeIterator iter0 = g.edge(0, 1, 10, true);
@@ -143,7 +116,7 @@ public class GraphStorageTest extends AbstractGraphTester {
         assertEquals(Arrays.asList(1, 3), GHUtility.neighbors(g.getEdges(0)));
         assertEquals(Arrays.asList(0, 2), GHUtility.neighbors(g.getEdges(1)));
         // remove edge "1-2" but only from 1
-        g.internalEdgeDisconnect(iter1.edge(), (long) iter0.edge() * g.edgeEntrySize, iter1.baseNode(), iter1.adjNode());        
+        g.internalEdgeDisconnect(iter1.edge(), (long) iter0.edge() * g.edgeEntrySize, iter1.baseNode(), iter1.adjNode(), true);
         assertEquals(Arrays.asList(0), GHUtility.neighbors(g.getEdges(1)));
         // let 0 unchanged -> no side effects
         assertEquals(Arrays.asList(1, 3), GHUtility.neighbors(g.getEdges(0)));

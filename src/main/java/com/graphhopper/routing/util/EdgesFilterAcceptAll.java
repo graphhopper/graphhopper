@@ -21,9 +21,11 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.EdgeIterator;
 
 /**
+ * Accepts every edge.
+ *
  * @author Peter Karich
  */
-public class AllEdgesFilter implements EdgeFilter {
+public class EdgesFilterAcceptAll implements EdgeFilter {
 
     @Override public boolean accept(EdgeIterator iter) {
         return true;

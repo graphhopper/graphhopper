@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -640,6 +641,17 @@ public abstract class AbstractGraphTester {
 
         iter = someGraphImpl.getEdgeProps(edgeId, 1);
         assertTrue(iter.isEmpty());
+
+        // delete
+        someGraphImpl.markNodeRemoved(1);
+        someGraphImpl.optimize();
+
+        // throw exception if accessing deleted edge
+        try {
+            someGraphImpl.getEdgeProps(iter1.edge(), -1);
+            assertTrue(false);
+        } catch (Exception ex) {
+        }
     }
 
     @Test
@@ -745,7 +757,7 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void footMix() {
+    public void testFootMix() {
         Graph g = createGraph();
         VehicleEncoder footEncoder = new FootFlagEncoder();
         g.edge(0, 1, 10, footEncoder.flags(10, true));
@@ -755,5 +767,55 @@ public abstract class AbstractGraphTester {
                 GHUtility.neighbors(g.getEdges(0, new DefaultEdgeFilter(footEncoder, false, true))));
         assertEquals(Arrays.asList(2, 3),
                 GHUtility.neighbors(g.getEdges(0, new DefaultEdgeFilter(carEncoder, false, true))));
+    }
+
+    @Test
+    public void testGetAllEdges() {
+        Graph g = createGraph();
+        g.edge(0, 1, 2, true);
+        g.edge(3, 1, 1, false);
+        g.edge(3, 2, 1, false);
+
+        EdgeIterator iter = g.getAllEdges();
+        assertTrue(iter.next());
+        int edgeId = iter.edge();
+        assertEquals(0, iter.baseNode());
+        assertEquals(1, iter.adjNode());
+        assertEquals(2, iter.distance(), 1e-6);
+
+        assertTrue(iter.next());
+        int edgeId2 = iter.edge();
+        assertEquals(1, edgeId2 - edgeId);
+        assertEquals(1, iter.baseNode());
+        assertEquals(3, iter.adjNode());
+
+        assertTrue(iter.next());
+        assertEquals(2, iter.baseNode());
+        assertEquals(3, iter.adjNode());
+
+        assertFalse(iter.next());
+    }
+
+    @Test
+    public void testGetAllEdgesWithDelete() {
+        Graph g = createGraph();
+        g.setNode(0, 0, 5);
+        g.setNode(1, 1, 5);
+        g.setNode(2, 2, 5);
+        g.setNode(3, 3, 5);
+        g.edge(0, 1, 1, true);
+        g.edge(0, 2, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1, true);
+        AllEdgesIterator iter = g.getAllEdges();
+        assertEquals(4, GHUtility.count(iter));
+        assertEquals(4, iter.maxId());
+
+        // delete
+        g.markNodeRemoved(1);
+        g.optimize();
+        iter = g.getAllEdges();
+        assertEquals(2, GHUtility.count(iter));
+        assertEquals(4, iter.maxId());
     }
 }
