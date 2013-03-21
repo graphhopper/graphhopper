@@ -38,9 +38,9 @@ import org.slf4j.LoggerFactory;
 /**
  * This helper requires less memory but parses the osm file twice. After the
  * first parse process it knows which nodes are involved in ways and only
- * memorizes the lat,lon of those node. Only tower nodes are kept directly in
- * the graph, pillar nodes (nodes with degree of exactly 2) are just stored as
- * geometry for an edge for later usage e.g. in a UI.
+ * memorizes the lat,lon of those node. Only tower nodes (crossroads) are kept
+ * directly in the graph, pillar nodes (nodes with degree of exactly 2) are just
+ * stored as geometry for an edge for later usage e.g. in a UI.
  *
  * @author Peter Karich
  */

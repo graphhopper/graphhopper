@@ -21,7 +21,6 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.util.EdgesFilterAcceptAll;
 import com.graphhopper.routing.util.CombinedEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -86,7 +85,7 @@ public class GraphStorage implements Graph, Storable {
 
     public GraphStorage(Directory dir) {
         combiEncoder = new CombinedEncoder();
-        allEdgesFilter = new EdgesFilterAcceptAll();
+        allEdgesFilter = EdgeFilter.ALL_EDGES;
         this.dir = dir;
         this.nodes = dir.findCreate("nodes");
         this.edges = dir.findCreate("egdes");

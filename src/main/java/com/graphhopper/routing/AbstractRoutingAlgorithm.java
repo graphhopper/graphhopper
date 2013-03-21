@@ -41,11 +41,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
 
     public AbstractRoutingAlgorithm(Graph graph, VehicleEncoder encoder) {
         this.graph = graph;
-        this.additionalEdgeFilter = new EdgeFilter() {
-            @Override public final boolean accept(EdgeIterator iter) {
-                return true;
-            }
-        };
+        this.additionalEdgeFilter = EdgeFilter.ALL_EDGES;
         type(new ShortestCalc());   
         this.flagEncoder = encoder;
         outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);

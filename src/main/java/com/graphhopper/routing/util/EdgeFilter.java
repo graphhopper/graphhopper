@@ -31,4 +31,9 @@ public interface EdgeFilter {
      * @return true if the current edge should be processed and false otherwise.
      */
     boolean accept(EdgeIterator iter);
+    static final EdgeFilter ALL_EDGES = new EdgeFilter() {
+        @Override public boolean accept(EdgeIterator iter) {
+            return true;
+        }
+    };
 }

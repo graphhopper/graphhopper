@@ -61,11 +61,6 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final static int MAGIC_INT = Integer.MAX_VALUE / 22316;
-    static final EdgeFilter ALL_EDGES = new EdgeFilter() {
-        @Override public boolean accept(EdgeIterator iter) {
-            return true;
-        }
-    };
     private DistanceCalc distCalc = new DistancePlaneProjection();
     DataAccess dataAccess;
     private Graph graph;
@@ -149,7 +144,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
     @Override
     public int findID(double lat, double lon) {
-        LocationIDResult res = findClosest(new GHPlace(lat, lon), ALL_EDGES);
+        LocationIDResult res = findClosest(new GHPlace(lat, lon), EdgeFilter.ALL_EDGES);
         if (res == null)
             return -1;
         return res.closestNode();

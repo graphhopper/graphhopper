@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -97,7 +98,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         inMemIndex.store(inMemIndex.root, 0);
         assertEquals(1.0, index.calcMemInMB(), 0.01);
 
-        LocationIDResult res = index.findClosest(new GHPlace(-.5, -.5), Location2NodesNtree.ALL_EDGES);
+        LocationIDResult res = index.findClosest(new GHPlace(-.5, -.5), EdgeFilter.ALL_EDGES);
         assertEquals(1, res.closestNode());
     }
 
