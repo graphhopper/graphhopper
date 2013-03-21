@@ -72,9 +72,8 @@ public class RoutingAlgorithmIntegrationTest {
     @Test
     public void testAndorra() {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 21233, 918));
-        // if id2location is created a bit different: list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 24.101, 992));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16201, 591));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 21122, 909));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16089, 582));
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list, true);
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
@@ -89,8 +88,8 @@ public class RoutingAlgorithmIntegrationTest {
         //   | bzip2 > campo-grande.extracted.osm.bz2
 
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(-20.4, -54.6, -20.6, -54.5, 25515, 271));
-        list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 17035, 228));
+        list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25515, 271));
+        list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18020, 238));
         runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list, false);
         assertEquals(testCollector.toString(), 0, testCollector.list.size());
     }
