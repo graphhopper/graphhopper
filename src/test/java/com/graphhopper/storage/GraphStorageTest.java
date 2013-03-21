@@ -116,7 +116,7 @@ public class GraphStorageTest extends AbstractGraphTester {
         assertEquals(Arrays.asList(1, 3), GHUtility.neighbors(g.getEdges(0)));
         assertEquals(Arrays.asList(0, 2), GHUtility.neighbors(g.getEdges(1)));
         // remove edge "1-2" but only from 1
-        g.internalEdgeDisconnect(iter1.edge(), (long) iter0.edge() * g.edgeEntrySize, iter1.baseNode(), iter1.adjNode(), true);
+        g.internalEdgeDisconnect(iter1.edge(), (long) iter0.edge() * g.edgeEntrySize, iter1.baseNode(), iter1.adjNode());
         assertEquals(Arrays.asList(0), GHUtility.neighbors(g.getEdges(1)));
         // let 0 unchanged -> no side effects
         assertEquals(Arrays.asList(1, 3), GHUtility.neighbors(g.getEdges(0)));

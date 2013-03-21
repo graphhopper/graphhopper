@@ -543,7 +543,7 @@ public abstract class AbstractGraphTester {
         assertEquals(1, GHUtility.count(g.getEdges(getIdOf(g, 8))));
         assertEquals(1, GHUtility.count(g.getEdges(getIdOf(g, 11))));
     }
-
+        
     @Test
     public void testDeleteAndOptimize() {
         Graph g = createGraph();

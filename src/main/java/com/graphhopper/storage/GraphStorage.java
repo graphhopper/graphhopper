@@ -48,6 +48,7 @@ import com.graphhopper.util.shapes.BBox;
  */
 public class GraphStorage implements Graph, Storable {
 
+    private static final int NO_NODE = -1;
     // distance of around +-1000 000 meter are ok
     private static final float INT_DIST_FACTOR = 1000f;
     private Directory dir;
@@ -434,7 +435,7 @@ public class GraphStorage implements Graph, Storable {
                 edgePointer += edgeEntrySize;
                 nodeA = edges.getInt(edgePointer + E_NODEA);
                 // some edges are deleted and have a negative node
-            } while (nodeA < 0 && edgePointer < maxEdges);
+            } while (nodeA == NO_NODE && edgePointer < maxEdges);
             return edgePointer < maxEdges;
         }
 
@@ -491,7 +492,7 @@ public class GraphStorage implements Graph, Storable {
             throw new IllegalStateException("endNode " + endNode + " out of bounds [0," + nf(nodeCount) + "]");
         long edgePointer = (long) edgeId * edgeEntrySize;
         int nodeA = edges.getInt(edgePointer + E_NODEA);
-        if (nodeA < 0)
+        if (nodeA == NO_NODE)
             throw new IllegalStateException("edgeId " + edgeId + " is invalid - already removed!");
         int nodeB = edges.getInt(edgePointer + E_NODEB);
         SingleEdge edge;
@@ -760,7 +761,7 @@ public class GraphStorage implements Graph, Storable {
      * @param edgeToUpdatePointer if it is negative then the nextEdgeId will be
      * saved to refToEdges of nodes
      */
-    void internalEdgeDisconnect(int edge, long edgeToUpdatePointer, int baseNode, int adjNode, boolean markDeleted) {
+    long internalEdgeDisconnect(int edge, long edgeToUpdatePointer, int baseNode, int adjNode) {
         long edgeToRemovePointer = (long) edge * edgeEntrySize;
         // an edge is shared across the two nodes even if the edge is not in both directions
         // so we need to know two edge-pointers pointing to the edge before edgeToRemovePointer
@@ -773,8 +774,11 @@ public class GraphStorage implements Graph, Storable {
                     ? edgeToUpdatePointer + E_LINKA : edgeToUpdatePointer + E_LINKB;
             edges.setInt(link, nextEdgeId);
         }
-        if (markDeleted)
-            edges.setInt(edgeToRemovePointer + E_NODEA, -1);
+        return edgeToRemovePointer;
+    }
+
+    private void invalidateEdge(long edgePointer) {
+        edges.setInt(edgePointer + E_NODEA, NO_NODE);
     }
 
     /**
@@ -792,15 +796,16 @@ public class GraphStorage implements Graph, Storable {
 
         // sorted map when we access it via keyAt and valueAt - see below!
         final SparseIntIntArray oldToNewMap = new SparseIntIntArray(removeNodeCount);
-        MyBitSetImpl toUpdatedSet = new MyBitSetImpl(removeNodeCount * 3);
-        for (int delNode = removedNodes.next(0); delNode >= 0; delNode = removedNodes.next(delNode + 1)) {
-            EdgeIterator delEdgesIter = getEdges(delNode, allEdgesFilter);
-            while (delEdgesIter.next()) {
-                int currNode = delEdgesIter.adjNode();
-                if (removedNodes.contains(currNode))
-                    continue;
+        MyBitSet toRemoveSet = new MyBitSetImpl(removeNodeCount);
+        removedNodes.copyTo(toRemoveSet);
 
-                toUpdatedSet.add(currNode);
+        // create map of old node ids pointing to new ids
+        for (int removeNode = removedNodes.next(0);
+                removeNode >= 0;
+                removeNode = removedNodes.next(removeNode + 1)) {
+            EdgeIterator delEdgesIter = getEdges(removeNode, allEdgesFilter);
+            while (delEdgesIter.next()) {
+                toRemoveSet.add(delEdgesIter.adjNode());
             }
 
             toMoveNode--;
@@ -809,40 +814,46 @@ public class GraphStorage implements Graph, Storable {
                     break;
             }
 
-            if (toMoveNode < delNode)
-                break;
-
-            oldToNewMap.put(toMoveNode, delNode);
+            if (toMoveNode >= removeNode)
+                oldToNewMap.put(toMoveNode, removeNode);
             itemsToMove++;
         }
 
         // now similar process to disconnectEdges but only for specific nodes
         // all deleted nodes could be connected to existing. remove the connections
-        for (int toUpdateNode = toUpdatedSet.next(0); toUpdateNode >= 0; toUpdateNode = toUpdatedSet.next(toUpdateNode + 1)) {
+        for (int removeNode = toRemoveSet.next(0);
+                removeNode >= 0;
+                removeNode = toRemoveSet.next(removeNode + 1)) {
             // remove all edges connected to the deleted nodes
-            EdgeIterable adjNodesToDelIter = (EdgeIterable) getEdges(toUpdateNode);
+            EdgeIterable adjNodesToDelIter = (EdgeIterable) getEdges(removeNode);
             long prev = EdgeIterator.NO_EDGE;
             while (adjNodesToDelIter.next()) {
                 int nodeId = adjNodesToDelIter.adjNode();
-                if (removedNodes.contains(nodeId)) {
+                // already invalidated
+                if (nodeId != NO_NODE && removedNodes.contains(nodeId)) {
                     int edgeToRemove = adjNodesToDelIter.edge();
-                    internalEdgeDisconnect(edgeToRemove, prev, toUpdateNode, adjNodesToDelIter.adjNode(), true);
+                    long edgeToRemovePointer = (long) edgeToRemove * edgeEntrySize;
+                    internalEdgeDisconnect(edgeToRemove, prev, removeNode, nodeId);
+                    invalidateEdge(edgeToRemovePointer);
                 } else
                     prev = adjNodesToDelIter.edgePointer();
             }
         }
-        toUpdatedSet.clear();
 
+        MyBitSet toMoveSet = new MyBitSetImpl(removeNodeCount * 3);
         // marks connected nodes to rewrite the edges
         for (int i = 0; i < itemsToMove; i++) {
             int oldI = oldToNewMap.keyAt(i);
             EdgeIterator movedEdgeIter = getEdges(oldI);
             while (movedEdgeIter.next()) {
-                if (removedNodes.contains(movedEdgeIter.adjNode()))
+                int nodeId = movedEdgeIter.adjNode();
+                if (nodeId == NO_NODE)
+                    continue;
+                if (removedNodes.contains(nodeId))
                     throw new IllegalStateException("shouldn't happen the edge to the node "
-                            + movedEdgeIter.adjNode() + " should be already deleted. " + oldI);
+                            + nodeId + " should be already deleted. " + oldI);
 
-                toUpdatedSet.add(movedEdgeIter.adjNode());
+                toMoveSet.add(nodeId);
             }
         }
 
@@ -866,7 +877,7 @@ public class GraphStorage implements Graph, Storable {
             long edgePointer = (long) edge * edgeEntrySize;
             int nodeA = iter.baseNode();
             int nodeB = iter.adjNode();
-            if (!toUpdatedSet.contains(nodeA) && !toUpdatedSet.contains(nodeB))
+            if (!toMoveSet.contains(nodeA) && !toMoveSet.contains(nodeB))
                 continue;
 
             // now overwrite exiting edge with new node ids 
@@ -886,9 +897,35 @@ public class GraphStorage implements Graph, Storable {
             writeEdge(edge, updatedA, updatedB, linkA, linkB, distance, flags);
         }
 
-        // edgeCount stays!
+        // we do not remove the invalid edges => edgeCount stays the same!
         nodeCount -= removeNodeCount;
+
+        // health check         
+        if (isTestingEnabled()) {
+            iter = getAllEdges();
+            while (iter.next()) {
+                int base = iter.baseNode();
+                int adj = iter.adjNode();
+                String str = iter.edge()
+                        + ", r.contains(" + base + "):" + removedNodes.contains(base)
+                        + ", r.contains(" + adj + "):" + removedNodes.contains(adj)
+                        + ", tr.contains(" + base + "):" + toRemoveSet.contains(base)
+                        + ", tr.contains(" + adj + "):" + toRemoveSet.contains(adj)
+                        + ", base:" + base + ", adj:" + adj + ", nodeCount:" + nodeCount;
+                if (adj >= nodeCount)
+                    throw new RuntimeException("Adj.node problem with edge " + str);
+                if (base >= nodeCount)
+                    throw new RuntimeException("Base node problem with edge " + str);
+            }
+        }
+
         removedNodes = null;
+    }
+
+    private static boolean isTestingEnabled() {
+        boolean enableIfAssert = false;
+        assert (enableIfAssert = true) : true;
+        return enableIfAssert;
     }
 
     @Override

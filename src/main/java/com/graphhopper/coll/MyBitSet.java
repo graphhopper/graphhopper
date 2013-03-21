@@ -41,6 +41,7 @@ public interface MyBitSet {
 
     /**
      * Searches for a greater or equal entry and returns it.
+     *
      * @return -1 if nothing found
      */
     int next(int index);

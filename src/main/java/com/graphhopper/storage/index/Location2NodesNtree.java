@@ -238,25 +238,31 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
         void prepare() {
             final AllEdgesIterator allIter = graph.getAllEdges();
-            while (allIter.next()) {
-                int nodeA = allIter.baseNode();
-                int nodeB = allIter.adjNode();
-                double lat1 = graph.getLatitude(nodeA);
-                double lon1 = graph.getLongitude(nodeA);
-                double lat2;
-                double lon2;
-                PointList points = allIter.wayGeometry();
-                int len = points.size();
-                for (int i = 0; i < len; i++) {
-                    lat2 = points.latitude(i);
-                    lon2 = points.longitude(i);
+            try {
+                while (allIter.next()) {
+                    int nodeA = allIter.baseNode();
+                    int nodeB = allIter.adjNode();
+                    double lat1 = graph.getLatitude(nodeA);
+                    double lon1 = graph.getLongitude(nodeA);
+                    double lat2;
+                    double lon2;
+                    PointList points = allIter.wayGeometry();
+                    int len = points.size();
+                    for (int i = 0; i < len; i++) {
+                        lat2 = points.latitude(i);
+                        lon2 = points.longitude(i);
+                        addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
+                        lat1 = lat2;
+                        lon1 = lon2;
+                    }
+                    lat2 = graph.getLatitude(nodeB);
+                    lon2 = graph.getLongitude(nodeB);
                     addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
-                    lat1 = lat2;
-                    lon1 = lon2;
                 }
-                lat2 = graph.getLatitude(nodeB);
-                lon2 = graph.getLongitude(nodeB);
-                addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
+            } catch (Exception ex) {
+//                logger.error("Problem!", ex);
+                logger.error("Problem! base:" + allIter.baseNode() + ", adj:" + allIter.adjNode()
+                        + ", max:" + allIter.maxId() + ", edge:" + allIter.edge(), ex);
             }
         }
 
@@ -470,7 +476,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                         double adjLon = graph.getLongitude(adjNode);
 
                         check(tmpNode, currDist, -adjNode - 2);
-                                                
+
                         double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
                         // if there are wayPoints this is only an approximation
                         if (adjDist < distCalc.calcNormalizedDist(currLat, currLon, queryLat, queryLon))

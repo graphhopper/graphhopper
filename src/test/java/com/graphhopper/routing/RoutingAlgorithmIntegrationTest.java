@@ -19,7 +19,6 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.OSMReader;
-import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;

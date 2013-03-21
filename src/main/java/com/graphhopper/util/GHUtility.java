@@ -139,7 +139,6 @@ public class GHUtility {
         return createSortedGraph(g, sortedGraph, list);
     }
 
-
     /**
      * Sorts the graph according to depth-first search traversal. Other
      * traversals have either no significant difference (bfs) for querying or
@@ -151,7 +150,7 @@ public class GHUtility {
         list.fill(0, nodes, -1);
         final MyBitSetImpl bitset = new MyBitSetImpl(nodes);
         final IntRef ref = new IntRef(0);
-        for (int startNode = 0; startNode >= 0 && startNode < nodes; 
+        for (int startNode = 0; startNode >= 0 && startNode < nodes;
                 startNode = bitset.nextClear(startNode + 1)) {
             new XFirstSearch() {
                 @Override protected MyBitSet createBitSet(int size) {
@@ -269,6 +268,7 @@ public class GHUtility {
         }
         return endNode;
     }
+
     public static final EdgeSkipIterator EMPTY = new EdgeSkipIterator() {
         @Override public boolean isShortcut() {
             return false;
