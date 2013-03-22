@@ -45,6 +45,11 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
     }
 
     @Override
+    public Location2IDIndex resolution(int resolution) {
+        return this;
+    }
+
+    @Override
     public Location2IDIndex precision(boolean approxDist) {
         if (approxDist)
             calc = new DistancePlaneProjection();
@@ -54,7 +59,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
     }
 
     @Override
-    public Location2IDIndex prepareIndex(int capacity) {
+    public Location2IDIndex prepareIndex() {
         return this;
     }
 

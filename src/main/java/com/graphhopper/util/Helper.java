@@ -228,8 +228,8 @@ public class Helper {
             throw new IllegalArgumentException("Bounding box is not valid to calculate index size: " + graphBounds);
         double dist = new DistanceCalc().calcDist(graphBounds.maxLat, graphBounds.minLon,
                 graphBounds.minLat, graphBounds.maxLon);
-        // convert to km and maximum 5000km => 25mio capacity, minimum capacity is 2000
-        dist = Math.min(dist / 1000, 5000);
+        // convert to km and maximum is 50000km => 1GB
+        dist = Math.min(dist / 1000, 50000);
         return Math.max(2000, (int) (dist * dist));
     }
 

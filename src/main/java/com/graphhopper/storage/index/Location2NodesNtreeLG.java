@@ -1,0 +1,55 @@
+/*
+ *  Licensed to Peter Karich under one or more contributor license
+ *  agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  Peter Karich licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the
+ *  License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package com.graphhopper.storage.index;
+
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeSkipIterator;
+
+/**
+ *
+ * @author Peter Karich
+ */
+public class Location2NodesNtreeLG extends Location2NodesNtree {
+
+    private final static EdgeFilter NO_SHORTCUT = new EdgeFilter() {
+        @Override public boolean accept(EdgeIterator iter) {
+            return !((EdgeSkipIterator) iter).isShortcut();
+        }
+    };
+    private LevelGraph lg;
+
+    public Location2NodesNtreeLG(LevelGraph g, Directory dir) {
+        super(g, dir);
+    }
+
+    @Override
+    protected AllEdgesIterator getAllEdges() {
+        // TODO how to skip shortcuts?
+        return super.getAllEdges();
+    }
+
+    @Override
+    protected EdgeIterator getEdges(int node) {
+        return lg.getEdges(node, NO_SHORTCUT);
+    }
+}

@@ -21,11 +21,11 @@ package com.graphhopper.storage.index;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
@@ -60,7 +60,7 @@ import org.slf4j.LoggerFactory;
 public class Location2NodesNtree implements Location2NodesIndex, Location2IDIndex {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final static int MAGIC_INT = Integer.MAX_VALUE / 22316;
+    private final int MAGIC_INT;
     private DistanceCalc distCalc = new DistancePlaneProjection();
     DataAccess dataAccess;
     private Graph graph;
@@ -81,10 +81,11 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     private double deltaLon;
     private int initLeafEntries = 4;
     private boolean initialized = false;
-    // do not start with 0 as a positive value means leaf and only a real negative means entry with subentries
+    // do not start with 0 as a positive value means leaf and only a real negative means "entry with subentries"
     private static final int START_POINTER = 1;
 
     public Location2NodesNtree(Graph g, Directory dir) {
+        MAGIC_INT = Integer.MAX_VALUE / 22316 ^ getClass().hashCode();
         this.graph = g;
         dataAccess = dir.findCreate("spatialNIndex");
         subEntries = 4;
@@ -136,7 +137,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         deltaLon = (graph.bounds().maxLon - graph.bounds().minLon) / parts;
     }
 
-    InMemConstructionIndex prepareIndex() {
+    InMemConstructionIndex prepareInMemIndex() {
         InMemConstructionIndex memIndex = new InMemConstructionIndex(subEntries);
         memIndex.prepare();
         return memIndex;
@@ -170,18 +171,32 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     }
 
     @Override
-    public Location2IDIndex prepareIndex(int capacity) {
+    public Location2IDIndex resolution(int minResolutionInMeter) {
+        if (minResolutionInMeter <= 0)
+            throw new IllegalStateException("Negative precision is not allowed!");
+
+        minResolutionInMeter(minResolutionInMeter);
+        return this;
+    }
+
+    @Override
+    public Location2IDIndex precision(boolean approx) {
+        if (approx)
+            distCalc = new DistancePlaneProjection();
+        else
+            distCalc = new DistanceCalc();
+        return this;
+    }
+
+    @Override
+    public Location2IDIndex prepareIndex() {
         if (initialized)
             throw new IllegalStateException("Call prepareIndex only once");
 
-        if (capacity <= 0)
-            throw new IllegalStateException("Negative precision is not allowed!");
-
         StopWatch sw = new StopWatch().start();
-        minResolutionInMeter(capacity);
         prepareAlgo();
         // in-memory preparation
-        InMemConstructionIndex inMem = prepareIndex();
+        InMemConstructionIndex inMem = prepareInMemIndex();
 
         // compact & store to dataAccess
         dataAccess.createNew(64 * 1024);
@@ -190,7 +205,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         dataAccess.setHeader(1, calcChecksum());
         dataAccess.setHeader(2, minResolutionInMeter);
         dataAccess.setHeader(3, subEntries);
-        // TODO save a bit more space dataAccess.trimTo((lastPointer + 1) * 4);
+        // TODO save a bit space dataAccess.trimTo((lastPointer + 1) * 4);
         dataAccess.flush();
 
         initialized = true;
@@ -208,19 +223,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     }
 
     @Override
-    public Location2IDIndex precision(boolean approx) {
-        if (approx)
-            distCalc = new DistancePlaneProjection();
-        else
-            distCalc = new DistanceCalc();
-        return this;
-    }
-
-    @Override
     public float calcMemInMB() {
         return (float) dataAccess.capacity() / Helper.MB;
-
-
     }
 
     class InMemConstructionIndex {
@@ -232,7 +236,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         }
 
         void prepare() {
-            final AllEdgesIterator allIter = graph.getAllEdges();
+            final EdgeIterator allIter = getAllEdges();
             try {
                 while (allIter.next()) {
                     int nodeA = allIter.baseNode();
@@ -257,7 +261,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             } catch (Exception ex) {
 //                logger.error("Problem!", ex);
                 logger.error("Problem! base:" + allIter.baseNode() + ", adj:" + allIter.adjNode()
-                        + ", max:" + allIter.maxId() + ", edge:" + allIter.edge(), ex);
+                        + ", edge:" + allIter.edge(), ex);
             }
         }
 
@@ -275,7 +279,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
         void addNode(InMemEntry entry, int nodeId, int depth, long key) {
             if (entry.isLeaf())
-                ((InMemLeafEntry) entry).addNode(nodeId, graph);
+                ((InMemLeafEntry) entry).addNode(nodeId, Location2NodesNtree.this);
             else {
                 depth++;
                 int index = (int) (bitmask & key);
@@ -342,7 +346,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             int refPointer = pointer;
             if (entry.isLeaf()) {
                 InMemLeafEntry leaf = ((InMemLeafEntry) entry);
-                leaf.doCompress(graph);
+                leaf.doCompress(Location2NodesNtree.this);
                 int len = leaf.size;
                 // special case for empty list
                 if (len == 0)
@@ -432,8 +436,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         final MyBitSet checkBitset = new MyTBitSet(new TIntHashSet(storedNetworkEntryIds));
         // find nodes from the network entries which are close to 'point'
         storedNetworkEntryIds.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(final int networkEntryNodeId) {
+            @Override public boolean execute(final int networkEntryNodeId) {
                 new XFirstSearch() {
                     boolean goFurther = true;
                     double currDist;
@@ -443,6 +446,10 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
                     @Override protected MyBitSet createBitSet(int size) {
                         return checkBitset;
+                    }
+
+                    @Override protected EdgeIterator getEdges(Graph g, int current) {
+                        return Location2NodesNtree.this.getEdges(current);
                     }
 
                     @Override protected boolean goFurther(int baseNode) {
@@ -483,7 +490,6 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                         for (int pointIndex = 0; pointIndex < len; pointIndex++) {
                             double wayLat = pointList.latitude(pointIndex);
                             double wayLon = pointList.longitude(pointIndex);
-
                             if (NumHelper.equalsEps(queryLat, wayLat, 1e-6)
                                     && NumHelper.equalsEps(queryLon, wayLon, 1e-6)) {
                                 // equal point found
@@ -526,6 +532,14 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         return closestNode;
     }
 
+    protected EdgeIterator getEdges(int node) {
+        return graph.getEdges(node);
+    }
+
+    protected AllEdgesIterator getAllEdges() {
+        return graph.getAllEdges();
+    }
+
     // make entries static as otherwise we get an additional reference to this class (memory waste)
     static interface InMemEntry {
 
@@ -542,14 +556,14 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             subEntries = new int[count];
         }
 
-        public void addNode(int nodeId, Graph graph) {
+        public void addNode(int nodeId, Location2NodesNtree index) {
             // TODO PERFORMANCE sort subEntries or insert sorted to make this contains check faster?
             for (int i = 0; i < size; i++) {
                 if (subEntries[i] == nodeId)
                     return;
             }
             if (size >= subEntries.length) {
-                doCompress(graph);
+                doCompress(index);
                 if (size >= subEntries.length)
                     subEntries = Arrays.copyOf(subEntries, (int) (1.6 * subEntries.length));
             }
@@ -558,8 +572,9 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             size++;
         }
 
-        void doCompress(Graph graph) {
+        void doCompress(Location2NodesNtree index) {
             // TODO remove node from the same network
+            // index.getEdges(node);
         }
 
         @Override public final boolean isLeaf() {

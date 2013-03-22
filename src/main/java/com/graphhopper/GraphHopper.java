@@ -33,11 +33,14 @@ import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.index.Location2IDQuadtree;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.index.Location2NodesNtree;
+import com.graphhopper.storage.index.Location2NodesNtreeLG;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.Helper;
@@ -63,6 +66,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean chUsage = false;
     private String ghLocation = "";
     private boolean simplify = true;
+    private boolean highResolutionIndex = true;
     private boolean chFast = true;
     private AcceptWay acceptWay = new AcceptWay(true, false, false);
 
@@ -82,18 +86,34 @@ public class GraphHopper implements GraphHopperAPI {
         return acceptWay;
     }
 
-    public GraphHopper forDesktop() {
-        return setInMemory(true, true);
-    }
-
     public GraphHopper forServer() {
+        // simplify to reduce network IO
+        simplify(true);
+        locationIndexHighResolution(true);
         return setInMemory(true, true);
     }
 
-    public GraphHopper forAndroid() {
-        // no need to simplify as no IO and simplifying costs a bit CPU
-        simplify = false;
+    public GraphHopper forDesktop() {
+        simplify(false);
+        locationIndexHighResolution(true);
+        return setInMemory(true, true);
+    }
+
+    public GraphHopper forAndroid() {        
+        simplify(false);
+        // for now unprecise index is sufficient and a lot faster+more compact
+        locationIndexHighResolution(false);
         return memoryMapped();
+    }
+
+    /**
+     * Precise location resolution index means also more space (disc/RAM) could
+     * be consumed and probably slower query times, which would be e.g. not
+     * suitable for Android.
+     */
+    public GraphHopper locationIndexHighResolution(boolean precise) {
+        highResolutionIndex = precise;
+        return this;
     }
 
     public GraphHopper setInMemory(boolean inMemory, boolean storeOnFlush) {
@@ -124,11 +144,18 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
+    /**
+     * This method specifies if the returned path should be simplified or not,
+     * via douglas-peucker or similar algorithm.
+     */
     public GraphHopper simplify(boolean doSimplify) {
         this.simplify = doSimplify;
         return this;
     }
 
+    /**
+     * Sets the graphhopper folder.
+     */
     public GraphHopper graphHopperLocation(String ghLocation) {
         if (ghLocation != null)
             this.ghLocation = ghLocation;
@@ -268,11 +295,18 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void initIndex(Directory dir) {
-        Location2IDQuadtree tmp = new Location2IDQuadtree(graph, dir);
-        if (!tmp.loadExisting())
-            tmp.prepareIndex(Helper.calcIndexSize(graph.bounds()));
-
-        index = tmp;
+        if (highResolutionIndex) {
+            if (graph instanceof LevelGraph)
+                index = new Location2NodesNtreeLG((LevelGraph) graph, dir);
+            else
+                index = new Location2NodesNtree(graph, dir);
+            index.resolution(1000);
+        } else {
+            index = new Location2IDQuadtree(graph, dir);
+            index.resolution(Helper.calcIndexSize(graph.bounds()));
+        }
+        if (!index.loadExisting())
+            index.prepareIndex();
     }
 
     public Graph getGraph() {

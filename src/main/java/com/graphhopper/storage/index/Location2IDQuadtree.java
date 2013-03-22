@@ -62,6 +62,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     public Location2IDQuadtree(Graph g, Directory dir) {
         this.g = g;
         index = dir.findCreate("loc2idIndex");
+        resolution(100 * 100);
     }
 
     @Override
@@ -101,6 +102,12 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return true;
     }
 
+    @Override
+    public Location2IDIndex resolution(int resolution) {
+        initLatLonSize(resolution);
+        return this;
+    }
+
     /**
      * Fill quadtree which will span a raster over the entire specified graph g.
      * But do this in a pre-defined resolution which is controlled via capacity.
@@ -112,8 +119,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
      * width instead of the memory usage
      */
     @Override
-    public Location2IDIndex prepareIndex(int _size) {
-        initBuffer(_size);
+    public Location2IDIndex prepareIndex() {
+        initBuffer();
         initAlgo(latSize, lonSize);
         StopWatch sw = new StopWatch().start();
         MyBitSet filledIndices = fillQuadtree(latSize * lonSize);
@@ -128,11 +135,13 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return this;
     }
 
-    private void initBuffer(int size) {
+    private void initLatLonSize(int size) {
         latSize = lonSize = (int) Math.sqrt(size);
         if (latSize * lonSize < size)
             lonSize++;
+    }
 
+    private void initBuffer() {
         // avoid default big segment size and use one segment only:
         index.segmentSize(latSize * lonSize * 4);
         index.createNew(latSize * lonSize * 4);

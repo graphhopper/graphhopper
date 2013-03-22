@@ -88,6 +88,7 @@ public class OSMReader {
     private AlgorithmPreparation prepare;
     private Location2IDIndex index;
     private boolean sortGraph = false;
+    private boolean locationIndexHighResolution = true;
 
     /**
      * Opens or creates a graph. The specified args need a property 'graph' (a
@@ -153,7 +154,8 @@ public class OSMReader {
                 createAlgoPrepare(algoStr, acceptWay.firstEncoder());
         osmReader.defaultAlgoPrepare(algoPrepare);
         osmReader.sort(args.getBool("osmreader.sortGraph", false));
-        osmReader.setCHShortcuts(args.get("osmreader.chShortcuts", "no"));
+        osmReader.chShortcuts(args.get("osmreader.chShortcuts", "no"));
+        osmReader.locationIndexHighResolution(args.getBool("osmreader.locationIndexHighResolution", true));
         if (!osmReader.loadExisting()) {
             String strOsm = args.get("osmreader.osm", "");
             if (Helper.isEmpty(strOsm))
@@ -250,9 +252,7 @@ public class OSMReader {
     }
 
     void createIndex() {
-        // int precisionInMeter = 500 * 500;
-        int precisionInMeter = 1000;
-        location2IDIndex().prepareIndex(precisionInMeter);
+        location2IDIndex().prepareIndex();
     }
 
     /**
@@ -374,7 +374,7 @@ public class OSMReader {
      *
      * @param chShortcuts fastest, shortest or false
      */
-    public OSMReader setCHShortcuts(String chShortcuts) {
+    public OSMReader chShortcuts(String chShortcuts) {
         if (Helper.isEmpty(chShortcuts) || "no".equals(chShortcuts) || "false".equals(chShortcuts))
             return this;
 
@@ -408,9 +408,14 @@ public class OSMReader {
     }
 
     public Location2IDIndex location2IDIndex() {
-        if (index == null)
-            index = new Location2NodesNtree(graphStorage, graphStorage.directory());
-//            index = new Location2IDQuadtree(graphStorage, graphStorage.directory());
+        if (index == null) {
+            if (locationIndexHighResolution)
+                index = new Location2NodesNtree(graphStorage, graphStorage.directory())
+                        .resolution(1000);
+            else
+                index = new Location2IDQuadtree(graphStorage, graphStorage.directory())
+                        .resolution(Helper.calcIndexSize(graphStorage.bounds()));
+        }
         return index;
     }
 
@@ -421,6 +426,11 @@ public class OSMReader {
      */
     public OSMReader sort(boolean bool) {
         sortGraph = bool;
+        return this;
+    }
+
+    public OSMReader locationIndexHighResolution(boolean highResolution) {
+        locationIndexHighResolution = highResolution;
         return this;
     }
 }

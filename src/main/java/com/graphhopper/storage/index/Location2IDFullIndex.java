@@ -52,7 +52,12 @@ public class Location2IDFullIndex implements Location2IDIndex {
     }
 
     @Override
-    public Location2IDIndex prepareIndex(int capacity) {
+    public Location2IDIndex resolution(int resolution) {
+        return this;
+    }
+    
+    @Override
+    public Location2IDIndex prepareIndex() {
         return this;
     }
 

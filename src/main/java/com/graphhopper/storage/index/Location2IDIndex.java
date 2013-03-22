@@ -31,12 +31,15 @@ public interface Location2IDIndex {
     boolean loadExisting();
 
     /**
-     * Creates this index - to be called once before findID.
-     *
-     * @param capacity specifies how many entries will be reserved. More entries
-     * means faster and more precise queries.
+     * Integer value to specify the resolution of this location index. The
+     * higher the better the resolution.
      */
-    Location2IDIndex prepareIndex(int capacity);
+    Location2IDIndex resolution(int resolution);
+
+    /**
+     * Creates this index - to be called once before findID.
+     */
+    Location2IDIndex prepareIndex();
 
     /**
      * @return graph id for specified point (lat,lon)
