@@ -48,6 +48,7 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import java.io.File;
 import java.io.IOException;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main wrapper of the offline API for a simple and efficient usage.
@@ -68,6 +69,8 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean simplify = true;
     private boolean highResolutionIndex = true;
     private boolean chFast = true;
+    private boolean edgeCalcOnSearch = true;
+    private boolean searchRegion = true;
     private AcceptWay acceptWay = new AcceptWay(true, false, false);
 
     public GraphHopper() {
@@ -99,10 +102,14 @@ public class GraphHopper implements GraphHopperAPI {
         return setInMemory(true, true);
     }
 
-    public GraphHopper forAndroid() {        
+    public GraphHopper forAndroid() {
         simplify(false);
         // for now unprecise index is sufficient and a lot faster+more compact
-        locationIndexHighResolution(false);
+        // locationIndexHighResolution(false);
+
+        // make new index faster
+        searchRegion = false;
+        locationIndexHighResolution(true);
         return memoryMapped();
     }
 
@@ -296,11 +303,15 @@ public class GraphHopper implements GraphHopperAPI {
 
     private void initIndex(Directory dir) {
         if (highResolutionIndex) {
+            Location2NodesNtree tmpIndex;
             if (graph instanceof LevelGraph)
-                index = new Location2NodesNtreeLG((LevelGraph) graph, dir);
+                tmpIndex = new Location2NodesNtreeLG((LevelGraph) graph, dir);
             else
-                index = new Location2NodesNtree(graph, dir);
-            index.resolution(1000);
+                tmpIndex = new Location2NodesNtree(graph, dir);
+            tmpIndex.edgeCalcOnFind(edgeCalcOnSearch);
+            tmpIndex.searchRegion(searchRegion);
+            tmpIndex.resolution(1000);
+            index = tmpIndex;
         } else {
             index = new Location2IDQuadtree(graph, dir);
             index.resolution(Helper.calcIndexSize(graph.bounds()));

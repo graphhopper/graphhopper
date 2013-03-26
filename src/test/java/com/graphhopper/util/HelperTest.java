@@ -43,7 +43,7 @@ public class HelperTest {
     @Test
     public void testVERSION() throws Exception {
         // assertTrue(Helper.SNAPSHOT);
-        assertNotSame("0.0", Helper.VERSION);
+        assertNotSame("0.0", Helper.VERSION);        
     }
 
     @Test

@@ -64,7 +64,7 @@ public class DistanceCalc {
     }
 
     /**
-     * in meter
+     * Returns the specified length in normalized meter.
      */
     public double calcNormalizedDist(double dist) {
         double tmp = sin(dist / 2 / R);
@@ -79,37 +79,6 @@ public class DistanceCalc {
         double sinDeltaLon = sin(toRadians(toLon - fromLon) / 2);
         return sinDeltaLat * sinDeltaLat
                 + sinDeltaLon * sinDeltaLon * cos(toRadians(fromLat)) * cos(toRadians(toLat));
-    }
-
-    double calcCartesianDist(double fromLat, double fromLon, double toLat, double toLon) {
-        fromLat = toRadians(fromLat);
-        fromLon = toRadians(fromLon);
-
-        double tmp = cos(fromLat);
-        double x1 = tmp * cos(fromLon);
-        double y1 = tmp * sin(fromLon);
-        double z1 = sin(fromLat);
-
-        toLat = toRadians(toLat);
-        toLon = toRadians(toLon);
-        tmp = cos(toLat);
-        double x2 = tmp * cos(toLon);
-        double y2 = tmp * sin(toLon);
-        double z2 = sin(toLat);
-
-        double dx = x1 - x2;
-        double dy = y1 - y2;
-        double dz = z1 - z2;
-        return R * sqrt(dx * dx + dy * dy + dz * dz);
-        // now make quadratic stuff faster:
-//        dx = abs(dx);
-//        dy = abs(dy);
-//        int mn = (int) min(dx, dy);
-//        return dx + dy - (mn >> 1) - (mn >> 2) + (mn >> 4);
-    }
-
-    void calcBearing() {
-        // http://stackoverflow.com/questions/2232911/why-is-this-bearing-calculation-so-inacurate
     }
 
     /**
@@ -146,7 +115,7 @@ public class DistanceCalc {
      * This method calculates the distance from r to edge g=(a to b) where the
      * crossing point is t
      *
-     * @return the normalized distance in meter
+     * @return the distance in normalized meter
      */
     public double calcNormalizedEdgeDistance(double r_lat, double r_lon,
             double a_lat, double a_lon,

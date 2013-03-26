@@ -62,8 +62,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
     private DistanceCalc distCalc = new DistancePlaneProjection();
-    DataAccess dataAccess;
-    private Graph graph;
+    final DataAccess dataAccess;
+    private final Graph graph;
     /**
      * With maximum depth you control precision versus memory usage. The higher
      * the more memory wasted due to references but more precise value selection
@@ -83,12 +83,14 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     private boolean initialized = false;
     // do not start with 0 as a positive value means leaf and only a real negative means "entry with subentries"
     private static final int START_POINTER = 1;
+    private boolean edgeDistCalcOnSearch = true;
+    private boolean regionSearch = true;
 
     public Location2NodesNtree(Graph g, Directory dir) {
-        MAGIC_INT = Integer.MAX_VALUE / 22316 ^ getClass().hashCode();
+        MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
         dataAccess = dir.findCreate("spatialNIndex");
-        subEntries = 4;
+        subEntries(4);
         minResolutionInMeter(500);
     }
 
@@ -107,6 +109,23 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     public Location2NodesNtree minResolutionInMeter(int minResolutionInMeter) {
         this.minResolutionInMeter = minResolutionInMeter;
         this.minResolutionInMeterNormed = distCalc.calcNormalizedDist(minResolutionInMeter);
+        return this;
+    }
+
+    /**
+     * Calculate edge distance to increase map matching precision.
+     */
+    public Location2NodesNtree edgeCalcOnFind(boolean edgeCalcOnSearch) {
+        this.edgeDistCalcOnSearch = edgeCalcOnSearch;
+        return this;
+    }
+
+    /**
+     * Searches also neighbouring quadtree entries to increase map matching
+     * precision.
+     */
+    public Location2NodesNtree searchRegion(boolean regionAround) {
+        this.regionSearch = regionAround;
         return this;
     }
 
@@ -160,7 +179,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             return false;
 
         if (dataAccess.getHeader(0) != MAGIC_INT)
-            throw new IllegalStateException("incorrect location2id index version");
+            throw new IllegalStateException("incorrect location2id index version, expected:" + MAGIC_INT);
         if (dataAccess.getHeader(1) != calcChecksum())
             throw new IllegalStateException("location2id index was opened with incorrect graph");
         minResolutionInMeter(dataAccess.getHeader(2));
@@ -411,11 +430,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         final double queryLat = point.lat;
         final double queryLon = point.lon;
         final TIntHashSet storedNetworkEntryIds = new TIntHashSet();
-        boolean simple = false;
-        if (simple) {
-            long key = createReverseKey(queryLat, queryLon);
-            fillIDs(key, START_POINTER, storedNetworkEntryIds);
-        } else {
+        if (regionSearch) {
             // search all rasters around minResolutionInMeter as we did not fill empty entries
             double maxLat = queryLat + deltaLat;
             double maxLon = queryLon + deltaLon;
@@ -426,6 +441,9 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                     fillIDs(key, START_POINTER, storedNetworkEntryIds);
                 }
             }
+        } else {
+            long key = createReverseKey(queryLat, queryLon);
+            fillIDs(key, START_POINTER, storedNetworkEntryIds);
         }
 
         if (storedNetworkEntryIds.isEmpty())
@@ -481,7 +499,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
                         double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
                         // if there are wayPoints this is only an approximation
-                        if (adjDist < distCalc.calcNormalizedDist(currLat, currLon, queryLat, queryLon))
+                        if (edgeDistCalcOnSearch && adjDist < distCalc.calcNormalizedDist(currLat, currLon, queryLat, queryLon))
                             tmpNode = adjNode;
 
                         double tmpDist;
@@ -495,7 +513,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                                 // equal point found
                                 check(tmpNode, 0d, pointIndex);
                                 break;
-                            } else if (distCalc.validEdgeDistance(queryLat, queryLon,
+                            } else if (edgeDistCalcOnSearch
+                                    && distCalc.validEdgeDistance(queryLat, queryLon,
                                     tmpLat, tmpLon, wayLat, wayLon)) {
                                 tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                         tmpLat, tmpLon, wayLat, wayLon);
@@ -506,7 +525,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                             tmpLon = wayLon;
                         }
 
-                        if (distCalc.validEdgeDistance(queryLat, queryLon,
+                        if (edgeDistCalcOnSearch
+                                && distCalc.validEdgeDistance(queryLat, queryLon,
                                 tmpLat, tmpLon, adjLat, adjLon))
                             tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                     tmpLat, tmpLon, adjLat, adjLon);

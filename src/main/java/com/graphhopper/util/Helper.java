@@ -30,6 +30,7 @@ import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -308,6 +309,7 @@ public class Helper {
      * The version without the snapshot string
      */
     public static final String VERSION;
+    public static final String BUILD_DATE;
     public static final boolean SNAPSHOT;
 
     static {
@@ -334,6 +336,13 @@ public class Helper {
             SNAPSHOT = version.toLowerCase().contains("-snapshot");
             VERSION = tmp;
         }
+        String buildDate = "";
+        try {
+            List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/builddate"), "UTF-8"));
+            buildDate = v.get(0);
+        } catch (Exception ex) {
+        }
+        BUILD_DATE = buildDate;
     }
 
     public static void cleanMappedByteBuffer(final ByteBuffer buffer) {

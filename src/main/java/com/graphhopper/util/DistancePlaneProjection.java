@@ -41,8 +41,8 @@ public class DistancePlaneProjection extends DistanceCalc {
     public double calcDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = toRadians(toLat - fromLat);
         double dLon = toRadians(toLon - fromLon);
-        double left = cos(toRadians((fromLat + toLat) / 2)) * dLon;
-        double normedDist = dLat * dLat + left * left;
+        double tmp = cos(toRadians((fromLat + toLat) / 2)) * dLon;
+        double normedDist = dLat * dLat + tmp * tmp;
         return R * sqrt(normedDist);
     }
 
@@ -67,6 +67,6 @@ public class DistancePlaneProjection extends DistanceCalc {
 
     @Override
     public String toString() {
-        return "APPROX";
+        return "PLANE_PROJ";
     }
 }

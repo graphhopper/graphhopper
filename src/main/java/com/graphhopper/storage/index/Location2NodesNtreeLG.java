@@ -40,6 +40,7 @@ public class Location2NodesNtreeLG extends Location2NodesNtree {
 
     public Location2NodesNtreeLG(LevelGraph g, Directory dir) {
         super(g, dir);
+        lg = g;
     }
 
     @Override
