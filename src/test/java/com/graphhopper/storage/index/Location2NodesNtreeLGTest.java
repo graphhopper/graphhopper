@@ -23,11 +23,15 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeSkipIterator;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public class Location2NodesNtreeLgTest extends Location2NodesNtreeTest {
+public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
 
     @Override
     public Location2IDIndex createIndex(Graph g, int resolution) {
@@ -36,7 +40,38 @@ public class Location2NodesNtreeLgTest extends Location2NodesNtreeTest {
     }
 
     @Override
-    Graph createGraph(Directory dir) {
+    LevelGraph createGraph(Directory dir) {
         return new LevelGraphStorage(dir).createNew(100);
+    }
+
+    @Test
+    public void testLevelGraph() {
+        LevelGraph g = createGraph(new RAMDirectory());
+        // 0
+        // 1
+        // 2
+        //  3
+        //   4
+
+        g.setNode(0, 1, 0);
+        g.setNode(1, 0.5, 0);
+        g.setNode(2, 0, 0);
+        g.setNode(3, -1, 1);
+        g.setNode(4, -2, 2);
+
+        EdgeIterator iter1 = g.edge(0, 1, 10, true);
+        EdgeIterator iter2 = g.edge(1, 2, 10, true);
+        EdgeIterator iter3 = g.edge(2, 3, 14, true);
+        EdgeIterator iter4 = g.edge(3, 4, 14, true);
+
+        // create shortcuts
+        EdgeSkipIterator iter5 = g.edge(0, 2, 20, true);
+        iter5.skippedEdges(iter1.edge(), iter2.edge());
+        EdgeSkipIterator iter6 = g.edge(2, 4, 28, true);
+        iter6.skippedEdges(iter3.edge(), iter4.edge());
+        g.edge(0, 4, 40, true).skippedEdges(iter5.edge(), iter6.edge());
+
+        Location2IDIndex index = createIndex(g, -1);
+        assertEquals(2, index.findID(0, 0.5));
     }
 }

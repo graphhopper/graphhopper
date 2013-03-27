@@ -34,7 +34,6 @@ public interface LevelGraph extends Graph {
 
     int getLevel(int index);
 
-    // override to use EdgeSkipIterator
     @Override
     EdgeSkipIterator edge(int a, int b, double distance, int flags);
 

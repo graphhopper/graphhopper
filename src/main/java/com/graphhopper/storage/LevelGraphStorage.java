@@ -79,6 +79,12 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     }
 
     @Override
+    public LevelGraphStorage createNew(int nodeCount) {
+        super.createNew(nodeCount);
+        return this;
+    }
+
+    @Override
     protected EdgeSkipIterator createEdgeIterable(int baseNode, EdgeFilter filter) {
         int edge = nodes.getInt((long) baseNode * nodeEntrySize + N_EDGE_REF);
         return new EdgeSkipIteratorImpl(edge, baseNode, filter);
@@ -132,7 +138,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
                 tmpPrevEdge = tmpIter.edge();
             }
-            if (found) 
+            if (found)
                 internalEdgeDisconnect(iter.edge(), (long) tmpPrevEdge * edgeEntrySize, iter.adjNode(), iter.baseNode());
         }
         return iter.edge();
