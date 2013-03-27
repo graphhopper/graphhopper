@@ -88,7 +88,7 @@ public class GraphStorage implements Graph, Storable {
         allEdgesFilter = EdgeFilter.ALL_EDGES;
         this.dir = dir;
         this.nodes = dir.findCreate("nodes");
-        this.edges = dir.findCreate("egdes");
+        this.edges = dir.findCreate("edges");
         this.geometry = dir.findCreate("geometry");
         this.bounds = BBox.INVERSE.clone();
         E_NODEA = nextEdgeEntryIndex();
