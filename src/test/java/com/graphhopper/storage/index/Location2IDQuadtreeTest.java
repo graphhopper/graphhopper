@@ -21,8 +21,6 @@ package com.graphhopper.storage.index;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.DistanceCalc;
-import java.util.Random;
 import static org.junit.Assert.*;
 import org.junit.Test;
 

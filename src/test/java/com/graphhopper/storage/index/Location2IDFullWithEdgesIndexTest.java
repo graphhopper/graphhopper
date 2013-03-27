@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
  */
 public class Location2IDFullWithEdgesIndexTest extends AbstractLocation2IDIndexTester {
 
-    @Override 
+    @Override
     public Location2IDIndex createIndex(Graph g, int resolution) {
         return new Location2IDFullWithEdgesIndex(g);
     }
@@ -37,10 +37,10 @@ public class Location2IDFullWithEdgesIndexTest extends AbstractLocation2IDIndexT
     public boolean hasEdgeSupport() {
         return true;
     }
-    
+
     @Test
     public void testFullIndex() {
-        Location2IDIndex idx = new Location2IDFullWithEdgesIndex(Location2IDQuadtreeTest.createSampleGraph());
+        Location2IDIndex idx = new Location2IDFullWithEdgesIndex(createSampleGraph());
         assertEquals(5, idx.findID(2, 3));
         assertEquals(10, idx.findID(4, 1));
         // 6, 9 or 10

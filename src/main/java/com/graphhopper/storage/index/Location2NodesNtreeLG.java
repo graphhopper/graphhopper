@@ -19,11 +19,13 @@
 package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.PointList;
 
 /**
  *
@@ -45,8 +47,60 @@ public class Location2NodesNtreeLG extends Location2NodesNtree {
 
     @Override
     protected AllEdgesIterator getAllEdges() {
-        // TODO how to skip shortcuts?
-        return super.getAllEdges();
+        final AllEdgesSkipIterator tmpIter = lg.getAllEdges();
+        return new AllEdgesIterator() {
+            @Override public int maxId() {
+                return tmpIter.maxId();
+            }
+
+            @Override public boolean next() {
+                while (tmpIter.next()) {
+                    if (!tmpIter.isShortcut())
+                        return true;
+                }
+                return false;
+            }
+
+            @Override public int edge() {
+                return tmpIter.edge();
+            }
+
+            @Override public int baseNode() {
+                return tmpIter.baseNode();
+            }
+
+            @Override public int adjNode() {
+                return tmpIter.adjNode();
+            }
+
+            @Override public PointList wayGeometry() {
+                return tmpIter.wayGeometry();
+            }
+
+            @Override public void wayGeometry(PointList list) {
+                tmpIter.wayGeometry(list);
+            }
+
+            @Override public double distance() {
+                return tmpIter.distance();
+            }
+
+            @Override public void distance(double dist) {
+                tmpIter.distance(dist);
+            }
+
+            @Override public int flags() {
+                return tmpIter.flags();
+            }
+
+            @Override public void flags(int flags) {
+                tmpIter.flags(flags);
+            }
+
+            @Override public boolean isEmpty() {
+                return tmpIter.isEmpty();
+            }
+        };
     }
 
     @Override

@@ -578,7 +578,9 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
         public void addNode(int nodeId, Location2NodesNtree index) {
             // TODO PERFORMANCE sort subEntries or insert sorted to make this contains check faster?
-            for (int i = 0; i < size; i++) {
+            
+            // reverse order as last nodeIds are more likely to be identical to current
+            for (int i = size - 1; i >= 0; i--) {
                 if (subEntries[i] == nodeId)
                     return;
             }

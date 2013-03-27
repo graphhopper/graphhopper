@@ -35,7 +35,7 @@ public class Location2IDFullIndexTest extends AbstractLocation2IDIndexTester {
 
     @Test
     public void testFullIndex() {
-        Location2IDIndex idx = new Location2IDFullIndex(Location2IDQuadtreeTest.createSampleGraph());
+        Location2IDIndex idx = new Location2IDFullIndex(createSampleGraph());
         assertEquals(5, idx.findID(2, 3));
         assertEquals(10, idx.findID(4, 1));
         assertEquals(10, idx.findID(3.6, 1.4));

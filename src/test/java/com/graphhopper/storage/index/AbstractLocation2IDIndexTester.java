@@ -18,8 +18,12 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.MMapDirectory;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 import java.io.File;
@@ -138,13 +142,13 @@ public abstract class AbstractLocation2IDIndexTester {
 
         // hit random lat,lon and compare result to full index
         Random rand = new Random(12);
-        
+
         Location2IDIndex fullIndex;
-        if(hasEdgeSupport())
+        if (hasEdgeSupport())
             fullIndex = new Location2IDFullWithEdgesIndex(g);
         else
             fullIndex = new Location2IDFullIndex(g);
-        
+
         DistanceCalc dist = new DistanceCalc();
         for (int i = 0; i < 100; i++) {
             double lat = rand.nextDouble() * 5;
@@ -204,7 +208,7 @@ public abstract class AbstractLocation2IDIndexTester {
     @Test
     public void testNoErrorOnEdgeCase_lastIndex() {
         int locs = 10000;
-        Graph g = new GraphBuilder().location(location).mmap(true).create();
+        Graph g = createGraph(new MMapDirectory(location));
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++) {
             g.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
@@ -213,11 +217,15 @@ public abstract class AbstractLocation2IDIndexTester {
         Helper.removeDir(new File(location));
     }
 
-    public static Graph createGraph() {
-        return new GraphBuilder().create();
+    Graph createGraph() {
+        return createGraph(new RAMDirectory());
+    }
+    
+    Graph createGraph(Directory dir) {
+        return new GraphStorage(dir).createNew(100);
     }
 
-    public static Graph createSampleGraph() {
+    public Graph createSampleGraph() {
         Graph graph = createGraph();
         // length does not matter here but lat,lon and outgoing edges do!
 

@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
@@ -138,25 +139,29 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     }
 
     @Override
-    public AllEdgeIterator getAllEdges() {
+    public AllEdgesSkipIterator getAllEdges() {
         return new AllEdgeSkipIterator();
     }
 
-    class AllEdgeSkipIterator extends AllEdgeIterator {
+    class AllEdgeSkipIterator extends AllEdgeIterator implements AllEdgesSkipIterator {
 
+        @Override
         public void skippedEdges(int edge1, int edge2) {
             edges.setInt(edgePointer + I_SKIP_EDGE1, edge1);
             edges.setInt(edgePointer + I_SKIP_EDGE2, edge2);
         }
 
+        @Override
         public int skippedEdge1() {
             return edges.getInt(edgePointer + I_SKIP_EDGE1);
         }
 
+        @Override
         public int skippedEdge2() {
             return edges.getInt(edgePointer + I_SKIP_EDGE2);
         }
 
+        @Override
         public boolean isShortcut() {
             return EdgeIterator.Edge.isValid(skippedEdge1());
         }

@@ -21,7 +21,6 @@ package com.graphhopper.storage.index;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
@@ -51,10 +50,10 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         // TODO do not skip
         // Error for i==45 
         // orig:3.9040709,2.1737225 full:3.2999998696148367,2.2000000372529036 fullDist:67232.91 found:4.0,1.0 foundDist:130637.836
-    }   
+    }
 
-    private Graph createTestGraph() {
-        Graph graph = new GraphBuilder().create();
+    Graph createTestGraph() {
+        Graph graph = createGraph(new RAMDirectory());
         graph.setNode(0, 0.5, -0.5);
         graph.setNode(1, -0.5, -0.5);
         graph.setNode(2, -1, -1);
@@ -113,7 +112,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     //-1|  2---------/
     //  |
     private Graph createTestGraphWithWayGeometry() {
-        Graph graph = new GraphBuilder().create();
+        Graph graph = createGraph();
         graph.setNode(0, 0.5, -0.5);
         graph.setNode(1, -0.5, -0.5);
         graph.setNode(2, -1, -1);
