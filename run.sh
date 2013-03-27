@@ -54,7 +54,7 @@ elif [ "x$TMP" = "xgermany" ]; then
  SIZE=35000000
 elif [ -f $OSM ]; then
  LINK=""
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx2400m -Xms2400m"
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1000m -Xms1000m"
  SIZE=10000000
 else
  echo "Sorry, your osm file $OSM was not found ... exiting"
@@ -121,4 +121,4 @@ else
 fi
 
 echo "## now running $CLASS. algo=$ALGO. JAVA_OPTS=$JAVA_OPTS"
-$JAVA $JAVA_OPTS -cp $JAR $CLASS config=config.properties osmreader.graph-location=$GRAPH osmreader.osm=$OSM osmreader.size=$SIZE osmreader.algo=$ALGO
+$JAVA $JAVA_OPTS -cp $JAR $CLASS printVersion=true config=config.properties osmreader.graph-location=$GRAPH osmreader.osm=$OSM osmreader.size=$SIZE osmreader.algo=$ALGO

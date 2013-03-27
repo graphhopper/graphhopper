@@ -129,7 +129,7 @@ public abstract class AbstractLocation2IDIndexTester {
         Graph g = createSampleGraph();
         int locs = g.nodes();
 
-        Location2IDIndex memoryEfficientIndex = createIndex(g, 120);
+        Location2IDIndex index = createIndex(g, 120);
         // if we would use less array entries then some points gets the same key so avoid that for this test
         // e.g. for 16 we get "expected 6 but was 9" i.e 6 was overwritten by node j9 which is a bit closer to the grid center        
         // go through every point of the graph if all points are reachable
@@ -137,12 +137,11 @@ public abstract class AbstractLocation2IDIndexTester {
             double lat = g.getLatitude(i);
             double lon = g.getLongitude(i);
             assertEquals("nodeId:" + i + " " + (float) lat + "," + (float) lon,
-                    i, memoryEfficientIndex.findID(lat, lon));
+                    i, index.findID(lat, lon));
         }
 
         // hit random lat,lon and compare result to full index
         Random rand = new Random(12);
-
         Location2IDIndex fullIndex;
         if (hasEdgeSupport())
             fullIndex = new Location2IDFullWithEdgesIndex(g);
@@ -157,14 +156,12 @@ public abstract class AbstractLocation2IDIndexTester {
             double fullLat = g.getLatitude(fullId);
             double fullLon = g.getLongitude(fullId);
             float fullDist = (float) dist.calcDist(lat, lon, fullLat, fullLon);
-            int newId = memoryEfficientIndex.findID(lat, lon);
+            int newId = index.findID(lat, lon);
             double newLat = g.getLatitude(newId);
             double newLon = g.getLongitude(newId);
             float newDist = (float) dist.calcDist(lat, lon, newLat, newLon);
 
-            // conceptual limitation where we are stuck in a blind alley limited
-            // to the current tile
-            if (i == 6 || i == 36 || i == 90 || i == 96)
+            if (testGridIgnore(i))
                 continue;
 
             assertTrue(i + " orig:" + (float) lat + "," + (float) lon
@@ -174,13 +171,16 @@ public abstract class AbstractLocation2IDIndexTester {
         }
     }
 
+    // our simple index has only one node per tile => problems if multiple subnetworks
+    boolean testGridIgnore(int i) {
+        return false;
+    }
+
     @Test
     public void testSinglePoints120() {
         Graph g = createSampleGraph();
         Location2IDIndex idx = createIndex(g, 120);
-
-        // maxWidth is ~555km and with size==8 it will be exanded to 4*4 array => maxRasterWidth==555/4
-        // assertTrue(idx.getMaxRasterWidthKm() + "", idx.getMaxRasterWidthKm() < 140);
+        
         assertEquals(1, idx.findID(1.637, 2.23));
         assertEquals(10, idx.findID(3.649, 1.375));
         assertEquals(9, idx.findID(3.3, 2.2));
@@ -220,7 +220,7 @@ public abstract class AbstractLocation2IDIndexTester {
     Graph createGraph() {
         return createGraph(new RAMDirectory());
     }
-    
+
     Graph createGraph(Directory dir) {
         return new GraphStorage(dir).createNew(100);
     }

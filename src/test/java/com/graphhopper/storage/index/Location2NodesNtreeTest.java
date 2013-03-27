@@ -45,13 +45,6 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         return true;
     }
 
-    @Override
-    public void testGrid() {
-        // TODO do not skip
-        // Error for i==45 
-        // orig:3.9040709,2.1737225 full:3.2999998696148367,2.2000000372529036 fullDist:67232.91 found:4.0,1.0 foundDist:130637.836
-    }
-
     Graph createTestGraph() {
         Graph graph = createGraph(new RAMDirectory());
         graph.setNode(0, 0.5, -0.5);

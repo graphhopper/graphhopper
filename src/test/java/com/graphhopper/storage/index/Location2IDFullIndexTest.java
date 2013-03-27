@@ -33,6 +33,11 @@ public class Location2IDFullIndexTest extends AbstractLocation2IDIndexTester {
         return new Location2IDFullIndex(g);
     }
 
+    @Override
+    public void testGrid() {
+        // do not test against itself
+    }
+
     @Test
     public void testFullIndex() {
         Location2IDIndex idx = new Location2IDFullIndex(createSampleGraph());

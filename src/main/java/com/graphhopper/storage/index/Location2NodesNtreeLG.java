@@ -28,6 +28,8 @@ import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.PointList;
 
 /**
+ * As the graph is filled and prepared before the index is created we need to
+ * ignore the introduced shortcuts e.g. for calculating closest edges.
  *
  * @author Peter Karich
  */

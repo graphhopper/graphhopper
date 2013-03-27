@@ -38,6 +38,11 @@ public class Location2IDFullWithEdgesIndexTest extends AbstractLocation2IDIndexT
         return true;
     }
 
+    @Override
+    public void testGrid() {
+        // do not test against itself
+    }
+
     @Test
     public void testFullIndex() {
         Location2IDIndex idx = new Location2IDFullWithEdgesIndex(createSampleGraph());

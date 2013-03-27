@@ -63,6 +63,11 @@ public class OSMReader {
 
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
+        if (!Helper.isEmpty(args.get("printVersion", ""))
+                || !Helper.isEmpty(args.get("v", "")) || !Helper.isEmpty(args.get("version", ""))) {
+            System.out.println("version " + Helper.VERSION + "|" + Helper.VERSION_FILE + "|" + Helper.BUILD_DATE);
+        }
+
         OSMReader reader = osm2Graph(args);
         Graph g = reader.graph();
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(reader);

@@ -48,7 +48,6 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import java.io.File;
 import java.io.IOException;
-import org.slf4j.LoggerFactory;
 
 /**
  * Main wrapper of the offline API for a simple and efficient usage.
@@ -103,12 +102,12 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public GraphHopper forAndroid() {
-        simplify(false);
-        // for now unprecise index is sufficient and a lot faster+more compact
-        // locationIndexHighResolution(false);
-
+        simplify(false);        
         // make new index faster
         searchRegion = false;
+        
+        // for smaller areas like Germany the unprecise index is sufficient and a lot faster+more compact
+        // for now improve high resulotion index
         locationIndexHighResolution(true);
         return memoryMapped();
     }

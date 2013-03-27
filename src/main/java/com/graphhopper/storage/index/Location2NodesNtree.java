@@ -220,6 +220,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         // compact & store to dataAccess
         dataAccess.createNew(64 * 1024);
         int lastPointer = inMem.store(inMem.root, START_POINTER);
+        float entriesPerLeaf = (float) inMem.size / inMem.leafs;
         dataAccess.setHeader(0, MAGIC_INT);
         dataAccess.setHeader(1, calcChecksum());
         dataAccess.setHeader(2, minResolutionInMeter);
@@ -229,8 +230,11 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
         initialized = true;
         logger.info("location index created in " + sw.stop().getSeconds()
+                + "s, size:" + Helper.nf(inMem.size)
+                + ", leafs:" + Helper.nf(inMem.leafs)
                 + ", precision:" + minResolutionInMeter
-                + ", maxDepth:" + maxDepth + ", subEntries:" + subEntries);
+                + ", maxDepth:" + maxDepth + ", subEntries:" + subEntries
+                + ", entriesPerLeaf:" + entriesPerLeaf);
 
         return this;
     }
@@ -248,6 +252,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
     class InMemConstructionIndex {
 
+        int size;
+        int leafs;
         InMemTreeEntry root;
 
         public InMemConstructionIndex(int noOfSubEntries) {
@@ -297,9 +303,10 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         }
 
         void addNode(InMemEntry entry, int nodeId, int depth, long key) {
-            if (entry.isLeaf())
-                ((InMemLeafEntry) entry).addNode(nodeId, Location2NodesNtree.this);
-            else {
+            if (entry.isLeaf()) {
+                if (((InMemLeafEntry) entry).addNode(nodeId, Location2NodesNtree.this))
+                    size++;
+            } else {
                 depth++;
                 int index = (int) (bitmask & key);
                 key = key >>> shift;
@@ -371,6 +378,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                 if (len == 0)
                     return pointer;
                 pointer++;
+                leafs++;
                 dataAccess.ensureCapacity((pointer + len + 1) * 4);
                 for (int index = 0; index < len; index++) {
                     int integ = leaf.subEntries[index];
@@ -497,12 +505,12 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
                         check(tmpNode, currDist, -adjNode - 2);
 
+                        double tmpDist;
                         double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
                         // if there are wayPoints this is only an approximation
-                        if (edgeDistCalcOnSearch && adjDist < distCalc.calcNormalizedDist(currLat, currLon, queryLat, queryLon))
+                        if (edgeDistCalcOnSearch && adjDist < currDist)
                             tmpNode = adjNode;
 
-                        double tmpDist;
                         PointList pointList = currEdge.wayGeometry();
                         int len = pointList.size();
                         for (int pointIndex = 0; pointIndex < len; pointIndex++) {
@@ -576,14 +584,19 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             subEntries = new int[count];
         }
 
-        public void addNode(int nodeId, Location2NodesNtree index) {
+        public boolean addNode(int nodeId, Location2NodesNtree index) {
             // TODO PERFORMANCE sort subEntries or insert sorted to make this contains check faster?
-            
+
             // reverse order as last nodeIds are more likely to be identical to current
             for (int i = size - 1; i >= 0; i--) {
                 if (subEntries[i] == nodeId)
-                    return;
+                    return false;
             }
+
+            // try simple skip => faster index creation + 5 times smaller!
+//            if (size > 10)
+//                return false;
+
             if (size >= subEntries.length) {
                 doCompress(index);
                 if (size >= subEntries.length)
@@ -592,6 +605,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
             subEntries[size] = nodeId;
             size++;
+            return true;
         }
 
         void doCompress(Location2NodesNtree index) {
