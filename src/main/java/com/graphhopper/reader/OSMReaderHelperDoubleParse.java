@@ -47,7 +47,9 @@ import org.slf4j.LoggerFactory;
 public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 
     private static final int EMPTY = -1;
+    // pillar node is >= 3
     private static final int PILLAR_NODE = 1;
+    // tower node is <= -3
     private static final int TOWER_NODE = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private BigLongIntMap osmIdToIndexMap;
@@ -102,14 +104,14 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     @Override
-    public int addEdge(TLongList nodes, int flags) {
-        PointList pointList = new PointList(nodes.size());
+    public int addEdge(TLongList osmIds, int flags) {
+        PointList pointList = new PointList(osmIds.size());
         int successfullyAdded = 0;
         int firstNode = -1;
-        int lastIndex = nodes.size() - 1;
+        int lastIndex = osmIds.size() - 1;
         int lastInBoundsPillarNode = -1;
-        for (int i = 0; i < nodes.size(); i++) {
-            long osmId = nodes.get(i);
+        for (int i = 0; i < osmIds.size(); i++) {
+            long osmId = osmIds.get(i);
             int tmpNode = osmIdToIndexMap.get(osmId);
             if (tmpNode == EMPTY)
                 continue;
@@ -117,9 +119,10 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
             if (tmpNode == TOWER_NODE)
                 continue;
             if (tmpNode == PILLAR_NODE) {
-                // no pillarLats,pillarLons was saved for tmpNode
-                // so if there are any existing pillar nodes we need to create an edge out of them
-                if (!pointList.isEmpty() && lastInBoundsPillarNode >= 3) {
+                // In some cases no node information is saved for the specified osmId.
+                // ie. a way references a <node> which does not exist in the current file.
+                // => if the node before was a pillar node then convert into to tower node (as it is also end-standing).
+                if (!pointList.isEmpty() && lastInBoundsPillarNode > -TOWER_NODE) {
                     // transform the pillar node to a tower node
                     tmpNode = lastInBoundsPillarNode;
                     tmpNode = handlePillarNode(tmpNode, osmId, null, true);
@@ -137,12 +140,15 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
             }
 
             if (tmpNode <= -TOWER_NODE && tmpNode >= TOWER_NODE)
-                throw new AssertionError("Mapped index not in correct bounds " + tmpNode);
+                throw new AssertionError("Mapped index not in correct bounds " + tmpNode + ", " + osmId);
 
             if (tmpNode > -TOWER_NODE) {
-                lastInBoundsPillarNode = tmpNode;
+                boolean convertToTowerNode = i == 0 || i == lastIndex;
+                if (!convertToTowerNode)
+                    lastInBoundsPillarNode = tmpNode;
+
                 // PILLAR node, but convert to towerNode if end-standing
-                tmpNode = handlePillarNode(tmpNode, osmId, pointList, i == 0 || i == lastIndex);
+                tmpNode = handlePillarNode(tmpNode, osmId, pointList, convertToTowerNode);
             }
 
             if (tmpNode < TOWER_NODE) {

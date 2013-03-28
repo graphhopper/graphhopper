@@ -47,7 +47,8 @@ public class OSMReaderTest {
 
     private String file1 = "test-osm.xml";
     private String file2 = "test-osm2.xml";
-    private String fileFoot = "test-osm3.xml";
+    private String file3 = "test-osm3.xml";
+    private String file4 = "test-osm4.xml";
     private String dir = "./target/tmp/test-db";
     private CarFlagEncoder carEncoder = new CarFlagEncoder();
     private FootFlagEncoder footEncoder = new FootFlagEncoder();
@@ -85,36 +86,36 @@ public class OSMReaderTest {
         reader.createIndex();
         Graph graph = reader.graph();
         assertEquals(4, graph.nodes());
-        int internalIdMain = AbstractGraphTester.getIdOf(graph, 52);
-        int internalId1 = AbstractGraphTester.getIdOf(graph, 51.2492152);
-        int internalId2 = AbstractGraphTester.getIdOf(graph, 51.2);
-        int internalId3 = AbstractGraphTester.getIdOf(graph, 49);
-        assertEquals(Arrays.asList(internalIdMain), GHUtility.neighbors(graph.getEdges(internalId1, carOutFilter)));
-        assertEquals(3, GHUtility.count(graph.getEdges(internalIdMain, carOutFilter)));
-        assertEquals(Arrays.asList(internalIdMain), GHUtility.neighbors(graph.getEdges(internalId2, carOutFilter)));
+        int n20 = AbstractGraphTester.getIdOf(graph, 52);
+        int n10 = AbstractGraphTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphTester.getIdOf(graph, 51.2);
+        int n50 = AbstractGraphTester.getIdOf(graph, 49);
+        assertEquals(Arrays.asList(n20), GHUtility.neighbors(graph.getEdges(n10, carOutFilter)));
+        assertEquals(3, GHUtility.count(graph.getEdges(n20, carOutFilter)));
+        assertEquals(Arrays.asList(n20), GHUtility.neighbors(graph.getEdges(n30, carOutFilter)));
 
-        EdgeIterator iter = graph.getEdges(internalIdMain, carOutFilter);
+        EdgeIterator iter = graph.getEdges(n20, carOutFilter);
         assertTrue(iter.next());
-        assertEquals(internalId1, iter.adjNode());
+        assertEquals(n10, iter.adjNode());
         assertEquals(88643, iter.distance(), 1);
         assertTrue(iter.next());
-        assertEquals(internalId2, iter.adjNode());
+        assertEquals(n30, iter.adjNode());
         assertEquals(93147, iter.distance(), 1);
         CarFlagEncoder flags = carEncoder;
         assertTrue(flags.isMotorway(iter.flags()));
         assertTrue(flags.isForward(iter.flags()));
         assertTrue(flags.isBackward(iter.flags()));
         assertTrue(iter.next());
-        assertEquals(internalId3, iter.adjNode());
+        assertEquals(n50, iter.adjNode());
         AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.wayGeometry());
         assertTrue(flags.isService(iter.flags()));
         assertTrue(flags.isForward(iter.flags()));
         assertTrue(flags.isBackward(iter.flags()));
 
         // get third added location id=30
-        iter = graph.getEdges(internalId2, carOutFilter);
+        iter = graph.getEdges(n30, carOutFilter);
         assertTrue(iter.next());
-        assertEquals(internalIdMain, iter.adjNode());
+        assertEquals(n20, iter.adjNode());
         assertEquals(93146.888, iter.distance(), 1);
         
         assertEquals(9.4, graph.getLongitude(reader.location2IDIndex().findID(51.2, 9.4)), 1e-3);
@@ -146,30 +147,30 @@ public class OSMReaderTest {
         reader.flush();
         Graph graph = reader.graph();
         assertEquals(4, graph.nodes());
-        int internalId1 = AbstractGraphTester.getIdOf(graph, 51.2492152); // 10
-        int internalIdMain = AbstractGraphTester.getIdOf(graph, 52); // 20
-        int internalId2 = AbstractGraphTester.getIdOf(graph, 51.2);  // 30
-        int internalId4 = AbstractGraphTester.getIdOf(graph, 51.25); // 40
+        int n10 = AbstractGraphTester.getIdOf(graph, 51.2492152);
+        int n20 = AbstractGraphTester.getIdOf(graph, 52);
+        int n30 = AbstractGraphTester.getIdOf(graph, 51.2);
+        int n40 = AbstractGraphTester.getIdOf(graph, 51.25);
 
-        assertEquals(Arrays.asList(internalIdMain), GHUtility.neighbors(graph.getEdges(internalId1, carOutFilter)));
-        assertEquals(3, GHUtility.count(graph.getEdges(internalIdMain, carOutFilter)));
-        assertEquals(Arrays.asList(internalIdMain), GHUtility.neighbors(graph.getEdges(internalId2, carOutFilter)));
+        assertEquals(Arrays.asList(n20), GHUtility.neighbors(graph.getEdges(n10, carOutFilter)));
+        assertEquals(3, GHUtility.count(graph.getEdges(n20, carOutFilter)));
+        assertEquals(Arrays.asList(n20), GHUtility.neighbors(graph.getEdges(n30, carOutFilter)));
 
-        EdgeIterator iter = graph.getEdges(internalIdMain, carOutFilter);
+        EdgeIterator iter = graph.getEdges(n20, carOutFilter);
         assertTrue(iter.next());
-        assertEquals(internalId1, iter.adjNode());
+        assertEquals(n10, iter.adjNode());
         assertEquals(88643, iter.distance(), 1);
         assertTrue(iter.next());
-        assertEquals(internalId2, iter.adjNode());
+        assertEquals(n30, iter.adjNode());
         assertEquals(93146.888, iter.distance(), 1);
         assertTrue(iter.next());
-        assertEquals(internalId4, iter.adjNode());
+        assertEquals(n40, iter.adjNode());
         AbstractGraphTester.assertPList(Helper.createPointList(), iter.wayGeometry());
 
         // get third added location => 2
-        iter = graph.getEdges(internalId2, carOutFilter);
+        iter = graph.getEdges(n30, carOutFilter);
         assertTrue(iter.next());
-        assertEquals(internalIdMain, iter.adjNode());
+        assertEquals(n20, iter.adjNode());
         assertEquals(93146.888, iter.distance(), 1);
         assertFalse(iter.next());
     }
@@ -180,20 +181,20 @@ public class OSMReaderTest {
         reader.flush();
         Graph graph = reader.graph();
 
-        int internalIdMain = AbstractGraphTester.getIdOf(graph, 52.0);
-        int internalId1 = AbstractGraphTester.getIdOf(graph, 51.2492152);
-        int internalId2 = AbstractGraphTester.getIdOf(graph, 51.2);
-        assertEquals(1, GHUtility.count(graph.getEdges(internalId1, carOutFilter)));
-        assertEquals(1, GHUtility.count(graph.getEdges(internalIdMain, carOutFilter)));
-        assertEquals(0, GHUtility.count(graph.getEdges(internalId2, carOutFilter)));
+        int n20 = AbstractGraphTester.getIdOf(graph, 52.0);
+        int n10 = AbstractGraphTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphTester.getIdOf(graph, 51.2);
+        assertEquals(1, GHUtility.count(graph.getEdges(n10, carOutFilter)));
+        assertEquals(1, GHUtility.count(graph.getEdges(n20, carOutFilter)));
+        assertEquals(0, GHUtility.count(graph.getEdges(n30, carOutFilter)));
 
-        EdgeIterator iter = graph.getEdges(internalIdMain, carOutFilter);
+        EdgeIterator iter = graph.getEdges(n20, carOutFilter);
         assertTrue(iter.next());
-        assertEquals(internalId2, iter.adjNode());
+        assertEquals(n30, iter.adjNode());
 
-        iter = graph.getEdges(internalIdMain);
+        iter = graph.getEdges(n20);
         assertTrue(iter.next());
-        assertEquals(internalId1, iter.adjNode());
+        assertEquals(n10, iter.adjNode());
         CarFlagEncoder encoder = carEncoder;
         assertTrue(encoder.isMotorway(iter.flags()));
         assertFalse(encoder.isForward(iter.flags()));
@@ -210,9 +211,9 @@ public class OSMReaderTest {
         reader.writeOsm2Graph(getClass().getResourceAsStream(file2));
         Graph graph = reader.graph();
 
-        int internalId4 = AbstractGraphTester.getIdOf(graph, 54.0);
-        int internalId5 = AbstractGraphTester.getIdOf(graph, 55.0);
-        assertEquals(Arrays.asList(internalId4), GHUtility.neighbors(graph.getEdges(internalId5)));
+        int n40 = AbstractGraphTester.getIdOf(graph, 54.0);
+        int n50 = AbstractGraphTester.getIdOf(graph, 55.0);
+        assertEquals(Arrays.asList(n40), GHUtility.neighbors(graph.getEdges(n50)));
     }
 
     @Test public void testMaxspeed() {
@@ -220,39 +221,52 @@ public class OSMReaderTest {
         reader.writeOsm2Graph(getClass().getResourceAsStream(file2));
         Graph graph = reader.graph();
 
-        int internalId6 = AbstractGraphTester.getIdOf(graph, 56.0);
-        EdgeIterator iter = graph.getEdges(internalId6);
+        int n60 = AbstractGraphTester.getIdOf(graph, 56.0);
+        EdgeIterator iter = graph.getEdges(n60);
         iter.next();
         assertEquals(40, carEncoder.getSpeed(iter.flags()));
     }
 
-    @Test public void testFoot() {
+    @Test public void testWayReferencesNotExistingadjNode() {
         OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000).
-                acceptStreet(new AcceptWay(true, false, true))), fileFoot);
-        reader.writeOsm2Graph(getClass().getResourceAsStream(fileFoot));
+                acceptStreet(new AcceptWay(true, false, true))), file4);
+        reader.writeOsm2Graph(getClass().getResourceAsStream(file4));
         Graph graph = reader.graph();
 
-        int a = AbstractGraphTester.getIdOf(graph, 11.1);
-        int b = AbstractGraphTester.getIdOf(graph, 12);
-        int c = AbstractGraphTester.getIdOf(graph, 11.2);
-        int d = AbstractGraphTester.getIdOf(graph, 11.3);
-        int e = AbstractGraphTester.getIdOf(graph, 10);
+        assertEquals(2, graph.nodes());
+        int n10 = AbstractGraphTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphTester.getIdOf(graph, 51.2);
 
-        assertEquals(Arrays.asList(b, d), GHUtility.neighbors(graph.getEdges(a,
+        assertEquals(Arrays.asList(n30), GHUtility.neighbors(graph.getEdges(n10)));
+    }
+
+    @Test public void testFoot() {
+        OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000).
+                acceptStreet(new AcceptWay(true, false, true))), file3);
+        reader.writeOsm2Graph(getClass().getResourceAsStream(file3));
+        Graph graph = reader.graph();
+
+        int n10 = AbstractGraphTester.getIdOf(graph, 11.1);
+        int n20 = AbstractGraphTester.getIdOf(graph, 12);
+        int n30 = AbstractGraphTester.getIdOf(graph, 11.2);
+        int n40 = AbstractGraphTester.getIdOf(graph, 11.3);
+        int n50 = AbstractGraphTester.getIdOf(graph, 10);
+
+        assertEquals(Arrays.asList(n20, n40), GHUtility.neighbors(graph.getEdges(n10,
                 new DefaultEdgeFilter(carEncoder))));
-        assertEquals(new ArrayList<Integer>(), GHUtility.neighbors(graph.getEdges(c,
+        assertEquals(new ArrayList<Integer>(), GHUtility.neighbors(graph.getEdges(n30,
                 carOutFilter)));
-        assertEquals(Arrays.asList(a, c, d), GHUtility.neighbors(graph.getEdges(b,
+        assertEquals(Arrays.asList(n10, n30, n40), GHUtility.neighbors(graph.getEdges(n20,
                 new DefaultEdgeFilter(carEncoder))));
-        assertEquals(Arrays.asList(c, d), GHUtility.neighbors(graph.getEdges(b,
+        assertEquals(Arrays.asList(n30, n40), GHUtility.neighbors(graph.getEdges(n20,
                 carOutFilter)));
 
         EdgeFilter footOutFilter = new DefaultEdgeFilter(footEncoder, false, true);
-        assertEquals(Arrays.asList(b, e), GHUtility.neighbors(graph.getEdges(a,
+        assertEquals(Arrays.asList(n20, n50), GHUtility.neighbors(graph.getEdges(n10,
                 footOutFilter)));
-        assertEquals(Arrays.asList(b, e), GHUtility.neighbors(graph.getEdges(c,
+        assertEquals(Arrays.asList(n20, n50), GHUtility.neighbors(graph.getEdges(n30,
                 footOutFilter)));
-        assertEquals(Arrays.asList(a, c), GHUtility.neighbors(graph.getEdges(b,
+        assertEquals(Arrays.asList(n10, n30), GHUtility.neighbors(graph.getEdges(n20,
                 footOutFilter)));
     }
 }
