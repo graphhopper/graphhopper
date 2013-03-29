@@ -18,6 +18,8 @@
  */
 package com.graphhopper.storage.index;
 
+import gnu.trove.set.hash.TLongHashSet;
+
 /**
  * http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm or even better:
  * http://en.wikipedia.org/wiki/Xiaolin_Wu%27s_line_algorithm
@@ -28,27 +30,29 @@ public class BresenhamLine {
 
     public static void calcPoints(double lat1, double lon1, double lat2, double lon2,
             PointEmitter emitter, double deltaLat, double deltaLon) {
+        boolean latIncreasing = lat1 < lat2;
+        boolean lonIncreasing = lon1 < lon2;
         double dLat = Math.abs(lat2 - lat1) / deltaLat,
-                sLat = lat1 < lat2 ? deltaLat : -deltaLat;
+                sLat = latIncreasing ? deltaLat : -deltaLat;
         double dLon = Math.abs(lon2 - lon1) / deltaLon,
-                sLon = lon1 < lon2 ? deltaLon : -deltaLon;
+                sLon = lonIncreasing ? deltaLon : -deltaLon;
         double err = (dLat > dLon ? dLat : -dLon) / 2;
 
         while (true) {
             emitter.set(lat1, lon1);
-
-            if ((sLat < 0 && lat1 <= lat2 || sLat > 0 && lat1 >= lat2)
-                    && (sLon < 0 && lon1 <= lon2 || sLon > 0 && lon1 >= lon2))
+            if ((!latIncreasing && lat1 <= lat2 || latIncreasing && lat1 >= lat2)
+                    && (!lonIncreasing && lon1 <= lon2 || lonIncreasing && lon1 >= lon2))
                 break;
-            double e2 = err;
-            if (e2 > -dLat) {
+            double tmpErr = err;
+            if (tmpErr > -dLat) {
                 err -= dLon;
                 lat1 += sLat;
             }
-            if (e2 < dLon) {
+            if (tmpErr < dLon) {
                 err += dLat;
                 lon1 += sLon;
             }
+
         }
     }
 }

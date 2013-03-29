@@ -34,9 +34,11 @@ import static org.junit.Assert.*;
 public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
 
     @Override
-    public Location2IDIndex createIndex(Graph g, int resolution) {
+    public Location2NodesNtreeLG createIndex(Graph g, int resolution) {
         Directory dir = new RAMDirectory(location);
-        return new Location2NodesNtreeLG((LevelGraph) g, dir).subEntries(4).resolution(1000000).prepareIndex();
+        Location2NodesNtreeLG idx = new Location2NodesNtreeLG((LevelGraph) g, dir);
+        idx.subEntries(4).resolution(1000000).prepareIndex();
+        return idx;
     }
 
     @Override

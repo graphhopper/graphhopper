@@ -18,8 +18,12 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.geohash.KeyAlgo;
+import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
+import java.util.ArrayList;
+import java.util.Arrays;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -65,5 +69,36 @@ public class BresenhamLineTest {
         BresenhamLine.calcPoints(6.0, 1.0, 4.5, -0.5, emitter, 0.2, 0.1);
         assertEquals(Helper.createPointList(6, 1, 6, 0.9, 5.8, 0.8, 5.8, 0.7, 5.6, 0.6, 5.6, 0.5, 5.4, 0.4, 5.4, 0.3,
                 5.2, 0.2, 5.2, 0.1, 5, 0, 5, -0.1, 4.8, -0.2, 4.8, -0.3, 4.6, -0.4, 4.6, -0.5, 4.4, -0.6), points);
+    }
+
+    @Test
+    public void testBresenham() {
+        int parts = 4;
+        int bits = (int) (Math.log(parts * parts) / Math.log(2));
+        double minLon = -1, maxLon = 1.6;
+        double minLat = -1, maxLat = 0.5;
+        final KeyAlgo keyAlgo = new SpatialKeyAlgo(bits).bounds(minLon, maxLon, minLat, maxLat);
+        double deltaLat = (maxLat - minLat) / parts;
+        double deltaLon = (maxLon - minLon) / parts;
+        final ArrayList<Long> keys = new ArrayList<Long>();
+        PointEmitter tmpEmitter = new PointEmitter() {
+            @Override public void set(double lat, double lon) {
+                keys.add(keyAlgo.encode(lat, lon));
+            }
+        };
+        BresenhamLine.calcPoints(.5, -.5, -0.1, 0.9, tmpEmitter, deltaLat, deltaLon);
+        assertEquals(Arrays.asList(10L, 11L, 12L), keys);
+    }
+
+    @Test
+    public void testBresenhamHorizontal() {
+        BresenhamLine.calcPoints(.5, -.5, 0.5, 1, emitter, 0.6, 0.4);
+        assertEquals(Helper.createPointList(.5, -.5, .5, -0.1, 0.5, 0.3, 0.5, 0.7, 0.5, 1.1), points);
+    }
+
+    @Test
+    public void testBresenhamVertical() {
+        BresenhamLine.calcPoints(-.5, .5, 1, 0.5, emitter, 0.4, 0.6);
+        assertEquals(Helper.createPointList(-.5, .5, -0.1, .5, 0.3, 0.5, 0.7, 0.5, 1.1, 0.5), points);
     }
 }

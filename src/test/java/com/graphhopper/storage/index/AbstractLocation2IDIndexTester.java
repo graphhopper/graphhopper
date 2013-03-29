@@ -135,7 +135,7 @@ public abstract class AbstractLocation2IDIndexTester {
         // go through every point of the graph if all points are reachable
         for (int i = 0; i < locs; i++) {
             double lat = g.getLatitude(i);
-            double lon = g.getLongitude(i);
+            double lon = g.getLongitude(i);            
             assertEquals("nodeId:" + i + " " + (float) lat + "," + (float) lon,
                     i, index.findID(lat, lon));
         }
@@ -180,7 +180,7 @@ public abstract class AbstractLocation2IDIndexTester {
     public void testSinglePoints120() {
         Graph g = createSampleGraph();
         Location2IDIndex idx = createIndex(g, 120);
-        
+
         assertEquals(1, idx.findID(1.637, 2.23));
         assertEquals(10, idx.findID(3.649, 1.375));
         assertEquals(9, idx.findID(3.3, 2.2));
