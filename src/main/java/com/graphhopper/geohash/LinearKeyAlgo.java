@@ -21,7 +21,7 @@ package com.graphhopper.geohash;
 import com.graphhopper.util.shapes.CoordTrig;
 
 /**
- * This class maps lat,lon in an array fashion unlike SpatialKeyAlgo.
+ * This class maps lat,lon to a (tile)number unlike SpatialKeyAlgo.
  *
  * @author Peter Karich,
  */
@@ -93,7 +93,8 @@ public class LinearKeyAlgo implements KeyAlgo {
     }
 
     /**
-     * This method returns latitude and longitude via latLon - calculated from specified linearKey
+     * This method returns latitude and longitude via latLon - calculated from
+     * specified linearKey
      *
      * @param linearKey is the input
      */

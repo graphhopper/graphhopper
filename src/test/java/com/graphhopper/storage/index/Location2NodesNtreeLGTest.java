@@ -25,6 +25,8 @@ import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.Helper;
+import gnu.trove.list.TIntList;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -75,5 +77,16 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
 
         Location2IDIndex index = createIndex(g, -1);
         assertEquals(2, index.findID(0, 0.5));
+    }
+
+    @Test
+    public void testSortHighLevelFirst() {
+        LevelGraph lg = createGraph(new RAMDirectory());
+        lg.setLevel(1, 10);
+        lg.setLevel(2, 30);
+        lg.setLevel(3, 20);
+        TIntList tlist = Helper.createTList(1, 2, 3);
+        new Location2NodesNtreeLG(lg, new RAMDirectory()).sortNodes(tlist);
+        assertEquals(Helper.createTList(2, 3, 1), tlist);
     }
 }

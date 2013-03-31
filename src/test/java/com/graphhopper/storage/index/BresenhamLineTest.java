@@ -49,7 +49,7 @@ public class BresenhamLineTest {
     @Test
     public void testBresenhamLineLeftDown() {
         BresenhamLine.calcPoints(2, 1, -3, -1, emitter, 1, 1);
-        assertEquals(Helper.createPointList(2, 1, 1, 1, 0, 0, -1, 0, -2, -1, -3, -1), points);
+        assertEquals(Helper.createPointList(2, 1, 1, 1, 0, 0, -1, 0, -2, 0, -3, -1), points);
     }
 
     @Test
@@ -87,7 +87,7 @@ public class BresenhamLineTest {
             }
         };
         BresenhamLine.calcPoints(.5, -.5, -0.1, 0.9, tmpEmitter, deltaLat, deltaLon);
-        assertEquals(Arrays.asList(10L, 11L, 12L), keys);
+        assertEquals(Arrays.asList(10L, 9L, 6L, 7L), keys);
     }
 
     @Test
@@ -101,4 +101,13 @@ public class BresenhamLineTest {
         BresenhamLine.calcPoints(-.5, .5, 1, 0.5, emitter, 0.4, 0.6);
         assertEquals(Helper.createPointList(-.5, .5, -0.1, .5, 0.3, 0.5, 0.7, 0.5, 1.1, 0.5), points);
     }
+
+    // fractional bresenham does not work!
+//    @Test
+//    public void testBresenhamToLeft() {
+//        BresenhamLine.calcPoints(
+//                47.57383, 9.61984,
+//                47.57382, 9.61890, emitter, 0.00647, 0.00964);
+//        assertEquals(points.toString(), 2, points.size());
+//    }
 }

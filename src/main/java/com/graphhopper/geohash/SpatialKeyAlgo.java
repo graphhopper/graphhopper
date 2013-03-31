@@ -236,4 +236,9 @@ public class SpatialKeyAlgo implements KeyAlgo {
         latLon.lat = lat;
         latLon.lon = lon;
     }
+
+    @Override
+    public String toString() {
+        return "bits:" + allBits + ", bounds:" + new BBox(minLon, maxLon, minLat, maxLat);
+    }
 }

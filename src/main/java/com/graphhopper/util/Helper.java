@@ -30,7 +30,6 @@ import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -47,6 +46,15 @@ public class Helper {
 
     private static Logger logger = LoggerFactory.getLogger(Helper.class);
     public static final int MB = 1 << 20;
+
+    public static ArrayList<Integer> tIntListToArrayList(TIntList from) {
+        int len = from.size();
+        ArrayList<Integer> list = new ArrayList<Integer>(len);
+        for (int i = 0; i < len; i++) {
+            list.add(from.get(i));
+        }
+        return list;
+    }
 
     private Helper() {
     }
@@ -325,7 +333,7 @@ public class Helper {
         if ("${project.version}".equals(version)) {
             VERSION = "0.0";
             SNAPSHOT = true;
-            System.err.println("GraphHopper Initialization WARNING: maven did not preprocess the version file!?");
+            System.err.println("GraphHopper Initialization WARNING: maven did not preprocess the version file! Do not use the jar for a release!");
         } else if ("0.0".equals(version) || indexM < 0 || indexP >= indexM) {
             VERSION = "0.0";
             SNAPSHOT = true;

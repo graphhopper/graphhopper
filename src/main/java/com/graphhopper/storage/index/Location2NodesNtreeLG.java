@@ -25,7 +25,12 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
+import gnu.trove.list.TIntList;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * As the graph is filled and prepared before the index is created we need to
@@ -45,6 +50,19 @@ public class Location2NodesNtreeLG extends Location2NodesNtree {
     public Location2NodesNtreeLG(LevelGraph g, Directory dir) {
         super(g, dir);
         lg = g;
+    }
+
+    @Override
+    protected void sortNodes(TIntList nodes) {        
+        // nodes with high level should come first to be covered by lower level nodes
+        ArrayList<Integer> list = Helper.tIntListToArrayList(nodes);
+        Collections.sort(list, new Comparator<Integer>() {
+            @Override public int compare(Integer o1, Integer o2) {
+                return lg.getLevel(o2) - lg.getLevel(o1);
+            }
+        });
+        nodes.clear();
+        nodes.addAll(list);
     }
 
     @Override

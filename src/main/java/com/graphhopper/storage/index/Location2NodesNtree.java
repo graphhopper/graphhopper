@@ -36,17 +36,16 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPlace;
+import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.procedure.TLongProcedure;
 import gnu.trove.set.hash.TIntHashSet;
-import gnu.trove.set.hash.TLongHashSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +76,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     private int shift;
     // convert spatial key to index for subentry of current depth
     private long bitmask;
-    private SpatialKeyAlgo keyAlgo;
+    SpatialKeyAlgo keyAlgo;
     private int minResolutionInMeter;
     private double minResolutionInMeterNormed;
     private double deltaLat;
@@ -258,6 +257,9 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         return (float) dataAccess.capacity() / Helper.MB;
     }
 
+    protected void sortNodes(TIntList nodes) {
+    }
+
     class InMemConstructionIndex {
 
         int size;
@@ -299,39 +301,23 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         }
 
         void addNode(final int nodeA, final int nodeB,
-                double lat1, double lon1, double lat2, double lon2) {
+                final double lat1, final double lon1,
+                final double lat2, final double lon2) {
             PointEmitter pointEmitter = new PointEmitter() {
                 @Override public void set(double lat, double lon) {
                     long key = keyAlgo.encode(lat, lon);
                     long keyPart = createReverseKey(key);
-                    // no need to feed both nodes as we search neighbors in findIDs                    
+                    // no need to feed both nodes as we search neighbors in findIDs
                     addNode(root, nodeA, 0, keyPart, key);
                 }
             };
             BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter, deltaLat, deltaLon);
-//            uniqueKeys.clear();
-//            BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, emitter, deltaLat, deltaLon);
-
-            // iterate over all generated keys
-//            uniqueKeys.forEach(new TLongProcedure() {
-//                @Override public boolean execute(long key) {
-//                    long keyPart = createReverseKey(key);
-//                    // no need to feed both nodes as we search neighbors in findIDs                    
-//                    addNode(root, nodeA, 0, keyPart, key);
-//                    return true;
-//                }
-//            });
         }
 
         void addNode(InMemEntry entry, int nodeId, int depth, long keyPart, long key) {
             if (entry.isLeaf()) {
                 InMemLeafEntry leafEntry = (InMemLeafEntry) entry;
-                if (leafEntry.addNode(nodeId)) {
-                    // compaction only every N additions
-                    if (leafEntry.size() > 50)
-                        leafEntry.doCompact(Location2NodesNtree.this);
-                    size++;
-                }
+                leafEntry.addNode(nodeId);
             } else {
                 depth++;
                 int index = (int) (bitmask & keyPart);
@@ -398,12 +384,16 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             int refPointer = pointer;
             if (entry.isLeaf()) {
                 InMemLeafEntry leaf = ((InMemLeafEntry) entry);
+//                int old = leaf.size();
                 leaf.doCompact(Location2NodesNtree.this);
                 TIntArrayList entries = leaf.getResults();
                 int len = entries.size();
+//                if (old > len)
+//                    System.out.println("shrink:" + old + " to " + len);
                 // special case for empty list
                 if (len == 0)
                     return pointer;
+                size += len;
                 pointer++;
                 leafs++;
                 dataAccess.ensureCapacity((pointer + len + 1) * 4);
@@ -623,10 +613,6 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             return addOnce(nodeId);
         }
 
-//        void doCompact(Location2NodesNtree index) {
-//            
-//        }
-
         // Reduces the nodes in this SortedIntSet to a lot fewer entries, store them into networkEntries.
         // There only entries to the spanning sub-networks are stored.
         // The following example can be reduced to the nodes 1 and 3
@@ -635,79 +621,41 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         // | | |  3-0
         // \_4-5
         //
+//        void noCompact(final Location2NodesNtree index) {
+//            networkEntries = this;
+//        }
         void doCompact(final Location2NodesNtree index) {
             if (isEmpty())
                 return;
-
-            final SortedIntSet containedSet = new SortedIntSet();
+            index.sortNodes(this);
+            final SortedIntSet removeExistingSet = new SortedIntSet();
             for (int i = 0; i < size(); i++) {
                 final int nodeId = get(i);
                 int foundIndex = networkEntries.binarySearch(nodeId);
                 if (foundIndex >= 0)
                     continue;
 
-                new XFirstSearch() {
-                    @Override protected MyBitSet createBitSet(int size) {
-                        return new MyTBitSet();
-                    }
+                foundIndex = -foundIndex - 1;
 
-                    @Override protected boolean goFurther(int adjNode) {
-                        if (networkEntries.binarySearch(adjNode) >= 0) {
-                            containedSet.addOnce(adjNode);
-                            return false;
-                        }
-
-                        double adjLat = index.graph.getLatitude(adjNode);
-                        double adjLon = index.graph.getLongitude(adjNode);
-                        double adjKey = index.keyAlgo.encode(adjLat, adjLon);
-                        return adjKey == key;
-                    }
-                }.start(index.graph, nodeId, false);
-
-                if (!containedSet.isEmpty()) {
-                    // the detected networkEntries (in containedSet) can be replaced by nodeId
-                    // i.e. nodeId spans a broader or at least the same network
-                    networkEntries.removeAll(containedSet);
-                    networkEntries.add(nodeId);
-                    containedSet.clear();
-                } else {
-                    // now we need to find out IF
-                    // case A: the nodeId is either an entry into a new network
-                    // OR 
-                    // case B: nodeId is covered by a network (spanned via an entry) already in networkEntries                    
-                    final AtomicBoolean coverageFound = new AtomicBoolean(false);
-                    final MyTBitSet bitset = new MyTBitSet();
-                    for (int j = 0; j < networkEntries.size(); j++) {
-                        int nwNode = networkEntries.get(j);
-                        new XFirstSearch() {
-                            @Override protected MyBitSet createBitSet(int size) {
-                                return bitset;
-                            }
-
-                            @Override protected boolean goFurther(int adjNode) {
-                                if (coverageFound.get())
-                                    return false;
-                                if (nodeId == adjNode) {
-                                    coverageFound.set(true);
-                                    return false;
-                                }
-
-                                double adjLat = index.graph.getLatitude(adjNode);
-                                double adjLon = index.graph.getLongitude(adjNode);
-                                double adjKey = index.keyAlgo.encode(adjLat, adjLon);
-                                return adjKey == key;
-                            }
-                        }.start(index.graph, nwNode, false);
-
-                        // found => network of current nwNode covers nodeId (case B)
-                        if (coverageFound.get())
-                            break;
-                    }
-                    if (!coverageFound.get())
-                        networkEntries.add(nodeId);
+                // check only the neighbors
+                EdgeIterator iter = index.graph.getEdges(nodeId);
+                while (iter.next()) {
+                    int adjNode = iter.adjNode();
+                    double adjLat = index.graph.getLatitude(adjNode);
+                    double adjLon = index.graph.getLongitude(adjNode);
+                    double adjKey = index.keyAlgo.encode(adjLat, adjLon);
+                    if (key == adjKey && networkEntries.binarySearch(adjNode) >= 0)
+                        removeExistingSet.addOnce(adjNode);
                 }
 
-                networkEntries.sort();
+                networkEntries.insert(foundIndex, nodeId);
+                if (!removeExistingSet.isEmpty()) {
+                    // the detected networkEntries (in containedSet) can be replaced by nodeId
+                    // i.e. nodeId spans a broader or at least the same network
+                    networkEntries.removeAll(removeExistingSet);
+                    // no need for networkEntries.sort();
+                    removeExistingSet.clear();
+                }
             }
 
             clear();

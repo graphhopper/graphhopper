@@ -28,6 +28,7 @@ import gnu.trove.set.hash.TLongHashSet;
  */
 public class BresenhamLine {
 
+    // http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm#Simplification
     public static void calcPoints(double lat1, double lon1, double lat2, double lon2,
             PointEmitter emitter, double deltaLat, double deltaLon) {
         boolean latIncreasing = lat1 < lat2;
@@ -36,7 +37,7 @@ public class BresenhamLine {
                 sLat = latIncreasing ? deltaLat : -deltaLat;
         double dLon = Math.abs(lon2 - lon1) / deltaLon,
                 sLon = lonIncreasing ? deltaLon : -deltaLon;
-        double err = (dLat > dLon ? dLat : -dLon) / 2;
+        double err = 2 * (dLon - dLat);
 
         while (true) {
             emitter.set(lat1, lon1);
@@ -45,14 +46,13 @@ public class BresenhamLine {
                 break;
             double tmpErr = err;
             if (tmpErr > -dLat) {
-                err -= dLon;
-                lat1 += sLat;
-            }
-            if (tmpErr < dLon) {
-                err += dLat;
+                err -= dLat;
                 lon1 += sLon;
             }
-
+            if (tmpErr < dLon) {
+                err += dLon;
+                lat1 += sLat;
+            }
         }
     }
 }

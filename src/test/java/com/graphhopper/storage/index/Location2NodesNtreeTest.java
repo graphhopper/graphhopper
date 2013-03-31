@@ -90,21 +90,73 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         // System.out.println(inMemIndex.getLayer(2));
 
         index.searchRegion(false);
-        
+
         TIntHashSet set = new TIntHashSet();
         set.add(0);
+        set.add(1);
         assertEquals(set, index.findNetworkEntries(-0.5, -0.9));
         assertEquals(2, index.findID(-0.5, -0.9));
-        set.clear();
-        set.add(3);
-        assertEquals(set, index.findNetworkEntries(-0.5, 0.5));
-        set.clear();
-        set.add(4);
-        assertEquals(set, index.findNetworkEntries(-0.7, 1.5));
+
+        // The optimization if(dist > normedHalf) => feed nodeA or nodeB
+        // although this reduces chance of nodes outside of the tile
+        // in practice it even increases file size!?
+        // Is this due to the LevelGraph disconnect problem?
+//        set.clear();
+//        set.add(4);
+//        assertEquals(set, index.findNetworkEntries(-0.7, 1.5));
+//        
+//        set.clear();
+//        set.add(4);
+//        assertEquals(set, index.findNetworkEntries(-0.5, 0.5));
     }
 
     @Test
     public void testInMemIndex2() {
+        Graph graph = createTestGraph2();
+        Location2NodesNtree index = new Location2NodesNtree(graph, new RAMDirectory());
+        index.subEntries(4).minResolutionInMeter(1000).prepareAlgo();
+        Location2NodesNtree.InMemConstructionIndex inMemIndex = index.prepareInMemIndex();
+
+        assertEquals(2, index.getMaxDepth());
+        assertEquals(1, inMemIndex.getLayer(0).size());
+        assertEquals(4, inMemIndex.getLayer(1).size());
+        assertEquals(8, inMemIndex.getLayer(2).size());
+
+        index.dataAccess.createNew(10);
+        inMemIndex.store(inMemIndex.root, index.START_POINTER);
+        index.searchRegion(false);
+
+        // 0
+        assertEquals(2L, index.keyAlgo.encode(49.94653, 11.57114));
+        // 1
+        assertEquals(3L, index.keyAlgo.encode(49.94653, 11.57214));
+        // 28
+        assertEquals(3L, index.keyAlgo.encode(49.95053, 11.57714));
+        // 29
+        assertEquals(6L, index.keyAlgo.encode(49.95053, 11.57814));
+        // 8
+        assertEquals(1L, index.keyAlgo.encode(49.94553, 11.57214));
+        // 34
+        assertEquals(9L, index.keyAlgo.encode(49.95153, 11.57714));
+
+
+        // query near point 25 (49.95053, 11.57314)
+        // if we would have a perfect compaction (takes a lot longer) we would
+        // get instead of 24, 23, 18, 16, 0 => only e.g. 0
+        // the other 2 subnetworks are already perfect: 28 and 6
+        TIntHashSet set = new TIntHashSet();
+        set.add(24);
+        set.add(23);
+        set.add(18);
+        set.add(16);        
+        set.add(0);
+        set.add(6);
+        set.add(28);        
+        assertEquals(set, index.findNetworkEntries(49.950, 11.5732));
+    }
+
+    @Test
+    public void testInMemIndex3() {
         Graph graph = createTestGraph();
         Location2NodesNtree index = new Location2NodesNtree(graph, new RAMDirectory());
         index.subEntries(4).minResolutionInMeter(10000).prepareAlgo();
@@ -274,4 +326,99 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
 //            }
 //        }).node);
 //    }
+
+    // see testgraph2.jpg
+    Graph createTestGraph2() {
+        Graph graph = createGraph(new RAMDirectory());
+
+        graph.setNode(8, 49.94553, 11.57214);
+        graph.setNode(9, 49.94553, 11.57314);
+        graph.setNode(10, 49.94553, 11.57414);
+        graph.setNode(11, 49.94553, 11.57514);
+        graph.setNode(12, 49.94553, 11.57614);
+        graph.setNode(13, 49.94553, 11.57714);
+
+        graph.setNode(0, 49.94653, 11.57114);
+        graph.setNode(1, 49.94653, 11.57214);
+        graph.setNode(2, 49.94653, 11.57314);
+        graph.setNode(3, 49.94653, 11.57414);
+        graph.setNode(4, 49.94653, 11.57514);
+        graph.setNode(5, 49.94653, 11.57614);
+        graph.setNode(6, 49.94653, 11.57714);
+        graph.setNode(7, 49.94653, 11.57814);
+
+        graph.setNode(14, 49.94753, 11.57214);
+        graph.setNode(15, 49.94753, 11.57314);
+        graph.setNode(16, 49.94753, 11.57614);
+        graph.setNode(17, 49.94753, 11.57814);
+
+        graph.setNode(18, 49.94853, 11.57114);
+        graph.setNode(19, 49.94853, 11.57214);
+        graph.setNode(20, 49.94853, 11.57814);
+
+        graph.setNode(21, 49.94953, 11.57214);
+        graph.setNode(22, 49.94953, 11.57614);
+
+        graph.setNode(23, 49.95053, 11.57114);
+        graph.setNode(24, 49.95053, 11.57214);
+        graph.setNode(25, 49.95053, 11.57314);
+        graph.setNode(26, 49.95053, 11.57514);
+        graph.setNode(27, 49.95053, 11.57614);
+        graph.setNode(28, 49.95053, 11.57714);
+        graph.setNode(29, 49.95053, 11.57814);
+
+        graph.setNode(30, 49.95153, 11.57214);
+        graph.setNode(31, 49.95153, 11.57314);
+        graph.setNode(32, 49.95153, 11.57514);
+        graph.setNode(33, 49.95153, 11.57614);
+        graph.setNode(34, 49.95153, 11.57714);
+
+        graph.setNode(34, 49.95153, 11.57714);
+
+        // to create correct bounds
+        // bottom left
+        graph.setNode(100, 49.94053, 11.56614);
+        // bottom right
+        graph.setNode(101, 49.96053, 11.58814);
+
+        graph.edge(0, 1, 10, true);
+        graph.edge(1, 2, 10, true);
+        graph.edge(2, 3, 10, true);
+        graph.edge(3, 4, 10, true);
+        graph.edge(4, 5, 10, true);
+        graph.edge(6, 7, 10, true);
+
+        graph.edge(8, 2, 10, true);
+        graph.edge(9, 2, 10, true);
+        graph.edge(10, 3, 10, true);
+        graph.edge(11, 4, 10, true);
+        graph.edge(12, 5, 10, true);
+        graph.edge(13, 6, 10, true);
+
+        graph.edge(1, 14, 10, true);
+        graph.edge(2, 15, 10, true);
+        graph.edge(5, 16, 10, true);
+        graph.edge(14, 15, 10, true);
+        graph.edge(16, 17, 10, true);
+        graph.edge(16, 20, 10, true);
+        graph.edge(16, 25, 10, true);
+
+        graph.edge(18, 14, 10, true);
+        graph.edge(18, 19, 10, true);
+        graph.edge(18, 21, 10, true);
+        graph.edge(19, 21, 10, true);
+        graph.edge(21, 24, 10, true);
+        graph.edge(23, 24, 10, true);
+        graph.edge(24, 25, 10, true);
+        graph.edge(26, 27, 10, true);
+        graph.edge(27, 28, 10, true);
+        graph.edge(28, 29, 10, true);
+
+        graph.edge(24, 30, 10, true);
+        graph.edge(24, 31, 10, true);
+        graph.edge(26, 32, 10, true);
+        graph.edge(27, 33, 10, true);
+        graph.edge(28, 34, 10, true);
+        return graph;
+    }
 }
