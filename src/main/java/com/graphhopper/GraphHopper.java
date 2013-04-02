@@ -102,10 +102,10 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public GraphHopper forAndroid() {
-        simplify(false);        
+        simplify(false);
         // make new index faster
         searchRegion = false;
-        
+
         // for smaller areas like Germany the unprecise index is sufficient and a lot faster+more compact
         // for now improve high resulotion index
         locationIndexHighResolution(true);
@@ -267,7 +267,10 @@ public class GraphHopper implements GraphHopperAPI {
         int from = index.findID(request.from().lat, request.from().lon);
         int to = index.findID(request.to().lat, request.to().lon);
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
-
+        if (from < 0)
+            throw new IllegalArgumentException("Cannot find point " + request.from());
+        if (to < 0)
+            throw new IllegalArgumentException("Cannot find point " + request.to());
         sw = new StopWatch().start();
         RoutingAlgorithm algo;
         if (chUsage) {
