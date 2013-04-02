@@ -36,7 +36,6 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPlace;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -265,6 +264,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         int size;
         int leafs;
         InMemTreeEntry root;
+        boolean compact = true;
 
         public InMemConstructionIndex(int noOfSubEntries) {
             root = new InMemTreeEntry(noOfSubEntries);
@@ -311,7 +311,9 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                     addNode(root, nodeA, 0, keyPart, key);
                 }
             };
-            BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter, deltaLat, deltaLon);
+            BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter,
+                    graph.bounds().minLat, graph.bounds().minLon,
+                    deltaLat, deltaLon);
         }
 
         void addNode(InMemEntry entry, int nodeId, int depth, long keyPart, long key) {
@@ -360,7 +362,10 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         void print(InMemEntry e, StringBuilder sb, long key) {
             if (e.isLeaf()) {
                 InMemLeafEntry leaf = (InMemLeafEntry) e;
-                leaf.doCompact(Location2NodesNtree.this);
+                if (compact)
+                    leaf.doCompact(Location2NodesNtree.this);
+                else
+                    leaf.noCompact();
                 int bits = keyAlgo.bits();
                 // print reverse keys
                 sb.append(BitUtil.toBitString(BitUtil.reverse(key, bits), bits)).append("  ");
@@ -384,8 +389,10 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             int refPointer = pointer;
             if (entry.isLeaf()) {
                 InMemLeafEntry leaf = ((InMemLeafEntry) entry);
-//                int old = leaf.size();
-                leaf.doCompact(Location2NodesNtree.this);
+                if (compact)
+                    leaf.doCompact(Location2NodesNtree.this);
+                else
+                    leaf.noCompact();
                 TIntArrayList entries = leaf.getResults();
                 int len = entries.size();
 //                if (old > len)
@@ -613,7 +620,11 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             return addOnce(nodeId);
         }
 
-        // Reduces the nodes in this SortedIntSet to a lot fewer entries, store them into networkEntries.
+        void noCompact() {
+            networkEntries = this;
+        }
+
+        // Reduces the nodes in this SortedIntSet to fewer entries, store them into networkEntries.
         // There only entries to the spanning sub-networks are stored.
         // The following example can be reduced to the nodes 1 and 3
         //
@@ -621,9 +632,6 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         // | | |  3-0
         // \_4-5
         //
-//        void noCompact(final Location2NodesNtree index) {
-//            networkEntries = this;
-//        }
         void doCompact(final Location2NodesNtree index) {
             if (isEmpty())
                 return;

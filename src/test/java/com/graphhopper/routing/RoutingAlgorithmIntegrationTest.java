@@ -88,7 +88,7 @@ public class RoutingAlgorithmIntegrationTest {
         //   | bzip2 > campo-grande.extracted.osm.bz2
 
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25080, 255));
+        list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25515, 271));
         list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18020, 238));
         runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list, false);
         assertEquals(testCollector.toString(), 0, testCollector.list.size());

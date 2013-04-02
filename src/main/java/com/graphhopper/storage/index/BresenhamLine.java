@@ -18,8 +18,6 @@
  */
 package com.graphhopper.storage.index;
 
-import gnu.trove.set.hash.TLongHashSet;
-
 /**
  * http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm or even better:
  * http://en.wikipedia.org/wiki/Xiaolin_Wu%27s_line_algorithm
@@ -29,30 +27,60 @@ import gnu.trove.set.hash.TLongHashSet;
 public class BresenhamLine {
 
     // http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm#Simplification
-    public static void calcPoints(double lat1, double lon1, double lat2, double lon2,
-            PointEmitter emitter, double deltaLat, double deltaLon) {
-        boolean latIncreasing = lat1 < lat2;
-        boolean lonIncreasing = lon1 < lon2;
-        double dLat = Math.abs(lat2 - lat1) / deltaLat,
-                sLat = latIncreasing ? deltaLat : -deltaLat;
-        double dLon = Math.abs(lon2 - lon1) / deltaLon,
-                sLon = lonIncreasing ? deltaLon : -deltaLon;
-        double err = 2 * (dLon - dLat);
+    public static void calcPoints(int y1, int x1, int y2, int x2,
+            PointEmitter emitter) {
+        boolean latIncreasing = y1 < y2;
+        boolean lonIncreasing = x1 < x2;
+        int dLat = Math.abs(y2 - y1), sLat = latIncreasing ? 1 : -1;
+        int dLon = Math.abs(x2 - x1), sLon = lonIncreasing ? 1 : -1;
+        int err = 2 * (dLon - dLat);
 
         while (true) {
-            emitter.set(lat1, lon1);
-            if ((!latIncreasing && lat1 <= lat2 || latIncreasing && lat1 >= lat2)
-                    && (!lonIncreasing && lon1 <= lon2 || lonIncreasing && lon1 >= lon2))
+            emitter.set(y1, x1);
+            if (y1 == y2 && x1 == x2)
                 break;
-            double tmpErr = err;
+            int tmpErr = err;
             if (tmpErr > -dLat) {
                 err -= dLat;
-                lon1 += sLon;
+                x1 += sLon;
             }
             if (tmpErr < dLon) {
                 err += dLon;
-                lat1 += sLat;
+                y1 += sLat;
             }
         }
+    }
+
+    public static void calcPoints(double lat1, double lon1,
+            double lat2, double lon2, final PointEmitter emitter,
+            final double offsetLat, final double offsetLon,
+            final double deltaLat, final double deltaLon) {
+        // round to make results of bresenham closer to correct solution
+        int y1 = (int) Math.round((lat1 - offsetLat) / deltaLat);
+        int x1 = (int) Math.round((lon1 - offsetLon) / deltaLon);
+        int y2 = (int) Math.round((lat2 - offsetLat) / deltaLat);
+        int x2 = (int) Math.round((lon2 - offsetLon) / deltaLon);
+        calcPoints(y1, x1, y2, x2, new PointEmitter() {
+            @Override public void set(double lat, double lon) {
+                emitter.set(((lat) * deltaLat + offsetLat),
+                        ((lon) * deltaLon + offsetLon));
+            }
+        });
+    }
+
+    public static void calcPointsOffset(double lat1, double lon1,
+            double lat2, double lon2, final PointEmitter emitter,
+            final double offsetLat, final double offsetLon,
+            final double deltaLat, final double deltaLon) {
+        int y1 = (int) ((lat1 - offsetLat) / deltaLat);
+        int x1 = (int) ((lon1 - offsetLon) / deltaLon);
+        int y2 = (int) ((lat2 - offsetLat) / deltaLat);
+        int x2 = (int) ((lon2 - offsetLon) / deltaLon);
+        calcPoints(y1, x1, y2, x2, new PointEmitter() {
+            @Override public void set(double lat, double lon) {
+                // +0.5 to move into the center of the tile
+                emitter.set((lat + .1) * deltaLat + offsetLat, (lon + .1) * deltaLon + offsetLon);
+            }
+        });
     }
 }
