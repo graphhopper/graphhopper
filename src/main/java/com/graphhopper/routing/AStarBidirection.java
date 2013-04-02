@@ -18,8 +18,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.AStar.AStarEdge;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.VehicleEncoder;
@@ -64,10 +62,10 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
     private DistanceCalc dist;
     private int from, to;
-    private MyBitSet visitedFrom;
+    private int visitedFromCount;
     private PriorityQueue<AStarEdge> prioQueueOpenSetFrom;
     private TIntObjectMap<AStarEdge> shortestWeightMapFrom;
-    private MyBitSet visitedTo;
+    private int visitedToCount;
     private PriorityQueue<AStarEdge> prioQueueOpenSetTo;
     private TIntObjectMap<AStarEdge> shortestWeightMapTo;
     private boolean alreadyRun;
@@ -87,11 +85,9 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     }
 
     protected void initCollections(int size) {
-        visitedFrom = new MyBitSetImpl(size);
         prioQueueOpenSetFrom = new PriorityQueue<AStarEdge>(size / 10);
         shortestWeightMapFrom = new TIntObjectHashMap<AStarEdge>(size / 10);
 
-        visitedTo = new MyBitSetImpl(size);
         prioQueueOpenSetTo = new PriorityQueue<AStarEdge>(size / 10);
         shortestWeightMapTo = new TIntObjectHashMap<AStarEdge>(size / 10);
     }
@@ -124,7 +120,6 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         this.from = from;
         currFrom = new AStarEdge(-1, from, 0, 0);
         shortestWeightMapFrom.put(from, currFrom);
-        visitedFrom.add(from);
         fromCoord = new CoordTrig(graph.getLatitude(from), graph.getLongitude(from));
     }
 
@@ -132,7 +127,6 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         this.to = to;
         currTo = new AStarEdge(-1, to, 0, 0);
         shortestWeightMapTo.put(to, currTo);
-        visitedTo.add(to);
         toCoord = new CoordTrig(graph.getLatitude(to), graph.getLongitude(to));
     }
 
@@ -191,7 +185,8 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     public boolean fillEdgesFrom() {
         if (currFrom != null) {
             shortestWeightMapOther = shortestWeightMapTo;
-            fillEdges(currFrom, toCoord, visitedFrom, prioQueueOpenSetFrom, shortestWeightMapFrom, outEdgeFilter);
+            fillEdges(currFrom, toCoord, prioQueueOpenSetFrom, shortestWeightMapFrom, outEdgeFilter);
+            visitedFromCount++;
             if (prioQueueOpenSetFrom.isEmpty()) {
                 currFrom = null;
                 return false;
@@ -200,7 +195,6 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
             currFrom = prioQueueOpenSetFrom.poll();
             if (checkFinishCondition())
                 return false;
-            visitedFrom.add(currFrom.endNode);
         } else if (currTo == null)
             return false;
 
@@ -210,7 +204,8 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     public boolean fillEdgesTo() {
         if (currTo != null) {
             shortestWeightMapOther = shortestWeightMapFrom;
-            fillEdges(currTo, fromCoord, visitedTo, prioQueueOpenSetTo, shortestWeightMapTo, inEdgeFilter);
+            fillEdges(currTo, fromCoord, prioQueueOpenSetTo, shortestWeightMapTo, inEdgeFilter);
+            visitedToCount++;
             if (prioQueueOpenSetTo.isEmpty()) {
                 currTo = null;
                 return false;
@@ -219,14 +214,13 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
             currTo = prioQueueOpenSetTo.poll();
             if (checkFinishCondition())
                 return false;
-            visitedTo.add(currTo.endNode);
         } else if (currFrom == null)
             return false;
 
         return true;
     }
 
-    private void fillEdges(AStarEdge curr, CoordTrig goal, MyBitSet closedSet,
+    private void fillEdges(AStarEdge curr, CoordTrig goal,
             PriorityQueue<AStarEdge> prioQueueOpenSet,
             TIntObjectMap<AStarEdge> shortestWeightMap, EdgeFilter filter) {
 
@@ -236,9 +230,6 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
             if (!accept(iter))
                 continue;
             int neighborNode = iter.adjNode();
-            if (closedSet.contains(neighborNode))
-                continue;
-
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
             double alreadyVisitedWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + curr.weightToCompare;
@@ -288,6 +279,6 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
 
     @Override
     public int calcVisitedNodes() {
-        return visitedFrom.cardinality() + visitedTo.cardinality();
+        return visitedFromCount + visitedToCount;
     }
 }

@@ -18,8 +18,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
@@ -42,7 +40,7 @@ public class AStar extends AbstractRoutingAlgorithm {
 
     private DistanceCalc dist = new DistancePlaneProjection();
     private boolean alreadyRun;
-    private MyBitSet closedSet;
+    private int visitedCount;
 
     public AStar(Graph g, VehicleEncoder encoder) {
         super(g, encoder);
@@ -64,7 +62,6 @@ public class AStar extends AbstractRoutingAlgorithm {
         if (alreadyRun)
             throw new IllegalStateException("Create a new instance per call");
         alreadyRun = true;
-        closedSet = new MyBitSetImpl(graph.nodes());
         TIntObjectMap<AStarEdge> map = new TIntObjectHashMap<AStarEdge>();
         PriorityQueue<AStarEdge> prioQueueOpenSet = new PriorityQueue<AStarEdge>(1000);
         double toLat = graph.getLatitude(to);
@@ -79,9 +76,6 @@ public class AStar extends AbstractRoutingAlgorithm {
                 if (!accept(iter))
                     continue;
                 int neighborNode = iter.adjNode();
-                if (closedSet.contains(neighborNode))
-                    continue;
-
                 double alreadyVisitedWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currEdge.weightToCompare;
                 AStarEdge nEdge = map.get(neighborNode);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight) {
@@ -105,7 +99,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                 }
             }
 
-            closedSet.add(currVertex);
+            visitedCount++;
             if (finished(currEdge, to))
                 break;
             if (prioQueueOpenSet.isEmpty())
@@ -125,7 +119,7 @@ public class AStar extends AbstractRoutingAlgorithm {
 
     @Override
     public int calcVisitedNodes() {
-        return closedSet.cardinality();
+        return visitedCount;
     }
 
     Path extractPath(EdgeEntry currEdge) {

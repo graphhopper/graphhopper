@@ -18,8 +18,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyTBitSet;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
@@ -36,10 +34,10 @@ import java.util.PriorityQueue;
  */
 public class DijkstraSimple extends AbstractRoutingAlgorithm {
 
-    protected MyBitSet visited = new MyTBitSet();
     private TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
     private PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
     private boolean alreadyRun;
+    private int visitedNodes;
 
     public DijkstraSimple(Graph graph, VehicleEncoder encoder) {
         super(graph, encoder);
@@ -51,7 +49,6 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
             throw new IllegalStateException("Create a new instance per call");
         alreadyRun = true;
         EdgeEntry fromEntry = new EdgeEntry(EdgeIterator.NO_EDGE, from, 0d);
-        visited.add(from);
         EdgeEntry currEdge = fromEntry;
         while (true) {
             int neighborNode = currEdge.endNode;
@@ -60,9 +57,6 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
                 if (!accept(iter))
                     continue;
                 int tmpNode = iter.adjNode();
-                if (visited.contains(tmpNode))
-                    continue;
-
                 double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currEdge.weight;
                 EdgeEntry nEdge = map.get(tmpNode);
                 if (nEdge == null) {
@@ -81,7 +75,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
                 updateShortest(nEdge, neighborNode);
             }
 
-            visited.add(neighborNode);
+            visitedNodes++;
             if (finished(currEdge, to))
                 break;
 
@@ -112,6 +106,6 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
 
     @Override
     public int calcVisitedNodes() {
-        return visited.cardinality();
+        return visitedNodes;
     }
 }

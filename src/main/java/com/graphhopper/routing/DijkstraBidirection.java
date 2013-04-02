@@ -19,8 +19,6 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.coll.IntDoubleBinHeap;
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.Graph;
@@ -53,30 +51,23 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     protected int currToRef;
     protected PathBidir shortest;
     protected EdgeWrapper wrapperOther;
-    private MyBitSet visitedFrom;
     private IntDoubleBinHeap openSetFrom;
     private EdgeWrapper wrapperFrom;
-    private MyBitSet visitedTo;
+    private int visitedFromCount;
     private IntDoubleBinHeap openSetTo;
     private EdgeWrapper wrapperTo;
+    private int visitedToCount;
     private boolean alreadyRun;
 
     public DijkstraBidirection(Graph graph, VehicleEncoder encoder) {
         super(graph, encoder);
         int locs = Math.max(20, graph.nodes());
-        visitedFrom = new MyBitSetImpl(locs);
         openSetFrom = new IntDoubleBinHeap(locs / 10);
         wrapperFrom = new EdgeWrapper(locs / 10);
 
-        visitedTo = new MyBitSetImpl(locs);
         openSetTo = new IntDoubleBinHeap(locs / 10);
         wrapperTo = new EdgeWrapper(locs / 10);
-    }
-
-    void addSkipNode(int node) {
-        visitedFrom.add(node);
-        visitedTo.add(node);
-    }
+    }    
 
     DijkstraBidirection initFrom(int from) {
         this.from = from;
@@ -131,7 +122,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         return currFromWeight + currToWeight >= shortest.weight();
     }
 
-    void fillEdges(int currNode, double currWeight, int currRef, MyBitSet visitedMain,
+    void fillEdges(int currNode, double currWeight, int currRef,
             IntDoubleBinHeap prioQueue, EdgeWrapper wrapper, EdgeFilter filter) {
 
         EdgeIterator iter = graph.getEdges(currNode, filter);
@@ -139,9 +130,6 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
             if (!accept(iter))
                 continue;
             int neighborNode = iter.adjNode();
-            if (visitedMain.contains(neighborNode))
-                continue;
-
             double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currWeight;
             int newRef = wrapper.getRef(neighborNode);
             if (newRef < 0) {
@@ -179,7 +167,8 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
     boolean fillEdgesFrom() {
         wrapperOther = wrapperTo;
-        fillEdges(currFrom, currFromWeight, currFromRef, visitedFrom, openSetFrom, wrapperFrom, outEdgeFilter);
+        fillEdges(currFrom, currFromWeight, currFromRef, openSetFrom, wrapperFrom, outEdgeFilter);
+        visitedFromCount++;
         if (openSetFrom.isEmpty())
             return false;
 
@@ -188,13 +177,13 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         currFromWeight = wrapperFrom.getWeight(currFromRef);
         if (checkFinishCondition())
             return false;
-        visitedFrom.add(currFrom);
         return true;
     }
 
     boolean fillEdgesTo() {
         wrapperOther = wrapperFrom;
-        fillEdges(currTo, currToWeight, currToRef, visitedTo, openSetTo, wrapperTo, inEdgeFilter);
+        fillEdges(currTo, currToWeight, currToRef, openSetTo, wrapperTo, inEdgeFilter);
+        visitedToCount++;
         if (openSetTo.isEmpty())
             return false;
 
@@ -203,13 +192,12 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         currToWeight = wrapperTo.getWeight(currToRef);
         if (checkFinishCondition())
             return false;
-        visitedTo.add(currTo);
         return true;
     }
 
     @Override
     public int calcVisitedNodes() {
-        return visitedFrom.cardinality() + visitedTo.cardinality();
+        return visitedFromCount + visitedToCount;
     }
 
     private Path checkIndenticalFromAndTo() {

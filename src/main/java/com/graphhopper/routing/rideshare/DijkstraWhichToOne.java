@@ -18,12 +18,9 @@
  */
 package com.graphhopper.routing.rideshare;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.EdgeEntry;
@@ -51,8 +48,8 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     private TIntObjectMap<EdgeEntry> shortestDistMapTo;
     private TIntArrayList pubTransport = new TIntArrayList();
     private int destination;
-    private MyBitSet visitedFrom;
-    private MyBitSet visitedTo;
+    private int visitedFromCount;
+    private int visitedToCount;
 
     public DijkstraWhichToOne(Graph graph, VehicleEncoder encoder) {
         super(graph, encoder);
@@ -81,13 +78,11 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         if (pubTransport.contains(destination))
             return new Path(graph, flagEncoder);
 
-        visitedFrom = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
         EdgeEntry entryTo = new EdgeEntry(EdgeIterator.NO_EDGE, destination, 0);
         EdgeEntry currTo = entryTo;
-        visitedTo = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
         shortestDistMapTo.put(destination, entryTo);
@@ -105,7 +100,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
                 currFrom = tmpFrom;
 
             shortestDistMapOther = shortestDistMapTo;
-            fillEdges(shortest, tmpFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom, outEdgeFilter);
+            fillEdges(shortest, tmpFrom, prioQueueFrom, shortestDistMapFrom, outEdgeFilter);
         }
 
         int finish = 0;
@@ -117,18 +112,16 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
 
             finish = 0;
             shortestDistMapOther = shortestDistMapTo;
-            fillEdges(shortest, currFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom, outEdgeFilter);
+            fillEdges(shortest, currFrom, prioQueueFrom, shortestDistMapFrom, outEdgeFilter);
             if (!prioQueueFrom.isEmpty()) {
                 currFrom = prioQueueFrom.poll();
-                visitedFrom.add(currFrom.endNode);
             } else
                 finish++;
 
             shortestDistMapOther = shortestDistMapFrom;
-            fillEdges(shortest, currTo, visitedTo, prioQueueTo, shortestDistMapTo, inEdgeFilter);
+            fillEdges(shortest, currTo, prioQueueTo, shortestDistMapTo, inEdgeFilter);
             if (!prioQueueTo.isEmpty()) {
                 currTo = prioQueueTo.poll();
-                visitedTo.add(currTo.endNode);
             } else
                 finish++;
         }
@@ -139,7 +132,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         return p;
     }
 
-    void fillEdges(PathBidirRef shortest, EdgeEntry curr, MyBitSet visitedMain,
+    void fillEdges(PathBidirRef shortest, EdgeEntry curr,
             PriorityQueue<EdgeEntry> prioQueue,
             TIntObjectMap<EdgeEntry> shortestDistMap, EdgeFilter filter) {
 
@@ -147,9 +140,6 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         EdgeIterator iter = graph.getEdges(currNode, filter);
         while (iter.next()) {
             int tmpV = iter.adjNode();
-            if (visitedMain.contains(tmpV))
-                continue;
-
             double tmp = weightCalc.getWeight(iter.distance(), iter.flags()) + curr.weight;
             EdgeEntry de = shortestDistMap.get(tmpV);
             if (de == null) {
@@ -192,6 +182,6 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
 
     @Override
     public int calcVisitedNodes() {
-        return visitedFrom.cardinality() + visitedTo.cardinality();
+        return visitedFromCount + visitedToCount;
     }
 }

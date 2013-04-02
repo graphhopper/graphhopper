@@ -21,7 +21,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.coll.MyBitSet;
 import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.XFirstSearch;
 import java.util.*;
 import java.util.Map.Entry;

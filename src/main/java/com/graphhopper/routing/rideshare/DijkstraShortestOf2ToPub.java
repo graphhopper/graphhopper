@@ -18,8 +18,6 @@
  */
 package com.graphhopper.routing.rideshare;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyBitSetImpl;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.DijkstraBidirection;
 import com.graphhopper.routing.Path;
@@ -58,8 +56,8 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
     private TIntObjectMap<EdgeEntry> shortestDistMapOther;
     private TIntObjectMap<EdgeEntry> shortestDistMapFrom;
     private TIntObjectMap<EdgeEntry> shortestDistMapTo;
-    private MyBitSet visitedFrom;
-    private MyBitSet visitedTo;
+    private int visitedFromCount;
+    private int visitedToCount;
 
     public DijkstraShortestOf2ToPub(Graph graph, VehicleEncoder encoder) {
         super(graph, encoder);
@@ -94,13 +92,11 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         if (pubTransport.contains(fromP1) || pubTransport.contains(toP2))
             return new DijkstraBidirection(graph, flagEncoder).calcPath(fromP1, toP2);
 
-        visitedFrom = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
 
         EdgeEntry entryTo = new EdgeEntry(EdgeIterator.NO_EDGE, toP2, 0);
         currTo = entryTo;
-        visitedTo = new MyBitSetImpl(graph.nodes());
         PriorityQueue<EdgeEntry> prioQueueTo = new PriorityQueue<EdgeEntry>();
         shortestDistMapTo = new TIntObjectHashMap<EdgeEntry>();
 
@@ -117,24 +113,22 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
         while (true) {
             if (currFrom != null) {
                 shortestDistMapOther = shortestDistMapTo;
-                fillEdges(currFrom, visitedFrom, prioQueueFrom, shortestDistMapFrom);
+                fillEdges(currFrom, prioQueueFrom, shortestDistMapFrom);
                 currFrom = prioQueueFrom.poll();
                 if (currFrom != null) {
                     if (checkFinishCondition())
                         break;
-                    visitedFrom.add(currFrom.endNode);
                 }
             } else if (currTo == null)
                 throw new IllegalStateException("Shortest Path not found? " + fromP1 + " " + toP2);
 
             if (currTo != null) {
                 shortestDistMapOther = shortestDistMapFrom;
-                fillEdges(currTo, visitedTo, prioQueueTo, shortestDistMapTo);
+                fillEdges(currTo, prioQueueTo, shortestDistMapTo);
                 currTo = prioQueueTo.poll();
                 if (currTo != null) {
                     if (checkFinishCondition())
                         break;
-                    visitedTo.add(currTo.endNode);
                 }
             } else if (currFrom == null)
                 throw new IllegalStateException("Shortest Path not found? " + fromP1 + " " + toP2);
@@ -162,16 +156,13 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
             return Math.min(currFrom.weight, currTo.weight) >= shortest.weight();
     }
 
-    void fillEdges(EdgeEntry curr, MyBitSet visitedMain,
-            PriorityQueue<EdgeEntry> prioQueue, TIntObjectMap<EdgeEntry> shortestDistMap) {
+    void fillEdges(EdgeEntry curr, PriorityQueue<EdgeEntry> prioQueue,
+            TIntObjectMap<EdgeEntry> shortestDistMap) {
 
         int currVertexFrom = curr.endNode;
         EdgeIterator iter = graph.getEdges(currVertexFrom, outEdgeFilter);
         while (iter.next()) {
             int tmpV = iter.adjNode();
-            if (visitedMain.contains(tmpV))
-                continue;
-
             double tmp = iter.distance() + curr.weight;
             EdgeEntry de = shortestDistMap.get(tmpV);
             if (de == null) {
@@ -218,6 +209,6 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
 
     @Override
     public int calcVisitedNodes() {
-        return visitedFrom.cardinality() + visitedTo.cardinality();
+        return visitedFromCount + visitedToCount;
     }
 }
