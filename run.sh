@@ -44,7 +44,7 @@ TMP="${TMP%.*}"
 #echo $TMP - $FILE - $NAME
 if [ "x$TMP" = "xunterfranken" ]; then
  LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx500m -Xms500m"
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx400m -Xms400m"
  SIZE=3000000
 elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2

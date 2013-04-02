@@ -49,7 +49,7 @@ public class RoutingAlgorithmIntegrationTest {
 
     @Before
     public void setUp() {
-        testCollector = new TestAlgoCollector();
+        testCollector = new TestAlgoCollector("integration tests");
     }
 
     List<OneRun> createMonacoInstances() {
@@ -66,7 +66,7 @@ public class RoutingAlgorithmIntegrationTest {
     @Test
     public void testMonaco() {
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco", createMonacoInstances(), true);
-        assertEquals(testCollector.toString(), 0, testCollector.list.size());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     @Test
@@ -76,7 +76,7 @@ public class RoutingAlgorithmIntegrationTest {
         list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16089, 582));
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list, true);
-        assertEquals(testCollector.toString(), 0, testCollector.list.size());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     @Test
@@ -91,7 +91,7 @@ public class RoutingAlgorithmIntegrationTest {
         list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25515, 271));
         list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18020, 238));
         runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list, false);
-        assertEquals(testCollector.toString(), 0, testCollector.list.size());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     void runAlgo(TestAlgoCollector testCollector, String osmFile,
@@ -172,7 +172,7 @@ public class RoutingAlgorithmIntegrationTest {
         }
 
         assertEquals(MAX * algosLength * instances.size(), integ.get());
-        assertEquals(testCollector.toString(), 0, testCollector.list.size());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     class OneRun {

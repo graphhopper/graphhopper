@@ -66,11 +66,11 @@ public class RoutingAlgorithmSpecialAreaTests {
             throw new IllegalStateException("run testAlgos only with a none-LevelGraph. Use osmreader.chShortcuts=false "
                     + "Or use osmreader.chShortcuts=shortest and avoid the preparation");
 
-        TestAlgoCollector testCollector = new TestAlgoCollector();
+        TestAlgoCollector testCollector = new TestAlgoCollector("testAlgos");
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         Collection<AlgorithmPreparation> prepares = createAlgos(unterfrankenGraph, carEncoder, true);
         for (AlgorithmPreparation prepare : prepares) {
-            int failed = testCollector.list.size();
+            int failed = testCollector.errors.size();
             testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 561.3, 20);
             testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107984.2, 1751);
             testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 92535.4, 1335);
@@ -80,14 +80,10 @@ public class RoutingAlgorithmSpecialAreaTests {
             testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 131299.2, 2220);
             testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73170.2, 1417);
 
-            System.out.println("unterfranken " + prepare.createAlgo() + ": " + (testCollector.list.size() - failed) + " failed");
+            System.out.println("unterfranken " + prepare.createAlgo() + ": " + (testCollector.errors.size() - failed) + " failed");
         }
 
-        if (testCollector.list.size() > 0) {
-            System.out.println("\n-------------------------------\n");
-            System.out.println(testCollector);
-        } else
-            System.out.println("SUCCESS!");
+        testCollector.printSummary();
     }
 
     public static Collection<AlgorithmPreparation> createAlgos(Graph g,
@@ -150,17 +146,12 @@ public class RoutingAlgorithmSpecialAreaTests {
     }
 
     void testIndex() {
-        // query outside        
-        double qLat = 49.4000;
-        double qLon = 9.9690;
-        int id = idx.findID(qLat, qLon);
-        double foundLat = unterfrankenGraph.getLatitude(id);
-        double foundLon = unterfrankenGraph.getLongitude(id);
-        double dist = new DistanceCalc().calcDist(qLat, qLon, foundLat, foundLon);
-        double expectedDist = 5589.2;
-        if (Math.abs(dist - expectedDist) > .1)
-            System.out.println("ERROR in test index. queried lat,lon=" + (float) qLat + "," + (float) qLon
-                    + ", but was " + (float) foundLat + "," + (float) foundLon
-                    + "\n   expected distance:" + expectedDist + ", but was:" + dist);
+        TestAlgoCollector testCollector = new TestAlgoCollector("testIndex");
+
+        testCollector.queryIndex(unterfrankenGraph, idx, 50.081241, 10.124366, 2.2);
+        testCollector.queryIndex(unterfrankenGraph, idx, 49.682000, 9.943000, 602.2);
+        testCollector.queryIndex(unterfrankenGraph, idx, 50.079341, 10.167925, 122.6);
+
+        testCollector.printSummary();
     }
 }

@@ -78,7 +78,7 @@ public class MiniGraphUI {
     private WeightCalculation wCalc = new ShortestCalc();
     private VehicleEncoder carEncoder = new CarFlagEncoder();
     private VehicleEncoder footEncoder = new FootFlagEncoder();
-    
+
     public MiniGraphUI(OSMReader reader, boolean debug) {
         this.graph = reader.graph();
         prepare = reader.preparation();
@@ -139,12 +139,13 @@ public class MiniGraphUI {
 //                    mg.plotNode(g2, nodeIndex, Color.RED);                    
 
                     // accept car and foot
-                    EdgeIterator iter = graph.getEdges(nodeIndex, new DefaultEdgeFilter(carEncoder, false, true) {
-                        @Override public boolean accept(EdgeIterator iter) {
-                            int flags = iter.flags();
-                            return footEncoder.isForward(flags);
-                        }
-                    });
+                    EdgeIterator iter = graph.getEdges(nodeIndex, new DefaultEdgeFilter(carEncoder, false, true));
+//                    {
+//                        @Override public boolean accept(EdgeIterator iter) {
+//                            int flags = iter.flags();
+//                            return footEncoder.isForward(flags);
+//                        }
+//                    });
                     while (iter.next()) {
                         int nodeId = iter.adjNode();
                         int sum = nodeIndex + nodeId;
@@ -160,14 +161,12 @@ public class MiniGraphUI {
                         mg.plotEdge(g2, lat, lon, lat2, lon2);
                     }
                 }
-
-//                mg.plotNode(g2, 14304, Color.red);
-
-                g2.setColor(Color.red);
-                Path p1 = calcPath(prepare.createAlgo().type(wCalc));
-                plotPath(p1, g2, 5);
-
-                g2.setColor(Color.black);
+                
+//                g2.setColor(Color.red);
+//                Path p1 = calcPath(prepare.createAlgo().type(wCalc));
+//                plotPath(p1, g2, 5);
+//
+//                g2.setColor(Color.black);
 
 //                if (quadTreeNodes != null) {
 //                    logger.info("found neighbors:" + quadTreeNodes.size());
@@ -221,7 +220,7 @@ public class MiniGraphUI {
 ////        System.out.println("path " + from + "->" + to);
 //        return algo.calcPath(from, to);
         // System.out.println(GraphUtility.getNodeInfo(graph, 60139, new DefaultEdgeFilter(new CarFlagEncoder()).direction(false, true)));
-        System.out.println(((GraphStorage) graph).debug(202947, 10));
+        // System.out.println(((GraphStorage) graph).debug(202947, 10));
 //        GraphUtility.printInfo(graph, 106511, 10);
         return algo.calcPath(60139, 202947);
     }
@@ -234,7 +233,7 @@ public class MiniGraphUI {
 
         double prevLat = Double.NaN;
         double prevLon = Double.NaN;
-        boolean plotNodes = true;
+        boolean plotNodes = false;
         TIntList nodes = tmpPath.calcNodes();
         if (plotNodes) {
             for (int i = 0; i < nodes.size(); i++) {

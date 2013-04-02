@@ -21,12 +21,15 @@ package com.graphhopper.ui;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Peter Karich
  */
 public abstract class DefaultMapLayer implements MapLayer {
 
+    private Logger logger = LoggerFactory.getLogger(getClass());    
     private Rectangle bounds = new Rectangle();
     private Graphics2D tmpG;
     protected BufferedImage image;
@@ -39,7 +42,11 @@ public abstract class DefaultMapLayer implements MapLayer {
 
     @Override public void paint(Graphics2D mainGraphics) {
         if (!buffering) {
-            paintComponent(mainGraphics);
+            try {
+                paintComponent(mainGraphics);
+            } catch (Exception ex) {
+                logger.error("Problem in paintComponent", ex);
+            }
             return;
         }
         if (image != null)

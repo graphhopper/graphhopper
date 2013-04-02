@@ -42,9 +42,9 @@ import org.slf4j.LoggerFactory;
  * a routing graph.
  *
  * This implementation is the most memory efficient representation for indices
- * which maps to a routing graph. But it is not the most efficient one
+ * which maps to a routing graph.
  *
- * @see Location2IDPreciseIndex for a more precise Location2IDIndex
+ * @see Location2NodesNtree for a more precise Location2IDIndex.
  *
  * @author Peter Karich
  */

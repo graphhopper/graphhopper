@@ -50,7 +50,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This implementation implements an n-tree to get node ids from GPS location.
- * This will replace Location2IDQuadtree and Location2IDPreciseIndex.
+ * This replaces Location2IDQuadtree except for cases when you only need rough
+ * precision or when you need better support for out-of-bounds queries.
  *
  * All leafs are at the same depth, otherwise it is quite complicated to
  * calculate the bresenham line for different resolutions, especially if a leaf
