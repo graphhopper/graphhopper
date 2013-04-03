@@ -28,7 +28,7 @@ import com.graphhopper.util.shapes.BBox;
  * can be requested via indices called node IDs. To get the lat,lon point you
  * need to set up a Location2IDIndex instance.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public interface Graph {
 

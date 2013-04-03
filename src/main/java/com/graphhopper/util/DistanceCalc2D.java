@@ -24,7 +24,7 @@ import static java.lang.Math.*;
  * Calculates the distance of two points or one point and an edge in euclidean
  * space.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class DistanceCalc2D extends DistanceCalc {
 

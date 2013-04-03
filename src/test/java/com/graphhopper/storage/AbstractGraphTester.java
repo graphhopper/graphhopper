@@ -41,7 +41,7 @@ import org.junit.Test;
  * interface. Graphs implementing GraphStorage should extend GraphStorageTest
  * instead.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public abstract class AbstractGraphTester {
 

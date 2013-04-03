@@ -41,7 +41,7 @@ import org.junit.Test;
 /**
  * Tests the OSMReader with the normal helper initialized.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class OSMReaderTest {
 

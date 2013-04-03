@@ -26,7 +26,7 @@ import gnu.trove.stack.array.TIntArrayStack;
 /**
  * This class can be used for breadth first search (BFS) or depth first search (DFS)
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class XFirstSearch {
 

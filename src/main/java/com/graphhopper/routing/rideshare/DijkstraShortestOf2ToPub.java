@@ -43,7 +43,7 @@ import java.util.PriorityQueue;
  * the detour of taking the passenger directly to his destination (and then
  * going back to P2).
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
 

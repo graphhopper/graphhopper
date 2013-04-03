@@ -20,7 +20,7 @@ package com.graphhopper.util.shapes;
 
 /**
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class CoordTrigLongEntry extends CoordTrig<Long> {
 

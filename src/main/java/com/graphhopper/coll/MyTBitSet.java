@@ -25,7 +25,7 @@ import gnu.trove.set.hash.TIntHashSet;
  * Implements the bitset interface via a trove THashSet. More efficient for a
  * few entries.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class MyTBitSet implements MyBitSet {
 

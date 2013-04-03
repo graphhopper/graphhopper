@@ -21,7 +21,7 @@ package com.graphhopper.util;
 /**
  * Conversation between integers/longs/float/doubles to bytes.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class BitUtil {
 

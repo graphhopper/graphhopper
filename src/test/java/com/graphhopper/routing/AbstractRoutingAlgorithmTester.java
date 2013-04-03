@@ -40,7 +40,7 @@ import org.junit.Test;
 
 /**
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public abstract class AbstractRoutingAlgorithmTester {
 

@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * Duplicates allowed.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class QuadTreeSimple<T> implements QuadTree<T> {
 

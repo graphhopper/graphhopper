@@ -28,7 +28,7 @@ import static java.lang.Math.*;
  *
  * http://en.wikipedia.org/wiki/Haversine_formula
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class DistanceCalc {
 

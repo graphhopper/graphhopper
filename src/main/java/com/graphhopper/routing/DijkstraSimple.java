@@ -30,7 +30,7 @@ import java.util.PriorityQueue;
  * Implements a single source shortest path algorithm
  * http://en.wikipedia.org/wiki/Dijkstra's_algorithm
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class DijkstraSimple extends AbstractRoutingAlgorithm {
 

@@ -29,7 +29,7 @@ import com.graphhopper.util.EdgeSkipIterator;
  * Recursivly unpack shortcuts.
  *
  * @see PrepareContractionHierarchies
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class Path4CH extends PathBidirRef {
 

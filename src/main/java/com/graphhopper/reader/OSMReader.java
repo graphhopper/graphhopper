@@ -59,7 +59,7 @@ import org.slf4j.LoggerFactory;
  * This class parses an OSM xml file and creates a graph from it. See run.sh on
  * how to use it from command line.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class OSMReader {
 

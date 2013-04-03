@@ -20,7 +20,7 @@ package com.graphhopper.trees;
 
 /**
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class QuadTreeSimple8Test extends QuadTreeTester {
 

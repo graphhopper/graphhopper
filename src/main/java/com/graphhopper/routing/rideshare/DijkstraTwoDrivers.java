@@ -26,7 +26,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.EdgeEntry;
 
 /**
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class DijkstraTwoDrivers {
 

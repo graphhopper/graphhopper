@@ -22,7 +22,7 @@ package com.graphhopper.coll;
  * Wrapper interface of an integer container for different implementations like
  * OpenBitset, BitSet, ...
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public interface MyBitSet {
 

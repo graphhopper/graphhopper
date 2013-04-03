@@ -23,7 +23,7 @@ import com.graphhopper.util.shapes.CoordTrig;
 /**
  * This class maps lat,lon to a (tile)number unlike SpatialKeyAlgo.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 // A 4*3 precision linear key will look like
 //  

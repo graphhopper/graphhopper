@@ -26,7 +26,7 @@ import com.graphhopper.storage.Graph;
 
 /**
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class DijkstraSimpleTest extends AbstractRoutingAlgorithmTester {
 
