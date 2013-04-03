@@ -95,7 +95,7 @@ public class OSMReader {
     private AlgorithmPreparation prepare;
     private Location2IDIndex index;
     private boolean sortGraph = false;
-    private boolean locationIndexHighResolution = true;
+    private int locationIndexHighResolution = 1000;
 
     /**
      * Opens or creates a graph. The specified args need a property 'graph' (a
@@ -162,7 +162,7 @@ public class OSMReader {
         osmReader.defaultAlgoPrepare(algoPrepare);
         osmReader.sort(args.getBool("osmreader.sortGraph", false));
         osmReader.chShortcuts(args.get("osmreader.chShortcuts", "no"));
-        osmReader.locationIndexHighResolution(args.getBool("osmreader.locationIndexHighResolution", true));
+        osmReader.locationIndexHighResolution(args.getInt("osmreader.locationIndexHighResolution", 1000));
         if (!osmReader.loadExisting()) {
             String strOsm = args.get("osmreader.osm", "");
             if (Helper.isEmpty(strOsm))
@@ -416,7 +416,7 @@ public class OSMReader {
 
     public Location2IDIndex location2IDIndex() {
         if (index == null) {
-            if (locationIndexHighResolution) {
+            if (locationIndexHighResolution > 0) {
                 if (graphStorage instanceof LevelGraph)
                     index = new Location2NodesNtreeLG((LevelGraph) graphStorage, graphStorage.directory());
                 else
@@ -439,8 +439,12 @@ public class OSMReader {
         return this;
     }
 
-    public OSMReader locationIndexHighResolution(boolean highResolution) {
-        locationIndexHighResolution = highResolution;
+    /**
+     * @param resolution specifies the tile width (in meter). The higher the
+     * more space is required but the faster a query will be.
+     */
+    public OSMReader locationIndexHighResolution(int resolution) {
+        locationIndexHighResolution = resolution;
         return this;
     }
 }

@@ -66,7 +66,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean chUsage = false;
     private String ghLocation = "";
     private boolean simplify = true;
-    private boolean highResolutionIndex = true;
+    private int preciseIndexResolution = 1000;
     private boolean chFast = true;
     private boolean edgeCalcOnSearch = true;
     private boolean searchRegion = true;
@@ -91,24 +91,21 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper forServer() {
         // simplify to reduce network IO
         simplify(true);
-        locationIndexHighResolution(true);
+        preciseIndexResolution(1000);
         return setInMemory(true, true);
     }
 
     public GraphHopper forDesktop() {
         simplify(false);
-        locationIndexHighResolution(true);
+        preciseIndexResolution(1000);
         return setInMemory(true, true);
     }
 
-    public GraphHopper forAndroid() {
+    public GraphHopper forMobile() {
         simplify(false);
         // make new index faster
-        searchRegion = false;
-
-        // for smaller areas like Germany the unprecise index is sufficient and a lot faster+more compact
-        // for now improve high resulotion index
-        locationIndexHighResolution(true);
+        searchRegion = true;
+        preciseIndexResolution(1000);
         return memoryMapped();
     }
 
@@ -117,8 +114,8 @@ public class GraphHopper implements GraphHopperAPI {
      * be consumed and probably slower query times, which would be e.g. not
      * suitable for Android.
      */
-    public GraphHopper locationIndexHighResolution(boolean precise) {
-        highResolutionIndex = precise;
+    public GraphHopper preciseIndexResolution(int precision) {
+        preciseIndexResolution = precision;
         return this;
     }
 
@@ -304,12 +301,13 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void initIndex(Directory dir) {
-        if (highResolutionIndex) {
+        if (preciseIndexResolution > 0) {
             Location2NodesNtree tmpIndex;
             if (graph instanceof LevelGraph)
                 tmpIndex = new Location2NodesNtreeLG((LevelGraph) graph, dir);
             else
                 tmpIndex = new Location2NodesNtree(graph, dir);
+            tmpIndex.resolution(preciseIndexResolution);
             tmpIndex.edgeCalcOnFind(edgeCalcOnSearch);
             tmpIndex.searchRegion(searchRegion);
             tmpIndex.resolution(1000);

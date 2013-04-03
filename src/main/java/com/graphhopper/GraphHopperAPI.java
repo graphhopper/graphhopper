@@ -53,6 +53,8 @@ public interface GraphHopperAPI {
 
     /**
      * Calculates the path from specified request with startPoint to endPoint.
+     * 
+     * @throws Exceptions if points not found or other problems occur.
      */
     GHResponse route(GHRequest request);
 }
