@@ -26,7 +26,6 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import static com.graphhopper.routing.util.NoOpAlgorithmPreparation.*;
@@ -147,8 +146,8 @@ public class RoutingAlgorithmSpecialAreaTests {
 
     void testIndex() {
         TestAlgoCollector testCollector = new TestAlgoCollector("testIndex");
-
-        testCollector.queryIndex(unterfrankenGraph, idx, 50.081241, 10.124366, 2.2);
+        testCollector.queryIndex(unterfrankenGraph, idx, 50.081241, 10.124366, 14.0);
+        testCollector.queryIndex(unterfrankenGraph, idx, 50.081146, 10.124496, 0.0);
         testCollector.queryIndex(unterfrankenGraph, idx, 49.682000, 9.943000, 602.2);
         testCollector.queryIndex(unterfrankenGraph, idx, 50.079341, 10.167925, 122.6);
 

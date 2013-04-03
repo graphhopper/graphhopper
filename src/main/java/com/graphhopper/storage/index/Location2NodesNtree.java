@@ -30,6 +30,7 @@ import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.PointList;
@@ -223,10 +224,6 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         dataAccess.createNew(64 * 1024);
         int lastPointer = inMem.store(inMem.root, START_POINTER);
 
-        // now doCompact was called
-//        System.out.println(inMem.getLayer(0));
-//        System.out.println(inMem.getLayer(1));
-
         float entriesPerLeaf = (float) inMem.size / inMem.leafs;
         dataAccess.setHeader(0, MAGIC_INT);
         dataAccess.setHeader(1, calcChecksum());
@@ -265,7 +262,9 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         int size;
         int leafs;
         InMemTreeEntry root;
-        boolean compact = true;
+        // Enable compact only when the TODO in searching is solved
+        // Otherwise not all nodes in a tile are recognized
+        boolean compact = false;
 
         public InMemConstructionIndex(int noOfSubEntries) {
             root = new InMemTreeEntry(noOfSubEntries);
@@ -527,6 +526,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 //                            return true;
 //                        }
 
+                        // TODO 
+//                        if(index.compact) goFurther = depends on tile size!
                         goFurther = false;
                         int tmpNode = currNode;
                         double tmpLat = currLat;

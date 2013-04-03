@@ -31,12 +31,14 @@ import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.Location2IDQuadtree;
 import com.graphhopper.storage.index.Location2NodesNtree;
+import com.graphhopper.storage.index.Location2NodesNtreeLG;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
@@ -414,10 +416,13 @@ public class OSMReader {
 
     public Location2IDIndex location2IDIndex() {
         if (index == null) {
-            if (locationIndexHighResolution)
-                index = new Location2NodesNtree(graphStorage, graphStorage.directory())
-                        .resolution(1000);
-            else
+            if (locationIndexHighResolution) {
+                if (graphStorage instanceof LevelGraph)
+                    index = new Location2NodesNtreeLG((LevelGraph) graphStorage, graphStorage.directory());
+                else
+                    index = new Location2NodesNtree(graphStorage, graphStorage.directory());
+                index.resolution(1000);
+            } else
                 index = new Location2IDQuadtree(graphStorage, graphStorage.directory())
                         .resolution(Helper.calcIndexSize(graphStorage.bounds()));
         }

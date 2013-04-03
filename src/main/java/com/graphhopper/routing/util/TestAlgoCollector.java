@@ -73,7 +73,7 @@ public class TestAlgoCollector {
         double dist = new DistanceCalc().calcDist(lat, lon, foundLat, foundLon);
         if (Math.abs(dist - expectedDist) > .1)
             errors.add("queried lat,lon=" + (float) lat + "," + (float) lon
-                    + ", but was " + (float) foundLat + "," + (float) foundLon
+                    + " (found: " + (float) foundLat + "," + (float) foundLon + ")"
                     + "\n   expected distance:" + expectedDist + ", but was:" + dist);
     }
 

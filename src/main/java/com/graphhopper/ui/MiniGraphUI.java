@@ -126,6 +126,10 @@ public class MiniGraphUI {
                     bitset.clear();
                 }
 
+//                int loc = index.findID(49.682000, 9.943000);
+//                mg.plotNode(g2, loc, Color.PINK);
+//                plotNodeName(g2, index.findID(49.682000, 9.943000));
+
                 for (int nodeIndex = 0; nodeIndex < locs; nodeIndex++) {
                     if (fastPaint && rand.nextInt(30) > 1)
                         continue;
@@ -134,9 +138,6 @@ public class MiniGraphUI {
                     // mg.plotText(g2, lat, lon, "" + nodeIndex);
                     if (lat < b.minLat || lat > b.maxLat || lon < b.minLon || lon > b.maxLon)
                         continue;
-
-//                    int count = MyIteratorable.count(graph.getEdges(nodeIndex));
-//                    mg.plotNode(g2, nodeIndex, Color.RED);                    
 
                     // accept car and foot
                     EdgeIterator iter = graph.getEdges(nodeIndex, new DefaultEdgeFilter(carEncoder, false, true));
@@ -161,19 +162,6 @@ public class MiniGraphUI {
                         mg.plotEdge(g2, lat, lon, lat2, lon2);
                     }
                 }
-                
-//                g2.setColor(Color.red);
-//                Path p1 = calcPath(prepare.createAlgo().type(wCalc));
-//                plotPath(p1, g2, 5);
-//
-//                g2.setColor(Color.black);
-
-//                if (quadTreeNodes != null) {
-//                    logger.info("found neighbors:" + quadTreeNodes.size());
-//                    for (CoordTrig<Long> coord : quadTreeNodes) {
-//                        mg.plot(g2, coord.lat, coord.lon, 1);
-//                    }
-//                }
             }
         });
 
@@ -190,6 +178,8 @@ public class MiniGraphUI {
                 StopWatch sw = new StopWatch().start();
                 logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + wCalc);
                 path = algo.type(wCalc).calcPath(dijkstraFromId, dijkstraToId);
+//                mg.plotNode(g2, dijkstraFromId, Color.red);
+//                mg.plotNode(g2, dijkstraToId, Color.BLUE);
                 sw.stop();
 
                 // if directed edges
@@ -225,6 +215,12 @@ public class MiniGraphUI {
         return algo.calcPath(60139, 202947);
     }
 
+    void plotNodeName(Graphics2D g2, int node) {
+        double lat = graph.getLatitude(node);
+        double lon = graph.getLongitude(node);
+        mg.plotText(g2, lat, lon, "" + node);
+    }
+
     private Path plotPath(Path tmpPath, Graphics2D g2, int w) {
         if (!tmpPath.found()) {
             logger.info("nothing found " + w);
@@ -237,9 +233,7 @@ public class MiniGraphUI {
         TIntList nodes = tmpPath.calcNodes();
         if (plotNodes) {
             for (int i = 0; i < nodes.size(); i++) {
-                double lat = graph.getLatitude(nodes.get(i));
-                double lon = graph.getLongitude(nodes.get(i));
-                mg.plotText(g2, lat, lon, "" + nodes.get(i));
+                plotNodeName(g2, nodes.get(i));
             }
         }
         PointList list = tmpPath.calcPoints();
