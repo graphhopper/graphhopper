@@ -22,6 +22,8 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.WayList;
 import java.util.Arrays;
 import org.junit.Test;
@@ -77,7 +79,11 @@ public class PathTest {
         g.edge(5, 8, 100, true);
 
         g.edge(6, 7, 110, true);
-        g.edge(7, 8, 100, true).name("7-8");
+        EdgeIterator iter = g.edge(7, 8, 100, true);
+        PointList list = new PointList();
+        list.add(1.0, 1.15);
+        iter.wayGeometry(list);
+        iter.name("7-8");
 
         Path p = new DijkstraSimple(g, new CarFlagEncoder()).calcPath(0, 8);
         WayList wayList = p.calcWays();
