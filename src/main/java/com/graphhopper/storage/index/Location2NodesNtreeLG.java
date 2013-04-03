@@ -53,7 +53,7 @@ public class Location2NodesNtreeLG extends Location2NodesNtree {
     }
 
     @Override
-    protected void sortNodes(TIntList nodes) {        
+    protected void sortNodes(TIntList nodes) {
         // nodes with high level should come first to be covered by lower level nodes
         ArrayList<Integer> list = Helper.tIntListToArrayList(nodes);
         Collections.sort(list, new Comparator<Integer>() {
@@ -115,6 +115,16 @@ public class Location2NodesNtreeLG extends Location2NodesNtree {
 
             @Override public void flags(int flags) {
                 tmpIter.flags(flags);
+            }
+
+            @Override
+            public String name() {
+                return tmpIter.name();
+            }
+
+            @Override
+            public void name(String name) {
+                tmpIter.name(name);
             }
 
             @Override public boolean isEmpty() {

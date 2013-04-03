@@ -104,7 +104,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     @Override
-    public int addEdge(TLongList osmIds, int flags) {
+    public int addEdge(TLongList osmIds, int flags, String name) {
         PointList pointList = new PointList(osmIds.size());
         int successfullyAdded = 0;
         int firstNode = -1;
@@ -129,7 +129,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                     tmpNode = -tmpNode - 3;
                     if (pointList.size() > 1 && firstNode >= 0) {
                         // TOWER node                        
-                        successfullyAdded += addEdge(firstNode, tmpNode, pointList, flags);
+                        successfullyAdded += addEdge(firstNode, tmpNode, pointList, flags, name);
                         pointList.clear();
                         pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
                     }
@@ -156,7 +156,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                 tmpNode = -tmpNode - 3;
                 pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
                 if (firstNode >= 0) {
-                    successfullyAdded += addEdge(firstNode, tmpNode, pointList, flags);
+                    successfullyAdded += addEdge(firstNode, tmpNode, pointList, flags, name);
                     pointList.clear();
                     pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
                 }

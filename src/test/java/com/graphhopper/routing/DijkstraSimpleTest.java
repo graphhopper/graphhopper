@@ -31,7 +31,8 @@ import com.graphhopper.storage.Graph;
 public class DijkstraSimpleTest extends AbstractRoutingAlgorithmTester {
 
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final VehicleEncoder encoder) {
+    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc,
+            final VehicleEncoder encoder) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
                 return new DijkstraSimple(_graph, encoder).type(calc);

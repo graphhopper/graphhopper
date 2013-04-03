@@ -543,7 +543,7 @@ public abstract class AbstractGraphTester {
         assertEquals(1, GHUtility.count(g.getEdges(getIdOf(g, 8))));
         assertEquals(1, GHUtility.count(g.getEdges(getIdOf(g, 11))));
     }
-        
+
     @Test
     public void testDeleteAndOptimize() {
         Graph g = createGraph();
@@ -817,5 +817,18 @@ public abstract class AbstractGraphTester {
         iter = g.getAllEdges();
         assertEquals(2, GHUtility.count(iter));
         assertEquals(4, iter.maxId());
+    }
+
+    @Test
+    public void testNameIndex() {
+        Graph g = createGraph();
+        EdgeIterator iter1 = g.edge(0, 1, 10, true);
+        iter1.name("named street1");
+
+        EdgeIterator iter2 = g.edge(0, 1, 10, true);
+        iter2.name("named street2");
+
+        assertEquals("named street1", g.getEdgeProps(iter1.edge(), -1).name());
+        assertEquals("named street2", g.getEdgeProps(iter2.edge(), -1).name());
     }
 }

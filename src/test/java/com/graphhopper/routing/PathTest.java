@@ -20,6 +20,10 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.WayList;
+import java.util.Arrays;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -42,5 +46,42 @@ public class PathTest {
         Path p = new Path(null, encoder);
         p.calcTime(100000, encoder.flags(100, true));
         assertEquals(60 * 60, p.time());
+    }
+
+    @Test
+    public void testWayList() {
+        Graph g = new GraphBuilder().create();
+        // 0-1-2
+        // | | |
+        // 3-4-5
+        // | | |
+        // 6-7-8
+        g.setNode(0, 1.2, 1.0);
+        g.setNode(1, 1.2, 1.1);
+        g.setNode(2, 1.2, 1.2);
+        g.setNode(3, 1.1, 1.0);
+        g.setNode(4, 1.1, 1.1);
+        g.setNode(5, 1.1, 1.2);
+        g.setNode(6, 1.0, 1.0);
+        g.setNode(7, 1.0, 1.1);
+        g.setNode(8, 1.0, 1.2);
+        g.edge(0, 1, 100, true).name("0-1");
+        g.edge(1, 2, 110, true);
+
+        g.edge(0, 3, 110, true);
+        g.edge(1, 4, 100, true).name("1-4");
+        g.edge(2, 5, 110, true);
+
+        g.edge(3, 6, 100, true);
+        g.edge(4, 7, 100, true).name("4-7");
+        g.edge(5, 8, 100, true);
+
+        g.edge(6, 7, 110, true);
+        g.edge(7, 8, 100, true).name("7-8");
+
+        Path p = new DijkstraSimple(g, new CarFlagEncoder()).calcPath(0, 8);
+        WayList wayList = p.calcWays();
+        assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4",
+                "Continue onto 4-7", "Turn left onto 7-8"), wayList.createInstructions("en"));
     }
 }

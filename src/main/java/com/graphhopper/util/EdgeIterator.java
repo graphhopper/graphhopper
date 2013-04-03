@@ -93,6 +93,10 @@ public interface EdgeIterator {
 
     void flags(int flags);
 
+    String name();
+
+    void name(String name);
+
     /**
      * @return true if no data is available where we could iterate over
      */

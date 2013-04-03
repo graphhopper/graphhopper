@@ -72,7 +72,8 @@ public class AcceptWay {
      * @return true if a way (speed attribute) is determined from the specified
      * tag
      */
-    public boolean handleTags(Map<String, Object> outProperties, Map<String, Object> osmProperties, TLongArrayList osmIds) {
+    public boolean handleTags(Map<String, Object> outProperties,
+            Map<String, Object> osmProperties, TLongArrayList osmIds) {
         boolean includeWay = false;
         Object value = osmProperties.get("highway");
         if (value != null) {
@@ -156,6 +157,12 @@ public class AcceptWay {
                 outProperties.put("bikeopposite", oneWayBikeIsOpposite);
             }
         }
+        String name = (String) osmProperties.get("name");
+        if (name == null)
+            outProperties.put("wayName", "");
+        else
+            outProperties.put("wayName", name);
+
         return includeWay;
     }
 

@@ -83,9 +83,9 @@ public abstract class OSMReaderHelper {
 
     public abstract boolean addNode(long osmId, double lat, double lon);
 
-    public abstract int addEdge(TLongList nodes, int flags);
+    public abstract int addEdge(TLongList nodes, int flags, String name);
 
-    int addEdge(int fromIndex, int toIndex, PointList pointList, int flags) {
+    int addEdge(int fromIndex, int toIndex, PointList pointList, int flags, String name) {
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError("to or from index is invalid for this edge "
                     + fromIndex + "->" + toIndex + ", points:" + pointList);
@@ -114,6 +114,7 @@ public abstract class OSMReaderHelper {
         }
 
         EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
+        iter.name(name);
         if (nodes > 2)
             iter.wayGeometry(pillarNodes);
         return nodes;
@@ -138,7 +139,7 @@ public abstract class OSMReaderHelper {
         boolean valid = parseWay(sReader);
         if (valid) {
             int flags = acceptWay.toFlags(outProperties);
-            int successfullAdded = addEdge(wayNodes, flags);
+            int successfullAdded = addEdge(wayNodes, flags, (String) outProperties.get("wayName"));
             edgeCount += successfullAdded;
         }
     }

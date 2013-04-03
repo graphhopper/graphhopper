@@ -68,9 +68,11 @@ public class GraphStorageTest extends AbstractGraphTester {
         graph.setNode(2, 12, 12);
 
         graph.edge(0, 1, 100, true).wayGeometry(Helper.createPointList(1, 1, 2, 3));
-        graph.edge(0, 2, 200, true);
-        graph.edge(1, 2, 120, false);
-
+        EdgeIterator iter1 = graph.edge(0, 2, 200, true);
+        EdgeIterator iter2 = graph.edge(1, 2, 120, false);
+        
+        iter1.name("named street1");
+        iter2.name("named street2");        
         checkGraph(graph);
         graph.flush();
 
@@ -78,7 +80,9 @@ public class GraphStorageTest extends AbstractGraphTester {
         assertTrue(graph.loadExisting());
         assertEquals(3, graph.nodes());
         assertEquals(3, graph.nodes());
-        checkGraph(graph);
+        assertEquals("named street1", graph.getEdgeProps(iter1.edge(), -1).name());
+        assertEquals("named street2", graph.getEdgeProps(iter2.edge(), -1).name());
+        checkGraph(graph);        
 
         graph.edge(3, 4, 123, true);
         checkGraph(graph);

@@ -33,6 +33,7 @@
         <nd ref="10"/>
         <nd ref="20"/>        
         <nd ref="30"/>
+        <tag k="name" v="route 666" />
         <tag k="highway" v="motorway" />
     </way> 
     
@@ -40,6 +41,7 @@
         <nd ref="20"/>
         <nd ref="40"/>
         <nd ref="50"/>
+        <tag k="name" v="street 123" />
         <tag k="highway" v="service" />
     </way>
 </osm>
