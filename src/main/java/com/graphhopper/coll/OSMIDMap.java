@@ -18,7 +18,9 @@
  */
 package com.graphhopper.coll;
 
-import java.util.Arrays;
+import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.util.BitUtil;
 
 /**
  * This is a special purpose map for writing increasing OSM IDs with consecutive
@@ -29,17 +31,26 @@ import java.util.Arrays;
  */
 public class OSMIDMap {
 
-    private long[] keys;
+    private final DataAccess keys;
     private long lastKey = Long.MIN_VALUE;
     private long lastValue = -1;
-    private int size;
+    private long doubleSize;
+    private final int noEntryValue;
+    private final Directory dir;
 
-    public OSMIDMap() {
-        this(10);
+    public OSMIDMap(Directory dir) {
+        this(dir, -1);
     }
 
-    public OSMIDMap(int initialCapacity) {
-        keys = new long[initialCapacity];
+    public OSMIDMap(Directory dir, int noNumber) {
+        this.dir = dir;
+        this.noEntryValue = noNumber;
+        keys = dir.findCreate("osmidMap");
+        keys.create(1000);
+    }
+
+    public void remove() {
+        dir.remove(keys);
     }
 
     public void put(long key, long value) {
@@ -50,29 +61,50 @@ public class OSMIDMap {
         if (value != lastValue + 1)
             throw new IllegalStateException("Not supported: value " + value + " is not " + (lastValue + 1));
 
-        if (size >= keys.length) {
-            int cap = (int) (size * 1.5f);
-            keys = Arrays.copyOf(keys, cap);
-        }
-        keys[size] = key;
-        size++;
+        keys.ensureCapacity(doubleSize + 2);
+        // store long => double of the orig size
+        keys.setInt(doubleSize++, (int) (key >>> 32));
+        keys.setInt(doubleSize++, (int) (key & 0xFFFFFFFFL));
         lastKey = key;
         lastValue = value;
     }
 
-    public long get(long key) {
-        int retIndex = SparseLongLongArray.binarySearch(keys, 0, size, key);
+    public int get(long key) {
+        long retIndex = binarySearch(keys, 0, size(), key);
         if (retIndex < 0)
-            return getNoEntryValue();
-
-        return retIndex;
+            return noEntryValue;
+        // for now we need only an integer
+        return (int) retIndex;
     }
 
-    public long getNoEntryValue() {
-        return -1;
+    static long binarySearch(DataAccess da, long start, long len, long key) {
+        long high = start + len, low = start - 1, guess;
+        while (high - low > 1) {
+            guess = (high + low) >>> 1;
+            long tmp = guess << 1;
+            long guessedKey = BitUtil.toLong(da.getInt(tmp), da.getInt(tmp + 1));
+            if (guessedKey < key)
+                low = guess;
+            else
+                high = guess;
+        }
+
+        if (high == start + len)
+            return ~(start + len);
+
+        long tmp = high << 1;
+        long highKey = BitUtil.toLong(da.getInt(tmp), da.getInt(tmp + 1));
+        if (highKey == key)
+            return high;
+        else
+            return ~high;
     }
 
-    public int size() {
-        return size;
+    public long size() {
+        return doubleSize >>> 1;
+    }
+    
+    public long capacity() {
+        return keys.capacity();
     }
 }

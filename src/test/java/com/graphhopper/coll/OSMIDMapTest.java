@@ -18,6 +18,8 @@
  */
 package com.graphhopper.coll;
 
+import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.RAMDirectory;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -29,7 +31,7 @@ public class OSMIDMapTest {
 
     @Test
     public void testGet() {
-        OSMIDMap map = new OSMIDMap();
+        OSMIDMap map = new OSMIDMap(new RAMDirectory());
         map.put(9, 0);
         map.put(10, 1);
         map.put(11, 2);
@@ -58,8 +60,48 @@ public class OSMIDMapTest {
     }
 
     @Test
+    public void testBinSearch() {
+        DataAccess da = new RAMDirectory().findCreate("");
+        da.create(100);
+
+        da.setInt(0, 0);
+        da.setInt(1, 1);
+
+        da.setInt(2, 0);
+        da.setInt(3, 5);
+
+        da.setInt(4, 0);
+        da.setInt(5, 100);
+
+        da.setInt(6, 0);
+        da.setInt(7, 300);
+
+        da.setInt(8, 0);
+        da.setInt(9, 333);
+
+        assertEquals(2, OSMIDMap.binarySearch(da, 0, 5, 100));
+        assertEquals(3, OSMIDMap.binarySearch(da, 0, 5, 300));
+        assertEquals(~3, OSMIDMap.binarySearch(da, 0, 5, 200));
+        assertEquals(0, OSMIDMap.binarySearch(da, 0, 5, 1));
+        assertEquals(1, OSMIDMap.binarySearch(da, 0, 5, 5));
+    }
+
+    @Test
+    public void testGetLong() {
+        OSMIDMap map = new OSMIDMap(new RAMDirectory());
+        map.put(12, 0);
+        map.put(Long.MAX_VALUE / 10, 1);
+        map.put(Long.MAX_VALUE / 9, 2);
+        map.put(Long.MAX_VALUE / 7, 3);        
+
+        assertEquals(1, map.get(Long.MAX_VALUE / 10));
+        assertEquals(3, map.get(Long.MAX_VALUE / 7));
+        assertEquals(-1, map.get(13));
+    }
+
+    @Test
     public void testGet2() {
-        OSMIDMap map = new OSMIDMap();
+        OSMIDMap map = new OSMIDMap(new RAMDirectory());
         map.put(9, 0);
         map.put(10, 1);
         map.put(11, 2);

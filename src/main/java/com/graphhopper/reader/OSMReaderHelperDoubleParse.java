@@ -19,6 +19,7 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.coll.BigLongIntMap;
+import com.graphhopper.coll.OSMIDMap;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;

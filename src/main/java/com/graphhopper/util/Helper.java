@@ -19,6 +19,7 @@ import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.DataAccess;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -375,5 +376,5 @@ public class Helper {
         // of comma vs. point confusion for english/german guys.
         // NumberFormat is not thread safe => but getInstance looks like it's cached
         return NumberFormat.getInstance(Locale.FRANCE).format(no);
-    }
+    }    
 }
