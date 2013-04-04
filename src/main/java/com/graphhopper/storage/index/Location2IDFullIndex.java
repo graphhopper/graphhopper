@@ -37,7 +37,7 @@ public class Location2IDFullIndex implements Location2IDIndex {
         this.g = g;
     }
 
-    @Override 
+    @Override
     public boolean loadExisting() {
         return true;
     }
@@ -55,7 +55,7 @@ public class Location2IDFullIndex implements Location2IDIndex {
     public Location2IDIndex resolution(int resolution) {
         return this;
     }
-    
+
     @Override
     public Location2IDIndex prepareIndex() {
         return this;
@@ -81,7 +81,20 @@ public class Location2IDFullIndex implements Location2IDIndex {
     }
 
     @Override
-    public float calcMemInMB() {
+    public Location2IDIndex create(long size) {
+        return this;
+    }
+
+    @Override
+    public void flush() {
+    }
+
+    @Override
+    public void close() {
+    }
+
+    @Override
+    public long capacity() {
         return 0;
     }
 }

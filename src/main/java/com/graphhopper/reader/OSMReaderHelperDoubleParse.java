@@ -230,8 +230,8 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
      */
     @Override
     public void preProcess(InputStream osmXml) {
-        pillarLats.createNew(Math.max(expectedNodes / 50, 100));
-        pillarLons.createNew(Math.max(expectedNodes / 50, 100));
+        pillarLats.create(Math.max(expectedNodes / 50, 100));
+        pillarLons.create(Math.max(expectedNodes / 50, 100));
         if (osmXml == null)
             throw new AssertionError("Stream cannot be empty");
 

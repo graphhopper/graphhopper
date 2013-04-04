@@ -25,7 +25,7 @@ import java.io.Closeable;
  *
  * @author Peter Karich
  */
-public interface Storable extends Closeable {
+public interface Storable<T> extends Closeable {
 
     /**
      * @return true if successfully loaded from persistent storage.
@@ -33,15 +33,20 @@ public interface Storable extends Closeable {
     boolean loadExisting();
 
     /**
-     * This method makes sure that the underlying data is written to the storage. Keep in mind that
-     * a disc normally has an IO cache so that flush() is (less) probably not save against power
-     * loses.
+     * Creates the underlying storage. First operation if it cannot be loaded.
+     */
+    T create(long size);
+
+    /**
+     * This method makes sure that the underlying data is written to the
+     * storage. Keep in mind that a disc normally has an IO cache so that
+     * flush() is (less) probably not save against power loses.
      */
     void flush();
 
     /**
-     * This method makes sure that the underlying used resources are released. WARNING: it does NOT
-     * flush on close!
+     * This method makes sure that the underlying used resources are released.
+     * WARNING: it does NOT flush on close!
      */
     @Override
     void close();

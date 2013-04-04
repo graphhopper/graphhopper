@@ -30,7 +30,7 @@ public class NameIndexTest {
 
     @Test
     public void testPut() {
-        NameIndex instance = new NameIndex(new RAMDirectory()).createNew(1000);
+        NameIndex instance = new NameIndex(new RAMDirectory()).create(1000);
         int result = instance.put("Something Streetä");
         assertEquals("Something Streetä", instance.get(result));
 

@@ -79,8 +79,8 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     }
 
     @Override
-    public LevelGraphStorage createNew(int nodeCount) {
-        super.createNew(nodeCount);
+    public LevelGraphStorage create(long nodeCount) {
+        super.create(nodeCount);
         return this;
     }
 

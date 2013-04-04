@@ -36,7 +36,7 @@ public class GraphStorageTest extends AbstractGraphTester {
     @Override
     public GraphStorage createGraph(String location, int size) {
         // reduce segment size in order to test the case where multiple segments come into the game
-        return newGraph(new RAMDirectory(location)).segmentSize(size / 2).createNew(size);
+        return newGraph(new RAMDirectory(location)).segmentSize(size / 2).create(size);
     }
 
     protected GraphStorage newGraph(Directory dir) {
@@ -44,7 +44,7 @@ public class GraphStorageTest extends AbstractGraphTester {
     }
 
     protected GraphStorage createGraphStorage(Directory dir) {
-        return newGraph(dir).createNew(defaultSize);
+        return newGraph(dir).create(defaultSize);
     }
 
     @Test

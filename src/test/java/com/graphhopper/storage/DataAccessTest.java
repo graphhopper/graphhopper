@@ -53,7 +53,7 @@ public abstract class DataAccessTest {
     public void testLoadFlush() {
         DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
-        da.createNew(300);
+        da.create(300);
         da.setInt(7, 123);
         assertEquals(123, da.getInt(7));
         da.setInt(10, Integer.MAX_VALUE / 3);
@@ -87,7 +87,7 @@ public abstract class DataAccessTest {
         } catch (Exception ex) {
         }
 
-        da.createNew(300);
+        da.create(300);
         da.setInt(2, 321);
         da.flush();
         da.close();
@@ -100,7 +100,7 @@ public abstract class DataAccessTest {
     @Test
     public void testHeader() {
         DataAccess da = createDataAccess(name);
-        da.createNew(300);
+        da.create(300);
         da.setHeader(7, 123);
         assertEquals(123, da.getHeader(7));
         da.setHeader(10, Integer.MAX_VALUE / 3);
@@ -116,7 +116,7 @@ public abstract class DataAccessTest {
     @Test
     public void testEnsureCapacity() {
         DataAccess da = createDataAccess(name);
-        da.createNew(128);
+        da.create(128);
         da.setInt(31, 200);
         try {
             // this should fail with an index out of bounds exception
@@ -133,20 +133,20 @@ public abstract class DataAccessTest {
 
         // ensure some bigger area
         da = createDataAccess(name);
-        da.createNew(200 * 4);
+        da.create(200 * 4);
         da.ensureCapacity(600 * 4);
     }
 
     @Test
     public void testCopy() {
         DataAccess da1 = createDataAccess(name);
-        da1.createNew(1001 * 4);
+        da1.create(1001 * 4);
         da1.setInt(1, 1);
         da1.setInt(123, 321);
         da1.setInt(1000, 1111);
 
         DataAccess da2 = createDataAccess(name + "2");
-        da2.createNew(10);
+        da2.create(10);
         da1.copyTo(da2);
         assertEquals(1, da2.getInt(1));
         assertEquals(321, da2.getInt(123));
@@ -164,7 +164,7 @@ public abstract class DataAccessTest {
     public void testSegments() {
         DataAccess da = createDataAccess(name);
         da.segmentSize(128);
-        da.createNew(10);
+        da.create(10);
         assertEquals(1, da.segments());
         da.ensureCapacity(500);
         int olds = da.segments();
@@ -184,7 +184,7 @@ public abstract class DataAccessTest {
     public void testTrimTo() {
         DataAccess da = createDataAccess(name);
         da.segmentSize(128);
-        da.createNew(128 * 11);
+        da.create(128 * 11);
         da.setInt(1, 10);
         da.setInt(27, 200);
         da.setInt(31, 301);
@@ -230,7 +230,7 @@ public abstract class DataAccessTest {
     @Test
     public void testRenameNoFlush() {
         DataAccess da = createDataAccess(name);
-        da.createNew(100);
+        da.create(100);
         da.setInt(17, 17);
         try {
             da.rename(name + "wow");
@@ -242,7 +242,7 @@ public abstract class DataAccessTest {
     @Test
     public void testRenameFlush() {
         DataAccess da = createDataAccess(name);
-        da.createNew(100);
+        da.create(100);
         da.setInt(17, 17);
         da.flush();
         assertTrue(new File(directory + name).exists());

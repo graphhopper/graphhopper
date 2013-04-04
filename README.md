@@ -14,7 +14,8 @@ the future as well.
 Features
 ---------------
 
- * 100% Java and 100% Open Source
+ * Written in Java
+ * Open Source
  * Memory efficient and fast
  * A small library (~3MB)
  * Works on the [desktop](http://karussell.files.wordpress.com/2012/06/graphhopper.png), 

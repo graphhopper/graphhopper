@@ -21,6 +21,7 @@ package com.graphhopper.storage.index;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.IntIterator;
+import com.graphhopper.storage.Storable;
 import gnu.trove.list.array.TIntArrayList;
 
 /**
@@ -28,7 +29,7 @@ import gnu.trove.list.array.TIntArrayList;
  *
  * @author Peter Karich
  */
-class ListOfArrays {
+class ListOfArrays implements Storable<ListOfArrays> {
 
     private DataAccess refs;
     private DataAccess entries;
@@ -40,6 +41,7 @@ class ListOfArrays {
         this.entries = dir.findCreate(listName + "entries");
     }
 
+    @Override
     public boolean loadExisting() {
         if (refs.loadExisting()) {
             if (!entries.loadExisting())
@@ -49,9 +51,10 @@ class ListOfArrays {
         return false;
     }
 
-    public ListOfArrays createNew(int integers) {
-        refs.createNew((long) integers * 4);
-        entries.createNew((long) integers * 4);
+    @Override
+    public ListOfArrays create(long size) {
+        refs.create((long) size * 4);
+        entries.create((long) size * 4);
         return this;
     }
 
@@ -99,6 +102,7 @@ class ListOfArrays {
         };
     }
 
+    @Override
     public long capacity() {
         return refs.capacity() + entries.capacity();
     }
@@ -111,8 +115,15 @@ class ListOfArrays {
         return refs.getHeader(index);
     }
 
+    @Override
     public void flush() {
         refs.flush();
         entries.flush();
+    }
+
+    @Override
+    public void close() {
+        refs.close();
+        entries.close();
     }
 }

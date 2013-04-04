@@ -276,7 +276,7 @@ public class OSMReader {
             throw new IllegalStateException("Expected nodes not in bounds: " + nf(helper.expectedNodes()));
 
         logger.info("creating graph with expected nodes:" + nf(helper.expectedNodes()));
-        graphStorage.createNew(tmp);
+        graphStorage.create(tmp);
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         long wayStart = -1;

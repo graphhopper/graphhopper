@@ -222,7 +222,7 @@ public abstract class AbstractLocation2IDIndexTester {
     }
 
     Graph createGraph(Directory dir) {
-        return new GraphStorage(dir).createNew(100);
+        return new GraphStorage(dir).create(100);
     }
 
     public Graph createSampleGraph() {

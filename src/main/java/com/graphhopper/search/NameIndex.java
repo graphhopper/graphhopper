@@ -20,13 +20,14 @@ package com.graphhopper.search;
 
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.Storable;
 import com.graphhopper.util.BitUtil;
 
 /**
  * @author Ottavio Campana
  * @author Peter Karich
  */
-public class NameIndex {
+public class NameIndex implements Storable<NameIndex> {
 
     private int nameCount;
     private DataAccess names;
@@ -35,11 +36,13 @@ public class NameIndex {
         names = dir.findCreate("names");
     }
 
-    public NameIndex createNew(int cap) {
-        names.createNew(cap);
+    @Override
+    public NameIndex create(long cap) {
+        names.create(cap);
         return this;
     }
 
+    @Override
     public boolean loadExisting() {
         if (names.loadExisting()) {
             nameCount = names.getHeader(0);
@@ -119,8 +122,19 @@ public class NameIndex {
         names.segmentSize(bytes);
     }
 
+    @Override
     public void flush() {
         names.setHeader(0, nameCount);
         names.flush();
+    }
+
+    @Override
+    public void close() {
+        names.close();
+    }
+
+    @Override
+    public long capacity() {
+        return names.capacity();
     }
 }

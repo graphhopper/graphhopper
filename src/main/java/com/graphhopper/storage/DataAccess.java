@@ -25,11 +25,11 @@ package com.graphhopper.storage;
  * and memory mapped access.
  *
  * Life cycle: (1) object creation, (2) configuration (e.g. segment size), (3)
- * createNew or loadExisting, (4) usage, (5) close
+ * create or loadExisting, (4) usage, (5) close
  *
  * @author Peter Karich
  */
-public interface DataAccess extends Storable {
+public interface DataAccess extends Storable<DataAccess> {
 
     /**
      * The logical identification of this object.
@@ -69,10 +69,11 @@ public interface DataAccess extends Storable {
      * to call this. After that first call you have to use ensureCapacity to
      * ensure that enough space is reserved.
      */
-    void createNew(long bytes);
+    @Override
+    DataAccess create(long bytes);
 
     /**
-     * Ensures the specified capacity. The first time you have to call createNew
+     * Ensures the specified capacity. The first time you have to call create
      * instead.
      */
     void ensureCapacity(long bytes);
