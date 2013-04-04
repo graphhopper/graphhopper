@@ -36,7 +36,7 @@ public class ListOfArraysTest {
 
     ListOfArrays createLA() {
         RAMDirectory dir = new RAMDirectory("test");
-        return new ListOfArrays(dir, "la").createNew(10);
+        return new ListOfArrays(dir, "la").create(10);
     }
 
     @Before

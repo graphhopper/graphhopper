@@ -52,7 +52,8 @@ public class RoutingAlgorithmSpecialAreaTests {
         this.unterfrankenGraph = reader.graph();
         StopWatch sw = new StopWatch().start();
         idx = reader.location2IDIndex();
-        logger.info(idx.getClass().getSimpleName() + " index. Size:" + idx.calcMemInMB() + " MB, took:" + sw.stop().getSeconds());
+        logger.info(idx.getClass().getSimpleName() + " index. Size:"
+                + (float) idx.capacity() / (1 << 20) + " MB, took:" + sw.stop().getSeconds());
     }
 
     public void start() {

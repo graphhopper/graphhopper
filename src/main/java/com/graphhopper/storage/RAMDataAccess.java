@@ -77,13 +77,14 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void createNew(long bytes) {
+    public RAMDataAccess create(long bytes) {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");
 
         // initialize transient values
         segmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10 * 4, bytes));
+        return this;
     }
 
     @Override
@@ -183,7 +184,7 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public void setInt(long longIndex, int value) {
-        // assert segmentSizeIntsPower > 0 : "call createNew or loadExisting before usage!";
+        // assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (longIndex >>> segmentSizeIntsPower);
         int index = (int) (longIndex & indexDivisor);
         segments[bufferIndex][index] = value;
@@ -191,7 +192,7 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public int getInt(long longIndex) {
-        // assert segmentSizeIntsPower > 0 : "call createNew or loadExisting before usage!";
+        // assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (longIndex >>> segmentSizeIntsPower);
         int index = (int) (longIndex & indexDivisor);
         return segments[bufferIndex][index];

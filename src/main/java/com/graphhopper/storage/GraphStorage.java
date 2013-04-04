@@ -37,7 +37,7 @@ import com.graphhopper.util.shapes.BBox;
  * read-thread safe usage which can be flushed to disc or via MMapDirectory for
  * virtual-memory and not thread safe usage.
  *
- * Life cycle: (1) object creation, (2) configuration, (3) createNew or
+ * Life cycle: (1) object creation, (2) configuration, (3) create or
  * loadExisting, (4) usage, (5) close
  *
  * @see GraphBuilder The GraphBuilder class to easily create a
@@ -45,7 +45,7 @@ import com.graphhopper.util.shapes.BBox;
  * @see LevelGraphStorage
  * @author Peter Karich
  */
-public class GraphStorage implements Graph, Storable {
+public class GraphStorage implements Graph, Storable<GraphStorage> {
 
     private static final int NO_NODE = -1;
     // distance of around +-1000 000 meter are ok
@@ -113,7 +113,7 @@ public class GraphStorage implements Graph, Storable {
     void checkInit() {
         if (initialized)
             throw new IllegalStateException("You cannot configure this GraphStorage "
-                    + "after calling createNew or loadExisting. Calling one of the methods twice is also not allowed.");
+                    + "after calling create or loadExisting. Calling one of the methods twice is also not allowed.");
     }
 
     protected final int nextEdgeEntryIndex() {
@@ -149,14 +149,15 @@ public class GraphStorage implements Graph, Storable {
     /**
      * After configuring this storage you need to create it explicitly.
      */
-    public GraphStorage createNew(int nodeCount) {
+    @Override
+    public GraphStorage create(long nodeCount) {
         checkInit();
-        int initBytes = Math.max(nodeCount * 4, 100);
-        nodes.createNew((long) initBytes * nodeEntrySize);
+        long initBytes = Math.max(nodeCount * 4, 100);
+        nodes.create((long) initBytes * nodeEntrySize);
         initNodeRefs(0, nodes.capacity() / 4);
 
-        edges.createNew((long) initBytes * edgeEntrySize);
-        geometry.createNew((long) initBytes);
+        edges.create((long) initBytes * edgeEntrySize);
+        geometry.create((long) initBytes);
         initialized = true;
         return this;
     }
@@ -214,7 +215,7 @@ public class GraphStorage implements Graph, Storable {
 
     private long incCapacity(DataAccess da, long deltaCap) {
         if (!initialized)
-            throw new IllegalStateException("Call createNew before or use the GraphBuilder class");
+            throw new IllegalStateException("Call create before or use the GraphBuilder class");
         long newSeg = deltaCap / da.segmentSize();
         if (deltaCap % da.segmentSize() != 0)
             newSeg++;

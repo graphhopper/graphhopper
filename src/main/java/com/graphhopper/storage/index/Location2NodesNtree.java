@@ -30,7 +30,6 @@ import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.PointList;
@@ -79,7 +78,6 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     private long bitmask;
     SpatialKeyAlgo keyAlgo;
     private int minResolutionInMeter;
-    private double minResolutionInMeterNormed;
     private double deltaLat;
     private double deltaLon;
     private int initLeafEntries = 4;
@@ -104,14 +102,13 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
      * 4 * 4 tiles => n=4^2
      * </pre>
      */
-    public Location2NodesNtree subEntries(int subEntries) {
+    Location2NodesNtree subEntries(int subEntries) {
         this.subEntries = subEntries;
         return this;
     }
 
     public Location2NodesNtree minResolutionInMeter(int minResolutionInMeter) {
         this.minResolutionInMeter = minResolutionInMeter;
-        this.minResolutionInMeterNormed = distCalc.calcNormalizedDist(minResolutionInMeter);
         return this;
     }
 
@@ -211,6 +208,21 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     }
 
     @Override
+    public Location2NodesNtree create(long size) {
+        throw new UnsupportedOperationException("Not supported. Use prepareIndex instead.");
+    }
+
+    @Override
+    public void flush() {
+        dataAccess.setHeader(0, MAGIC_INT);
+        dataAccess.setHeader(1, calcChecksum());
+        dataAccess.setHeader(2, minResolutionInMeter);
+        dataAccess.setHeader(3, subEntries);
+        // save a bit space not necessary dataAccess.trimTo((lastPointer + 1) * 4);
+        dataAccess.flush();
+    }
+
+    @Override
     public Location2IDIndex prepareIndex() {
         if (initialized)
             throw new IllegalStateException("Call prepareIndex only once");
@@ -221,17 +233,10 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         InMemConstructionIndex inMem = prepareInMemIndex();
 
         // compact & store to dataAccess
-        dataAccess.createNew(64 * 1024);
+        dataAccess.create(64 * 1024);
         int lastPointer = inMem.store(inMem.root, START_POINTER);
-
+        flush();
         float entriesPerLeaf = (float) inMem.size / inMem.leafs;
-        dataAccess.setHeader(0, MAGIC_INT);
-        dataAccess.setHeader(1, calcChecksum());
-        dataAccess.setHeader(2, minResolutionInMeter);
-        dataAccess.setHeader(3, subEntries);
-        // save a bit space not necessary dataAccess.trimTo((lastPointer + 1) * 4);
-        dataAccess.flush();
-
         initialized = true;
         logger.info("location index created in " + sw.stop().getSeconds()
                 + "s, size:" + Helper.nf(inMem.size)
@@ -249,12 +254,17 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         return graph.nodes();
     }
 
-    @Override
-    public float calcMemInMB() {
-        return (float) dataAccess.capacity() / Helper.MB;
+    protected void sortNodes(TIntList nodes) {
     }
 
-    protected void sortNodes(TIntList nodes) {
+    @Override
+    public void close() {
+        dataAccess.close();
+    }
+
+    @Override
+    public long capacity() {
+        return dataAccess.capacity();
     }
 
     class InMemConstructionIndex {

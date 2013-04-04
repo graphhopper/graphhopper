@@ -105,7 +105,20 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
     }
 
     @Override
-    public float calcMemInMB() {
+    public Location2IDIndex create(long size) {
+        return this;
+    }
+
+    @Override
+    public void flush() {
+    }
+
+    @Override
+    public void close() {
+    }
+
+    @Override
+    public long capacity() {
         return 0;
     }
 }

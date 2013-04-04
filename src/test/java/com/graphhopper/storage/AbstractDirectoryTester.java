@@ -44,7 +44,7 @@ public abstract class AbstractDirectoryTester {
     public void testRename() {
         Directory dir = createDir();
         DataAccess da = dir.findCreate("testing");
-        da.createNew(100);
+        da.create(100);
         da.flush();
         dir.rename(da, "newtesting");
     }
@@ -61,7 +61,7 @@ public abstract class AbstractDirectoryTester {
     public void testNoErrorForDACreate() {
         Directory dir = createDir();
         DataAccess da = dir.findCreate("testing");
-        da.createNew(100);
+        da.create(100);
         da.flush();
     }
 }

@@ -33,8 +33,8 @@ public class GraphStorage3D extends GraphStorage implements Graph3D {
     }
 
     @Override
-    public GraphStorage3D createNew(int nodeCount) {
-        return (GraphStorage3D) super.createNew(nodeCount);
+    public GraphStorage3D create(long nodeCount) {
+        return (GraphStorage3D) super.create(nodeCount);
     }
 
     @Override

@@ -590,7 +590,7 @@ public abstract class AbstractGraphTester {
     public void testCopyTo() {
         Graph someGraphImpl = createGraph();
         initExampleGraph(someGraphImpl);
-        Graph gs = new GraphStorage(new RAMDirectory()).segmentSize(8000).createNew(10);
+        Graph gs = new GraphStorage(new RAMDirectory()).segmentSize(8000).create(10);
         try {
             someGraphImpl.copyTo(gs);
         } catch (Exception ex) {
@@ -607,7 +607,7 @@ public abstract class AbstractGraphTester {
     @Test
     public void testEnsureSize() {
         Directory dir = new RAMDirectory();
-        Graph gs = new GraphStorage(dir).createNew(defaultSize);
+        Graph gs = new GraphStorage(dir).create(defaultSize);
         int testIndex = dir.findCreate("edges").segmentSize() * 3;
         gs.edge(0, testIndex, 10, true);
     }

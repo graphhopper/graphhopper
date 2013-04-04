@@ -66,7 +66,7 @@ public class MMapDataAccess extends AbstractDataAccess {
             return;
 
         try {
-            // raFile necessary for loadExisting and createNew
+            // raFile necessary for loadExisting and create
             raFile = new RandomAccessFile(fullName(), "rw");
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -74,13 +74,14 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void createNew(long bytes) {
+    public MMapDataAccess create(long bytes) {
         if (!segments.isEmpty())
             throw new IllegalThreadStateException("already created");
         initRandomAccessFile();
         bytes = Math.max(10 * 4, bytes);
         segmentSize(segmentSizeInBytes);
         ensureCapacity(bytes);
+        return this;
     }
 
     @Override

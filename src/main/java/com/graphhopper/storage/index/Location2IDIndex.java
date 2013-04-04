@@ -18,6 +18,8 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.storage.Storable;
+
 /**
  * Provides a way to map realword data "lat,lon" to internal ids/indices of a
  * memory efficient graph - often just implemented as an array.
@@ -26,9 +28,7 @@ package com.graphhopper.storage.index;
  *
  * @author Peter Karich
  */
-public interface Location2IDIndex {
-
-    boolean loadExisting();
+public interface Location2IDIndex extends Storable<Location2IDIndex> {
 
     /**
      * Integer value to specify the resolution of this location index. The
@@ -51,6 +51,4 @@ public interface Location2IDIndex {
      * but less precise.
      */
     Location2IDIndex precision(boolean approxDist);
-
-    float calcMemInMB();
 }

@@ -45,7 +45,7 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
 
     @Override
     LevelGraph createGraph(Directory dir) {
-        return new LevelGraphStorage(dir).createNew(100);
+        return new LevelGraphStorage(dir).create(100);
     }
 
     @Test

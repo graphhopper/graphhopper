@@ -84,7 +84,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         // [LEAF 0 {} {0, 2}, LEAF 2 {} {0, 1}, LEAF 1 {} {2}, LEAF 3 {} {1}, LEAF 8 {} {0}, LEAF 10 {} {0}, LEAF 9 {} {0}, LEAF 4 {} {2}, LEAF 6 {} {0, 1, 2, 3}, LEAF 5 {} {0, 2, 3}, LEAF 7 {} {1, 2, 3}, LEAF 13 {} {1}]        
         // System.out.println(inMemIndex.getLayer(2));
 
-        index.dataAccess.createNew(10);
+        index.dataAccess.create(10);
         inMemIndex.store(inMemIndex.root, index.START_POINTER);
         // [LEAF 0 {2} {},    LEAF 2 {1} {},    LEAF 1 {2} {}, LEAF 3 {1} {}, LEAF 8 {0} {}, LEAF 10 {0} {}, LEAF 9 {0} {}, LEAF 4 {2} {}, LEAF 6 {0, 3} {},       LEAF 5 {0, 2, 3} {}, LEAF 7 {1, 2, 3} {}, LEAF 13 {1} {}]
         // System.out.println(inMemIndex.getLayer(2));
@@ -121,7 +121,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         assertEquals(1, inMemIndex.getLayer(1).size());
         assertEquals(4, inMemIndex.getLayer(2).size());
 
-        index.dataAccess.createNew(10);
+        index.dataAccess.create(10);
         inMemIndex.store(inMemIndex.root, index.START_POINTER);
         index.searchRegion(false);
 
@@ -147,7 +147,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
 //        set.add(24);
 //        set.add(23);
 //        set.add(18);
-        set.add(16);        
+        set.add(16);
 //        set.add(0);
 //        set.add(6);
         set.add(28);
@@ -171,9 +171,9 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         assertEquals(138, inMemIndex.getLayer(5).size());
         assertEquals(0, inMemIndex.getLayer(6).size());
 
-        index.dataAccess.createNew(1024);
+        index.dataAccess.create(1024);
         inMemIndex.store(inMemIndex.root, index.START_POINTER);
-        assertEquals(1.0, index.calcMemInMB(), 0.01);
+        assertEquals(1 << 20, index.capacity());
 
         LocationIDResult res = index.findClosest(new GHPlace(-.5, -.5), EdgeFilter.ALL_EDGES);
         assertEquals(1, res.closestNode());
@@ -285,7 +285,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         leaf.doCompact(index);
         assertEquals(2, leaf.getResults().size());
     }
-    
+
     // TODO
 //    @Test
 //    public void testEdgeFilter() {
@@ -299,7 +299,6 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
 //            }
 //        }).node);
 //    }
-
     // see testgraph2.jpg
     Graph createTestGraph2() {
         Graph graph = createGraph(new RAMDirectory());

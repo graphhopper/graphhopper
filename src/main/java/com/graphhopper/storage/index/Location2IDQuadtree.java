@@ -74,8 +74,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return this;
     }
 
-    public int capacity() {
-        return (int) (index.capacity() / 4);
+    @Override
+    public long capacity() {
+        return index.capacity() / 4;
     }
 
     /**
@@ -100,6 +101,11 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
         initAlgo(lat, lon);
         return true;
+    }
+
+    @Override
+    public Location2IDIndex create(long size) {
+        throw new UnsupportedOperationException("Not supported. Use prepareIndex instead.");
     }
 
     @Override
@@ -144,7 +150,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     private void initBuffer() {
         // avoid default big segment size and use one segment only:
         index.segmentSize(latSize * lonSize * 4);
-        index.createNew(latSize * lonSize * 4);
+        index.create(latSize * lonSize * 4);
     }
 
     void initAlgo(int lat, int lon) {
@@ -196,7 +202,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     private int fillEmptyIndices(MyBitSet filledIndices) {
         int len = latSize * lonSize;
         DataAccess indexCopy = new RAMDirectory().findCreate("tempIndexCopy");
-        indexCopy.createNew(index.capacity());
+        indexCopy.create(index.capacity());
         MyBitSet indicesCopy = new MyBitSetImpl(len);
         int initializedCounter = filledIndices.cardinality();
         // fan out initialized entries to avoid "nose-artifacts"
@@ -326,6 +332,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     public void goFurtherHook(int n) {
     }
 
+    @Override
     public void flush() {
         index.setHeader(0, MAGIC_INT);
         index.setHeader(1, latSize);
@@ -335,7 +342,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
     }
 
     @Override
-    public float calcMemInMB() {
-        return (float) index.capacity() / (1 << 20);
+    public void close() {
+        index.close();
     }
 }
