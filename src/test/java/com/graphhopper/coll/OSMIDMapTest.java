@@ -33,24 +33,24 @@ public class OSMIDMapTest {
     public void testGet() {
         OSMIDMap map = new OSMIDMap(new RAMDirectory());
         map.put(9, 0);
-        map.put(10, 1);
+        map.put(10, -50);
         map.put(11, 2);
         map.put(12, 3);
-        map.put(20, 4);
+        map.put(20, 6);
         map.put(21, 5);
-        map.put(31, 6);
+        map.put(31, 2);
 
         assertEquals(7, map.size());
         assertEquals(-1, map.get(8));
         assertEquals(0, map.get(9));
-        assertEquals(1, map.get(10));
+        assertEquals(-50, map.get(10));
         assertEquals(2, map.get(11));
         assertEquals(3, map.get(12));
         assertEquals(-1, map.get(13));
         assertEquals(-1, map.get(19));
-        assertEquals(4, map.get(20));
+        assertEquals(6, map.get(20));
         assertEquals(5, map.get(21));
-        assertEquals(6, map.get(31));
+        assertEquals(2, map.get(31));
         assertEquals(-1, map.get(32));
 
         for (int i = 0; i < 50; i++) {
@@ -92,7 +92,7 @@ public class OSMIDMapTest {
         map.put(12, 0);
         map.put(Long.MAX_VALUE / 10, 1);
         map.put(Long.MAX_VALUE / 9, 2);
-        map.put(Long.MAX_VALUE / 7, 3);        
+        map.put(Long.MAX_VALUE / 7, 3);
 
         assertEquals(1, map.get(Long.MAX_VALUE / 10));
         assertEquals(3, map.get(Long.MAX_VALUE / 7));
@@ -124,5 +124,17 @@ public class OSMIDMapTest {
         assertEquals(-1, map.get(17));
         assertEquals(7, map.get(18));
         assertEquals(8, map.get(19));
+    }
+
+    @Test
+    public void testUpdateOfLowerKeys() {
+        OSMIDMap map = new OSMIDMap(new RAMDirectory());
+        map.put(9, 0);
+        map.put(10, 1);
+        map.put(11, 2);
+        map.put(9, 3);
+
+        assertEquals(2, map.get(11));
+        assertEquals(3, map.get(9));
     }
 }

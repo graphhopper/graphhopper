@@ -8,14 +8,14 @@
     <node id="20" lat="52.0" lon="9" uid="24854">
         <tag k="name" v="Halbendorf-Spree" />
     </node>
-    <node id="30" lat="51.2" lon="9.4" uid="24855">
-        <tag k="name" v="Dresden" />
-    </node>
+    
     <node id="21" lat="52.1" lon="9.1" uid="24854">
         <tag k="name" v="Next-Halbendorf-Spree" />
     </node>
+    <node id="30" lat="51.2" lon="9.4" uid="24855">
+        <tag k="name" v="Dresden" />
+    </node>
     
-    <!-- -->
     <node id="40" lat="54.0" lon="10.1">
         <tag k="name" v="Ferry End" />
     </node>  
@@ -23,7 +23,6 @@
         <tag k="name" v="Ferry Start" />
     </node>
     
-    <!-- -->
     <node id="60" lat="56.0" lon="10.1">
         <tag k="name" v="Start" />
     </node>  

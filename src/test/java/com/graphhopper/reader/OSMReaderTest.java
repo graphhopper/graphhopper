@@ -117,11 +117,11 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(n20, iter.adjNode());
         assertEquals(93146.888, iter.distance(), 1);
-        
+
         assertEquals(9.4, graph.getLongitude(reader.location2IDIndex().findID(51.2, 9.4)), 1e-3);
         assertEquals(10, graph.getLongitude(reader.location2IDIndex().findID(49, 10)), 1e-3);
         assertEquals(51.249, graph.getLatitude(reader.location2IDIndex().findID(51.2492152, 9.4317166)), 1e-3);
-        
+
         // node 40 is on the way between 30 and 50 => 9.0
         assertEquals(9, graph.getLongitude(reader.location2IDIndex().findID(51.25, 9.43)), 1e-3);
     }

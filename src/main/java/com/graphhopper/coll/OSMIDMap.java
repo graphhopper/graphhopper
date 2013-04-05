@@ -32,9 +32,9 @@ import com.graphhopper.util.BitUtil;
 public class OSMIDMap {
 
     private final DataAccess keys;
+    private final DataAccess values;
     private long lastKey = Long.MIN_VALUE;
-    private long lastValue = -1;
-    private long doubleSize;
+    private long size;
     private final int noEntryValue;
     private final Directory dir;
 
@@ -45,36 +45,43 @@ public class OSMIDMap {
     public OSMIDMap(Directory dir, int noNumber) {
         this.dir = dir;
         this.noEntryValue = noNumber;
-        keys = dir.findCreate("osmidMap");
-        keys.create(1000);
+        keys = dir.findCreate("osmidMapKeys");
+        keys.create(2000);
+        values = dir.findCreate("osmidMapValues");
+        values.create(1000);
     }
 
     public void remove() {
         dir.remove(keys);
     }
 
-    public void put(long key, long value) {
-        if (key <= lastKey)
-            throw new IllegalStateException("Not supported: key " + key + " is lower than last one " + lastKey);
-        if (value < 0)
-            throw new IllegalStateException("Not supported: negative value " + value);
-        if (value != lastValue + 1)
-            throw new IllegalStateException("Not supported: value " + value + " is not " + (lastValue + 1));
+    public void put(long key, int value) {
+        if (key <= lastKey) {
+            long retIndex = binarySearch(keys, 0, size(), key);
+            if (retIndex < 0)
+                throw new IllegalStateException("Cannot insert keys lower than "
+                        + "the last key " + key + " < " + lastKey + ". Only updating supported");
+            values.setInt(retIndex, value);
+            return;
+        }
 
+        values.ensureCapacity(size + 1);
+        values.setInt(size, value);
+        long doubleSize = size * 2;
         keys.ensureCapacity(doubleSize + 2);
+
         // store long => double of the orig size
         keys.setInt(doubleSize++, (int) (key >>> 32));
-        keys.setInt(doubleSize++, (int) (key & 0xFFFFFFFFL));
+        keys.setInt(doubleSize, (int) (key & 0xFFFFFFFFL));
         lastKey = key;
-        lastValue = value;
+        size++;
     }
 
     public int get(long key) {
         long retIndex = binarySearch(keys, 0, size(), key);
         if (retIndex < 0)
             return noEntryValue;
-        // for now we need only an integer
-        return (int) retIndex;
+        return values.getInt(retIndex);
     }
 
     static long binarySearch(DataAccess da, long start, long len, long key) {
@@ -101,9 +108,9 @@ public class OSMIDMap {
     }
 
     public long size() {
-        return doubleSize >>> 1;
+        return size;
     }
-    
+
     public long capacity() {
         return keys.capacity();
     }

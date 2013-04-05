@@ -247,7 +247,8 @@ public class OSMReader {
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
         int n = graphStorage.nodes();
-        logger.info("nodes " + n + ", there were " + preparation.subNetworks()
+        logger.info("edges: " + graphStorage.getAllEdges().maxId()
+                + ", nodes " + n + ", there were " + preparation.subNetworks()
                 + " sub-networks. removed them => " + (prev - n)
                 + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
     }

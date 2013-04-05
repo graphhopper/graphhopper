@@ -19,7 +19,6 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.coll.BigLongIntMap;
-import com.graphhopper.coll.OSMIDMap;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;
@@ -53,7 +52,9 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     // tower node is <= -3
     private static final int TOWER_NODE = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    // memory overhead due to hash:
     private BigLongIntMap osmIdToIndexMap;
+    // only append and update possible: private OSMIDMap osmIdToIndexMap;
     // very slow: private SparseLongLongArray osmIdToIndexMap;
     // not applicable as ways introduces the nodes in 'wrong' order: private OSMIDSegmentedMap
     private int towerId = 0;
@@ -194,8 +195,9 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 
     @Override
     void startWayProcessing() {
-        LoggerFactory.getLogger(getClass()).info("finished node processing. osmIdMap:"
-                + (int) (osmIdToIndexMap.capacity() * (12f + 1) / Helper.MB) + "MB, " + Helper.getMemInfo());
+        LoggerFactory.getLogger(getClass()).info("finished node processing. nodes: " + g.nodes()
+                + ", osmIdMap:" + (int) (osmIdToIndexMap.capacity() * (12f + 1) / Helper.MB) + "MB, "
+                + Helper.getMemInfo());
     }
 
     @Override
