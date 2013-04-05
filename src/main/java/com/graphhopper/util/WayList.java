@@ -30,8 +30,8 @@ import java.util.List;
 public class WayList {
 
     public static final int CONTINUE_ON_STREET = 0;
-    public static final int TURN_LEFT = 1;
-    public static final int TURN_RIGHT = 2;
+    public static final int TURN_LEFT = -1;
+    public static final int TURN_RIGHT = 1;
     private int[] indications;
     private String[] names;
     private int size = 0;

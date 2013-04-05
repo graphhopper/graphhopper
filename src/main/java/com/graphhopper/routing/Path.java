@@ -291,9 +291,23 @@ public class Path {
 
             @Override public void next(EdgeIterator iter) {
                 double orientation = 0;
+                // Hmmh, a bit ugly: edge points to the previous node of the path!
+                // Ie. baseNode is the current node and adjNode is the previous.
                 int baseNode = iter.baseNode();
-                double latitude = graph.getLatitude(baseNode);
-                double longitude = graph.getLongitude(baseNode);
+                double baseLat = graph.getLatitude(baseNode);
+                double baseLon = graph.getLongitude(baseNode);
+                double latitude, longitude;
+                PointList wayGeo = iter.wayGeometry();
+                if (wayGeo.isEmpty()) {
+                    latitude = baseLat;
+                    longitude = baseLon;
+                } else {
+                    int adjNode = iter.adjNode();
+                    prevLat = graph.getLatitude(adjNode);
+                    prevLon = graph.getLongitude(adjNode);
+                    latitude = wayGeo.latitude(wayGeo.size() - 1);
+                    longitude = wayGeo.longitude(wayGeo.size() - 1);
+                }
 
                 if (name == null) {
                     name = iter.name();
@@ -315,7 +329,11 @@ public class Path {
 
                     String tmpName = iter.name();
                     if (!name.equals(tmpName)) {
-                        name = tmpName;
+                        // if empty use 'unknown'
+                        if (tmpName.isEmpty())
+                            name = "unknown street";
+                        else
+                            name = tmpName;
 
                         // we have a tolerance of approx +/- 10 degrees to 
                         // indicate that we have to go straight and not to turn.                         
@@ -330,9 +348,15 @@ public class Path {
                     }
                 }
 
-                prevLat = latitude;
-                prevLon = longitude;
-                prevOrientation = orientation;
+                if (wayGeo.isEmpty()) {
+                    prevLat = latitude;
+                    prevLon = longitude;
+                    prevOrientation = orientation;
+                } else {
+                    prevLat = wayGeo.latitude(0);
+                    prevLon = wayGeo.longitude(0);
+                    prevOrientation = Math.atan2(baseLat - prevLat, baseLon - prevLon);
+                }
             }
         });
 
@@ -370,7 +394,8 @@ public class Path {
         return retSet;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return "distance:" + distance() + ", edges:" + edgeIds.size();
     }
 

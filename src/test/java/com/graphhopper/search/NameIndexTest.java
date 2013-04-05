@@ -39,5 +39,7 @@ public class NameIndexTest {
 
         result = instance.put("testing");
         assertEquals("testing", instance.get(result));
+        
+        assertEquals("", instance.get(0));
     }
 }

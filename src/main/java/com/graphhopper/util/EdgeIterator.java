@@ -68,9 +68,9 @@ public interface EdgeIterator {
     int adjNode();
 
     /**
-     * For OSM a way is often a curve not just a straight line and so nodes
-     * between tower nodes are necessary to have a more exact geometry (for
-     * drawing). Those nodes are called pillar nodes
+     * For OSM a way is often a curve not just a straight line and nodes between
+     * tower nodes are necessary to have a more exact geometry. Those nodes are
+     * called pillar nodes and will be returned in this method.
      *
      * @return pillar nodes
      */

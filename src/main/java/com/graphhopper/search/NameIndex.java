@@ -29,7 +29,8 @@ import com.graphhopper.util.BitUtil;
  */
 public class NameIndex implements Storable<NameIndex> {
 
-    private int nameCount;
+    private static final int START_POINTER = 1;
+    private int nameCount = START_POINTER;
     private DataAccess names;
 
     public NameIndex(Directory dir) {
@@ -62,7 +63,7 @@ public class NameIndex implements Storable<NameIndex> {
             throw new RuntimeException(ex);
         }
 
-        int offset = 0;
+        int offset = START_POINTER;
         for (int i = 0; i < nameCount; i++) {
             int size = names.getInt(offset);
             byte[] bytes = new byte[4 * size];

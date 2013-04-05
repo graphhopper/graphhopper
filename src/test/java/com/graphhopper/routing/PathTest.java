@@ -55,15 +55,18 @@ public class PathTest {
         Graph g = new GraphBuilder().create();
         // 0-1-2
         // | | |
-        // 3-4-5
-        // | | |
-        // 6-7-8
+        // 3-4-5  9-10
+        // | | |  |
+        // 6-7-8--*
         g.setNode(0, 1.2, 1.0);
         g.setNode(1, 1.2, 1.1);
         g.setNode(2, 1.2, 1.2);
         g.setNode(3, 1.1, 1.0);
         g.setNode(4, 1.1, 1.1);
         g.setNode(5, 1.1, 1.2);
+        g.setNode(9, 1.1, 1.3);
+        g.setNode(10, 1.1, 1.4);
+
         g.setNode(6, 1.0, 1.0);
         g.setNode(7, 1.0, 1.1);
         g.setNode(8, 1.0, 1.2);
@@ -82,12 +85,22 @@ public class PathTest {
         EdgeIterator iter = g.edge(7, 8, 100, true);
         PointList list = new PointList();
         list.add(1.0, 1.15);
+        list.add(1.0, 1.16);
         iter.wayGeometry(list);
         iter.name("7-8");
+        // missing edge name => Unknown
+        g.edge(9, 10, 100, true);
+        EdgeIterator iter2 = g.edge(8, 9, 100, true);
+        list.clear();
+        list.add(1.0, 1.3);
+        iter2.name("8-9");
+        iter2.wayGeometry(list);
 
-        Path p = new DijkstraSimple(g, new CarFlagEncoder()).calcPath(0, 8);
+        Path p = new DijkstraSimple(g, new CarFlagEncoder()).calcPath(0, 10);
         WayList wayList = p.calcWays();
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4",
-                "Continue onto 4-7", "Turn left onto 7-8"), wayList.createInstructions("en"));
+                "Continue onto 4-7", "Turn left onto 7-8", "Continue onto 8-9",
+                "Turn right onto unknown street"),
+                wayList.createInstructions("en"));
     }
 }
