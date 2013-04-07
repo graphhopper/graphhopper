@@ -29,9 +29,10 @@ import gnu.trove.map.hash.TLongIntHashMap;
 public class BigLongIntMap {
 
     private TLongIntHashMap[] maps;
+//    private MyLongIntHashMap[] maps;
 
     public BigLongIntMap(long maxSize, int noNumber) {
-        this(maxSize, Math.max(1, (int) (maxSize / 50000000)), noNumber);
+        this(maxSize, Math.max(1, (int) (maxSize / 10000000)), noNumber);
     }
 
     public BigLongIntMap(long maxSize, int minSegments, int noNumber) {
