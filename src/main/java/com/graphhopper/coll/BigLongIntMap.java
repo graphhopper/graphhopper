@@ -88,4 +88,11 @@ public class BigLongIntMap {
             maps[i].clear();
         }
     }
+
+    /**
+     * memory usage in MB
+     */
+    public int memoryUsage() {
+        return Math.round(capacity() * (12f + 1) / Helper.MB);
+    }
 }

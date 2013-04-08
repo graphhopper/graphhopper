@@ -52,8 +52,9 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     // tower node is <= -3
     private static final int TOWER_NODE = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    // memory overhead due to hash:
+    // memory overhead due to hash: 
     private BigLongIntMap osmIdToIndexMap;
+//    private MyLongIntBTree osmIdToIndexMap;
     // only append and update possible: private OSMIDMap osmIdToIndexMap;
     // very slow: private SparseLongLongArray osmIdToIndexMap;
     // not applicable as ways introduces the nodes in 'wrong' order: private OSMIDSegmentedMap
@@ -70,6 +71,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         pillarLons = dir.findCreate("tmpLongitudes");
         // TODO check out if we better should use http://en.wikipedia.org/wiki/Segment_tree
         osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
+//        osmIdToIndexMap = new MyLongIntBTree(30);
     }
 
     @Override
@@ -193,15 +195,22 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         return tmpNode;
     }
 
-    @Override
-    void startWayProcessing() {
-        LoggerFactory.getLogger(getClass()).info("finished node processing. nodes: " + g.nodes()
-                + ", osmIdMap:" + (int) (osmIdToIndexMap.capacity() * (12f + 1) / Helper.MB) + "MB, "
+    private void printInfo(String str) {
+        LoggerFactory.getLogger(getClass()).info("finished " + str + " processing."
+                + " nodes: " + g.nodes() + ", osmIdMap.size:" + osmIdToIndexMap.size()
+                + ", osmIdMap:" + osmIdToIndexMap.memoryUsage() + "MB"
+                + ", osmIdMap.toString:" + osmIdToIndexMap + " "
                 + Helper.getMemInfo());
     }
 
     @Override
-    void cleanup() {
+    void startWayProcessing() {
+        printInfo("node");
+    }
+
+    @Override
+    void finishedReading() {
+        printInfo("way");
         dir.remove(pillarLats);
         dir.remove(pillarLons);
         pillarLons = null;
@@ -247,7 +256,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                     event = sReader.next(), tmpCounter++) {
                 if (tmpCounter % 50000000 == 0)
                     logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
-                            + nf(osmIdToIndexMap.size()) + " (" + nf(osmIdToIndexMap.capacity()) + ") "
+                            + nf(osmIdToIndexMap.size()) + " (" + osmIdToIndexMap.memoryUsage() + "MB) "
                             + Helper.getMemInfo());
 
                 switch (event) {

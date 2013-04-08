@@ -376,5 +376,5 @@ public class Helper {
         // of comma vs. point confusion for english/german guys.
         // NumberFormat is not thread safe => but getInstance looks like it's cached
         return NumberFormat.getInstance(Locale.FRANCE).format(no);
-    }    
+    }
 }

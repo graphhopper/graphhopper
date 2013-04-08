@@ -637,7 +637,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         }
 
         // Reduces the nodes in this SortedIntSet to fewer entries, store them into networkEntries.
-        // There only entries to the spanning sub-networks are stored.
+        // There only entries to the spanning subnetworks are stored.
         // The following example can be reduced to the nodes 1 and 3
         //
         // 1-2-6 

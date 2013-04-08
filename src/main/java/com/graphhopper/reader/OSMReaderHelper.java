@@ -127,7 +127,7 @@ public abstract class OSMReaderHelper {
                 + "|" + storage.version();
     }
 
-    void cleanup() {
+    void finishedReading() {
     }
 
     void startWayProcessing() {
