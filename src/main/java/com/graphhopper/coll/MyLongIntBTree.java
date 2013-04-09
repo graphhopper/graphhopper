@@ -21,6 +21,8 @@ package com.graphhopper.coll;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An in-memory simple B-Tree. Later we'll use DataAccess to allow on-disc
@@ -30,6 +32,7 @@ import java.util.Arrays;
  */
 public class MyLongIntBTree {
 
+    private Logger logger = LoggerFactory.getLogger(getClass());
     private final int noNumberValue = -1;
     private long size;
     private int maxLeafEntries;
@@ -213,16 +216,12 @@ public class MyLongIntBTree {
             // right child: copy from this
             int count = entrySize - splitIndex - 1;
             BTreeEntry newRightChild = new BTreeEntry(Math.max(initLeafSize, count), isLeaf);
-            System.arraycopy(keys, splitIndex + 1, newRightChild.keys, 0, count);
-            System.arraycopy(values, splitIndex + 1, newRightChild.values, 0, count);
-            if (!isLeaf)
-                System.arraycopy(children, splitIndex + 1, newRightChild.children, 0, count + 1);
+            copy(this, newRightChild, splitIndex + 1, count);
 
-            newRightChild.entrySize = count;
-
-            // left child: just copy pointer and decrease size to index
-            BTreeEntry newLeftChild = this;
-            newLeftChild.entrySize = splitIndex;
+            // left child: copy from this
+            // avoid: http://stackoverflow.com/q/15897869/194609
+            BTreeEntry newLeftChild = new BTreeEntry(Math.max(initLeafSize, splitIndex), isLeaf);
+            copy(this, newLeftChild, 0, splitIndex);
 
             // new tree pointing to left + right tree only
             BTreeEntry newTree = new BTreeEntry(1, false);
@@ -232,6 +231,15 @@ public class MyLongIntBTree {
             newTree.children[0] = newLeftChild;
             newTree.children[1] = newRightChild;
             return newTree;
+        }
+
+        void copy(BTreeEntry fromChild, BTreeEntry toChild, int from, int count) {
+            System.arraycopy(fromChild.keys, from, toChild.keys, 0, count);
+            System.arraycopy(fromChild.values, from, toChild.values, 0, count);
+            if (!fromChild.isLeaf)
+                System.arraycopy(fromChild.children, from, toChild.children, 0, count + 1);
+
+            toChild.entrySize = count;
         }
 
         void insertKeyValue(int index, long key, int newValue) {
@@ -341,11 +349,13 @@ public class MyLongIntBTree {
     }
 
     public void optimize() {
-        StopWatch sw = new StopWatch().start();
-        int old = memoryUsage();
-        root.compact();
-        System.out.println(size + "| osmIdMap.optimize took: " + sw.stop().getSeconds()
-                + " => freed: " + (old - memoryUsage()) + "MB");
+        if (size() > 10000) {
+            StopWatch sw = new StopWatch().start();
+            int old = memoryUsage();
+            root.compact();
+            logger.info(size + "| osmIdMap.optimize took: " + sw.stop().getSeconds()
+                    + " => freed: " + (old - memoryUsage()) + "MB");
+        }
     }
 
     @Override
@@ -354,7 +364,7 @@ public class MyLongIntBTree {
     }
 
     void print() {
-        System.out.println(root.toString(1));
+        logger.info(root.toString(1));
     }
 
     // LATER: see OSMIDMap for a version where we use DataAccess
