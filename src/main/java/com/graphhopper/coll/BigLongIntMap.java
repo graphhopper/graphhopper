@@ -97,7 +97,7 @@ public class BigLongIntMap implements LongIntMap {
      */
     @Override
     public int memoryUsage() {
-        return Math.round(capacity() * (12f + 1) / Helper.MB);
+        return Math.round(capacity() * (8 + 4 + 1) / Helper.MB);
     }
 
     @Override
