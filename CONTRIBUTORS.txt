@@ -1,3 +1,6 @@
 agouge
+ - API improvements, bug reporting
 karussell
+ - core developer
 ocampana
+ - initial implementation of instructions
