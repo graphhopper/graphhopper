@@ -19,6 +19,7 @@ import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.DataAccess;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -163,13 +164,13 @@ public class Helper {
 
     public static VehicleEncoder getVehicleEncoder(String str) {
         str = str.toLowerCase();
-        if ("car".equals(str))
+        if (str.isEmpty() || "car".equals(str))
             return new CarFlagEncoder();
         else if ("foot".equals(str))
             return new FootFlagEncoder();
         else if ("bike".equals(str))
             return new BikeFlagEncoder();
-        throw new RuntimeException("Not found " + str);
+        throw new RuntimeException("VehicleEncoder not found " + str);
     }
 
     /**

@@ -18,8 +18,8 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyBitSetImpl;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.Graph;
 import gnu.trove.stack.array.TIntArrayStack;
 
@@ -42,8 +42,8 @@ public class XFirstSearch {
         void push(int v);
     }
 
-    protected MyBitSet createBitSet(int size) {
-        return new MyBitSetImpl(size);
+    protected GHBitSet createBitSet(int size) {
+        return new GHBitSetImpl(size);
     }
 
     public void start(Graph g, int startNode, boolean depthFirst) {
@@ -53,7 +53,7 @@ public class XFirstSearch {
         else
             coll = new MyHelperIntQueue();
 
-        MyBitSet visited = createBitSet(g.nodes());
+        GHBitSet visited = createBitSet(g.nodes());
         visited.add(startNode);
         coll.push(startNode);
         int current;
@@ -92,6 +92,6 @@ public class XFirstSearch {
         }
     }
 
-    static class MyHelperIntQueue extends MyIntDeque implements HelperColl {
+    static class MyHelperIntQueue extends SimpleIntDeque implements HelperColl {
     }
 }

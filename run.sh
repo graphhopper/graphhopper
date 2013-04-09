@@ -44,7 +44,7 @@ TMP="${TMP%.*}"
 #echo $TMP - $FILE - $NAME
 if [ "x$TMP" = "xunterfranken" ]; then
  LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx400m -Xms400m"
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx100m -Xms100m"
  SIZE=3000000
 elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
@@ -54,7 +54,7 @@ elif [ "x$TMP" = "xgermany" ]; then
  SIZE=35000000
 elif [ -f $OSM ]; then
  LINK=""
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1000m -Xms1000m"
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx280m -Xms280m"
  SIZE=10000000
 else
  echo "Sorry, your osm file $OSM was not found ... exiting"

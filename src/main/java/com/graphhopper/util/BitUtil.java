@@ -106,6 +106,10 @@ public class BitUtil {
         return toLong(b, 0);
     }
 
+    public static long toLong(int high, int low) {
+        return ((long) high << 32) | (low & 0xFFFFFFFFL);
+    }
+
     public static long toLong(byte[] b, int offset) {
         return ((long) toInt(b, offset) << 32) | (toInt(b, offset + 4) & 0xFFFFFFFFL);
     }

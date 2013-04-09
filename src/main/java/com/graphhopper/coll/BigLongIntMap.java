@@ -26,12 +26,13 @@ import gnu.trove.map.hash.TLongIntHashMap;
  *
  * @author Peter Karich
  */
-public class BigLongIntMap {
+public class BigLongIntMap implements LongIntMap {
 
     private TLongIntHashMap[] maps;
+//    private MyLongIntHashMap[] maps;
 
     public BigLongIntMap(long maxSize, int noNumber) {
-        this(maxSize, Math.max(1, (int) (maxSize / 50000000)), noNumber);
+        this(maxSize, Math.max(1, (int) (maxSize / 10000000)), noNumber);
     }
 
     public BigLongIntMap(long maxSize, int minSegments, int noNumber) {
@@ -47,11 +48,13 @@ public class BigLongIntMap {
         }
     }
 
+    @Override
     public int put(long key, int value) {
         int segment = Math.abs((int) ((key >> 32) ^ key)) % maps.length;
         return maps[segment].put(key, value);
     }
 
+    @Override
     public int get(long key) {
         int segment = Math.abs((int) ((key >> 32) ^ key)) % maps.length;
         return maps[segment].get(key);
@@ -65,6 +68,7 @@ public class BigLongIntMap {
         return cap;
     }
 
+    @Override
     public long size() {
         long size = 0;
         for (int i = 0; i < maps.length; i++) {
@@ -86,5 +90,17 @@ public class BigLongIntMap {
         for (int i = 0; i < maps.length; i++) {
             maps[i].clear();
         }
+    }
+
+    /**
+     * memory usage in MB
+     */
+    @Override
+    public int memoryUsage() {
+        return Math.round(capacity() * (8 + 4 + 1) / Helper.MB);
+    }
+
+    @Override
+    public void optimize() {
     }
 }

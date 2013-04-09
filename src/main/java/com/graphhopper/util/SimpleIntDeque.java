@@ -25,22 +25,22 @@ import java.util.Arrays;
  *
  * @author Peter Karich
  */
-public class MyIntDeque {
+public class SimpleIntDeque {
 
     private int[] arr;
     private float growFactor;
     private int frontIndex;
     private int endIndexPlusOne;
 
-    public MyIntDeque() {
+    public SimpleIntDeque() {
         this(100, 2);
     }
 
-    public MyIntDeque(int initSize) {
+    public SimpleIntDeque(int initSize) {
         this(initSize, 2);
     }
 
-    public MyIntDeque(int initSize, float growFactor) {
+    public SimpleIntDeque(int initSize, float growFactor) {
         if ((int) (initSize * growFactor) <= initSize)
             throw new RuntimeException("initial size or increasing grow-factor too low!");
 

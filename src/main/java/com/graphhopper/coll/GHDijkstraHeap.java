@@ -43,7 +43,7 @@ import java.util.Map.Entry;
  *
  * @author Peter Karich
  */
-public class MyDijkstraHeap implements BinHeapWrapper<Number, Integer> {
+public class GHDijkstraHeap implements BinHeapWrapper<Number, Integer> {
 
     private IntDoubleBinHeap smallHeap;
     private IntDoubleBinHeap midHeap;
@@ -55,15 +55,15 @@ public class MyDijkstraHeap implements BinHeapWrapper<Number, Integer> {
     private int underflows = 0;
     private int overflows = 0;
 
-    public MyDijkstraHeap() {
+    public GHDijkstraHeap() {
         this(16, 2048, 2048);
     }
 
-    public MyDijkstraHeap(int cap) {
+    public GHDijkstraHeap(int cap) {
         this(16, 16, cap < 100 ? 100 : cap);
     }
 
-    public MyDijkstraHeap(int smallCap, int midCap, int largeCap) {
+    public GHDijkstraHeap(int smallCap, int midCap, int largeCap) {
         smallCapacity = smallCap;
         midCapacity = midCap;
         smallHeap = new IntDoubleBinHeap(smallCapacity);

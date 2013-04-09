@@ -25,18 +25,18 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class MyIntDequeTest {
+public class SimpleIntDequeTest {
 
     @Test
     public void testSmall() {
-        MyIntDeque deque = new MyIntDeque(8, 2f);
+        SimpleIntDeque deque = new SimpleIntDeque(8, 2f);
         assertTrue(deque.isEmpty());
         assertEquals(0, deque.size());
     }
 
     @Test
     public void testEmpty() {
-        MyIntDeque deque = new MyIntDeque(1, 2f);
+        SimpleIntDeque deque = new SimpleIntDeque(1, 2f);
         deque.push(1);
         assertEquals(1, deque.size());
         deque.pop();
@@ -47,7 +47,7 @@ public class MyIntDequeTest {
 
     @Test
     public void testPush() {
-        MyIntDeque deque = new MyIntDeque(8, 2f);
+        SimpleIntDeque deque = new SimpleIntDeque(8, 2f);
 
         for (int i = 0; i < 60; i++) {
             deque.push(i);

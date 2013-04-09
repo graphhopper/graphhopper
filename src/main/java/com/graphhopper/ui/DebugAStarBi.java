@@ -30,10 +30,10 @@ import java.awt.Graphics2D;
  */
 public class DebugAStarBi extends AStarBidirection implements DebugAlgo {
 
-    private MyGraphics mg;
+    private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugAStarBi(Graph graph, VehicleEncoder encoder, MyGraphics mg) {
+    public DebugAStarBi(Graph graph, VehicleEncoder encoder, GraphicsWrapper mg) {
         super(graph, encoder);
         this.mg = mg;
     }

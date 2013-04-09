@@ -43,7 +43,6 @@ public abstract class OSMReaderHelper {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     protected long zeroCounter = 0;
-    private long edgeCount;
     protected final Graph g;
     protected final long expectedNodes;
     private DistanceCalc callback = new DistanceCalc();
@@ -72,10 +71,10 @@ public abstract class OSMReaderHelper {
 
     public long expectedNodes() {
         return expectedNodes;
-    }
+    }    
 
     public long edgeCount() {
-        return edgeCount;
+        return g.getAllEdges().maxId();
     }
 
     public void preProcess(InputStream osmXml) {
@@ -83,7 +82,7 @@ public abstract class OSMReaderHelper {
 
     public abstract boolean addNode(long osmId, double lat, double lon);
 
-    public abstract int addEdge(TLongList nodes, int flags, String name);
+    public abstract void addEdge(TLongList nodes, int flags, String name);
 
     int addEdge(int fromIndex, int toIndex, PointList pointList, int flags, String name) {
         if (fromIndex < 0 || toIndex < 0)
@@ -129,7 +128,7 @@ public abstract class OSMReaderHelper {
                 + "|" + storage.version();
     }
 
-    void cleanup() {
+    void finishedReading() {
     }
 
     void startWayProcessing() {
@@ -139,8 +138,7 @@ public abstract class OSMReaderHelper {
         boolean valid = parseWay(sReader);
         if (valid) {
             int flags = acceptWay.toFlags(outProperties);
-            int successfullAdded = addEdge(wayNodes, flags, (String) outProperties.get("wayName"));
-            edgeCount += successfullAdded;
+            addEdge(wayNodes, flags, (String) outProperties.get("wayName"));
         }
     }
 

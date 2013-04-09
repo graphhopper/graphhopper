@@ -241,14 +241,14 @@ public class OSMReader {
     }
 
     private void cleanUp() {
-        helper.cleanup();
         int prev = graphStorage.nodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graphStorage);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
         int n = graphStorage.nodes();
-        logger.info("nodes " + n + ", there were " + preparation.subNetworks()
-                + " sub-networks. removed them => " + (prev - n)
+        logger.info("edges: " + graphStorage.getAllEdges().maxId()
+                + "nodes " + n + ", there were " + preparation.subNetworks()
+                + " subnetworks. removed them => " + (prev - n)
                 + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
     }
 
@@ -275,7 +275,7 @@ public class OSMReader {
         if (tmp < 0 || helper.expectedNodes() == 0)
             throw new IllegalStateException("Expected nodes not in bounds: " + nf(helper.expectedNodes()));
 
-        logger.info("creating graph with expected nodes:" + nf(helper.expectedNodes()));
+        logger.info("creating graph. Found nodes (pillar+tower):" + nf(helper.expectedNodes()) + ", " + Helper.getMemInfo());
         graphStorage.create(tmp);
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
@@ -293,8 +293,7 @@ public class OSMReader {
                             processNode(sReader);
                             if (counter % 10000000 == 0) {
                                 logger.info(nf(counter) + ", locs:" + nf(locations)
-                                        + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
-                                        + " " + Helper.getMemInfo());
+                                        + " (" + skippedLocations + ") " + Helper.getMemInfo());
                             }
                         } else if ("way".equals(sReader.getLocalName())) {
                             if (wayStart < 0) {
@@ -315,7 +314,6 @@ public class OSMReader {
                                         + " " + Helper.getMemInfo());
                             }
                         }
-
                         break;
                 }
             }
@@ -325,6 +323,7 @@ public class OSMReader {
         } finally {
             Helper7.close(sReader);
         }
+        helper.finishedReading();
     }
 
     private void processNode(XMLStreamReader sReader) throws XMLStreamException {

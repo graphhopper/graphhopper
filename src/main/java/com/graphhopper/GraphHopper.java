@@ -103,8 +103,8 @@ public class GraphHopper implements GraphHopperAPI {
 
     public GraphHopper forMobile() {
         simplify(false);
-        // make new index faster
-        searchRegion = true;
+        // make new index faster (but unprecise) and disable searchRegion
+        // searchRegion = false;        
         preciseIndexResolution(1000);
         return memoryMapped();
     }

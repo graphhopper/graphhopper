@@ -19,6 +19,8 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.coll.BigLongIntMap;
+import com.graphhopper.coll.LongIntMap;
+import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;
@@ -52,9 +54,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     // tower node is <= -3
     private static final int TOWER_NODE = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private BigLongIntMap osmIdToIndexMap;
-    // very slow: private SparseLongLongArray osmIdToIndexMap;
-    // not applicable as ways introduces the nodes in 'wrong' order: private OSMIDSegmentedMap
+    private LongIntMap osmIdToIndexMap;
     private int towerId = 0;
     private int pillarId = 0;
     // remember how many times a node was used to identify tower nodes
@@ -66,8 +66,15 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         dir = storage.directory();
         pillarLats = dir.findCreate("tmpLatitudes");
         pillarLons = dir.findCreate("tmpLongitudes");
-        // TODO check out if we better should use http://en.wikipedia.org/wiki/Segment_tree
+
+        // Using the correct Map<Long, Integer> is hard. We need a very memory 
+        // efficient and fast solution for very big data sets!
+        // very slow: new SparseLongLongArray
+        // only append and update possible: new OSMIDMap
+        // not applicable as ways introduces the nodes in 'wrong' order: new OSMIDSegmentedMap
+        // memory overhead due to hash:
         osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
+//        osmIdToIndexMap = new MyLongIntBTree(200);
     }
 
     @Override
@@ -104,7 +111,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     @Override
-    public int addEdge(TLongList osmIds, int flags, String name) {
+    public void addEdge(TLongList osmIds, int flags, String name) {
         PointList pointList = new PointList(osmIds.size());
         int successfullyAdded = 0;
         int firstNode = -1;
@@ -163,7 +170,6 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                 firstNode = tmpNode;
             }
         }
-        return successfullyAdded;
     }
 
     /**
@@ -191,14 +197,23 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         return tmpNode;
     }
 
-    @Override
-    void startWayProcessing() {
-        LoggerFactory.getLogger(getClass()).info("finished node processing. osmIdMap:"
-                + (int) (osmIdToIndexMap.capacity() * (12f + 1) / Helper.MB) + "MB, " + Helper.getMemInfo());
+    private void printInfo(String str) {
+        LoggerFactory.getLogger(getClass()).info("finished " + str + " processing."
+                + " nodes: " + g.nodes() + ", osmIdMap.size:" + osmIdToIndexMap.size()
+                + ", osmIdMap:" + osmIdToIndexMap.memoryUsage() + "MB"
+                + ", osmIdMap.toString:" + osmIdToIndexMap + " "
+                + Helper.getMemInfo());
     }
 
     @Override
-    void cleanup() {
+    void startWayProcessing() {
+        printInfo("node");
+    }
+
+    @Override
+    void finishedReading() {
+        osmIdToIndexMap.optimize();
+        printInfo("way");
         dir.remove(pillarLats);
         dir.remove(pillarLons);
         pillarLons = null;
@@ -244,7 +259,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                     event = sReader.next(), tmpCounter++) {
                 if (tmpCounter % 50000000 == 0)
                     logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
-                            + nf(osmIdToIndexMap.size()) + " (" + nf(osmIdToIndexMap.capacity()) + ") "
+                            + nf(osmIdToIndexMap.size()) + " (" + osmIdToIndexMap.memoryUsage() + "MB) "
                             + Helper.getMemInfo());
 
                 switch (event) {

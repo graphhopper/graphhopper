@@ -19,6 +19,7 @@
 package com.graphhopper;
 
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.shapes.BBox;
 
 /**
  * Wrapper to simplify output of GraphHopper.
@@ -63,6 +64,26 @@ public class GHResponse {
 
     public PointList points() {
         return list;
+    }
+
+    public BBox calcRouteBBox(BBox _fallback) {
+        BBox bounds = BBox.INVERSE.clone();
+        int len = list.size();
+        if (len == 0)
+            return _fallback;
+        for (int i = 0; i < len; i++) {
+            double lat = list.latitude(i);
+            double lon = list.longitude(i);
+            if (lat > bounds.maxLat)
+                bounds.maxLat = lat;
+            if (lat < bounds.minLat)
+                bounds.minLat = lat;
+            if (lon > bounds.maxLon)
+                bounds.maxLon = lon;
+            if (lon < bounds.minLon)
+                bounds.minLon = lon;
+        }
+        return bounds;
     }
 
     public String debugInfo() {

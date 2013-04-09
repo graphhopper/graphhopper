@@ -18,7 +18,10 @@
  */
 package com.graphhopper.coll;
 
-import java.util.Arrays;
+import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.Helper;
 
 /**
  * This is a special purpose map for writing increasing OSM IDs with consecutive
@@ -27,52 +30,103 @@ import java.util.Arrays;
  *
  * @author Peter Karich
  */
-public class OSMIDMap {
+public class OSMIDMap implements LongIntMap {
 
-    private long[] keys;
+    private final DataAccess keys;
+    private final DataAccess values;
     private long lastKey = Long.MIN_VALUE;
-    private long lastValue = -1;
-    private int size;
+    private long size;
+    private final int noEntryValue;
+    private final Directory dir;
 
-    public OSMIDMap() {
-        this(10);
+    public OSMIDMap(Directory dir) {
+        this(dir, -1);
     }
 
-    public OSMIDMap(int initialCapacity) {
-        keys = new long[initialCapacity];
+    public OSMIDMap(Directory dir, int noNumber) {
+        this.dir = dir;
+        this.noEntryValue = noNumber;
+        keys = dir.findCreate("osmidMapKeys");
+        keys.create(2000);
+        values = dir.findCreate("osmidMapValues");
+        values.create(1000);
     }
 
-    public void put(long key, long value) {
-        if (key <= lastKey)
-            throw new IllegalStateException("Not supported: key " + key + " is lower than last one " + lastKey);
-        if (value < 0)
-            throw new IllegalStateException("Not supported: negative value " + value);
-        if (value != lastValue + 1)
-            throw new IllegalStateException("Not supported: value " + value + " is not " + (lastValue + 1));
+    public void remove() {
+        dir.remove(keys);
+    }
 
-        if (size >= keys.length) {
-            int cap = (int) (size * 1.5f);
-            keys = Arrays.copyOf(keys, cap);
+    @Override
+    public int put(long key, int value) {
+        if (key <= lastKey) {
+            long oldValueIndex = binarySearch(keys, 0, size(), key);
+            if (oldValueIndex < 0)
+                throw new IllegalStateException("Cannot insert keys lower than "
+                        + "the last key " + key + " < " + lastKey + ". Only updating supported");
+            int oldValue = values.getInt(oldValueIndex);
+            values.setInt(oldValueIndex, value);
+            return oldValue;
         }
-        keys[size] = key;
-        size++;
+
+        values.ensureCapacity(size + 1);
+        values.setInt(size, value);
+        long doubleSize = size * 2;
+        keys.ensureCapacity(doubleSize + 2);
+
+        // store long => double of the orig size
+        keys.setInt(doubleSize++, (int) (key >>> 32));
+        keys.setInt(doubleSize, (int) (key & 0xFFFFFFFFL));
         lastKey = key;
-        lastValue = value;
-    }
-
-    public long get(long key) {
-        int retIndex = SparseLongLongArray.binarySearch(keys, 0, size, key);
-        if (retIndex < 0)
-            return getNoEntryValue();
-
-        return retIndex;
-    }
-
-    public long getNoEntryValue() {
+        size++;
         return -1;
     }
 
-    public int size() {
+    @Override
+    public int get(long key) {
+        long retIndex = binarySearch(keys, 0, size(), key);
+        if (retIndex < 0)
+            return noEntryValue;
+        return values.getInt(retIndex);
+    }
+
+    static long binarySearch(DataAccess da, long start, long len, long key) {
+        long high = start + len, low = start - 1, guess;
+        while (high - low > 1) {
+            guess = (high + low) >>> 1;
+            long tmp = guess << 1;
+            long guessedKey = BitUtil.toLong(da.getInt(tmp), da.getInt(tmp + 1));
+            if (guessedKey < key)
+                low = guess;
+            else
+                high = guess;
+        }
+
+        if (high == start + len)
+            return ~(start + len);
+
+        long tmp = high << 1;
+        long highKey = BitUtil.toLong(da.getInt(tmp), da.getInt(tmp + 1));
+        if (highKey == key)
+            return high;
+        else
+            return ~high;
+    }
+
+    @Override
+    public long size() {
         return size;
+    }
+
+    public long capacity() {
+        return keys.capacity();
+    }
+
+    @Override
+    public int memoryUsage() {
+        return Math.round(capacity() / Helper.MB);
+    }
+
+    @Override
+    public void optimize() {
     }
 }

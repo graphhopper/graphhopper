@@ -27,15 +27,15 @@ import org.junit.Test;
  */
 public abstract class AbstractMyBitSetTest {
 
-    public abstract MyBitSet createBitSet(int no);
+    public abstract GHBitSet createBitSet(int no);
 
     @Test
     public void testCopy() {
-        MyBitSet bs = createBitSet(100);
+        GHBitSet bs = createBitSet(100);
         bs.add(100);
         bs.add(70);
         bs.add(30);
-        MyBitSet copyBS = createBitSet(10);
+        GHBitSet copyBS = createBitSet(10);
         copyBS.add(20);
         copyBS.add(40);
         bs.copyTo(copyBS);
@@ -58,7 +58,7 @@ public abstract class AbstractMyBitSetTest {
 
     @Test
     public void testToString() {
-        MyBitSet bs = createBitSet(100);
+        GHBitSet bs = createBitSet(100);
         bs.add(12);
         bs.add(1);
         assertEquals("{1, 12}", bs.toString());
@@ -66,7 +66,7 @@ public abstract class AbstractMyBitSetTest {
 
     @Test
     public void testNext() {
-        MyBitSet bs = createBitSet(100);
+        GHBitSet bs = createBitSet(100);
         bs.add(7);
         bs.add(90);
         assertEquals(7, bs.next(0));
@@ -77,7 +77,7 @@ public abstract class AbstractMyBitSetTest {
 
     @Test
     public void testEnsureCapacity() {
-        MyBitSet bs = createBitSet(8);
+        GHBitSet bs = createBitSet(8);
         bs.add(7);
         try {
             bs.add(8);
@@ -94,7 +94,7 @@ public abstract class AbstractMyBitSetTest {
 
     @Test
     public void testClear() {
-        MyBitSet bs = createBitSet(100);
+        GHBitSet bs = createBitSet(100);
         bs.add(12);
         bs.add(1);
         assertTrue(bs.contains(1));

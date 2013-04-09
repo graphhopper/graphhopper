@@ -27,19 +27,19 @@ import gnu.trove.set.hash.TIntHashSet;
  *
  * @author Peter Karich
  */
-public class MyTBitSet implements MyBitSet {
+public class GHTBitSet implements GHBitSet {
 
     private final TIntHashSet tHash;
 
-    public MyTBitSet(TIntHashSet set) {
+    public GHTBitSet(TIntHashSet set) {
         tHash = set;
     }
 
-    public MyTBitSet(int no) {
+    public GHTBitSet(int no) {
         tHash = new TIntHashSet(no, 0.7f, -1);
     }
 
-    public MyTBitSet() {
+    public GHTBitSet() {
         this(1000);
     }
 
@@ -70,10 +70,10 @@ public class MyTBitSet implements MyBitSet {
     }
 
     @Override
-    public MyBitSet copyTo(MyBitSet bs) {
+    public GHBitSet copyTo(GHBitSet bs) {
         bs.clear();
-        if (bs instanceof MyTBitSet) {
-            ((MyTBitSet) bs).tHash.addAll(this.tHash);
+        if (bs instanceof GHTBitSet) {
+            ((GHTBitSet) bs).tHash.addAll(this.tHash);
         } else {
             TIntIterator iter = tHash.iterator();
             while (iter.hasNext()) {

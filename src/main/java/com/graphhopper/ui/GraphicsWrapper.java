@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Peter Karich
  */
-public class MyGraphics {
+public class GraphicsWrapper {
 
     private Graph g;
     private double scaleX;
@@ -38,7 +38,7 @@ public class MyGraphics {
     private double offsetY;
     private BBox bounds = new BBox(-180, 180, -90, 90);
 
-    public MyGraphics(Graph g) {
+    public GraphicsWrapper(Graph g) {
         this.g = g;
         BBox b = g.bounds();
         scaleX = scaleY = 0.002 * (b.maxLat - b.minLat);

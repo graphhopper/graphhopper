@@ -18,7 +18,7 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.coll.MySortedCollection;
+import com.graphhopper.coll.GHSortedCollection;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraSimple;
@@ -75,7 +75,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private EdgeFilter vehicleAllFilter;
     private LevelGraph g;
     // the most important nodes comes last
-    private MySortedCollection sortedNodes;
+    private GHSortedCollection sortedNodes;
     private PriorityNode refs[];
     private TIntArrayList originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
@@ -324,7 +324,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     PrepareContractionHierarchies initFromGraph() {
         originalEdges = new TIntArrayList(g.nodes() / 2, -1);
         levelEdgeFilter = new LevelEdgeFilterCH(this.g);
-        sortedNodes = new MySortedCollection(g.nodes());
+        sortedNodes = new GHSortedCollection(g.nodes());
         refs = new PriorityNode[g.nodes()];
         return this;
     }

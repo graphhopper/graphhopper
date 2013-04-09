@@ -19,6 +19,8 @@
 package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.NumHelper;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A simple bounding box defined as follows: minLon, maxLon followed by minLat
@@ -163,5 +165,18 @@ public class BBox implements Shape, Cloneable {
                 && Double.doubleToLongBits(minLat) != Double.doubleToLongBits(INVERSE.minLat)
                 && Double.doubleToLongBits(maxLon) != Double.doubleToLongBits(INVERSE.maxLon)
                 && Double.doubleToLongBits(minLon) != Double.doubleToLongBits(INVERSE.minLon);
+    }
+
+    /**
+     * @return array containing this bounding box. Attention: GeoJson is
+     * lon,lat!
+     */
+    public List<Double> toGeoJson() {
+        List<Double> list = new ArrayList<Double>(4);
+        list.add(minLon);
+        list.add(minLat);
+        list.add(maxLon);
+        list.add(maxLat);
+        return list;
     }
 }

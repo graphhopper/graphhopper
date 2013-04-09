@@ -29,7 +29,7 @@ import java.util.Arrays;
  *
  * @author Peter Karich
  */
-public class OSMIDSegmentedMap {
+public class OSMIDSegmentedMap implements LongIntMap {
 
     private int bucketSize;
     private long[] keys;
@@ -38,7 +38,7 @@ public class OSMIDSegmentedMap {
     private long lastValue = -1;
     private int currentBucket = 0;
     private int currentIndex = -1;
-    private int size;
+    private long size;
 
     public OSMIDSegmentedMap() {
         this(100, 10);
@@ -81,27 +81,28 @@ public class OSMIDSegmentedMap {
         lastKey = key;
     }
 
-    public long get(long key) {
+    @Override
+    public int get(long key) {
         int retBucket = SparseLongLongArray.binarySearch(keys, 0, currentBucket + 1, key);
         if (retBucket < 0) {
             retBucket = ~retBucket;
             retBucket--;
             if (retBucket < 0)
-                return getNoEntryValue();
+                return (int) getNoEntryValue();
 
             long storedKey = keys[retBucket];
             if (storedKey == key)
-                return (long) retBucket * bucketSize;
+                return retBucket * bucketSize;
 
             VLongStorage buck = buckets[retBucket];
             long tmp = buck.position();
             buck.seek(0);
             int max = currentBucket == retBucket ? currentIndex + 1 : bucketSize;
-            long ret = getNoEntryValue();
+            int ret = getNoEntryValue();
             for (int i = 1; i < max; i++) {
                 storedKey += buck.readVLong();
                 if (storedKey == key) {
-                    ret = (long) retBucket * bucketSize + i;
+                    ret = retBucket * bucketSize + i;
                     break;
                 } else if (storedKey > key)
                     break;
@@ -110,23 +111,34 @@ public class OSMIDSegmentedMap {
             return ret;
         }
 
-        return (long) retBucket * bucketSize;
+        return retBucket * bucketSize;
     }
 
-    public long getNoEntryValue() {
+    public int getNoEntryValue() {
         return -1;
     }
 
-    public int size() {
+    @Override
+    public long size() {
         return size;
     }
 
-    public float calcMemInMB() {
+    @Override
+    public void optimize() {
+    }
+
+    @Override
+    public int memoryUsage() {
         long bytes = 0;
         for (int i = 0; i < buckets.length; i++) {
             if (buckets[i] != null)
                 bytes += buckets[i].length();
         }
-        return (float) (keys.length * 4 + bytes) / Helper.MB;
+        return Math.round((keys.length * 4 + bytes) / Helper.MB);
+    }
+
+    @Override
+    public int put(long key, int value) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }
