@@ -164,13 +164,13 @@ public class Helper {
 
     public static VehicleEncoder getVehicleEncoder(String str) {
         str = str.toLowerCase();
-        if ("car".equals(str))
+        if (str.isEmpty() || "car".equals(str))
             return new CarFlagEncoder();
         else if ("foot".equals(str))
             return new FootFlagEncoder();
         else if ("bike".equals(str))
             return new BikeFlagEncoder();
-        throw new RuntimeException("Not found " + str);
+        throw new RuntimeException("VehicleEncoder not found " + str);
     }
 
     /**
