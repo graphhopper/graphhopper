@@ -18,9 +18,9 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyBitSetImpl;
-import com.graphhopper.coll.MyTBitSet;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.LinearKeyAlgo;
 import com.graphhopper.storage.DataAccess;
@@ -129,7 +129,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
         initBuffer();
         initAlgo(latSize, lonSize);
         StopWatch sw = new StopWatch().start();
-        MyBitSet filledIndices = fillQuadtree(latSize * lonSize);
+        GHBitSet filledIndices = fillQuadtree(latSize * lonSize);
         int fillQT = filledIndices.cardinality();
         float res1 = sw.stop().getSeconds();
         sw = new StopWatch().start();
@@ -169,12 +169,12 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return dist.calcDenormalizedDist(maxNormRasterWidthInMeter);
     }
 
-    private MyBitSet fillQuadtree(int size) {
+    private GHBitSet fillQuadtree(int size) {
         int locs = g.nodes();
         if (locs <= 0)
             throw new IllegalStateException("check your graph - it is empty!");
 
-        MyBitSet filledIndices = new MyBitSetImpl(size);
+        GHBitSet filledIndices = new GHBitSetImpl(size);
         CoordTrig coord = new CoordTrig();
         for (int nodeId = 0; nodeId < locs; nodeId++) {
             double lat = g.getLatitude(nodeId);
@@ -199,11 +199,11 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return filledIndices;
     }
 
-    private int fillEmptyIndices(MyBitSet filledIndices) {
+    private int fillEmptyIndices(GHBitSet filledIndices) {
         int len = latSize * lonSize;
         DataAccess indexCopy = new RAMDirectory().findCreate("tempIndexCopy");
         indexCopy.create(index.capacity());
-        MyBitSet indicesCopy = new MyBitSetImpl(len);
+        GHBitSet indicesCopy = new GHBitSetImpl(len);
         int initializedCounter = filledIndices.cardinality();
         // fan out initialized entries to avoid "nose-artifacts"
         // we 1. do not use the same index for check and set and iterate until all indices are set
@@ -303,8 +303,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
         goFurtherHook(id);
         new XFirstSearch() {
             @Override
-            protected MyBitSet createBitSet(int size) {
-                return new MyTBitSet(10);
+            protected GHBitSet createBitSet(int size) {
+                return new GHTBitSet(10);
             }
 
             @Override protected boolean goFurther(int nodeId) {

@@ -20,7 +20,7 @@ package com.graphhopper.reader;
 
 import com.graphhopper.coll.BigLongIntMap;
 import com.graphhopper.coll.LongIntMap;
-import com.graphhopper.coll.MyLongIntBTree;
+import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;

@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class MyLongIntBTree implements LongIntMap {
+public class GHLongIntBTree implements LongIntMap {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final int noNumberValue = -1;
@@ -41,7 +41,7 @@ public class MyLongIntBTree implements LongIntMap {
     private int height;
     private BTreeEntry root;
 
-    public MyLongIntBTree(int maxLeafEntries) {
+    public GHLongIntBTree(int maxLeafEntries) {
         this.maxLeafEntries = maxLeafEntries;
         if (maxLeafEntries < 1)
             throw new IllegalArgumentException("illegal maxLeafEntries:" + maxLeafEntries);

@@ -18,8 +18,8 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyBitSetImpl;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.DistanceCalc;
@@ -67,7 +67,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
         int nodes = g.nodes();
         int id = -1;
         double foundDist = Double.MAX_VALUE;
-        MyBitSet alreadyDone = new MyBitSetImpl(nodes);
+        GHBitSet alreadyDone = new GHBitSetImpl(nodes);
         for (int fromNode = 0; fromNode < nodes; fromNode++) {
             double fromLat = g.getLatitude(fromNode);
             double fromLon = g.getLongitude(fromNode);

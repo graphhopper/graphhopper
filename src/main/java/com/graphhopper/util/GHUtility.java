@@ -18,8 +18,8 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyBitSetImpl;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -148,12 +148,12 @@ public class GHUtility {
         final TIntList list = new TIntArrayList(g.nodes(), -1);
         int nodes = g.nodes();
         list.fill(0, nodes, -1);
-        final MyBitSetImpl bitset = new MyBitSetImpl(nodes);
+        final GHBitSetImpl bitset = new GHBitSetImpl(nodes);
         final IntRef ref = new IntRef(0);
         for (int startNode = 0; startNode >= 0 && startNode < nodes;
                 startNode = bitset.nextClear(startNode + 1)) {
             new XFirstSearch() {
-                @Override protected MyBitSet createBitSet(int size) {
+                @Override protected GHBitSet createBitSet(int size) {
                     return bitset;
                 }
 
@@ -170,7 +170,7 @@ public class GHUtility {
     static Graph createSortedGraph(Graph g, Graph sortedGraph, final TIntList oldToNewNodeList) {
         int len = oldToNewNodeList.size();
         // important to avoid creating two edges for edges with both directions
-        MyBitSet bitset = new MyBitSetImpl(len);
+        GHBitSet bitset = new GHBitSetImpl(len);
         for (int old = 0; old < len; old++) {
             int newIndex = oldToNewNodeList.get(old);
             // ignore empty entries
@@ -246,7 +246,7 @@ public class GHUtility {
     public static Graph copyTo(Graph from, Graph to) {
         int len = from.nodes();
         // important to avoid creating two edges for edges with both directions        
-        MyBitSet bitset = new MyBitSetImpl(len);
+        GHBitSet bitset = new GHBitSetImpl(len);
         for (int oldNode = 0; oldNode < len; oldNode++) {
             bitset.add(oldNode);
             to.setNode(oldNode, from.getLatitude(oldNode), from.getLongitude(oldNode));

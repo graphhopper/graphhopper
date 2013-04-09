@@ -28,11 +28,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class MyLongIntBTreeTest {
+public class GHLongIntBTreeTest {
 
     @Test
     public void testThrowException_IfPutting_NoNumber() {
-        MyLongIntBTree instance = new MyLongIntBTree(2);
+        GHLongIntBTree instance = new GHLongIntBTree(2);
         try {
             instance.put(-1, 1);
             assertTrue(false);
@@ -42,7 +42,7 @@ public class MyLongIntBTreeTest {
 
     @Test
     public void testTwoSplits() {
-        MyLongIntBTree instance = new MyLongIntBTree(3);
+        GHLongIntBTree instance = new GHLongIntBTree(3);
         instance.put(1, 2);
         instance.put(2, 4);
         instance.put(3, 6);
@@ -70,7 +70,7 @@ public class MyLongIntBTreeTest {
 
     @Test
     public void testSplitAndOverwrite() {
-        MyLongIntBTree instance = new MyLongIntBTree(3);
+        GHLongIntBTree instance = new GHLongIntBTree(3);
         instance.put(1, 2);
         instance.put(2, 4);
         instance.put(3, 6);
@@ -83,7 +83,7 @@ public class MyLongIntBTreeTest {
         assertEquals(6, instance.get(3));
     }
 
-    void check(MyLongIntBTree instance, int from) {
+    void check(GHLongIntBTree instance, int from) {
         for (int i = from; i < instance.size(); i++) {
             assertEquals(i * 2, instance.get(i));
         }
@@ -91,7 +91,7 @@ public class MyLongIntBTreeTest {
 
     @Test
     public void testPut() {
-        MyLongIntBTree instance = new MyLongIntBTree(3);
+        GHLongIntBTree instance = new GHLongIntBTree(3);
         instance.put(2, 4);
         instance.put(7, 14);
         instance.put(5, 10);
@@ -118,7 +118,7 @@ public class MyLongIntBTreeTest {
 
     @Test
     public void testUpdate() {
-        MyLongIntBTree instance = new MyLongIntBTree(2);
+        GHLongIntBTree instance = new GHLongIntBTree(2);
         int result = instance.put(100, 10);
         assertEquals(instance.getNoNumberValue(), result);
 
@@ -135,7 +135,7 @@ public class MyLongIntBTreeTest {
     @Test
     public void testRandom() {
         for (int j = 3; j < 12; j += 4) {
-            MyLongIntBTree instance = new MyLongIntBTree(j);
+            GHLongIntBTree instance = new GHLongIntBTree(j);
             int size = 500;
             Random rand = new Random(123);
             Set<Integer> addedValues = new LinkedHashSet<Integer>(size);

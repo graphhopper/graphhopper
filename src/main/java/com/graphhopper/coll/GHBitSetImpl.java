@@ -23,12 +23,12 @@ import java.util.BitSet;
 /**
  * @author Peter Karich
  */
-public class MyBitSetImpl extends BitSet implements MyBitSet {
+public class GHBitSetImpl extends BitSet implements GHBitSet {
 
-    public MyBitSetImpl() {
+    public GHBitSetImpl() {
     }
 
-    public MyBitSetImpl(int nbits) {
+    public GHBitSetImpl(int nbits) {
         super(nbits);
     }
 
@@ -61,10 +61,10 @@ public class MyBitSetImpl extends BitSet implements MyBitSet {
     }
 
     @Override
-    public MyBitSet copyTo(MyBitSet bs) {
+    public GHBitSet copyTo(GHBitSet bs) {
         bs.clear();
-        if (bs instanceof MyBitSetImpl) {
-            ((MyBitSetImpl) bs).or(this);
+        if (bs instanceof GHBitSetImpl) {
+            ((GHBitSetImpl) bs).or(this);
         } else {
             int len = size();
             bs.ensureCapacity(len);

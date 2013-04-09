@@ -31,10 +31,10 @@ import java.awt.Graphics2D;
  */
 public class DebugDijkstraSimple extends DijkstraSimple implements DebugAlgo {
 
-    private MyGraphics mg;
+    private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraSimple(Graph graph, VehicleEncoder encoder, MyGraphics mg) {
+    public DebugDijkstraSimple(Graph graph, VehicleEncoder encoder, GraphicsWrapper mg) {
         super(graph, encoder);
         this.mg = mg;
     }

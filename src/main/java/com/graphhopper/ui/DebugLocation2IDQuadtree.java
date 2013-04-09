@@ -29,10 +29,10 @@ import java.awt.Graphics2D;
  */
 class DebugLocation2IDQuadtree extends Location2IDQuadtree {
 
-    private MyGraphics mg;
+    private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugLocation2IDQuadtree(Graph g, MyGraphics mg, Directory dir) {
+    public DebugLocation2IDQuadtree(Graph g, GraphicsWrapper mg, Directory dir) {
         super(g, dir);
         this.mg = mg;
     }

@@ -24,22 +24,22 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
- * A priority queue implemented by a treemap to allow fast key update. Or should we use a standard
- * b-tree?
+ * A priority queue implemented by a treemap to allow fast key update. Or should
+ * we use a standard b-tree?
  *
  * @author Peter Karich
  */
-public class MySortedCollection {
+public class GHSortedCollection {
 
     private int size;
     private int slidingMeanValue = 20;
     private TreeMap<Integer, TIntHashSet> map;
 
-    public MySortedCollection() {
+    public GHSortedCollection() {
         this(0);
     }
 
-    public MySortedCollection(int size) {
+    public GHSortedCollection(int size) {
         // use size as indicator for maxEntries => try radix sort?
         map = new TreeMap<Integer, TIntHashSet>();
     }

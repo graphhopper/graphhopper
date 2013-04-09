@@ -28,15 +28,15 @@ import javax.swing.JPanel;
 /**
  * @author Peter Karich
  */
-public class MyLayerPanel extends JPanel {
+public class LayeredPanel extends JPanel {
 
     private final Collection<MapLayer> layers;
 
-    public MyLayerPanel() {
+    public LayeredPanel() {
         this(new ArrayList<MapLayer>());
     }
 
-    public MyLayerPanel(Collection<MapLayer> layer) {
+    public LayeredPanel(Collection<MapLayer> layer) {
         this.layers = layer;
         this.addComponentListener(new ComponentAdapter() {
             @Override public void componentResized(ComponentEvent e) {

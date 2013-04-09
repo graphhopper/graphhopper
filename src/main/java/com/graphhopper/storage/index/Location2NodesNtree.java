@@ -18,8 +18,8 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyTBitSet;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -500,7 +500,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
         final LocationIDResult closestNode = new LocationIDResult();
         // clone storedIds to avoid interference with forEach
-        final MyBitSet checkBitset = new MyTBitSet(new TIntHashSet(storedNetworkEntryIds));
+        final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
         // find nodes from the network entries which are close to 'point'
         storedNetworkEntryIds.forEach(new TIntProcedure() {
             @Override public boolean execute(final int networkEntryNodeId) {
@@ -511,7 +511,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                     double currLon;
                     int currNode;
 
-                    @Override protected MyBitSet createBitSet(int size) {
+                    @Override protected GHBitSet createBitSet(int size) {
                         return checkBitset;
                     }
 

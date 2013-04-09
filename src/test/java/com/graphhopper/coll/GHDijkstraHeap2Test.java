@@ -27,11 +27,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class MyDijkstraHeap2Test extends AbstractBinHeapTest {
+public class GHDijkstraHeap2Test extends AbstractBinHeapTest {
 
     @Override
     public BinHeapWrapper<Number, Integer> createHeap(int capacity) {
-        return new MyDijkstraHeap2(capacity / 5);
+        return new GHDijkstraHeap2(capacity / 5);
     }
 
     @Test
@@ -51,7 +51,7 @@ public class MyDijkstraHeap2Test extends AbstractBinHeapTest {
 
     @Test
     public void testRemove() {
-        MyDijkstraHeap2 heap = new MyDijkstraHeap2(5);
+        GHDijkstraHeap2 heap = new GHDijkstraHeap2(5);
 
         heap.insert(4, 3);
         heap.insert(4, 4);

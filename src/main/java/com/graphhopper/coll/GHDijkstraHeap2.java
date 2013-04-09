@@ -32,7 +32,7 @@ import java.util.TreeMap;
  *
  * @author Peter Karich
  */
-public class MyDijkstraHeap2 implements BinHeapWrapper<Number, Integer> {
+public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer> {
 
     private static final double noKey = Double.MAX_VALUE;
     private TreeMap<Double, Object> sorted;
@@ -43,15 +43,15 @@ public class MyDijkstraHeap2 implements BinHeapWrapper<Number, Integer> {
     private int underflows = 0;
     private int overflows = 0;
 
-    public MyDijkstraHeap2() {
+    public GHDijkstraHeap2() {
         this(102);
     }
 
-    public MyDijkstraHeap2(int cap) {
+    public GHDijkstraHeap2(int cap) {
         this(cap < 100 ? 25 : cap / 4, cap < 100 ? 100 : cap);
     }
 
-    public MyDijkstraHeap2(int smallCap, int largeCap) {
+    public GHDijkstraHeap2(int smallCap, int largeCap) {
         smallCapacity = smallCap;
         sorted = new TreeMap<Double, Object>();
         largeHeap = new IntDoubleBinHeap(largeCap);

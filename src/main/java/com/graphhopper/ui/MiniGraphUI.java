@@ -18,8 +18,8 @@
  */
 package com.graphhopper.ui;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyTBitSet;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
@@ -69,9 +69,9 @@ public class MiniGraphUI {
     private final Graph graph;
     private Location2IDIndex index;
     private String latLon = "";
-    private MyGraphics mg;
+    private GraphicsWrapper mg;
     private JPanel infoPanel;
-    private MyLayerPanel mainPanel;
+    private LayeredPanel mainPanel;
     private MapLayer roadsLayer;
     private MapLayer pathLayer;
     private boolean fastPaint = false;
@@ -83,7 +83,7 @@ public class MiniGraphUI {
         this.graph = reader.graph();
         prepare = reader.preparation();
         logger.info("locations:" + graph.nodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().name());
-        mg = new MyGraphics(graph);
+        mg = new GraphicsWrapper(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
@@ -109,10 +109,10 @@ public class MiniGraphUI {
             }
         };
 
-        mainPanel = new MyLayerPanel();
+        mainPanel = new LayeredPanel();
 
         // TODO make it correct with bitset-skipping too
-        final MyBitSet bitset = new MyTBitSet(graph.nodes());
+        final GHBitSet bitset = new GHTBitSet(graph.nodes());
         mainPanel.addLayer(roadsLayer = new DefaultMapLayer() {
             Random rand = new Random();
 

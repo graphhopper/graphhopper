@@ -18,8 +18,8 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyBitSetImpl;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
 import com.graphhopper.routing.util.CombinedEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -72,7 +72,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     private int nodeCount;
     private BBox bounds;
     // remove markers are not yet persistent!
-    private MyBitSet removedNodes;
+    private GHBitSet removedNodes;
     private int edgeEntryIndex = -1, nodeEntryIndex = -1;
     // length | nodeA | nextNode | ... | nodeB
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 2GB
@@ -717,13 +717,13 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         if (removedNodes == null)
             clonedG.removedNodes = null;
         else
-            clonedG.removedNodes = removedNodes.copyTo(new MyBitSetImpl());
+            clonedG.removedNodes = removedNodes.copyTo(new GHBitSetImpl());
         return clonedG;
     }
 
-    private MyBitSet removedNodes() {
+    private GHBitSet removedNodes() {
         if (removedNodes == null)
-            removedNodes = new MyBitSetImpl((int) (nodes.capacity() / 4));
+            removedNodes = new GHBitSetImpl((int) (nodes.capacity() / 4));
         return removedNodes;
     }
 
@@ -796,7 +796,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
         // sorted map when we access it via keyAt and valueAt - see below!
         final SparseIntIntArray oldToNewMap = new SparseIntIntArray(removeNodeCount);
-        MyBitSet toRemoveSet = new MyBitSetImpl(removeNodeCount);
+        GHBitSet toRemoveSet = new GHBitSetImpl(removeNodeCount);
         removedNodes.copyTo(toRemoveSet);
 
         // create map of old node ids pointing to new ids
@@ -840,7 +840,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             }
         }
 
-        MyBitSet toMoveSet = new MyBitSetImpl(removeNodeCount * 3);
+        GHBitSet toMoveSet = new GHBitSetImpl(removeNodeCount * 3);
         // marks connected nodes to rewrite the edges
         for (int i = 0; i < itemsToMove; i++) {
             int oldI = oldToNewMap.keyAt(i);

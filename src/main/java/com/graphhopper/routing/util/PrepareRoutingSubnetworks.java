@@ -18,8 +18,8 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.coll.MyBitSet;
-import com.graphhopper.coll.MyBitSetImpl;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.XFirstSearch;
 import java.util.*;
@@ -68,13 +68,13 @@ public class PrepareRoutingSubnetworks {
         Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         final AtomicInteger integ = new AtomicInteger(0);
         int locs = g.nodes();
-        final MyBitSet bs = new MyBitSetImpl(locs);
+        final GHBitSet bs = new GHBitSetImpl(locs);
         for (int start = 0; start < locs; start++) {
             if (g.isNodeRemoved(start) || bs.contains(start))
                 continue;
 
             new XFirstSearch() {
-                @Override protected MyBitSet createBitSet(int size) {
+                @Override protected GHBitSet createBitSet(int size) {
                     return bs;
                 }
 
@@ -101,7 +101,7 @@ public class PrepareRoutingSubnetworks {
 
         int biggestStart = -1;
         int maxCount = -1;
-        MyBitSetImpl bs = new MyBitSetImpl(g.nodes());
+        GHBitSetImpl bs = new GHBitSetImpl(g.nodes());
         for (Entry<Integer, Integer> e : map.entrySet()) {
             if (biggestStart < 0) {
                 biggestStart = e.getKey();
@@ -123,13 +123,13 @@ public class PrepareRoutingSubnetworks {
     /**
      * Deletes the complete subnetwork reachable through start
      */
-    void removeNetwork(int start, int entries, final MyBitSet bs) {
+    void removeNetwork(int start, int entries, final GHBitSet bs) {
         if (entries > minNetworkSize) {
             logger.info("did not remove large network (" + entries + ")");
             return;
         }
         new XFirstSearch() {
-            @Override protected MyBitSet createBitSet(int size) {
+            @Override protected GHBitSet createBitSet(int size) {
                 return bs;
             }
 
