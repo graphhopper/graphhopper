@@ -67,14 +67,16 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         pillarLats = dir.findCreate("tmpLatitudes");
         pillarLons = dir.findCreate("tmpLongitudes");
 
-        // Using the correct Map<Long, Integer> is hard. We need a very memory 
-        // efficient and fast solution for very big data sets!
+        // Using the correct Map<Long, Integer> is hard. We need a memory 
+        // efficient and fast solution for big data sets!
+        //
         // very slow: new SparseLongLongArray
-        // only append and update possible: new OSMIDMap
-        // not applicable as ways introduces the nodes in 'wrong' order: new OSMIDSegmentedMap
-        // memory overhead due to hash:
-        osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
-//        osmIdToIndexMap = new MyLongIntBTree(200);
+        // only append and update possible (no unordered storage like with this doubleParse): new OSMIDMap
+        // same here: not applicable as ways introduces the nodes in 'wrong' order: new OSMIDSegmentedMap
+        // memory overhead due to open addressing and full rehash:
+//        osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
+        // smaller memory overhead for bigger data sets because of avoiding a "rehash"
+        osmIdToIndexMap = new GHLongIntBTree(200);
     }
 
     @Override

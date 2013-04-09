@@ -50,7 +50,7 @@ elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
 
  # For import we need a lot more memory. For the mmap storage you need to lower this in order to use off-heap memory.
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1200m -Xms1200m"
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1300m -Xms1300m"
  SIZE=35000000
 elif [ -f $OSM ]; then
  LINK=""
