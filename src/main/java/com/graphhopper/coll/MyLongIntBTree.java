@@ -19,6 +19,7 @@
 package com.graphhopper.coll;
 
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.StopWatch;
 import java.util.Arrays;
 
 /**
@@ -70,9 +71,12 @@ public class MyLongIntBTree {
             height++;
             root = rv.tree;
         }
-        if (rv.oldValue == noNumberValue)
+        if (rv.oldValue == noNumberValue) {
             // successfully inserted
             size++;
+            if (size % 1000000 == 0)
+                optimize();
+        }
         return rv.oldValue;
     }
 
@@ -98,7 +102,7 @@ public class MyLongIntBTree {
     void clear() {
         size = 0;
         height = 1;
-        root = new BTreeEntry(initLeafSize);
+        root = new BTreeEntry(initLeafSize, true);
     }
 
     int getNoNumberValue() {
@@ -135,12 +139,16 @@ public class MyLongIntBTree {
         long keys[];
         int values[];
         BTreeEntry children[];
+        boolean isLeaf;
 
-        public BTreeEntry(int tmpSize) {
+        public BTreeEntry(int tmpSize, boolean leaf) {
+            this.isLeaf = leaf;
             keys = new long[tmpSize];
             values = new int[tmpSize];
-            // in a b-tree we need one more entry to point to all children!
-            children = new BTreeEntry[tmpSize + 1];
+
+            if (!isLeaf)
+                // in a b-tree we need one more entry to point to all children!
+                children = new BTreeEntry[tmpSize + 1];
         }
 
         /**
@@ -158,7 +166,7 @@ public class MyLongIntBTree {
 
             index = ~index;
             ReturnValue downTreeRV;
-            if (children[index] == null) {
+            if (isLeaf || children[index] == null) {
                 // insert
                 downTreeRV = new ReturnValue(noNumberValue);
                 downTreeRV.tree = checkSplitEntry();
@@ -206,10 +214,11 @@ public class MyLongIntBTree {
 
             // right child: copy from this
             int count = entrySize - splitIndex - 1;
-            BTreeEntry newRightChild = new BTreeEntry(Math.max(initLeafSize, count));
+            BTreeEntry newRightChild = new BTreeEntry(Math.max(initLeafSize, count), isLeaf);
             System.arraycopy(keys, splitIndex + 1, newRightChild.keys, 0, count);
             System.arraycopy(values, splitIndex + 1, newRightChild.values, 0, count);
-            System.arraycopy(children, splitIndex + 1, newRightChild.children, 0, count + 1);
+            if (!isLeaf)
+                System.arraycopy(children, splitIndex + 1, newRightChild.children, 0, count + 1);
 
             newRightChild.entrySize = count;
 
@@ -218,7 +227,7 @@ public class MyLongIntBTree {
             newLeftChild.entrySize = splitIndex;
 
             // new tree pointing to left + right tree only
-            BTreeEntry newTree = new BTreeEntry(1);
+            BTreeEntry newTree = new BTreeEntry(1, false);
             newTree.entrySize = 1;
             newTree.keys[0] = this.keys[splitIndex];
             newTree.values[0] = this.values[splitIndex];
@@ -233,7 +242,8 @@ public class MyLongIntBTree {
             if (count > 0) {
                 System.arraycopy(keys, index, keys, index + 1, count);
                 System.arraycopy(values, index, values, index + 1, count);
-                System.arraycopy(children, index + 1, children, index + 2, count);
+                if (!isLeaf)
+                    System.arraycopy(children, index + 1, children, index + 2, count);
             }
 
             keys[index] = key;
@@ -243,10 +253,12 @@ public class MyLongIntBTree {
 
         void insertTree(int index, BTreeEntry tree) {
             insertKeyValue(index, tree.keys[0], tree.values[0]);
-            // overwrite children
-            children[index] = tree.children[0];
-            // set
-            children[index + 1] = tree.children[1];
+            if (!isLeaf) {
+                // overwrite children
+                children[index] = tree.children[0];
+                // set
+                children[index + 1] = tree.children[1];
+            }
         }
 
         int get(long key) {
@@ -254,7 +266,7 @@ public class MyLongIntBTree {
             if (index >= 0)
                 return values[index];
             index = ~index;
-            if (children[index] == null)
+            if (isLeaf || children[index] == null)
                 return noNumberValue;
             return children[index].get(key);
         }
@@ -263,20 +275,24 @@ public class MyLongIntBTree {
          * @return used bytes
          */
         long capacity() {
-            long cap = keys.length * (8 + 4 + 4) + 3 * 12 + 4;
-            for (int i = 0; i < children.length; i++) {
-                if (children[i] != null)
-                    cap += children[i].capacity();
+            long cap = keys.length * (8 + 4) + 3 * 12 + 4 + 1;
+            if (!isLeaf) {
+                cap += children.length * 4;
+                for (int i = 0; i < children.length; i++) {
+                    if (children[i] != null)
+                        cap += children[i].capacity();
+                }
             }
             return cap;
         }
 
         int entries() {
             int entries = 1;
-            for (int i = 0; i < children.length; i++) {
-                if (children[i] != null)
-                    entries += children[i].entries();
-            }
+            if (!isLeaf)
+                for (int i = 0; i < children.length; i++) {
+                    if (children[i] != null)
+                        entries += children[i].entries();
+                }
             return entries;
         }
 
@@ -286,16 +302,24 @@ public class MyLongIntBTree {
             int newSize = Math.min(maxLeafEntries, Math.max(size + 1, Math.round(size * factor)));
             keys = Arrays.copyOf(keys, newSize);
             values = Arrays.copyOf(values, newSize);
-            children = Arrays.copyOf(children, newSize + 1);
+            if (!isLeaf)
+                children = Arrays.copyOf(children, newSize + 1);
         }
 
         void compact() {
             int tolerance = 1;
-            if (entrySize + tolerance >= keys.length)
-                return;
-            keys = Arrays.copyOf(keys, entrySize);
-            values = Arrays.copyOf(values, entrySize);
-            children = Arrays.copyOf(children, entrySize + 1);
+            if (entrySize + tolerance < keys.length) {
+                keys = Arrays.copyOf(keys, entrySize);
+                values = Arrays.copyOf(values, entrySize);
+                if (!isLeaf)
+                    children = Arrays.copyOf(children, entrySize + 1);
+            }
+
+            if (!isLeaf)
+                for (int i = 0; i < children.length; i++) {
+                    if (children[i] != null)
+                        children[i].compact();
+                }
         }
 
         String toString(int height) {
@@ -309,12 +333,21 @@ public class MyLongIntBTree {
                     str += keys[i];
             }
             str += "\n";
-            for (int i = 0; i < entrySize + 1; i++) {
-                if (children[i] != null)
-                    str += children[i].toString(height + 1) + "| ";
-            }
+            if (!isLeaf)
+                for (int i = 0; i < entrySize + 1; i++) {
+                    if (children[i] != null)
+                        str += children[i].toString(height + 1) + "| ";
+                }
             return str;
         }
+    }
+
+    public void optimize() {
+        StopWatch sw = new StopWatch().start();
+        int old = memoryUsage();
+        root.compact();
+        System.out.println(size + "| osmIdMap.optimize took: " + sw.stop().getSeconds()
+                + " => freed: " + (old - memoryUsage()) + "MB");
     }
 
     @Override

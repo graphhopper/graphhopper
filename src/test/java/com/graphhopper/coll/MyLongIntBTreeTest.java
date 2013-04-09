@@ -62,7 +62,8 @@ public class MyLongIntBTreeTest {
         assertEquals(3, instance.height());
 
         assertEquals(3, instance.height());
-        assertEquals(10, instance.size());
+        assertEquals(10, instance.size());        
+        assertEquals(0, instance.memoryUsage());
 
         check(instance, 1);
     }
@@ -154,6 +155,12 @@ public class MyLongIntBTreeTest {
                 assertEquals(j + "| Size not equal to set! In " + i + " added " + val, addedValues.size(), instance.size());
             }
             int i = 0;
+            for (int val : addedValues) {
+                assertEquals(j + "| Problem with " + i, val, instance.get(val));
+                i++;
+            }
+            instance.optimize();
+            i = 0;
             for (int val : addedValues) {
                 assertEquals(j + "| Problem with " + i, val, instance.get(val));
                 i++;

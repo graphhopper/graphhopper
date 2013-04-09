@@ -95,4 +95,7 @@ public class BigLongIntMap {
     public int memoryUsage() {
         return Math.round(capacity() * (12f + 1) / Helper.MB);
     }
+
+    public void optimize() {
+    }
 }
