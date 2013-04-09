@@ -21,6 +21,7 @@ package com.graphhopper.coll;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.Helper;
 
 /**
  * This is a special purpose map for writing increasing OSM IDs with consecutive
@@ -29,7 +30,7 @@ import com.graphhopper.util.BitUtil;
  *
  * @author Peter Karich
  */
-public class OSMIDMap {
+public class OSMIDMap implements LongIntMap {
 
     private final DataAccess keys;
     private final DataAccess values;
@@ -55,14 +56,16 @@ public class OSMIDMap {
         dir.remove(keys);
     }
 
-    public void put(long key, int value) {
+    @Override
+    public int put(long key, int value) {
         if (key <= lastKey) {
-            long retIndex = binarySearch(keys, 0, size(), key);
-            if (retIndex < 0)
+            long oldValueIndex = binarySearch(keys, 0, size(), key);
+            if (oldValueIndex < 0)
                 throw new IllegalStateException("Cannot insert keys lower than "
                         + "the last key " + key + " < " + lastKey + ". Only updating supported");
-            values.setInt(retIndex, value);
-            return;
+            int oldValue = values.getInt(oldValueIndex);
+            values.setInt(oldValueIndex, value);
+            return oldValue;
         }
 
         values.ensureCapacity(size + 1);
@@ -75,8 +78,10 @@ public class OSMIDMap {
         keys.setInt(doubleSize, (int) (key & 0xFFFFFFFFL));
         lastKey = key;
         size++;
+        return -1;
     }
 
+    @Override
     public int get(long key) {
         long retIndex = binarySearch(keys, 0, size(), key);
         if (retIndex < 0)
@@ -107,11 +112,21 @@ public class OSMIDMap {
             return ~high;
     }
 
+    @Override
     public long size() {
         return size;
     }
 
     public long capacity() {
         return keys.capacity();
+    }
+
+    @Override
+    public int memoryUsage() {
+        return Math.round(capacity() / Helper.MB);
+    }
+
+    @Override
+    public void optimize() {
     }
 }

@@ -19,6 +19,7 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.coll.BigLongIntMap;
+import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.coll.MyLongIntBTree;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
@@ -53,12 +54,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     // tower node is <= -3
     private static final int TOWER_NODE = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    // memory overhead due to hash: 
-//    private BigLongIntMap osmIdToIndexMap;
-    private MyLongIntBTree osmIdToIndexMap;
-    // only append and update possible: private OSMIDMap osmIdToIndexMap;
-    // very slow: private SparseLongLongArray osmIdToIndexMap;
-    // not applicable as ways introduces the nodes in 'wrong' order: private OSMIDSegmentedMap
+    private LongIntMap osmIdToIndexMap;
     private int towerId = 0;
     private int pillarId = 0;
     // remember how many times a node was used to identify tower nodes
@@ -70,9 +66,15 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         dir = storage.directory();
         pillarLats = dir.findCreate("tmpLatitudes");
         pillarLons = dir.findCreate("tmpLongitudes");
-        // TODO check out if we better should use http://en.wikipedia.org/wiki/Segment_tree
-//        osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
-        osmIdToIndexMap = new MyLongIntBTree(150);
+
+        // Using the correct Map<Long, Integer> is hard. We need a very memory 
+        // efficient and fast solution for very big data sets!
+        // very slow: new SparseLongLongArray
+        // only append and update possible: new OSMIDMap
+        // not applicable as ways introduces the nodes in 'wrong' order: new OSMIDSegmentedMap
+        // memory overhead due to hash:
+        osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
+//        osmIdToIndexMap = new MyLongIntBTree(200);
     }
 
     @Override

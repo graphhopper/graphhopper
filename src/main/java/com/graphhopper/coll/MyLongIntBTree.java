@@ -19,7 +19,6 @@
 package com.graphhopper.coll;
 
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.StopWatch;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +29,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class MyLongIntBTree {
+public class MyLongIntBTree implements LongIntMap {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final int noNumberValue = -1;
@@ -63,6 +62,7 @@ public class MyLongIntBTree {
         clear();
     }
 
+    @Override
     public int put(long key, int value) {
         if (key == noNumberValue)
             throw new IllegalArgumentException("Illegal key " + key);
@@ -81,6 +81,7 @@ public class MyLongIntBTree {
         return rv.oldValue;
     }
 
+    @Override
     public int get(long key) {
         return root.get(key);
     }
@@ -89,6 +90,7 @@ public class MyLongIntBTree {
         return height;
     }
 
+    @Override
     public long size() {
         return size;
     }
@@ -96,6 +98,7 @@ public class MyLongIntBTree {
     /**
      * @return memory usage in MB
      */
+    @Override
     public int memoryUsage() {
         return Math.round(root.capacity() / Helper.MB);
     }
@@ -348,13 +351,14 @@ public class MyLongIntBTree {
         }
     }
 
+    @Override
     public void optimize() {
         if (size() > 10000) {
-            StopWatch sw = new StopWatch().start();
-            int old = memoryUsage();
+//            StopWatch sw = new StopWatch().start();
+//            int old = memoryUsage();
             root.compact();
-            logger.info(size + "| osmIdMap.optimize took: " + sw.stop().getSeconds()
-                    + " => freed: " + (old - memoryUsage()) + "MB");
+//            logger.info(size + "| osmIdMap.optimize took: " + sw.stop().getSeconds()
+//                    + " => freed: " + (old - memoryUsage()) + "MB");
         }
     }
 
