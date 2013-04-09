@@ -18,8 +18,7 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.coll.MyLongIntBTree;
-import com.graphhopper.coll.MyMapDB;
+import com.graphhopper.coll.BigLongIntMap;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;
@@ -54,9 +53,9 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     private static final int TOWER_NODE = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     // memory overhead due to hash: 
-//    private BigLongIntMap osmIdToIndexMap;
+    private BigLongIntMap osmIdToIndexMap;
 //    private MyLongIntBTree osmIdToIndexMap;
-    private MyMapDB osmIdToIndexMap;
+//    private MyMapDB osmIdToIndexMap;
     // only append and update possible: private OSMIDMap osmIdToIndexMap;
     // very slow: private SparseLongLongArray osmIdToIndexMap;
     // not applicable as ways introduces the nodes in 'wrong' order: private OSMIDSegmentedMap
@@ -72,9 +71,9 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         pillarLats = dir.findCreate("tmpLatitudes");
         pillarLons = dir.findCreate("tmpLongitudes");
         // TODO check out if we better should use http://en.wikipedia.org/wiki/Segment_tree
-//        osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
+        osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
 //        osmIdToIndexMap = new MyLongIntBTree(30);
-        osmIdToIndexMap = new MyMapDB(true);
+//        osmIdToIndexMap = new MyMapDB(false);
     }
 
     @Override
