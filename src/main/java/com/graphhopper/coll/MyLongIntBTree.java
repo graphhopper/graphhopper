@@ -23,11 +23,9 @@ import com.graphhopper.util.StopWatch;
 import java.util.Arrays;
 
 /**
- * A HashMap which can be stored in RAM or on disc, using open addressing
- * hashing. In combination with MMapDirectory and BigLongIntMap this can be used
- * for very large data sets.
+ * An in-memory simple B-Tree. Later we'll use DataAccess to allow on-disc
+ * storage for very large data sets. Delete not supported.
  *
- * @see http://en.wikipedia.org/wiki/Hash_table#Open_addressing
  * @author Peter Karich
  */
 public class MyLongIntBTree {
