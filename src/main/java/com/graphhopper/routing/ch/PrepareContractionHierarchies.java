@@ -261,7 +261,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     sortedNodes.update(nn, tmpOld, neighborWn.priority);
 
                 if (removesHigher2LowerEdges)
-                    ((LevelGraphStorage) g).disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
+                    ((LevelGraphStorage) g).disconnect(iter, EdgeIterator.NO_EDGE, false);
             }
         }
         logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc

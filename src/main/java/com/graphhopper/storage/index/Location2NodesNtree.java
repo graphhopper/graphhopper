@@ -318,7 +318,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                     long key = keyAlgo.encode(lat, lon);
                     long keyPart = createReverseKey(key);
                     // no need to feed both nodes as we search neighbors in findIDs
-                    addNode(root, nodeA, 0, keyPart, key);
+                    addNode(root, pickBestNode(nodeA, nodeB), 0, keyPart, key);
                 }
             };
             BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter,
@@ -601,6 +601,12 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         });
 
         return closestNode;
+    }
+
+    protected int pickBestNode(int nodeA, int nodeB) {
+        // For normal graph the node does not matter because if nodeA is conntected to nodeB
+        // then nodeB is also connect to nodeA, but for a LevelGraph this does not apply.
+        return nodeA;
     }
 
     protected EdgeIterator getEdges(int node) {
