@@ -117,9 +117,13 @@ public class AcceptWay {
         value = osmProperties.get("route");
         if (value != null
                 && ("shuttle_train".equals(value) || "ferry".equals(value))) {
-            if (car && isTrue(osmProperties.get("motorcar"))
-                    || bike && isTrue(osmProperties.get("bike"))
-                    || foot && isTrue(osmProperties.get("foot"))) {
+            Object motorcarProp = osmProperties.get("motorcar");
+            Object bikeProp = osmProperties.get("bike");
+            Object footProp = osmProperties.get("motorcar");
+            boolean allEmpty = motorcarProp == null && bikeProp == null && footProp == null;
+            if (car && (allEmpty || isTrue(motorcarProp))
+                    || bike && (allEmpty || isTrue(bikeProp))
+                    || foot && (allEmpty || isTrue(footProp))) {
 
                 int velo = 30;
                 // TODO read duration and calculate speed 00:30 for ferry
@@ -190,10 +194,10 @@ public class AcceptWay {
         }
     }
 
-    boolean isTrue(Object str) {
-        if (str == null)
+    boolean isTrue(Object obj) {
+        if (obj == null)
             return false;
-        return "yes".equals(str) || "true".equals(str) || "1".equals(str);
+        return "yes".equals(obj) || "true".equals(obj) || "1".equals(obj);
     }
 
     /**
