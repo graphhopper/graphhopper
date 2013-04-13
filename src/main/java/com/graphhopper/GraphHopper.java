@@ -237,7 +237,6 @@ public class GraphHopper implements GraphHopperAPI {
             }
 
             args.put("osmreader.type", acceptWay.toString());
-
             if (chUsage) {
                 args.put("osmreader.levelgraph", "true");
                 args.put("osmreader.chShortcuts", chFast ? "fastest" : "shortest");
