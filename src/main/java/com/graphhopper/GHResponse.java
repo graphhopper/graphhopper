@@ -20,6 +20,8 @@ package com.graphhopper;
 
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Wrapper to simplify output of GraphHopper.
@@ -28,13 +30,18 @@ import com.graphhopper.util.shapes.BBox;
  */
 public class GHResponse {
 
-    private final PointList list;
+    private PointList list;
     private double distance;
     private long time;
     private String debugInfo = "";
+    private List<Throwable> errors = new ArrayList<Throwable>(4);
 
-    public GHResponse(PointList list) {
-        this.list = list;
+    public GHResponse() {
+    }
+
+    public GHResponse points(PointList points) {
+        list = points;
+        return this;
     }
 
     public GHResponse distance(double distance) {
@@ -92,6 +99,19 @@ public class GHResponse {
 
     public GHResponse debugInfo(String debugInfo) {
         this.debugInfo = debugInfo;
+        return this;
+    }
+
+    public boolean hasError() {
+        return !errors.isEmpty();
+    }
+
+    public List<Throwable> errors() {
+        return errors;
+    }
+
+    public GHResponse addError(Throwable error) {
+        errors.add(error);
         return this;
     }
 
