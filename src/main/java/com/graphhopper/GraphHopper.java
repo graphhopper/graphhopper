@@ -323,7 +323,7 @@ public class GraphHopper implements GraphHopperAPI {
             index.prepareIndex();
     }
 
-    public Graph getGraph() {
+    public Graph graph() {
         return graph;
     }
 }
