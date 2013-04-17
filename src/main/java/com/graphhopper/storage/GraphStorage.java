@@ -988,6 +988,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
     @Override
     public void close() {
+        geometry.close();
         edges.close();
         nodes.close();
     }

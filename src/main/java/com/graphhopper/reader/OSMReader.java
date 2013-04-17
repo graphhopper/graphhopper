@@ -40,6 +40,7 @@ import com.graphhopper.storage.index.Location2IDQuadtree;
 import com.graphhopper.storage.index.Location2NodesNtree;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Constants;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
@@ -67,7 +68,7 @@ public class OSMReader {
         CmdArgs args = CmdArgs.read(strs);
         if (!Helper.isEmpty(args.get("printVersion", ""))
                 || !Helper.isEmpty(args.get("v", "")) || !Helper.isEmpty(args.get("version", ""))) {
-            System.out.println("version " + Helper.VERSION + "|" + Helper.VERSION_FILE + "|" + Helper.BUILD_DATE);
+            System.out.println("version " + Constants.VERSION + "|" + Constants.VERSION_FILE + "|" + Constants.BUILD_DATE);
         }
 
         OSMReader reader = osm2Graph(args);

@@ -33,6 +33,16 @@ import org.junit.Test;
  */
 public class GraphStorageTest extends AbstractGraphTester {
 
+    private GraphStorage gs;
+
+    @Override
+    public void setUp() {
+        super.setUp();
+        if (gs != null) {
+            gs.close();
+        }
+    }
+
     @Override
     public GraphStorage createGraph(String location, int size) {
         // reduce segment size in order to test the case where multiple segments come into the game
@@ -49,7 +59,7 @@ public class GraphStorageTest extends AbstractGraphTester {
 
     @Test
     public void testNoCreateCalled() throws IOException {
-        GraphStorage gs = new GraphBuilder().build();
+        gs = new GraphBuilder().build();
         try {
             gs.ensureNodeIndex(123);
             assertFalse("IllegalStateException should be raised", true);
@@ -73,6 +83,7 @@ public class GraphStorageTest extends AbstractGraphTester {
 
         checkGraph(graph);
         graph.flush();
+        graph.close();
 
         graph = newGraph(new MMapDirectory(defaultGraph));
         assertTrue(graph.loadExisting());
@@ -82,6 +93,7 @@ public class GraphStorageTest extends AbstractGraphTester {
 
         graph.edge(3, 4, 123, true);
         checkGraph(graph);
+        graph.close();
     }
 
     protected void checkGraph(Graph g) {
@@ -108,17 +120,25 @@ public class GraphStorageTest extends AbstractGraphTester {
 
     @Test
     public void internalDisconnect() {
-        GraphStorage g = (GraphStorage) createGraph();
-        EdgeIterator iter0 = g.edge(0, 1, 10, true);
-        EdgeIterator iter1 = g.edge(1, 2, 10, true);
-        g.edge(0, 3, 10, true);
+        gs = (GraphStorage) createGraph();
+        EdgeIterator iter0 = gs.edge(0, 1, 10, true);
+        EdgeIterator iter1 = gs.edge(1, 2, 10, true);
+        gs.edge(0, 3, 10, true);
 
-        assertEquals(Arrays.asList(1, 3), GHUtility.neighbors(g.getEdges(0)));
-        assertEquals(Arrays.asList(0, 2), GHUtility.neighbors(g.getEdges(1)));
+        assertEquals(Arrays.asList(1, 3), GHUtility.neighbors(gs.getEdges(0)));
+        assertEquals(Arrays.asList(0, 2), GHUtility.neighbors(gs.getEdges(1)));
         // remove edge "1-2" but only from 1
-        g.internalEdgeDisconnect(iter1.edge(), (long) iter0.edge() * g.edgeEntrySize, iter1.baseNode(), iter1.adjNode());
-        assertEquals(Arrays.asList(0), GHUtility.neighbors(g.getEdges(1)));
+        gs.internalEdgeDisconnect(iter1.edge(), (long) iter0.edge() * gs.edgeEntrySize, iter1.baseNode(), iter1.adjNode());
+        assertEquals(Arrays.asList(0), GHUtility.neighbors(gs.getEdges(1)));
         // let 0 unchanged -> no side effects
-        assertEquals(Arrays.asList(1, 3), GHUtility.neighbors(g.getEdges(0)));
-    }    
+        assertEquals(Arrays.asList(1, 3), GHUtility.neighbors(gs.getEdges(0)));
+    }
+
+    @Test
+    public void testEnsureSize() {
+        Directory dir = new RAMDirectory();
+        gs = new GraphStorage(dir).create(defaultSize);
+        int testIndex = dir.findCreate("edges").segmentSize() * 3;
+        gs.edge(0, testIndex, 10, true);
+    }
 }

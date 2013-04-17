@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NotThreadSafe;
 import java.io.File;
@@ -139,9 +140,10 @@ public class MMapDataAccess extends AbstractDataAccess {
                 // Here we rely on the OS+file system that increasing the file 
                 // size has no effect on the old mappings!
                 bufferStart += segments.size() * longSegmentSize;
-                newSegments = segmentsToMap - segments.size();
+                newSegments = segmentsToMap - segments.size();            
             }
-            raFile.setLength(newFileLength);
+            // rely on automatically increasing when mapping
+//            raFile.setLength(newFileLength);
             for (; i < newSegments; i++) {
                 segments.add(newByteBuffer(bufferStart, longSegmentSize));
                 bufferStart += longSegmentSize;
@@ -240,10 +242,10 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void close() {
-        Helper.close(raFile);
+    public void close() {        
         clean(0, segments.size());
         segments.clear();
+        Helper.close(raFile);
         closed = true;
     }
 
@@ -317,14 +319,15 @@ public class MMapDataAccess extends AbstractDataAccess {
 
         clean(remainingSegNo, segments.size());
         segments = new ArrayList<ByteBuffer>(segments.subList(0, remainingSegNo));
-
-        // reduce file size
+               
         try {
-            raFile.setLength(HEADER_OFFSET + remainingSegNo * segmentSizeInBytes);
+            // windows does not allow changing the length of an open files
+            if(!Constants.WINDOWS)                
+                // reduce file size
+                raFile.setLength(HEADER_OFFSET + remainingSegNo * segmentSizeInBytes);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
-        }
-        cleanHack();
+        }        
     }
 
     boolean releaseSegment(int segNumber) {

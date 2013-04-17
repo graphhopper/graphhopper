@@ -42,6 +42,7 @@ public class MMapDataAccessTest extends DataAccessTest {
         da = createDataAccess(name);
         assertTrue(da.loadExisting());
         assertEquals(123, da.getInt(7));
+        da.close();
     }
 
     @Test
@@ -57,5 +58,6 @@ public class MMapDataAccessTest extends DataAccessTest {
         da = new RAMDataAccess(name, directory, true);
         assertTrue(da.loadExisting());
         assertEquals(123, da.getInt(7));
+        da.close();
     }
 }

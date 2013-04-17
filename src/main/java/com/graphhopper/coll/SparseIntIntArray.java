@@ -323,7 +323,7 @@ public class SparseIntIntArray {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < mKeys.length; i++) {
+        for (int i = 0; i < size(); i++) {
             int k = mKeys[i];
             int v = mValues[i];
             if (i > 0)

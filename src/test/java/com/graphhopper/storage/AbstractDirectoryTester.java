@@ -30,11 +30,17 @@ import static org.junit.Assert.*;
  */
 public abstract class AbstractDirectoryTester {
 
-    protected String location = "./target/tmp/ramdir";
-
+    protected String location = "./target/tmp/dir";
+    private DataAccess da;
     abstract Directory createDir();
 
-    @After
+    @After    
+    public void tearDown() {
+        Helper.removeDir(new File(location));
+        if(da != null)
+            da.close();
+    }
+    
     @Before
     public void setUp() {
         Helper.removeDir(new File(location));
@@ -43,7 +49,7 @@ public abstract class AbstractDirectoryTester {
     @Test
     public void testRename() {
         Directory dir = createDir();
-        DataAccess da = dir.findCreate("testing");
+        da = dir.findCreate("testing");
         da.create(100);
         da.flush();
         dir.rename(da, "newtesting");
@@ -55,12 +61,14 @@ public abstract class AbstractDirectoryTester {
         DataAccess da1 = dir.findCreate("testing");
         DataAccess da2 = dir.findCreate("testing");
         assertTrue(da1 == da2);
+        da1.close();
+        da2.close();
     }
 
     @Test
     public void testNoErrorForDACreate() {
         Directory dir = createDir();
-        DataAccess da = dir.findCreate("testing");
+        da = dir.findCreate("testing");
         da.create(100);
         da.flush();
     }
