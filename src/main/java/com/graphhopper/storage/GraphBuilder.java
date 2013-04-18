@@ -64,7 +64,7 @@ public class GraphBuilder {
         return this;
     }
 
-    LevelGraphStorage levelGraphBuild() {
+    public LevelGraphStorage levelGraphBuild() {
         return (LevelGraphStorage) levelGraph(true).build();
     }
 

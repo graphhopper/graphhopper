@@ -995,7 +995,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
     @Override
     public long capacity() {
-        return edges.capacity() + nodes.capacity();
+        return edges.capacity() + nodes.capacity() + geometry.capacity();
     }
 
     public int version() {

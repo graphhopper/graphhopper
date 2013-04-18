@@ -205,7 +205,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                 + " nodes: " + g.nodes() + ", osmIdMap.size:" + osmIdToIndexMap.size()
                 + ", osmIdMap:" + osmIdToIndexMap.memoryUsage() + "MB"
                 + ", osmIdMap.toString:" + osmIdToIndexMap + " "
-                + Helper.getMemInfo());
+                + Helper.memInfo());
     }
 
     @Override
@@ -263,7 +263,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                 if (tmpCounter % 50000000 == 0)
                     logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
                             + nf(osmIdToIndexMap.size()) + " (" + osmIdToIndexMap.memoryUsage() + "MB) "
-                            + Helper.getMemInfo());
+                            + Helper.memInfo());
 
                 switch (event) {
                     case XMLStreamConstants.START_ELEMENT:

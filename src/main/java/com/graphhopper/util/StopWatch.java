@@ -42,14 +42,14 @@ public class StopWatch {
     }
 
     public StopWatch start() {
-        lastTime = System.currentTimeMillis();
+        lastTime = System.nanoTime();
         return this;
     }
 
     public StopWatch stop() {
         if (lastTime < 0)
             return this;
-        time += System.currentTimeMillis() - lastTime;
+        time += System.nanoTime() - lastTime;
         lastTime = -1;
         return this;
     }
@@ -58,7 +58,7 @@ public class StopWatch {
      * @return the delta time in milliseconds
      */
     public long getTime() {
-        return time;
+        return time / 1000000;
     }
 
     @Override
@@ -71,6 +71,6 @@ public class StopWatch {
     }
 
     public float getSeconds() {
-        return time / 1000f;
+        return time / 1e9f;
     }
 }

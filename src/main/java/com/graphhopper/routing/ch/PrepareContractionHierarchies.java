@@ -218,7 +218,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 updateCounter++;
                 logger.info(counter + ", nodes: " + sortedNodes.size() + ", shortcuts:" + newShortcuts
                         + ", updateAllTime:" + sw.getSeconds() + ", " + updateCounter
-                        + ", memory:" + Helper.getMemInfo());
+                        + ", memory:" + Helper.memInfo());
             }
 
             counter++;
@@ -268,7 +268,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 + ", " + prepareEncoder + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges);
     }
 
-    int shortcuts() {
+    public int shortcuts() {
         return newShortcuts;
     }
 

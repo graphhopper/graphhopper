@@ -12,3 +12,4 @@ config.properties
 build.xml
 queries.sh
 maven/
+measurement*.properties

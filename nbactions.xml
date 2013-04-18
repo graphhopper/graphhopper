@@ -49,8 +49,10 @@
     </action>
     <action>
             <actionName>CUSTOM-assembly</actionName>
-            <displayName>assembly</displayName>
+            <displayName>clean assembly</displayName>
             <goals>
+                <goal>clean</goal>
+                <goal>install</goal>
                 <goal>assembly:single</goal>
             </goals>
             <properties>

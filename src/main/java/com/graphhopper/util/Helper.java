@@ -19,7 +19,6 @@ import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.DataAccess;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -118,9 +117,9 @@ public class Helper {
     }
 
     public static boolean removeDir(File file) {
-        if(!file.exists())
+        if (!file.exists())
             return true;
-        
+
         if (file.isDirectory()) {
             for (File f : file.listFiles()) {
                 removeDir(f);
@@ -130,9 +129,16 @@ public class Helper {
         return file.delete();
     }
 
-    public static String getMemInfo() {
-        return "totalMB:" + Runtime.getRuntime().totalMemory() / MB
-                + ", usedMB:" + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / MB;
+    public static long totalMB() {
+        return Runtime.getRuntime().totalMemory() / MB;
+    }
+
+    public static long usedMB() {
+        return (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / MB;
+    }
+
+    public static String memInfo() {
+        return "totalMB:" + totalMB() + ", usedMB:" + usedMB();
     }
 
     public static int sizeOfObjectRef(int factor) {
@@ -312,7 +318,7 @@ public class Helper {
     // +- 180 and +-90 => let use use 400
     private static final float DEGREE_FACTOR = Integer.MAX_VALUE / 400f;
     private static final float INT_FACTOR = Integer.MAX_VALUE / 10000f;
-   
+
     public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
         try {
             AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
