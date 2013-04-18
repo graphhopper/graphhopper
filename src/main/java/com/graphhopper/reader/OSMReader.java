@@ -156,7 +156,7 @@ public class OSMReader {
      */
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
         String type = args.get("osmreader.type", "CAR");
-        System.out.println(args);
+        // System.out.println(args);
         AcceptWay acceptWay = AcceptWay.parse(type);
         osmReader.acceptStreet(acceptWay);
         final String algoStr = args.get("osmreader.algo", "astar");

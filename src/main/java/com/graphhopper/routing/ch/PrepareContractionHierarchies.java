@@ -197,11 +197,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         int updateCounter = 0;
         StopWatch sw = new StopWatch();
+        // without lazyUpdate preparation and queries are faster
+        boolean lazyUpdate = false;
+        // preparation takes longer but queries a slightly faster with preparation
+        // => enable it but call not so often
+        boolean periodicUpdate = true;
         // no update all => 600k shortcuts and 3min
         while (!sortedNodes.isEmpty()) {
             if (counter % updateSize == 0) {
                 // periodically update priorities of ALL nodes            
-                if (updateCounter > 0 && updateCounter % 2 == 0) {
+                if (periodicUpdate && updateCounter > 0 && updateCounter % 5 == 0) {
                     int len = g.nodes();
                     sw.start();
                     // TODO avoid to traverse all nodes -> via a new sortedNodes.iterator()
@@ -226,7 +231,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             // update priority of current endNode via simulating 'addShortcuts'
             wn.priority = calculatePriority(wn.node);
-            if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue()) {
+            if (lazyUpdate && !sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue()) {
                 // endNode got more important => insert as new value and contract it later
                 sortedNodes.insert(wn.node, wn.priority);
                 continue;
@@ -246,7 +251,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             g.setLevel(wn.node, level);
             level++;
 
-            // recompute priority of uncontracted neighbors
+            // this is very important: recompute priority of uncontracted neighbors
             EdgeIterator iter = g.getEdges(wn.node, vehicleAllFilter);
             while (iter.next()) {
                 if (g.getLevel(iter.adjNode()) != 0)
