@@ -13,3 +13,4 @@ build.xml
 queries.sh
 maven/
 measurement*.properties
+files/live_measurement.sh

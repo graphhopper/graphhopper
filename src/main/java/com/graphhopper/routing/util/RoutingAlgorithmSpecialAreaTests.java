@@ -105,47 +105,6 @@ public class RoutingAlgorithmSpecialAreaTests {
         return prepare;
     }
 
-    public void runShortestPathPerf(int runs, AlgorithmPreparation prepare) throws Exception {
-        BBox bbox = unterfrankenGraph.bounds();
-        double minLat = bbox.minLat, minLon = bbox.minLon;
-        double maxLat = bbox.maxLat, maxLon = bbox.maxLon;
-
-        logger.info("running " + prepare.createAlgo());
-        Random rand = new Random(123);
-        StopWatch sw = new StopWatch();
-
-        // System.out.println("cap:" + ((GraphStorage) unterfrankenGraph).capacity());
-        for (int i = 0; i < runs; i++) {
-            double fromLat = rand.nextDouble() * (maxLat - minLat) + minLat;
-            double fromLon = rand.nextDouble() * (maxLon - minLon) + minLon;
-//            sw.start();
-            int from = idx.findID(fromLat, fromLon);
-            double toLat = rand.nextDouble() * (maxLat - minLat) + minLat;
-            double toLon = rand.nextDouble() * (maxLon - minLon) + minLon;
-            int to = idx.findID(toLat, toLon);
-//            sw.stop();
-//                logger.info(i + " " + sw + " from (" + from + ")" + fromLat + ", " + fromLon + " to (" + to + ")" + toLat + ", " + toLon);
-            if (from == to) {
-                logger.warn("skipping i " + i + " from==to " + from);
-                continue;
-            }
-
-            sw.start();
-            Path p = prepare.graph(unterfrankenGraph).createAlgo().calcPath(from, to);
-            sw.stop();
-            if (!p.found()) {
-                // there are still paths not found cause of oneway motorways => only routable in one direction
-                // e.g. unterfrankenGraph.getLatitude(798809) + "," + unterfrankenGraph.getLongitude(798809)
-                logger.warn("no route found for i=" + i + " !? "
-                        + "graph-from " + from + "(" + fromLat + "," + fromLon + "), "
-                        + "graph-to " + to + "(" + toLat + "," + toLon + ")");
-                continue;
-            }
-            if (i % 20 == 0)
-                logger.info(i + " " + sw.getSeconds() / (i + 1) + " secs/run");// (" + p + ")");            
-        }
-    }
-
     void testIndex() {
         TestAlgoCollector testCollector = new TestAlgoCollector("testIndex");
         testCollector.queryIndex(unterfrankenGraph, idx, 50.081241, 10.124366, 14.0);

@@ -25,8 +25,21 @@ ARGS="osmreader.graph-location=$GL osmreader.osm=$OSM_XML osmreader.chShortcuts=
 echo $"\ncreate graph via $ARGS, $JAR"
 $JAVA $JAVA_OPTS -cp $JAR com.graphhopper.reader.OSMReader $ARGS osmreader.doPrepare=false
 
-# measurement
-COUNT=10000
-ARGS="$ARGS osmreader.doPrepare=true measurement.count=$COUNT"
-echo $"perform measurement via $ARGS, $JAR"
-$JAVA $JAVA_OPTS -cp $JAR com.graphhopper.util.Measurement $ARGS
+function startMeasurement {
+  COUNT=5000
+  ARGS="$ARGS osmreader.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME"
+  echo $"perform measurement via $ARGS, $JAR"
+  $JAVA $JAVA_OPTS -cp $JAR com.graphhopper.util.Measurement $ARGS
+}
+
+last_commits=1
+commits=$(git rev-list HEAD -n $last_commits)
+for commit in $commits; do
+  git checkout $commit -q
+  M_FILE_NAME=`git log -n 1 --pretty=oneline | grep -o "\ .*" |  tr " ,;" "_"`
+  M_FILE_NAME="measurement$M_FILE_NAME.properties"
+  echo "using commit $commit and $M_FILE_NAME"
+  
+  mvn -DskipTests clean install assembly:single
+  startMeasurement
+done

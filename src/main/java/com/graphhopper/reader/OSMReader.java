@@ -76,16 +76,6 @@ public class OSMReader {
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(reader);
         if (args.getBool("osmreader.test", false))
             tests.start();
-
-        if (args.getBool("osmreader.runshortestpath", false)) {
-            String type = args.get("osmreader.type", "CAR");
-            VehicleEncoder encoder = AcceptWay.parse(type).firstEncoder();
-            String algo = args.get("osmreader.algo", "dijkstra");
-            int iters = args.getInt("osmreader.algoIterations", 50);
-            //warmup            
-            tests.runShortestPathPerf(iters / 10, NoOpAlgorithmPreparation.createAlgoPrepare(g, algo, encoder));
-            tests.runShortestPathPerf(iters, NoOpAlgorithmPreparation.createAlgoPrepare(g, algo, encoder));
-        }
     }
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
     private long locations;
