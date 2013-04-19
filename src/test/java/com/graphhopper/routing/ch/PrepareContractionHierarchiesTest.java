@@ -90,7 +90,7 @@ public class PrepareContractionHierarchiesTest {
                 new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
         List<NodeCH> gs = createGoals(2);
-        algo.setLimit(10).calcPath(4, gs);
+        algo.limit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(0).entry);
         assertTrue(p.distance() > normalDist);
     }
@@ -103,7 +103,7 @@ public class PrepareContractionHierarchiesTest {
                 new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
         List<NodeCH> gs = createGoals(1, 2);
-        algo.setLimit(10).calcPath(4, gs);
+        algo.limit(10).calcPath(4, gs);
         Path p = algo.extractPath(gs.get(1).entry);
         assertTrue(p.distance() > normalDist);
     }
@@ -115,7 +115,7 @@ public class PrepareContractionHierarchiesTest {
                 new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(0));
         List<NodeCH> gs = createGoals(1);
-        algo.setLimit(2).calcPath(4, gs);
+        algo.limit(2).calcPath(4, gs);
         assertNull(gs.get(0).entry);
     }
 
@@ -134,7 +134,7 @@ public class PrepareContractionHierarchiesTest {
         int old = GHUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old + 7, GHUtility.count(g.getAllEdges()));
+        assertEquals(old + 8, GHUtility.count(g.getAllEdges()));
     }
 
     @Test
@@ -268,7 +268,7 @@ public class PrepareContractionHierarchiesTest {
         int old = GHUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old + 20, GHUtility.count(g.getAllEdges()));
+        assertEquals(old + 21, GHUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());

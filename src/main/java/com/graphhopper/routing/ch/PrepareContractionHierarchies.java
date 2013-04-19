@@ -91,7 +91,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private boolean removesHigher2LowerEdges = true;
     private long counter;
     private int newShortcuts;
-    private DistanceCalc distanceCalc = new DistancePlaneProjection();
 
     public PrepareContractionHierarchies() {
         type(new ShortestCalc()).vehicle(new CarFlagEncoder());
@@ -385,9 +384,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // TODO instead of a weight-limit we could use a hop-limit 
             // and successively increasing it when mean-degree of graph increases
             algo = new OneToManyDijkstraCH(g, prepareEncoder);
-            algo.edgeFilter(levelEdgeFilter.avoidNode(v));
-            algo.type(shortestCalc);
-            algo.setLimit(maxWeight).calcPath(u, goalNodes);
+            algo.limit(maxWeight).edgeFilter(levelEdgeFilter.avoidNode(v));
+            algo.type(shortestCalc);            
+            algo.calcPath(u, goalNodes);
             internalFindShortcuts(goalNodes, u, iter1.edge());
         }
         return shortcuts.keySet();
@@ -395,13 +394,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     void internalFindShortcuts(List<NodeCH> goalNodes, int fromNode, int skippedEdge1) {
         int uOrigEdgeCount = getOrigEdgeCount(skippedEdge1);
-        for (NodeCH n : goalNodes) {
-            if (n.entry != null) {
-                Path path = algo.extractPath(n.entry);
-                if (path.found() && path.distance() <= n.distance) {
-                    // FOUND witness path, so do not add shortcut
-                    continue;
-                }
+        for (NodeCH n : goalNodes) {            
+            if (n.entry != null && n.entry.weight < n.distance) {
+                // FOUND witness path, so do not add shortcut
+                continue;
             }
 
             // FOUND shortcut but be sure that it is the only shortcut in the collection 
@@ -589,7 +585,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             super(graph, encoder);
         }
 
-        OneToManyDijkstraCH setLimit(double weight) {
+        OneToManyDijkstraCH limit(double weight) {
             limit = weight;
             return this;
         }
@@ -619,10 +615,27 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             return found == goals.size();
         }
 
+//        @Override
+//        protected EdgeEntry newEdgeEntry(EdgeEntry ee, int edge, int tmpNode, double tmpWeight) {
+//            if (ee == null)
+//                return new EdgeEntryCH(0, edge, tmpNode, tmpWeight);
+//            return new EdgeEntryCH(((EdgeEntryCH) ee).hops + 1, edge, tmpNode, tmpWeight);
+//        }
+
         @Override public String name() {
             return "dijkstraOne2Many";
         }
     }
+
+//    private static class EdgeEntryCH extends EdgeEntry {
+//
+//        int hops;
+//
+//        public EdgeEntryCH(int hops, int edgeId, int endNode, double distance) {
+//            super(edgeId, endNode, distance);
+//            this.hops = hops;
+//        }
+//    }
 
     private static class PriorityNode {
 
