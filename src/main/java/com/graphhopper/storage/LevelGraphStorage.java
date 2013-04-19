@@ -126,7 +126,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
         if (sameDirection)
             internalEdgeDisconnect(iter.edge(), prevEdgePointer, iter.baseNode(), iter.adjNode());
         else {
-            // prevEdgePointer belongs to baseNode ... but now we need it for node()!
+            // prevEdgePointer belongs to baseNode ... but now we need it for adjNode()!
             EdgeSkipIterator tmpIter = getEdges(iter.adjNode());
             int tmpPrevEdge = EdgeIterator.NO_EDGE;
             boolean found = false;

@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
@@ -85,7 +86,7 @@ public abstract class AbstractDataAccess implements DataAccess {
 
     @Override
     public int version() {
-        return Helper.VERSION_FILE;
+        return Constants.VERSION_FILE;
     }
 
     protected long readHeader(RandomAccessFile raFile) throws IOException {
@@ -161,8 +162,12 @@ public abstract class AbstractDataAccess implements DataAccess {
             throw new IllegalArgumentException("newName mustn't be empty!");
         if (newName.equals(name))
             return false;
-        if (new File(location + newName).exists())
+        if (isStoring() && new File(location + newName).exists())
             throw new IllegalArgumentException("file newName already exists!");
+        return true;
+    }
+    
+    public boolean isStoring() {
         return true;
     }
 }

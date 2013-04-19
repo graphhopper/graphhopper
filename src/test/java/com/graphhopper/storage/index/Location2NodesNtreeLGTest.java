@@ -27,6 +27,8 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.Helper;
 import gnu.trove.list.TIntList;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -88,5 +90,43 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
         TIntList tlist = Helper.createTList(1, 2, 3);
         new Location2NodesNtreeLG(lg, new RAMDirectory()).sortNodes(tlist);
         assertEquals(Helper.createTList(2, 3, 1), tlist);
+    }
+
+    @Test
+    public void testLevelGraphBug() {
+        // 0
+        // |
+        // | X  2--3
+        // |
+        // 1
+
+        LevelGraphStorage lg = (LevelGraphStorage) createGraph(new RAMDirectory());
+        lg.setNode(0, 1, 0);
+        lg.setNode(1, 0, 0);
+        lg.setNode(2, 0.5, 0.5);
+        lg.setNode(3, 0.5, 1);
+        EdgeIterator iter1 = lg.edge(1, 0, 100, true);
+        EdgeIterator iter2 = lg.edge(2, 3, 100, true);
+        
+        lg.setLevel(0, 11);
+        lg.setLevel(1, 10);
+        // disconnect higher 0 from lower 1
+        lg.disconnect(iter1, EdgeIterator.NO_EDGE, false);
+        
+        lg.setLevel(2, 12);
+        lg.setLevel(3, 13);
+        // disconnect higher 3 from lower 2
+        lg.disconnect(iter1, EdgeIterator.NO_EDGE, false);
+
+        Location2NodesNtreeLG index = new Location2NodesNtreeLG(lg, new RAMDirectory());
+        index.resolution(100000);
+        index.prepareIndex();
+        // very close to 2, but should match the edge 0--1
+        TIntHashSet set = index.findNetworkEntries(0.51, 0.2);
+        TIntSet expectedSet = new TIntHashSet();
+        expectedSet.add(1);
+        expectedSet.add(2);
+        assertEquals(expectedSet, set);
+        assertEquals(0, index.findID(0.51, 0.2));
     }
 }

@@ -77,6 +77,18 @@ public class DistanceCalcTest {
         assertEquals(res, dist.calcDist(lat, lon, lat + 10, lon - 10), 1);
         assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat + 10, lon - 10), 1);
         assertEquals(res, approxDist.calcDist(lat, lon, lat + 10, lon - 10), 10000);
+
+        res = 1013735.28;
+        assertEquals(res, dist.calcDist(lat, lon, lat, lon - 10), 1);
+        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat, lon - 10), 1);
+           // 1013952.659
+        assertEquals(res, approxDist.calcDist(lat, lon, lat, lon - 10), 1000);
+        
+        // if we have a big distance for latitude only then PlaneProjection is exact!!
+        res = 1111949.3;
+        assertEquals(res, dist.calcDist(lat, lon, lat + 10, lon), 1);
+        assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat + 10, lon), 1);
+        assertEquals(res, approxDist.calcDist(lat, lon, lat + 10, lon), 1);
     }
 
     @Test

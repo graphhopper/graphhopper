@@ -19,7 +19,6 @@ import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.DataAccess;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -117,19 +116,29 @@ public class Helper {
         return need;
     }
 
-    public static void removeDir(File file) {
+    public static boolean removeDir(File file) {
+        if (!file.exists())
+            return true;
+
         if (file.isDirectory()) {
             for (File f : file.listFiles()) {
                 removeDir(f);
             }
         }
 
-        file.delete();
+        return file.delete();
     }
 
-    public static String getMemInfo() {
-        return "totalMB:" + Runtime.getRuntime().totalMemory() / MB
-                + ", usedMB:" + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / MB;
+    public static long totalMB() {
+        return Runtime.getRuntime().totalMemory() / MB;
+    }
+
+    public static long usedMB() {
+        return (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / MB;
+    }
+
+    public static String memInfo() {
+        return "totalMB:" + totalMB() + ", usedMB:" + usedMB();
     }
 
     public static int sizeOfObjectRef(int factor) {
@@ -309,50 +318,6 @@ public class Helper {
     // +- 180 and +-90 => let use use 400
     private static final float DEGREE_FACTOR = Integer.MAX_VALUE / 400f;
     private static final float INT_FACTOR = Integer.MAX_VALUE / 10000f;
-    /**
-     * The file version is independent of the real world version. E.g. to make
-     * major version jumps without the need to change the file version.
-     */
-    public static final int VERSION_FILE = 7;
-    /**
-     * The version without the snapshot string
-     */
-    public static final String VERSION;
-    public static final String BUILD_DATE;
-    public static final boolean SNAPSHOT;
-
-    static {
-        String version = "0.0";
-        try {
-            List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/version"), "UTF-8"));
-            version = v.get(0);
-        } catch (Exception ex) {
-            System.err.println("GraphHopper Initialization ERROR: cannot read version!? " + ex.getMessage());
-        }
-        int indexM = version.indexOf("-");
-        int indexP = version.indexOf(".");
-        if ("${project.version}".equals(version)) {
-            VERSION = "0.0";
-            SNAPSHOT = true;
-            System.err.println("GraphHopper Initialization WARNING: maven did not preprocess the version file! Do not use the jar for a release!");
-        } else if ("0.0".equals(version) || indexM < 0 || indexP >= indexM) {
-            VERSION = "0.0";
-            SNAPSHOT = true;
-            System.err.println("GraphHopper Initialization WARNING: cannot get version!?");
-        } else {
-            // throw away the "-SNAPSHOT"
-            String tmp = version.substring(0, indexM);
-            SNAPSHOT = version.toLowerCase().contains("-snapshot");
-            VERSION = tmp;
-        }
-        String buildDate = "";
-        try {
-            List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/builddate"), "UTF-8"));
-            buildDate = v.get(0);
-        } catch (Exception ex) {
-        }
-        BUILD_DATE = buildDate;
-    }
 
     public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
         try {

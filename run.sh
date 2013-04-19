@@ -1,4 +1,5 @@
 #!/bin/bash
+
 GH_HOME=$(dirname $0)
 JAVA=$JAVA_HOME/bin/java
 if [ "x$JAVA_HOME" = "x" ]; then
@@ -32,7 +33,7 @@ fi
 
 # file without extension if any
 NAME="${FILE%.*}"
-OSM=$NAME.osm
+OSM_XML=$NAME.osm
 
 GRAPH=$NAME-gh
 VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
@@ -50,14 +51,14 @@ elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
 
  # For import we need a lot more memory. For the mmap storage you need to lower this in order to use off-heap memory.
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1200m -Xms1200m"
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1600m -Xms1600m"
  SIZE=35000000
-elif [ -f $OSM ]; then
+elif [ -f $OSM_XML ]; then
  LINK=""
  JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx280m -Xms280m"
  SIZE=10000000
 else
- echo "Sorry, your osm file $OSM was not found ... exiting"
+ echo "Sorry, your osm file $OSM_XML was not found ... exiting"
  exit   
 fi
 
@@ -65,11 +66,11 @@ if [ ! -f "config.properties" ]; then
   cp config-example.properties config.properties
 fi
 
-if [ ! -f "$OSM" ]; then
+if [ ! -f "$OSM_XML" ]; then
   echo "No OSM file found or specified. Press ENTER to grab one from internet."
   echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
   read -e  
-  BZ=$OSM.bz2
+  BZ=$OSM_XML.bz2
   rm $BZ &> /dev/null
   
   echo "## now downloading OSM file from $LINK"
@@ -78,12 +79,12 @@ if [ ! -f "$OSM" ]; then
   echo "## extracting $BZ"
   bzip2 -d $BZ
 
-  if [ ! -f "$OSM" ]; then
-    echo "ERROR couldn't download or extract OSM file $OSM ... exiting"
+  if [ ! -f "$OSM_XML" ]; then
+    echo "ERROR couldn't download or extract OSM file $OSM_XML ... exiting"
     exit
   fi
 else
-  echo "## using existing osm file $OSM"
+  echo "## using existing osm file $OSM_XML"
 fi
 
 # maven home existent?
@@ -121,4 +122,4 @@ else
 fi
 
 echo "## now running $CLASS. algo=$ALGO. JAVA_OPTS=$JAVA_OPTS"
-$JAVA $JAVA_OPTS -cp $JAR $CLASS printVersion=true config=config.properties osmreader.graph-location=$GRAPH osmreader.osm=$OSM osmreader.size=$SIZE osmreader.algo=$ALGO
+$JAVA $JAVA_OPTS -cp $JAR $CLASS printVersion=true config=config.properties osmreader.graph-location=$GRAPH osmreader.osm=$OSM_XML osmreader.size=$SIZE osmreader.algo=$ALGO

@@ -38,13 +38,7 @@ public class HelperTest {
     @After
     public void tearDown() {
         Helper.removeDir(new File("test"));
-    }
-    
-    @Test
-    public void testVERSION() throws Exception {
-        // assertTrue(Helper.SNAPSHOT);
-        assertNotSame("0.0", Helper.VERSION);        
-    }
+    }    
 
     @Test
     public void testUnzip() throws Exception {

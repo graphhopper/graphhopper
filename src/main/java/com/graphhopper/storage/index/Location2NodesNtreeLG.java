@@ -66,6 +66,15 @@ public class Location2NodesNtreeLG extends Location2NodesNtree {
     }
 
     @Override
+    protected int pickBestNode(int nodeA, int nodeB) {
+        // return lower level nodes as those nodes are always connected to higher ones
+        // (high level nodes are potentially disconnected from lower ones in order to improve performance on Android)
+        if (lg.getLevel(nodeA) < lg.getLevel(nodeB))
+            return nodeA;
+        return nodeB;
+    }
+
+    @Override
     protected AllEdgesIterator getAllEdges() {
         final AllEdgesSkipIterator tmpIter = lg.getAllEdges();
         return new AllEdgesIterator() {

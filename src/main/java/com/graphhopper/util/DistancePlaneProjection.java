@@ -22,8 +22,8 @@ import static java.lang.Math.*;
 
 /**
  * Calculates the approximative distance of two points on earth. Very good
- * results if delta_lat and delat_lon are not too big, e.g. the distance is
- * small.
+ * results if delat_lon is not too big (see DistanceCalcTest), e.g. the distance
+ * is small.
  *
  * http://en.wikipedia.org/wiki/Geographical_distance#Spherical_Earth_projected_to_a_plane
  *
@@ -41,6 +41,7 @@ public class DistancePlaneProjection extends DistanceCalc {
     public double calcDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = toRadians(toLat - fromLat);
         double dLon = toRadians(toLon - fromLon);
+        // use mean latitude as reference point for delta_lon
         double tmp = cos(toRadians((fromLat + toLat) / 2)) * dLon;
         double normedDist = dLat * dLat + tmp * tmp;
         return R * sqrt(normedDist);

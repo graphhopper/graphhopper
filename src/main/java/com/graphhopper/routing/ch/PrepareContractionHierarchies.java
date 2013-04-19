@@ -37,6 +37,8 @@ import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GHUtility;
@@ -89,6 +91,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private boolean removesHigher2LowerEdges = true;
     private long counter;
     private int newShortcuts;
+    private DistanceCalc distanceCalc = new DistancePlaneProjection();
 
     public PrepareContractionHierarchies() {
         type(new ShortestCalc()).vehicle(new CarFlagEncoder());
@@ -197,11 +200,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         int updateCounter = 0;
         StopWatch sw = new StopWatch();
+
+        // preparation takes longer but queries a slightly faster with preparation
+        // => enable it but call not so often
+        boolean periodicUpdate = true;
         // no update all => 600k shortcuts and 3min
         while (!sortedNodes.isEmpty()) {
             if (counter % updateSize == 0) {
                 // periodically update priorities of ALL nodes            
-                if (updateCounter > 0 && updateCounter % 2 == 0) {
+                if (periodicUpdate && updateCounter > 0 && updateCounter % 5 == 0) {
                     int len = g.nodes();
                     sw.start();
                     // TODO avoid to traverse all nodes -> via a new sortedNodes.iterator()
@@ -218,35 +225,18 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 updateCounter++;
                 logger.info(counter + ", nodes: " + sortedNodes.size() + ", shortcuts:" + newShortcuts
                         + ", updateAllTime:" + sw.getSeconds() + ", " + updateCounter
-                        + ", memory:" + Helper.getMemInfo());
+                        + ", memory:" + Helper.memInfo());
             }
 
             counter++;
             PriorityNode wn = refs[sortedNodes.pollKey()];
 
-            // update priority of current endNode via simulating 'addShortcuts'
-            wn.priority = calculatePriority(wn.node);
-            if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue()) {
-                // endNode got more important => insert as new value and contract it later
-                sortedNodes.insert(wn.node, wn.priority);
-                continue;
-            }
-
             // contract!            
             newShortcuts += addShortcuts(wn.node);
-
-//            logger.info(counter + " level:" + level
-//                    + ", sc:" + newShortcuts
-//                    + ", visited:" + visitedNodes
-//                    + ", prio:" + wn.priority
-//                    + ", goalSum:" + goalSum + ", goalCounter:" + goalCounter
-//                    + ", peekVal:" + (!sortedNodes.isEmpty() ? sortedNodes.peekValue() : -1)
-//                    + ", size:" + sortedNodes.size());
-
             g.setLevel(wn.node, level);
             level++;
 
-            // recompute priority of uncontracted neighbors
+            // this is very important: recompute priority of uncontracted neighbors
             EdgeIterator iter = g.getEdges(wn.node, vehicleAllFilter);
             while (iter.next()) {
                 if (g.getLevel(iter.adjNode()) != 0)
@@ -261,14 +251,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     sortedNodes.update(nn, tmpOld, neighborWn.priority);
 
                 if (removesHigher2LowerEdges)
-                    ((LevelGraphStorage) g).disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
+                    ((LevelGraphStorage) g).disconnect(iter, EdgeIterator.NO_EDGE, false);
             }
         }
         logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc
                 + ", " + prepareEncoder + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges);
     }
 
-    int shortcuts() {
+    public int shortcuts() {
         return newShortcuts;
     }
 

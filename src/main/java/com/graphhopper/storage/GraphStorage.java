@@ -1021,13 +1021,14 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
     @Override
     public void close() {
+        geometry.close();
         edges.close();
         nodes.close();
     }
 
     @Override
     public long capacity() {
-        return edges.capacity() + nodes.capacity();
+        return edges.capacity() + nodes.capacity() + geometry.capacity();
     }
 
     public int version() {

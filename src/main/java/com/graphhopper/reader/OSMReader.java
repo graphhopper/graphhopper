@@ -40,6 +40,7 @@ import com.graphhopper.storage.index.Location2IDQuadtree;
 import com.graphhopper.storage.index.Location2NodesNtree;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Constants;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
@@ -67,7 +68,7 @@ public class OSMReader {
         CmdArgs args = CmdArgs.read(strs);
         if (!Helper.isEmpty(args.get("printVersion", ""))
                 || !Helper.isEmpty(args.get("v", "")) || !Helper.isEmpty(args.get("version", ""))) {
-            System.out.println("version " + Helper.VERSION + "|" + Helper.VERSION_FILE + "|" + Helper.BUILD_DATE);
+            System.out.println("version " + Constants.VERSION + "|" + Constants.VERSION_FILE + "|" + Constants.BUILD_DATE);
         }
 
         OSMReader reader = osm2Graph(args);
@@ -75,16 +76,6 @@ public class OSMReader {
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(reader);
         if (args.getBool("osmreader.test", false))
             tests.start();
-
-        if (args.getBool("osmreader.runshortestpath", false)) {
-            String type = args.get("osmreader.type", "CAR");
-            VehicleEncoder encoder = AcceptWay.parse(type).firstEncoder();
-            String algo = args.get("osmreader.algo", "dijkstra");
-            int iters = args.getInt("osmreader.algoIterations", 50);
-            //warmup            
-            tests.runShortestPathPerf(iters / 10, NoOpAlgorithmPreparation.createAlgoPrepare(g, algo, encoder));
-            tests.runShortestPathPerf(iters, NoOpAlgorithmPreparation.createAlgoPrepare(g, algo, encoder));
-        }
     }
     private static Logger logger = LoggerFactory.getLogger(OSMReader.class);
     private long locations;
@@ -96,6 +87,7 @@ public class OSMReader {
     private Location2IDIndex index;
     private boolean sortGraph = false;
     private int locationIndexHighResolution = 1000;
+    private boolean doPrepare = true;
 
     /**
      * Opens or creates a graph. The specified args need a property 'graph' (a
@@ -154,6 +146,7 @@ public class OSMReader {
      */
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
         String type = args.get("osmreader.type", "CAR");
+        // System.out.println(args);
         AcceptWay acceptWay = AcceptWay.parse(type);
         osmReader.acceptStreet(acceptWay);
         final String algoStr = args.get("osmreader.algo", "astar");
@@ -161,6 +154,7 @@ public class OSMReader {
                 createAlgoPrepare(algoStr, acceptWay.firstEncoder());
         osmReader.defaultAlgoPrepare(algoPrepare);
         osmReader.sort(args.getBool("osmreader.sortGraph", false));
+        osmReader.prepare(args.getBool("osmreader.doPrepare", true));
         osmReader.chShortcuts(args.get("osmreader.chShortcuts", "no"));
         osmReader.locationIndexHighResolution(args.getInt("osmreader.locationIndexHighResolution", 1000));
         if (!osmReader.loadExisting()) {
@@ -210,7 +204,7 @@ public class OSMReader {
 
     void osm2Graph(File osmXmlFile) throws IOException {
         logger.info("using " + helper.getStorageInfo(graphStorage) + ", accepts:"
-                + helper.acceptWay() + ", memory:" + Helper.getMemInfo());
+                + helper.acceptWay() + ", memory:" + Helper.memInfo());
         helper.preProcess(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
         cleanUp();
@@ -220,41 +214,43 @@ public class OSMReader {
     }
 
     void optimize() {
-        logger.info("optimizing ... (" + Helper.getMemInfo() + ")");
+        logger.info("optimizing ... (" + Helper.memInfo() + ")");
         graphStorage.optimize();
-        logger.info("finished optimize (" + Helper.getMemInfo() + ")");
+        logger.info("finished optimize (" + Helper.memInfo() + ")");
 
         // move this into the GraphStorage.optimize method?
         if (sortGraph) {
-            logger.info("sorting ... (" + Helper.getMemInfo() + ")");
+            logger.info("sorting ... (" + Helper.memInfo() + ")");
             GraphStorage newGraph = GHUtility.newStorage(graphStorage);
             GHUtility.sortDFS(graphStorage, newGraph);
             graphStorage = newGraph;
         }
 
-        logger.info("calling prepare.doWork ... (" + Helper.getMemInfo() + ")");
-        if (prepare == null)
-            defaultAlgoPrepare(NoOpAlgorithmPreparation.createAlgoPrepare("dijkstrabi",
-                    helper.acceptWay().firstEncoder()));
-        else
-            prepare.doWork();
+        if (doPrepare) {
+            logger.info("calling prepare.doWork ... (" + Helper.memInfo() + ")");
+            if (prepare == null)
+                defaultAlgoPrepare(NoOpAlgorithmPreparation.createAlgoPrepare("dijkstrabi",
+                        helper.acceptWay().firstEncoder()));
+            else
+                prepare.doWork();
+        }
     }
 
     private void cleanUp() {
         int prev = graphStorage.nodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graphStorage);
-        logger.info("start finding subnetworks, " + Helper.getMemInfo());
+        logger.info("start finding subnetworks, " + Helper.memInfo());
         preparation.doWork();
         int n = graphStorage.nodes();
         logger.info("edges: " + graphStorage.getAllEdges().maxId()
-                + "nodes " + n + ", there were " + preparation.subNetworks()
+                + ", nodes " + n + ", there were " + preparation.subNetworks()
                 + " subnetworks. removed them => " + (prev - n)
                 + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
     }
 
     void flush() {
         logger.info("flushing graph with " + graphStorage.nodes() + " nodes, bounds:"
-                + graphStorage.bounds() + ", " + Helper.getMemInfo() + ")");
+                + graphStorage.bounds() + ", " + Helper.memInfo() + ")");
         graphStorage.flush();
     }
 
@@ -275,7 +271,7 @@ public class OSMReader {
         if (tmp < 0 || helper.expectedNodes() == 0)
             throw new IllegalStateException("Expected nodes not in bounds: " + nf(helper.expectedNodes()));
 
-        logger.info("creating graph. Found nodes (pillar+tower):" + nf(helper.expectedNodes()) + ", " + Helper.getMemInfo());
+        logger.info("creating graph. Found nodes (pillar+tower):" + nf(helper.expectedNodes()) + ", " + Helper.memInfo());
         graphStorage.create(tmp);
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
@@ -293,7 +289,7 @@ public class OSMReader {
                             processNode(sReader);
                             if (counter % 10000000 == 0) {
                                 logger.info(nf(counter) + ", locs:" + nf(locations)
-                                        + " (" + skippedLocations + ") " + Helper.getMemInfo());
+                                        + " (" + skippedLocations + ") " + Helper.memInfo());
                             }
                         } else if ("way".equals(sReader.getLocalName())) {
                             if (wayStart < 0) {
@@ -311,7 +307,7 @@ public class OSMReader {
                             if ((counter / 2) % 1000000 == 0) {
                                 logger.info(nf(counter) + ", locs:" + nf(locations)
                                         + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
-                                        + " " + Helper.getMemInfo());
+                                        + " " + Helper.memInfo());
                             }
                         }
                         break;
@@ -445,5 +441,9 @@ public class OSMReader {
     public OSMReader locationIndexHighResolution(int resolution) {
         locationIndexHighResolution = resolution;
         return this;
+    }
+
+    public void prepare(boolean bool) {
+        doPrepare = bool;
     }
 }

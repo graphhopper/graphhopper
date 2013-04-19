@@ -218,7 +218,7 @@ public class GraphHopper implements GraphHopperAPI {
                 storage = new GraphStorage(dir);
 
             if (!storage.loadExisting())
-                throw new IllegalStateException("Couldn't load storage at " + graphHopperFile);
+                throw new IllegalStateException("Invalid storage at:" + graphHopperFile);
 
             graph = storage;
             initIndex(dir);
@@ -237,7 +237,6 @@ public class GraphHopper implements GraphHopperAPI {
             }
 
             args.put("osmreader.type", acceptWay.toString());
-
             if (chUsage) {
                 args.put("osmreader.levelgraph", "true");
                 args.put("osmreader.chShortcuts", chFast ? "fastest" : "shortest");
@@ -264,12 +263,14 @@ public class GraphHopper implements GraphHopperAPI {
         int from = index.findID(request.from().lat, request.from().lon);
         int to = index.findID(request.to().lat, request.to().lon);
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
+        GHResponse rsp = new GHResponse();
         if (from < 0)
-            throw new IllegalArgumentException("Cannot find point " + request.from());
+            rsp.addError(new IllegalArgumentException("Cannot find point 1:" + request.from()));
         if (to < 0)
-            throw new IllegalArgumentException("Cannot find point " + request.to());
+            rsp.addError(new IllegalArgumentException("Cannot find point 2:" + request.to()));
+
         sw = new StopWatch().start();
-        RoutingAlgorithm algo;
+        RoutingAlgorithm algo = null;
         if (chUsage) {
             prepare.graph(graph);
             if (request.algorithm().equals("dijkstrabi"))
@@ -277,12 +278,14 @@ public class GraphHopper implements GraphHopperAPI {
             else if (request.algorithm().equals("astarbi"))
                 algo = ((PrepareContractionHierarchies) prepare).createAStar();
             else
-                throw new IllegalStateException("Only dijkstrabi and astarbi is supported for levelgraph/CH!");
+                rsp.addError(new IllegalStateException("Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
         } else {
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm(), request.vehicle());
             algo = prepare.createAlgo();
             algo.type(request.type());
         }
+        if (rsp.hasError())
+            return rsp;
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
         sw = new StopWatch().start();
@@ -297,7 +300,7 @@ public class GraphHopper implements GraphHopperAPI {
             new DouglasPeucker().maxDistance(minPathPrecision).simplify(points);
             debug += ", simplify (" + orig + "->" + points.size() + "):" + sw.stop().getSeconds() + "s";
         }
-        return new GHResponse(points).distance(path.distance()).time(path.time()).debugInfo(debug);
+        return rsp.points(points).distance(path.distance()).time(path.time()).debugInfo(debug);
     }
 
     private void initIndex(Directory dir) {
@@ -320,7 +323,7 @@ public class GraphHopper implements GraphHopperAPI {
             index.prepareIndex();
     }
 
-    public Graph getGraph() {
+    public Graph graph() {
         return graph;
     }
 }

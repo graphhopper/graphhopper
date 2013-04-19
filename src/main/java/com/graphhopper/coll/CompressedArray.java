@@ -104,7 +104,6 @@ public class CompressedArray {
             }
             return null;
         } catch (ArrayIndexOutOfBoundsException ex) {
-            // hack to get more information when exception happens
             throw new RuntimeException("index " + index + "=> segNo:" + segmentNo + ", entry=" + entry
                     + ", segments:" + segments.size(), ex);
         } catch (Exception ex) {

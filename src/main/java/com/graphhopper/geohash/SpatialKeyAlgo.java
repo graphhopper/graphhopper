@@ -75,15 +75,7 @@ import com.graphhopper.util.shapes.CoordTrig;
 //  lon0 == 0 | lon0 == 1
 public class SpatialKeyAlgo implements KeyAlgo {
 
-    // private int factorForPrecision;
-    // normally -180 degree
-    private double minLon;
-    // normally +180 degree (parallel to equator)
-    private double maxLon;
-    // normally -90 degree
-    private double minLat;
-    // normally +90 degree (south to nord)
-    private double maxLat;
+    private BBox bbox;
     private int allBits;
     private long initialBits;
 
@@ -126,16 +118,13 @@ public class SpatialKeyAlgo implements KeyAlgo {
     }
 
     public SpatialKeyAlgo bounds(BBox box) {
-        bounds(box.minLon, box.maxLon, box.minLat, box.maxLat);
+        bbox = box.clone();
         return this;
     }
 
     @Override
     public SpatialKeyAlgo bounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit) {
-        minLon = minLonInit;
-        maxLon = maxLonInit;
-        minLat = minLatInit;
-        maxLat = maxLatInit;
+        bounds(new BBox(minLonInit, maxLonInit, minLatInit, maxLatInit));
         return this;
     }
 
@@ -159,10 +148,10 @@ public class SpatialKeyAlgo implements KeyAlgo {
         // but we would need 'long' because 'int factorForPrecision' is not enough (problem: coord!=decode(encode(coord)) see testBijection)
         // and 'long'-ops are more expensive than double (at least on 32bit systems)
         long hash = 0;
-        double minLatTmp = minLat;
-        double maxLatTmp = maxLat;
-        double minLonTmp = minLon;
-        double maxLonTmp = maxLon;
+        double minLatTmp = bbox.minLat;
+        double maxLatTmp = bbox.maxLat;
+        double minLonTmp = bbox.minLon;
+        double maxLonTmp = bbox.maxLon;
         int i = 0;
         while (true) {
             if (minLatTmp < maxLatTmp) {
@@ -209,10 +198,10 @@ public class SpatialKeyAlgo implements KeyAlgo {
         // precalculated values from arrays and for 'bits' a precalculated array is even slightly slower!
 
         // Use the value in the middle => start from "min" use "max" as initial step-size
-        double midLat = (maxLat - minLat) / 2;
-        double midLon = (maxLon - minLon) / 2;
-        double lat = minLat;
-        double lon = minLon;
+        double midLat = (bbox.maxLat - bbox.minLat) / 2;
+        double midLon = (bbox.maxLon - bbox.minLon) / 2;
+        double lat = bbox.minLat;
+        double lon = bbox.minLon;
         long bits = initialBits;
         while (true) {
             if ((spatialKey & bits) != 0)
@@ -239,6 +228,6 @@ public class SpatialKeyAlgo implements KeyAlgo {
 
     @Override
     public String toString() {
-        return "bits:" + allBits + ", bounds:" + new BBox(minLon, maxLon, minLat, maxLat);
+        return "bits:" + allBits + ", bounds:" + bbox;
     }
 }

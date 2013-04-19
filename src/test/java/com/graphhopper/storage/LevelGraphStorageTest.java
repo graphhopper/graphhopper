@@ -119,20 +119,20 @@ public class LevelGraphStorageTest extends GraphStorageTest {
         iter.next();
         assertEquals(2, iter.adjNode());
         assertEquals(1, GHUtility.count(g.getEdges(2, carOutFilter)));
-        g.disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
+        g.disconnect(iter, EdgeIterator.NO_EDGE, false);
         assertEquals(0, GHUtility.count(g.getEdges(2, carOutFilter)));
 
         // even directed ways change!
         assertTrue(iter.next());
         assertEquals(0, iter.adjNode());
         assertEquals(1, GHUtility.count(g.getEdges(0, carInFilter)));
-        g.disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
+        g.disconnect(iter, EdgeIterator.NO_EDGE, false);
         assertEquals(0, GHUtility.count(g.getEdges(0, carInFilter)));
 
         iter.next();
         assertEquals(3, iter.adjNode());
         assertEquals(1, GHUtility.count(g.getEdges(3, carOutFilter)));
-        g.disconnect(iter, EdgeSkipIterator.NO_EDGE, false);
+        g.disconnect(iter, EdgeIterator.NO_EDGE, false);
         assertEquals(0, GHUtility.count(g.getEdges(3, carOutFilter)));
     }
 }

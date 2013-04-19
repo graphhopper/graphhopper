@@ -24,7 +24,7 @@ package com.graphhopper.routing.util;
  * @author Peter Karich
  */
 public class FastestCalc implements WeightCalculation {
-    
+
     private final VehicleEncoder encoder;
     private final double maxSpeed;
 
@@ -35,7 +35,7 @@ public class FastestCalc implements WeightCalculation {
 
     @Override
     public double getMinWeight(double distance) {
-        return distance * 3.6 / maxSpeed;
+        return distance / maxSpeed;
     }
 
     @Override
