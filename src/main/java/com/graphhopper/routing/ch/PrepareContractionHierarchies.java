@@ -201,11 +201,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         int updateCounter = 0;
         StopWatch sw = new StopWatch();
 
-        double lastLat = Double.NaN;
-        double lastLon = Double.NaN;
-        boolean spatialUpdate = true;
-        // without lazyUpdate preparation and queries are faster
-        boolean lazyUpdate = false;
         // preparation takes longer but queries a slightly faster with preparation
         // => enable it but call not so often
         boolean periodicUpdate = true;
@@ -236,53 +231,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             counter++;
             PriorityNode wn = refs[sortedNodes.pollKey()];
 
-            // update priority of current endNode via simulating 'addShortcuts'
-            if (lazyUpdate) {
-                wn.priority = calculatePriority(wn.node);
-                if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue()) {
-                    // endNode got more important => insert as new value and contract it later
-                    sortedNodes.insert(wn.node, wn.priority);
-                    continue;
-                }
-            }
-
-            if (spatialUpdate && !sortedNodes.isEmpty()) {
-                if (!Double.isNaN(lastLat)) {
-                    int nextNode = sortedNodes.peekKey();
-                    double nextLat = g.getLatitude(nextNode);
-                    double nextLon = g.getLongitude(nextNode);
-                    double currentLat = g.getLatitude(wn.node);
-                    double currentLon = g.getLongitude(wn.node);
-                    // if distance of last node to next node would be larger than to current choose next node as current
-                    if (distanceCalc.calcNormalizedDist(lastLat, lastLon, nextLat, nextLon)
-                            > distanceCalc.calcNormalizedDist(lastLat, lastLon, currentLat, currentLon)) {
-                        PriorityNode next = refs[sortedNodes.pollKey()];
-                        // put current back into queue
-                        sortedNodes.insert(wn.node, wn.priority);
-                        wn = next;
-                        lastLat = nextLat;
-                        lastLon = nextLon;
-                    } else {
-                        lastLat = currentLat;
-                        lastLon = currentLon;
-                    }
-                } else {
-                    lastLat = g.getLatitude(wn.node);
-                    lastLon = g.getLongitude(wn.node);
-                }
-            }
-
             // contract!            
             newShortcuts += addShortcuts(wn.node);
-
-//            logger.info(counter + " level:" + level
-//                    + ", sc:" + newShortcuts
-//                    + ", visited:" + visitedNodes
-//                    + ", prio:" + wn.priority
-//                    + ", goalSum:" + goalSum + ", goalCounter:" + goalCounter
-//                    + ", peekVal:" + (!sortedNodes.isEmpty() ? sortedNodes.peekValue() : -1)
-//                    + ", size:" + sortedNodes.size());
-
             g.setLevel(wn.node, level);
             level++;
 
