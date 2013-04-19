@@ -103,7 +103,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>de.jetsli.graph.ui.MiniGraphUI</mainClass>
+                            <mainClass>com.graphhopper.reader.OSMReader</mainClass>
                         </manifest>
                     </archive>
                     <!-- for usage on android -->

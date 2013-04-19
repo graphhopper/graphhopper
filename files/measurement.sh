@@ -1,4 +1,12 @@
 #!/bin/bash
+
+# before execution do
+# 1. cp files/measurement.sh files/live_measurement.sh
+#    to ensure that you have your customized measurement.sh file available and git has no problems to switch versions
+# 2. adapt memory usage in JAVA_OPTS
+# 3. adapt the OSM location GH_MAIN
+# 4. adapt last_commits
+
 GH_HOME=$(dirname $0)/..
 cd $GH_HOME
 
@@ -22,23 +30,23 @@ GH_MAIN=/media/SAMSUNG/maps/unterfranken
 OSM_XML=$GH_MAIN.osm
 GL=$GH_MAIN-gh
 ARGS="osmreader.graph-location=$GL osmreader.osm=$OSM_XML osmreader.chShortcuts=fastest osmreader.type=CAR"
-echo $"\ncreate graph via $ARGS, $JAR"
+echo -e "\ncreate graph via $ARGS, $JAR"
 $JAVA $JAVA_OPTS -cp $JAR com.graphhopper.reader.OSMReader $ARGS osmreader.doPrepare=false
 
 function startMeasurement {
   COUNT=5000
   ARGS="$ARGS osmreader.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME"
-  echo $"perform measurement via $ARGS, $JAR"
+  echo -e "\nperform measurement via $ARGS, $JAR"
   $JAVA $JAVA_OPTS -cp $JAR com.graphhopper.util.Measurement $ARGS
 }
 
-last_commits=1
+last_commits=3
 commits=$(git rev-list HEAD -n $last_commits)
 for commit in $commits; do
   git checkout $commit -q
   M_FILE_NAME=`git log -n 1 --pretty=oneline | grep -o "\ .*" |  tr " ,;" "_"`
   M_FILE_NAME="measurement$M_FILE_NAME.properties"
-  echo "using commit $commit and $M_FILE_NAME"
+  echo -e "\nusing commit $commit and $M_FILE_NAME"
   
   mvn -DskipTests clean install assembly:single
   startMeasurement
