@@ -200,7 +200,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         int updateCounter = 0;
         StopWatch sw = new StopWatch();
 
-        // preparation takes longer but queries a slightly faster with preparation
+        boolean lazyUpdate = true;
+        // preparation takes longer but queries are slightly faster with preparation
         // => enable it but call not so often
         boolean periodicUpdate = true;
         // no update all => 600k shortcuts and 3min
@@ -229,6 +230,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             counter++;
             PriorityNode wn = refs[sortedNodes.pollKey()];
+            if (lazyUpdate) {
+                wn.priority = calculatePriority(wn.node);
+                if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue()) {
+                    // current node got more important => insert as new value and contract it later
+                    sortedNodes.insert(wn.node, wn.priority);
+                    continue;
+                }
+            }
 
             // contract!            
             newShortcuts += addShortcuts(wn.node);
@@ -385,7 +394,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // and successively increasing it when mean-degree of graph increases
             algo = new OneToManyDijkstraCH(g, prepareEncoder);
             algo.limit(maxWeight).edgeFilter(levelEdgeFilter.avoidNode(v));
-            algo.type(shortestCalc);            
+            algo.type(shortestCalc);
             algo.calcPath(u, goalNodes);
             internalFindShortcuts(goalNodes, u, iter1.edge());
         }
@@ -394,7 +403,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     void internalFindShortcuts(List<NodeCH> goalNodes, int fromNode, int skippedEdge1) {
         int uOrigEdgeCount = getOrigEdgeCount(skippedEdge1);
-        for (NodeCH n : goalNodes) {            
+        for (NodeCH n : goalNodes) {
             if (n.entry != null && n.entry.weight < n.distance) {
                 // FOUND witness path, so do not add shortcut
                 continue;
@@ -621,7 +630,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 //                return new EdgeEntryCH(0, edge, tmpNode, tmpWeight);
 //            return new EdgeEntryCH(((EdgeEntryCH) ee).hops + 1, edge, tmpNode, tmpWeight);
 //        }
-
         @Override public String name() {
             return "dijkstraOne2Many";
         }
@@ -636,7 +644,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 //            this.hops = hops;
 //        }
 //    }
-
     private static class PriorityNode {
 
         int node;
