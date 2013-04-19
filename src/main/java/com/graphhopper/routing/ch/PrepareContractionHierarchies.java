@@ -37,6 +37,8 @@ import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GHUtility;
@@ -89,6 +91,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private boolean removesHigher2LowerEdges = true;
     private long counter;
     private int newShortcuts;
+    private DistanceCalc distanceCalc = new DistancePlaneProjection();
 
     public PrepareContractionHierarchies() {
         type(new ShortestCalc()).vehicle(new CarFlagEncoder());
@@ -197,6 +200,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         int updateCounter = 0;
         StopWatch sw = new StopWatch();
+
+        double lastLat = Double.NaN;
+        double lastLon = Double.NaN;
+        boolean spatialUpdate = true;
         // without lazyUpdate preparation and queries are faster
         boolean lazyUpdate = false;
         // preparation takes longer but queries a slightly faster with preparation
@@ -230,11 +237,39 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             PriorityNode wn = refs[sortedNodes.pollKey()];
 
             // update priority of current endNode via simulating 'addShortcuts'
-            wn.priority = calculatePriority(wn.node);
-            if (lazyUpdate && !sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue()) {
-                // endNode got more important => insert as new value and contract it later
-                sortedNodes.insert(wn.node, wn.priority);
-                continue;
+            if (lazyUpdate) {
+                wn.priority = calculatePriority(wn.node);
+                if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue()) {
+                    // endNode got more important => insert as new value and contract it later
+                    sortedNodes.insert(wn.node, wn.priority);
+                    continue;
+                }
+            }
+
+            if (spatialUpdate && !sortedNodes.isEmpty()) {
+                if (!Double.isNaN(lastLat)) {
+                    int nextNode = sortedNodes.peekKey();
+                    double nextLat = g.getLatitude(nextNode);
+                    double nextLon = g.getLongitude(nextNode);
+                    double currentLat = g.getLatitude(wn.node);
+                    double currentLon = g.getLongitude(wn.node);
+                    // if distance of last node to next node would be larger than to current choose next node as current
+                    if (distanceCalc.calcNormalizedDist(lastLat, lastLon, nextLat, nextLon)
+                            > distanceCalc.calcNormalizedDist(lastLat, lastLon, currentLat, currentLon)) {
+                        PriorityNode next = refs[sortedNodes.pollKey()];
+                        // put current back into queue
+                        sortedNodes.insert(wn.node, wn.priority);
+                        wn = next;
+                        lastLat = nextLat;
+                        lastLon = nextLon;
+                    } else {
+                        lastLat = currentLat;
+                        lastLon = currentLon;
+                    }
+                } else {
+                    lastLat = g.getLatitude(wn.node);
+                    lastLon = g.getLongitude(wn.node);
+                }
             }
 
             // contract!            
