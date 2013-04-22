@@ -200,7 +200,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         int updateCounter = 0;
         StopWatch sw = new StopWatch();
 
-        boolean lazyUpdate = true;
+        // disable as preparation is slower and query time does not benefit
+        boolean lazyUpdate = false;
         // preparation takes longer but queries are slightly faster with preparation
         // => enable it but call not so often
         boolean periodicUpdate = true;
