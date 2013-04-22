@@ -105,7 +105,7 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
     }
 
     @Override
-    public int calcVisitedNodes() {
+    public int visitedNodes() {
         return visitedNodes;
     }
 }

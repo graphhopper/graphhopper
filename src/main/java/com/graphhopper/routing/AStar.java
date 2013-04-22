@@ -118,7 +118,7 @@ public class AStar extends AbstractRoutingAlgorithm {
     }
 
     @Override
-    public int calcVisitedNodes() {
+    public int visitedNodes() {
         return visitedCount;
     }
 

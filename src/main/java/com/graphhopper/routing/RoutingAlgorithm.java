@@ -52,5 +52,5 @@ public interface RoutingAlgorithm {
     /**
      * Returns the visited nodes after searching. Useful for debugging.
      */
-    int calcVisitedNodes();
+    int visitedNodes();
 }

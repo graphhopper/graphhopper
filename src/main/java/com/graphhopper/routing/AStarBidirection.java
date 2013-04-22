@@ -278,7 +278,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     }
 
     @Override
-    public int calcVisitedNodes() {
+    public int visitedNodes() {
         return visitedFromCount + visitedToCount;
     }
 }

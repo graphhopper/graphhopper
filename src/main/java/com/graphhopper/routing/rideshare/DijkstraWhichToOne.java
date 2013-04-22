@@ -181,7 +181,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     }
 
     @Override
-    public int calcVisitedNodes() {
+    public int visitedNodes() {
         return visitedFromCount + visitedToCount;
     }
 }

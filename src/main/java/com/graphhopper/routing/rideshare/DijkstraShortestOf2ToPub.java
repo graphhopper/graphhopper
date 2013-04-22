@@ -208,7 +208,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm {
     }
 
     @Override
-    public int calcVisitedNodes() {
+    public int visitedNodes() {
         return visitedFromCount + visitedToCount;
     }
 }
