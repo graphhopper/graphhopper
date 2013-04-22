@@ -31,7 +31,6 @@ import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.EdgeIterator;
@@ -157,8 +156,6 @@ public class MiniGraphUI {
                         }
                         double lat2 = graph.getLatitude(nodeId);
                         double lon2 = graph.getLongitude(nodeId);
-                        if (lat2 <= 0 || lon2 <= 0)
-                            logger.info("ERROR " + nodeId + " " + iter.distance() + " " + lat2 + "," + lon2);
                         mg.plotEdge(g2, lat, lon, lat2, lon2);
                     }
                 }
