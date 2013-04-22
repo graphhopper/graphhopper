@@ -148,16 +148,16 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     }
 
     @Override
-    protected void updateShortest(EdgeEntry shortestDE, int currLoc) {
+    protected void updateShortest(EdgeEntry shortestEE, int currLoc) {
         EdgeEntry entryOther = shortestWeightMapOther.get(currLoc);
         if (entryOther == null)
             return;
 
         // update μ
-        double newShortest = shortestDE.weight + entryOther.weight;
+        double newShortest = shortestEE.weight + entryOther.weight;
         if (newShortest < shortest.weight()) {
             shortest.switchToFrom(shortestWeightMapFrom == shortestWeightMapOther);
-            shortest.edgeEntry = shortestDE;
+            shortest.edgeEntry(shortestEE);
             shortest.edgeTo = entryOther;
             shortest.weight(newShortest);
         }

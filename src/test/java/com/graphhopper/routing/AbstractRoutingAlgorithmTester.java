@@ -184,11 +184,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), 4, p.calcNodes().size());
     }
 
-    @Test public void testCalcIfNoWay() {
+    @Test public void testCalcIfEmptyWay() {
         Graph graph = createTestGraph();
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 0);
-        assertEquals(p.toString(), 0, p.distance(), 1e-4);
         assertEquals(p.toString(), 0, p.calcNodes().size());
+        assertEquals(p.toString(), 0, p.distance(), 1e-4);        
     }
 
     @Test public void testCalcIf1EdgeAway() {

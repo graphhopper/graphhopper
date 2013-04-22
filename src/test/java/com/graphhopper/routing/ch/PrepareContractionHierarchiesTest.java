@@ -268,7 +268,7 @@ public class PrepareContractionHierarchiesTest {
         int old = GHUtility.count(g.getAllEdges());
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old + 21, GHUtility.count(g.getAllEdges()));
+        assertEquals(old + 20, GHUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());
