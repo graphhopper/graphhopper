@@ -122,4 +122,4 @@ else
 fi
 
 echo "## now running $CLASS. algo=$ALGO. JAVA_OPTS=$JAVA_OPTS"
-$JAVA $JAVA_OPTS -cp $JAR $CLASS printVersion=true config=config.properties osmreader.graph-location=$GRAPH osmreader.osm=$OSM_XML osmreader.size=$SIZE osmreader.algo=$ALGO
+"$JAVA" $JAVA_OPTS -cp "$JAR" $CLASS printVersion=true config=config.properties osmreader.graph-location="$GRAPH" osmreader.osm="$OSM_XML" osmreader.size=$SIZE osmreader.algo=$ALGO
