@@ -49,8 +49,13 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
             throw new IllegalStateException("Create a new instance per call");
         alreadyRun = true;
         EdgeEntry fromEntry = new EdgeEntry(EdgeIterator.NO_EDGE, from, 0d);
+        map.put(from, fromEntry);
         EdgeEntry currEdge = fromEntry;
         while (true) {
+            visitedNodes++;
+            if (finished(currEdge, to))
+                break;
+
             int neighborNode = currEdge.endNode;
             EdgeIterator iter = neighbors(neighborNode);
             while (iter.next()) {
@@ -74,10 +79,6 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
 
                 updateShortest(nEdge, neighborNode);
             }
-
-            visitedNodes++;
-            if (finished(currEdge, to))
-                break;
 
             if (heap.isEmpty())
                 return new Path(graph, flagEncoder);

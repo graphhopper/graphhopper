@@ -68,9 +68,14 @@ public class AStar extends AbstractRoutingAlgorithm {
         double toLon = graph.getLongitude(to);
         double currWeightToGoal, distEstimation, tmpLat, tmpLon;
         AStarEdge fromEntry = new AStarEdge(EdgeIterator.NO_EDGE, from, 0, 0);
+        map.put(from, fromEntry);
         AStarEdge currEdge = fromEntry;
         while (true) {
             int currVertex = currEdge.endNode;
+            visitedCount++;
+            if (finished(currEdge, to))
+                break;
+            
             EdgeIterator iter = neighbors(currVertex);
             while (iter.next()) {
                 if (!accept(iter))
@@ -99,9 +104,6 @@ public class AStar extends AbstractRoutingAlgorithm {
                 }
             }
 
-            visitedCount++;
-            if (finished(currEdge, to))
-                break;
             if (prioQueueOpenSet.isEmpty())
                 return new Path(graph, flagEncoder);
 

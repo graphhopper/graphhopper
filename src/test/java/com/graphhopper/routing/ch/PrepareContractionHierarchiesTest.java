@@ -152,9 +152,9 @@ public class PrepareContractionHierarchiesTest {
         // PrepareTowerNodesShortcutsTest.printEdges(g);
         assertEquals(old + 2, GHUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
-        Path p = algo.calcPath(4, 2);
+        Path p = algo.calcPath(4, 2);        
         assertEquals(3, p.distance(), 1e-6);
-        assertEquals(Helper.createTList(4, 3, 5, 2), p.calcNodes());
+        assertEquals(Helper.createTList(4, 3, 5, 2), p.calcNodes());        
     }
 
     @Test
