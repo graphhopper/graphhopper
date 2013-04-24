@@ -2,6 +2,16 @@
 
 A fast and memory efficient Java road routing engine under Apache License 2.0
 
+Get Started & Contribute
+---------------
+
+Read the information for [Developers](https://github.com/graphhopper/graphhopper/wiki/Developers) and sign up to [our mailing list](http://lists.openstreetmap.org/listinfo/graphhopper).
+
+**Please only email me directly if you need consultancy** or can't explain your problem in the public.
+
+There are also subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/wiki/Android) or as a [web service](https://github.com/graphhopper/graphhopper-web).
+
+
 Purpose
 ---------------
 
@@ -22,10 +32,3 @@ Features
    [as a web service](https://github.com/graphhopper/graphhopper-web) 
    and even offline [on Android](https://github.com/graphhopper/graphhopper/wiki/Android)
  * Well tested
-
-Get Started & Contribute
----------------
-
-Read the information for [Developers](https://github.com/graphhopper/graphhopper/wiki/Developers) and sign up to [our mailing list](http://lists.openstreetmap.org/listinfo/graphhopper).
-
-There are also subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/wiki/Android) or as a [web service](https://github.com/graphhopper/graphhopper-web).
