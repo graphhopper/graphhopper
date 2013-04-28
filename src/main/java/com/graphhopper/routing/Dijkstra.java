@@ -32,14 +32,14 @@ import java.util.PriorityQueue;
  *
  * @author Peter Karich,
  */
-public class DijkstraSimple extends AbstractRoutingAlgorithm {
+public class Dijkstra extends AbstractRoutingAlgorithm {
 
-    private TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
-    private PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
-    private boolean alreadyRun;
-    private int visitedNodes;
+    protected TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
+    protected PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
+    protected boolean alreadyRun;
+    protected int visitedNodes;
 
-    public DijkstraSimple(Graph graph, VehicleEncoder encoder) {
+    public Dijkstra(Graph graph, VehicleEncoder encoder) {
         super(graph, encoder);
     }
 
@@ -48,9 +48,16 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
         if (alreadyRun)
             throw new IllegalStateException("Create a new instance per call");
         alreadyRun = true;
-        EdgeEntry fromEntry = new EdgeEntry(EdgeIterator.NO_EDGE, from, 0d);
-        map.put(from, fromEntry);
-        EdgeEntry currEdge = fromEntry;
+        EdgeEntry fromEdge = new EdgeEntry(EdgeIterator.NO_EDGE, from, 0d);
+        map.put(from, fromEdge);
+        EdgeEntry currEdge = calcEdgeEntry(fromEdge, to);
+        if (currEdge == null || currEdge.endNode != to)
+            return new Path(graph, flagEncoder);
+
+        return extractPath(currEdge);
+    }
+
+    public EdgeEntry calcEdgeEntry(EdgeEntry currEdge, int to) {
         while (true) {
             visitedNodes++;
             if (finished(currEdge, to))
@@ -81,16 +88,12 @@ public class DijkstraSimple extends AbstractRoutingAlgorithm {
             }
 
             if (heap.isEmpty())
-                return new Path(graph, flagEncoder);
+                return null;
             currEdge = heap.poll();
             if (currEdge == null)
                 throw new AssertionError("cannot happen?");
         }
-
-        if (currEdge.endNode != to)
-            return new Path(graph, flagEncoder);
-
-        return extractPath(currEdge);
+        return currEdge;
     }
 
     protected boolean finished(EdgeEntry currEdge, int to) {

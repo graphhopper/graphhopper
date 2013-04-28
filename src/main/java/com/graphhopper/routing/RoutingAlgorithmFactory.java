@@ -49,7 +49,7 @@ public class RoutingAlgorithmFactory {
         } else if ("dijkstraNative".equalsIgnoreCase(algoStr)) {
             return new DijkstraBidirection(g, encoder);
         } else if ("dijkstra".equalsIgnoreCase(algoStr)) {
-            return new DijkstraSimple(g, encoder);
+            return new Dijkstra(g, encoder);
         } else if ("astarbi".equalsIgnoreCase(algoStr)) {
             return new AStarBidirection(g, encoder).approximation(approx);
         } else

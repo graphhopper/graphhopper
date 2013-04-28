@@ -18,15 +18,15 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.DijkstraSimple;
+import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.ch.PrepareContractionHierarchies.NodeCH;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -35,10 +35,8 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -72,69 +70,57 @@ public class PrepareContractionHierarchiesTest {
         return g;
     }
 
-    List<NodeCH> createGoals(int... gNodes) {
-        List<NodeCH> goals = new ArrayList<NodeCH>();
-        for (int i = 0; i < gNodes.length; i++) {
-            NodeCH n = new NodeCH();
-            n.endNode = gNodes[i];
-            goals.add(n);
-        }
-        return goals;
-    }
-
     @Test
     public void testShortestPathSkipNode() {
         LevelGraph g = createExampleGraph();
-        double normalDist = new DijkstraSimple(g, carEncoder).calcPath(4, 2).distance();
+        double normalDist = new Dijkstra(g, carEncoder).calcPath(4, 2).distance();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo =
                 new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
-        List<NodeCH> gs = createGoals(2);
-        algo.limit(10).calcPath(4, gs);
-        Path p = algo.extractPath(gs.get(0).entry);
-        assertTrue(p.distance() > normalDist);
+        EdgeEntry ee = algo.limit(100).calcEdgeEntry(4, 2);
+        assertTrue(ee.weight > normalDist);
     }
 
     @Test
     public void testShortestPathSkipNode2() {
         LevelGraph g = createExampleGraph();
-        double normalDist = new DijkstraSimple(g, carEncoder).calcPath(4, 2).distance();
+        double normalDist = new Dijkstra(g, carEncoder).calcPath(4, 2).distance();
         PrepareContractionHierarchies.OneToManyDijkstraCH algo =
                 new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
-        List<NodeCH> gs = createGoals(1, 2);
-        algo.limit(10).calcPath(4, gs);
-        Path p = algo.extractPath(gs.get(1).entry);
-        assertTrue(p.distance() > normalDist);
+        EdgeEntry ee = algo.limit(10).calcEdgeEntry(4, 2);
+        // assertEquals(ee.weight, normalDist, 1e-5);
+        ee = algo.limit(10).calcEdgeEntry(4, 1);
+        assertTrue(ee.weight > normalDist);
     }
 
     @Test
     public void testShortestPathLimit() {
         LevelGraph g = createExampleGraph();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo = 
+        PrepareContractionHierarchies.OneToManyDijkstraCH algo =
                 new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(0));
-        List<NodeCH> gs = createGoals(1);
-        algo.limit(2).calcPath(4, gs);
-        assertNull(gs.get(0).entry);
+        EdgeEntry ee = algo.limit(2).calcEdgeEntry(4, 1);
+        // did not reach endNode
+        assertNotEquals(1, ee.endNode);
     }
 
     @Test
     public void testAddShortcuts() {
         LevelGraph g = createExampleGraph();
-        int old = GHUtility.count(g.getAllEdges());
+        int old = g.getAllEdges().maxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old, GHUtility.count(g.getAllEdges()));
+        assertEquals(old, g.getAllEdges().maxId());
     }
 
     @Test
     public void testMoreComplexGraph() {
         LevelGraph g = initShortcutsGraph(createGraph());
-        int old = GHUtility.count(g.getAllEdges());
+        int old = g.getAllEdges().maxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old + 8, GHUtility.count(g.getAllEdges()));
+        assertEquals(old + 10, g.getAllEdges().maxId());
     }
 
     @Test
@@ -152,9 +138,9 @@ public class PrepareContractionHierarchiesTest {
         // PrepareTowerNodesShortcutsTest.printEdges(g);
         assertEquals(old + 2, GHUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
-        Path p = algo.calcPath(4, 2);        
+        Path p = algo.calcPath(4, 2);
         assertEquals(3, p.distance(), 1e-6);
-        assertEquals(Helper.createTList(4, 3, 5, 2), p.calcNodes());        
+        assertEquals(Helper.createTList(4, 3, 5, 2), p.calcNodes());
     }
 
     @Test
@@ -165,7 +151,7 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
-        assertEquals(old + 14, GHUtility.count(g.getAllEdges()));
+        assertEquals(old + 15, GHUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
 
         Path p = algo.calcPath(0, 10);
@@ -265,10 +251,10 @@ public class PrepareContractionHierarchiesTest {
     public void testRoundaboutUnpacking() {
         LevelGraph g = createGraph();
         initRoundaboutGraph(g);
-        int old = GHUtility.count(g.getAllEdges());
+        int old = g.getAllEdges().maxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old + 21, GHUtility.count(g.getAllEdges()));
+        assertEquals(old + 24, g.getAllEdges().maxId());
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());

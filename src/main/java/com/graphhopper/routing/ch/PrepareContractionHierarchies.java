@@ -21,7 +21,7 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.coll.GHSortedCollection;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.DijkstraSimple;
+import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
@@ -39,15 +39,11 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import gnu.trove.list.array.TIntArrayList;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -85,7 +81,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private int scOneDir;
     private int scBothDir;
     private Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
-    private List<NodeCH> goalNodes = new ArrayList<NodeCH>();
     private LevelEdgeFilterCH levelEdgeFilter;
     private OneToManyDijkstraCH algo;
     private int updateSize;
@@ -93,6 +88,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private long counter;
     private int newShortcuts;
     private long dijkstraCount;
+    private Random rand = new Random(123);
     private StopWatch dijkstraSW = new StopWatch();
 
     public PrepareContractionHierarchies() {
@@ -172,8 +168,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     // TODO we can avoid node level if we store this into a temporary array and 
-    // disconnect all edges which goes from higher to lower level 
-    // => should already be satisfied => no edgeFilter necessary    
+    // disconnect all edges which goes from higher to lower level
     // uninitialized nodes have a level of 0
     // TODO we could avoid the second storage for skippedEdge as we could store that info into linkB or A if it is disconnected
     boolean prepareNodes() {
@@ -202,12 +197,17 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         int updateCounter = 0;
         StopWatch updateSW = new StopWatch();
 
-        // disable as preparation is slower and query time does not benefit
-        boolean lazyUpdate = false;
         // preparation takes longer but queries are slightly faster with preparation
         // => enable it but call not so often
         boolean periodicUpdate = true;
-        // no update all => 600k shortcuts and 3min
+
+        // disable as preparation is slower and query time does not benefit
+        boolean lazyUpdate = true;
+
+        // Recompute priority of uncontracted neighbors.
+        // Without neighborupdates preparation is faster but we need them
+        // to slightly improve query time. Also if not applied too often it decreases the shortcut number.
+        boolean neighborUpdate = true;
         while (!sortedNodes.isEmpty()) {
             if (counter % updateSize == 0) {
                 // periodically update priorities of ALL nodes            
@@ -250,32 +250,30 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             g.setLevel(wn.node, level);
             level++;
 
-            // Recompute priority of uncontracted neighbors.
-            // Important step to tune preparation time but we cannot avoid it
-            // as it degrades query time a lot. This is expensive when preparing
-            // as we call calculatePriority but we'll produce more shortcuts 
-            // if we avoid this which again leads to longer preparation times.
             EdgeIterator iter = g.getEdges(wn.node, vehicleAllFilter);
             while (iter.next()) {
-                if (g.getLevel(iter.adjNode()) != 0)
+                int nn = iter.adjNode();
+                if (g.getLevel(nn) != 0)
                     // already contracted no update necessary
                     continue;
 
-                int nn = iter.adjNode();
-                PriorityNode neighborWn = refs[nn];
-                int oldPrio = neighborWn.priority;
-                neighborWn.priority = calculatePriority(nn);
-                if (neighborWn.priority != oldPrio)
-                    sortedNodes.update(nn, oldPrio, neighborWn.priority);
+                if (neighborUpdate && rand.nextInt(50) < 5) {
+                    PriorityNode neighborWn = refs[nn];
+                    int oldPrio = neighborWn.priority;
+                    neighborWn.priority = calculatePriority(nn);
+                    if (neighborWn.priority != oldPrio)
+                        sortedNodes.update(nn, oldPrio, neighborWn.priority);
+                }
 
                 if (removesHigher2LowerEdges)
                     ((LevelGraphStorage) g).disconnect(iter, EdgeIterator.NO_EDGE, false);
             }
         }
-        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc
-                + ", " + prepareEncoder + ", removeHigher2LowerEdges:"
-                + removesHigher2LowerEdges + ", dijkstraTime:" + dijkstraSW.getSeconds()
-                + ", dijkstras:" + dijkstraCount);
+
+        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc + ", " + prepareEncoder
+                + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges
+                + ", dijkstras:" + dijkstraCount
+                + ", dijkstraTime:" + dijkstraSW.getSeconds());
     }
 
     /**
@@ -288,15 +286,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     int calculatePriority(int v) {
         // set of shortcuts that would be added if endNode v would be contracted next.
         Collection<Shortcut> tmpShortcuts = findShortcuts(v);
-        // from shortcuts we can compute the edgeDifference
-
-        // # low influence: with it the shortcut creation is slightly faster
-        //
-        // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|        
-        // meanDegree is used instead of outDegree+inDegree as if one endNode is in both directions
-        // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
-        int degree = GHUtility.count(g.getEdges(v, vehicleAllFilter));
-        int edgeDifference = tmpShortcuts.size() - degree;
 
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
         //
@@ -314,48 +303,33 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         //
         // number of already contracted neighbors of v
         int contractedNeighbors = 0;
+        int degree = 0;
         EdgeSkipIterator iter = g.getEdges(v, vehicleAllFilter);
         while (iter.next()) {
+            degree++;
             if (iter.isShortcut())
                 contractedNeighbors++;
         }
 
-        // unterfranken example
-        // 10, 50, 1 => 180s preparation, q 3.3ms
-        //  2,  4, 1 => 200s preparation, q 3.0ms
-        // according to the paper do a simple linear combination of the properties to get the priority
-        return 10 * edgeDifference + 50 * originalEdgesCount + contractedNeighbors;
+        // from shortcuts we can compute the edgeDifference
+        // # low influence: with it the shortcut creation is slightly faster
+        //
+        // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|        
+        // meanDegree is used instead of outDegree+inDegree as if one endNode is in both directions
+        // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
+
+        int edgeDifference = tmpShortcuts.size() - degree;
+
+        // according to the paper do a simple linear combination of the properties to get the priority.
+        // this is the current optimum for unterfranken:
+        return 10 * edgeDifference + originalEdgesCount + contractedNeighbors;
     }
 
     /**
      * Finds shortcuts, does not change the underlying graph.
      */
     Collection<Shortcut> findShortcuts(int v) {
-        // we can use distance instead of weight, see prepareEdges where distance is overwritten by weight!
-        goalNodes.clear();
         shortcuts.clear();
-
-        // collect outgoing nodes (goal-nodes) only once
-        EdgeIterator outgoingEdges = g.getEdges(v, vehicleOutFilter);
-        double maxWeight = -1;
-        while (outgoingEdges.next()) {
-            int w_toNode = outgoingEdges.adjNode();
-            // add only uncontracted nodes
-            if (g.getLevel(w_toNode) != 0)
-                continue;
-            NodeCH n = new NodeCH();
-            n.endNode = w_toNode;
-            n.originalEdges = getOrigEdgeCount(outgoingEdges.edge());
-            n.weight = outgoingEdges.distance();
-            if (maxWeight < n.weight)
-                maxWeight = n.weight;
-            n.edge = outgoingEdges.edge();
-            goalNodes.add(n);
-        }
-
-        if (goalNodes.isEmpty())
-            return Collections.emptySet();
-
         EdgeIterator incomingEdges = g.getEdges(v, vehicleInFilter);
         // collect outgoing nodes (goal-nodes) only once
         while (incomingEdges.next()) {
@@ -365,21 +339,28 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 continue;
 
             double v_u_weight = incomingEdges.distance();
-            double tmpMaxWeight = maxWeight + v_u_weight;
-            
-            dijkstraCount++;
-            algo = new OneToManyDijkstraCH(g, prepareEncoder);
-            algo.limit(tmpMaxWeight).edgeFilter(levelEdgeFilter.avoidNode(v));
-            algo.type(shortestCalc);
-            dijkstraSW.start();
-            algo.calcPath(u_fromNode, goalNodes);
-            dijkstraSW.stop();
-
             int skippedEdge1 = incomingEdges.edge();
-            int uOrigEdgeCount = getOrigEdgeCount(skippedEdge1);
-            for (NodeCH n : goalNodes) {
-                double tmpWeight = v_u_weight + n.weight;
-                if (n.entry != null && n.entry.weight < tmpWeight)
+            int incomingEdgeOrigCount = getOrigEdgeCount(skippedEdge1);
+            // collect outgoing nodes (goal-nodes) only once
+            EdgeIterator outgoingEdges = g.getEdges(v, vehicleOutFilter);
+            // force fresh maps etc as this cannot be determined by from node alone (e.g. same from node but different avoidNode)
+            algo.clear();
+            while (outgoingEdges.next()) {
+                int w_toNode = outgoingEdges.adjNode();
+                // add only uncontracted nodes
+                if (g.getLevel(w_toNode) != 0 || u_fromNode == w_toNode)
+                    continue;
+
+                double existingDirectWeight = v_u_weight + outgoingEdges.distance();
+                algo.limit(existingDirectWeight).edgeFilter(levelEdgeFilter.avoidNode(v));
+
+                dijkstraSW.start();
+                dijkstraCount++;
+                EdgeEntry entry = algo.calcEdgeEntry(u_fromNode, w_toNode);
+                dijkstraSW.stop();
+
+                // compare end node as the limit could force dijkstra to finish earlier
+                if (entry != null && entry.endNode == w_toNode && entry.weight <= existingDirectWeight)
                     // FOUND witness path, so do not add shortcut
                     continue;
 
@@ -392,11 +373,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 // minor improvement: if (shortcuts.containsKey(sc) 
                 // then two shortcuts with the same nodes (u<->n.endNode) exists => check current shortcut against both
 
-                Shortcut sc = new Shortcut(u_fromNode, n.endNode, tmpWeight);
+                Shortcut sc = new Shortcut(u_fromNode, w_toNode, existingDirectWeight);
                 if (shortcuts.containsKey(sc))
                     continue;
                 else {
-                    Shortcut tmpSc = new Shortcut(n.endNode, u_fromNode, tmpWeight);
+                    Shortcut tmpSc = new Shortcut(w_toNode, u_fromNode, existingDirectWeight);
                     Shortcut tmpRetSc = shortcuts.get(tmpSc);
                     if (tmpRetSc != null) {
                         tmpRetSc.flags = scBothDir;
@@ -406,15 +387,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
                 shortcuts.put(sc, sc);
                 sc.skippedEdge1 = skippedEdge1;
-                sc.skippedEdge2 = n.edge;
-                sc.originalEdges = uOrigEdgeCount + n.originalEdges;
-            }
-
-            for (NodeCH n : goalNodes) {
-                n.entry = null;
+                sc.skippedEdge2 = outgoingEdges.edge();
+                sc.originalEdges = incomingEdgeOrigCount + getOrigEdgeCount(outgoingEdges.edge());
             }
         }
-
         return shortcuts.keySet();
     }
 
@@ -456,6 +432,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         levelEdgeFilter = new LevelEdgeFilterCH(this.g);
         sortedNodes = new GHSortedCollection(g.nodes());
         refs = new PriorityNode[g.nodes()];
+        algo = new OneToManyDijkstraCH(g, prepareEncoder);
+        algo.type(shortestCalc);
         return this;
     }
 
@@ -602,10 +580,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
      * DijkstraSimple as AStar or DijkstraBidirection cannot be efficiently used
      * with multiple goals
      */
-    static class OneToManyDijkstraCH extends DijkstraSimple {
+    static class OneToManyDijkstraCH extends DijkstraOneToMany {
 
         double limit;
-        Collection<NodeCH> goals;
 
         public OneToManyDijkstraCH(Graph graph, VehicleEncoder encoder) {
             super(graph, encoder);
@@ -620,29 +597,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             throw new IllegalArgumentException("call the other calcPath instead");
         }
 
-        Path calcPath(int from, Collection<NodeCH> goals) {
-            this.goals = goals;
-            return super.calcPath(from, -1);
-        }
-
-        @Override public boolean finished(EdgeEntry curr, int _ignoreTo) {
-            if (curr.weight > limit)
-                return true;
-
-            int found = 0;
-            for (NodeCH n : goals) {
-                if (n.endNode == curr.endNode) {
-                    n.entry = curr;
-                    found++;
-                } else if (n.entry != null) {
-                    found++;
-                }
-            }
-            return found == goals.size();
-        }
-
-        @Override public String name() {
-            return "dijkstraOne2Many";
+        @Override public boolean finished(EdgeEntry currEdge, int to) {
+            return currEdge.weight >= limit || currEdge.endNode == to;
         }
     }
 
@@ -699,19 +655,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         @Override public String toString() {
             return from + "->" + to + ", dist:" + distance;
-        }
-    }
-
-    static class NodeCH {
-
-        int endNode;
-        int originalEdges;
-        int edge;
-        EdgeEntry entry;
-        double weight;
-
-        @Override public String toString() {
-            return "" + endNode;
         }
     }
 }

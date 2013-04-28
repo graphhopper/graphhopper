@@ -34,6 +34,7 @@ import gnu.trove.list.array.TIntArrayList;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -63,7 +64,7 @@ public class Measurement {
 
         String propLocation = args.get("measurement.location", "");
         if (Helper.isEmpty(propLocation))
-            propLocation = "measurement" + System.currentTimeMillis() + ".properties";
+            propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date()) + ".properties";
 
         long seed = args.getLong("measurement.seed", 123);
         Random rand = new Random(seed);

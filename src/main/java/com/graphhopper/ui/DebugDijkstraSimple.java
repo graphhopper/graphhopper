@@ -19,7 +19,7 @@
 package com.graphhopper.ui;
 
 import com.graphhopper.routing.AStar;
-import com.graphhopper.routing.DijkstraSimple;
+import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.EdgeEntry;
@@ -29,7 +29,7 @@ import java.awt.Graphics2D;
 /**
  * @author Peter Karich
  */
-public class DebugDijkstraSimple extends DijkstraSimple implements DebugAlgo {
+public class DebugDijkstraSimple extends Dijkstra implements DebugAlgo {
 
     private GraphicsWrapper mg;
     private Graphics2D g2;
