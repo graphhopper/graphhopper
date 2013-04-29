@@ -24,9 +24,11 @@ import java.io.InputStreamReader;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 /**
- * Stores command line options in a map. The capitalization of the key is ignored.
+ * Stores command line options in a map. The capitalization of the key is
+ * ignored.
  *
  * @author Peter Karich
  */
@@ -112,6 +114,17 @@ public class CmdArgs {
         Helper.loadProperties(map, new InputStreamReader(new FileInputStream(fileStr), "UTF-8"));
         CmdArgs args = new CmdArgs();
         args.merge(map);
+        
+        // overwrite with system settings
+        Properties props = System.getProperties();
+        for (Entry<Object, Object> e : props.entrySet()) {
+            String k = ((String) e.getKey());
+            String v = ((String) e.getValue());
+            if (k.startsWith("graphhopper.")) {
+                k = k.substring("graphhopper.".length());
+                args.put(k, v);
+            }
+        }
         return args;
     }
 
@@ -123,14 +136,14 @@ public class CmdArgs {
                 continue;
 
             String key = arg.substring(0, index);
-            if (key.startsWith("-")) 
-                key = key.substring(1);
-            
             if (key.startsWith("-"))
                 key = key.substring(1);
-            
+
+            if (key.startsWith("-"))
+                key = key.substring(1);
+
             String value = arg.substring(index + 1);
-            map.put(key.toLowerCase(), value);        
+            map.put(key.toLowerCase(), value);
         }
 
         return new CmdArgs(map);

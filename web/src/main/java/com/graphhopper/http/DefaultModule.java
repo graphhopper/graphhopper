@@ -43,7 +43,10 @@ public class DefaultModule extends AbstractModule {
             args = CmdArgs.readFromConfig("config.properties");
             osmFile = args.get("osmreader.osm", "");
             if (osmFile.isEmpty())
-                throw new IllegalStateException("OSM file cannot be empty. set it in config.properties");
+                throw new IllegalStateException("OSM file cannot be empty. "
+                        + "set it on command line via -Dgraphhopper.osmreader.osm=<file> "
+                        + "or in config.properties");
+
         } catch (IOException ex) {
             throw new IllegalStateException("Couldn't load config file " + new File(osmFile).getAbsolutePath(), ex);
         }

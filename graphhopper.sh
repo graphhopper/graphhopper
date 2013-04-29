@@ -148,7 +148,7 @@ echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
 if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
  export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
- "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Djetty.reload=manual jetty:run
+ "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Dgraphhopper.osmreader.osm=$OSM_XML -Djetty.reload=manual jetty:run
 
 
 elif [ "x$ACTION" = "ximport" ]; then
@@ -158,13 +158,13 @@ elif [ "x$ACTION" = "ximport" ]; then
 
 
 elif [ "x$ACTION" = "xtest" ]; then
- $ALGO=$3
+ ALGO=$3
  if [ "x$ALGO" = "x" ]; then
    ALGO=astar
  fi
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=config.properties \
-       osmreader.graph-location="$GRAPH" \
-       osmreader.osm="$OSM_XML"
+       osmreader.graph-location="$GRAPH" osmreader.osm="$OSM_XML" \
+       osmreader.test=true
 
        
 elif [ "x$ACTION" = "xmeasurement" ]; then
