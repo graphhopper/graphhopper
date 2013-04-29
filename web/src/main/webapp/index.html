@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+    <head>        
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="keywords" content="road routing,shortest path,maps,openstreetmap,android,navigation,routenplaner,gis"/>
+        <link type="image/png" rel="icon" href="/favicon.ico"/>        
+        <title>GraphHopper Web Demo</title>
+
+        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.css" />
+        <!--[if lte IE 8]>
+            <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.ie.css" />
+        <![endif]-->
+        <script src="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.js"></script>
+        <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>        
+        <script defer type="text/javascript" src="js/jquery.history.js"></script>
+        <script type="text/javascript" src="js/ghrequest.js?v=1"></script>
+        <script type="text/javascript" src="js/main.js?v=10"></script>
+        <style>
+            body {                
+                color: #000;
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;    
+                line-height: 1.4;    
+                color: #111111;
+                background-color: #EEEEEE
+            }
+            #map { 
+                width: 800px;
+                height: 600px;
+                cursor: default;
+            }
+            #input {
+                float: left;                
+                padding-left: 10px; 
+                padding-right: 20px; 
+            }
+            .defaulting {
+                color: gray;
+            }
+            #info {
+                border: lightgray groove thin;
+                display: none;
+                padding: 5px;
+            }
+            #info a {
+                padding-right: 5px;
+            }
+            /* ugly hack to hide button. as jquery requires us to include a submit button */
+            #hiddenButton {
+                position: absolute; 
+                left: -9999px;
+            }
+            #input {
+                width: 225px;
+            }
+            #fromInput, #toInput {
+                width: 200px;
+            }
+            #fromFound, #toFound {
+                font-size: 12px;
+                color: gray;
+                padding-top: 4px;
+                padding-bottom: 5px;
+            }
+            .warn {
+                color: orange;
+            }
+            .error {
+                color: red;
+            }
+            #moreattribution a {
+                text-decoration: none;
+                color: black
+            }
+            #moreattribution {
+                padding-top: 20px;
+                color: #666666                    
+            }
+            #fromDiv img, #toDiv img {
+                margin-top: 4px;
+                padding-right: 3px;                
+                float: left;
+            }
+            .hidden {
+                display: none;
+            }
+            .no_link {
+                text-decoration: none;
+                color: black;
+            }
+            .no_link img {
+                margin-bottom: -10px;
+            }
+            .small_text {
+                font-size: small;
+            }
+        </style>
+    </head>
+    <body>
+        <h1><a class="no_link" href="http://graphhopper.com">
+                <img alt="GraphHopper" src="http://graphhopper.com/img/header.png"/> 
+                <span style="font-size: small; color: gray">Web Demo</span></a></h1>
+        <div id="input">
+            <form id="locationform" action="javascript:return false;">
+                <div id="fromDiv">
+                    <img id="fromIndicator" class="hidden" src="img/indicator.gif"/>
+                    <img id="fromFlag" src="img/marker-from.png"/>
+                    <input id="fromInput" class="defaulting" type="text" name="from"  value="From" defaultValue="From"/>                
+                    <div id="fromFound"></div>
+                </div>
+                <div id="toDiv">
+                    <img id="toIndicator" class="hidden" src="img/indicator.gif"/>
+                    <img id="toFlag" src="img/marker-to.png"/>                    
+                    <input id="toInput" class="defaulting" type="text" name="to" value="To" defaultValue="To"/>
+                    <div id="toFound"></div>
+                </div>
+                <input id="hiddenButton" type="submit">
+            </form>            
+            <div class="small_text" id="info">                
+            </div>
+            <div id="error" class="error">
+            </div>
+        </div>
+        <div id="map">
+        </div>
+        <div id="moreattribution">
+            <a href="http://graphhopper.com">graphhopper.com</a> is hosted by <a href="https://github.com">GitHub</a>
+            and the routing API is hosted by <a href="http://www.pannous.info">Pannous</a>
+        </div>
+        <!-- Piwik -->
+        <script type="text/javascript">
+            PIWIK=false;
+            if(PIWIK) {
+                var pkBaseURL = (("https:" == document.location.protocol) ? "https://www.pannous.info/piwik/" : "http://www.pannous.info/piwik/");
+                document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));
+            }
+        </script>
+        <script type="text/javascript">
+            if(PIWIK)
+                try { 
+                    var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", 7);
+                    piwikTracker.trackPageView();
+                    piwikTracker.enableLinkTracking();
+                } catch( err ) {}
+        </script>
+        <noscript><p><img src="http://www.pannous.info/piwik/piwik.php?idsite=7" style="border:0" alt="" /></p></noscript>
+        <!-- End Piwik Tracking Code -->
+    </body>
+</html>
