@@ -9,7 +9,7 @@ Read the information for [Developers](https://github.com/graphhopper/graphhopper
 
 **Please only email me directly if you need consultancy** or can't explain your problem in the public.
 
-There are also subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/wiki/Android) or as a [web service](https://github.com/graphhopper/graphhopper-web).
+There are also subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/wiki/Android) or as a [web service](https://github.com/graphhopper/graphhopper/tree/master/web).
 
 
 Purpose
@@ -29,6 +29,6 @@ Features
  * Memory efficient and fast
  * A small library (~3MB)
  * Works on the [desktop](http://karussell.files.wordpress.com/2012/06/graphhopper.png), 
-   [as a web service](https://github.com/graphhopper/graphhopper-web) 
+   [as a web service](https://github.com/graphhopper/graphhopper/tree/master/web) 
    and even offline [on Android](https://github.com/graphhopper/graphhopper/wiki/Android)
  * Well tested
