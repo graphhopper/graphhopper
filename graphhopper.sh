@@ -88,17 +88,24 @@ function packageCoreJar {
   fi
 }
 
+function prepareEclipse {
+ ensureMaven   
+ packageCoreJar
+ cp core/target/graphhopper-*-android.jar android/libs/   
+}
+
 
 ## now handle actions which do not take an OSM file
 if [ "x$ACTION" = "xclean" ]; then
  rm -rf */target
  exit
- 
+
+elif [ "x$ACTION" = "xeclipse" ]; then
+ prepareEclipse
+ exit
  
 elif [ "x$ACTION" = "xandroid" ]; then
- ensureMaven
- packageCoreJar
- cp core/target/graphhopper-*-android.jar android/libs/
+ prepareEclipse
  cd android
  "$MAVEN_HOME/bin/mvn" android:deploy android:run
  exit
