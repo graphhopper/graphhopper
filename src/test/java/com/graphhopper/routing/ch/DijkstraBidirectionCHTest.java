@@ -92,7 +92,6 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.edge(5, 7, 1.4, true);
         g2.edge(6, 7, 1, true);
 
-        VehicleEncoder carEncoder = new CarFlagEncoder();
         // simulate preparation
         EdgeSkipIterator iter2_1 = g2.edge(0, 5, 2.8, carEncoder.flags(0, true));
         iter2_1.skippedEdges(iter1_1.edge(), iter1_2.edge());

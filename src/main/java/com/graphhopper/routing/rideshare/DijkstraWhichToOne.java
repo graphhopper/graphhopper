@@ -38,7 +38,7 @@ import java.util.PriorityQueue;
  * but it it more memory efficient (ie. the shortest-path-trees do not overlap
  * here)
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
 

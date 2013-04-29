@@ -32,7 +32,7 @@ import org.junit.Test;
 
 /**
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
 

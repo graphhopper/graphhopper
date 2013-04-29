@@ -52,6 +52,8 @@ public class RoutingAlgorithmFactory {
             return new Dijkstra(g, encoder);
         } else if ("astarbi".equalsIgnoreCase(algoStr)) {
             return new AStarBidirection(g, encoder).approximation(approx);
+        } else if ("dijkstraOneToMany".equalsIgnoreCase(algoStr)) {
+            return new DijkstraOneToMany(g, encoder);
         } else
             return new AStar(g, encoder);
     }

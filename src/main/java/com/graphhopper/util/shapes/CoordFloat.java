@@ -21,7 +21,7 @@ package com.graphhopper.util.shapes;
 /**
  * Single precision coordinates without an associated value. To add one - subclass.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class CoordFloat<T> {
 

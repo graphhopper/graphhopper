@@ -21,7 +21,7 @@ package com.graphhopper.util;
 /**
  * Make simple speed measurements possible.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class StopWatch {
 

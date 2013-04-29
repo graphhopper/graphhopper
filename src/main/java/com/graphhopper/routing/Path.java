@@ -36,7 +36,7 @@ import gnu.trove.set.hash.TIntHashSet;
  * the edgeIds to make edge determination faster and less complex as there could
  * be several edges (u,v) especially for graphs with shortcuts.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class Path {
 

@@ -18,12 +18,13 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.routing.util.VehicleEncoder;
-import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import java.util.PriorityQueue;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
+import java.util.Arrays;
 
 /**
  * A simple dijkstra tuned to perform one to many queries more efficient than
@@ -32,80 +33,121 @@ import java.util.PriorityQueue;
  *
  * @author Peter Karich
  */
-public class DijkstraOneToMany extends Dijkstra {
+public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
-    boolean nextFrom = true;
+    protected double[] weights;
+    private TIntList changedNodes;
+    private int[] parents;
+    private int[] edgeIds;
+    private IntDoubleBinHeap heap;
+    private int visitedNodes;
+    private boolean doClear = true;
 
     public DijkstraOneToMany(Graph graph, VehicleEncoder encoder) {
         super(graph, encoder);
+        parents = new int[graph.nodes()];
+        Arrays.fill(parents, -1);
+
+        weights = new double[graph.nodes()];
+        Arrays.fill(weights, Double.MAX_VALUE);
+        heap = new IntDoubleBinHeap();
+        changedNodes = new TIntArrayList();
     }
 
     @Override
     public Path calcPath(int from, int to) {
-        EdgeEntry resEdge = calcEdgeEntry(from, to);
-        if (resEdge == null)
-            return new Path(graph, flagEncoder);
-        return super.extractPath(resEdge);
+        if (edgeIds == null) {
+            edgeIds = new int[graph.nodes()];
+            Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
+        }
+        int endNode = findEndNode(from, to);
+        PathNative p = new PathNative(graph, flagEncoder, parents, edgeIds);
+        p.fromNode(from);
+        if (endNode < 0)
+            return p;
+        return p.found(endNode).extract();
     }
 
     public DijkstraOneToMany clear() {
-        nextFrom = true;
+        doClear = true;
         return this;
     }
 
-    public EdgeEntry calcEdgeEntry(int from, int to) {
-        visitedNodes = 0;
-        EdgeEntry currEdge;
-        if (nextFrom) {
-            // start over!
-            nextFrom = false;
-            map = new TIntObjectHashMap<EdgeEntry>(map.size() > 20 ? map.size() : 10);
-            heap = new PriorityQueue<EdgeEntry>(heap.size() > 20 ? heap.size() : 10);
-            currEdge = new EdgeEntry(EdgeIterator.NO_EDGE, from, 0d);
-            map.put(from, currEdge);
+    public double weight(int endNode) {
+        return weights[endNode];
+    }
+
+    public int findEndNode(int from, int to) {
+        if (weights.length < 2)
+            return -1;
+        int currNode = from;
+        if (doClear) {
+            doClear = false;
+            int vn = changedNodes.size();
+            for (int i = 0; i < vn; i++) {
+                int n = changedNodes.get(i);
+                weights[n] = Double.MAX_VALUE;
+                parents[n] = -1;
+                if (edgeIds != null)
+                    edgeIds[n] = EdgeIterator.NO_EDGE;
+            }
+
+            heap.clear();
+            changedNodes.clear();
+
+            weights[currNode] = 0;
+            changedNodes.add(currNode);
         } else {
             // re-use existing data structures
-            EdgeEntry ee = map.get(to);
-            if (ee != null || heap.isEmpty())
-                return ee;
-
-            currEdge = heap.poll();
+            int parentNode = parents[to];
+            if (parentNode >= 0 || heap.isEmpty())
+                return to;
+            currNode = heap.poll_element();
         }
 
-        if (finished(currEdge, to))
-            return currEdge;
+        if (finished(currNode, to))
+            return currNode;
         while (true) {
             visitedNodes++;
-            int neighborNode = currEdge.endNode;
-            EdgeIterator iter = graph.getEdges(neighborNode, outEdgeFilter);
+            EdgeIterator iter = neighbors(currNode);
             while (iter.next()) {
                 if (!accept(iter))
                     continue;
-                int tmpNode = iter.adjNode();
-                double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currEdge.weight;
-                EdgeEntry nEdge = map.get(tmpNode);
-                if (nEdge == null) {
-                    nEdge = new EdgeEntry(iter.edge(), tmpNode, tmpWeight);
-                    nEdge.parent = currEdge;
-                    map.put(tmpNode, nEdge);
-                    heap.add(nEdge);
-                } else if (nEdge.weight > tmpWeight) {
-                    heap.remove(nEdge);
-                    nEdge.edge = iter.edge();
-                    nEdge.weight = tmpWeight;
-                    nEdge.parent = currEdge;
-                    heap.add(nEdge);
+                int adjNode = iter.adjNode();
+                double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + weights[currNode];
+                if (weights[adjNode] == Double.MAX_VALUE) {
+                    parents[adjNode] = currNode;
+                    weights[adjNode] = tmpWeight;
+                    heap.insert_(tmpWeight, adjNode);
+                    changedNodes.add(adjNode);
+                    if (edgeIds != null)
+                        edgeIds[adjNode] = iter.edge();
+                } else if (weights[adjNode] > tmpWeight) {
+                    parents[adjNode] = currNode;
+                    weights[adjNode] = tmpWeight;
+                    heap.update_(tmpWeight, adjNode);
+                    changedNodes.add(adjNode);
+                    if (edgeIds != null)
+                        edgeIds[adjNode] = iter.edge();
                 }
             }
 
             if (heap.isEmpty())
-                return null;
+                return -1;
             // calling just peek() is important for cache access of a next query
-            currEdge = heap.peek();
-            if (finished(currEdge, to))
-                return currEdge;
-            heap.poll();
+            currNode = heap.peek_element();
+            if (finished(currNode, to))
+                return currNode;
+            heap.poll_element();
         }
+    }
+
+    public boolean finished(int currNode, int to) {
+        return currNode == to;
+    }
+
+    @Override public int visitedNodes() {
+        return visitedNodes;
     }
 
     @Override public String name() {

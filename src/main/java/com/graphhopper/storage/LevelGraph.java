@@ -26,7 +26,7 @@ import com.graphhopper.util.EdgeSkipIterator;
  * Extended graph interface which supports storing and retrieving the level for
  * a node.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public interface LevelGraph extends Graph {
 

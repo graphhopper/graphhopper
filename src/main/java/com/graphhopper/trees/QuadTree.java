@@ -27,7 +27,7 @@ import java.util.Collection;
  * A quad tree interface - think Map<latitude+longitude, V> with the possibility to get neighbouring
  * entries fast.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public interface QuadTree<V> {
 

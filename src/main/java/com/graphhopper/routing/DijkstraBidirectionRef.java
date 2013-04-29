@@ -34,7 +34,7 @@ import java.util.PriorityQueue;
  * Java-'reference'-way.
  *
  * @see DijkstraBidirection for an optimized but more complicated version
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 

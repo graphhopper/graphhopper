@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
 

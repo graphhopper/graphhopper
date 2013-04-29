@@ -33,7 +33,7 @@ import static java.lang.Math.*;
  * http://en.wikipedia.org/wiki/Mercator_projection#Mathematics_of_the_Mercator_projection
  * http://gis.stackexchange.com/questions/4906/why-is-law-of-cosines-more-preferable-than-haversine-when-calculating-distance-b
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class DistancePlaneProjection extends DistanceCalc {
 

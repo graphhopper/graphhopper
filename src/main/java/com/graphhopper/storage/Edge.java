@@ -25,7 +25,7 @@ package com.graphhopper.storage;
  * except the native BidirectionalDijkstra.
  *
  * @see EdgeEntry
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class Edge implements Comparable<Edge> {
 

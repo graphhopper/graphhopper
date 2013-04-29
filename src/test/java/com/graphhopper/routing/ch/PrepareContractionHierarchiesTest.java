@@ -77,8 +77,8 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies.OneToManyDijkstraCH algo =
                 new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
-        EdgeEntry ee = algo.limit(100).calcEdgeEntry(4, 2);
-        assertTrue(ee.weight > normalDist);
+        int nodeEntry = algo.limit(100).findEndNode(4, 2);
+        assertTrue(algo.weight(nodeEntry) > normalDist);
     }
 
     @Test
@@ -88,10 +88,10 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies.OneToManyDijkstraCH algo =
                 new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
-        EdgeEntry ee = algo.limit(10).calcEdgeEntry(4, 2);
+        int nodeEntry = algo.limit(10).findEndNode(4, 2);
         // assertEquals(ee.weight, normalDist, 1e-5);
-        ee = algo.limit(10).calcEdgeEntry(4, 1);
-        assertTrue(ee.weight > normalDist);
+        nodeEntry = algo.limit(10).findEndNode(4, 1);
+        assertTrue(algo.weight(nodeEntry) > normalDist);
     }
 
     @Test
@@ -100,9 +100,9 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies.OneToManyDijkstraCH algo =
                 new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(0));
-        EdgeEntry ee = algo.limit(2).calcEdgeEntry(4, 1);
+        int endNode = algo.limit(2).findEndNode(4, 1);
         // did not reach endNode
-        assertNotEquals(1, ee.endNode);
+        assertNotEquals(1, endNode);
     }
 
     @Test
@@ -136,7 +136,7 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
-        assertEquals(old + 2, GHUtility.count(g.getAllEdges()));
+        assertEquals(old + 3, GHUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(4, 2);
         assertEquals(3, p.distance(), 1e-6);

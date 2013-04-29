@@ -18,24 +18,48 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.VehicleEncoder;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeIterator;
 
 /**
+ * This class creates a Path from a DijkstraOneToMany node
  *
  * @author Peter Karich
  */
-public class DijkstraSimpleTest extends AbstractRoutingAlgorithmTester {
+public class PathNative extends Path {
 
+    int endNode = -1;
+    int[] parents;
+    int[] pathEdgeIds;
+
+    public PathNative(Graph g, VehicleEncoder encoder, int[] parents, int[] pathEdgeIds) {
+        super(g, encoder);
+        this.parents = parents;
+        this.pathEdgeIds = pathEdgeIds;
+    }
+
+    public PathNative found(int end) {
+        endNode = end;
+        return this;
+    }
+
+    /**
+     * Extracts path from two shortest-path-tree
+     */
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final VehicleEncoder encoder) {
-        return new NoOpAlgorithmPreparation() {
-            @Override public RoutingAlgorithm createAlgo() {
-                return new Dijkstra(_graph, encoder).type(calc);
-            }
-        }.graph(g);
+    public Path extract() {
+        if (endNode < 0)
+            return this;
+
+        while (true) {
+            int edgeId = pathEdgeIds[endNode];
+            if (!EdgeIterator.Edge.isValid(edgeId))
+                break;
+            processDistance(edgeId, endNode);
+            endNode = parents[endNode];
+        }
+        reverseOrder();
+        return found(true);
     }
 }

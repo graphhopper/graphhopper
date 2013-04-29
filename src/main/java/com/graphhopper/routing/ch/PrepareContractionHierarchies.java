@@ -287,6 +287,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // set of shortcuts that would be added if endNode v would be contracted next.
         Collection<Shortcut> tmpShortcuts = findShortcuts(v);
 
+//        System.out.println(v + "\t " + tmpShortcuts);
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
         //
         // every endNode has an 'original edge' number associated. initially it is r=1
@@ -356,11 +357,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
                 dijkstraSW.start();
                 dijkstraCount++;
-                EdgeEntry entry = algo.calcEdgeEntry(u_fromNode, w_toNode);
+                int endNode = algo.findEndNode(u_fromNode, w_toNode);
                 dijkstraSW.stop();
 
                 // compare end node as the limit could force dijkstra to finish earlier
-                if (entry != null && entry.endNode == w_toNode && entry.weight <= existingDirectWeight)
+                if (endNode == w_toNode && algo.weight(endNode) <= existingDirectWeight)
                     // FOUND witness path, so do not add shortcut
                     continue;
 
@@ -597,8 +598,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             throw new IllegalArgumentException("call the other calcPath instead");
         }
 
-        @Override public boolean finished(EdgeEntry currEdge, int to) {
-            return currEdge.weight >= limit || currEdge.endNode == to;
+        @Override public boolean finished(int currNode, int to) {
+            return weights[currNode] >= limit || currNode == to;
         }
     }
 

@@ -21,7 +21,7 @@ package com.graphhopper.util.shapes;
 /**
  * Double precision coordinates without an associated value. To add one - subclass.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class CoordTrig<T> {
 

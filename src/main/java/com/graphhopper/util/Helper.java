@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * Several utility classes which are compatible with Java6 on Android.
  *
  * @see Helper7 for none-Android compatible methods.
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class Helper {
 

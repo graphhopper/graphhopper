@@ -25,7 +25,7 @@ import com.graphhopper.util.NotThreadSafe;
  * Calculates the shortest path from the specified node ids. Can be used only
  * once.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 @NotThreadSafe
 public interface RoutingAlgorithm {

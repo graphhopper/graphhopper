@@ -91,6 +91,7 @@ public class RoutingAlgorithmSpecialAreaTests {
             VehicleEncoder encoder, boolean withCh) {
         List<AlgorithmPreparation> prepare = new ArrayList<AlgorithmPreparation>(Arrays.<AlgorithmPreparation>asList(
                 createAlgoPrepare(g, "astar", encoder),
+                createAlgoPrepare(g, "dijkstraOneToMany", encoder),
                 createAlgoPrepare(g, "astarbi", encoder),
                 createAlgoPrepare(g, "dijkstraNative", encoder),
                 createAlgoPrepare(g, "dijkstrabi", encoder),

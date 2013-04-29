@@ -38,7 +38,7 @@ import java.util.Random;
  * A helper class to avoid cluttering the Graph interface with all the common
  * methods. Most of the methods are useful for unit tests or debugging only.
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class GHUtility {
 

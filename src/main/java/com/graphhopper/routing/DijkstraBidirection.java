@@ -38,7 +38,7 @@ import com.graphhopper.util.EdgeWrapper;
  * TODO EdgeWrapper: instead of creating references point to the edges itself =>
  * we only need an edge+node array and from that can retrieve eg. the distance
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 

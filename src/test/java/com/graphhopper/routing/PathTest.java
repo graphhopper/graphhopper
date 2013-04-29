@@ -25,7 +25,7 @@ import static org.junit.Assert.*;
 
 /**
  *
- * @author Peter Karich,
+ * @author Peter Karich
  */
 public class PathTest {
 
