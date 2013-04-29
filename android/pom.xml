@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.graphhopper</groupId>
+    <artifactId>graphhopper-android</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <name>GraphHopper Android</name>
+    <packaging>apk</packaging>    
+    <organization>
+        <name>GraphHopper</name>
+        <url>http://graphhopper.com</url>
+    </organization>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
+        instead use your IDE to set it up or specify android sdk via command line
+        using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
+        https://github.com/rgladwell/m2e-android/issues/52 -->
+    </properties>
+    <dependencies>          
+        <!-- run scripts/maven-install-mapsforge.sh 
+        if we would use system dep it doesn't work (classnotfound)-->              
+        <dependency>
+            <groupId>org.mapsforge</groupId>
+            <artifactId>mapsforge</artifactId>
+            <version>0.3.1-SNAPSHOT</version>	                                                
+            <type>jar</type>            
+        </dependency>
+        
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper</artifactId>
+            <version>0.1-SNAPSHOT</version>            
+            <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>                    
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>                    
+                </exclusion>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>                    
+                </exclusion>
+            </exclusions>
+        </dependency>        
+        
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-android</artifactId>
+            <version>1.6.1-RC1</version>
+            <type>jar</type>
+        </dependency>        
+        
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Make sure this is above (!) the android dependencies -->
+        <!--
+        <dependency>
+            <groupId>com.pivotallabs</groupId>
+            <artifactId>robolectric</artifactId>
+            <version>1.1</version>
+            <scope>test</scope>
+        </dependency>
+        -->
+        <dependency>
+            <groupId>android</groupId>
+            <artifactId>android</artifactId>
+            <version>2.2_r3</version>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <!-- 
+        1. Use src/test/java for JUnit tests that don't call any Android APIs (directly or transitively)
+        2. Use src/main/java for JUnit tests that call Android APIs  
+        -->
+        <sourceDirectory>src</sourceDirectory>        
+        <finalName>${project.artifactId}</finalName>        
+
+        <plugins>
+            <!-- to avoid problems with jvm 1.5 and @Override -->
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <!-- to run single tests -->
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.14</version>
+            </plugin>
+            <plugin>
+                <!-- See http://code.google.com/p/maven-android-plugin/ -->
+                <groupId>com.jayway.maven.plugins.android.generation2</groupId>
+                <artifactId>android-maven-plugin</artifactId>
+                <version>3.5.1</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <sdk>
+                        <!-- platform or api level (api level 8 = platform 2.2) -->                        
+                        <platform>8</platform>
+                    </sdk>
+                    <deleteConflictingFiles>true</deleteConflictingFiles>
+                    <undeployBeforeDeploy>true</undeployBeforeDeploy>
+                </configuration>                
+            </plugin>            
+        </plugins>
+    </build>
+</project>

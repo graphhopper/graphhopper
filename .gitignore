@@ -2,11 +2,9 @@ target/
 *~
 *largeEWD.txt.gz
 TODO.txt
-mmap-graph*
 *-gh/
 *.osm
 docs/
-loc2idIndex/
 nbactions-*.xml
 config.properties
 build.xml
@@ -14,3 +12,8 @@ queries.sh
 maven/
 measurement*.properties
 files/live_measurement.sh
+gen/
+bin/
+*.map
+scripts/googlecode_upload.py
+deploy.sh
