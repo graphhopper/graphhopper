@@ -96,11 +96,12 @@ public class OSMReader {
      * preinstantiate a datastructure/graph to avoid over-memory allocation or
      * reallocation (default is 5mio)
      */
-    public static OSMReader osm2Graph(final CmdArgs args) throws IOException {
+    public static OSMReader osm2Graph(CmdArgs args) throws IOException {
         if (!Helper.isEmpty(args.get("config", ""))) {
             CmdArgs tmp = CmdArgs.readFromConfig(args.get("config", ""));
-            // overwrite command line configuration
-            args.merge(tmp);
+            // command line configuration overwrites the ones in the config file
+            tmp.merge(args);
+            args = tmp;
         }
         String graphLocation = args.get("osmreader.graph-location", "");
         if (Helper.isEmpty(graphLocation)) {

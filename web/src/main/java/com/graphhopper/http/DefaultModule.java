@@ -41,16 +41,16 @@ public class DefaultModule extends AbstractModule {
         String osmFile = "";
         try {
             args = CmdArgs.readFromConfig("config.properties");
-            osmFile = args.get("graphhopperweb.osm", "");
+            osmFile = args.get("osmreader.osm", "");
             if (osmFile.isEmpty())
                 throw new IllegalStateException("OSM file cannot be empty. set it in config.properties");
         } catch (IOException ex) {
             throw new IllegalStateException("Couldn't load config file " + new File(osmFile).getAbsolutePath(), ex);
         }
         try {
-            String ghLocation = args.get("graphhopperweb.graph-location", "");
+            String ghLocation = args.get("osmreader.graph-location", "");
             GraphHopper hopper = new GraphHopper().graphHopperLocation(ghLocation);
-            String chShortcuts = args.get("graphhopperweb.chShortcuts", "");
+            String chShortcuts = args.get("osmreader.chShortcuts", "");
             if (!chShortcuts.isEmpty()) {
                 hopper.contractionHierarchies("fastest".equals(chShortcuts));
             }
@@ -59,10 +59,10 @@ public class DefaultModule extends AbstractModule {
             logger.info("loaded graph at:" + ghLocation + ", source:" + osmFile + ", class:" + hopper.graph().getClass().getSimpleName());
             bind(GraphHopper.class).toInstance(hopper);
 
-            String algo = args.get("graphhopperweb.defaultAlgorithm", "dijkstrabi");
+            String algo = args.get("web.defaultAlgorithm", "dijkstrabi");
             bind(String.class).annotatedWith(Names.named("defaultAlgorithm")).toInstance(algo);
 
-            long timeout = args.getLong("graphhopperweb.timeout", 3000);
+            long timeout = args.getLong("web.timeout", 3000);
             bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
             bind(Geocoding.class).toInstance(new NominatimGeocoder().timeout((int) timeout).
                     bounds(hopper.graph().bounds()));
