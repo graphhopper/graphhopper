@@ -98,6 +98,7 @@ if [ "x$ACTION" = "xclean" ]; then
 elif [ "x$ACTION" = "xandroid" ]; then
  ensureMaven
  packageCoreJar
+ cp core/target/graphhopper-*-android.jar android/libs/
  cd android
  "$MAVEN_HOME/bin/mvn" android:deploy android:run
  exit
@@ -122,7 +123,7 @@ TMP="${TMP%.*}"
 
 if [ "x$TMP" = "xunterfranken" ]; then
  LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx300m -Xms300m"
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx200m -Xms200m"
  SIZE=3000000
 elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
