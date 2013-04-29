@@ -1,0 +1,3 @@
+agouge, discussion and API refactoring
+karussell, lead developer
+quintona, initial instruction implementation

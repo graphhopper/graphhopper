@@ -13,19 +13,12 @@ if [ "x$bit64" != "x" ]; then
 fi
 echo "## using java $vers from $JAVA_HOME"
 
-FILE=$1
-ALGO=$2
-CLASS=$3
-
-if [ "x$ALGO" = "xui" ]; then
- CLASS=com.graphhopper.ui.MiniGraphUI
-else
- CLASS=com.graphhopper.reader.OSMReader
+if [ ! -f "config.properties" ]; then
+  cp config-example.properties config.properties
 fi
 
-if [ "x$ALGO" = "x" ]; then
- ALGO=astar
-fi
+ACTION=$1
+FILE=$2
 
 if [ "x$FILE" = "x" ]; then
  FILE=unterfranken.osm
@@ -42,7 +35,7 @@ JAR=target/graphhopper-$VERSION-jar-with-dependencies.jar
 # file without path
 TMP=$(basename "$FILE")
 TMP="${TMP%.*}"
-#echo $TMP - $FILE - $NAME
+
 if [ "x$TMP" = "xunterfranken" ]; then
  LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
  JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx100m -Xms100m"
@@ -62,10 +55,7 @@ else
  exit   
 fi
 
-if [ ! -f "config.properties" ]; then
-  cp config-example.properties config.properties
-fi
-
+ 
 if [ ! -f "$OSM_XML" ]; then
   echo "No OSM file found or specified. Press ENTER to grab one from internet."
   echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
@@ -121,5 +111,64 @@ else
   echo "## existing jar found $JAR"
 fi
 
-echo "## now running $CLASS. algo=$ALGO. JAVA_OPTS=$JAVA_OPTS"
-"$JAVA" $JAVA_OPTS -cp "$JAR" $CLASS printVersion=true config=config.properties osmreader.graph-location="$GRAPH" osmreader.osm="$OSM_XML" osmreader.size=$SIZE osmreader.algo=$ALGO
+echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
+
+
+
+if [ "x$ACTION" = "xui" ]; then
+ export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
+ mvn -Djetty.reload=manual jetty:run
+
+
+elif ["x$ACTION" = "ximport" ]; then
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=config.properties \
+      osmreader.graph-location="$GRAPH" \
+      osmreader.osm="$OSM_XML"
+
+      
+elif [ "x$ACTION" = "xtest" ]; then
+ $ALGO=$3
+ if [ "x$ALGO" = "x" ]; then
+   ALGO=astar
+ fi
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=config.properties \
+       osmreader.graph-location="$GRAPH" \
+       osmreader.osm="$OSM_XML"
+
+       
+elif [ "x$ACTION" = "xmeasurement" ]; then
+ ARGS="osmreader.graph-location=$GRAPH osmreader.osm=$OSM_XML osmreader.chShortcuts=fastest osmreader.type=CAR"
+ echo -e "\ncreate graph via $ARGS, $JAR"
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader $ARGS osmreader.doPrepare=false
+
+ function startMeasurement {
+    COUNT=5000
+    ARGS="$ARGS osmreader.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME"
+    echo -e "\nperform measurement via $ARGS, $JAR"
+    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS
+ }
+ 
+# use current version
+mvn -DskipTests clean install assembly:single
+startMeasurement
+exit
+
+# use all <last_commits> versions starting from HEAD
+ last_commits=3
+ commits=$(git rev-list HEAD -n $last_commits)
+ for commit in $commits; do
+   git checkout $commit -q
+   M_FILE_NAME=`git log -n 1 --pretty=oneline | grep -o "\ .*" |  tr " ,;" "_"`
+   M_FILE_NAME="measurement$M_FILE_NAME.properties"
+   echo -e "\nusing commit $commit and $M_FILE_NAME"
+   
+   mvn -DskipTests clean install assembly:single
+   startMeasurement
+ done
+
+elif [ "x$ACTION" = "x" ]; then
+ echo "## action $ACTION not found. try graphhopper.sh import|ui|test <your-osm-file>"
+fi
+
+
+
