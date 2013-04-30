@@ -16,8 +16,19 @@
         <module>core</module>
         <module>tools</module>
         <module>web</module>
-        <module>android</module>
     </modules>
+
+	<!-- does not run on build server yet 
+		call 'mvn install -P with-android' to compile everything including the android module
+	-->
+	<profiles>
+		<profile>
+			<id>with-android</id>
+			<modules>
+				<module>android</module>
+			</modules>
+		</profile>
+	</profiles>
         
     <build>
         <plugins>

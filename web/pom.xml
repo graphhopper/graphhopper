@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-web</artifactId>
     <packaging>jar</packaging>
-    <version>0.1-SNAPSHOT</version>
+    <version>${parent.version}</version>
     <name>GraphHopper Web</name>
     <description>Example on how to use GraphHopper in a web-based application</description>
     <properties>
@@ -25,7 +25,7 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper</artifactId>
-            <version>0.1-SNAPSHOT</version>            
+            <version>${parent.version}</version>            
         </dependency>
         <!--  TODO <dependency>
             <groupId>org.codehaus.jackson</groupId>

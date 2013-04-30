@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper</artifactId>
     <name>GraphHopper</name>
-    <version>0.1-SNAPSHOT</version>
+    <version>${parent.version}</version>
     <packaging>jar</packaging>     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

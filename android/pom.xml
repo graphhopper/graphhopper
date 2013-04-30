@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-android</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>${parent.version}</version>
     <name>GraphHopper Android</name>
     <packaging>apk</packaging>    
     <organization>
@@ -18,6 +18,26 @@
         using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
         https://github.com/rgladwell/m2e-android/issues/52 -->
     </properties>
+    
+	<repositories>
+		<!-- local repository which contains all unresolable libs -->
+		<repository>
+			<id>local</id>
+			<name>android libs</name>
+			<url>file:${project.basedir}/libs</url>
+		</repository>
+		
+		<!-- repository of project 'molecular' to resolve android-jars -->
+		<repository>
+			<id>mulecular_repo</id>
+			<name>android libs</name>
+			<url>https://repo.molecular.com/artifactory/repo</url>
+			<snapshots>		
+				<enabled>true</enabled>		
+			</snapshots>		
+		</repository>
+		
+	</repositories>
     
     <parent>
     	<groupId>com.graphhopper</groupId>
@@ -38,7 +58,7 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper</artifactId>
-            <version>0.1-SNAPSHOT</version>            
+            <version>${parent.version}</version>            
             <type>jar</type>
             <exclusions>
                 <exclusion>
