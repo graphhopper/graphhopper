@@ -4,7 +4,7 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-tools</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>${parent.version}</version>
     <packaging>jar</packaging>
     <name>GraphHopper Tools</name>
     <url>http://maven.apache.org</url>
@@ -12,23 +12,23 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+    
+    <parent>
+    	<groupId>com.graphhopper</groupId>
+    	<artifactId>graphhopper-parent</artifactId>    	
+    	<version>0.1-SNAPSHOT</version>
+    </parent>
 
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${parent.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.5</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

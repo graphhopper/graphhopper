@@ -1,0 +1,73 @@
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.graphhopper</groupId>
+    <artifactId>graphhopper-parent</artifactId>
+    <name>GraphHopper Parent Project</name>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>     
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    
+    <modules>
+        <module>core</module>
+        <module>tools</module>
+        <module>web</module>
+    </modules>
+
+	<!-- does not run on build server yet 
+		call 'mvn install -P with-android' to compile everything including the android module
+	-->
+	<profiles>
+		<profile>
+			<id>with-android</id>
+			<modules>
+				<module>android</module>
+			</modules>
+		</profile>
+	</profiles>
+        
+    <build>
+        <plugins>
+        
+            <!-- to avoid problems with jvm 1.5 and @Override -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <!-- <compilerArgument>-Xlint:unchecked</compilerArgument>
+                    -->
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            
+            <!-- to run single tests -->
+            <plugin>                
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.14</version>
+                <configuration>
+                    <argLine>-Xmx100m -Xms100m</argLine>
+                </configuration>
+            </plugin>
+            
+        </plugins>
+    </build>    
+    
+	<dependencies>
+      
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        
+    </dependencies>
+  
+</project>
