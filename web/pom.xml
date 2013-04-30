@@ -15,6 +15,12 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     
+    <parent>
+    	<groupId>com.graphhopper</groupId>
+    	<artifactId>graphhopper-parent</artifactId>    	
+    	<version>0.1-SNAPSHOT</version>
+    </parent>
+    
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
@@ -73,12 +79,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlets</artifactId>
