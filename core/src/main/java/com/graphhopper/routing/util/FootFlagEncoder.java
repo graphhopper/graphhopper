@@ -35,7 +35,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             add("steps");
             add("pedestrian");
             add("foot");
-            add("living_street");            
+            add("living_street");
             add("track");
         }
     };
@@ -66,14 +66,14 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     /**
-     * Separate ways for pedestrians.
+     * Some ways are okay but not separate for pedestrians.
      */
     public boolean isAllowedHighway(String highwayValue) {
         return allowedHighwayTags.contains(highwayValue);
     }
 
     /**
-     * Some ways are okay but not separate for pedestrians.
+     * Separate ways for pedestrians.
      */
     public boolean isSaveHighway(String highwayValue) {
         return saveHighwayTags.contains(highwayValue);
