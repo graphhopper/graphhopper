@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-web</artifactId>
     <packaging>jar</packaging>
-    <version>0.1-SNAPSHOT</version>
+    <version>${parent.version}</version>
     <name>GraphHopper Web</name>
     <description>Example on how to use GraphHopper in a web-based application</description>
     <properties>
@@ -15,11 +15,17 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     
+    <parent>
+    	<groupId>com.graphhopper</groupId>
+    	<artifactId>graphhopper-parent</artifactId>    	
+    	<version>0.1-SNAPSHOT</version>
+    </parent>
+    
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper</artifactId>
-            <version>0.1-SNAPSHOT</version>            
+            <version>${parent.version}</version>            
         </dependency>
         <!--  TODO <dependency>
             <groupId>org.codehaus.jackson</groupId>
@@ -73,12 +79,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlets</artifactId>
