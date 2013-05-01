@@ -16,9 +16,7 @@
     	<version>0.1-SNAPSHOT</version>
     </parent>
     <properties>
-        <slf4j.version>1.7.3</slf4j.version>
         <jetty.version>8.1.10.v20130312</jetty.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     
     <dependencies>
@@ -75,7 +73,7 @@
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
-            <version>1.2.17</version>
+            <version>${log4j.version}</version>
             <scope>compile</scope>
         </dependency>
 
