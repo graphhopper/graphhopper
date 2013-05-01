@@ -117,7 +117,7 @@ public class PrepareContractionHierarchiesTest {
         int old = g.getAllEdges().maxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old + 10, g.getAllEdges().maxId());
+        assertEquals(old + 8, g.getAllEdges().maxId());
     }
 
     @Test
@@ -175,7 +175,7 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.initFromGraph();
         // find all shortcuts if we contract node 1
-        Collection<Shortcut> scs = prepare.findShortcuts(1);
+        Collection<Shortcut> scs = prepare.testFindShortcuts(1);
         assertEquals(2, scs.size());
         Iterator<Shortcut> iter = scs.iterator();
         Shortcut sc1 = iter.next();
@@ -251,7 +251,7 @@ public class PrepareContractionHierarchiesTest {
         int old = g.getAllEdges().maxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old + 24, g.getAllEdges().maxId());
+        assertEquals(old + 25, g.getAllEdges().maxId());
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());
@@ -280,7 +280,7 @@ public class PrepareContractionHierarchiesTest {
 
         prepare.initFromGraph();
         // there should be two different shortcuts for both directions!
-        Collection<Shortcut> sc = prepare.findShortcuts(4);
+        Collection<Shortcut> sc = prepare.testFindShortcuts(4);
         assertEquals(2, sc.size());
     }
 
