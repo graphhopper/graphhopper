@@ -121,7 +121,7 @@ NAME="${FILE%.*}"
 OSM_XML=$NAME.osm
 
 GRAPH=$NAME-gh
-VERSION=`grep  "<name>" -A 1 core/pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
+VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
 JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
 
 # file without path
