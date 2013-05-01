@@ -3,7 +3,7 @@ jdk:
   - openjdk7
   - openjdk6
   - oraclejdk7
-before_script: cd core
+# before_script: cd core
 notifications:
   email:
     - peathal@yahoo.de
