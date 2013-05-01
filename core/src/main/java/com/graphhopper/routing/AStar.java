@@ -82,6 +82,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                     continue;
                 int neighborNode = iter.adjNode();
                 double alreadyVisitedWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currEdge.weightToCompare;
+                alreadyVisitedWeight += turnCostCalc.getTurnCosts(currVertex, currEdge.edge, iter.edge());
                 AStarEdge nEdge = map.get(neighborNode);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight) {
                     tmpLat = graph.getLatitude(neighborNode);

@@ -33,6 +33,7 @@ import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.GraphStorageNodeCosts;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.index.Location2IDIndex;
@@ -67,10 +68,12 @@ public class GraphHopper implements GraphHopperAPI {
     private String ghLocation = "";
     private boolean simplify = true;
     private int preciseIndexResolution = 1000;
+    private boolean turnCosts = false;
     private boolean chFast = true;
     private boolean edgeCalcOnSearch = true;
     private boolean searchRegion = true;
     private AcceptWay acceptWay = new AcceptWay(true, false, false);
+	
 
     public GraphHopper() {
     }
@@ -144,6 +147,20 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper contractionHierarchies(boolean fast) {
         chUsage = true;
         chFast = fast;
+        turnCosts = false;
+        return this;
+    }
+    
+    /**
+     * Enables the usage of turn restrictions when routing.
+     * 
+     * Currently not available for contraction hierarchies
+     */
+    public GraphHopper enableTurnCosts() {
+    	if(chUsage){
+    		throw new IllegalStateException("Turn costs for contraction hierachies are not available yet.");
+    	}
+    	turnCosts = true;
         return this;
     }
 
@@ -214,8 +231,12 @@ public class GraphHopper implements GraphHopperAPI {
                     tmpPrepareCH.type(new ShortestCalc()).vehicle(encoder);
                 }
                 prepare = tmpPrepareCH;
-            } else
-                storage = new GraphStorage(dir);
+            } else if (turnCosts) {
+            	storage = new GraphStorageNodeCosts(dir);
+            } else{
+            	storage = new GraphStorage(dir);
+            }
+                
 
             if (!storage.loadExisting())
                 throw new IllegalStateException("Invalid storage at:" + graphHopperFile);
@@ -240,6 +261,10 @@ public class GraphHopper implements GraphHopperAPI {
             if (chUsage) {
                 args.put("osmreader.levelgraph", "true");
                 args.put("osmreader.chShortcuts", chFast ? "fastest" : "shortest");
+            }
+            
+            if(turnCosts){
+            	args.put("osmreader.turncosts", "save+restrict");
             }
 
             try {
@@ -283,6 +308,7 @@ public class GraphHopper implements GraphHopperAPI {
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm(), request.vehicle());
             algo = prepare.createAlgo();
             algo.type(request.type());
+            algo.turnCosts(request.turnCosts());
         }
         if (rsp.hasError())
             return rsp;

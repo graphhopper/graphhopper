@@ -125,12 +125,19 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     void fillEdges(int currNode, double currWeight, int currRef,
             IntDoubleBinHeap prioQueue, EdgeWrapper wrapper, EdgeFilter filter) {
 
+    	boolean backwards = wrapperFrom == wrapperOther;
+    	
         EdgeIterator iter = graph.getEdges(currNode, filter);
         while (iter.next()) {
             if (!accept(iter))
                 continue;
             int neighborNode = iter.adjNode();
-            double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currWeight;
+            double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currWeight;     
+            if(!backwards){
+            	tmpWeight += turnCostCalc.getTurnCosts(currNode, wrapper.getEdgeId(currRef), iter.edge());
+            }else{
+            	tmpWeight += turnCostCalc.getTurnCosts(currNode, iter.edge(), wrapper.getEdgeId(currRef));
+            }
             int newRef = wrapper.getRef(neighborNode);
             if (newRef < 0) {
                 newRef = wrapper.add(neighborNode, tmpWeight, iter.edge());
@@ -155,10 +162,20 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         if (otherRef < 0)
             return;
 
+        boolean backwards = wrapperFrom == wrapperOther;
+        
         // update μ
         double newWeight = weight + wrapperOther.getWeight(otherRef);
+        
+        //costs for the turn where forward and backward routing meet each other
+        if(!backwards){
+        	newWeight += turnCostCalc.getTurnCosts(nodeId, wrapperFrom.getEdgeId(ref), wrapperOther.getEdgeId(otherRef));
+        }else{
+        	newWeight += turnCostCalc.getTurnCosts(nodeId, wrapperOther.getEdgeId(otherRef), wrapperTo.getEdgeId(ref));
+        }
+        
         if (newWeight < shortest.weight()) {
-            shortest.switchWrapper = wrapperFrom == wrapperOther;
+            shortest.switchWrapper = backwards;
             shortest.fromRef = ref;
             shortest.toRef = otherRef;
             shortest.weight(newWeight);

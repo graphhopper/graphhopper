@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.TurnCostCalculation;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.NotThreadSafe;
 
@@ -43,6 +44,12 @@ public interface RoutingAlgorithm {
      * shortest.
      */
     RoutingAlgorithm type(WeightCalculation calc);
+    
+    /**
+     * Changes the used turn costs calculation (e.g. turn restriction). Default is
+     * turn restriction, if, and only if, turn cost tables are available.
+     */
+    RoutingAlgorithm turnCosts(TurnCostCalculation calc);
 
     /**
      * @return name of this algorithm

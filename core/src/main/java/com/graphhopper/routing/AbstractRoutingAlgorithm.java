@@ -20,12 +20,14 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.TurnCostCalculation;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.TurnRestrictionsCalc;
 
 /**
  * @author Peter Karich
@@ -35,6 +37,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected Graph graph;
     private EdgeFilter additionalEdgeFilter;
     protected WeightCalculation weightCalc;
+    protected TurnCostCalculation turnCostCalc;
     protected final EdgeFilter outEdgeFilter;
     protected final EdgeFilter inEdgeFilter;
     protected final VehicleEncoder flagEncoder;
@@ -43,6 +46,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         this.graph = graph;
         this.additionalEdgeFilter = EdgeFilter.ALL_EDGES;
         type(new ShortestCalc());   
+        turnCosts(new TurnRestrictionsCalc());
         this.flagEncoder = encoder;
         outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
         inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);        
@@ -61,19 +65,29 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         return graph.getEdges(neighborNode, outEdgeFilter);
     }
 
-    @Override public RoutingAlgorithm type(WeightCalculation wc) {
+    @Override 
+    public RoutingAlgorithm type(WeightCalculation wc) {
         this.weightCalc = wc;
         return this;
+    }
+    
+    @Override
+    public RoutingAlgorithm turnCosts(TurnCostCalculation calc) {
+    	this.turnCostCalc = calc;
+    	this.turnCostCalc.graph(graph);
+    	return this;
     }
 
     protected void updateShortest(EdgeEntry shortestDE, int currLoc) {
     }
 
-    @Override public String toString() {
-        return name() + "|" + weightCalc;
+    @Override 
+    public String toString() {
+        return name() + "|" + weightCalc+"|"+turnCostCalc;
     }
 
-    @Override public String name() {
+    @Override 
+    public String name() {
         return getClass().getSimpleName();
     }
 }

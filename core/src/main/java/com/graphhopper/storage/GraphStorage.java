@@ -213,7 +213,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             bounds.minLon = lon;
     }
 
-    private long incCapacity(DataAccess da, long deltaCap) {
+    protected long incCapacity(DataAccess da, long deltaCap) {
         if (!initialized)
             throw new IllegalStateException("Call create before or use the GraphBuilder class");
         long newSeg = deltaCap / da.segmentSize();

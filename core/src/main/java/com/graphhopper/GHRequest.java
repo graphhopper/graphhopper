@@ -19,9 +19,11 @@
 package com.graphhopper;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.TurnCostCalculation;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.util.TurnRestrictionsCalc;
 import com.graphhopper.util.shapes.GHPlace;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +41,7 @@ public class GHRequest {
     private Map<String, Object> hints = new HashMap<String, Object>(5);
     private VehicleEncoder encoder = new CarFlagEncoder();
     private WeightCalculation weightCalc = new ShortestCalc();
+    private TurnCostCalculation turnCostCalc = new TurnRestrictionsCalc();
 
     /**
      * Calculate the path from specified startPoint (fromLat, fromLon) to
@@ -112,6 +115,15 @@ public class GHRequest {
 
     public WeightCalculation type() {
         return weightCalc;
+    }
+    
+    public GHRequest turnCosts(TurnCostCalculation turnCostCalc) {
+    	this.turnCostCalc = turnCostCalc;
+    	return this;
+    }
+    
+    public TurnCostCalculation turnCosts(){
+    	return turnCostCalc;
     }
 
     public GHRequest vehicle(VehicleEncoder encoder) {

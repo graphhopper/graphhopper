@@ -21,6 +21,7 @@ package com.graphhopper.reader;
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.GraphStorageNodeCosts;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
@@ -50,6 +51,7 @@ public abstract class OSMReaderHelper {
     protected TLongArrayList wayNodes = new TLongArrayList(10);
     private Map<String, Object> osmProperties = new HashMap<String, Object>();
     private Map<String, Object> outProperties = new HashMap<String, Object>();
+    private long edgeOsmId;
 
     public OSMReaderHelper(Graph g, long expectedNodes) {
         this.g = g;
@@ -82,9 +84,9 @@ public abstract class OSMReaderHelper {
 
     public abstract boolean addNode(long osmId, double lat, double lon);
 
-    public abstract int addEdge(TLongList nodes, int flags);
+    public abstract int addEdge(TLongList nodes, int flags, long edgeOsmid);
 
-    int addEdge(int fromIndex, int toIndex, PointList pointList, int flags) {
+    int addEdge(int fromIndex, int toIndex, PointList pointList, int flags, long osmid) {
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError("to or from index is invalid for this edge "
                     + fromIndex + "->" + toIndex + ", points:" + pointList);
@@ -112,7 +114,12 @@ public abstract class OSMReaderHelper {
             towerNodeDistance = 0.0001;
         }
 
-        EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
+        final EdgeIterator iter;
+        if(g instanceof GraphStorageNodeCosts){
+        	iter = ((GraphStorageNodeCosts)g).edge(fromIndex, toIndex, towerNodeDistance, flags, osmid);
+        }else{
+        	iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
+        } 
         if (nodes > 2)
             iter.wayGeometry(pillarNodes);
         return nodes;
@@ -132,15 +139,19 @@ public abstract class OSMReaderHelper {
 
     void startWayProcessing() {
     }
+    
+    void processRelations(XMLStreamReader sReader) throws XMLStreamException{
+    }
+    
 
     public void processWay(XMLStreamReader sReader) throws XMLStreamException {
         boolean valid = parseWay(sReader);
         if (valid) {
             int flags = acceptWay.toFlags(outProperties);
-            addEdge(wayNodes, flags);            
+            addEdge(wayNodes, flags, edgeOsmId);            
         }
     }
-
+    
     /**
      * wayNodes will be filled with participating node ids. outProperties will
      * be filled with way information after calling this method.
@@ -151,6 +162,12 @@ public abstract class OSMReaderHelper {
         wayNodes.clear();
         osmProperties.clear();
         outProperties.clear();
+        try{
+        	edgeOsmId = Long.parseLong(sReader.getAttributeValue(null, "id"));	
+        }catch(Exception e){
+        	logger.error("could not read osm id of edge", e);
+        }
+        
         for (int tmpE = sReader.nextTag(); tmpE != XMLStreamConstants.END_ELEMENT;
                 tmpE = sReader.nextTag()) {
             if (tmpE == XMLStreamConstants.START_ELEMENT) {

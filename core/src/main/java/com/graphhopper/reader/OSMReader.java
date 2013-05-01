@@ -31,6 +31,7 @@ import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.GraphStorageNodeCosts;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -130,15 +131,26 @@ public class OSMReader {
             else
                 dir = new RAMDirectory(graphLocation, false);
         }
+        
+        String turnCosts = args.get("osmreader.turncosts", "ignore");
+        boolean useTurnCosts = "save+restrict".equals(turnCosts);
 
         String chShortcuts = args.get("osmreader.chShortcuts", "no");
         boolean levelGraph = "true".equals(chShortcuts)
                 || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
-        if (levelGraph)
+        
+        
+        if (levelGraph){
+        	if(useTurnCosts){
+        		throw new IllegalStateException("Turn costs for contraction hierachies are not available yet.");
+        	}
             // necessary for simple or CH shortcuts
             storage = new LevelGraphStorage(dir);
-        else
-            storage = new GraphStorage(dir);
+        } else if(useTurnCosts) {
+        	storage = new GraphStorageNodeCosts(dir);
+        } else {
+        	storage = new GraphStorage(dir);
+        }
         return osm2Graph(new OSMReader(storage, size), args);
     }
 
@@ -277,6 +289,7 @@ public class OSMReader {
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         long wayStart = -1;
+        long relStart = -1;
         StopWatch sw = new StopWatch();
         try {
             sReader = factory.createXMLStreamReader(is, "UTF-8");
@@ -309,6 +322,17 @@ public class OSMReader {
                                 logger.info(nf(counter) + ", locs:" + nf(locations)
                                         + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
                                         + " " + Helper.memInfo());
+                            }
+                        } else if ("relation".equals(sReader.getLocalName())){
+                        	if (relStart < 0) {
+                                logger.info(nf(counter) + ", now parsing relations");
+                                relStart = counter;
+                                sw.start();
+                            }
+                        	helper.processRelations(sReader);
+                        	if (counter - relStart == 10000 && sw.stop().getSeconds() > 1) {
+                                logger.warn("Something is wrong! Processing relations takes too long! "
+                                        + sw.getSeconds() + "sec for only " + (counter - relStart) + " entries");
                             }
                         }
                         break;
