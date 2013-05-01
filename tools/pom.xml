@@ -7,17 +7,15 @@
     <version>${parent.version}</version>
     <packaging>jar</packaging>
     <name>GraphHopper Tools</name>
-    <url>http://maven.apache.org</url>
 
+    <parent>
+        <groupId>com.graphhopper</groupId>
+        <artifactId>graphhopper-parent</artifactId>    	
+        <version>0.1-SNAPSHOT</version>
+    </parent>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-    
-    <parent>
-    	<groupId>com.graphhopper</groupId>
-    	<artifactId>graphhopper-parent</artifactId>    	
-    	<version>0.1-SNAPSHOT</version>
-    </parent>
+    </properties>    
 
     <dependencies>
         <dependency>

@@ -18,19 +18,19 @@
         <module>web</module>
     </modules>
 
-	<!-- does not run on build server yet 
-		call 'mvn install -P with-android' to compile everything including the android module
-	-->
-	<profiles>
-		<profile>
-			<id>with-android</id>
-			<modules>
-				<module>android</module>
-			</modules>
-		</profile>
-	</profiles>
+    <!-- does not run on build server yet 
+         call 'mvn install -P with-android' to compile everything including the android module
+    -->
+    <profiles>
+        <profile>
+            <id>with-android</id>
+            <modules>
+                <module>android</module>
+            </modules>
+        </profile>
+    </profiles>
         
-    <build>
+    <build>        
         <plugins>
         
             <!-- to avoid problems with jvm 1.5 and @Override -->
@@ -59,7 +59,7 @@
         </plugins>
     </build>    
     
-	<dependencies>
+    <dependencies>
       
         <dependency>
             <groupId>junit</groupId>

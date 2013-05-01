@@ -11,6 +11,12 @@
         <name>GraphHopper</name>
         <url>http://graphhopper.com</url>
     </organization>
+    
+    <parent>
+        <groupId>com.graphhopper</groupId>
+        <artifactId>graphhopper-parent</artifactId>    	
+        <version>0.1-SNAPSHOT</version>
+    </parent>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
@@ -19,31 +25,26 @@
         https://github.com/rgladwell/m2e-android/issues/52 -->
     </properties>
     
-	<repositories>
-		<!-- local repository which contains all unresolable libs -->
-		<repository>
-			<id>local</id>
-			<name>android libs</name>
-			<url>file:${project.basedir}/libs</url>
-		</repository>
+    <repositories>
+        <!-- local repository which contains all unresolable libs like mapsforge-->
+        <repository>
+            <id>locallibs</id>
+            <name>android libs</name>
+            <url>file:${project.basedir}/libs</url>
+        </repository>
 		
-		<!-- repository of project 'molecular' to resolve android-jars -->
-		<repository>
-			<id>mulecular_repo</id>
-			<name>android libs</name>
-			<url>https://repo.molecular.com/artifactory/repo</url>
-			<snapshots>		
-				<enabled>true</enabled>		
-			</snapshots>		
-		</repository>
+        <!-- repository of project 'molecular' to resolve android-jars -->
+        <repository>
+            <id>mulecular_repo</id>
+            <name>android libs</name>
+            <url>https://repo.molecular.com/artifactory/repo</url>
+            <snapshots>		
+                <enabled>true</enabled>		
+            </snapshots>		
+        </repository>
 		
-	</repositories>
+    </repositories>
     
-    <parent>
-    	<groupId>com.graphhopper</groupId>
-    	<artifactId>graphhopper-parent</artifactId>    	
-    	<version>0.1-SNAPSHOT</version>
-    </parent>
     
     <dependencies>          
         <!-- run scripts/maven-install-mapsforge.sh 

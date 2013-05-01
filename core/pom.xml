@@ -7,7 +7,14 @@
     <artifactId>graphhopper</artifactId>
     <name>GraphHopper</name>
     <version>${parent.version}</version>
-    <packaging>jar</packaging>     
+    <packaging>jar</packaging> 
+    
+    <parent>
+        <groupId>com.graphhopper</groupId>
+        <artifactId>graphhopper-parent</artifactId>    	
+        <version>0.1-SNAPSHOT</version>
+    </parent>
+        
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <slf4j.version>1.7.3</slf4j.version>        
@@ -23,13 +30,6 @@
             <comments>A business-friendly OSS license</comments>
         </license>
     </licenses> 
-    
-    <parent>
-    	<groupId>com.graphhopper</groupId>
-    	<artifactId>graphhopper-parent</artifactId>    	
-    	<version>0.1-SNAPSHOT</version>
-    </parent>
-    
     <dependencies>
         
         <!-- Trove is LGPL and slightly big (~3MB) -->
@@ -75,56 +75,56 @@
     </dependencies>
         
     <build>
-    	<pluginManagement>
-	        <plugins>
-	            <plugin>
-	                <groupId>org.apache.maven.plugins</groupId>
-	                <artifactId>maven-assembly-plugin</artifactId>
-	                <version>2.4</version>
-	                <configuration>
-	                    <archive>
-	                        <manifest>
-	                            <mainClass>com.graphhopper.reader.OSMReader</mainClass>
-	                        </manifest>
-	                    </archive>
-	                    <!-- for usage on android -->
-	                    <descriptors>
-	                        <descriptor>src/main/assembly/android.xml</descriptor>
-	                    </descriptors>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>2.4</version>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>com.graphhopper.reader.OSMReader</mainClass>
+                            </manifest>
+                        </archive>
+                        <!-- for usage on android -->
+                        <descriptors>
+                            <descriptor>src/main/assembly/android.xml</descriptor>
+                        </descriptors>
 	                    
-	                    <!-- for standalone usage -->
-	                    <descriptorRefs>
-	                        <descriptorRef>jar-with-dependencies</descriptorRef>
-	                    </descriptorRefs>
-	                </configuration>
-	            </plugin>
-	            <plugin>
-	                <groupId>org.apache.maven.plugins</groupId>
-	                <artifactId>maven-site-plugin</artifactId>
-	                <version>3.2</version>
-	                <configuration>
-	                    <reportPlugins>
-	                        <plugin>
-	                            <!-- either call mvn compile site or mvn findbugs:gui -->
-	                            <groupId>org.codehaus.mojo</groupId>
-	                            <artifactId>findbugs-maven-plugin</artifactId>
-	                            <version>2.5.2</version>
-	                            <configuration>
-	                                <!-- <xmlOutput>true</xmlOutput> -->
-	                                <!-- Optional directory to put FindBugs xdoc xml report -->
-	                                <xmlOutputDirectory>target/site</xmlOutputDirectory>
-	                                <threshold>Normal</threshold>
-	                                <effort>Default</effort>
-	                                <!--
-	                                <threshold>High|Normal|Low|Exp|Ignore</threshold>
-	                                <effort>Min|Default|Max</effort>
-	                                -->
-	                            </configuration>
-	                        </plugin>
-	                    </reportPlugins>
-	                </configuration>
-	            </plugin>
-	        </plugins>
+                        <!-- for standalone usage -->
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.2</version>
+                    <configuration>
+                        <reportPlugins>
+                            <plugin>
+                                <!-- either call mvn compile site or mvn findbugs:gui -->
+                                <groupId>org.codehaus.mojo</groupId>
+                                <artifactId>findbugs-maven-plugin</artifactId>
+                                <version>2.5.2</version>
+                                <configuration>
+                                    <!-- <xmlOutput>true</xmlOutput> -->
+                                    <!-- Optional directory to put FindBugs xdoc xml report -->
+                                    <xmlOutputDirectory>target/site</xmlOutputDirectory>
+                                    <threshold>Normal</threshold>
+                                    <effort>Default</effort>
+                                    <!--
+   	                                <threshold>High|Normal|Low|Exp|Ignore</threshold>
+   	                                <effort>Min|Default|Max</effort>
+   	                                -->
+                                </configuration>
+                            </plugin>
+                        </reportPlugins>
+                    </configuration>
+                </plugin>
+            </plugins>
         </pluginManagement>
         
         <!-- make version available at runtime via version file -->

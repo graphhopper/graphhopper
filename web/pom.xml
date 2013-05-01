@@ -9,17 +9,17 @@
     <version>${parent.version}</version>
     <name>GraphHopper Web</name>
     <description>Example on how to use GraphHopper in a web-based application</description>
-    <properties>
-        <slf4j.version>1.7.3</slf4j.version>
-        <jetty.version>8.1.10.v20130312</jetty.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-    
+        
     <parent>
     	<groupId>com.graphhopper</groupId>
     	<artifactId>graphhopper-parent</artifactId>    	
     	<version>0.1-SNAPSHOT</version>
     </parent>
+    <properties>
+        <slf4j.version>1.7.3</slf4j.version>
+        <jetty.version>8.1.10.v20130312</jetty.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
     
     <dependencies>
         <dependency>
@@ -88,17 +88,6 @@
 
     <build>
         <plugins>
-            <!-- maven3 -->
-            <plugin>
-                <inherited>true</inherited>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.0</version>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
