@@ -140,7 +140,7 @@ elif [ "x$TMP" = "xgermany" ]; then
  SIZE=35000000
 elif [ -f $OSM_XML ]; then
  LINK=""
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx280m -Xms280m"
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx480m -Xms480m"
  SIZE=10000000
 else
  echo "Sorry, your osm file $OSM_XML was not found ... exiting"

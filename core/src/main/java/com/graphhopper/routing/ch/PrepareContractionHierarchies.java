@@ -32,14 +32,15 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
-import gnu.trove.list.array.TIntArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -74,7 +75,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     // the most important nodes comes last
     private GHSortedCollection sortedNodes;
     private PriorityNode refs[];
-    private TIntArrayList originalEdges;
+    private DataAccess originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
     private int scOneDir;
     private int scBothDir;
@@ -91,6 +92,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     public PrepareContractionHierarchies() {
         type(new ShortestCalc()).vehicle(new CarFlagEncoder());
+        originalEdges = new RAMDirectory().findCreate("originalEdges");
+        originalEdges.create(1000);        
     }
 
     @Override
@@ -493,7 +496,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     PrepareContractionHierarchies initFromGraph() {
-        originalEdges = new TIntArrayList(g.nodes() / 2, -1);
         levelEdgeFilter = new LevelEdgeFilterCH(this.g);
         sortedNodes = new GHSortedCollection(g.nodes());
         refs = new PriorityNode[g.nodes()];
@@ -530,13 +532,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     private void setOrigEdgeCount(int index, int value) {
-        originalEdges.ensureCapacity(index + 1);
-        originalEdges.setQuick(index, value);
+        originalEdges.ensureCapacity(index * 4 + 4);
+        originalEdges.setInt(index, value);
     }
 
     private int getOrigEdgeCount(int index) {
-        originalEdges.ensureCapacity(index + 1);
-        return originalEdges.getQuick(index);
+        originalEdges.ensureCapacity(index * 4 + 4);
+        return originalEdges.getInt(index);
     }
 
     @Override
