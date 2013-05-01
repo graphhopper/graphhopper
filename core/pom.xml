@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper</artifactId>
     <name>GraphHopper</name>
-    <version>${parent.version}</version>
+    <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging> 
     
     <parent>
