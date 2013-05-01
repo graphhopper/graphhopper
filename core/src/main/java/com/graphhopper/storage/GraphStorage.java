@@ -520,12 +520,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
         public SingleEdge(int edgeId, int nodeId) {
             super(edgeId, nodeId, null);
+            nextEdge = EdgeIterable.NO_EDGE;
         }
-
-        @Override public boolean next() {
-            return false;
-        }
-
+        
         @Override public int flags() {
             flags = edges.getInt(edgePointer + E_FLAGS);
             if (switchFlags)
@@ -568,7 +565,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             this.filter = filter;
         }
 
-        boolean readNext() {
+        private boolean readNext() {
             edgePointer = (long) nextEdge * edgeEntrySize;
             edgeId = nextEdge;
             node = getOtherNode(baseNode, edgePointer);
@@ -587,11 +584,11 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             return filter != null && filter.accept(this);
         }
 
-        long edgePointer() {
+        private long edgePointer() {
             return edgePointer;
         }
 
-        @Override public boolean next() {
+        @Override public final boolean next() {
             int i = 0;
             boolean foundNext = false;
             for (; i < 1000; i++) {
@@ -607,15 +604,15 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             return foundNext;
         }
 
-        @Override public int adjNode() {
+        @Override public final int adjNode() {
             return node;
         }
 
-        @Override public double distance() {
+        @Override public final double distance() {
             return getDist(edgePointer);
         }
 
-        @Override public void distance(double dist) {
+        @Override public final void distance(double dist) {
             edges.setInt(edgePointer + E_DIST, distToInt(dist));
         }
 
@@ -623,34 +620,34 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             return flags;
         }
 
-        @Override public void flags(int fl) {
+        @Override public final void flags(int fl) {
             flags = fl;
             int nep = edges.getInt(getLinkPosInEdgeArea(baseNode, node, edgePointer));
             int neop = edges.getInt(getLinkPosInEdgeArea(node, baseNode, edgePointer));
             writeEdge(edge(), baseNode, node, nep, neop, distance(), flags);
         }
 
-        @Override public int baseNode() {
+        @Override public final  int baseNode() {
             return baseNode;
         }
 
-        @Override public void wayGeometry(PointList pillarNodes) {
+        @Override public final void wayGeometry(PointList pillarNodes) {
             GraphStorage.this.wayGeometry(pillarNodes, edgePointer, baseNode > node);
         }
 
-        @Override public PointList wayGeometry() {
+        @Override public final PointList wayGeometry() {
             return GraphStorage.this.wayGeometry(edgePointer, baseNode > node);
         }
 
-        @Override public int edge() {
+        @Override public final int edge() {
             return edgeId;
         }
 
-        @Override public boolean isEmpty() {
+        @Override public final boolean isEmpty() {
             return false;
         }
 
-        @Override public String toString() {
+        @Override public final String toString() {
             return edge() + " " + baseNode() + "-" + adjNode();
         }
     }

@@ -19,6 +19,7 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
@@ -26,7 +27,6 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
-import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -74,8 +74,7 @@ public class PrepareContractionHierarchiesTest {
     public void testShortestPathSkipNode() {
         LevelGraph g = createExampleGraph();
         double normalDist = new Dijkstra(g, carEncoder).calcPath(4, 2).distance();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo =
-                new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
+        DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
         int nodeEntry = algo.limit(100).findEndNode(4, 2);
         assertTrue(algo.weight(nodeEntry) > normalDist);
@@ -85,8 +84,7 @@ public class PrepareContractionHierarchiesTest {
     public void testShortestPathSkipNode2() {
         LevelGraph g = createExampleGraph();
         double normalDist = new Dijkstra(g, carEncoder).calcPath(4, 2).distance();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo =
-                new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
+        DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
         int nodeEntry = algo.limit(10).findEndNode(4, 2);
         // assertEquals(ee.weight, normalDist, 1e-5);
@@ -97,8 +95,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testShortestPathLimit() {
         LevelGraph g = createExampleGraph();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo =
-                new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
+        DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(0));
         int endNode = algo.limit(2).findEndNode(4, 1);
         // did not reach endNode

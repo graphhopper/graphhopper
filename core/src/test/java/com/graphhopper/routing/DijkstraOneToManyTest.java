@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.VehicleEncoder;
@@ -25,6 +26,7 @@ import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import static org.junit.Assert.*;
@@ -89,5 +91,5 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
         });        
         p = algo.calcPath(4, 6);
         assertEquals(Helper.createTList(4, 5, 6), p.calcNodes());
-    }
+    }       
 }

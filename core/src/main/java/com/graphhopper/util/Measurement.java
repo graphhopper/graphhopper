@@ -64,7 +64,7 @@ public class Measurement {
 
         String propLocation = args.get("measurement.location", "");
         if (Helper.isEmpty(propLocation))
-            propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date()) + ".properties";
+            propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date()) + ".properties";
 
         long seed = args.getLong("measurement.seed", 123);
         Random rand = new Random(seed);

@@ -188,7 +188,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
  }
  
  # use current version
- mvn -DskipTests clean install assembly:single
+ "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
  startMeasurement
  exit
 
@@ -201,7 +201,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
    M_FILE_NAME="measurement$M_FILE_NAME.properties"
    echo -e "\nusing commit $commit and $M_FILE_NAME"
    
-   mvn -DskipTests clean install assembly:single
+   "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
    startMeasurement
  done
 

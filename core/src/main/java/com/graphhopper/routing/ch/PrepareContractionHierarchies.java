@@ -22,7 +22,6 @@ import com.graphhopper.coll.GHSortedCollection;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
@@ -33,7 +32,6 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
-import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -82,7 +80,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private int scBothDir;
     private Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private LevelEdgeFilterCH levelEdgeFilter;
-    private OneToManyDijkstraCH algo;
+    private DijkstraOneToMany algo;
     private int updateSize;
     private boolean removesHigher2LowerEdges = true;
     private long counter;
@@ -433,7 +431,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         levelEdgeFilter = new LevelEdgeFilterCH(this.g);
         sortedNodes = new GHSortedCollection(g.nodes());
         refs = new PriorityNode[g.nodes()];
-        algo = new OneToManyDijkstraCH(g, prepareEncoder);
+        algo = new DijkstraOneToMany(g, prepareEncoder);
         algo.type(shortestCalc);
         return this;
     }
@@ -456,7 +454,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             return this;
         }
 
-        @Override public boolean accept(EdgeIterator iter) {
+        @Override public final boolean accept(EdgeIterator iter) {
             if (!super.accept(iter))
                 return false;
             // ignore if it is skipNode or a endNode already contracted
@@ -574,33 +572,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 return prepareWeightCalc.revertWeight(weight, flags);
             }
         };
-    }
-
-    /**
-     * Use an one-to-many algorithm to make preparation faster. We need to use
-     * DijkstraSimple as AStar or DijkstraBidirection cannot be efficiently used
-     * with multiple goals
-     */
-    static class OneToManyDijkstraCH extends DijkstraOneToMany {
-
-        double limit;
-
-        public OneToManyDijkstraCH(Graph graph, VehicleEncoder encoder) {
-            super(graph, encoder);
-        }
-
-        OneToManyDijkstraCH limit(double weight) {
-            limit = weight;
-            return this;
-        }
-
-        @Override public Path calcPath(int from, int to) {
-            throw new IllegalArgumentException("call the other calcPath instead");
-        }
-
-        @Override public boolean finished(int currNode, int to) {
-            return weights[currNode] >= limit || currNode == to;
-        }
     }
 
     private static class PriorityNode {

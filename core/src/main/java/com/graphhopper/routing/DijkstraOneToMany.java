@@ -42,6 +42,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     private IntDoubleBinHeap heap;
     private int visitedNodes;
     private boolean doClear = true;
+    private double limit = Double.MAX_VALUE;
 
     public DijkstraOneToMany(Graph graph, VehicleEncoder encoder) {
         super(graph, encoder);
@@ -52,6 +53,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         Arrays.fill(weights, Double.MAX_VALUE);
         heap = new IntDoubleBinHeap();
         changedNodes = new TIntArrayList();
+    }
+
+    public DijkstraOneToMany limit(double weight) {
+        limit = weight;
+        return this;
     }
 
     @Override
@@ -109,7 +115,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             return currNode;
         while (true) {
             visitedNodes++;
-            EdgeIterator iter = neighbors(currNode);
+            EdgeIterator iter = graph.getEdges(currNode, outEdgeFilter);
             while (iter.next()) {
                 if (!accept(iter))
                     continue;
@@ -143,7 +149,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     }
 
     public boolean finished(int currNode, int to) {
-        return currNode == to;
+        return weights[currNode] >= limit || currNode == to;
     }
 
     @Override public int visitedNodes() {
