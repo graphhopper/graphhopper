@@ -522,9 +522,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             super(edgeId, nodeId, null);
             nextEdge = EdgeIterable.NO_EDGE;
         }
-        
+
         @Override public int flags() {
-            flags = edges.getInt(edgePointer + E_FLAGS);
+            int flags = edges.getInt(edgePointer + E_FLAGS);
             if (switchFlags)
                 return combiEncoder.swapDirection(flags);
             return flags;
@@ -551,7 +551,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         final EdgeFilter filter;
         final int baseNode;
         // edge properties
-        int flags;
         int node;
         int edgeId;
         long edgePointer;
@@ -565,36 +564,22 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             this.filter = filter;
         }
 
-        private boolean readNext() {
-            edgePointer = (long) nextEdge * edgeEntrySize;
-            edgeId = nextEdge;
-            node = getOtherNode(baseNode, edgePointer);
-
-            // position to next edge
-            nextEdge = edges.getInt(getLinkPosInEdgeArea(baseNode, node, edgePointer));
-            if (nextEdge == edgeId)
-                throw new AssertionError("endless loop detected for " + baseNode + "," + node + "," + edgePointer);
-
-            flags = edges.getInt(edgePointer + E_FLAGS);
-
-            // switch direction flags if necessary
-            if (baseNode > node)
-                flags = combiEncoder.swapDirection(flags);
-
-            return filter != null && filter.accept(this);
-        }
-
-        private long edgePointer() {
-            return edgePointer;
-        }
-
         @Override public final boolean next() {
             int i = 0;
             boolean foundNext = false;
             for (; i < 1000; i++) {
                 if (nextEdge == EdgeIterator.NO_EDGE)
                     break;
-                foundNext = readNext();
+                edgePointer = (long) nextEdge * edgeEntrySize;
+                edgeId = nextEdge;
+                node = getOtherNode(baseNode, edgePointer);
+
+                // position to next edge
+                nextEdge = edges.getInt(getLinkPosInEdgeArea(baseNode, node, edgePointer));
+                if (nextEdge == edgeId)
+                    throw new AssertionError("endless loop detected for " + baseNode + "," + node + "," + edgePointer);
+
+                foundNext = filter != null && filter.accept(this);
                 if (foundNext)
                     break;
             }
@@ -602,6 +587,10 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             if (i > 1000)
                 throw new IllegalStateException("something went wrong: no end of edge-list found");
             return foundNext;
+        }
+
+        private long edgePointer() {
+            return edgePointer;
         }
 
         @Override public final int adjNode() {
@@ -617,17 +606,21 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         }
 
         @Override public int flags() {
+            int flags = edges.getInt(edgePointer + E_FLAGS);
+
+            // switch direction flags if necessary
+            if (baseNode > node)
+                flags = combiEncoder.swapDirection(flags);
             return flags;
         }
 
         @Override public final void flags(int fl) {
-            flags = fl;
             int nep = edges.getInt(getLinkPosInEdgeArea(baseNode, node, edgePointer));
             int neop = edges.getInt(getLinkPosInEdgeArea(node, baseNode, edgePointer));
-            writeEdge(edge(), baseNode, node, nep, neop, distance(), flags);
+            writeEdge(edge(), baseNode, node, nep, neop, distance(), fl);
         }
 
-        @Override public final  int baseNode() {
+        @Override public final int baseNode() {
             return baseNode;
         }
 

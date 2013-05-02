@@ -82,8 +82,10 @@ public class Measurement {
         try {
             printGraphDetails(g);
             PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
-            if (doPrepare)
+            if (doPrepare) {
+                logger.info("nodes:" + g.nodes() + ", edges:" + g.getAllEdges().maxId());
                 printPreparationDetails(g, prepare);
+            }
             TIntList list = printLocation2IDQuery(g, dir, count, rand);
             lookupCount = list.size();
             printTimeOfRouteQuery(prepare, list);

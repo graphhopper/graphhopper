@@ -93,7 +93,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public PrepareContractionHierarchies() {
         type(new ShortestCalc()).vehicle(new CarFlagEncoder());
         originalEdges = new RAMDirectory().findCreate("originalEdges");
-        originalEdges.create(1000);        
+        originalEdges.create(1000);
     }
 
     @Override
@@ -193,7 +193,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         int level = 1;
         counter = 0;
         if (updateSize <= 0)
-            updateSize = Math.max(10, sortedNodes.size() / 10);
+            updateSize = Math.max(10, sortedNodes.size() / 15);
 
         int updateCounter = 0;
         StopWatch updateSW = new StopWatch();
@@ -209,13 +209,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // Without neighborupdates preparation is faster but we need them
         // to slightly improve query time. Also if not applied too often it decreases the shortcut number.
         boolean neighborUpdate = true;
+        int transitNodeLimit = sortedNodes.size() / 100;
         while (!sortedNodes.isEmpty()) {
             if (counter % updateSize == 0) {
                 // periodically update priorities of ALL nodes            
-                if (periodicUpdate && updateCounter > 0 && updateCounter % 5 == 0) {
-                    int len = g.nodes();
+                if (periodicUpdate && updateCounter > 0 && updateCounter % 10 == 0) {
                     updateSW.start();
                     // TODO avoid to traverse all nodes -> via a new sortedNodes.iterator()
+                    int len = g.nodes();
                     for (int node = 0; node < len; node++) {
                         PriorityNode pNode = refs[node];
                         if (g.getLevel(node) != 0)
@@ -227,12 +228,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     updateSW.stop();
                 }
                 updateCounter++;
-                logger.info(counter + ", nodes: " + sortedNodes.size() + ", shortcuts:" + newShortcuts
-                        + ", updateAllTime:" + updateSW.getSeconds()
-                        + ", dijkstras:" + dijkstraCount
-                        + ", dijkstraTime:" + dijkstraSW.getSeconds()
-                        + ", " + updateCounter
-                        + ", memory:" + Helper.memInfo());
+                logger.info(updateCounter + ", nodes: " + Helper.nf(sortedNodes.size())
+                        + ", shortcuts:" + Helper.nf(newShortcuts)
+                        + ", t(update):" + (int) updateSW.getSeconds()
+                        + ", dijkstras:" + Helper.nf(dijkstraCount)
+                        + ", t(dijk):" + (int) dijkstraSW.getSeconds()
+                        + ", " + Helper.memInfo());
             }
 
             counter++;
@@ -268,6 +269,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
                 if (removesHigher2LowerEdges)
                     ((LevelGraphStorage) g).disconnect(iter, EdgeIterator.NO_EDGE, false);
+            }
+            if(sortedNodes.size() <= transitNodeLimit) {
+                neighborUpdate = true;
+                lazyUpdate = false;
+                periodicUpdate = false;
             }
         }
 
