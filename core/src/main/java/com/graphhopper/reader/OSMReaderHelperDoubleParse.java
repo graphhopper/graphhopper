@@ -18,7 +18,6 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.coll.BigLongIntMap;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.storage.DataAccess;
@@ -119,58 +118,62 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         int firstNode = -1;
         int lastIndex = osmIds.size() - 1;
         int lastInBoundsPillarNode = -1;
-        for (int i = 0; i < osmIds.size(); i++) {
-            long osmId = osmIds.get(i);
-            int tmpNode = osmIdToIndexMap.get(osmId);
-            if (tmpNode == EMPTY)
-                continue;
-            // skip osmIds with no associated pillar or tower id (e.g. !OSMReader.isBounds)
-            if (tmpNode == TOWER_NODE)
-                continue;
-            if (tmpNode == PILLAR_NODE) {
-                // In some cases no node information is saved for the specified osmId.
-                // ie. a way references a <node> which does not exist in the current file.
-                // => if the node before was a pillar node then convert into to tower node (as it is also end-standing).
-                if (!pointList.isEmpty() && lastInBoundsPillarNode > -TOWER_NODE) {
-                    // transform the pillar node to a tower node
-                    tmpNode = lastInBoundsPillarNode;
-                    tmpNode = handlePillarNode(tmpNode, osmId, null, true);
+        try {
+            for (int i = 0; i < osmIds.size(); i++) {
+                long osmId = osmIds.get(i);
+                int tmpNode = osmIdToIndexMap.get(osmId);
+                if (tmpNode == EMPTY)
+                    continue;
+                // skip osmIds with no associated pillar or tower id (e.g. !OSMReader.isBounds)
+                if (tmpNode == TOWER_NODE)
+                    continue;
+                if (tmpNode == PILLAR_NODE) {
+                    // In some cases no node information is saved for the specified osmId.
+                    // ie. a way references a <node> which does not exist in the current file.
+                    // => if the node before was a pillar node then convert into to tower node (as it is also end-standing).
+                    if (!pointList.isEmpty() && lastInBoundsPillarNode > -TOWER_NODE) {
+                        // transform the pillar node to a tower node
+                        tmpNode = lastInBoundsPillarNode;
+                        tmpNode = handlePillarNode(tmpNode, osmId, null, true);
+                        tmpNode = -tmpNode - 3;
+                        if (pointList.size() > 1 && firstNode >= 0) {
+                            // TOWER node                        
+                            successfullyAdded += addEdge(firstNode, tmpNode, pointList, flags);
+                            pointList.clear();
+                            pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
+                        }
+                        firstNode = tmpNode;
+                        lastInBoundsPillarNode = -1;
+                    }
+                    continue;
+                }
+
+                if (tmpNode <= -TOWER_NODE && tmpNode >= TOWER_NODE)
+                    throw new AssertionError("Mapped index not in correct bounds " + tmpNode + ", " + osmId);
+
+                if (tmpNode > -TOWER_NODE) {
+                    boolean convertToTowerNode = i == 0 || i == lastIndex;
+                    if (!convertToTowerNode)
+                        lastInBoundsPillarNode = tmpNode;
+
+                    // PILLAR node, but convert to towerNode if end-standing
+                    tmpNode = handlePillarNode(tmpNode, osmId, pointList, convertToTowerNode);
+                }
+
+                if (tmpNode < TOWER_NODE) {
+                    // TOWER node
                     tmpNode = -tmpNode - 3;
-                    if (pointList.size() > 1 && firstNode >= 0) {
-                        // TOWER node                        
+                    pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
+                    if (firstNode >= 0) {
                         successfullyAdded += addEdge(firstNode, tmpNode, pointList, flags);
                         pointList.clear();
                         pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
                     }
                     firstNode = tmpNode;
-                    lastInBoundsPillarNode = -1;
                 }
-                continue;
             }
-
-            if (tmpNode <= -TOWER_NODE && tmpNode >= TOWER_NODE)
-                throw new AssertionError("Mapped index not in correct bounds " + tmpNode + ", " + osmId);
-
-            if (tmpNode > -TOWER_NODE) {
-                boolean convertToTowerNode = i == 0 || i == lastIndex;
-                if (!convertToTowerNode)
-                    lastInBoundsPillarNode = tmpNode;
-
-                // PILLAR node, but convert to towerNode if end-standing
-                tmpNode = handlePillarNode(tmpNode, osmId, pointList, convertToTowerNode);
-            }
-
-            if (tmpNode < TOWER_NODE) {
-                // TOWER node
-                tmpNode = -tmpNode - 3;
-                pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
-                if (firstNode >= 0) {
-                    successfullyAdded += addEdge(firstNode, tmpNode, pointList, flags);
-                    pointList.clear();
-                    pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
-                }
-                firstNode = tmpNode;
-            }
+        } catch (RuntimeException ex) {            
+            logger.error("Couldn't properly add edge with osm ids:" + osmIds, ex);
         }
         return successfullyAdded;
     }
@@ -183,7 +186,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         int intlat = pillarLats.getInt(tmpNode);
         int intlon = pillarLons.getInt(tmpNode);
         if (intlat == Integer.MAX_VALUE || intlon == Integer.MAX_VALUE)
-            throw new AssertionError("Conversation pillarNode to towerNode already happended!? "
+            throw new RuntimeException("Conversation pillarNode to towerNode already happended!? "
                     + "osmId:" + osmId + " pillarIndex:" + tmpNode);
 
         double tmpLat = Helper.intToDegree(intlat);
