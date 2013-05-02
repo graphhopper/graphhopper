@@ -87,6 +87,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private long counter;
     private int newShortcuts;
     private long dijkstraCount;
+    private double meanDegree;
     private Random rand = new Random(123);
     private StopWatch dijkstraSW = new StopWatch();
 
@@ -190,6 +191,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     void contractNodes() {
+        meanDegree = g.getAllEdges().maxId() / g.nodes();
         int level = 1;
         counter = 0;
         if (updateSize <= 0)
@@ -209,7 +211,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // Without neighborupdates preparation is faster but we need them
         // to slightly improve query time. Also if not applied too often it decreases the shortcut number.
         boolean neighborUpdate = true;
-        int transitNodeLimit = sortedNodes.size() / 100;
         while (!sortedNodes.isEmpty()) {
             if (counter % updateSize == 0) {
                 // periodically update priorities of ALL nodes            
@@ -233,6 +234,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                         + ", t(update):" + (int) updateSW.getSeconds()
                         + ", dijkstras:" + Helper.nf(dijkstraCount)
                         + ", t(dijk):" + (int) dijkstraSW.getSeconds()
+                        + ", meanDegree:" + (long) meanDegree
                         + ", " + Helper.memInfo());
             }
 
@@ -270,17 +272,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 if (removesHigher2LowerEdges)
                     ((LevelGraphStorage) g).disconnect(iter, EdgeIterator.NO_EDGE, false);
             }
-            if(sortedNodes.size() <= transitNodeLimit) {
-                neighborUpdate = true;
-                lazyUpdate = false;
-                periodicUpdate = false;
-            }
         }
 
-        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc + ", " + prepareEncoder
+        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc
+                + ", " + prepareEncoder
                 + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges
                 + ", dijkstras:" + dijkstraCount
-                + ", dijkstraTime:" + dijkstraSW.getSeconds());
+                + ", t(dijk):" + dijkstraSW.getSeconds()
+                + ", meanDegree:" + (long) meanDegree);
     }
     AddShortcutHandler addScHandler = new AddShortcutHandler();
     CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
@@ -427,6 +426,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
      * Finds shortcuts, does not change the underlying graph.
      */
     void findShortcuts(ShortcutHandler sch) {
+        long tmpDegreeCounter = 0;
         EdgeIterator incomingEdges = g.getEdges(sch.node(), vehicleInFilter);
         // collect outgoing nodes (goal-nodes) only once
         while (incomingEdges.next()) {
@@ -442,12 +442,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             EdgeIterator outgoingEdges = g.getEdges(sch.node(), vehicleOutFilter);
             // force fresh maps etc as this cannot be determined by from node alone (e.g. same from node but different avoidNode)
             algo.clear();
+            tmpDegreeCounter++;
             while (outgoingEdges.next()) {
                 int w_toNode = outgoingEdges.adjNode();
                 // add only uncontracted nodes
                 if (g.getLevel(w_toNode) != 0 || u_fromNode == w_toNode)
                     continue;
-
+                
                 double existingDirectWeight = v_u_weight + outgoingEdges.distance();
                 algo.limit(existingDirectWeight).edgeFilter(levelEdgeFilter.avoidNode(sch.node()));
 
@@ -464,6 +465,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 sch.foundShortcut(u_fromNode, w_toNode, existingDirectWeight,
                         outgoingEdges, skippedEdge1, incomingEdgeOrigCount);
             }
+        }
+        if (sch instanceof AddShortcutHandler) {
+            // sliding mean value when using "*2" => slower changes
+            meanDegree = (meanDegree *2 + tmpDegreeCounter) / 3;
+            // meanDegree = (meanDegree + tmpDegreeCounter) / 2;
         }
     }
 
