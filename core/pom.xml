@@ -1,0 +1,151 @@
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.graphhopper</groupId>
+    <artifactId>graphhopper</artifactId>
+    <name>GraphHopper</name>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>jar</packaging> 
+    
+    <parent>
+        <groupId>com.graphhopper</groupId>
+        <artifactId>graphhopper-parent</artifactId>    	
+        <version>0.1-SNAPSHOT</version>
+    </parent>
+        
+    <properties>  
+        <netbeans.hint.license>apache20</netbeans.hint.license>        
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm</maven.build.timestamp.format>        
+        <builddate>${maven.build.timestamp}</builddate>        
+    </properties>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
+        </license>
+    </licenses> 
+    <dependencies>
+        
+        <!-- Trove is LGPL and slightly big (~3MB) -->
+        <dependency>
+            <groupId>net.sf.trove4j</groupId>
+            <artifactId>trove4j</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+        
+        <!-- Mahout is APL but a bit slower and bigger (4MB)
+        <dependency>
+            <groupId>org.apache.mahout</groupId>
+            <artifactId>mahout-collections</artifactId>
+            <version>1.0</version>
+        </dependency>
+        -->
+        <!--
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.0</version>
+        </dependency>
+        -->
+              
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>   
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        
+    </dependencies>
+        
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>2.4</version>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>com.graphhopper.reader.OSMReader</mainClass>
+                            </manifest>
+                        </archive>
+                        <!-- for usage on android -->
+                        <descriptors>
+                            <descriptor>src/main/assembly/android.xml</descriptor>
+                        </descriptors>
+	                    
+                        <!-- for standalone usage -->
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.2</version>
+                    <configuration>
+                        <reportPlugins>
+                            <plugin>
+                                <!-- either call mvn compile site or mvn findbugs:gui -->
+                                <groupId>org.codehaus.mojo</groupId>
+                                <artifactId>findbugs-maven-plugin</artifactId>
+                                <version>2.5.2</version>
+                                <configuration>
+                                    <!-- <xmlOutput>true</xmlOutput> -->
+                                    <!-- Optional directory to put FindBugs xdoc xml report -->
+                                    <xmlOutputDirectory>target/site</xmlOutputDirectory>
+                                    <threshold>Normal</threshold>
+                                    <effort>Default</effort>
+                                    <!--
+   	                                <threshold>High|Normal|Low|Exp|Ignore</threshold>
+   	                                <effort>Min|Default|Max</effort>
+   	                                -->
+                                </configuration>
+                            </plugin>
+                        </reportPlugins>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        
+        <!-- make version available at runtime via version file -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/version</include>
+                    <include>**/builddate</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/version</exclude>
+                    <exclude>**/builddate</exclude>
+                </excludes>
+            </resource>
+        </resources>
+    </build>    
+    <repositories>
+        
+    </repositories>   
+</project>

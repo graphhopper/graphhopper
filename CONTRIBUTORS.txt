@@ -1,6 +1,3 @@
-agouge
- - API improvements, bug reporting
-karussell
- - core developer
-ocampana
- - initial implementation of instructions
+agouge, discussion and API refactoring
+karussell, lead developer
+quintona, initial implementation for instructions

@@ -4,87 +4,38 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.graphhopper</groupId>
-    <artifactId>graphhopper</artifactId>
-    <name>GraphHopper</name>
+    <artifactId>graphhopper-parent</artifactId>
+    <name>GraphHopper Parent Project</name>
     <version>0.1-SNAPSHOT</version>
-    <packaging>jar</packaging>     
+    <packaging>pom</packaging>     
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <slf4j.version>1.7.3</slf4j.version>        
-        <netbeans.hint.license>apache20</netbeans.hint.license>        
-        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm</maven.build.timestamp.format>        
-        <builddate>${maven.build.timestamp}</builddate>        
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>        
+        <slf4j.version>1.7.5</slf4j.version>
+        <log4j.version>1.2.17</log4j.version>
     </properties>
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-            <comments>A business-friendly OSS license</comments>
-        </license>
-    </licenses>
     
-    <dependencies>
+    <modules>
+        <module>core</module>
+        <module>tools</module>
+        <module>web</module>
+    </modules>
+
+    <!-- does not run on build server yet 
+         call 'mvn install -P with-android' to compile everything including the android module
+    -->
+    <profiles>
+        <profile>
+            <id>with-android</id>
+            <modules>
+                <module>android</module>
+            </modules>
+        </profile>
+    </profiles>
         
-        <!-- Trove is LGPL and slightly big (~3MB) -->
-        <dependency>
-            <groupId>net.sf.trove4j</groupId>
-            <artifactId>trove4j</artifactId>
-            <version>3.0.3</version>
-        </dependency>
-        
-        <!-- Mahout is APL but a bit slower and bigger (4MB)
-        <dependency>
-            <groupId>org.apache.mahout</groupId>
-            <artifactId>mahout-collections</artifactId>
-            <version>1.0</version>
-        </dependency>
-        -->
-        <!--
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-math3</artifactId>
-            <version>3.0</version>
-        </dependency>
-        -->
-              
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>   
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.17</version>
-            <scope>runtime</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
-        
-    </dependencies>
-        
-    <build>
+    <build>        
         <plugins>
-            <plugin>                
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.14</version>
-                <configuration>
-                    <argLine>-Xmx100m -Xms100m</argLine>
-                </configuration>
-            </plugin>
+        
+            <!-- to avoid problems with jvm 1.5 and @Override -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -96,76 +47,29 @@
                     <target>1.6</target>
                 </configuration>
             </plugin>
-            <plugin>
+            
+            <!-- to run single tests -->
+            <plugin>                
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.14</version>
                 <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.graphhopper.reader.OSMReader</mainClass>
-                        </manifest>
-                    </archive>
-                    <!-- for usage on android -->
-                    <descriptors>
-                        <descriptor>src/main/assembly/android.xml</descriptor>
-                    </descriptors>
-                    
-                    <!-- for standalone usage -->
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
+                    <argLine>-Xmx100m -Xms100m</argLine>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>3.2</version>
-                <configuration>
-                    <reportPlugins>
-                        <plugin>
-                            <!-- either call mvn compile site or mvn findbugs:gui -->
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>findbugs-maven-plugin</artifactId>
-                            <version>2.5.2</version>
-                            <configuration>
-                                <!-- <xmlOutput>true</xmlOutput> -->
-                                <!-- Optional directory to put FindBugs xdoc xml report -->
-                                <xmlOutputDirectory>target/site</xmlOutputDirectory>
-                                <threshold>Normal</threshold>
-                                <effort>Default</effort>
-                                <!--
-                                <threshold>High|Normal|Low|Exp|Ignore</threshold>
-                                <effort>Min|Default|Max</effort>
-                                -->
-                            </configuration>
-                        </plugin>
-                    </reportPlugins>
-                </configuration>
-            </plugin>
+            
         </plugins>
-        
-        <!-- make version available at runtime via version file -->
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>**/version</include>
-                    <include>**/builddate</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>false</filtering>
-                <excludes>
-                    <exclude>**/version</exclude>
-                    <exclude>**/builddate</exclude>
-                </excludes>
-            </resource>
-        </resources>
     </build>    
-    <repositories>
+    
+    <dependencies>
+      
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
         
-    </repositories>    
+    </dependencies>
+  
 </project>
