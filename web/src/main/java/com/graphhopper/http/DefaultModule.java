@@ -54,9 +54,9 @@ public class DefaultModule extends AbstractModule {
             String ghLocation = args.get("osmreader.graph-location", "");
             GraphHopper hopper = new GraphHopper().graphHopperLocation(ghLocation);
             String chShortcuts = args.get("osmreader.chShortcuts", "");
-            if (!chShortcuts.isEmpty()) {
-                hopper.contractionHierarchies("fastest".equals(chShortcuts));
-            }
+            if (!chShortcuts.isEmpty())
+                hopper.chShortcuts(true, "fastest".equals(chShortcuts));
+            
             hopper.forServer();
             hopper.load(osmFile);
             logger.info("loaded graph at:" + ghLocation + ", source:" + osmFile + ", class:" + hopper.graph().getClass().getSimpleName());

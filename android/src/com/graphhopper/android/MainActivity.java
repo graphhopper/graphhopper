@@ -378,7 +378,7 @@ public class MainActivity extends MapActivity {
         new GHAsyncTask<Void, Void, Path>() {
             protected Path saveDoInBackground(Void... v) throws Exception {
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
-                tmpHopp.contractionHierarchies(true);
+                tmpHopp.chShortcuts(true, true);
                 tmpHopp.load(mapsFolder + currentArea);
                 log("found graph with " + tmpHopp.graph().nodes() + " nodes");
                 hopper = tmpHopp;

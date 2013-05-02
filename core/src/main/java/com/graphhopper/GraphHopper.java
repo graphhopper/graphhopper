@@ -141,8 +141,8 @@ public class GraphHopper implements GraphHopperAPI {
      *
      * @param true if fastest route should be calculated (instead of shortest)
      */
-    public GraphHopper contractionHierarchies(boolean fast) {
-        chUsage = true;
+    public GraphHopper chShortcuts(boolean enable, boolean fast) {
+        chUsage = enable;
         chFast = fast;
         return this;
     }
