@@ -120,14 +120,15 @@
     </build>
     
     <repositories>
-        <!-- local repository which contains all unresolable libs like mapsforge-->
+        <!-- local repository which contains all unresolable libs like mapsforge
         <repository>
             <id>locallibs</id>
             <name>android libs</name>
             <url>file:${project.basedir}/libs</url>
         </repository>
+        -->
 		
-        <!-- repository of project 'molecular' to resolve android-jars -->
+        <!-- repository of project 'molecular' to resolve android-jars 
         <repository>
             <id>mulecular_repo</id>
             <name>android libs</name>
@@ -136,6 +137,7 @@
                 <enabled>true</enabled>		
             </snapshots>		
         </repository>
+        -->
 		
     </repositories>
     
