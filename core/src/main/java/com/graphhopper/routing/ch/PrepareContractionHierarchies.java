@@ -39,6 +39,7 @@ import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import java.util.HashMap;
@@ -448,7 +449,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 // add only uncontracted nodes
                 if (g.getLevel(w_toNode) != 0 || u_fromNode == w_toNode)
                     continue;
-                
+
                 double existingDirectWeight = v_u_weight + outgoingEdges.distance();
                 algo.limit(existingDirectWeight).edgeFilter(levelEdgeFilter.avoidNode(sch.node()));
 
@@ -468,7 +469,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         }
         if (sch instanceof AddShortcutHandler) {
             // sliding mean value when using "*2" => slower changes
-            meanDegree = (meanDegree *2 + tmpDegreeCounter) / 3;
+            meanDegree = (meanDegree * 2 + tmpDegreeCounter) / 3;
             // meanDegree = (meanDegree + tmpDegreeCounter) / 2;
         }
     }

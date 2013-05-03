@@ -75,7 +75,6 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         Location2NodesNtree index = new Location2NodesNtree(graph, new RAMDirectory());
         index.subEntries(4).minResolutionInMeter(100000).prepareAlgo();
         Location2NodesNtree.InMemConstructionIndex inMemIndex = index.prepareInMemIndex();
-        inMemIndex.compact = true;
         assertEquals(2, index.getMaxDepth());
 
         assertEquals(1, inMemIndex.getLayer(0).size());
@@ -115,7 +114,6 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         Location2NodesNtree index = new Location2NodesNtree(graph, new RAMDirectory());
         index.subEntries(4).minResolutionInMeter(1000).prepareAlgo();
         Location2NodesNtree.InMemConstructionIndex inMemIndex = index.prepareInMemIndex();
-        inMemIndex.compact = true;
         assertEquals(2, index.getMaxDepth());
         assertEquals(1, inMemIndex.getLayer(0).size());
         assertEquals(1, inMemIndex.getLayer(1).size());
@@ -138,18 +136,14 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         // 34
         assertEquals(9L, index.keyAlgo.encode(49.95153, 11.57714));
 
-
         // query near point 25 (49.95053, 11.57314)
         // if we would have a perfect compaction (takes a lot longer) we would
         // get instead of 24, 23, 18, 16, 0 => only e.g. 0
         // the other 2 subnetworks are already perfect: 28 and 6
         TIntHashSet set = new TIntHashSet();
-//        set.add(24);
-//        set.add(23);
-//        set.add(18);
         set.add(16);
-//        set.add(0);
-//        set.add(6);
+        set.add(26);
+        set.add(27);
         set.add(28);
         assertEquals(set, index.findNetworkEntries(49.950, 11.5732));
     }
@@ -237,53 +231,6 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
 
         Location2IDIndex index = createIndex(g, 2000);
         assertEquals(20, index.findID(51.25, 9.43));
-    }
-
-    @Test
-    public void testLeafCompact() {
-        Graph g = createGraph();
-
-        Location2NodesNtree index = internCreateIndex(g, 4, 1000);
-        Location2NodesNtree.InMemLeafEntry leaf = new Location2NodesNtree.InMemLeafEntry(4, 0L);
-        for (int i = 0; i < 3; i++) {
-            assertTrue(leaf.addNode(i));
-            // assign a valid position
-            g.setNode(i, 0, 0);
-        }
-        assertTrue(leaf.getResults().isEmpty());
-        leaf.doCompact(index);
-        assertEquals(3, leaf.getResults().size());
-
-        // reduce already existing subnetworks to only one subnetwork        
-        leaf = new Location2NodesNtree.InMemLeafEntry(4, 0L);
-        g.edge(0, 1, 10, true);
-        g.edge(1, 2, 10, true);
-        g.edge(2, 3, 10, true);
-        for (int i = 0; i < 4; i++) {
-            assertTrue(leaf.addNode(i));
-            // assign a valid position
-            g.setNode(i, 0, 0);
-        }
-        leaf.doCompact(index);
-        assertEquals(1, leaf.getResults().size());
-    }
-
-    @Test
-    public void testLeaf2Subnetworks() {
-        // only 2 subnetworks as one edge connects two nodes        
-        Graph g = createGraph();
-        g.edge(0, 1, 10, true);
-
-        Location2NodesNtree index = internCreateIndex(g, 4, 1000);
-        Location2NodesNtree.InMemLeafEntry leaf = new Location2NodesNtree.InMemLeafEntry(4, 0L);
-        for (int i = 0; i < 3; i++) {
-            assertTrue(leaf.addNode(i));
-            // assign a valid position
-            g.setNode(i, 0, 0);
-        }
-        assertTrue(leaf.getResults().isEmpty());
-        leaf.doCompact(index);
-        assertEquals(2, leaf.getResults().size());
     }
 
     // TODO

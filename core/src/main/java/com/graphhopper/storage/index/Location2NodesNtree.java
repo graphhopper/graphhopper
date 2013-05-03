@@ -272,9 +272,6 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         int size;
         int leafs;
         InMemTreeEntry root;
-        // Enable compact only when the TODO in searching is solved
-        // Otherwise not all nodes in a tile are recognized
-        boolean compact = false;
 
         public InMemConstructionIndex(int noOfSubEntries) {
             root = new InMemTreeEntry(noOfSubEntries);
@@ -372,10 +369,6 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         void print(InMemEntry e, StringBuilder sb, long key) {
             if (e.isLeaf()) {
                 InMemLeafEntry leaf = (InMemLeafEntry) e;
-                if (compact)
-                    leaf.doCompact(Location2NodesNtree.this);
-                else
-                    leaf.noCompact();
                 int bits = keyAlgo.bits();
                 // print reverse keys
                 sb.append(BitUtil.toBitString(BitUtil.reverse(key, bits), bits)).append("  ");
@@ -399,10 +392,6 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
             int refPointer = pointer;
             if (entry.isLeaf()) {
                 InMemLeafEntry leaf = ((InMemLeafEntry) entry);
-                if (compact)
-                    leaf.doCompact(Location2NodesNtree.this);
-                else
-                    leaf.noCompact();
                 TIntArrayList entries = leaf.getResults();
                 int len = entries.size();
 //                if (old > len)
@@ -536,8 +525,6 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 //                            return true;
 //                        }
 
-                        // TODO 
-//                        if(index.compact) goFurther = depends on tile size!
                         goFurther = false;
                         int tmpNode = currNode;
                         double tmpLat = currLat;
@@ -625,66 +612,15 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
     static class InMemLeafEntry extends SortedIntSet implements InMemEntry {
 
-        private TIntArrayList networkEntries;
         private long key;
 
         public InMemLeafEntry(int count, long key) {
             super(count);
             this.key = key;
-            networkEntries = new TIntArrayList(count);
         }
 
         public boolean addNode(int nodeId) {
             return addOnce(nodeId);
-        }
-
-        void noCompact() {
-            networkEntries = this;
-        }
-
-        // Reduces the nodes in this SortedIntSet to fewer entries, store them into networkEntries.
-        // There only entries to the spanning subnetworks are stored.
-        // The following example can be reduced to the nodes 1 and 3
-        //
-        // 1-2-6 
-        // | | |  3-0
-        // \_4-5
-        //
-        void doCompact(final Location2NodesNtree index) {
-            if (isEmpty())
-                return;
-            index.sortNodes(this);
-            final SortedIntSet removeExistingSet = new SortedIntSet();
-            for (int i = 0; i < size(); i++) {
-                final int nodeId = get(i);
-                int foundIndex = networkEntries.binarySearch(nodeId);
-                if (foundIndex >= 0)
-                    continue;
-
-                foundIndex = -foundIndex - 1;
-
-                // check only the neighbors
-                EdgeIterator iter = index.graph.getEdges(nodeId);
-                while (iter.next()) {
-                    int adjNode = iter.adjNode();
-                    double adjLat = index.graph.getLatitude(adjNode);
-                    double adjLon = index.graph.getLongitude(adjNode);
-                    double adjKey = index.keyAlgo.encode(adjLat, adjLon);
-                    if (key == adjKey && networkEntries.binarySearch(adjNode) >= 0)
-                        removeExistingSet.addOnce(adjNode);
-                }
-
-                networkEntries.insert(foundIndex, nodeId);
-                if (!removeExistingSet.isEmpty()) {
-                    // the detected networkEntries (in containedSet) can be replaced by nodeId
-                    // i.e. nodeId spans a broader or at least the same network
-                    networkEntries.removeAll(removeExistingSet);
-                    // no need for networkEntries.sort();
-                    removeExistingSet.clear();
-                }
-            }
-
-            clear();
         }
 
         @Override public final boolean isLeaf() {
@@ -692,11 +628,11 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         }
 
         @Override public String toString() {
-            return "LEAF " + key + " " + networkEntries + " " + super.toString();
+            return "LEAF " + key + " " + super.toString();
         }
 
         TIntArrayList getResults() {
-            return networkEntries;
+            return this;
         }
     }
 
