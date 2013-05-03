@@ -23,7 +23,7 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper</artifactId>
-            <version>${parent.version}</version>            
+            <version>${project.parent.version}</version>            
         </dependency>
         <!--  TODO <dependency>
             <groupId>org.codehaus.jackson</groupId>

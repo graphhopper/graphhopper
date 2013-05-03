@@ -22,43 +22,13 @@
         instead use your IDE to set it up or specify android sdk via command line
         using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
         https://github.com/rgladwell/m2e-android/issues/52 -->
-    </properties>
+    </properties>    
     
-    <repositories>
-        <!-- local repository which contains all unresolable libs like mapsforge-->
-        <repository>
-            <id>locallibs</id>
-            <name>android libs</name>
-            <url>file:${project.basedir}/libs</url>
-        </repository>
-		
-        <!-- repository of project 'molecular' to resolve android-jars -->
-        <repository>
-            <id>mulecular_repo</id>
-            <name>android libs</name>
-            <url>https://repo.molecular.com/artifactory/repo</url>
-            <snapshots>		
-                <enabled>true</enabled>		
-            </snapshots>		
-        </repository>
-		
-    </repositories>
-    
-    
-    <dependencies>          
-        <!-- run scripts/maven-install-mapsforge.sh 
-        if we would use system dep it doesn't work (classnotfound)-->              
-        <dependency>
-            <groupId>org.mapsforge</groupId>
-            <artifactId>mapsforge</artifactId>
-            <version>0.3.1-SNAPSHOT</version>	                                                
-            <type>jar</type>            
-        </dependency>
-        
+    <dependencies>        
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper</artifactId>
-            <version>${parent.version}</version>            
+            <version>${project.parent.version}</version>            
             <type>jar</type>
             <exclusions>
                 <exclusion>
@@ -75,6 +45,15 @@
                 </exclusion>
             </exclusions>
         </dependency>        
+          
+        <!-- run scripts/maven-install-mapsforge.sh -> or already solved via local repo!
+        if we would use system dep it doesn't work (classnotfound)-->              
+        <dependency>
+            <groupId>org.mapsforge</groupId>
+            <artifactId>mapsforge</artifactId>
+            <version>0.3.1-SNAPSHOT</version>	                                                
+            <type>jar</type>            
+        </dependency>
         
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -109,7 +88,19 @@
         <sourceDirectory>src</sourceDirectory>        
         <finalName>${project.artifactId}</finalName>        
 
-        <plugins>            
+        <plugins>     
+            <!-- android (apache harmony) is nearly java but not really 1.6 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <!-- <compilerArgument>-Xlint:unchecked</compilerArgument>
+                    -->
+                    <source>1.5</source>
+                    <target>1.5</target>
+                </configuration>
+            </plugin>       
             <plugin>
                 <!-- See http://code.google.com/p/maven-android-plugin/ -->
                 <groupId>com.jayway.maven.plugins.android.generation2</groupId>
@@ -127,4 +118,25 @@
             </plugin>            
         </plugins>
     </build>
+    
+    <repositories>
+        <!-- local repository which contains all unresolable libs like mapsforge-->
+        <repository>
+            <id>locallibs</id>
+            <name>android libs</name>
+            <url>file:${project.basedir}/libs</url>
+        </repository>
+		
+        <!-- repository of project 'molecular' to resolve android-jars -->
+        <repository>
+            <id>mulecular_repo</id>
+            <name>android libs</name>
+            <url>https://repo.molecular.com/artifactory/repo</url>
+            <snapshots>		
+                <enabled>true</enabled>		
+            </snapshots>		
+        </repository>
+		
+    </repositories>
+    
 </project>

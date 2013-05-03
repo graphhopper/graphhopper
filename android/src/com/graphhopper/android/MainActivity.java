@@ -442,19 +442,19 @@ public class MainActivity extends MapActivity {
                 return resp;
             }
 
-            protected void onPostExecute(GHResponse res) {
-                if (!res.hasError()) {
+            protected void onPostExecute(GHResponse resp) {
+                if (!resp.hasError()) {
                     log("from:" + fromLat + "," + fromLon + " to:" + toLat + ","
-                            + toLon + " found path with distance:" + res.distance()
-                            / 1000f + ", nodes:" + res.points().size() + ", time:"
-                            + time + " " + res.debugInfo());
-                    logUser("the route is " + (int) (res.distance() / 100) / 10f
-                            + "km long, time:" + res.time() / 60f + "min, debug:" + time);
+                            + toLon + " found path with distance:" + resp.distance()
+                            / 1000f + ", nodes:" + resp.points().size() + ", time:"
+                            + time + " " + resp.debugInfo());
+                    logUser("the route is " + (int) (resp.distance() / 100) / 10f
+                            + "km long, time:" + resp.time() / 60f + "min, debug:" + time);
 
-                    pathOverlay.getOverlayItems().add(createPolyline(res));
+                    pathOverlay.getOverlayItems().add(createPolyline(resp));
                     mapView.redraw();
                 } else {
-                    logUser("Error:" + res.errors());
+                    logUser("Error:" + resp.errors());
                 }
                 shortestPathRunning = false;
             }
