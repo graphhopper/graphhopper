@@ -74,9 +74,7 @@ function packageCoreJar {
     echo "## now building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
     #mvn clean
-    cd core
-    "$MAVEN_HOME/bin/mvn" -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
-    cd ..
+    "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
     returncode=$?
     if [[ $returncode != 0 ]] ; then
         echo "## compilation failed"
@@ -106,8 +104,7 @@ elif [ "x$ACTION" = "xeclipse" ]; then
  
 elif [ "x$ACTION" = "xandroid" ]; then
  prepareEclipse
- cd android
- "$MAVEN_HOME/bin/mvn" android:deploy android:run
+ "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/android/pom.xml" android:deploy android:run
  exit
 fi
 
