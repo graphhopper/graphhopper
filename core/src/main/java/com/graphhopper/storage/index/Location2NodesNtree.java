@@ -107,6 +107,10 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         return this;
     }
 
+    public int minResolutionInMeter() {
+        return minResolutionInMeter;
+    }
+
     public Location2NodesNtree minResolutionInMeter(int minResolutionInMeter) {
         this.minResolutionInMeter = minResolutionInMeter;
         return this;

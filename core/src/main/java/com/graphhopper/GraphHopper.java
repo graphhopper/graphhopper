@@ -265,9 +265,9 @@ public class GraphHopper implements GraphHopperAPI {
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
         GHResponse rsp = new GHResponse();
         if (from < 0)
-            rsp.addError(new IllegalArgumentException("Cannot find point 1:" + request.from()));
+            rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
         if (to < 0)
-            rsp.addError(new IllegalArgumentException("Cannot find point 2:" + request.to()));
+            rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.to()));
 
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
@@ -313,7 +313,6 @@ public class GraphHopper implements GraphHopperAPI {
             tmpIndex.resolution(preciseIndexResolution);
             tmpIndex.edgeCalcOnFind(edgeCalcOnSearch);
             tmpIndex.searchRegion(searchRegion);
-            tmpIndex.resolution(1000);
             index = tmpIndex;
         } else {
             index = new Location2IDQuadtree(graph, dir);

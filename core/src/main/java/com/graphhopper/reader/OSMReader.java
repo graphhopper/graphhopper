@@ -417,7 +417,7 @@ public class OSMReader {
                     index = new Location2NodesNtreeLG((LevelGraph) graphStorage, graphStorage.directory());
                 else
                     index = new Location2NodesNtree(graphStorage, graphStorage.directory());
-                index.resolution(1000);
+                index.resolution(locationIndexHighResolution);
             } else
                 index = new Location2IDQuadtree(graphStorage, graphStorage.directory())
                         .resolution(Helper.calcIndexSize(graphStorage.bounds()));
