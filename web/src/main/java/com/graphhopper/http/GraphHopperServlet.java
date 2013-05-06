@@ -120,7 +120,7 @@ public class GraphHopperServlet extends HttpServlet {
 
         try {
             if (minPathPrecision <= 0)
-                hopper.simplify(false);
+                hopper.simplifyRequest(false);
 
             sw = new StopWatch().start();
             GHResponse rsp = hopper.route(new GHRequest(start, end).

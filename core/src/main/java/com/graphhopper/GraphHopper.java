@@ -65,7 +65,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean memoryMapped;
     private boolean chUsage = false;
     private String ghLocation = "";
-    private boolean simplify = true;
+    private boolean simplifyRequest = true;
     private int preciseIndexResolution = 1000;
     private boolean chFast = true;
     private boolean edgeCalcOnSearch = true;
@@ -90,22 +90,21 @@ public class GraphHopper implements GraphHopperAPI {
 
     public GraphHopper forServer() {
         // simplify to reduce network IO
-        simplify(true);
+        simplifyRequest(true);
         preciseIndexResolution(1000);
         return setInMemory(true, true);
     }
 
     public GraphHopper forDesktop() {
-        simplify(false);
+        simplifyRequest(false);
         preciseIndexResolution(1000);
         return setInMemory(true, true);
     }
 
     public GraphHopper forMobile() {
-        simplify(false);
+        simplifyRequest(false);
         // make new index faster (but unprecise) and disable searchRegion
-        // searchRegion = false;        
-        preciseIndexResolution(1000);
+        preciseIndexResolution(500);
         return memoryMapped();
     }
 
@@ -151,8 +150,8 @@ public class GraphHopper implements GraphHopperAPI {
      * This method specifies if the returned path should be simplified or not,
      * via douglas-peucker or similar algorithm.
      */
-    public GraphHopper simplify(boolean doSimplify) {
-        this.simplify = doSimplify;
+    public GraphHopper simplifyRequest(boolean doSimplify) {
+        this.simplifyRequest = doSimplify;
         return this;
     }
 
@@ -293,7 +292,7 @@ public class GraphHopper implements GraphHopperAPI {
         debug += ", " + algo.name() + "-routing:" + sw.stop().getSeconds() + "s"
                 + ", " + path.debugInfo();
         PointList points = path.calcPoints();
-        if (simplify) {
+        if (simplifyRequest) {
             sw = new StopWatch().start();
             int orig = points.size();
             double minPathPrecision = request.getHint("douglas.minprecision", 1d);
