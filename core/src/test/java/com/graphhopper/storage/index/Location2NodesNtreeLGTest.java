@@ -41,7 +41,7 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
     public Location2NodesNtreeLG createIndex(Graph g, int resolution) {
         Directory dir = new RAMDirectory(location);
         Location2NodesNtreeLG idx = new Location2NodesNtreeLG((LevelGraph) g, dir);
-        idx.subEntries(4).resolution(1000000).prepareIndex();
+        idx.resolution(1000000).prepareIndex();
         return idx;
     }
 

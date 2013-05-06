@@ -22,6 +22,7 @@ import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
@@ -49,7 +50,7 @@ public abstract class OSMReaderHelper {
     private AcceptWay acceptWay;
     protected TLongArrayList wayNodes = new TLongArrayList(10);
     private Map<String, Object> osmProperties = new HashMap<String, Object>();
-    private Map<String, Object> outProperties = new HashMap<String, Object>();
+    private Map<String, Object> outProperties = new HashMap<String, Object>();    
 
     public OSMReaderHelper(Graph g, long expectedNodes) {
         this.g = g;
