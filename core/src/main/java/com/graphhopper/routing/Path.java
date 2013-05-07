@@ -171,7 +171,7 @@ public class Path {
 
     /**
      * This method calculates not only the weight but also the distance in
-     * kilometer for the specified edge.
+     * meter for the specified edge.
      */
     protected void calcDistance(EdgeIterator iter) {
         distance += iter.distance();
