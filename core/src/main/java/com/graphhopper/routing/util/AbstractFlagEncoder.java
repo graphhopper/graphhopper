@@ -102,4 +102,9 @@ public class AbstractFlagEncoder implements VehicleEncoder {
     public int getMaxSpeed() {
         return maxSpeed;
     }
+
+    @Override
+    public boolean ignoreTurnCosts() {
+        return false;
+    }
 }

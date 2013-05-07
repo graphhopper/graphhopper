@@ -23,12 +23,15 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphTurnCosts;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.Helper;
 import java.io.IOException;
+
+import junit.framework.Assert;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -57,6 +60,15 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     @Override
     protected LevelGraph createGraph() {
         return new GraphBuilder().levelGraphCreate();
+    }
+    @Override
+    protected GraphTurnCosts createTurnCostsGraph() {
+        LevelGraph graph = new GraphBuilder().levelGraphCreate();
+        if(graph instanceof GraphTurnCosts){
+            return (GraphTurnCosts)graph;
+        }
+        fail("LevelGraph does not implement GraphTurnCosts");
+        return null;
     }
 
     @Override

@@ -122,6 +122,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
                     continue;
                 int adjNode = iter.adjNode();                
                 double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + weights[currNode];
+                if(edgeIds != null){ //TODO this must not be null when considering turn costs
+                    tmpWeight += turnCostCalc.getTurnCosts(currNode, edgeIds[currNode], iter.edge());    
+                }
                 if (weights[adjNode] == Double.MAX_VALUE) {
                     parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;

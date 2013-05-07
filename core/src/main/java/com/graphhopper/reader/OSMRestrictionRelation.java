@@ -7,8 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.GraphNodeCosts;
-import com.graphhopper.storage.NodeCostsEntry;
+import com.graphhopper.storage.GraphTurnCosts;
+import com.graphhopper.storage.TurnCostEncoder;
+import com.graphhopper.storage.TurnCostsEntry;
 import com.graphhopper.util.EdgeIterator;
 
 /**
@@ -28,9 +29,9 @@ public class OSMRestrictionRelation {
     public static final int TYPE_ONLY_STRAIGHT_ON = 6;
     public static final int TYPE_NO_U_TURN = 7;
 
-    protected long osmFrom;
+    protected int edgeIdFrom;
     protected int via;
-    protected long osmTo;
+    protected int edgeIdTo;
     protected int restriction;
     protected boolean restrictionTypeFound;
 
@@ -38,7 +39,7 @@ public class OSMRestrictionRelation {
      * @return <code>true</code>, if restriction type is supported and a via node has been found
      */
     public boolean isValid() {
-        return restrictionTypeFound && restriction != TYPE_UNSUPPORTED && via >= 0;
+        return restrictionTypeFound && restriction != TYPE_UNSUPPORTED && via >= 0 && edgeIdFrom >=0 && edgeIdTo >= 0;
     }
 
     /**
@@ -49,9 +50,9 @@ public class OSMRestrictionRelation {
      * @param edgeInFilter an edge filter which only allows incoming edges
      * @return a collection of node cost entries which can be added to the graph later
      */
-    public Collection<NodeCostsEntry> getAsEntries(GraphNodeCosts g,
+    public Collection<TurnCostsEntry> getAsEntries(GraphTurnCosts g,
             EdgeFilter edgeOutFilter, EdgeFilter edgeInFilter) {
-        Collection<NodeCostsEntry> entries = new ArrayList<NodeCostsEntry>(3);
+        Collection<TurnCostsEntry> entries = new ArrayList<TurnCostsEntry>(3);
         if (via == EdgeIterator.NO_EDGE) {
             return entries;
         }
@@ -61,7 +62,7 @@ public class OSMRestrictionRelation {
             final EdgeIterator edgesIn = g.getEdges(via, edgeInFilter);
             EdgeIterator edgeFrom = null;
             do {
-                if (g.getEdgeOsmId(edgesIn.edge()) == osmFrom) {
+                if (edgesIn.edge() == edgeIdFrom) {
                     edgeFrom = edgesIn;
                     break;
                 }
@@ -79,9 +80,9 @@ public class OSMRestrictionRelation {
                     // the given turn (from, via, to)  
                     do {
                         if (edgesOut.edge() != edgeFrom.edge()
-                                && g.getEdgeOsmId(edgesOut.edge()) == osmTo) {
-                            entries.add(new NodeCostsEntry()
-                                    .costs(Double.MAX_VALUE).node(via)
+                                && edgesOut.edge() == edgeIdTo) {
+                            entries.add(new TurnCostsEntry()
+                                    .flags(TurnCostEncoder.restriction()).node(via)
                                     .edgeFrom(edgeFrom.edge())
                                     .edgeTo(edgesOut.edge()));
                         }
@@ -94,9 +95,9 @@ public class OSMRestrictionRelation {
                     // any other turn possibility (from, via, * )
                     do {
                         if (edgesOut.edge() != edgeFrom.edge()
-                                && g.getEdgeOsmId(edgesOut.edge()) != osmTo) {
-                            entries.add(new NodeCostsEntry()
-                                    .costs(Double.MAX_VALUE).node(via)
+                                && edgesOut.edge() != edgeIdTo) {
+                            entries.add(new TurnCostsEntry()
+                                    .flags(TurnCostEncoder.restriction()).node(via)
                                     .edgeFrom(edgeFrom.edge())
                                     .edgeTo(edgesOut.edge()));
                         }

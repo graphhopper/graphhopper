@@ -2,28 +2,33 @@ package com.graphhopper.util;
 
 import com.graphhopper.routing.util.TurnCostCalculation;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphNodeCosts;
+import com.graphhopper.storage.GraphTurnCosts;
+import com.graphhopper.storage.TurnCostEncoder;
 
 public class TurnRestrictionsCalc implements TurnCostCalculation {
 
-    private GraphNodeCosts graph;
+    private GraphTurnCosts graph;
+    private TurnCostEncoder encoder;
 
     public TurnRestrictionsCalc() {
-        //noop		
+        encoder = new TurnCostEncoder();
     }
 
     @Override
     public double getTurnCosts(int viaNode, int fromEdge, int toEdge) {
         if (graph != null) {
-            return graph.getTurnCosts(viaNode, fromEdge, toEdge);
+            int flags = graph.turnCosts(viaNode, fromEdge, toEdge);
+            if(encoder.isTurnRestricted(flags)){
+                return Double.MAX_VALUE;
+            }
         }
         return 0;
     }
 
     @Override
     public TurnCostCalculation graph(Graph graph) {
-        if (graph instanceof GraphNodeCosts) {
-            this.graph = (GraphNodeCosts) graph;
+        if (graph instanceof GraphTurnCosts) {
+            this.graph = (GraphTurnCosts) graph;
         }
         return this;
     }
@@ -35,6 +40,12 @@ public class TurnRestrictionsCalc implements TurnCostCalculation {
         } else {
             return "allows any turns";
         }
+    }
+    
+    public static void main(String[] args) {
+        Double inf = Double.POSITIVE_INFINITY;
+        System.out.println(inf);
+        System.out.println(inf+Double.MAX_VALUE);
     }
 
 }

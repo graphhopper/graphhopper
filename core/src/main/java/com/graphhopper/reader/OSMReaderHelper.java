@@ -21,7 +21,7 @@ package com.graphhopper.reader;
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.GraphStorageNodeCosts;
+import com.graphhopper.storage.GraphStorageTurnCosts;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
@@ -114,16 +114,17 @@ public abstract class OSMReaderHelper {
             towerNodeDistance = 0.0001;
         }
 
-        final EdgeIterator iter;
-        if(g instanceof GraphStorageNodeCosts){
-        	iter = ((GraphStorageNodeCosts)g).edge(fromIndex, toIndex, towerNodeDistance, flags, osmid);
-        }else{
-        	iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
+        final EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
+        if(g instanceof GraphStorageTurnCosts){
+        	storeEdgeOSMId(iter.edge(), osmid);
         } 
         if (nodes > 2)
             iter.wayGeometry(pillarNodes);
         return nodes;
     }
+    
+    abstract void storeEdgeOSMId(int edgeId, long osmId);
+    
 
     String getInfo() {
         return "Found " + zeroCounter + " zero distances.";

@@ -39,6 +39,8 @@ public interface VehicleEncoder {
     boolean isForward(int flags);
 
     boolean isBackward(int flags);
+    
+    boolean ignoreTurnCosts();
 
     /**
      * @return the maximum speed in km/h

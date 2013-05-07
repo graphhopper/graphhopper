@@ -29,6 +29,7 @@ public class GraphBuilder {
     private boolean mmap;
     private boolean store;
     private boolean level;
+    private boolean turnCosts;
     private int size = 100;
 
     public GraphBuilder() {
@@ -41,6 +42,16 @@ public class GraphBuilder {
      */
     GraphBuilder levelGraph(boolean level) {
         this.level = level;
+        return this;
+    }
+    
+    /**
+     * If true builder will create a Graph with turn cost tables
+     *
+     * @see GraphTurnCosts
+     */
+    GraphBuilder turnCostsGraph(boolean turnCosts) {
+        this.turnCosts = turnCosts;
         return this;
     }
 
@@ -67,12 +78,23 @@ public class GraphBuilder {
     public LevelGraphStorage levelGraphBuild() {
         return (LevelGraphStorage) levelGraph(true).build();
     }
+    
+    public GraphStorageTurnCosts turnCostsGraphBuild() {
+        return (GraphStorageTurnCosts) turnCostsGraph(true).build();
+    }
 
     /**
      * Creates a LevelGraphStorage
      */
     public LevelGraphStorage levelGraphCreate() {
         return (LevelGraphStorage) levelGraph(true).create();
+    }
+    
+    /**
+     * Creates a GraphStorage with turn costs tables
+     */
+    public GraphStorageTurnCosts turnCostsGraphCreate() {
+        return (GraphStorageTurnCosts) turnCostsGraph(true).create();
     }
 
     /**
@@ -90,6 +112,8 @@ public class GraphBuilder {
         GraphStorage graph;
         if (level)
             graph = new LevelGraphStorage(dir);
+        else if(turnCosts)
+            graph = new GraphStorageTurnCosts(dir);
         else
             graph = new GraphStorage(dir);
         return graph;

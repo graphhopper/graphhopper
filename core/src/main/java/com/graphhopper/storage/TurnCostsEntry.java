@@ -5,22 +5,22 @@ package com.graphhopper.storage;
  * 
  * @author Karl Hübner
  */
-public class NodeCostsEntry {
+public class TurnCostsEntry {
 
     private int node;
     private int edgeFrom;
     private int edgeTo;
-    private double costs;
+    private int flags;
 
-    public NodeCostsEntry() {
-        costs = 0;
+    public TurnCostsEntry() {
+        flags = 0;
     }
 
     public int node() {
         return node;
     }
 
-    public NodeCostsEntry node(int node) {
+    public TurnCostsEntry node(int node) {
         this.node = node;
         return this;
     }
@@ -29,7 +29,7 @@ public class NodeCostsEntry {
         return edgeFrom;
     }
 
-    public NodeCostsEntry edgeFrom(int edgeFrom) {
+    public TurnCostsEntry edgeFrom(int edgeFrom) {
         this.edgeFrom = edgeFrom;
         return this;
     }
@@ -38,17 +38,17 @@ public class NodeCostsEntry {
         return edgeTo;
     }
 
-    public NodeCostsEntry edgeTo(int edgeTo) {
+    public TurnCostsEntry edgeTo(int edgeTo) {
         this.edgeTo = edgeTo;
         return this;
     }
 
-    public double costs() {
-        return costs;
+    public int flags() {
+        return flags;
     }
 
-    public NodeCostsEntry costs(double costs) {
-        this.costs = costs;
+    public TurnCostsEntry flags(int flags) {
+        this.flags = flags;
         return this;
     }
 

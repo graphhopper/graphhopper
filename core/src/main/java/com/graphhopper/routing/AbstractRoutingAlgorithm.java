@@ -27,6 +27,7 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.TurnCostsIgnoreCalc;
 import com.graphhopper.util.TurnRestrictionsCalc;
 
 /**
@@ -46,7 +47,11 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         this.graph = graph;
         this.additionalEdgeFilter = EdgeFilter.ALL_EDGES;
         type(new ShortestCalc());   
-        turnCosts(new TurnRestrictionsCalc());
+        if(encoder.ignoreTurnCosts()){
+            turnCosts(new TurnCostsIgnoreCalc());
+        }else{
+            turnCosts(new TurnRestrictionsCalc());    
+        }
         this.flagEncoder = encoder;
         outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
         inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);        

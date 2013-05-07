@@ -38,9 +38,9 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphNodeCosts;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.NodeCostsEntry;
+import com.graphhopper.storage.GraphTurnCosts;
+import com.graphhopper.storage.TurnCostsEntry;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Helper7;
 import com.graphhopper.util.PointList;
@@ -63,6 +63,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     private static final int TOWER_NODE = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private LongIntMap osmIdToIndexMap;
+    private LongIntMap osmIdToEdgeIndexMap;
     private int towerId = 0;
     private int pillarId = 0;
     // remember how many times a node was used to identify tower nodes
@@ -92,6 +93,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 //        osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
         // smaller memory overhead for bigger data sets because of avoiding a "rehash"
        osmIdToIndexMap = new GHLongIntBTree(200);
+       osmIdToEdgeIndexMap = new GHLongIntBTree(200);
     }
 
     @Override
@@ -115,12 +117,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     private int addTowerNode(long osmId, double lat, double lon) {
-        if (g instanceof GraphNodeCosts) {
-            // store the osmid of a node additionally
-            ((GraphNodeCosts) g).setNode(towerId, lat, lon, osmId);
-        } else {
-            g.setNode(towerId, lat, lon);
-        }
+        g.setNode(towerId, lat, lon);
         int id = -(towerId + 3);
         osmIdToIndexMap.put(osmId, id);
         towerId++;
@@ -199,6 +196,11 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         return successfullyAdded;
     }
 
+    @Override
+    void storeEdgeOSMId(int edgeId, long osmId) {
+        osmIdToEdgeIndexMap.put(osmId, edgeId);
+    }
+
     /**
      * @return converted tower node
      */
@@ -225,13 +227,13 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     public void processRelations(XMLStreamReader sReader) throws XMLStreamException {
-        if (g instanceof GraphNodeCosts) {
+        if (g instanceof GraphTurnCosts) {
             OSMRestrictionRelation restriction = parseRestriction(sReader);
             if (restriction.isValid()) {
-                for (NodeCostsEntry entry : restriction.getAsEntries((GraphNodeCosts) g,
+                for (TurnCostsEntry entry : restriction.getAsEntries((GraphTurnCosts) g,
                         edgeOutFilter, edgeInFilter)) {
-                    ((GraphNodeCosts) g).addNodeCostEntry(entry.node(), entry.edgeFrom(),
-                            entry.edgeTo(), entry.costs());
+                    ((GraphTurnCosts) g).turnCosts(entry.node(), entry.edgeFrom(),
+                            entry.edgeTo(), entry.flags());
                 }
             }
         }
@@ -250,9 +252,9 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                     String type = sReader.getAttributeValue(null, "type");
                     if ("way".equals(type) && ref != null) {
                         if ("from".equals(role)) {
-                            restriction.osmFrom = Long.parseLong(ref);
+                            restriction.edgeIdFrom = osmIdToEdgeIndexMap.get(Long.parseLong(ref));
                         } else if ("to".equals(role)) {
-                            restriction.osmTo = Long.parseLong(ref);
+                            restriction.edgeIdTo = osmIdToEdgeIndexMap.get(Long.parseLong(ref));
                         }
                     } else if ("node".equals(type) && ref != null && "via".equals(role)) {
                         int tmpNode = osmIdToIndexMap.get(Long.parseLong(ref));
@@ -314,12 +316,14 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     @Override
     void finishedReading() {
         osmIdToIndexMap.optimize();
+        osmIdToEdgeIndexMap.optimize();
         printInfo("way");
         dir.remove(pillarLats);
         dir.remove(pillarLons);
         pillarLons = null;
         pillarLats = null;
         osmIdToIndexMap = null;
+        osmIdToEdgeIndexMap = null;
     }
 
     private void setHasHighways(long osmId) {

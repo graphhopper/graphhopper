@@ -31,7 +31,7 @@ import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.GraphStorageNodeCosts;
+import com.graphhopper.storage.GraphStorageTurnCosts;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -147,7 +147,7 @@ public class OSMReader {
             // necessary for simple or CH shortcuts
             storage = new LevelGraphStorage(dir);
         } else if(useTurnCosts) {
-        	storage = new GraphStorageNodeCosts(dir);
+        	storage = new GraphStorageTurnCosts(dir);
         } else {
         	storage = new GraphStorage(dir);
         }

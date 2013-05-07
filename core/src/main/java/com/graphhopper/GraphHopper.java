@@ -33,7 +33,7 @@ import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.GraphStorageNodeCosts;
+import com.graphhopper.storage.GraphStorageTurnCosts;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.index.Location2IDIndex;
@@ -231,7 +231,7 @@ public class GraphHopper implements GraphHopperAPI {
                 }
                 prepare = tmpPrepareCH;
             } else if (turnCosts) {
-            	storage = new GraphStorageNodeCosts(dir);
+            	storage = new GraphStorageTurnCosts(dir);
             } else{
             	storage = new GraphStorage(dir);
             }
