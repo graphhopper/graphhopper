@@ -74,9 +74,7 @@ function packageCoreJar {
     echo "## now building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
     #mvn clean
-    cd core
-    "$MAVEN_HOME/bin/mvn" -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
-    cd ..
+    "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
     returncode=$?
     if [[ $returncode != 0 ]] ; then
         echo "## compilation failed"
@@ -106,8 +104,7 @@ elif [ "x$ACTION" = "xeclipse" ]; then
  
 elif [ "x$ACTION" = "xandroid" ]; then
  prepareEclipse
- cd android
- "$MAVEN_HOME/bin/mvn" android:deploy android:run
+ "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/android/pom.xml" install android:deploy android:run
  exit
 fi
 
@@ -121,7 +118,7 @@ NAME="${FILE%.*}"
 OSM_XML=$NAME.osm
 
 GRAPH=$NAME-gh
-VERSION=`grep  "<name>" -A 1 core/pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
+VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
 JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
 
 # file without path
@@ -140,7 +137,7 @@ elif [ "x$TMP" = "xgermany" ]; then
  SIZE=35000000
 elif [ -f $OSM_XML ]; then
  LINK=""
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx280m -Xms280m"
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx480m -Xms480m"
  SIZE=10000000
 else
  echo "Sorry, your osm file $OSM_XML was not found ... exiting"
@@ -188,7 +185,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
  }
  
  # use current version
- mvn -DskipTests clean install assembly:single
+ "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
  startMeasurement
  exit
 
@@ -201,7 +198,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
    M_FILE_NAME="measurement$M_FILE_NAME.properties"
    echo -e "\nusing commit $commit and $M_FILE_NAME"
    
-   mvn -DskipTests clean install assembly:single
+   "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
    startMeasurement
  done
 

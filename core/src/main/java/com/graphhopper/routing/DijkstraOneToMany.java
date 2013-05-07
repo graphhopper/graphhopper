@@ -42,6 +42,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     private IntDoubleBinHeap heap;
     private int visitedNodes;
     private boolean doClear = true;
+    private double limit = Double.MAX_VALUE;    
 
     public DijkstraOneToMany(Graph graph, VehicleEncoder encoder) {
         super(graph, encoder);
@@ -54,6 +55,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         changedNodes = new TIntArrayList();
     }
 
+    public DijkstraOneToMany limit(double weight) {
+        limit = weight;
+        return this;
+    }
+    
     @Override
     public Path calcPath(int from, int to) {
         if (edgeIds == null) {
@@ -82,7 +88,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             return -1;
         int currNode = from;
         if (doClear) {
-            doClear = false;
+            doClear = false;            
             int vn = changedNodes.size();
             for (int i = 0; i < vn; i++) {
                 int n = changedNodes.get(i);
@@ -105,15 +111,16 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             currNode = heap.poll_element();
         }
 
+        visitedNodes = 0;
         if (finished(currNode, to))
             return currNode;
         while (true) {
             visitedNodes++;
-            EdgeIterator iter = neighbors(currNode);
+            EdgeIterator iter = graph.getEdges(currNode, outEdgeFilter);
             while (iter.next()) {
                 if (!accept(iter))
                     continue;
-                int adjNode = iter.adjNode();
+                int adjNode = iter.adjNode();                
                 double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + weights[currNode];
                 if (weights[adjNode] == Double.MAX_VALUE) {
                     parents[adjNode] = currNode;
@@ -143,7 +150,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     }
 
     public boolean finished(int currNode, int to) {
-        return currNode == to;
+        return weights[currNode] >= limit || currNode == to;
     }
 
     @Override public int visitedNodes() {

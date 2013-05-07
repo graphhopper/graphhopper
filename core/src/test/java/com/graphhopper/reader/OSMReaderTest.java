@@ -216,7 +216,7 @@ public class OSMReaderTest {
         assertEquals(Arrays.asList(n40), GHUtility.neighbors(graph.getEdges(n50)));
     }
 
-    @Test public void testMaxspeed() {
+    @Test public void testMaxSpeed() {
         OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000)), file2);
         reader.writeOsm2Graph(getClass().getResourceAsStream(file2));
         Graph graph = reader.graph();
@@ -227,7 +227,7 @@ public class OSMReaderTest {
         assertEquals(40, carEncoder.getSpeed(iter.flags()));
     }
 
-    @Test public void testWayReferencesNotExistingadjNode() {
+    @Test public void testWayReferencesNotExistingAdjNode() {
         OSMReader reader = preProcess(init(new OSMReader(buildGraph(dir), 1000).
                 acceptStreet(new AcceptWay(true, false, true))), file4);
         reader.writeOsm2Graph(getClass().getResourceAsStream(file4));

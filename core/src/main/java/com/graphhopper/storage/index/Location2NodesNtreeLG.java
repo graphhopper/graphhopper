@@ -33,8 +33,15 @@ import java.util.Collections;
 import java.util.Comparator;
 
 /**
- * As the graph is filled and prepared before the index is created we need to
+ * The LevelGraph has some edges disconnected (to be more efficient), but this
+ * happens before the index is created! So we need to take care of this and also
  * ignore the introduced shortcuts e.g. for calculating closest edges.
+ *
+ * TODO avoid some of the tricks if we move a disconnected edge to the end of
+ * the edge-list (instead of just disconnecting them). And then while accessing
+ * them break iteration if we encounter the first of those disconnected edges
+ * (this should have the same speed). Therefor we also need to change the
+ * EdgeFilter interface and add a stop(EdgeIterator) method or similar.
  *
  * @author Peter Karich
  */

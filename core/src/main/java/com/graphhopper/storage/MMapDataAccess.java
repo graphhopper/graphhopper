@@ -255,7 +255,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void setInt(long longIndex, int value) {
+    public final void setInt(long longIndex, int value) {
         // convert longIndex to byte index => *4
         longIndex <<= 2;
         int bufferIndex = (int) (longIndex >>> segmentSizePower);
@@ -264,7 +264,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public int getInt(long longIndex) {
+    public final int getInt(long longIndex) {
         longIndex <<= 2;
         int bufferIndex = (int) (longIndex >>> segmentSizePower);
         int index = (int) (longIndex & indexDivisor);

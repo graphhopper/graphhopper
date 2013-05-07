@@ -19,6 +19,7 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
@@ -26,7 +27,6 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
-import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -74,8 +74,7 @@ public class PrepareContractionHierarchiesTest {
     public void testShortestPathSkipNode() {
         LevelGraph g = createExampleGraph();
         double normalDist = new Dijkstra(g, carEncoder).calcPath(4, 2).distance();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo =
-                new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
+        DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
         int nodeEntry = algo.limit(100).findEndNode(4, 2);
         assertTrue(algo.weight(nodeEntry) > normalDist);
@@ -85,8 +84,7 @@ public class PrepareContractionHierarchiesTest {
     public void testShortestPathSkipNode2() {
         LevelGraph g = createExampleGraph();
         double normalDist = new Dijkstra(g, carEncoder).calcPath(4, 2).distance();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo =
-                new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
+        DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(3));
         int nodeEntry = algo.limit(10).findEndNode(4, 2);
         // assertEquals(ee.weight, normalDist, 1e-5);
@@ -97,8 +95,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testShortestPathLimit() {
         LevelGraph g = createExampleGraph();
-        PrepareContractionHierarchies.OneToManyDijkstraCH algo =
-                new PrepareContractionHierarchies.OneToManyDijkstraCH(g, carEncoder);
+        DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(0));
         int endNode = algo.limit(2).findEndNode(4, 1);
         // did not reach endNode
@@ -120,7 +117,7 @@ public class PrepareContractionHierarchiesTest {
         int old = g.getAllEdges().maxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old + 10, g.getAllEdges().maxId());
+        assertEquals(old + 8, g.getAllEdges().maxId());
     }
 
     @Test
@@ -178,7 +175,7 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.initFromGraph();
         // find all shortcuts if we contract node 1
-        Collection<Shortcut> scs = prepare.findShortcuts(1);
+        Collection<Shortcut> scs = prepare.testFindShortcuts(1);
         assertEquals(2, scs.size());
         Iterator<Shortcut> iter = scs.iterator();
         Shortcut sc1 = iter.next();
@@ -254,7 +251,7 @@ public class PrepareContractionHierarchiesTest {
         int old = g.getAllEdges().maxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         prepare.doWork();
-        assertEquals(old + 24, g.getAllEdges().maxId());
+        assertEquals(old + 25, g.getAllEdges().maxId());
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());
@@ -283,7 +280,7 @@ public class PrepareContractionHierarchiesTest {
 
         prepare.initFromGraph();
         // there should be two different shortcuts for both directions!
-        Collection<Shortcut> sc = prepare.findShortcuts(4);
+        Collection<Shortcut> sc = prepare.testFindShortcuts(4);
         assertEquals(2, sc.size());
     }
 

@@ -64,7 +64,7 @@ public class Measurement {
 
         String propLocation = args.get("measurement.location", "");
         if (Helper.isEmpty(propLocation))
-            propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date()) + ".properties";
+            propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date()) + ".properties";
 
         long seed = args.getLong("measurement.seed", 123);
         Random rand = new Random(seed);
@@ -82,8 +82,10 @@ public class Measurement {
         try {
             printGraphDetails(g);
             PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
-            if (doPrepare)
+            if (doPrepare) {
+                logger.info("nodes:" + g.nodes() + ", edges:" + g.getAllEdges().maxId());
                 printPreparationDetails(g, prepare);
+            }
             TIntList list = printLocation2IDQuery(g, dir, count, rand);
             lookupCount = list.size();
             printTimeOfRouteQuery(prepare, list);

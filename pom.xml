@@ -7,30 +7,53 @@
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
     <version>0.1-SNAPSHOT</version>
-    <packaging>pom</packaging>     
+    <packaging>pom</packaging>  
+    
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+     
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>        
+        <slf4j.version>1.7.5</slf4j.version>
+        <log4j.version>1.2.17</log4j.version>
     </properties>
+    
+    <scm>
+        <connection>scm:git:git@github.com:graphhopper/graphhopper.git</connection>
+        <developerConnection>scm:git:git@github.com:graphhopper/graphhopper.git</developerConnection>
+        <url>git@github.com:graphhopper/graphhopper.git</url>
+    </scm>
+    <developers>
+        <developer>
+            <id>peterka</id>
+            <name>Peter Karich</name>
+            <email>my.name@gmx.de</email>
+        </developer>
+    </developers>
     
     <modules>
         <module>core</module>
         <module>tools</module>
         <module>web</module>
     </modules>
-
-	<!-- does not run on build server yet 
-		call 'mvn install -P with-android' to compile everything including the android module
-	-->
-	<profiles>
-		<profile>
-			<id>with-android</id>
-			<modules>
-				<module>android</module>
-			</modules>
-		</profile>
-	</profiles>
+    
+    <!-- does not run on build server yet 
+         call 'mvn install -P with-android' to compile everything including the android module
+    
+<profiles>
+    <profile>
+        <id>graphhopper-android</id>
+        <modules>
+            <module>android</module>
+        </modules>
+    </profile>
+</profiles>
+    -->
         
-    <build>
+    <build>        
         <plugins>
         
             <!-- to avoid problems with jvm 1.5 and @Override -->
@@ -59,7 +82,7 @@
         </plugins>
     </build>    
     
-	<dependencies>
+    <dependencies>
       
         <dependency>
             <groupId>junit</groupId>
@@ -69,5 +92,5 @@
         </dependency>
         
     </dependencies>
-  
+    
 </project>

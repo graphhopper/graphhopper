@@ -66,7 +66,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean memoryMapped;
     private boolean chUsage = false;
     private String ghLocation = "";
-    private boolean simplify = true;
+    private boolean simplifyRequest = true;
     private int preciseIndexResolution = 1000;
     private boolean turnCosts = false;
     private boolean chFast = true;
@@ -93,22 +93,21 @@ public class GraphHopper implements GraphHopperAPI {
 
     public GraphHopper forServer() {
         // simplify to reduce network IO
-        simplify(true);
+        simplifyRequest(true);
         preciseIndexResolution(1000);
         return setInMemory(true, true);
     }
 
     public GraphHopper forDesktop() {
-        simplify(false);
+        simplifyRequest(false);
         preciseIndexResolution(1000);
         return setInMemory(true, true);
     }
 
     public GraphHopper forMobile() {
-        simplify(false);
+        simplifyRequest(false);
         // make new index faster (but unprecise) and disable searchRegion
-        // searchRegion = false;        
-        preciseIndexResolution(1000);
+        preciseIndexResolution(500);
         return memoryMapped();
     }
 
@@ -144,8 +143,8 @@ public class GraphHopper implements GraphHopperAPI {
      *
      * @param true if fastest route should be calculated (instead of shortest)
      */
-    public GraphHopper contractionHierarchies(boolean fast) {
-        chUsage = true;
+    public GraphHopper chShortcuts(boolean enable, boolean fast) {
+        chUsage = enable;
         chFast = fast;
         turnCosts = false;
         return this;
@@ -168,8 +167,8 @@ public class GraphHopper implements GraphHopperAPI {
      * This method specifies if the returned path should be simplified or not,
      * via douglas-peucker or similar algorithm.
      */
-    public GraphHopper simplify(boolean doSimplify) {
-        this.simplify = doSimplify;
+    public GraphHopper simplifyRequest(boolean doSimplify) {
+        this.simplifyRequest = doSimplify;
         return this;
     }
 
@@ -290,9 +289,9 @@ public class GraphHopper implements GraphHopperAPI {
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
         GHResponse rsp = new GHResponse();
         if (from < 0)
-            rsp.addError(new IllegalArgumentException("Cannot find point 1:" + request.from()));
+            rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
         if (to < 0)
-            rsp.addError(new IllegalArgumentException("Cannot find point 2:" + request.to()));
+            rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.to()));
 
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
@@ -319,7 +318,7 @@ public class GraphHopper implements GraphHopperAPI {
         debug += ", " + algo.name() + "-routing:" + sw.stop().getSeconds() + "s"
                 + ", " + path.debugInfo();
         PointList points = path.calcPoints();
-        if (simplify) {
+        if (simplifyRequest) {
             sw = new StopWatch().start();
             int orig = points.size();
             double minPathPrecision = request.getHint("douglas.minprecision", 1d);
@@ -339,7 +338,6 @@ public class GraphHopper implements GraphHopperAPI {
             tmpIndex.resolution(preciseIndexResolution);
             tmpIndex.edgeCalcOnFind(edgeCalcOnSearch);
             tmpIndex.searchRegion(searchRegion);
-            tmpIndex.resolution(1000);
             index = tmpIndex;
         } else {
             index = new Location2IDQuadtree(graph, dir);

@@ -11,7 +11,7 @@ build.xml
 queries.sh
 maven/
 measurement*.properties
-files/live_measurement.sh
+live_graphhopper.sh
 gen/
 bin/
 *.map
