@@ -50,6 +50,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             add("residential");
             add("road");
             add("service");
+            // disallowed in some countries?
+            add("bridleway");
         }
     };
     private static final Map<String, Integer> SPEED = new FootSpeed();
@@ -69,8 +71,15 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     /**
      * Some ways are okay but not separate for pedestrians.
      */
-    public boolean isAllowedHighway(String highwayValue) {
-        return allowedHighwayTags.contains(highwayValue);
+    @Override
+    public boolean isAllowed(Map<String, Object> osmProperties) {
+        String highwayValue = (String) osmProperties.get("highway");
+        String sidewalkValue = (String) osmProperties.get("sidewalk");
+        if (!allowedHighwayTags.contains(highwayValue)
+                && (sidewalkValue == null || "no".equals(sidewalkValue) || "none".equals(sidewalkValue)))
+            return false;
+        String accessValue = (String) osmProperties.get("access");
+        return super.isAllowed(accessValue);
     }
 
     /**

@@ -22,6 +22,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.GHUtility;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -74,5 +76,22 @@ public class FootFlagEncoderTest {
         assertEquals(Arrays.asList(1, 2), GHUtility.neighbors(g.getEdges(0, out)));
         assertEquals(Arrays.asList(0, 3), GHUtility.neighbors(g.getEdges(1, out)));
         assertEquals(Arrays.asList(0), GHUtility.neighbors(g.getEdges(2, out)));
+    }
+
+    @Test
+    public void testAccess() {
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("sidewalk", "anything");
+        assertTrue(footEncoder.isAllowed(map));
+        
+        map.put("sidewalk", "none");
+        assertFalse(footEncoder.isAllowed(map));
+        map.clear();
+        
+        map.put("highway", "pedestrian");
+        assertTrue(footEncoder.isAllowed(map));
+        
+        map.put("access", "no");
+        assertFalse(footEncoder.isAllowed(map));
     }
 }
