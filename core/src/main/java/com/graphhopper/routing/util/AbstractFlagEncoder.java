@@ -18,10 +18,13 @@
  */
 package com.graphhopper.routing.util;
 
+import java.util.HashSet;
+import java.util.Map;
+
 /**
  * @author Peter Karich
  */
-public class AbstractFlagEncoder implements VehicleEncoder {
+public abstract class AbstractFlagEncoder implements VehicleEncoder {
 
     /**
      * This variable converts the stored value to the speed in km/h or does the
@@ -47,6 +50,12 @@ public class AbstractFlagEncoder implements VehicleEncoder {
         FORWARD = 1 << shift;
         BACKWARD = 2 << shift;
         BOTH = 3 << shift;
+    }
+
+    public abstract boolean isAllowed(Map<String, Object> map);
+    
+    protected boolean isAllowed(String accessValue) {
+        return !"no".equals(accessValue);
     }
 
     @Override

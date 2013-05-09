@@ -19,6 +19,7 @@
 package com.graphhopper.routing.util;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -26,11 +27,15 @@ import java.util.Map;
  */
 public class CarFlagEncoder extends AbstractFlagEncoder {
 
+    private static HashSet<String> restricted = new HashSet<String>();
     private static final Map<String, Integer> SPEED = new CarSpeed();
 
     public CarFlagEncoder() {
         super(0, 2, SPEED.get("secondary"), SPEED.get("motorway"));
-    }       
+        restricted.add("private");
+        restricted.add("agricultural");
+        restricted.add("forestry");
+    }
 
     public boolean isMotorway(int flags) {
         return getSpeedPart(flags) * factor == SPEED.get("motorway");
@@ -42,6 +47,21 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
     public Integer getSpeed(String string) {
         return SPEED.get(string);
+    }
+
+    @Override
+    public boolean isAllowed(Map<String, Object> osmProperties) {
+        String highwayValue = (String) osmProperties.get("highway");
+        if (!SPEED.containsKey(highwayValue))
+            return false;
+
+        String motorcarValue = (String) osmProperties.get("motorcar");
+        if ("no".equals(motorcarValue) || "none".equals(motorcarValue))
+            return false;
+        String accessValue = (String) osmProperties.get("access");
+        if (!super.isAllowed(accessValue))
+            return false;
+        return !restricted.contains(accessValue);
     }
 
     @Override public String toString() {

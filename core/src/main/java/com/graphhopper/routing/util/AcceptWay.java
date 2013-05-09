@@ -74,47 +74,40 @@ public class AcceptWay {
      */
     public boolean handleTags(Map<String, Object> outProperties, Map<String, Object> osmProperties, TLongArrayList osmIds) {
         boolean includeWay = false;
-        Object value = osmProperties.get("highway");
+        String value = (String) osmProperties.get("highway");
         if (value != null) {
-            String highwayValue = (String) value;
-            if (foot) {
-                if (footEncoder.isAllowedHighway(highwayValue)
-                        || osmProperties.get("sidewalk") != null) {
-                    includeWay = true;
-                    outProperties.put("foot", true);
-                    outProperties.put("save", footEncoder.isSaveHighway(highwayValue));
-                }
+            String highwayValue = value;
+            if (foot && footEncoder.isAllowed(osmProperties)) {
+                includeWay = true;
+                outProperties.put("foot", true);
+                outProperties.put("save", footEncoder.isSaveHighway(highwayValue));
             }
-            if (bike) {
+            if (bike && bikeEncoder.isAllowed(osmProperties)) {
                 // http://wiki.openstreetmap.org/wiki/Cycleway
-                // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway                                
-                if (bikeEncoder.isAllowedHighway(highwayValue)) {
-                    includeWay = true;
-                    outProperties.put("bike", 10);
-                    outProperties.put("save", bikeEncoder.isSaveHighway(highwayValue));
-                }
+                // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway
+                includeWay = true;
+                outProperties.put("bike", 10);
+                outProperties.put("save", bikeEncoder.isSaveHighway(highwayValue));
             }
 
-            if (car) {
+            if (car && carEncoder.isAllowed(osmProperties)) {
                 Integer integ = carEncoder.getSpeed(highwayValue);
-                if (integ != null) {
-                    int maxspeed = parseSpeed((String) osmProperties.get("maxspeed"));
-                    includeWay = true;
-                    if (maxspeed > 0 && integ > maxspeed)
-                        outProperties.put("car", maxspeed);
-                    else {
-                        if ("city_limit".equals(osmProperties.get("traffic_sign")))
-                            integ = 50;
-                        outProperties.put("car", integ);
-                    }
-
-                    if ("toll_booth".equals(osmProperties.get("barrier")))
-                        outProperties.put("carpaid", true);
+                int maxspeed = parseSpeed((String) osmProperties.get("maxspeed"));
+                includeWay = true;
+                if (maxspeed > 0 && integ > maxspeed)
+                    outProperties.put("car", maxspeed);
+                else {
+                    if ("city_limit".equals(osmProperties.get("traffic_sign")))
+                        integ = 50;
+                    outProperties.put("car", integ);
                 }
+
+                if ("toll_booth".equals(osmProperties.get("barrier")))
+                    outProperties.put("carpaid", true);
             }
         }
 
-        value = osmProperties.get("route");
+        value = (String) osmProperties.get("route");
         if (value != null
                 && ("shuttle_train".equals(value) || "ferry".equals(value))) {
             Object motorcarProp = osmProperties.get("motorcar");
@@ -146,9 +139,9 @@ public class AcceptWay {
         boolean oneWayForBike = !"no".equals(osmProperties.get("oneway:bicycle"));
         String cycleway = (String) osmProperties.get("cycleway");
         boolean oneWayBikeIsOpposite = bikeEncoder.isOpposite(cycleway);
-        value = osmProperties.get("oneway");
+        value = (String) osmProperties.get("oneway");
         if (value != null) {
-            if (isTrue(((String) value)))
+            if (isTrue(value))
                 outProperties.put("caroneway", true);
 
             // Abzweigung
