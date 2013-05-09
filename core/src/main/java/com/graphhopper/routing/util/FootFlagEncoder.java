@@ -49,6 +49,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             add("unclassified");
             add("residential");
             add("road");
+            add("service");
         }
     };
     private static final Map<String, Integer> SPEED = new FootSpeed();
