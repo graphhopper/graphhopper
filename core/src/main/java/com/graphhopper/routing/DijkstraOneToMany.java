@@ -21,8 +21,8 @@ package com.graphhopper.routing;
 import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphTurnCosts;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.TurnCostsIgnoreCalc;
 
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -92,7 +92,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     public int findEndNode(int from, int to) {        
         if (weights.length < 2)
             return -1;
-        if(!(turnCostCalc instanceof TurnCostsIgnoreCalc)){
+        if(graph instanceof GraphTurnCosts && ((GraphTurnCosts)graph).isTurnCostSupport()){
             initializeEdgeIds();    
         }
         
@@ -132,7 +132,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
                     continue;
                 int adjNode = iter.adjNode();                
                 double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + weights[currNode];
-                if(edgeIds != null){ //TODO this must not be null when considering turn costs
+                if(edgeIds != null){
                     tmpWeight += turnCostCalc.getTurnCosts(currNode, edgeIds[currNode], iter.edge());    
                 }
                 if (weights[adjNode] == Double.MAX_VALUE) {

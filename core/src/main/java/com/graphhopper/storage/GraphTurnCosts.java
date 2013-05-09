@@ -1,6 +1,7 @@
 package com.graphhopper.storage;
 
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.TurnCostIterator;
+
 
 /**
  * Provides the possibility to store node cost tables
@@ -19,5 +20,10 @@ public interface GraphTurnCosts extends Graph {
     /**
      * @return the turn cost flags for the requested turn
      */
-	int turnCosts(int currNode, int edgeFrom, int edgeTo);
+	int turnCosts(int nodeVia, int edgeFrom, int edgeTo);
+	
+	TurnCostIterator createTurnCostIterable(int nodeVia, int edgeFrom, int edgeTo);
+
+    boolean isTurnCostSupport();
+	
 }

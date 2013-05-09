@@ -146,7 +146,6 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper chShortcuts(boolean enable, boolean fast) {
         chUsage = enable;
         chFast = fast;
-        turnCosts = false;
         return this;
     }
     
@@ -156,9 +155,6 @@ public class GraphHopper implements GraphHopperAPI {
      * Currently not available for contraction hierarchies
      */
     public GraphHopper enableTurnCosts() {
-    	if(chUsage){
-    		throw new IllegalStateException("Turn costs for contraction hierachies are not available yet.");
-    	}
     	turnCosts = true;
         return this;
     }
@@ -216,7 +212,7 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalStateException("either memory mapped or in-memory!");
 
             if (chUsage) {
-                storage = new LevelGraphStorage(dir);
+                storage = new LevelGraphStorage(dir, turnCosts);
                 PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
 
                 VehicleEncoder encoder;
@@ -230,9 +226,9 @@ public class GraphHopper implements GraphHopperAPI {
                     tmpPrepareCH.type(new ShortestCalc()).vehicle(encoder);
                 }
                 prepare = tmpPrepareCH;
-            } else if (turnCosts) {
-            	storage = new GraphStorageTurnCosts(dir);
-            } else{
+            } else if(turnCosts) { 
+            	storage = new GraphStorageTurnCosts(dir, true);
+            } else {
             	storage = new GraphStorage(dir);
             }
                 

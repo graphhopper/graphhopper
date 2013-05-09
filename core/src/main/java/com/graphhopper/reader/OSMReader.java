@@ -141,11 +141,8 @@ public class OSMReader {
         
         
         if (levelGraph){
-        	if(useTurnCosts){
-        		throw new IllegalStateException("Turn costs for contraction hierachies are not available yet.");
-        	}
             // necessary for simple or CH shortcuts
-            storage = new LevelGraphStorage(dir);
+            storage = new LevelGraphStorage(dir, useTurnCosts);
         } else if(useTurnCosts) {
         	storage = new GraphStorageTurnCosts(dir);
         } else {
@@ -217,7 +214,7 @@ public class OSMReader {
 
     void osm2Graph(File osmXmlFile) throws IOException {
         logger.info("using " + helper.getStorageInfo(graphStorage) + ", accepts:"
-                + helper.acceptWay() + ", memory:" + Helper.memInfo());
+                + helper.acceptWay() + ", store turn costs: "+helper.isTurnCostSupport(graphStorage)+", memory:" + Helper.memInfo());
         helper.preProcess(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
         cleanUp();
@@ -323,8 +320,9 @@ public class OSMReader {
                                         + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
                                         + " " + Helper.memInfo());
                             }
-                        } else if ("relation".equals(sReader.getLocalName())){
+                        } else if ("relation".equals(sReader.getLocalName()) && helper.isTurnCostSupport(graphStorage)){
                         	if (relStart < 0) {
+                        	    helper.startRelationsProcessing();
                                 logger.info(nf(counter) + ", now parsing relations");
                                 relStart = counter;
                                 sw.start();

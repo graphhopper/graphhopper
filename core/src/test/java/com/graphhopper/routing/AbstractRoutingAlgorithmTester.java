@@ -18,31 +18,37 @@
  */
 package com.graphhopper.routing;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import gnu.trove.list.TIntList;
+
+import java.io.IOException;
+import java.util.Random;
+import java.util.zip.GZIPInputStream;
+
+import org.junit.Test;
+
 import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.TurnCostCalculation;
-import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.TurnCostCalculation;
+import com.graphhopper.routing.util.TurnCostEncoder;
+import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphTurnCosts;
-import com.graphhopper.storage.TurnCostEncoder;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.TurnCostsIgnoreCalc;
 import com.graphhopper.util.TurnRestrictionsCalc;
-
-import gnu.trove.list.TIntList;
-import java.io.IOException;
-import java.util.Random;
-import java.util.zip.GZIPInputStream;
-import static org.junit.Assert.*;
-import org.junit.Test;
 
 /**
  *
@@ -95,12 +101,19 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p2.toString(), 5580, p2.time());
     }
 
+    public static void initNodes(Graph graph, int nodes) {
+        for(int i=0;i<nodes;i++){
+            graph.setNode(i, 0, 0);
+        }
+    }
+    
     // 0-1-2-3
     // |/|/ /|
     // 4-5-- |
     // |/ \--7
     // 6----/
     void initFastVsShort(Graph graph) {
+        initNodes(graph, 8);
         graph.edge(0, 1, 7000, carEncoder.flags(10, false));
         graph.edge(0, 4, 5000, carEncoder.flags(20, false));
 
@@ -133,6 +146,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
 
     void initFootVsCar(Graph graph) {
+        initNodes(graph, 8);
         graph.edge(0, 1, 7000, footEncoder.flags(5, true) | carEncoder.flags(10, false));
         graph.edge(0, 4, 5000, footEncoder.flags(5, true) | carEncoder.flags(20, false));
 
@@ -156,13 +170,6 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
     
     void initTurnRestrictionsFootVsCar(GraphTurnCosts graph) {
-        graph.setNode(0, 0, 0);
-        graph.setNode(1, 0, 0);
-        graph.setNode(3, 0, 0);
-        graph.setNode(4, 0, 0);
-        graph.setNode(5, 0, 0);
-        graph.setNode(6, 0, 0);
-        graph.setNode(7, 0, 0);
         graph.setNode(8, 0, 0);
         
         initFootVsCar(graph);
@@ -176,8 +183,28 @@ public abstract class AbstractRoutingAlgorithmTester {
         int edge_8_3 = graph.edge(8, 3, 1000, footEncoder.flags(5, true) | carEncoder.flags(20, false)).edge();
         graph.edge(3, 8, 1000, footEncoder.flags(5, true) | carEncoder.flags(20, false));
         
+        EdgeIterator e1 = graph.getEdges(5, new EdgeFilter() {
+            
+            @Override
+            public boolean accept(EdgeIterator iter) {
+                return iter.baseNode() == 5 && iter.adjNode() == 2;
+            }
+        });
+        assertTrue(e1.next());
+       
+        
+        EdgeIterator e2 = graph.getEdges(2, new EdgeFilter() {
+            
+            @Override
+            public boolean accept(EdgeIterator iter) {
+                return iter.baseNode() == 2 && iter.adjNode() == 3;
+            }
+        });
+        assertTrue(e2.next());
+        
         graph.turnCosts(8, edge_5_8, edge_8_3, TurnCostEncoder.restriction());
         graph.turnCosts(8, edge_2_8, edge_8_3, TurnCostEncoder.restriction());
+        graph.turnCosts(2, e1.edge(), e2.edge(), TurnCostEncoder.restriction());
 
         
     }
@@ -187,9 +214,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         GraphTurnCosts graph = createTurnCostsGraph();
         initTurnRestrictionsFootVsCar(graph);
         Path p1 = prepareGraph(graph, new ShortestCalc(), carEncoder).createAlgo().calcPath(0, 3);
-        assertEquals(p1.toString(), 24000, p1.distance(), 1e-6);
-        assertEquals(p1.toString(), 8640, p1.time());
-        assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
+        
+        assertEquals(Helper.createTList(0, 1, 5, 3), p1.calcNodes());
+        assertEquals(p1.toString(), 25000, p1.distance(), 1e-6);
+        assertEquals(p1.toString(), 7020, p1.time());
+        
     }
     
     @Test 
@@ -197,9 +226,9 @@ public abstract class AbstractRoutingAlgorithmTester {
         GraphTurnCosts graph = createTurnCostsGraph();
         initTurnRestrictionsFootVsCar(graph);
         Path p1 = prepareGraph(graph, new ShortestCalc(), carEncoder).createAlgo().turnCosts(turnIgnore).calcPath(0, 3);
+        assertEquals(Helper.createTList(0, 1, 5, 8, 3), p1.calcNodes());
         assertEquals(p1.toString(), 18000, p1.distance(), 1e-6);
         assertEquals(p1.toString(), 5760, p1.time());
-        assertEquals(Helper.createTList(0, 1, 5, 8, 3), p1.calcNodes());
     }
     
     @Test 
@@ -221,6 +250,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         
     // see test-graph.svg !
     protected Graph createTestGraph(Graph graph) {
+        initNodes(graph, 8);
         graph.edge(0, 1, 7, true);
         graph.edge(0, 4, 6, true);
 
@@ -273,6 +303,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     // see wikipedia-graph.svg !
     protected Graph createWikipediaTestGraph() {
         Graph graph = createGraph();
+        initNodes(graph, 6);
         graph.edge(0, 1, 7, true);
         graph.edge(0, 2, 9, true);
         graph.edge(0, 5, 14, true);
@@ -291,6 +322,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     // \   /   /
     //  7-6-5-/
     public static void initBiGraph(Graph graph) {
+        initNodes(graph, 9);
         graph.edge(0, 1, 100, true);
         graph.edge(1, 2, 1, true);
         graph.edge(2, 3, 1, true);
@@ -325,7 +357,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     //  8-7-6-/
     @Test public void testBidirectional2() {
         Graph graph = createGraph();
-
+        initNodes(graph, 9);
         graph.edge(0, 1, 100, true);
         graph.edge(1, 2, 1, true);
         graph.edge(2, 3, 1, true);
@@ -374,6 +406,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testCannotCalculateSP() {
         Graph graph = createGraph();
+        initNodes(graph, 2);
         graph.edge(0, 1, 1, false);
         graph.edge(1, 2, 1, false);
 
@@ -384,6 +417,8 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testDirectedGraphBug1() {
         Graph graph = createGraph();
+        initNodes(graph, 5);
+        
         graph.edge(0, 1, 3, false);
         graph.edge(1, 2, 2.99, false);
 
@@ -400,6 +435,8 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testDirectedGraphBug2() {
         Graph graph = createGraph();
+        initNodes(graph, 5);
+        
         graph.edge(0, 1, 1, false);
         graph.edge(1, 2, 1, false);
         graph.edge(2, 3, 1, false);
@@ -491,6 +528,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         int WIDTH = 10;
         int HEIGHT = 15;
         Graph tmp = new GraphBuilder().create();
+        initNodes(tmp, WIDTH * HEIGHT);
         int[][] matrix = new int[WIDTH][HEIGHT];
         int counter = 0;
         Random rand = new Random(12);

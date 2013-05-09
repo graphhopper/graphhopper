@@ -66,6 +66,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
     @Test
     public void testDifferentEdgeFilter() {
         Graph g = new GraphBuilder().levelGraphCreate();
+        initNodes(g, 7);
         g.edge(4, 3, 10, true);        
         g.edge(3, 6, 10, true);
         

@@ -1,4 +1,4 @@
-package com.graphhopper.storage;
+package com.graphhopper.routing.util;
 
 /**
  * Describes a node costs entry

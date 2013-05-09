@@ -7,10 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.TurnCostEncoder;
+import com.graphhopper.routing.util.TurnCostsEntry;
+import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.GraphTurnCosts;
-import com.graphhopper.storage.TurnCostEncoder;
-import com.graphhopper.storage.TurnCostsEntry;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.Helper;
 
 /**
  * Helper object which gives node cost entries
@@ -29,17 +31,16 @@ public class OSMRestrictionRelation {
     public static final int TYPE_ONLY_STRAIGHT_ON = 6;
     public static final int TYPE_NO_U_TURN = 7;
 
-    protected int edgeIdFrom;
+    protected long fromOsm;
     protected int via;
-    protected int edgeIdTo;
+    protected long toOsm;
     protected int restriction;
-    protected boolean restrictionTypeFound;
 
     /**
      * @return <code>true</code>, if restriction type is supported and a via node has been found
      */
     public boolean isValid() {
-        return restrictionTypeFound && restriction != TYPE_UNSUPPORTED && via >= 0 && edgeIdFrom >=0 && edgeIdTo >= 0;
+        return restriction != TYPE_UNSUPPORTED && via >= 0 && fromOsm >=0 && toOsm >= 0;
     }
 
     /**
@@ -51,7 +52,7 @@ public class OSMRestrictionRelation {
      * @return a collection of node cost entries which can be added to the graph later
      */
     public Collection<TurnCostsEntry> getAsEntries(GraphTurnCosts g,
-            EdgeFilter edgeOutFilter, EdgeFilter edgeInFilter) {
+            EdgeFilter edgeOutFilter, EdgeFilter edgeInFilter, DataAccess osmidsOfEdges) {
         Collection<TurnCostsEntry> entries = new ArrayList<TurnCostsEntry>(3);
         if (via == EdgeIterator.NO_EDGE) {
             return entries;
@@ -61,12 +62,12 @@ public class OSMRestrictionRelation {
             // get all incoming edges and receive the edge which is defined by osmFrom 
             final EdgeIterator edgesIn = g.getEdges(via, edgeInFilter);
             EdgeIterator edgeFrom = null;
-            do {
-                if (edgesIn.edge() == edgeIdFrom) {
+            while (edgesIn.next()) {
+                if (osmid(edgesIn.edge(), osmidsOfEdges) == fromOsm) {
                     edgeFrom = edgesIn;
                     break;
                 }
-            } while (edgesIn.next());
+            } 
             
             //get all outgoing edges of the via node 
             final EdgeIterator edgesOut = g.getEdges(via, edgeOutFilter);
@@ -76,32 +77,32 @@ public class OSMRestrictionRelation {
                         || restriction == TYPE_NO_LEFT_TURN
                         || restriction == TYPE_NO_RIGHT_TURN
                         || restriction == TYPE_NO_STRAIGHT_ON) {
-                    // if we have a restriction of TYPE_NO_* we add infinite costs only to
+                    // if we have a restriction of TYPE_NO_* we add restriction only to
                     // the given turn (from, via, to)  
-                    do {
+                    while (edgesOut.next()) {
                         if (edgesOut.edge() != edgeFrom.edge()
-                                && edgesOut.edge() == edgeIdTo) {
+                                && osmid(edgesOut.edge(), osmidsOfEdges) == toOsm) {
                             entries.add(new TurnCostsEntry()
                                     .flags(TurnCostEncoder.restriction()).node(via)
                                     .edgeFrom(edgeFrom.edge())
                                     .edgeTo(edgesOut.edge()));
                         }
-                    } while (edgesOut.next());
+                    }
 
                 } else if (restriction == TYPE_ONLY_RIGHT_TURN
                         || restriction == TYPE_ONLY_LEFT_TURN
                         || restriction == TYPE_ONLY_STRAIGHT_ON) {
-                    // if we have a restriction of TYPE_ONLY_* we add infinite costs to
-                    // any other turn possibility (from, via, * )
-                    do {
+                    // if we have a restriction of TYPE_ONLY_* we add restriction to
+                    // any turn possibility (from, via, * ) except the given turn
+                    while (edgesOut.next()) {
                         if (edgesOut.edge() != edgeFrom.edge()
-                                && edgesOut.edge() != edgeIdTo) {
+                                && osmid(edgesOut.edge(), osmidsOfEdges) != toOsm) {
                             entries.add(new TurnCostsEntry()
                                     .flags(TurnCostEncoder.restriction()).node(via)
                                     .edgeFrom(edgeFrom.edge())
                                     .edgeTo(edgesOut.edge()));
                         }
-                    } while (edgesOut.next());
+                    } ;
                 }
             }
         } catch (Exception e) {
@@ -110,6 +111,32 @@ public class OSMRestrictionRelation {
         //TODO remove duplicate entries
         return entries;
 
+    }
+    
+    private long osmid(int edgeId, DataAccess osmIds) {
+        long ptr = (long) edgeId * 2;
+        int left = osmIds.getInt(ptr);
+        int right = osmIds.getInt(ptr + 1);
+        return Helper.intToLong(left, right);
+    }
+    
+    public final static int getRestrictionType(String restrictionType) {
+        if ("no_left_turn".equals(restrictionType)) {
+            return OSMRestrictionRelation.TYPE_NO_LEFT_TURN;
+        } else if ("no_right_turn".equals(restrictionType)) {
+            return OSMRestrictionRelation.TYPE_NO_RIGHT_TURN;
+        } else if ("no_straight_on".equals(restrictionType)) {
+            return OSMRestrictionRelation.TYPE_NO_STRAIGHT_ON;
+        } else if ("no_u_turn".equals(restrictionType)) {
+            return OSMRestrictionRelation.TYPE_NO_U_TURN;
+        } else if ("only_right_turn".equals(restrictionType)) {
+            return OSMRestrictionRelation.TYPE_ONLY_RIGHT_TURN;
+        } else if ("only_left_turn".equals(restrictionType)) {
+            return OSMRestrictionRelation.TYPE_ONLY_LEFT_TURN;
+        } else if ("only_straight_on".equals(restrictionType)) {
+            return OSMRestrictionRelation.TYPE_ONLY_STRAIGHT_ON;
+        }
+        return OSMRestrictionRelation.TYPE_UNSUPPORTED;
     }
 
 }

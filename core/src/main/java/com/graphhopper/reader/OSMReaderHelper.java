@@ -22,6 +22,7 @@ import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.GraphStorageTurnCosts;
+import com.graphhopper.storage.GraphTurnCosts;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
@@ -135,10 +136,17 @@ public abstract class OSMReaderHelper {
                 + "|" + storage.version();
     }
 
+    public boolean isTurnCostSupport(GraphStorage graphStorage) {
+        return (graphStorage instanceof GraphTurnCosts) && ((GraphTurnCosts)graphStorage).isTurnCostSupport();
+    }
+
     void finishedReading() {
     }
 
     void startWayProcessing() {
+    }
+
+    void startRelationsProcessing() {
     }
     
     void processRelations(XMLStreamReader sReader) throws XMLStreamException{

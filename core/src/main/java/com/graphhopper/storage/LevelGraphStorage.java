@@ -31,14 +31,18 @@ import com.graphhopper.util.EdgeSkipIterator;
  * @see GraphBuilder
  * @author Peter Karich
  */
-public class LevelGraphStorage extends GraphStorage implements LevelGraph {
+public class LevelGraphStorage extends GraphStorageTurnCosts implements LevelGraph {
 
     private final int I_SKIP_EDGE1;
     private final int I_SKIP_EDGE2;
     private final int I_LEVEL;
 
     public LevelGraphStorage(Directory dir) {
-        super(dir);
+        this(dir, false);
+    }
+    
+    public LevelGraphStorage(Directory dir, boolean withTurnCostSupport) {
+        super(dir, withTurnCostSupport);
         I_SKIP_EDGE1 = nextEdgeEntryIndex();
         I_SKIP_EDGE2 = nextEdgeEntryIndex();
         I_LEVEL = nextNodeEntryIndex();

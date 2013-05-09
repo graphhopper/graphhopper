@@ -1,9 +1,9 @@
 package com.graphhopper.util;
 
 import com.graphhopper.routing.util.TurnCostCalculation;
+import com.graphhopper.routing.util.TurnCostEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphTurnCosts;
-import com.graphhopper.storage.TurnCostEncoder;
 
 public class TurnRestrictionsCalc implements TurnCostCalculation {
 

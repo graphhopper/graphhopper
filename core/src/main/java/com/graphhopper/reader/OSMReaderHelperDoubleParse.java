@@ -36,11 +36,12 @@ import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.TurnCostsEntry;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.GraphStorageTurnCosts;
 import com.graphhopper.storage.GraphTurnCosts;
-import com.graphhopper.storage.TurnCostsEntry;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Helper7;
 import com.graphhopper.util.PointList;
@@ -63,7 +64,11 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     private static final int TOWER_NODE = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private LongIntMap osmIdToIndexMap;
-    private LongIntMap osmIdToEdgeIndexMap;
+    /* we cannot hold a map for osmId->edgeId, because different edgeIds can have the same osmId
+      instead we hold for each edgeId the corresponding OSM id and compare it later when we need it
+      @see OSMRestrictionRelation#getAsEntries(...) */ 
+    private DataAccess osmIDsOfEdges;
+    
     private int towerId = 0;
     private int pillarId = 0;
     // remember how many times a node was used to identify tower nodes
@@ -77,6 +82,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         dir = storage.directory();
         pillarLats = dir.findCreate("tmpLatitudes");
         pillarLons = dir.findCreate("tmpLongitudes");
+        osmIDsOfEdges = dir.findCreate("tmpOsmidsEdges");
         // we need those to build the node costs tables
         // here we can use any vehicleDecoder, because we just care about
         // forward/backward direction of the edges
@@ -93,7 +99,6 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 //        osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
         // smaller memory overhead for bigger data sets because of avoiding a "rehash"
        osmIdToIndexMap = new GHLongIntBTree(200);
-       osmIdToEdgeIndexMap = new GHLongIntBTree(200);
     }
 
     @Override
@@ -198,7 +203,9 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 
     @Override
     void storeEdgeOSMId(int edgeId, long osmId) {
-        osmIdToEdgeIndexMap.put(osmId, edgeId);
+        long ptr = (long) edgeId * 2;
+        osmIDsOfEdges.setInt(ptr, Helper.longToIntLeft(osmId));
+        osmIDsOfEdges.setInt(ptr + 1, Helper.longToIntRight(osmId));
     }
 
     /**
@@ -229,20 +236,23 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     public void processRelations(XMLStreamReader sReader) throws XMLStreamException {
         if (g instanceof GraphTurnCosts) {
             OSMRestrictionRelation restriction = parseRestriction(sReader);
-            if (restriction.isValid()) {
-                for (TurnCostsEntry entry : restriction.getAsEntries((GraphTurnCosts) g,
-                        edgeOutFilter, edgeInFilter)) {
-                    ((GraphTurnCosts) g).turnCosts(entry.node(), entry.edgeFrom(),
-                            entry.edgeTo(), entry.flags());
-                }
+            if (restriction != null && restriction.isValid()) {
+                    for (TurnCostsEntry entry : restriction.getAsEntries((GraphTurnCosts) g,
+                            edgeOutFilter, edgeInFilter, osmIDsOfEdges)) {
+                        ((GraphTurnCosts) g).turnCosts(entry.node(), entry.edgeFrom(),
+                                entry.edgeTo(), entry.flags());
+                    }    
+                
             }
         }
     }
 
     public OSMRestrictionRelation parseRestriction(XMLStreamReader sReader)
             throws XMLStreamException {
-        OSMRestrictionRelation restriction = new OSMRestrictionRelation();
-
+        final OSMRestrictionRelation restriction = new OSMRestrictionRelation();
+        
+        boolean restrictionFound = false;
+        
         for (int tmpE = sReader.nextTag(); tmpE != XMLStreamConstants.END_ELEMENT; tmpE = sReader
                 .nextTag()) {
             if (tmpE == XMLStreamConstants.START_ELEMENT) {
@@ -252,9 +262,9 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                     String type = sReader.getAttributeValue(null, "type");
                     if ("way".equals(type) && ref != null) {
                         if ("from".equals(role)) {
-                            restriction.edgeIdFrom = osmIdToEdgeIndexMap.get(Long.parseLong(ref));
+                            restriction.fromOsm = Long.valueOf(ref);
                         } else if ("to".equals(role)) {
-                            restriction.edgeIdTo = osmIdToEdgeIndexMap.get(Long.parseLong(ref));
+                            restriction.toOsm = Long.valueOf(ref);
                         }
                     } else if ("node".equals(type) && ref != null && "via".equals(role)) {
                         int tmpNode = osmIdToIndexMap.get(Long.parseLong(ref));
@@ -268,36 +278,17 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                     String tagValue = sReader.getAttributeValue(null, "v");
                     if (!Helper.isEmpty(tagKey) && !Helper.isEmpty(tagValue)) {
                         if ("type".equals(tagKey) && "restriction".equals(tagValue)) {
-                            restriction.restrictionTypeFound = true;
+                            restrictionFound = true;
                         }
                         if ("restriction".equals(tagKey)) {
-                            restriction.restriction = getRestrictionType(tagValue);
+                            restriction.restriction = OSMRestrictionRelation.getRestrictionType(tagValue);
                         }
                     }
                 }
                 sReader.next();
             }
         }
-        return restriction;
-    }
-
-    private int getRestrictionType(String restrictionType) {
-        if ("no_left_turn".equals(restrictionType)) {
-            return OSMRestrictionRelation.TYPE_NO_LEFT_TURN;
-        } else if ("no_right_turn".equals(restrictionType)) {
-            return OSMRestrictionRelation.TYPE_NO_RIGHT_TURN;
-        } else if ("no_straight_on".equals(restrictionType)) {
-            return OSMRestrictionRelation.TYPE_NO_STRAIGHT_ON;
-        } else if ("no_u_turn".equals(restrictionType)) {
-            return OSMRestrictionRelation.TYPE_NO_U_TURN;
-        } else if ("only_right_turn".equals(restrictionType)) {
-            return OSMRestrictionRelation.TYPE_ONLY_RIGHT_TURN;
-        } else if ("only_left_turn".equals(restrictionType)) {
-            return OSMRestrictionRelation.TYPE_ONLY_LEFT_TURN;
-        } else if ("only_straight_on".equals(restrictionType)) {
-            return OSMRestrictionRelation.TYPE_ONLY_STRAIGHT_ON;
-        }
-        return OSMRestrictionRelation.TYPE_UNSUPPORTED;
+        return (restrictionFound) ? restriction : null;
     }
 
     private void printInfo(String str) {
@@ -312,18 +303,31 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     void startWayProcessing() {
         printInfo("node");
     }
+    
+    @Override
+    void startRelationsProcessing() {
+        printInfo("way");
+    }
+
+    void printRelationInfo() {
+        if(g instanceof GraphStorageTurnCosts){
+            LoggerFactory.getLogger(getClass()).info("finished relation processing."
+                    + " turn cost entries: "+ ((GraphStorageTurnCosts)g).entries()+", "
+                    + Helper.memInfo());    
+        }
+        
+    }
 
     @Override
     void finishedReading() {
         osmIdToIndexMap.optimize();
-        osmIdToEdgeIndexMap.optimize();
-        printInfo("way");
+        printRelationInfo();
         dir.remove(pillarLats);
         dir.remove(pillarLons);
+        dir.remove(osmIDsOfEdges);
         pillarLons = null;
         pillarLats = null;
         osmIdToIndexMap = null;
-        osmIdToEdgeIndexMap = null;
     }
 
     private void setHasHighways(long osmId) {
@@ -352,6 +356,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     public void preProcess(InputStream osmXml) {
         pillarLats.create(Math.max(expectedNodes / 50, 100));
         pillarLons.create(Math.max(expectedNodes / 50, 100));
+        osmIDsOfEdges.create(Math.max(expectedNodes / 50, 100));
         if (osmXml == null)
             throw new AssertionError("Stream cannot be empty");
 
