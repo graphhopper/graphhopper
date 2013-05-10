@@ -28,7 +28,7 @@ import com.graphhopper.storage.Graph;
  *
  * @author Peter Karich
  */
-public class DijkstraSimpleTest extends AbstractRoutingAlgorithmTester {
+public class DijkstraTest extends AbstractRoutingAlgorithmTester {
 
     @Override
     public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final EdgePropertyEncoder encoder) {
