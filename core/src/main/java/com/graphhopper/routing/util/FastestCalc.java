@@ -35,16 +35,16 @@ public class FastestCalc implements WeightCalculation {
 
     @Override
     public double getMinWeight(double distance) {
-        return distance / maxSpeed;
+        return (distance * 3.6 )/ maxSpeed;
     }
 
     @Override
     public double getWeight(double distance, int flags) {
-        return distance / encoder.getSpeed(flags);
+        return (distance * 3.6)/ encoder.getSpeed(flags);
     }
 
     @Override public double revertWeight(double weight, int flags) {
-        return weight * encoder.getSpeed(flags);
+        return (weight / 3.6) * encoder.getSpeed(flags) ;
     }
 
     @Override public String toString() {
