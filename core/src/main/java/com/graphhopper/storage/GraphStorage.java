@@ -671,14 +671,23 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             count = wayGeometry.getInt(geoRef);
         if (count == 0)
             return PointList.EMPTY;
+        geoRef++;
         PointList pillarNodes = new PointList(count);
-        for (int i = 0; i < count; i++) {
-            double lat = Helper.intToDegree(wayGeometry.getInt(geoRef + i * 2 + 1));
-            double lon = Helper.intToDegree(wayGeometry.getInt(geoRef + i * 2 + 2));
-            pillarNodes.add(lat, lon);
+        if (reverse) {
+            int index = geoRef + 2 * (count - 1) + 1;
+            for (int i = count - 1; i >= 0; i--) {
+                double lon = Helper.intToDegree(wayGeometry.getInt(index--));
+                double lat = Helper.intToDegree(wayGeometry.getInt(index--));
+                pillarNodes.add(lat, lon);
+            }
+        } else {
+            int index = geoRef;
+            for (int i = 0; i < count; i++) {
+                double lat = Helper.intToDegree(wayGeometry.getInt(index++));
+                double lon = Helper.intToDegree(wayGeometry.getInt(index++));
+                pillarNodes.add(lat, lon);
+            }
         }
-        if (reverse)
-            pillarNodes.reverse();
         return pillarNodes;
     }
 

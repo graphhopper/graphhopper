@@ -18,7 +18,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
@@ -26,7 +25,6 @@ import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import static org.junit.Assert.*;

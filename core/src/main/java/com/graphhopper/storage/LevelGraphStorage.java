@@ -96,7 +96,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
             super(edge, node, filter);
         }
 
-        @Override public void skippedEdges(int edge1, int edge2) {
+        @Override public final void skippedEdges(int edge1, int edge2) {
             if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2))
                 throw new IllegalStateException("Skipped edges of a shortcuts needs "
                         + "to be both valid but wasn't " + edge1 + ", " + edge2);
@@ -104,15 +104,15 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
             edges.setInt(edgePointer + I_SKIP_EDGE2, edge2);
         }
 
-        @Override public int skippedEdge1() {
+        @Override public final int skippedEdge1() {
             return edges.getInt(edgePointer + I_SKIP_EDGE1);
         }
 
-        @Override public int skippedEdge2() {
+        @Override public final int skippedEdge2() {
             return edges.getInt(edgePointer + I_SKIP_EDGE2);
         }
 
-        @Override public boolean isShortcut() {
+        @Override public final boolean isShortcut() {
             return EdgeIterator.Edge.isValid(skippedEdge1());
         }
     }
