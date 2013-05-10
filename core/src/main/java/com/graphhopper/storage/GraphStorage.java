@@ -669,6 +669,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         int count = 0;
         if (geoRef > EdgeIterator.NO_EDGE)
             count = wayGeometry.getInt(geoRef);
+        if (count == 0)
+            return PointList.EMPTY;
         PointList pillarNodes = new PointList(count);
         for (int i = 0; i < count; i++) {
             double lat = Helper.intToDegree(wayGeometry.getInt(geoRef + i * 2 + 1));

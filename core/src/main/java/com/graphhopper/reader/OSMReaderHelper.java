@@ -50,11 +50,17 @@ public abstract class OSMReaderHelper {
     private AcceptWay acceptWay;
     protected TLongArrayList wayNodes = new TLongArrayList(10);
     private Map<String, Object> osmProperties = new HashMap<String, Object>();
-    private Map<String, Object> outProperties = new HashMap<String, Object>();    
+    private Map<String, Object> outProperties = new HashMap<String, Object>();
+    private DouglasPeucker dpAlgo = new DouglasPeucker();
 
     public OSMReaderHelper(Graph g, long expectedNodes) {
         this.g = g;
         this.expectedNodes = expectedNodes;
+    }
+
+    public OSMReaderHelper wayPointMaxDistance(double maxDist) {
+        dpAlgo.maxDistance(maxDist);
+        return this;
     }
 
     public OSMReaderHelper acceptWay(AcceptWay acceptWay) {
@@ -72,7 +78,7 @@ public abstract class OSMReaderHelper {
 
     public long expectedNodes() {
         return expectedNodes;
-    }    
+    }
 
     public long edgeCount() {
         return g.getAllEdges().maxId();
@@ -114,8 +120,10 @@ public abstract class OSMReaderHelper {
         }
 
         EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
-        if (nodes > 2)
+        if (nodes > 2) {
+            dpAlgo.simplify(pillarNodes);
             iter.wayGeometry(pillarNodes);
+        }
         return nodes;
     }
 
@@ -138,7 +146,7 @@ public abstract class OSMReaderHelper {
         boolean valid = parseWay(sReader);
         if (valid) {
             int flags = acceptWay.toFlags(outProperties);
-            addEdge(wayNodes, flags);            
+            addEdge(wayNodes, flags);
         }
     }
 

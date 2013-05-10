@@ -38,8 +38,8 @@ public class PointList {
     }
 
     public PointList(int cap) {
-        if (cap < 10)
-            cap = 10;
+        if (cap < 5)
+            cap = 5;
         latitudes = new double[cap];
         longitudes = new double[cap];
     }
@@ -55,7 +55,7 @@ public class PointList {
     public void add(double lat, double lon) {
         int newSize = size + 1;
         if (newSize >= latitudes.length) {
-            int cap = newSize * 3 / 2;
+            int cap = (int) (newSize * 1.7);
             latitudes = Arrays.copyOf(latitudes, cap);
             longitudes = Arrays.copyOf(longitudes, cap);
         }
@@ -187,4 +187,29 @@ public class PointList {
         longitudes = Arrays.copyOf(longitudes, size);
         return this;
     }
+    public static final PointList EMPTY = new PointList(0) {
+        @Override public void set(int index, double lat, double lon) {
+            throw new RuntimeException("cannot change EMPTY PointList");
+        }
+
+        @Override public void add(double lat, double lon) {
+            throw new RuntimeException("cannot change EMPTY PointList");
+        }
+
+        @Override public double latitude(int index) {
+            throw new RuntimeException("cannot access EMPTY PointList");
+        }
+
+        @Override public double longitude(int index) {
+            throw new RuntimeException("cannot access EMPTY PointList");
+        }
+
+        @Override public void clear() {
+            throw new RuntimeException("cannot change EMPTY PointList");
+        }
+
+        @Override public void trimToSize(int newSize) {
+            throw new RuntimeException("cannot change EMPTY PointList");
+        }
+    };
 }

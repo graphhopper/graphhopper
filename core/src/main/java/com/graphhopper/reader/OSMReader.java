@@ -157,6 +157,7 @@ public class OSMReader {
         osmReader.sort(args.getBool("osmreader.sortGraph", false));
         osmReader.prepare(args.getBool("osmreader.doPrepare", true));
         osmReader.chShortcuts(args.get("osmreader.chShortcuts", "no"));
+        osmReader.wayPointMaxDistance(args.getDouble("osmreader.wayPointMaxDistance", 1));
         osmReader.locationIndexHighResolution(args.getInt("osmreader.locationIndexHighResolution", 1000));
         if (!osmReader.loadExisting()) {
             String strOsm = args.get("osmreader.osm", "");
@@ -446,5 +447,9 @@ public class OSMReader {
 
     public void prepare(boolean bool) {
         doPrepare = bool;
+    }
+
+    public void wayPointMaxDistance(double maxDist) {
+        helper.wayPointMaxDistance(maxDist);
     }
 }
