@@ -88,7 +88,7 @@ public class RoutingAlgorithmSpecialAreaTests {
     }
 
     public static Collection<AlgorithmPreparation> createAlgos(Graph g,
-            VehicleEncoder encoder, boolean withCh) {
+            EdgePropertyEncoder encoder, boolean withCh) {
         List<AlgorithmPreparation> prepare = new ArrayList<AlgorithmPreparation>(Arrays.<AlgorithmPreparation>asList(
                 createAlgoPrepare(g, "astar", encoder),
                 createAlgoPrepare(g, "dijkstraOneToMany", encoder),

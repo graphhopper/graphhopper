@@ -25,10 +25,10 @@ package com.graphhopper.routing.util;
  */
 public class FastestCalc implements WeightCalculation {
 
-    private final VehicleEncoder encoder;
+    private final EdgePropertyEncoder encoder;
     private final double maxSpeed;
 
-    public FastestCalc(VehicleEncoder encoder) {
+    public FastestCalc(EdgePropertyEncoder encoder) {
         this.encoder = encoder;
         maxSpeed = encoder.getMaxSpeed();
     }

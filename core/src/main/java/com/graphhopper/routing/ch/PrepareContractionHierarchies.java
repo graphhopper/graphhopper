@@ -29,7 +29,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.DataAccess;
@@ -68,7 +68,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     // preparation dijkstra uses always shortest path as edges are rewritten - see doWork
     private final WeightCalculation shortestCalc = new ShortestCalc();
     private WeightCalculation prepareWeightCalc;
-    private VehicleEncoder prepareEncoder;
+    private EdgePropertyEncoder prepareEncoder;
     private EdgeFilter vehicleInFilter;
     private EdgeFilter vehicleOutFilter;
     private EdgeFilter vehicleAllFilter;
@@ -117,7 +117,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return this;
     }
 
-    public PrepareContractionHierarchies vehicle(VehicleEncoder encoder) {
+    public PrepareContractionHierarchies vehicle(EdgePropertyEncoder encoder) {
         this.prepareEncoder = encoder;
         vehicleInFilter = new DefaultEdgeFilter(encoder, true, false);
         vehicleOutFilter = new DefaultEdgeFilter(encoder, false, true);

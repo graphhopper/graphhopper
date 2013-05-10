@@ -18,7 +18,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 
@@ -33,7 +33,7 @@ public class PathNative extends Path {
     int[] parents;
     int[] pathEdgeIds;
 
-    public PathNative(Graph g, VehicleEncoder encoder, int[] parents, int[] pathEdgeIds) {
+    public PathNative(Graph g, EdgePropertyEncoder encoder, int[] parents, int[] pathEdgeIds) {
         super(g, encoder);
         this.parents = parents;
         this.pathEdgeIds = pathEdgeIds;

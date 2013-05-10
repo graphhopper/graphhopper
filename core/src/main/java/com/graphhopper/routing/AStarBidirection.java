@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.AStar.AStarEdge;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
@@ -77,7 +77,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
     private CoordTrig toCoord;
     protected double approximationFactor;
 
-    public AStarBidirection(Graph graph, VehicleEncoder encoder) {
+    public AStarBidirection(Graph graph, EdgePropertyEncoder encoder) {
         super(graph, encoder);
         int nodes = Math.max(20, graph.nodes());
         initCollections(nodes);

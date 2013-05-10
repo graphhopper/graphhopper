@@ -20,11 +20,11 @@ package com.graphhopper.routing.util;
 
 /**
  * This class provides methods to define how a value (like speed or direction)
- * converts to a flag (currently an integer value).
+ * converts to a flag (currently an integer value), which is stored in an edge .
  *
  * @author Peter Karich
  */
-public interface VehicleEncoder {
+public interface EdgePropertyEncoder {
 
     /**
      * @param speed the speed in km/h

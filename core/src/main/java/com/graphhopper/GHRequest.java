@@ -19,7 +19,7 @@
 package com.graphhopper;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.shapes.GHPlace;
@@ -37,7 +37,7 @@ public class GHRequest {
     private GHPlace from;
     private GHPlace to;
     private Map<String, Object> hints = new HashMap<String, Object>(5);
-    private VehicleEncoder encoder = new CarFlagEncoder();
+    private EdgePropertyEncoder encoder = new CarFlagEncoder();
     private WeightCalculation weightCalc = new ShortestCalc();
 
     /**
@@ -114,12 +114,12 @@ public class GHRequest {
         return weightCalc;
     }
 
-    public GHRequest vehicle(VehicleEncoder encoder) {
+    public GHRequest vehicle(EdgePropertyEncoder encoder) {
         this.encoder = encoder;
         return this;
     }
 
-    public VehicleEncoder vehicle() {
+    public EdgePropertyEncoder vehicle() {
         return encoder;
     }
 }

@@ -76,7 +76,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     private int edgeEntryIndex = -1, nodeEntryIndex = -1;
     // length | nodeA | nextNode | ... | nodeB
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 2GB
-    private DataAccess geometry;
+    private DataAccess wayGeometry;
     // 0 stands for no separate geoRef
     private int maxGeoRef = 1;
     private boolean initialized = false;
@@ -89,7 +89,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         this.dir = dir;
         this.nodes = dir.findCreate("nodes");
         this.edges = dir.findCreate("edges");
-        this.geometry = dir.findCreate("geometry");
+        this.wayGeometry = dir.findCreate("geometry");
         this.bounds = BBox.INVERSE.clone();
         E_NODEA = nextEdgeEntryIndex();
         E_NODEB = nextEdgeEntryIndex();
@@ -142,7 +142,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         checkInit();
         nodes.segmentSize(bytes);
         edges.segmentSize(bytes);
-        geometry.segmentSize(bytes);
+        wayGeometry.segmentSize(bytes);
         return this;
     }
 
@@ -157,7 +157,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         initNodeRefs(0, nodes.capacity() / 4);
 
         edges.create((long) initBytes * edgeEntrySize);
-        geometry.create((long) initBytes);
+        wayGeometry.create((long) initBytes);
         initialized = true;
         return this;
     }
@@ -258,11 +258,11 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     }
 
     private void ensureGeometry(int index, int size) {
-        long deltaCap = ((long) index + size) * 4 - geometry.capacity();
+        long deltaCap = ((long) index + size) * 4 - wayGeometry.capacity();
         if (deltaCap <= 0)
             return;
 
-        incCapacity(geometry, deltaCap);
+        incCapacity(wayGeometry, deltaCap);
     }
 
     @Override
@@ -651,14 +651,14 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             int geoRef = nextGeoRef(len * 2);
             edges.setInt(edgePointer + E_GEO, geoRef);
             ensureGeometry(geoRef, len * 2 + 1);
-            geometry.setInt(geoRef, len);
+            wayGeometry.setInt(geoRef, len);
             geoRef++;
             if (reverse)
                 pillarNodes.reverse();
 
             for (int i = 0; i < len; geoRef += 2, i++) {
-                geometry.setInt(geoRef, Helper.degreeToInt(pillarNodes.latitude(i)));
-                geometry.setInt(geoRef + 1, Helper.degreeToInt(pillarNodes.longitude(i)));
+                wayGeometry.setInt(geoRef, Helper.degreeToInt(pillarNodes.latitude(i)));
+                wayGeometry.setInt(geoRef + 1, Helper.degreeToInt(pillarNodes.longitude(i)));
             }
         } else
             edges.setInt(edgePointer + E_GEO, EdgeIterator.NO_EDGE);
@@ -668,11 +668,11 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         int geoRef = edges.getInt(edgePointer + E_GEO);
         int count = 0;
         if (geoRef > EdgeIterator.NO_EDGE)
-            count = geometry.getInt(geoRef);
+            count = wayGeometry.getInt(geoRef);
         PointList pillarNodes = new PointList(count);
         for (int i = 0; i < count; i++) {
-            double lat = Helper.intToDegree(geometry.getInt(geoRef + i * 2 + 1));
-            double lon = Helper.intToDegree(geometry.getInt(geoRef + i * 2 + 2));
+            double lat = Helper.intToDegree(wayGeometry.getInt(geoRef + i * 2 + 1));
+            double lon = Helper.intToDegree(wayGeometry.getInt(geoRef + i * 2 + 2));
             pillarNodes.add(lat, lon);
         }
         if (reverse)
@@ -700,7 +700,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         nodes.copyTo(clonedG.nodes);
         clonedG.nodeCount = nodeCount;
 
-        geometry.copyTo(clonedG.geometry);
+        wayGeometry.copyTo(clonedG.wayGeometry);
         clonedG.maxGeoRef = maxGeoRef;
 
         clonedG.bounds = bounds;
@@ -924,7 +924,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         if (edges.loadExisting()) {
             if (!nodes.loadExisting())
                 throw new IllegalStateException("cannot load nodes. corrupt file or directory? " + dir);
-            if (!geometry.loadExisting())
+            if (!wayGeometry.loadExisting())
                 throw new IllegalStateException("cannot load geometry. corrupt file or directory? " + dir);
             if (nodes.version() != edges.version())
                 throw new IllegalStateException("nodes and edges files have different versions!? " + dir);
@@ -969,23 +969,23 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         edges.setHeader(1, edgeCount);
 
         // geometry
-        geometry.setHeader(0, maxGeoRef);
+        wayGeometry.setHeader(0, maxGeoRef);
 
-        geometry.flush();
+        wayGeometry.flush();
         edges.flush();
         nodes.flush();
     }
 
     @Override
     public void close() {
-        geometry.close();
+        wayGeometry.close();
         edges.close();
         nodes.close();
     }
 
     @Override
     public long capacity() {
-        return edges.capacity() + nodes.capacity() + geometry.capacity();
+        return edges.capacity() + nodes.capacity() + wayGeometry.capacity();
     }
 
     public int version() {
@@ -995,7 +995,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     @Override public String toString() {
         return "edges:" + nf(edgeCount) + "(" + edges.capacity() / Helper.MB + "), "
                 + "nodes:" + nf(nodeCount) + "(" + nodes.capacity() / Helper.MB + "), "
-                + "geo:" + nf(maxGeoRef) + "(" + geometry.capacity() / Helper.MB + "), "
+                + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.capacity() / Helper.MB + "), "
                 + "bounds:" + bounds;
     }
 }

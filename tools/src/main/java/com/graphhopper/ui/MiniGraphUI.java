@@ -26,7 +26,7 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
@@ -75,8 +75,8 @@ public class MiniGraphUI {
     private MapLayer pathLayer;
     private boolean fastPaint = false;
     private WeightCalculation wCalc = new ShortestCalc();
-    private VehicleEncoder carEncoder = new CarFlagEncoder();
-    private VehicleEncoder footEncoder = new FootFlagEncoder();
+    private EdgePropertyEncoder carEncoder = new CarFlagEncoder();
+    private EdgePropertyEncoder footEncoder = new FootFlagEncoder();
 
     public MiniGraphUI(OSMReader reader, boolean debug) {
         this.graph = reader.graph();

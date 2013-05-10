@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * @author Peter Karich
  */
-public abstract class AbstractFlagEncoder implements VehicleEncoder {
+public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
 
     /**
      * This variable converts the stored value to the speed in km/h or does the

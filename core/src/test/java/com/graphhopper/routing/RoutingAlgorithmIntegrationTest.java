@@ -23,7 +23,7 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.util.CmdArgs;
@@ -103,7 +103,7 @@ public class RoutingAlgorithmIntegrationTest {
                     put("osmreader.graph-location", graphFile).
                     put("osmreader.dataaccess", "inmemory"));
             Graph g = osm.graph();
-            VehicleEncoder carEncoder = new CarFlagEncoder();
+            EdgePropertyEncoder carEncoder = new CarFlagEncoder();
             // System.out.println("nodes:" + g.getNodes());
             Location2IDIndex idx = osm.location2IDIndex();
             Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
@@ -136,7 +136,7 @@ public class RoutingAlgorithmIntegrationTest {
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
-        VehicleEncoder carEncoder = new CarFlagEncoder();
+        EdgePropertyEncoder carEncoder = new CarFlagEncoder();
 
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread

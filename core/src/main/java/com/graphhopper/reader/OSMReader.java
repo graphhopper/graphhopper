@@ -23,7 +23,7 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
@@ -381,7 +381,7 @@ public class OSMReader {
         if (Helper.isEmpty(chShortcuts) || "no".equals(chShortcuts) || "false".equals(chShortcuts))
             return this;
 
-        VehicleEncoder encoder = new CarFlagEncoder();
+        EdgePropertyEncoder encoder = new CarFlagEncoder();
         int tmpIndex = chShortcuts.indexOf(",");
         if (tmpIndex >= 0)
             encoder = Helper.getVehicleEncoder(chShortcuts.substring(tmpIndex + 1).trim());

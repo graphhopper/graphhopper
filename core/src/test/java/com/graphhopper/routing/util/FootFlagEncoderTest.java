@@ -53,7 +53,7 @@ public class FootFlagEncoderTest {
 
     @Test
     public void testCombined() {
-        VehicleEncoder carEncoder = new CarFlagEncoder();
+        EdgePropertyEncoder carEncoder = new CarFlagEncoder();
         int fl = footEncoder.flags(10, true) | carEncoder.flags(100, false);
         assertEquals(10, footEncoder.getSpeed(fl));
         assertTrue(footEncoder.isForward(fl));
