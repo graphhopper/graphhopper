@@ -63,6 +63,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
+    private DistanceCalc preciseDistCalc = new DistanceCalc();
     private DistanceCalc distCalc = new DistancePlaneProjection();
     final DataAccess dataAccess;
     private final Graph graph;
@@ -72,6 +73,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     private long[] bitmasks;
     SpatialKeyAlgo keyAlgo;
     private int minResolutionInMeter;
+    private double minResolution2InMeterNormed;
     private double deltaLat;
     private double deltaLon;
     private int initSizeLeafEntries = 4;
@@ -99,6 +101,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
      */
     public Location2NodesNtree minResolutionInMeter(int minResolutionInMeter) {
         this.minResolutionInMeter = minResolutionInMeter;
+        minResolution2InMeterNormed = distCalc.calcNormalizedDist(minResolutionInMeter * 2);
         return this;
     }
 
@@ -127,7 +130,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
                 (bounds.maxLat - bounds.minLat) / 360 * DistanceCalc.C,
-                (bounds.maxLon - bounds.minLon) / 360 * distCalc.calcCircumference(lat));
+                (bounds.maxLon - bounds.minLon) / 360 * preciseDistCalc.calcCircumference(lat));
         double tmp = maxDistInMeter / minResolutionInMeter;
         tmp = tmp * tmp;
         TIntArrayList tmpEntries = new TIntArrayList();
@@ -354,7 +357,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                 @Override public void set(double lat, double lon) {
                     long key = keyAlgo.encode(lat, lon);
                     long keyPart = createReverseKey(key);
-                    // no need to feed both nodes as we search neighbors in findIDs
+                    // no need to feed both nodes as we search neighbors in fillIDs
                     addNode(root, pickBestNode(nodeA, nodeB), 0, keyPart, key);
                 }
             };
@@ -566,12 +569,11 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
                     @Override
                     protected boolean checkAdjacent(EdgeIterator currEdge) {
-                        // TODO
-//                        if (!edgeFilter.accept(currEdge)) {
-//                            // only limit the adjNode to a certain radius as currNode could be the wrong side of a valid edge
-//                            goFurther = currDist < minResolutionInMeterNormed * 2;
-//                            return true;
-//                        }
+                        if (!edgeFilter.accept(currEdge)) {
+                            // only limit the adjNode to a certain radius as currNode could be the wrong side of a valid edge
+                            goFurther = currDist < minResolution2InMeterNormed;
+                            return true;
+                        }
 
                         goFurther = false;
                         int tmpNode = currNode;
