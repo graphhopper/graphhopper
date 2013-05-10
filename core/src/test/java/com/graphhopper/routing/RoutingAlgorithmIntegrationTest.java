@@ -57,9 +57,9 @@ public class RoutingAlgorithmIntegrationTest {
         // it is not possible to cross the place du palais and there is a oneway directive:
         // list.add(new OneRun(43.727687, 7.418737, 43.730729, 7.421288, 1.532, 88));
         // but the other way (where no crossing is necessary) is possible:
-        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2542, 107));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 179));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2365, 126));
+        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2542, 88));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 136));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2365, 99));
         return list;
     }
 
@@ -72,8 +72,8 @@ public class RoutingAlgorithmIntegrationTest {
     @Test
     public void testAndorra() {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 21122, 909));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16089, 582));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 21122, 699));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16089, 510));
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list, true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -88,7 +88,7 @@ public class RoutingAlgorithmIntegrationTest {
         //   | bzip2 > campo-grande.extracted.osm.bz2
 
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25515, 271));
+        list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25515, 253));
         list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18020, 238));
         runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list, false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
