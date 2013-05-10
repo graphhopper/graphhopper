@@ -91,8 +91,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         index.searchRegion(false);
         TIntHashSet set = new TIntHashSet();
         set.add(0);
-//        set.add(1);
-        assertEquals(set, index.findNetworkEntries(0.5, -0.5));
+        assertEquals(set, index.findNetworkEntries(0.5, -0.5));        
         assertEquals(set, index.findNetworkEntries(-0.5, -0.9));
         assertEquals(2, index.findID(-0.5, -0.9));
 
@@ -124,18 +123,18 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         inMemIndex.store(inMemIndex.root, Location2NodesNtree.START_POINTER);
         index.searchRegion(false);
 
-//        // 0
-//        assertEquals(2L, index.keyAlgo.encode(49.94653, 11.57114));
-//        // 1
-//        assertEquals(3L, index.keyAlgo.encode(49.94653, 11.57214));
-//        // 28
-//        assertEquals(3L, index.keyAlgo.encode(49.95053, 11.57714));
-//        // 29
-//        assertEquals(6L, index.keyAlgo.encode(49.95053, 11.57814));
-//        // 8
-//        assertEquals(1L, index.keyAlgo.encode(49.94553, 11.57214));
-//        // 34
-//        assertEquals(9L, index.keyAlgo.encode(49.95153, 11.57714));
+        // 0
+        assertEquals(2L, index.keyAlgo.encode(49.94653, 11.57114));
+        // 1
+        assertEquals(3L, index.keyAlgo.encode(49.94653, 11.57214));
+        // 28
+        assertEquals(3L, index.keyAlgo.encode(49.95053, 11.57714));
+        // 29
+        assertEquals(6L, index.keyAlgo.encode(49.95053, 11.57814));
+        // 8
+        assertEquals(1L, index.keyAlgo.encode(49.94553, 11.57214));
+        // 34
+        assertEquals(9L, index.keyAlgo.encode(49.95153, 11.57714));
 
         // Query near point 25 (49.95053, 11.57314).
         // If we would have a perfect compaction (takes a lot longer) we would
@@ -158,8 +157,8 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         Location2NodesNtree.InMemConstructionIndex inMemIndex = index.prepareInMemIndex();
         assertEquals(Helper.createTList(64, 4), index.getEntries());
 
-        assertEquals(31, inMemIndex.getEntriesOf(0).size());
-        assertEquals(48, inMemIndex.getEntriesOf(1).size());
+        assertEquals(33, inMemIndex.getEntriesOf(0).size());
+        assertEquals(59, inMemIndex.getEntriesOf(1).size());
         assertEquals(0, inMemIndex.getEntriesOf(2).size());
 
         index.dataAccess.create(1024);
@@ -190,9 +189,8 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
 
         graph.edge(1, 0, 1000, true);
         graph.edge(0, 2, 1000, true);
-        graph.edge(0, 3, 1000, true).wayGeometry(Helper.createPointList(51.25, 9.43));
-        // TODO is it correct to fail for 1000 !?
-        Location2IDIndex index = internalCreateIndex(graph, 1500);
+        graph.edge(0, 3, 1000, true).wayGeometry(Helper.createPointList(51.21, 9.43));
+        Location2IDIndex index = internalCreateIndex(graph, 1000);
         assertEquals(2, index.findID(51.2, 9.4));
     }
 

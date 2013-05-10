@@ -44,7 +44,6 @@ import gnu.trove.set.hash.TIntHashSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,11 +127,11 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
                 (bounds.maxLat - bounds.minLat) / 360 * DistanceCalc.C,
-                (bounds.maxLon - bounds.minLon) / 360 * distCalc.calcCircumference(lat));        
+                (bounds.maxLon - bounds.minLon) / 360 * distCalc.calcCircumference(lat));
         double tmp = maxDistInMeter / minResolutionInMeter;
         tmp = tmp * tmp;
-        // the last one is 4
         TIntArrayList tmpEntries = new TIntArrayList();
+        // the last one is always 4 to reduce costs if only a single entry
         tmp /= 4;
         while (tmp > 1) {
             int tmpNo;
@@ -153,11 +152,12 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         long parts = 1;
         for (int i = 0; i < shifts.length; i++) {
             shiftSum += shifts[i];
-            parts *= shifts[i];
+            parts *= entries[i];
         }
         if (shiftSum > 64)
             throw new IllegalStateException("sum of all shifts does not fit into a long variable");
         keyAlgo = new SpatialKeyAlgo(shiftSum).bounds(bounds);
+        parts = Math.round(Math.sqrt(parts));
         deltaLat = (bounds.maxLat - bounds.minLat) / parts;
         deltaLon = (bounds.maxLon - bounds.minLon) / parts;
     }
@@ -363,7 +363,6 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                     deltaLat, deltaLon);
         }
 
-        // TODO replace keyPart with a shifted bitmasks array
         void addNode(InMemEntry entry, int nodeId, int depth, long keyPart, long key) {
             if (entry.isLeaf()) {
                 InMemLeafEntry leafEntry = (InMemLeafEntry) entry;
@@ -436,20 +435,21 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                 InMemLeafEntry leaf = ((InMemLeafEntry) entry);
                 TIntArrayList entries = leaf.getResults();
                 int len = entries.size();
-//                if (old > len)
-//                    System.out.println("shrink:" + old + " to " + len);
-                // special case for empty list
                 if (len == 0)
                     return pointer;
                 size += len;
                 pointer++;
                 leafs++;
                 dataAccess.ensureCapacity((pointer + len + 1) * 4);
-                for (int index = 0; index < len; index++) {
-                    int integ = entries.get(index);
-                    dataAccess.setInt(pointer++, integ);
+                if (len == 1) {
+                    // less disc space for single entries
+                    dataAccess.setInt(refPointer, -entries.get(0) - 1);
+                } else {
+                    for (int index = 0; index < len; index++) {
+                        dataAccess.setInt(pointer++, entries.get(index));
+                    }
+                    dataAccess.setInt(refPointer, pointer);
                 }
-                dataAccess.setInt(refPointer, pointer);
             } else {
                 InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
                 int len = treeEntry.subEntries.length;
@@ -464,7 +464,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                     if (pointer == beforePointer)
                         dataAccess.setInt(refPointer, 0);
                     else
-                        dataAccess.setInt(refPointer, -beforePointer);
+                        dataAccess.setInt(refPointer, beforePointer);
                 }
             }
             return pointer;
@@ -480,21 +480,21 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         int value;
         if (depth == entries.length) {
             value = dataAccess.getInt(pointer);
-            // leaf entry => value is maxPointer
-            for (int leafIndex = pointer + 1; leafIndex < value; leafIndex++) {
-                set.add(dataAccess.getInt(leafIndex));
-            }
+            if (value < 0)
+                // single data entries (less disc space)            
+                set.add(-(value + 1));
+            else
+                // leaf entry => value is maxPointer
+                for (int leafIndex = pointer + 1; leafIndex < value; leafIndex++) {
+                    set.add(dataAccess.getInt(leafIndex));
+                }
             return;
         }
         int offset = (int) (bitmasks[depth] & keyPart);
         value = dataAccess.getInt(pointer + offset);
-        if (value == 0) {
-            // empty entry
-        } else if (value > 0) {
-            // unused
-        } else if (value < 0) {
+        if (value > 0) {
             // tree entry => negative value points to subentries
-            fillIDs(keyPart >>> shifts[depth], -value, set, depth + 1);
+            fillIDs(keyPart >>> shifts[depth], value, set, depth + 1);
         }
     }
 
@@ -634,7 +634,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                 return true;
             }
         });
-        logger.info("NOW " + storedNetworkEntryIds.size() + " vs. " + checkBitset.cardinality());
+        // logger.info("NOW " + storedNetworkEntryIds.size() + " vs. " + checkBitset.cardinality());
         return closestNode;
     }
 
