@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Storable;
 
 /**
@@ -42,9 +43,15 @@ public interface Location2IDIndex extends Storable<Location2IDIndex> {
     Location2IDIndex prepareIndex();
 
     /**
-     * @return graph id for specified point (lat,lon)
+     * @return the node id for the specified geo location (latitude,longitude)
      */
     int findID(double lat, double lon);
+
+    /**
+     * @return node id for the specfied location. The node id has at least one
+     * edge which is accepted from the specified filter
+     */
+    LocationIDResult findClosest(double lat, double lon, EdgeFilter edgeFilter);
 
     /**
      * @param approxDist If false this makes initialization and querying faster

@@ -46,11 +46,11 @@ public class Circle implements Shape {
         bbox = calc.createBBox(lat, lon, radiusInMeter);
     }
 
-    public double getLat() {
+    public double lat() {
         return lat;
     }
 
-    public double getLon() {
+    public double lon() {
         return lon;
     }
 

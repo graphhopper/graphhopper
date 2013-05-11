@@ -18,7 +18,6 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.HashSet;
 import java.util.Map;
 
 /**

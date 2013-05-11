@@ -18,6 +18,7 @@
  */
 package com.graphhopper.geohash;
 
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.CoordTrig;
 
 /**
@@ -38,15 +39,7 @@ import com.graphhopper.util.shapes.CoordTrig;
 //              lon
 public class LinearKeyAlgo implements KeyAlgo {
 
-    // private int factorForPrecision;
-    // normally -180 degree
-    private double minLon;
-    // normally +180 degree (parallel to equator)
-    private double maxLon;
-    // normally -90 degree
-    private double minLat;
-    // normally +90 degree (south to nord)
-    private double maxLat;
+    private BBox bounds;
     private double latDelta, lonDelta;
     private final int latUnits, lonUnits;
     private static final double C = 1 - 1e-15;
@@ -59,12 +52,14 @@ public class LinearKeyAlgo implements KeyAlgo {
 
     @Override
     public LinearKeyAlgo bounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit) {
-        minLon = minLonInit;
-        maxLon = maxLonInit;
-        minLat = minLatInit;
-        maxLat = maxLatInit;
-        latDelta = (maxLat - minLat) / latUnits;
-        lonDelta = (maxLon - minLon) / lonUnits;
+        bounds = new BBox(minLonInit, maxLonInit, minLatInit, maxLatInit);
+        latDelta = (bounds.maxLat - bounds.minLat) / latUnits;
+        lonDelta = (bounds.maxLon - bounds.minLon) / lonUnits;
+        return this;
+    }
+
+    public LinearKeyAlgo bounds(BBox bounds) {
+        bounds(bounds.minLon, bounds.maxLat, bounds.minLat, bounds.maxLat);
         return this;
     }
 
@@ -84,11 +79,11 @@ public class LinearKeyAlgo implements KeyAlgo {
      */
     @Override
     public final long encode(double lat, double lon) {
-        lat = Math.min(Math.max(lat, minLat), maxLat);
-        lon = Math.min(Math.max(lon, minLon), maxLon);
+        lat = Math.min(Math.max(lat, bounds.minLat), bounds.maxLat);
+        lon = Math.min(Math.max(lon, bounds.minLon), bounds.maxLon);
         // introduce a minor correction to round to lower grid entry!
-        int latIndex = (int) ((lat - minLat) / latDelta * C);
-        int lonIndex = (int) ((lon - minLon) / lonDelta * C);
+        int latIndex = (int) ((lat - bounds.minLat) / latDelta * C);
+        int lonIndex = (int) ((lon - bounds.minLon) / lonDelta * C);
         return latIndex * lonUnits + lonIndex;
     }
 
@@ -100,8 +95,8 @@ public class LinearKeyAlgo implements KeyAlgo {
      */
     @Override
     public final void decode(long linearKey, CoordTrig latLon) {
-        double lat = linearKey / lonUnits * latDelta + minLat;
-        double lon = linearKey % lonUnits * lonDelta + minLon;
+        double lat = linearKey / lonUnits * latDelta + bounds.minLat;
+        double lon = linearKey % lonUnits * lonDelta + bounds.minLon;
         latLon.lat = lat + latDelta / 2;
         latLon.lon = lon + lonDelta / 2;
     }

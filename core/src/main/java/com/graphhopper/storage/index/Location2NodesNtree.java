@@ -36,7 +36,6 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPlace;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
@@ -59,7 +58,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class Location2NodesNtree implements Location2NodesIndex, Location2IDIndex {
+public class Location2NodesNtree implements Location2IDIndex {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
@@ -205,16 +204,14 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
         return memIndex;
     }
 
-    @Override
-    public int findID(double lat, double lon) {
-        LocationIDResult res = findClosest(new GHPlace(lat, lon), EdgeFilter.ALL_EDGES);
+    @Override public int findID(double lat, double lon) {
+        LocationIDResult res = findClosest(lat, lon, EdgeFilter.ALL_EDGES);
         if (res == null)
             return -1;
         return res.closestNode();
     }
 
-    @Override
-    public boolean loadExisting() {
+    @Override public boolean loadExisting() {
         if (initialized)
             throw new IllegalStateException("Call loadExisting only once");
 
@@ -531,9 +528,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
     }
 
     @Override
-    public LocationIDResult findClosest(GHPlace point, final EdgeFilter edgeFilter) {
-        final double queryLat = point.lat;
-        final double queryLon = point.lon;
+    public LocationIDResult findClosest(final double queryLat, final double queryLon,
+            final EdgeFilter edgeFilter) {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
         if (storedNetworkEntryIds.isEmpty())
             return null;
@@ -569,13 +565,13 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
 
                     @Override
                     protected boolean checkAdjacent(EdgeIterator currEdge) {
+                        goFurther = false;                        
                         if (!edgeFilter.accept(currEdge)) {
                             // only limit the adjNode to a certain radius as currNode could be the wrong side of a valid edge
-                            goFurther = currDist < minResolution2InMeterNormed;
+                            // goFurther = currDist < minResolution2InMeterNormed;
                             return true;
                         }
-
-                        goFurther = false;
+                        
                         int tmpNode = currNode;
                         double tmpLat = currLat;
                         double tmpLon = currLon;
@@ -622,21 +618,21 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                             tmpDist = adjDist;
 
                         check(tmpNode, tmpDist, -currNode - 2);
-                        return closestNode.weight >= 0;
+                        return closestNode.weight() >= 0;
                     }
 
                     void check(int node, double dist, int wayIndex) {
-                        if (dist < closestNode.weight) {
-                            closestNode.weight = dist;
+                        if (dist < closestNode.weight()) {
+                            closestNode.weight(dist);
                             closestNode.closestNode(node);
-                            closestNode.wayIndex = wayIndex;
+                            closestNode.wayIndex(wayIndex);
                         }
                     }
                 }.start(graph, networkEntryNodeId, false);
                 return true;
             }
         });
-        // logger.info("NOW " + storedNetworkEntryIds.size() + " vs. " + checkBitset.cardinality());
+        
         return closestNode;
     }
 
