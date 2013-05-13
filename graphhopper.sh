@@ -13,8 +13,9 @@ if [ "x$bit64" != "x" ]; then
 fi
 echo "## using java $vers from $JAVA_HOME"
 
+CONFIG=config.properties
 if [ ! -f "config.properties" ]; then
-  cp config-example.properties config.properties
+  cp config-example.properties $CONFIG
 fi
 
 ACTION=$1
@@ -149,15 +150,16 @@ fi
 ensureOsmXml
 ensureMaven
 packageCoreJar
+
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
 if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
  export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
- "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Dgraphhopper.osmreader.osm=$OSM_XML -Djetty.reload=manual jetty:run
+ "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Dgraphhopper.config=$CONFIG -Dgraphhopper.osmreader.osm=$OSM_XML -Djetty.reload=manual jetty:run
 
 
 elif [ "x$ACTION" = "ximport" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=config.properties \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=$CONFIG \
       osmreader.graph-location="$GRAPH" \
       osmreader.osm="$OSM_XML"
 
@@ -167,7 +169,7 @@ elif [ "x$ACTION" = "xtest" ]; then
  if [ "x$ALGO" = "x" ]; then
    ALGO=astar
  fi
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=config.properties \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=$CONFIG \
        osmreader.graph-location="$GRAPH" osmreader.osm="$OSM_XML" \
        osmreader.test=true
 

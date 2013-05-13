@@ -70,6 +70,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean chFast = true;
     private boolean edgeCalcOnSearch = true;
     private boolean searchRegion = true;
+    private CmdArgs args = new CmdArgs();
     private AcceptWay acceptWay = new AcceptWay(true, false, false);
 
     public GraphHopper() {
@@ -224,7 +225,7 @@ public class GraphHopper implements GraphHopperAPI {
         } else if (tmpGHFile.endsWith(".osm") || tmpGHFile.endsWith(".xml")) {
             if (Helper.isEmpty(ghLocation))
                 ghLocation = Helper.pruneFileEnd(graphHopperFile) + "-gh";
-            CmdArgs args = new CmdArgs().put("osmreader.osm", graphHopperFile).
+            args.put("osmreader.osm", graphHopperFile).
                     put("osmreader.graph-location", ghLocation);
             if (memoryMapped)
                 args.put("osmreader.dataaccess", "mmap");

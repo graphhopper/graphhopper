@@ -98,7 +98,7 @@ public class OSMReader {
      */
     public static OSMReader osm2Graph(CmdArgs args) throws IOException {
         if (!Helper.isEmpty(args.get("config", ""))) {
-            CmdArgs tmp = CmdArgs.readFromConfig(args.get("config", ""));
+            CmdArgs tmp = CmdArgs.readFromConfig(args.get("config", ""), "graphhopper.config");
             // command line configuration overwrites the ones in the config file
             tmp.merge(args);
             args = tmp;
@@ -146,7 +146,7 @@ public class OSMReader {
      * Initializes the specified osmReader with arguments from the args object.
      */
     public static OSMReader osm2Graph(OSMReader osmReader, CmdArgs args) throws IOException {
-        String type = args.get("osmreader.type", "CAR");
+        String type = args.get("osmreader.vehicles", "CAR");
         // System.out.println(args);
         AcceptWay acceptWay = AcceptWay.parse(type);
         osmReader.acceptStreet(acceptWay);

@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.util.CmdArgs;
@@ -65,7 +66,26 @@ public class RoutingAlgorithmIntegrationTest {
 
     @Test
     public void testMonaco() {
-        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco", createMonacoInstances(), true);
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+                createMonacoInstances(), "CAR", true, new CarFlagEncoder());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testMonacoMixed() {
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+                createMonacoInstances(), "CAR,FOOT", false, new CarFlagEncoder());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testMonacoFoot() {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 1542, 88));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 2604, 136));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 1365, 99));
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+                list, "FOOT", true, new FootFlagEncoder());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -75,7 +95,19 @@ public class RoutingAlgorithmIntegrationTest {
         list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 21122, 699));
         list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16089, 510));
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
-        runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list, true);
+        runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
+                list, "CAR", true, new CarFlagEncoder());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testAndorraFoot() {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 16053, 509));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 12154, 367));
+        // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
+        runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
+                list, "FOOT", true, new FootFlagEncoder());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -90,24 +122,26 @@ public class RoutingAlgorithmIntegrationTest {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25515, 253));
         list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18020, 238));
-        runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list, false);
+        runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list,
+                "CAR", false, new CarFlagEncoder());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     void runAlgo(TestAlgoCollector testCollector, String osmFile,
-            String graphFile, List<OneRun> forEveryAlgo, boolean ch) {
+            String graphFile, List<OneRun> forEveryAlgo, String vehicles,
+            boolean ch, EdgePropertyEncoder encoder) {
         try {
             // make sure we are using the latest file format
             Helper.removeDir(new File(graphFile));
             OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
                     put("osmreader.graph-location", graphFile).
-                    put("osmreader.dataaccess", "inmemory"));
+                    put("osmreader.dataaccess", "inmemory").
+                    put("osmreader.vehicles", vehicles));
             Graph g = osm.graph();
-            EdgePropertyEncoder carEncoder = new CarFlagEncoder();
             // System.out.println("nodes:" + g.getNodes());
             Location2IDIndex idx = osm.location2IDIndex();
             Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(g, carEncoder, ch);
+                    createAlgos(g, encoder, ch);
             for (AlgorithmPreparation prepare : prepares) {
                 for (OneRun or : forEveryAlgo) {
                     int from = idx.findID(or.fromLat, or.fromLon);

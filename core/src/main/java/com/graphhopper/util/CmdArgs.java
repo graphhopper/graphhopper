@@ -109,12 +109,23 @@ public class CmdArgs {
         return val;
     }
 
-    public static CmdArgs readFromConfig(String fileStr) throws IOException {
+    /**
+     * @param fileStr the file name of config.properties
+     * @param systemProperty the property name of the configuration. E.g.
+     * -Dgraphhopper.config
+     */
+    public static CmdArgs readFromConfig(String fileStr, String systemProperty) throws IOException {
+        if (systemProperty.startsWith("-D"))
+            systemProperty = systemProperty.substring(2);
+        String configLocation = System.getProperty(systemProperty);
+        if (Helper.isEmpty(configLocation))
+            configLocation = fileStr;
+
         Map<String, String> map = new LinkedHashMap<String, String>();
-        Helper.loadProperties(map, new InputStreamReader(new FileInputStream(fileStr), "UTF-8"));
+        Helper.loadProperties(map, new InputStreamReader(new FileInputStream(configLocation), "UTF-8"));
         CmdArgs args = new CmdArgs();
         args.merge(map);
-        
+
         // overwrite with system settings
         Properties props = System.getProperties();
         for (Entry<Object, Object> e : props.entrySet()) {

@@ -40,12 +40,12 @@ public class DefaultModule extends AbstractModule {
         CmdArgs args;
         String osmFile = "";
         try {
-            args = CmdArgs.readFromConfig("config.properties");
+            args = CmdArgs.readFromConfig("config.properties", "graphhopper.config");
             osmFile = args.get("osmreader.osm", "");
             if (osmFile.isEmpty())
                 throw new IllegalStateException("OSM file cannot be empty. "
                         + "set it on command line via -Dgraphhopper.osmreader.osm=<file> "
-                        + "or in config.properties");
+                        + "or in the file config.properties");
 
         } catch (IOException ex) {
             throw new IllegalStateException("Couldn't load config file " + new File(osmFile).getAbsolutePath(), ex);
@@ -56,7 +56,7 @@ public class DefaultModule extends AbstractModule {
             String chShortcuts = args.get("osmreader.chShortcuts", "");
             if (!chShortcuts.isEmpty())
                 hopper.chShortcuts(true, "fastest".equals(chShortcuts));
-            
+
             hopper.forServer();
             hopper.load(osmFile);
             logger.info("loaded graph at:" + ghLocation + ", source:" + osmFile + ", class:" + hopper.graph().getClass().getSimpleName());

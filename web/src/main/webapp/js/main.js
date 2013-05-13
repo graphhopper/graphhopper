@@ -28,7 +28,7 @@ else {
     host = "http://217.92.216.224:8080";
 }
 var ghRequest = new GHRequest(host);
-ghRequest.algoVehicle = "car";
+ghRequest.algoVehicle = "foot";
 ghRequest.algoType = "fastest";
 //ghRequest.algo = "dijkstra";
 
