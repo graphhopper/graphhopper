@@ -61,7 +61,7 @@ public class Location2IDFullIndex implements Location2IDIndex {
         return this;
     }
 
-    @Override public int findID(double lat, double lon) {
+    @Override public LocationIDResult findID(double lat, double lon) {
         int locs = g.nodes();
         int id = -1;
         Circle circle = null;
@@ -77,7 +77,13 @@ public class Location2IDFullIndex implements Location2IDIndex {
                 circle = new Circle(lat, lon, dist, calc);
             }
         }
-        return id;
+        LocationIDResult res = new LocationIDResult();
+        res.closestNode(id);
+        // TODO set other LocationIDResult attributes
+        /*res.wayIndex = ;
+        res.weight = ;
+        res.closestEdge(edge);*/
+        return res;
     }
 
     @Override

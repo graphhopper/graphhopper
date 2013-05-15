@@ -37,6 +37,7 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.index.Location2IDQuadtree;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.Location2NodesNtree;
@@ -259,13 +260,13 @@ public class GraphHopper implements GraphHopperAPI {
     public GHResponse route(GHRequest request) {
         request.check();
         StopWatch sw = new StopWatch().start();
-        int from = index.findID(request.from().lat, request.from().lon);
-        int to = index.findID(request.to().lat, request.to().lon);
+        LocationIDResult from = index.findID(request.from().lat, request.from().lon);
+        LocationIDResult to = index.findID(request.to().lat, request.to().lon);
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
         GHResponse rsp = new GHResponse();
-        if (from < 0)
+        if (from == null)
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
-        if (to < 0)
+        if (to == null)
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.to()));
 
         sw = new StopWatch().start();
@@ -288,7 +289,7 @@ public class GraphHopper implements GraphHopperAPI {
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
         sw = new StopWatch().start();
-        Path path = algo.calcPath(from, to);
+        Path path = algo.calcPath(from.closestNode(), to.closestNode());
         debug += ", " + algo.name() + "-routing:" + sw.stop().getSeconds() + "s"
                 + ", " + path.debugInfo();
         PointList points = path.calcPoints();

@@ -44,7 +44,7 @@ public interface Location2IDIndex extends Storable<Location2IDIndex> {
     /**
      * @return graph id for specified point (lat,lon)
      */
-    int findID(double lat, double lon);
+    LocationIDResult findID(double lat, double lon);
 
     /**
      * @param approxDist If false this makes initialization and querying faster

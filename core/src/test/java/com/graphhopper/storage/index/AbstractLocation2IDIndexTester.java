@@ -152,11 +152,11 @@ public abstract class AbstractLocation2IDIndexTester {
         for (int i = 0; i < 100; i++) {
             double lat = rand.nextDouble() * 5;
             double lon = rand.nextDouble() * 5;
-            int fullId = fullIndex.findID(lat, lon);
+            int fullId = fullIndex.findID(lat, lon).closestNode();
             double fullLat = g.getLatitude(fullId);
             double fullLon = g.getLongitude(fullId);
             float fullDist = (float) dist.calcDist(lat, lon, fullLat, fullLon);
-            int newId = index.findID(lat, lon);
+            int newId = index.findID(lat, lon).closestNode();
             double newLat = g.getLatitude(newId);
             double newLon = g.getLongitude(newId);
             float newDist = (float) dist.calcDist(lat, lon, newLat, newLon);

@@ -305,8 +305,8 @@ public class MiniGraphUI {
                                 logger.info("start searching from " + fromLat + "," + fromLon
                                         + " to " + toLat + "," + toLon);
                                 // get from and to node id
-                                dijkstraFromId = index.findID(fromLat, fromLon);
-                                dijkstraToId = index.findID(toLat, toLon);
+                                dijkstraFromId = index.findID(fromLat, fromLon).closestNode();
+                                dijkstraToId = index.findID(toLat, toLon).closestNode();
                                 logger.info("found ids " + dijkstraFromId + " -> " + dijkstraToId + " in " + sw.stop().getSeconds() + "s");
 
                                 repaintPaths();

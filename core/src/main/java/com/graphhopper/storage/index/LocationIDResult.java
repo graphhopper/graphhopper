@@ -18,16 +18,19 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.util.EdgeIterator;
+
 /**
  * Result of Location2IDIndex lookup
  *
- * @author Peter Karich
+ * @author Peter Karich, NG
  */
 public class LocationIDResult {
 
     double weight = Double.MAX_VALUE;    
     int wayIndex = -3;
     private int closestNode = -1;
+    private EdgeIterator closestEdge = null;
 
     public LocationIDResult() {
     }
@@ -40,6 +43,14 @@ public class LocationIDResult {
         return closestNode;
     }
 
+    public void closestEdge(EdgeIterator edge) {
+    	this.closestEdge = edge;
+    }
+    
+    public EdgeIterator closestEdge() {
+    	return this.closestEdge;
+    }
+    
     @Override
     public String toString() {
         return closestNode + ", " + weight + ", " + wayIndex;

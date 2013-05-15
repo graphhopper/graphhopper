@@ -21,8 +21,8 @@ package com.graphhopper.storage.index;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
 
 /**
@@ -63,9 +63,10 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
         return this;
     }
 
-    @Override public int findID(double queryLat, double queryLon) {
+    @Override public LocationIDResult findID(double queryLat, double queryLon) {
         int nodes = g.nodes();
         int id = -1;
+        int edgeId = -1;
         double foundDist = Double.MAX_VALUE;
         GHBitSet alreadyDone = new GHBitSetImpl(nodes);
         for (int fromNode = 0; fromNode < nodes; fromNode++) {
@@ -97,11 +98,17 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
                         if (fromDist > calc.calcDist(toLat, toLon, queryLat, queryLon))
                             id = toNode;
                         foundDist = distEdge;
+                        edgeId = iter.edge();
                     }
                 }
             }
         }
-        return id;
+        LocationIDResult res = new LocationIDResult();
+        res.closestNode(id);
+        // res.wayIndex = ; // TODO set wayIndex
+        res.weight = foundDist;
+        res.closestEdge(g.getEdgeProps(edgeId, -1));
+        return res;
     }
 
     @Override

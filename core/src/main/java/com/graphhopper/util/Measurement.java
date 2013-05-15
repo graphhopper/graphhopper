@@ -140,7 +140,7 @@ public class Measurement {
             @Override public int doCalc(boolean warmup, int run) {
                 double lat = rand.nextDouble() * latDelta + bbox.minLat;
                 double lon = rand.nextDouble() * lonDelta + bbox.minLon;
-                int val = idx.findID(lat, lon);
+                int val = idx.findID(lat, lon).closestNode();
                 if (!warmup && val >= 0)
                     list.add(val);
                 return val;

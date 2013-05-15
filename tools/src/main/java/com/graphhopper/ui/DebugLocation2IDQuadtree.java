@@ -21,6 +21,8 @@ package com.graphhopper.ui;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.Location2IDQuadtree;
+import com.graphhopper.storage.index.LocationIDResult;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 
@@ -58,9 +60,9 @@ class DebugLocation2IDQuadtree extends Location2IDQuadtree {
     }
 
     @Override
-    public int findID(double lat, double lon) {
-        int ret = super.findID(lat, lon);
-        mg.plotNode(g2, ret, Color.GREEN);
+    public LocationIDResult findID(double lat, double lon) {
+        LocationIDResult ret = super.findID(lat, lon);
+        mg.plotNode(g2, ret.closestNode(), Color.GREEN);
         return ret;
     }
 

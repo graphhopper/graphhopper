@@ -110,8 +110,8 @@ public class RoutingAlgorithmIntegrationTest {
                     createAlgos(g, carEncoder, ch);
             for (AlgorithmPreparation prepare : prepares) {
                 for (OneRun or : forEveryAlgo) {
-                    int from = idx.findID(or.fromLat, or.fromLon);
-                    int to = idx.findID(or.toLat, or.toLon);
+                    int from = idx.findID(or.fromLat, or.fromLon).closestNode();
+                    int to = idx.findID(or.toLat, or.toLon).closestNode();
                     testCollector.assertDistance(prepare.createAlgo(), from, to, or.dist, or.locs);
                 }
             }
@@ -151,8 +151,8 @@ public class RoutingAlgorithmIntegrationTest {
                     Thread t = new Thread() {
                         @Override public void run() {
                             OneRun o = instances.get(instanceIndex);
-                            int from = idx.findID(o.fromLat, o.fromLon);
-                            int to = idx.findID(o.toLat, o.toLon);
+                            int from = idx.findID(o.fromLat, o.fromLon).closestNode();
+                            int to = idx.findID(o.toLat, o.toLon).closestNode();
                             testCollector.assertDistance(algo, from, to, o.dist, o.locs);
                             integ.addAndGet(1);
                         }

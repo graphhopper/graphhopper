@@ -279,7 +279,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
      * specified lat,lon.
      */
     @Override
-    public int findID(final double lat, final double lon) {
+    public LocationIDResult findID(final double lat, final double lon) {
         // The following cases (e.g. dead ends or motorways crossing a normal way) could be problematic:
         // |     |
         // |  P  | 
@@ -326,7 +326,14 @@ public class Location2IDQuadtree implements Location2IDIndex {
         }.start(g, id, false);
 
 //        logger.info("key:" + key + " lat:" + lat + ",lon:" + lon);
-        return closestNode.node;
+
+        LocationIDResult res = new LocationIDResult();
+        res.closestNode(closestNode.node);
+        res.weight = closestNode.weight;
+        // TODO set other LocationIDResult attributes
+        //res.wayIndex = ;
+        //res.closestEdge(edge);*/
+        return res;
     }
 
     public void goFurtherHook(int n) {
