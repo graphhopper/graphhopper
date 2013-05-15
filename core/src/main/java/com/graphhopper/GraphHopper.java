@@ -18,37 +18,42 @@
  */
 package com.graphhopper;
 
+import java.io.File;
+import java.io.IOException;
+
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.noderesolver.DummyNodeResolver;
+import com.graphhopper.routing.noderesolver.RouteNodeResolver;
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.index.Location2IDIndex;
-import com.graphhopper.storage.index.Location2IDQuadtree;
-import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.index.Location2IDIndex;
+import com.graphhopper.storage.index.Location2IDQuadtree;
 import com.graphhopper.storage.index.Location2NodesNtree;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DouglasPeucker;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Main wrapper of the offline API for a simple and efficient usage.
@@ -259,6 +264,7 @@ public class GraphHopper implements GraphHopperAPI {
     @Override
     public GHResponse route(GHRequest request) {
         request.check();
+        // find edges to route
         StopWatch sw = new StopWatch().start();
         LocationIDResult from = index.findID(request.from().lat, request.from().lon);
         LocationIDResult to = index.findID(request.to().lat, request.to().lon);
@@ -268,7 +274,8 @@ public class GraphHopper implements GraphHopperAPI {
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
         if (to == null)
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.to()));
-
+      
+        // initialize routing algorithm
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
         if (chUsage) {
@@ -288,11 +295,21 @@ public class GraphHopper implements GraphHopperAPI {
             return rsp;
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
+        // get nodes to route
+        RouteNodeResolver nodeFinder = this.getNodeResolver(request);
+        boolean sameEdge = this.isSameEdge(from, to);
+        int fromId = nodeFinder.findRouteNode(from, request.from().lat, request.from().lon, true, sameEdge);
+        int toId = nodeFinder.findRouteNode(to, request.to().lat, request.to().lon, false, sameEdge);
+        
+        // compute route path
         sw = new StopWatch().start();
-        Path path = algo.calcPath(from.closestNode(), to.closestNode());
+        Path path = algo.calcPath(fromId, toId);
         debug += ", " + algo.name() + "-routing:" + sw.stop().getSeconds() + "s"
                 + ", " + path.debugInfo();
+        
         PointList points = path.calcPoints();
+        
+        // simplify route geometry
         if (simplifyRequest) {
             sw = new StopWatch().start();
             int orig = points.size();
@@ -324,5 +341,28 @@ public class GraphHopper implements GraphHopperAPI {
 
     public Graph graph() {
         return graph;
+    }
+    
+    /**
+     * Creates a {@link RouteNodeResolver} for the passed request
+     * @param request
+     * @return
+     */
+    private RouteNodeResolver getNodeResolver(GHRequest request) {
+    	// TODO use a better implementation of RouteNodeResolver
+    	return new DummyNodeResolver(request.vehicle());
+    }
+    
+    /**
+     * Checks if the two LocationIDResult are actually the same edge.
+     * @param from
+     * @param to
+     * @return
+     */
+    private boolean isSameEdge(LocationIDResult from, LocationIDResult to) {
+    	if(from.closestEdge() != null && to.closestEdge() != null) {
+    		return from.closestEdge().edge() == to.closestEdge().edge();
+    	}
+    	return from.closestNode() == to.closestNode();
     }
 }

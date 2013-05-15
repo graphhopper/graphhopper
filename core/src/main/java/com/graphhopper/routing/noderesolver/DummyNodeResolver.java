@@ -27,7 +27,7 @@ public class DummyNodeResolver implements RouteNodeResolver {
 	}
 
 	@Override
-	public int findRouteNode(LocationIDResult closestLocation, double lat, double lon, boolean isOrigin) {
+	public int findRouteNode(LocationIDResult closestLocation, double lat, double lon, boolean isOrigin, boolean sameEdge) {
 		
 		if (closestLocation.closestEdge() == null) {
 			// edge is unknown : return the closest node
@@ -42,11 +42,11 @@ public class DummyNodeResolver implements RouteNodeResolver {
 					isOrigin);
 		} else {
 			// one way
-			if (isOrigin ^ edgeEncoder.isForward(flags)) {
-				// start on forward OR arrive on backward
+			if (isOrigin ^ edgeEncoder.isForward(flags) ^ sameEdge) {
+				// start on forward OR arrive on backward => Start node
 				return closestEdge.baseNode();
 			} else {
-				// start on backward OR arrive on forward
+				// start on backward OR arrive on forward => End node
 				return closestEdge.adjNode();
 			}
 		}

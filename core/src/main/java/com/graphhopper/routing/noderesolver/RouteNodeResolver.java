@@ -16,7 +16,7 @@ public interface RouteNodeResolver {
 	 * into account.
 	 * 
 	 * @param closestLocation
-	 *            information of the closest edge/node of the searched point.
+	 *            path start location
 	 * @param lat
 	 *            searched point's latitude
 	 * @param lon
@@ -24,8 +24,10 @@ public interface RouteNodeResolver {
 	 * @param isOrigin
 	 *            true if the node to find will the the origin of the road (false =
 	 *            destination)
+	 * @param sameEdge
+	 * 			  true is the from edge = the end edge
 	 * @return
 	 */
 	public int findRouteNode(LocationIDResult closestLocation, double lat,
-			double lon, boolean isOrigin);
+			double lon, boolean isOrigin, boolean sameEdge);
 }
