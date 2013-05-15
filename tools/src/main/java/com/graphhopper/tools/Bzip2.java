@@ -1,4 +1,4 @@
-package com.graphhopper.bzip2plugin;
+package com.graphhopper.tools;
 
 import com.graphhopper.util.Helper;
 import java.io.FileInputStream;
