@@ -114,7 +114,7 @@ public class CmdArgs {
         Helper.loadProperties(map, new InputStreamReader(new FileInputStream(fileStr), "UTF-8"));
         CmdArgs args = new CmdArgs();
         args.merge(map);
-        
+
         // overwrite with system settings
         Properties props = System.getProperties();
         for (Entry<Object, Object> e : props.entrySet()) {

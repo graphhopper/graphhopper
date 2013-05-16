@@ -157,7 +157,7 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
 
 
 elif [ "x$ACTION" = "ximport" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=config.properties \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=config.properties \
       osmreader.graph-location="$GRAPH" \
       osmreader.osm="$OSM_XML"
 
@@ -167,7 +167,7 @@ elif [ "x$ACTION" = "xtest" ]; then
  if [ "x$ALGO" = "x" ]; then
    ALGO=astar
  fi
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=config.properties \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=config.properties \
        osmreader.graph-location="$GRAPH" osmreader.osm="$OSM_XML" \
        osmreader.test=true
 
@@ -175,7 +175,7 @@ elif [ "x$ACTION" = "xtest" ]; then
 elif [ "x$ACTION" = "xmeasurement" ]; then
  ARGS="osmreader.graph-location=$GRAPH osmreader.osm=$OSM_XML osmreader.chShortcuts=fastest osmreader.type=CAR"
  echo -e "\ncreate graph via $ARGS, $JAR"
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader $ARGS osmreader.doPrepare=false
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.GraphHopper $ARGS osmreader.doPrepare=false
 
  function startMeasurement {
     COUNT=5000

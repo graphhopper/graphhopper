@@ -49,7 +49,7 @@ public interface GraphHopperAPI {
     /**
      * Load the specified service or graph file (graphhopper or OSM).
      */
-    GraphHopperAPI load(String urlOrFile);
+    boolean load(String urlOrFile);
 
     /**
      * Calculates the path from specified request with startPoint to endPoint.

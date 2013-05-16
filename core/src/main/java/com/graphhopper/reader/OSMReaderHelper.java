@@ -46,7 +46,7 @@ public abstract class OSMReaderHelper {
     protected long zeroCounter = 0;
     protected final Graph g;
     protected final long expectedNodes;
-    private DistanceCalc callback = new DistanceCalc();
+    private DistanceCalc distCalc = new DistanceCalc();
     private AcceptWay acceptWay;
     protected TLongArrayList wayNodes = new TLongArrayList(10);
     private Map<String, Object> osmProperties = new HashMap<String, Object>();
@@ -71,12 +71,11 @@ public abstract class OSMReaderHelper {
     public AcceptWay acceptWay() {
         return acceptWay;
     }
-
-    public void callback(DistanceCalc callback) {
-        this.callback = callback;
-    }
-
-    public long expectedNodes() {
+    
+    /**
+     * @return inclusive pillar nodes (either via pre-parsing or via expectedNodes)
+     */
+    public long foundNodes() {
         return expectedNodes;
     }
 
@@ -106,7 +105,7 @@ public abstract class OSMReaderHelper {
         for (int i = 1; i < nodes; i++) {
             lat = pointList.latitude(i);
             lon = pointList.longitude(i);
-            towerNodeDistance += callback.calcDist(prevLat, prevLon, lat, lon);
+            towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
             prevLat = lat;
             prevLon = lon;
             if (nodes > 2 && i < nodes - 1)

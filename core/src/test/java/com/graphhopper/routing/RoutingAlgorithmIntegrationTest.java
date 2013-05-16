@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -99,13 +100,14 @@ public class RoutingAlgorithmIntegrationTest {
         try {
             // make sure we are using the latest file format
             Helper.removeDir(new File(graphFile));
-            OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
+            GraphHopper hopper = new GraphHopper().
+                    init(new CmdArgs().put("osmreader.osm", osmFile).
                     put("osmreader.graph-location", graphFile).
-                    put("osmreader.dataaccess", "inmemory"));
-            Graph g = osm.graph();
+                    put("osmreader.dataaccess", "inmemory")).
+                    importOrLoad();
+            Graph g = hopper.graph();
             EdgePropertyEncoder carEncoder = new CarFlagEncoder();
-            // System.out.println("nodes:" + g.getNodes());
-            Location2IDIndex idx = osm.location2IDIndex();
+            Location2IDIndex idx = hopper.index();
             Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
                     createAlgos(g, carEncoder, ch);
             for (AlgorithmPreparation prepare : prepares) {
@@ -127,11 +129,13 @@ public class RoutingAlgorithmIntegrationTest {
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/graph-monaco";
         Helper.removeDir(new File(graphFile));
-        OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", "files/monaco.osm.gz").
+        GraphHopper hopper = new GraphHopper().
+                init(new CmdArgs().put("osmreader.osm", "files/monaco.osm.gz").
                 put("osmreader.graph-location", graphFile).
-                put("osmreader.dataaccess", "inmemory"));
-        final Graph g = osm.graph();
-        final Location2IDIndex idx = osm.location2IDIndex();
+                put("osmreader.dataaccess", "inmemory")).
+                importOrLoad();
+        final Graph g = hopper.graph();
+        final Location2IDIndex idx = hopper.index();
         final List<OneRun> instances = createMonacoInstances();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);

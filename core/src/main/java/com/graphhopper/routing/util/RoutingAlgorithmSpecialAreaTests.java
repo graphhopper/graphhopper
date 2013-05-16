@@ -18,22 +18,19 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMReader;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.Path;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.BBox;
 import static com.graphhopper.routing.util.NoOpAlgorithmPreparation.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,10 +45,10 @@ public class RoutingAlgorithmSpecialAreaTests {
     private final Graph unterfrankenGraph;
     private final Location2IDIndex idx;
 
-    public RoutingAlgorithmSpecialAreaTests(OSMReader reader) {
-        this.unterfrankenGraph = reader.graph();
+    public RoutingAlgorithmSpecialAreaTests(GraphHopper graphhopper) {
+        this.unterfrankenGraph = graphhopper.graph();
         StopWatch sw = new StopWatch().start();
-        idx = reader.location2IDIndex();
+        idx = graphhopper.index();
         logger.info(idx.getClass().getSimpleName() + " index. Size:"
                 + (float) idx.capacity() / (1 << 20) + " MB, took:" + sw.stop().getSeconds());
     }
