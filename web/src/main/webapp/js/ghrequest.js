@@ -3,21 +3,33 @@ GHRequest = function(host) {
     this.host = host;
     this.from = new GHInput("");
     this.to = new GHInput("");    
-    this.algoVehicle = "car";
+    this.vehicle = "car";
 };
+
+GHRequest.prototype.init = function(params) {    
+    if(params.minPathPrecision)
+        this.minPathPrecision = params.minPathPrecision;    
+    
+    if(params.vehicle)
+        this.vehicle = params.vehicle;
+    if(params.algoType)
+        this.algoType = params.algoType;    
+    if(params.algorithm)
+        this.algorithm = params.algorithm;
+}
 
 GHRequest.prototype.doRequest = function(demoUrl, callback) {
     var encodedPolyline = true;
     var debug = false;
     var url = this.host + "/api/route?" + demoUrl + "&type=jsonp";
     // car
-    url += "&algoVehicle=" + this.algoVehicle;
+    url += "&vehicle=" + this.vehicle;
     // fastest or shortest
     if(this.algoType)
         url += "&algoType=" + this.algoType;
     // dijkstra, dijkstrabi, astar, astarbi
-    if(this.algo)
-        url += "&algo=" + this.algo;
+    if(this.algorithm)
+        url += "&algorithm=" + this.algorithm;
     if (encodedPolyline)
         url += "&encodedPolyline=true";
     if (debug)

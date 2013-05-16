@@ -28,9 +28,8 @@ else {
     host = "http://217.92.216.224:8080";
 }
 var ghRequest = new GHRequest(host);
-ghRequest.algoVehicle = "foot";
 ghRequest.algoType = "fastest";
-//ghRequest.algo = "dijkstra";
+//ghRequest.algorithm = "dijkstra";
 
 $(document).ready(function(e) {
     // I'm really angry about you history.js :/ (triggering double events) ... but let us just use the url rewriting thing
@@ -56,11 +55,10 @@ $(document).ready(function(e) {
         console.log(err);
         $('#error').html('GraphHopper API offline? ' + host);
     }).done(function() {
-        var params = parseUrlWithHisto()        
-        if(params.minPathPrecision)
-            ghRequest.minPathPrecision = params.minPathPrecision;
-        var fromAndTo = params.from && params.to;
+        var params = parseUrlWithHisto();
+        ghRequest.init(params);
         initMap();
+        var fromAndTo = params.from && params.to;    
         var routeNow = params.point && params.point.length == 2 || fromAndTo;
         if(routeNow) {
             if(fromAndTo)
@@ -305,7 +303,7 @@ function routeLatLng(request) {
     setFlag(request.to, false);    
     
     var urlForAPI = "point=" + from + "&point=" + to;
-    var urlForHistory = "?point=" + request.from.input + "&point=" + request.to.input;
+    var urlForHistory = "?point=" + request.from.input + "&point=" + request.to.input + "&vehicle=" + request.vehicle;
     if(request.minPathPrecision != 1) {
         urlForHistory += "&minPathPrecision=" + request.minPathPrecision;
         urlForAPI += "&minPathPrecision=" + request.minPathPrecision;
@@ -356,7 +354,7 @@ function routeLatLng(request) {
         var googleLink = $("<a>Google</a> ");
         var addToGoogle = "";
         var addToBing = "";
-        if(request.algoVehicle == "foot") {
+        if(request.vehicle == "foot") {
             addToGoogle = "&dirflg=w";
             addToBing = "&mode=W";
         }

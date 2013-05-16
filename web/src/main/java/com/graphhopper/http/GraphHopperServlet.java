@@ -108,13 +108,13 @@ public class GraphHopperServlet extends HttpServlet {
             minPathPrecision = Double.parseDouble(getParam(req, "minPathPrecision"));
         } catch (Exception ex) {
         }
-        String vehicleStr = getParam(req, "algoVehicle");
+        String vehicleStr = getParam(req, "vehicle");
         EdgePropertyEncoder algoVehicle = Helper.getVehicleEncoder(vehicleStr);
         WeightCalculation algoType = new FastestCalc(algoVehicle);
         if ("shortest".equalsIgnoreCase(getParam(req, "algoType")))
             algoType = new ShortestCalc();
 
-        String algoStr = getParam(req, "algo");
+        String algoStr = getParam(req, "algorithm");
         if (Helper.isEmpty(algoStr))
             algoStr = defaultAlgorithm;
 

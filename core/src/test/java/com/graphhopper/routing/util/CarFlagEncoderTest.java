@@ -32,7 +32,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testAccess() {
         CarFlagEncoder instance = new CarFlagEncoder();
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, String> map = new HashMap<String, String>();
         assertFalse(instance.isAllowed(map));
         map.put("highway", "service");
         assertTrue(instance.isAllowed(map));

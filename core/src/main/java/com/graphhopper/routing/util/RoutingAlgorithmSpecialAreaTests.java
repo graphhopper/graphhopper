@@ -95,7 +95,8 @@ public class RoutingAlgorithmSpecialAreaTests {
                 createAlgoPrepare(g, "dijkstra", encoder)));
         if (withCh) {
             LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder().levelGraphCreate());
-            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().graph(graphCH);
+            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().
+                    graph(graphCH).vehicle(encoder);
             prepareCH.doWork();
             prepare.add(prepareCH);
             // TODO prepare.add(prepareCH.createAStar().approximation(true).approximationFactor(.9));

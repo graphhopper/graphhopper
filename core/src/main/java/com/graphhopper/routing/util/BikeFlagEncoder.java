@@ -69,11 +69,15 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
      * Separate ways for pedestrians.
      */
     @Override
-    public boolean isAllowed(Map<String, Object> osmProperties) {
-        String highwayValue = (String) osmProperties.get("highway");
+    public boolean isAllowed(Map<String, String> osmProperties) {
+        String highwayValue = osmProperties.get("highway");
         if (!allowedHighwayTags.contains(highwayValue))
             return false;
-        String accessValue = (String) osmProperties.get("access");
+
+        String bicycleValue = osmProperties.get("bicycle");
+        if ("yes".equals(bicycleValue))
+            return true;
+        String accessValue = osmProperties.get("access");
         return super.isAllowed(accessValue);
     }
 

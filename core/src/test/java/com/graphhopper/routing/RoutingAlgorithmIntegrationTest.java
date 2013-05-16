@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.util.CmdArgs;
@@ -76,17 +77,17 @@ public class RoutingAlgorithmIntegrationTest {
 //                createMonacoInstances(), "CAR,FOOT", false, new CarFlagEncoder());
 //        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 //    }
-//
-//    @Test
-//    public void testMonacoFoot() {
-//        List<OneRun> list = new ArrayList<OneRun>();
-//        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 1542, 88));
-//        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 2604, 136));
-//        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 1365, 99));
-//        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
-//                list, "FOOT", true, new FootFlagEncoder());
-//        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
-//    }
+
+    @Test
+    public void testMonacoFoot() {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 1536, 80));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3455, 123));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2243, 99));
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+                list, "FOOT", true, new FootFlagEncoder());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
 
     @Test
     public void testAndorra() {
@@ -99,16 +100,17 @@ public class RoutingAlgorithmIntegrationTest {
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
-//    @Test
-//    public void testAndorraFoot() {
-//        List<OneRun> list = new ArrayList<OneRun>();
-//        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 16053, 509));
-//        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 12154, 367));
-//        // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
-//        runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
-//                list, "FOOT", true, new FootFlagEncoder());
-//        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
-//    }
+    @Test
+    public void testAndorraFoot() {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 16053, 509));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 12154, 367));
+        // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
+        runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
+                list, "FOOT", true, new FootFlagEncoder());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
     @Test
     public void testCampoGrande() {
         // test not only NE quadrant of earth!

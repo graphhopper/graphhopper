@@ -72,13 +72,18 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      * Some ways are okay but not separate for pedestrians.
      */
     @Override
-    public boolean isAllowed(Map<String, Object> osmProperties) {
-        String highwayValue = (String) osmProperties.get("highway");
-        String sidewalkValue = (String) osmProperties.get("sidewalk");
-        if (!allowedHighwayTags.contains(highwayValue)
-                && (sidewalkValue == null || "no".equals(sidewalkValue) || "none".equals(sidewalkValue)))
+    public boolean isAllowed(Map<String, String> osmProperties) {
+        String sidewalkValue = osmProperties.get("sidewalk");
+        if ("yes".equals(sidewalkValue) || "both".equals(sidewalkValue)
+                || "left".equals(sidewalkValue) || "right".equals(sidewalkValue))
+            return true;
+        String footValue = osmProperties.get("foot");
+        if ("yes".equals(footValue))
+            return true;
+        String highwayValue = osmProperties.get("highway");
+        if (!allowedHighwayTags.contains(highwayValue))
             return false;
-        String accessValue = (String) osmProperties.get("access");
+        String accessValue = osmProperties.get("access");
         return super.isAllowed(accessValue);
     }
 

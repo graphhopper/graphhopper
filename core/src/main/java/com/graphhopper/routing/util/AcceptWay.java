@@ -72,27 +72,28 @@ public class AcceptWay {
      * @return true if a way (speed attribute) is determined from the specified
      * tag
      */
-    public boolean handleTags(Map<String, Object> outProperties, Map<String, Object> osmProperties, TLongArrayList osmIds) {
+    public boolean handleTags(Map<String, Object> outProperties,
+            Map<String, String> osmProperties, TLongArrayList osmIds) {
         boolean includeWay = false;
-        String value = (String) osmProperties.get("highway");
+        String value = osmProperties.get("highway");
         if (value != null) {
             String highwayValue = value;
             if (foot && footEncoder.isAllowed(osmProperties)) {
                 includeWay = true;
                 outProperties.put("foot", true);
-                outProperties.put("save", footEncoder.isSaveHighway(highwayValue));
+                outProperties.put("footsave", footEncoder.isSaveHighway(highwayValue));
             }
             if (bike && bikeEncoder.isAllowed(osmProperties)) {
                 // http://wiki.openstreetmap.org/wiki/Cycleway
                 // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway
                 includeWay = true;
-                outProperties.put("bike", 10);
-                outProperties.put("save", bikeEncoder.isSaveHighway(highwayValue));
+                outProperties.put("bike", bikeEncoder.getSpeed(value));
+                outProperties.put("bikesave", bikeEncoder.isSaveHighway(highwayValue));
             }
 
             if (car && carEncoder.isAllowed(osmProperties)) {
                 Integer integ = carEncoder.getSpeed(highwayValue);
-                int maxspeed = parseSpeed((String) osmProperties.get("maxspeed"));
+                int maxspeed = parseSpeed(osmProperties.get("maxspeed"));
                 includeWay = true;
                 if (maxspeed > 0 && integ > maxspeed)
                     outProperties.put("car", maxspeed);
@@ -107,7 +108,7 @@ public class AcceptWay {
             }
         }
 
-        value = (String) osmProperties.get("route");
+        value = osmProperties.get("route");
         if (value != null
                 && ("shuttle_train".equals(value) || "ferry".equals(value))) {
             Object motorcarProp = osmProperties.get("motorcar");
@@ -118,7 +119,6 @@ public class AcceptWay {
                     || bike && (allEmpty || isTrue(bikeProp))
                     || foot && (allEmpty || isTrue(footProp))) {
 
-                int velo = 30;
                 // TODO read duration and calculate speed 00:30 for ferry
                 Object duration = osmProperties.get("duration");
                 if (duration != null) {
@@ -126,20 +126,20 @@ public class AcceptWay {
 
                 includeWay = true;
                 if (car)
-                    outProperties.put("car", velo);
+                    outProperties.put("car", 20);
                 if (bike)
-                    outProperties.put("bike", velo);
+                    outProperties.put("bike", 10);
                 if (foot)
-                    outProperties.put("foot", velo);
+                    outProperties.put("foot", true);
                 outProperties.put("carpaid", true);
                 outProperties.put("bikepaid", true);
             }
         }
 
         boolean oneWayForBike = !"no".equals(osmProperties.get("oneway:bicycle"));
-        String cycleway = (String) osmProperties.get("cycleway");
+        String cycleway = osmProperties.get("cycleway");
         boolean oneWayBikeIsOpposite = bikeEncoder.isOpposite(cycleway);
-        value = (String) osmProperties.get("oneway");
+        value = osmProperties.get("oneway");
         if (value != null) {
             if (isTrue(value))
                 outProperties.put("caroneway", true);

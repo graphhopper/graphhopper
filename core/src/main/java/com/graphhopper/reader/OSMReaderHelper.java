@@ -49,7 +49,7 @@ public abstract class OSMReaderHelper {
     private DistanceCalc distCalc = new DistanceCalc();
     private AcceptWay acceptWay;
     protected TLongArrayList wayNodes = new TLongArrayList(10);
-    private Map<String, Object> osmProperties = new HashMap<String, Object>();
+    private Map<String, String> osmProperties = new HashMap<String, String>();
     private Map<String, Object> outProperties = new HashMap<String, Object>();
     private DouglasPeucker dpAlgo = new DouglasPeucker();
 
@@ -71,9 +71,10 @@ public abstract class OSMReaderHelper {
     public AcceptWay acceptWay() {
         return acceptWay;
     }
-    
+
     /**
-     * @return inclusive pillar nodes (either via pre-parsing or via expectedNodes)
+     * @return inclusive pillar nodes (either via pre-parsing or via
+     * expectedNodes)
      */
     public long foundNodes() {
         return expectedNodes;
@@ -179,7 +180,6 @@ public abstract class OSMReaderHelper {
                 sReader.next();
             }
         }
-
         boolean isWay = acceptWay.handleTags(outProperties, osmProperties, wayNodes);
         boolean hasNodes = wayNodes.size() > 1;
         return isWay && hasNodes;

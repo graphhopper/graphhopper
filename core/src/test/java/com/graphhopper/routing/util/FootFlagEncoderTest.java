@@ -80,8 +80,10 @@ public class FootFlagEncoderTest {
 
     @Test
     public void testAccess() {
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put("sidewalk", "anything");
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("sidewalk", "yes");
+        assertTrue(footEncoder.isAllowed(map));
+        map.put("sidewalk", "left");
         assertTrue(footEncoder.isAllowed(map));
         
         map.put("sidewalk", "none");
@@ -93,5 +95,10 @@ public class FootFlagEncoderTest {
         
         map.put("access", "no");
         assertFalse(footEncoder.isAllowed(map));
+        
+        map.clear();
+        map.put("highway", "cycleway");
+        map.put("foot", "yes");
+        assertTrue(footEncoder.isAllowed(map));        
     }
 }
