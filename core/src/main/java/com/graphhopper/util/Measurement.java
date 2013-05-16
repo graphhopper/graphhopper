@@ -58,9 +58,9 @@ public class Measurement {
     // creates properties file in the format key=value
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
     void start(CmdArgs args) {
-        String graphLocation = args.get("osmreader.graph-location", "");
+        String graphLocation = args.get("graph.location", "");
         if (Helper.isEmpty(graphLocation))
-            throw new IllegalStateException("no graph-location specified");
+            throw new IllegalStateException("no graph.location specified");
 
         String propLocation = args.get("measurement.location", "");
         if (Helper.isEmpty(propLocation))
@@ -68,7 +68,7 @@ public class Measurement {
 
         long seed = args.getLong("measurement.seed", 123);
         Random rand = new Random(seed);
-        boolean doPrepare = args.getBool("osmreader.doPrepare", true);
+        boolean doPrepare = args.getBool("prepare.doPrepare", true);
         int count = args.getInt("measurement.count", 1000);
         int lookupCount = 0;
 

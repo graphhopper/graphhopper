@@ -72,7 +72,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         GraphHopper hopper = new GraphHopper().init(args).importOrLoad();
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(hopper);
-        if (args.getBool("osmreader.test", false))
+        if (args.getBool("graph.testIT", false))
             tests.start();
     }
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -229,7 +229,7 @@ public class GraphHopper implements GraphHopperAPI {
         String tmpOsmFile = args.get("osmreader.osm", "");
         if (!Helper.isEmpty(tmpOsmFile))
             osmFile = tmpOsmFile;
-        String graphHopperFolder = args.get("osmreader.graph-location", "");
+        String graphHopperFolder = args.get("graph.location", "");
         if (Helper.isEmpty(graphHopperFolder) && Helper.isEmpty(ghLocation)) {
             if (Helper.isEmpty(osmFile))
                 throw new IllegalArgumentException("You need to specify an OSM file.");
@@ -239,8 +239,8 @@ public class GraphHopper implements GraphHopperAPI {
 
         // graph
         graphHopperLocation(graphHopperFolder);
-        expectedNodes = args.getLong("osmreader.size", 10 * 1000);
-        String dataAccess = args.get("osmreader.dataaccess", "inmemory+save");
+        expectedNodes = args.getLong("graph.expectedSize", 10 * 1000);
+        String dataAccess = args.get("graph.dataaccess", "inmemory+save");
         if ("mmap".equalsIgnoreCase(dataAccess)) {
             memoryMapped = true;
         } else {
@@ -249,28 +249,27 @@ public class GraphHopper implements GraphHopperAPI {
             } else
                 setInMemory(true, false);
         }
-        sortGraph = args.getBool("osmreader.sortGraph", false);
-
+        sortGraph = args.getBool("graph.doSort", false);
+        removeZipped = args.getBool("graph.removeZipped", true);
 
         // prepare
-        doPrepare = args.getBool("osmreader.doPrepare", true);
-        String chShortcuts = args.get("osmreader.chShortcuts", "no");
+        doPrepare = args.getBool("prepare.doPrepare", true);
+        String chShortcuts = args.get("prepare.chShortcuts", "no");
         boolean levelGraph = "true".equals(chShortcuts)
                 || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
         if (levelGraph)
             chShortcuts(true, !"shortest".equals(chShortcuts));
 
         // routing
-        defaultAlgorithm = args.get("osmreader.algo", defaultAlgorithm);
+        defaultAlgorithm = args.get("routing.defaultAlgorithm", defaultAlgorithm);
 
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", 1);
         String type = args.get("osmreader.acceptWay", "CAR");
         acceptWay = AcceptWay.parse(type);
-        removeZipped = args.getBool("osmreader.graph.removeZipped", true);
 
         // index
-        preciseIndexResolution = args.getInt("osmreader.locationIndexHighResolution", 1000);
+        preciseIndexResolution = args.getInt("index.highResolution", 1000);
         return this;
     }
 

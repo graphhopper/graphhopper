@@ -128,18 +128,15 @@ TMP="${TMP%.*}"
 
 if [ "x$TMP" = "xunterfranken" ]; then
  LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx200m -Xms200m"
- SIZE=3000000
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx200m -Xms200m" 
 elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
 
  # For import we need a lot more memory. For the mmap storage you need to lower this in order to use off-heap memory.
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1600m -Xms1600m"
- SIZE=35000000
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1600m -Xms1600m" 
 elif [ -f $OSM_XML ]; then
  LINK=""
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx480m -Xms480m"
- SIZE=10000000
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx480m -Xms480m" 
 else
  echo "Sorry, your osm file $OSM_XML was not found ... exiting"
  exit   
@@ -155,16 +152,13 @@ echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
 if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
  export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
- "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Dgraphhopper.config=$CONFIG -Dgraphhopper.osmreader.osm=$OSM_XML -Djetty.reload=manual jetty:run
+ "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Dgraphhopper.config=$CONFIG \
+      -Dgraphhopper.osmreader.osm=$OSM_XML -Djetty.reload=manual jetty:run
 
 
 elif [ "x$ACTION" = "ximport" ]; then
-<<<<<<< HEAD
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=$CONFIG \
-=======
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=config.properties \
->>>>>>> master
-      osmreader.graph-location="$GRAPH" \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=$CONFIG \
+      graph.location="$GRAPH" \
       osmreader.osm="$OSM_XML"
 
 
@@ -173,23 +167,20 @@ elif [ "x$ACTION" = "xtest" ]; then
  if [ "x$ALGO" = "x" ]; then
    ALGO=astar
  fi
-<<<<<<< HEAD
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=$CONFIG \
-=======
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=config.properties \
->>>>>>> master
-       osmreader.graph-location="$GRAPH" osmreader.osm="$OSM_XML" \
-       osmreader.test=true
+
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=$CONFIG \
+       graph.location="$GRAPH" osmreader.osm="$OSM_XML" \
+       graph.testIT=true
 
        
 elif [ "x$ACTION" = "xmeasurement" ]; then
- ARGS="osmreader.graph-location=$GRAPH osmreader.osm=$OSM_XML osmreader.chShortcuts=fastest osmreader.type=CAR"
+ ARGS="graph.location=$GRAPH osmreader.osm=$OSM_XML prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
  echo -e "\ncreate graph via $ARGS, $JAR"
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.GraphHopper $ARGS osmreader.doPrepare=false
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.GraphHopper $ARGS prepare.doPrepare=false
 
  function startMeasurement {
     COUNT=5000
-    ARGS="$ARGS osmreader.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME"
+    ARGS="$ARGS prepare.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME"
     echo -e "\nperform measurement via $ARGS, $JAR"
     "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS
  }

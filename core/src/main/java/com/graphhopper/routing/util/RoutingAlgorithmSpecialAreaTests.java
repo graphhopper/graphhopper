@@ -60,8 +60,8 @@ public class RoutingAlgorithmSpecialAreaTests {
 
     void testAlgos() {
         if (unterfrankenGraph instanceof LevelGraph)
-            throw new IllegalStateException("run testAlgos only with a none-LevelGraph. Use osmreader.chShortcuts=false "
-                    + "Or use osmreader.chShortcuts=shortest and avoid the preparation");
+            throw new IllegalStateException("run testAlgos only with a none-LevelGraph. Use prepare.chShortcuts=false "
+                    + "Or use prepare.chShortcuts=shortest and avoid the preparation");
 
         TestAlgoCollector testCollector = new TestAlgoCollector("testAlgos");
         CarFlagEncoder carEncoder = new CarFlagEncoder();
@@ -69,7 +69,7 @@ public class RoutingAlgorithmSpecialAreaTests {
         for (AlgorithmPreparation prepare : prepares) {
             int failed = testCollector.errors.size();
             
-            // using osmreader.locationIndexHighResolution=1000
+            // using index.highResolution=1000
             testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 561.3, 20);
             testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107826.9, 1755);
             testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 92535.4, 1335);

@@ -47,7 +47,7 @@ public class DefaultModule extends AbstractModule {
 
             bind(GraphHopper.class).toInstance(hopper);
 
-            String algo = args.get("web.defaultAlgorithm", "dijkstrabi");
+            String algo = args.get("routing.defaultAlgorithm", "dijkstrabi");
             bind(String.class).annotatedWith(Names.named("defaultAlgorithm")).toInstance(algo);
 
             long timeout = args.getLong("web.timeout", 3000);

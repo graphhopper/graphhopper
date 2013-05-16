@@ -19,13 +19,11 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
-import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.util.CmdArgs;
@@ -72,12 +70,12 @@ public class RoutingAlgorithmIntegrationTest {
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
-    @Test
-    public void testMonacoMixed() {
-        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
-                createMonacoInstances(), "CAR,FOOT", false, new CarFlagEncoder());
-        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
-    }
+//    @Test
+//    public void testMonacoMixed() {
+//        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+//                createMonacoInstances(), "CAR,FOOT", false, new CarFlagEncoder());
+//        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+//    }
 //
 //    @Test
 //    public void testMonacoFoot() {
@@ -111,7 +109,6 @@ public class RoutingAlgorithmIntegrationTest {
 //                list, "FOOT", true, new FootFlagEncoder());
 //        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 //    }
-
     @Test
     public void testCampoGrande() {
         // test not only NE quadrant of earth!
@@ -135,10 +132,11 @@ public class RoutingAlgorithmIntegrationTest {
             // make sure we are using the latest file format
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopper().
-                    init(new CmdArgs().put("osmreader.osm", osmFile).
-                    put("osmreader.graph-location", graphFile).
-                    put("osmreader.vehicles", vehicles).
-                    put("osmreader.dataaccess", "inmemory")).
+                    init(new CmdArgs().
+                    put("graph.location", graphFile).
+                    put("graph.dataaccess", "inmemory").
+                    put("osmreader.osm", osmFile).
+                    put("osmreader.acceptWay", vehicles)).
                     importOrLoad();
 
             Graph g = hopper.graph();
@@ -166,9 +164,10 @@ public class RoutingAlgorithmIntegrationTest {
         String graphFile = "target/graph-monaco";
         Helper.removeDir(new File(graphFile));
         GraphHopper hopper = new GraphHopper().
-                init(new CmdArgs().put("osmreader.osm", "files/monaco.osm.gz").
-                put("osmreader.graph-location", graphFile).
-                put("osmreader.dataaccess", "inmemory")).
+                init(new CmdArgs().
+                put("graph.location", graphFile).
+                put("graph.dataaccess", "inmemory").
+                put("osmreader.osm", "files/monaco.osm.gz")).
                 importOrLoad();
         final Graph g = hopper.graph();
         final Location2IDIndex idx = hopper.index();
