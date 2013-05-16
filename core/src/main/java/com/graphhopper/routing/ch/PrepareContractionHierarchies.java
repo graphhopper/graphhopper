@@ -509,6 +509,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     PrepareContractionHierarchies initFromGraph() {
+        if (g == null)
+            throw new NullPointerException("Graph must not be empty calling doWork of preparation");
         levelEdgeFilter = new LevelEdgeFilterCH(this.g);
         sortedNodes = new GHSortedCollection(g.nodes());
         refs = new PriorityNode[g.nodes()];

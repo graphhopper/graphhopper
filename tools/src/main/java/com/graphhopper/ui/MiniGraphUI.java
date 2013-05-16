@@ -18,6 +18,7 @@
  */
 package com.graphhopper.ui;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.reader.OSMReader;
@@ -26,6 +27,7 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
@@ -58,9 +60,9 @@ public class MiniGraphUI {
 
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
-        OSMReader osm = OSMReader.osm2Graph(args);
+        GraphHopper hopper = new GraphHopper().init(args).importOrLoad();
         boolean debug = args.getBool("minigraphui.debug", false);
-        new MiniGraphUI(osm, debug).visualize();
+        new MiniGraphUI(hopper, debug).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
     private Path path;
@@ -78,15 +80,15 @@ public class MiniGraphUI {
     private EdgePropertyEncoder carEncoder = new CarFlagEncoder();
     private EdgePropertyEncoder footEncoder = new FootFlagEncoder();
 
-    public MiniGraphUI(OSMReader reader, boolean debug) {
-        this.graph = reader.graph();
-        prepare = reader.preparation();
+    public MiniGraphUI(GraphHopper hopper, boolean debug) {
+        this.graph = hopper.graph();
+        prepare = hopper.preparation();
         logger.info("locations:" + graph.nodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().name());
         mg = new GraphicsWrapper(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
-        this.index = reader.location2IDIndex();
+        this.index = hopper.index();
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
 //        this.algo = new DebugAStar(graph, mg);
@@ -138,8 +140,8 @@ public class MiniGraphUI {
                     if (lat < b.minLat || lat > b.maxLat || lon < b.minLon || lon > b.maxLon)
                         continue;
 
-                    // accept car and foot
-                    EdgeIterator iter = graph.getEdges(nodeIndex, new DefaultEdgeFilter(carEncoder, false, true));
+                    // accept all
+                    EdgeIterator iter = graph.getEdges(nodeIndex, EdgeFilter.ALL_EDGES);
 //                    {
 //                        @Override public boolean accept(EdgeIterator iter) {
 //                            int flags = iter.flags();

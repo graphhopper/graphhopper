@@ -119,9 +119,6 @@ public class GraphHopperServlet extends HttpServlet {
             algoStr = defaultAlgorithm;
 
         try {
-            if (minPathPrecision <= 0)
-                hopper.simplifyRequest(false);
-
             sw = new StopWatch().start();
             GHResponse rsp = hopper.route(new GHRequest(start, end).
                     vehicle(algoVehicle).type(algoType).

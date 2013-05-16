@@ -126,6 +126,8 @@ public class Location2NodesNtree implements Location2IDIndex {
         // if we assume a minimum resolution like 0.5km for a leaf-tile                
         // n^(depth/2) = toMeter(dLon) / minResolution
         BBox bounds = graph.bounds();
+        if (graph.nodes() == 0 || !bounds.check())
+            throw new IllegalStateException("graph is not valid. bounds are: " + bounds);
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
                 (bounds.maxLat - bounds.minLat) / 360 * DistanceCalc.C,

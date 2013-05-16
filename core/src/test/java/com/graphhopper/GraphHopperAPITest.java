@@ -20,8 +20,6 @@ package com.graphhopper;
 
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.util.Helper;
-import java.io.File;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -54,17 +52,6 @@ public class GraphHopperAPITest {
         assertEquals(10.4, ph.points().longitude(0), 1e-5);
         assertEquals(41.9, ph.points().latitude(1), 1e-5);
         assertEquals(10.2, ph.points().longitude(1), 1e-5);
-        assertEquals(3, ph.points().size());
-    }
-
-    @Test
-    public void testLoadOSM() {
-        String str = "./target/tmp/ghosm";
-        Helper.removeDir(new File(str));
-        GraphHopperAPI instance = new GraphHopper().graphHopperLocation(str);
-        instance.load("./src/test/resources/com/graphhopper/reader/test-osm.xml");
-        GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
-        assertTrue(ph.found());
         assertEquals(3, ph.points().size());
     }
 }

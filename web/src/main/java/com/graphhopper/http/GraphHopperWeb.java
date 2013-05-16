@@ -42,7 +42,8 @@ import org.slf4j.LoggerFactory;
 public class GraphHopperWeb implements GraphHopperAPI {
 
     public static void main(String[] args) {
-        GraphHopperAPI gh = new GraphHopperWeb().load("http://localhost:8989/api");
+        GraphHopperAPI gh = new GraphHopperWeb();
+        gh.load("http://localhost:8989/api");
         GHResponse ph = gh.route(new GHRequest(53.080827, 9.074707, 50.597186, 11.184082));
         System.out.println(ph);
     }
@@ -55,10 +56,9 @@ public class GraphHopperWeb implements GraphHopperAPI {
     /**
      * Example url: http://localhost:8989/api or http://217.92.216.224:8080/api
      */
-    @Override
-    public GraphHopperAPI load(String url) {
+    @Override public boolean load(String url) {
         this.serviceUrl = url;
-        return this;
+        return true;
     }
 
     @Override
