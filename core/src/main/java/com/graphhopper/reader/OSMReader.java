@@ -68,9 +68,7 @@ public class OSMReader {
         return fi;
     }
 
-    public void osm2Graph(File osmXmlFile) throws IOException {
-        logger.info("using " + helper.getStorageInfo(graphStorage) + ", accepts:"
-                + helper.acceptWay() + ", memory:" + Helper.memInfo());
+    public void osm2Graph(File osmXmlFile) throws IOException {        
         helper.preProcess(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
     }

@@ -33,7 +33,6 @@ public class AcceptWay {
     private boolean car;
     private boolean bike;
     private boolean foot;
-    private EdgePropertyEncoder firstEncoder = carEncoder;
 
     public AcceptWay(boolean car, boolean bike, boolean foot) {
         this.car = car;
@@ -187,6 +186,27 @@ public class AcceptWay {
         }
     }
 
+    public int countVehicles() {
+        int count = 0;
+        if (car)
+            count++;
+        if (bike)
+            count++;
+        if (foot)
+            count++;
+        return count;
+    }
+
+    public boolean accepts(EdgePropertyEncoder encoder) {
+        if (car && encoder instanceof CarFlagEncoder)
+            return true;
+        else if (bike && encoder instanceof BikeFlagEncoder)
+            return true;
+        else if (foot && encoder instanceof FootFlagEncoder)
+            return true;
+        return false;
+    }
+
     boolean isTrue(Object obj) {
         if (obj == null)
             return false;
@@ -239,29 +259,9 @@ public class AcceptWay {
         return str.trim().replaceAll("\\ ", ",");
     }
 
-    public static AcceptWay parse(String type) {
-        EdgePropertyEncoder firstEncoder = getFirstVehicleEncoder(type);
-        return new AcceptWay(type.contains("CAR"), type.contains("BIKE"), type.contains("FOOT")).
-                firstEncoder(firstEncoder);
-    }
-
-    private static EdgePropertyEncoder getFirstVehicleEncoder(String str) {
-        str = str.toLowerCase();
-        if (str.startsWith("car"))
-            return new CarFlagEncoder();
-        else if (str.startsWith("foot"))
-            return new FootFlagEncoder();
-        else if (str.startsWith("bike"))
-            return new BikeFlagEncoder();
-        throw new RuntimeException("Not found " + str);
-    }
-
-    public EdgePropertyEncoder firstEncoder() {
-        return firstEncoder;
-    }
-
-    private AcceptWay firstEncoder(EdgePropertyEncoder firstEncoder) {
-        this.firstEncoder = firstEncoder;
-        return this;
+    public static AcceptWay parse(String acceptWayString) {
+        return new AcceptWay(acceptWayString.contains("CAR"),
+                acceptWayString.contains("BIKE"),
+                acceptWayString.contains("FOOT"));
     }
 }

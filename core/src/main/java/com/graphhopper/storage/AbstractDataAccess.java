@@ -75,18 +75,11 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected void writeHeader(RandomAccessFile file, long length, int segmentSize) throws IOException {
         file.seek(0);
         file.writeUTF("GH");
-        // make changes to file format only with major version changes
-        file.writeInt(version());
         file.writeLong(length);
         file.writeInt(segmentSize);
         for (int i = 0; i < header.length; i++) {
             file.writeInt(header[i]);
         }
-    }
-
-    @Override
-    public int version() {
-        return Constants.VERSION_FILE;
     }
 
     protected long readHeader(RandomAccessFile raFile) throws IOException {
@@ -95,12 +88,7 @@ public abstract class AbstractDataAccess implements DataAccess {
             return -1;
         String versionHint = raFile.readUTF();
         if (!"GH".equals(versionHint))
-            throw new IllegalArgumentException("Not a GraphHopper file! Expected 'GH' as file marker but was " + versionHint);
-        // use a separate version field
-        int majorVersion = raFile.readInt();
-        if (majorVersion != version())
-            throw new IllegalArgumentException("This GraphHopper file has the wrong version! "
-                    + "Expected " + version() + " but was " + majorVersion);
+            throw new IllegalArgumentException("Not a GraphHopper file! Expected 'GH' as file marker but was " + versionHint);        
         long bytes = raFile.readLong();
         segmentSize(raFile.readInt());
         for (int i = 0; i < header.length; i++) {

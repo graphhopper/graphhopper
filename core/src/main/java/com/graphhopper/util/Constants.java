@@ -52,11 +52,10 @@ public class Constants {
     public static final String OS_ARCH = System.getProperty("os.arch");
     public static final String OS_VERSION = System.getProperty("os.version");
     public static final String JAVA_VENDOR = System.getProperty("java.vendor");
-    /**
-     * The file version is independent of the real world version. E.g. to make
-     * major version jumps without the need to change the file version.
-     */
-    public static final int VERSION_FILE = 7;
+    public static final int VERSION_EDGE = 1;
+    public static final int VERSION_NODE = 1;
+    public static final int VERSION_LOCATION_IDX = 1;
+    public static final int VERSION_GEOMETRY = 1;
     /**
      * The version without the snapshot string
      */

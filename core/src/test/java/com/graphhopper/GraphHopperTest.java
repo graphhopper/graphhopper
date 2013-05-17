@@ -82,7 +82,7 @@ public class GraphHopperTest {
 
         FootFlagEncoder footEnc = new FootFlagEncoder();
         EdgePropertyEncoder carEnc = new CarFlagEncoder();
-        
+
         // A to D
         GHResponse res = instance.route(new GHRequest(11.1, 50, 11.3, 51).vehicle(carEnc));
         assertTrue(res.found());

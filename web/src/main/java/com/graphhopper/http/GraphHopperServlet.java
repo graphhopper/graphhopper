@@ -74,7 +74,7 @@ public class GraphHopperServlet extends HttpServlet {
     public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         try {
             if ("/info".equals(req.getPathInfo()))
-                writeBounds(req, res);
+                writeInfos(req, res);
             else if ("/route".equals(req.getPathInfo()))
                 writePath(req, res);
         } catch (Exception ex) {
@@ -83,14 +83,16 @@ public class GraphHopperServlet extends HttpServlet {
         }
     }
 
-    void writeBounds(HttpServletRequest req, HttpServletResponse res) throws JSONException {
+    void writeInfos(HttpServletRequest req, HttpServletResponse res) throws JSONException {
         BBox bb = hopper.graph().bounds();
         List<Double> list = new ArrayList<Double>(4);
         list.add(bb.minLon);
         list.add(bb.minLat);
         list.add(bb.maxLon);
         list.add(bb.maxLat);
-        JSONBuilder json = new JSONBuilder().object("bbox", list).
+        JSONBuilder json = new JSONBuilder().
+                object("bbox", list).
+                object("supportedVehicles", hopper.acceptWay()).
                 object("version", Constants.VERSION).
                 object("buildDate", Constants.BUILD_DATE);
         writeJson(req, res, json.build());

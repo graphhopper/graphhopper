@@ -43,6 +43,7 @@ import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.index.Location2IDQuadtree;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.Location2NodesNtree;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
 import com.graphhopper.util.CmdArgs;
@@ -67,12 +68,15 @@ public class GraphHopper implements GraphHopperAPI {
 
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
+        GraphHopper hopper = new GraphHopper().init(args).importOrLoad();
         if (!Helper.isEmpty(args.get("printVersion", ""))
                 || !Helper.isEmpty(args.get("v", "")) || !Helper.isEmpty(args.get("version", ""))) {
-            System.out.println("version " + Constants.VERSION + "|" + Constants.VERSION_FILE + "|" + Constants.BUILD_DATE);
+
+            System.out.println("version " + Constants.VERSION
+                    + "|" + hopper.properties().versionsToString()
+                    + "|" + Constants.BUILD_DATE);
         }
 
-        GraphHopper hopper = new GraphHopper().init(args).importOrLoad();
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(hopper);
         if (args.getBool("graph.testIT", false))
             tests.start();
@@ -104,6 +108,7 @@ public class GraphHopper implements GraphHopperAPI {
     private AcceptWay acceptWay = new AcceptWay(true, false, false);
     private long expectedNodes = 10;
     private double wayPointMaxDistance = 1;
+    private StorableProperties properties;
 
     public GraphHopper() {
     }
@@ -220,6 +225,26 @@ public class GraphHopper implements GraphHopperAPI {
         return osmFile;
     }
 
+    public Graph graph() {
+        return graph;
+    }
+
+    public Location2IDIndex index() {
+        return index;
+    }
+
+    public AlgorithmPreparation preparation() {
+        return prepare;
+    }
+
+    /**
+     * @deprecated until #12 is fixed
+     */
+    public GraphHopper sortGraph(boolean sortGraph) {
+        this.sortGraph = sortGraph;
+        return this;
+    }
+
     public GraphHopper init(CmdArgs args) throws IOException {
         if (!Helper.isEmpty(args.get("config", ""))) {
             CmdArgs tmp = CmdArgs.readFromConfig(args.get("config", ""), "graphhopper.config");
@@ -283,13 +308,13 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    GraphHopper importOSM(String graphHopperLocation, String strOsm) {
+    private GraphHopper importOSM(String graphHopperLocation, String strOsm) {
         graphHopperLocation(graphHopperLocation);
         try {
             OSMReader reader = importOSM(strOsm);
             graph = reader.graph();
         } catch (IOException ex) {
-            throw new RuntimeException("Cannot parse file " + ghLocation, ex);
+            throw new RuntimeException("Cannot parse file " + strOsm, ex);
         }
         cleanUp();
         optimize();
@@ -308,16 +333,13 @@ public class GraphHopper implements GraphHopperAPI {
         OSMReader reader = new OSMReader(graph, expectedNodes);
         reader.acceptWay(acceptWay);
         reader.wayPointMaxDistance(wayPointMaxDistance);
-        reader.osm2Graph(new File(file));
-        return reader;
-    }
 
-    /**
-     * @deprecated until #12 is fixed
-     */
-    public GraphHopper sortGraph(boolean sortGraph) {
-        this.sortGraph = sortGraph;
-        return this;
+        String info = graph.getClass().getSimpleName()
+                + "|" + graph.directory().getClass().getSimpleName()
+                + "|" + properties.versionsToString();
+        logger.info("using " + info + ", accepts:" + acceptWay + ", memory:" + Helper.memInfo());
+        reader.osm2Graph(osmTmpFile);
+        return reader;
     }
 
     /**
@@ -360,7 +382,8 @@ public class GraphHopper implements GraphHopperAPI {
             dir = new RAMDirectory(ghLocation, storeOnFlush);
         } else
             throw new IllegalArgumentException("either memory mapped or in-memory has to be specified!");
-
+        
+        properties = new StorableProperties(dir, "properties");
         if (chUsage) {
             graph = new LevelGraphStorage(dir);
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
@@ -385,20 +408,37 @@ public class GraphHopper implements GraphHopperAPI {
         if (!graph.loadExisting())
             return false;
 
+        properties.loadExisting();
+
+        // overwrite configured accept way
+        String acceptStr = properties.get("osmreader.acceptWay");
+        if (!acceptStr.isEmpty())
+            acceptWay = AcceptWay.parse(acceptStr);
+        properties.checkVersions(false);
         initIndex();
         return true;
+    }
+
+    private boolean supportsVehicle(EdgePropertyEncoder encoder) {
+        return acceptWay.accepts(encoder);
     }
 
     @Override
     public GHResponse route(GHRequest request) {
         request.check();
         StopWatch sw = new StopWatch().start();
-        
+        GHResponse rsp = new GHResponse();
+
+        if (!supportsVehicle(request.vehicle())) {
+            rsp.addError(new IllegalArgumentException("Vehicle " + request.vehicle() + " unsupported. Supported are: " + acceptWay()));
+            return rsp;
+        }
+
         EdgeFilter edgeFilter = new DefaultEdgeFilter(request.vehicle());
         int from = index.findClosest(request.from().lat, request.from().lon, edgeFilter).closestNode();
         int to = index.findClosest(request.to().lat, request.to().lon, edgeFilter).closestNode();
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
-        GHResponse rsp = new GHResponse();
+
         if (from < 0)
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
         if (to < 0)
@@ -460,15 +500,7 @@ public class GraphHopper implements GraphHopperAPI {
             index.prepareIndex();
     }
 
-    public Graph graph() {
-        return graph;
-    }
-
-    public Location2IDIndex index() {
-        return index;
-    }
-
-    void optimize() {
+    private void optimize() {
         logger.info("optimizing ... (" + Helper.memInfo() + ")");
         graph.optimize();
         logger.info("finished optimize (" + Helper.memInfo() + ")");
@@ -482,12 +514,15 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (doPrepare && prepare != null) {
+            if (prepare instanceof PrepareContractionHierarchies && acceptWay.countVehicles() > 1)
+                throw new IllegalArgumentException("Contraction hierarchies preparation "
+                        + "requires (at the moment) only one vehicle. But was:" + acceptWay);
             logger.info("calling prepare.doWork ... (" + Helper.memInfo() + ")");
             prepare.doWork();
         }
     }
 
-    public void cleanUp() {
+    protected void cleanUp() {
         int prev = graph.nodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graph);
         logger.info("start finding subnetworks, " + Helper.memInfo());
@@ -499,21 +534,21 @@ public class GraphHopper implements GraphHopperAPI {
                 + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
     }
 
-    void flush() {
+    private void flush() {
         logger.info("flushing graph with " + graph.nodes() + " nodes, bounds:"
                 + graph.bounds() + ", " + Helper.memInfo() + ")");
         graph.flush();
-    }
-
-    public AlgorithmPreparation preparation() {
-        return prepare;
-    }
-
-    public void prepare(boolean bool) {
-        doPrepare = bool;
+        properties.put("osmreader.acceptWay", acceptWay.toString());
+        properties.put("prepare.done", doPrepare);
+        properties.saveCurrentVersions();
+        properties.flush();
     }
 
     void close() {
         graph.close();
+    }
+
+    StorableProperties properties() {
+        return properties;
     }
 }

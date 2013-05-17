@@ -104,10 +104,4 @@ public interface DataAccess extends Storable<DataAccess> {
      * @return the number of segments.
      */
     int segments();
-
-    /**
-     * @return the version number of this object to make compatibility issues
-     * detectable.
-     */
-    int version();
 }

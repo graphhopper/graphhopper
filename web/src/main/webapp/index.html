@@ -94,6 +94,12 @@
             .small_text {
                 font-size: small;
             }
+            #options {
+                padding-bottom: 10px;
+            }
+            .bold {
+                font-weight: bold;
+            }
         </style>
     </head>
     <body>
@@ -102,6 +108,12 @@
                 <span style="font-size: small; color: gray">Web Demo</span></a></h1>
         <div id="input">
             <form id="locationform" action="javascript:return false;">
+                <div id="options">
+                    <span id="vehicles">
+                        
+                    </span>
+                    <input id="hiddenButton" type="submit" value="Search">
+                </div>
                 <div id="fromDiv">
                     <img id="fromIndicator" class="hidden" src="img/indicator.gif"/>
                     <img id="fromFlag" src="img/marker-from.png"/>
@@ -114,7 +126,6 @@
                     <input id="toInput" class="defaulting" type="text" name="to" value="To" defaultValue="To"/>
                     <div id="toFound"></div>
                 </div>
-                <input id="hiddenButton" type="submit">
             </form>            
             <div class="small_text" id="info">                
             </div>

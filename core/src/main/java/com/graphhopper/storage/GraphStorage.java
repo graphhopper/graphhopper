@@ -937,8 +937,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
                 throw new IllegalStateException("cannot load nodes. corrupt file or directory? " + dir);
             if (!wayGeometry.loadExisting())
                 throw new IllegalStateException("cannot load geometry. corrupt file or directory? " + dir);
-            if (nodes.version() != edges.version())
-                throw new IllegalStateException("nodes and edges files have different versions!? " + dir);
+
             // nodes
             int hash = nodes.getHeader(0);
             if (hash != getClass().getName().hashCode())
@@ -997,10 +996,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     @Override
     public long capacity() {
         return edges.capacity() + nodes.capacity() + wayGeometry.capacity();
-    }
-
-    public int version() {
-        return nodes.version();
     }
 
     @Override public String toString() {

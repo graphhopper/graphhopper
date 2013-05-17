@@ -16,7 +16,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.storage;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -25,13 +25,21 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class AcceptWayTest {
+public class StorablePropertiesTest {
 
     @Test
-    public void testAcceptsCar() {
-        assertEquals(40, AcceptWay.parseSpeed("40 km/h"));
-        assertEquals(64, AcceptWay.parseSpeed("40mph"));
-        assertEquals(-1, AcceptWay.parseSpeed(null));
-        assertEquals(19, AcceptWay.parseSpeed("10 knots"));
+    public void testVersionCheck() {
+        StorableProperties instance = new StorableProperties(new RAMDirectory("", false), "prop");
+        instance.saveCurrentVersions();
+        assertTrue(instance.checkVersions(true));
+
+        instance.put("nodes.version", 0);
+        assertFalse(instance.checkVersions(true));
+
+        try {
+            instance.checkVersions(false);
+            assertTrue(false);
+        } catch (Exception ex) {
+        }
     }
 }

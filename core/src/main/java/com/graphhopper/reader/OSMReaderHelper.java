@@ -131,11 +131,6 @@ public abstract class OSMReaderHelper {
         return "Found " + zeroCounter + " zero distances.";
     }
 
-    String getStorageInfo(GraphStorage storage) {
-        return storage.getClass().getSimpleName() + "|" + storage.directory().getClass().getSimpleName()
-                + "|" + storage.version();
-    }
-
     void finishedReading() {
     }
 

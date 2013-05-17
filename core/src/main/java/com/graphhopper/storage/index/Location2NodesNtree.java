@@ -85,7 +85,7 @@ public class Location2NodesNtree implements Location2IDIndex {
     public Location2NodesNtree(Graph g, Directory dir) {
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
-        dataAccess = dir.findCreate("spatialNIndex");
+        dataAccess = dir.findCreate("locationIndex");
         minResolutionInMeter(500);
     }
 

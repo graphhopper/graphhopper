@@ -50,6 +50,25 @@ $(document).ready(function(e) {
         bounds.minLat = tmp[1];
         bounds.maxLon = tmp[2];
         bounds.maxLat = tmp[3];
+        var vehiclesDiv = $("#vehicles");
+        function createButton(text) {
+            var button = $("<button/>")            
+            button.attr('id', text);
+            button.html(text.charAt(0) + text.substr(1).toLowerCase());
+            button.click(function() {
+                ghRequest.vehicle = text;
+                resolveFrom();
+                resolveTo();
+                routeLatLng(ghRequest);
+            });
+            return button;
+        }
+        
+        var vehicles = json.supportedVehicles.split(",");
+        if(vehicles.length > 1)
+            for(var i = 0; i < vehicles.length; i++) {
+                vehiclesDiv.append(createButton(vehicles[i]));
+            }
     }, function(err) {
         // error bounds
         console.log(err);
@@ -162,7 +181,7 @@ function initMap() {
             ghRequest.to.setCoord(e.latlng.lat, e.latlng.lng);
             resolveTo();            
             // do not wait for resolving
-            routeLatLng(ghRequest);            
+            routeLatLng(ghRequest);
         }
     }
 
@@ -302,6 +321,9 @@ function routeLatLng(request) {
     setFlag(request.from, true);
     setFlag(request.to, false);    
     
+    $("#vehicles button").removeClass();
+    $("button#"+request.vehicle).addClass("bold");
+
     var urlForAPI = "point=" + from + "&point=" + to;
     var urlForHistory = "?point=" + request.from.input + "&point=" + request.to.input + "&vehicle=" + request.vehicle;
     if(request.minPathPrecision != 1) {
