@@ -21,6 +21,8 @@ package com.graphhopper.routing;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
@@ -53,30 +55,38 @@ public class RoutingAlgorithmIntegrationTest {
         testCollector = new TestAlgoCollector("integration tests");
     }
 
-    List<OneRun> createMonacoInstances() {
+    List<OneRun> createMonacoCar() {
         List<OneRun> list = new ArrayList<OneRun>();
         // it is not possible to cross the place du palais and there is a oneway directive:
         // list.add(new OneRun(43.727687, 7.418737, 43.730729, 7.421288, 1.532, 88));
-        // but the other way (where no crossing is necessary) is possible:
-        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2542, 88));
+        // but the other direction (where no crossing is necessary) is possible:
+        list.add(new OneRun(43.730729, 7.42135, 43.72775, 7.418737, 2524, 87));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 136));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2365, 99));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.4277, 2365, 99));        
         return list;
     }
 
     @Test
     public void testMonaco() {
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
-                createMonacoInstances(), "CAR", true, new CarFlagEncoder());
+                createMonacoCar(), "CAR", true, new CarFlagEncoder());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
-//    @Test
-//    public void testMonacoMixed() {
-//        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
-//                createMonacoInstances(), "CAR,FOOT", false, new CarFlagEncoder());
-//        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
-//    }
+    @Test
+    public void testMonacoMixed() {
+        // Additional locations are inserted because of new crossings from foot to highway paths!
+        // Distance is the same.
+        List<OneRun> list = createMonacoCar();
+        list.get(0).locs = 97;
+        list.get(1).locs = 147;
+                
+        // 43.72915, 7.410572, 43.739213, 7.4277 -> cannot route
+        // 43.72915, 7.410572, 43.739213, 7.4278 -> all ok
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+                list, "CAR,FOOT", false, new CarFlagEncoder());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
 
     @Test
     public void testMonacoFoot() {
@@ -146,10 +156,11 @@ public class RoutingAlgorithmIntegrationTest {
 
             Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
                     createAlgos(g, encoder, ch);
+            EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (AlgorithmPreparation prepare : prepares) {
                 for (OneRun or : forEveryAlgo) {
-                    int from = idx.findID(or.fromLat, or.fromLon);
-                    int to = idx.findID(or.toLat, or.toLon);
+                    int from = idx.findClosest(or.fromLat, or.fromLon, edgeFilter).closestNode();
+                    int to = idx.findClosest(or.toLat, or.toLon, edgeFilter).closestNode();
                     testCollector.assertDistance(prepare.createAlgo(), from, to, or.dist, or.locs);
                 }
             }
@@ -173,7 +184,7 @@ public class RoutingAlgorithmIntegrationTest {
                 importOrLoad();
         final Graph g = hopper.graph();
         final Location2IDIndex idx = hopper.index();
-        final List<OneRun> instances = createMonacoInstances();
+        final List<OneRun> instances = createMonacoCar();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;

@@ -27,7 +27,7 @@ import java.util.Set;
  * @author Peter Karich
  */
 public class FootFlagEncoder extends AbstractFlagEncoder {
-
+    
     private final Set<String> saveHighwayTags = new HashSet<String>() {
         {
             add("footway");

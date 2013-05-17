@@ -25,6 +25,8 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
@@ -391,8 +393,10 @@ public class GraphHopper implements GraphHopperAPI {
     public GHResponse route(GHRequest request) {
         request.check();
         StopWatch sw = new StopWatch().start();
-        int from = index.findID(request.from().lat, request.from().lon);
-        int to = index.findID(request.to().lat, request.to().lon);
+        
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(request.vehicle());
+        int from = index.findClosest(request.from().lat, request.from().lon, edgeFilter).closestNode();
+        int to = index.findClosest(request.to().lat, request.to().lon, edgeFilter).closestNode();
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
         GHResponse rsp = new GHResponse();
         if (from < 0)

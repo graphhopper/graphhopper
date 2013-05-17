@@ -20,6 +20,7 @@ package com.graphhopper;
 
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.util.Helper;
 import java.io.File;
@@ -74,23 +75,37 @@ public class GraphHopperTest {
         GraphHopper instance = new GraphHopper().setInMemory(true, false).
                 acceptWay(new AcceptWay(true, false, true)).
                 graphHopperLocation(ghLoc).osmFile(testOsm3);
-        instance.importOrLoad();        
+        instance.importOrLoad();
 
         assertEquals(5, instance.graph().nodes());
         assertEquals(8, instance.graph().getAllEdges().maxId());
-        
-        // A to D not allowed for foot
+
         FootFlagEncoder footEnc = new FootFlagEncoder();
-        GHResponse res = instance.route(new GHRequest(11.1, 50, 11.3, 51).vehicle(footEnc));
-        assertFalse(res.found());
+        EdgePropertyEncoder carEnc = new CarFlagEncoder();
+        
+        // A to D
+        GHResponse res = instance.route(new GHRequest(11.1, 50, 11.3, 51).vehicle(carEnc));
+        assertTrue(res.found());
+        assertEquals(2, res.points().size());
+        // => found D
+        assertEquals(51, res.points().longitude(1), 1e-3);
+        assertEquals(11.3, res.points().latitude(1), 1e-3);
+
+        // A to D not allowed for foot. But the location index will choose a node close to D accessible to FOOT        
+        res = instance.route(new GHRequest(11.1, 50, 11.3, 51).vehicle(footEnc));
+        assertTrue(res.found());
+        assertEquals(2, res.points().size());
+        // => found B
+        assertEquals(51, res.points().longitude(1), 1e-3);
+        assertEquals(12, res.points().latitude(1), 1e-3);
 
         // A to E only for foot
         res = instance.route(new GHRequest(11.1, 50, 10, 51).vehicle(footEnc));
         assertTrue(res.found());
         assertEquals(2, res.points().size());
-        
+
         // A D E for car
-        res = instance.route(new GHRequest(11.1, 50, 10, 51).vehicle(new CarFlagEncoder()));
+        res = instance.route(new GHRequest(11.1, 50, 10, 51).vehicle(carEnc));
         assertTrue(res.found());
         assertEquals(3, res.points().size());
     }
@@ -101,8 +116,8 @@ public class GraphHopperTest {
         GraphHopper instance = new GraphHopper().setInMemory(true, false).
                 acceptWay(new AcceptWay(false, false, true)).
                 graphHopperLocation(ghLoc).osmFile(testOsm3);
-        instance.importOrLoad();        
-        
+        instance.importOrLoad();
+
         assertEquals(2, instance.graph().nodes());
         assertEquals(2, instance.graph().getAllEdges().maxId());
 

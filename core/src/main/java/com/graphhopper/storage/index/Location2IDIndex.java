@@ -48,8 +48,13 @@ public interface Location2IDIndex extends Storable<Location2IDIndex> {
     int findID(double lat, double lon);
 
     /**
+     * @param edgeFilter if a graph supports multiple vehicles we have to make
+     * sure that the entry node into the graph is accessible from a selected
+     * vehicle. E.g. if you have a FOOT-query do:      <pre>
+     *   new DefaultEdgeFilter(new FootFlagEncoder());
+     * </pre>
      * @return node id for the specfied location. The node id has at least one
-     * edge which is accepted from the specified filter
+     * edge which is accepted from the specified edgeFilter
      */
     LocationIDResult findClosest(double lat, double lon, EdgeFilter edgeFilter);
 
