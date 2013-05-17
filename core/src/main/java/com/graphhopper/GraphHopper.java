@@ -69,9 +69,6 @@ public class GraphHopper implements GraphHopperAPI {
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
         GraphHopper hopper = new GraphHopper().init(args);
-        System.out.println("version " + Constants.VERSION
-                + "|" + hopper.properties().versionsToString()
-                + "|" + Constants.BUILD_DATE);
         hopper.importOrLoad();
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(hopper);
         if (args.getBool("graph.testIT", false))
@@ -296,11 +293,19 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public GraphHopper importOrLoad() {
-        if (!load(ghLocation))
-            importOSM(ghLocation, osmFile);
-
+    private void printInfo() {
+        logger.info("version " + Constants.VERSION                
+                + "|" + Constants.BUILD_DATE
+                + "|" + properties().versionsToString());
         logger.info("graph " + graph.toString());
+    }
+
+    public GraphHopper importOrLoad() {
+        if (!load(ghLocation)) {
+            printInfo();
+            importOSM(ghLocation, osmFile);
+        } else
+            printInfo();
         return this;
     }
 

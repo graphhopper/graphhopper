@@ -18,9 +18,13 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -81,11 +85,20 @@ public class Measurement {
         StopWatch sw = new StopWatch().start();
         try {
             printGraphDetails(g);
-            PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
+            AlgorithmPreparation prepare;
             if (doPrepare) {
+                PrepareContractionHierarchies p = new PrepareContractionHierarchies().graph(g);
                 logger.info("nodes:" + g.nodes() + ", edges:" + g.getAllEdges().maxId());
-                printPreparationDetails(g, prepare);
+                printPreparationDetails(g, p);
+                prepare = p;
+            } else {
+                prepare = new NoOpAlgorithmPreparation() {
+                    @Override public RoutingAlgorithm createAlgo() {
+                        return new Dijkstra(_graph, new CarFlagEncoder());
+                    }
+                }.graph(g);
             }
+
             TIntList list = printLocation2IDQuery(g, dir, count, rand);
             lookupCount = list.size();
             printTimeOfRouteQuery(prepare, list);
