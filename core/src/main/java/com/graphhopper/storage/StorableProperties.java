@@ -99,7 +99,7 @@ public class StorableProperties implements Storable<StorableProperties> {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public void saveCurrentVersions() {
+    public void putCurrentVersions() {
         put("nodes.version", Constants.VERSION_NODE);
         put("edges.version", Constants.VERSION_NODE);
         put("geometry.version", Constants.VERSION_GEOMETRY);

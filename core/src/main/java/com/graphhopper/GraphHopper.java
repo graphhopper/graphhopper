@@ -68,15 +68,11 @@ public class GraphHopper implements GraphHopperAPI {
 
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
-        GraphHopper hopper = new GraphHopper().init(args).importOrLoad();
-        if (!Helper.isEmpty(args.get("printVersion", ""))
-                || !Helper.isEmpty(args.get("v", "")) || !Helper.isEmpty(args.get("version", ""))) {
-
-            System.out.println("version " + Constants.VERSION
-                    + "|" + hopper.properties().versionsToString()
-                    + "|" + Constants.BUILD_DATE);
-        }
-
+        GraphHopper hopper = new GraphHopper().init(args);
+        System.out.println("version " + Constants.VERSION
+                + "|" + hopper.properties().versionsToString()
+                + "|" + Constants.BUILD_DATE);
+        hopper.importOrLoad();
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(hopper);
         if (args.getBool("graph.testIT", false))
             tests.start();
@@ -318,6 +314,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
         cleanUp();
         optimize();
+        prepare();
         flush();
         initIndex();
         return this;
@@ -334,6 +331,8 @@ public class GraphHopper implements GraphHopperAPI {
         reader.acceptWay(acceptWay);
         reader.wayPointMaxDistance(wayPointMaxDistance);
 
+        properties.put("osmreader.acceptWay", acceptWay.toString());
+        properties.putCurrentVersions();
         String info = graph.getClass().getSimpleName()
                 + "|" + graph.directory().getClass().getSimpleName()
                 + "|" + properties.versionsToString();
@@ -382,7 +381,7 @@ public class GraphHopper implements GraphHopperAPI {
             dir = new RAMDirectory(ghLocation, storeOnFlush);
         } else
             throw new IllegalArgumentException("either memory mapped or in-memory has to be specified!");
-        
+
         properties = new StorableProperties(dir, "properties");
         if (chUsage) {
             graph = new LevelGraphStorage(dir);
@@ -415,6 +414,9 @@ public class GraphHopper implements GraphHopperAPI {
         if (!acceptStr.isEmpty())
             acceptWay = AcceptWay.parse(acceptStr);
         properties.checkVersions(false);
+        if ("false".equals(properties.get("prepare.done")))
+            prepare();
+
         initIndex();
         return true;
     }
@@ -512,8 +514,12 @@ public class GraphHopper implements GraphHopperAPI {
             GHUtility.sortDFS(graph, newGraph);
             graph = newGraph;
         }
+    }
 
-        if (doPrepare && prepare != null) {
+    public void prepare() {
+        boolean tmpPrepare = doPrepare && prepare != null;
+        properties.put("prepare.done", tmpPrepare);
+        if (tmpPrepare) {
             if (prepare instanceof PrepareContractionHierarchies && acceptWay.countVehicles() > 1)
                 throw new IllegalArgumentException("Contraction hierarchies preparation "
                         + "requires (at the moment) only one vehicle. But was:" + acceptWay);
@@ -538,9 +544,6 @@ public class GraphHopper implements GraphHopperAPI {
         logger.info("flushing graph with " + graph.nodes() + " nodes, bounds:"
                 + graph.bounds() + ", " + Helper.memInfo() + ")");
         graph.flush();
-        properties.put("osmreader.acceptWay", acceptWay.toString());
-        properties.put("prepare.done", doPrepare);
-        properties.saveCurrentVersions();
         properties.flush();
     }
 

@@ -72,9 +72,9 @@
         </dependency>
         -->
         <dependency>
-            <groupId>android</groupId>
+            <groupId>com.google.android</groupId>
             <artifactId>android</artifactId>
-            <version>2.2_r3</version>
+            <version>2.2.1</version>
             <scope>provided</scope>
         </dependency>
 
@@ -119,26 +119,9 @@
         </plugins>
     </build>
     
-    <repositories>
-        <!-- local repository which contains all unresolable libs like mapsforge
-        <repository>
-            <id>locallibs</id>
-            <name>android libs</name>
-            <url>file:${project.basedir}/libs</url>
-        </repository>
-        -->
-		
-        <!-- repository of project 'molecular' to resolve android-jars 
-        <repository>
-            <id>mulecular_repo</id>
-            <name>android libs</name>
-            <url>https://repo.molecular.com/artifactory/repo</url>
-            <snapshots>		
-                <enabled>true</enabled>		
-            </snapshots>		
-        </repository>
-        -->
-		
+    <repositories>        		
+        <!-- Android is in maven central! To install android sdk in a continuos integration environment see http://stackoverflow.com/q/4681697/194609
+        For mapsforge see scripts/maven-install-mapsforge.sh  -->
     </repositories>
     
 </project>

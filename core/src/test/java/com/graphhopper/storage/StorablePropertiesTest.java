@@ -30,7 +30,7 @@ public class StorablePropertiesTest {
     @Test
     public void testVersionCheck() {
         StorableProperties instance = new StorableProperties(new RAMDirectory("", false), "prop");
-        instance.saveCurrentVersions();
+        instance.putCurrentVersions();
         assertTrue(instance.checkVersions(true));
 
         instance.put("nodes.version", 0);
