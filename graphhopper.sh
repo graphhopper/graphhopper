@@ -28,18 +28,16 @@ fi
 
 function ensureOsmXml { 
   if [ ! -f "$OSM_XML" ]; then
-    echo "No OSM file found or specified. Press ENTER to grab one from internet."
+    echo "No OSM file found or specified. Press ENTER to get it from: $LINK"
     echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
-    read -e  
-    BZ=$OSM_XML.bz2
-    rm $BZ &> /dev/null
+    read -e
   
-    echo "## now downloading OSM file from $LINK"
-    wget -O $BZ $LINK
+    echo "## now downloading OSM file from $LINK and extracting to $OSM_XML"
+    # make sure aborting download does not result in loading corrupt osm file
+    TMP_OSM=temp-$OSM_XML
+    wget -O - $LINK | bzip2 -d > $TMP_OSM
+    mv $TMP_OSM $OSM_XML
   
-    echo "## extracting $BZ"
-    bzip2 -d $BZ
-
     if [ ! -f "$OSM_XML" ]; then
       echo "ERROR couldn't download or extract OSM file $OSM_XML ... exiting"
       exit
@@ -116,7 +114,7 @@ fi
 
 # file without extension if any
 NAME="${FILE%.*}"
-OSM_XML=$NAME.osm
+OSM_XML=`echo $NAME|tr '/' '_'`.osm
 
 GRAPH=$NAME-gh
 VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
@@ -132,14 +130,14 @@ if [ "x$TMP" = "xunterfranken" ]; then
 elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
 
- # For import we need a lot more memory. For the mmap storage you need to lower this in order to use off-heap memory.
+ # Info: for import we need a more memory than for just loading it
  JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1600m -Xms1600m" 
-elif [ -f $OSM_XML ]; then
- LINK=""
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx480m -Xms480m" 
-else
- echo "Sorry, your osm file $OSM_XML was not found ... exiting"
- exit   
+else 
+ LINK=`echo $NAME | tr '_' '/'`
+ LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
+ if [ "x$JAVA_OPTS" = "x" ]; then
+  JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1000m -Xms1000m" 
+ fi
 fi
 
 
