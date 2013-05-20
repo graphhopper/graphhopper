@@ -27,7 +27,7 @@ if [ "x$ACTION" = "x" ]; then
 fi
 
 function ensureOsmXml { 
-  if [ ! -f "$OSM_XML" ]; then
+  if [ ! -s "$OSM_XML" ]; then
     echo "No OSM file found or specified. Press ENTER to get it from: $LINK"
     echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
     read -e
@@ -114,8 +114,7 @@ fi
 
 # file without extension if any
 NAME="${FILE%.*}"
-OSM_XML=`echo $NAME|tr '/' '_'`.osm
-
+OSM_XML=$NAME.osm
 GRAPH=$NAME-gh
 VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
 JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
