@@ -20,7 +20,6 @@ Features
  * Written in Java
  * Open Source
  * Memory efficient and fast
- * Works on the desktop, [as a web service](https://github.com/graphhopper/graphhopper/tree/master/web) 
-   and offline [on Android](https://github.com/graphhopper/graphhopper/wiki/Android)
+ * Works on the desktop, as a web service and offline on Android
  * Well tested
  * A small library
