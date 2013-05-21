@@ -8,7 +8,10 @@
     <name>GraphHopper</name>
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging> 
-    
+    <description>
+        GraphHopper is a fast and memory efficient Java road routing engine 
+        working seamlessly with OpenStreetMap data.
+    </description>
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
