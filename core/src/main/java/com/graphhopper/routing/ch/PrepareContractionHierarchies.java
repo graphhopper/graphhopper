@@ -205,7 +205,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         boolean periodicUpdate = true;
 
         // disable as preparation is slower and query time does not benefit
-        boolean lazyUpdate = true;
+        boolean lazyUpdate = false;
+
+        int lastNodes = sortedNodes.size() / 10;
 
         // Recompute priority of uncontracted neighbors.
         // Without neighborupdates preparation is faster but we need them
@@ -214,7 +216,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         while (!sortedNodes.isEmpty()) {
             if (counter % updateSize == 0) {
                 // periodically update priorities of ALL nodes            
-                if (periodicUpdate && updateCounter > 0 && updateCounter % 10 == 0) {
+                if (periodicUpdate && updateCounter > 0 && updateCounter % 3 == 0) {
                     updateSW.start();
                     // TODO avoid to traverse all nodes -> via a new sortedNodes.iterator()
                     int len = g.nodes();
@@ -240,6 +242,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             counter++;
             PriorityNode wn = refs[sortedNodes.pollKey()];
+
+            if (sortedNodes.size() < lastNodes)
+                lazyUpdate = true;
             if (lazyUpdate) {
                 wn.priority = calculatePriority(wn.node);
                 if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue()) {
@@ -261,7 +266,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     // already contracted no update necessary
                     continue;
 
-                if (neighborUpdate && rand.nextInt(50) < 5) {
+                if (neighborUpdate && rand.nextInt(50) < 25) {
                     PriorityNode neighborWn = refs[nn];
                     int oldPrio = neighborWn.priority;
                     neighborWn.priority = calculatePriority(nn);
