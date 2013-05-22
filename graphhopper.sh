@@ -182,13 +182,16 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
     "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS
  }
  
- # use current version
- "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
- startMeasurement
- exit
-
  # use all <last_commits> versions starting from HEAD
- last_commits=3
+ last_commits=$3
+ 
+ if [ "x$last_commits" = "x" ]; then
+   # use current version
+   "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
+   startMeasurement
+   exit
+ fi
+
  commits=$(git rev-list HEAD -n $last_commits)
  for commit in $commits; do
    git checkout $commit -q
