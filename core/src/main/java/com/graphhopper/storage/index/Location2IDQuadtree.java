@@ -329,7 +329,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
         LocationIDResult res = new LocationIDResult();
         res.closestNode(closestNode.node);
-        res.weight = closestNode.weight;
+        res.weight(closestNode.weight);
         // TODO set other LocationIDResult attributes
         //res.wayIndex = ;
         //res.closestEdge(edge);*/

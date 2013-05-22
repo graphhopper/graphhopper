@@ -106,7 +106,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
         LocationIDResult res = new LocationIDResult();
         res.closestNode(id);
         // res.wayIndex = ; // TODO set wayIndex
-        res.weight = foundDist;
+        res.weight(foundDist);
         res.closestEdge(g.getEdgeProps(edgeId, -1));
         return res;
     }

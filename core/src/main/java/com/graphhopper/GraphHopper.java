@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.PathFinisher;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.noderesolver.DummyNodeResolver;
@@ -36,7 +37,6 @@ import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.LevelGraph;
@@ -50,7 +50,6 @@ import com.graphhopper.storage.index.Location2NodesNtreeLG;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.DouglasPeucker;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
@@ -274,7 +273,23 @@ public class GraphHopper implements GraphHopperAPI {
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
         if (to == null)
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.to()));
-      
+        
+        
+        // get nodes to route
+//        Graph graph = this.graph;
+//        int fromId, toId;
+//        if((this.graph instanceof LevelGraph) && from.closestEdge() != null && to.closestEdge() != null) {
+//        	// substitute the graph with a decorated one
+//        	VirtualNodeLevelGraph vGraph = new VirtualNodeLevelGraph((LevelGraph)this.graph);
+//        	fromId = vGraph.setFromEdges(from.closestEdge(), request.from().lat, request.from().lon);
+//        	toId = vGraph.setToEdges(to.closestEdge(), request.to().lat, request.to().lon);
+//        	
+//        	graph = vGraph;
+//        } else {
+//        	fromId = from.closestNode();
+//        	toId = to.closestNode();
+//        }
+        
         // initialize routing algorithm
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
@@ -295,9 +310,9 @@ public class GraphHopper implements GraphHopperAPI {
             return rsp;
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
-        // get nodes to route
         RouteNodeResolver nodeFinder = this.getNodeResolver(request);
         boolean sameEdge = this.isSameEdge(from, to);
+        
         int fromId = nodeFinder.findRouteNode(from, request.from().lat, request.from().lon, true, sameEdge);
         int toId = nodeFinder.findRouteNode(to, request.to().lat, request.to().lon, false, sameEdge);
         
@@ -307,7 +322,9 @@ public class GraphHopper implements GraphHopperAPI {
         debug += ", " + algo.name() + "-routing:" + sw.stop().getSeconds() + "s"
                 + ", " + path.debugInfo();
         
+//        PathFinisher finishedPath = new PathFinisher(from, to, request.from(), request.to(), path, graph);
         PointList points = path.calcPoints();
+//        PointList points = finishedPath.getFinishedPointList();
         
         // simplify route geometry
         if (simplifyRequest) {

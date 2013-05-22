@@ -89,6 +89,10 @@ public class GHPlace {
             str += " (" + nodeId + ")";
         return str.trim();
     }
+    
+    public String toWkt() {
+    	return new StringBuilder("POINT(").append(lon).append(' ').append(lat).append(')').toString();
+    }
 
     /**
      * Attention: geoJson is LON,LAT

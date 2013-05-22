@@ -42,6 +42,7 @@ public class DummyNodeResolver implements RouteNodeResolver {
 					isOrigin);
 		} else {
 			// one way
+			// (routing from-to the same edge is an exception to the one way behavior)
 			if (isOrigin ^ edgeEncoder.isForward(flags) ^ sameEdge) {
 				// start on forward OR arrive on backward => Start node
 				return closestEdge.baseNode();

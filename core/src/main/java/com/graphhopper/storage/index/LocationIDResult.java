@@ -27,8 +27,8 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class LocationIDResult {
 
-    double weight = Double.MAX_VALUE;    
-    int wayIndex = -3;
+    private double weight = Double.MAX_VALUE;    
+    private int wayIndex = -3;
     private int closestNode = -1;
     private EdgeIterator closestEdge = null;
 
@@ -49,6 +49,22 @@ public class LocationIDResult {
     
     public EdgeIterator closestEdge() {
     	return this.closestEdge;
+    }
+    
+    public void weight(double weight) {
+    	this.weight = weight;
+    }
+    
+    public double weight() {
+    	return this.weight;
+    }
+    
+    public void wayIndex(int index) {
+    	this.wayIndex = index;
+    }
+    
+    public int wayIndex() {
+    	return this.wayIndex;
     }
     
     @Override

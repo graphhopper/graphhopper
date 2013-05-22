@@ -18,6 +18,19 @@
  */
 package com.graphhopper.storage.index;
 
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.procedure.TIntProcedure;
+import gnu.trove.set.hash.TIntHashSet;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
@@ -37,16 +50,6 @@ import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.set.hash.TIntHashSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This implementation implements an n-tree to get node ids from GPS location.
@@ -617,14 +620,14 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                             tmpDist = adjDist;
 
                         check(tmpNode, tmpDist, -currNode - 2, currEdge);
-                        return closestNode.weight >= 0;
+                        return closestNode.weight() >= 0;
                     }
 
                     void check(int node, double dist, int wayIndex, EdgeIterator edge) {
-                        if (dist < closestNode.weight) {
-                            closestNode.weight = dist;
+                        if (dist < closestNode.weight()) {
+                            closestNode.weight(dist);
                             closestNode.closestNode(node);
-                            closestNode.wayIndex = wayIndex;
+                            closestNode.wayIndex(wayIndex);
                             closestNode.closestEdge(edge);
                         }
                     }
