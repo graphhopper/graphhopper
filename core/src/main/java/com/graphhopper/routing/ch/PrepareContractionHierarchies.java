@@ -214,17 +214,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         while (!sortedNodes.isEmpty()) {
             if (counter % updateSize == 0) {
                 // periodically update priorities of ALL nodes            
-                if (periodicUpdate && updateCounter > 0 && updateCounter % 10 == 0) {
+                if (periodicUpdate && updateCounter > 0 && updateCounter % 3 == 0) {
                     updateSW.start();
-                    // TODO avoid to traverse all nodes -> via a new sortedNodes.iterator()
+                    sortedNodes.clear();
                     int len = g.nodes();
                     for (int node = 0; node < len; node++) {
                         PriorityNode pNode = refs[node];
                         if (g.getLevel(node) != 0)
                             continue;
-                        int old = pNode.priority;
                         pNode.priority = calculatePriority(node);
-                        sortedNodes.update(node, old, pNode.priority);
+                        sortedNodes.insert(node, pNode.priority);
                     }
                     updateSW.stop();
                 }
