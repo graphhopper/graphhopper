@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeWrapper;
@@ -59,7 +59,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     private int visitedToCount;
     private boolean alreadyRun;
 
-    public DijkstraBidirection(Graph graph, VehicleEncoder encoder) {
+    public DijkstraBidirection(Graph graph, EdgePropertyEncoder encoder) {
         super(graph, encoder);
         int locs = Math.max(20, graph.nodes());
         openSetFrom = new IntDoubleBinHeap(locs / 10);

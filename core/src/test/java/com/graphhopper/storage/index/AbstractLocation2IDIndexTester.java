@@ -18,13 +18,16 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.util.Random;
@@ -99,14 +102,14 @@ public abstract class AbstractLocation2IDIndexTester {
         g.edge(3, 4, 3.2, true);
         g.edge(1, 4, 2.4, true);
         g.edge(3, 5, 1.5, true);
+        // make sure 6 is connected
+        g.edge(6, 4, 1.2, true);
     }
 
     @Test
     public void testSimpleGraph2() {
         Graph g = createGraph();
         initSimpleGraph(g);
-        // make sure 6 is connected
-        g.edge(6, 4, 1.2, true);
 
         Location2IDIndex idx = createIndex(g, 28);
         assertEquals(4, idx.findID(5, 2));
@@ -135,7 +138,7 @@ public abstract class AbstractLocation2IDIndexTester {
         // go through every point of the graph if all points are reachable
         for (int i = 0; i < locs; i++) {
             double lat = g.getLatitude(i);
-            double lon = g.getLongitude(i);            
+            double lon = g.getLongitude(i);
             assertEquals("nodeId:" + i + " " + (float) lat + "," + (float) lon,
                     i, index.findID(lat, lon));
         }
@@ -302,5 +305,24 @@ public abstract class AbstractLocation2IDIndexTester {
         graph.edge(q16, p15, 1, true);
         graph.edge(q16, m12, 1, true);
         return graph;
+    }
+
+    @Test
+    public void testDifferentVehicles() {
+        Graph g = createGraph();
+        initSimpleGraph(g);
+        Location2IDIndex idx = createIndex(g, 32);
+        assertEquals(1, idx.findID(1, -1));
+
+        // now make all edges from node 1 accessible for CAR only
+        EdgeIterator iter = g.getEdges(1);
+        CarFlagEncoder carEncoder = new CarFlagEncoder();
+        while (iter.next()) {
+            iter.flags(carEncoder.flags(50, true));
+        }
+
+        idx = createIndex(g, 32);
+        FootFlagEncoder footEncoder = new FootFlagEncoder();
+        assertEquals(2, idx.findClosest(1, -1, new DefaultEdgeFilter(footEncoder)).closestNode());
     }
 }

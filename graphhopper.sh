@@ -13,8 +13,9 @@ if [ "x$bit64" != "x" ]; then
 fi
 echo "## using java $vers from $JAVA_HOME"
 
+CONFIG=config.properties
 if [ ! -f "config.properties" ]; then
-  cp config-example.properties config.properties
+  cp config-example.properties $CONFIG
 fi
 
 ACTION=$1
@@ -26,19 +27,17 @@ if [ "x$ACTION" = "x" ]; then
 fi
 
 function ensureOsmXml { 
-  if [ ! -f "$OSM_XML" ]; then
-    echo "No OSM file found or specified. Press ENTER to grab one from internet."
+  if [ ! -s "$OSM_XML" ]; then
+    echo "No OSM file found or specified. Press ENTER to get it from: $LINK"
     echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
-    read -e  
-    BZ=$OSM_XML.bz2
-    rm $BZ &> /dev/null
+    read -e
   
-    echo "## now downloading OSM file from $LINK"
-    wget -O $BZ $LINK
+    echo "## now downloading OSM file from $LINK and extracting to $OSM_XML"
+    # make sure aborting download does not result in loading corrupt osm file
+    TMP_OSM=temp-$OSM_XML
+    wget -O - $LINK | bzip2 -d > $TMP_OSM
+    mv $TMP_OSM $OSM_XML
   
-    echo "## extracting $BZ"
-    bzip2 -d $BZ
-
     if [ ! -f "$OSM_XML" ]; then
       echo "ERROR couldn't download or extract OSM file $OSM_XML ... exiting"
       exit
@@ -116,7 +115,6 @@ fi
 # file without extension if any
 NAME="${FILE%.*}"
 OSM_XML=$NAME.osm
-
 GRAPH=$NAME-gh
 VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
 JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
@@ -127,21 +125,18 @@ TMP="${TMP%.*}"
 
 if [ "x$TMP" = "xunterfranken" ]; then
  LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx200m -Xms200m"
- SIZE=3000000
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx200m -Xms200m" 
 elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
 
- # For import we need a lot more memory. For the mmap storage you need to lower this in order to use off-heap memory.
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1600m -Xms1600m"
- SIZE=35000000
-elif [ -f $OSM_XML ]; then
- LINK=""
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx480m -Xms480m"
- SIZE=10000000
-else
- echo "Sorry, your osm file $OSM_XML was not found ... exiting"
- exit   
+ # Info: for import we need a more memory than for just loading it
+ JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1600m -Xms1600m" 
+else 
+ LINK=`echo $NAME | tr '_' '/'`
+ LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
+ if [ "x$JAVA_OPTS" = "x" ]; then
+  JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1000m -Xms1000m" 
+ fi
 fi
 
 
@@ -149,16 +144,18 @@ fi
 ensureOsmXml
 ensureMaven
 packageCoreJar
+
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
 if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
  export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
- "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Dgraphhopper.osmreader.osm=$OSM_XML -Djetty.reload=manual jetty:run
+ "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Dgraphhopper.config=$CONFIG \
+      -Dgraphhopper.osmreader.osm=$OSM_XML -Djetty.reload=manual jetty:run
 
 
 elif [ "x$ACTION" = "ximport" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=config.properties \
-      osmreader.graph-location="$GRAPH" \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=$CONFIG \
+      graph.location="$GRAPH" \
       osmreader.osm="$OSM_XML"
 
 
@@ -167,30 +164,34 @@ elif [ "x$ACTION" = "xtest" ]; then
  if [ "x$ALGO" = "x" ]; then
    ALGO=astar
  fi
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader printVersion=true config=config.properties \
-       osmreader.graph-location="$GRAPH" osmreader.osm="$OSM_XML" \
-       osmreader.test=true
+
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=$CONFIG \
+       graph.location="$GRAPH" osmreader.osm="$OSM_XML" \
+       graph.testIT=true
 
        
 elif [ "x$ACTION" = "xmeasurement" ]; then
- ARGS="osmreader.graph-location=$GRAPH osmreader.osm=$OSM_XML osmreader.chShortcuts=fastest osmreader.type=CAR"
+ ARGS="graph.location=$GRAPH osmreader.osm=$OSM_XML prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
  echo -e "\ncreate graph via $ARGS, $JAR"
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.reader.OSMReader $ARGS osmreader.doPrepare=false
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper $ARGS prepare.doPrepare=false
 
  function startMeasurement {
     COUNT=5000
-    ARGS="$ARGS osmreader.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME"
+    ARGS="$ARGS prepare.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME"
     echo -e "\nperform measurement via $ARGS, $JAR"
     "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS
  }
  
- # use current version
- "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
- startMeasurement
- exit
-
  # use all <last_commits> versions starting from HEAD
- last_commits=3
+ last_commits=$3
+ 
+ if [ "x$last_commits" = "x" ]; then
+   # use current version
+   "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
+   startMeasurement
+   exit
+ fi
+
  commits=$(git rev-list HEAD -n $last_commits)
  for commit in $commits; do
    git checkout $commit -q

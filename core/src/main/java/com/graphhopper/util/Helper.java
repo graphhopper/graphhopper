@@ -17,7 +17,7 @@ package com.graphhopper.util;
 
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
@@ -31,6 +31,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.slf4j.Logger;
@@ -82,6 +83,20 @@ public class Helper {
             }
         } finally {
             reader.close();
+        }
+    }
+
+    public static void saveProperties(Map<String, String> map, Writer tmpWriter) throws IOException {
+        BufferedWriter writer = new BufferedWriter(tmpWriter);
+        try {
+            for (Entry<String, String> e : map.entrySet()) {
+                writer.append(e.getKey());
+                writer.append('=');
+                writer.append(e.getValue());
+                writer.append('\n');
+            }
+        } finally {
+            writer.close();
         }
     }
 
@@ -171,7 +186,7 @@ public class Helper {
         return strOsm == null || strOsm.trim().length() == 0;
     }
 
-    public static VehicleEncoder getVehicleEncoder(String str) {
+    public static EdgePropertyEncoder getVehicleEncoder(String str) {
         str = str.toLowerCase();
         if (str.isEmpty() || "car".equals(str))
             return new CarFlagEncoder();

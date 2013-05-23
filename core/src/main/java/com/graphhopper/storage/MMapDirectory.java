@@ -41,4 +41,9 @@ public class MMapDirectory extends AbstractDirectory {
     protected DataAccess create(String id, String location) {
         return new MMapDataAccess(id, location);
     }
+
+    @Override
+    public boolean isLoadRequired() {
+        return true;
+    }
 }

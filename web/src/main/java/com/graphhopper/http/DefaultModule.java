@@ -23,8 +23,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.util.CmdArgs;
-import java.io.File;
-import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,32 +35,19 @@ public class DefaultModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        CmdArgs args;
-        String osmFile = "";
         try {
-            args = CmdArgs.readFromConfig("config.properties");
-            osmFile = args.get("osmreader.osm", "");
-            if (osmFile.isEmpty())
-                throw new IllegalStateException("OSM file cannot be empty. "
-                        + "set it on command line via -Dgraphhopper.osmreader.osm=<file> "
-                        + "or in config.properties");
+            CmdArgs args = CmdArgs.readFromConfig("config.properties", "graphhopper.config");
+            GraphHopper hopper = new GraphHopper().init(args)
+                    .forServer();
+            hopper.importOrLoad();
+            logger.info("loaded graph at:" + hopper.graphHopperLocation()
+                    + ", source:" + hopper.osmFile()
+                    + ", acceptWay:" + hopper.acceptWay()
+                    + ", class:" + hopper.graph().getClass().getSimpleName());
 
-        } catch (IOException ex) {
-            throw new IllegalStateException("Couldn't load config file " + new File(osmFile).getAbsolutePath(), ex);
-        }
-        try {
-            String ghLocation = args.get("osmreader.graph-location", "");
-            GraphHopper hopper = new GraphHopper().graphHopperLocation(ghLocation);
-            String chShortcuts = args.get("osmreader.chShortcuts", "");
-            if (!chShortcuts.isEmpty())
-                hopper.chShortcuts(true, "fastest".equals(chShortcuts));
-            
-            hopper.forServer();
-            hopper.load(osmFile);
-            logger.info("loaded graph at:" + ghLocation + ", source:" + osmFile + ", class:" + hopper.graph().getClass().getSimpleName());
             bind(GraphHopper.class).toInstance(hopper);
 
-            String algo = args.get("web.defaultAlgorithm", "dijkstrabi");
+            String algo = args.get("routing.defaultAlgorithm", "dijkstrabi");
             bind(String.class).annotatedWith(Names.named("defaultAlgorithm")).toInstance(algo);
 
             long timeout = args.getLong("web.timeout", 3000);

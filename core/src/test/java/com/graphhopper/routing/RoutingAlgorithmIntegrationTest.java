@@ -18,12 +18,15 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.reader.OSMReader;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.TestAlgoCollector;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.util.CmdArgs;
@@ -52,30 +55,69 @@ public class RoutingAlgorithmIntegrationTest {
         testCollector = new TestAlgoCollector("integration tests");
     }
 
-    List<OneRun> createMonacoInstances() {
+    List<OneRun> createMonacoCar() {
         List<OneRun> list = new ArrayList<OneRun>();
         // it is not possible to cross the place du palais and there is a oneway directive:
         // list.add(new OneRun(43.727687, 7.418737, 43.730729, 7.421288, 1.532, 88));
-        // but the other way (where no crossing is necessary) is possible:
-        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2542, 107));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 179));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2365, 126));
+        // but the other direction (where no crossing is necessary) is possible:
+        list.add(new OneRun(43.730729, 7.42135, 43.72775, 7.418737, 2524, 87));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 136));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.4277, 2365, 99));        
         return list;
     }
 
     @Test
     public void testMonaco() {
-        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco", createMonacoInstances(), true);
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+                createMonacoCar(), "CAR", true, new CarFlagEncoder());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testMonacoMixed() {
+        // Additional locations are inserted because of new crossings from foot to highway paths!
+        // Distance is the same.
+        List<OneRun> list = createMonacoCar();
+        list.get(0).locs = 97;
+        list.get(1).locs = 147;
+                
+        // 43.72915, 7.410572, 43.739213, 7.4277 -> cannot route
+        // 43.72915, 7.410572, 43.739213, 7.4278 -> all ok
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+                list, "CAR,FOOT", false, new CarFlagEncoder());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testMonacoFoot() {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 1536, 80));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3455, 123));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2243, 99));
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+                list, "FOOT", true, new FootFlagEncoder());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     @Test
     public void testAndorra() {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 21122, 909));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16089, 582));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 21122, 699));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16089, 510));
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
-        runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra", list, true);
+        runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
+                list, "CAR", true, new CarFlagEncoder());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testAndorraFoot() {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 16053, 509));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 12154, 367));
+        // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
+        runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
+                list, "FOOT", true, new FootFlagEncoder());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -88,30 +130,37 @@ public class RoutingAlgorithmIntegrationTest {
         //   | bzip2 > campo-grande.extracted.osm.bz2
 
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25515, 271));
+        list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25515, 253));
         list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18020, 238));
-        runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list, false);
+        runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list,
+                "CAR", false, new CarFlagEncoder());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     void runAlgo(TestAlgoCollector testCollector, String osmFile,
-            String graphFile, List<OneRun> forEveryAlgo, boolean ch) {
+            String graphFile, List<OneRun> forEveryAlgo, String vehicles,
+            boolean ch, EdgePropertyEncoder encoder) {
         try {
             // make sure we are using the latest file format
             Helper.removeDir(new File(graphFile));
-            OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", osmFile).
-                    put("osmreader.graph-location", graphFile).
-                    put("osmreader.dataaccess", "inmemory"));
-            Graph g = osm.graph();
-            VehicleEncoder carEncoder = new CarFlagEncoder();
-            // System.out.println("nodes:" + g.getNodes());
-            Location2IDIndex idx = osm.location2IDIndex();
+            GraphHopper hopper = new GraphHopper().
+                    init(new CmdArgs().
+                    put("graph.location", graphFile).
+                    put("graph.dataaccess", "inmemory").
+                    put("osmreader.osm", osmFile).
+                    put("osmreader.acceptWay", vehicles)).
+                    importOrLoad();
+
+            Graph g = hopper.graph();
+            Location2IDIndex idx = hopper.index();
+
             Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(g, carEncoder, ch);
+                    createAlgos(g, encoder, ch);
+            EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (AlgorithmPreparation prepare : prepares) {
                 for (OneRun or : forEveryAlgo) {
-                    int from = idx.findID(or.fromLat, or.fromLon);
-                    int to = idx.findID(or.toLat, or.toLon);
+                    int from = idx.findClosest(or.fromLat, or.fromLon, edgeFilter).closestNode();
+                    int to = idx.findClosest(or.toLat, or.toLon, edgeFilter).closestNode();
                     testCollector.assertDistance(prepare.createAlgo(), from, to, or.dist, or.locs);
                 }
             }
@@ -127,16 +176,19 @@ public class RoutingAlgorithmIntegrationTest {
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/graph-monaco";
         Helper.removeDir(new File(graphFile));
-        OSMReader osm = OSMReader.osm2Graph(new CmdArgs().put("osmreader.osm", "files/monaco.osm.gz").
-                put("osmreader.graph-location", graphFile).
-                put("osmreader.dataaccess", "inmemory"));
-        final Graph g = osm.graph();
-        final Location2IDIndex idx = osm.location2IDIndex();
-        final List<OneRun> instances = createMonacoInstances();
+        GraphHopper hopper = new GraphHopper().
+                init(new CmdArgs().
+                put("graph.location", graphFile).
+                put("graph.dataaccess", "inmemory").
+                put("osmreader.osm", "files/monaco.osm.gz")).
+                importOrLoad();
+        final Graph g = hopper.graph();
+        final Location2IDIndex idx = hopper.index();
+        final List<OneRun> instances = createMonacoCar();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
-        VehicleEncoder carEncoder = new CarFlagEncoder();
+        EdgePropertyEncoder carEncoder = new CarFlagEncoder();
 
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread

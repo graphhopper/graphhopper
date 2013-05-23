@@ -34,11 +34,11 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FastestCalc;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.TurnCostCalculation;
 import com.graphhopper.routing.util.TurnCostEncoder;
-import com.graphhopper.routing.util.VehicleEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -60,8 +60,8 @@ public abstract class AbstractRoutingAlgorithmTester {
     private static Graph matrixGraph;
     protected TurnCostCalculation turnRestrictions = new TurnRestrictionsCalc();
     protected TurnCostCalculation turnIgnore = new TurnCostsIgnoreCalc();
-    protected VehicleEncoder carEncoder = new CarFlagEncoder();
-    private VehicleEncoder footEncoder = new FootFlagEncoder();
+    protected EdgePropertyEncoder carEncoder = new CarFlagEncoder();
+    private EdgePropertyEncoder footEncoder = new FootFlagEncoder();
 
     protected Graph createGraph() {
         return new GraphBuilder().create();
@@ -75,7 +75,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         return prepareGraph(g, new ShortestCalc(), carEncoder);
     }
 
-    public abstract AlgorithmPreparation prepareGraph(Graph g, WeightCalculation calc, VehicleEncoder encoder);
+    public abstract AlgorithmPreparation prepareGraph(Graph g, WeightCalculation calc, EdgePropertyEncoder encoder);
 
     @Test public void testCalcShortestPath() {
         Graph graph = createTestGraph();
@@ -300,7 +300,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), 2, p.distance(), 1e-4);
     }
     
-    @Test public void testTurnCostRestricted() {
+    @Test public void testCalcWithTurnRestrictions_PTurnInShortestPath() {
         Graph graph = createTestGraphPTurn(createTurnCostsGraph(), TurnCostEncoder.restriction());
         Path p1 = prepareGraph(graph, new ShortestCalc(), carEncoder).createAlgo().turnCosts(turnRestrictions).calcPath(3, 0);
         assertEquals(Helper.createTList(3, 5, 8, 9, 10, 5, 6, 7, 0), p1.calcNodes());

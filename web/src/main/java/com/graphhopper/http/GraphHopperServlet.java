@@ -23,7 +23,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.Constants;
@@ -74,7 +74,7 @@ public class GraphHopperServlet extends HttpServlet {
     public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         try {
             if ("/info".equals(req.getPathInfo()))
-                writeBounds(req, res);
+                writeInfos(req, res);
             else if ("/route".equals(req.getPathInfo()))
                 writePath(req, res);
         } catch (Exception ex) {
@@ -83,14 +83,16 @@ public class GraphHopperServlet extends HttpServlet {
         }
     }
 
-    void writeBounds(HttpServletRequest req, HttpServletResponse res) throws JSONException {
+    void writeInfos(HttpServletRequest req, HttpServletResponse res) throws JSONException {
         BBox bb = hopper.graph().bounds();
         List<Double> list = new ArrayList<Double>(4);
         list.add(bb.minLon);
         list.add(bb.minLat);
         list.add(bb.maxLon);
         list.add(bb.maxLat);
-        JSONBuilder json = new JSONBuilder().object("bbox", list).
+        JSONBuilder json = new JSONBuilder().
+                object("bbox", list).
+                object("supportedVehicles", hopper.acceptWay()).
                 object("version", Constants.VERSION).
                 object("buildDate", Constants.BUILD_DATE);
         writeJson(req, res, json.build());
@@ -108,20 +110,17 @@ public class GraphHopperServlet extends HttpServlet {
             minPathPrecision = Double.parseDouble(getParam(req, "minPathPrecision"));
         } catch (Exception ex) {
         }
-        String vehicleStr = getParam(req, "algoVehicle");
-        VehicleEncoder algoVehicle = Helper.getVehicleEncoder(vehicleStr);
+        String vehicleStr = getParam(req, "vehicle");
+        EdgePropertyEncoder algoVehicle = Helper.getVehicleEncoder(vehicleStr);
         WeightCalculation algoType = new FastestCalc(algoVehicle);
         if ("shortest".equalsIgnoreCase(getParam(req, "algoType")))
             algoType = new ShortestCalc();
 
-        String algoStr = getParam(req, "algo");
+        String algoStr = getParam(req, "algorithm");
         if (Helper.isEmpty(algoStr))
             algoStr = defaultAlgorithm;
 
         try {
-            if (minPathPrecision <= 0)
-                hopper.simplifyRequest(false);
-
             sw = new StopWatch().start();
             GHResponse rsp = hopper.route(new GHRequest(start, end).
                     vehicle(algoVehicle).type(algoType).

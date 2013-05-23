@@ -21,7 +21,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.ShortestCalc;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 
@@ -43,7 +43,7 @@ public class RoutingAlgorithmFactory {
         this.approx = approx;
     }
 
-    public RoutingAlgorithm createAlgo(Graph g, VehicleEncoder encoder) {
+    public RoutingAlgorithm createAlgo(Graph g, EdgePropertyEncoder encoder) {
         if ("dijkstrabi".equalsIgnoreCase(algoStr)) {
             return new DijkstraBidirectionRef(g, encoder);
         } else if ("dijkstraNative".equalsIgnoreCase(algoStr)) {
@@ -59,7 +59,7 @@ public class RoutingAlgorithmFactory {
     }
 
     public static RoutingAlgorithm createAlgoForCar(String algoStr, Graph g, boolean shortest) {
-        VehicleEncoder carEncoder = new CarFlagEncoder();
+        EdgePropertyEncoder carEncoder = new CarFlagEncoder();
         WeightCalculation weight;
         if (shortest)
             weight = new ShortestCalc();

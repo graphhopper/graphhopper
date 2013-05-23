@@ -221,7 +221,10 @@ public class GraphStorageTurnCosts extends GraphStorage implements GraphTurnCost
     
     @Override 
     public String toString() {
-        return super.toString()+", turn cost entries: " + nf(turnCostsCount) + "(" + turnCosts.capacity() / Helper.MB + ")";
+        if(isTurnCostSupport()){
+            return super.toString()+", turn cost entries: " + nf(turnCostsCount) + "(" + turnCosts.capacity() / Helper.MB + ")";    
+        }
+        return super.toString();
     }
     
     public class TurnCostIteratable implements TurnCostIterator{

@@ -16,51 +16,30 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage.index;
+package com.graphhopper.storage;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
- * Result of Location2IDIndex lookup
  *
  * @author Peter Karich
  */
-public class LocationIDResult {
+public class StorablePropertiesTest {
 
-    private double weight = Double.MAX_VALUE;
-    private int wayIndex = -3;
-    private int closestNode = -1;
+    @Test
+    public void testVersionCheck() {
+        StorableProperties instance = new StorableProperties(new RAMDirectory("", false), "prop");
+        instance.putCurrentVersions();
+        assertTrue(instance.checkVersions(true));
 
-    public LocationIDResult() {
-    }
+        instance.put("nodes.version", 0);
+        assertFalse(instance.checkVersions(true));
 
-    void closestNode(int node) {
-        closestNode = node;
-    }
-
-    public int closestNode() {
-        return closestNode;
-    }
-
-    public void weight(double dist) {
-        weight = dist;
-    }
-
-    public void wayIndex(int wayIndex) {
-        this.wayIndex = wayIndex;
-    }
-
-    public double weight() {
-        return weight;
-    }
-
-    /**
-     * @return true if a close node was found
-     */
-    public boolean isValid() {
-        return closestNode >= 0;
-    }
-
-    @Override
-    public String toString() {
-        return closestNode + ", " + weight + ", " + wayIndex;
+        try {
+            instance.checkVersions(false);
+            assertTrue(false);
+        } catch (Exception ex) {
+        }
     }
 }

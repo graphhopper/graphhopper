@@ -24,6 +24,7 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.GraphStorageTurnCosts;
 import com.graphhopper.storage.GraphTurnCosts;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
@@ -47,16 +48,22 @@ public abstract class OSMReaderHelper {
     protected long zeroCounter = 0;
     protected final Graph g;
     protected final long expectedNodes;
-    private DistanceCalc callback = new DistanceCalc();
+    private DistanceCalc distCalc = new DistanceCalc();
     private AcceptWay acceptWay;
     protected TLongArrayList wayNodes = new TLongArrayList(10);
-    private Map<String, Object> osmProperties = new HashMap<String, Object>();
+    private Map<String, String> osmProperties = new HashMap<String, String>();
     private Map<String, Object> outProperties = new HashMap<String, Object>();
     private long edgeOsmId;
+    private DouglasPeucker dpAlgo = new DouglasPeucker();
 
     public OSMReaderHelper(Graph g, long expectedNodes) {
         this.g = g;
         this.expectedNodes = expectedNodes;
+    }
+
+    public OSMReaderHelper wayPointMaxDistance(double maxDist) {
+        dpAlgo.maxDistance(maxDist);
+        return this;
     }
 
     public OSMReaderHelper acceptWay(AcceptWay acceptWay) {
@@ -68,13 +75,13 @@ public abstract class OSMReaderHelper {
         return acceptWay;
     }
 
-    public void callback(DistanceCalc callback) {
-        this.callback = callback;
-    }
-
-    public long expectedNodes() {
+    /**
+     * @return inclusive pillar nodes (either via pre-parsing or via
+     * expectedNodes)
+     */
+    public long foundNodes() {
         return expectedNodes;
-    }    
+    }
 
     public long edgeCount() {
         return g.getAllEdges().maxId();
@@ -102,7 +109,7 @@ public abstract class OSMReaderHelper {
         for (int i = 1; i < nodes; i++) {
             lat = pointList.latitude(i);
             lon = pointList.longitude(i);
-            towerNodeDistance += callback.calcDist(prevLat, prevLon, lat, lon);
+            towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
             prevLat = lat;
             prevLon = lon;
             if (nodes > 2 && i < nodes - 1)
@@ -119,8 +126,10 @@ public abstract class OSMReaderHelper {
         if(g instanceof GraphStorageTurnCosts){
         	storeEdgeOSMId(iter.edge(), osmid);
         } 
-        if (nodes > 2)
+        if (nodes > 2) {
+            dpAlgo.simplify(pillarNodes);
             iter.wayGeometry(pillarNodes);
+        }
         return nodes;
     }
     
@@ -129,11 +138,6 @@ public abstract class OSMReaderHelper {
 
     String getInfo() {
         return "Found " + zeroCounter + " zero distances.";
-    }
-
-    String getStorageInfo(GraphStorage storage) {
-        return storage.getClass().getSimpleName() + "|" + storage.directory().getClass().getSimpleName()
-                + "|" + storage.version();
     }
 
     public boolean isTurnCostSupport(GraphStorage graphStorage) {
@@ -197,7 +201,6 @@ public abstract class OSMReaderHelper {
                 sReader.next();
             }
         }
-
         boolean isWay = acceptWay.handleTags(outProperties, osmProperties, wayNodes);
         boolean hasNodes = wayNodes.size() > 1;
         return isWay && hasNodes;

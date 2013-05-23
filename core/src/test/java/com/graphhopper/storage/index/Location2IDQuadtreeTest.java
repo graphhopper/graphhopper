@@ -55,4 +55,9 @@ public class Location2IDQuadtreeTest extends AbstractLocation2IDIndexTester {
             return true;
         return false;
     }
+
+    @Override
+    public void testDifferentVehicles() {
+        // currently unsupported
+    }
 }

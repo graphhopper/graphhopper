@@ -27,7 +27,7 @@ import java.util.Set;
  * @author Peter Karich
  */
 public class FootFlagEncoder extends AbstractFlagEncoder {
-
+    
     private final Set<String> saveHighwayTags = new HashSet<String>() {
         {
             add("footway");
@@ -50,6 +50,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             add("residential");
             add("road");
             add("service");
+            // disallowed in some countries?
+            add("bridleway");
         }
     };
     private static final Map<String, Integer> SPEED = new FootSpeed();
@@ -69,8 +71,20 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     /**
      * Some ways are okay but not separate for pedestrians.
      */
-    public boolean isAllowedHighway(String highwayValue) {
-        return allowedHighwayTags.contains(highwayValue);
+    @Override
+    public boolean isAllowed(Map<String, String> osmProperties) {
+        String sidewalkValue = osmProperties.get("sidewalk");
+        if ("yes".equals(sidewalkValue) || "both".equals(sidewalkValue)
+                || "left".equals(sidewalkValue) || "right".equals(sidewalkValue))
+            return true;
+        String footValue = osmProperties.get("foot");
+        if ("yes".equals(footValue))
+            return true;
+        String highwayValue = osmProperties.get("highway");
+        if (!allowedHighwayTags.contains(highwayValue))
+            return false;
+        String accessValue = osmProperties.get("access");
+        return super.isAllowed(accessValue);
     }
 
     /**

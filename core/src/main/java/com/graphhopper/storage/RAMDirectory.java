@@ -37,8 +37,8 @@ public class RAMDirectory extends AbstractDirectory {
     }
 
     /**
-     * @param store true if you want that the RAMDirectory can be loaded or saved on demand, false
-     * if it should be entirely in RAM
+     * @param store true if you want that the RAMDirectory can be loaded or
+     * saved on demand, false if it should be entirely in RAM
      */
     public RAMDirectory(String _location, boolean store) {
         super(_location);
@@ -59,5 +59,10 @@ public class RAMDirectory extends AbstractDirectory {
     @Override
     protected DataAccess create(String id, String location) {
         return new RAMDataAccess(id, location, store);
+    }
+
+    @Override
+    public boolean isLoadRequired() {
+        return store;
     }
 }

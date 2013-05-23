@@ -35,6 +35,8 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
             add("road");
             add("living_street");
             add("track");
+            // disallowed in some countries?
+            add("bridleway");
         }
     };
     private final Set<String> allowedHighwayTags = new HashSet<String>() {
@@ -66,8 +68,17 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
     /**
      * Separate ways for pedestrians.
      */
-    public boolean isAllowedHighway(String highwayValue) {
-        return allowedHighwayTags.contains(highwayValue);
+    @Override
+    public boolean isAllowed(Map<String, String> osmProperties) {
+        String highwayValue = osmProperties.get("highway");
+        if (!allowedHighwayTags.contains(highwayValue))
+            return false;
+
+        String bicycleValue = osmProperties.get("bicycle");
+        if ("yes".equals(bicycleValue))
+            return true;
+        String accessValue = osmProperties.get("access");
+        return super.isAllowed(accessValue);
     }
 
     /**

@@ -16,20 +16,29 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage.index;
+package com.graphhopper.coll;
 
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.shapes.GHPlace;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
- * Look up ids from gps coordinates.
  *
  * @author Peter Karich
  */
-public interface Location2NodesIndex {
+public class GHTreeMapComposedTest {
 
-    /**
-     * Returns the closest matching result (currently one node only).
-     */
-    LocationIDResult findClosest(GHPlace point, EdgeFilter edgeFilter);
+    @Test
+    public void testInsert() {
+        GHTreeMapComposed instance = new GHTreeMapComposed();
+        instance.insert(1, 100);
+        assertEquals(1, instance.peekKey());
+        assertEquals(100, instance.peekValue());
+
+        instance.insert(2, 99);
+        instance.insert(3, 101);
+        assertEquals(2, instance.peekKey());
+        assertEquals(99, instance.peekValue());
+
+        assertEquals(2, instance.pollKey());
+    }
 }

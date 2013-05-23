@@ -33,7 +33,6 @@ public class AcceptWay {
     private boolean car;
     private boolean bike;
     private boolean foot;
-    private VehicleEncoder firstEncoder = carEncoder;
 
     public AcceptWay(boolean car, boolean bike, boolean foot) {
         this.car = car;
@@ -72,45 +71,39 @@ public class AcceptWay {
      * @return true if a way (speed attribute) is determined from the specified
      * tag
      */
-    public boolean handleTags(Map<String, Object> outProperties, Map<String, Object> osmProperties, TLongArrayList osmIds) {
+    public boolean handleTags(Map<String, Object> outProperties,
+            Map<String, String> osmProperties, TLongArrayList osmIds) {
         boolean includeWay = false;
-        Object value = osmProperties.get("highway");
+        String value = osmProperties.get("highway");
         if (value != null) {
-            String highwayValue = (String) value;
-            if (foot) {
-                if (footEncoder.isAllowedHighway(highwayValue)
-                        || osmProperties.get("sidewalk") != null) {
-                    includeWay = true;
-                    outProperties.put("foot", true);
-                    outProperties.put("save", footEncoder.isSaveHighway(highwayValue));
-                }
+            String highwayValue = value;
+            if (foot && footEncoder.isAllowed(osmProperties)) {
+                includeWay = true;
+                outProperties.put("foot", true);
+                outProperties.put("footsave", footEncoder.isSaveHighway(highwayValue));
             }
-            if (bike) {
+            if (bike && bikeEncoder.isAllowed(osmProperties)) {
                 // http://wiki.openstreetmap.org/wiki/Cycleway
-                // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway                                
-                if (bikeEncoder.isAllowedHighway(highwayValue)) {
-                    includeWay = true;
-                    outProperties.put("bike", 10);
-                    outProperties.put("save", bikeEncoder.isSaveHighway(highwayValue));
-                }
+                // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway
+                includeWay = true;
+                outProperties.put("bike", bikeEncoder.getSpeed(value));
+                outProperties.put("bikesave", bikeEncoder.isSaveHighway(highwayValue));
             }
 
-            if (car) {
+            if (car && carEncoder.isAllowed(osmProperties)) {
                 Integer integ = carEncoder.getSpeed(highwayValue);
-                if (integ != null) {
-                    int maxspeed = parseSpeed((String) osmProperties.get("maxspeed"));
-                    includeWay = true;
-                    if (maxspeed > 0 && integ > maxspeed)
-                        outProperties.put("car", maxspeed);
-                    else {
-                        if ("city_limit".equals(osmProperties.get("traffic_sign")))
-                            integ = 50;
-                        outProperties.put("car", integ);
-                    }
-
-                    if ("toll_booth".equals(osmProperties.get("barrier")))
-                        outProperties.put("carpaid", true);
+                int maxspeed = parseSpeed(osmProperties.get("maxspeed"));
+                includeWay = true;
+                if (maxspeed > 0 && integ > maxspeed)
+                    outProperties.put("car", maxspeed);
+                else {
+                    if ("city_limit".equals(osmProperties.get("traffic_sign")))
+                        integ = 50;
+                    outProperties.put("car", integ);
                 }
+
+                if ("toll_booth".equals(osmProperties.get("barrier")))
+                    outProperties.put("carpaid", true);
             }
         }
 
@@ -125,7 +118,6 @@ public class AcceptWay {
                     || bike && (allEmpty || isTrue(bikeProp))
                     || foot && (allEmpty || isTrue(footProp))) {
 
-                int velo = 30;
                 // TODO read duration and calculate speed 00:30 for ferry
                 Object duration = osmProperties.get("duration");
                 if (duration != null) {
@@ -133,22 +125,22 @@ public class AcceptWay {
 
                 includeWay = true;
                 if (car)
-                    outProperties.put("car", velo);
+                    outProperties.put("car", 20);
                 if (bike)
-                    outProperties.put("bike", velo);
+                    outProperties.put("bike", 10);
                 if (foot)
-                    outProperties.put("foot", velo);
+                    outProperties.put("foot", true);
                 outProperties.put("carpaid", true);
                 outProperties.put("bikepaid", true);
             }
         }
 
         boolean oneWayForBike = !"no".equals(osmProperties.get("oneway:bicycle"));
-        String cycleway = (String) osmProperties.get("cycleway");
+        String cycleway = osmProperties.get("cycleway");
         boolean oneWayBikeIsOpposite = bikeEncoder.isOpposite(cycleway);
         value = osmProperties.get("oneway");
         if (value != null) {
-            if (isTrue(((String) value)))
+            if (isTrue(value))
                 outProperties.put("caroneway", true);
 
             // Abzweigung
@@ -192,6 +184,27 @@ public class AcceptWay {
         } catch (Exception ex) {
             return -1;
         }
+    }
+
+    public int countVehicles() {
+        int count = 0;
+        if (car)
+            count++;
+        if (bike)
+            count++;
+        if (foot)
+            count++;
+        return count;
+    }
+
+    public boolean accepts(EdgePropertyEncoder encoder) {
+        if (car && encoder instanceof CarFlagEncoder)
+            return true;
+        else if (bike && encoder instanceof BikeFlagEncoder)
+            return true;
+        else if (foot && encoder instanceof FootFlagEncoder)
+            return true;
+        return false;
     }
 
     boolean isTrue(Object obj) {
@@ -246,29 +259,9 @@ public class AcceptWay {
         return str.trim().replaceAll("\\ ", ",");
     }
 
-    public static AcceptWay parse(String type) {
-        VehicleEncoder firstEncoder = getFirstVehicleEncoder(type);
-        return new AcceptWay(type.contains("CAR"), type.contains("BIKE"), type.contains("FOOT")).
-                firstEncoder(firstEncoder);
-    }
-
-    private static VehicleEncoder getFirstVehicleEncoder(String str) {
-        str = str.toLowerCase();
-        if (str.startsWith("car"))
-            return new CarFlagEncoder();
-        else if (str.startsWith("foot"))
-            return new FootFlagEncoder();
-        else if (str.startsWith("bike"))
-            return new BikeFlagEncoder();
-        throw new RuntimeException("Not found " + str);
-    }
-
-    public VehicleEncoder firstEncoder() {
-        return firstEncoder;
-    }
-
-    private AcceptWay firstEncoder(VehicleEncoder firstEncoder) {
-        this.firstEncoder = firstEncoder;
-        return this;
+    public static AcceptWay parse(String acceptWayString) {
+        return new AcceptWay(acceptWayString.contains("CAR"),
+                acceptWayString.contains("BIKE"),
+                acceptWayString.contains("FOOT"));
     }
 }

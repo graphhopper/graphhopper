@@ -130,7 +130,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     }
 
     @Override
-    public long expectedNodes() {
+    public long foundNodes() {
         return osmIdToIndexMap.size();
     }
 

@@ -28,7 +28,7 @@ public class FastestCalcTest {
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
-        VehicleEncoder encoder = new CarFlagEncoder();
+        EdgePropertyEncoder encoder = new CarFlagEncoder();
         FastestCalc instance = new FastestCalc(encoder);
         int flags = encoder.flags(encoder.getMaxSpeed(), true);
         assertEquals(instance.getMinWeight(10), instance.getWeight(10, flags), 1e-8);
@@ -36,7 +36,7 @@ public class FastestCalcTest {
 
     @Test
     public void testSpeed0() {
-        VehicleEncoder encoder = new CarFlagEncoder();
+        EdgePropertyEncoder encoder = new CarFlagEncoder();
         FastestCalc instance = new FastestCalc(encoder);
         assertEquals(1.0 / 0, instance.getWeight(10, encoder.flags(0, true)), 1e-8);
     }

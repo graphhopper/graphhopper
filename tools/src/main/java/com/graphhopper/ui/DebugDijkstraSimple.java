@@ -20,7 +20,7 @@ package com.graphhopper.ui;
 
 import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.EdgeEntry;
 import java.awt.Color;
@@ -34,7 +34,7 @@ public class DebugDijkstraSimple extends Dijkstra implements DebugAlgo {
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraSimple(Graph graph, VehicleEncoder encoder, GraphicsWrapper mg) {
+    public DebugDijkstraSimple(Graph graph, EdgePropertyEncoder encoder, GraphicsWrapper mg) {
         super(graph, encoder);
         this.mg = mg;
     }

@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.graphhopper.coll.GHSortedCollection;
+import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraOneToMany;
@@ -42,7 +43,7 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.TurnCostCalculation;
 import com.graphhopper.routing.util.TurnCostsEntry;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Graph;
@@ -76,13 +77,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private final WeightCalculation shortestCalc = new ShortestCalc();
     private WeightCalculation prepareWeightCalc;
     private TurnCostCalculation prepareTurnCostCalc;;
-    private VehicleEncoder prepareEncoder;
+    private EdgePropertyEncoder prepareEncoder;
     private EdgeFilter vehicleInFilter;
     private EdgeFilter vehicleOutFilter;
     private EdgeFilter vehicleAllFilter;
     private LevelGraph g;
     // the most important nodes comes last
-    private GHSortedCollection sortedNodes;
+    private GHTreeMapComposed sortedNodes;
     private PriorityNode refs[];
     private DataAccess originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
@@ -137,7 +138,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return this;
     }
 
-    public PrepareContractionHierarchies vehicle(VehicleEncoder encoder) {
+    public PrepareContractionHierarchies vehicle(EdgePropertyEncoder encoder) {
         this.prepareEncoder = encoder;
         vehicleInFilter = new DefaultEdgeFilter(encoder, true, false);
         vehicleOutFilter = new DefaultEdgeFilter(encoder, false, true);
@@ -235,17 +236,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         while (!sortedNodes.isEmpty()) {
             if (counter % updateSize == 0) {
                 // periodically update priorities of ALL nodes            
-                if (periodicUpdate && updateCounter > 0 && updateCounter % 10 == 0) {
+                if (periodicUpdate && updateCounter > 0 && updateCounter % 3 == 0) {
                     updateSW.start();
-                    // TODO avoid to traverse all nodes -> via a new sortedNodes.iterator()
+                    sortedNodes.clear();
                     int len = g.nodes();
                     for (int node = 0; node < len; node++) {
                         PriorityNode pNode = refs[node];
                         if (g.getLevel(node) != 0)
                             continue;
-                        int old = pNode.priority;
                         pNode.priority = calculatePriority(node);
-                        sortedNodes.update(node, old, pNode.priority);
+                        sortedNodes.insert(node, pNode.priority);
                     }
                     updateSW.stop();
                 }
@@ -570,8 +570,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     PrepareContractionHierarchies initFromGraph() {
+        if (g == null)
+            throw new NullPointerException("Graph must not be empty calling doWork of preparation");
         levelEdgeFilter = new LevelEdgeFilterCH(this.g);
-        sortedNodes = new GHSortedCollection(g.nodes());
+        sortedNodes = new GHTreeMapComposed();
         refs = new PriorityNode[g.nodes()];
         algo = new DijkstraOneToMany(g, prepareEncoder);
         algo.turnCosts(prepareTurnCostCalc);
@@ -717,7 +719,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         };
     }
 
-    private static class PriorityNode {
+    private static class PriorityNode implements Comparable<PriorityNode> {
 
         int node;
         int priority;
@@ -729,6 +731,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         @Override public String toString() {
             return node + " (" + priority + ")";
+        }
+
+        @Override public int compareTo(PriorityNode o) {
+            return priority - o.priority;
         }
     }
 

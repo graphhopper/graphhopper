@@ -66,7 +66,7 @@ public class GHResponse {
     }
 
     public boolean found() {
-        return !list.isEmpty();
+        return list != null && !list.isEmpty();
     }
 
     public PointList points() {

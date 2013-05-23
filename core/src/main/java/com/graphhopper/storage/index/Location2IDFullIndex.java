@@ -18,32 +18,32 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.shapes.Circle;
 
 /**
- * Very slow O(n) Location2IDIndex but no RAM required.
+ * Very slow O(n) Location2IDIndex but no RAM/disc required.
  *
  * @author Peter Karich
  */
 public class Location2IDFullIndex implements Location2IDIndex {
 
-    private DistanceCalc calc = new DistanceCalc();
+    private DistanceCalc calc = new DistancePlaneProjection();
     private Graph g;
 
     public Location2IDFullIndex(Graph g) {
         this.g = g;
     }
 
-    @Override
-    public boolean loadExisting() {
+    @Override public boolean loadExisting() {
         return true;
     }
 
-    @Override
-    public Location2IDIndex precision(boolean approxDist) {
+    @Override public Location2IDIndex precision(boolean approxDist) {
         if (approxDist)
             calc = new DistancePlaneProjection();
         else
@@ -51,50 +51,59 @@ public class Location2IDFullIndex implements Location2IDIndex {
         return this;
     }
 
-    @Override
-    public Location2IDIndex resolution(int resolution) {
+    @Override public Location2IDIndex resolution(int resolution) {
+        return this;
+    }
+
+    @Override public Location2IDIndex prepareIndex() {
         return this;
     }
 
     @Override
-    public Location2IDIndex prepareIndex() {
-        return this;
+    public LocationIDResult findClosest(double queryLat, double queryLon, EdgeFilter edgeFilter) {
+        LocationIDResult res = new LocationIDResult();
+        Circle circle = null;
+        AllEdgesIterator iter = g.getAllEdges();
+        while (iter.next()) {
+            if (!edgeFilter.accept(iter))
+                continue;
+
+            for (int node, i = 0; i < 2; i++) {
+                if (i == 0)
+                    node = iter.baseNode();
+                else
+                    node = iter.adjNode();
+                double tmpLat = g.getLatitude(node);
+                double tmpLon = g.getLongitude(node);
+                double dist = calc.calcDist(tmpLat, tmpLon, queryLat, queryLon);
+                if (circle == null || dist < calc.calcDist(circle.lat(), circle.lon(), queryLat, queryLon)) {
+                    res.closestNode(node);
+                    res.weight(dist);
+                    if (dist <= 0)
+                        break;
+
+                    circle = new Circle(tmpLat, tmpLon, dist, calc);
+                }
+            }
+        }
+        return res;
     }
 
     @Override public int findID(double lat, double lon) {
-        int locs = g.nodes();
-        int id = -1;
-        Circle circle = null;
-        for (int i = 0; i < locs; i++) {
-            double tmpLat = g.getLatitude(i);
-            double tmpLon = g.getLongitude(i);
-            if (circle == null || circle.contains(tmpLat, tmpLon)) {
-                id = i;
-                double dist = calc.calcDist(tmpLat, tmpLon, lat, lon);
-                if (dist <= 0)
-                    break;
-
-                circle = new Circle(lat, lon, dist, calc);
-            }
-        }
-        return id;
+        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).closestNode();
     }
 
-    @Override
-    public Location2IDIndex create(long size) {
+    @Override public Location2IDIndex create(long size) {
         return this;
     }
 
-    @Override
-    public void flush() {
+    @Override public void flush() {
     }
 
-    @Override
-    public void close() {
+    @Override public void close() {
     }
 
-    @Override
-    public long capacity() {
+    @Override public long capacity() {
         return 0;
     }
 }

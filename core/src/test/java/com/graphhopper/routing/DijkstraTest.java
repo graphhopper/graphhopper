@@ -19,7 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.VehicleEncoder;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -28,10 +28,10 @@ import com.graphhopper.storage.Graph;
  *
  * @author Peter Karich
  */
-public class DijkstraSimpleTest extends AbstractRoutingAlgorithmTester {
+public class DijkstraTest extends AbstractRoutingAlgorithmTester {
 
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final VehicleEncoder encoder) {
+    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final EdgePropertyEncoder encoder) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
                 return new Dijkstra(_graph, encoder).type(calc);

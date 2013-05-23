@@ -16,51 +16,32 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage.index;
+package com.graphhopper.routing.util;
+
+import java.util.HashMap;
+import java.util.Map;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
- * Result of Location2IDIndex lookup
  *
  * @author Peter Karich
  */
-public class LocationIDResult {
+public class CarFlagEncoderTest {
 
-    private double weight = Double.MAX_VALUE;
-    private int wayIndex = -3;
-    private int closestNode = -1;
-
-    public LocationIDResult() {
-    }
-
-    void closestNode(int node) {
-        closestNode = node;
-    }
-
-    public int closestNode() {
-        return closestNode;
-    }
-
-    public void weight(double dist) {
-        weight = dist;
-    }
-
-    public void wayIndex(int wayIndex) {
-        this.wayIndex = wayIndex;
-    }
-
-    public double weight() {
-        return weight;
-    }
-
-    /**
-     * @return true if a close node was found
-     */
-    public boolean isValid() {
-        return closestNode >= 0;
-    }
-
-    @Override
-    public String toString() {
-        return closestNode + ", " + weight + ", " + wayIndex;
+    @Test
+    public void testAccess() {
+        CarFlagEncoder instance = new CarFlagEncoder();
+        Map<String, String> map = new HashMap<String, String>();
+        assertFalse(instance.isAllowed(map));
+        map.put("highway", "service");
+        assertTrue(instance.isAllowed(map));
+        map.put("access", "no");
+        assertFalse(instance.isAllowed(map));
+        map.clear();
+        
+        map.put("highway", "track");        
+        map.put("motorcar", "no");
+        assertFalse(instance.isAllowed(map));
     }
 }
