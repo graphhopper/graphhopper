@@ -270,6 +270,11 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
         if (entryOther == null)
             return;
         
+        //prevents the shortest path to contain the same edge twice, when turn restriction is around the meeting point
+        if(shortestDE.edge == entryOther.edge){
+            return;
+        }
+        
         boolean backwards = shortestWeightMapFrom == shortestWeightMapOther;
 
         // update μ

@@ -161,7 +161,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         int otherRef = wrapperOther.getRef(nodeId);
         if (otherRef < 0)
             return;
-
+        
         boolean backwards = wrapperFrom == wrapperOther;
         
         // update μ
@@ -169,8 +169,16 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         
         //costs for the turn where forward and backward routing meet each other
         if(!backwards){
+            //prevents the shortest path to contain the same edge twice, when turn restriction is around the meeting point
+            if(wrapperFrom.getEdgeId(ref) == wrapperOther.getEdgeId(otherRef)){
+                return;
+            }            
         	newWeight += turnCostCalc.getTurnCosts(nodeId, wrapperFrom.getEdgeId(ref), wrapperOther.getEdgeId(otherRef));
         }else{
+            //prevents the shortest path to contain the same edge twice, when turn restriction is around the meeting point
+            if(wrapperTo.getEdgeId(ref) == wrapperOther.getEdgeId(otherRef)){
+                return;
+            }
         	newWeight += turnCostCalc.getTurnCosts(nodeId, wrapperOther.getEdgeId(otherRef), wrapperTo.getEdgeId(ref));
         }
         
