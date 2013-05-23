@@ -176,7 +176,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper $ARGS prepare.doPrepare=false
 
  function startMeasurement {
-    COUNT=50
+    COUNT=5000
     ARGS="$ARGS prepare.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME"
     echo -e "\nperform measurement via $ARGS, $JAR"
     "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS
