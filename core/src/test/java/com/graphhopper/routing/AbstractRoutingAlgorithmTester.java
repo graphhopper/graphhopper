@@ -300,6 +300,58 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), 2, p.distance(), 1e-4);
     }
     
+    @Test public void testTurnCostRestricted() {
+        Graph graph = createTestGraphPTurn(createTurnCostsGraph(), TurnCostEncoder.restriction());
+        Path p1 = prepareGraph(graph, new ShortestCalc(), carEncoder).createAlgo().turnCosts(turnRestrictions).calcPath(3, 0);
+        assertEquals(Helper.createTList(3, 5, 8, 9, 10, 5, 6, 7, 0), p1.calcNodes());
+        assertEquals(p1.toString(), 23, p1.distance(), 1e-6);
+    }
+    
+    /*
+     * 0---------1
+     *  \        |
+     *   7->8--9 |
+     *   |  |  | |
+     *   6--5-10 |
+     *      |    |
+     * 4----3----2
+     * 
+     * Outer links are expensive
+     * Inner links are cheap
+     * Turn restriction: (3,5) to (5,6)
+     * One way: (7,8)
+     * 
+     * Shortest path from 3 to 0 should be 3,5,8,9,10,5,6,7,0 (which contains a p-turn)  
+     * 
+     */
+    protected Graph createTestGraphPTurn(GraphTurnCosts graph, int leftTurnCosts) {
+        initNodes(graph, 11);
+        //outer lanes
+        graph.edge(0, 1, 10, true);
+        graph.edge(1, 2, 10, true);        
+        graph.edge(2, 3, 5, true);        
+        graph.edge(3, 4, 5, true);
+        
+        //inner lanes
+        
+        graph.edge(5, 8, 3, true);        
+        EdgeIterator edgeTo = graph.edge(5, 6, 3, true);        
+        graph.edge(5, 10, 3, true);        
+        graph.edge(8, 9, 3, true);        
+        graph.edge(9, 10, 3, true);
+        graph.edge(6, 7, 3, false);        
+        graph.edge(7, 8, 3, false);        
+        
+        //connections
+        EdgeIterator edgeFrom = graph.edge(3, 5, 4, true);        
+        graph.edge(7, 0, 4, true);
+        
+        //turn costs
+        graph.turnCosts(5, edgeFrom.edge(), edgeTo.edge(), leftTurnCosts);
+        
+        return graph;
+    }
+    
     // see wikipedia-graph.svg !
     protected Graph createWikipediaTestGraph() {
         Graph graph = createGraph();
