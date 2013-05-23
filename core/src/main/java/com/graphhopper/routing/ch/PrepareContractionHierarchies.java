@@ -18,7 +18,6 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.coll.GHSortedCollection;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraOneToMany;
@@ -43,6 +42,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -73,7 +73,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private EdgeFilter vehicleAllFilter;
     private LevelGraph g;
     // the most important nodes comes last
-    private GHSortedCollection sortedNodes;
+    private PriorityQueue<PriorityNode> sortedNodes;
     private PriorityNode refs[];
     private DataAccess originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
@@ -182,7 +182,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         for (int node = 0; node < len; node++) {
             PriorityNode wn = refs[node];
             wn.priority = calculatePriority(node);
-            sortedNodes.insert(wn.node, wn.priority);
+            sortedNodes.add(wn);
         }
 
         if (sortedNodes.isEmpty())
@@ -223,7 +223,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                         if (g.getLevel(node) != 0)
                             continue;
                         pNode.priority = calculatePriority(node);
-                        sortedNodes.insert(node, pNode.priority);
+                        sortedNodes.add(pNode);
                     }
                     updateSW.stop();
                 }
@@ -238,12 +238,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             counter++;
-            PriorityNode wn = refs[sortedNodes.pollKey()];
+            PriorityNode wn = sortedNodes.poll();
             if (lazyUpdate) {
                 wn.priority = calculatePriority(wn.node);
-                if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue()) {
+                if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peek().priority) {
                     // current node got more important => insert as new value and contract it later
-                    sortedNodes.insert(wn.node, wn.priority);
+                    sortedNodes.add(wn);
                     continue;
                 }
             }
@@ -264,8 +264,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     PriorityNode neighborWn = refs[nn];
                     int oldPrio = neighborWn.priority;
                     neighborWn.priority = calculatePriority(nn);
-                    if (neighborWn.priority != oldPrio)
-                        sortedNodes.update(nn, oldPrio, neighborWn.priority);
+                    if (neighborWn.priority != oldPrio) {
+                        sortedNodes.remove(neighborWn);
+                        sortedNodes.add(neighborWn);
+                    }
                 }
 
                 if (removesHigher2LowerEdges)
@@ -510,7 +512,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         if (g == null)
             throw new NullPointerException("Graph must not be empty calling doWork of preparation");
         levelEdgeFilter = new LevelEdgeFilterCH(this.g);
-        sortedNodes = new GHSortedCollection(g.nodes());
+        sortedNodes = new PriorityQueue<PriorityNode>(g.nodes());
         refs = new PriorityNode[g.nodes()];
         algo = new DijkstraOneToMany(g, prepareEncoder);
         algo.type(shortestCalc);
@@ -655,7 +657,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         };
     }
 
-    private static class PriorityNode {
+    private static class PriorityNode implements Comparable<PriorityNode> {
 
         int node;
         int priority;
@@ -667,6 +669,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         @Override public String toString() {
             return node + " (" + priority + ")";
+        }
+
+        @Override public int compareTo(PriorityNode o) {
+            return priority - o.priority;
         }
     }
 
