@@ -18,7 +18,6 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.coll.GHSortedCollection;
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
@@ -83,7 +82,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private LevelEdgeFilterCH levelEdgeFilter;
     private DijkstraOneToMany algo;
-    private int updateSize;
     private boolean removesHigher2LowerEdges = true;
     private long counter;
     private int newShortcuts;
@@ -91,6 +89,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private double meanDegree;
     private Random rand = new Random(123);
     private StopWatch dijkstraSW = new StopWatch();
+    private int periodicUpdatesCount = 3;
+    private int lastNodesLazyUpdatePercentage = 10;
+    private int neighborUpdatePercentage = 40;
 
     public PrepareContractionHierarchies() {
         type(new ShortestCalc()).vehicle(new CarFlagEncoder());
@@ -127,8 +128,24 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return this;
     }
 
-    public PrepareContractionHierarchies updateSize(int updateSize) {
-        this.updateSize = updateSize;
+    /**
+     * The higher the values are the longer the preparation takes but the less
+     * shortcuts are produced.
+     *
+     * @param lastNodesLazyUpdatePercentage specifies when lazy updates will
+     * happen, measured relative to all existing nodes. 100 means always.
+     * @param neighborUpdatePercentage specifies how often neighbor updates will
+     * happen. 100 means always.
+     * @param periodicUpdates specifies how often periodic updates will happen.
+     * 1 means always. 2 means only 1 of 2 times. etc
+     */
+    public PrepareContractionHierarchies configure(
+            int periodicUpdates,
+            int lastNodesLazyUpdatePercentage,
+            int neighborUpdatePercentage) {
+        this.periodicUpdatesCount = periodicUpdates;
+        this.lastNodesLazyUpdatePercentage = lastNodesLazyUpdatePercentage;
+        this.neighborUpdatePercentage = neighborUpdatePercentage;
         return this;
     }
 
@@ -195,28 +212,32 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         meanDegree = g.getAllEdges().maxId() / g.nodes();
         int level = 1;
         counter = 0;
-        if (updateSize <= 0)
-            updateSize = Math.max(10, sortedNodes.size() / 15);
+        int logSize = Math.max(10, sortedNodes.size() / 15);
 
-        int updateCounter = 0;
-        StopWatch updateSW = new StopWatch();
+        StopWatch allSW = new StopWatch().start();
 
         // preparation takes longer but queries are slightly faster with preparation
         // => enable it but call not so often
         boolean periodicUpdate = true;
+        int updateCounter = 0;
+        StopWatch periodSW = new StopWatch();
 
-        // disable as preparation is slower and query time does not benefit
-        boolean lazyUpdate = true;
+        // disable as preparation is slower and query time does not benefit        
+        int lastNodesLazyUpdates = sortedNodes.size() / (100 / lastNodesLazyUpdatePercentage);
+        StopWatch lazySW = new StopWatch();
 
         // Recompute priority of uncontracted neighbors.
         // Without neighborupdates preparation is faster but we need them
         // to slightly improve query time. Also if not applied too often it decreases the shortcut number.
         boolean neighborUpdate = true;
+        StopWatch neighborSW = new StopWatch();
+
         while (!sortedNodes.isEmpty()) {
-            if (counter % updateSize == 0) {
+            if (counter % logSize == 0) {
                 // periodically update priorities of ALL nodes            
-                if (periodicUpdate && updateCounter > 0 && updateCounter % 3 == 0) {
-                    updateSW.start();
+                if (periodicUpdate && updateCounter > 0
+                        && updateCounter % periodicUpdatesCount == 0) {
+                    periodSW.start();
                     sortedNodes.clear();
                     int len = g.nodes();
                     for (int node = 0; node < len; node++) {
@@ -226,27 +247,35 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                         pNode.priority = calculatePriority(node);
                         sortedNodes.insert(node, pNode.priority);
                     }
-                    updateSW.stop();
+                    periodSW.stop();
                 }
                 updateCounter++;
                 logger.info(updateCounter + ", nodes: " + Helper.nf(sortedNodes.size())
                         + ", shortcuts:" + Helper.nf(newShortcuts)
-                        + ", t(update):" + (int) updateSW.getSeconds()
                         + ", dijkstras:" + Helper.nf(dijkstraCount)
                         + ", t(dijk):" + (int) dijkstraSW.getSeconds()
+                        + ", t(period):" + periodSW.getSeconds()
+                        + ", t(lazy):" + lazySW.getSeconds()
+                        + ", t(neighbor):" + neighborSW.getSeconds()
                         + ", meanDegree:" + (long) meanDegree
                         + ", " + Helper.memInfo());
+                periodSW = new StopWatch();
+                lazySW = new StopWatch();
+                neighborSW = new StopWatch();
             }
 
             counter++;
             PriorityNode wn = refs[sortedNodes.pollKey()];
-            if (lazyUpdate) {
+            if (sortedNodes.size() < lastNodesLazyUpdates) {
+                lazySW.start();
                 wn.priority = calculatePriority(wn.node);
                 if (!sortedNodes.isEmpty() && wn.priority > sortedNodes.peekValue()) {
                     // current node got more important => insert as new value and contract it later
                     sortedNodes.insert(wn.node, wn.priority);
+                    lazySW.stop();
                     continue;
                 }
+                lazySW.stop();
             }
 
             // contract!            
@@ -261,12 +290,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     // already contracted no update necessary
                     continue;
 
-                if (neighborUpdate && rand.nextInt(50) < 5) {
+                if (neighborUpdate && rand.nextInt(100) < neighborUpdatePercentage) {
+                    neighborSW.start();
                     PriorityNode neighborWn = refs[nn];
                     int oldPrio = neighborWn.priority;
                     neighborWn.priority = calculatePriority(nn);
                     if (neighborWn.priority != oldPrio)
                         sortedNodes.update(nn, oldPrio, neighborWn.priority);
+                    neighborSW.stop();
                 }
 
                 if (removesHigher2LowerEdges)
@@ -279,6 +310,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges
                 + ", dijkstras:" + dijkstraCount
                 + ", t(dijk):" + dijkstraSW.getSeconds()
+                + ", t(period):" + periodSW.getSeconds()
+                + ", t(lazy):" + lazySW.getSeconds()
+                + ", t(neighbor):" + neighborSW.getSeconds()
+                + ", t(all):" + allSW.stop().getSeconds()
                 + ", meanDegree:" + (long) meanDegree);
     }
     AddShortcutHandler addScHandler = new AddShortcutHandler();
