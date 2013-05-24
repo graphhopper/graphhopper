@@ -52,6 +52,7 @@ public class OSMReaderTest {
     private String file2 = "test-osm2.xml";
     private String file3 = "test-osm3.xml";
     private String file4 = "test-osm4.xml";
+    private String file5 = "test-osm-negative-ids.xml";
     private String dir = "./target/tmp/test-db";
     private CarFlagEncoder carEncoder = new CarFlagEncoder();
     private FootFlagEncoder footEncoder = new FootFlagEncoder();
@@ -229,7 +230,7 @@ public class OSMReaderTest {
     }
 
     @Test public void testMaxSpeed() {
-        GraphHopper hopper = new GraphHopperTest(file2){
+        GraphHopper hopper = new GraphHopperTest(file2) {
             @Override public void cleanUp() {
             }
         }.importOrLoad();
@@ -282,5 +283,27 @@ public class OSMReaderTest {
                 footOutFilter)));
         assertEquals(Arrays.asList(n10, n30), GHUtility.neighbors(graph.getEdges(n20,
                 footOutFilter)));
+    }
+
+    @Test public void testNegativeIds() {
+        GraphHopper hopper = new GraphHopperTest(file5).
+                acceptWay(new AcceptWay(true, false, false)).
+                importOrLoad();
+        Graph graph = hopper.graph();
+        assertEquals(4, graph.nodes());
+        int n20 = AbstractGraphTester.getIdOf(graph, 52);
+        int n10 = AbstractGraphTester.getIdOf(graph, 51.2492152);
+        int n30 = AbstractGraphTester.getIdOf(graph, 51.2);
+        assertEquals(Arrays.asList(n20), GHUtility.neighbors(graph.getEdges(n10, carOutFilter)));
+        assertEquals(3, GHUtility.count(graph.getEdges(n20, carOutFilter)));
+        assertEquals(Arrays.asList(n20), GHUtility.neighbors(graph.getEdges(n30, carOutFilter)));
+
+        EdgeIterator iter = graph.getEdges(n20, carOutFilter);
+        assertTrue(iter.next());
+        assertEquals(n10, iter.adjNode());
+        assertEquals(88643, iter.distance(), 1);
+        assertTrue(iter.next());
+        assertEquals(n30, iter.adjNode());
+        assertEquals(93147, iter.distance(), 1);
     }
 }

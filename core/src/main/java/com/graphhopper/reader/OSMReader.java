@@ -47,6 +47,7 @@ public class OSMReader {
     private long skippedLocations;
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
+    private Boolean negativeIds;
 
     public OSMReader(GraphStorage storage, long expectedNodes) {
         this.graphStorage = storage;
@@ -68,7 +69,7 @@ public class OSMReader {
         return fi;
     }
 
-    public void osm2Graph(File osmXmlFile) throws IOException {        
+    public void osm2Graph(File osmXmlFile) throws IOException {
         helper.preProcess(createInputStream(osmXmlFile));
         writeOsm2Graph(createInputStream(osmXmlFile));
     }
@@ -144,6 +145,13 @@ public class OSMReader {
             logger.error("cannot get id from xml node:" + sReader.getAttributeValue(null, "id"), ex);
             return;
         }
+
+        if (negativeIds == null)
+            negativeIds = osmId < 0;
+        else if (negativeIds != osmId < 0)
+            throw new IllegalStateException("You cannot mix positive and negative ids. See #42");
+        if (negativeIds)
+            osmId = -osmId;
 
         double lat = -1;
         double lon = -1;
