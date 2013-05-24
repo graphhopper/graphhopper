@@ -142,6 +142,11 @@ public class AcceptWay {
         if (value != null) {
             if (isTrue(value))
                 outProperties.put("caroneway", true);
+            else if( "-1".equals( value ))
+            {
+                outProperties.put("caroneway", true);
+                outProperties.put("caronewayreverse", true);
+            }
 
             // Abzweigung
             if ("roundabout".equals(value))
@@ -227,6 +232,9 @@ public class AcceptWay {
             if (integ != null) {
                 boolean bothways = !Boolean.TRUE.equals(properties.get("caroneway"));
                 flags = carEncoder.flags(integ, bothways);
+
+                if( Boolean.TRUE.equals(properties.get("caronewayreverse")) )
+                    flags = carEncoder.swapDirection( flags );
             }
         }
 
