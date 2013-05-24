@@ -373,14 +373,13 @@ public class MainActivity extends MapActivity {
     }
 
     void prepareGraph() {
-        logUser("loading graph (" + Constants.VERSION + "|" + Constants.VERSION_FILE
-                + ") ... ");
+        logUser("loading graph (" + Constants.VERSION + "|" + Constants.VERSION + ") ... ");
         new GHAsyncTask<Void, Void, Path>() {
             protected Path saveDoInBackground(Void... v) throws Exception {
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
                 tmpHopp.chShortcuts(true, true);
                 tmpHopp.load(mapsFolder + currentArea);
-                log("found graph with " + tmpHopp.graph().nodes() + " nodes");
+                log("found graph with " + tmpHopp.graph().nodes() + " nodes.");
                 hopper = tmpHopp;
                 return null;
             }

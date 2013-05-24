@@ -23,6 +23,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPlace;
 import gnu.trove.set.hash.TIntHashSet;
@@ -91,7 +92,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         index.searchRegion(false);
         TIntHashSet set = new TIntHashSet();
         set.add(0);
-        assertEquals(set, index.findNetworkEntries(0.5, -0.5));        
+        assertEquals(set, index.findNetworkEntries(0.5, -0.5));
         assertEquals(set, index.findNetworkEntries(-0.5, -0.9));
         assertEquals(2, index.findID(-0.5, -0.9));
 
@@ -165,7 +166,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         inMemIndex.store(inMemIndex.root, Location2NodesNtree.START_POINTER);
         assertEquals(1 << 20, index.capacity());
 
-        LocationIDResult res = index.findClosest(new GHPlace(-.5, -.5), EdgeFilter.ALL_EDGES);
+        LocationIDResult res = index.findClosest(-.5, -.5, EdgeFilter.ALL_EDGES);
         assertEquals(1, res.closestNode());
     }
 
@@ -246,19 +247,19 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         assertEquals(20, index.findID(51.25, 9.43));
     }
 
-    // TODO
-//    @Test
-//    public void testEdgeFilter() {
-//        Graph g = createTestGraph();
-//        Location2NodesNtree index = (Location2NodesNtree) createIndex(g, 1000);
-//
-//        assertEquals(1, index.findIDs(new GHPlace(-.7, -.7), Location2NodesNtree.ALL_EDGES).node);
-//        assertEquals(2, index.findIDs(new GHPlace(-.7, -.7), new EdgeFilter() {
-//            @Override public boolean accept(EdgeIterator iter) {
-//                return iter.baseNode() == 2 || iter.adjNode() == 2;
-//            }
-//        }).node);
-//    }
+    @Test
+    public void testEdgeFilter() {
+        Graph g = createTestGraph();
+        Location2NodesNtree index = (Location2NodesNtree) createIndex(g, 1000);
+
+        assertEquals(1, index.findClosest(-.6, -.6, EdgeFilter.ALL_EDGES).closestNode());
+        assertEquals(2, index.findClosest(-.6, -.6, new EdgeFilter() {
+            @Override public boolean accept(EdgeIterator iter) {
+                return iter.baseNode() == 2 || iter.adjNode() == 2;
+            }
+        }).closestNode());
+    }
+    
     // see testgraph2.jpg
     Graph createTestGraph2() {
         Graph graph = createGraph(new RAMDirectory());

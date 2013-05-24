@@ -23,11 +23,11 @@ import com.graphhopper.util.EdgeIterator;
 /**
  * Result of Location2IDIndex lookup
  *
- * @author Peter Karich, NG
+ * @author Peter Karich
  */
 public class LocationIDResult {
 
-    private double weight = Double.MAX_VALUE;    
+    private double weight = Double.MAX_VALUE;
     private int wayIndex = -3;
     private int closestNode = -1;
     private EdgeIterator closestEdge = null;
@@ -43,28 +43,31 @@ public class LocationIDResult {
         return closestNode;
     }
 
+    public void weight(double dist) {
+        weight = dist;
+    }
+
+    public void wayIndex(int wayIndex) {
+        this.wayIndex = wayIndex;
+    }
+
+    public double weight() {
+        return weight;
+    }
+
+    /**
+     * @return true if a close node was found
+     */
+    public boolean isValid() {
+        return closestNode >= 0;
+    }
+    
     public void closestEdge(EdgeIterator edge) {
     	this.closestEdge = edge;
     }
     
     public EdgeIterator closestEdge() {
     	return this.closestEdge;
-    }
-    
-    public void weight(double weight) {
-    	this.weight = weight;
-    }
-    
-    public double weight() {
-    	return this.weight;
-    }
-    
-    public void wayIndex(int index) {
-    	this.wayIndex = index;
-    }
-    
-    public int wayIndex() {
-    	return this.wayIndex;
     }
     
     @Override

@@ -18,22 +18,19 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMReader;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.Path;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.BBox;
 import static com.graphhopper.routing.util.NoOpAlgorithmPreparation.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,10 +45,10 @@ public class RoutingAlgorithmSpecialAreaTests {
     private final Graph unterfrankenGraph;
     private final Location2IDIndex idx;
 
-    public RoutingAlgorithmSpecialAreaTests(OSMReader reader) {
-        this.unterfrankenGraph = reader.graph();
+    public RoutingAlgorithmSpecialAreaTests(GraphHopper graphhopper) {
+        this.unterfrankenGraph = graphhopper.graph();
         StopWatch sw = new StopWatch().start();
-        idx = reader.location2IDIndex();
+        idx = graphhopper.index();
         logger.info(idx.getClass().getSimpleName() + " index. Size:"
                 + (float) idx.capacity() / (1 << 20) + " MB, took:" + sw.stop().getSeconds());
     }
@@ -63,8 +60,8 @@ public class RoutingAlgorithmSpecialAreaTests {
 
     void testAlgos() {
         if (unterfrankenGraph instanceof LevelGraph)
-            throw new IllegalStateException("run testAlgos only with a none-LevelGraph. Use osmreader.chShortcuts=false "
-                    + "Or use osmreader.chShortcuts=shortest and avoid the preparation");
+            throw new IllegalStateException("run testAlgos only with a none-LevelGraph. Use prepare.chShortcuts=false "
+                    + "Or use prepare.chShortcuts=shortest and avoid the preparation");
 
         TestAlgoCollector testCollector = new TestAlgoCollector("testAlgos");
         CarFlagEncoder carEncoder = new CarFlagEncoder();
@@ -72,14 +69,14 @@ public class RoutingAlgorithmSpecialAreaTests {
         for (AlgorithmPreparation prepare : prepares) {
             int failed = testCollector.errors.size();
             
-            // using osmreader.locationIndexHighResolution=1000
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0315, 10.5105).closestNode(), idx.findID(50.0303, 10.5070).closestNode(), 561.3, 20);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.51451, 9.967346).closestNode(), idx.findID(50.2920, 10.4650).closestNode(), 107826.9, 1755);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0780, 9.1570).closestNode(), idx.findID(49.5860, 9.9750).closestNode(), 92535.4, 1335);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.2800, 9.7190).closestNode(), idx.findID(49.8960, 10.3890).closestNode(), 77429.6, 1302);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.8020, 9.2470).closestNode(), idx.findID(50.4940, 10.1970).closestNode(), 125593.6, 2331);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.7260, 9.2550).closestNode(), idx.findID(50.4140, 10.2750).closestNode(),131706.1, 2215);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.1100, 10.7530).closestNode(), idx.findID(49.6500, 10.3410).closestNode(), 73170.2, 1417);
+            // using index.highResolution=1000
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 561.3, 20);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107826.9, 1755);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 92535.4, 1335);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77429.6, 1302);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125593.6, 2331);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750),131706.1, 2215);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73170.2, 1417);
 
             System.out.println("unterfranken " + prepare.createAlgo() + ": " + (testCollector.errors.size() - failed) + " failed");
         }
@@ -98,7 +95,8 @@ public class RoutingAlgorithmSpecialAreaTests {
                 createAlgoPrepare(g, "dijkstra", encoder)));
         if (withCh) {
             LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder().levelGraphCreate());
-            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().graph(graphCH);
+            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().
+                    graph(graphCH).vehicle(encoder);
             prepareCH.doWork();
             prepare.add(prepareCH);
             // TODO prepare.add(prepareCH.createAStar().approximation(true).approximationFactor(.9));

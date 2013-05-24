@@ -62,7 +62,7 @@ public class TestAlgoCollector {
     }
 
     void queryIndex(Graph g, Location2IDIndex idx, double lat, double lon, double expectedDist) {
-        int id = idx.findID(lat, lon).closestNode();
+        int id = idx.findID(lat, lon);
         if (id < 0) {
             errors.add("node not found for " + lat + "," + lon);
             return;

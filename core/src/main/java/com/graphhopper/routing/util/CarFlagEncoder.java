@@ -50,15 +50,15 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public boolean isAllowed(Map<String, Object> osmProperties) {
-        String highwayValue = (String) osmProperties.get("highway");
+    public boolean isAllowed(Map<String, String> osmProperties) {
+        String highwayValue = osmProperties.get("highway");
         if (!SPEED.containsKey(highwayValue))
             return false;
 
-        String motorcarValue = (String) osmProperties.get("motorcar");
+        String motorcarValue = osmProperties.get("motorcar");
         if ("no".equals(motorcarValue) || "none".equals(motorcarValue))
             return false;
-        String accessValue = (String) osmProperties.get("access");
+        String accessValue = osmProperties.get("access");
         if (!super.isAllowed(accessValue))
             return false;
         return !restricted.contains(accessValue);

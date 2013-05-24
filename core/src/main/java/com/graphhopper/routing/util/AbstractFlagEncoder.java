@@ -18,7 +18,6 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -52,7 +51,7 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
         BOTH = 3 << shift;
     }
 
-    public abstract boolean isAllowed(Map<String, Object> map);
+    public abstract boolean isAllowed(Map<String, String> osmProperties);
     
     protected boolean isAllowed(String accessValue) {
         return !"no".equals(accessValue);

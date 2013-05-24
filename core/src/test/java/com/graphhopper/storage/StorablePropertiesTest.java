@@ -16,10 +16,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.storage;
 
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -27,21 +25,21 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class CarFlagEncoderTest {
+public class StorablePropertiesTest {
 
     @Test
-    public void testAccess() {
-        CarFlagEncoder instance = new CarFlagEncoder();
-        Map<String, String> map = new HashMap<String, String>();
-        assertFalse(instance.isAllowed(map));
-        map.put("highway", "service");
-        assertTrue(instance.isAllowed(map));
-        map.put("access", "no");
-        assertFalse(instance.isAllowed(map));
-        map.clear();
-        
-        map.put("highway", "track");        
-        map.put("motorcar", "no");
-        assertFalse(instance.isAllowed(map));
+    public void testVersionCheck() {
+        StorableProperties instance = new StorableProperties(new RAMDirectory("", false), "prop");
+        instance.putCurrentVersions();
+        assertTrue(instance.checkVersions(true));
+
+        instance.put("nodes.version", 0);
+        assertFalse(instance.checkVersions(true));
+
+        try {
+            instance.checkVersions(false);
+            assertTrue(false);
+        } catch (Exception ex) {
+        }
     }
 }

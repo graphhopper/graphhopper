@@ -45,6 +45,7 @@ public class GHSortedCollection {
     }
 
     public void clear() {
+        size = 0;
         map.clear();
     }
 

@@ -28,9 +28,8 @@ else {
     host = "http://217.92.216.224:8080";
 }
 var ghRequest = new GHRequest(host);
-ghRequest.algoVehicle = "car";
 ghRequest.algoType = "fastest";
-//ghRequest.algo = "dijkstra";
+//ghRequest.algorithm = "dijkstra";
 
 $(document).ready(function(e) {
     // I'm really angry about you history.js :/ (triggering double events) ... but let us just use the url rewriting thing
@@ -51,16 +50,34 @@ $(document).ready(function(e) {
         bounds.minLat = tmp[1];
         bounds.maxLon = tmp[2];
         bounds.maxLat = tmp[3];
+        var vehiclesDiv = $("#vehicles");
+        function createButton(text) {
+            var button = $("<button/>")            
+            button.attr('id', text);
+            button.html(text.charAt(0) + text.substr(1).toLowerCase());
+            button.click(function() {
+                ghRequest.vehicle = text;
+                resolveFrom();
+                resolveTo();
+                routeLatLng(ghRequest);
+            });
+            return button;
+        }
+        
+        var vehicles = json.supportedVehicles.split(",");
+        if(vehicles.length > 1)
+            for(var i = 0; i < vehicles.length; i++) {
+                vehiclesDiv.append(createButton(vehicles[i]));
+            }
     }, function(err) {
         // error bounds
         console.log(err);
         $('#error').html('GraphHopper API offline? ' + host);
     }).done(function() {
-        var params = parseUrlWithHisto()        
-        if(params.minPathPrecision)
-            ghRequest.minPathPrecision = params.minPathPrecision;
-        var fromAndTo = params.from && params.to;
+        var params = parseUrlWithHisto();
+        ghRequest.init(params);
         initMap();
+        var fromAndTo = params.from && params.to;    
         var routeNow = params.point && params.point.length == 2 || fromAndTo;
         if(routeNow) {
             if(fromAndTo)
@@ -164,7 +181,7 @@ function initMap() {
             ghRequest.to.setCoord(e.latlng.lat, e.latlng.lng);
             resolveTo();            
             // do not wait for resolving
-            routeLatLng(ghRequest);            
+            routeLatLng(ghRequest);
         }
     }
 
@@ -304,8 +321,11 @@ function routeLatLng(request) {
     setFlag(request.from, true);
     setFlag(request.to, false);    
     
+    $("#vehicles button").removeClass();
+    $("button#"+request.vehicle).addClass("bold");
+
     var urlForAPI = "point=" + from + "&point=" + to;
-    var urlForHistory = "?point=" + request.from.input + "&point=" + request.to.input;
+    var urlForHistory = "?point=" + request.from.input + "&point=" + request.to.input + "&vehicle=" + request.vehicle;
     if(request.minPathPrecision != 1) {
         urlForHistory += "&minPathPrecision=" + request.minPathPrecision;
         urlForAPI += "&minPathPrecision=" + request.minPathPrecision;
@@ -356,7 +376,7 @@ function routeLatLng(request) {
         var googleLink = $("<a>Google</a> ");
         var addToGoogle = "";
         var addToBing = "";
-        if(request.algoVehicle == "foot") {
+        if(request.vehicle == "foot") {
             addToGoogle = "&dirflg=w";
             addToBing = "&mode=W";
         }
