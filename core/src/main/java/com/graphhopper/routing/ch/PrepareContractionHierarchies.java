@@ -91,7 +91,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private StopWatch dijkstraSW = new StopWatch();
     private int periodicUpdatesCount = 3;
     private int lastNodesLazyUpdatePercentage = 10;
-    private int neighborUpdatePercentage = 40;
+    private int neighborUpdatePercentage = 10;
 
     public PrepareContractionHierarchies() {
         type(new ShortestCalc()).vehicle(new CarFlagEncoder());
