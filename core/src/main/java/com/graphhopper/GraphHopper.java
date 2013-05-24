@@ -293,19 +293,24 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    private void printInfo() {
-        logger.info("version " + Constants.VERSION                
+    private void printInfo(StorableProperties props) {
+        String versionInfoStr = "";
+        if (props != null)
+            versionInfoStr = props.versionsToString();
+
+        logger.info("version " + Constants.VERSION
                 + "|" + Constants.BUILD_DATE
-                + "|" + properties().versionsToString());
+                + ", installed:" + Constants.getVersions()
+                + "|" + versionInfoStr);
         logger.info("graph " + graph.toString());
     }
 
     public GraphHopper importOrLoad() {
         if (!load(ghLocation)) {
-            printInfo();
+            printInfo(null);
             importOSM(ghLocation, osmFile);
         } else
-            printInfo();
+            printInfo(properties());
         return this;
     }
 

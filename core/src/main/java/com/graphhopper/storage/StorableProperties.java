@@ -101,7 +101,7 @@ public class StorableProperties implements Storable<StorableProperties> {
 
     public void putCurrentVersions() {
         put("nodes.version", Constants.VERSION_NODE);
-        put("edges.version", Constants.VERSION_NODE);
+        put("edges.version", Constants.VERSION_EDGE);
         put("geometry.version", Constants.VERSION_GEOMETRY);
         put("locationIndex.version", Constants.VERSION_LOCATION_IDX);
     }
@@ -114,9 +114,9 @@ public class StorableProperties implements Storable<StorableProperties> {
     }
 
     public boolean checkVersions(boolean silent) {
-        if (!check("edges", Constants.VERSION_EDGE, silent))
-            return false;
         if (!check("nodes", Constants.VERSION_NODE, silent))
+            return false;
+        if (!check("edges", Constants.VERSION_EDGE, silent))
             return false;
         if (!check("geometry", Constants.VERSION_GEOMETRY, silent))
             return false;
