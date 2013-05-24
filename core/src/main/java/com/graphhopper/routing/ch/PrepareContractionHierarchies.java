@@ -91,6 +91,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private StopWatch dijkstraSW = new StopWatch();
     private int periodicUpdatesCount = 3;
     private int lastNodesLazyUpdatePercentage = 10;
+    private StopWatch allSW = new StopWatch();
     private int neighborUpdatePercentage = 10;
 
     public PrepareContractionHierarchies() {
@@ -132,20 +133,35 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
      * The higher the values are the longer the preparation takes but the less
      * shortcuts are produced.
      *
-     * @param lastNodesLazyUpdatePercentage specifies when lazy updates will
-     * happen, measured relative to all existing nodes. 100 means always.
-     * @param neighborUpdatePercentage specifies how often neighbor updates will
-     * happen. 100 means always.
      * @param periodicUpdates specifies how often periodic updates will happen.
      * 1 means always. 2 means only 1 of 2 times. etc
      */
-    public PrepareContractionHierarchies configure(
-            int periodicUpdates,
-            int lastNodesLazyUpdatePercentage,
-            int neighborUpdatePercentage) {
+    public PrepareContractionHierarchies periodicUpdates(int periodicUpdates) {
+        if (periodicUpdates < 0)
+            throw new IllegalArgumentException("periodicUpdates has to be positive. To disable it use 0");
         this.periodicUpdatesCount = periodicUpdates;
-        this.lastNodesLazyUpdatePercentage = lastNodesLazyUpdatePercentage;
-        this.neighborUpdatePercentage = neighborUpdatePercentage;
+        return this;
+    }
+
+    /**
+     * @param lazyUpdates specifies when lazy updates will happen, measured
+     * relative to all existing nodes. 100 means always.
+     */
+    public PrepareContractionHierarchies lazyUpdates(int lazyUpdates) {
+        if (lazyUpdates < 0 || lazyUpdates > 100)
+            throw new IllegalArgumentException("lazyUpdates has to be in [0, 100], to disable it use 0");
+        this.lastNodesLazyUpdatePercentage = lazyUpdates;
+        return this;
+    }
+
+    /**
+     * @param neighborUpdates specifies how often neighbor updates will happen.
+     * 100 means always.
+     */
+    public PrepareContractionHierarchies neighborUpdates(int neighborUpdates) {
+        if (neighborUpdates < 0 || neighborUpdates > 100)
+            throw new IllegalArgumentException("neighborUpdates has to be in [0, 100], to disable it use 0");
+        this.neighborUpdatePercentage = neighborUpdates;
         return this;
     }
 
@@ -162,6 +178,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     @Override
     public PrepareContractionHierarchies doWork() {
+        allSW.start();
         super.doWork();
         initFromGraph();
         if (!prepareEdges())
@@ -214,22 +231,26 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         counter = 0;
         int logSize = Math.max(10, sortedNodes.size() / 15);
 
-        StopWatch allSW = new StopWatch().start();
-
         // preparation takes longer but queries are slightly faster with preparation
         // => enable it but call not so often
         boolean periodicUpdate = true;
+        if (periodicUpdatesCount == 0)
+            periodicUpdate = false;
         int updateCounter = 0;
         StopWatch periodSW = new StopWatch();
 
-        // disable as preparation is slower and query time does not benefit        
-        int lastNodesLazyUpdates = sortedNodes.size() / (100 / lastNodesLazyUpdatePercentage);
+        // disable as preparation is slower and query time does not benefit
+        int lastNodesLazyUpdates = lastNodesLazyUpdatePercentage == 0
+                ? 0
+                : sortedNodes.size() / (100 / lastNodesLazyUpdatePercentage);
         StopWatch lazySW = new StopWatch();
 
         // Recompute priority of uncontracted neighbors.
         // Without neighborupdates preparation is faster but we need them
         // to slightly improve query time. Also if not applied too often it decreases the shortcut number.
         boolean neighborUpdate = true;
+        if (neighborUpdatePercentage == 0)
+            neighborUpdate = false;
         StopWatch neighborSW = new StopWatch();
 
         while (!sortedNodes.isEmpty()) {
@@ -262,7 +283,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 dijkstraSW = new StopWatch();
                 periodSW = new StopWatch();
                 lazySW = new StopWatch();
-                neighborSW = new StopWatch();                
+                neighborSW = new StopWatch();
             }
 
             counter++;

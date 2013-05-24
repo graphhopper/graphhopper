@@ -101,6 +101,9 @@ public class GraphHopper implements GraphHopperAPI {
     private AcceptWay acceptWay = new AcceptWay(true, false, false);
     private long expectedNodes = 10;
     private double wayPointMaxDistance = 1;
+    private int periodicUpdates = 3;
+    private int lazyUpdates = 10;
+    private int neighborUpdates = 20;
     private StorableProperties properties;
 
     public GraphHopper() {
@@ -279,6 +282,12 @@ public class GraphHopper implements GraphHopperAPI {
                 || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
         if (levelGraph)
             chShortcuts(true, !"shortest".equals(chShortcuts));
+        if (args.has("prepare.updates.periodic"))
+            periodicUpdates = args.getInt("prepare.updates.periodic", -1);
+        if (args.has("prepare.updates.lazy"))
+            lazyUpdates = args.getInt("prepare.updates.lazy", -1);
+        if (args.has("prepare.updates.neighbor"))
+            neighborUpdates = args.getInt("prepare.updates.neighbor", -1);
 
         // routing
         defaultAlgorithm = args.get("routing.defaultAlgorithm", defaultAlgorithm);
@@ -406,6 +415,9 @@ public class GraphHopper implements GraphHopperAPI {
             } else {
                 tmpPrepareCH.type(new ShortestCalc()).vehicle(encoder);
             }
+            tmpPrepareCH.periodicUpdates(periodicUpdates).
+                    lazyUpdates(lazyUpdates).
+                    neighborUpdates(neighborUpdates);
             prepare = tmpPrepareCH;
             prepare.graph(graph);
         } else {
