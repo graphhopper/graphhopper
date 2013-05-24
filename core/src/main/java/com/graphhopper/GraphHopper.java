@@ -331,9 +331,11 @@ public class GraphHopper implements GraphHopperAPI {
         	logger.debug("Solved path: nodes:{} distance:{} time:{}", new Object[]{path.calcPoints().size(), path.distance(), path.time()});
         }
         
+        sw = new StopWatch().start();
         PathFinisher finishedPath = new PathFinisher(from, to, request.from(), request.to(), path, request.vehicle(), graph);
 //		PointList points = path.calcPoints();
         PointList points = finishedPath.getFinishedPointList();
+        debug.append(", ").append("finished-path:").append(sw.stop().getSeconds()).append('s');
 
         if(logger.isDebugEnabled()) {
         	logger.debug("Finished path: nodes:{} distance:{} time:{}", new Object[]{finishedPath.getFinishedPointList().size(), finishedPath.getFinishedDistance(), finishedPath.getFinishedTime()});
