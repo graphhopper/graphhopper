@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Integration tests for one bigger area - at the moment Unterfranken (Germany).
+ * Execute via ./graphhopper.sh test unterfranken.osm
  *
  * @author Peter Karich
  */
@@ -68,15 +69,15 @@ public class RoutingAlgorithmSpecialAreaTests {
         Collection<AlgorithmPreparation> prepares = createAlgos(unterfrankenGraph, carEncoder, true);
         for (AlgorithmPreparation prepare : prepares) {
             int failed = testCollector.errors.size();
-            
+
             // using index.highResolution=1000
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0315, 10.5105), idx.findID(50.0303, 10.5070), 561.3, 20);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107826.9, 1755);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 92535.4, 1335);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77429.6, 1302);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125593.6, 2331);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750),131706.1, 2215);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73170.2, 1417);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0314, 10.5105), idx.findID(50.0303, 10.5070), 559, 19);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.51451, 9.967346), idx.findID(50.2920, 10.4650), 107837, 1659);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 93122, 1292);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77238, 1278);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125894, 2213);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 135625, 2192);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73152, 1300);
 
             System.out.println("unterfranken " + prepare.createAlgo() + ": " + (testCollector.errors.size() - failed) + " failed");
         }
@@ -109,7 +110,7 @@ public class RoutingAlgorithmSpecialAreaTests {
         testCollector.queryIndex(unterfrankenGraph, idx, 50.081241, 10.124366, 14.0);
         testCollector.queryIndex(unterfrankenGraph, idx, 50.081146, 10.124496, 0.0);
         testCollector.queryIndex(unterfrankenGraph, idx, 49.682000, 9.943000, 602.2);
-        testCollector.queryIndex(unterfrankenGraph, idx, 50.079341, 10.167925, 122.6);
+        testCollector.queryIndex(unterfrankenGraph, idx, 50.066495,10.191836, 53.1);
 
         testCollector.printSummary();
     }

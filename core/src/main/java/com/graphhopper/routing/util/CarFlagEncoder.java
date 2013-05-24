@@ -35,6 +35,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         restricted.add("private");
         restricted.add("agricultural");
         restricted.add("forestry");
+        restricted.add("no");
+        restricted.add("private");
     }
 
     public boolean isMotorway(int flags) {
@@ -58,9 +60,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         String motorcarValue = osmProperties.get("motorcar");
         if ("no".equals(motorcarValue) || "none".equals(motorcarValue))
             return false;
-        String accessValue = osmProperties.get("access");
-        if (!super.isAllowed(accessValue))
+        String motorVehicle = osmProperties.get("motor_vehicle");
+        if (restricted.contains(motorVehicle))
             return false;
+        String accessValue = osmProperties.get("access");
         return !restricted.contains(accessValue);
     }
 

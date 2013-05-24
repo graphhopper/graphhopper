@@ -455,6 +455,8 @@ public class GraphHopper implements GraphHopperAPI {
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
         if (to < 0)
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.to()));
+        if(from == to)
+            rsp.addError(new IllegalArgumentException("Point 1 is equal to point 2"));
 
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
