@@ -113,24 +113,28 @@ public class LineEquation {
 	 * @return
 	 */
 	public GHPlace getIntersection(double lat, double lon) {
-//		double c = lat + lon / a;
-//		double x = a * (c - b) / (a * a + 1);
-//		double y = (a * a * c + b) / (a * a + 1);
-		
 		// d1 : y=ax+b
 		// d2 : y=a2x+b2
-		// d1 perpendiculaire à d2 => a*a2 = -1 => a2 = -1/a
+		// d1 perpendicular to d2 => a2 = -1/a
 		double a2 = -1/a;
-		// d1 passe par lat/lon => lat = a2*lon + b2 => b2 = lat -(a2*lon)
+		// d2 passes by lat/lon => lat = a2*lon + b2 => b2 = lat -(a2*lon)
 		double b2 = lat -(a2*lon);
 		
 		double x = (b2-b)/(a-a2);
-		double y = a*lon+b;
-		double y2 = a2*lon+b2;
-		assert(y == y2);
+		double y = a*x+b;		
 		
-		
-		return new GHPlace(y, x);
+		GHPlace p = new GHPlace(y, x);
+		if(Double.isNaN(p.lon)) {
+			// special rare case handling
+			if(a == 0) {
+				// case D1 is horizontal
+				p = new GHPlace(b, lon);
+			} else if(Double.isInfinite(a)) {
+				// case D1 is vertical
+				p = new GHPlace(b2, p1[0]);
+			}
+		}
+		return p;
 	}
 
 	/**

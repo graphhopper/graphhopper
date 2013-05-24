@@ -611,11 +611,8 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                             tmpLon = wayLon;
                         }
 
-                        if (edgeDistCalcOnSearch
-                                && distCalc.validEdgeDistance(queryLat, queryLon,
-                                tmpLat, tmpLon, adjLat, adjLon))
-                            tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
-                                    tmpLat, tmpLon, adjLat, adjLon);
+                        if (edgeDistCalcOnSearch && distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon))
+                            tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
                         else
                             tmpDist = adjDist;
 
@@ -628,7 +625,7 @@ public class Location2NodesNtree implements Location2NodesIndex, Location2IDInde
                             closestNode.weight(dist);
                             closestNode.closestNode(node);
                             closestNode.wayIndex(wayIndex);
-                            closestNode.closestEdge(edge);
+                            closestNode.closestEdge(graph.getEdgeProps(edge.edge(), -1));
                         }
                     }
                 }.start(graph, networkEntryNodeId, false);

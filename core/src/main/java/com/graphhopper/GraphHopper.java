@@ -21,6 +21,9 @@ package com.graphhopper;
 import java.io.File;
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathFinisher;
@@ -61,6 +64,9 @@ import com.graphhopper.util.StopWatch;
  * @author Peter Karich
  */
 public class GraphHopper implements GraphHopperAPI {
+	
+	
+	private static final Logger logger = LoggerFactory.getLogger(GraphHopper.class);
 
     private Graph graph;
     private AlgorithmPreparation prepare;
@@ -267,14 +273,13 @@ public class GraphHopper implements GraphHopperAPI {
         StopWatch sw = new StopWatch().start();
         LocationIDResult from = index.findID(request.from().lat, request.from().lon);
         LocationIDResult to = index.findID(request.to().lat, request.to().lon);
-        String debug = "idLookup:" + sw.stop().getSeconds() + "s";
+        StringBuilder debug = new StringBuilder("idLookup:").append(sw.stop().getSeconds()).append('s');
         GHResponse rsp = new GHResponse();
         if (from == null)
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
         if (to == null)
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.to()));
-        
-        
+                
         // get nodes to route
 //        Graph graph = this.graph;
 //        int fromId, toId;
@@ -308,7 +313,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
         if (rsp.hasError())
             return rsp;
-        debug += ", algoInit:" + sw.stop().getSeconds() + "s";
+        debug.append(", algoInit:").append(sw.stop().getSeconds()).append('s');
 
         RouteNodeResolver nodeFinder = this.getNodeResolver(request);
         boolean sameEdge = this.isSameEdge(from, to);
@@ -319,22 +324,29 @@ public class GraphHopper implements GraphHopperAPI {
         // compute route path
         sw = new StopWatch().start();
         Path path = algo.calcPath(fromId, toId);
-        debug += ", " + algo.name() + "-routing:" + sw.stop().getSeconds() + "s"
-                + ", " + path.debugInfo();
+        debug.append(", ").append(algo.name()).append("-routing:").append(sw.stop().getSeconds()).append('s')
+             .append(", ").append(path.debugInfo());
         
-//        PathFinisher finishedPath = new PathFinisher(from, to, request.from(), request.to(), path, graph);
-        PointList points = path.calcPoints();
-//        PointList points = finishedPath.getFinishedPointList();
+        if(logger.isDebugEnabled()) {
+        	logger.debug("Solved path: nodes:{} distance:{} time:{}", new Object[]{path.calcPoints().size(), path.distance(), path.time()});
+        }
         
+        PathFinisher finishedPath = new PathFinisher(from, to, request.from(), request.to(), path, request.vehicle(), graph);
+//		PointList points = path.calcPoints();
+        PointList points = finishedPath.getFinishedPointList();
+
+        if(logger.isDebugEnabled()) {
+        	logger.debug("Finished path: nodes:{} distance:{} time:{}", new Object[]{finishedPath.getFinishedPointList().size(), finishedPath.getFinishedDistance(), finishedPath.getFinishedTime()});
+        }
         // simplify route geometry
         if (simplifyRequest) {
             sw = new StopWatch().start();
             int orig = points.size();
             double minPathPrecision = request.getHint("douglas.minprecision", 1d);
             new DouglasPeucker().maxDistance(minPathPrecision).simplify(points);
-            debug += ", simplify (" + orig + "->" + points.size() + "):" + sw.stop().getSeconds() + "s";
+            debug.append(", simplify (").append(orig).append("->").append(points.size()).append("):").append(sw.stop().getSeconds()).append('s');
         }
-        return rsp.points(points).distance(path.distance()).time(path.time()).debugInfo(debug);
+        return rsp.points(points).distance(finishedPath.getFinishedDistance()).time(finishedPath.getFinishedTime()).debugInfo(debug.toString());
     }
 
     private void initIndex(Directory dir) {
