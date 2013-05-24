@@ -254,14 +254,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                         + ", shortcuts:" + Helper.nf(newShortcuts)
                         + ", dijkstras:" + Helper.nf(dijkstraCount)
                         + ", t(dijk):" + (int) dijkstraSW.getSeconds()
-                        + ", t(period):" + periodSW.getSeconds()
-                        + ", t(lazy):" + lazySW.getSeconds()
-                        + ", t(neighbor):" + neighborSW.getSeconds()
+                        + ", t(period):" + (int) periodSW.getSeconds()
+                        + ", t(lazy):" + (int) lazySW.getSeconds()
+                        + ", t(neighbor):" + (int) neighborSW.getSeconds()
                         + ", meanDegree:" + (long) meanDegree
                         + ", " + Helper.memInfo());
+                dijkstraSW = new StopWatch();
                 periodSW = new StopWatch();
                 lazySW = new StopWatch();
-                neighborSW = new StopWatch();
+                neighborSW = new StopWatch();                
             }
 
             counter++;
@@ -309,11 +310,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 + ", " + prepareEncoder
                 + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges
                 + ", dijkstras:" + dijkstraCount
-                + ", t(dijk):" + dijkstraSW.getSeconds()
-                + ", t(period):" + periodSW.getSeconds()
-                + ", t(lazy):" + lazySW.getSeconds()
-                + ", t(neighbor):" + neighborSW.getSeconds()
-                + ", t(all):" + allSW.stop().getSeconds()
+                + ", t(dijk):" + (int) dijkstraSW.getSeconds()
+                + ", t(period):" + (int) periodSW.getSeconds()
+                + ", t(lazy):" + (int) lazySW.getSeconds()
+                + ", t(neighbor):" + (int) neighborSW.getSeconds()
+                + ", t(all):" + (int) allSW.stop().getSeconds()
                 + ", meanDegree:" + (long) meanDegree);
     }
     AddShortcutHandler addScHandler = new AddShortcutHandler();
