@@ -581,7 +581,7 @@ public class Location2NodesNtree implements Location2IDIndex {
                         double adjLat = graph.getLatitude(adjNode);
                         double adjLon = graph.getLongitude(adjNode);
 
-                        check(tmpNode, currDist, -adjNode - 2);
+                        check(tmpNode, currDist, -adjNode - 2, currEdge);
 
                         double tmpDist;
                         double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
@@ -597,14 +597,14 @@ public class Location2NodesNtree implements Location2IDIndex {
                             if (NumHelper.equalsEps(queryLat, wayLat, 1e-6)
                                     && NumHelper.equalsEps(queryLon, wayLon, 1e-6)) {
                                 // equal point found
-                                check(tmpNode, 0d, pointIndex);
+                                check(tmpNode, 0d, pointIndex, currEdge);
                                 break;
                             } else if (edgeDistCalcOnSearch
                                     && distCalc.validEdgeDistance(queryLat, queryLon,
                                     tmpLat, tmpLon, wayLat, wayLon)) {
                                 tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                         tmpLat, tmpLon, wayLat, wayLon);
-                                check(tmpNode, tmpDist, pointIndex);
+                                check(tmpNode, tmpDist, pointIndex, currEdge);
                             }
 
                             tmpLat = wayLat;
@@ -619,15 +619,16 @@ public class Location2NodesNtree implements Location2IDIndex {
                         else
                             tmpDist = adjDist;
 
-                        check(tmpNode, tmpDist, -currNode - 2);
+                        check(tmpNode, tmpDist, -currNode - 2, currEdge);
                         return closestNode.weight() >= 0;
                     }
 
-                    void check(int node, double dist, int wayIndex) {
+                    void check(int node, double dist, int wayIndex, EdgeIterator edge) {
                         if (dist < closestNode.weight()) {
                             closestNode.weight(dist);
                             closestNode.closestNode(node);
                             closestNode.wayIndex(wayIndex);
+                            closestNode.closestEdge(graph.getEdgeProps(edge.edge(), -1));
                         }
                     }
                 }.start(graph, networkEntryNodeId, false);
