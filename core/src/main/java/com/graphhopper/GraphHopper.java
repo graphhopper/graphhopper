@@ -296,12 +296,11 @@ public class GraphHopper implements GraphHopperAPI {
     private void printInfo(StorableProperties props) {
         String versionInfoStr = "";
         if (props != null)
-            versionInfoStr = props.versionsToString();
+            versionInfoStr = " | load:" + props.versionsToString();
 
         logger.info("version " + Constants.VERSION
-                + "|" + Constants.BUILD_DATE
-                + ", installed:" + Constants.getVersions()
-                + "|" + versionInfoStr);
+                + "|" + Constants.BUILD_DATE + " (" + Constants.getVersions() + ")"
+                + versionInfoStr);
         logger.info("graph " + graph.toString());
     }
 
@@ -455,7 +454,7 @@ public class GraphHopper implements GraphHopperAPI {
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
         if (to < 0)
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.to()));
-        if(from == to)
+        if (from == to)
             rsp.addError(new IllegalArgumentException("Point 1 is equal to point 2"));
 
         sw = new StopWatch().start();
