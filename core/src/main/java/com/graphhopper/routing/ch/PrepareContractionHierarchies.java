@@ -336,7 +336,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 + ", t(lazy):" + (int) lazySW.getSeconds()
                 + ", t(neighbor):" + (int) neighborSW.getSeconds()
                 + ", t(all):" + (int) allSW.stop().getSeconds()
-                + ", meanDegree:" + (long) meanDegree);
+                + ", meanDegree:" + (long) meanDegree
+                + ", periodic:" + periodicUpdatesCount
+                + ", lazy:" + lastNodesLazyUpdatePercentage
+                + ", neighbor:" + neighborUpdatePercentage);
     }
     AddShortcutHandler addScHandler = new AddShortcutHandler();
     CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
