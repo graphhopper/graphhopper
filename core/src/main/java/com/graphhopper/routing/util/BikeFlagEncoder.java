@@ -52,9 +52,20 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         }
     };
     private static final Map<String, Integer> SPEED = new FootSpeed();
+    private HashSet<String> intended = new HashSet<String>();
 
     public BikeFlagEncoder() {
         super(8, 2, SPEED.get("mean"), SPEED.get("max"));
+
+        // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
+        restrictions = new String[] { "bicycle", "access"};
+        restricted.add("private");
+        restricted.add("no");
+        restricted.add("restricted");
+        intended.add( "yes" );
+        intended.add( "designated" );
+        intended.add( "official" );
+        intended.add( "permissive" );
     }
 
     public Integer getSpeed(String string) {
@@ -74,11 +85,13 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         if (!allowedHighwayTags.contains(highwayValue))
             return false;
 
-        String bicycleValue = osmProperties.get("bicycle");
-        if ("yes".equals(bicycleValue))
+        if( hasTag( "bicycle", intended, osmProperties ))
             return true;
-        String accessValue = osmProperties.get("access");
-        return super.isAllowed(accessValue);
+
+        if( hasTag( "motorroad", "yes", osmProperties ))
+            return false;
+
+        return checkAccessRestrictions( osmProperties );
     }
 
     /**

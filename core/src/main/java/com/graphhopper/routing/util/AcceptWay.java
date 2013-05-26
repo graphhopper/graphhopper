@@ -62,6 +62,42 @@ public class AcceptWay {
         return foot;
     }
 
+    /*
+    Determine whether an osm way is a routable way
+     */
+    public boolean accept( Map<String, String> osmProperties ) {
+        boolean includeWay = false;
+        String value = osmProperties.get("highway");
+        if (value != null) {
+            if (foot && footEncoder.isAllowed(osmProperties)) {
+                includeWay = true;
+            }
+            if (bike && bikeEncoder.isAllowed(osmProperties)) {
+                includeWay = true;
+            }
+
+            if (car && carEncoder.isAllowed(osmProperties)) {
+                includeWay = true;
+            }
+        }
+
+        value = osmProperties.get("route");
+        if (value != null
+                && ("shuttle_train".equals(value) || "ferry".equals(value))) {
+            Object motorcarProp = osmProperties.get("motorcar");
+            Object bikeProp = osmProperties.get("bike");
+            Object footProp = osmProperties.get("motorcar");
+            boolean allEmpty = motorcarProp == null && bikeProp == null && footProp == null;
+            if (car && (allEmpty || isTrue(motorcarProp))
+                    || bike && (allEmpty || isTrue(bikeProp))
+                    || foot && (allEmpty || isTrue(footProp))) {
+
+                includeWay = true;
+            }
+        }
+        return includeWay;
+    }
+
     /**
      * Processes way properties of different kind to determine speed and
      * direction.

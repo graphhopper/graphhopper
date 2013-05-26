@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -38,6 +39,9 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
     private final int maxSpeed;
     private final int flagWindow;
 
+    protected String[] restrictions;
+    protected HashSet<String> restricted = new HashSet<String>();
+
     public AbstractFlagEncoder(int shift, int factor, int defaultSpeed, int maxSpeed) {
         this.factor = factor;
         this.defaultSpeedPart = defaultSpeed / factor;
@@ -51,8 +55,21 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
         BOTH = 3 << shift;
     }
 
+    /*
+        Decided whether a way is routable for a given mode of travel
+     */
     public abstract boolean isAllowed(Map<String, String> osmProperties);
-    
+
+    /*
+        Analyze properties of a way
+     */
+/*
+    public void handleWayTags( Map<String, String> osmProperties, Map<String, Object> outProperties )
+    {
+
+    }
+*/
+
     protected boolean isAllowed(String accessValue) {
         return !"no".equals(accessValue);
     }
@@ -109,5 +126,36 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
     @Override
     public int getMaxSpeed() {
         return maxSpeed;
+    }
+
+
+    /**
+     * Simple Helper to check for OSM tags
+     */
+    protected boolean hasTag( String tag, String check, Map<String, String> osmProperties )
+    {
+        String value = osmProperties.get( tag );
+        return check.equals( value );
+    }
+
+    /**
+     * Check the osm properties against the set of rules set in the constructor
+     *
+     * @return
+     */
+    protected boolean checkAccessRestrictions( Map<String, String> osmProperties )
+    {
+        for( int i = 0; i < restrictions.length; i++ ) {
+            String osmValue = osmProperties.get( restrictions[i] );
+            if( osmValue != null && restricted.contains( osmValue ) )
+                return false;
+        }
+        return true;
+    }
+
+    protected boolean hasTag( String key, HashSet<String> values, Map<String, String> osmProperties )
+    {
+        String osmValue = osmProperties.get( key );
+        return osmValue != null && values.contains( osmValue );
     }
 }
