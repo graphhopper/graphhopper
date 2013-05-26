@@ -18,9 +18,7 @@ public class TurnRestrictionsCalc implements TurnCostCalculation {
     public double getTurnCosts(int viaNode, int fromEdge, int toEdge) {
         if (graph != null) {
             int flags = graph.turnCosts(viaNode, fromEdge, toEdge);
-            if(encoder.isTurnRestricted(flags)){
-                return Double.MAX_VALUE;
-            }
+            return encoder.getTurnCostsForCar(flags);
         }
         return 0;
     }
