@@ -103,6 +103,9 @@ public class GraphHopper implements GraphHopperAPI {
     private AcceptWay acceptWay = new AcceptWay(true, false, false);
 	private long expectedNodes = 10;
     private double wayPointMaxDistance = 1;
+    private int periodicUpdates = 3;
+    private int lazyUpdates = 10;
+    private int neighborUpdates = 20;
     private StorableProperties properties;
 
     public GraphHopper() {
@@ -291,6 +294,12 @@ public class GraphHopper implements GraphHopperAPI {
                 || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
         if (levelGraph)
             chShortcuts(true, !"shortest".equals(chShortcuts));
+        if (args.has("prepare.updates.periodic"))
+            periodicUpdates = args.getInt("prepare.updates.periodic", -1);
+        if (args.has("prepare.updates.lazy"))
+            lazyUpdates = args.getInt("prepare.updates.lazy", -1);
+        if (args.has("prepare.updates.neighbor"))
+            neighborUpdates = args.getInt("prepare.updates.neighbor", -1);
 
         // routing
         defaultAlgorithm = args.get("routing.defaultAlgorithm", defaultAlgorithm);
@@ -305,19 +314,23 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    private void printInfo() {
-        logger.info("version " + Constants.VERSION                
-                + "|" + Constants.BUILD_DATE
-                + "|" + properties().versionsToString());
+    private void printInfo(StorableProperties props) {
+        String versionInfoStr = "";
+        if (props != null)
+            versionInfoStr = " | load:" + props.versionsToString();
+
+        logger.info("version " + Constants.VERSION
+                + "|" + Constants.BUILD_DATE + " (" + Constants.getVersions() + ")"
+                + versionInfoStr);
         logger.info("graph " + graph.toString());
     }
 
     public GraphHopper importOrLoad() {
         if (!load(ghLocation)) {
-            printInfo();
+            printInfo(null);
             importOSM(ghLocation, osmFile);
         } else
-            printInfo();
+            printInfo(properties());
         return this;
     }
 
@@ -414,6 +427,9 @@ public class GraphHopper implements GraphHopperAPI {
             } else {
                 tmpPrepareCH.type(new ShortestCalc()).vehicle(encoder);
             }
+            tmpPrepareCH.periodicUpdates(periodicUpdates).
+                    lazyUpdates(lazyUpdates).
+                    neighborUpdates(neighborUpdates);
             prepare = tmpPrepareCH;
             prepare.graph(graph);
         } else if(turnCosts) { 
@@ -465,6 +481,8 @@ public class GraphHopper implements GraphHopperAPI {
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
         if (to < 0)
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.to()));
+        if (from == to)
+            rsp.addError(new IllegalArgumentException("Point 1 is equal to point 2"));
 
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
