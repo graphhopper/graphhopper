@@ -92,12 +92,35 @@ public class FootFlagEncoderTest {
         
         map.put("highway", "pedestrian");
         assertTrue(footEncoder.isAllowed(map));
-        
+
+        map.put("highway", "footway");
+        assertTrue(footEncoder.isAllowed(map));
+
+        map.put("highway", "motorway");
+        assertFalse( footEncoder.isAllowed(map));
+
+        map.put("highway", "path");
+        assertTrue(footEncoder.isAllowed(map));
+
+        map.put("bicycle", "official");
+        assertFalse(footEncoder.isAllowed(map));
+
+        map.put("foot", "official");
+        assertTrue(footEncoder.isAllowed(map));
+
+        map.clear();
+        map.put("highway", "service");
         map.put("access", "no");
         assertFalse(footEncoder.isAllowed(map));
         
         map.clear();
+        map.put("highway", "tertiary");
+        map.put("motorroad", "yes");
+        assertFalse(footEncoder.isAllowed(map));
+
+        map.clear();
         map.put("highway", "cycleway");
+        assertFalse( footEncoder.isAllowed(map));
         map.put("foot", "yes");
         assertTrue(footEncoder.isAllowed(map));        
     }

@@ -20,7 +20,6 @@ package com.graphhopper.reader;
 
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.EdgeIterator;
@@ -146,15 +145,40 @@ public abstract class OSMReaderHelper {
     }
 
     /**
+     * Filter ways but do not anayze properties
+     * wayNodes will be filled with participating node ids.
+     *
+     * @return true the current xml entry is a way entry and has nodes
+     */
+    boolean filterWay(XMLStreamReader sReader) throws XMLStreamException {
+
+        readWayAttributes( sReader );
+
+        boolean isWay = acceptWay.accept(osmProperties);
+        boolean hasNodes = wayNodes.size() > 1;
+        return isWay && hasNodes;
+    }
+
+    /**
      * wayNodes will be filled with participating node ids. outProperties will
      * be filled with way information after calling this method.
      *
      * @return true the current xml entry is a way entry and has nodes
      */
     boolean parseWay(XMLStreamReader sReader) throws XMLStreamException {
+        outProperties.clear();
+
+        readWayAttributes( sReader );
+
+        boolean isWay = acceptWay.handleTags( outProperties, osmProperties, wayNodes );
+        boolean hasNodes = wayNodes.size() > 1;
+        return isWay && hasNodes;
+    }
+
+    private void readWayAttributes( XMLStreamReader sReader ) throws XMLStreamException
+    {
         wayNodes.clear();
         osmProperties.clear();
-        outProperties.clear();
         for (int tmpE = sReader.nextTag(); tmpE != XMLStreamConstants.END_ELEMENT;
                 tmpE = sReader.nextTag()) {
             if (tmpE == XMLStreamConstants.START_ELEMENT) {
@@ -167,7 +191,8 @@ public abstract class OSMReaderHelper {
                     }
                 } else if ("tag".equals(sReader.getLocalName())) {
                     String tagKey = sReader.getAttributeValue(null, "k");
-                    if (tagKey != null && !Helper.isEmpty(tagKey)) {
+                    // check for null values is included in Helper.isEmpty
+                    if ( !Helper.isEmpty( tagKey )) {
                         String tagValue = sReader.getAttributeValue(null, "v");
                         osmProperties.put(tagKey, tagValue);
                     }
@@ -175,8 +200,5 @@ public abstract class OSMReaderHelper {
                 sReader.next();
             }
         }
-        boolean isWay = acceptWay.handleTags(outProperties, osmProperties, wayNodes);
-        boolean hasNodes = wayNodes.size() > 1;
-        return isWay && hasNodes;
     }
 }
