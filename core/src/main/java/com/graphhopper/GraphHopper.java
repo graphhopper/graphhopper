@@ -105,6 +105,9 @@ public class GraphHopper implements GraphHopperAPI {
     private AcceptWay acceptWay = new AcceptWay(true, false, false);
     private long expectedNodes = 10;
     private double wayPointMaxDistance = 1;
+    private int periodicUpdates = 3;
+    private int lazyUpdates = 10;
+    private int neighborUpdates = 20;
     private StorableProperties properties;
 
     public GraphHopper() {
@@ -283,6 +286,12 @@ public class GraphHopper implements GraphHopperAPI {
                 || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
         if (levelGraph)
             chShortcuts(true, !"shortest".equals(chShortcuts));
+        if (args.has("prepare.updates.periodic"))
+            periodicUpdates = args.getInt("prepare.updates.periodic", -1);
+        if (args.has("prepare.updates.lazy"))
+            lazyUpdates = args.getInt("prepare.updates.lazy", -1);
+        if (args.has("prepare.updates.neighbor"))
+            neighborUpdates = args.getInt("prepare.updates.neighbor", -1);
 
         // routing
         defaultAlgorithm = args.get("routing.defaultAlgorithm", defaultAlgorithm);
@@ -300,12 +309,11 @@ public class GraphHopper implements GraphHopperAPI {
     private void printInfo(StorableProperties props) {
         String versionInfoStr = "";
         if (props != null)
-            versionInfoStr = props.versionsToString();
+            versionInfoStr = " | load:" + props.versionsToString();
 
         logger.info("version " + Constants.VERSION
-                + "|" + Constants.BUILD_DATE
-                + ", installed:" + Constants.getVersions()
-                + "|" + versionInfoStr);
+                + "|" + Constants.BUILD_DATE + " (" + Constants.getVersions() + ")"
+                + versionInfoStr);
         logger.info("graph " + graph.toString());
     }
 
@@ -400,17 +408,16 @@ public class GraphHopper implements GraphHopperAPI {
         if (chUsage) {
             graph = new LevelGraphStorage(dir);
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
-
-            EdgePropertyEncoder encoder;
-            if (acceptWay.acceptsCar())
-                encoder = new CarFlagEncoder();
+            EdgePropertyEncoder encoder = acceptWay.getSingle();
+            if (chFast)
+                tmpPrepareCH.type(new FastestCalc(encoder));
             else
-                encoder = new FootFlagEncoder();
-            if (chFast) {
-                tmpPrepareCH.type(new FastestCalc(encoder)).vehicle(encoder);
-            } else {
-                tmpPrepareCH.type(new ShortestCalc()).vehicle(encoder);
-            }
+                tmpPrepareCH.type(new ShortestCalc());
+            tmpPrepareCH.vehicle(encoder);
+            tmpPrepareCH.periodicUpdates(periodicUpdates).
+                    lazyUpdates(lazyUpdates).
+                    neighborUpdates(neighborUpdates);
+
             prepare = tmpPrepareCH;
             prepare.graph(graph);
         } else {
@@ -442,9 +449,9 @@ public class GraphHopper implements GraphHopperAPI {
     @Override
     public GHResponse route(GHRequest request) {
         request.check();
-		StopWatch sw = new StopWatch().start();
-		GHResponse rsp = new GHResponse();
-		
+        StopWatch sw = new StopWatch().start();
+        GHResponse rsp = new GHResponse();
+
         if (!supportsVehicle(request.vehicle())) {
             rsp.addError(new IllegalArgumentException("Vehicle " + request.vehicle() + " unsupported. Supported are: " + acceptWay()));
             return rsp;
@@ -454,6 +461,7 @@ public class GraphHopper implements GraphHopperAPI {
         LocationIDResult from = index.findClosest(request.from().lat, request.from().lon, edgeFilter);
         LocationIDResult to = index.findClosest(request.to().lat, request.to().lon, edgeFilter);
         StringBuilder debug = new StringBuilder("idLookup:").append(sw.stop().getSeconds()).append('s');
+
         if (from == null)
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
         if (to == null)
@@ -520,12 +528,13 @@ public class GraphHopper implements GraphHopperAPI {
         	logger.debug("Finished path: nodes:{} distance:{} time:{}", new Object[]{finishedPath.getFinishedPointList().size(), finishedPath.getFinishedDistance(), finishedPath.getFinishedTime()});
         }
         // simplify route geometry
+        simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
         if (simplifyRequest) {
             sw = new StopWatch().start();
             int orig = points.size();
             double minPathPrecision = request.getHint("douglas.minprecision", 1d);
             if (minPathPrecision > 0)
-            	new DouglasPeucker().maxDistance(minPathPrecision).simplify(points);
+                new DouglasPeucker().maxDistance(minPathPrecision).simplify(points);
             debug.append(", simplify (").append(orig).append("->").append(points.size()).append("):").append(sw.stop().getSeconds()).append('s');
         }
         return rsp.points(points).distance(finishedPath.getFinishedDistance()).time(finishedPath.getFinishedTime()).debugInfo(debug.toString());

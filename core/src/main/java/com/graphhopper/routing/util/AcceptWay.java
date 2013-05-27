@@ -62,6 +62,42 @@ public class AcceptWay {
         return foot;
     }
 
+    /*
+    Determine whether an osm way is a routable way
+     */
+    public boolean accept( Map<String, String> osmProperties ) {
+        boolean includeWay = false;
+        String value = osmProperties.get("highway");
+        if (value != null) {
+            if (foot && footEncoder.isAllowed(osmProperties)) {
+                includeWay = true;
+            }
+            if (bike && bikeEncoder.isAllowed(osmProperties)) {
+                includeWay = true;
+            }
+
+            if (car && carEncoder.isAllowed(osmProperties)) {
+                includeWay = true;
+            }
+        }
+
+        value = osmProperties.get("route");
+        if (value != null
+                && ("shuttle_train".equals(value) || "ferry".equals(value))) {
+            Object motorcarProp = osmProperties.get("motorcar");
+            Object bikeProp = osmProperties.get("bike");
+            Object footProp = osmProperties.get("motorcar");
+            boolean allEmpty = motorcarProp == null && bikeProp == null && footProp == null;
+            if (car && (allEmpty || isTrue(motorcarProp))
+                    || bike && (allEmpty || isTrue(bikeProp))
+                    || foot && (allEmpty || isTrue(footProp))) {
+
+                includeWay = true;
+            }
+        }
+        return includeWay;
+    }
+
     /**
      * Processes way properties of different kind to determine speed and
      * direction.
@@ -142,6 +178,11 @@ public class AcceptWay {
         if (value != null) {
             if (isTrue(value))
                 outProperties.put("caroneway", true);
+            else if( "-1".equals( value ))
+            {
+                outProperties.put("caroneway", true);
+                outProperties.put("caronewayreverse", true);
+            }
 
             // Abzweigung
             if ("roundabout".equals(value))
@@ -227,6 +268,9 @@ public class AcceptWay {
             if (integ != null) {
                 boolean bothways = !Boolean.TRUE.equals(properties.get("caroneway"));
                 flags = carEncoder.flags(integ, bothways);
+
+                if( Boolean.TRUE.equals(properties.get("caronewayreverse")) )
+                    flags = carEncoder.swapDirection( flags );
             }
         }
 
@@ -260,8 +304,21 @@ public class AcceptWay {
     }
 
     public static AcceptWay parse(String acceptWayString) {
+        acceptWayString = acceptWayString.toUpperCase();
         return new AcceptWay(acceptWayString.contains("CAR"),
                 acceptWayString.contains("BIKE"),
                 acceptWayString.contains("FOOT"));
+    }
+
+    public EdgePropertyEncoder getSingle() {
+        if (countVehicles() > 1)
+            throw new IllegalStateException("multiple encoders are active. cannot return one:" + toString());
+        if (car)
+            return carEncoder;
+        if (bike)
+            return bikeEncoder;
+        if (foot)
+            return footEncoder;
+        throw new IllegalStateException("no encoder is active!");
     }
 }

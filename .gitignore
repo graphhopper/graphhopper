@@ -18,13 +18,6 @@ bin/
 scripts/googlecode_upload.py
 deploy.sh
 android/libs/graphhopper-*-android.jar
-<<<<<<< HEAD
-<<<<<<< HEAD
+*/nbactions.xml
 /.settings
 /.project
-=======
-*/nbactions.xml
->>>>>>> refs/remotes/origin/master
-=======
-*/nbactions.xml
->>>>>>> refs/remotes/origin/master

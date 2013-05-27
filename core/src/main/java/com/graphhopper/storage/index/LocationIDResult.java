@@ -69,7 +69,6 @@ public class LocationIDResult {
     public EdgeIterator closestEdge() {
     	return this.closestEdge;
     }
-    
     @Override
     public String toString() {
         return closestNode + ", " + weight + ", " + wayIndex;

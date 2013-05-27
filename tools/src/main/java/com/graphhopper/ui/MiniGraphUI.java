@@ -128,7 +128,14 @@ public class MiniGraphUI {
 //                int loc = index.findID(49.682000, 9.943000);
 //                mg.plotNode(g2, loc, Color.PINK);
 //                plotNodeName(g2, index.findID(49.682000, 9.943000));
-
+                
+//                g2.setColor(Color.RED.brighter().brighter());
+//
+//                path = calcPath(prepare.createAlgo());
+//                System.out.println("now: " + path.toDetailsString());
+//                plotPath(path, g2, 1);
+//                g2.setColor(Color.black);
+                
                 for (int nodeIndex = 0; nodeIndex < locs; nodeIndex++) {
                     if (fastPaint && rand.nextInt(30) > 1)
                         continue;
@@ -209,7 +216,7 @@ public class MiniGraphUI {
         // System.out.println(GraphUtility.getNodeInfo(graph, 60139, new DefaultEdgeFilter(new CarFlagEncoder()).direction(false, true)));
         // System.out.println(((GraphStorage) graph).debug(202947, 10));
 //        GraphUtility.printInfo(graph, 106511, 10);
-        return algo.calcPath(60139, 202947);
+        return algo.calcPath(162810, 35120);
     }
 
     void plotNodeName(Graphics2D g2, int node) {
@@ -226,7 +233,7 @@ public class MiniGraphUI {
 
         double prevLat = Double.NaN;
         double prevLon = Double.NaN;
-        boolean plotNodes = false;
+        boolean plotNodes = true;
         TIntList nodes = tmpPath.calcNodes();
         if (plotNodes) {
             for (int i = 0; i < nodes.size(); i++) {

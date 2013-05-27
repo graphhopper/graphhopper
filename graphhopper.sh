@@ -34,7 +34,7 @@ function ensureOsmXml {
   
     echo "## now downloading OSM file from $LINK and extracting to $OSM_XML"
     # make sure aborting download does not result in loading corrupt osm file
-    TMP_OSM=temp-$OSM_XML
+    TMP_OSM=temp.osm
     wget -O - $LINK | bzip2 -d > $TMP_OSM
     mv $TMP_OSM $OSM_XML
   
@@ -160,13 +160,8 @@ elif [ "x$ACTION" = "ximport" ]; then
 
 
 elif [ "x$ACTION" = "xtest" ]; then
- ALGO=$3
- if [ "x$ALGO" = "x" ]; then
-   ALGO=astar
- fi
-
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=$CONFIG \
-       graph.location="$GRAPH" osmreader.osm="$OSM_XML" \
+       graph.location="$GRAPH" osmreader.osm="$OSM_XML" prepare.chShortcuts=false \
        graph.testIT=true
 
        
