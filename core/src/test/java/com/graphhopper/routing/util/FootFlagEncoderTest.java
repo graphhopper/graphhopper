@@ -81,47 +81,48 @@ public class FootFlagEncoderTest {
     @Test
     public void testAccess() {
         Map<String, String> map = new HashMap<String, String>();
+        map.put("highway", "motorway");
         map.put("sidewalk", "yes");
-        assertTrue(footEncoder.isAllowed(map));
+        assertTrue(footEncoder.isAllowed(map) > 0);
         map.put("sidewalk", "left");
-        assertTrue(footEncoder.isAllowed(map));
-        
+        assertTrue(footEncoder.isAllowed(map) > 0);
+
         map.put("sidewalk", "none");
-        assertFalse(footEncoder.isAllowed(map));
+        assertFalse(footEncoder.isAllowed(map) > 0);
         map.clear();
-        
+
         map.put("highway", "pedestrian");
-        assertTrue(footEncoder.isAllowed(map));
+        assertTrue(footEncoder.isAllowed(map) > 0);
 
         map.put("highway", "footway");
-        assertTrue(footEncoder.isAllowed(map));
+        assertTrue(footEncoder.isAllowed(map) > 0);
 
         map.put("highway", "motorway");
-        assertFalse( footEncoder.isAllowed(map));
+        assertFalse(footEncoder.isAllowed(map) > 0);
 
         map.put("highway", "path");
-        assertTrue(footEncoder.isAllowed(map));
+        assertTrue(footEncoder.isAllowed(map) > 0);
 
         map.put("bicycle", "official");
-        assertFalse(footEncoder.isAllowed(map));
+        assertFalse(footEncoder.isAllowed(map) > 0);
 
         map.put("foot", "official");
-        assertTrue(footEncoder.isAllowed(map));
+        assertTrue(footEncoder.isAllowed(map) > 0);
 
         map.clear();
         map.put("highway", "service");
         map.put("access", "no");
-        assertFalse(footEncoder.isAllowed(map));
-        
+        assertFalse(footEncoder.isAllowed(map) > 0);
+
         map.clear();
         map.put("highway", "tertiary");
         map.put("motorroad", "yes");
-        assertFalse(footEncoder.isAllowed(map));
+        assertFalse(footEncoder.isAllowed(map) > 0);
 
         map.clear();
         map.put("highway", "cycleway");
-        assertFalse( footEncoder.isAllowed(map));
+        assertFalse(footEncoder.isAllowed(map) > 0);
         map.put("foot", "yes");
-        assertTrue(footEncoder.isAllowed(map));        
+        assertTrue(footEncoder.isAllowed(map) > 0);
     }
 }

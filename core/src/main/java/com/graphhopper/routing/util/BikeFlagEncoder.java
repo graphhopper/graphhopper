@@ -52,19 +52,25 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
     };
     private static final Map<String, Integer> SPEED = new BikeSpeed();
     private HashSet<String> intended = new HashSet<String>();
+    private HashSet<String> oppositeLanes = new HashSet<String>();
 
     public BikeFlagEncoder() {
         super(8, 2, SPEED.get("cycleway"), SPEED.get("road"));
 
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions = new String[]{"bicycle", "access"};
-        restricted.add("private");
-        restricted.add("no");
-        restricted.add("restricted");
+        restrictedValues.add("private");
+        restrictedValues.add("no");
+        restrictedValues.add("restricted");
+
         intended.add("yes");
         intended.add("designated");
         intended.add("official");
         intended.add("permissive");
+
+        oppositeLanes.add("opposite");
+        oppositeLanes.add("opposite_lane");
+        oppositeLanes.add("opposite_track");
     }
 
     public int getSpeed(String string) {
@@ -83,18 +89,57 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
      * Separate ways for pedestrians.
      */
     @Override
-    public boolean isAllowed(Map<String, String> osmProperties) {
+    public int isAllowed(Map<String, String> osmProperties) {
         String highwayValue = osmProperties.get("highway");
-        if (!allowedHighwayTags.contains(highwayValue))
-            return false;
+        if (highwayValue == null) {
+            if (hasTag("route", ferries, osmProperties)
+                    && hasTag("bicycle", "yes", osmProperties))
+                return acceptBit | ferryBit;
 
-        if (hasTag("bicycle", intended, osmProperties))
-            return true;
+            return 0;
+        } else {
+            if (!allowedHighwayTags.contains(highwayValue))
+                return 0;
 
-        if (hasTag("motorroad", "yes", osmProperties))
-            return false;
+            if (hasTag("bicycle", intended, osmProperties))
+                return acceptBit;
 
-        return super.isAllowed(osmProperties);
+            if (hasTag("motorroad", "yes", osmProperties))
+                return 0;
+
+            // check access restrictions
+            if (hasTag(restrictions, restrictedValues, osmProperties))
+                return 0;
+
+            return acceptBit;
+        }
+    }
+
+    @Override
+    public int handleWayTags(int allowed, Map<String, String> osmProperties) {
+        if ((allowed & acceptBit) == 0)
+            return 0;
+
+        int encoded = 0;
+        if ((allowed & ferryBit) == 0) {
+            // http://wiki.openstreetmap.org/wiki/Cycleway
+            // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway
+            String highwayValue = osmProperties.get("highway");
+            int speed = getSpeed(highwayValue);
+            if (hasTag("oneway", oneways, osmProperties)
+                    && !hasTag("oneway:bicycle", "no", osmProperties)
+                    && !hasTag("cycleway", oppositeLanes, osmProperties)) {
+                
+                encoded = flags(speed, false);                
+                if (hasTag("oneway", "-1", osmProperties))
+                    encoded = swapDirection(encoded);
+            } else
+                encoded = flags(speed, true);                
+        } else {
+            // TODO read duration and calculate speed 00:30 for ferry
+            encoded = flags(10, true);
+        }
+        return encoded;
     }
 
     /**
@@ -102,11 +147,6 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
      */
     public boolean isSaveHighway(String highwayValue) {
         return saveHighwayTags.contains(highwayValue);
-    }
-
-    public boolean isOpposite(String cycleway) {
-        return "opposite".equals(cycleway) || "opposite_lane".equals(cycleway)
-                || "opposite_track".equals(cycleway);
     }
 
     private static class BikeSpeed extends HashMap<String, Integer> {

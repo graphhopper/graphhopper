@@ -31,7 +31,6 @@ import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.Location2IDIndex;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
@@ -106,7 +105,7 @@ public class RoutingAlgorithmIntegrationTest {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2543, 86));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 125));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2564, 125));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2797, 124));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "BIKE", true, new BikeFlagEncoder());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -158,7 +157,7 @@ public class RoutingAlgorithmIntegrationTest {
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopper().setInMemory(true, true).
                     osmFile(osmFile).graphHopperLocation(graphFile).
-                    acceptWay(AcceptWay.parse(vehicles)).
+                    acceptWay(new AcceptWay(vehicles)).
                     importOrLoad();
 
             Graph g = hopper.graph();

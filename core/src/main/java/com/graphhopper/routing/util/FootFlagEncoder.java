@@ -60,11 +60,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     public FootFlagEncoder() {
         super(16, 1, SPEED.get("mean"), SPEED.get("max"));
-
         restrictions = new String[]{"foot", "access"};
-        restricted.add("private");
-        restricted.add("no");
-        restricted.add("restricted");
+        restrictedValues.add("private");
+        restrictedValues.add("no");
+        restrictedValues.add("restricted");
 
         intended.add("yes");
         intended.add("designated");
@@ -75,6 +74,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         sidewalks.add("both");
         sidewalks.add("left");
         sidewalks.add("right");
+        
+        ferries.add("shuttle_train");
+        ferries.add("ferry");
     }
 
     public Integer getSpeed(String string) {
@@ -92,24 +94,57 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      * Some ways are okay but not separate for pedestrians.
      */
     @Override
-    public boolean isAllowed(Map<String, String> osmProperties) {
-        if (hasTag("sidewalk", sidewalks, osmProperties))
-            return true;
-
-        if (hasTag("foot", intended, osmProperties))
-            return true;
-
+    public int isAllowed(Map<String, String> osmProperties) {
         String highwayValue = osmProperties.get("highway");
-        if (!allowedHighwayTags.contains(highwayValue))
-            return false;
+        if (highwayValue == null) {
+            if (hasTag("route", ferries, osmProperties)) {
+                if (!hasTag("foot", "no", osmProperties))
+                    return acceptBit | ferryBit;
+            }
+            return 0;
+        } else {
+            if (hasTag("sidewalk", sidewalks, osmProperties))
+                return acceptBit;
 
-        if (hasTag("motorroad", "yes", osmProperties))
-            return false;
+            // no need to evaluate ferries - already included here
+            if (hasTag("foot", intended, osmProperties))
+                return acceptBit;
 
-        if (hasTag("bicycle", "official", osmProperties))
-            return false;
+            if (!allowedHighwayTags.contains(highwayValue))
+                return 0;
 
-        return super.isAllowed(osmProperties);
+            if (hasTag("motorroad", "yes", osmProperties))
+                return 0;
+
+            if (hasTag("bicycle", "official", osmProperties))
+                return 0;
+            // check access restrictions
+            if (hasTag(restrictions, restrictedValues, osmProperties))
+                return 0;
+
+            return acceptBit;
+        }
+    }
+
+    @Override
+    public int handleWayTags(int allowed, Map<String, String> osmProperties) {
+        if ((allowed & acceptBit) == 0)
+            return 0;
+
+        int encoded = 0;
+        if ((allowed & ferryBit) == 0) {
+            //outProperties.put("foot", true);
+            encoded = flagsDefault(true);
+            //String highwayValue = osmProperties.get("highway");
+            //outProperties.put( "footsave", isSaveHighway( highwayValue ) );
+        } else {
+            // TODO read duration and calculate speed 00:30 for ferry
+            //outProperties.put("foot", true);
+            encoded = flagsDefault(true);
+            //outProperties.put("footpaid", true);
+        }
+
+        return encoded;
     }
 
     /**

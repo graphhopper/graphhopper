@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Peter Karich
@@ -38,10 +39,17 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
     private final int defaultSpeedPart;
     private final int maxSpeed;
     private final int flagWindow;
+    // bit to signal that way is accepted
+    protected final int acceptBit;
+    protected final int ferryBit;
     protected String[] restrictions;
-    protected HashSet<String> restricted = new HashSet<String>();
+    protected HashSet<String> restrictedValues = new HashSet<String>();
+    protected HashSet<String> ferries = new HashSet<String>();
+    protected HashSet<String> oneways = new HashSet<String>();
 
     public AbstractFlagEncoder(int shift, int factor, int defaultSpeed, int maxSpeed) {
+        this.acceptBit = 1 << shift;
+        this.ferryBit = 2 << shift;
         this.factor = factor;
         this.defaultSpeedPart = defaultSpeed / factor;
         this.maxSpeed = maxSpeed;
@@ -52,17 +60,38 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
         FORWARD = 1 << shift;
         BACKWARD = 2 << shift;
         BOTH = 3 << shift;
+
+        oneways.add("yes");
+        oneways.add("true");
+        oneways.add("1");
+        oneways.add("-1");
+        oneways.add("roundabout");
+
+        ferries.add("shuttle_train");
+        ferries.add("ferry");
     }
 
-    /*
-     Analyze properties of a way
+    /**
+     * Decide whether a way is routable for a given mode of travel
+     *
+     * @param osmProperties
+     * @return the assigned bit of the mode of travel if it is accepted or 0 for
+     * not accepted
      */
-    /*
-     public void handleWayTags( Map<String, String> osmProperties, Map<String, Object> outProperties )
-     {
+    public abstract int isAllowed(Map<String, String> osmProperties);
 
-     }
+    /**
+     * Analyze properties of a way and create the routing flags
+     *
+     * @param allowed
+     * @param osmProperties
      */
+    public abstract int handleWayTags(int allowed, Map<String, String> osmProperties);
+
+    public boolean hasAccepted(int acceptedValue) {
+        return (acceptedValue & acceptBit) > 0;
+    }
+
     @Override
     public boolean isForward(int flags) {
         return (flags & FORWARD) != 0;
@@ -130,18 +159,17 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
         return osmValue != null && values.contains(osmValue);
     }
 
-    /**
-     * Decided whether a way is routable for a given vehicle. Check the osm
-     * properties against a set of rules.
-     *
-     * @return true if allowed
-     */
-    protected boolean isAllowed(Map<String, String> osmProperties) {
-        for (int i = 0; i < restrictions.length; i++) {
-            String osmValue = osmProperties.get(restrictions[i]);
-            if (osmValue != null && restricted.contains(osmValue))
-                return false;
+    protected boolean hasTag(String[] keyList, Set<String> values, Map<String, String> osmProperties) {
+        for (int i = 0; i < keyList.length; i++) {
+            String osmValue = osmProperties.get(keyList[i]);
+            if (osmValue != null && values.contains(osmValue))
+                return true;
         }
-        return true;
+        return false;
+    }
+
+    protected boolean hasTag(String key, Set<String> values, Map<String, String> osmProperties) {
+        String osmValue = osmProperties.get(key);
+        return osmValue != null && values.contains(osmValue);
     }
 }

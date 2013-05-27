@@ -102,7 +102,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm {
             approximationFactor = 0.5;
         } else {
             dist = new DistanceCalc();
-            approximationFactor = 1.15;
+            approximationFactor = 1.2;
         }
         return this;
     }
