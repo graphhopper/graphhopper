@@ -38,7 +38,7 @@ public class HelperTest {
     @After
     public void tearDown() {
         Helper.removeDir(new File("test"));
-    }    
+    }
 
     @Test
     public void testUnzip() throws Exception {

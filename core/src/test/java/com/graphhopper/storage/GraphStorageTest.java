@@ -107,7 +107,7 @@ public class GraphStorageTest extends AbstractGraphTester {
         EdgeIterator iter = g.getEdges(0, carOutFilter);
         assertTrue(iter.next());
         assertEquals(Helper.createPointList(1.5, 1, 2, 3), iter.wayGeometry());
-        
+
         assertTrue(iter.next());
         assertEquals(Helper.createPointList(3.5, 4.5, 5, 6), iter.wayGeometry());
 

@@ -42,10 +42,10 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     public AbstractRoutingAlgorithm(Graph graph, EdgePropertyEncoder encoder) {
         this.graph = graph;
         this.additionalEdgeFilter = EdgeFilter.ALL_EDGES;
-        type(new ShortestCalc());   
+        type(new ShortestCalc());
         this.flagEncoder = encoder;
         outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
-        inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);        
+        inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
     }
 
     public RoutingAlgorithm edgeFilter(EdgeFilter additionalEdgeFilter) {

@@ -318,7 +318,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 return new GHTBitSet(10);
             }
 
-            @Override protected boolean goFurther(int baseNode) {                
+            @Override protected boolean goFurther(int baseNode) {
                 if (baseNode == id)
                     return true;
 

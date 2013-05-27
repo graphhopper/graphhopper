@@ -19,7 +19,8 @@
 package com.graphhopper.util.shapes;
 
 /**
- * Single precision coordinates without an associated value. To add one - subclass.
+ * Single precision coordinates without an associated value. To add one -
+ * subclass.
  *
  * @author Peter Karich
  */

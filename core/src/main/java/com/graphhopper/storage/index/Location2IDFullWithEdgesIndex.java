@@ -91,7 +91,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex {
                     res.closestNode(node);
                     foundDist = fromDist;
                 }
-                
+
                 // process the next stuff only for baseNode
                 if (i > 0)
                     continue;

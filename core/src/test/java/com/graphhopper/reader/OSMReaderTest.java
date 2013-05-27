@@ -224,7 +224,7 @@ public class OSMReaderTest {
         assertTrue(encoder.isBackward(iter.flags()));
 
         assertTrue(iter.next());
-        assertEquals( n22, iter.adjNode() );
+        assertEquals(n22, iter.adjNode());
         assertFalse(encoder.isMotorway(iter.flags()));
         assertFalse(encoder.isForward(iter.flags()));
         assertTrue(encoder.isBackward(iter.flags()));

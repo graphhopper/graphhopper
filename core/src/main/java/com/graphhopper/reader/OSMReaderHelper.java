@@ -136,49 +136,45 @@ public abstract class OSMReaderHelper {
     }
 
     /**
-     * Filter ways but do not analyze properties
-     * wayNodes will be filled with participating node ids.
+     * Filter ways but do not analyze properties wayNodes will be filled with
+     * participating node ids.
      *
      * @return true the current xml entry is a way entry and has nodes
      */
     boolean filterWay(XMLStreamReader sReader) throws XMLStreamException {
-
-        readWayAttributes( sReader );
-
-        if( wayNodes.size() < 2 )
+        readWayAttributes(sReader);
+        if (wayNodes.size() < 2)
             return false;
 
-        return acceptWay.accept(osmProperties)>0;
+        return acceptWay.accept(osmProperties) > 0;
     }
 
     /**
      * Process properties, encode flags and create edges for the way
+     *
      * @param sReader
      * @throws XMLStreamException
      */
     public void processWay(XMLStreamReader sReader) throws XMLStreamException {
-
-        readWayAttributes( sReader );
-
-        if( wayNodes.size() < 2 )
+        readWayAttributes(sReader);
+        if (wayNodes.size() < 2)
             return;
 
         int includeWay = acceptWay.accept(osmProperties);
-
-        if( includeWay > 0 ) {
-            int flags = acceptWay.encodeTags( includeWay, osmProperties );
-            if( flags != 0 )
+        if (includeWay > 0) {
+            int flags = acceptWay.encodeTags(includeWay, osmProperties);
+            if (flags != 0)
                 addEdge(wayNodes, flags);
         }
     }
 
     /**
      * Read member nodes and tags from OSM way
+     *
      * @param sReader
      * @throws XMLStreamException
      */
-    private void readWayAttributes( XMLStreamReader sReader ) throws XMLStreamException
-    {
+    private void readWayAttributes(XMLStreamReader sReader) throws XMLStreamException {
         wayNodes.clear();
         osmProperties.clear();
         for (int tmpE = sReader.nextTag(); tmpE != XMLStreamConstants.END_ELEMENT;
@@ -194,7 +190,7 @@ public abstract class OSMReaderHelper {
                 } else if ("tag".equals(sReader.getLocalName())) {
                     String tagKey = sReader.getAttributeValue(null, "k");
                     // check for null values is included in Helper.isEmpty
-                    if ( !Helper.isEmpty( tagKey )) {
+                    if (!Helper.isEmpty(tagKey)) {
                         String tagValue = sReader.getAttributeValue(null, "v");
                         osmProperties.put(tagKey, tagValue);
                     }

@@ -71,7 +71,7 @@ public abstract class AbstractDirectory implements Directory {
     public void remove(DataAccess da) {
         removeByName(da.name());
     }
-    
+
     void removeByName(String name) {
         if (map.remove(name) == null)
             throw new IllegalStateException("Couldn't remove dataAccess object:" + name);

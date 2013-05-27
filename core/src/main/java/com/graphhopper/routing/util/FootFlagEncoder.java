@@ -74,7 +74,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         sidewalks.add("both");
         sidewalks.add("left");
         sidewalks.add("right");
-        
+
         ferries.add("shuttle_train");
         ferries.add("ferry");
     }

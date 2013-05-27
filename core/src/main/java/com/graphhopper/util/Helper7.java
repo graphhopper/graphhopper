@@ -27,8 +27,8 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 /**
- * Put the usage of proprietary "sun" classes and after jdk6 classes into this class. To use Helper
- * class under Android as well.
+ * Put the usage of proprietary "sun" classes and after jdk6 classes into this
+ * class. To use Helper class under Android as well.
  *
  * @author Peter Karich
  */
@@ -51,7 +51,7 @@ public class Helper7 {
         }
         UNMAP_SUPPORTED = v;
     }
-    
+
     public static String getBeanMemInfo() {
         java.lang.management.OperatingSystemMXBean mxbean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
         com.sun.management.OperatingSystemMXBean sunmxbean = (com.sun.management.OperatingSystemMXBean) mxbean;

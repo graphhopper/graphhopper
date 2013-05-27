@@ -129,12 +129,12 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
             if (hasTag("oneway", oneways, osmProperties)
                     && !hasTag("oneway:bicycle", "no", osmProperties)
                     && !hasTag("cycleway", oppositeLanes, osmProperties)) {
-                
-                encoded = flags(speed, false);                
+
+                encoded = flags(speed, false);
                 if (hasTag("oneway", "-1", osmProperties))
                     encoded = swapDirection(encoded);
             } else
-                encoded = flags(speed, true);                
+                encoded = flags(speed, true);
         } else {
             // TODO read duration and calculate speed 00:30 for ferry
             encoded = flags(10, true);

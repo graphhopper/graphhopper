@@ -62,7 +62,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     @Override
     public boolean isStoring() {
         return store;
-    }       
+    }
 
     @Override
     public DataAccess copyTo(DataAccess da) {

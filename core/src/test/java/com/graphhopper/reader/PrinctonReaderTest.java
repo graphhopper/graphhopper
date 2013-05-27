@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class PrinctonReaderTest {
-    
+
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(new CarFlagEncoder(), false, true);
 
     @Test

@@ -75,7 +75,7 @@ public class AStar extends AbstractRoutingAlgorithm {
             visitedCount++;
             if (finished(currEdge, to))
                 break;
-            
+
             EdgeIterator iter = neighbors(currVertex);
             while (iter.next()) {
                 if (!accept(iter))

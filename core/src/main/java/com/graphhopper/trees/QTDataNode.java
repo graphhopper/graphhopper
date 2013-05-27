@@ -29,7 +29,8 @@ class QTDataNode<V> implements QTNode<V> {
 
     long[] keys;
     /**
-     * Use 'null' to mark the end of the array and to avoid an additional capacity int
+     * Use 'null' to mark the end of the array and to avoid an additional
+     * capacity int
      */
     V[] values;
 

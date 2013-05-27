@@ -67,7 +67,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
         openSetTo = new IntDoubleBinHeap(locs / 10);
         wrapperTo = new EdgeWrapper(locs / 10);
-    }    
+    }
 
     DijkstraBidirection initFrom(int from) {
         this.from = from;

@@ -49,7 +49,7 @@ public class PrepareRoutingSubnetworks {
     public PrepareRoutingSubnetworks minNetworkSize(int minNetworkSize) {
         this.minNetworkSize = minNetworkSize;
         return this;
-    }       
+    }
 
     public void doWork() {
         int del = removeZeroDegreeNodes();

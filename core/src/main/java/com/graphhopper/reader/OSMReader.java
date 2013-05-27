@@ -122,8 +122,7 @@ public class OSMReader {
                                         + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
                                         + " " + Helper.memInfo());
                             }
-                        }
-                        else if ("relation".equals(sReader.getLocalName()))
+                        } else if ("relation".equals(sReader.getLocalName()))
                             keepRunning = false;
                         break;
                 }

@@ -31,13 +31,14 @@ public interface Shape {
     boolean intersect(Shape o);
 
     /**
-     * @return true only if lat and lon are inside (or on the edge) of this shape
+     * @return true only if lat and lon are inside (or on the edge) of this
+     * shape
      */
     boolean contains(double lat, double lon);
 
     /**
-     * @return true if the specified shape is fully contained in this shape. Only iff
-     * s1.contains(s2) && && s2.contains(s1) then s1 is equal to s2
+     * @return true if the specified shape is fully contained in this shape.
+     * Only iff s1.contains(s2) && && s2.contains(s1) then s1 is equal to s2
      */
     boolean contains(Shape s);
 

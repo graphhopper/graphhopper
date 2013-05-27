@@ -20,8 +20,8 @@ import com.graphhopper.util.Helper;
 /**
  * Copied from Android project. android.util.LongSparseArray.java
  *
- * SparseArrays map longs to longs. Unlike a normal array of longs, there can be gaps in the
- * indices.
+ * SparseArrays map longs to longs. Unlike a normal array of longs, there can be
+ * gaps in the indices.
  */
 public class SparseLongLongArray {
 
@@ -36,8 +36,9 @@ public class SparseLongLongArray {
     }
 
     /**
-     * Creates a new SparseLongLongArray containing no mappings that will not require any additional
-     * memory allocation to store the specified number of mappings.
+     * Creates a new SparseLongLongArray containing no mappings that will not
+     * require any additional memory allocation to store the specified number of
+     * mappings.
      */
     public SparseLongLongArray(int cap) {
         try {
@@ -83,8 +84,8 @@ public class SparseLongLongArray {
     }
 
     /**
-     * Gets the Object mapped from the specified key, or the specified Object if no such mapping has
-     * been made.
+     * Gets the Object mapped from the specified key, or the specified Object if
+     * no such mapping has been made.
      */
     private long get(long key, long valueIfKeyNotFound) {
         int i = binarySearch(mKeys, 0, mSize, key);
@@ -133,8 +134,8 @@ public class SparseLongLongArray {
     }
 
     /**
-     * Adds a mapping from the specified key to the specified value, replacing the previous mapping
-     * from the specified key if there was one.
+     * Adds a mapping from the specified key to the specified value, replacing
+     * the previous mapping from the specified key if there was one.
      */
     public int put(long key, long value) {
         int i = binarySearch(mKeys, 0, mSize, key);
@@ -183,7 +184,8 @@ public class SparseLongLongArray {
     }
 
     /**
-     * Returns the number of key-value mappings that this SparseLongLongArray currently stores.
+     * Returns the number of key-value mappings that this SparseLongLongArray
+     * currently stores.
      */
     public int size() {
         if (mGarbage) {
@@ -196,7 +198,8 @@ public class SparseLongLongArray {
     /**
      * Given an index in the range
      * <code>0...size()-1</code>, returns the key from the
-     * <code>index</code>th key-value mapping that this SparseLongLongArray stores.
+     * <code>index</code>th key-value mapping that this SparseLongLongArray
+     * stores.
      */
     public long keyAt(int index) {
         if (mGarbage) {
@@ -209,7 +212,8 @@ public class SparseLongLongArray {
     /**
      * Given an index in the range
      * <code>0...size()-1</code>, sets a new key for the
-     * <code>index</code>th key-value mapping that this SparseLongLongArray stores.
+     * <code>index</code>th key-value mapping that this SparseLongLongArray
+     * stores.
      */
     public void setKeyAt(int index, long key) {
         if (mGarbage) {
@@ -222,7 +226,8 @@ public class SparseLongLongArray {
     /**
      * Given an index in the range
      * <code>0...size()-1</code>, returns the value from the
-     * <code>index</code>th key-value mapping that this SparseLongLongArray stores.
+     * <code>index</code>th key-value mapping that this SparseLongLongArray
+     * stores.
      */
     public long valueAt(int index) {
         if (mGarbage) {
@@ -235,7 +240,8 @@ public class SparseLongLongArray {
     /**
      * Given an index in the range
      * <code>0...size()-1</code>, sets a new value for the
-     * <code>index</code>th key-value mapping that this SparseLongLongArray stores.
+     * <code>index</code>th key-value mapping that this SparseLongLongArray
+     * stores.
      */
     public void setValueAt(int index, long value) {
         if (mGarbage) {
@@ -246,8 +252,8 @@ public class SparseLongLongArray {
     }
 
     /**
-     * Returns the index for which {@link #keyAt} would return the specified key, or a negative
-     * number if the specified key is not mapped.
+     * Returns the index for which {@link #keyAt} would return the specified
+     * key, or a negative number if the specified key is not mapped.
      */
     private int indexOfKey(long key) {
         if (mGarbage) {
@@ -258,10 +264,10 @@ public class SparseLongLongArray {
     }
 
     /**
-     * Returns an index for which {@link #valueAt} would return the specified key, or a negative
-     * number if no keys map to the specified value. Beware that this is a linear search, unlike
-     * lookups by key, and that multiple keys can map to the same value and this will find only one
-     * of them.
+     * Returns an index for which {@link #valueAt} would return the specified
+     * key, or a negative number if no keys map to the specified value. Beware
+     * that this is a linear search, unlike lookups by key, and that multiple
+     * keys can map to the same value and this will find only one of them.
      */
     private int indexOfValue(long value) {
         if (mGarbage) {
@@ -292,8 +298,8 @@ public class SparseLongLongArray {
     }
 
     /**
-     * Puts a key/value pair into the array, optimizing for the case where the key is greater than
-     * all existing keys in the array.
+     * Puts a key/value pair into the array, optimizing for the case where the
+     * key is greater than all existing keys in the array.
      */
     public int append(long key, long value) {
         if (mSize != 0 && key <= mKeys[mSize - 1]) {

@@ -268,7 +268,6 @@ public class GHUtility {
         }
         return endNode;
     }
-
     public static final EdgeSkipIterator EMPTY = new EdgeSkipIterator() {
         @Override public boolean isShortcut() {
             return false;

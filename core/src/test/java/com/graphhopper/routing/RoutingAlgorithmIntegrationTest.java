@@ -63,7 +63,7 @@ public class RoutingAlgorithmIntegrationTest {
         // but the other direction (where no crossing is necessary) is possible:
         list.add(new OneRun(43.730729, 7.42135, 43.72775, 7.418737, 2524, 87));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3605, 126));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.4277, 2490, 102));        
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.4277, 2490, 102));
         return list;
     }
 

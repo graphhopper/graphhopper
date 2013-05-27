@@ -536,7 +536,7 @@ public class Location2NodesNtree implements Location2IDIndex {
         final LocationIDResult closestNode = new LocationIDResult();
         if (storedNetworkEntryIds.isEmpty())
             return closestNode;
-        
+
         // clone storedIds to avoid interference with forEach
         final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
         // find nodes from the network entries which are close to 'point'
@@ -567,13 +567,13 @@ public class Location2NodesNtree implements Location2IDIndex {
 
                     @Override
                     protected boolean checkAdjacent(EdgeIterator currEdge) {
-                        goFurther = false;                        
+                        goFurther = false;
                         if (!edgeFilter.accept(currEdge)) {
                             // only limit the adjNode to a certain radius as currNode could be the wrong side of a valid edge
                             // goFurther = currDist < minResolution2InMeterNormed;
                             return true;
                         }
-                        
+
                         int tmpNode = currNode;
                         double tmpLat = currLat;
                         double tmpLon = currLon;
@@ -634,7 +634,7 @@ public class Location2NodesNtree implements Location2IDIndex {
                 return true;
             }
         });
-        
+
         return closestNode;
     }
 

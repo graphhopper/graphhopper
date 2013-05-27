@@ -96,10 +96,10 @@ public class BitUtilTest {
     public void testReverse() {
         long ret = BitUtil.reverse(BitUtil.fromBitString2Long("0111000000000101"), 16);
         assertEquals("1010000000001110", BitUtil.toBitString(ret, 16));
-        
+
         ret = BitUtil.reverse(BitUtil.fromBitString2Long("0111000000000101"), 8);
         assertEquals("0000000010100000", BitUtil.toBitString(ret, 16));
-        
+
         ret = BitUtil.reversePart(BitUtil.fromBitString2Long("0111000000000101"), 8);
         assertEquals("0111000010100000", BitUtil.toBitString(ret, 16));
     }
