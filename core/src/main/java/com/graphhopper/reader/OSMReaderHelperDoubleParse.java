@@ -63,7 +63,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     // tower node is <= -3
     private static final int TOWER_NODE = -2;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private LongIntMap osmIdToIndexMap;
+    private LongIntMap nodeOsmIdToIndexMap;
     /* we cannot hold a map for osmId->edgeId, because different edgeIds can have the same osmId
       instead we hold for each edgeId the corresponding OSM id and compare it later when we need it
       @see OSMRestrictionRelation#getAsEntries(...) */ 
@@ -96,14 +96,14 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         // only append and update possible (no unordered storage like with this doubleParse): new OSMIDMap
         // same here: not applicable as ways introduces the nodes in 'wrong' order: new OSMIDSegmentedMap
         // memory overhead due to open addressing and full rehash:
-//        osmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
+//        nodeOsmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
         // smaller memory overhead for bigger data sets because of avoiding a "rehash"
-       osmIdToIndexMap = new GHLongIntBTree(200);
+       nodeOsmIdToIndexMap = new GHLongIntBTree(200);
     }
 
     @Override
     public boolean addNode(long osmId, double lat, double lon) {
-        int nodeType = osmIdToIndexMap.get(osmId);
+        int nodeType = nodeOsmIdToIndexMap.get(osmId);
         if (nodeType == EMPTY)
             return false;
 
@@ -115,7 +115,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
             pillarLats.setInt(pillarId, Helper.degreeToInt(lat));
             pillarLons.ensureCapacity(tmp);
             pillarLons.setInt(pillarId, Helper.degreeToInt(lon));
-            osmIdToIndexMap.put(osmId, pillarId + 3);
+            nodeOsmIdToIndexMap.put( osmId, pillarId + 3 );
             pillarId++;
         }
         return true;
@@ -124,14 +124,14 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
     private int addTowerNode(long osmId, double lat, double lon) {
         g.setNode(towerId, lat, lon);
         int id = -(towerId + 3);
-        osmIdToIndexMap.put(osmId, id);
+        nodeOsmIdToIndexMap.put( osmId, id );
         towerId++;
         return id;
     }
 
     @Override
     public long foundNodes() {
-        return osmIdToIndexMap.size();
+        return nodeOsmIdToIndexMap.size();
     }
 
     @Override
@@ -144,7 +144,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         try {
             for (int i = 0; i < osmIds.size(); i++) {
                 long osmId = osmIds.get(i);
-                int tmpNode = osmIdToIndexMap.get(osmId);
+                int tmpNode = nodeOsmIdToIndexMap.get(osmId);
                 if (tmpNode == EMPTY)
                     continue;
                 // skip osmIds with no associated pillar or tower id (e.g. !OSMReader.isBounds)
@@ -267,7 +267,7 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                             restriction.toOsm = Long.valueOf(ref);
                         }
                     } else if ("node".equals(type) && ref != null && "via".equals(role)) {
-                        int tmpNode = osmIdToIndexMap.get(Long.parseLong(ref));
+                        int tmpNode = nodeOsmIdToIndexMap.get(Long.parseLong(ref));
                         if (tmpNode < TOWER_NODE) {
                             tmpNode = -tmpNode - 3;
                             restriction.via = tmpNode;
@@ -293,9 +293,9 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 
     private void printInfo(String str) {
         LoggerFactory.getLogger(getClass()).info("finished " + str + " processing."
-                + " nodes: " + g.nodes() + ", osmIdMap.size:" + osmIdToIndexMap.size()
-                + ", osmIdMap:" + osmIdToIndexMap.memoryUsage() + "MB"
-                + ", osmIdMap.toString:" + osmIdToIndexMap + " "
+                + " nodes: " + g.nodes() + ", osmIdMap.size:" + nodeOsmIdToIndexMap.size()
+                + ", osmIdMap:" + nodeOsmIdToIndexMap.memoryUsage() + "MB"
+                + ", osmIdMap.toString:" + nodeOsmIdToIndexMap + " "
                 + Helper.memInfo());
     }
 
@@ -320,24 +320,25 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
 
     @Override
     void finishedReading() {
-        osmIdToIndexMap.optimize();
+        // todo: is this necessary before removing it?
+        nodeOsmIdToIndexMap.optimize();
         printRelationInfo();
         dir.remove(pillarLats);
         dir.remove(pillarLons);
         dir.remove(osmIDsOfEdges);
         pillarLons = null;
         pillarLats = null;
-        osmIdToIndexMap = null;
+        nodeOsmIdToIndexMap = null;
     }
 
     private void setHasHighways(long osmId) {
-        int tmpIndex = osmIdToIndexMap.get(osmId);
+        int tmpIndex = nodeOsmIdToIndexMap.get(osmId);
         if (tmpIndex == EMPTY) {
             // osmId is used exactly once
-            osmIdToIndexMap.put(osmId, PILLAR_NODE);
+            nodeOsmIdToIndexMap.put( osmId, PILLAR_NODE );
         } else if (tmpIndex > EMPTY) {
             // mark node as tower node as it occured at least twice times
-            osmIdToIndexMap.put(osmId, TOWER_NODE);
+            nodeOsmIdToIndexMap.put( osmId, TOWER_NODE );
         } else {
             // tmpIndex is already negative (already tower node)
         }
@@ -365,17 +366,18 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
         try {
             sReader = factory.createXMLStreamReader(osmXml, "UTF-8");
             long tmpCounter = 1;
-            for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
+            boolean keepRunning = true;
+            for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT && keepRunning;
                     event = sReader.next(), tmpCounter++) {
                 if (tmpCounter % 50000000 == 0)
                     logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
-                            + nf(osmIdToIndexMap.size()) + " (" + osmIdToIndexMap.memoryUsage() + "MB) "
+                            + nf( nodeOsmIdToIndexMap.size()) + " (" + nodeOsmIdToIndexMap.memoryUsage() + "MB) "
                             + Helper.memInfo());
 
                 switch (event) {
                     case XMLStreamConstants.START_ELEMENT:
                         if ("way".equals(sReader.getLocalName())) {
-                            boolean valid = parseWay(sReader);
+                            boolean valid = filterWay(sReader);
                             if (valid) {
                                 int s = wayNodes.size();
                                 for (int index = 0; index < s; index++) {
@@ -383,6 +385,10 @@ public class OSMReaderHelperDoubleParse extends OSMReaderHelper {
                                 }
                             }
                         }
+                        // stop parsing when we hit the first relation. Works in all sorted planetfiles.
+                        // Would not work in self-constructed, unsorted data
+                        else if ("relation".equals(sReader.getLocalName()))
+                            keepRunning = false;
                         break;
                 }
             }

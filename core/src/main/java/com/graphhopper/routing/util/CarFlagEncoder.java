@@ -19,7 +19,6 @@
 package com.graphhopper.routing.util;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -27,16 +26,17 @@ import java.util.Map;
  */
 public class CarFlagEncoder extends AbstractFlagEncoder {
 
-    private static HashSet<String> restricted = new HashSet<String>();
     private static final Map<String, Integer> SPEED = new CarSpeed();
 
     public CarFlagEncoder() {
         super(0, 2, SPEED.get("secondary"), SPEED.get("motorway"));
+
+        restrictions = new String[]{"motorcar", "motor_vehicle", "vehicle", "access"};
         restricted.add("private");
         restricted.add("agricultural");
         restricted.add("forestry");
         restricted.add("no");
-        restricted.add("private");
+        restricted.add("restricted");
     }
 
     public boolean isMotorway(int flags) {
@@ -47,8 +47,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         return getSpeedPart(flags) * factor == SPEED.get("service");
     }
 
-    public Integer getSpeed(String string) {
-        return SPEED.get(string);
+    public int getSpeed(String string) {
+        Integer speed = SPEED.get(string);
+        if (speed == null)
+            throw new IllegalStateException("car, no speed found for:" + string);
+        return speed;
     }
 
     @Override
@@ -57,14 +60,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         if (!SPEED.containsKey(highwayValue))
             return false;
 
-        String motorcarValue = osmProperties.get("motorcar");
-        if ("no".equals(motorcarValue) || "none".equals(motorcarValue))
-            return false;
-        String motorVehicle = osmProperties.get("motor_vehicle");
-        if (restricted.contains(motorVehicle))
-            return false;
-        String accessValue = osmProperties.get("access");
-        return !restricted.contains(accessValue);
+        return super.isAllowed(osmProperties);
     }
 
     @Override public String toString() {

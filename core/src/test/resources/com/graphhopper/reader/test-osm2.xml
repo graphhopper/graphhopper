@@ -12,6 +12,11 @@
     <node id="21" lat="52.1" lon="9.1" uid="24854">
         <tag k="name" v="Next-Halbendorf-Spree" />
     </node>
+
+    <node id="22" lat="52.133" lon="9.1" uid="24854">
+
+    </node>
+
     <node id="30" lat="51.2" lon="9.4" uid="24855">
         <tag k="name" v="Dresden" />
     </node>
@@ -43,11 +48,18 @@
     <way id="11" uid="85761">
         <nd ref="21"/>
         <nd ref="20"/>
-        <tag k="oneway" v="true" />
+        <tag k="oneway" v="yes" />
         <tag k="highway" v="motorway" />
     </way>    
     
-    <way id="15" uid="85762">          
+    <way id="12" uid="85761">
+        <nd ref="20"/>
+        <nd ref="22"/>
+        <tag k="oneway" v="-1" />
+        <tag k="highway" v="primary" />
+    </way>
+
+    <way id="15" uid="85762">
         <nd ref="50"/>        
         <nd ref="40"/>
         <tag k="route" v="ferry"/>

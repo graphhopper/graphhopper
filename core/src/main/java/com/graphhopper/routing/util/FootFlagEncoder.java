@@ -27,7 +27,7 @@ import java.util.Set;
  * @author Peter Karich
  */
 public class FootFlagEncoder extends AbstractFlagEncoder {
-    
+
     private final Set<String> saveHighwayTags = new HashSet<String>() {
         {
             add("footway");
@@ -55,13 +55,33 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         }
     };
     private static final Map<String, Integer> SPEED = new FootSpeed();
+    protected HashSet<String> intended = new HashSet<String>();
+    protected HashSet<String> sidewalks = new HashSet<String>();
 
     public FootFlagEncoder() {
         super(16, 1, SPEED.get("mean"), SPEED.get("max"));
+
+        restrictions = new String[]{"foot", "access"};
+        restricted.add("private");
+        restricted.add("no");
+        restricted.add("restricted");
+
+        intended.add("yes");
+        intended.add("designated");
+        intended.add("official");
+        intended.add("permissive");
+
+        sidewalks.add("yes");
+        sidewalks.add("both");
+        sidewalks.add("left");
+        sidewalks.add("right");
     }
 
     public Integer getSpeed(String string) {
-        return SPEED.get(string);
+        Integer speed = SPEED.get(string);
+        if (speed == null)
+            throw new IllegalStateException("foot, no speed found for:" + string);
+        return speed;
     }
 
     @Override public String toString() {
@@ -73,18 +93,23 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      */
     @Override
     public boolean isAllowed(Map<String, String> osmProperties) {
-        String sidewalkValue = osmProperties.get("sidewalk");
-        if ("yes".equals(sidewalkValue) || "both".equals(sidewalkValue)
-                || "left".equals(sidewalkValue) || "right".equals(sidewalkValue))
+        if (hasTag("sidewalk", sidewalks, osmProperties))
             return true;
-        String footValue = osmProperties.get("foot");
-        if ("yes".equals(footValue))
+
+        if (hasTag("foot", intended, osmProperties))
             return true;
+
         String highwayValue = osmProperties.get("highway");
         if (!allowedHighwayTags.contains(highwayValue))
             return false;
-        String accessValue = osmProperties.get("access");
-        return super.isAllowed(accessValue);
+
+        if (hasTag("motorroad", "yes", osmProperties))
+            return false;
+
+        if (hasTag("bicycle", "official", osmProperties))
+            return false;
+
+        return super.isAllowed(osmProperties);
     }
 
     /**
