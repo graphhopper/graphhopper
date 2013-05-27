@@ -38,7 +38,6 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
     private final int defaultSpeedPart;
     private final int maxSpeed;
     private final int flagWindow;
-
     protected String[] restrictions;
     protected HashSet<String> restricted = new HashSet<String>();
 
@@ -56,24 +55,14 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
     }
 
     /*
-        Decided whether a way is routable for a given mode of travel
+     Analyze properties of a way
      */
-    public abstract boolean isAllowed(Map<String, String> osmProperties);
-
     /*
-        Analyze properties of a way
+     public void handleWayTags( Map<String, String> osmProperties, Map<String, Object> outProperties )
+     {
+
+     }
      */
-/*
-    public void handleWayTags( Map<String, String> osmProperties, Map<String, Object> outProperties )
-    {
-
-    }
-*/
-
-    protected boolean isAllowed(String accessValue) {
-        return !"no".equals(accessValue);
-    }
-
     @Override
     public boolean isForward(int flags) {
         return (flags & FORWARD) != 0;
@@ -128,34 +117,31 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
         return maxSpeed;
     }
 
-
     /**
      * Simple Helper to check for OSM tags
      */
-    protected boolean hasTag( String tag, String check, Map<String, String> osmProperties )
-    {
-        String value = osmProperties.get( tag );
-        return check.equals( value );
+    protected final boolean hasTag(String tag, String check, Map<String, String> osmProperties) {
+        String value = osmProperties.get(tag);
+        return check.equals(value);
+    }
+
+    protected final boolean hasTag(String key, HashSet<String> values, Map<String, String> osmProperties) {
+        String osmValue = osmProperties.get(key);
+        return osmValue != null && values.contains(osmValue);
     }
 
     /**
-     * Check the osm properties against the set of rules set in the constructor
+     * Decided whether a way is routable for a given vehicle. Check the osm
+     * properties against a set of rules.
      *
-     * @return
+     * @return true if allowed
      */
-    protected boolean checkAccessRestrictions( Map<String, String> osmProperties )
-    {
-        for( int i = 0; i < restrictions.length; i++ ) {
-            String osmValue = osmProperties.get( restrictions[i] );
-            if( osmValue != null && restricted.contains( osmValue ) )
+    protected boolean isAllowed(Map<String, String> osmProperties) {
+        for (int i = 0; i < restrictions.length; i++) {
+            String osmValue = osmProperties.get(restrictions[i]);
+            if (osmValue != null && restricted.contains(osmValue))
                 return false;
         }
         return true;
-    }
-
-    protected boolean hasTag( String key, HashSet<String> values, Map<String, String> osmProperties )
-    {
-        String osmValue = osmProperties.get( key );
-        return osmValue != null && values.contains( osmValue );
     }
 }

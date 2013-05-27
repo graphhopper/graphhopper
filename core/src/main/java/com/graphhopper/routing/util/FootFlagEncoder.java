@@ -27,7 +27,7 @@ import java.util.Set;
  * @author Peter Karich
  */
 public class FootFlagEncoder extends AbstractFlagEncoder {
-    
+
     private final Set<String> saveHighwayTags = new HashSet<String>() {
         {
             add("footway");
@@ -61,21 +61,20 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     public FootFlagEncoder() {
         super(16, 1, SPEED.get("mean"), SPEED.get("max"));
 
-        restrictions = new String[] { "foot", "access"};
+        restrictions = new String[]{"foot", "access"};
         restricted.add("private");
         restricted.add("no");
         restricted.add("restricted");
 
-        intended.add( "yes" );
-        intended.add( "designated" );
-        intended.add( "official" );
-        intended.add( "permissive" );
+        intended.add("yes");
+        intended.add("designated");
+        intended.add("official");
+        intended.add("permissive");
 
-        sidewalks.add( "yes" );
-        sidewalks.add("both" );
-        sidewalks.add( "left" );
-        sidewalks.add( "right" );
-
+        sidewalks.add("yes");
+        sidewalks.add("both");
+        sidewalks.add("left");
+        sidewalks.add("right");
     }
 
     public Integer getSpeed(String string) {
@@ -91,23 +90,23 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      */
     @Override
     public boolean isAllowed(Map<String, String> osmProperties) {
-        if( hasTag( "sidewalk", sidewalks, osmProperties ))
+        if (hasTag("sidewalk", sidewalks, osmProperties))
             return true;
 
-        if( hasTag( "foot", intended, osmProperties ))
+        if (hasTag("foot", intended, osmProperties))
             return true;
 
         String highwayValue = osmProperties.get("highway");
         if (!allowedHighwayTags.contains(highwayValue))
             return false;
 
-        if( hasTag( "motorroad", "yes", osmProperties ))
+        if (hasTag("motorroad", "yes", osmProperties))
             return false;
 
-        if( hasTag( "bicycle", "official", osmProperties ))
+        if (hasTag("bicycle", "official", osmProperties))
             return false;
 
-        return checkAccessRestrictions( osmProperties );
+        return super.isAllowed(osmProperties);
     }
 
     /**

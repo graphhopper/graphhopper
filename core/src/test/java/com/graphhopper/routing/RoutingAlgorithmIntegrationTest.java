@@ -61,8 +61,8 @@ public class RoutingAlgorithmIntegrationTest {
         // list.add(new OneRun(43.727687, 7.418737, 43.730729, 7.421288, 1.532, 88));
         // but the other direction (where no crossing is necessary) is possible:
         list.add(new OneRun(43.730729, 7.42135, 43.72775, 7.418737, 2524, 87));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 136));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.4277, 2365, 99));        
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3605, 126));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.4277, 2490, 102));        
         return list;
     }
 
@@ -79,7 +79,7 @@ public class RoutingAlgorithmIntegrationTest {
         // Distance is the same.
         List<OneRun> list = createMonacoCar();
         list.get(0).locs = 97;
-        list.get(1).locs = 147;
+        list.get(1).locs = 135;
                 
         // 43.72915, 7.410572, 43.739213, 7.4277 -> cannot route
         // 43.72915, 7.410572, 43.739213, 7.4278 -> all ok
@@ -113,8 +113,8 @@ public class RoutingAlgorithmIntegrationTest {
     @Test
     public void testAndorraFoot() {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 16053, 509));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 12154, 367));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 16189, 517));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 12410, 391));
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
                 list, "FOOT", true, new FootFlagEncoder());

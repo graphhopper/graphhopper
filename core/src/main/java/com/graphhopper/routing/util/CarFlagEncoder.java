@@ -31,7 +31,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     public CarFlagEncoder() {
         super(0, 2, SPEED.get("secondary"), SPEED.get("motorway"));
 
-        restrictions = new String[] { "motorcar", "motor_vehicle", "vehicle", "access"};
+        restrictions = new String[]{"motorcar", "motor_vehicle", "vehicle", "access"};
         restricted.add("private");
         restricted.add("agricultural");
         restricted.add("forestry");
@@ -51,13 +51,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         return SPEED.get(string);
     }
 
-   @Override
+    @Override
     public boolean isAllowed(Map<String, String> osmProperties) {
         String highwayValue = osmProperties.get("highway");
         if (!SPEED.containsKey(highwayValue))
             return false;
 
-       return checkAccessRestrictions( osmProperties );
+        return super.isAllowed(osmProperties);
     }
 
     @Override public String toString() {

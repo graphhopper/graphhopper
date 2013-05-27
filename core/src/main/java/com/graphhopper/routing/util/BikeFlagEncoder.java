@@ -58,14 +58,14 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         super(8, 2, SPEED.get("mean"), SPEED.get("max"));
 
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
-        restrictions = new String[] { "bicycle", "access"};
+        restrictions = new String[]{"bicycle", "access"};
         restricted.add("private");
         restricted.add("no");
         restricted.add("restricted");
-        intended.add( "yes" );
-        intended.add( "designated" );
-        intended.add( "official" );
-        intended.add( "permissive" );
+        intended.add("yes");
+        intended.add("designated");
+        intended.add("official");
+        intended.add("permissive");
     }
 
     public Integer getSpeed(String string) {
@@ -85,13 +85,13 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         if (!allowedHighwayTags.contains(highwayValue))
             return false;
 
-        if( hasTag( "bicycle", intended, osmProperties ))
+        if (hasTag("bicycle", intended, osmProperties))
             return true;
 
-        if( hasTag( "motorroad", "yes", osmProperties ))
+        if (hasTag("motorroad", "yes", osmProperties))
             return false;
 
-        return checkAccessRestrictions( osmProperties );
+        return super.isAllowed(osmProperties);
     }
 
     /**
