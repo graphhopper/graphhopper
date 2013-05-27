@@ -43,6 +43,7 @@ import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.TurnCostCalculation;
 import com.graphhopper.routing.util.TurnCostsEntry;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.DefaultTurnCostsCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Graph;
@@ -54,7 +55,6 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.TurnRestrictionsCalc;
 
 /**
  * This class prepares the graph for a bidirectional algorithm supporting
@@ -75,7 +75,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     // preparation dijkstra uses always shortest path as edges are rewritten - see doWork
     private final WeightCalculation shortestCalc = new ShortestCalc();
     private WeightCalculation prepareWeightCalc;
-    private TurnCostCalculation prepareTurnCostCalc;;
+    private TurnCostCalculation prepareTurnCostCalc;
     private EdgePropertyEncoder prepareEncoder;
     private EdgeFilter vehicleInFilter;
     private EdgeFilter vehicleOutFilter;
@@ -105,7 +105,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private int neighborUpdatePercentage = 10;
 
     public PrepareContractionHierarchies() {
-        type(new ShortestCalc()).vehicle(new CarFlagEncoder()).turnCosts(new TurnRestrictionsCalc());
+        type(new ShortestCalc()).vehicle(new CarFlagEncoder());
         originalEdges = new RAMDirectory().findCreate("originalEdges");
         originalEdges.create(1000);
     }
@@ -632,6 +632,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     PrepareContractionHierarchies initFromGraph() {
         if (g == null)
             throw new NullPointerException("Graph must not be empty calling doWork of preparation");
+        if(prepareTurnCostCalc == null){
+            //choose default turn costs calculation when not set explicitly 
+            prepareTurnCostCalc = new DefaultTurnCostsCalc(prepareEncoder, prepareWeightCalc);
+        }
         levelEdgeFilter = new LevelEdgeFilterCH(this.g);
         sortedNodes = new GHTreeMapComposed();
         refs = new PriorityNode[g.nodes()];

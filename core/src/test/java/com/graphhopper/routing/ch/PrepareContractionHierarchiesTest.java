@@ -45,7 +45,6 @@ import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.TurnCostsIgnoreCalc;
 
 /**
  * @author Peter Karich

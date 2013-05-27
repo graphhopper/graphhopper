@@ -32,9 +32,10 @@ import org.junit.Test;
 import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultTurnCostsCalc;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.TurnCostCalculation;
@@ -47,8 +48,6 @@ import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.TurnCostsIgnoreCalc;
-import com.graphhopper.util.TurnRestrictionsCalc;
 
 /**
  *
@@ -58,8 +57,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     // problem is: matrix graph is expensive to create to cache it in a static variable
     private static Graph matrixGraph;
-    protected TurnCostCalculation turnRestrictions = new TurnRestrictionsCalc();
-    protected TurnCostCalculation turnIgnore = new TurnCostsIgnoreCalc();
+    protected TurnCostCalculation turnIgnore = new DefaultTurnCostsCalc(DefaultTurnCostsCalc.MODE_IGNORE_RESTRICTIONS);
     protected EdgePropertyEncoder carEncoder = new CarFlagEncoder();
     private EdgePropertyEncoder footEncoder = new FootFlagEncoder();
 

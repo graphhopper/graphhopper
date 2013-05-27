@@ -34,6 +34,7 @@ import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.DefaultTurnCostsCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -466,6 +467,11 @@ public class GraphHopper implements GraphHopperAPI {
         if (!supportsVehicle(request.vehicle())) {
             rsp.addError(new IllegalArgumentException("Vehicle " + request.vehicle() + " unsupported. Supported are: " + acceptWay()));
             return rsp;
+        }
+        
+        if(request.turnCosts() == null){
+            //if turn costs calculation has not been set, the calculation which fits best to requested vehicle and weight calculation will be chosen
+            request.turnCosts(new DefaultTurnCostsCalc(request.vehicle(), request.type()));
         }
 
         EdgeFilter edgeFilter = new DefaultEdgeFilter(request.vehicle());

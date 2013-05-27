@@ -19,16 +19,15 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.DefaultTurnCostsCalc;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.TurnCostCalculation;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.TurnCostCalculation;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.TurnCostsIgnoreCalc;
-import com.graphhopper.util.TurnRestrictionsCalc;
 
 /**
  * @author Peter Karich
@@ -46,15 +45,10 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     public AbstractRoutingAlgorithm(Graph graph, EdgePropertyEncoder encoder) {
         this.graph = graph;
         this.additionalEdgeFilter = EdgeFilter.ALL_EDGES;
-        type(new ShortestCalc());   
-        if(encoder.ignoreTurnCosts()){
-            turnCosts(new TurnCostsIgnoreCalc());
-        }else{
-            turnCosts(new TurnRestrictionsCalc());    
-        }
         this.flagEncoder = encoder;
+        type(new ShortestCalc());
         outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
-        inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);        
+        inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
     }
 
     public RoutingAlgorithm edgeFilter(EdgeFilter additionalEdgeFilter) {
@@ -73,6 +67,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     @Override 
     public RoutingAlgorithm type(WeightCalculation wc) {
         this.weightCalc = wc;
+        turnCosts(new DefaultTurnCostsCalc(flagEncoder, weightCalc));
         return this;
     }
     

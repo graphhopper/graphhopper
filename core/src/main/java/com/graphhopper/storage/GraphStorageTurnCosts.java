@@ -227,7 +227,7 @@ public class GraphStorageTurnCosts extends GraphStorage implements GraphTurnCost
         return super.toString();
     }
     
-    public class TurnCostIteratable implements TurnCostIterator{
+    public class TurnCostIteratable implements TurnCostIterator {
         
         int nodeVia;
         int edgeFrom;

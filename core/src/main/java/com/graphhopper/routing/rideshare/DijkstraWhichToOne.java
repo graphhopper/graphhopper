@@ -172,6 +172,12 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     public void updateShortest(EdgeEntry de, int currLoc) {
         EdgeEntry entryOther = shortestDistMapOther.get(currLoc);
         if (entryOther != null) {
+            
+            //prevents the shortest path to contain the same edge twice, when turn restriction is around the meeting point
+            if(de.edge == entryOther.edge){
+                return;
+            }
+            
             // update μ
             double newShortest = de.weight + entryOther.weight;
             
