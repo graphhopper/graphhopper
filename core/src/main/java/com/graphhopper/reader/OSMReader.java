@@ -180,8 +180,8 @@ public class OSMReader {
     /**
      * Specify the type of the path calculation (car, bike, ...).
      */
-    public OSMReader acceptWay(AcceptWay acceptWays) {
-        helper.acceptWay(acceptWays);
+    public OSMReader acceptWay(AcceptWay acceptWay) {
+        helper.acceptWay(acceptWay);
         return this;
     }
 

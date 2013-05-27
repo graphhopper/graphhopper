@@ -404,20 +404,16 @@ public class GraphHopper implements GraphHopperAPI {
         if (chUsage) {
             graph = new LevelGraphStorage(dir);
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
-
-            EdgePropertyEncoder encoder;
-            if (acceptWay.acceptsCar())
-                encoder = new CarFlagEncoder();
+            EdgePropertyEncoder encoder = acceptWay.getSingle();
+            if (chFast)
+                tmpPrepareCH.type(new FastestCalc(encoder));
             else
-                encoder = new FootFlagEncoder();
-            if (chFast) {
-                tmpPrepareCH.type(new FastestCalc(encoder)).vehicle(encoder);
-            } else {
-                tmpPrepareCH.type(new ShortestCalc()).vehicle(encoder);
-            }
+                tmpPrepareCH.type(new ShortestCalc());
+            tmpPrepareCH.vehicle(encoder);
             tmpPrepareCH.periodicUpdates(periodicUpdates).
                     lazyUpdates(lazyUpdates).
                     neighborUpdates(neighborUpdates);
+
             prepare = tmpPrepareCH;
             prepare.graph(graph);
         } else {

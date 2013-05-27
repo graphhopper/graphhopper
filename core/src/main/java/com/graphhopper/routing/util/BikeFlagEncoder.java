@@ -48,17 +48,31 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
             add("tertiary");
             add("unclassified");
             add("residential");
-            add("road");
         }
     };
-    private static final Map<String, Integer> SPEED = new FootSpeed();
+    private static final Map<String, Integer> SPEED = new BikeSpeed();
+    private HashSet<String> intended = new HashSet<String>();
 
     public BikeFlagEncoder() {
-        super(8, 2, SPEED.get("mean"), SPEED.get("max"));
+        super(8, 2, SPEED.get("cycleway"), SPEED.get("road"));
+
+        // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
+        restrictions = new String[]{"bicycle", "access"};
+        restricted.add("private");
+        restricted.add("no");
+        restricted.add("restricted");
+        intended.add("yes");
+        intended.add("designated");
+        intended.add("official");
+        intended.add("permissive");
     }
 
-    public Integer getSpeed(String string) {
-        return SPEED.get(string);
+    public int getSpeed(String string) {
+        // TODO use surface for speed!
+        Integer speed = SPEED.get(string);
+        if (speed == null)
+            throw new IllegalStateException("bike, no speed found for:" + string);
+        return speed;
     }
 
     @Override public String toString() {
@@ -74,11 +88,13 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         if (!allowedHighwayTags.contains(highwayValue))
             return false;
 
-        String bicycleValue = osmProperties.get("bicycle");
-        if ("yes".equals(bicycleValue))
+        if (hasTag("bicycle", intended, osmProperties))
             return true;
-        String accessValue = osmProperties.get("access");
-        return super.isAllowed(accessValue);
+
+        if (hasTag("motorroad", "yes", osmProperties))
+            return false;
+
+        return super.isAllowed(osmProperties);
     }
 
     /**
@@ -93,14 +109,23 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
                 || "opposite_track".equals(cycleway);
     }
 
-    private static class FootSpeed extends HashMap<String, Integer> {
+    private static class BikeSpeed extends HashMap<String, Integer> {
 
         {
-            put("min", 4);
-            put("slow", 10);
-            put("mean", 16);
-            put("fast", 20);
-            put("max", 26);
+            put("living_street", 5);
+            put("bridleway", 10);
+
+            put("cycleway", 10);
+            put("path", 10);
+            put("road", 10);
+            put("track", 10);
+
+            put("trunk", 20);
+            put("primary", 20);
+            put("secondary", 20);
+            put("tertiary", 20);
+            put("unclassified", 10);
+            put("residential", 10);
         }
     }
 }

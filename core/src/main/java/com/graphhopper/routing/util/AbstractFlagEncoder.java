@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -37,6 +38,8 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
     private final int defaultSpeedPart;
     private final int maxSpeed;
     private final int flagWindow;
+    protected String[] restrictions;
+    protected HashSet<String> restricted = new HashSet<String>();
 
     public AbstractFlagEncoder(int shift, int factor, int defaultSpeed, int maxSpeed) {
         this.factor = factor;
@@ -51,12 +54,15 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
         BOTH = 3 << shift;
     }
 
-    public abstract boolean isAllowed(Map<String, String> osmProperties);
-    
-    protected boolean isAllowed(String accessValue) {
-        return !"no".equals(accessValue);
-    }
+    /*
+     Analyze properties of a way
+     */
+    /*
+     public void handleWayTags( Map<String, String> osmProperties, Map<String, Object> outProperties )
+     {
 
+     }
+     */
     @Override
     public boolean isForward(int flags) {
         return (flags & FORWARD) != 0;
@@ -109,5 +115,33 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
     @Override
     public int getMaxSpeed() {
         return maxSpeed;
+    }
+
+    /**
+     * Simple Helper to check for OSM tags
+     */
+    protected final boolean hasTag(String tag, String check, Map<String, String> osmProperties) {
+        String value = osmProperties.get(tag);
+        return check.equals(value);
+    }
+
+    protected final boolean hasTag(String key, HashSet<String> values, Map<String, String> osmProperties) {
+        String osmValue = osmProperties.get(key);
+        return osmValue != null && values.contains(osmValue);
+    }
+
+    /**
+     * Decided whether a way is routable for a given vehicle. Check the osm
+     * properties against a set of rules.
+     *
+     * @return true if allowed
+     */
+    protected boolean isAllowed(Map<String, String> osmProperties) {
+        for (int i = 0; i < restrictions.length; i++) {
+            String osmValue = osmProperties.get(restrictions[i]);
+            if (osmValue != null && restricted.contains(osmValue))
+                return false;
+        }
+        return true;
     }
 }
