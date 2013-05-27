@@ -101,7 +101,7 @@ public class GraphHopper implements GraphHopperAPI {
     private AcceptWay acceptWay = new AcceptWay(true, false, false);
     private long expectedNodes = 10;
     private double wayPointMaxDistance = 1;
-    private StorableProperties properties;
+    private StorableProperties properties;    
 
     public GraphHopper() {
     }
@@ -287,7 +287,7 @@ public class GraphHopper implements GraphHopperAPI {
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", 1);
         String type = args.get("osmreader.acceptWay", "CAR");
         acceptWay = AcceptWay.parse(type);
-
+        
         // index
         preciseIndexResolution = args.getInt("index.highResolution", 1000);
         return this;
@@ -396,16 +396,12 @@ public class GraphHopper implements GraphHopperAPI {
             graph = new LevelGraphStorage(dir);
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
 
-            EdgePropertyEncoder encoder;
-            if (acceptWay.acceptsCar())
-                encoder = new CarFlagEncoder();
+            EdgePropertyEncoder encoder = acceptWay.getSingle();
+            if (chFast)
+                tmpPrepareCH.type(new FastestCalc(encoder));
             else
-                encoder = new FootFlagEncoder();
-            if (chFast) {
-                tmpPrepareCH.type(new FastestCalc(encoder)).vehicle(encoder);
-            } else {
-                tmpPrepareCH.type(new ShortestCalc()).vehicle(encoder);
-            }
+                tmpPrepareCH.type(new ShortestCalc());
+            tmpPrepareCH.vehicle(encoder);
             prepare = tmpPrepareCH;
             prepare.graph(graph);
         } else {

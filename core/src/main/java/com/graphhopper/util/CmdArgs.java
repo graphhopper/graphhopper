@@ -173,6 +173,10 @@ public class CmdArgs {
         return this;
     }
 
+    public boolean has(String key) {
+        return map.containsKey(key);
+    }
+
     @Override public String toString() {
         return map.toString();
     }

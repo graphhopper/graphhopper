@@ -304,8 +304,21 @@ public class AcceptWay {
     }
 
     public static AcceptWay parse(String acceptWayString) {
+        acceptWayString = acceptWayString.toUpperCase();
         return new AcceptWay(acceptWayString.contains("CAR"),
                 acceptWayString.contains("BIKE"),
                 acceptWayString.contains("FOOT"));
+    }
+
+    public EdgePropertyEncoder getSingle() {
+        if (countVehicles() > 1)
+            throw new IllegalStateException("multiple encoders are active. cannot return one:" + toString());
+        if (car)
+            return carEncoder;
+        if (bike)
+            return bikeEncoder;
+        if (foot)
+            return footEncoder;
+        throw new IllegalStateException("no encoder is active!");
     }
 }

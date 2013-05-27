@@ -78,7 +78,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     public Integer getSpeed(String string) {
-        return SPEED.get(string);
+        Integer speed = SPEED.get(string);
+        if (speed == null)
+            throw new IllegalStateException("foot, no speed found for:" + string);
+        return speed;
     }
 
     @Override public String toString() {

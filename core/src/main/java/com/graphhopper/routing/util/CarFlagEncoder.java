@@ -47,8 +47,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         return getSpeedPart(flags) * factor == SPEED.get("service");
     }
 
-    public Integer getSpeed(String string) {
-        return SPEED.get(string);
+    public int getSpeed(String string) {
+        Integer speed = SPEED.get(string);
+        if (speed == null)
+            throw new IllegalStateException("car, no speed found for:" + string);
+        return speed;
     }
 
     @Override

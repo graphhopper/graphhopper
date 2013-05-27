@@ -19,7 +19,9 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -80,7 +82,7 @@ public class RoutingAlgorithmIntegrationTest {
         List<OneRun> list = createMonacoCar();
         list.get(0).locs = 97;
         list.get(1).locs = 135;
-                
+
         // 43.72915, 7.410572, 43.739213, 7.4277 -> cannot route
         // 43.72915, 7.410572, 43.739213, 7.4278 -> all ok
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
@@ -96,6 +98,17 @@ public class RoutingAlgorithmIntegrationTest {
         list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2243, 99));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "FOOT", true, new FootFlagEncoder());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testMonacoBike() {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2543, 86));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 125));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2564, 125));
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
+                list, "BIKE", true, new BikeFlagEncoder());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -143,12 +156,9 @@ public class RoutingAlgorithmIntegrationTest {
         try {
             // make sure we are using the latest file format
             Helper.removeDir(new File(graphFile));
-            GraphHopper hopper = new GraphHopper().
-                    init(new CmdArgs().
-                    put("graph.location", graphFile).
-                    put("graph.dataaccess", "inmemory").
-                    put("osmreader.osm", osmFile).
-                    put("osmreader.acceptWay", vehicles)).
+            GraphHopper hopper = new GraphHopper().setInMemory(true, true).
+                    osmFile(osmFile).graphHopperLocation(graphFile).
+                    acceptWay(AcceptWay.parse(vehicles)).
                     importOrLoad();
 
             Graph g = hopper.graph();
@@ -176,11 +186,8 @@ public class RoutingAlgorithmIntegrationTest {
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/graph-monaco";
         Helper.removeDir(new File(graphFile));
-        GraphHopper hopper = new GraphHopper().
-                init(new CmdArgs().
-                put("graph.location", graphFile).
-                put("graph.dataaccess", "inmemory").
-                put("osmreader.osm", "files/monaco.osm.gz")).
+        GraphHopper hopper = new GraphHopper().setInMemory(true, true).
+                osmFile("files/monaco.osm.gz").graphHopperLocation(graphFile).
                 importOrLoad();
         final Graph g = hopper.graph();
         final Location2IDIndex idx = hopper.index();
