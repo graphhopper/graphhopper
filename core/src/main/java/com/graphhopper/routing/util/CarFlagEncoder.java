@@ -82,7 +82,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         if ((allowed & acceptBit) == 0)
             return 0;
 
-        int encoded = 0;
+        int encoded;
         if ((allowed & ferryBit) == 0) {
             String highwayValue = osmProperties.get("highway");
             // get assumed speed from highway type
@@ -92,22 +92,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             if (maxspeed > 0 && speed > maxspeed)
                 //outProperties.put( "car", maxspeed );
                 speed = maxspeed;
-            /*            else {
-             // not used on ways according to taginfo
-             if( "city_limit".equals( osmProperties.get( "traffic_sign" ) ) )
-             speed = 50;
-             //outProperties.put( "car", speed );
-             }
 
-             // usually used with a node, this does not work as intended
-             if( "toll_booth".equals( osmProperties.get( "barrier" ) ) )
-             outProperties.put( "carpaid", true );
-             */
+            // usually used with a node, this does not work as intended
+            // if( "toll_booth".equals( osmProperties.get( "barrier" ) ) )
+
             if (hasTag("oneway", oneways, osmProperties)) {
-                //outProperties.put("caroneway", true);
                 encoded = flags(speed, false);
                 if (hasTag("oneway", "-1", osmProperties)) {
-                    //outProperties.put("caronewayreverse", true);
                     encoded = swapDirection(encoded);
                 }
             } else
@@ -115,13 +106,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         } else {
             // TODO read duration and calculate speed 00:30 for ferry
-//            Object duration = osmProperties.get("duration");
-//            if (duration != null) {
-//            }
-
-            //outProperties.put("car", 20);
             encoded = flags(10, true);
-            //outProperties.put("carpaid", true);
         }
 
         return encoded;

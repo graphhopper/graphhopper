@@ -120,7 +120,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         if ((allowed & acceptBit) == 0)
             return 0;
 
-        int encoded = 0;
+        int encoded;
         if ((allowed & ferryBit) == 0) {
             // http://wiki.openstreetmap.org/wiki/Cycleway
             // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway

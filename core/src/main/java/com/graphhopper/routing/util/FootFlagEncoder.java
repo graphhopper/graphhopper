@@ -131,17 +131,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         if ((allowed & acceptBit) == 0)
             return 0;
 
-        int encoded = 0;
+        int encoded;
         if ((allowed & ferryBit) == 0) {
-            //outProperties.put("foot", true);
             encoded = flagsDefault(true);
-            //String highwayValue = osmProperties.get("highway");
-            //outProperties.put( "footsave", isSaveHighway( highwayValue ) );
         } else {
-            // TODO read duration and calculate speed 00:30 for ferry
-            //outProperties.put("foot", true);
+            // TODO read duration and calculate speed 00:30 for ferry            
             encoded = flagsDefault(true);
-            //outProperties.put("footpaid", true);
         }
 
         return encoded;
