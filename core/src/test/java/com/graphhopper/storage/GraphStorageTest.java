@@ -77,8 +77,10 @@ public class GraphStorageTest extends AbstractGraphTester {
         graph.setNode(1, 11, 20);
         graph.setNode(2, 12, 12);
 
-        graph.edge(0, 1, 100, true).wayGeometry(Helper.createPointList(1, 1, 2, 3));
-        graph.edge(0, 2, 200, true);
+        graph.edge(0, 1, 100, true).wayGeometry(Helper.createPointList(1.5, 1, 2, 3));
+        graph.edge(0, 2, 200, true).wayGeometry(Helper.createPointList(3.5, 4.5, 5, 6));
+        graph.edge(9, 10, 200, true);
+        graph.edge(9, 11, 200, true);
         graph.edge(1, 2, 120, false);
 
         checkGraph(graph);
@@ -87,11 +89,10 @@ public class GraphStorageTest extends AbstractGraphTester {
 
         graph = newGraph(new MMapDirectory(defaultGraph));
         assertTrue(graph.loadExisting());
-        assertEquals(3, graph.nodes());
-        assertEquals(3, graph.nodes());
+        assertEquals(12, graph.nodes());
         checkGraph(graph);
 
-        graph.edge(3, 4, 123, true);
+        graph.edge(3, 4, 123, true).wayGeometry(Helper.createPointList(4.4, 5.5, 6.6, 7.7));
         checkGraph(graph);
         graph.close();
     }
@@ -105,7 +106,10 @@ public class GraphStorageTest extends AbstractGraphTester {
 
         EdgeIterator iter = g.getEdges(0, carOutFilter);
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList(1, 1, 2, 3), iter.wayGeometry());
+        assertEquals(Helper.createPointList(1.5, 1, 2, 3), iter.wayGeometry());
+        
+        assertTrue(iter.next());
+        assertEquals(Helper.createPointList(3.5, 4.5, 5, 6), iter.wayGeometry());
 
         assertEquals(11, g.getLatitude(1), 1e-2);
         assertEquals(20, g.getLongitude(1), 1e-2);

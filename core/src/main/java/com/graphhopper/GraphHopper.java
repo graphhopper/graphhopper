@@ -560,8 +560,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void flush() {
-        logger.info("flushing graph with " + graph.nodes() + " nodes, bounds:"
-                + graph.bounds() + ", " + Helper.memInfo() + ")");
+        logger.info("flushing graph " + graph.toString() + ", " + Helper.memInfo() + ")");
         graph.flush();
         properties.flush();
     }
