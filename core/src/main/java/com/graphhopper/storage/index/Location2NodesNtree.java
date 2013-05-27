@@ -533,10 +533,10 @@ public class Location2NodesNtree implements Location2IDIndex {
     public LocationIDResult findClosest(final double queryLat, final double queryLon,
             final EdgeFilter edgeFilter) {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
-        if (storedNetworkEntryIds.isEmpty())
-            return null;
-
         final LocationIDResult closestNode = new LocationIDResult();
+        if (storedNetworkEntryIds.isEmpty())
+            return closestNode;
+        
         // clone storedIds to avoid interference with forEach
         final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
         // find nodes from the network entries which are close to 'point'
