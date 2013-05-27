@@ -75,9 +75,7 @@ public class CarFlagsEncoderTest {
 
     @Test
     public void testService() {
-        Map<String, Object> properties = new HashMap<String, Object>();
-        properties.put("car", encoder.getSpeed("service"));
-        int flags = new AcceptWay(true, false, false).toFlags(properties);
+        int flags = encoder.flags( encoder.getSpeed("service"), true );
         assertTrue(encoder.isForward(flags));
         assertTrue(encoder.isBackward(flags));
         assertTrue(encoder.isService(flags));

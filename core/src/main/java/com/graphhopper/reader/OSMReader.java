@@ -52,7 +52,7 @@ public class OSMReader {
     public OSMReader(GraphStorage storage, long expectedNodes) {
         this.graphStorage = storage;
         helper = createDoubleParseHelper(expectedNodes);
-        helper.acceptWay(new AcceptWay(true, false, false));
+        helper.acceptWay(new AcceptWay(AcceptWay.CAR));
     }
 
     private OSMReaderHelper createDoubleParseHelper(long expectedNodes) {
@@ -92,7 +92,8 @@ public class OSMReader {
         long counter = 1;
         try {
             sReader = factory.createXMLStreamReader(is, "UTF-8");
-            for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
+            boolean keepRunning = true;
+            for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT && keepRunning;
                     event = sReader.next(), counter++) {
 
                 switch (event) {
@@ -122,6 +123,8 @@ public class OSMReader {
                                         + " " + Helper.memInfo());
                             }
                         }
+                        else if ("relation".equals(sReader.getLocalName()))
+                            keepRunning = false;
                         break;
                 }
             }

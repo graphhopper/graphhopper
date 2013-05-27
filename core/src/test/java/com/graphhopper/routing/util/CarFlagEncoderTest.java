@@ -33,15 +33,15 @@ public class CarFlagEncoderTest {
     public void testAccess() {
         CarFlagEncoder instance = new CarFlagEncoder();
         Map<String, String> map = new HashMap<String, String>();
-        assertFalse(instance.isAllowed(map));
+        assertFalse(instance.isAllowed(map)>0);
         map.put("highway", "service");
-        assertTrue(instance.isAllowed(map));
+        assertTrue(instance.isAllowed(map)>0);
         map.put("access", "no");
-        assertFalse(instance.isAllowed(map));
+        assertFalse(instance.isAllowed(map)>0);
         map.clear();
         
         map.put("highway", "track");        
         map.put("motorcar", "no");
-        assertFalse(instance.isAllowed(map));
+        assertFalse(instance.isAllowed(map)>0);
     }
 }

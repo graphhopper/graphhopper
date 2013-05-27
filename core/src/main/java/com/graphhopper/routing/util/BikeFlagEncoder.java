@@ -41,7 +41,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
     };
     private final Set<String> allowedHighwayTags = new HashSet<String>() {
         {
-            addAll(saveHighwayTags);
+            addAll( saveHighwayTags );
             add("trunk");
             add("primary");
             add("secondary");
@@ -53,19 +53,25 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
     };
     private static final Map<String, Integer> SPEED = new FootSpeed();
     private HashSet<String> intended = new HashSet<String>();
+    private HashSet<String> oppositeLanes = new HashSet<String>();
 
     public BikeFlagEncoder() {
         super(8, 2, SPEED.get("mean"), SPEED.get("max"));
 
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions = new String[] { "bicycle", "access"};
-        restricted.add("private");
-        restricted.add("no");
-        restricted.add("restricted");
+        restrictedValues.add("private");
+        restrictedValues.add("no");
+        restrictedValues.add("restricted");
         intended.add( "yes" );
         intended.add( "designated" );
         intended.add( "official" );
         intended.add( "permissive" );
+
+        oppositeLanes.add("opposite");
+        oppositeLanes.add("opposite_lane");
+        oppositeLanes.add("opposite_track");
+
     }
 
     public Integer getSpeed(String string) {
@@ -80,18 +86,73 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
      * Separate ways for pedestrians.
      */
     @Override
-    public boolean isAllowed(Map<String, String> osmProperties) {
+    public int isAllowed(Map<String, String> osmProperties) {
+
         String highwayValue = osmProperties.get("highway");
-        if (!allowedHighwayTags.contains(highwayValue))
-            return false;
 
-        if( hasTag( "bicycle", intended, osmProperties ))
-            return true;
+        if( highwayValue == null ) {
+            if( hasTag( "route", ferries, osmProperties ) ) {
+                if( hasTag( "bicycle", "yes", osmProperties ) ) {
+                    return acceptBit | ferryBit;
+                }
+            }
+            return 0;
+        }
+        else {
+            if (!allowedHighwayTags.contains(highwayValue))
+                return 0;
 
-        if( hasTag( "motorroad", "yes", osmProperties ))
-            return false;
+            if( hasTag( "bicycle", intended, osmProperties ))
+                return acceptBit;
 
-        return checkAccessRestrictions( osmProperties );
+            if( hasTag( "motorroad", "yes", osmProperties ))
+                return 0;
+
+            // check access restrictions
+            if( hasTag( restrictions, restrictedValues, osmProperties ) )
+                return 0;
+
+            return acceptBit;
+        }
+    }
+
+    @Override
+    public int handleWayTags( int allowed, Map<String, String> osmProperties ) {
+
+        if( (allowed & acceptBit) == 0 )
+            return 0;
+
+        int encoded = 0;
+        if( (allowed & ferryBit) == 0 ) {
+            // http://wiki.openstreetmap.org/wiki/Cycleway
+            // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway
+            String highwayValue = osmProperties.get("highway");
+            //outProperties.put( "bike", getSpeed( highwayValue ) );
+            //Integer speed = getSpeed( highwayValue );  definitions are wrong
+            //outProperties.put( "bikesave", isSaveHighway( highwayValue ) );
+
+            if( hasTag( "oneway", oneways, osmProperties )
+                    && !hasTag( "oneway:bicycle", "no", osmProperties )
+                    && !hasTag( "cycleway", oppositeLanes, osmProperties ) ) {
+                //outProperties.put("bikeoneway", true);
+                //encoded = flags(speed, false);
+                encoded = flagsDefault(false);
+                if( hasTag( "oneway", "-1", osmProperties ))
+                    //outProperties.put("bikeonewayreverse", true);
+                    encoded = swapDirection( encoded );
+            }
+            else
+                //encoded = flags(speed, true);
+                encoded = flagsDefault(true);
+        }
+        else {
+            // TODO read duration and calculate speed 00:30 for ferry
+
+            //outProperties.put("bike", 10);
+            encoded = flags(10, true);
+            //outProperties.put("bikepaid", true);
+        }
+        return encoded;
     }
 
     /**

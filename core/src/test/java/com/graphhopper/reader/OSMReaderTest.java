@@ -257,7 +257,7 @@ public class OSMReaderTest {
 
     @Test public void testWayReferencesNotExistingAdjNode() {
         GraphHopper hopper = new GraphHopperTest(file4).
-                acceptWay(new AcceptWay(true, false, true)).
+                acceptWay(new AcceptWay("CAR,FOOT")).
                 importOrLoad();
         Graph graph = hopper.graph();
 
@@ -270,7 +270,7 @@ public class OSMReaderTest {
 
     @Test public void testFoot() {
         GraphHopper hopper = new GraphHopperTest(file3).
-                acceptWay(new AcceptWay(true, false, true)).
+                acceptWay(new AcceptWay("CAR,FOOT")).
                 importOrLoad();
         Graph graph = hopper.graph();
 
@@ -300,7 +300,7 @@ public class OSMReaderTest {
 
     @Test public void testNegativeIds() {
         GraphHopper hopper = new GraphHopperTest(file5).
-                acceptWay(new AcceptWay(true, false, false)).
+                acceptWay(new AcceptWay("CAR")).
                 importOrLoad();
         Graph graph = hopper.graph();
         assertEquals(4, graph.nodes());

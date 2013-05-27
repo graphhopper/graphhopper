@@ -73,7 +73,7 @@ public class GraphHopperTest {
     public void testFootAndCar() throws IOException {
         // now all ways are imported
         GraphHopper instance = new GraphHopper().setInMemory(true, false).
-                acceptWay(new AcceptWay(true, false, true)).
+                acceptWay(new AcceptWay("CAR,FOOT")).
                 graphHopperLocation(ghLoc).osmFile(testOsm3);
         instance.importOrLoad();
 
@@ -114,7 +114,7 @@ public class GraphHopperTest {
     public void testFootOnly() throws IOException {
         // now only footable ways are imported => no A D C and B D E => the other both ways have pillar nodes!
         GraphHopper instance = new GraphHopper().setInMemory(true, false).
-                acceptWay(new AcceptWay(false, false, true)).
+                acceptWay(new AcceptWay("FOOT")).
                 graphHopperLocation(ghLoc).osmFile(testOsm3);
         instance.importOrLoad();
 
