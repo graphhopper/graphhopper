@@ -39,7 +39,7 @@ package com.graphhopper;
  * for(int i = 0; i &lt; points.size(); i++) {
  *    add(point.latitude(i), point.longitude(i));
  * }
- * 
+ *
  * </pre>
  *
  * @author Peter Karich
@@ -53,7 +53,7 @@ public interface GraphHopperAPI {
 
     /**
      * Calculates the path from specified request with startPoint to endPoint.
-     * 
+     *
      * @throws Exceptions if points not found or other problems occur.
      */
     GHResponse route(GHRequest request);

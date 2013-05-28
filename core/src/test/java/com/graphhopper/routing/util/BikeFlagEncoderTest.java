@@ -31,7 +31,7 @@ public class BikeFlagEncoderTest {
     public void testGetSpeed() {
         BikeFlagEncoder instance = new BikeFlagEncoder();
         int result = instance.flags(10, true);
-        assertEquals(10, instance.getSpeed(result));    
+        assertEquals(10, instance.getSpeed(result));
         assertEquals(10, instance.getSpeed("cycleway"));
     }
 }

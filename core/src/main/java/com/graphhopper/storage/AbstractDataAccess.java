@@ -37,7 +37,7 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
     private final String location;
     protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
-    protected String name;    
+    protected String name;
 
     public AbstractDataAccess(String name, String location) {
         this.name = name;
@@ -88,7 +88,7 @@ public abstract class AbstractDataAccess implements DataAccess {
             return -1;
         String versionHint = raFile.readUTF();
         if (!"GH".equals(versionHint))
-            throw new IllegalArgumentException("Not a GraphHopper file! Expected 'GH' as file marker but was " + versionHint);        
+            throw new IllegalArgumentException("Not a GraphHopper file! Expected 'GH' as file marker but was " + versionHint);
         long bytes = raFile.readLong();
         segmentSize(raFile.readInt());
         for (int i = 0; i < header.length; i++) {
@@ -114,7 +114,7 @@ public abstract class AbstractDataAccess implements DataAccess {
     public DataAccess segmentSize(int bytes) {
         // segment size should be a power of 2
         int tmp = (int) (Math.log(bytes) / Math.log(2));
-        segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);        
+        segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
         return this;
     }
 
@@ -154,7 +154,7 @@ public abstract class AbstractDataAccess implements DataAccess {
             throw new IllegalArgumentException("file newName already exists!");
         return true;
     }
-    
+
     public boolean isStoring() {
         return true;
     }

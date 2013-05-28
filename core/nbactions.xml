@@ -48,15 +48,15 @@
         </properties>
     </action>
     <action>
-            <actionName>CUSTOM-assembly</actionName>
-            <displayName>clean assembly</displayName>
-            <goals>
-                <goal>clean</goal>
-                <goal>install</goal>
-                <goal>assembly:single</goal>
-            </goals>
-            <properties>
-                <skipTests>true</skipTests>
-            </properties>
-        </action>
+        <actionName>CUSTOM-assembly</actionName>
+        <displayName>clean assembly</displayName>
+        <goals>
+            <goal>clean</goal>
+            <goal>install</goal>
+            <goal>assembly:single</goal>
+        </goals>
+        <properties>
+            <skipTests>true</skipTests>
+        </properties>
+    </action>
 </actions>

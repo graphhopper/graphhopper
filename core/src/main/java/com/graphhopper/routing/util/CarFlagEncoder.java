@@ -30,13 +30,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
     public CarFlagEncoder() {
         super(0, 2, SPEED.get("secondary"), SPEED.get("motorway"));
-
         restrictions = new String[]{"motorcar", "motor_vehicle", "vehicle", "access"};
-        restricted.add("private");
-        restricted.add("agricultural");
-        restricted.add("forestry");
-        restricted.add("no");
-        restricted.add("restricted");
+        restrictedValues.add("private");
+        restrictedValues.add("agricultural");
+        restrictedValues.add("forestry");
+        restrictedValues.add("no");
+        restrictedValues.add("restricted");
     }
 
     public boolean isMotorway(int flags) {
@@ -55,12 +54,62 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public boolean isAllowed(Map<String, String> osmProperties) {
+    public int isAllowed(Map<String, String> osmProperties) {
         String highwayValue = osmProperties.get("highway");
-        if (!SPEED.containsKey(highwayValue))
-            return false;
+        if (highwayValue == null) {
+            if (hasTag("route", ferries, osmProperties)) {
+                String markedFor = osmProperties.get("motorcar");
+                if (markedFor == null)
+                    markedFor = osmProperties.get("motor_vehicle");
+                if ("yes".equals(markedFor))
+                    return acceptBit | ferryBit;
+            }
+            return 0;
+        } else {
+            if (!SPEED.containsKey(highwayValue))
+                return 0;
 
-        return super.isAllowed(osmProperties);
+            // check access restrictions
+            if (hasTag(restrictions, restrictedValues, osmProperties))
+                return 0;
+
+            return acceptBit;
+        }
+    }
+
+    @Override
+    public int handleWayTags(int allowed, Map<String, String> osmProperties) {
+        if ((allowed & acceptBit) == 0)
+            return 0;
+
+        int encoded;
+        if ((allowed & ferryBit) == 0) {
+            String highwayValue = osmProperties.get("highway");
+            // get assumed speed from highway type
+            Integer speed = getSpeed(highwayValue);
+            // apply speed limit
+            int maxspeed = AcceptWay.parseSpeed(osmProperties.get("maxspeed"));
+            if (maxspeed > 0 && speed > maxspeed)
+                //outProperties.put( "car", maxspeed );
+                speed = maxspeed;
+
+            // usually used with a node, this does not work as intended
+            // if( "toll_booth".equals( osmProperties.get( "barrier" ) ) )
+
+            if (hasTag("oneway", oneways, osmProperties)) {
+                encoded = flags(speed, false);
+                if (hasTag("oneway", "-1", osmProperties)) {
+                    encoded = swapDirection(encoded);
+                }
+            } else
+                encoded = flags(speed, true);
+
+        } else {
+            // TODO read duration and calculate speed 00:30 for ferry
+            encoded = flags(10, true);
+        }
+
+        return encoded;
     }
 
     @Override public String toString() {

@@ -44,7 +44,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     private IntDoubleBinHeap heap;
     private int visitedNodes;
     private boolean doClear = true;
-    private double limit = Double.MAX_VALUE;    
+    private double limit = Double.MAX_VALUE;
 
     public DijkstraOneToMany(Graph graph, EdgePropertyEncoder encoder) {
         super(graph, encoder);
@@ -61,7 +61,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         limit = weight;
         return this;
     }
-    
+
     @Override
     public Path calcPath(int from, int to) {
         initializeEdgeIds();
@@ -98,7 +98,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         
         int currNode = from;
         if (doClear) {
-            doClear = false;            
+            doClear = false;
             int vn = changedNodes.size();
             for (int i = 0; i < vn; i++) {
                 int n = changedNodes.get(i);
@@ -130,7 +130,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             while (iter.next()) {
                 if (!accept(iter))
                     continue;
-                int adjNode = iter.adjNode();                
+                int adjNode = iter.adjNode();
                 double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + weights[currNode];
                 if(edgeIds != null){
                     tmpWeight += turnCostCalc.getTurnCosts(currNode, edgeIds[currNode], iter.edge());    

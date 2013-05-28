@@ -20,8 +20,9 @@ import com.graphhopper.util.Helper;
 /**
  * Copied from Android project: android.util.SparseArray.java
  *
- * SparseArrays map integers to Objects. Unlike a normal array of Objects, there can be gaps in the
- * indices. It is intended to be more efficient than using a HashMap to map Integers to Objects.
+ * SparseArrays map integers to Objects. Unlike a normal array of Objects, there
+ * can be gaps in the indices. It is intended to be more efficient than using a
+ * HashMap to map Integers to Objects.
  */
 public class SparseArray<E> implements Cloneable {
 
@@ -39,8 +40,9 @@ public class SparseArray<E> implements Cloneable {
     }
 
     /**
-     * Creates a new SparseArray containing no mappings that will not require any additional memory
-     * allocation to store the specified number of mappings.
+     * Creates a new SparseArray containing no mappings that will not require
+     * any additional memory allocation to store the specified number of
+     * mappings.
      */
     public SparseArray(int initialCapacity) {
         initialCapacity = Helper.idealIntArraySize(initialCapacity);
@@ -73,8 +75,8 @@ public class SparseArray<E> implements Cloneable {
     }
 
     /**
-     * Gets the Object mapped from the specified key, or the specified Object if no such mapping has
-     * been made.
+     * Gets the Object mapped from the specified key, or the specified Object if
+     * no such mapping has been made.
      */
     @SuppressWarnings("unchecked")
     public E get(int key, E valueIfKeyNotFound) {
@@ -139,8 +141,8 @@ public class SparseArray<E> implements Cloneable {
     }
 
     /**
-     * Adds a mapping from the specified key to the specified value, replacing the previous mapping
-     * from the specified key if there was one.
+     * Adds a mapping from the specified key to the specified value, replacing
+     * the previous mapping from the specified key if there was one.
      */
     public void put(int key, E value) {
         int i = binarySearch(mKeys, 0, mSize, key);
@@ -190,7 +192,8 @@ public class SparseArray<E> implements Cloneable {
     }
 
     /**
-     * Returns the number of key-value mappings that this SparseArray currently stores.
+     * Returns the number of key-value mappings that this SparseArray currently
+     * stores.
      */
     public int size() {
         if (mGarbage) {
@@ -241,8 +244,8 @@ public class SparseArray<E> implements Cloneable {
     }
 
     /**
-     * Returns the index for which {@link #keyAt} would return the specified key, or a negative
-     * number if the specified key is not mapped.
+     * Returns the index for which {@link #keyAt} would return the specified
+     * key, or a negative number if the specified key is not mapped.
      */
     public int indexOfKey(int key) {
         if (mGarbage) {
@@ -253,10 +256,10 @@ public class SparseArray<E> implements Cloneable {
     }
 
     /**
-     * Returns an index for which {@link #valueAt} would return the specified key, or a negative
-     * number if no keys map to the specified value. Beware that this is a linear search, unlike
-     * lookups by key, and that multiple keys can map to the same value and this will find only one
-     * of them.
+     * Returns an index for which {@link #valueAt} would return the specified
+     * key, or a negative number if no keys map to the specified value. Beware
+     * that this is a linear search, unlike lookups by key, and that multiple
+     * keys can map to the same value and this will find only one of them.
      */
     public int indexOfValue(E value) {
         if (mGarbage) {
@@ -290,8 +293,8 @@ public class SparseArray<E> implements Cloneable {
     }
 
     /**
-     * Puts a key/value pair into the array, optimizing for the case where the key is greater than
-     * all existing keys in the array.
+     * Puts a key/value pair into the array, optimizing for the case where the
+     * key is greater than all existing keys in the array.
      */
     public void append(int key, E value) {
         if (mSize != 0 && key <= mKeys[mSize - 1]) {

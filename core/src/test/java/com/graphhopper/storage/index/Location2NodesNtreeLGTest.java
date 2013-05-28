@@ -107,12 +107,12 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
         lg.setNode(3, 0.5, 1);
         EdgeIterator iter1 = lg.edge(1, 0, 100, true);
         EdgeIterator iter2 = lg.edge(2, 3, 100, true);
-        
+
         lg.setLevel(0, 11);
         lg.setLevel(1, 10);
         // disconnect higher 0 from lower 1
         lg.disconnect(iter1, EdgeIterator.NO_EDGE, false);
-        
+
         lg.setLevel(2, 12);
         lg.setLevel(3, 13);
         // disconnect higher 3 from lower 2

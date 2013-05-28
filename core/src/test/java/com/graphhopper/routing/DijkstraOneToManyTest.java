@@ -65,10 +65,10 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
     public void testDifferentEdgeFilter() {
         Graph g = new GraphBuilder().levelGraphCreate();
         initNodes(g, 7);
-        g.edge(4, 3, 10, true);        
+        g.edge(4, 3, 10, true);
         g.edge(3, 6, 10, true);
-        
-        g.edge(4, 5, 10, true);        
+
+        g.edge(4, 5, 10, true);
         g.edge(5, 6, 10, true);
 
         AlgorithmPreparation prep = prepareGraph(g);
@@ -80,15 +80,15 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
         });
         Path p = algo.calcPath(4, 6);
         assertEquals(Helper.createTList(4, 3, 6), p.calcNodes());
-        
+
         // important call!
         algo.clear();
         algo.edgeFilter(new EdgeFilter() {
             @Override public boolean accept(EdgeIterator iter) {
                 return iter.adjNode() != 3;
             }
-        });        
+        });
         p = algo.calcPath(4, 6);
         assertEquals(Helper.createTList(4, 5, 6), p.calcNodes());
-    }       
+    }
 }

@@ -227,7 +227,7 @@ public abstract class AbstractGraphTester {
         graph.edge(0, 2, 10, true);
         assertEquals(3, graph.nodes());
         close(graph);
-        
+
         graph = createGraph();
         assertEquals(0, graph.nodes());
     }

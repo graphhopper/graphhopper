@@ -43,7 +43,7 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
 
     @Test
     public void testCannotCalculateSP2() {
-        Graph g = createGraph();        
+        Graph g = createGraph();
         DijkstraBidirection algo = new DijkstraBidirection(g, carEncoder);
         Path p = algo.calcPath(0, 2);
         assertFalse(p.found());

@@ -19,7 +19,8 @@
 package com.graphhopper.routing.util;
 
 /**
- * Specifies how the best route is calculated. E.g. the fastest or shortest route.
+ * Specifies how the best route is calculated. E.g. the fastest or shortest
+ * route.
  *
  * @author Peter Karich
  */

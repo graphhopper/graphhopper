@@ -62,7 +62,7 @@ public class GHLongIntBTreeTest {
         assertEquals(3, instance.height());
 
         assertEquals(3, instance.height());
-        assertEquals(10, instance.size());        
+        assertEquals(10, instance.size());
         assertEquals(0, instance.memoryUsage());
 
         check(instance, 1);

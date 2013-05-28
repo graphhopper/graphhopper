@@ -52,7 +52,6 @@ public abstract class OSMReaderHelper {
     private AcceptWay acceptWay;
     protected TLongArrayList wayNodes = new TLongArrayList(10);
     private Map<String, String> osmProperties = new HashMap<String, String>();
-    private Map<String, Object> outProperties = new HashMap<String, Object>();
     private long edgeOsmId;
     private DouglasPeucker dpAlgo = new DouglasPeucker();
 
@@ -156,48 +155,46 @@ public abstract class OSMReaderHelper {
     void processRelations(XMLStreamReader sReader) throws XMLStreamException{
     }
     
-
-    public void processWay(XMLStreamReader sReader) throws XMLStreamException {
-        boolean valid = parseWay(sReader);
-        if (valid) {
-            int flags = acceptWay.toFlags(outProperties);
-            addEdge(wayNodes, flags, edgeOsmId);            
-        }
-    }
-    
     /**
-     * Filter ways but do not anayze properties
-     * wayNodes will be filled with participating node ids.
+     * Filter ways but do not analyze properties wayNodes will be filled with
+     * participating node ids.
      *
      * @return true the current xml entry is a way entry and has nodes
      */
     boolean filterWay(XMLStreamReader sReader) throws XMLStreamException {
+        readWayAttributes(sReader);
+        if (wayNodes.size() < 2)
+            return false;
 
-        readWayAttributes( sReader );
-
-        boolean isWay = acceptWay.accept(osmProperties);
-        boolean hasNodes = wayNodes.size() > 1;
-        return isWay && hasNodes;
+        return acceptWay.accept(osmProperties) > 0;
     }
 
     /**
-     * wayNodes will be filled with participating node ids. outProperties will
-     * be filled with way information after calling this method.
+     * Process properties, encode flags and create edges for the way
      *
-     * @return true the current xml entry is a way entry and has nodes
+     * @param sReader
+     * @throws XMLStreamException
      */
-    boolean parseWay(XMLStreamReader sReader) throws XMLStreamException {
-        outProperties.clear();
+    public void processWay(XMLStreamReader sReader) throws XMLStreamException {
+        readWayAttributes(sReader);
+        if (wayNodes.size() < 2)
+            return;
 
-        readWayAttributes( sReader );
-
-        boolean isWay = acceptWay.handleTags( outProperties, osmProperties, wayNodes );
-        boolean hasNodes = wayNodes.size() > 1;
-        return isWay && hasNodes;
+        int includeWay = acceptWay.accept(osmProperties);
+        if (includeWay > 0) {
+            int flags = acceptWay.encodeTags(includeWay, osmProperties);
+            if (flags != 0)
+                addEdge(wayNodes, flags, edgeOsmId);
+        }
     }
 
-    private void readWayAttributes( XMLStreamReader sReader ) throws XMLStreamException
-    {
+    /**
+     * Read member nodes and tags from OSM way
+     *
+     * @param sReader
+     * @throws XMLStreamException
+     */
+    private void readWayAttributes(XMLStreamReader sReader) throws XMLStreamException {
         wayNodes.clear();
         osmProperties.clear();
         try{
@@ -219,7 +216,7 @@ public abstract class OSMReaderHelper {
                 } else if ("tag".equals(sReader.getLocalName())) {
                     String tagKey = sReader.getAttributeValue(null, "k");
                     // check for null values is included in Helper.isEmpty
-                    if ( !Helper.isEmpty( tagKey )) {
+                    if (!Helper.isEmpty(tagKey)) {
                         String tagValue = sReader.getAttributeValue(null, "v");
                         osmProperties.put(tagKey, tagValue);
                     }

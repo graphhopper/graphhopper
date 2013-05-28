@@ -24,16 +24,16 @@ import com.graphhopper.util.shapes.Shape;
 import java.util.Collection;
 
 /**
- * A quad tree interface - think Map<latitude+longitude, V> with the possibility to get neighbouring
- * entries fast.
+ * A quad tree interface - think Map<latitude+longitude, V> with the possibility
+ * to get neighbouring entries fast.
  *
  * @author Peter Karich
  */
 public interface QuadTree<V> {
 
     /**
-     * The quadtree could be configured with implementation specific values. After this it needs to
-     * be configured.
+     * The quadtree could be configured with implementation specific values.
+     * After this it needs to be configured.
      *
      * @throws RuntimeException could be thrown
      */
@@ -48,8 +48,8 @@ public interface QuadTree<V> {
     int remove(double lat, double lon);
 
     /**
-     * @return The nodes matching the specified latitude and longitude. If value is null all values
-     * will be returned
+     * @return The nodes matching the specified latitude and longitude. If value
+     * is null all values will be returned
      */
     Collection<CoordTrig<V>> getNodesFromValue(double lat, double lon, V value);
 

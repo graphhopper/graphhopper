@@ -259,7 +259,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
             }
         }).closestNode());
     }
-    
+
     // see testgraph2.jpg
     Graph createTestGraph2() {
         Graph graph = createGraph(new RAMDirectory());

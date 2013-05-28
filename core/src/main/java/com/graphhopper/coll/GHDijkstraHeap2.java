@@ -25,10 +25,12 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
- * A simple two staged heap where the first N values are stored in a sorted tree.
+ * A simple two staged heap where the first N values are stored in a sorted
+ * tree.
  *
- * TODO some bug remaining if it over or underflows (or same problem as with MyDijkstraHeap?) ...
- * use dijkstra simple => cannot remove 8243.565 size:32, smallSize: 22 ...
+ * TODO some bug remaining if it over or underflows (or same problem as with
+ * MyDijkstraHeap?) ... use dijkstra simple => cannot remove 8243.565 size:32,
+ * smallSize: 22 ...
  *
  * @author Peter Karich
  */

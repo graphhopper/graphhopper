@@ -32,15 +32,16 @@ public abstract class AbstractDirectoryTester {
 
     protected String location = "./target/tmp/dir";
     private DataAccess da;
+
     abstract Directory createDir();
 
-    @After    
+    @After
     public void tearDown() {
         Helper.removeDir(new File(location));
-        if(da != null)
+        if (da != null)
             da.close();
     }
-    
+
     @Before
     public void setUp() {
         Helper.removeDir(new File(location));

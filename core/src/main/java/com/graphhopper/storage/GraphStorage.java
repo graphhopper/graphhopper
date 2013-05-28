@@ -956,7 +956,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             edgeCount = edges.getHeader(1);
 
             // geometry
-            maxGeoRef = edges.getHeader(0);
+            maxGeoRef = wayGeometry.getHeader(0);
             initialized = true;
             return true;
         }

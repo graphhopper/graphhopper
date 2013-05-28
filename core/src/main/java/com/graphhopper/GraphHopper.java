@@ -29,7 +29,6 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
-import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
@@ -101,7 +100,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean chFast = true;
     // for OSM import:
     private String osmFile;
-    private AcceptWay acceptWay = new AcceptWay(true, false, false);
+    private AcceptWay acceptWay = new AcceptWay("CAR");
 	private long expectedNodes = 10;
     private double wayPointMaxDistance = 1;
     private int periodicUpdates = 3;
@@ -180,7 +179,7 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * Enables the use of contraction hierarchies to reduce query times.
      *
-     * @param true if fastest route should be calculated (instead of shortest)
+     * @param enable if fastest route should be calculated (instead of shortest)
      */
     public GraphHopper chShortcuts(boolean enable, boolean fast) {
         chUsage = enable;
@@ -308,7 +307,7 @@ public class GraphHopper implements GraphHopperAPI {
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", 1);
         String type = args.get("osmreader.acceptWay", "CAR");
-        acceptWay = AcceptWay.parse(type);
+        acceptWay = new AcceptWay(type);
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", 1000);
@@ -417,6 +416,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (chUsage) {
             graph = new LevelGraphStorage(dir);
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
+
             EdgePropertyEncoder encoder = acceptWay.getSingle();
             if (chFast)
                 tmpPrepareCH.type(new FastestCalc(encoder));
@@ -445,7 +445,7 @@ public class GraphHopper implements GraphHopperAPI {
         // overwrite configured accept way
         String acceptStr = properties.get("osmreader.acceptWay");
         if (!acceptStr.isEmpty())
-            acceptWay = AcceptWay.parse(acceptStr);
+            acceptWay = new AcceptWay(acceptStr);
         properties.checkVersions(false);
         if ("false".equals(properties.get("prepare.done")))
             prepare();
@@ -582,8 +582,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void flush() {
-        logger.info("flushing graph with " + graph.nodes() + " nodes, bounds:"
-                + graph.bounds() + ", " + Helper.memInfo() + ")");
+        logger.info("flushing graph " + graph.toString() + ", " + Helper.memInfo() + ")");
         graph.flush();
         properties.flush();
     }
