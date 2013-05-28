@@ -1,3 +1,21 @@
+/*
+ *  Licensed to Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
+ * 
+ *  Peter Karich licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
+ * 
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.reader;
 
 import com.graphhopper.coll.LongIntMap;
@@ -11,7 +29,9 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
 
 /**
- * A readable OSM file. User: Nop Date: 06.12.2008 Time: 15:14:13
+ * A readable OSM file.
+ *
+ * @author Nop
  */
 public class OSMInputFile {
 
@@ -36,7 +56,7 @@ public class OSMInputFile {
         try {
             ips = new BufferedInputStream(new FileInputStream(file), 50000);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            throw new RuntimeException(e);
         }
         ips.mark(10);
 

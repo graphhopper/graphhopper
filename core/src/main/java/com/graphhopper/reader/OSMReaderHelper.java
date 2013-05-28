@@ -20,7 +20,6 @@ package com.graphhopper.reader;
 
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
-import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -28,15 +27,11 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.*;
 import gnu.trove.list.TLongList;
 
-import java.io.File;
-import javax.xml.stream.XMLStreamException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.graphhopper.util.Helper.nf;
-
 /**
+ * @author Nop
  * @author Peter Karich
  */
 public class OSMReaderHelper {
