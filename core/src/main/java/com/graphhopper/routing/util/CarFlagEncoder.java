@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMWay;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,13 +55,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public int isAllowed(Map<String, String> osmProperties) {
-        String highwayValue = osmProperties.get("highway");
+    public int isAllowed(OSMWay way) {
+        String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            if (hasTag("route", ferries, osmProperties)) {
-                String markedFor = osmProperties.get("motorcar");
+            if (way.hasTag("route", ferries)) {
+                String markedFor = way.getTag("motorcar");
                 if (markedFor == null)
-                    markedFor = osmProperties.get("motor_vehicle");
+                    markedFor = way.getTag("motor_vehicle");
                 if ("yes".equals(markedFor))
                     return acceptBit | ferryBit;
             }
@@ -70,7 +71,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 return 0;
 
             // check access restrictions
-            if (hasTag(restrictions, restrictedValues, osmProperties))
+            if (way.hasTag(restrictions, restrictedValues))
                 return 0;
 
             return acceptBit;
@@ -78,27 +79,26 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public int handleWayTags(int allowed, Map<String, String> osmProperties) {
+    public int handleWayTags(int allowed, OSMWay way) {
         if ((allowed & acceptBit) == 0)
             return 0;
 
         int encoded;
         if ((allowed & ferryBit) == 0) {
-            String highwayValue = osmProperties.get("highway");
+            String highwayValue = way.getTag("highway");
             // get assumed speed from highway type
             Integer speed = getSpeed(highwayValue);
             // apply speed limit
-            int maxspeed = AcceptWay.parseSpeed(osmProperties.get("maxspeed"));
+            int maxspeed = AcceptWay.parseSpeed(way.getTag("maxspeed"));
             if (maxspeed > 0 && speed > maxspeed)
                 //outProperties.put( "car", maxspeed );
                 speed = maxspeed;
 
             // usually used with a node, this does not work as intended
             // if( "toll_booth".equals( osmProperties.get( "barrier" ) ) )
-
-            if (hasTag("oneway", oneways, osmProperties)) {
+            if (way.hasTag("oneway", oneways)) {
                 encoded = flags(speed, false);
-                if (hasTag("oneway", "-1", osmProperties)) {
+                if (way.hasTag("oneway", "-1")) {
                     encoded = swapDirection(encoded);
                 }
             } else

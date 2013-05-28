@@ -30,16 +30,16 @@
     </node>
     
     <way id="-10">
-        <nd ref="10"/>
-        <nd ref="20"/>        
-        <nd ref="30"/>
+        <nd ref="-10"/>
+        <nd ref="-20"/>        
+        <nd ref="-30"/>
         <tag k="highway" v="motorway" />
     </way> 
     
     <way id="-11">
-        <nd ref="20"/>
-        <nd ref="40"/>
-        <nd ref="50"/>
+        <nd ref="-20"/>
+        <nd ref="-40"/>
+        <nd ref="-50"/>
         <tag k="highway" v="service" />
     </way>
 </osm>

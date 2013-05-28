@@ -34,6 +34,7 @@ import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.junit.After;
@@ -81,9 +82,14 @@ public class OSMReaderTest {
 
         @Override protected OSMReader importOSM(String ignore) throws IOException {
             OSMReader osmReader = new OSMReader(buildGraph(dir), 1000);
-            osmReader.acceptWay(acceptWay());
-            osmReader.helper().preProcess(getResource(testFile));
-            osmReader.writeOsm2Graph(getResource(testFile));
+            osmReader.acceptWay( acceptWay() );
+            try {
+                osmReader.osm2Graph( new File( getClass().getResource( testFile ).toURI()));
+            }
+            catch( URISyntaxException e ) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            //osmReader.writeOsm2Graph(getResource(testFile));
             return osmReader;
         }
     }
@@ -147,12 +153,17 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopperTest(file1) {
             @Override protected OSMReader importOSM(String ignore) throws IOException {
                 OSMReader osmReader = new OSMReader(buildGraph(dir), 1000) {
-                    @Override public boolean isInBounds(double lat, double lon) {
-                        return lat > 49 && lon > 8;
+                    @Override public boolean isInBounds(OSMNode node) {
+                        return node.lat() > 49 && node.lon() > 8;
                     }
                 };
-                osmReader.helper().preProcess(getResource(testFile));
-                osmReader.writeOsm2Graph(getResource(testFile));
+                try {
+                    osmReader.osm2Graph( new File( getClass().getResource( testFile ).toURI()));
+                }
+                catch( URISyntaxException e ) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+                //osmReader.writeOsm2Graph(getResource(testFile));
                 return osmReader;
             }
         };
