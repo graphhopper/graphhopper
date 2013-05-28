@@ -200,6 +200,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         });
         assertTrue(e2.next());
         
+        //add some restrictions
         graph.turnCosts(8, edge_5_8, edge_8_3, TurnCostEncoder.restriction());
         graph.turnCosts(8, edge_2_8, edge_8_3, TurnCostEncoder.restriction());
         graph.turnCosts(2, e1.edge(), e2.edge(), TurnCostEncoder.restriction());

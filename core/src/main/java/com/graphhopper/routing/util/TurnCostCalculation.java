@@ -16,7 +16,7 @@ public interface TurnCostCalculation {
 	 * @param viaNode the node id for which the turn costs will be calculated
 	 * @param fromEdge the edge the turn is coming from
 	 * @param toEdge the edge the turn is going to
-	 * @return the turn costs for this turn
+	 * @return the turn costs for this turn (to be encoded by {@link TurnCostEncoder})
 	 */
 	double getTurnCosts(int viaNode, int fromEdge, int toEdge);
 	

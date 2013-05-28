@@ -26,7 +26,7 @@ public class TurnCostEncoderTest {
     }
     
     @Test public void composeRestrictionBoth(){
-        int turnCostFlag = TurnCostEncoder.flags(BIKE_300, CAR_100, TurnCostEncoder.RESTRICTION_BOTH);
+        int turnCostFlag = TurnCostEncoder.costs(BIKE_300, CAR_100, TurnCostEncoder.RESTRICTION_BOTH);
         
         assertTrue(turnCostEncoder.isTurnRestricted(turnCostFlag));
         assertTrue(turnCostEncoder.isTurnRestrictedForBike(turnCostFlag));
@@ -36,7 +36,7 @@ public class TurnCostEncoderTest {
     }
     
     @Test public void composeRestrictionCarOnly(){
-        int turnCostFlag = TurnCostEncoder.flags(BIKE_300, CAR_100, TurnCostEncoder.RESTRICTION_CAR);
+        int turnCostFlag = TurnCostEncoder.costs(BIKE_300, CAR_100, TurnCostEncoder.RESTRICTION_CAR);
         
         assertFalse(turnCostEncoder.isTurnRestricted(turnCostFlag));
         assertFalse(turnCostEncoder.isTurnRestrictedForBike(turnCostFlag));
@@ -46,7 +46,7 @@ public class TurnCostEncoderTest {
     }
     
     @Test public void composeRestrictionBikeOnly(){
-        int turnCostFlag = TurnCostEncoder.flags(BIKE_300, CAR_100, TurnCostEncoder.RESTRICTION_BIKE);
+        int turnCostFlag = TurnCostEncoder.costs(BIKE_300, CAR_100, TurnCostEncoder.RESTRICTION_BIKE);
         
         assertFalse(turnCostEncoder.isTurnRestricted(turnCostFlag));
         assertTrue(turnCostEncoder.isTurnRestrictedForBike(turnCostFlag));
@@ -56,7 +56,7 @@ public class TurnCostEncoderTest {
     }
     
     @Test public void composeTurnCostsOnly(){
-        int turnCostFlag = TurnCostEncoder.flags(BIKE_300, CAR_100, 0);
+        int turnCostFlag = TurnCostEncoder.costs(BIKE_300, CAR_100, 0);
         
         assertFalse(turnCostEncoder.isTurnRestricted(turnCostFlag));
         assertFalse(turnCostEncoder.isTurnRestrictedForBike(turnCostFlag));
@@ -67,14 +67,14 @@ public class TurnCostEncoderTest {
     
     @Test public void errorNegativeCosts(){
         try{
-            TurnCostEncoder.flags(-BIKE_300, CAR_100, 0);
+            TurnCostEncoder.costs(-BIKE_300, CAR_100, 0);
             fail();
         }catch(Exception e){
             //ok
         }
         
         try{
-            TurnCostEncoder.flags(BIKE_300, -CAR_100, 0);
+            TurnCostEncoder.costs(BIKE_300, -CAR_100, 0);
             fail();
         }catch(Exception e){
             //ok
@@ -84,20 +84,20 @@ public class TurnCostEncoderTest {
     
     @Test public void maxCosts(){
         try{
-            TurnCostEncoder.flags(MAX_COSTS+1, MAX_COSTS, 0);
+            TurnCostEncoder.costs(MAX_COSTS+1, MAX_COSTS, 0);
             fail();
         }catch(Exception e){
             //ok
         }
         
         try{
-            TurnCostEncoder.flags(MAX_COSTS, MAX_COSTS+1, 0);
+            TurnCostEncoder.costs(MAX_COSTS, MAX_COSTS+1, 0);
             fail();
         }catch(Exception e){
             //ok
         }
         
-        int turnCostFlag = TurnCostEncoder.flags(MAX_COSTS, MAX_COSTS, 0);
+        int turnCostFlag = TurnCostEncoder.costs(MAX_COSTS, MAX_COSTS, 0);
         
         assertFalse(turnCostEncoder.isTurnRestricted(turnCostFlag));
         assertFalse(turnCostEncoder.isTurnRestrictedForBike(turnCostFlag));

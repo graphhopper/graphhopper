@@ -40,7 +40,14 @@ public final class TurnCostEncoder {
     /**
      * @return a new turn costs flag which holds the time this turn would cost for car and bike
      */
-    public static int flags(double costsBike, double costsCar, int flags){
+    public static int costs(double costsBike, double costsCar){
+        return costs(costsBike, costsCar, 0);
+    }
+    
+    /**
+     * @return a new turn costs flag which holds the time this turn would cost for car and bike
+     */
+    public static int costs(double costsBike, double costsCar, int flags){
         if(costsCar < 0 || costsCar > COSTS_MAX ){
             throw new IllegalArgumentException("time of the turn by car must be bigger or equal than 0 and less or equal than 4095");
         }
@@ -76,8 +83,8 @@ public final class TurnCostEncoder {
     }
     
     /**
-     * @param flags holds the distance this turn will cost
-     * @return the distance in meters of the turn costs decoded by <code>flags</code> 
+     * @param flags holds the time this turn will cost for cars 
+     * @return the time in seconds of the turn costs decoded by <code>flags</code> 
      */
     public double getTurnCostsForCar(int flags){
         if(isTurnRestrictedForCar(flags)){
@@ -87,7 +94,7 @@ public final class TurnCostEncoder {
     }
     
     /**
-     * @param flags holds the time this turn will cost
+     * @param flags holds the time this turn will cost for bikes
      * @return the time in seconds of the turn costs decoded by <code>flags</code> 
      */
     public double getTurnCostsForBike(int flags){
