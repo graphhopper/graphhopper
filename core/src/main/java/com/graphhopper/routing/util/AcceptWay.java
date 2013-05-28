@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,11 +83,12 @@ public class AcceptWay {
 
     /**
      * Determine whether an osm way is a routable way
+     * @param way
      */
-    public int accept(Map<String, String> osmProperties) {
+    public int accept(OSMWay way) {
         int includeWay = 0;
         for (int i = 0; i < encoderCount; i++) {
-            includeWay |= encoders[i].isAllowed(osmProperties);
+            includeWay |= encoders[i].isAllowed(way);
         }
 
         return includeWay;
@@ -98,7 +100,7 @@ public class AcceptWay {
      *
      * @return the encoded flags
      */
-    public int encodeTags(int includeWay, Map<String, String> osmProperties) {
+    public int encodeTags(int includeWay, OSMWay osmProperties) {
         int flags = 0;
         for (int i = 0; i < encoderCount; i++) {
             flags |= encoders[i].handleWayTags(includeWay, osmProperties);

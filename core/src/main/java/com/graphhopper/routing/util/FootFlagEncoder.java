@@ -18,6 +18,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMWay;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -92,34 +94,35 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     /**
      * Some ways are okay but not separate for pedestrians.
+     * @param way
      */
     @Override
-    public int isAllowed(Map<String, String> osmProperties) {
-        String highwayValue = osmProperties.get("highway");
+    public int isAllowed(OSMWay way ) {
+        String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            if (hasTag("route", ferries, osmProperties)) {
-                if (!hasTag("foot", "no", osmProperties))
+            if (way.hasTag("route", ferries )) {
+                if (!way.hasTag("foot", "no" ))
                     return acceptBit | ferryBit;
             }
             return 0;
         } else {
-            if (hasTag("sidewalk", sidewalks, osmProperties))
+            if (way.hasTag("sidewalk", sidewalks ))
                 return acceptBit;
 
             // no need to evaluate ferries - already included here
-            if (hasTag("foot", intended, osmProperties))
+            if (way.hasTag("foot", intended ))
                 return acceptBit;
 
             if (!allowedHighwayTags.contains(highwayValue))
                 return 0;
 
-            if (hasTag("motorroad", "yes", osmProperties))
+            if (way.hasTag("motorroad", "yes" ))
                 return 0;
 
-            if (hasTag("bicycle", "official", osmProperties))
+            if (way.hasTag("bicycle", "official" ))
                 return 0;
             // check access restrictions
-            if (hasTag(restrictions, restrictedValues, osmProperties))
+            if (way.hasTag(restrictions, restrictedValues ))
                 return 0;
 
             return acceptBit;
@@ -127,7 +130,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public int handleWayTags(int allowed, Map<String, String> osmProperties) {
+    public int handleWayTags(int allowed, OSMWay way) {
         if ((allowed & acceptBit) == 0)
             return 0;
 

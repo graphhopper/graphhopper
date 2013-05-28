@@ -18,6 +18,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMWay;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,7 +43,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
     };
     private final Set<String> allowedHighwayTags = new HashSet<String>() {
         {
-            addAll(saveHighwayTags);
+            addAll( saveHighwayTags );
             add("trunk");
             add("primary");
             add("secondary");
@@ -87,13 +89,14 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
 
     /**
      * Separate ways for pedestrians.
+     * @param way
      */
     @Override
-    public int isAllowed(Map<String, String> osmProperties) {
-        String highwayValue = osmProperties.get("highway");
+    public int isAllowed(OSMWay way ) {
+        String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            if (hasTag("route", ferries, osmProperties)
-                    && hasTag("bicycle", "yes", osmProperties))
+            if (way.hasTag("route", ferries )
+                    && way.hasTag("bicycle", "yes" ))
                 return acceptBit | ferryBit;
 
             return 0;
@@ -101,14 +104,14 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
             if (!allowedHighwayTags.contains(highwayValue))
                 return 0;
 
-            if (hasTag("bicycle", intended, osmProperties))
+            if (way.hasTag("bicycle", intended ))
                 return acceptBit;
 
-            if (hasTag("motorroad", "yes", osmProperties))
+            if (way.hasTag("motorroad", "yes" ))
                 return 0;
 
             // check access restrictions
-            if (hasTag(restrictions, restrictedValues, osmProperties))
+            if (way.hasTag(restrictions, restrictedValues ))
                 return 0;
 
             return acceptBit;
@@ -116,7 +119,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public int handleWayTags(int allowed, Map<String, String> osmProperties) {
+    public int handleWayTags(int allowed, OSMWay way) {
         if ((allowed & acceptBit) == 0)
             return 0;
 
@@ -124,14 +127,14 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         if ((allowed & ferryBit) == 0) {
             // http://wiki.openstreetmap.org/wiki/Cycleway
             // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway
-            String highwayValue = osmProperties.get("highway");
+            String highwayValue = way.getTag("highway");
             int speed = getSpeed(highwayValue);
-            if (hasTag("oneway", oneways, osmProperties)
-                    && !hasTag("oneway:bicycle", "no", osmProperties)
-                    && !hasTag("cycleway", oppositeLanes, osmProperties)) {
+            if (way.hasTag("oneway", oneways )
+                    && !way.hasTag("oneway:bicycle", "no")
+                    && !way.hasTag("cycleway", oppositeLanes)) {
 
                 encoded = flags(speed, false);
-                if (hasTag("oneway", "-1", osmProperties))
+                if (way.hasTag("oneway", "-1"))
                     encoded = swapDirection(encoded);
             } else
                 encoded = flags(speed, true);

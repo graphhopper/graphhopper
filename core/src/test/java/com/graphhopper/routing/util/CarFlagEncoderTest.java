@@ -20,6 +20,8 @@ package com.graphhopper.routing.util;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import com.graphhopper.reader.OSMWay;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -34,16 +36,18 @@ public class CarFlagEncoderTest {
     @Test
     public void testAccess() {
         Map<String, String> map = new HashMap<String, String>();
-        assertFalse(encoder.isAllowed(map) > 0);
+        OSMWay way = new OSMWay();
+        way.setTags( map );
+        assertFalse(encoder.isAllowed(way) > 0);
         map.put("highway", "service");
-        assertTrue(encoder.isAllowed(map) > 0);
+        assertTrue(encoder.isAllowed(way) > 0);
         map.put("access", "no");
-        assertFalse(encoder.isAllowed(map) > 0);
+        assertFalse(encoder.isAllowed(way) > 0);
         map.clear();
 
         map.put("highway", "track");
         map.put("motorcar", "no");
-        assertFalse(encoder.isAllowed(map) > 0);
+        assertFalse(encoder.isAllowed(way) > 0);
     }
 
     @Test
@@ -92,7 +96,7 @@ public class CarFlagEncoderTest {
     public void testService() {
         int flags = encoder.flags(encoder.getSpeed("service"), true);
         assertTrue(encoder.isForward(flags));
-        assertTrue(encoder.isBackward(flags));
-        assertTrue(encoder.isService(flags));
+        assertTrue( encoder.isBackward( flags ) );
+        assertTrue( encoder.isService( flags ) );
     }
 }

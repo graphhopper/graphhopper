@@ -18,6 +18,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMWay;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -74,19 +76,19 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
     /**
      * Decide whether a way is routable for a given mode of travel
      *
-     * @param osmProperties
+     *
+     * @param way
      * @return the assigned bit of the mode of travel if it is accepted or 0 for
      * not accepted
      */
-    public abstract int isAllowed(Map<String, String> osmProperties);
+    public abstract int isAllowed(OSMWay way );
 
     /**
      * Analyze properties of a way and create the routing flags
      *
      * @param allowed
-     * @param osmProperties
      */
-    public abstract int handleWayTags(int allowed, Map<String, String> osmProperties);
+    public abstract int handleWayTags(int allowed, OSMWay way);
 
     public boolean hasAccepted(int acceptedValue) {
         return (acceptedValue & acceptBit) > 0;
@@ -146,30 +148,4 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
         return maxSpeed;
     }
 
-    /**
-     * Simple Helper to check for OSM tags
-     */
-    protected final boolean hasTag(String tag, String check, Map<String, String> osmProperties) {
-        String value = osmProperties.get(tag);
-        return check.equals(value);
-    }
-
-    protected final boolean hasTag(String key, HashSet<String> values, Map<String, String> osmProperties) {
-        String osmValue = osmProperties.get(key);
-        return osmValue != null && values.contains(osmValue);
-    }
-
-    protected boolean hasTag(String[] keyList, Set<String> values, Map<String, String> osmProperties) {
-        for (int i = 0; i < keyList.length; i++) {
-            String osmValue = osmProperties.get(keyList[i]);
-            if (osmValue != null && values.contains(osmValue))
-                return true;
-        }
-        return false;
-    }
-
-    protected boolean hasTag(String key, Set<String> values, Map<String, String> osmProperties) {
-        String osmValue = osmProperties.get(key);
-        return osmValue != null && values.contains(osmValue);
-    }
 }
