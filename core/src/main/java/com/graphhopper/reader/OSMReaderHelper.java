@@ -98,13 +98,13 @@ public class OSMReaderHelper {
         double lat = node.lat();
         double lon = node.lon();
         if (nodeType == TOWER_NODE) {
-            addTowerNode( node.id(), lat, lon );
+            addTowerNode(node.id(), lat, lon);
         } else if (nodeType == PILLAR_NODE) {
             int tmp = (pillarId + 1) * 4;
             pillarLats.ensureCapacity(tmp);
-            pillarLats.setInt(pillarId, Helper.degreeToInt( lat ));
+            pillarLats.setInt(pillarId, Helper.degreeToInt(lat));
             pillarLons.ensureCapacity(tmp);
-            pillarLons.setInt(pillarId, Helper.degreeToInt( lon ));
+            pillarLons.setInt(pillarId, Helper.degreeToInt(lon));
             nodeOsmIdToIndexMap.put(node.id(), pillarId + 3);
             pillarId++;
         }
@@ -151,7 +151,7 @@ public class OSMReaderHelper {
         return "Found " + zeroCounter + " zero distances.";
     }
 
-    public void prepareHighwayNode( long osmId ) {
+    public void prepareHighwayNode(long osmId) {
         int tmpIndex = nodeOsmIdToIndexMap.get(osmId);
         if (tmpIndex == OSMReaderHelper.EMPTY) {
             // osmId is used exactly once
@@ -164,8 +164,7 @@ public class OSMReaderHelper {
         }
     }
 
-
-    protected int addTowerNode( long osmId, double lat, double lon ) {
+    protected int addTowerNode(long osmId, double lat, double lon) {
         g.setNode(towerId, lat, lon);
         int id = -(towerId + 3);
         nodeOsmIdToIndexMap.put(osmId, id);

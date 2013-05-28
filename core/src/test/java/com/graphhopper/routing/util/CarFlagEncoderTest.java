@@ -37,7 +37,7 @@ public class CarFlagEncoderTest {
     public void testAccess() {
         Map<String, String> map = new HashMap<String, String>();
         OSMWay way = new OSMWay();
-        way.setTags( map );
+        way.setTags(map);
         assertFalse(encoder.isAllowed(way) > 0);
         map.put("highway", "service");
         assertTrue(encoder.isAllowed(way) > 0);
@@ -96,7 +96,7 @@ public class CarFlagEncoderTest {
     public void testService() {
         int flags = encoder.flags(encoder.getSpeed("service"), true);
         assertTrue(encoder.isForward(flags));
-        assertTrue( encoder.isBackward( flags ) );
-        assertTrue( encoder.isService( flags ) );
+        assertTrue(encoder.isBackward(flags));
+        assertTrue(encoder.isService(flags));
     }
 }

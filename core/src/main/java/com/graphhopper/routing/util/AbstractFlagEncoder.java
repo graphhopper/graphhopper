@@ -81,7 +81,7 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
      * @return the assigned bit of the mode of travel if it is accepted or 0 for
      * not accepted
      */
-    public abstract int isAllowed(OSMWay way );
+    public abstract int isAllowed(OSMWay way);
 
     /**
      * Analyze properties of a way and create the routing flags
@@ -147,5 +147,4 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
     public int getMaxSpeed() {
         return maxSpeed;
     }
-
 }

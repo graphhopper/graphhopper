@@ -22,15 +22,9 @@ import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
-import com.graphhopper.util.Helper7;
 import com.graphhopper.util.StopWatch;
 import java.io.*;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipInputStream;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 
 import gnu.trove.list.TLongList;
 import org.slf4j.Logger;
@@ -59,9 +53,9 @@ public class OSMReader {
 
     public void osm2Graph(File osmXmlFile) throws IOException {
 
-        preProcess( osmXmlFile );
+        preProcess(osmXmlFile);
 
-        writeOsm2Graph( osmXmlFile );
+        writeOsm2Graph(osmXmlFile);
 
     }
 
@@ -72,37 +66,36 @@ public class OSMReader {
     public void preProcess(File osmXml) {
 
         try {
-            OSMInputFile in = new OSMInputFile( osmXml );
-            in.parseNodes( false );
-            in.parseRelations( false );
+            OSMInputFile in = new OSMInputFile(osmXml);
+            in.parseNodes(false);
+            in.parseRelations(false);
 
             long tmpCounter = 1;
 
             OSMElement item;
-            while( (item = in.getNext()) != null ) {
+            while ((item = in.getNext()) != null) {
                 if (++tmpCounter % 50000000 == 0)
                     logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
                             + nf(helper.getNodeMap().size()) + " (" + helper.getNodeMap().memoryUsage() + "MB) "
                             + Helper.memInfo());
 
-                if(item.isType( OSMElement.WAY )) {
+                if (item.isType(OSMElement.WAY)) {
                     final OSMWay way = (OSMWay) item;
-                    boolean valid = filterWay( way );
+                    boolean valid = filterWay(way);
                     if (valid) {
                         TLongList wayNodes = way.nodes();
                         int s = wayNodes.size();
                         for (int index = 0; index < s; index++) {
-                            helper.prepareHighwayNode( wayNodes.get( index ) );
+                            helper.prepareHighwayNode(wayNodes.get(index));
                         }
                     }
                 }
             }
             in.close();
-        } catch ( Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException("Problem while parsing file", ex);
         }
     }
-
 
     /**
      * Filter ways but do not analyze properties wayNodes will be filled with
@@ -110,23 +103,23 @@ public class OSMReader {
      *
      * @return true the current xml entry is a way entry and has nodes
      */
-    boolean filterWay( OSMWay item ) throws XMLStreamException {
+    boolean filterWay(OSMWay item) throws XMLStreamException {
 
         // ignore broken geometry
         if (item.nodes().size() < 2)
             return false;
         // ignore multipolygon geometry
-        if( !item.hasTags() )
+        if (!item.hasTags())
             return false;
 
-        return acceptWay.accept( item ) > 0;
+        return acceptWay.accept(item) > 0;
     }
 
     /**
      * Creates the edges and nodes files from the specified inputstream (osm xml
      * file).
      */
-    void writeOsm2Graph( File osmFile ) {
+    void writeOsm2Graph(File osmFile) {
 
         int tmp = (int) Math.max(helper.foundNodes() / 50, 100);
         logger.info("creating graph. Found nodes (pillar+tower):" + nf(helper.foundNodes()) + ", " + Helper.memInfo());
@@ -135,39 +128,39 @@ public class OSMReader {
         StopWatch sw = new StopWatch();
         long counter = 1;
         try {
-            OSMInputFile in = new OSMInputFile( osmFile );
-            in.parseRelations( false );
-            in.nodeFilter( helper.getNodeMap() );
+            OSMInputFile in = new OSMInputFile(osmFile);
+            in.parseRelations(false);
+            in.nodeFilter(helper.getNodeMap());
 
             OSMElement item;
-            while( (item = in.getNext()) != null ) {
+            while ((item = in.getNext()) != null) {
 
                 switch (item.type()) {
                     case OSMElement.NODE:
-                            processNode((OSMNode) item);
-                            if (counter % 10000000 == 0) {
-                                logger.info(nf(counter) + ", locs:" + nf(locations)
-                                        + " (" + skippedLocations + ") " + Helper.memInfo());
-                            }
+                        processNode((OSMNode) item);
+                        if (counter % 10000000 == 0) {
+                            logger.info(nf(counter) + ", locs:" + nf(locations)
+                                    + " (" + skippedLocations + ") " + Helper.memInfo());
+                        }
                         break;
                     case OSMElement.WAY:
-                            if (wayStart < 0) {
-                                helper.startWayProcessing();
-                                logger.info(nf(counter) + ", now parsing ways");
-                                wayStart = counter;
-                                sw.start();
-                            }
-                            processWay((OSMWay) item);
-                            if (counter - wayStart == 10000 && sw.stop().getSeconds() > 1) {
-                                logger.warn("Something is wrong! Processing ways takes too long! "
-                                        + sw.getSeconds() + "sec for only " + (counter - wayStart) + " entries");
-                            }
-                            // hmmh a bit hacky: counter does +=2 until the next loop
-                            if ((counter / 2) % 1000000 == 0) {
-                                logger.info(nf(counter) + ", locs:" + nf(locations)
-                                        + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
-                                        + " " + Helper.memInfo());
-                            }
+                        if (wayStart < 0) {
+                            helper.startWayProcessing();
+                            logger.info(nf(counter) + ", now parsing ways");
+                            wayStart = counter;
+                            sw.start();
+                        }
+                        processWay((OSMWay) item);
+                        if (counter - wayStart == 10000 && sw.stop().getSeconds() > 1) {
+                            logger.warn("Something is wrong! Processing ways takes too long! "
+                                    + sw.getSeconds() + "sec for only " + (counter - wayStart) + " entries");
+                        }
+                        // hmmh a bit hacky: counter does +=2 until the next loop
+                        if ((counter / 2) % 1000000 == 0) {
+                            logger.info(nf(counter) + ", locs:" + nf(locations)
+                                    + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
+                                    + " " + Helper.memInfo());
+                        }
                         break;
                 }
             }
@@ -188,11 +181,11 @@ public class OSMReader {
      * @param way
      * @throws XMLStreamException
      */
-    public void processWay( OSMWay way) throws XMLStreamException {
+    public void processWay(OSMWay way) throws XMLStreamException {
         if (way.nodes().size() < 2)
             return;
         // ignore multipolygon geometry
-        if( !way.hasTags() )
+        if (!way.hasTags())
             return;
 
         int includeWay = acceptWay.accept(way);
@@ -203,16 +196,14 @@ public class OSMReader {
         }
     }
 
+    private void processNode(OSMNode node) throws XMLStreamException {
 
-
-    private void processNode( OSMNode node) throws XMLStreamException {
-
-            if (isInBounds( node )) {
-                helper.addNode( node );
-                locations++;
-            } else {
-                skippedLocations++;
-            }
+        if (isInBounds(node)) {
+            helper.addNode(node);
+            locations++;
+        } else {
+            skippedLocations++;
+        }
     }
 
     /**

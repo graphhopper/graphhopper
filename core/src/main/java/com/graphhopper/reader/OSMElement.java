@@ -9,99 +9,78 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Base class for all OSM objects
- * User: Nop
+ * Base class for all OSM objects User: Nop
  */
-public abstract class OSMElement
-{
+public abstract class OSMElement {
+
     public static final int NODE = 0;
     public static final int WAY = 1;
     public static final int RELATION = 2;
-
     private static long nextID = 20000000000L;
-
     private static String[] className = new String[]{
         "OSMNode", "OSMWay", "OSMRelation"
     };
-
     protected int type;
     protected long id;
-
     protected Map<String, String> tags;
 
 //    protected HashMap<String, String> inherited;
-
-    public OSMElement( int type, long id, XMLStreamReader parser )
-    {
+    public OSMElement(int type, long id, XMLStreamReader parser) {
         this.type = type;
         this.id = id;
     }
 
-    protected OSMElement( int type )
-    {
+    protected OSMElement(int type) {
         this.type = type;
         createId();
     }
 
-    protected OSMElement()
-    {
+    protected OSMElement() {
     }
 
-    public OSMElement( OSMElement src )
-    {
+    public OSMElement(OSMElement src) {
         type = src.type;
         // no use case where tags need to be copied yet
     }
 
-    public long id()
-    {
+    public long id() {
         return id;
     }
 
-    public void id( long id )
-    {
-        if( this.id != 0 )
-        {
-            throw new IllegalArgumentException( "Overwriting id " );
+    public void id(long id) {
+        if (this.id != 0) {
+            throw new IllegalArgumentException("Overwriting id ");
         }
 
         this.id = id;
     }
 
-    public void replaceId( long id )
-    {
+    public void replaceId(long id) {
         this.id = id;
     }
 
-    public void copyTags( OSMElement input )
-    {
-        if( input.hasTags() )
-        {
+    public void copyTags(OSMElement input) {
+        if (input.hasTags()) {
             tags = new HashMap<String, String>();
-            tags.putAll( input.getTags() );
+            tags.putAll(input.getTags());
         }
     }
 
-    protected void readTags( XMLStreamReader parser ) throws XMLStreamException
-    {
+    protected void readTags(XMLStreamReader parser) throws XMLStreamException {
         int event = parser.getEventType();
-        while( event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals( "tag" ) )
-        {
-            if( event == XMLStreamConstants.START_ELEMENT )
-            {
+        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("tag")) {
+            if (event == XMLStreamConstants.START_ELEMENT) {
                 // read tag
-                String key = parser.getAttributeValue( null, "k" );
-                String value = parser.getAttributeValue( null, "v" );
+                String key = parser.getAttributeValue(null, "k");
+                String value = parser.getAttributeValue(null, "v");
                 // ignore tags with empty values
-                if( value != null && value.length() > 0 )
-                {
+                if (value != null && value.length() > 0) {
                     // create map only if needed
-                    if( tags == null )
-                    {
+                    if (tags == null) {
                         tags = new HashMap<String, String>();
                     }
 
-                    tags.put( key, value );
+                    tags.put(key, value);
                 }
             }
 
@@ -109,82 +88,73 @@ public abstract class OSMElement
         }
     }
 
-    protected String tagsToString( )
-    {
-        if( tags == null )
-        {
+    protected String tagsToString() {
+        if (tags == null) {
             return "<empty>";
         }
 
-            StringBuilder tagTxt = new StringBuilder();
-            for( Map.Entry<String, String> entry : tags.entrySet() )
-            {
-                tagTxt.append( entry.getKey() );
-                tagTxt.append( "=" );
-                tagTxt.append( entry.getValue() );
-                tagTxt.append( "\n" );
-            }
+        StringBuilder tagTxt = new StringBuilder();
+        for (Map.Entry<String, String> entry : tags.entrySet()) {
+            tagTxt.append(entry.getKey());
+            tagTxt.append("=");
+            tagTxt.append(entry.getValue());
+            tagTxt.append("\n");
+        }
         return tagTxt.toString();
     }
 
-    public Map<String, String> getTags()
-    {
+    public Map<String, String> getTags() {
         return tags;
     }
 
-    public void replaceTags( HashMap<String, String> newTags )
-    {
+    public void replaceTags(HashMap<String, String> newTags) {
         tags = newTags;
     }
 
-    public boolean hasTags()
-    {
+    public boolean hasTags() {
         return tags != null && !tags.isEmpty();
     }
 
-    public String getTag( String name )
-    {
-        if( tags == null )
-        {
+    public String getTag(String name) {
+        if (tags == null) {
             return null;
         }
 
-        return tags.get( name );
+        return tags.get(name);
     }
 
-    public void setTag( String name, String value )
-    {
-        if( tags == null )
-        {
+    public void setTag(String name, String value) {
+        if (tags == null) {
             tags = new HashMap<String, String>();
         }
 
-        tags.put( name, value );
+        tags.put(name, value);
     }
 
     /**
      * Chaeck that the object has a given tag with a given value.
+     *
      * @param name
      * @param value
      * @return
      */
-    public boolean hasTag( String name, String value )
-    {
-        if( tags == null )
+    public boolean hasTag(String name, String value) {
+        if (tags == null)
             return false;
 
-        String val = tags.get( name );
-        return value.equals( val );
+        String val = tags.get(name);
+        return value.equals(val);
     }
 
     /**
      * Check that a given tag has one of a list of values
+     *
      * @param key
      * @param values
      * @return
      */
     public final boolean hasTag(String key, Set<String> values) {
-        if( tags == null )
+        if (tags == null)
             return false;
 
         String osmValue = tags.get(key);
@@ -192,14 +162,15 @@ public abstract class OSMElement
     }
 
     /**
-     * Check a number of tags in the given order for the any of the given values.
-     * Used to parse hierarchical access restrictions
+     * Check a number of tags in the given order for the any of the given
+     * values. Used to parse hierarchical access restrictions
+     *
      * @param keyList
      * @param values
      * @return
      */
     public boolean hasTag(String[] keyList, Set<String> values) {
-        if( tags == null )
+        if (tags == null)
             return false;
 
         for (int i = 0; i < keyList.length; i++) {
@@ -210,43 +181,37 @@ public abstract class OSMElement
         return false;
     }
 
-
-    public void removeTag( String name )
-    {
-        if( tags == null )
-        {
+    public void removeTag(String name) {
+        if (tags == null) {
             return;
         }
 
-        tags.remove( name );
+        tags.remove(name);
     }
 
-    public void clearTags()
-    {
+    public void clearTags() {
         tags = null;
     }
 
-    protected void createId()
-    {
+    protected void createId() {
         id = nextID++;
     }
 
-    public int type()
-    {
+    public int type() {
         return type;
     }
 
-    public boolean isType( int type )
-    {
+    public boolean isType(int type) {
         return this.type == type;
     }
 
     /**
      * Only for testing
+     *
      * @deprecated
      * @param tags
      */
-    public void setTags( Map<String, String> tags ) {
+    public void setTags(Map<String, String> tags) {
         this.tags = tags;
     }
 }

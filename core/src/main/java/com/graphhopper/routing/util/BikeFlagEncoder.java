@@ -43,7 +43,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
     };
     private final Set<String> allowedHighwayTags = new HashSet<String>() {
         {
-            addAll( saveHighwayTags );
+            addAll(saveHighwayTags);
             add("trunk");
             add("primary");
             add("secondary");
@@ -89,14 +89,15 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
 
     /**
      * Separate ways for pedestrians.
+     *
      * @param way
      */
     @Override
-    public int isAllowed(OSMWay way ) {
+    public int isAllowed(OSMWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            if (way.hasTag("route", ferries )
-                    && way.hasTag("bicycle", "yes" ))
+            if (way.hasTag("route", ferries)
+                    && way.hasTag("bicycle", "yes"))
                 return acceptBit | ferryBit;
 
             return 0;
@@ -104,14 +105,14 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
             if (!allowedHighwayTags.contains(highwayValue))
                 return 0;
 
-            if (way.hasTag("bicycle", intended ))
+            if (way.hasTag("bicycle", intended))
                 return acceptBit;
 
-            if (way.hasTag("motorroad", "yes" ))
+            if (way.hasTag("motorroad", "yes"))
                 return 0;
 
             // check access restrictions
-            if (way.hasTag(restrictions, restrictedValues ))
+            if (way.hasTag(restrictions, restrictedValues))
                 return 0;
 
             return acceptBit;
@@ -129,7 +130,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
             // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway
             String highwayValue = way.getTag("highway");
             int speed = getSpeed(highwayValue);
-            if (way.hasTag("oneway", oneways )
+            if (way.hasTag("oneway", oneways)
                     && !way.hasTag("oneway:bicycle", "no")
                     && !way.hasTag("cycleway", oppositeLanes)) {
 

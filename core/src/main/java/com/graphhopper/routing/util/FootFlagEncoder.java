@@ -94,35 +94,36 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     /**
      * Some ways are okay but not separate for pedestrians.
+     *
      * @param way
      */
     @Override
-    public int isAllowed(OSMWay way ) {
+    public int isAllowed(OSMWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            if (way.hasTag("route", ferries )) {
-                if (!way.hasTag("foot", "no" ))
+            if (way.hasTag("route", ferries)) {
+                if (!way.hasTag("foot", "no"))
                     return acceptBit | ferryBit;
             }
             return 0;
         } else {
-            if (way.hasTag("sidewalk", sidewalks ))
+            if (way.hasTag("sidewalk", sidewalks))
                 return acceptBit;
 
             // no need to evaluate ferries - already included here
-            if (way.hasTag("foot", intended ))
+            if (way.hasTag("foot", intended))
                 return acceptBit;
 
             if (!allowedHighwayTags.contains(highwayValue))
                 return 0;
 
-            if (way.hasTag("motorroad", "yes" ))
+            if (way.hasTag("motorroad", "yes"))
                 return 0;
 
-            if (way.hasTag("bicycle", "official" ))
+            if (way.hasTag("bicycle", "official"))
                 return 0;
             // check access restrictions
-            if (way.hasTag(restrictions, restrictedValues ))
+            if (way.hasTag(restrictions, restrictedValues))
                 return 0;
 
             return acceptBit;

@@ -83,6 +83,7 @@ public class AcceptWay {
 
     /**
      * Determine whether an osm way is a routable way
+     *
      * @param way
      */
     public int accept(OSMWay way) {

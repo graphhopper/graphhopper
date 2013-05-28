@@ -82,11 +82,10 @@ public class OSMReaderTest {
 
         @Override protected OSMReader importOSM(String ignore) throws IOException {
             OSMReader osmReader = new OSMReader(buildGraph(dir), 1000);
-            osmReader.acceptWay( acceptWay() );
+            osmReader.acceptWay(acceptWay());
             try {
-                osmReader.osm2Graph( new File( getClass().getResource( testFile ).toURI()));
-            }
-            catch( URISyntaxException e ) {
+                osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
+            } catch (URISyntaxException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
             //osmReader.writeOsm2Graph(getResource(testFile));
@@ -158,9 +157,8 @@ public class OSMReaderTest {
                     }
                 };
                 try {
-                    osmReader.osm2Graph( new File( getClass().getResource( testFile ).toURI()));
-                }
-                catch( URISyntaxException e ) {
+                    osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
+                } catch (URISyntaxException e) {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
                 //osmReader.writeOsm2Graph(getResource(testFile));
