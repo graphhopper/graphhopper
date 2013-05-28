@@ -825,6 +825,16 @@ public abstract class AbstractGraphTester {
         }
         return -1;
     }
+    
+    public static int getIdOf(Graph g, double latitude, double longitude) {
+        int s = g.nodes();
+        for (int i = 0; i < s; i++) {
+            if (Math.abs(g.getLatitude(i) - latitude) < 1e-4 && Math.abs(g.getLongitude(i) - longitude) < 1e-4) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     /**
      * Windows forces us to close files properly and so we need to close the

@@ -69,7 +69,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
                 if (!accept(iter))
                     continue;
                 int tmpNode = iter.adjNode();
-                double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currEdge.weight;
+                double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currEdge.weight + turnCostCalc.getTurnCosts(neighborNode, currEdge.edge, iter.edge());
                 EdgeEntry nEdge = map.get(tmpNode);
                 if (nEdge == null) {
                     nEdge = new EdgeEntry(iter.edge(), tmpNode, tmpWeight);

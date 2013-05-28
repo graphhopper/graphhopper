@@ -18,21 +18,28 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.routing.util.AcceptWay;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.util.Helper;
-import static com.graphhopper.util.Helper.*;
-import com.graphhopper.util.Helper7;
-import com.graphhopper.util.StopWatch;
-import java.io.*;
+import static com.graphhopper.util.Helper.nf;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
+
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.graphhopper.routing.util.AcceptWay;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.Helper7;
+import com.graphhopper.util.StopWatch;
 
 /**
  * This class parses an OSM xml file and creates a graph from it. See run.sh on
@@ -48,8 +55,8 @@ public class OSMReader {
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
     private Boolean negativeIds;
-
-    public OSMReader(GraphStorage storage, long expectedNodes) {
+        
+     public OSMReader(GraphStorage storage, long expectedNodes) {
         this.graphStorage = storage;
         helper = createDoubleParseHelper(expectedNodes);
         helper.acceptWay(new AcceptWay(AcceptWay.CAR));
@@ -88,6 +95,7 @@ public class OSMReader {
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader sReader = null;
         long wayStart = -1;
+        long relStart = -1;
         StopWatch sw = new StopWatch();
         long counter = 1;
         try {
@@ -121,6 +129,18 @@ public class OSMReader {
                                 logger.info(nf(counter) + ", locs:" + nf(locations)
                                         + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
                                         + " " + Helper.memInfo());
+                            }
+                        } else if ("relation".equals(sReader.getLocalName()) && helper.isTurnCostSupport(graphStorage)){
+                        	if (relStart < 0) {
+                        	    helper.startRelationsProcessing();
+                                logger.info(nf(counter) + ", now parsing relations");
+                                relStart = counter;
+                                sw.start();
+                            }
+                        	helper.processRelations(sReader);
+                        	if (counter - relStart == 10000 && sw.stop().getSeconds() > 1) {
+                                logger.warn("Something is wrong! Processing relations takes too long! "
+                                        + sw.getSeconds() + "sec for only " + (counter - relStart) + " entries");
                             }
                         } else if ("relation".equals(sReader.getLocalName()))
                             keepRunning = false;

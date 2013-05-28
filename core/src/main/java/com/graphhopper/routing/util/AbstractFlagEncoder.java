@@ -146,6 +146,12 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
         return maxSpeed;
     }
 
+    @Override
+    public boolean ignoreTurnCosts() {
+        return false;
+    }
+    
+    
     /**
      * Simple Helper to check for OSM tags
      */

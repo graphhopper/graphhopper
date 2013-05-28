@@ -18,13 +18,15 @@
  */
 package com.graphhopper;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.TurnCostCalculation;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.shapes.GHPlace;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * GraphHopper request wrapper to simplify requesting GraphHopper.
@@ -39,6 +41,7 @@ public class GHRequest {
     private Map<String, Object> hints = new HashMap<String, Object>(5);
     private EdgePropertyEncoder encoder = new CarFlagEncoder();
     private WeightCalculation weightCalc = new ShortestCalc();
+    private TurnCostCalculation turnCostCalc = null;
 
     /**
      * Calculate the path from specified startPoint (fromLat, fromLon) to
@@ -112,6 +115,15 @@ public class GHRequest {
 
     public WeightCalculation type() {
         return weightCalc;
+    }
+    
+    public GHRequest turnCosts(TurnCostCalculation turnCostCalc) {
+    	this.turnCostCalc = turnCostCalc;
+    	return this;
+    }
+    
+    public TurnCostCalculation turnCosts(){
+    	return turnCostCalc;
     }
 
     public GHRequest vehicle(EdgePropertyEncoder encoder) {

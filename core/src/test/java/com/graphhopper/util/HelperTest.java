@@ -25,7 +25,7 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 
 /**
- *
+ * 
  * @author Peter Karich
  */
 public class HelperTest {
@@ -49,5 +49,50 @@ public class HelperTest {
         assertTrue(new File("./target/tmp/test/folder1").isDirectory());
         assertTrue(new File("./target/tmp/test/folder1/folder 3").isDirectory());
         Helper.removeDir(new File(to));
+    }
+
+    @Test
+    public void testLongToInt() {
+        long numberLng = 8746822910082L;
+
+        int numberIntLeft = Helper.longToIntLeft(numberLng);
+        int numberIntRight = Helper.longToIntRight(numberLng);
+
+        assertEquals(0x000007F4, numberIntLeft);
+        assertEquals(0x8745C082, numberIntRight);
+
+        long numberLngBack = Helper.intToLong(numberIntLeft, numberIntRight);
+
+        assertEquals(numberLng, numberLngBack);
+    }
+
+    @Test
+    public void testLongToIntNegative() {
+        long numberLng = -982739918826609783L;
+
+        int numberIntLeft = Helper.longToIntLeft(numberLng);
+        int numberIntRight = Helper.longToIntRight(numberLng);
+
+        assertEquals(0xF25C9B40, numberIntLeft);
+        assertEquals(0x27BE6389, numberIntRight);
+
+        long numberLngBack = Helper.intToLong(numberIntLeft, numberIntRight);
+
+        assertEquals(numberLng, numberLngBack);
+    }
+
+    @Test
+    public void testLongToIntSimpleNumber() {
+        long numberLng = 13;
+
+        int numberIntLeft = Helper.longToIntLeft(numberLng);
+        int numberIntRight = Helper.longToIntRight(numberLng);
+
+        assertEquals(0x00000000, numberIntLeft);
+        assertEquals(0x0000000D, numberIntRight);
+
+        long numberLngBack = Helper.intToLong(numberIntLeft, numberIntRight);
+
+        assertEquals(numberLng, numberLngBack);
     }
 }

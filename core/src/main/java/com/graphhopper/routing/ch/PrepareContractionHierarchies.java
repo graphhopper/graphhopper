@@ -18,6 +18,16 @@
  */
 package com.graphhopper.routing.ch;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
@@ -29,24 +39,22 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.TurnCostCalculation;
+import com.graphhopper.routing.util.TurnCostsEntry;
+import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.DefaultTurnCostsCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.TurnCostIterator;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class prepares the graph for a bidirectional algorithm supporting
@@ -67,6 +75,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     // preparation dijkstra uses always shortest path as edges are rewritten - see doWork
     private final WeightCalculation shortestCalc = new ShortestCalc();
     private WeightCalculation prepareWeightCalc;
+    private TurnCostCalculation prepareTurnCostCalc;
     private EdgePropertyEncoder prepareEncoder;
     private EdgeFilter vehicleInFilter;
     private EdgeFilter vehicleOutFilter;
@@ -85,6 +94,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private boolean removesHigher2LowerEdges = true;
     private long counter;
     private int newShortcuts;
+    private int newTurnCostEntries;
     private long dijkstraCount;
     private double meanDegree;
     private Random rand = new Random(123);
@@ -103,6 +113,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     @Override
     public PrepareContractionHierarchies graph(Graph g) {
         this.g = (LevelGraph) g;
+        if(prepareTurnCostCalc != null){
+            prepareTurnCostCalc.graph(g);    
+        }
         return this;
     }
 
@@ -116,6 +129,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     public PrepareContractionHierarchies type(WeightCalculation weightCalc) {
         prepareWeightCalc = weightCalc;
+        return this;
+    }
+    
+    public PrepareContractionHierarchies turnCosts(TurnCostCalculation turnCostCalc) {
+        prepareTurnCostCalc= turnCostCalc;
+        if(g != null){
+            prepareTurnCostCalc.graph(g);    
+        }
         return this;
     }
 
@@ -327,7 +348,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
         }
 
-        logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc
+        logger.info("new shortcuts " + newShortcuts + ", new turn cost entries: " 
+                + newTurnCostEntries + ", " + prepareWeightCalc
                 + ", " + prepareEncoder
                 + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges
                 + ", dijkstras:" + dijkstraCount
@@ -510,6 +532,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     continue;
 
                 double existingDirectWeight = v_u_weight + outgoingEdges.distance();
+                
+                //this shortcut candidate may contain an expensive turn 
+                existingDirectWeight += prepareTurnCostCalc.getTurnCosts(sch.node(), incomingEdges.edge(), outgoingEdges.edge());
+                
                 algo.limit(existingDirectWeight).edgeFilter(levelEdgeFilter.avoidNode(sch.node()));
 
                 dijkstraSW.start();
@@ -552,6 +578,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                     iter.skippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                     iter.distance(sc.distance);
                     setOrigEdgeCount(iter.edge(), sc.originalEdges);
+                    //TODO we should delete old turn costs of updated shortcut
+                    
+                    copyTurnCosts(sc.from, sc.skippedEdge1, sc.skippedEdge2, sc.to, iter.edge());
+                    
                     updatedInGraph = true;
                     break;
                 }
@@ -562,18 +592,55 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 iter.skippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                 setOrigEdgeCount(iter.edge(), sc.originalEdges);
                 tmpNewShortcuts++;
+                
+                //we need to copy the old turn cost entries for the shortcut
+                copyTurnCosts(sc.from, sc.skippedEdge1, sc.skippedEdge2, sc.to, iter.edge());
             }
         }
         return tmpNewShortcuts;
+    }
+    
+    public void copyTurnCosts(int scNodeStart, int skippedEdge1, int skippedEdge2, int scNodeEnd, int shortcut) {
+        final Collection<TurnCostsEntry> costEntriesToAdd = new ArrayList<TurnCostsEntry>();
+        TurnCostIterator turnCostsOnStart = g.createTurnCostIterable(scNodeStart, TurnCostIterator.ANY_EDGE, skippedEdge1);
+        while(turnCostsOnStart.next()){
+            final TurnCostsEntry newEntry = new TurnCostsEntry();
+            newEntry.edgeFrom(turnCostsOnStart.edgeFrom());
+            newEntry.flags(turnCostsOnStart.costs());
+            newEntry.edgeTo(shortcut);
+            newEntry.node(scNodeStart);
+            costEntriesToAdd.add(newEntry);
+        }
+        
+        TurnCostIterator turnCostsOnEnd = g.createTurnCostIterable(scNodeEnd, skippedEdge2, TurnCostIterator.ANY_EDGE);
+        while(turnCostsOnEnd.next()){
+            final TurnCostsEntry newEntry = new TurnCostsEntry();
+            newEntry.edgeFrom(shortcut);
+            newEntry.flags(turnCostsOnEnd.costs());
+            newEntry.edgeTo(turnCostsOnEnd.edgeTo());
+            newEntry.node(scNodeEnd);
+            costEntriesToAdd.add(newEntry);
+        }
+        
+        //we add new entries AFTER iterating through them
+        for(TurnCostsEntry entry : costEntriesToAdd){
+            g.turnCosts(entry.node(), entry.edgeFrom(), entry.edgeTo(), entry.flags());
+            newTurnCostEntries++;
+        }
     }
 
     PrepareContractionHierarchies initFromGraph() {
         if (g == null)
             throw new NullPointerException("Graph must not be empty calling doWork of preparation");
+        if(prepareTurnCostCalc == null){
+            //choose default turn costs calculation when not set explicitly 
+            prepareTurnCostCalc = new DefaultTurnCostsCalc(prepareEncoder, prepareWeightCalc);
+        }
         levelEdgeFilter = new LevelEdgeFilterCH(this.g);
         sortedNodes = new GHTreeMapComposed();
         refs = new PriorityNode[g.nodes()];
         algo = new DijkstraOneToMany(g, prepareEncoder);
+        algo.turnCosts(prepareTurnCostCalc);
         algo.type(shortestCalc);
         return this;
     }

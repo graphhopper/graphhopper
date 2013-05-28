@@ -21,7 +21,9 @@ package com.graphhopper.routing;
 import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphTurnCosts;
 import com.graphhopper.util.EdgeIterator;
+
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.Arrays;
@@ -62,16 +64,20 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
     @Override
     public Path calcPath(int from, int to) {
-        if (edgeIds == null) {
-            edgeIds = new int[graph.nodes()];
-            Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
-        }
+        initializeEdgeIds();
         int endNode = findEndNode(from, to);
         PathNative p = new PathNative(graph, flagEncoder, parents, edgeIds);
         p.fromNode(from);
         if (endNode < 0)
             return p;
         return p.found(endNode).extract();
+    }
+
+    private void initializeEdgeIds() {
+        if (edgeIds == null ) {
+            edgeIds = new int[graph.nodes()];
+            Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
+        }
     }
 
     public DijkstraOneToMany clear() {
@@ -83,9 +89,13 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         return weights[endNode];
     }
 
-    public int findEndNode(int from, int to) {
+    public int findEndNode(int from, int to) {        
         if (weights.length < 2)
             return -1;
+        if(graph instanceof GraphTurnCosts && ((GraphTurnCosts)graph).isTurnCostSupport()){
+            initializeEdgeIds();    
+        }
+        
         int currNode = from;
         if (doClear) {
             doClear = false;
@@ -122,6 +132,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
                     continue;
                 int adjNode = iter.adjNode();
                 double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + weights[currNode];
+                if(edgeIds != null){
+                    tmpWeight += turnCostCalc.getTurnCosts(currNode, edgeIds[currNode], iter.edge());    
+                }
                 if (weights[adjNode] == Double.MAX_VALUE) {
                     parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;

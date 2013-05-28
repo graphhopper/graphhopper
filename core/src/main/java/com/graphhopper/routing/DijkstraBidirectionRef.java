@@ -122,6 +122,8 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     void fillEdges(EdgeEntry curr, PriorityQueue<EdgeEntry> prioQueue,
             TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeFilter filter) {
 
+        boolean backwards = shortestWeightMapFrom == shortestWeightMapOther;
+    	
         int currNode = curr.endNode;
         EdgeIterator iter = graph.getEdges(currNode, filter);
         while (iter.next()) {
@@ -129,6 +131,11 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
                 continue;
             int neighborNode = iter.adjNode();
             double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + curr.weight;
+            if(!backwards){
+            	tmpWeight += turnCostCalc.getTurnCosts(currNode, curr.edge, iter.edge());
+            }else{
+            	tmpWeight += turnCostCalc.getTurnCosts(currNode, iter.edge(), curr.edge);
+            }
             EdgeEntry de = shortestWeightMap.get(neighborNode);
             if (de == null) {
                 de = new EdgeEntry(iter.edge(), neighborNode, tmpWeight);
@@ -153,10 +160,25 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         if (entryOther == null)
             return;
 
+        //prevents the shortest path to contain the same edge twice, when turn restriction is around the meeting point
+        if(shortestEE.edge == entryOther.edge){
+            return;
+        }
+        
+        boolean backwards = shortestWeightMapFrom == shortestWeightMapOther;
+        
         // update μ
         double newShortest = shortestEE.weight + entryOther.weight;
+        
+        //costs for the turn where forward and backward routing meet each other
+        if(!backwards){
+        	newShortest += turnCostCalc.getTurnCosts(currLoc, shortestEE.edge, entryOther.edge);
+        }else{
+        	newShortest += turnCostCalc.getTurnCosts(currLoc, entryOther.edge, shortestEE.edge);
+        }
+        
         if (newShortest < shortest.weight()) {
-            shortest.switchToFrom(shortestWeightMapFrom == shortestWeightMapOther);
+            shortest.switchToFrom(backwards);
             shortest.edgeEntry(shortestEE);
             shortest.edgeTo = entryOther;
             shortest.weight(newShortest);

@@ -18,6 +18,16 @@
  */
 package com.graphhopper.routing.ch;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Collection;
+import java.util.Iterator;
+
+import org.junit.Test;
+
+import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.Path;
@@ -28,17 +38,13 @@ import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.util.EdgeSkipIterator;
-import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import java.util.Collection;
-import java.util.Iterator;
-import static org.junit.Assert.*;
-import org.junit.Test;
 
 /**
  * @author Peter Karich
@@ -53,6 +59,7 @@ public class PrepareContractionHierarchiesTest {
 
     LevelGraph createExampleGraph() {
         LevelGraph g = createGraph();
+        AbstractRoutingAlgorithmTester.initNodes(g, 6);
 
         //5-1-----2
         //   \ __/|
@@ -123,6 +130,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testDirectedGraph() {
         LevelGraph g = createGraph();
+        AbstractRoutingAlgorithmTester.initNodes(g, 6);
         g.edge(5, 4, 3, false);
         g.edge(4, 5, 10, false);
         g.edge(2, 4, 1, false);
@@ -158,6 +166,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testDirectedGraph3() {
         LevelGraph g = createGraph();
+        AbstractRoutingAlgorithmTester.initNodes(g, 12);
         g.edge(0, 2, 2, true);
         g.edge(10, 2, 2, true);
         g.edge(11, 2, 2, true);
@@ -193,6 +202,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     void initRoundaboutGraph(Graph g) {
+        AbstractRoutingAlgorithmTester.initNodes(g, 32);
+        
         //              roundabout:
         //16-0-9-10--11   12<-13
         //    \       \  /      \
@@ -259,6 +270,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testFindShortcuts_Roundabout() {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
+        AbstractRoutingAlgorithmTester.initNodes(g, 9);
         EdgeSkipIterator iter1_1 = g.edge(1, 3, 1, true);
         EdgeSkipIterator iter1_2 = g.edge(3, 4, 1, true);
         EdgeSkipIterator iter2_1 = g.edge(4, 5, 1, false);
@@ -284,6 +296,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     void initUnpackingGraph(LevelGraphStorage g, WeightCalculation w) {
+        AbstractRoutingAlgorithmTester.initNodes(g, 11);
         double dist = 1;
         int flags = carEncoder.flags(30, false);
         g.edge(10, 0, w.getWeight(dist, flags), flags);
@@ -347,6 +360,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testCircleBug() {
         LevelGraph g = createGraph();
+        AbstractRoutingAlgorithmTester.initNodes(g, 4);
         //  /--1
         // -0--/
         //  |
@@ -365,6 +379,7 @@ public class PrepareContractionHierarchiesTest {
     // \   /   /
     //  7-6-5-/
     void initBiGraph(Graph graph) {
+        AbstractRoutingAlgorithmTester.initNodes(graph, 9);
         graph.edge(0, 1, 100, true);
         graph.edge(1, 2, 1, true);
         graph.edge(2, 3, 1, true);
@@ -382,6 +397,7 @@ public class PrepareContractionHierarchiesTest {
     // |         |    |
     // 17-16-...-11<-/
     public static void initDirected2(Graph g) {
+        AbstractRoutingAlgorithmTester.initNodes(g, 18);
         g.edge(0, 1, 1, true);
         g.edge(1, 2, 1, true);
         g.edge(2, 3, 1, true);
@@ -411,6 +427,7 @@ public class PrepareContractionHierarchiesTest {
     //10<-2---4<---5
     //    9
     public static void initDirected1(Graph g) {
+        AbstractRoutingAlgorithmTester.initNodes(g, 11);
         g.edge(0, 8, 1, true);
         g.edge(0, 1, 1, false);
         g.edge(1, 3, 1, false);
@@ -426,6 +443,7 @@ public class PrepareContractionHierarchiesTest {
 
     // prepare-routing.svg
     public static LevelGraph initShortcutsGraph(LevelGraph g) {
+        AbstractRoutingAlgorithmTester.initNodes(g, 17);
         g.edge(0, 1, 1, true);
         g.edge(0, 2, 1, true);
         g.edge(1, 2, 1, true);

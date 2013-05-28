@@ -20,6 +20,9 @@ package com.graphhopper.reader;
 
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.GraphStorageTurnCosts;
+import com.graphhopper.storage.GraphTurnCosts;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.EdgeIterator;
@@ -49,6 +52,7 @@ public abstract class OSMReaderHelper {
     private AcceptWay acceptWay;
     protected TLongArrayList wayNodes = new TLongArrayList(10);
     private Map<String, String> osmProperties = new HashMap<String, String>();
+    private long edgeOsmId;
     private DouglasPeucker dpAlgo = new DouglasPeucker();
 
     public OSMReaderHelper(Graph g, long expectedNodes) {
@@ -87,9 +91,9 @@ public abstract class OSMReaderHelper {
 
     public abstract boolean addNode(long osmId, double lat, double lon);
 
-    public abstract int addEdge(TLongList nodes, int flags);
+    public abstract int addEdge(TLongList nodes, int flags, long edgeOsmid);
 
-    int addEdge(int fromIndex, int toIndex, PointList pointList, int flags) {
+    int addEdge(int fromIndex, int toIndex, PointList pointList, int flags, long osmid) {
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError("to or from index is invalid for this edge "
                     + fromIndex + "->" + toIndex + ", points:" + pointList);
@@ -117,16 +121,26 @@ public abstract class OSMReaderHelper {
             towerNodeDistance = 0.0001;
         }
 
-        EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
+        final EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
+        if(g instanceof GraphStorageTurnCosts){
+        	storeEdgeOSMId(iter.edge(), osmid);
+        } 
         if (nodes > 2) {
             dpAlgo.simplify(pillarNodes);
             iter.wayGeometry(pillarNodes);
         }
         return nodes;
     }
+    
+    abstract void storeEdgeOSMId(int edgeId, long osmId);
+    
 
     String getInfo() {
         return "Found " + zeroCounter + " zero distances.";
+    }
+
+    public boolean isTurnCostSupport(GraphStorage graphStorage) {
+        return (graphStorage instanceof GraphTurnCosts) && ((GraphTurnCosts)graphStorage).isTurnCostSupport();
     }
 
     void finishedReading() {
@@ -135,6 +149,12 @@ public abstract class OSMReaderHelper {
     void startWayProcessing() {
     }
 
+    void startRelationsProcessing() {
+    }
+    
+    void processRelations(XMLStreamReader sReader) throws XMLStreamException{
+    }
+    
     /**
      * Filter ways but do not analyze properties wayNodes will be filled with
      * participating node ids.
@@ -164,7 +184,7 @@ public abstract class OSMReaderHelper {
         if (includeWay > 0) {
             int flags = acceptWay.encodeTags(includeWay, osmProperties);
             if (flags != 0)
-                addEdge(wayNodes, flags);
+                addEdge(wayNodes, flags, edgeOsmId);
         }
     }
 
@@ -177,6 +197,12 @@ public abstract class OSMReaderHelper {
     private void readWayAttributes(XMLStreamReader sReader) throws XMLStreamException {
         wayNodes.clear();
         osmProperties.clear();
+        try{
+        	edgeOsmId = Long.parseLong(sReader.getAttributeValue(null, "id"));	
+        }catch(Exception e){
+        	logger.error("could not read osm id of edge", e);
+        }
+        
         for (int tmpE = sReader.nextTag(); tmpE != XMLStreamConstants.END_ELEMENT;
                 tmpE = sReader.nextTag()) {
             if (tmpE == XMLStreamConstants.START_ELEMENT) {
