@@ -134,11 +134,10 @@ public class OSMReader {
 
             OSMElement item;
             while ((item = in.getNext()) != null) {
-
                 switch (item.type()) {
                     case OSMElement.NODE:
                         processNode((OSMNode) item);
-                        if (counter % 10000000 == 0) {
+                        if (counter % 1000000 == 0) {
                             logger.info(nf(counter) + ", locs:" + nf(locations)
                                     + " (" + skippedLocations + ") " + Helper.memInfo());
                         }
@@ -163,6 +162,7 @@ public class OSMReader {
                         }
                         break;
                 }
+                counter++;
             }
             in.close();
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
