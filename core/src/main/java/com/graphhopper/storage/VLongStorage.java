@@ -16,8 +16,9 @@ package com.graphhopper.storage;
 import java.util.Arrays;
 
 /**
- * Taken from lucene DataOutput. VLong's are longs which have variable length depending on the size.
- * When used together with 'delta compression' it is likely that you'll use only 1 byte per value.
+ * Taken from lucene DataOutput. VLong's are longs which have variable length
+ * depending on the size. When used together with 'delta compression' it is
+ * likely that you'll use only 1 byte per value.
  */
 public class VLongStorage {
 
@@ -65,8 +66,9 @@ public class VLongStorage {
     }
 
     /**
-     * Writes an long in a variable-length format. Writes between one and nine bytes. Smaller values
-     * take fewer bytes. Negative numbers are not supported. <p> The format is described further in
+     * Writes an long in a variable-length format. Writes between one and nine
+     * bytes. Smaller values take fewer bytes. Negative numbers are not
+     * supported. <p> The format is described further in
      * {@link DataOutput#writeVInt(int)}.
      *
      * @see DataInput#readVLong()
@@ -81,9 +83,10 @@ public class VLongStorage {
     }
 
     /**
-     * Reads a long stored in variable-length format. Reads between one and nine bytes. Smaller
-     * values take fewer bytes. Negative numbers are not supported. <p> The format is described
-     * further in {@link DataOutput#writeVInt(int)}.
+     * Reads a long stored in variable-length format. Reads between one and nine
+     * bytes. Smaller values take fewer bytes. Negative numbers are not
+     * supported. <p> The format is described further in
+     * {@link DataOutput#writeVInt(int)}.
      *
      * @see DataOutput#writeVLong(long)
      */

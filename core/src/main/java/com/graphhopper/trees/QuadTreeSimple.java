@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
  *  agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
+ *  GraphHopper licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except 
  *  in compliance with the License. You may obtain a copy of the 
  *  License at
@@ -33,16 +33,17 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A simple implementation of a spatial index via a spatial key trie - the normal java way (a bit
- * memory intensive with all those object references).
+ * A simple implementation of a spatial index via a spatial key trie - the
+ * normal java way (a bit memory intensive with all those object references).
  *
  * TODO depth is too large!
  *
- * The latitude and longitude is encoded via our spatial key - see SpatialKeyAlgo for more details.
+ * The latitude and longitude is encoded via our spatial key - see
+ * SpatialKeyAlgo for more details.
  *
- * If the branch node would have only 2 children then it would be a binary tree - we would need to
- * shift only once. If the branch node would have 8 children then it would be an oct tree - shifting
- * 3 times.
+ * If the branch node would have only 2 children then it would be a binary tree
+ * - we would need to shift only once. If the branch node would have 8 children
+ * then it would be an oct tree - shifting 3 times.
  *
  * Warning: cannot store null values - an exception will be thrown.
  *

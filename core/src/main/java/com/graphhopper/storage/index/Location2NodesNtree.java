@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license
  *  agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
- *  Peter Karich licenses this file to you under the Apache License,
+ *  GraphHopper licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the
  *  License at
@@ -533,10 +533,10 @@ public class Location2NodesNtree implements Location2IDIndex {
     public LocationIDResult findClosest(final double queryLat, final double queryLon,
             final EdgeFilter edgeFilter) {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
-        if (storedNetworkEntryIds.isEmpty())
-            return null;
-
         final LocationIDResult closestNode = new LocationIDResult();
+        if (storedNetworkEntryIds.isEmpty())
+            return closestNode;
+
         // clone storedIds to avoid interference with forEach
         final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
         // find nodes from the network entries which are close to 'point'
@@ -567,13 +567,13 @@ public class Location2NodesNtree implements Location2IDIndex {
 
                     @Override
                     protected boolean checkAdjacent(EdgeIterator currEdge) {
-                        goFurther = false;                        
+                        goFurther = false;
                         if (!edgeFilter.accept(currEdge)) {
                             // only limit the adjNode to a certain radius as currNode could be the wrong side of a valid edge
                             // goFurther = currDist < minResolution2InMeterNormed;
                             return true;
                         }
-                        
+
                         int tmpNode = currNode;
                         double tmpLat = currLat;
                         double tmpLon = currLon;
@@ -635,7 +635,7 @@ public class Location2NodesNtree implements Location2IDIndex {
                 return true;
             }
         });
-        
+
         return closestNode;
     }
 

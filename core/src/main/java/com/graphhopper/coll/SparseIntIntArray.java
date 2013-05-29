@@ -20,7 +20,8 @@ import com.graphhopper.util.Helper;
 /**
  * Copied from Android project. android.util.SparseArray.java
  *
- * SparseArrays map ints to ints. Unlike a normal array of ints, there can be gaps in the indices.
+ * SparseArrays map ints to ints. Unlike a normal array of ints, there can be
+ * gaps in the indices.
  */
 public class SparseIntIntArray {
 
@@ -35,8 +36,9 @@ public class SparseIntIntArray {
     }
 
     /**
-     * Creates a new SparseIntIntArray containing no mappings that will not require any additional
-     * memory allocation to store the specified number of mappings.
+     * Creates a new SparseIntIntArray containing no mappings that will not
+     * require any additional memory allocation to store the specified number of
+     * mappings.
      */
     public SparseIntIntArray(int cap) {
         try {
@@ -82,8 +84,8 @@ public class SparseIntIntArray {
     }
 
     /**
-     * Gets the Object mapped from the specified key, or the specified Object if no such mapping has
-     * been made.
+     * Gets the Object mapped from the specified key, or the specified Object if
+     * no such mapping has been made.
      */
     private int get(int key, int valueIfKeyNotFound) {
         int i = binarySearch(mKeys, 0, mSize, key);
@@ -130,8 +132,8 @@ public class SparseIntIntArray {
     }
 
     /**
-     * Adds a mapping from the specified key to the specified value, replacing the previous mapping
-     * from the specified key if there was one.
+     * Adds a mapping from the specified key to the specified value, replacing
+     * the previous mapping from the specified key if there was one.
      */
     public int put(int key, int value) {
         int i = binarySearch(mKeys, 0, mSize, key);
@@ -180,7 +182,8 @@ public class SparseIntIntArray {
     }
 
     /**
-     * Returns the number of key-value mappings that this SparseIntIntArray currently stores.
+     * Returns the number of key-value mappings that this SparseIntIntArray
+     * currently stores.
      */
     public int size() {
         if (mGarbage) {
@@ -193,7 +196,8 @@ public class SparseIntIntArray {
     /**
      * Given an index in the range
      * <code>0...size()-1</code>, returns the key from the
-     * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
+     * <code>index</code>th key-value mapping that this SparseIntIntArray
+     * stores.
      */
     public int keyAt(int index) {
         if (mGarbage) {
@@ -206,7 +210,8 @@ public class SparseIntIntArray {
     /**
      * Given an index in the range
      * <code>0...size()-1</code>, sets a new key for the
-     * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
+     * <code>index</code>th key-value mapping that this SparseIntIntArray
+     * stores.
      */
     public void setKeyAt(int index, int key) {
         if (mGarbage) {
@@ -219,7 +224,8 @@ public class SparseIntIntArray {
     /**
      * Given an index in the range
      * <code>0...size()-1</code>, returns the value from the
-     * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
+     * <code>index</code>th key-value mapping that this SparseIntIntArray
+     * stores.
      */
     public int valueAt(int index) {
         if (mGarbage) {
@@ -232,7 +238,8 @@ public class SparseIntIntArray {
     /**
      * Given an index in the range
      * <code>0...size()-1</code>, sets a new value for the
-     * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
+     * <code>index</code>th key-value mapping that this SparseIntIntArray
+     * stores.
      */
     public void setValueAt(int index, int value) {
         if (mGarbage) {
@@ -243,8 +250,8 @@ public class SparseIntIntArray {
     }
 
     /**
-     * Returns the index for which {@link #keyAt} would return the specified key, or a negative
-     * number if the specified key is not mapped.
+     * Returns the index for which {@link #keyAt} would return the specified
+     * key, or a negative number if the specified key is not mapped.
      */
     private int indexOfKey(int key) {
         if (mGarbage) {
@@ -255,10 +262,10 @@ public class SparseIntIntArray {
     }
 
     /**
-     * Returns an index for which {@link #valueAt} would return the specified key, or a negative
-     * number if no keys map to the specified value. Beware that this is a linear search, unlike
-     * lookups by key, and that multiple keys can map to the same value and this will find only one
-     * of them.
+     * Returns an index for which {@link #valueAt} would return the specified
+     * key, or a negative number if no keys map to the specified value. Beware
+     * that this is a linear search, unlike lookups by key, and that multiple
+     * keys can map to the same value and this will find only one of them.
      */
     private int indexOfValue(int value) {
         if (mGarbage) {
@@ -288,8 +295,8 @@ public class SparseIntIntArray {
     }
 
     /**
-     * Puts a key/value pair into the array, optimizing for the case where the key is greater than
-     * all existing keys in the array.
+     * Puts a key/value pair into the array, optimizing for the case where the
+     * key is greater than all existing keys in the array.
      */
     public int append(int key, int value) {
         if (mSize != 0 && key <= mKeys[mSize - 1]) {

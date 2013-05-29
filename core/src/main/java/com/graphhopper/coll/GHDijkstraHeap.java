@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
  *  agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
+ *  GraphHopper licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except 
  *  in compliance with the License. You may obtain a copy of the 
  *  License at
@@ -30,16 +30,18 @@ import java.util.Map.Entry;
  *
  * Several papers regarding queues are interesting:
  *
- * "Priority Queues and Dijkstra’s Algorithm" http://www.cs.utexas.edu/~shaikat/papers/TR-07-54.pdf
- * -> 2007, Chen et al, Auxiliary Buffer Heap, also the idea of a dijkstra with no decrement key is
+ * "Priority Queues and Dijkstra’s Algorithm"
+ * http://www.cs.utexas.edu/~shaikat/papers/TR-07-54.pdf -> 2007, Chen et al,
+ * Auxiliary Buffer Heap, also the idea of a dijkstra with no decrement key is
  * shown
  *
- * "Fast Priority Queues for Cached Memory" http://algo2.iti.kit.edu/sanders/papers/falenex.ps.gz ->
- * 1998, Peter Sanders, sequence heap and tuned other heaps
+ * "Fast Priority Queues for Cached Memory"
+ * http://algo2.iti.kit.edu/sanders/papers/falenex.ps.gz -> 1998, Peter Sanders,
+ * sequence heap and tuned other heaps
  *
  * "Revisiting priority queues for image analysis"
- * http://www.cb.uu.se/~cris/Documents/j.patcog.2010.04.002_preprint.pdf -> 2010, Hendriks, ladder
- * queue
+ * http://www.cb.uu.se/~cris/Documents/j.patcog.2010.04.002_preprint.pdf ->
+ * 2010, Hendriks, ladder queue
  *
  * @author Peter Karich
  */

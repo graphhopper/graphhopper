@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
  *  agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
+ *  GraphHopper licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except 
  *  in compliance with the License. You may obtain a copy of the 
  *  License at
@@ -34,6 +34,7 @@ import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.junit.After;
@@ -82,8 +83,12 @@ public class OSMReaderTest {
         @Override protected OSMReader importOSM(String ignore) throws IOException {
             OSMReader osmReader = new OSMReader(buildGraph(dir), 1000);
             osmReader.acceptWay(acceptWay());
-            osmReader.helper().preProcess(getResource(testFile));
-            osmReader.writeOsm2Graph(getResource(testFile));
+            try {
+                osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
+            } catch (URISyntaxException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            //osmReader.writeOsm2Graph(getResource(testFile));
             return osmReader;
         }
     }
@@ -147,12 +152,16 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopperTest(file1) {
             @Override protected OSMReader importOSM(String ignore) throws IOException {
                 OSMReader osmReader = new OSMReader(buildGraph(dir), 1000) {
-                    @Override public boolean isInBounds(double lat, double lon) {
-                        return lat > 49 && lon > 8;
+                    @Override public boolean isInBounds(OSMNode node) {
+                        return node.lat() > 49 && node.lon() > 8;
                     }
                 };
-                osmReader.helper().preProcess(getResource(testFile));
-                osmReader.writeOsm2Graph(getResource(testFile));
+                try {
+                    osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+                //osmReader.writeOsm2Graph(getResource(testFile));
                 return osmReader;
             }
         };
@@ -224,7 +233,7 @@ public class OSMReaderTest {
         assertTrue(encoder.isBackward(iter.flags()));
 
         assertTrue(iter.next());
-        assertEquals( n22, iter.adjNode() );
+        assertEquals(n22, iter.adjNode());
         assertFalse(encoder.isMotorway(iter.flags()));
         assertFalse(encoder.isForward(iter.flags()));
         assertTrue(encoder.isBackward(iter.flags()));
@@ -257,7 +266,7 @@ public class OSMReaderTest {
 
     @Test public void testWayReferencesNotExistingAdjNode() {
         GraphHopper hopper = new GraphHopperTest(file4).
-                acceptWay(new AcceptWay(true, false, true)).
+                acceptWay(new AcceptWay("CAR,FOOT")).
                 importOrLoad();
         Graph graph = hopper.graph();
 
@@ -270,7 +279,7 @@ public class OSMReaderTest {
 
     @Test public void testFoot() {
         GraphHopper hopper = new GraphHopperTest(file3).
-                acceptWay(new AcceptWay(true, false, true)).
+                acceptWay(new AcceptWay("CAR,FOOT")).
                 importOrLoad();
         Graph graph = hopper.graph();
 
@@ -300,7 +309,7 @@ public class OSMReaderTest {
 
     @Test public void testNegativeIds() {
         GraphHopper hopper = new GraphHopperTest(file5).
-                acceptWay(new AcceptWay(true, false, false)).
+                acceptWay(new AcceptWay("CAR")).
                 importOrLoad();
         Graph graph = hopper.graph();
         assertEquals(4, graph.nodes());

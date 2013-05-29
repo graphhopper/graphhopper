@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
  *  agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
+ *  GraphHopper licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except 
  *  in compliance with the License. You may obtain a copy of the 
  *  License at
@@ -140,7 +140,7 @@ public class MMapDataAccess extends AbstractDataAccess {
                 // Here we rely on the OS+file system that increasing the file 
                 // size has no effect on the old mappings!
                 bufferStart += segments.size() * longSegmentSize;
-                newSegments = segmentsToMap - segments.size();            
+                newSegments = segmentsToMap - segments.size();
             }
             // rely on automatically increasing when mapping
 //            raFile.setLength(newFileLength);
@@ -242,7 +242,7 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void close() {        
+    public void close() {
         clean(0, segments.size());
         segments.clear();
         Helper.close(raFile);
@@ -319,15 +319,15 @@ public class MMapDataAccess extends AbstractDataAccess {
 
         clean(remainingSegNo, segments.size());
         segments = new ArrayList<ByteBuffer>(segments.subList(0, remainingSegNo));
-               
+
         try {
             // windows does not allow changing the length of an open files
-            if(!Constants.WINDOWS)                
+            if (!Constants.WINDOWS)
                 // reduce file size
                 raFile.setLength(HEADER_OFFSET + remainingSegNo * segmentSizeInBytes);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
-        }        
+        }
     }
 
     boolean releaseSegment(int segNumber) {

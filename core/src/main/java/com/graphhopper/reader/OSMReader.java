@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
  *  agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
+ *  GraphHopper licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except 
  *  in compliance with the License. You may obtain a copy of the 
  *  License at
@@ -22,15 +22,11 @@ import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
-import com.graphhopper.util.Helper7;
 import com.graphhopper.util.StopWatch;
 import java.io.*;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipInputStream;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+
+import gnu.trove.list.TLongList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,129 +43,173 @@ public class OSMReader {
     private long skippedLocations;
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
-    private Boolean negativeIds;
+    private AcceptWay acceptWay;
 
     public OSMReader(GraphStorage storage, long expectedNodes) {
         this.graphStorage = storage;
-        helper = createDoubleParseHelper(expectedNodes);
-        helper.acceptWay(new AcceptWay(true, false, false));
-    }
-
-    private OSMReaderHelper createDoubleParseHelper(long expectedNodes) {
-        return new OSMReaderHelperDoubleParse(graphStorage, expectedNodes);
-    }
-
-    private InputStream createInputStream(File file) throws IOException {
-        FileInputStream fi = new FileInputStream(file);
-        if (file.getAbsolutePath().endsWith(".gz"))
-            return new GZIPInputStream(fi);
-        else if (file.getAbsolutePath().endsWith(".zip"))
-            return new ZipInputStream(fi);
-
-        return fi;
+        helper = new OSMReaderHelper(graphStorage, expectedNodes);
+        acceptWay = new AcceptWay(AcceptWay.CAR);
     }
 
     public void osm2Graph(File osmXmlFile) throws IOException {
-        helper.preProcess(createInputStream(osmXmlFile));
-        writeOsm2Graph(createInputStream(osmXmlFile));
+
+        preProcess(osmXmlFile);
+
+        writeOsm2Graph(osmXmlFile);
+
+    }
+
+    /**
+     * Preprocessing of OSM file to select nodes which are used for highways.
+     * This allows a more compact graph data structure.
+     */
+    public void preProcess(File osmXml) {
+
+        try {
+            OSMInputFile in = new OSMInputFile(osmXml);
+            in.parseNodes(false);
+            in.parseRelations(false);
+
+            long tmpCounter = 1;
+
+            OSMElement item;
+            while ((item = in.getNext()) != null) {
+                if (++tmpCounter % 50000000 == 0)
+                    logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
+                            + nf(helper.getNodeMap().size()) + " (" + helper.getNodeMap().memoryUsage() + "MB) "
+                            + Helper.memInfo());
+
+                if (item.isType(OSMElement.WAY)) {
+                    final OSMWay way = (OSMWay) item;
+                    boolean valid = filterWay(way);
+                    if (valid) {
+                        TLongList wayNodes = way.nodes();
+                        int s = wayNodes.size();
+                        for (int index = 0; index < s; index++) {
+                            helper.prepareHighwayNode(wayNodes.get(index));
+                        }
+                    }
+                }
+            }
+            in.close();
+        } catch (Exception ex) {
+            throw new RuntimeException("Problem while parsing file", ex);
+        }
+    }
+
+    /**
+     * Filter ways but do not analyze properties wayNodes will be filled with
+     * participating node ids.
+     *
+     * @return true the current xml entry is a way entry and has nodes
+     */
+    boolean filterWay(OSMWay item) throws XMLStreamException {
+
+        // ignore broken geometry
+        if (item.nodes().size() < 2)
+            return false;
+        // ignore multipolygon geometry
+        if (!item.hasTags())
+            return false;
+
+        return acceptWay.accept(item) > 0;
     }
 
     /**
      * Creates the edges and nodes files from the specified inputstream (osm xml
      * file).
      */
-    void writeOsm2Graph(InputStream is) {
-        if (is == null)
-            throw new IllegalStateException("Stream cannot be empty");
+    void writeOsm2Graph(File osmFile) {
 
         int tmp = (int) Math.max(helper.foundNodes() / 50, 100);
         logger.info("creating graph. Found nodes (pillar+tower):" + nf(helper.foundNodes()) + ", " + Helper.memInfo());
         graphStorage.create(tmp);
-        XMLInputFactory factory = XMLInputFactory.newInstance();
-        XMLStreamReader sReader = null;
         long wayStart = -1;
         StopWatch sw = new StopWatch();
         long counter = 1;
         try {
-            sReader = factory.createXMLStreamReader(is, "UTF-8");
-            for (int event = sReader.next(); event != XMLStreamConstants.END_DOCUMENT;
-                    event = sReader.next(), counter++) {
+            OSMInputFile in = new OSMInputFile(osmFile);
+            in.parseRelations(false);
+            in.nodeFilter(helper.getNodeMap());
 
-                switch (event) {
-                    case XMLStreamConstants.START_ELEMENT:
-                        if ("node".equals(sReader.getLocalName())) {
-                            processNode(sReader);
-                            if (counter % 10000000 == 0) {
-                                logger.info(nf(counter) + ", locs:" + nf(locations)
-                                        + " (" + skippedLocations + ") " + Helper.memInfo());
-                            }
-                        } else if ("way".equals(sReader.getLocalName())) {
-                            if (wayStart < 0) {
-                                helper.startWayProcessing();
-                                logger.info(nf(counter) + ", now parsing ways");
-                                wayStart = counter;
-                                sw.start();
-                            }
-                            helper.processWay(sReader);
-                            if (counter - wayStart == 10000 && sw.stop().getSeconds() > 1) {
-                                logger.warn("Something is wrong! Processing ways takes too long! "
-                                        + sw.getSeconds() + "sec for only " + (counter - wayStart) + " entries");
-                            }
-                            // hmmh a bit hacky: counter does +=2 until the next loop
-                            if ((counter / 2) % 1000000 == 0) {
-                                logger.info(nf(counter) + ", locs:" + nf(locations)
-                                        + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
-                                        + " " + Helper.memInfo());
-                            }
+            OSMElement item;
+            while ((item = in.getNext()) != null) {
+                switch (item.type()) {
+                    case OSMElement.NODE:
+                        processNode((OSMNode) item);
+                        if (counter % 1000000 == 0) {
+                            logger.info(nf(counter) + ", locs:" + nf(locations)
+                                    + " (" + skippedLocations + ") " + Helper.memInfo());
+                        }
+                        break;
+                    case OSMElement.WAY:
+                        if (wayStart < 0) {
+                            helper.startWayProcessing();
+                            logger.info(nf(counter) + ", now parsing ways");
+                            wayStart = counter;
+                            sw.start();
+                        }
+                        processWay((OSMWay) item);
+                        if (counter - wayStart == 10000 && sw.stop().getSeconds() > 1) {
+                            logger.warn("Something is wrong! Processing ways takes too long! "
+                                    + sw.getSeconds() + "sec for only " + (counter - wayStart) + " entries");
+                        }
+                        // hmmh a bit hacky: counter does +=2 until the next loop
+                        if ((counter / 2) % 1000000 == 0) {
+                            logger.info(nf(counter) + ", locs:" + nf(locations)
+                                    + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
+                                    + " " + Helper.memInfo());
                         }
                         break;
                 }
+                counter++;
             }
+            in.close();
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
-        } catch (XMLStreamException ex) {
+        } catch (Exception ex) {
             throw new RuntimeException("Couldn't process file", ex);
-        } finally {
-            Helper7.close(sReader);
         }
-
         helper.finishedReading();
         if (graphStorage.nodes() == 0)
             throw new IllegalStateException("osm must not be empty. read " + counter + " lines and " + locations + " locations");
     }
 
-    private void processNode(XMLStreamReader sReader) throws XMLStreamException {
-        long osmId;
-        try {
-            osmId = Long.parseLong(sReader.getAttributeValue(null, "id"));
-        } catch (Exception ex) {
-            logger.error("cannot get id from xml node:" + sReader.getAttributeValue(null, "id"), ex);
+    /**
+     * Process properties, encode flags and create edges for the way
+     *
+     *
+     * @param way
+     * @throws XMLStreamException
+     */
+    public void processWay(OSMWay way) throws XMLStreamException {
+        if (way.nodes().size() < 2)
             return;
-        }
+        // ignore multipolygon geometry
+        if (!way.hasTags())
+            return;
 
-        if (negativeIds == null)
-            negativeIds = osmId < 0;
-        else if (negativeIds != osmId < 0)
-            throw new IllegalStateException("You cannot mix positive and negative ids. See #42");
-        if (negativeIds)
-            osmId = -osmId;
-
-        double lat = -1;
-        double lon = -1;
-        try {
-            lat = Double.parseDouble(sReader.getAttributeValue(null, "lat"));
-            lon = Double.parseDouble(sReader.getAttributeValue(null, "lon"));
-            if (isInBounds(lat, lon)) {
-                helper.addNode(osmId, lat, lon);
-                locations++;
-            } else {
-                skippedLocations++;
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException("cannot handle lon/lat of node " + osmId + ": " + lat + "," + lon, ex);
+        int includeWay = acceptWay.accept(way);
+        if (includeWay > 0) {
+            int flags = acceptWay.encodeTags(includeWay, way);
+            if (flags != 0)
+                helper.addEdge(way.nodes(), flags);
         }
     }
 
-    boolean isInBounds(double lat, double lon) {
+    private void processNode(OSMNode node) throws XMLStreamException {
+
+        if (isInBounds(node)) {
+            helper.addNode(node);
+            locations++;
+        } else {
+            skippedLocations++;
+        }
+    }
+
+    /**
+     * Filter method, override in subclass
+     */
+    boolean isInBounds(OSMNode node) {
         return true;
     }
 
@@ -181,7 +221,7 @@ public class OSMReader {
      * Specify the type of the path calculation (car, bike, ...).
      */
     public OSMReader acceptWay(AcceptWay acceptWay) {
-        helper.acceptWay(acceptWay);
+        this.acceptWay = acceptWay;
         return this;
     }
 

@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
  *  agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
+ *  GraphHopper licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except 
  *  in compliance with the License. You may obtain a copy of the 
  *  License at
@@ -31,13 +31,14 @@ public interface Shape {
     boolean intersect(Shape o);
 
     /**
-     * @return true only if lat and lon are inside (or on the edge) of this shape
+     * @return true only if lat and lon are inside (or on the edge) of this
+     * shape
      */
     boolean contains(double lat, double lon);
 
     /**
-     * @return true if the specified shape is fully contained in this shape. Only iff
-     * s1.contains(s2) && && s2.contains(s1) then s1 is equal to s2
+     * @return true if the specified shape is fully contained in this shape.
+     * Only iff s1.contains(s2) && && s2.contains(s1) then s1 is equal to s2
      */
     boolean contains(Shape s);
 

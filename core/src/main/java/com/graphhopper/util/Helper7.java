@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
  *  agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
+ *  GraphHopper licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except 
  *  in compliance with the License. You may obtain a copy of the 
  *  License at
@@ -27,8 +27,8 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 /**
- * Put the usage of proprietary "sun" classes and after jdk6 classes into this class. To use Helper
- * class under Android as well.
+ * Put the usage of proprietary "sun" classes and after jdk6 classes into this
+ * class. To use Helper class under Android as well.
  *
  * @author Peter Karich
  */
@@ -51,7 +51,7 @@ public class Helper7 {
         }
         UNMAP_SUPPORTED = v;
     }
-    
+
     public static String getBeanMemInfo() {
         java.lang.management.OperatingSystemMXBean mxbean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
         com.sun.management.OperatingSystemMXBean sunmxbean = (com.sun.management.OperatingSystemMXBean) mxbean;

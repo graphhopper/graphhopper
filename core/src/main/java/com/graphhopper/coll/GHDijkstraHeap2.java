@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
  *  agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
+ *  GraphHopper licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except 
  *  in compliance with the License. You may obtain a copy of the 
  *  License at
@@ -25,10 +25,12 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
- * A simple two staged heap where the first N values are stored in a sorted tree.
+ * A simple two staged heap where the first N values are stored in a sorted
+ * tree.
  *
- * TODO some bug remaining if it over or underflows (or same problem as with MyDijkstraHeap?) ...
- * use dijkstra simple => cannot remove 8243.565 size:32, smallSize: 22 ...
+ * TODO some bug remaining if it over or underflows (or same problem as with
+ * MyDijkstraHeap?) ... use dijkstra simple => cannot remove 8243.565 size:32,
+ * smallSize: 22 ...
  *
  * @author Peter Karich
  */

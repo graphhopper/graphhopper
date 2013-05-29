@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license
  *  agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
- *  Peter Karich licenses this file to you under the Apache License,
+ *  GraphHopper licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the
  *  License at
@@ -17,6 +17,8 @@
  *  limitations under the License.
  */
 package com.graphhopper.routing.util;
+
+import com.graphhopper.reader.OSMWay;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,11 +62,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     public FootFlagEncoder() {
         super(16, 1, SPEED.get("mean"), SPEED.get("max"));
-
         restrictions = new String[]{"foot", "access"};
-        restricted.add("private");
-        restricted.add("no");
-        restricted.add("restricted");
+        restrictedValues.add("private");
+        restrictedValues.add("no");
+        restrictedValues.add("restricted");
 
         intended.add("yes");
         intended.add("designated");
@@ -75,6 +76,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         sidewalks.add("both");
         sidewalks.add("left");
         sidewalks.add("right");
+
+        ferries.add("shuttle_train");
+        ferries.add("ferry");
     }
 
     public Integer getSpeed(String string) {
@@ -90,26 +94,56 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     /**
      * Some ways are okay but not separate for pedestrians.
+     *
+     * @param way
      */
     @Override
-    public boolean isAllowed(Map<String, String> osmProperties) {
-        if (hasTag("sidewalk", sidewalks, osmProperties))
-            return true;
+    public int isAllowed(OSMWay way) {
+        String highwayValue = way.getTag("highway");
+        if (highwayValue == null) {
+            if (way.hasTag("route", ferries)) {
+                if (!way.hasTag("foot", "no"))
+                    return acceptBit | ferryBit;
+            }
+            return 0;
+        } else {
+            if (way.hasTag("sidewalk", sidewalks))
+                return acceptBit;
 
-        if (hasTag("foot", intended, osmProperties))
-            return true;
+            // no need to evaluate ferries - already included here
+            if (way.hasTag("foot", intended))
+                return acceptBit;
 
-        String highwayValue = osmProperties.get("highway");
-        if (!allowedHighwayTags.contains(highwayValue))
-            return false;
+            if (!allowedHighwayTags.contains(highwayValue))
+                return 0;
 
-        if (hasTag("motorroad", "yes", osmProperties))
-            return false;
+            if (way.hasTag("motorroad", "yes"))
+                return 0;
 
-        if (hasTag("bicycle", "official", osmProperties))
-            return false;
+            if (way.hasTag("bicycle", "official"))
+                return 0;
+            // check access restrictions
+            if (way.hasTag(restrictions, restrictedValues))
+                return 0;
 
-        return super.isAllowed(osmProperties);
+            return acceptBit;
+        }
+    }
+
+    @Override
+    public int handleWayTags(int allowed, OSMWay way) {
+        if ((allowed & acceptBit) == 0)
+            return 0;
+
+        int encoded;
+        if ((allowed & ferryBit) == 0) {
+            encoded = flagsDefault(true);
+        } else {
+            // TODO read duration and calculate speed 00:30 for ferry            
+            encoded = flagsDefault(true);
+        }
+
+        return encoded;
     }
 
     /**

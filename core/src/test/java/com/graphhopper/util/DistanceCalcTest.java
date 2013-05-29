@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
  *  agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
+ *  GraphHopper licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except 
  *  in compliance with the License. You may obtain a copy of the 
  *  License at
@@ -81,9 +81,9 @@ public class DistanceCalcTest {
         res = 1013735.28;
         assertEquals(res, dist.calcDist(lat, lon, lat, lon - 10), 1);
         assertEquals(dist.calcNormalizedDist(res), dist.calcNormalizedDist(lat, lon, lat, lon - 10), 1);
-           // 1013952.659
+        // 1013952.659
         assertEquals(res, approxDist.calcDist(lat, lon, lat, lon - 10), 1000);
-        
+
         // if we have a big distance for latitude only then PlaneProjection is exact!!
         res = 1111949.3;
         assertEquals(res, dist.calcDist(lat, lon, lat + 10, lon), 1);

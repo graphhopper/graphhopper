@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license
  *  agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
- *  Peter Karich licenses this file to you under the Apache License,
+ *  GraphHopper licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the
  *  License at
@@ -42,7 +42,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     private IntDoubleBinHeap heap;
     private int visitedNodes;
     private boolean doClear = true;
-    private double limit = Double.MAX_VALUE;    
+    private double limit = Double.MAX_VALUE;
 
     public DijkstraOneToMany(Graph graph, EdgePropertyEncoder encoder) {
         super(graph, encoder);
@@ -59,7 +59,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         limit = weight;
         return this;
     }
-    
+
     @Override
     public Path calcPath(int from, int to) {
         if (edgeIds == null) {
@@ -88,7 +88,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             return -1;
         int currNode = from;
         if (doClear) {
-            doClear = false;            
+            doClear = false;
             int vn = changedNodes.size();
             for (int i = 0; i < vn; i++) {
                 int n = changedNodes.get(i);
@@ -120,7 +120,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             while (iter.next()) {
                 if (!accept(iter))
                     continue;
-                int adjNode = iter.adjNode();                
+                int adjNode = iter.adjNode();
                 double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + weights[currNode];
                 if (weights[adjNode] == Double.MAX_VALUE) {
                     parents[adjNode] = currNode;

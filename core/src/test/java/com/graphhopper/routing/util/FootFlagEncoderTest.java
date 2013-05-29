@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license
  *  agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
- *  Peter Karich licenses this file to you under the Apache License,
+ *  GraphHopper licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the
  *  License at
@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.GHUtility;
@@ -81,47 +82,51 @@ public class FootFlagEncoderTest {
     @Test
     public void testAccess() {
         Map<String, String> map = new HashMap<String, String>();
-        map.put("sidewalk", "yes");
-        assertTrue(footEncoder.isAllowed(map));
-        map.put("sidewalk", "left");
-        assertTrue(footEncoder.isAllowed(map));
-        
-        map.put("sidewalk", "none");
-        assertFalse(footEncoder.isAllowed(map));
-        map.clear();
-        
-        map.put("highway", "pedestrian");
-        assertTrue(footEncoder.isAllowed(map));
-
-        map.put("highway", "footway");
-        assertTrue(footEncoder.isAllowed(map));
+        OSMWay way = new OSMWay();
+        way.setTags(map);
 
         map.put("highway", "motorway");
-        assertFalse( footEncoder.isAllowed(map));
+        map.put("sidewalk", "yes");
+        assertTrue(footEncoder.isAllowed(way) > 0);
+        map.put("sidewalk", "left");
+        assertTrue(footEncoder.isAllowed(way) > 0);
+
+        map.put("sidewalk", "none");
+        assertFalse(footEncoder.isAllowed(way) > 0);
+        map.clear();
+
+        map.put("highway", "pedestrian");
+        assertTrue(footEncoder.isAllowed(way) > 0);
+
+        map.put("highway", "footway");
+        assertTrue(footEncoder.isAllowed(way) > 0);
+
+        map.put("highway", "motorway");
+        assertFalse(footEncoder.isAllowed(way) > 0);
 
         map.put("highway", "path");
-        assertTrue(footEncoder.isAllowed(map));
+        assertTrue(footEncoder.isAllowed(way) > 0);
 
         map.put("bicycle", "official");
-        assertFalse(footEncoder.isAllowed(map));
+        assertFalse(footEncoder.isAllowed(way) > 0);
 
         map.put("foot", "official");
-        assertTrue(footEncoder.isAllowed(map));
+        assertTrue(footEncoder.isAllowed(way) > 0);
 
         map.clear();
         map.put("highway", "service");
         map.put("access", "no");
-        assertFalse(footEncoder.isAllowed(map));
-        
+        assertFalse(footEncoder.isAllowed(way) > 0);
+
         map.clear();
         map.put("highway", "tertiary");
         map.put("motorroad", "yes");
-        assertFalse(footEncoder.isAllowed(map));
+        assertFalse(footEncoder.isAllowed(way) > 0);
 
         map.clear();
         map.put("highway", "cycleway");
-        assertFalse( footEncoder.isAllowed(map));
+        assertFalse(footEncoder.isAllowed(way) > 0);
         map.put("foot", "yes");
-        assertTrue(footEncoder.isAllowed(map));        
+        assertTrue(footEncoder.isAllowed(way) > 0);
     }
 }
