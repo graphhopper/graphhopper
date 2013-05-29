@@ -1,3 +1,21 @@
+/*
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
+ *  agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
+ * 
+ *  GraphHopper licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at
+ * 
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.EdgePropertyEncoder;
@@ -11,9 +29,19 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPlace;
 
 /**
+ * The PathFinisher is a tool meant to "finish" a path. Finishing a path
+ * consists of improving the path around it's extremities as the underlying
+ * routing algorithm only route graph nodes and not actual GPS locations. 
+ * To improve these endings, the PathFinisher uses the start/end edges of the
+ * base path, projects the GPS points on them and then adapt the path by
+ * adding/removing the needed points to have a more accurate routing.<br> 
+ * <br>
+ * The path finisher can "finish" only one path it's meant to be disposed once the path
+ * has been finished, do not try to reuse the same instance of PathFinisher to
+ * finish two different path.
  * 
  * @author NG
- *
+ * 
  */
 public class PathFinisher {
 
@@ -32,6 +60,8 @@ public class PathFinisher {
 	/** graph used to compute the path */
 	private final Graph graph;
 	
+	private boolean scaleDistances = false;
+	
 	private final DistanceCalc calc = new DistanceCalc();
 	
 	private boolean finished = false;
@@ -40,9 +70,29 @@ public class PathFinisher {
 	private PointList points;
 	private PathSplitter splitter = new PathSplitter();
 	
+	/**
+	 * Initializes the PathFinisher.
+	 * 
+	 * @param fromLoc
+	 *            location containing the "from" edge
+	 * @param toLoc
+	 *            location containing the "to" edge
+	 * @param from
+	 *            GPS location of the start point (true GPS point, not yet
+	 *            projected on the edges)
+	 * @param to
+	 *            GPS location of the end point (true GPS point, not yet
+	 *            projected on the edges)
+	 * @param path
+	 *            the base path between two nodes of the graph and that need to
+	 *            be finished
+	 * @param encoder
+	 *            encoder used to create the path
+	 * @param graph
+	 *            graph used to create the path
+	 */
 	public PathFinisher(LocationIDResult fromLoc, LocationIDResult toLoc,
 			GHPlace from, GHPlace to, Path path, EdgePropertyEncoder encoder, Graph graph) {
-		super();
 		this.fromLoc = fromLoc;
 		this.toLoc = toLoc;
 		this.from = from;
@@ -169,7 +219,7 @@ public class PathFinisher {
 		}
 		
 		// update distance/time data
-		updateTimeDist(-removedDist, loc.closestEdge());
+		updateTimeDist(-removedDist, loc.closestEdge(), edgePoints);
 		
 		// invert for endings
 		if(!start && idx2 >= 0) {
@@ -197,11 +247,11 @@ public class PathFinisher {
 			throw new RuntimeException("Could not find common point between edge and path");
 		}
 		// update distance/time data
-		updateTimeDist(dist, loc.closestEdge());
+		updateTimeDist(dist, loc.closestEdge(), edgePoints);
 	}
 	
 	/**
-	 * Insert a point in the edge's geometry at the closes location to the GPS
+	 * Insert a point in the edge's geometry at the closest location to the GPS
 	 * point in the edge's geometry. If the point can be located between two of
 	 * the edge's nodes if will be inserted, otherwise the edges's geometry is
 	 * returned unchanged. In case the point cannot be located on the edge the
@@ -248,16 +298,35 @@ public class PathFinisher {
 		return new PointListIndex(newList, index);
 	}
 	
-	private void updateTimeDist(double addedDist, EdgeIterator edge) {
+	/**
+	 * Adapt the finished distance and time by adding some distance to the base
+	 * path
+	 * 
+	 * @param addedDist
+	 *            distance to add (remove if negative) to the base path
+	 * @param edge
+	 *            edge from which the distance is add/removed
+	 */
+	private void updateTimeDist(double addedDist, EdgeIterator edge, PointList fullEdge) {
 		if(addedDist != 0) {
+			if(scaleDistances) {
+				double totPtDist = 0;
+				for(int i=1 ; i < fullEdge.size() ; i++) {
+					totPtDist += calc.calcDist(fullEdge.longitude(i-1), fullEdge.latitude(i-1), fullEdge.longitude(i), fullEdge.latitude(i)); 
+				}
+				addedDist = addedDist * edge.distance() / totPtDist;
+			}
 			this.distance += addedDist;
 			this.time += (long) (addedDist * 3.6 / vehicleEncoder.getSpeed(edge.flags()));
 		}
 	}
-	
+
 	/**
-	 * Builds a virtual path out of the FromEdge "AB" and the ToEdge "BC" when they are
-	 * connected by one of their (tower) node "B"
+	 * Builds a virtual path out of the FromEdge "AB" and the ToEdge "BC" when
+	 * they are connected by (at least) one of their (tower) node "B". This
+	 * allows to handle routing between two adjacent edges when fromNode =
+	 * toNode or event routing in the same edge. This creates a full path as the
+	 * sum of both edges, it will later need to be finished.
 	 * 
 	 * @return
 	 */
@@ -310,7 +379,7 @@ public class PathFinisher {
 		
 		// add toEdge's points to path
 		len = toPts.size();
-		for(i=0 ; i < len ; i++) {
+		for(i=1 ; i < len ; i++) {// do not add 1st point, as it's the shared point between the two edges
 			if(!revertTo) {
 				path.add(toPts.latitude(i), toPts.longitude(i));
 			} else {
@@ -385,6 +454,7 @@ public class PathFinisher {
 		double lat, lon, dist=0,
 			   prevLon = Double.NaN,
 			   prevLat = Double.NaN;
+		// chain nodes from edge
 		for(int i=startIdx ; i <= endIdx ; i++) {
 			if(!revert) {
 				lat = edgePoints.latitude(i);
@@ -409,6 +479,26 @@ public class PathFinisher {
 		}
 		this.points = newList;
 		return dist;
+	}
+	
+	/**
+	 * This enables the "scale distance feature" which influences the way
+	 * distance and time of path are updated. When computing points
+	 * removed/added to the path, distance between these points is added/removed
+	 * from the path. But sometimes edge's distance is a lot different from the
+	 * sum of all distances between it's points. Therefore, to avoid negative
+	 * time and duration it's possible to scale the removed distance into the
+	 * edge's distance. When enabling scale distance a rule of 3 will be
+	 * applied.
+	 * 
+	 * <pre>
+	 * distance = dist2scale * edgeDist / totPtDist
+	 * </pre>
+	 * 
+	 * @param b
+	 */
+	public void setScaleDistance(boolean b) {
+		this.scaleDistances = b;
 	}
 	
 	/**

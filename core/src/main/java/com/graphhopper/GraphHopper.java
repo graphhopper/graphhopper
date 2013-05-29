@@ -521,6 +521,7 @@ public class GraphHopper implements GraphHopperAPI {
         
         sw = new StopWatch().start();
         PathFinisher finishedPath = new PathFinisher(from, to, request.from(), request.to(), path, request.vehicle(), graph);
+        finishedPath.setScaleDistance(true);
 //		PointList points = path.calcPoints();
         PointList points = finishedPath.getFinishedPointList();
         debug.append(", ").append("finished-path:").append(sw.stop().getSeconds()).append('s');
