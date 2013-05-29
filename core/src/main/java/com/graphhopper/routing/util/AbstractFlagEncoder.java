@@ -67,7 +67,6 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
         oneways.add("true");
         oneways.add("1");
         oneways.add("-1");
-        oneways.add("roundabout");
 
         ferries.add("shuttle_train");
         ferries.add("ferry");

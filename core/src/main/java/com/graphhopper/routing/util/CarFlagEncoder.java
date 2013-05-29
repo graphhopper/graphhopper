@@ -56,12 +56,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int isAllowed(OSMWay way) {
-        String highwayValue = way.getTag("highway");
+        String highwayValue = way.getTag( "highway" );
         if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
-                String markedFor = way.getTag("motorcar");
+            if (way.hasTag( "route", ferries )) {
+                String markedFor = way.getTag( "motorcar" );
                 if (markedFor == null)
-                    markedFor = way.getTag("motor_vehicle");
+                    markedFor = way.getTag( "motor_vehicle" );
                 if ("yes".equals(markedFor))
                     return acceptBit | ferryBit;
             }
@@ -71,7 +71,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 return 0;
 
             // check access restrictions
-            if (way.hasTag(restrictions, restrictedValues))
+            if (way.hasTag( restrictions, restrictedValues ))
                 return 0;
 
             return acceptBit;
@@ -85,18 +85,21 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         int encoded;
         if ((allowed & ferryBit) == 0) {
-            String highwayValue = way.getTag("highway");
+            String highwayValue = way.getTag( "highway" );
             // get assumed speed from highway type
             Integer speed = getSpeed(highwayValue);
             // apply speed limit
-            int maxspeed = AcceptWay.parseSpeed(way.getTag("maxspeed"));
+            int maxspeed = AcceptWay.parseSpeed(way.getTag( "maxspeed" ));
             if (maxspeed > 0 && speed > maxspeed)
                 //outProperties.put( "car", maxspeed );
                 speed = maxspeed;
 
+            if( way.hasTag( "junction", "roundabout" ) ) {
+                System.out.println();
+            }
             // usually used with a node, this does not work as intended
             // if( "toll_booth".equals( osmProperties.get( "barrier" ) ) )
-            if (way.hasTag("oneway", oneways)) {
+            if (way.hasTag("oneway", oneways) || way.hasTag("junction","roundabout")) {
                 encoded = flags(speed, false);
                 if (way.hasTag("oneway", "-1")) {
                     encoded = swapDirection(encoded);
