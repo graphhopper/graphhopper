@@ -203,10 +203,11 @@ public class OSMReaderTest {
 
         int n20 = AbstractGraphTester.getIdOf(graph, 52.0);
         int n22 = AbstractGraphTester.getIdOf(graph, 52.133);
+        int n23 = AbstractGraphTester.getIdOf(graph, 52.144);
         int n10 = AbstractGraphTester.getIdOf(graph, 51.2492152);
         int n30 = AbstractGraphTester.getIdOf(graph, 51.2);
         assertEquals(1, GHUtility.count(graph.getEdges(n10, carOutFilter)));
-        assertEquals(1, GHUtility.count(graph.getEdges(n20, carOutFilter)));
+        assertEquals(2, GHUtility.count(graph.getEdges(n20, carOutFilter)));
         assertEquals(0, GHUtility.count(graph.getEdges(n30, carOutFilter)));
 
         EdgeIterator iter = graph.getEdges(n20, carOutFilter);
@@ -237,6 +238,12 @@ public class OSMReaderTest {
         assertFalse(encoder.isMotorway(iter.flags()));
         assertFalse(encoder.isForward(iter.flags()));
         assertTrue(encoder.isBackward(iter.flags()));
+
+        assertTrue(iter.next());
+        assertEquals(n23, iter.adjNode());
+        assertFalse(encoder.isMotorway(iter.flags()));
+        assertTrue(encoder.isForward(iter.flags()));
+        assertFalse(encoder.isBackward(iter.flags()));
     }
 
     @Test public void testFerry() {
