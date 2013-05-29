@@ -48,8 +48,13 @@ public abstract class AbstractDirectory implements Directory {
     protected abstract DataAccess create(String id, String location);
 
     @Override
+    public DataAccess find(String name) {
+    	return map.get(name);
+    }
+    
+    @Override
     public DataAccess findCreate(String name) {
-        DataAccess da = map.get(name);
+        DataAccess da = find(name);
         if (da != null)
             return da;
 

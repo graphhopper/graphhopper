@@ -18,6 +18,12 @@
  */
 package com.graphhopper;
 
+import java.io.File;
+import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathFinisher;
@@ -30,9 +36,8 @@ import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
-import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
@@ -42,14 +47,14 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.index.Location2IDIndex;
-import com.graphhopper.storage.index.Location2IDQuadtree;
-import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
+import com.graphhopper.storage.index.Location2IDIndex;
+import com.graphhopper.storage.index.Location2IDQuadtree;
 import com.graphhopper.storage.index.Location2NodesNtree;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.DouglasPeucker;
@@ -57,10 +62,6 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
-import java.io.File;
-import java.io.IOException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Main wrapper of the offline API for a simple and efficient usage.
@@ -466,17 +467,21 @@ public class GraphHopper implements GraphHopperAPI {
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
         if (to == null)
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.to()));
-                
+        
         // get nodes to route
-//        Graph graph = this.graph;
-//        int fromId, toId;
-//        if((this.graph instanceof LevelGraph) && from.closestEdge() != null && to.closestEdge() != null) {
-//        	// substitute the graph with a decorated one
-//        	VirtualNodeLevelGraph vGraph = new VirtualNodeLevelGraph((LevelGraph)this.graph);
-//        	fromId = vGraph.setFromEdges(from.closestEdge(), request.from().lat, request.from().lon);
-//        	toId = vGraph.setToEdges(to.closestEdge(), request.to().lat, request.to().lon);
-//        	
-//        	graph = vGraph;
+
+		RouteNodeResolver nodeFinder = this.getNodeResolver(request);
+		boolean sameEdge = this.isSameEdge(from, to);
+		
+		int fromId = nodeFinder.findRouteNode(from, request.from().lat, request.from().lon, true, sameEdge);
+		int toId = nodeFinder.findRouteNode(to, request.to().lat, request.to().lon, false, sameEdge);
+        GraphStorage wGraph = this.graph;
+        // DISABLED : use graph virtually enhanced with start/end nod corresponding to GPS locations
+//        if(from.closestEdge() != null && to.closestEdge() != null) {
+//        	wGraph = new VirtualGraphStorage(wGraph.directory());
+//        	wGraph.loadExisting();
+//        	fromId = ((VirtualGraphStorage)wGraph).cutEdge(from.closestEdge(), request.from());
+//        	toId = ((VirtualGraphStorage)wGraph).cutEdge(to.closestEdge(), request.to());
 //        } else {
 //        	fromId = from.closestNode();
 //        	toId = to.closestNode();
@@ -494,7 +499,7 @@ public class GraphHopper implements GraphHopperAPI {
                 // or use defaultAlgorithm here?
                 rsp.addError(new IllegalStateException("Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
         } else {
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm(), request.vehicle());
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(wGraph, request.algorithm(), request.vehicle());
             algo = prepare.createAlgo();
             algo.type(request.type());
         }
@@ -502,11 +507,6 @@ public class GraphHopper implements GraphHopperAPI {
             return rsp;
         debug.append(", algoInit:").append(sw.stop().getSeconds()).append('s');
 
-        RouteNodeResolver nodeFinder = this.getNodeResolver(request);
-        boolean sameEdge = this.isSameEdge(from, to);
-        
-        int fromId = nodeFinder.findRouteNode(from, request.from().lat, request.from().lon, true, sameEdge);
-        int toId = nodeFinder.findRouteNode(to, request.to().lat, request.to().lon, false, sameEdge);
         
         // compute route path
         sw = new StopWatch().start();
@@ -538,6 +538,7 @@ public class GraphHopper implements GraphHopperAPI {
             debug.append(", simplify (").append(orig).append("->").append(points.size()).append("):").append(sw.stop().getSeconds()).append('s');
         }
         return rsp.points(points).distance(finishedPath.getFinishedDistance()).time(finishedPath.getFinishedTime()).debugInfo(debug.toString());
+//        return rsp.points(points).distance(path.distance()).time(path.time()).debugInfo(debug.toString());
     }
 
     private void initIndex() {
