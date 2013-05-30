@@ -95,15 +95,16 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean doPrepare = true;
     private boolean chUsage = false;
     private boolean chFast = true;
+    private int periodicUpdates = 3;
+    private int lazyUpdates = 10;
+    private int neighborUpdates = 20;
     // for OSM import:
     private String osmFile;
     private AcceptWay acceptWay = new AcceptWay("CAR");
     private long expectedNodes = 10;
     private double wayPointMaxDistance = 1;
-    private int periodicUpdates = 3;
-    private int lazyUpdates = 10;
-    private int neighborUpdates = 20;
-    private StorableProperties properties;
+    private int workerThreads = -1;    
+    private StorableProperties properties;    
 
     public GraphHopper() {
     }
@@ -209,6 +210,10 @@ public class GraphHopper implements GraphHopperAPI {
         return ghLocation;
     }
 
+    /**
+     * This file can be an osm xml (.osm), a compressed xml (.osm.zip or
+     * .osm.gz) or a protobuf file (.pbf).
+     */
     public GraphHopper osmFile(String strOsm) {
         if (Helper.isEmpty(strOsm))
             throw new IllegalArgumentException("OSM file cannot be empty.");
@@ -295,6 +300,7 @@ public class GraphHopper implements GraphHopperAPI {
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", 1);
         String type = args.get("osmreader.acceptWay", "CAR");
         acceptWay = new AcceptWay(type);
+        workerThreads = args.getInt("osmreader.workerThreads", -1);
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", 1000);
@@ -344,7 +350,7 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Your specified OSM file does not exist:" + osmTmpFile.getAbsolutePath());
 
         logger.info("start creating graph from " + file);
-        OSMReader reader = new OSMReader(graph, expectedNodes);
+        OSMReader reader = new OSMReader(graph, expectedNodes).workerThreads(workerThreads);
         reader.acceptWay(acceptWay);
         reader.wayPointMaxDistance(wayPointMaxDistance);
 

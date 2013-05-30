@@ -23,7 +23,6 @@ import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
-import com.graphhopper.util.StopWatch;
 import java.io.*;
 import javax.xml.stream.XMLStreamException;
 
@@ -45,6 +44,7 @@ public class OSMReader {
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
     private AcceptWay acceptWay;
+    private int workerThreads = -1;
 
     public OSMReader(GraphStorage storage, long expectedNodes) {
         this.graphStorage = storage;
@@ -52,26 +52,29 @@ public class OSMReader {
         acceptWay = new AcceptWay(AcceptWay.CAR);
     }
 
-    public void osm2Graph(File osmXmlFile) throws IOException {
+    public OSMReader workerThreads(int numOfWorkers) {
+        this.workerThreads = numOfWorkers;
+        return this;
+    }
 
+    public void osm2Graph(File osmFile) throws IOException {
         long start = System.currentTimeMillis();
-        preProcess(osmXmlFile);
+        preProcess(osmFile);
 
         long pass2 = System.currentTimeMillis();
-        writeOsm2Graph(osmXmlFile);
+        writeOsm2Graph(osmFile);
 
         final long finished = System.currentTimeMillis();
-        logger.info( "Times Pass1: " + (pass2 - start) + " Pass2: " + (finished - pass2) + " Total:" + (finished - start) );
+        logger.info("Times Pass1: " + (pass2 - start) + " Pass2: " + (finished - pass2) + " Total:" + (finished - start));
     }
 
     /**
      * Preprocessing of OSM file to select nodes which are used for highways.
      * This allows a more compact graph data structure.
      */
-    public void preProcess(File osmXml) {
-
+    public void preProcess(File osmFile) {
         try {
-            OSMInputFile in = new OSMInputFile(osmXml);
+            OSMInputFile in = new OSMInputFile(osmFile).workerThreads(workerThreads).open();
 
             long tmpCounter = 1;
 
@@ -119,25 +122,24 @@ public class OSMReader {
     }
 
     /**
-     * Creates the edges and nodes files from the specified inputstream (osm xml
-     * file).
+     * Creates the edges and nodes files from the specified osm file.
      */
     void writeOsm2Graph(File osmFile) {
 
         int tmp = (int) Math.max(helper.foundNodes() / 50, 100);
         logger.info("creating graph. Found nodes (pillar+tower):" + nf(helper.foundNodes()) + ", " + Helper.memInfo());
-        graphStorage.create( tmp );
+        graphStorage.create(tmp);
         long wayStart = -1;
         long counter = 1;
         try {
-            OSMInputFile in = new OSMInputFile(osmFile);
+            OSMInputFile in = new OSMInputFile(osmFile).workerThreads(workerThreads).open();
             LongIntMap nodeFilter = helper.getNodeMap();
 
             OSMElement item;
             while ((item = in.getNext()) != null) {
                 switch (item.type()) {
                     case OSMElement.NODE:
-                        if( nodeFilter.get( item.id() ) != -1)
+                        if (nodeFilter.get(item.id()) != -1)
                             processNode((OSMNode) item);
                         break;
 
@@ -157,7 +159,7 @@ public class OSMReader {
             in.close();
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
         } catch (Exception ex) {
-            throw new RuntimeException("Couldn't process file", ex);
+            throw new RuntimeException("Couldn't process file " + osmFile, ex);
         }
         helper.finishedReading();
         if (graphStorage.nodes() == 0)

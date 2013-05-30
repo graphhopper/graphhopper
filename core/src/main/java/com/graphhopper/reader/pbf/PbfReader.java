@@ -6,11 +6,6 @@ import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.graphhopper.reader.pbf.Sink;
-import com.graphhopper.reader.pbf.PbfDecoder;
-import com.graphhopper.reader.pbf.PbfStreamSplitter;
-
-
 /**
  * An OSM data source reading from a PBF file. The entire contents of the file
  * are read.

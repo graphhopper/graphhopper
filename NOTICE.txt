@@ -7,6 +7,8 @@ The core product includes the following software
  * trove.starlight-systems.com - GNU Trove library (LGPL license)
  * SparseArray from the Android project (Apache license)
  * Snippets regarding mmap, vint/vlong and compression from Lucene (Apache license)
+ * protobuf - New BSD license
+ * OSM-binary - LGPL license
 
 tools
  * apache-compress

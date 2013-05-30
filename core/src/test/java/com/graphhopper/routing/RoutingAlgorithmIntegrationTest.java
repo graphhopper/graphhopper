@@ -111,22 +111,34 @@ public class RoutingAlgorithmIntegrationTest {
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
+    List<OneRun> createAndorra() {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 17345, 435));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 11093, 250));
+        return list;
+    }
+
     @Test
     public void testAndorra() {
-        List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 21154, 703));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16144, 523));
-        // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
-                list, "CAR", true, new CarFlagEncoder());
+                createAndorra(), "CAR", true, new CarFlagEncoder());
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testAndorraPbf() {
+        runAlgo(testCollector, "files/andorra.osm.pbf", "target/graph-andorra",
+                createAndorra(), "CAR", true, new CarFlagEncoder());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     @Test
     public void testAndorraFoot() {
-        List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 16189, 517));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 12410, 391));
+        List<OneRun> list = createAndorra();
+        list.get(0).dist = 16023;
+        list.get(0).locs = 514;
+        list.get(1).dist = 12410;
+        list.get(1).locs = 391;        
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
                 list, "FOOT", true, new FootFlagEncoder());
