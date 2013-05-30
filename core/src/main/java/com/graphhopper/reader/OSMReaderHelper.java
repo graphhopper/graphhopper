@@ -270,10 +270,6 @@ public class OSMReaderHelper {
                 + Helper.memInfo());
     }
 
-    void startWayProcessing() {
-        printInfo("node");
-    }
-
     void finishedReading() {
         // todo: is this necessary before removing it?
         nodeOsmIdToIndexMap.optimize();
