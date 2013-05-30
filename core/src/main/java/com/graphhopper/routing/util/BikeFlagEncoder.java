@@ -19,6 +19,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.Helper;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,12 +53,11 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
             add("residential");
         }
     };
-    private static final Map<String, Integer> SPEED = new BikeSpeed();
     private HashSet<String> intended = new HashSet<String>();
     private HashSet<String> oppositeLanes = new HashSet<String>();
 
     public BikeFlagEncoder() {
-        super(8, 2, SPEED.get("cycleway"), SPEED.get("road"));
+        super(8, 2, HIGHWAY_SPEED.get("cycleway"), HIGHWAY_SPEED.get("road"));
 
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions = new String[]{"bicycle", "access"};
@@ -73,14 +73,6 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         oppositeLanes.add("opposite");
         oppositeLanes.add("opposite_lane");
         oppositeLanes.add("opposite_track");
-    }
-
-    public int getSpeed(String string) {
-        // TODO use surface for speed!
-        Integer speed = SPEED.get(string);
-        if (speed == null)
-            throw new IllegalStateException("bike, no speed found for:" + string);
-        return speed;
     }
 
     @Override public String toString() {
@@ -128,8 +120,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         if ((allowed & ferryBit) == 0) {
             // http://wiki.openstreetmap.org/wiki/Cycleway
             // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway
-            String highwayValue = way.getTag("highway");
-            int speed = getSpeed(highwayValue);
+            int speed = getSpeed(way);
             if ((way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
                     && !way.hasTag("oneway:bicycle", "no")
                     && !way.hasTag("cycleway", oppositeLanes)) {
@@ -153,23 +144,65 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         return saveHighwayTags.contains(highwayValue);
     }
 
-    private static class BikeSpeed extends HashMap<String, Integer> {
-
+    int getSpeed(OSMWay way) {
+        String s = way.getTag("surface");
+        if (!Helper.isEmpty(s)) {
+            Integer sInt = SURFACE_SPEED.get(s);
+            if (sInt != null)
+                return sInt;
+        }
+        String tt = way.getTag("tracktype");
+        if (!Helper.isEmpty(tt)) {
+            Integer tInt = TRACKTYPE_SPEED.get(tt);
+            if (tInt != null)
+                return tInt;
+        }
+        String highway = way.getTag("highway");
+        if (!Helper.isEmpty(tt)) {
+            Integer hwInt = HIGHWAY_SPEED.get(highway);
+            if (hwInt != null)
+                return hwInt;
+        }
+        return 10;
+    }
+    private static final Map<String, Integer> TRACKTYPE_SPEED = new HashMap<String, Integer>() {
         {
-            put("living_street", 5);
+            put("grade1", 16); // paved
+            put("grade2", 12); // now unpaved ...
+            put("grade3", 12);
+            put("grade4", 10);
+            put("grade5", 8); // like sand/grass            
+        }
+    };
+    private static final Map<String, Integer> SURFACE_SPEED = new HashMap<String, Integer>() {
+        {
+            put("asphalt", 18);
+            put("concrete", 18);
+            put("paved", 16);
+            put("unpaved", 12);
+            put("gravel", 12);
+            put("ground", 12);
+            put("dirt", 10);
+            put("paving_stones", 8);
+            put("grass", 8);
+        }
+    };
+    private static final Map<String, Integer> HIGHWAY_SPEED = new HashMap<String, Integer>() {
+        {
+            put("living_street", 6);
             put("bridleway", 10);
 
-            put("cycleway", 10);
+            put("cycleway", 14);
             put("path", 10);
             put("road", 10);
             put("track", 10);
 
-            put("trunk", 20);
-            put("primary", 20);
-            put("secondary", 20);
-            put("tertiary", 20);
+            put("trunk", 18);
+            put("primary", 18);
+            put("secondary", 18);
+            put("tertiary", 18);
             put("unclassified", 10);
             put("residential", 10);
         }
-    }
+    };
 }
