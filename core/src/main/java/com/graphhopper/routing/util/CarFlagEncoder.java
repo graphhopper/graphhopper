@@ -20,14 +20,14 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Peter Karich
  */
 public class CarFlagEncoder extends AbstractFlagEncoder {
-
-    private static final Map<String, Integer> SPEED = new CarSpeed();
 
     public CarFlagEncoder() {
         super(0, 2, SPEED.get("secondary"), SPEED.get("motorway"));
@@ -47,7 +47,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         return getSpeedPart(flags) * factor == SPEED.get("service");
     }
 
-    public int getSpeed(String string) {
+    int getSpeed(String string) {
         Integer speed = SPEED.get(string);
         if (speed == null)
             throw new IllegalStateException("car, no speed found for:" + string);
@@ -93,6 +93,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             if (maxspeed > 0 && speed > maxspeed)
                 speed = maxspeed;
 
+            // limit speed to max 30 km/h if bad surface
+            if (speed > 30 && way.hasTag("surface", BAD_SURFACE))
+                speed = 30;
+
             // usually used with a node, this does not work as intended
             // if( "toll_booth".equals( osmProperties.get( "barrier" ) ) )
             if (way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout")) {
@@ -114,14 +118,24 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     @Override public String toString() {
         return "CAR";
     }
-
+    private static final Set<String> BAD_SURFACE = new HashSet<String>() {
+        {
+            add("cobblestone");
+            add("grass_paver");
+            add("gravel");
+            add("sand");
+            add("paving_stones");
+            add("dirt");
+            add("ground");
+            add("grass");
+        }
+    };
     /**
      * A map which associates string to speed. Get some impression:
      * http://www.itoworld.com/map/124#fullscreen
      * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
      */
-    private static class CarSpeed extends HashMap<String, Integer> {
-
+    private static final Map<String, Integer> SPEED = new HashMap<String, Integer>() {
         {
             // autobahn
             put("motorway", 100);
@@ -148,5 +162,5 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             // forestry stuff
             put("track", 20);
         }
-    }
+    };
 }

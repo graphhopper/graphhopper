@@ -151,25 +151,35 @@ public abstract class OSMElement {
 
     /**
      * Chaeck that the object has a given tag with a given value.
-     *
-     * @param name
-     * @param value
-     * @return
      */
-    public boolean hasTag(String name, String value) {
+    public boolean hasTag(String key, String value) {
         if (tags == null)
             return false;
 
-        String val = tags.get(name);
+        String val = tags.get(key);
         return value.equals(val);
     }
 
     /**
-     * Check that a given tag has one of a list of values
-     *
-     * @param key
-     * @param values
-     * @return
+     * Check that a given tag has one of the specified values.
+     */
+    public boolean hasTag(String key, String... values) {
+        if (tags == null)
+            return false;
+
+        String osmValue = tags.get(key);
+        if (osmValue == null)
+            return false;
+
+        for (String val : values) {
+            if (val.equals(osmValue))
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check that a given tag has one of the specified values.
      */
     public final boolean hasTag(String key, Set<String> values) {
         if (tags == null)
