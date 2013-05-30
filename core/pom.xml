@@ -61,13 +61,11 @@
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>2.5.0</version>
-            <optional>true</optional>
         </dependency>        
         <dependency>
             <groupId>org.openstreetmap.osmosis</groupId>
             <artifactId>osmosis-osm-binary</artifactId>
             <version>0.43.1</version>
-            <optional>true</optional>
         </dependency>
     </dependencies>
         
