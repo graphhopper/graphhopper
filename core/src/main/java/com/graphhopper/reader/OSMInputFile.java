@@ -191,8 +191,8 @@ public class OSMInputFile implements Sink {
     private void openPBFReader(InputStream stream) {
         incomingData = true;
 
-        if (workerThreads < 0)
-            workerThreads = Runtime.getRuntime().availableProcessors();
+        if (workerThreads <= 0)
+            workerThreads = 2;
         PbfReader reader = new PbfReader(stream, this, workerThreads);
         new Thread(reader, "PBF Reader").start();
     }
