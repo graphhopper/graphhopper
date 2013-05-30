@@ -17,6 +17,10 @@
 
     </node>
 
+    <node id="23" lat="52.144" lon="9.1" uid="24854">
+
+    </node>
+
     <node id="30" lat="51.2" lon="9.4" uid="24855">
         <tag k="name" v="Dresden" />
     </node>
@@ -57,6 +61,13 @@
         <nd ref="22"/>
         <tag k="oneway" v="-1" />
         <tag k="highway" v="primary" />
+    </way>
+
+    <way id="13" uid="85761">
+        <nd ref="20"/>
+        <nd ref="23"/>
+        <tag k="junction" v="roundabout" />
+        <tag k="highway" v="secondary" />
     </way>
 
     <way id="15" uid="85762">
