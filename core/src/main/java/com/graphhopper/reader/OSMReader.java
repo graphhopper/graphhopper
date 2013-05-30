@@ -53,10 +53,14 @@ public class OSMReader {
 
     public void osm2Graph(File osmXmlFile) throws IOException {
 
+        long start = System.currentTimeMillis();
         preProcess(osmXmlFile);
 
+        long pass2 = System.currentTimeMillis();
         writeOsm2Graph(osmXmlFile);
 
+        final long finished = System.currentTimeMillis();
+        logger.info( "Times Pass1: "+(pass2-start)+" Pass2: "+(finished-pass2)+" Total:"+(finished-start));
     }
 
     /**
@@ -134,6 +138,7 @@ public class OSMReader {
 
             OSMElement item;
             while ((item = in.getNext()) != null) {
+                counter++;
                 switch (item.type()) {
                     case OSMElement.NODE:
                         processNode((OSMNode) item);

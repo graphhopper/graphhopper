@@ -130,7 +130,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
             // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway
             String highwayValue = way.getTag("highway");
             int speed = getSpeed(highwayValue);
-            if (way.hasTag("oneway", oneways)
+            if ((way.hasTag("oneway", oneways) || way.hasTag("junction","roundabout"))
                     && !way.hasTag("oneway:bicycle", "no")
                     && !way.hasTag("cycleway", oppositeLanes)) {
 
