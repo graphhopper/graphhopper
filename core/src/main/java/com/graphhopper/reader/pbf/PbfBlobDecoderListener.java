@@ -5,21 +5,19 @@ import com.graphhopper.reader.OSMElement;
 
 import java.util.List;
 
-
 /**
  * Instances of this interface are used to receive results from PBFBlobDecoder.
  *
  * @author Brett Henderson
  */
-public interface PbfBlobDecoderListener
-{
+public interface PbfBlobDecoderListener {
+
     /**
      * Provides the listener with the list of decoded entities.
      *
      * @param decodedEntities The decoded entities.
      */
-    void complete( List<OSMElement> decodedEntities );
-
+    void complete(List<OSMElement> decodedEntities);
 
     /**
      * Notifies the listener that an error occurred during processing.

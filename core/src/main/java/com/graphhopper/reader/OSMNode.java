@@ -43,8 +43,8 @@ public class OSMNode extends OSMElement {
         readTags(parser);
     }
 
-    public OSMNode( long id, Map<String, String> tags, double lat, double lon ) {
-        super( NODE, id, tags );
+    public OSMNode(long id, Map<String, String> tags, double lat, double lon) {
+        super(NODE, id, tags);
         this.lat = lat;
         this.lon = lon;
     }

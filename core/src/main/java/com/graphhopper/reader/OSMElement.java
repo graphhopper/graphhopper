@@ -48,7 +48,7 @@ public abstract class OSMElement {
         this.id = id;
     }
 
-    public OSMElement(int type, long id, Map<String, String> tags ) {
+    public OSMElement(int type, long id, Map<String, String> tags) {
         this.type = type;
         this.id = id;
         this.tags = tags;

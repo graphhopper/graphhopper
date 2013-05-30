@@ -83,11 +83,11 @@ public class OSMReaderTest {
         @Override protected OSMReader importOSM(String ignore) throws IOException {
             OSMReader osmReader = new OSMReader(buildGraph(dir), 1000);
             osmReader.acceptWay(acceptWay());
-                try {
-                    osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
-                } catch (URISyntaxException e) {
-                    throw new RuntimeException(e);
-                }
+            try {
+                osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
             //osmReader.writeOsm2Graph(getResource(testFile));
             return osmReader;
         }

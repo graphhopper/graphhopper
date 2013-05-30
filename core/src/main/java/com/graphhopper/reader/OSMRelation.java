@@ -47,8 +47,8 @@ public class OSMRelation extends OSMElement {
         readTags(parser);
     }
 
-    public OSMRelation( long id, Map<String, String> tags ) {
-        super( RELATION, id, tags );
+    public OSMRelation(long id, Map<String, String> tags) {
+        super(RELATION, id, tags);
 
         members = new ArrayList<Member>();
     }
@@ -103,10 +103,11 @@ public class OSMRelation extends OSMElement {
         }
         return false;
     }
- /*   private static String[] memberType = new String[]{
-        "node", "way", "relation"
-    };
-*/
+    /*   private static String[] memberType = new String[]{
+     "node", "way", "relation"
+     };
+     */
+
     public void removeRelations() {
         for (int i = members.size() - 1; i >= 0; i--) {
             if (members.get(i).type() == RELATION) {
@@ -128,15 +129,14 @@ public class OSMRelation extends OSMElement {
         public static final int WAY = 1;
         public static final int RELATION = 2;
         private static final String typeDecode = "nwr";
-
         private int type;
         private long ref;
         private String role;
 
         public Member(XMLStreamReader parser) {
             String typeName = parser.getAttributeValue(null, "type");
-            type = typeDecode.indexOf( typeName.charAt( 0 ) );
-            ref = Long.parseLong( parser.getAttributeValue(null, "ref"));
+            type = typeDecode.indexOf(typeName.charAt(0));
+            ref = Long.parseLong(parser.getAttributeValue(null, "ref"));
             role = parser.getAttributeValue(null, "role");
         }
 
@@ -146,7 +146,7 @@ public class OSMRelation extends OSMElement {
             role = input.role;
         }
 
-        public Member( int type, long ref, String role ) {
+        public Member(int type, long ref, String role) {
             this.type = type;
             this.ref = ref;
             this.role = role;

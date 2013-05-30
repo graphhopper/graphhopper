@@ -138,7 +138,7 @@ public class RoutingAlgorithmIntegrationTest {
         list.get(0).dist = 16023;
         list.get(0).locs = 514;
         list.get(1).dist = 12410;
-        list.get(1).locs = 391;        
+        list.get(1).locs = 391;
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
                 list, "FOOT", true, new FootFlagEncoder());

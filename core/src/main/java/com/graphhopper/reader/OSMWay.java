@@ -37,6 +37,7 @@ public class OSMWay extends OSMElement {
 
     /**
      * Constructor for XML Parser
+     *
      * @param id
      * @param parser
      * @throws XMLStreamException
@@ -52,11 +53,12 @@ public class OSMWay extends OSMElement {
 
     /**
      * Constructor for PBF Parser
+     *
      * @param id
      * @param tags
      */
-    public OSMWay( long id, Map<String, String> tags ) {
-        super( WAY, id, tags );
+    public OSMWay(long id, Map<String, String> tags) {
+        super(WAY, id, tags);
 
         nodes = new TLongArrayList();
     }

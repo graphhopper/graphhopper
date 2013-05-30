@@ -103,8 +103,8 @@ public class GraphHopper implements GraphHopperAPI {
     private AcceptWay acceptWay = new AcceptWay("CAR");
     private long expectedNodes = 10;
     private double wayPointMaxDistance = 1;
-    private int workerThreads = -1;    
-    private StorableProperties properties;    
+    private int workerThreads = -1;
+    private StorableProperties properties;
 
     public GraphHopper() {
     }
