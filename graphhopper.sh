@@ -138,6 +138,8 @@ JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
 # file without path
 TMP=$(basename "$FILE")
 TMP="${TMP%.*}"
+TMP="${TMP%.*}"
+
 
 if [ "x$TMP" = "xunterfranken" ]; then
  LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"

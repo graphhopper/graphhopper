@@ -151,7 +151,7 @@ public class OSMReader {
                         processWay((OSMWay) item);
                         break;
                 }
-                if (++counter % 1000000 == 0) {
+                if (++counter % 5000000 == 0) {
                     logger.info(nf(counter) + ", locs:" + nf(locations)
                             + " (" + skippedLocations + ") " + Helper.memInfo());
                 }
