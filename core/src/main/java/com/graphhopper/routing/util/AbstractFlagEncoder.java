@@ -21,8 +21,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMWay;
 
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Peter Karich
