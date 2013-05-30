@@ -133,10 +133,10 @@ function initMap() {
     //    }).addTo(map);
 
     // mapquest provider:
-    //var mapquestUrl = 'http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png',
-    //subDomains = ['otile1','otile2','otile3','otile4'],
-    var mapquestUrl = 'http://{s}.wanderreitkarte.de/topo/{z}/{x}/{y}.png',
-    subDomains = ['topo4','topo','topo2','topo3'],
+    var mapquestUrl = 'http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png',
+    subDomains = ['otile1','otile2','otile3','otile4'],
+    //var mapquestUrl = 'http://{s}.wanderreitkarte.de/topo/{z}/{x}/{y}.png',
+    //subDomains = ['topo4','topo','topo2','topo3'],
     mapquestAttrib = 'Data &copy; <a href="http://www.openstreetmap.org/">OpenStreetMap</a>,'
     +'<a href="http://open.mapquest.co.uk">MapQuest</a>. '
     +'Geocoder: <a href="http://wiki.openstreetmap.org/wiki/Nominatim">Nominatim</a>. '
