@@ -114,8 +114,8 @@ public class RoutingAlgorithmIntegrationTest {
     @Test
     public void testAndorra() {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 21122, 699));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16089, 510));
+        list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 21154, 703));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 16144, 523));
         // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
                 list, "CAR", true, new CarFlagEncoder());
