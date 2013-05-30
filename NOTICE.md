@@ -1,5 +1,4 @@
 GraphHopper licensed under the Apache license, Version 2.0
---------------------
 
 Copyright 2012-2013 Peter Karich
 
