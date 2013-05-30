@@ -27,23 +27,28 @@ if [ "x$ACTION" = "x" ]; then
 fi
 
 function ensureOsmXml { 
-  if [ ! -s "$OSM_XML" ]; then
-    echo "No OSM file found or specified. Press ENTER to get it from: $LINK"
+  if [ ! -s "$OSM_FILE" ]; then
+    echo "File not found '$OSM_FILE'. Press ENTER to get it from: $LINK"
     echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
     read -e
+      
+    echo "## now downloading OSM file from $LINK and extracting to $OSM_FILE"
+    
+    if [ ${OSM_FILE: -4} == ".pbf" ]; then
+       wget -O $OSM_FILE $LINK
+    else    
+       # make sure aborting download does not result in loading corrupt osm file
+       TMP_OSM=temp.osm
+       wget -O - $LINK | bzip2 -d > $TMP_OSM
+       mv $TMP_OSM $OSM_FILE
+    fi
   
-    echo "## now downloading OSM file from $LINK and extracting to $OSM_XML"
-    # make sure aborting download does not result in loading corrupt osm file
-    TMP_OSM=temp.osm
-    wget -O - $LINK | bzip2 -d > $TMP_OSM
-    mv $TMP_OSM $OSM_XML
-  
-    if [ ! -f "$OSM_XML" ]; then
-      echo "ERROR couldn't download or extract OSM file $OSM_XML ... exiting"
+    if [ ! -f "$OSM_FILE" ]; then
+      echo "ERROR couldn't download or extract OSM file $OSM_FILE ... exiting"
       exit
     fi
   else
-    echo "## using existing osm file $OSM_XML"
+    echo "## using existing osm file $OSM_FILE"
   fi
 }
 
@@ -112,9 +117,20 @@ if [ "x$FILE" = "x" ]; then
   exit
 fi
 
-# file without extension if any
+# NAME = file without extension if any
 NAME="${FILE%.*}"
-OSM_XML=$NAME.osm
+FILE_END=".osm"
+
+if [ ${FILE: -4} == ".osm" ]; then
+   OSM_FILE=$FILE
+elif [ ${FILE: -4} == ".pbf" ]; then
+   OSM_FILE=$FILE
+   FILE_END=".pbf"
+else
+   # no end default to osm
+   OSM_FILE=$NAME.osm
+fi
+
 GRAPH=$NAME-gh
 VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
 JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
@@ -133,7 +149,11 @@ elif [ "x$TMP" = "xgermany" ]; then
  JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1600m -Xms1600m" 
 else 
  LINK=`echo $NAME | tr '_' '/'`
- LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
+ if [ ${FILE: -4} == ".osm" ]; then 
+   LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
+ else
+   LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
+ fi
  if [ "x$JAVA_OPTS" = "x" ]; then
   JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1000m -Xms1000m" 
  fi
@@ -150,23 +170,23 @@ echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
  export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
  "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Dgraphhopper.config=$CONFIG \
-      -Dgraphhopper.osmreader.osm=$OSM_XML -Djetty.reload=manual jetty:run
+      -Dgraphhopper.osmreader.osm=$OSM_FILE -Djetty.reload=manual jetty:run
 
 
 elif [ "x$ACTION" = "ximport" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=$CONFIG \
       graph.location="$GRAPH" \
-      osmreader.osm="$OSM_XML"
+      osmreader.osm="$OSM_FILE"
 
 
 elif [ "x$ACTION" = "xtest" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=$CONFIG \
-       graph.location="$GRAPH" osmreader.osm="$OSM_XML" prepare.chShortcuts=false \
+       graph.location="$GRAPH" osmreader.osm="$OSM_FILE" prepare.chShortcuts=false \
        graph.testIT=true
 
        
 elif [ "x$ACTION" = "xmeasurement" ]; then
- ARGS="graph.location=$GRAPH osmreader.osm=$OSM_XML prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
+ ARGS="graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
  echo -e "\ncreate graph via $ARGS, $JAR"
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper $ARGS prepare.doPrepare=false
 
