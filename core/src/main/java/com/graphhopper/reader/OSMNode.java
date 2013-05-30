@@ -20,6 +20,7 @@ package com.graphhopper.reader;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import java.util.Map;
 
 /**
  * Represents an OSM Node
@@ -40,6 +41,12 @@ public class OSMNode extends OSMElement {
 
         parser.nextTag();
         readTags(parser);
+    }
+
+    public OSMNode( long id, Map<String, String> tags, double lat, double lon ) {
+        super( NODE, id, tags );
+        this.lat = lat;
+        this.lon = lon;
     }
 
     public OSMNode(double lat, double lon) {

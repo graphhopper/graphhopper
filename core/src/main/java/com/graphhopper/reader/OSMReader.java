@@ -18,6 +18,7 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.Helper;
@@ -60,7 +61,7 @@ public class OSMReader {
         writeOsm2Graph(osmXmlFile);
 
         final long finished = System.currentTimeMillis();
-        logger.info( "Times Pass1: "+(pass2-start)+" Pass2: "+(finished-pass2)+" Total:"+(finished-start));
+        logger.info( "Times Pass1: " + (pass2 - start) + " Pass2: " + (finished - pass2) + " Total:" + (finished - start) );
     }
 
     /**
@@ -71,18 +72,11 @@ public class OSMReader {
 
         try {
             OSMInputFile in = new OSMInputFile(osmXml);
-            in.parseNodes(false);
-            in.parseRelations(false);
 
             long tmpCounter = 1;
 
             OSMElement item;
             while ((item = in.getNext()) != null) {
-                if (++tmpCounter % 50000000 == 0)
-                    logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
-                            + nf(helper.getNodeMap().size()) + " (" + helper.getNodeMap().memoryUsage() + "MB) "
-                            + Helper.memInfo());
-
                 if (item.isType(OSMElement.WAY)) {
                     final OSMWay way = (OSMWay) item;
                     boolean valid = filterWay(way);
@@ -92,6 +86,11 @@ public class OSMReader {
                         for (int index = 0; index < s; index++) {
                             helper.prepareHighwayNode(wayNodes.get(index));
                         }
+
+                        if (++tmpCounter % 500000 == 0)
+                            logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
+                                    + nf(helper.getNodeMap().size()) + " (" + helper.getNodeMap().memoryUsage() + "MB) "
+                                    + Helper.memInfo());
                     }
                 }
             }
@@ -127,47 +126,33 @@ public class OSMReader {
 
         int tmp = (int) Math.max(helper.foundNodes() / 50, 100);
         logger.info("creating graph. Found nodes (pillar+tower):" + nf(helper.foundNodes()) + ", " + Helper.memInfo());
-        graphStorage.create(tmp);
+        graphStorage.create( tmp );
         long wayStart = -1;
-        StopWatch sw = new StopWatch();
         long counter = 1;
         try {
             OSMInputFile in = new OSMInputFile(osmFile);
-            in.parseRelations(false);
-            in.nodeFilter(helper.getNodeMap());
+            LongIntMap nodeFilter = helper.getNodeMap();
 
             OSMElement item;
             while ((item = in.getNext()) != null) {
-                counter++;
                 switch (item.type()) {
                     case OSMElement.NODE:
-                        processNode((OSMNode) item);
-                        if (counter % 1000000 == 0) {
-                            logger.info(nf(counter) + ", locs:" + nf(locations)
-                                    + " (" + skippedLocations + ") " + Helper.memInfo());
-                        }
+                        if( nodeFilter.get( item.id() ) != -1)
+                            processNode((OSMNode) item);
                         break;
+
                     case OSMElement.WAY:
                         if (wayStart < 0) {
-                            helper.startWayProcessing();
                             logger.info(nf(counter) + ", now parsing ways");
                             wayStart = counter;
-                            sw.start();
                         }
                         processWay((OSMWay) item);
-                        if (counter - wayStart == 10000 && sw.stop().getSeconds() > 1) {
-                            logger.warn("Something is wrong! Processing ways takes too long! "
-                                    + sw.getSeconds() + "sec for only " + (counter - wayStart) + " entries");
-                        }
-                        // hmmh a bit hacky: counter does +=2 until the next loop
-                        if ((counter / 2) % 1000000 == 0) {
-                            logger.info(nf(counter) + ", locs:" + nf(locations)
-                                    + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
-                                    + " " + Helper.memInfo());
-                        }
                         break;
                 }
-                counter++;
+                if (++counter % 1000000 == 0) {
+                    logger.info(nf(counter) + ", locs:" + nf(locations)
+                            + " (" + skippedLocations + ") " + Helper.memInfo());
+                }
             }
             in.close();
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());

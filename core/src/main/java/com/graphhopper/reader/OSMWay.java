@@ -24,6 +24,7 @@ import gnu.trove.list.array.TLongArrayList;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import java.util.Map;
 
 /**
  * Represents an OSM Way
@@ -34,6 +35,12 @@ public class OSMWay extends OSMElement {
 
     protected TLongList nodes;
 
+    /**
+     * Constructor for XML Parser
+     * @param id
+     * @param parser
+     * @throws XMLStreamException
+     */
     public OSMWay(long id, XMLStreamReader parser) throws XMLStreamException {
         super(WAY, id, parser);
         nodes = new TLongArrayList();
@@ -41,6 +48,17 @@ public class OSMWay extends OSMElement {
         parser.nextTag();
         readNodes(parser);
         readTags(parser);
+    }
+
+    /**
+     * Constructor for PBF Parser
+     * @param id
+     * @param tags
+     */
+    public OSMWay( long id, Map<String, String> tags ) {
+        super( WAY, id, tags );
+
+        nodes = new TLongArrayList();
     }
 
     public OSMWay(OSMWay src) {
