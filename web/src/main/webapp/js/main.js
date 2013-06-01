@@ -381,6 +381,9 @@ function routeLatLng(request) {
         if(request.vehicle == "foot") {
             addToGoogle = "&dirflg=w";
             addToBing = "&mode=W";
+        } else if(request.vehicle == "bike") {
+            addToGoogle = "&dirflg=b";
+            // ? addToBing = "&mode=B";
         }
         googleLink.attr("href", "http://maps.google.com/?q=from:" + from + "+to:" + to + addToGoogle);
         $("#info").append(googleLink);
