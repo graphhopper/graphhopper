@@ -64,11 +64,13 @@ $(document).ready(function(e) {
             return button;
         }
         
-        var vehicles = json.supportedVehicles.split(",");
-        if(vehicles.length > 1)
-            for(var i = 0; i < vehicles.length; i++) {
-                vehiclesDiv.append(createButton(vehicles[i]));
-            }
+        if(json.supportedVehicles) {
+            var vehicles = json.supportedVehicles.split(",");
+            if(vehicles.length > 1)
+                for(var i = 0; i < vehicles.length; i++) {
+                    vehiclesDiv.append(createButton(vehicles[i]));
+                }
+        }
     }, function(err) {
         // error bounds
         console.log(err);
@@ -122,30 +124,54 @@ function initMap() {
     var minSize = Math.min($(window).width(), $(window).height()) * 0.9;
     mapDiv.width(minSize).height(minSize);
     console.log("init map at " + JSON.stringify(bounds));
-    map = L.map('map');
+    
+    // mapquest provider
+    var moreAttr = 'Data &copy; <a href="http://www.openstreetmap.org/">OpenStreetMap</a>,'
+    +'Geocoder: <a href="http://wiki.openstreetmap.org/wiki/Nominatim">Nominatim</a>. '
+    + 'JS: <a href="http://leafletjs.com/">Leaflet</a>';
+    var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
+        attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr, 
+        subdomains: ['otile1','otile2','otile3','otile4']
+    });
+    
+    var wrk = L.tileLayer('http://{s}.wanderreitkarte.de/topo/{z}/{x}/{y}.png', {
+        attribution: '<a href="http://wanderreitkarte.de">WanderReitKarte</a>,' + moreAttr, 
+        subdomains: ['topo4','topo','topo2','topo3']
+    });
+    
+    var cloudmade = L.tileLayer('http://{s}.tile.cloudmade.com/{key}/{styleId}/256/{z}/{x}/{y}.png', {
+        attribution: '<a href="http://cloudmade.com">Cloudmade</a>,' + moreAttr,
+        key: '43b079df806c4e03b102055c4e1a8ba8',
+        styleId: 997
+    });
+    
+    var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: moreAttr
+    });
+    
+    var osmde = L.tileLayer('http://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', {
+        attribution: moreAttr
+    });
+    
+    // default
+    map = L.map('map' , {
+        layers: [mapquest]
+    });
+    
+    var baseMaps = {
+        "MapQuest": mapquest,
+        "WanderReitKarte": wrk,
+        "Cloudmade": cloudmade,
+        "OpenStreetMap": osm,
+        "OpenStreetMap.de": osmde
+    };
+    L.control.layers(baseMaps).addTo(map);
+
     map.fitBounds(new L.LatLngBounds(new L.LatLng(bounds.minLat, bounds.minLon), 
         new L.LatLng(bounds.maxLat, bounds.maxLon)));
     
-    // cloudmade provider:
-    //    L.tileLayer('http://{s}.tile.cloudmade.com/{key}/{styleId}/256/{z}/{x}/{y}.png', {
-    //        key: '43b079df806c4e03b102055c4e1a8ba8',
-    //        styleId: 997
-    //    }).addTo(map);
-
-    // mapquest provider:
-    var mapquestUrl = 'http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png',
-    subDomains = ['otile1','otile2','otile3','otile4'],
-    //var mapquestUrl = 'http://{s}.wanderreitkarte.de/topo/{z}/{x}/{y}.png',
-    //subDomains = ['topo4','topo','topo2','topo3'],
-    mapquestAttrib = 'Data &copy; <a href="http://www.openstreetmap.org/">OpenStreetMap</a>,'
-    +'<a href="http://open.mapquest.co.uk">MapQuest</a>. '
-    +'Geocoder: <a href="http://wiki.openstreetmap.org/wiki/Nominatim">Nominatim</a>. '
-    + 'JS: <a href="http://leafletjs.com/">Leaflet</a>';
     map.attributionControl.setPrefix('');
-    L.tileLayer(mapquestUrl, {
-        attribution: mapquestAttrib, 
-        subdomains: subDomains
-    }).addTo(map);
+
     var myStyle = {
         "color": 'black',
         "weight": 2,
@@ -383,7 +409,7 @@ function routeLatLng(request) {
             addToBing = "&mode=W";
         } else if(request.vehicle == "bike") {
             addToGoogle = "&dirflg=b";
-            // ? addToBing = "&mode=B";
+        // ? addToBing = "&mode=B";
         }
         googleLink.attr("href", "http://maps.google.com/?q=from:" + from + "+to:" + to + addToGoogle);
         $("#info").append(googleLink);
