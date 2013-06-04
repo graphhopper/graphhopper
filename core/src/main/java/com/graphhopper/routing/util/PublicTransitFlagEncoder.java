@@ -26,16 +26,25 @@ public class PublicTransitFlagEncoder implements EdgePropertyEncoder {
     private final int BOTH;
     private final int TRANSIT;
     private final int BOARDING;
-    private final int ALIGN;
+    private final int ALIGHT;
+    private final int ENTRY;
+    private final int EXIT;
 
     public PublicTransitFlagEncoder() {
 
+        // 2 Bits
         FORWARD = 1;
         BACKWARD = 2;
         BOTH = 3;
+
+        // 3 Bits
         BOARDING = 1 << 2;
-        ALIGN = 2 << 2;
+        ALIGHT = 2 << 2;
         TRANSIT = 4 << 2;
+
+        // 2 Bits
+        ENTRY = 1 << 5;
+        EXIT = 2 << 5;
 
 
     }
@@ -44,14 +53,27 @@ public class PublicTransitFlagEncoder implements EdgePropertyEncoder {
     public int flags(int speed, boolean bothDir) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     public int flags(boolean bothDir) {
-        if (bothDir)
+        if (bothDir) {
             return BOTH;
-        else
+        } else {
             return FORWARD;
+        }
     }
 
+    /**
+     * Flags which encodes a entry to a station. 
+     *
+     * @return flags
+     */
+    public int getEntryFlags() {
+        return (ENTRY | TRANSIT | FORWARD);
+    }
+
+    public int getExitFlags() {
+        return (FORWARD | EXIT);
+    }
     /**
      * Flags which encodes a transit edge
      *
@@ -81,16 +103,16 @@ public class PublicTransitFlagEncoder implements EdgePropertyEncoder {
     }
 
     /**
-     * Flags which encodes a align edge
+     * Flags which encodes a alight edge
      *
      * @param bothDir true if traveling is allowed in both direction
      * @return flags
      */
-    public int getAlignFlags(boolean bothDir) {
+    public int getAlightFlags(boolean bothDir) {
         if (bothDir) {
-            return (BOTH | ALIGN);
+            return (BOTH | ALIGHT);
         } else {
-            return (FORWARD | ALIGN);
+            return (FORWARD | ALIGHT);
         }
     }
 
@@ -119,15 +141,24 @@ public class PublicTransitFlagEncoder implements EdgePropertyEncoder {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    boolean isTransit(int flags) {
+    public boolean isTransit(int flags) {
         return (flags & TRANSIT) != 0;
     }
 
-    boolean isBoarding(int flags) {
+    public boolean isBoarding(int flags) {
         return (flags & BOARDING) != 0;
     }
 
-    boolean isAlight(int flags) {
-        return (flags & ALIGN) != 0;
+    public boolean isAlight(int flags) {
+        return (flags & ALIGHT) != 0;
     }
+
+    public boolean isEntry(int flags) {
+        return (flags & ENTRY) != 0;
+    }
+    
+    public boolean isExit(int flags) {
+        return (flags & EXIT) != 0;
+    }
+
 }

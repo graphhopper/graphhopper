@@ -30,6 +30,7 @@ public class GHPlace
     public double lon = Double.NaN;
     private int nodeId = -1;
     private String name = "";
+    private int time = -1;
 
     public GHPlace()
     {
@@ -49,6 +50,18 @@ public class GHPlace
     {
         this.lat = lat;
         this.lon = lon;
+    }
+    
+    /**
+     * 
+     * @param lat
+     * @param lon
+     * @param time seconds after midnight
+     */
+    public GHPlace(double lat, double lon, int time) {
+        this.lat = lat;
+        this.lon = lon;
+        this.time = time;
     }
 
     public GHPlace setNodeId( int node )
@@ -72,6 +85,22 @@ public class GHPlace
     {
         return name;
     }
+    
+    /**
+     * Set the time of the place
+     * @param time seconds after midnight
+     */
+    public void setTime(int time) {
+        this.time = time;
+    }
+    
+    /**
+     * Returns tine of the place
+     * @return seconds after midnight
+     */
+    public int getTime() {
+        return time;
+    }
 
     public boolean isValidNodeId()
     {
@@ -87,6 +116,10 @@ public class GHPlace
     {
         return lat != Double.NaN;
     }
+    
+    public boolean hasTime() {
+        return time >= 0;
+    }
 
     @Override
     public String toString()
@@ -99,6 +132,9 @@ public class GHPlace
         if (isValidPoint())
         {
             str += " " + lat + ", " + lon;
+        }
+        if (hasTime()){
+            str += " " + time + "s";
         }
         if (isValidNodeId())
         {

@@ -44,6 +44,14 @@ public class GHRequest
     {
         this(new GHPlace(fromLat, fromLon), new GHPlace(toLat, toLon));
     }
+    
+    /**
+     * Calculate the path from specified startPoint (fromLat, fromLon) and startTime to
+     * endPoint (toLat, toLon).
+     */
+    public GHRequest(double fromLat, double fromLon, int startTime,  double toLat, double toLon) {
+        this(new GHPlace(fromLat, fromLon, startTime), new GHPlace(toLat, toLon));
+    }
 
     /**
      * Calculate the path from specified startPoint to endPoint.

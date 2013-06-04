@@ -17,6 +17,9 @@ package com.graphhopper.reader;
 
 import com.graphhopper.routing.util.PublicTransitFlagEncoder;
 import com.graphhopper.storage.Graph;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.TreeSet;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.StopTime;
@@ -28,22 +31,36 @@ import org.onebusaway.gtfs.model.StopTime;
  *
  * @author Thomas Buerli <tbuerli@student.ethz.ch>
  */
-class TransitStop {
+public class TransitStop {
 
-    private int transfereTime = 360;
+    private int alightTime;
     private Graph graph;
     private Stop stop;
+    
+    // Start and Exit node of the station
     private int stopId;
     private int exitNodeId;
-    private int defaultFlags;
+    
+    // Encoded Flags
+    private int entryFlags;
+    private int exitFlags;
     private int transitFlags;
     private int boardingFlags;
     private int alignFlags;
+    
+    // All transit nodes
     private TreeSet<TransitNode> transitNodes = new TreeSet<TransitNode>();
+    
+    // List of all nodes id used in this station
+    private List<Integer> nodesList;
 
-    TransitStop(Graph graph, Stop stop) {
+    TransitStop(Graph graph, Stop stop, int alightTime) {
         this.graph = graph;
         this.stop = stop;
+        this.alightTime = alightTime;
+        
+        nodesList = new ArrayList<Integer>();
+        
         this.stopId = getNewNodeId();
         this.exitNodeId = getNewNodeId();
 
@@ -55,10 +72,11 @@ class TransitStop {
 
         // Generate flags for time-expanded graph
         PublicTransitFlagEncoder encoder = new PublicTransitFlagEncoder();
-        defaultFlags = encoder.flags(false);
+        entryFlags = encoder.getEntryFlags();
+        exitFlags = encoder.getExitFlags();
         transitFlags = encoder.getTransitFlags(false);
         boardingFlags = encoder.getBoardingFlags(false);
-        alignFlags = encoder.getAlignFlags(false);
+        alignFlags = encoder.getAlightFlags(false);
     }
 
     /**
@@ -69,7 +87,7 @@ class TransitStop {
      */
     public void addTransitNode(StopTime stopTime) {
         if (stopTime.isArrivalTimeSet()) {
-            int time = stopTime.getArrivalTime() + transfereTime;
+            int time = stopTime.getArrivalTime() + alightTime;
             transitNodes.add(new TransitNode(getNewNodeId(), time));
         }
         if (stopTime.isDepartureTimeSet()) {
@@ -79,11 +97,13 @@ class TransitStop {
     }
 
     /**
-     *
+     * Returns new node id and adds to the list of nodes for this station
      * @return New node id
      */
     private int getNewNodeId() {
-        return GTFSReader.getNewNodeId();
+        int id = GTFSReader.getNewNodeId();
+        nodesList.add(id);
+        return id;
     }
 
     /**
@@ -91,12 +111,14 @@ class TransitStop {
      */
     public void buildTransitNodes() {
         TransitNode previousNode = null;
+        int flags = entryFlags;
         for (TransitNode transitNode : transitNodes) {
             graph.setNode(transitNode.getId(), stop.getLat(), stop.getLon());
             connect2ExitNode(transitNode.getId());
             if (previousNode != null) {
-                graph.edge(previousNode.getId(), transitNode.getId(), transitNode.getTime() - previousNode.getTime(), transitFlags);
-            }
+               graph.edge(previousNode.getId(), transitNode.getId(), transitNode.getTime() - previousNode.getTime(), flags);
+               flags = transitFlags;
+            } 
             previousNode = transitNode;
         }
     }
@@ -128,7 +150,7 @@ class TransitStop {
      * @return id of new added node
      */
     public int addArrivalNode(StopTime stopTime) {
-        int time = stopTime.getArrivalTime() + transfereTime;
+        int time = stopTime.getArrivalTime() + alightTime;
         TransitNode transitNode = transitNodes.floor(new TransitNode(graph.nodes(), time));
         int arrivalNodeId = getNewNodeId();
 
@@ -136,7 +158,7 @@ class TransitStop {
         graph.setNode(arrivalNodeId, stop.getLat(), stop.getLon());
 
         // Add edge from the trip to the tranist of the station
-        graph.edge(arrivalNodeId, transitNode.getId(), transfereTime, alignFlags);
+        graph.edge(arrivalNodeId, transitNode.getId(), alightTime, alignFlags);
 
         return arrivalNodeId;
     }
@@ -160,13 +182,22 @@ class TransitStop {
         return exitNodeId;
     }
 
+    public String getStopName() {
+        return stop.getName();
+    }
+
+    public List<Integer> getNodesList() {
+        return nodesList;
+    }
+
+
     /**
      * Connects a transit node to the exit node of the station
      *
      * @param nodeId
      */
     private void connect2ExitNode(int nodeId) {
-        graph.edge(nodeId, exitNodeId, 0, defaultFlags);
+        graph.edge(nodeId, exitNodeId, 0, exitFlags);
     }
 
     private static class TransitNode implements Comparable<TransitNode> {

@@ -31,8 +31,8 @@ public class PublicTransitRouting implements RoutingAlgorithm{
         this.algorithm.type(new ShortestCalc());
     }
     
-    public Path calPath(int from, int to, int timeOffset){
-        Path path = this.algorithm.calcPath(from, to);
+    public Path calcPath(int from, int to, int timeOffset){
+        Path path = algorithm.calcPath(from, to);
         path.distance += timeOffset;
         return path;
     }
@@ -56,5 +56,5 @@ public class PublicTransitRouting implements RoutingAlgorithm{
     public int visitedNodes() {
         return algorithm.visitedNodes();
     }
-    
+
 }

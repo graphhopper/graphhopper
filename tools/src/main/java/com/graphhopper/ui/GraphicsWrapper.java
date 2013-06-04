@@ -66,9 +66,12 @@ public class GraphicsWrapper
         return scaleY;
     }
 
-    public void plotText( Graphics2D g2, double lat, double lon, String text )
-    {
-        g2.drawString(text, (int) getX(lon) + 5, (int) getY(lat) + 5);
+    public void plotText(Graphics2D g2, double lat, double lon, String text) {
+        plotText(g2, lat, lon, text, 5 ,5);
+    }
+    
+    public void plotText(Graphics2D g2, double lat, double lon, String text, int offsetX, int offsetY) {
+        g2.drawString(text, (int) getX(lon) + offsetX, (int) getY(lat) + offsetY);
     }
 
     public void plotEdge( Graphics2D g2, double lat, double lon, double lat2, double lon2, int width )

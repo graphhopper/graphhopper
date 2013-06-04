@@ -18,23 +18,27 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.EdgeIterator;
 
 /**
+ * TODO: split into multiple filters
  *
  * @author Thomas Buerli <tbuerli@student.ethz.ch>
  */
 public class PublicTransitEdgeFilter implements EdgeFilter {
 
     private PublicTransitFlagEncoder encoder;
-    
     private final boolean in;
     private final boolean out;
     private final boolean transit;
     private final boolean boarding;
     private final boolean alight;
+    private final boolean entry;
+    private final boolean exit;
 
-    public PublicTransitEdgeFilter(PublicTransitFlagEncoder encoder, boolean in, boolean out, boolean transit, boolean boarding, boolean alight) {
+    public PublicTransitEdgeFilter(PublicTransitFlagEncoder encoder, boolean in, boolean out, boolean entry, boolean exit, boolean transit, boolean boarding, boolean alight) {
         this.encoder = encoder;
         this.in = in;
         this.out = out;
+        this.entry = entry;
+        this.exit = exit;
         this.transit = transit;
         this.boarding = boarding;
         this.alight = alight;
@@ -45,11 +49,11 @@ public class PublicTransitEdgeFilter implements EdgeFilter {
         int flags = iter.flags();
         return checkEdgeDirection(flags) && checkEdgeType(flags);
     }
-    
+
     private boolean checkEdgeType(int flags) {
-        return ((transit == encoder.isTransit(flags)) && (boarding == encoder.isBoarding(flags)) && (alight == encoder.isAlight(flags)));
+        return ((transit && encoder.isTransit(flags)) || (boarding && encoder.isBoarding(flags)) || (alight && encoder.isAlight(flags)) || (entry && encoder.isEntry(flags)) || (exit && encoder.isExit(flags)));
     }
-    
+
     private boolean checkEdgeDirection(int flags) {
         return (out && encoder.isForward(flags)) || (in && encoder.isBackward(flags));
     }

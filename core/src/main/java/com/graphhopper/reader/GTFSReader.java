@@ -19,9 +19,13 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.PublicTransitEdgeFilter;
 import com.graphhopper.routing.util.PublicTransitFlagEncoder;
+import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.index.Id2NameIndex;
 import com.graphhopper.storage.index.LocationTime2IDIndex;
+import com.graphhopper.storage.index.LocationTime2NodeNtree;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.TimeUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,9 +52,15 @@ public class GTFSReader {
 
     private static Logger logger = LoggerFactory.getLogger(GTFSReader.class);
     private GraphStorage graph;
+
     private LocationTime2IDIndex index;
-    private int defaultFlags;
+    private Id2NameIndex nameIndex;
     
+    // Default time it takes to get off in sec
+    private int defaultAlightTime = 240;
+    
+    
+    private int defaultFlags;
     private static int nodeId = 0;
 
     private Map<Stop, TransitStop> stopNodes;
@@ -58,7 +68,7 @@ public class GTFSReader {
     public GTFSReader(GraphStorage graph) {
         this.stopNodes = new HashMap<Stop, TransitStop>();
         this.graph = graph;
-        this.index = new LocationTime2IDIndex(graph);
+        this.nameIndex = new Id2NameIndex();
         this.defaultFlags = new PublicTransitFlagEncoder().flags(false);
 
     }
@@ -77,6 +87,8 @@ public class GTFSReader {
         reader.setEntityStore(store);
 
         reader.run();
+        long expectedNodes = calcExpectedNodes(store);
+        prepare(expectedNodes);
         loadStops(store);
         loadTrips(store);
     }
@@ -89,14 +101,13 @@ public class GTFSReader {
     private void loadStops(GtfsRelationalDaoImpl store) {
         logger.info("Importing stations ...");
         for (Stop stop : store.getAllStops()) {
-            TransitStop transitStop = new TransitStop(graph, stop);
+            TransitStop transitStop = new TransitStop(graph, stop,defaultAlightTime);
             stopNodes.put(stop, transitStop);
 
             for (StopTime stopTime : store.getStopTimesForStop(stop)) {
                 transitStop.addTransitNode(stopTime);
             }
             transitStop.buildTransitNodes();
-            index.addStation(transitStop.getStopId(), transitStop.getExitNodeId(), stop.getLat(), stop.getLon());
         }
         logger.info("Added " + stopNodes.size() +" stations.");
     }
@@ -170,8 +181,35 @@ public class GTFSReader {
      * Maps location and time to node id
      * @return index
      */
-    public LocationTime2IDIndex getIndex() {
+    public LocationTime2IDIndex getIndex(Directory dir) {
+        if (index == null) {
+            index = new LocationTime2NodeNtree(graph, dir);
+            index.prepareIndex();
+        }
         return index;
+    }
+    
+    /**
+     * Maps nodes id to the name of the station/stops
+     * @return 
+     */
+    public Id2NameIndex getNameIndex() {
+        if (nameIndex.isEmpty()){
+            generateNameIndex();
+        }
+        return nameIndex;
+    }
+    
+    /**
+     * Loads the names-id pair into the index
+     */
+    private void generateNameIndex() {
+        for (TransitStop stop : stopNodes.values()) {
+            String stopName = stop.getStopName();
+            for (int id: stop.getNodesList()){
+                nameIndex.addName(id, stopName);
+            }
+        }
     }
 
     public GraphStorage graph() {
@@ -184,6 +222,14 @@ public class GTFSReader {
      */
     public synchronized static int getNewNodeId() {
         return nodeId++;
+    }
+    
+    /**
+     * Sets the default value how it takes to alight
+     * @param defaultAlightTime time in sec
+     */
+    public void setDefaultAlightTime(int defaultAlightTime) {
+        this.defaultAlightTime = defaultAlightTime;
     }
     
     /**
@@ -206,48 +252,47 @@ public class GTFSReader {
      * Error        < E >
      * @param path 
      */
-    public void debugPath(Path path) {
+    public void debugPath(Path path, final int startTime) {
+        
+        
+        // Make sure name index is generated
+        getNameIndex();
+        
         Path.EdgeVisitor visitor = new Path.EdgeVisitor() {
-            private PublicTransitFlagEncoder encoder = new PublicTransitFlagEncoder();
-            private EdgeFilter transitFilter = new PublicTransitEdgeFilter(encoder, true, false, true, false, false);
-            private EdgeFilter boardingFilter = new PublicTransitEdgeFilter(encoder, true, false, false, true, false);
-            private EdgeFilter alightFilter = new PublicTransitEdgeFilter(encoder, true, false, false, false, true);
-            private EdgeFilter defaultFilter = new PublicTransitEdgeFilter(encoder, true, false, false, false, false);
+            private final PublicTransitFlagEncoder encoder = new PublicTransitFlagEncoder();
             private boolean onTrain = false;
-            private double time = 0;
+            private double time = startTime;
 
             @Override
             public void next(EdgeIterator iter) {
+                int flags = iter.flags();
                 String output = new String();
                 output += "(" + iter.adjNode() + ")";
                 time += iter.distance();
-                if (!onTrain && transitFilter.accept(iter)) {
+                if (!onTrain && encoder.isTransit(flags)) {
                     // Transit edge
                     output += " --- ";
-                } else if (!onTrain && boardingFilter.accept(iter)) {
+                } else if (!onTrain && encoder.isBoarding(flags)) {
                     // Boarding edge
                     onTrain = true;
                     output += " __/ ";
-                } else if (onTrain && alightFilter.accept(iter)) {
+                } else if (onTrain && encoder.isAlight(flags)) {
                     // Alight edge
                     onTrain = false;
                     output += " \\__ ";
-                } else if (defaultFilter.accept(iter)) {
-                    // travling edge or get off
-                    if (!onTrain) {
+                } else if (!onTrain && encoder.isExit(flags)) {
                         // Get off
                         output += " --| ";
-                    } else {
+                } else if (onTrain && encoder.isBackward(flags)) {
                         // Travling
                         output += " === ";
-                    }
                 } else {
                     // Wrong edge
                     output += " < E > ";
                 }
 
-                output += "(" + iter.baseNode() + ")";
-                output += " " + time + "s";
+                output +=  nameIndex.findName(iter.baseNode()) + " (" + iter.baseNode() + ")";
+                output += " " + TimeUtils.formatTime((int) time);
                 System.out.println(output);
             }
         };
@@ -258,5 +303,21 @@ public class GTFSReader {
         if (travelTime < 0) {
             throw new RuntimeException("Negative travel time!");
         }
+    }
+
+    void debugPath(Path path) {
+        debugPath(path,0);
+    }
+
+    private void prepare(long expectedNodes) {
+        graph.create(expectedNodes);
+    }
+
+    private long calcExpectedNodes(GtfsRelationalDaoImpl store) {
+        long stops = store.getAllStops().size();
+        long stopTimes = store.getAllStopTimes().size();
+        long trips = store.getAllTrips().size();
+        
+        return 2 * (stops + stopTimes + trips);
     }
 }

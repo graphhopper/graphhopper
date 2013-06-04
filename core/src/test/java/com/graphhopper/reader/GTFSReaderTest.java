@@ -15,20 +15,23 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.PublicTransitFlagEncoder;
+import com.graphhopper.storage.AbstractGraphTester;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.index.LocationTime2IDIndex;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Before;
 
 /**
  *
@@ -36,10 +39,27 @@ import static org.junit.Assert.*;
  */
 public class GTFSReaderTest {
 
+    private String dir = "./target/tmp/";
     private String file1 = "test-gtfs1.zip";
     private String file2 = "test-gtfs2.zip";
+    
+    private PublicTransitFlagEncoder encoder =  new PublicTransitFlagEncoder();
+    private EdgeFilter outFilter = new DefaultEdgeFilter(encoder, false, true);
+    
+    private int defaultAlightTime = 240;
 
-    public GTFSReaderTest() {
+    @Before
+    public void setUp() {
+        new File(dir).mkdirs();
+    }
+
+    @After
+    public void tearDown() {
+        Helper.removeDir(new File(dir));
+    }
+
+    GraphStorage buildGraph(String directory) {
+        return new GraphStorage(new RAMDirectory(directory, false));
     }
 
     private File getFile(String file) throws URISyntaxException {
@@ -47,84 +67,66 @@ public class GTFSReaderTest {
     }
 
     private GTFSReader readGTFS(String testFile) {
-        GraphStorage graph = new GraphBuilder().create();
-        GTFSReader gtfsReader = new GTFSReader(graph);
+        GTFSReader gtfsReader = new GTFSReader(buildGraph(dir));
         try {
             File gtfsFile = getFile(testFile);
+            gtfsReader.setDefaultAlightTime(defaultAlightTime);
             gtfsReader.load(gtfsFile);
             gtfsReader.close();
         } catch (URISyntaxException ex) {
-            fail("Could not open " + file2 + ": " + ex);
+            fail("Could not open " + testFile + ": " + ex);
         } catch (IOException ex) {
-            fail("Could not load GTFS file " + file2 + ": " + ex);
+            fail("Could not load GTFS file " + testFile + ": " + ex);
         }
-        
+
         return gtfsReader;
     }
-
+    
+    
+    private void setDefaultAlightTime(int time) {
+        this.defaultAlightTime = time;
+    }
+    
     @Test
-    public void testReader2() {
+    public void testRead() {
         GTFSReader reader = readGTFS(file2);
         Graph graph = reader.graph();
-        // 2 * Number of stops + 2 * number of stoptimes
-        // 2 * number of trips (1 for start & 1 for end)
-        // 2 for each stop in a trip (excluding start and end)
-        //
-        // 2 * 9 + 2 * 38 + + 2 * 12 + 2 * 12
         assertEquals(142, graph.nodes());
-    }
-
-    @Test
-    public void testReader1() {
-        GTFSReader reader = readGTFS(file1);
-        Graph graph = reader.graph();
-
-        // 2* 9 + 2 * 28 + 2 * 12
-        assertEquals(90, graph.nodes());
-    }
-    
-    /**
-     * Test if the right start position is found for a given location and time
-     */
-    @Test
-    public void testIndex() {
-        GTFSReader reader = readGTFS(file1);
-        LocationTime2IDIndex index = reader.getIndex();
-        assertEquals(0, index.findID(36.915682,-116.751677, 0));
-        assertEquals(0, index.findID(36.915682,-116.751677, 21000));
-        assertEquals(5, index.findID(36.915682,-116.751677, 21600));
-        assertEquals(68, index.findID(36.425288,-117.133162, 0));
-        assertEquals(73, index.findID(36.425288,-117.133162, 33600));
-        assertEquals(72, index.findID(36.425288,-117.133162, 33960));
-        assertEquals(72, index.findID(36.425288,-117.133162, 34000));
-    }
-    
-    /**
-     * Tests if the right exit node for a station is found
-     */
-    @Test
-    public void testExitNode() {
-        GTFSReader reader = readGTFS(file1);
-        LocationTime2IDIndex index = reader.getIndex();
-        assertEquals(1,index.getExitNodeID(36.915682,-116.751677));
-        assertEquals(69,index.getExitNodeID(36.425288,-117.133162));
-    }
-    
-    /**
-     * 
-     */
-    @Test
-    public void testRouting() {
-        GTFSReader reader = readGTFS(file1);
-        Graph graph = reader.graph();
-        LocationTime2IDIndex index = reader.getIndex();
-        EdgePropertyEncoder encoder = new PublicTransitFlagEncoder();
-        RoutingAlgorithm algorithm = new Dijkstra(graph, encoder);
-        // Start BEATTY_AIRPORT at midnight to Amargosa Valley
-        int from = index.findID(36.868446,-116.784582, 0);
-        int to = index.getExitNodeID(36.641496,-116.40094);
-        Path p1 = algorithm.calcPath(from, to);
-        assertEquals(p1.toString(), 32760, p1.distance(), 1e-6);
-        //reader.debugPath(p1);
+        assertEquals(0, AbstractGraphTester.getIdOf(graph, 36.915682));
+        assertEquals(88, AbstractGraphTester.getIdOf(graph, 36.425288));
+        assertEquals(72, AbstractGraphTester.getIdOf(graph, 36.868446));
+        assertEquals(42, AbstractGraphTester.getIdOf(graph, 36.88108));
+        assertEquals(2, GHUtility.count(graph.getEdges(0, outFilter)));
+        
+        PublicTransitFlagEncoder flags = encoder;
+        EdgeIterator iter = graph.getEdges(0, outFilter);
+        assertTrue(iter.next());
+        
+        // Exit node
+        assertEquals(1, iter.adjNode());
+        assertEquals(0, iter.distance(), 1e-3);
+        assertTrue(flags.isExit(iter.flags()));
+        assertTrue(flags.isForward(iter.flags()));
+        assertFalse(flags.isBackward(iter.flags()));
+        assertFalse(flags.isTransit(iter.flags()));
+        assertFalse(flags.isBoarding(iter.flags()));
+        assertFalse(flags.isAlight(iter.flags()));
+        
+        // Entry Node
+        assertTrue(iter.next());
+        assertEquals(21600, iter.distance(), 1);
+        assertEquals(3, iter.adjNode());
+        assertTrue(flags.isTransit(iter.flags()));
+        assertTrue(flags.isEntry(iter.flags()));
+        assertTrue(flags.isForward(iter.flags()));
+        assertFalse(flags.isBackward(iter.flags()));
+        assertFalse(flags.isBoarding(iter.flags()));
+        assertFalse(flags.isAlight(iter.flags()));
+        assertFalse(iter.next());
+        
+        iter = graph.getEdges(3, outFilter);
+        assertTrue(iter.next());
+        assertTrue(iter.next());
+        assertEquals(5, iter.adjNode());
     }
 }
