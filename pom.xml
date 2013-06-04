@@ -56,20 +56,8 @@
         <module>core</module>
         <module>tools</module>
         <module>web</module>
+        <!-- we build android on own build server to provide android setup for compiling and packaging the apk -->
     </modules>
-    
-    <!-- does not run on build server yet 
-         call 'mvn install -P with-android' to compile everything including the android module
-    
-<profiles>
-    <profile>
-        <id>graphhopper-android</id>
-        <modules>
-            <module>android</module>
-        </modules>
-    </profile>
-</profiles>
-    -->
         
     <build>        
         <plugins>

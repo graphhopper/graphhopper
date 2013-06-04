@@ -29,10 +29,10 @@ public class JSONBuilder {
 
     private String lastObjectName;
     private JSONBuilder parent;
-    private Map map;
+    private Map<String, Object> map;
 
     public JSONBuilder() {
-        map = new HashMap(5);
+        map = new HashMap<String, Object>(5);
     }
 
     public JSONBuilder setParent(JSONBuilder p) {

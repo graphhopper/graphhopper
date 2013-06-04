@@ -128,7 +128,7 @@ public class GraphHopperServlet extends HttpServlet {
                     putHint("douglas.minprecision", minPathPrecision));
             if (rsp.hasError()) {
                 JSONBuilder builder = new JSONBuilder().startObject("info");
-                List list = new ArrayList();
+                List<Map<String, String>> list = new ArrayList<Map<String, String>>();
                 for (Throwable t : rsp.errors()) {
                     Map<String, String> map = new HashMap<String, String>();
                     map.put("message", t.getMessage());

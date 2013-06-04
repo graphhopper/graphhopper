@@ -159,9 +159,8 @@ public class OSMReaderTest {
                 try {
                     osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
                 } catch (URISyntaxException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    throw new RuntimeException(e);
                 }
-                //osmReader.writeOsm2Graph(getResource(testFile));
                 return osmReader;
             }
         };

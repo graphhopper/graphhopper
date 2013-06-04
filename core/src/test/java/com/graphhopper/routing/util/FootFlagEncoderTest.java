@@ -82,8 +82,7 @@ public class FootFlagEncoderTest {
     @Test
     public void testAccess() {
         Map<String, String> map = new HashMap<String, String>();
-        OSMWay way = new OSMWay();
-        way.setTags(map);
+        OSMWay way = new OSMWay(1, map);
 
         map.put("highway", "motorway");
         map.put("sidewalk", "yes");

@@ -36,8 +36,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testAccess() {
         Map<String, String> map = new HashMap<String, String>();
-        OSMWay way = new OSMWay();
-        way.setTags(map);
+        OSMWay way = new OSMWay(1, map);
         assertFalse(encoder.isAllowed(way) > 0);
         map.put("highway", "service");
         assertTrue(encoder.isAllowed(way) > 0);
