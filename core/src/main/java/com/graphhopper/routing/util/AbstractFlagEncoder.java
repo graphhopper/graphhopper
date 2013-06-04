@@ -21,8 +21,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMWay;
 
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Peter Karich
@@ -67,7 +65,6 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
         oneways.add("true");
         oneways.add("1");
         oneways.add("-1");
-        oneways.add("roundabout");
 
         ferries.add("shuttle_train");
         ferries.add("ferry");

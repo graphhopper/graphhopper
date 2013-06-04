@@ -1,6 +1,0 @@
-# also look at: https://github.com/graphhopper/graphhopper/contributors
-
-agouge, discussion and API refactoring
-karussell, lead developer
-NopMap, several OSM parse improvements
-quintona, initial implementation for instructions

@@ -18,11 +18,11 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.routing.util.AcceptWay;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
-import com.graphhopper.util.StopWatch;
 import java.io.*;
 import javax.xml.stream.XMLStreamException;
 
@@ -44,6 +44,7 @@ public class OSMReader {
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
     private AcceptWay acceptWay;
+    private int workerThreads = -1;
 
     public OSMReader(GraphStorage storage, long expectedNodes) {
         this.graphStorage = storage;
@@ -51,34 +52,34 @@ public class OSMReader {
         acceptWay = new AcceptWay(AcceptWay.CAR);
     }
 
-    public void osm2Graph(File osmXmlFile) throws IOException {
+    public OSMReader workerThreads(int numOfWorkers) {
+        this.workerThreads = numOfWorkers;
+        return this;
+    }
 
-        preProcess(osmXmlFile);
+    public void osm2Graph(File osmFile) throws IOException {
+        long start = System.currentTimeMillis();
+        preProcess(osmFile);
 
-        writeOsm2Graph(osmXmlFile);
+        long pass2 = System.currentTimeMillis();
+        writeOsm2Graph(osmFile);
 
+        final long finished = System.currentTimeMillis();
+        logger.info("Times Pass1: " + (pass2 - start) + " Pass2: " + (finished - pass2) + " Total:" + (finished - start));
     }
 
     /**
      * Preprocessing of OSM file to select nodes which are used for highways.
      * This allows a more compact graph data structure.
      */
-    public void preProcess(File osmXml) {
-
+    public void preProcess(File osmFile) {
         try {
-            OSMInputFile in = new OSMInputFile(osmXml);
-            in.parseNodes(false);
-            in.parseRelations(false);
+            OSMInputFile in = new OSMInputFile(osmFile).workerThreads(workerThreads).open();
 
             long tmpCounter = 1;
 
             OSMElement item;
             while ((item = in.getNext()) != null) {
-                if (++tmpCounter % 50000000 == 0)
-                    logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
-                            + nf(helper.getNodeMap().size()) + " (" + helper.getNodeMap().memoryUsage() + "MB) "
-                            + Helper.memInfo());
-
                 if (item.isType(OSMElement.WAY)) {
                     final OSMWay way = (OSMWay) item;
                     boolean valid = filterWay(way);
@@ -88,6 +89,11 @@ public class OSMReader {
                         for (int index = 0; index < s; index++) {
                             helper.prepareHighwayNode(wayNodes.get(index));
                         }
+
+                        if (++tmpCounter % 500000 == 0)
+                            logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
+                                    + nf(helper.getNodeMap().size()) + " (" + helper.getNodeMap().memoryUsage() + "MB) "
+                                    + Helper.memInfo());
                     }
                 }
             }
@@ -116,8 +122,7 @@ public class OSMReader {
     }
 
     /**
-     * Creates the edges and nodes files from the specified inputstream (osm xml
-     * file).
+     * Creates the edges and nodes files from the specified osm file.
      */
     void writeOsm2Graph(File osmFile) {
 
@@ -125,49 +130,36 @@ public class OSMReader {
         logger.info("creating graph. Found nodes (pillar+tower):" + nf(helper.foundNodes()) + ", " + Helper.memInfo());
         graphStorage.create(tmp);
         long wayStart = -1;
-        StopWatch sw = new StopWatch();
         long counter = 1;
         try {
-            OSMInputFile in = new OSMInputFile(osmFile);
-            in.parseRelations(false);
-            in.nodeFilter(helper.getNodeMap());
+            OSMInputFile in = new OSMInputFile(osmFile).workerThreads(workerThreads).open();
+            LongIntMap nodeFilter = helper.getNodeMap();
 
             OSMElement item;
             while ((item = in.getNext()) != null) {
                 switch (item.type()) {
                     case OSMElement.NODE:
-                        processNode((OSMNode) item);
-                        if (counter % 1000000 == 0) {
-                            logger.info(nf(counter) + ", locs:" + nf(locations)
-                                    + " (" + skippedLocations + ") " + Helper.memInfo());
-                        }
+                        if (nodeFilter.get(item.id()) != -1)
+                            processNode((OSMNode) item);
                         break;
+
                     case OSMElement.WAY:
                         if (wayStart < 0) {
-                            helper.startWayProcessing();
                             logger.info(nf(counter) + ", now parsing ways");
                             wayStart = counter;
-                            sw.start();
                         }
                         processWay((OSMWay) item);
-                        if (counter - wayStart == 10000 && sw.stop().getSeconds() > 1) {
-                            logger.warn("Something is wrong! Processing ways takes too long! "
-                                    + sw.getSeconds() + "sec for only " + (counter - wayStart) + " entries");
-                        }
-                        // hmmh a bit hacky: counter does +=2 until the next loop
-                        if ((counter / 2) % 1000000 == 0) {
-                            logger.info(nf(counter) + ", locs:" + nf(locations)
-                                    + " (" + skippedLocations + "), edges:" + nf(helper.edgeCount())
-                                    + " " + Helper.memInfo());
-                        }
                         break;
                 }
-                counter++;
+                if (++counter % 5000000 == 0) {
+                    logger.info(nf(counter) + ", locs:" + nf(locations)
+                            + " (" + skippedLocations + ") " + Helper.memInfo());
+                }
             }
             in.close();
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
         } catch (Exception ex) {
-            throw new RuntimeException("Couldn't process file", ex);
+            throw new RuntimeException("Couldn't process file " + osmFile, ex);
         }
         helper.finishedReading();
         if (graphStorage.nodes() == 0)

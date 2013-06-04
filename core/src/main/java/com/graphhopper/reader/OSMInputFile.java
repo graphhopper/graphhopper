@@ -18,13 +18,15 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.coll.LongIntMap;
+import com.graphhopper.reader.pbf.Sink;
+import com.graphhopper.reader.pbf.PbfReader;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.*;
+import java.util.LinkedList;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
 
@@ -33,23 +35,41 @@ import java.util.zip.ZipInputStream;
  *
  * @author Nop
  */
-public class OSMInputFile {
+public class OSMInputFile implements Sink {
 
     private boolean eof;
-    private XMLStreamReader parser;
     private InputStream bis;
     private boolean autoClose;
-    private boolean parseNodes = true;
-    private LongIntMap nodeFilter = null;
-    private boolean parseRelations = true;
+    // for xml parsing
+    private XMLStreamReader parser;
+    // for pbf parsing
+    private boolean binary = false;
+    private final LinkedList<OSMElement> itemQueue = new LinkedList<OSMElement>();
+    private boolean incomingData;
+    private int workerThreads = -1;
 
-    public OSMInputFile(File file) throws IOException, XMLStreamException {
-        openStream(decode(file));
+    public OSMInputFile(File file) throws IOException {
+        bis = decode(file);
         autoClose = true;
     }
 
-    public static InputStream decode(File file)
-            throws IOException, XMLStreamException {
+    public OSMInputFile open() throws XMLStreamException {
+        if (binary)
+            openPBFReader(bis);
+        else
+            openXMLStream(bis);
+        return this;
+    }
+
+    /**
+     * Currently on for pbf format. Default is number of cores.
+     */
+    public OSMInputFile workerThreads(int num) {
+        workerThreads = num;
+        return this;
+    }
+
+    private InputStream decode(File file) throws IOException {
         final String name = file.getName();
 
         InputStream ips = null;
@@ -61,7 +81,7 @@ public class OSMInputFile {
         ips.mark(10);
 
         // check file header
-        byte header[] = new byte[2];
+        byte header[] = new byte[6];
         ips.read(header);
 
         /*     can parse bz2 directly with additional lib
@@ -72,7 +92,12 @@ public class OSMInputFile {
          */
         if (header[0] == 31 && header[1] == -117) {
             ips.reset();
-            return new GZIPInputStream(ips);
+            return new GZIPInputStream(ips, 50000);
+        } else if (header[0] == 0 && header[1] == 0 && header[2] == 0
+                && header[3] == 13 && header[4] == 10 && header[5] == 9) {
+            ips.reset();
+            binary = true;
+            return ips;
         } else if (header[0] == 'P' && header[1] == 'K') {
             ips.reset();
             ZipInputStream zip = new ZipInputStream(ips);
@@ -88,13 +113,12 @@ public class OSMInputFile {
     }
 
     public OSMInputFile(InputStream in) throws XMLStreamException {
-        openStream(in);
+        openXMLStream(in);
     }
 
-    private void openStream(InputStream in)
+    private void openXMLStream(InputStream in)
             throws XMLStreamException {
         XMLInputFactory factory = XMLInputFactory.newInstance();
-        bis = in;
         parser = factory.createXMLStreamReader(bis, "UTF-8");
 
         int event = parser.next();
@@ -105,54 +129,49 @@ public class OSMInputFile {
         eof = false;
     }
 
-    public void parseNodes(boolean doNodes) {
-        this.parseNodes = doNodes;
-    }
-
-    public void nodeFilter(LongIntMap nodeFilter) {
-        this.nodeFilter = nodeFilter;
-    }
-
-    public void parseRelations(boolean doRelations) {
-        this.parseRelations = doRelations;
-    }
-
     public OSMElement getNext() throws XMLStreamException {
         if (eof) {
             throw new IllegalStateException("EOF reached");
         }
 
+        OSMElement item;
+        if (binary) {
+            item = getNextPBF();
+        } else {
+            item = getNextXML();
+        }
+        if (item != null) {
+            return item;
+        }
+
+        eof = true;
+        return null;
+    }
+
+    private OSMElement getNextXML() throws XMLStreamException {
+
         int event = parser.next();
-        boolean keepRunning = true;
-        while (event != XMLStreamConstants.END_DOCUMENT && keepRunning) {
+        while (event != XMLStreamConstants.END_DOCUMENT) {
             if (event == XMLStreamConstants.START_ELEMENT) {
                 String name = parser.getLocalName();
+                long id = 0;
                 switch (name.charAt(0)) {
                     case 'n':
-                        if (parseNodes) {
-                            long id = Long.parseLong(parser.getAttributeValue(null, "id"));
-                            if (nodeFilter == null || nodeFilter.get(id) != -1)
-                                return new OSMNode(id, parser);
-                        }
-                        break;
+                        id = Long.parseLong(parser.getAttributeValue(null, "id"));
+                        return new OSMNode(id, parser);
 
                     case 'w': {
-                        long id = Long.parseLong(parser.getAttributeValue(null, "id"));
+                        id = Long.parseLong(parser.getAttributeValue(null, "id"));
                         return new OSMWay(id, parser);
                     }
                     case 'r':
-                        if (parseRelations) {
-                            long id = Long.parseLong(parser.getAttributeValue(null, "id"));
-                            return new OSMRelation(id, parser);
-                        } else
-                            keepRunning = false;
-                        break;
+                        id = Long.parseLong(parser.getAttributeValue(null, "id"));
+                        return new OSMRelation(id, parser);
                 }
             }
             event = parser.next();
         }
         parser.close();
-        eof = true;
         return null;
     }
 
@@ -161,10 +180,70 @@ public class OSMInputFile {
     }
 
     public void close() throws XMLStreamException, IOException {
-        parser.close();
+        if (!binary)
+            parser.close();
         eof = true;
         if (autoClose) {
             bis.close();
         }
+    }
+
+    private void openPBFReader(InputStream stream) {
+        incomingData = true;
+
+        if (workerThreads <= 0)
+            workerThreads = 2;
+        PbfReader reader = new PbfReader(stream, this, workerThreads);
+        new Thread(reader, "PBF Reader").start();
+    }
+
+    @Override
+    public void process(OSMElement item) {
+        synchronized (itemQueue) {
+            itemQueue.addLast(item);
+            itemQueue.notifyAll();
+            // keep queue from overrunning
+            if (itemQueue.size() > 50000) {
+                try {
+                    itemQueue.wait();
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+            }
+        }
+    }
+
+    @Override
+    public void complete() {
+        synchronized (itemQueue) {
+            incomingData = false;
+            itemQueue.notifyAll();
+        }
+    }
+
+    private OSMElement getNextPBF() {
+        OSMElement next = null;
+        do {
+            synchronized (itemQueue) {
+                // try to read next object
+                next = itemQueue.pollFirst();
+
+                if (next == null) {
+                    // if we have no items to process but parser is still working: wait
+                    if (incomingData)
+                        try {
+                            itemQueue.wait();
+                        } catch (InterruptedException e) {
+                            // ignored
+                        }
+                    // we are done, stop waiting
+                    else
+                        break;
+                } else
+                    itemQueue.notifyAll();
+            }
+        } while (next == null);
+
+        return next;
     }
 }

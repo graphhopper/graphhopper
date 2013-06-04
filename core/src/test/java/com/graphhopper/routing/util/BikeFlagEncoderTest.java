@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMWay;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -32,6 +33,11 @@ public class BikeFlagEncoderTest {
         BikeFlagEncoder instance = new BikeFlagEncoder();
         int result = instance.flags(10, true);
         assertEquals(10, instance.getSpeed(result));
-        assertEquals(10, instance.getSpeed("cycleway"));
+        OSMWay way = new OSMWay();
+        way.setTag("highway", "road");
+        assertEquals(10, instance.getSpeed(way));
+
+        way.setTag("surface", "paved");
+        assertEquals(16, instance.getSpeed(way));
     }
 }

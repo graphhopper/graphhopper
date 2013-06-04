@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license
+ *  Licensed to Peter Karich under one or more contributor license
  *  agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
- *  GraphHopper licenses this file to you under the Apache License,
+ *  Peter Karich licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the
  *  License at
@@ -16,7 +16,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.reader;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -25,17 +25,13 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class AcceptWayTest {
+public class OSMElementTest {
 
     @Test
-    public void testAcceptsCar() {
-        assertEquals(40, AcceptWay.parseSpeed("40 km/h"));
-        assertEquals(40, AcceptWay.parseSpeed("40km/h"));
-        assertEquals(40, AcceptWay.parseSpeed("40kmh"));
-        assertEquals(64, AcceptWay.parseSpeed("40mph"));
-        assertEquals(-1, AcceptWay.parseSpeed(null));
-        assertEquals(19, AcceptWay.parseSpeed("10 knots"));
-        assertEquals(19, AcceptWay.parseSpeed("19 kph"));
-        assertEquals(19, AcceptWay.parseSpeed("19kph"));
+    public void testHasTag() {
+        OSMElement instance = new OSMWay();
+        instance.setTag("surface", "something");
+        assertTrue(instance.hasTag("surface", "now", "something"));
+        assertFalse(instance.hasTag("surface", "now", "not"));
     }
 }
