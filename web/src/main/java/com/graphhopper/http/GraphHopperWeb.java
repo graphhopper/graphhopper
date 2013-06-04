@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
  *  agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
+ *  GraphHopper licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except 
  *  in compliance with the License. You may obtain a copy of the 
  *  License at
@@ -30,6 +30,7 @@ import java.net.URL;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,11 +46,12 @@ public class GraphHopperWeb implements GraphHopperAPI {
         GraphHopperAPI gh = new GraphHopperWeb();
         gh.load("http://localhost:8989/api");
         //GHResponse ph = gh.route(new GHRequest(53.080827, 9.074707, 50.597186, 11.184082));
-        GHResponse ph = gh.route(new GHRequest( 49.6724, 11.3494, 49.6550, 11.4180));
+        GHResponse ph = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180));
         System.out.println(ph);
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
     private String serviceUrl;
+    private boolean encodePolyline = true;
 
     public GraphHopperWeb() {
     }
@@ -62,6 +64,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
         return true;
     }
 
+    public GraphHopperWeb encodePolyline(boolean b) {
+        encodePolyline = b;
+        return this;
+    }
+
     @Override
     public GHResponse route(GHRequest request) {
         request.check();
@@ -72,15 +79,28 @@ public class GraphHopperWeb implements GraphHopperAPI {
                     + "?from=" + request.from().lat + "," + request.from().lon
                     + "&to=" + request.to().lat + "," + request.to().lon
                     + "&type=json"
-                    + "&encodedPolyline=true"
+                    + "&encodedPolyline=" + encodePolyline
                     + "&minPathPrecision=" + request.getHint("douglas.minprecision", 1)
                     + "&algo=" + request.algorithm();
-            JSONObject json = new JSONObject(WebHelper.readString(new URL(url).openStream()));
+            String str = WebHelper.readString(fetch(url));
+            JSONObject json = new JSONObject(str);
             took = json.getJSONObject("info").getDouble("took");
             JSONObject route = json.getJSONObject("route");
             double distance = route.getDouble("distance");
             int timeInSeconds = route.getInt("time");
-            PointList list = WebHelper.decodePolyline(route.getString("coordinates"), 100);
+            PointList list;
+            if (encodePolyline)
+                list = WebHelper.decodePolyline(route.getString("coordinates"), 100);
+            else {
+                JSONArray coords = route.getJSONObject("data").getJSONArray("coordinates");
+                list = new PointList(coords.length());
+                for (int i = 0; i < coords.length(); i++) {
+                    JSONArray arr = coords.getJSONArray(i);
+                    double lon = arr.getDouble(0);
+                    double lat = arr.getDouble(1);
+                    list.add(lat, lon);
+                }
+            }
             return new GHResponse().points(list).distance(distance).time(timeInSeconds);
         } catch (Exception ex) {
             throw new RuntimeException("Problem while fetching path " + request.from() + "->" + request.to(), ex);
