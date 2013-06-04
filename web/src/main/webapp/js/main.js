@@ -197,16 +197,17 @@ function initMap() {
     
     routingLayer = L.geoJson().addTo(map);    
     clickToRoute = true;
-    function onMapClick(e) {        
+    function onMapClick(e) {       
+        var latlng = e.latlng;
         if(clickToRoute) {
             // set start point
             routingLayer.clearLayers();
             clickToRoute = false;
-            ghRequest.from.setCoord(e.latlng.lat, e.latlng.lng);
+            ghRequest.from.setCoord(latlng.lat, latlng.lng);
             resolveFrom();            
         } else {
             // set end point
-            ghRequest.to.setCoord(e.latlng.lat, e.latlng.lng);
+            ghRequest.to.setCoord(latlng.lat, latlng.lng);
             resolveTo();            
             // do not wait for resolving
             routeLatLng(ghRequest);
@@ -218,9 +219,24 @@ function initMap() {
 
 function setFlag(latlng, isFrom) {
     if(latlng.lat) {
-        L.marker([latlng.lat, latlng.lng], {
-            icon: (isFrom? iconFrom : iconTo)
+        var marker = L.marker([latlng.lat, latlng.lng], {
+            icon: (isFrom? iconFrom : iconTo),
+            draggable: true            
         }).addTo(routingLayer).bindPopup(isFrom? "Start" : "End");                  
+        marker.on('dragend', function(e) {
+            routingLayer.clearLayers();
+            // inconsistent leaflet API: event.target.getLatLng vs. mouseEvent.latlng?
+            var latlng = e.target.getLatLng();
+            if(isFrom) {
+                ghRequest.from.setCoord(latlng.lat, latlng.lng);
+                resolveFrom();                                
+            } else {
+                ghRequest.to.setCoord(latlng.lat, latlng.lng);
+                resolveTo();
+            }
+            // do not wait for resolving
+            routeLatLng(ghRequest);
+        });
     } 
 }
 
