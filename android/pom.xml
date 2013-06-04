@@ -43,6 +43,14 @@
                     <groupId>log4j</groupId>
                     <artifactId>log4j</artifactId>                    
                 </exclusion>
+                 <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>                    
+                </exclusion>
+                 <exclusion>
+                    <groupId>org.openstreetmap.osmosis</groupId>
+                    <artifactId>osmosis-osm-binary</artifactId>                    
+                </exclusion>
             </exclusions>
         </dependency>        
           
