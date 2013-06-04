@@ -65,8 +65,9 @@ public class RoutingAlgorithmSpecialAreaTests {
                     + "Or use prepare.chShortcuts=shortest and avoid the preparation");
 
         TestAlgoCollector testCollector = new TestAlgoCollector("testAlgos");
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
-        Collection<AlgorithmPreparation> prepares = createAlgos(unterfrankenGraph, carEncoder, true);
+        final EncodingManager encodingManager = new EncodingManager( "CAR" );
+        CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder( "CAR" );
+        Collection<AlgorithmPreparation> prepares = createAlgos(unterfrankenGraph, carEncoder, true, encodingManager);
         for (AlgorithmPreparation prepare : prepares) {
             int failed = testCollector.errors.size();
 
@@ -86,7 +87,7 @@ public class RoutingAlgorithmSpecialAreaTests {
     }
 
     public static Collection<AlgorithmPreparation> createAlgos(Graph g,
-            EdgePropertyEncoder encoder, boolean withCh) {
+            EdgePropertyEncoder encoder, boolean withCh, EncodingManager encodingManager ) {
         List<AlgorithmPreparation> prepare = new ArrayList<AlgorithmPreparation>(Arrays.<AlgorithmPreparation>asList(
                 createAlgoPrepare(g, "astar", encoder),
                 createAlgoPrepare(g, "dijkstraOneToMany", encoder),
@@ -95,9 +96,9 @@ public class RoutingAlgorithmSpecialAreaTests {
                 createAlgoPrepare(g, "dijkstrabi", encoder),
                 createAlgoPrepare(g, "dijkstra", encoder)));
         if (withCh) {
-            LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder().levelGraphCreate());
+            LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder(encodingManager).levelGraphCreate());
             PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().
-                    graph(graphCH).vehicle(encoder);
+                    graph( graphCH ).vehicle( encoder );
             prepareCH.doWork();
             prepare.add(prepareCH);
             // TODO prepare.add(prepareCH.createAStar().approximation(true).approximationFactor(.9));

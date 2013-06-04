@@ -242,7 +242,6 @@ public abstract class OSMElement {
     /**
      * Only for testing
      *
-     * @deprecated
      * @param tags
      */
     public void setTags(Map<String, String> tags) {

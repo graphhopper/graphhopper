@@ -75,8 +75,6 @@ public class MiniGraphUI {
     private MapLayer pathLayer;
     private boolean fastPaint = false;
     private WeightCalculation wCalc = new ShortestCalc();
-    private EdgePropertyEncoder carEncoder = new CarFlagEncoder();
-    private EdgePropertyEncoder footEncoder = new FootFlagEncoder();
 
     public MiniGraphUI(GraphHopper hopper, boolean debug) {
         this.graph = hopper.graph();

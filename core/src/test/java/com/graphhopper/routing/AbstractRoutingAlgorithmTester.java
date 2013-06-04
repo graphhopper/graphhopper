@@ -19,13 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.PrinctonReader;
-import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
-import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.routing.util.ShortestCalc;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.DistanceCalc;
@@ -46,11 +40,13 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     // problem is: matrix graph is expensive to create to cache it in a static variable
     private static Graph matrixGraph;
-    protected EdgePropertyEncoder carEncoder = new CarFlagEncoder();
-    private EdgePropertyEncoder footEncoder = new FootFlagEncoder();
+    protected static EncodingManager encodingManager = new EncodingManager( "CAR,FOOT" );
+
+    protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder( "CAR" );
+    protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder( "FOOT" );
 
     protected Graph createGraph() {
-        return new GraphBuilder().create();
+        return new GraphBuilder(encodingManager).create();
     }
 
     public AlgorithmPreparation prepareGraph(Graph g) {
@@ -416,7 +412,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     private static Graph createMatrixAlikeGraph() {
         int WIDTH = 10;
         int HEIGHT = 15;
-        Graph tmp = new GraphBuilder().create();
+        Graph tmp = new GraphBuilder(encodingManager).create();
         int[][] matrix = new int[WIDTH][HEIGHT];
         int counter = 0;
         Random rand = new Random(12);

@@ -18,12 +18,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import static com.graphhopper.util.GHUtility.*;
@@ -51,7 +46,9 @@ public abstract class AbstractGraphTester {
     private String location = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraph = "./target/graphstorage/default";
-    CarFlagEncoder carEncoder = new CarFlagEncoder();
+    protected EncodingManager encodingManager = new EncodingManager( "CAR,FOOT" );
+    protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder( "CAR" );
+    protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder( "FOOT" );
     EdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
     EdgeFilter carInFilter = new DefaultEdgeFilter(carEncoder, true, false);
     private Graph graph;
@@ -587,7 +584,7 @@ public abstract class AbstractGraphTester {
     public void testCopyTo() {
         graph = createGraph();
         initExampleGraph(graph);
-        Graph gs = new GraphStorage(new RAMDirectory()).segmentSize(8000).create(10);
+        Graph gs = new GraphStorage(new RAMDirectory(),encodingManager).segmentSize(8000).create(10);
         try {
             graph.copyTo(gs);
         } catch (Exception ex) {
@@ -748,7 +745,6 @@ public abstract class AbstractGraphTester {
     @Test
     public void testFootMix() {
         graph = createGraph();
-        EdgePropertyEncoder footEncoder = new FootFlagEncoder();
         graph.edge(0, 1, 10, footEncoder.flags(10, true));
         graph.edge(0, 2, 10, carEncoder.flags(10, true));
         graph.edge(0, 3, 10, footEncoder.flags(10, true) | carEncoder.flags(10, true));

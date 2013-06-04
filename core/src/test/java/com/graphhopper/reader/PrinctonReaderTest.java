@@ -21,6 +21,7 @@ package com.graphhopper.reader;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import static com.graphhopper.util.GHUtility.*;
 import com.graphhopper.storage.GraphBuilder;
@@ -35,11 +36,12 @@ import static org.junit.Assert.*;
  */
 public class PrinctonReaderTest {
 
-    private EdgeFilter carOutEdges = new DefaultEdgeFilter(new CarFlagEncoder(), false, true);
+    private EncodingManager encodingManager = new EncodingManager( "CAR" );
+    private EdgeFilter carOutEdges = new DefaultEdgeFilter(new EncodingManager("CAR").getEncoder( "CAR" ), false, true);
 
     @Test
     public void testRead() {
-        Graph graph = new GraphBuilder().create();
+        Graph graph = new GraphBuilder(encodingManager).create();
         new PrinctonReader(graph).stream(PrinctonReader.class.getResourceAsStream("tinyEWD.txt")).read();
         assertEquals(8, graph.nodes());
         assertEquals(2, count(graph.getEdges(0, carOutEdges)));
@@ -48,7 +50,7 @@ public class PrinctonReaderTest {
 
     @Test
     public void testMediumRead() throws IOException {
-        Graph graph = new GraphBuilder().create();
+        Graph graph = new GraphBuilder(encodingManager).create();
         new PrinctonReader(graph).stream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
         assertEquals(250, graph.nodes());
         assertEquals(13, count(graph.getEdges(244, carOutEdges)));

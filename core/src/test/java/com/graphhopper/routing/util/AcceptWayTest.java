@@ -29,13 +29,13 @@ public class AcceptWayTest {
 
     @Test
     public void testAcceptsCar() {
-        assertEquals(40, AcceptWay.parseSpeed("40 km/h"));
-        assertEquals(40, AcceptWay.parseSpeed("40km/h"));
-        assertEquals(40, AcceptWay.parseSpeed("40kmh"));
-        assertEquals(64, AcceptWay.parseSpeed("40mph"));
-        assertEquals(-1, AcceptWay.parseSpeed(null));
-        assertEquals(19, AcceptWay.parseSpeed("10 knots"));
-        assertEquals(19, AcceptWay.parseSpeed("19 kph"));
-        assertEquals(19, AcceptWay.parseSpeed("19kph"));
+        assertEquals(40, AbstractFlagEncoder.parseSpeed( "40 km/h" ));
+        assertEquals(40, AbstractFlagEncoder.parseSpeed( "40km/h" ));
+        assertEquals(40, AbstractFlagEncoder.parseSpeed( "40kmh" ));
+        assertEquals(64, AbstractFlagEncoder.parseSpeed( "40mph" ));
+        assertEquals(-1, AbstractFlagEncoder.parseSpeed( null ));
+        assertEquals(19, AbstractFlagEncoder.parseSpeed( "10 knots" ));
+        assertEquals(19, AbstractFlagEncoder.parseSpeed( "19 kph" ));
+        assertEquals(19, AbstractFlagEncoder.parseSpeed( "19kph" ));
     }
 }

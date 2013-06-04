@@ -31,7 +31,8 @@ import static org.junit.Assert.*;
  */
 public class CarFlagEncoderTest {
 
-    private CarFlagEncoder encoder = new CarFlagEncoder();
+    private EncodingManager em = new EncodingManager( "CAR,BIKE,FOOT" );
+    private CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder( "CAR" );
 
     @Test
     public void testAccess() {
@@ -92,11 +93,4 @@ public class CarFlagEncoderTest {
         assertEquals(0, encoder.swapDirection(0));
     }
 
-    @Test
-    public void testService() {
-        int flags = encoder.flags(encoder.getSpeed("service"), true);
-        assertTrue(encoder.isForward(flags));
-        assertTrue(encoder.isBackward(flags));
-        assertTrue(encoder.isService(flags));
-    }
 }

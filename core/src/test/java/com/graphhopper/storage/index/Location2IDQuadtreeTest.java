@@ -37,7 +37,7 @@ public class Location2IDQuadtreeTest extends AbstractLocation2IDIndexTester {
 
     @Test
     public void testNormedDist() {
-        Location2IDQuadtree index = new Location2IDQuadtree(createGraph(), new RAMDirectory());
+        Location2IDQuadtree index = new Location2IDQuadtree(createGraph( null ), new RAMDirectory());
         index.initAlgo(5, 6);
         assertEquals(1, index.normedDist(0, 1), 1e-6);
         assertEquals(2, index.normedDist(0, 7), 1e-6);

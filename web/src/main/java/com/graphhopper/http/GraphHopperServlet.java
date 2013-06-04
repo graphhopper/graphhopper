@@ -92,7 +92,7 @@ public class GraphHopperServlet extends HttpServlet {
         list.add(bb.maxLat);
         JSONBuilder json = new JSONBuilder().
                 object("bbox", list).
-                object("supportedVehicles", hopper.acceptWay()).
+                object("supportedVehicles", hopper.encodingManager()).
                 object("version", Constants.VERSION).
                 object("buildDate", Constants.BUILD_DATE);
         writeJson(req, res, json.build());
@@ -111,7 +111,7 @@ public class GraphHopperServlet extends HttpServlet {
         } catch (Exception ex) {
         }
         String vehicleStr = getParam(req, "vehicle");
-        EdgePropertyEncoder algoVehicle = Helper.getVehicleEncoder(vehicleStr);
+        EdgePropertyEncoder algoVehicle = hopper.encodingManager().getEncoder( vehicleStr.toUpperCase() );
         WeightCalculation algoType = new FastestCalc(algoVehicle);
         if ("shortest".equalsIgnoreCase(getParam(req, "algoType")))
             algoType = new ShortestCalc();
@@ -123,7 +123,7 @@ public class GraphHopperServlet extends HttpServlet {
         try {
             sw = new StopWatch().start();
             GHResponse rsp = hopper.route(new GHRequest(start, end).
-                    vehicle(algoVehicle).type(algoType).
+                    vehicle(algoVehicle.toString()).type(algoType).
                     algorithm(algoStr).
                     putHint("douglas.minprecision", minPathPrecision));
             if (rsp.hasError()) {

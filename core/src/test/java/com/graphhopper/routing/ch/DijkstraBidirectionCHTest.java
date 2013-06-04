@@ -56,7 +56,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
     @Override
     protected LevelGraph createGraph() {
-        return new GraphBuilder().levelGraphCreate();
+        return new GraphBuilder(encodingManager).levelGraphCreate();
     }
 
     @Override
@@ -105,7 +105,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.setLevel(7, 6);
         g2.setLevel(0, 7);
 
-        Path p = new PrepareContractionHierarchies().graph(g2).createAlgo().calcPath(0, 7);
+        Path p = new PrepareContractionHierarchies().vehicle(carEncoder).graph(g2).createAlgo().calcPath(0, 7);
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
         assertEquals(4, p.calcNodes().size());
         assertEquals(4.2, p.distance(), 1e-5);

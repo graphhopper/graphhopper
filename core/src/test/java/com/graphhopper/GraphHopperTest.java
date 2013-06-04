@@ -18,10 +18,7 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.routing.util.AcceptWay;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
-import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +39,7 @@ public class GraphHopperTest {
     public void testLoadOSM() throws IOException {
         Helper.removeDir(new File(ghLoc));
         GraphHopper instance = new GraphHopper().setInMemory(true, true).
+                encodingManager( new EncodingManager( "CAR" )).
                 graphHopperLocation(ghLoc).osmFile(testOsm);
         instance.importOrLoad();
         GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
@@ -49,7 +47,7 @@ public class GraphHopperTest {
         assertEquals(3, ph.points().size());
 
         instance.close();
-        instance = new GraphHopper().setInMemory(true, true);
+        instance = new GraphHopper().encodingManager( new EncodingManager( "CAR" ) ).setInMemory(true, true);
         assertTrue(instance.load(ghLoc));
         ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.found());
@@ -61,6 +59,7 @@ public class GraphHopperTest {
     @Test
     public void testPrepare() throws IOException {
         GraphHopper instance = new GraphHopper().setInMemory(true, false).
+                encodingManager( new EncodingManager( "CAR" ) ).
                 chShortcuts(true, true).
                 graphHopperLocation(ghLoc).osmFile(testOsm);
         instance.importOrLoad();
@@ -73,18 +72,15 @@ public class GraphHopperTest {
     public void testFootAndCar() throws IOException {
         // now all ways are imported
         GraphHopper instance = new GraphHopper().setInMemory(true, false).
-                acceptWay(new AcceptWay("CAR,FOOT")).
+                encodingManager( new EncodingManager( "CAR,FOOT" ) ).
                 graphHopperLocation(ghLoc).osmFile(testOsm3);
         instance.importOrLoad();
 
         assertEquals(5, instance.graph().nodes());
         assertEquals(8, instance.graph().getAllEdges().maxId());
 
-        FootFlagEncoder footEnc = new FootFlagEncoder();
-        EdgePropertyEncoder carEnc = new CarFlagEncoder();
-
         // A to D
-        GHResponse res = instance.route(new GHRequest(11.1, 50, 11.3, 51).vehicle(carEnc));
+        GHResponse res = instance.route(new GHRequest(11.1, 50, 11.3, 51).vehicle(EncodingManager.CAR));
         assertTrue(res.found());
         assertEquals(2, res.points().size());
         // => found D
@@ -92,7 +88,7 @@ public class GraphHopperTest {
         assertEquals(11.3, res.points().latitude(1), 1e-3);
 
         // A to D not allowed for foot. But the location index will choose a node close to D accessible to FOOT        
-        res = instance.route(new GHRequest(11.1, 50, 11.3, 51).vehicle(footEnc));
+        res = instance.route(new GHRequest(11.1, 50, 11.3, 51).vehicle(EncodingManager.FOOT));
         assertTrue(res.found());
         assertEquals(2, res.points().size());
         // => found B
@@ -100,12 +96,12 @@ public class GraphHopperTest {
         assertEquals(12, res.points().latitude(1), 1e-3);
 
         // A to E only for foot
-        res = instance.route(new GHRequest(11.1, 50, 10, 51).vehicle(footEnc));
+        res = instance.route(new GHRequest(11.1, 50, 10, 51).vehicle(EncodingManager.FOOT));
         assertTrue(res.found());
         assertEquals(2, res.points().size());
 
         // A D E for car
-        res = instance.route(new GHRequest(11.1, 50, 10, 51).vehicle(carEnc));
+        res = instance.route(new GHRequest(11.1, 50, 10, 51).vehicle(EncodingManager.CAR));
         assertTrue(res.found());
         assertEquals(3, res.points().size());
     }
@@ -114,7 +110,7 @@ public class GraphHopperTest {
     public void testFootOnly() throws IOException {
         // now only footable ways are imported => no A D C and B D E => the other both ways have pillar nodes!
         GraphHopper instance = new GraphHopper().setInMemory(true, false).
-                acceptWay(new AcceptWay("FOOT")).
+                encodingManager( new EncodingManager( "FOOT" ) ).
                 graphHopperLocation(ghLoc).osmFile(testOsm3);
         instance.importOrLoad();
 
@@ -122,7 +118,7 @@ public class GraphHopperTest {
         assertEquals(2, instance.graph().getAllEdges().maxId());
 
         // A to E only for foot
-        GHResponse res = instance.route(new GHRequest(11.1, 50, 11.2, 52).vehicle(new FootFlagEncoder()));
+        GHResponse res = instance.route(new GHRequest(11.1, 50, 11.2, 52).vehicle(EncodingManager.FOOT));
         assertTrue(res.found());
         assertEquals(3, res.points().size());
     }

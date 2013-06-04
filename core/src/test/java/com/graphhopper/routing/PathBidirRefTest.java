@@ -18,10 +18,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -35,11 +32,12 @@ import org.junit.Test;
  */
 public class PathBidirRefTest {
 
-    private EdgePropertyEncoder carEncoder = new CarFlagEncoder();
+    private final EncodingManager encodingManager = new EncodingManager( "CAR" );
+    private EdgePropertyEncoder carEncoder = encodingManager.getEncoder( "CAR" );
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
 
     Graph createGraph() {
-        return new GraphBuilder().create();
+        return new GraphBuilder(encodingManager).create();
     }
 
     @Test

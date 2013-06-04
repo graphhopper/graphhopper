@@ -23,6 +23,7 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.GHUtility;
 import org.junit.Test;
@@ -34,7 +35,7 @@ import static org.junit.Assert.*;
  */
 public class DijkstraShortestOf2ToPubTest {
 
-    CarFlagEncoder carEncoder = new CarFlagEncoder();
+    CarFlagEncoder carEncoder = (CarFlagEncoder) new EncodingManager("CAR").getEncoder( "CAR" );
 
     Graph getGraph() {
         return AbstractRoutingAlgorithmTester.getMatrixAlikeGraph();

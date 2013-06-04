@@ -20,6 +20,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 
@@ -37,8 +38,8 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     private final int I_SKIP_EDGE2;
     private final int I_LEVEL;
 
-    public LevelGraphStorage(Directory dir) {
-        super(dir);
+    public LevelGraphStorage(Directory dir, EncodingManager encodingManager ) {
+        super(dir, encodingManager );
         I_SKIP_EDGE1 = nextEdgeEntryIndex();
         I_SKIP_EDGE2 = nextEdgeEntryIndex();
         I_LEVEL = nextNodeEntryIndex();

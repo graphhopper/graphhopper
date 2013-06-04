@@ -42,7 +42,7 @@ public class DefaultModule extends AbstractModule {
             hopper.importOrLoad();
             logger.info("loaded graph at:" + hopper.graphHopperLocation()
                     + ", source:" + hopper.osmFile()
-                    + ", acceptWay:" + hopper.acceptWay()
+                    + ", acceptWay:" + hopper.encodingManager()
                     + ", class:" + hopper.graph().getClass().getSimpleName());
 
             bind(GraphHopper.class).toInstance(hopper);

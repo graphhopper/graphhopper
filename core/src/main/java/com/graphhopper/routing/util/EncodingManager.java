@@ -20,13 +20,17 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
+ * Manager class to register encoder, assign their flag values and check objects with all encoders during parsing.
  * @author Peter Karich
  */
-public class AcceptWay {
-
+public class EncodingManager
+{
     public static final String CAR = "CAR";
     public static final String BIKE = "BIKE";
     public static final String FOOT = "FOOT";
@@ -37,12 +41,25 @@ public class AcceptWay {
         defaultEncoders.put(BIKE, BikeFlagEncoder.class.getName());
         defaultEncoders.put(FOOT, FootFlagEncoder.class.getName());
     }
-    // maximum number supported by int flag size is currnetly 4
-    private AbstractFlagEncoder[] encoders = new AbstractFlagEncoder[4];
-    private int encoderCount = 0;
 
-    public AcceptWay(String encoderList) {
+    private static EncodingManager instance = null;
+
+    public static final int MAX_BITS = 32;
+    private ArrayList<AbstractFlagEncoder> encoders = new ArrayList<AbstractFlagEncoder>(  );
+    private int encoderCount = 0;
+    private int nextBit = 0;
+
+    /**
+     * Instantiate manager with the given list of encoders.
+     * The manager knows the default encoders: CAR, FOOT and BIKE
+     * Custom encoders can be added by giving a full class name
+     * e.g. "CAR:com.graphhopper.myproject.MyCarEncoder"
+     * @param encoderList comma delimited list of encoders. The order does not matter.
+     */
+    public EncodingManager( String encoderList ) {
         String[] entries = encoderList.split(",");
+        Arrays.sort(entries);
+
         for (String entry : entries) {
             entry = entry.trim();
             String className = null;
@@ -57,15 +74,43 @@ public class AcceptWay {
 
             try {
                 Class cls = Class.forName(className);
-                register((AbstractFlagEncoder) cls.newInstance());
+                register((AbstractFlagEncoder) cls.getDeclaredConstructor( new Class[] { EncodingManager.class } ).newInstance( this ));
             } catch (Exception e) {
                 throw new IllegalArgumentException("Cannot instantiate class " + className, e);
             }
         }
+
+/*
+    // comment this in to detect involuntary changes of the encoding
+        if( instance != null )
+        {
+            System.out.println( "WARNING: Overwriting Encoding Manager " + instance.toString() + " with new instance " + toString());
+            StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+            for( int i = 2; i < trace.length; i++ ) {
+                System.out.println( trace[i] );
+            }
+        }
+*/
+        instance = this;
     }
 
     public void register(AbstractFlagEncoder encoder) {
-        encoders[encoderCount++] = encoder;
+        encoders.add( encoder );
+
+        int usedBits = encoder.defineBits( encoderCount, nextBit );
+        if( usedBits >= MAX_BITS )
+            throw new IllegalArgumentException( "Encoders are requesting more than 32 bits of flags" );
+
+        nextBit = usedBits;
+        encoderCount = encoders.size();
+    }
+
+    public static EncodingManager instance()
+    {
+        if( instance == null )
+            throw new IllegalStateException( "Encoding Manager still uninitialized." );
+
+        return instance;
     }
 
     public boolean accepts(String name) {
@@ -74,10 +119,10 @@ public class AcceptWay {
 
     public AbstractFlagEncoder getEncoder(String name) {
         for (int i = 0; i < encoderCount; i++) {
-            if (name.equals(encoders[i].toString()))
-                return encoders[i];
+            if (name.equals(encoders.get(i).toString()))
+                return encoders.get(i);
         }
-        return null;
+        throw new IllegalArgumentException( "Encoder for " + name + " not found." );
     }
 
     /**
@@ -88,7 +133,7 @@ public class AcceptWay {
     public int accept(OSMWay way) {
         int includeWay = 0;
         for (int i = 0; i < encoderCount; i++) {
-            includeWay |= encoders[i].isAllowed(way);
+            includeWay |= encoders.get(i).isAllowed( way );
         }
 
         return includeWay;
@@ -103,78 +148,36 @@ public class AcceptWay {
     public int encodeTags(int includeWay, OSMWay osmProperties) {
         int flags = 0;
         for (int i = 0; i < encoderCount; i++) {
-            flags |= encoders[i].handleWayTags(includeWay, osmProperties);
+            flags |= encoders.get(i).handleWayTags(includeWay, osmProperties);
         }
 
         return flags;
-    }
-
-    /**
-     * @return the speed in km/h
-     */
-    static int parseSpeed(String str) {
-        if (Helper.isEmpty(str))
-            return -1;
-
-        try {
-            int val;
-            // see https://en.wikipedia.org/wiki/Knot_%28unit%29#Definitions
-            int mpInteger = str.indexOf("mp");
-            if (mpInteger > 0) {
-                str = str.substring(0, mpInteger).trim();
-                val = Integer.parseInt(str);
-                return (int) Math.round(val * 1.609);
-            }
-
-            int knotInteger = str.indexOf("knots");
-            if (knotInteger > 0) {
-                str = str.substring(0, knotInteger).trim();
-                val = Integer.parseInt(str);
-                return (int) Math.round(val * 1.852);
-            }
-
-            int kmInteger = str.indexOf("km");
-            if (kmInteger > 0)
-                str = str.substring(0, kmInteger).trim();
-            else {
-                kmInteger = str.indexOf("kph");
-                if (kmInteger > 0)
-                    str = str.substring(0, kmInteger).trim();
-            }
-
-            return Integer.parseInt(str);
-        } catch (Exception ex) {
-            return -1;
-        }
     }
 
     public int countVehicles() {
         return encoderCount;
     }
 
-    public boolean accepts(EdgePropertyEncoder encoder) {
-        for (int i = 0; i < encoderCount; i++) {
-            if (encoders[i].getClass().equals(encoder.getClass()))
-                return true;
-        }
-        return false;
-    }
-
-    public static boolean isTrue(Object obj) {
-        if (obj == null)
-            return false;
-        return "yes".equals(obj) || "true".equals(obj) || "1".equals(obj);
-    }
-
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        for (int i = 0;
-                i < encoderCount;
-                i++) {
-            if (str.length() > 0)
-                str.append(",");
-            str.append(encoders[i].toString());
+        for( int i = 0; i < encoderCount; i++ ) {
+            if( str.length() > 0 )
+                str.append( "," );
+            str.append( encoders.get( i ).toString() );
+        }
+
+        return str.toString();
+    }
+
+    public String encoderList() {
+        StringBuilder str = new StringBuilder();
+        for( int i = 0; i < encoderCount; i++ ) {
+            if( str.length() > 0 )
+                str.append( "," );
+            str.append( encoders.get( i ).toString() );
+            str.append( ":" );
+            str.append( encoders.get( i ).getClass().getName() );
         }
 
         return str.toString();
@@ -183,8 +186,30 @@ public class AcceptWay {
     public EdgePropertyEncoder getSingle() {
         if (countVehicles() > 1)
             throw new IllegalStateException("multiple encoders are active. cannot return one:" + toString());
+        return getFirst();
+    }
+
+    public EdgePropertyEncoder getFirst() {
         if (countVehicles() == 0)
             throw new IllegalStateException("no encoder is active!");
-        return encoders[0];
+        return encoders.get(0);
+    }
+
+    public int flagsDefault( boolean bothDirections ) {
+        int flags = 0;
+        for( int i=0; i<encoderCount; i++)
+            flags |= encoders.get( i ).flagsDefault( bothDirections );
+        return flags;
+    }
+
+    /**
+     * Swap direction for all encoders
+     * @param flags
+     * @return
+     */
+    public int swapDirection( int flags ) {
+        for( int i=0; i<encoderCount; i++)
+            flags = encoders.get( i ).swapDirection( flags );
+        return flags;
     }
 }

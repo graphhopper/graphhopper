@@ -19,7 +19,7 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.coll.LongIntMap;
-import com.graphhopper.routing.util.AcceptWay;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
@@ -43,13 +43,12 @@ public class OSMReader {
     private long skippedLocations;
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
-    private AcceptWay acceptWay;
+    private EncodingManager encodingManager = null;
     private int workerThreads = -1;
 
     public OSMReader(GraphStorage storage, long expectedNodes) {
         this.graphStorage = storage;
         helper = new OSMReaderHelper(graphStorage, expectedNodes);
-        acceptWay = new AcceptWay(AcceptWay.CAR);
     }
 
     public OSMReader workerThreads(int numOfWorkers) {
@@ -58,6 +57,9 @@ public class OSMReader {
     }
 
     public void osm2Graph(File osmFile) throws IOException {
+        if( encodingManager == null )
+            throw new IllegalStateException( "Encoding manager not set." );
+
         long start = System.currentTimeMillis();
         preProcess(osmFile);
 
@@ -118,7 +120,7 @@ public class OSMReader {
         if (!item.hasTags())
             return false;
 
-        return acceptWay.accept(item) > 0;
+        return encodingManager.accept(item) > 0;
     }
 
     /**
@@ -180,9 +182,9 @@ public class OSMReader {
         if (!way.hasTags())
             return;
 
-        int includeWay = acceptWay.accept(way);
+        int includeWay = encodingManager.accept(way);
         if (includeWay > 0) {
-            int flags = acceptWay.encodeTags(includeWay, way);
+            int flags = encodingManager.encodeTags(includeWay, way);
             if (flags != 0)
                 helper.addEdge(way.nodes(), flags);
         }
@@ -212,8 +214,8 @@ public class OSMReader {
     /**
      * Specify the type of the path calculation (car, bike, ...).
      */
-    public OSMReader acceptWay(AcceptWay acceptWay) {
-        this.acceptWay = acceptWay;
+    public OSMReader encodingManager( EncodingManager acceptWay ) {
+        this.encodingManager = acceptWay;
         return this;
     }
 

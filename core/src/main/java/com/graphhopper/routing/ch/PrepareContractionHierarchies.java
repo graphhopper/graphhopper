@@ -95,7 +95,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private int neighborUpdatePercentage = 10;
 
     public PrepareContractionHierarchies() {
-        type(new ShortestCalc()).vehicle(new CarFlagEncoder());
+        type(new ShortestCalc());
+        //vehicle(new CarFlagEncoder());
         originalEdges = new RAMDirectory().findCreate("originalEdges");
         originalEdges.create(1000);
     }
@@ -178,6 +179,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     @Override
     public PrepareContractionHierarchies doWork() {
+        if( prepareEncoder == null )
+            throw new IllegalStateException( "No vehicle encoder set." );
+        if( prepareWeightCalc == null )
+            throw new IllegalStateException( "No weight calculation set." );
         allSW.start();
         super.doWork();
         initFromGraph();

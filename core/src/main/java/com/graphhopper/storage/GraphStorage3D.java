@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
 
 /**
@@ -27,8 +28,8 @@ public class GraphStorage3D extends GraphStorage implements Graph3D {
 
     private static final int I_HEIGHT = 3;
 
-    public GraphStorage3D(Directory dir) {
-        super(dir);
+    public GraphStorage3D(Directory dir, EncodingManager encodingManager ) {
+        super(dir, encodingManager);
         nodeEntrySize = 4;
     }
 

@@ -24,6 +24,7 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -76,8 +77,9 @@ public class Measurement {
         int count = args.getInt("measurement.count", 1000);
         int lookupCount = 0;
 
+        final EncodingManager encodingManager = new EncodingManager( "CAR" );
         Directory dir = new RAMDirectory(graphLocation, true);
-        LevelGraphStorage g = new LevelGraphStorage(dir);
+        LevelGraphStorage g = new LevelGraphStorage(dir, encodingManager);
         if (!g.loadExisting())
             throw new IllegalStateException("Cannot load existing levelgraph at " + graphLocation);
         // TODO make sure the graph is unprepared!
@@ -94,7 +96,7 @@ public class Measurement {
             } else {
                 prepare = new NoOpAlgorithmPreparation() {
                     @Override public RoutingAlgorithm createAlgo() {
-                        return new Dijkstra(_graph, new CarFlagEncoder());
+                        return new Dijkstra(_graph, encodingManager.getEncoder( "CAR" ));
                     }
                 }.graph(g);
             }

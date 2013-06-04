@@ -26,9 +26,10 @@ import static org.junit.Assert.*;
  */
 public class FastestCalcTest {
 
+    private EdgePropertyEncoder encoder = new EncodingManager("CAR").getEncoder( "CAR" );
+
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
-        EdgePropertyEncoder encoder = new CarFlagEncoder();
         FastestCalc instance = new FastestCalc(encoder);
         int flags = encoder.flags(encoder.getMaxSpeed(), true);
         assertEquals(instance.getMinWeight(10), instance.getWeight(10, flags), 1e-8);
@@ -36,7 +37,6 @@ public class FastestCalcTest {
 
     @Test
     public void testSpeed0() {
-        EdgePropertyEncoder encoder = new CarFlagEncoder();
         FastestCalc instance = new FastestCalc(encoder);
         assertEquals(1.0 / 0, instance.getWeight(10, encoder.flags(0, true)), 1e-8);
     }

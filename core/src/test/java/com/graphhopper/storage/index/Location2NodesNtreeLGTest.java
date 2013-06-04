@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -37,6 +38,8 @@ import static org.junit.Assert.*;
  */
 public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
 
+    EncodingManager encodingManager = new EncodingManager( "CAR" );
+
     @Override
     public Location2NodesNtreeLG createIndex(Graph g, int resolution) {
         Directory dir = new RAMDirectory(location);
@@ -46,13 +49,13 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
     }
 
     @Override
-    LevelGraph createGraph(Directory dir) {
-        return new LevelGraphStorage(dir).create(100);
+    LevelGraph createGraph(Directory dir, EncodingManager encodingManager) {
+        return new LevelGraphStorage(dir,encodingManager).create(100);
     }
 
     @Test
     public void testLevelGraph() {
-        LevelGraph g = createGraph(new RAMDirectory());
+        LevelGraph g = createGraph(new RAMDirectory(), encodingManager);
         // 0
         // 1
         // 2
@@ -83,7 +86,7 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
 
     @Test
     public void testSortHighLevelFirst() {
-        LevelGraph lg = createGraph(new RAMDirectory());
+        LevelGraph lg = createGraph(new RAMDirectory(), encodingManager);
         lg.setLevel(1, 10);
         lg.setLevel(2, 30);
         lg.setLevel(3, 20);
@@ -100,7 +103,7 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
         // |
         // 1
 
-        LevelGraphStorage lg = (LevelGraphStorage) createGraph(new RAMDirectory());
+        LevelGraphStorage lg = (LevelGraphStorage) createGraph(new RAMDirectory(), encodingManager);
         lg.setNode(0, 1, 0);
         lg.setNode(1, 0, 0);
         lg.setNode(2, 0.5, 0.5);

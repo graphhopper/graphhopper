@@ -18,6 +18,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.Graph;
 import gnu.trove.set.hash.TIntHashSet;
@@ -51,7 +52,7 @@ public class XFirstSearchTest {
             }
         };
 
-        Graph g = new GraphBuilder().create();
+        Graph g = new GraphBuilder(new EncodingManager( "CAR" ) ).create();
         g.edge(0, 1, 85, true);
         g.edge(0, 2, 217, true);
         g.edge(0, 3, 173, true);

@@ -22,6 +22,7 @@ import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -34,7 +35,7 @@ import org.junit.Test;
  */
 public class DijkstraTwoDriversTest {
 
-    CarFlagEncoder carEncoder = new CarFlagEncoder();
+    CarFlagEncoder carEncoder = (CarFlagEncoder) new EncodingManager( "CAR" ).getEncoder( "CAR" );
 
     Graph getGraph() {
         return AbstractRoutingAlgorithmTester.getMatrixAlikeGraph();
@@ -43,6 +44,7 @@ public class DijkstraTwoDriversTest {
     @Test public void testFindMeetingPointWhenNotCrossing() {
         Graph g = getGraph();
         DijkstraTwoDrivers d = new DijkstraTwoDrivers(g);
+
         d.setDriverA(12, 36);
         d.setDriverB(30, 45);
         d.calcPath();

@@ -27,6 +27,7 @@ package com.graphhopper.routing.util;
 public interface EdgePropertyEncoder {
 
     /**
+     * @deprecated
      * @param speed the speed in km/h
      */
     int flags(int speed, boolean bothDir);

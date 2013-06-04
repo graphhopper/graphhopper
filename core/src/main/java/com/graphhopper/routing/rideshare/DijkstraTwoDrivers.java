@@ -22,6 +22,7 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.EdgeEntry;
 
@@ -41,7 +42,7 @@ public class DijkstraTwoDrivers {
 
     public DijkstraTwoDrivers(Graph graph) {
         this.graph = graph;
-        this.carEncoder = new CarFlagEncoder();
+        this.carEncoder = EncodingManager.instance().getEncoder( "CAR" );
     }
 
     public void setDriverA(int fromA, int toA) {
