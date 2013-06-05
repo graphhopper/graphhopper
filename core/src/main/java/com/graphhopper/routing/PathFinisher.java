@@ -18,7 +18,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.PathSplitter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIDResult;
@@ -56,7 +56,7 @@ public class PathFinisher {
 	/** Base path between 2 graph's node */
 	private final Path path;
 	/** vehicle encoder used to compute the path */
-	private final EdgePropertyEncoder vehicleEncoder;
+	private final AbstractFlagEncoder vehicleEncoder;
 	/** graph used to compute the path */
 	private final Graph graph;
 	
@@ -92,7 +92,7 @@ public class PathFinisher {
 	 *            graph used to create the path
 	 */
 	public PathFinisher(LocationIDResult fromLoc, LocationIDResult toLoc,
-			GHPlace from, GHPlace to, Path path, EdgePropertyEncoder encoder, Graph graph) {
+			GHPlace from, GHPlace to, Path path, AbstractFlagEncoder encoder, Graph graph) {
 		this.fromLoc = fromLoc;
 		this.toLoc = toLoc;
 		this.from = from;

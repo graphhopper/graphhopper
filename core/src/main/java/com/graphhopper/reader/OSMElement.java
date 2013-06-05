@@ -238,14 +238,4 @@ public abstract class OSMElement {
     public boolean isType(int type) {
         return this.type == type;
     }
-
-    /**
-     * Only for testing
-     *
-     * @deprecated
-     * @param tags
-     */
-    public void setTags(Map<String, String> tags) {
-        this.tags = tags;
-    }
 }

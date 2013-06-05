@@ -1,6 +1,6 @@
 package com.graphhopper.routing.noderesolver;
 
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.EdgeIterator;
 
@@ -16,13 +16,13 @@ import com.graphhopper.util.EdgeIterator;
 public class DummyNodeResolver implements RouteNodeResolver {
 
 	/** the encoder to read edge flags in node resolution */
-	private final EdgePropertyEncoder edgeEncoder;
+	private final AbstractFlagEncoder edgeEncoder;
 
 	/**
 	 * @param edgenEncoder
 	 *            the encoder to read edge flags in node resolution
 	 */
-	public DummyNodeResolver(EdgePropertyEncoder edgenEncoder) {
+	public DummyNodeResolver(AbstractFlagEncoder edgenEncoder) {
 		this.edgeEncoder = edgenEncoder;
 	}
 

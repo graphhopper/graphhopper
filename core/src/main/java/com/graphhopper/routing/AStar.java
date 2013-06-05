@@ -18,7 +18,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
@@ -42,7 +42,7 @@ public class AStar extends AbstractRoutingAlgorithm {
     private boolean alreadyRun;
     private int visitedCount;
 
-    public AStar(Graph g, EdgePropertyEncoder encoder) {
+    public AStar(Graph g, FlagEncoder encoder) {
         super(g, encoder);
     }
 

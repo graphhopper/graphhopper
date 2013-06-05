@@ -18,6 +18,8 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.EncodingManager;
+
 /**
  * For now this is just a helper class to quickly create a GraphStorage.
  *
@@ -25,13 +27,15 @@ package com.graphhopper.storage;
  */
 public class GraphBuilder {
 
+    private EncodingManager encodingManager;
     private String location;
     private boolean mmap;
     private boolean store;
     private boolean level;
     private int size = 100;
 
-    public GraphBuilder() {
+    public GraphBuilder(EncodingManager encodingManager) {
+        this.encodingManager = encodingManager;
     }
 
     /**
@@ -89,9 +93,9 @@ public class GraphBuilder {
         }
         GraphStorage graph;
         if (level)
-            graph = new LevelGraphStorage(dir);
+            graph = new LevelGraphStorage(dir, encodingManager);
         else
-            graph = new GraphStorage(dir);
+            graph = new GraphStorage(dir, encodingManager);
         return graph;
     }
 

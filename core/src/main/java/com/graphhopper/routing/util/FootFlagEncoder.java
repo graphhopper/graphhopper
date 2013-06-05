@@ -27,41 +27,15 @@ import java.util.Set;
 
 /**
  * @author Peter Karich
+ * @author Nop
  */
 public class FootFlagEncoder extends AbstractFlagEncoder {
 
-    private final Set<String> saveHighwayTags = new HashSet<String>() {
-        {
-            add("footway");
-            add("path");
-            add("steps");
-            add("pedestrian");
-            add("foot");
-            add("living_street");
-            add("track");
-        }
-    };
-    private final Set<String> allowedHighwayTags = new HashSet<String>() {
-        {
-            addAll(saveHighwayTags);
-            add("trunk");
-            add("primary");
-            add("secondary");
-            add("tertiary");
-            add("unclassified");
-            add("residential");
-            add("road");
-            add("service");
-            // disallowed in some countries?
-            add("bridleway");
-        }
-    };
-    private static final Map<String, Integer> SPEED = new FootSpeed();
+    private int safeWayBit = 0;
     protected HashSet<String> intended = new HashSet<String>();
     protected HashSet<String> sidewalks = new HashSet<String>();
 
     public FootFlagEncoder() {
-        super(16, 1, SPEED.get("mean"), SPEED.get("max"));
         restrictions = new String[]{"foot", "access"};
         restrictedValues.add("private");
         restrictedValues.add("no");
@@ -79,6 +53,20 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
         ferries.add("shuttle_train");
         ferries.add("ferry");
+    }
+
+    @Override
+    public int defineBits(int index, int shift) {
+        // first two bits are reserved for route handling in superclass
+        shift = super.defineBits(index, shift);
+
+        // larger value required - ferries are faster than pedestrians
+        speedEncoder = new EncodedValue("Speed", shift, 4, 1, SPEED.get("mean"), SPEED.get("max"));
+        shift += 4;
+
+        safeWayBit = 1 << shift++;
+
+        return shift;
     }
 
     public Integer getSpeed(String string) {
@@ -137,10 +125,18 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
         int encoded;
         if ((allowed & ferryBit) == 0) {
-            encoded = flagsDefault(true);
+            encoded = speedEncoder.setDefaultValue(0);
+            encoded |= directionBitMask;
+
+            // mark safe ways or ways with cycle lanes
+            if (safeHighwayTags.contains(way.getTag("highway"))
+                    || way.hasTag("sidewalk", sidewalks))
+                encoded |= safeWayBit;
+
         } else {
             // TODO read duration and calculate speed 00:30 for ferry            
-            encoded = flagsDefault(true);
+            encoded = speedEncoder.setValue(0, 10);
+            encoded |= directionBitMask;
         }
 
         return encoded;
@@ -150,17 +146,44 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      * Separate ways for pedestrians.
      */
     public boolean isSaveHighway(String highwayValue) {
-        return saveHighwayTags.contains(highwayValue);
+        return safeHighwayTags.contains(highwayValue);
     }
-
-    private static class FootSpeed extends HashMap<String, Integer> {
-
+    private final Set<String> safeHighwayTags = new HashSet<String>() {
         {
-            put("min", 1);
-            put("slow", 3);
-            put("mean", 5);
-            put("fast", 10);
-            put("max", 15);
+            add("footway");
+            add("path");
+            add("steps");
+            add("pedestrian");
+            add("living_street");
+            add("track");
+            add("residential");
+            add("service");
         }
-    }
+    };
+    private final Set<String> allowedHighwayTags = new HashSet<String>() {
+        {
+            addAll(safeHighwayTags);
+            add("trunk");
+            add("trunk_link");
+            add("primary");
+            add("primary_link");
+            add("secondary");
+            add("secondary_link");
+            add("tertiary");
+            add("tertiary_link");
+            add("unclassified");
+            add("road");
+            // disallowed in some countries
+            //add("bridleway");
+        }
+    };
+    private static final Map<String, Integer> SPEED = new HashMap<String, Integer>() {
+        {
+            put("min", 2);
+            put("slow", 4);
+            put("mean", 5);
+            put("fast", 6);
+            put("max", 7);
+        }
+    };
 }

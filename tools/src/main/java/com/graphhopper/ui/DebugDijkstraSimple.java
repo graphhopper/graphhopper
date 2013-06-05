@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
  *  agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
+ *  GraphHopper licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except 
  *  in compliance with the License. You may obtain a copy of the 
  *  License at
@@ -18,9 +18,8 @@
  */
 package com.graphhopper.ui;
 
-import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.EdgeEntry;
 import java.awt.Color;
@@ -34,7 +33,7 @@ public class DebugDijkstraSimple extends Dijkstra implements DebugAlgo {
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraSimple(Graph graph, EdgePropertyEncoder encoder, GraphicsWrapper mg) {
+    public DebugDijkstraSimple(Graph graph, FlagEncoder encoder, GraphicsWrapper mg) {
         super(graph, encoder);
         this.mg = mg;
     }

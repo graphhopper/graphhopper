@@ -38,15 +38,15 @@ public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<N
      * astarbi (bidirectional A*) dijkstra (Dijkstra), dijkstrabi and
      * dijkstraNative (a bit faster bidirectional Dijkstra).
      */
-    public static AlgorithmPreparation createAlgoPrepare(Graph g, final String algorithmStr, EdgePropertyEncoder encoder) {
+    public static AlgorithmPreparation createAlgoPrepare(Graph g, final String algorithmStr, FlagEncoder encoder) {
         return p(new RoutingAlgorithmFactory(algorithmStr, false), encoder).graph(g);
     }
 
-    public static AlgorithmPreparation createAlgoPrepare(String algorithmStr, EdgePropertyEncoder encoder) {
+    public static AlgorithmPreparation createAlgoPrepare(String algorithmStr, FlagEncoder encoder) {
         return p(new RoutingAlgorithmFactory(algorithmStr, false), encoder);
     }
 
-    private static AlgorithmPreparation p(final RoutingAlgorithmFactory factory, final EdgePropertyEncoder encoder) {
+    private static AlgorithmPreparation p(final RoutingAlgorithmFactory factory, final FlagEncoder encoder) {
         return new NoOpAlgorithmPreparation() {
             @Override public RoutingAlgorithm createAlgo() {
                 try {

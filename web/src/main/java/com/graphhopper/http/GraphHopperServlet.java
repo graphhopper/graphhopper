@@ -1,9 +1,9 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
  *  agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
+ *  GraphHopper licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except 
  *  in compliance with the License. You may obtain a copy of the 
  *  License at
@@ -23,7 +23,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.Constants;
@@ -92,7 +92,7 @@ public class GraphHopperServlet extends HttpServlet {
         list.add(bb.maxLat);
         JSONBuilder json = new JSONBuilder().
                 object("bbox", list).
-                object("supportedVehicles", hopper.acceptWay()).
+                object("supportedVehicles", hopper.encodingManager()).
                 object("version", Constants.VERSION).
                 object("buildDate", Constants.BUILD_DATE);
         writeJson(req, res, json.build());
@@ -111,7 +111,7 @@ public class GraphHopperServlet extends HttpServlet {
         } catch (Exception ex) {
         }
         String vehicleStr = getParam(req, "vehicle");
-        EdgePropertyEncoder algoVehicle = Helper.getVehicleEncoder(vehicleStr);
+        FlagEncoder algoVehicle = hopper.encodingManager().getEncoder( vehicleStr.toUpperCase() );
         WeightCalculation algoType = new FastestCalc(algoVehicle);
         if ("shortest".equalsIgnoreCase(getParam(req, "algoType")))
             algoType = new ShortestCalc();
@@ -123,12 +123,12 @@ public class GraphHopperServlet extends HttpServlet {
         try {
             sw = new StopWatch().start();
             GHResponse rsp = hopper.route(new GHRequest(start, end).
-                    vehicle(algoVehicle).type(algoType).
+                    vehicle(algoVehicle.toString()).type(algoType).
                     algorithm(algoStr).
                     putHint("douglas.minprecision", minPathPrecision));
             if (rsp.hasError()) {
                 JSONBuilder builder = new JSONBuilder().startObject("info");
-                List list = new ArrayList();
+                List<Map<String, String>> list = new ArrayList<Map<String, String>>();
                 for (Throwable t : rsp.errors()) {
                     Map<String, String> map = new HashMap<String, String>();
                     map.put("message", t.getMessage());

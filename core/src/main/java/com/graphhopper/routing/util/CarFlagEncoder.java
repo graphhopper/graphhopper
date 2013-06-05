@@ -26,11 +26,11 @@ import java.util.Set;
 
 /**
  * @author Peter Karich
+ * @author Nop
  */
 public class CarFlagEncoder extends AbstractFlagEncoder {
 
     public CarFlagEncoder() {
-        super(0, 2, SPEED.get("secondary"), SPEED.get("motorway"));
         restrictions = new String[]{"motorcar", "motor_vehicle", "vehicle", "access"};
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
@@ -39,12 +39,22 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         restrictedValues.add("restricted");
     }
 
-    public boolean isMotorway(int flags) {
-        return getSpeedPart(flags) * factor == SPEED.get("motorway");
-    }
+    /**
+     * Define the encoding flags for car
+     *
+     * @param index
+     * @param shift bit offset for the first bit used by this encoder
+     * @return adjusted shift pointing behind the last used field
+     */
+    @Override
+    public int defineBits(int index, int shift) {
+        // first two bits are reserved for route handling in superclass
+        shift = super.defineBits(index, shift);
 
-    public boolean isService(int flags) {
-        return getSpeedPart(flags) * factor == SPEED.get("service");
+        speedEncoder = new EncodedValue("Speed", shift, 5, 5, SPEED.get("secondary"), SPEED.get("motorway"));
+
+        // speed used 5 bits
+        return shift + 5;
     }
 
     int getSpeed(String string) {
@@ -89,7 +99,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             // get assumed speed from highway type
             Integer speed = getSpeed(highwayValue);
             // apply speed limit
-            int maxspeed = AcceptWay.parseSpeed(way.getTag("maxspeed"));
+            int maxspeed = parseSpeed(way.getTag("maxspeed"));
             if (maxspeed > 0 && speed > maxspeed)
                 speed = maxspeed;
 
@@ -97,19 +107,22 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             if (speed > 30 && way.hasTag("surface", BAD_SURFACE))
                 speed = 30;
 
+            encoded = speedEncoder.setValue(0, speed);
+
             // usually used with a node, this does not work as intended
             // if( "toll_booth".equals( osmProperties.get( "barrier" ) ) )
             if (way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout")) {
-                encoded = flags(speed, false);
-                if (way.hasTag("oneway", "-1")) {
-                    encoded = swapDirection(encoded);
-                }
+                if (way.hasTag("oneway", "-1"))
+                    encoded |= backwardBit;
+                else
+                    encoded |= forwardBit;
             } else
-                encoded = flags(speed, true);
+                encoded |= directionBitMask;
 
         } else {
             // TODO read duration and calculate speed 00:30 for ferry
-            encoded = flags(10, true);
+            encoded = speedEncoder.setValue(0, 10);
+            encoded |= directionBitMask;
         }
 
         return encoded;

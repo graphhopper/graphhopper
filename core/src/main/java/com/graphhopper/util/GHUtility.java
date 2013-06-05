@@ -21,6 +21,7 @@ package com.graphhopper.util;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -206,12 +207,12 @@ public class GHUtility {
         return outdir;
     }
 
-    static GraphStorage guessStorage(Graph g, Directory outdir) {
+    static GraphStorage guessStorage(Graph g, Directory outdir, EncodingManager encodingManager) {
         GraphStorage store;
         if (g instanceof LevelGraphStorage)
-            store = new LevelGraphStorage(outdir);
+            store = new LevelGraphStorage(outdir, encodingManager);
         else
-            store = new GraphStorage(outdir);
+            store = new GraphStorage(outdir, encodingManager);
         return store;
     }
 
@@ -219,19 +220,9 @@ public class GHUtility {
      * Create a new storage from the specified one without copying the data.
      */
     public static GraphStorage newStorage(GraphStorage store) {
-        return guessStorage(store, guessDirectory(store)).create(store.nodes());
+        return guessStorage(store, guessDirectory(store), store.encodingManager()).create(store.nodes());
     }
-
-    /**
-     * Create a new in-memory storage from the specified one with copying the
-     * data.
-     *
-     * @return the new storage
-     */
-    public static Graph clone(Graph graph) {
-        return clone(graph, guessStorage(graph, new RAMDirectory()));
-    }
-
+    
     /**
      * @return the graph outGraph
      */

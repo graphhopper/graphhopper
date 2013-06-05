@@ -25,7 +25,7 @@ if(LOCAL)
     host = "http://localhost:8989";
 else {
     // cross origin:
-    host = "http://217.92.216.224:8080";
+    host = "http://graphhopper.gpsies.com";
 }
 var ghRequest = new GHRequest(host);
 ghRequest.algoType = "fastest";
@@ -121,13 +121,15 @@ function resolveCoords(fromStr, toStr) {
 
 function initMap() {
     var mapDiv = $("#map");
-    var minSize = Math.min($(window).width(), $(window).height()) * 0.9;
-    mapDiv.width(minSize).height(minSize);
+    var width = $(window).width() - 260;
+    if(width < 100)
+        width = $(window).width() - 5;
+    var height = $(window).height() - 5;
+    mapDiv.width(width).height(height);
     console.log("init map at " + JSON.stringify(bounds));
     
     // mapquest provider
-    var moreAttr = 'Data &copy; <a href="http://www.openstreetmap.org/">OpenStreetMap</a>,'
-    +'Geocoder: <a href="http://wiki.openstreetmap.org/wiki/Nominatim">Nominatim</a>. '
+    var moreAttr = 'Data &copy; <a href="http://www.openstreetmap.org/">OSM</a>,'
     + 'JS: <a href="http://leafletjs.com/">Leaflet</a>';
     var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
         attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr, 
@@ -165,7 +167,9 @@ function initMap() {
         "OpenStreetMap": osm,
         "OpenStreetMap.de": osmde
     };
-    L.control.layers(baseMaps).addTo(map);
+    // no layers for small browser windows
+    if($(window).width() > 400)
+        L.control.layers(baseMaps).addTo(map);
 
     map.fitBounds(new L.LatLngBounds(new L.LatLng(bounds.minLat, bounds.minLon), 
         new L.LatLng(bounds.maxLat, bounds.maxLon)));
@@ -197,16 +201,17 @@ function initMap() {
     
     routingLayer = L.geoJson().addTo(map);    
     clickToRoute = true;
-    function onMapClick(e) {        
+    function onMapClick(e) {       
+        var latlng = e.latlng;
         if(clickToRoute) {
             // set start point
             routingLayer.clearLayers();
             clickToRoute = false;
-            ghRequest.from.setCoord(e.latlng.lat, e.latlng.lng);
+            ghRequest.from.setCoord(latlng.lat, latlng.lng);
             resolveFrom();            
         } else {
             // set end point
-            ghRequest.to.setCoord(e.latlng.lat, e.latlng.lng);
+            ghRequest.to.setCoord(latlng.lat, latlng.lng);
             resolveTo();            
             // do not wait for resolving
             routeLatLng(ghRequest);
@@ -218,9 +223,24 @@ function initMap() {
 
 function setFlag(latlng, isFrom) {
     if(latlng.lat) {
-        L.marker([latlng.lat, latlng.lng], {
-            icon: (isFrom? iconFrom : iconTo)
+        var marker = L.marker([latlng.lat, latlng.lng], {
+            icon: (isFrom? iconFrom : iconTo),
+            draggable: true            
         }).addTo(routingLayer).bindPopup(isFrom? "Start" : "End");                  
+        marker.on('dragend', function(e) {
+            routingLayer.clearLayers();
+            // inconsistent leaflet API: event.target.getLatLng vs. mouseEvent.latlng?
+            var latlng = e.target.getLatLng();
+            if(isFrom) {
+                ghRequest.from.setCoord(latlng.lat, latlng.lng);
+                resolveFrom();                                
+            } else {
+                ghRequest.to.setCoord(latlng.lat, latlng.lng);
+                resolveTo();
+            }
+            // do not wait for resolving
+            routeLatLng(ghRequest);
+        });
     } 
 }
 
@@ -387,20 +407,41 @@ function routeLatLng(request) {
             map.fitBounds(tmpB);
         }
         
-        var tmpTime = round(json.route.time / 60, 1000);
-        if(tmpTime > 60) 
-            tmpTime = floor(tmpTime / 60, 1) + "h " + round(tmpTime % 60, 1) + "min";
-        else
+        var tmpTime = round(json.route.time / 60, 1000);        
+        if(tmpTime > 60) {
+            if(tmpTime / 60 > 24)
+                tmpTime = floor(tmpTime / 60 / 24, 1) + "d " + round(((tmpTime / 60) % 24), 1) + "h";
+            else
+                tmpTime = floor(tmpTime / 60, 1) + "h " + round(tmpTime % 60, 1) + "min";
+        } else
             tmpTime = round(tmpTime % 60, 1) + "min";
-        descriptionDiv.html("distance: " + round(json.route.distance, 100) + "km<br/>"
-            +"time: " + tmpTime + "<br/>"
-            +"took: " + round(json.info.took, 1000) + "s<br/>"
-            +"points: " + json.route.data.coordinates.length); 
-        $("#info").append(descriptionDiv);
-        var osrmLink = $("<a>OSRM</a> ");
-        osrmLink.attr("href", "http://map.project-osrm.org/?loc=" + from + "&loc=" + to);
-        $("#info").append("<span>Compare with: </span>");
-        $("#info").append(osrmLink);
+        var dist = round(json.route.distance, 100);
+        if(dist > 100)
+            dist = round(dist, 1);
+        descriptionDiv.html("<b>"+ dist + "km</b> will take " + tmpTime);        
+
+        var hiddenDiv = $("<div/>");
+        hiddenDiv.hide();
+        
+        var toggly = $("<button style='font-size:9px; float: right; padding: 0px'>more</button>");
+        toggly.click(function() {
+            hiddenDiv.toggle();
+        })
+        $("#info").prepend(toggly);
+        hiddenDiv.html("took: " + round(json.info.took, 1000) + "s, "
+            +"points: " + json.route.data.coordinates.length);
+        $("#info").append(hiddenDiv);
+        
+        var startOsmLink = $("<a>start</a>");
+        startOsmLink.attr("href", "http://www.openstreetmap.org/?zoom=14&mlat="+request.from.lat+"&mlon="+request.from.lng);
+        var endOsmLink = $("<a>end</a>");
+        endOsmLink.attr("href", "http://www.openstreetmap.org/?zoom=14&mlat="+request.to.lat+"&mlon="+request.to.lng);
+        hiddenDiv.append("<br/><span>View on OSM: </span>").append(startOsmLink).append(endOsmLink);
+        
+        var osrmLink = $("<a>OSRM</a>");
+        osrmLink.attr("href", "http://map.project-osrm.org/?loc=" + from + "&loc=" + to);        
+        hiddenDiv.append("<br/><span>Compare with: </span>");
+        hiddenDiv.append(osrmLink);
         var googleLink = $("<a>Google</a> ");
         var addToGoogle = "";
         var addToBing = "";
@@ -412,10 +453,14 @@ function routeLatLng(request) {
         // ? addToBing = "&mode=B";
         }
         googleLink.attr("href", "http://maps.google.com/?q=from:" + from + "+to:" + to + addToGoogle);
-        $("#info").append(googleLink);
+        hiddenDiv.append(googleLink);
         var bingLink = $("<a>Bing</a> ");        
         bingLink.attr("href", "http://www.bing.com/maps/default.aspx?rtp=adr." + from + "~adr." + to + addToBing);
-        $("#info").append(bingLink);
+        hiddenDiv.append(bingLink);
+        
+        if(host.indexOf("gpsies.com") > 0)
+            hiddenDiv.append("<br/><br/>The routing API is hosted by <a href='http://gpsies.com'>Gpsies.com</a>");            
+        
         $('.defaulting').each(function(index, element) {
             $(element).css("color", "black");
         });

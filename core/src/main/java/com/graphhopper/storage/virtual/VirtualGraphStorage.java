@@ -3,6 +3,7 @@ package com.graphhopper.storage.virtual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PathSplitter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.LevelGraphStorage;
@@ -18,8 +19,8 @@ public class VirtualGraphStorage extends LevelGraphStorage {
 	
 	private PathSplitter splitter = new PathSplitter();
 	
-	public VirtualGraphStorage(Directory dir) {
-		super(new PushDirectory(dir));
+	public VirtualGraphStorage(Directory dir, EncodingManager encodingManager) {
+		super(new PushDirectory(dir), encodingManager);
 	}
 	
 	public int cutEdge(EdgeIterator edge, GHPlace gpsPt) {

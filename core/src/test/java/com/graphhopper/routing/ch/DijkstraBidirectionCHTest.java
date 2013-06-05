@@ -20,7 +20,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -56,11 +56,11 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
     @Override
     protected LevelGraph createGraph() {
-        return new GraphBuilder().levelGraphCreate();
+        return new GraphBuilder(encodingManager).levelGraphCreate();
     }
 
     @Override
-    public PrepareContractionHierarchies prepareGraph(Graph g, WeightCalculation calc, EdgePropertyEncoder encoder) {
+    public PrepareContractionHierarchies prepareGraph(Graph g, WeightCalculation calc, FlagEncoder encoder) {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies().graph(g).
                 type(calc).vehicle(encoder);
         // hack: prepare matrixgraph only once
@@ -105,7 +105,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.setLevel(7, 6);
         g2.setLevel(0, 7);
 
-        Path p = new PrepareContractionHierarchies().graph(g2).createAlgo().calcPath(0, 7);
+        Path p = new PrepareContractionHierarchies().vehicle(carEncoder).graph(g2).createAlgo().calcPath(0, 7);
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
         assertEquals(4, p.calcNodes().size());
         assertEquals(4.2, p.distance(), 1e-5);

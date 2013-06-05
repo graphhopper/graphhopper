@@ -30,12 +30,12 @@ public class BikeFlagEncoderTest {
 
     @Test
     public void testGetSpeed() {
-        BikeFlagEncoder instance = new BikeFlagEncoder();
+        BikeFlagEncoder instance = (BikeFlagEncoder) new EncodingManager("CAR,BIKE").getEncoder("BIKE");
         int result = instance.flags(10, true);
         assertEquals(10, instance.getSpeed(result));
         OSMWay way = new OSMWay();
-        way.setTag("highway", "road");
-        assertEquals(10, instance.getSpeed(way));
+        way.setTag("highway", "primary");
+        assertEquals(18, instance.getSpeed(way));
 
         way.setTag("surface", "paved");
         assertEquals(16, instance.getSpeed(way));

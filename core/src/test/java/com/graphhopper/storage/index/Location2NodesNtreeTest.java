@@ -19,13 +19,13 @@
 package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.GHPlace;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -35,6 +35,8 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
+
+    protected final EncodingManager encodingManager = new EncodingManager("CAR");
 
     @Override
     public Location2NodesNtree createIndex(Graph g, int resolution) {
@@ -54,7 +56,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     }
 
     Graph createTestGraph() {
-        Graph graph = createGraph(new RAMDirectory());
+        Graph graph = createGraph(new RAMDirectory(), encodingManager);
         graph.setNode(0, 0.5, -0.5);
         graph.setNode(1, -0.5, -0.5);
         graph.setNode(2, -1, -1);
@@ -182,7 +184,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
 
     @Test
     public void testMoreReal() {
-        Graph graph = createGraph();
+        Graph graph = createGraph(new EncodingManager("CAR"));
         graph.setNode(1, 51.2492152, 9.4317166);
         graph.setNode(0, 52, 9);
         graph.setNode(2, 51.2, 9.4);
@@ -205,7 +207,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     //-1|  2---------/
     //  |
     private Graph createTestGraphWithWayGeometry() {
-        Graph graph = createGraph();
+        Graph graph = createGraph(encodingManager);
         graph.setNode(0, 0.5, -0.5);
         graph.setNode(1, -0.5, -0.5);
         graph.setNode(2, -1, -1);
@@ -234,7 +236,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
 
     @Test
     public void testMore() {
-        Graph g = createGraph();
+        Graph g = createGraph(encodingManager);
         g.setNode(10, 51.2492152, 9.4317166);
         g.setNode(20, 52, 9);
         g.setNode(30, 51.2, 9.4);
@@ -262,7 +264,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
 
     // see testgraph2.jpg
     Graph createTestGraph2() {
-        Graph graph = createGraph(new RAMDirectory());
+        Graph graph = createGraph(new RAMDirectory(), encodingManager);
 
         graph.setNode(8, 49.94553, 11.57214);
         graph.setNode(9, 49.94553, 11.57314);

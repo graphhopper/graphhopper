@@ -31,13 +31,13 @@ import static org.junit.Assert.*;
  */
 public class CarFlagEncoderTest {
 
-    private CarFlagEncoder encoder = new CarFlagEncoder();
+    private EncodingManager em = new EncodingManager("CAR,BIKE,FOOT");
+    private CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("CAR");
 
     @Test
     public void testAccess() {
         Map<String, String> map = new HashMap<String, String>();
-        OSMWay way = new OSMWay();
-        way.setTags(map);
+        OSMWay way = new OSMWay(1, map);
         assertFalse(encoder.isAllowed(way) > 0);
         map.put("highway", "service");
         assertTrue(encoder.isAllowed(way) > 0);
@@ -90,13 +90,5 @@ public class CarFlagEncoderTest {
         assertTrue(encoder.isBackward(swappedFlags));
 
         assertEquals(0, encoder.swapDirection(0));
-    }
-
-    @Test
-    public void testService() {
-        int flags = encoder.flags(encoder.getSpeed("service"), true);
-        assertTrue(encoder.isForward(flags));
-        assertTrue(encoder.isBackward(flags));
-        assertTrue(encoder.isService(flags));
     }
 }

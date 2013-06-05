@@ -18,6 +18,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -32,11 +33,12 @@ import org.junit.Test;
  */
 public class EdgeSkipIteratorTest {
 
-    private CarFlagEncoder carFlagsEncoder = new CarFlagEncoder();
+    private final EncodingManager encodingManager = new EncodingManager("CAR");
+    private CarFlagEncoder carFlagsEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
     private EdgeFilter carOutFilter = new DefaultEdgeFilter(carFlagsEncoder, false, true);
 
     LevelGraph createGraph() {
-        return new GraphBuilder().levelGraphCreate();
+        return new GraphBuilder(encodingManager).levelGraphCreate();
     }
 
     @Test

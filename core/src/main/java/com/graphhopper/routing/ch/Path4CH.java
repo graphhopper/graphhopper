@@ -19,7 +19,7 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.PathBidirRef;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -35,7 +35,7 @@ public class Path4CH extends PathBidirRef {
 
     private WeightCalculation calc;
 
-    public Path4CH(Graph g, EdgePropertyEncoder encoder, WeightCalculation calc) {
+    public Path4CH(Graph g, FlagEncoder encoder, WeightCalculation calc) {
         super(g, encoder);
         this.calc = calc;
     }

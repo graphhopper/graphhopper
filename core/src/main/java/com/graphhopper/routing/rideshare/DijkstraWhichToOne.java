@@ -22,7 +22,7 @@ import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -51,7 +51,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     private int visitedFromCount;
     private int visitedToCount;
 
-    public DijkstraWhichToOne(Graph graph, EdgePropertyEncoder encoder) {
+    public DijkstraWhichToOne(Graph graph, FlagEncoder encoder) {
         super(graph, encoder);
     }
 

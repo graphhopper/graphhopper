@@ -28,37 +28,15 @@ import java.util.Set;
 
 /**
  * @author Peter Karich
+ * @author Nop
  */
 public class BikeFlagEncoder extends AbstractFlagEncoder {
 
-    private final Set<String> saveHighwayTags = new HashSet<String>() {
-        {
-            add("cycleway");
-            add("path");
-            add("road");
-            add("living_street");
-            add("track");
-            // disallowed in some countries?
-            add("bridleway");
-        }
-    };
-    private final Set<String> allowedHighwayTags = new HashSet<String>() {
-        {
-            addAll(saveHighwayTags);
-            add("trunk");
-            add("primary");
-            add("secondary");
-            add("tertiary");
-            add("unclassified");
-            add("residential");
-        }
-    };
+    private int safeWayBit = 0;
     private HashSet<String> intended = new HashSet<String>();
     private HashSet<String> oppositeLanes = new HashSet<String>();
 
     public BikeFlagEncoder() {
-        super(8, 2, HIGHWAY_SPEED.get("cycleway"), HIGHWAY_SPEED.get("road"));
-
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions = new String[]{"bicycle", "access"};
         restrictedValues.add("private");
@@ -73,6 +51,19 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         oppositeLanes.add("opposite");
         oppositeLanes.add("opposite_lane");
         oppositeLanes.add("opposite_track");
+    }
+
+    @Override
+    public int defineBits(int index, int shift) {
+        // first two bits are reserved for route handling in superclass
+        shift = super.defineBits(index, shift);
+
+        speedEncoder = new EncodedValue("Speed", shift, 4, 2, HIGHWAY_SPEED.get("cycleway"), HIGHWAY_SPEED.get("primary"));
+        shift += 4;
+
+        safeWayBit = 1 << shift++;
+
+        return shift;
     }
 
     @Override public String toString() {
@@ -94,7 +85,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
 
             return 0;
         } else {
-            if (!allowedHighwayTags.contains(highwayValue))
+            if (!HIGHWAY_SPEED.containsKey(highwayValue))
                 return 0;
 
             if (way.hasTag("bicycle", intended))
@@ -118,30 +109,32 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
 
         int encoded;
         if ((allowed & ferryBit) == 0) {
-            // http://wiki.openstreetmap.org/wiki/Cycleway
-            // http://wiki.openstreetmap.org/wiki/Map_Features#Cycleway
-            int speed = getSpeed(way);
+            // set speed
+            encoded = speedEncoder.setValue(0, getSpeed(way));
+
+            // handle oneways
             if ((way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
                     && !way.hasTag("oneway:bicycle", "no")
                     && !way.hasTag("cycleway", oppositeLanes)) {
 
-                encoded = flags(speed, false);
                 if (way.hasTag("oneway", "-1"))
-                    encoded = swapDirection(encoded);
+                    encoded |= backwardBit;
+                else
+                    encoded |= forwardBit;
             } else
-                encoded = flags(speed, true);
+                encoded |= directionBitMask;
+
+            // mark safe ways or ways with cycle lanes
+            if (safeHighwayTags.contains(way.getTag("highway"))
+                    || way.hasTag("cycleway"))
+                encoded |= safeWayBit;
+
         } else {
             // TODO read duration and calculate speed 00:30 for ferry
-            encoded = flags(10, true);
+            encoded = speedEncoder.setValue(0, 10);
+            encoded |= directionBitMask;
         }
         return encoded;
-    }
-
-    /**
-     * Some ways are okay but not separate for pedestrians.
-     */
-    public boolean isSaveHighway(String highwayValue) {
-        return saveHighwayTags.contains(highwayValue);
     }
 
     int getSpeed(OSMWay way) {
@@ -158,13 +151,24 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
                 return tInt;
         }
         String highway = way.getTag("highway");
-        if (!Helper.isEmpty(tt)) {
+        if (!Helper.isEmpty(highway)) {
             Integer hwInt = HIGHWAY_SPEED.get(highway);
             if (hwInt != null)
                 return hwInt;
         }
         return 10;
     }
+    private final Set<String> safeHighwayTags = new HashSet<String>() {
+        {
+            add("cycleway");
+            add("path");
+            add("living_street");
+            add("track");
+            add("service");
+            add("unclassified");
+            add("residential");
+        }
+    };
     private static final Map<String, Integer> TRACKTYPE_SPEED = new HashMap<String, Integer>() {
         {
             put("grade1", 16); // paved
@@ -185,24 +189,30 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
             put("dirt", 10);
             put("paving_stones", 8);
             put("grass", 8);
+            put("cobblestone", 6);
         }
     };
     private static final Map<String, Integer> HIGHWAY_SPEED = new HashMap<String, Integer>() {
         {
             put("living_street", 6);
-            put("bridleway", 10);
 
             put("cycleway", 14);
             put("path", 10);
             put("road", 10);
             put("track", 10);
+            put("service", 8);
+            put("unclassified", 14);
+            put("residential", 10);
 
             put("trunk", 18);
+            put("trunk_link", 16);
             put("primary", 18);
+            put("primary_link", 16);
             put("secondary", 18);
+            put("secondary_link", 16);
             put("tertiary", 18);
-            put("unclassified", 10);
-            put("residential", 10);
+            put("tertiary_link", 16);
+
         }
     };
 }
