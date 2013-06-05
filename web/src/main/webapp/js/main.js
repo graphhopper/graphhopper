@@ -351,6 +351,13 @@ function createCallback(errorFallback) {
     };
 }
 
+function focus(coord) {
+    if(coord.lat && coord.lng) {
+        routingLayer.clearLayers();
+        map.setView(new L.LatLng(coord.lat, coord.lng), 11);
+        setFlag(coord, true);
+    }
+}
 function routeLatLng(request) {    
     clickToRoute = true;
     $("#info").empty();
@@ -560,23 +567,28 @@ function initForm() {
     });
     
     // if FROM will be submitted
-    $('#fromInput').keyup(function(e) {
-        if(e.which == 10 || e.which == 13) {
+    $('#fromInput').keypress(function(e) {
+        if(e.which == 13) {
+            var from = $("#fromInput").val()
             var to = $("#toInput").val();
             // do not resolve 'to'
             if(to == "To") {
-                resolveTo();
+                if(from != ghRequest.from.input)
+                    ghRequest.from = new GHInput(from);
+                $.when(resolveFrom()).done(function() {                    
+                    focus(ghRequest.from);
+                });
             } else 
-                resolveCoords($("#fromInput").val(), to);
+                resolveCoords(from, to);
         }
     });
     
     // if TO will be submitted
-    $('#toInput').keyup(function(e) {
-        if(e.which == 10 || e.which == 13) {
+    $('#toInput').keypress(function(e) {
+        if(e.which == 13) {
             var from = $("#fromInput").val();            
             if(from == "From")  {
-                resolveFrom();
+            //                resolveFrom();
             } else
                 resolveCoords(from, $("#toInput").val());
         }

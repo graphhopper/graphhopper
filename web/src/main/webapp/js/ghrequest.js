@@ -113,5 +113,5 @@ GHInput.prototype.setCoord = function(lat, lng) {
 GHInput.prototype.toString = function() {
     if (this.lat && this.lng)
         return this.lat + "," + this.lng;
-    return null;
+    return undefined;
 };
