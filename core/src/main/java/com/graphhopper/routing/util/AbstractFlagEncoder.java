@@ -24,10 +24,12 @@ import com.graphhopper.util.Helper;
 import java.util.HashSet;
 
 /**
- * Abstract class which handles flag decoding and encoding.
+ * Abstract class which handles flag decoding and encoding. Every encoder should
+ * be registered to a EncodingManager to be usable.
  *
  * @author Peter Karich
  * @author Nop
+ * @see EncodingManager
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder {
 
@@ -44,13 +46,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected HashSet<String> ferries = new HashSet<String>();
     protected HashSet<String> oneways = new HashSet<String>();
 
-    /**
-     * Dummy to allow private default constructors in encoder classes
-     */
-    protected AbstractFlagEncoder() {
-    }
-
-    public AbstractFlagEncoder(EncodingManager manager) {
+    public AbstractFlagEncoder() {
         oneways.add("yes");
         oneways.add("true");
         oneways.add("1");
@@ -200,6 +196,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     public int hashCode() {
         int hash = 7;
         hash = 61 * hash + this.directionBitMask;
+        hash = 61 * hash + this.toString().hashCode();
         return hash;
     }
 
@@ -207,11 +204,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     public boolean equals(Object obj) {
         if (obj == null)
             return false;
-        if (getClass() != obj.getClass())
-            return false;
+        // only rely on the string
+//        if (getClass() != obj.getClass())
+//            return false;
         final AbstractFlagEncoder other = (AbstractFlagEncoder) obj;
         if (this.directionBitMask != other.directionBitMask)
             return false;
-        return true;
+        return this.toString().equals(other.toString());
     }
 }

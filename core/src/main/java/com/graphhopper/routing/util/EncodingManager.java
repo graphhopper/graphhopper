@@ -49,6 +49,9 @@ public class EncodingManager {
     private int encoderCount = 0;
     private int nextBit = 0;
 
+    public EncodingManager() {
+    }
+
     /**
      * Instantiate manager with the given list of encoders. The manager knows
      * the default encoders: CAR, FOOT and BIKE Custom encoders can be added by
@@ -64,6 +67,9 @@ public class EncodingManager {
 
         for (String entry : entries) {
             entry = entry.trim();
+            if (entry.isEmpty())
+                continue;
+
             String className = null;
             int pos = entry.indexOf(":");
             if (pos > 0) {
@@ -76,8 +82,7 @@ public class EncodingManager {
 
             try {
                 Class cls = Class.forName(className);
-                register((AbstractFlagEncoder) cls.getDeclaredConstructor(
-                        new Class[]{EncodingManager.class}).newInstance(this));
+                register((AbstractFlagEncoder) cls.getDeclaredConstructor().newInstance());
             } catch (Exception e) {
                 throw new IllegalArgumentException("Cannot instantiate class " + className, e);
             }

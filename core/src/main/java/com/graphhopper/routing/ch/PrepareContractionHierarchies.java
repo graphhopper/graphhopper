@@ -25,7 +25,6 @@ import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.LevelEdgeFilter;

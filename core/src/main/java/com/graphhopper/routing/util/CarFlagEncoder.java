@@ -30,11 +30,7 @@ import java.util.Set;
  */
 public class CarFlagEncoder extends AbstractFlagEncoder {
 
-    private CarFlagEncoder() {
-    }
-
-    public CarFlagEncoder(EncodingManager manager) {
-        super(manager);
+    public CarFlagEncoder() {
         restrictions = new String[]{"motorcar", "motor_vehicle", "vehicle", "access"};
         restrictedValues.add("private");
         restrictedValues.add("agricultural");

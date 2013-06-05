@@ -36,12 +36,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
     private HashSet<String> intended = new HashSet<String>();
     private HashSet<String> oppositeLanes = new HashSet<String>();
 
-    private BikeFlagEncoder() {
-    }
-
-    public BikeFlagEncoder(EncodingManager manager) {
-        super(manager);
-
+    public BikeFlagEncoder() {
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions = new String[]{"bicycle", "access"};
         restrictedValues.add("private");
