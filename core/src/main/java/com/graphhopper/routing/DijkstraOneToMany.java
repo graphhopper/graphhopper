@@ -19,7 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.coll.IntDoubleBinHeap;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.list.TIntList;
@@ -44,7 +44,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     private boolean doClear = true;
     private double limit = Double.MAX_VALUE;
 
-    public DijkstraOneToMany(Graph graph, EdgePropertyEncoder encoder) {
+    public DijkstraOneToMany(Graph graph, FlagEncoder encoder) {
         super(graph, encoder);
         parents = new int[graph.nodes()];
         Arrays.fill(parents, -1);

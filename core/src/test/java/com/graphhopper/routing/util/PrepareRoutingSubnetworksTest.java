@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
 public class PrepareRoutingSubnetworksTest {
 
     Graph createGraph() {
-        return new GraphBuilder().create();
+        return new GraphBuilder(new EncodingManager("CAR")).create();
     }
 
     Graph createSubnetworkTestGraph() {

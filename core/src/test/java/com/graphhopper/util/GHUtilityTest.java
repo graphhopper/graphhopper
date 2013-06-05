@@ -18,6 +18,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -30,8 +31,10 @@ import org.junit.Test;
  */
 public class GHUtilityTest {
 
+    private EncodingManager encodingManager = new EncodingManager("CAR");
+
     Graph createGraph() {
-        return new GraphBuilder().create();
+        return new GraphBuilder(encodingManager).create();
     }
 
     Graph initUnsorted(Graph g) {
@@ -95,7 +98,7 @@ public class GHUtilityTest {
         Graph g = initUnsorted(createGraph());
         EdgeIterator iter = g.edge(6, 5, 11, true);
         iter.wayGeometry(Helper.createPointList(12, 10, -1, 3));
-        LevelGraph lg = new GraphBuilder().levelGraphCreate();
+        LevelGraph lg = new GraphBuilder(encodingManager).levelGraphCreate();
         GHUtility.copyTo(g, lg);
         iter = lg.getEdgeProps(iter.edge(), 6);
         assertEquals(Helper.createPointList(-1, 3, 12, 10), iter.wayGeometry());

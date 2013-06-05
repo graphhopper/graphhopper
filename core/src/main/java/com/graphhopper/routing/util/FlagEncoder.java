@@ -24,10 +24,10 @@ package com.graphhopper.routing.util;
  *
  * @author Peter Karich
  */
-public interface EdgePropertyEncoder {
+public interface FlagEncoder {
 
     /**
-     * @param speed the speed in km/h
+     * @deprecated @param speed the speed in km/h
      */
     int flags(int speed, boolean bothDir);
 

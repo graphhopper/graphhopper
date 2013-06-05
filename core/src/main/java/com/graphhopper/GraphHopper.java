@@ -22,17 +22,8 @@ import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.AcceptWay;
-import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
-import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
-import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -100,7 +91,7 @@ public class GraphHopper implements GraphHopperAPI {
     private int neighborUpdates = 20;
     // for OSM import:
     private String osmFile;
-    private AcceptWay acceptWay = new AcceptWay("CAR");
+    private EncodingManager encodingManager = null;
     private long expectedNodes = 10;
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
@@ -118,13 +109,13 @@ public class GraphHopper implements GraphHopperAPI {
         initIndex();
     }
 
-    public GraphHopper acceptWay(AcceptWay acceptWay) {
-        this.acceptWay = acceptWay;
+    public GraphHopper encodingManager(EncodingManager acceptWay) {
+        this.encodingManager = acceptWay;
         return this;
     }
 
-    public AcceptWay acceptWay() {
-        return acceptWay;
+    public EncodingManager encodingManager() {
+        return encodingManager;
     }
 
     public GraphHopper forServer() {
@@ -299,7 +290,7 @@ public class GraphHopper implements GraphHopperAPI {
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", 1);
         String type = args.get("osmreader.acceptWay", "CAR");
-        acceptWay = new AcceptWay(type);
+        encodingManager = new EncodingManager(type);
         workerThreads = args.getInt("osmreader.workerThreads", -1);
 
         // index
@@ -351,15 +342,15 @@ public class GraphHopper implements GraphHopperAPI {
 
         logger.info("start creating graph from " + file);
         OSMReader reader = new OSMReader(graph, expectedNodes).workerThreads(workerThreads);
-        reader.acceptWay(acceptWay);
+        reader.encodingManager(encodingManager);
         reader.wayPointMaxDistance(wayPointMaxDistance);
 
-        properties.put("osmreader.acceptWay", acceptWay.toString());
+        properties.put("osmreader.acceptWay", encodingManager.encoderList());
         properties.putCurrentVersions();
         String info = graph.getClass().getSimpleName()
                 + "|" + graph.directory().getClass().getSimpleName()
                 + "|" + properties.versionsToString();
-        logger.info("using " + info + ", accepts:" + acceptWay + ", memory:" + Helper.memInfo());
+        logger.info("using " + info + ", accepts:" + encodingManager + ", memory:" + Helper.memInfo());
         reader.osm2Graph(osmTmpFile);
         return reader;
     }
@@ -378,6 +369,8 @@ public class GraphHopper implements GraphHopperAPI {
     public boolean load(String graphHopperFolder) {
         if (Helper.isEmpty(graphHopperFolder))
             throw new IllegalStateException("graphHopperLocation is not specified. call init before");
+        if (encodingManager == null)
+            throw new IllegalStateException("No vehicles are defined (no encoding manager set)");
         if (graph != null)
             throw new IllegalStateException("graph is already loaded");
 
@@ -407,10 +400,10 @@ public class GraphHopper implements GraphHopperAPI {
 
         properties = new StorableProperties(dir, "properties");
         if (chUsage) {
-            graph = new LevelGraphStorage(dir);
+            graph = new LevelGraphStorage(dir, encodingManager);
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
 
-            EdgePropertyEncoder encoder = acceptWay.getSingle();
+            FlagEncoder encoder = encodingManager.getSingle();
             if (chFast)
                 tmpPrepareCH.type(new FastestCalc(encoder));
             else
@@ -423,8 +416,8 @@ public class GraphHopper implements GraphHopperAPI {
             prepare = tmpPrepareCH;
             prepare.graph(graph);
         } else {
-            graph = new GraphStorage(dir);
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, defaultAlgorithm, new CarFlagEncoder());
+            graph = new GraphStorage(dir, encodingManager);
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, defaultAlgorithm, encodingManager.getFirst());
         }
 
         if (!graph.loadExisting())
@@ -432,10 +425,10 @@ public class GraphHopper implements GraphHopperAPI {
 
         properties.loadExisting();
 
-        // overwrite configured accept way
+        // check encoding for compatiblity
         String acceptStr = properties.get("osmreader.acceptWay");
-        if (!acceptStr.isEmpty())
-            acceptWay = new AcceptWay(acceptStr);
+        if (!acceptStr.isEmpty() && !encodingManager.encoderList().equals(acceptStr))
+            throw new IllegalStateException("Encoding does not match:\nGraphhopper: " + encodingManager.encoderList() + "\nGraph: " + acceptStr);
         properties.checkVersions(false);
         if ("false".equals(properties.get("prepare.done")))
             prepare();
@@ -444,8 +437,8 @@ public class GraphHopper implements GraphHopperAPI {
         return true;
     }
 
-    private boolean supportsVehicle(EdgePropertyEncoder encoder) {
-        return acceptWay.accepts(encoder);
+    private boolean supportsVehicle(String encoder) {
+        return encodingManager.accepts(encoder);
     }
 
     @Override
@@ -455,11 +448,11 @@ public class GraphHopper implements GraphHopperAPI {
         GHResponse rsp = new GHResponse();
 
         if (!supportsVehicle(request.vehicle())) {
-            rsp.addError(new IllegalArgumentException("Vehicle " + request.vehicle() + " unsupported. Supported are: " + acceptWay()));
+            rsp.addError(new IllegalArgumentException("Vehicle " + request.vehicle() + " unsupported. Supported are: " + encodingManager()));
             return rsp;
         }
 
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(request.vehicle());
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder(request.vehicle()));
         int from = index.findClosest(request.from().lat, request.from().lon, edgeFilter).closestNode();
         int to = index.findClosest(request.to().lat, request.to().lon, edgeFilter).closestNode();
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
@@ -482,7 +475,7 @@ public class GraphHopper implements GraphHopperAPI {
                 // or use defaultAlgorithm here?
                 rsp.addError(new IllegalStateException("Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
         } else {
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm(), request.vehicle());
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm(), encodingManager.getEncoder(request.vehicle()));
             algo = prepare.createAlgo();
             algo.type(request.type());
         }
@@ -545,9 +538,9 @@ public class GraphHopper implements GraphHopperAPI {
         boolean tmpPrepare = doPrepare && prepare != null;
         properties.put("prepare.done", tmpPrepare);
         if (tmpPrepare) {
-            if (prepare instanceof PrepareContractionHierarchies && acceptWay.countVehicles() > 1)
+            if (prepare instanceof PrepareContractionHierarchies && encodingManager.countVehicles() > 1)
                 throw new IllegalArgumentException("Contraction hierarchies preparation "
-                        + "requires (at the moment) only one vehicle. But was:" + acceptWay);
+                        + "requires (at the moment) only one vehicle. But was:" + encodingManager);
             logger.info("calling prepare.doWork ... (" + Helper.memInfo() + ")");
             prepare.doWork();
         }

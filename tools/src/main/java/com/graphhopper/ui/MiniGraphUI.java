@@ -26,7 +26,7 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
@@ -75,8 +75,6 @@ public class MiniGraphUI {
     private MapLayer pathLayer;
     private boolean fastPaint = false;
     private WeightCalculation wCalc = new ShortestCalc();
-    private EdgePropertyEncoder carEncoder = new CarFlagEncoder();
-    private EdgePropertyEncoder footEncoder = new FootFlagEncoder();
 
     public MiniGraphUI(GraphHopper hopper, boolean debug) {
         this.graph = hopper.graph();

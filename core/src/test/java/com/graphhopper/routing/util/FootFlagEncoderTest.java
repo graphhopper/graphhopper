@@ -34,7 +34,8 @@ import static org.junit.Assert.*;
  */
 public class FootFlagEncoderTest {
 
-    private FootFlagEncoder footEncoder = new FootFlagEncoder();
+    private EncodingManager encodingManager = new EncodingManager("CAR,BIKE,FOOT");
+    private FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
 
     @Test
     public void testGetSpeed() {
@@ -54,7 +55,7 @@ public class FootFlagEncoderTest {
 
     @Test
     public void testCombined() {
-        EdgePropertyEncoder carEncoder = new CarFlagEncoder();
+        FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
         int fl = footEncoder.flags(10, true) | carEncoder.flags(100, false);
         assertEquals(10, footEncoder.getSpeed(fl));
         assertTrue(footEncoder.isForward(fl));
@@ -69,7 +70,7 @@ public class FootFlagEncoderTest {
 
     @Test
     public void testGraph() {
-        Graph g = new GraphBuilder().create();
+        Graph g = new GraphBuilder(encodingManager).create();
         g.edge(0, 1, 10, footEncoder.flags(10, true));
         g.edge(0, 2, 10, footEncoder.flags(5, true));
         g.edge(1, 3, 10, footEncoder.flags(10, true));
@@ -127,5 +128,24 @@ public class FootFlagEncoderTest {
         assertFalse(footEncoder.isAllowed(way) > 0);
         map.put("foot", "yes");
         assertTrue(footEncoder.isAllowed(way) > 0);
+    }
+
+    @Test
+    public void testMixSpeedAndSafe() {
+        Map<String, String> map = new HashMap<String, String>();
+        OSMWay way = new OSMWay(1, map);
+
+        map.put("highway", "motorway");        
+        int flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(0, flags);
+        
+        map.put("sidewalk", "yes");
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(5, footEncoder.getSpeed(flags));
+        
+        map.clear();
+        map.put("highway", "track");        
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(5, footEncoder.getSpeed(flags));                
     }
 }

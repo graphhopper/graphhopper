@@ -43,7 +43,7 @@ public class LevelGraphStorageTest extends GraphStorageTest {
 
     @Override
     public GraphStorage newGraph(Directory dir) {
-        return new LevelGraphStorage(dir);
+        return new LevelGraphStorage(dir, encodingManager);
     }
 
     @Test
@@ -52,7 +52,7 @@ public class LevelGraphStorageTest extends GraphStorageTest {
         g.flush();
         g.close();
 
-        g = new GraphBuilder().location(defaultGraph).mmap(false).store(true).create();
+        g = new GraphBuilder(encodingManager).location(defaultGraph).mmap(false).store(true).create();
         try {
             g.loadExisting();
             assertTrue(false);

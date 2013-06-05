@@ -18,6 +18,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.GraphBuilder;
 import org.junit.Test;
@@ -31,7 +32,8 @@ public class GraphHopperAPITest {
 
     @Test
     public void testLoad() {
-        GraphStorage graph = new GraphBuilder().create();
+        final EncodingManager encodingManager = new EncodingManager("CAR");
+        GraphStorage graph = new GraphBuilder(encodingManager).create();
         graph.setNode(0, 42, 10);
         graph.setNode(1, 42.1, 10.1);
         graph.setNode(2, 42.1, 10.2);
@@ -44,7 +46,7 @@ public class GraphHopperAPITest {
         graph.edge(0, 4, 40, true);
         graph.edge(4, 3, 40, true);
 
-        GraphHopperAPI instance = new GraphHopper(graph);
+        GraphHopperAPI instance = new GraphHopper(graph).encodingManager(encodingManager);
         GHResponse ph = instance.route(new GHRequest(42, 10.4, 42, 10));
         assertTrue(ph.found());
         assertEquals(80, ph.distance(), 1e-6);

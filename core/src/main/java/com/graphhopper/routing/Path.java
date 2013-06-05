@@ -18,7 +18,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -41,7 +41,7 @@ import gnu.trove.set.hash.TIntHashSet;
 public class Path {
 
     protected Graph graph;
-    protected EdgePropertyEncoder encoder;
+    protected FlagEncoder encoder;
     protected double distance;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
@@ -54,7 +54,7 @@ public class Path {
     private PointList cachedPoints;
     private double weight;
 
-    public Path(Graph graph, EdgePropertyEncoder encoder) {
+    public Path(Graph graph, FlagEncoder encoder) {
         this.weight = Double.MAX_VALUE;
         this.graph = graph;
         this.encoder = encoder;

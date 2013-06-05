@@ -19,11 +19,8 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.routing.util.AcceptWay;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.AbstractGraphTester;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -55,9 +52,9 @@ public class OSMReaderTest {
     private String file4 = "test-osm4.xml";
     private String file5 = "test-osm-negative-ids.xml";
     private String dir = "./target/tmp/test-db";
-    private CarFlagEncoder carEncoder = new CarFlagEncoder();
-    private FootFlagEncoder footEncoder = new FootFlagEncoder();
-    private EdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
+    private CarFlagEncoder carEncoder;
+    private FootFlagEncoder footEncoder;
+    private EdgeFilter carOutFilter;
 
     @Before public void setUp() {
         new File(dir).mkdirs();
@@ -67,8 +64,8 @@ public class OSMReaderTest {
         Helper.removeDir(new File(dir));
     }
 
-    GraphStorage buildGraph(String directory) {
-        return new GraphStorage(new RAMDirectory(directory, false));
+    GraphStorage buildGraph(String directory, EncodingManager encodingManager) {
+        return new GraphStorage(new RAMDirectory(directory, false), encodingManager);
     }
 
     class GraphHopperTest extends GraphHopper {
@@ -78,11 +75,17 @@ public class OSMReaderTest {
         public GraphHopperTest(String file) {
             this.testFile = file;
             graphHopperLocation(dir);
+            encodingManager(new EncodingManager("CAR,FOOT"));
+
+            carEncoder = (CarFlagEncoder) encodingManager().getEncoder("CAR");
+            footEncoder = (FootFlagEncoder) encodingManager().getEncoder("FOOT");
+            carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
+
         }
 
         @Override protected OSMReader importOSM(String ignore) throws IOException {
-            OSMReader osmReader = new OSMReader(buildGraph(dir), 1000);
-            osmReader.acceptWay(acceptWay());
+            OSMReader osmReader = new OSMReader(buildGraph(dir, encodingManager()), 1000);
+            osmReader.encodingManager(encodingManager());
             try {
                 osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
             } catch (URISyntaxException e) {
@@ -117,13 +120,11 @@ public class OSMReaderTest {
         assertEquals(n30, iter.adjNode());
         assertEquals(93147, iter.distance(), 1);
         CarFlagEncoder flags = carEncoder;
-        assertTrue(flags.isMotorway(iter.flags()));
         assertTrue(flags.isForward(iter.flags()));
         assertTrue(flags.isBackward(iter.flags()));
         assertTrue(iter.next());
         assertEquals(n50, iter.adjNode());
         AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.wayGeometry());
-        assertTrue(flags.isService(iter.flags()));
         assertTrue(flags.isForward(iter.flags()));
         assertTrue(flags.isBackward(iter.flags()));
 
@@ -151,11 +152,12 @@ public class OSMReaderTest {
     @Test public void testWithBounds() {
         GraphHopper hopper = new GraphHopperTest(file1) {
             @Override protected OSMReader importOSM(String ignore) throws IOException {
-                OSMReader osmReader = new OSMReader(buildGraph(dir), 1000) {
+                OSMReader osmReader = new OSMReader(buildGraph(dir, encodingManager()), 1000) {
                     @Override public boolean isInBounds(OSMNode node) {
                         return node.lat() > 49 && node.lon() > 8;
                     }
                 };
+                osmReader.encodingManager(encodingManager());
                 try {
                     osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
                 } catch (URISyntaxException e) {
@@ -217,30 +219,25 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(n10, iter.adjNode());
         CarFlagEncoder encoder = carEncoder;
-        assertTrue(encoder.isMotorway(iter.flags()));
         assertFalse(encoder.isForward(iter.flags()));
         assertTrue(encoder.isBackward(iter.flags()));
 
         assertTrue(iter.next());
         assertEquals(n30, iter.adjNode());
-        assertTrue(encoder.isMotorway(iter.flags()));
         assertTrue(encoder.isForward(iter.flags()));
         assertFalse(encoder.isBackward(iter.flags()));
 
         assertTrue(iter.next());
-        assertTrue(encoder.isMotorway(iter.flags()));
         assertFalse(encoder.isForward(iter.flags()));
         assertTrue(encoder.isBackward(iter.flags()));
 
         assertTrue(iter.next());
         assertEquals(n22, iter.adjNode());
-        assertFalse(encoder.isMotorway(iter.flags()));
         assertFalse(encoder.isForward(iter.flags()));
         assertTrue(encoder.isBackward(iter.flags()));
 
         assertTrue(iter.next());
         assertEquals(n23, iter.adjNode());
-        assertFalse(encoder.isMotorway(iter.flags()));
         assertTrue(encoder.isForward(iter.flags()));
         assertFalse(encoder.isBackward(iter.flags()));
     }
@@ -272,7 +269,6 @@ public class OSMReaderTest {
 
     @Test public void testWayReferencesNotExistingAdjNode() {
         GraphHopper hopper = new GraphHopperTest(file4).
-                acceptWay(new AcceptWay("CAR,FOOT")).
                 importOrLoad();
         Graph graph = hopper.graph();
 
@@ -285,7 +281,6 @@ public class OSMReaderTest {
 
     @Test public void testFoot() {
         GraphHopper hopper = new GraphHopperTest(file3).
-                acceptWay(new AcceptWay("CAR,FOOT")).
                 importOrLoad();
         Graph graph = hopper.graph();
 
@@ -315,7 +310,6 @@ public class OSMReaderTest {
 
     @Test public void testNegativeIds() {
         GraphHopper hopper = new GraphHopperTest(file5).
-                acceptWay(new AcceptWay("CAR")).
                 importOrLoad();
         Graph graph = hopper.graph();
         assertEquals(4, graph.nodes());

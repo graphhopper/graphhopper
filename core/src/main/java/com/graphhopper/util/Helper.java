@@ -17,7 +17,7 @@ package com.graphhopper.util;
 
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
@@ -186,17 +186,18 @@ public class Helper {
         return strOsm == null || strOsm.trim().length() == 0;
     }
 
-    public static EdgePropertyEncoder getVehicleEncoder(String str) {
-        str = str.toLowerCase();
-        if (str.isEmpty() || "car".equals(str))
-            return new CarFlagEncoder();
-        else if ("foot".equals(str))
-            return new FootFlagEncoder();
-        else if ("bike".equals(str))
-            return new BikeFlagEncoder();
-        throw new RuntimeException("VehicleEncoder not found " + str);
-    }
-
+    /*
+     public static EdgePropertyEncoder getVehicleEncoder(String str) {
+     str = str.toLowerCase();
+     if (str.isEmpty() || "car".equals(str))
+     return new CarFlagEncoder();
+     else if ("foot".equals(str))
+     return new FootFlagEncoder();
+     else if ("bike".equals(str))
+     return new BikeFlagEncoder();
+     throw new RuntimeException("VehicleEncoder not found " + str);
+     }
+     */
     /**
      * Determines if the specified ByteBuffer is one which maps to a file!
      */

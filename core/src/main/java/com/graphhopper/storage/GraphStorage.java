@@ -21,15 +21,16 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.util.CombinedEncoder;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import static com.graphhopper.util.Helper.*;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
+
+import static com.graphhopper.util.Helper.nf;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be
@@ -80,11 +81,13 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     // 0 stands for no separate geoRef
     private int maxGeoRef = 1;
     private boolean initialized = false;
-    private CombinedEncoder combiEncoder;
+    private EncodingManager encodingManager;
     protected final EdgeFilter allEdgesFilter;
 
-    public GraphStorage(Directory dir) {
-        combiEncoder = new CombinedEncoder();
+    public GraphStorage(Directory dir, EncodingManager encodingManager) {
+        if (encodingManager == null)
+            throw new NullPointerException("EncodingManager cannot be null!");
+        this.encodingManager = encodingManager;
         allEdgesFilter = EdgeFilter.ALL_EDGES;
         this.dir = dir;
         this.nodes = dir.findCreate("nodes");
@@ -103,11 +106,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         N_LAT = nextNodeEntryIndex();
         N_LON = nextNodeEntryIndex();
         initNodeAndEdgeEntrySize();
-    }
-
-    public GraphStorage combinedEncoder(CombinedEncoder combiEncoder) {
-        this.combiEncoder = combiEncoder;
-        return this;
     }
 
     void checkInit() {
@@ -267,7 +265,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
     @Override
     public EdgeIterator edge(int a, int b, double distance, boolean bothDirections) {
-        return edge(a, b, distance, combiEncoder.flagsDefault(bothDirections));
+        return edge(a, b, distance, encodingManager.flagsDefault(bothDirections));
     }
 
     @Override
@@ -330,7 +328,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             nextEdge = nextEdgeOther;
             nextEdgeOther = tmp;
 
-            flags = combiEncoder.swapDirection(flags);
+            flags = encodingManager.swapDirection(flags);
         }
 
         long edgePointer = (long) edge * edgeEntrySize;
@@ -415,6 +413,10 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     @Override
     public AllEdgesIterator getAllEdges() {
         return new AllEdgeIterator();
+    }
+
+    public EncodingManager encodingManager() {
+        return encodingManager;
     }
 
     /**
@@ -526,7 +528,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         @Override public int flags() {
             int flags = edges.getInt(edgePointer + E_FLAGS);
             if (switchFlags)
-                return combiEncoder.swapDirection(flags);
+                return encodingManager.swapDirection(flags);
             return flags;
         }
     }
@@ -610,7 +612,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
             // switch direction flags if necessary
             if (baseNode > node)
-                flags = combiEncoder.swapDirection(flags);
+                flags = encodingManager.swapDirection(flags);
             return flags;
         }
 
@@ -719,6 +721,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             clonedG.removedNodes = null;
         else
             clonedG.removedNodes = removedNodes.copyTo(new GHBitSetImpl());
+
+        clonedG.encodingManager = encodingManager;
+
         return clonedG;
     }
 
@@ -977,6 +982,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         // edges
         edges.setHeader(0, edgeEntrySize);
         edges.setHeader(1, edgeCount);
+        edges.setHeader(2, encodingManager.hashCode());
 
         // geometry
         wayGeometry.setHeader(0, maxGeoRef);

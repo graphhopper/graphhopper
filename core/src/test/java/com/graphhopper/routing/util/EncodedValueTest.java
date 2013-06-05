@@ -1,6 +1,6 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license
- *  agreements. See the NOTICE file distributed with this work for
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
  *  GraphHopper licenses this file to you under the Apache License,
@@ -22,22 +22,20 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
+ *
  * @author Peter Karich
  */
-public class FastestCalcTest {
-
-    private FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
+public class EncodedValueTest {
 
     @Test
-    public void testMinWeightHasSameUnitAs_getWeight() {
-        FastestCalc instance = new FastestCalc(encoder);
-        int flags = encoder.flags(encoder.getMaxSpeed(), true);
-        assertEquals(instance.getMinWeight(10), instance.getWeight(10, flags), 1e-8);
-    }
+    public void testSetValue() {
+        EncodedValue instance = new EncodedValue("test", 6, 4, 1, 5, 10);
+        assertEquals(10, instance.getValue(instance.setValue(0, 10)));
 
-    @Test
-    public void testSpeed0() {
-        FastestCalc instance = new FastestCalc(encoder);
-        assertEquals(1.0 / 0, instance.getWeight(10, encoder.flags(0, true)), 1e-8);
+        instance = new EncodedValue("test", 0, 4, 1, 5, 10);
+        assertEquals(10, instance.getValue(instance.setValue(0, 10)));
+        
+        instance = new EncodedValue("test", 0, 4, 1, 5, 10);
+        assertEquals(5, instance.getValue(instance.setDefaultValue(0)));
     }
 }

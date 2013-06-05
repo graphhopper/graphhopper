@@ -19,7 +19,7 @@
 package com.graphhopper.ui;
 
 import com.graphhopper.routing.AStarBidirection;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import java.awt.Color;
@@ -33,7 +33,7 @@ public class DebugAStarBi extends AStarBidirection implements DebugAlgo {
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugAStarBi(Graph graph, EdgePropertyEncoder encoder, GraphicsWrapper mg) {
+    public DebugAStarBi(Graph graph, FlagEncoder encoder, GraphicsWrapper mg) {
         super(graph, encoder);
         this.mg = mg;
     }
