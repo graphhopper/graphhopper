@@ -103,6 +103,10 @@ GHInput = function(str) {
     }
 };
 
+GHInput.prototype.isResolved = function() {
+    return this.lat && this.lng;
+}
+
 GHInput.prototype.setCoord = function(lat, lng) {
     this.resolvedText = "";
     this.lat = round(lat);
