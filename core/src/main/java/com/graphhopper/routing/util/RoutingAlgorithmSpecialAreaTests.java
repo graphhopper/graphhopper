@@ -27,6 +27,7 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.StopWatch;
 import static com.graphhopper.routing.util.NoOpAlgorithmPreparation.*;
+import com.graphhopper.storage.GraphStorage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -67,7 +68,9 @@ public class RoutingAlgorithmSpecialAreaTests {
         TestAlgoCollector testCollector = new TestAlgoCollector("testAlgos");
         final EncodingManager encodingManager = new EncodingManager("CAR");
         CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
-        Collection<AlgorithmPreparation> prepares = createAlgos(unterfrankenGraph, carEncoder, true, encodingManager);
+        boolean ch = true;
+        Collection<AlgorithmPreparation> prepares = createAlgos(unterfrankenGraph, carEncoder,
+                ch, new ShortestCalc(), encodingManager);
         for (AlgorithmPreparation prepare : prepares) {
             int failed = testCollector.errors.size();
 
@@ -87,18 +90,18 @@ public class RoutingAlgorithmSpecialAreaTests {
     }
 
     public static Collection<AlgorithmPreparation> createAlgos(Graph g,
-            FlagEncoder encoder, boolean withCh, EncodingManager encodingManager) {
+            FlagEncoder encoder, boolean withCh, WeightCalculation weightCalc, EncodingManager manager) {
         List<AlgorithmPreparation> prepare = new ArrayList<AlgorithmPreparation>(Arrays.<AlgorithmPreparation>asList(
-                createAlgoPrepare(g, "astar", encoder),
-                createAlgoPrepare(g, "dijkstraOneToMany", encoder),
-                createAlgoPrepare(g, "astarbi", encoder),
-                createAlgoPrepare(g, "dijkstraNative", encoder),
-                createAlgoPrepare(g, "dijkstrabi", encoder),
-                createAlgoPrepare(g, "dijkstra", encoder)));
+                createAlgoPrepare(g, "astar", encoder, weightCalc),
+                createAlgoPrepare(g, "dijkstraOneToMany", encoder, weightCalc),
+                createAlgoPrepare(g, "astarbi", encoder, weightCalc),
+                createAlgoPrepare(g, "dijkstraNative", encoder, weightCalc),
+                createAlgoPrepare(g, "dijkstrabi", encoder, weightCalc),
+                createAlgoPrepare(g, "dijkstra", encoder, weightCalc)));
         if (withCh) {
-            LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder(encodingManager).levelGraphCreate());
+            LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder(manager).levelGraphCreate());
             PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().
-                    graph(graphCH).vehicle(encoder);
+                    graph(graphCH).vehicle(encoder).type(weightCalc);
             prepareCH.doWork();
             prepare.add(prepareCH);
             // TODO prepare.add(prepareCH.createAStar().approximation(true).approximationFactor(.9));

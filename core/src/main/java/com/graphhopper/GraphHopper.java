@@ -417,7 +417,7 @@ public class GraphHopper implements GraphHopperAPI {
             prepare.graph(graph);
         } else {
             graph = new GraphStorage(dir, encodingManager);
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, defaultAlgorithm, encodingManager.getFirst());
+            // prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, defaultAlgorithm, encodingManager.getFirst());
         }
 
         if (!graph.loadExisting())
@@ -475,9 +475,9 @@ public class GraphHopper implements GraphHopperAPI {
                 // or use defaultAlgorithm here?
                 rsp.addError(new IllegalStateException("Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
         } else {
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm(), encodingManager.getEncoder(request.vehicle()));
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm(), 
+                    encodingManager.getEncoder(request.vehicle()), request.type());
             algo = prepare.createAlgo();
-            algo.type(request.type());
         }
         if (rsp.hasError())
             return rsp;

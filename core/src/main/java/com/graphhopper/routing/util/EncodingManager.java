@@ -196,7 +196,7 @@ public class EncodingManager {
         return getFirst();
     }
 
-    public FlagEncoder getFirst() {
+    private FlagEncoder getFirst() {
         if (countVehicles() == 0)
             throw new IllegalStateException("no encoder is active!");
         return encoders.get(0);

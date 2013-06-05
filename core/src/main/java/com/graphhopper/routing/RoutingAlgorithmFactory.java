@@ -57,20 +57,4 @@ public class RoutingAlgorithmFactory {
         } else
             return new AStar(g, encoder);
     }
-
-    /*
-     public static RoutingAlgorithm createAlgoForCar(String algoStr, Graph g, boolean shortest) {
-     EdgePropertyEncoder carEncoder = new CarFlagEncoder();
-     WeightCalculation weight;
-     if (shortest)
-     weight = new ShortestCalc();
-     else
-     weight = new FastestCalc(carEncoder);
-     try {
-     return new RoutingAlgorithmFactory(algoStr, false).createAlgo(g, carEncoder).type(weight);
-     } catch (Exception ex) {
-     throw new RuntimeException(ex);
-     }
-     }
-     */
 }
