@@ -393,8 +393,8 @@ function routeLatLng(request) {
                 descriptionDiv.append("<div class='error'>" + tmpErrors[i].message + "</div>");
             }
             return;
-        } else if(json.info.routeNotFound) {
-            descriptionDiv.html('route not found');
+        } else if(!json.info.routeFound) {
+            descriptionDiv.html('Route not found! Disconnected areas?');
             return;
         }
         

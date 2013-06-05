@@ -143,16 +143,13 @@ public class GraphHopperServlet extends HttpServlet {
             float took = sw.stop().getSeconds();
             String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
             PointList points = rsp.points();
-            if (rsp.found())
-                infoStr += " path found";
-            else
-                infoStr += " NO path found";
-
+            
             double distInKM = rsp.distance() / 1000;
             String encodedParam = getParam(req, "encodedPolyline");
 
             JSONBuilder builder = new JSONBuilder().
                     startObject("info").
+                    object("routeFound", rsp.found()).
                     object("took", took).
                     object("tookGeocoding", tookGeocoding).
                     endObject();
