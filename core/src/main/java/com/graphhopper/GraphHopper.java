@@ -428,7 +428,7 @@ public class GraphHopper implements GraphHopperAPI {
         // check encoding for compatiblity
         String acceptStr = properties.get("osmreader.acceptWay");
         if (!acceptStr.isEmpty() && !encodingManager.encoderList().equals(acceptStr))
-            throw new IllegalStateException("Encoding does not match:\nGraphhopper: " + encodingManager.encoderList() + "\nGraph: " + acceptStr);
+            throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.encoderList() + "\nGraph: " + acceptStr);
         properties.checkVersions(false);
         if ("false".equals(properties.get("prepare.done")))
             prepare();

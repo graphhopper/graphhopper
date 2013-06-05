@@ -19,6 +19,7 @@
 package com.graphhopper;
 
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
@@ -104,6 +105,31 @@ public class GraphHopperTest {
         res = instance.route(new GHRequest(11.1, 50, 10, 51).vehicle(EncodingManager.CAR));
         assertTrue(res.found());
         assertEquals(3, res.points().size());
+    }
+
+    @Test
+    public void testFailsForWrongConfig() throws IOException {
+        GraphHopper instance = new GraphHopper().init(
+                new CmdArgs().put("osmreader.acceptWay", "FOOT,CAR").put("osmreader.osm", testOsm3)).
+                graphHopperLocation(ghLoc);
+        instance.importOrLoad();
+        assertEquals(5, instance.graph().nodes());
+
+        instance = new GraphHopper().init(
+                new CmdArgs().put("osmreader.acceptWay", "FOOT").put("osmreader.osm", testOsm3)).
+                osmFile(testOsm3);
+        try {
+            instance.load(ghLoc);
+            assertTrue(false);
+        } catch (Exception ex) {
+        }
+
+        // different order should be ok
+        instance = new GraphHopper().init(
+                new CmdArgs().put("osmreader.acceptWay", "CAR,FOOT").put("osmreader.osm", testOsm3)).
+                osmFile(testOsm3);
+        assertTrue(instance.load(ghLoc));
+        assertEquals(5, instance.graph().nodes());
     }
 
     @Test
