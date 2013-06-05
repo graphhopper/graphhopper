@@ -37,8 +37,6 @@ public class FootFlagEncoderTest {
     private EncodingManager encodingManager = new EncodingManager("CAR,BIKE,FOOT");
     private FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
 
-    ;
-
     @Test
     public void testGetSpeed() {
         int fl = footEncoder.flags(10, true);
@@ -131,5 +129,25 @@ public class FootFlagEncoderTest {
         assertFalse(footEncoder.isAllowed(way) > 0);
         map.put("foot", "yes");
         assertTrue(footEncoder.isAllowed(way) > 0);
+    }
+
+    @Test
+    public void testMixSpeedAndSafe() {
+        Map<String, String> map = new HashMap<String, String>();
+        OSMWay way = new OSMWay();
+        way.setTags(map);
+
+        map.put("highway", "motorway");        
+        int flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(0, flags);
+        
+        map.put("sidewalk", "yes");
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(5, footEncoder.getSpeed(flags));
+        
+        map.clear();
+        map.put("highway", "track");        
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(5, footEncoder.getSpeed(flags));                
     }
 }

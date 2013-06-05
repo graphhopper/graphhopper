@@ -86,7 +86,7 @@ public class RoutingAlgorithmIntegrationTest {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 1536, 80));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3455, 123));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2243, 99));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2018, 89));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "FOOT", true, "FOOT");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -97,7 +97,7 @@ public class RoutingAlgorithmIntegrationTest {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2543, 86));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 125));
-        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2797, 124));
+        list.add(new OneRun(43.72915, 7.410572, 43.739213, 7.427806, 2490, 102));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 list, "BIKE", true, "BIKE");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
