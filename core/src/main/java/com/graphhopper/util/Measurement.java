@@ -23,8 +23,8 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -84,19 +84,20 @@ public class Measurement {
             throw new IllegalStateException("Cannot load existing levelgraph at " + graphLocation);
         // TODO make sure the graph is unprepared!
 
+        final FlagEncoder vehicle = encodingManager.getEncoder("CAR");
         StopWatch sw = new StopWatch().start();
         try {
             printGraphDetails(g);
             AlgorithmPreparation prepare;
             if (doPrepare) {
-                PrepareContractionHierarchies p = new PrepareContractionHierarchies().graph(g);
+                PrepareContractionHierarchies p = new PrepareContractionHierarchies().vehicle(vehicle).graph(g);
                 logger.info("nodes:" + g.nodes() + ", edges:" + g.getAllEdges().maxId());
                 printPreparationDetails(g, p);
                 prepare = p;
             } else {
                 prepare = new NoOpAlgorithmPreparation() {
                     @Override public RoutingAlgorithm createAlgo() {
-                        return new Dijkstra(_graph, encodingManager.getEncoder("CAR"));
+                        return new Dijkstra(_graph, vehicle);
                     }
                 }.graph(g);
             }

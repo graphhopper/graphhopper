@@ -95,7 +95,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     public PrepareContractionHierarchies() {
         type(new ShortestCalc());
-        //vehicle(new CarFlagEncoder());
         originalEdges = new RAMDirectory().findCreate("originalEdges");
         originalEdges.create(1000);
     }
