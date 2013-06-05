@@ -85,6 +85,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     protected final EdgeFilter allEdgesFilter;
 
     public GraphStorage(Directory dir, EncodingManager encodingManager) {
+        if (encodingManager == null)
+            throw new NullPointerException("EncodingManager cannot be null!");
         this.encodingManager = encodingManager;
         allEdgesFilter = EdgeFilter.ALL_EDGES;
         this.dir = dir;
@@ -411,6 +413,10 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     @Override
     public AllEdgesIterator getAllEdges() {
         return new AllEdgeIterator();
+    }
+
+    public EncodingManager encodingManager() {
+        return encodingManager;
     }
 
     /**

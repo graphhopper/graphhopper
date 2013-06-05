@@ -220,19 +220,9 @@ public class GHUtility {
      * Create a new storage from the specified one without copying the data.
      */
     public static GraphStorage newStorage(GraphStorage store) {
-        return guessStorage(store, guessDirectory(store), null).create(store.nodes());
+        return guessStorage(store, guessDirectory(store), store.encodingManager()).create(store.nodes());
     }
-
-    /**
-     * Create a new in-memory storage from the specified one with copying the
-     * data.
-     *
-     * @return the new storage
-     */
-    public static Graph clone(Graph graph) {
-        return clone(graph, guessStorage(graph, new RAMDirectory(), null));
-    }
-
+    
     /**
      * @return the graph outGraph
      */
