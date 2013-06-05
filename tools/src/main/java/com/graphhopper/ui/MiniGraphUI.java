@@ -26,7 +26,7 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;

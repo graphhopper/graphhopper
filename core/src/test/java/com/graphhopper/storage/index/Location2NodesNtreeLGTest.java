@@ -38,7 +38,7 @@ import static org.junit.Assert.*;
  */
 public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
 
-    EncodingManager encodingManager = new EncodingManager( "CAR" );
+    EncodingManager encodingManager = new EncodingManager("CAR");
 
     @Override
     public Location2NodesNtreeLG createIndex(Graph g, int resolution) {
@@ -50,7 +50,7 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
 
     @Override
     LevelGraph createGraph(Directory dir, EncodingManager encodingManager) {
-        return new LevelGraphStorage(dir,encodingManager).create(100);
+        return new LevelGraphStorage(dir, encodingManager).create(100);
     }
 
     @Test

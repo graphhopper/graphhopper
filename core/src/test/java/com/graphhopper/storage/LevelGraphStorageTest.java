@@ -43,7 +43,7 @@ public class LevelGraphStorageTest extends GraphStorageTest {
 
     @Override
     public GraphStorage newGraph(Directory dir) {
-        return new LevelGraphStorage(dir,encodingManager);
+        return new LevelGraphStorage(dir, encodingManager);
     }
 
     @Test

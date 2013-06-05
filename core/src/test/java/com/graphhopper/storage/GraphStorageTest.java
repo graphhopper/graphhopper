@@ -50,7 +50,7 @@ public class GraphStorageTest extends AbstractGraphTester {
     }
 
     protected GraphStorage newGraph(Directory dir) {
-        return new GraphStorage(dir,encodingManager);
+        return new GraphStorage(dir, encodingManager);
     }
 
     protected GraphStorage createGraphStorage(Directory dir) {
@@ -141,7 +141,7 @@ public class GraphStorageTest extends AbstractGraphTester {
     @Test
     public void testEnsureSize() {
         Directory dir = new RAMDirectory();
-        gs = new GraphStorage(dir,encodingManager).create(defaultSize);
+        gs = new GraphStorage(dir, encodingManager).create(defaultSize);
         int testIndex = dir.findCreate("edges").segmentSize() * 3;
         gs.edge(0, testIndex, 10, true);
     }

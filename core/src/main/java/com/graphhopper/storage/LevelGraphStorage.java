@@ -38,8 +38,8 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
     private final int I_SKIP_EDGE2;
     private final int I_LEVEL;
 
-    public LevelGraphStorage(Directory dir, EncodingManager encodingManager ) {
-        super(dir, encodingManager );
+    public LevelGraphStorage(Directory dir, EncodingManager encodingManager) {
+        super(dir, encodingManager);
         I_SKIP_EDGE1 = nextEdgeEntryIndex();
         I_SKIP_EDGE2 = nextEdgeEntryIndex();
         I_LEVEL = nextNodeEntryIndex();

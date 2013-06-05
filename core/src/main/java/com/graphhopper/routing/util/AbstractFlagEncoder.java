@@ -24,19 +24,20 @@ import com.graphhopper.util.Helper;
 import java.util.HashSet;
 
 /**
+ * Abstract class which handles flag decoding and encoding.
+ *
  * @author Peter Karich
+ * @author Nop
  */
-public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
+public abstract class AbstractFlagEncoder implements FlagEncoder {
 
-    private EncodingManager manager;
-
-    protected int FORWARD=0;
-    protected int BACKWARD=0;
-    protected int BOTH_DIRECTIONS =0;
+    protected int forwardBit = 0;
+    protected int backwardBit = 0;
+    protected int directionBitMask = 0;
     protected EncodedValue speedEncoder = null;
     // bit to signal that way is accepted
-    protected int acceptBit=0;
-    protected int ferryBit=0;
+    protected int acceptBit = 0;
+    protected int ferryBit = 0;
     // restriction definitions
     protected String[] restrictions;
     protected HashSet<String> restrictedValues = new HashSet<String>();
@@ -49,9 +50,7 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
     protected AbstractFlagEncoder() {
     }
 
-    public AbstractFlagEncoder( EncodingManager manager ) {
-        this.manager = manager;
-
+    public AbstractFlagEncoder(EncodingManager manager) {
         oneways.add("yes");
         oneways.add("true");
         oneways.add("1");
@@ -65,7 +64,7 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
      * @return the speed in km/h
      */
     static int parseSpeed(String str) {
-        if ( Helper.isEmpty( str ))
+        if (Helper.isEmpty(str))
             return -1;
 
         try {
@@ -102,22 +101,23 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
 
     /**
      * Define 2 reserved bits for routing and internal bits for parsing.
+     *
      * @param index
      * @param shift bit offset for the first bit used by this encoder
      * @return incremented shift value pointing behind the last used bit
      */
-    public int defineBits( int index, int shift ) {
+    public int defineBits(int index, int shift) {
         // define the first 2 bits in flags for routing
-        FORWARD = 1 << shift;
-        BACKWARD = 2 << shift;
-        BOTH_DIRECTIONS = 3 << shift;
+        forwardBit = 1 << shift;
+        backwardBit = 2 << shift;
+        directionBitMask = 3 << shift;
 
         // define internal flags for parsing
         index *= 2;
         acceptBit = 1 << index;
         ferryBit = 2 << index;
 
-        return shift+2;
+        return shift + 2;
     }
 
     /**
@@ -142,33 +142,33 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
 
     @Override
     public boolean isForward(int flags) {
-        return (flags & FORWARD) != 0;
+        return (flags & forwardBit) != 0;
     }
 
     @Override
     public boolean isBackward(int flags) {
-        return (flags & BACKWARD) != 0;
+        return (flags & backwardBit) != 0;
     }
 
     public boolean isBoth(int flags) {
-        return (flags & BOTH_DIRECTIONS) == BOTH_DIRECTIONS;
+        return (flags & directionBitMask) == directionBitMask;
     }
 
     @Override
     public boolean canBeOverwritten(int flags1, int flags2) {
-        return isBoth(flags2) || (flags1 & BOTH_DIRECTIONS) == (flags2 & BOTH_DIRECTIONS);
+        return isBoth(flags2) || (flags1 & directionBitMask) == (flags2 & directionBitMask);
     }
 
     public int swapDirection(int flags) {
-        int dir = flags & BOTH_DIRECTIONS;
-        if (dir == BOTH_DIRECTIONS || dir == 0)
+        int dir = flags & directionBitMask;
+        if (dir == directionBitMask || dir == 0)
             return flags;
-        return flags ^ BOTH_DIRECTIONS;
+        return flags ^ directionBitMask;
     }
 
     @Override
     public int getSpeed(int flags) {
-        return speedEncoder.getValue( flags );
+        return speedEncoder.getValue(flags);
     }
 
     /**
@@ -176,22 +176,19 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
      * @return
      */
     public int flagsDefault(boolean bothDirections) {
-        int flags = speedEncoder.setDefaultValue( 0 );
-
-        return flags | ( bothDirections ? BOTH_DIRECTIONS : FORWARD);
+        int flags = speedEncoder.setDefaultValue(0);
+        return flags | (bothDirections ? directionBitMask : forwardBit);
     }
 
     /**
-     * @deprecated
-     * @param speed the speed in km/h
+     * @deprecated @param speed the speed in km/h
      * @param bothDirections
      * @return
      */
     @Override
     public int flags(int speed, boolean bothDirections) {
-        int flags = speedEncoder.setValue( 0, speed );
-
-        return flags | ( bothDirections ? BOTH_DIRECTIONS : FORWARD);
+        int flags = speedEncoder.setValue(0, speed);
+        return flags | (bothDirections ? directionBitMask : forwardBit);
     }
 
     @Override
@@ -199,4 +196,22 @@ public abstract class AbstractFlagEncoder implements EdgePropertyEncoder {
         return speedEncoder.maxValue();
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 61 * hash + this.directionBitMask;
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final AbstractFlagEncoder other = (AbstractFlagEncoder) obj;
+        if (this.directionBitMask != other.directionBitMask)
+            return false;
+        return true;
+    }
 }

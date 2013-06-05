@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
@@ -37,9 +37,9 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected WeightCalculation weightCalc;
     protected final EdgeFilter outEdgeFilter;
     protected final EdgeFilter inEdgeFilter;
-    protected final EdgePropertyEncoder flagEncoder;
+    protected final FlagEncoder flagEncoder;
 
-    public AbstractRoutingAlgorithm(Graph graph, EdgePropertyEncoder encoder) {
+    public AbstractRoutingAlgorithm(Graph graph, FlagEncoder encoder) {
         this.graph = graph;
         this.additionalEdgeFilter = EdgeFilter.ALL_EDGES;
         type(new ShortestCalc());

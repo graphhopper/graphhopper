@@ -19,7 +19,7 @@
 package com.graphhopper;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.shapes.GHPlace;

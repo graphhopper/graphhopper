@@ -114,7 +114,7 @@ public class RoutingAlgorithmIntegrationTest {
     public void testAndorra() {
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
                 createAndorra(), "CAR", true, "CAR");
-        assertEquals( testCollector.toString(), 0, testCollector.errors.size() );
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     @Test
@@ -147,10 +147,10 @@ public class RoutingAlgorithmIntegrationTest {
 
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25515, 253));
-        list.add( new OneRun( -20.43, -54.54, -20.537, -54.674, 18020, 238 ) );
+        list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18020, 238));
         runAlgo(testCollector, "files/campo-grande.osm.gz", "target/graph-campo-grande", list,
                 "CAR", false, "CAR");
-        assertEquals( testCollector.toString(), 0, testCollector.errors.size() );
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     void runAlgo(TestAlgoCollector testCollector, String osmFile,
@@ -161,15 +161,15 @@ public class RoutingAlgorithmIntegrationTest {
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopper().setInMemory(true, true).
                     osmFile(osmFile).graphHopperLocation(graphFile).
-                    encodingManager( new EncodingManager( vehicles ) ).
+                    encodingManager(new EncodingManager(vehicles)).
                     importOrLoad();
 
             Graph g = hopper.graph();
             Location2IDIndex idx = hopper.index();
 
-            final AbstractFlagEncoder encoder = hopper.encodingManager().getEncoder( mode );
+            final AbstractFlagEncoder encoder = hopper.encodingManager().getEncoder(mode);
             Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(g, encoder, ch,hopper.encodingManager());
+                    createAlgos(g, encoder, ch, hopper.encodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (AlgorithmPreparation prepare : prepares) {
                 for (OneRun or : forEveryAlgo) {
@@ -190,10 +190,10 @@ public class RoutingAlgorithmIntegrationTest {
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/graph-monaco";
         Helper.removeDir(new File(graphFile));
-        final EncodingManager encodingManager = new EncodingManager( "CAR" );
+        final EncodingManager encodingManager = new EncodingManager("CAR");
         GraphHopper hopper = new GraphHopper().setInMemory(true, true).
-                encodingManager( encodingManager ).
-                osmFile("files/monaco.osm.gz").graphHopperLocation( graphFile ).
+                encodingManager(encodingManager).
+                osmFile("files/monaco.osm.gz").graphHopperLocation(graphFile).
                 importOrLoad();
         final Graph g = hopper.graph();
         final Location2IDIndex idx = hopper.index();
@@ -201,7 +201,7 @@ public class RoutingAlgorithmIntegrationTest {
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
-        EdgePropertyEncoder carEncoder = encodingManager.getEncoder( "CAR" );
+        FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
 
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread

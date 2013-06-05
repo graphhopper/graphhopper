@@ -39,7 +39,7 @@ public class GraphHopperTest {
     public void testLoadOSM() throws IOException {
         Helper.removeDir(new File(ghLoc));
         GraphHopper instance = new GraphHopper().setInMemory(true, true).
-                encodingManager( new EncodingManager( "CAR" )).
+                encodingManager(new EncodingManager("CAR")).
                 graphHopperLocation(ghLoc).osmFile(testOsm);
         instance.importOrLoad();
         GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
@@ -47,7 +47,7 @@ public class GraphHopperTest {
         assertEquals(3, ph.points().size());
 
         instance.close();
-        instance = new GraphHopper().encodingManager( new EncodingManager( "CAR" ) ).setInMemory(true, true);
+        instance = new GraphHopper().encodingManager(new EncodingManager("CAR")).setInMemory(true, true);
         assertTrue(instance.load(ghLoc));
         ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.found());
@@ -59,7 +59,7 @@ public class GraphHopperTest {
     @Test
     public void testPrepare() throws IOException {
         GraphHopper instance = new GraphHopper().setInMemory(true, false).
-                encodingManager( new EncodingManager( "CAR" ) ).
+                encodingManager(new EncodingManager("CAR")).
                 chShortcuts(true, true).
                 graphHopperLocation(ghLoc).osmFile(testOsm);
         instance.importOrLoad();
@@ -72,7 +72,7 @@ public class GraphHopperTest {
     public void testFootAndCar() throws IOException {
         // now all ways are imported
         GraphHopper instance = new GraphHopper().setInMemory(true, false).
-                encodingManager( new EncodingManager( "CAR,FOOT" ) ).
+                encodingManager(new EncodingManager("CAR,FOOT")).
                 graphHopperLocation(ghLoc).osmFile(testOsm3);
         instance.importOrLoad();
 
@@ -110,7 +110,7 @@ public class GraphHopperTest {
     public void testFootOnly() throws IOException {
         // now only footable ways are imported => no A D C and B D E => the other both ways have pillar nodes!
         GraphHopper instance = new GraphHopper().setInMemory(true, false).
-                encodingManager( new EncodingManager( "FOOT" ) ).
+                encodingManager(new EncodingManager("FOOT")).
                 graphHopperLocation(ghLoc).osmFile(testOsm3);
         instance.importOrLoad();
 

@@ -34,7 +34,7 @@ public class GraphBuilder {
     private boolean level;
     private int size = 100;
 
-    public GraphBuilder( EncodingManager encodingManager ) {
+    public GraphBuilder(EncodingManager encodingManager) {
         this.encodingManager = encodingManager;
     }
 

@@ -35,7 +35,7 @@ import org.junit.Test;
  */
 public class DijkstraTwoDriversTest {
 
-    CarFlagEncoder carEncoder = (CarFlagEncoder) new EncodingManager( "CAR" ).getEncoder( "CAR" );
+    CarFlagEncoder carEncoder = (CarFlagEncoder) new EncodingManager("CAR").getEncoder("CAR");
 
     Graph getGraph() {
         return AbstractRoutingAlgorithmTester.getMatrixAlikeGraph();

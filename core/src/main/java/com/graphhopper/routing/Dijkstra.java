@@ -18,7 +18,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -39,7 +39,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
     protected boolean alreadyRun;
     protected int visitedNodes;
 
-    public Dijkstra(Graph graph, EdgePropertyEncoder encoder) {
+    public Dijkstra(Graph graph, FlagEncoder encoder) {
         super(graph, encoder);
     }
 

@@ -19,18 +19,20 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.util.Helper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
 /**
- * Manager class to register encoder, assign their flag values and check objects with all encoders during parsing.
+ * Manager class to register encoder, assign their flag values and check objects
+ * with all encoders during parsing.
+ *
  * @author Peter Karich
+ * @author Nop
  */
-public class EncodingManager
-{
+public class EncodingManager {
+
     public static final String CAR = "CAR";
     public static final String BIKE = "BIKE";
     public static final String FOOT = "FOOT";
@@ -41,22 +43,22 @@ public class EncodingManager
         defaultEncoders.put(BIKE, BikeFlagEncoder.class.getName());
         defaultEncoders.put(FOOT, FootFlagEncoder.class.getName());
     }
-
     private static EncodingManager instance = null;
-
     public static final int MAX_BITS = 32;
-    private ArrayList<AbstractFlagEncoder> encoders = new ArrayList<AbstractFlagEncoder>(  );
+    private ArrayList<AbstractFlagEncoder> encoders = new ArrayList<AbstractFlagEncoder>();
     private int encoderCount = 0;
     private int nextBit = 0;
 
     /**
-     * Instantiate manager with the given list of encoders.
-     * The manager knows the default encoders: CAR, FOOT and BIKE
-     * Custom encoders can be added by giving a full class name
-     * e.g. "CAR:com.graphhopper.myproject.MyCarEncoder"
-     * @param encoderList comma delimited list of encoders. The order does not matter.
+     * Instantiate manager with the given list of encoders. The manager knows
+     * the default encoders: CAR, FOOT and BIKE Custom encoders can be added by
+     * giving a full class name e.g.
+     * "CAR:com.graphhopper.myproject.MyCarEncoder"
+     *
+     * @param encoderList comma delimited list of encoders. The order does not
+     * matter.
      */
-    public EncodingManager( String encoderList ) {
+    public EncodingManager(String encoderList) {
         String[] entries = encoderList.split(",");
         Arrays.sort(entries);
 
@@ -74,41 +76,41 @@ public class EncodingManager
 
             try {
                 Class cls = Class.forName(className);
-                register((AbstractFlagEncoder) cls.getDeclaredConstructor( new Class[] { EncodingManager.class } ).newInstance( this ));
+                register((AbstractFlagEncoder) cls.getDeclaredConstructor(
+                        new Class[]{EncodingManager.class}).newInstance(this));
             } catch (Exception e) {
                 throw new IllegalArgumentException("Cannot instantiate class " + className, e);
             }
         }
 
-/*
-    // comment this in to detect involuntary changes of the encoding
-        if( instance != null )
-        {
-            System.out.println( "WARNING: Overwriting Encoding Manager " + instance.toString() + " with new instance " + toString());
-            StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-            for( int i = 2; i < trace.length; i++ ) {
-                System.out.println( trace[i] );
-            }
-        }
-*/
+        /*
+         // comment this in to detect involuntary changes of the encoding
+         if( instance != null )
+         {
+         System.out.println( "WARNING: Overwriting Encoding Manager " + instance.toString() + " with new instance " + toString());
+         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+         for( int i = 2; i < trace.length; i++ ) {
+         System.out.println( trace[i] );
+         }
+         }
+         */
         instance = this;
     }
 
     public void register(AbstractFlagEncoder encoder) {
-        encoders.add( encoder );
+        encoders.add(encoder);
 
-        int usedBits = encoder.defineBits( encoderCount, nextBit );
-        if( usedBits >= MAX_BITS )
-            throw new IllegalArgumentException( "Encoders are requesting more than 32 bits of flags" );
+        int usedBits = encoder.defineBits(encoderCount, nextBit);
+        if (usedBits >= MAX_BITS)
+            throw new IllegalArgumentException("Encoders are requesting more than 32 bits of flags");
 
         nextBit = usedBits;
         encoderCount = encoders.size();
     }
 
-    public static EncodingManager instance()
-    {
-        if( instance == null )
-            throw new IllegalStateException( "Encoding Manager still uninitialized." );
+    public static EncodingManager instance() {
+        if (instance == null)
+            throw new IllegalStateException("Encoding Manager still uninitialized.");
 
         return instance;
     }
@@ -122,7 +124,7 @@ public class EncodingManager
             if (name.equals(encoders.get(i).toString()))
                 return encoders.get(i);
         }
-        throw new IllegalArgumentException( "Encoder for " + name + " not found." );
+        throw new IllegalArgumentException("Encoder for " + name + " not found.");
     }
 
     /**
@@ -133,7 +135,7 @@ public class EncodingManager
     public int accept(OSMWay way) {
         int includeWay = 0;
         for (int i = 0; i < encoderCount; i++) {
-            includeWay |= encoders.get(i).isAllowed( way );
+            includeWay |= encoders.get(i).isAllowed(way);
         }
 
         return includeWay;
@@ -161,10 +163,10 @@ public class EncodingManager
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        for( int i = 0; i < encoderCount; i++ ) {
-            if( str.length() > 0 )
-                str.append( "," );
-            str.append( encoders.get( i ).toString() );
+        for (int i = 0; i < encoderCount; i++) {
+            if (str.length() > 0)
+                str.append(",");
+            str.append(encoders.get(i).toString());
         }
 
         return str.toString();
@@ -172,44 +174,63 @@ public class EncodingManager
 
     public String encoderList() {
         StringBuilder str = new StringBuilder();
-        for( int i = 0; i < encoderCount; i++ ) {
-            if( str.length() > 0 )
-                str.append( "," );
-            str.append( encoders.get( i ).toString() );
-            str.append( ":" );
-            str.append( encoders.get( i ).getClass().getName() );
+        for (int i = 0; i < encoderCount; i++) {
+            if (str.length() > 0)
+                str.append(",");
+            str.append(encoders.get(i).toString());
+            str.append(":");
+            str.append(encoders.get(i).getClass().getName());
         }
 
         return str.toString();
     }
 
-    public EdgePropertyEncoder getSingle() {
+    public FlagEncoder getSingle() {
         if (countVehicles() > 1)
             throw new IllegalStateException("multiple encoders are active. cannot return one:" + toString());
         return getFirst();
     }
 
-    public EdgePropertyEncoder getFirst() {
+    public FlagEncoder getFirst() {
         if (countVehicles() == 0)
             throw new IllegalStateException("no encoder is active!");
         return encoders.get(0);
     }
 
-    public int flagsDefault( boolean bothDirections ) {
+    public int flagsDefault(boolean bothDirections) {
         int flags = 0;
-        for( int i=0; i<encoderCount; i++)
-            flags |= encoders.get( i ).flagsDefault( bothDirections );
+        for (int i = 0; i < encoderCount; i++) {
+            flags |= encoders.get(i).flagsDefault(bothDirections);
+        }
         return flags;
     }
 
     /**
      * Swap direction for all encoders
-     * @param flags
-     * @return
      */
-    public int swapDirection( int flags ) {
-        for( int i=0; i<encoderCount; i++)
-            flags = encoders.get( i ).swapDirection( flags );
+    public int swapDirection(int flags) {
+        for (int i = 0; i < encoderCount; i++) {
+            flags = encoders.get(i).swapDirection(flags);
+        }
         return flags;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 53 * hash + (this.encoders != null ? this.encoders.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final EncodingManager other = (EncodingManager) obj;
+        if (this.encoders != other.encoders && (this.encoders == null || !this.encoders.equals(other.encoders)))
+            return false;
+        return true;
     }
 }

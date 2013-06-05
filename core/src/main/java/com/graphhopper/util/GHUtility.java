@@ -207,12 +207,12 @@ public class GHUtility {
         return outdir;
     }
 
-    static GraphStorage guessStorage( Graph g, Directory outdir, EncodingManager encodingManager ) {
+    static GraphStorage guessStorage(Graph g, Directory outdir, EncodingManager encodingManager) {
         GraphStorage store;
         if (g instanceof LevelGraphStorage)
-            store = new LevelGraphStorage(outdir, encodingManager );
+            store = new LevelGraphStorage(outdir, encodingManager);
         else
-            store = new GraphStorage(outdir, encodingManager );
+            store = new GraphStorage(outdir, encodingManager);
         return store;
     }
 
@@ -220,7 +220,7 @@ public class GHUtility {
      * Create a new storage from the specified one without copying the data.
      */
     public static GraphStorage newStorage(GraphStorage store) {
-        return guessStorage(store, guessDirectory(store), null ).create(store.nodes());
+        return guessStorage(store, guessDirectory(store), null).create(store.nodes());
     }
 
     /**
@@ -230,7 +230,7 @@ public class GHUtility {
      * @return the new storage
      */
     public static Graph clone(Graph graph) {
-        return clone(graph, guessStorage(graph, new RAMDirectory(), null ));
+        return clone(graph, guessStorage(graph, new RAMDirectory(), null));
     }
 
     /**

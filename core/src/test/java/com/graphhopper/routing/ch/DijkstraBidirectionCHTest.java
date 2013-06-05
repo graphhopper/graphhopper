@@ -20,7 +20,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -60,7 +60,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Override
-    public PrepareContractionHierarchies prepareGraph(Graph g, WeightCalculation calc, EdgePropertyEncoder encoder) {
+    public PrepareContractionHierarchies prepareGraph(Graph g, WeightCalculation calc, FlagEncoder encoder) {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies().graph(g).
                 type(calc).vehicle(encoder);
         // hack: prepare matrixgraph only once

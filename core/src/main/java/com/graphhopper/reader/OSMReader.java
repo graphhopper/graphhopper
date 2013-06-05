@@ -57,8 +57,8 @@ public class OSMReader {
     }
 
     public void osm2Graph(File osmFile) throws IOException {
-        if( encodingManager == null )
-            throw new IllegalStateException( "Encoding manager not set." );
+        if (encodingManager == null)
+            throw new IllegalStateException("Encoding manager not set.");
 
         long start = System.currentTimeMillis();
         preProcess(osmFile);
@@ -214,7 +214,7 @@ public class OSMReader {
     /**
      * Specify the type of the path calculation (car, bike, ...).
      */
-    public OSMReader encodingManager( EncodingManager acceptWay ) {
+    public OSMReader encodingManager(EncodingManager acceptWay) {
         this.encodingManager = acceptWay;
         return this;
     }

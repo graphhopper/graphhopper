@@ -21,7 +21,7 @@ package com.graphhopper.routing.rideshare;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.EdgeEntry;
@@ -38,11 +38,11 @@ public class DijkstraTwoDrivers {
     private int fromA, toA;
     private int fromB, toB;
     private double overallDistance = Double.MAX_VALUE;
-    private EdgePropertyEncoder carEncoder;
+    private FlagEncoder carEncoder;
 
     public DijkstraTwoDrivers(Graph graph) {
         this.graph = graph;
-        this.carEncoder = EncodingManager.instance().getEncoder( "CAR" );
+        this.carEncoder = EncodingManager.instance().getEncoder("CAR");
     }
 
     public void setDriverA(int fromA, int toA) {
@@ -126,7 +126,7 @@ public class DijkstraTwoDrivers {
 
     private abstract class DijkstraBidirectionCombined extends DijkstraBidirectionRef {
 
-        public DijkstraBidirectionCombined(Graph graph, EdgePropertyEncoder encoder) {
+        public DijkstraBidirectionCombined(Graph graph, FlagEncoder encoder) {
             super(graph, encoder);
         }
 

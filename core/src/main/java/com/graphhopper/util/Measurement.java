@@ -77,7 +77,7 @@ public class Measurement {
         int count = args.getInt("measurement.count", 1000);
         int lookupCount = 0;
 
-        final EncodingManager encodingManager = new EncodingManager( "CAR" );
+        final EncodingManager encodingManager = new EncodingManager("CAR");
         Directory dir = new RAMDirectory(graphLocation, true);
         LevelGraphStorage g = new LevelGraphStorage(dir, encodingManager);
         if (!g.loadExisting())
@@ -96,7 +96,7 @@ public class Measurement {
             } else {
                 prepare = new NoOpAlgorithmPreparation() {
                     @Override public RoutingAlgorithm createAlgo() {
-                        return new Dijkstra(_graph, encodingManager.getEncoder( "CAR" ));
+                        return new Dijkstra(_graph, encodingManager.getEncoder("CAR"));
                     }
                 }.graph(g);
             }

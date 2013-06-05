@@ -32,7 +32,7 @@ public class GraphHopperAPITest {
 
     @Test
     public void testLoad() {
-        final EncodingManager encodingManager = new EncodingManager( "CAR" );
+        final EncodingManager encodingManager = new EncodingManager("CAR");
         GraphStorage graph = new GraphBuilder(encodingManager).create();
         graph.setNode(0, 42, 10);
         graph.setNode(1, 42.1, 10.1);
@@ -46,7 +46,7 @@ public class GraphHopperAPITest {
         graph.edge(0, 4, 40, true);
         graph.edge(4, 3, 40, true);
 
-        GraphHopperAPI instance = new GraphHopper(graph).encodingManager( encodingManager );
+        GraphHopperAPI instance = new GraphHopper(graph).encodingManager(encodingManager);
         GHResponse ph = instance.route(new GHRequest(42, 10.4, 42, 10));
         assertTrue(ph.found());
         assertEquals(80, ph.distance(), 1e-6);

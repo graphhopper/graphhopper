@@ -31,7 +31,7 @@ import org.junit.Test;
  */
 public class GHUtilityTest {
 
-    private EncodingManager encodingManager = new EncodingManager( "CAR" );
+    private EncodingManager encodingManager = new EncodingManager("CAR");
 
     Graph createGraph() {
         return new GraphBuilder(encodingManager).create();

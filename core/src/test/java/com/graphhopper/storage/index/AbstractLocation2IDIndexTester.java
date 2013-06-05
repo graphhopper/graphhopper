@@ -62,7 +62,7 @@ public abstract class AbstractLocation2IDIndexTester {
 
     @Test
     public void testSimpleGraph() {
-        Graph g = createGraph( new EncodingManager( "CAR" ) );
+        Graph g = createGraph(new EncodingManager("CAR"));
         initSimpleGraph(g);
 
         Location2IDIndex idx = createIndex(g, 8);
@@ -109,7 +109,7 @@ public abstract class AbstractLocation2IDIndexTester {
 
     @Test
     public void testSimpleGraph2() {
-        Graph g = createGraph( new EncodingManager( "CAR" ) );
+        Graph g = createGraph(new EncodingManager("CAR"));
         initSimpleGraph(g);
 
         Location2IDIndex idx = createIndex(g, 28);
@@ -130,7 +130,7 @@ public abstract class AbstractLocation2IDIndexTester {
 
     @Test
     public void testGrid() {
-        Graph g = createSampleGraph(new EncodingManager( "CAR" ));
+        Graph g = createSampleGraph(new EncodingManager("CAR"));
         int locs = g.nodes();
 
         Location2IDIndex index = createIndex(g, 120);
@@ -182,7 +182,7 @@ public abstract class AbstractLocation2IDIndexTester {
 
     @Test
     public void testSinglePoints120() {
-        Graph g = createSampleGraph(new EncodingManager( "CAR" ));
+        Graph g = createSampleGraph(new EncodingManager("CAR"));
         Location2IDIndex idx = createIndex(g, 120);
 
         assertEquals(1, idx.findID(1.637, 2.23));
@@ -196,7 +196,7 @@ public abstract class AbstractLocation2IDIndexTester {
 
     @Test
     public void testSinglePoints32() {
-        Graph g = createSampleGraph(new EncodingManager( "CAR" ));
+        Graph g = createSampleGraph(new EncodingManager("CAR"));
         Location2IDIndex idx = createIndex(g, 32);
 
         // 10 or 6
@@ -210,10 +210,10 @@ public abstract class AbstractLocation2IDIndexTester {
     }
 
     @Test
-    public void testNoErrorOnEdgeCase_lastIndex(  ) {
-        final EncodingManager encodingManager = new EncodingManager( "CAR" );
+    public void testNoErrorOnEdgeCase_lastIndex() {
+        final EncodingManager encodingManager = new EncodingManager("CAR");
         int locs = 10000;
-        Graph g = createGraph(new MMapDirectory(location), encodingManager );
+        Graph g = createGraph(new MMapDirectory(location), encodingManager);
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++) {
             g.setNode(i, (float) rand.nextDouble() * 10 + 10, (float) rand.nextDouble() * 10 + 10);
@@ -222,16 +222,16 @@ public abstract class AbstractLocation2IDIndexTester {
         Helper.removeDir(new File(location));
     }
 
-    Graph createGraph( EncodingManager encodingManager ) {
-        return createGraph(new RAMDirectory(), encodingManager );
+    Graph createGraph(EncodingManager encodingManager) {
+        return createGraph(new RAMDirectory(), encodingManager);
     }
 
-    Graph createGraph(Directory dir, EncodingManager encodingManager ) {
+    Graph createGraph(Directory dir, EncodingManager encodingManager) {
         return new GraphStorage(dir, encodingManager).create(100);
     }
 
-    public Graph createSampleGraph( EncodingManager encodingManager) {
-        Graph graph = createGraph( encodingManager );
+    public Graph createSampleGraph(EncodingManager encodingManager) {
+        Graph graph = createGraph(encodingManager);
         // length does not matter here but lat,lon and outgoing edges do!
 
 //        
@@ -311,21 +311,21 @@ public abstract class AbstractLocation2IDIndexTester {
 
     @Test
     public void testDifferentVehicles() {
-        final EncodingManager encodingManager = new EncodingManager( "CAR,FOOT" );
-        Graph g = createGraph( encodingManager );
+        final EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
+        Graph g = createGraph(encodingManager);
         initSimpleGraph(g);
         Location2IDIndex idx = createIndex(g, 32);
         assertEquals(1, idx.findID(1, -1));
 
         // now make all edges from node 1 accessible for CAR only
         EdgeIterator iter = g.getEdges(1);
-        CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder( "CAR" );
+        CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
         while (iter.next()) {
             iter.flags(carEncoder.flags(50, true));
         }
 
         idx = createIndex(g, 32);
-        FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder( "FOOT" );
+        FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
         assertEquals(2, idx.findClosest(1, -1, new DefaultEdgeFilter(footEncoder)).closestNode());
     }
 }

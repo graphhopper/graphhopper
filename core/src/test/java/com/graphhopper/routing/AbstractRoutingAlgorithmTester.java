@@ -40,10 +40,9 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     // problem is: matrix graph is expensive to create to cache it in a static variable
     private static Graph matrixGraph;
-    protected static EncodingManager encodingManager = new EncodingManager( "CAR,FOOT" );
-
-    protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder( "CAR" );
-    protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder( "FOOT" );
+    protected static EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
+    protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
+    protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
 
     protected Graph createGraph() {
         return new GraphBuilder(encodingManager).create();
@@ -53,7 +52,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         return prepareGraph(g, new ShortestCalc(), carEncoder);
     }
 
-    public abstract AlgorithmPreparation prepareGraph(Graph g, WeightCalculation calc, EdgePropertyEncoder encoder);
+    public abstract AlgorithmPreparation prepareGraph(Graph g, WeightCalculation calc, FlagEncoder encoder);
 
     @Test public void testCalcShortestPath() {
         Graph graph = createTestGraph();

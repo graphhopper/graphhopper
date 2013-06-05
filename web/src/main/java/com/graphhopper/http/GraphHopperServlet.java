@@ -23,7 +23,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.Constants;
@@ -111,7 +111,7 @@ public class GraphHopperServlet extends HttpServlet {
         } catch (Exception ex) {
         }
         String vehicleStr = getParam(req, "vehicle");
-        EdgePropertyEncoder algoVehicle = hopper.encodingManager().getEncoder( vehicleStr.toUpperCase() );
+        FlagEncoder algoVehicle = hopper.encodingManager().getEncoder( vehicleStr.toUpperCase() );
         WeightCalculation algoType = new FastestCalc(algoVehicle);
         if ("shortest".equalsIgnoreCase(getParam(req, "algoType")))
             algoType = new ShortestCalc();

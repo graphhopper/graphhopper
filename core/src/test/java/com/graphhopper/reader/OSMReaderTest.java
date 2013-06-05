@@ -72,20 +72,20 @@ public class OSMReaderTest {
 
         String testFile;
 
-        public GraphHopperTest(String file ) {
+        public GraphHopperTest(String file) {
             this.testFile = file;
             graphHopperLocation(dir);
-            encodingManager( new EncodingManager( "CAR,FOOT" ) );
+            encodingManager(new EncodingManager("CAR,FOOT"));
 
-            carEncoder = (CarFlagEncoder) encodingManager().getEncoder( "CAR" );
-            footEncoder = (FootFlagEncoder) encodingManager().getEncoder( "FOOT" );
+            carEncoder = (CarFlagEncoder) encodingManager().getEncoder("CAR");
+            footEncoder = (FootFlagEncoder) encodingManager().getEncoder("FOOT");
             carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
 
         }
 
         @Override protected OSMReader importOSM(String ignore) throws IOException {
-            OSMReader osmReader = new OSMReader(buildGraph(dir,encodingManager()), 1000);
-            osmReader.encodingManager( encodingManager() );
+            OSMReader osmReader = new OSMReader(buildGraph(dir, encodingManager()), 1000);
+            osmReader.encodingManager(encodingManager());
             try {
                 osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
             } catch (URISyntaxException e) {
@@ -120,11 +120,11 @@ public class OSMReaderTest {
         assertEquals(n30, iter.adjNode());
         assertEquals(93147, iter.distance(), 1);
         CarFlagEncoder flags = carEncoder;
-        assertTrue(flags.isForward( iter.flags() ));
-        assertTrue(flags.isBackward( iter.flags() ));
-        assertTrue( iter.next() );
-        assertEquals( n50, iter.adjNode() );
-        AbstractGraphTester.assertPList( Helper.createPointList( 51.25, 9.43 ), iter.wayGeometry() );
+        assertTrue(flags.isForward(iter.flags()));
+        assertTrue(flags.isBackward(iter.flags()));
+        assertTrue(iter.next());
+        assertEquals(n50, iter.adjNode());
+        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.wayGeometry());
         assertTrue(flags.isForward(iter.flags()));
         assertTrue(flags.isBackward(iter.flags()));
 
@@ -152,12 +152,12 @@ public class OSMReaderTest {
     @Test public void testWithBounds() {
         GraphHopper hopper = new GraphHopperTest(file1) {
             @Override protected OSMReader importOSM(String ignore) throws IOException {
-                OSMReader osmReader = new OSMReader(buildGraph(dir,encodingManager()), 1000) {
+                OSMReader osmReader = new OSMReader(buildGraph(dir, encodingManager()), 1000) {
                     @Override public boolean isInBounds(OSMNode node) {
                         return node.lat() > 49 && node.lon() > 8;
                     }
                 };
-                osmReader.encodingManager( encodingManager() );
+                osmReader.encodingManager(encodingManager());
                 try {
                     osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
                 } catch (URISyntaxException e) {
@@ -213,34 +213,34 @@ public class OSMReaderTest {
         assertEquals(0, GHUtility.count(graph.getEdges(n30, carOutFilter)));
 
         EdgeIterator iter = graph.getEdges(n20, carOutFilter);
-        assertTrue( iter.next() );
+        assertTrue(iter.next());
         assertEquals(n30, iter.adjNode());
 
         iter = graph.getEdges(n20);
-        assertTrue( iter.next() );
+        assertTrue(iter.next());
         assertEquals(n10, iter.adjNode());
         CarFlagEncoder encoder = carEncoder;
-        assertFalse( encoder.isForward( iter.flags() ) );
-        assertTrue(encoder.isBackward( iter.flags() ));
+        assertFalse(encoder.isForward(iter.flags()));
+        assertTrue(encoder.isBackward(iter.flags()));
 
-        assertTrue( iter.next() );
-        assertEquals( n30, iter.adjNode() );
-        assertTrue( encoder.isForward( iter.flags() ) );
+        assertTrue(iter.next());
+        assertEquals(n30, iter.adjNode());
+        assertTrue(encoder.isForward(iter.flags()));
         assertFalse(encoder.isBackward(iter.flags()));
 
         assertTrue(iter.next());
         assertFalse(encoder.isForward(iter.flags()));
         assertTrue(encoder.isBackward(iter.flags()));
 
-        assertTrue( iter.next() );
-        assertEquals( n22, iter.adjNode() );
+        assertTrue(iter.next());
+        assertEquals(n22, iter.adjNode());
         assertFalse(encoder.isForward(iter.flags()));
         assertTrue(encoder.isBackward(iter.flags()));
 
-        assertTrue( iter.next() );
-        assertEquals( n23, iter.adjNode() );
-        assertTrue( encoder.isForward( iter.flags() ) );
-        assertFalse( encoder.isBackward( iter.flags() ) );
+        assertTrue(iter.next());
+        assertEquals(n23, iter.adjNode());
+        assertTrue(encoder.isForward(iter.flags()));
+        assertFalse(encoder.isBackward(iter.flags()));
     }
 
     @Test public void testFerry() {

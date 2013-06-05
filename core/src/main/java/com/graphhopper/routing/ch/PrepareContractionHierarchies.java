@@ -29,7 +29,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.DataAccess;
@@ -67,7 +67,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     // preparation dijkstra uses always shortest path as edges are rewritten - see doWork
     private final WeightCalculation shortestCalc = new ShortestCalc();
     private WeightCalculation prepareWeightCalc;
-    private EdgePropertyEncoder prepareEncoder;
+    private FlagEncoder prepareEncoder;
     private EdgeFilter vehicleInFilter;
     private EdgeFilter vehicleOutFilter;
     private EdgeFilter vehicleAllFilter;
@@ -120,7 +120,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return this;
     }
 
-    public PrepareContractionHierarchies vehicle(EdgePropertyEncoder encoder) {
+    public PrepareContractionHierarchies vehicle(FlagEncoder encoder) {
         this.prepareEncoder = encoder;
         vehicleInFilter = new DefaultEdgeFilter(encoder, true, false);
         vehicleOutFilter = new DefaultEdgeFilter(encoder, false, true);
@@ -179,10 +179,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     @Override
     public PrepareContractionHierarchies doWork() {
-        if( prepareEncoder == null )
-            throw new IllegalStateException( "No vehicle encoder set." );
-        if( prepareWeightCalc == null )
-            throw new IllegalStateException( "No weight calculation set." );
+        if (prepareEncoder == null)
+            throw new IllegalStateException("No vehicle encoder set.");
+        if (prepareWeightCalc == null)
+            throw new IllegalStateException("No weight calculation set.");
         allSW.start();
         super.doWork();
         initFromGraph();

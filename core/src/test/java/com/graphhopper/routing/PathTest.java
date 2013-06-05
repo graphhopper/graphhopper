@@ -19,7 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -39,7 +39,7 @@ public class PathTest {
 
     @Test
     public void testTime() {
-        EdgePropertyEncoder encoder = new EncodingManager("CAR").getEncoder( "CAR" );
+        FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
         Path p = new Path(null, encoder);
         p.calcTime(100000, encoder.flags(100, true));
         assertEquals(60 * 60, p.time());

@@ -84,7 +84,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     private EncodingManager encodingManager;
     protected final EdgeFilter allEdgesFilter;
 
-    public GraphStorage(Directory dir, EncodingManager encodingManager ) {
+    public GraphStorage(Directory dir, EncodingManager encodingManager) {
         this.encodingManager = encodingManager;
         allEdgesFilter = EdgeFilter.ALL_EDGES;
         this.dir = dir;
@@ -263,7 +263,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
     @Override
     public EdgeIterator edge(int a, int b, double distance, boolean bothDirections) {
-        return edge( a, b, distance, encodingManager.flagsDefault( bothDirections ) );
+        return edge(a, b, distance, encodingManager.flagsDefault(bothDirections));
     }
 
     @Override
@@ -976,6 +976,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         // edges
         edges.setHeader(0, edgeEntrySize);
         edges.setHeader(1, edgeCount);
+        edges.setHeader(2, encodingManager.hashCode());
 
         // geometry
         wayGeometry.setHeader(0, maxGeoRef);

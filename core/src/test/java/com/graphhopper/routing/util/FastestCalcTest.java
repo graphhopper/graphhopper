@@ -26,7 +26,7 @@ import static org.junit.Assert.*;
  */
 public class FastestCalcTest {
 
-    private EdgePropertyEncoder encoder = new EncodingManager("CAR").getEncoder( "CAR" );
+    private FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {

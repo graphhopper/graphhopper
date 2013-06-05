@@ -35,7 +35,7 @@ import static org.junit.Assert.*;
  */
 public class DijkstraShortestOf2ToPubTest {
 
-    CarFlagEncoder carEncoder = (CarFlagEncoder) new EncodingManager("CAR").getEncoder( "CAR" );
+    CarFlagEncoder carEncoder = (CarFlagEncoder) new EncodingManager("CAR").getEncoder("CAR");
 
     Graph getGraph() {
         return AbstractRoutingAlgorithmTester.getMatrixAlikeGraph();

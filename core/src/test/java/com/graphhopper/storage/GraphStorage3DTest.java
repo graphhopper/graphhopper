@@ -32,11 +32,11 @@ import org.junit.Test;
  */
 public class GraphStorage3DTest {
 
-    final EncodingManager encodingManager = new EncodingManager( "CAR" );
+    final EncodingManager encodingManager = new EncodingManager("CAR");
 
     @Test
     public void testGetHeight() {
-        GraphStorage3D g = new GraphStorage3D(new RAMDirectory(),encodingManager).create(100);
+        GraphStorage3D g = new GraphStorage3D(new RAMDirectory(), encodingManager).create(100);
         g.setNode(0, 50, 20000.00, 100);
         g.setNode(1, 50, 20000.02, 100);
 
@@ -52,7 +52,7 @@ public class GraphStorage3DTest {
         edge(g, dist, 1, 3);
         edge(g, dist, 1, 4);
 
-        Path p = new DijkstraBidirection(g, encodingManager.getEncoder( "CAR" )).calcPath( 0, 1 );
+        Path p = new DijkstraBidirection(g, encodingManager.getEncoder("CAR")).calcPath(0, 1);
         assertEquals(Helper.createTList(0, 3, 1), p.calcNodes());
         assertEquals(100, p.distance(), .1);
     }

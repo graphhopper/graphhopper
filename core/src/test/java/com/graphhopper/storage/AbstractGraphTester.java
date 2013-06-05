@@ -46,9 +46,9 @@ public abstract class AbstractGraphTester {
     private String location = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraph = "./target/graphstorage/default";
-    protected EncodingManager encodingManager = new EncodingManager( "CAR,FOOT" );
-    protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder( "CAR" );
-    protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder( "FOOT" );
+    protected EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
+    protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
+    protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
     EdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
     EdgeFilter carInFilter = new DefaultEdgeFilter(carEncoder, true, false);
     private Graph graph;
@@ -584,7 +584,7 @@ public abstract class AbstractGraphTester {
     public void testCopyTo() {
         graph = createGraph();
         initExampleGraph(graph);
-        Graph gs = new GraphStorage(new RAMDirectory(),encodingManager).segmentSize(8000).create(10);
+        Graph gs = new GraphStorage(new RAMDirectory(), encodingManager).segmentSize(8000).create(10);
         try {
             graph.copyTo(gs);
         } catch (Exception ex) {
