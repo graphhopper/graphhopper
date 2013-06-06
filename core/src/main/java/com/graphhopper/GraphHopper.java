@@ -82,6 +82,7 @@ public class GraphHopper implements GraphHopperAPI {
     // for routing:
     private boolean simplifyRequest = true;
     private String defaultAlgorithm = "bidijkstra";
+    private boolean finishPath = true;
     // for index:
     private Location2IDIndex index;
     private int preciseIndexResolution = 1000;
@@ -233,6 +234,27 @@ public class GraphHopper implements GraphHopperAPI {
     public AlgorithmPreparation preparation() {
         return prepare;
     }
+    
+	/**
+	 * Checks if the hopper is configured to compute accurate path endings
+	 * 
+	 * @return true if configured to compute accurate path endings
+	 */
+	public boolean isFinishPath() {
+		return this.finishPath;
+	}
+
+	/**
+	 * Configure the hopper to compute (or not) the path endings
+	 * 
+	 * @param finish
+	 *            set to true to compute accurate path endings
+	 * @return
+	 */
+	public GraphHopper finishPath(boolean finish) {
+		this.finishPath = finish;
+		return this;
+	}
 
     /**
      * @deprecated until #12 is fixed
@@ -518,15 +540,24 @@ public class GraphHopper implements GraphHopperAPI {
         	logger.debug("Solved path: nodes:{} distance:{} time:{}", new Object[]{path.calcPoints().size(), path.distance(), path.time()});
         }
         
-        sw = new StopWatch().start();
-        PathFinisher finishedPath = new PathFinisher(from, to, request.from(), request.to(), path, encodingManager.getEncoder(request.vehicle()), graph);
-        finishedPath.setScaleDistance(true);
-//		PointList points = path.calcPoints();
-        PointList points = finishedPath.getFinishedPointList();
-        debug.append(", ").append("finished-path:").append(sw.stop().getSeconds()).append('s');
-
-        if(logger.isDebugEnabled()) {
-        	logger.debug("Finished path: nodes:{} distance:{} time:{}", new Object[]{finishedPath.getFinishedPointList().size(), finishedPath.getFinishedDistance(), finishedPath.getFinishedTime()});
+        PointList points;
+        double distance;
+        long time;
+        if(finishPath) {
+	        sw = new StopWatch().start();
+	        PathFinisher finishedPath = new PathFinisher(from, to, request.from(), request.to(), path, encodingManager.getEncoder(request.vehicle()), graph);
+	        finishedPath.setScaleDistance(true);
+	        points = finishedPath.getFinishedPointList();
+	        distance = finishedPath.getFinishedDistance();
+	        time = finishedPath.getFinishedTime();
+	        debug.append(", ").append("finished-path:").append(sw.stop().getSeconds()).append('s');
+	        if(logger.isDebugEnabled()) {
+	        	logger.debug("Finished path: nodes:{} distance:{} time:{}", new Object[]{points.size(), distance, time});
+	        }
+        } else {
+        	points = path.calcPoints();
+        	distance = path.distance();
+        	time = path.time();
         }
         // simplify route geometry
         simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
@@ -538,8 +569,7 @@ public class GraphHopper implements GraphHopperAPI {
                 new DouglasPeucker().maxDistance(minPathPrecision).simplify(points);
             debug.append(", simplify (").append(orig).append("->").append(points.size()).append("):").append(sw.stop().getSeconds()).append('s');
         }
-        return rsp.points(points).distance(finishedPath.getFinishedDistance()).time(finishedPath.getFinishedTime()).debugInfo(debug.toString());
-//        return rsp.points(points).distance(path.distance()).time(path.time()).debugInfo(debug.toString());
+        return rsp.points(points).distance(distance).time(time).debugInfo(debug.toString());
     }
 
     private void initIndex() {

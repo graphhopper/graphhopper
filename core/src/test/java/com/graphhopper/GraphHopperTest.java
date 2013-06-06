@@ -41,7 +41,8 @@ public class GraphHopperTest {
         Helper.removeDir(new File(ghLoc));
         GraphHopper instance = new GraphHopper().setInMemory(true, true).
                 encodingManager(new EncodingManager("CAR")).
-                graphHopperLocation(ghLoc).osmFile(testOsm);
+                graphHopperLocation(ghLoc).osmFile(testOsm).
+                finishPath(false);
         instance.importOrLoad();
         GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.found());
@@ -74,7 +75,8 @@ public class GraphHopperTest {
         // now all ways are imported
         GraphHopper instance = new GraphHopper().setInMemory(true, false).
                 encodingManager(new EncodingManager("CAR,FOOT")).
-                graphHopperLocation(ghLoc).osmFile(testOsm3);
+                graphHopperLocation(ghLoc).osmFile(testOsm3).
+                finishPath(false);
         instance.importOrLoad();
 
         assertEquals(5, instance.graph().nodes());
@@ -104,14 +106,15 @@ public class GraphHopperTest {
         // A D E for car
         res = instance.route(new GHRequest(11.1, 50, 10, 51).vehicle(EncodingManager.CAR));
         assertTrue(res.found());
-        assertEquals(3, res.points().size());
+        assertEquals(2, res.points().size()); // 2 not 3 because of AD is one way => starting on AD mean starting at D.
     }
 
     @Test
     public void testFailsForWrongConfig() throws IOException {
         GraphHopper instance = new GraphHopper().init(
                 new CmdArgs().put("osmreader.acceptWay", "FOOT,CAR").put("osmreader.osm", testOsm3)).
-                graphHopperLocation(ghLoc);
+                graphHopperLocation(ghLoc).
+                finishPath(false);
         instance.importOrLoad();
         assertEquals(5, instance.graph().nodes());
 
