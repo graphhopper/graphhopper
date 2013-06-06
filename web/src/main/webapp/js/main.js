@@ -100,10 +100,10 @@ $(document).ready(function(e) {
 
 function resolveCoords(fromStr, toStr) { 
     routingLayer.clearLayers();
-    if(fromStr != ghRequest.from.input)
+    if(fromStr !== ghRequest.from.input || !ghRequest.from.isResolved())
         ghRequest.from = new GHInput(fromStr);
     
-    if(toStr != ghRequest.to.input)
+    if(toStr !== ghRequest.to.input || !ghRequest.to.isResolved())
         ghRequest.to = new GHInput(toStr);
     
     if(ghRequest.from.lat && ghRequest.to.lat) {
@@ -260,7 +260,7 @@ function resolve(fromOrTo, point) {
     return getInfoFromLocation(point).done(function() {        
         $("#" + fromOrTo + "Input").val(point.input);
         if(point.resolvedText)
-            $("#" + fromOrTo + "Found").html(point.resolvedText);
+            $("#" + fromOrTo + "Found").html(point.resolvedText);        
         
         $("#" + fromOrTo + "Flag").show();
         $("#" + fromOrTo + "Indicator").hide();
@@ -351,6 +351,13 @@ function createCallback(errorFallback) {
     };
 }
 
+function focus(coord) {
+    if(coord.lat && coord.lng) {
+        routingLayer.clearLayers();
+        map.setView(new L.LatLng(coord.lat, coord.lng), 11);
+        setFlag(coord, true);
+    }
+}
 function routeLatLng(request) {    
     clickToRoute = true;
     $("#info").empty();
@@ -559,24 +566,29 @@ function initForm() {
         e.preventDefault();
     });
     
+    // use keyup instead keypress otherwise the val() calls could contain partial values
     // if FROM will be submitted
     $('#fromInput').keyup(function(e) {
-        if(e.which == 10 || e.which == 13) {
+        if(e.which == 13) {
+            var from = $("#fromInput").val()
             var to = $("#toInput").val();
             // do not resolve 'to'
-            if(to == "To") {
-                resolveTo();
+            if(to == "To") {                
+                ghRequest.from = new GHInput(from);
+                $.when(resolveFrom()).done(function() {                    
+                    focus(ghRequest.from);
+                });                
             } else 
-                resolveCoords($("#fromInput").val(), to);
+                resolveCoords(from, to);
         }
     });
     
     // if TO will be submitted
     $('#toInput').keyup(function(e) {
-        if(e.which == 10 || e.which == 13) {
+        if(e.which == 13) {
             var from = $("#fromInput").val();            
             if(from == "From")  {
-                resolveFrom();
+            //                resolveFrom();
             } else
                 resolveCoords(from, $("#toInput").val());
         }

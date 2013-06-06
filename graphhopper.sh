@@ -119,13 +119,13 @@ fi
 
 # NAME = file without extension if any
 NAME="${FILE%.*}"
-FILE_END=".osm"
 
 if [ ${FILE: -4} == ".osm" ]; then
    OSM_FILE=$FILE
 elif [ ${FILE: -4} == ".pbf" ]; then
    OSM_FILE=$FILE
-   FILE_END=".pbf"
+elif [ ${FILE: -7} == ".osm.gz" ]; then
+   OSM_FILE=$FILE
 else
    # no end default to osm
    OSM_FILE=$NAME.osm
@@ -135,7 +135,7 @@ GRAPH=$NAME-gh
 VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
 JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
 
-# file without path
+# file without path (.osm.gz or osm.bz2 is also possible)
 TMP=$(basename "$FILE")
 TMP="${TMP%.*}"
 TMP="${TMP%.*}"
