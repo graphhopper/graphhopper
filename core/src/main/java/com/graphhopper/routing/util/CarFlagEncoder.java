@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +31,8 @@ import java.util.Set;
  */
 public class CarFlagEncoder extends AbstractFlagEncoder {
 
+    protected HashSet<String> intended = new HashSet<String>();
+
     public CarFlagEncoder() {
         restrictions = new String[]{"motorcar", "motor_vehicle", "vehicle", "access"};
         restrictedValues.add("private");
@@ -37,6 +40,20 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         restrictedValues.add("forestry");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
+
+        intended.add("yes");
+        intended.add("permissive");
+
+        potentialBarriers.add( "gate" );
+        potentialBarriers.add( "lift_gate" );
+        potentialBarriers.add( "kissing_gate" );
+        potentialBarriers.add( "swing_gate" );
+
+        absoluteBarriers.add( "bollard" );
+        absoluteBarriers.add( "stile" );
+        absoluteBarriers.add( "turnstile" );
+        absoluteBarriers.add( "cycle_barrier" );
+        absoluteBarriers.add( "block" );
     }
 
     /**
@@ -99,7 +116,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             // get assumed speed from highway type
             Integer speed = getSpeed(highwayValue);
             // apply speed limit
-            int maxspeed = parseSpeed(way.getTag("maxspeed"));
+            int maxspeed = parseSpeed( way.getTag( "maxspeed" ) );
             if (maxspeed > 0 && speed > maxspeed)
                 speed = maxspeed;
 
@@ -126,6 +143,22 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         }
 
         return encoded;
+    }
+
+    @Override
+    public int analyzeNodeTags( OSMNode node ) {
+
+        // absolute barriers always block
+        if( node.hasTag( "barrier", absoluteBarriers ))
+            return directionBitMask;
+
+        // movable barriers block if they are not marked as passable
+        if( node.hasTag( "barrier", potentialBarriers )
+                && !node.hasTag( restrictions, intended )
+                && !node.hasTag( "locked", "no" ) )
+            return directionBitMask;
+
+        return 0;
     }
 
     @Override public String toString() {

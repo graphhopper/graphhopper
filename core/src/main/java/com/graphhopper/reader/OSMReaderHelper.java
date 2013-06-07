@@ -27,6 +27,7 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.*;
 import gnu.trove.list.TLongList;
 
+import gnu.trove.list.array.TLongArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,6 @@ import org.slf4j.LoggerFactory;
  * @author Peter Karich
  */
 public class OSMReaderHelper {
-
     protected static final int EMPTY = -1;
     // pillar node is >= 3
     protected static final int PILLAR_NODE = 1;
@@ -56,6 +56,7 @@ public class OSMReaderHelper {
     //        nodeOsmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
     // smaller memory overhead for bigger data sets because of avoiding a "rehash"
     private LongIntMap nodeOsmIdToIndexMap;
+    private static final TLongList barrierNodeIDs = new TLongArrayList();
     // remember how many times a node was used to identify tower nodes
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
@@ -120,7 +121,7 @@ public class OSMReaderHelper {
         int nodes = pointList.size();
         for (int i = 1; i < nodes; i++) {
             lat = pointList.latitude(i);
-            lon = pointList.longitude(i);
+            lon = pointList.longitude( i );
             towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
             prevLat = lat;
             prevLon = lon;
@@ -288,5 +289,49 @@ public class OSMReaderHelper {
 
     public LongIntMap getNodeMap() {
         return nodeOsmIdToIndexMap;
+    }
+
+    /**
+     * Create a copy of the barrier node
+     * @param nodeId
+     */
+    public long addBarrierNode( long nodeId ) {
+        // create node
+        OSMNode newNode;
+        int graphIndex = nodeOsmIdToIndexMap.get( nodeId );
+        if (graphIndex < TOWER_NODE) {
+            graphIndex = -graphIndex - 3;
+            newNode = new OSMNode( g.getLatitude(graphIndex), g.getLongitude(graphIndex) );
+        }
+        else {
+            graphIndex = graphIndex - 3;
+            newNode = new OSMNode(
+                    Helper.intToDegree( pillarLats.getInt(graphIndex)),
+                    Helper.intToDegree( pillarLons.getInt(graphIndex)) );
+        }
+
+        final long id = newNode.id();
+        prepareHighwayNode( id );
+        addNode( newNode );
+
+        return id;
+    }
+
+    /**
+     * Add a zero length edge with reduced routing options to the graph.
+     * @param fromId
+     * @param toId
+     * @param flags
+     * @param barrierFlags
+     */
+    public void addBarrierEdge( long fromId, long toId, int flags, int barrierFlags ) {
+
+        // clear barred directions from routing flags
+        flags &= ~barrierFlags;
+        // add edge
+        barrierNodeIDs.clear();
+        barrierNodeIDs.add( fromId );
+        barrierNodeIDs.add( toId );
+        addEdge( barrierNodeIDs, flags );
     }
 }

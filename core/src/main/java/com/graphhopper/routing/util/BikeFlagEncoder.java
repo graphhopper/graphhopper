@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
 
@@ -51,6 +52,16 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         oppositeLanes.add("opposite");
         oppositeLanes.add("opposite_lane");
         oppositeLanes.add("opposite_track");
+
+        potentialBarriers.add( "gate" );
+        potentialBarriers.add( "lift_gate" );
+        potentialBarriers.add( "swing_gate" );
+        potentialBarriers.add( "cycle_barrier" );
+        potentialBarriers.add( "block" );
+
+        absoluteBarriers.add( "kissing_gate" );
+        absoluteBarriers.add( "stile" );
+        absoluteBarriers.add( "turnstile" );
     }
 
     @Override
@@ -136,6 +147,23 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         }
         return encoded;
     }
+
+    @Override
+    public int analyzeNodeTags( OSMNode node ) {
+
+        // absolute barriers always block
+        if( node.hasTag( "barrier", absoluteBarriers ))
+            return directionBitMask;
+
+        // movable barriers block if they are not marked as passable
+        if( node.hasTag( "barrier", potentialBarriers )
+                && !node.hasTag( restrictions, intended )
+                && !node.hasTag( "locked", "no"))
+            return directionBitMask;
+
+        return 0;
+    }
+
 
     int getSpeed(OSMWay way) {
         String s = way.getTag("surface");

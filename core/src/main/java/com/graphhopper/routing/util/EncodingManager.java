@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 
 import java.util.ArrayList;
@@ -152,10 +153,10 @@ public class EncodingManager {
      *
      * @return the encoded flags
      */
-    public int encodeTags(int includeWay, OSMWay osmProperties) {
+    public int encodeTags(int includeWay, OSMWay way) {
         int flags = 0;
         for (int i = 0; i < encoderCount; i++) {
-            flags |= encoders.get(i).handleWayTags(includeWay, osmProperties);
+            flags |= encoders.get(i).handleWayTags(includeWay, way);
         }
 
         return flags;
@@ -199,7 +200,7 @@ public class EncodingManager {
     private FlagEncoder getFirst() {
         if (countVehicles() == 0)
             throw new IllegalStateException("no encoder is active!");
-        return encoders.get(0);
+        return encoders.get( 0 );
     }
 
     public int flagsDefault(boolean bothDirections) {
@@ -237,5 +238,18 @@ public class EncodingManager {
         if (this.encoders != other.encoders && (this.encoders == null || !this.encoders.equals(other.encoders)))
             return false;
         return true;
+    }
+
+    /**
+     * Analyze tags on osm node
+     * @param node
+     */
+    public int analyzeNode( OSMNode node ) {
+        int flags = 0;
+        for (int i = 0; i < encoderCount; i++) {
+            flags |= encoders.get(i).analyzeNodeTags( node );
+        }
+
+        return flags;
     }
 }

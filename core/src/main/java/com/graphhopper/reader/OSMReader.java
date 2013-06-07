@@ -18,6 +18,7 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
@@ -27,6 +28,7 @@ import java.io.*;
 import javax.xml.stream.XMLStreamException;
 
 import gnu.trove.list.TLongList;
+import gnu.trove.list.array.TLongArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +47,12 @@ public class OSMReader {
     private OSMReaderHelper helper;
     private EncodingManager encodingManager = null;
     private int workerThreads = -1;
+    private LongIntMap nodeOsmIdToBarrierMap;
 
     public OSMReader(GraphStorage storage, long expectedNodes) {
         this.graphStorage = storage;
         helper = new OSMReaderHelper(graphStorage, expectedNodes);
+        nodeOsmIdToBarrierMap = new GHLongIntBTree( 200 );
     }
 
     public OSMReader workerThreads(int numOfWorkers) {
@@ -170,8 +174,7 @@ public class OSMReader {
 
     /**
      * Process properties, encode flags and create edges for the way
-     *
-     *
+     *      *
      * @param way
      * @throws XMLStreamException
      */
@@ -185,8 +188,60 @@ public class OSMReader {
         int includeWay = encodingManager.accept(way);
         if (includeWay > 0) {
             int flags = encodingManager.encodeTags(includeWay, way);
-            if (flags != 0)
-                helper.addEdge(way.nodes(), flags);
+            if (flags != 0) {
+                TLongList osmIds = way.nodes();
+
+                // look for barriers along the way
+                final int size = osmIds.size();
+                int lastBarrier = -1;
+                for( int i = 0; i < size; i++ ) {
+                    final long nodeId = osmIds.get( i );
+                    int barrierFlags = nodeOsmIdToBarrierMap.get( nodeId );
+                    // barrier was spotted and way is otherwise passable for that mode of travel
+                    if( barrierFlags > 0 && (barrierFlags & flags) > 0 ) {
+                        // remove barrier to avoid duplicates
+                        nodeOsmIdToBarrierMap.put( nodeId, 0 );
+
+                        // create shadow node copy for zero length edge
+                        long newNodeId = helper.addBarrierNode( nodeId );
+
+                        if( i > 0 ) {
+                            // start at beginning of array if there was no previous barrier
+                            if( lastBarrier < 0 )
+                                lastBarrier = 0;
+                            // add way up to barrier shadow node
+                            long transfer[] = osmIds.toArray( lastBarrier, i-lastBarrier+1 );
+                            transfer[ transfer.length-1] = newNodeId;
+                            TLongList partIds = new TLongArrayList( transfer );
+                            helper.addEdge(partIds, flags);
+
+                            // create zero length edge for barrier
+                            helper.addBarrierEdge( newNodeId, nodeId, flags, barrierFlags );
+                        }
+                        else {
+                            // run edge from real first node to shadow node
+                            helper.addBarrierEdge( nodeId, newNodeId, flags, barrierFlags );
+
+                            // exchange first node for created barrier node
+                            osmIds.set( 0, newNodeId );
+                        }
+                        // remember barrier for processing the way behind it
+                        lastBarrier = i;
+                    }
+                }
+
+                // just add remainder of way to graph if barrier was not the last node
+                if( lastBarrier >= 0  ) {
+                    if( lastBarrier < size - 1 ) {
+                        long transfer[] = osmIds.toArray( lastBarrier, size - lastBarrier );
+                        TLongList partIds = new TLongArrayList( transfer );
+                        helper.addEdge( partIds, flags );
+                    }
+                }
+                // no barriers - simply add the whole way
+                else
+                    helper.addEdge(way.nodes(), flags);
+            }
         }
     }
 
@@ -194,6 +249,14 @@ public class OSMReader {
 
         if (isInBounds(node)) {
             helper.addNode(node);
+
+            // analyze node tags for barriers
+            if( node.hasTags() ) {
+                final int barrierFlags = encodingManager.analyzeNode( node );
+                if( barrierFlags != 0 )
+                    nodeOsmIdToBarrierMap.put( node.id(), barrierFlags );
+            }
+
             locations++;
         } else {
             skippedLocations++;

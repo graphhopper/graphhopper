@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
 
@@ -45,6 +46,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected HashSet<String> restrictedValues = new HashSet<String>();
     protected HashSet<String> ferries = new HashSet<String>();
     protected HashSet<String> oneways = new HashSet<String>();
+    protected HashSet<String> absoluteBarriers = new HashSet<String>();
+    protected HashSet<String> potentialBarriers = new HashSet<String>();
 
     public AbstractFlagEncoder() {
         oneways.add("yes");
@@ -132,6 +135,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      */
     public abstract int handleWayTags(int allowed, OSMWay way);
 
+    /**
+     * Parse tags on nodes, looking for barriers.
+     * @param node
+     * @return
+     */
+    public abstract int analyzeNodeTags( OSMNode node );
+
     public boolean hasAccepted(int acceptedValue) {
         return (acceptedValue & acceptBit) > 0;
     }
@@ -210,6 +220,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         final AbstractFlagEncoder other = (AbstractFlagEncoder) obj;
         if (this.directionBitMask != other.directionBitMask)
             return false;
-        return this.toString().equals(other.toString());
+        return this.toString().equals( other.toString() );
     }
+
 }
