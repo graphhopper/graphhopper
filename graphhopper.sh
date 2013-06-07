@@ -143,12 +143,12 @@ TMP="${TMP%.*}"
 
 if [ "x$TMP" = "xunterfranken" ]; then
  LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx200m -Xms200m" 
+ JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx200m -Xms200m" 
 elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
 
  # Info: for import we need a more memory than for just loading it
- JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1600m -Xms1600m" 
+ JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1600m -Xms1600m" 
 else 
  LINK=`echo $NAME | tr '_' '/'`
  if [ ${FILE: -4} == ".osm" ]; then 
@@ -157,7 +157,7 @@ else
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
  fi
  if [ "x$JAVA_OPTS" = "x" ]; then
-  JAVA_OPTS="-XX:PermSize=30m -XX:MaxPermSize=30m -Xmx1000m -Xms1000m" 
+  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1000m -Xms1000m" 
  fi
 fi
 
