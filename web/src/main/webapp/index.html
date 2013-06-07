@@ -15,7 +15,7 @@
         <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>        
         <script defer type="text/javascript" src="js/jquery.history.js"></script>
         <script type="text/javascript" src="js/ghrequest.js?v=1"></script>
-        <script type="text/javascript" src="js/main.js?v=10"></script>
+        <script type="text/javascript" src="js/main.js?v=11"></script>
         <style>
             body {                
                 color: #000;
@@ -23,7 +23,7 @@
                 line-height: 1.4;    
                 color: #111111;
                 background-color: #EEEEEE;
-                    margin: 0;
+                margin: 0;
             }
             #map { 
                 width: 800px;
@@ -45,11 +45,6 @@
             }
             #info a {
                 padding-right: 5px;
-            }
-            /* ugly hack to hide button. as jquery requires us to include a submit button */
-            #hiddenButton {
-                position: absolute; 
-                left: -9999px;
             }
             #input {
                 width: 225px;
@@ -106,6 +101,13 @@
                 padding-top: 15px;
                 padding-bottom: 15px;
             }
+            #searchButton {
+                float: right;
+                margin-bottom: 5px;
+            }
+            .clear {
+                clear: both;
+            }
         </style>
     </head>
     <body>
@@ -119,9 +121,8 @@
                 <span id="vehicles">
 
                 </span>
-                <input id="hiddenButton" type="submit" value="Search">
             </div>
-            <form id="locationform" action="javascript:return false;">                
+            <form id="locationform">
                 <div id="fromDiv">
                     <img id="fromIndicator" class="hidden" src="img/indicator.gif"/>
                     <img id="fromFlag" src="img/marker-from.png"/>
@@ -134,12 +135,15 @@
                     <input id="toInput" class="defaulting" type="text" name="to" value="To" defaultValue="To"/>
                     <div id="toFound"></div>
                 </div>
-            </form>            
+                <input id="searchButton" type="submit" value="Search">
+            </form>      
+            <div class="clear"> </div>
             <div class="small_text" id="info">                
             </div>
             <div id="error" class="error">
             </div>
         </div>
+
         <div id="map">
         </div>
         <!-- Piwik -->
