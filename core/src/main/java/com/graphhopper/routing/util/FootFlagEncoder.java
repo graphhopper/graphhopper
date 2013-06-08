@@ -108,8 +108,13 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             if (way.hasTag("motorroad", "yes"))
                 return 0;
 
+            // do not get our feet wet
+            if (way.hasTag( "ford" ))
+                return 0;
+
             if (way.hasTag("bicycle", "official"))
                 return 0;
+
             // check access restrictions
             if (way.hasTag(restrictions, restrictedValues))
                 return 0;
