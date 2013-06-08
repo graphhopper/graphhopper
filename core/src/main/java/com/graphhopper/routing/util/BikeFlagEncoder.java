@@ -161,6 +161,10 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
                 && !node.hasTag( "locked", "no"))
             return directionBitMask;
 
+        if( (node.hasTag( "highway", "ford" ) || node.hasTag( "ford" ))
+                && !node.hasTag( restrictions, intended ) )
+            return directionBitMask;
+
         return 0;
     }
 
