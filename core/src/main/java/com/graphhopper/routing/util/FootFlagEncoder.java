@@ -98,7 +98,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             if (way.hasTag("sidewalk", sidewalks))
                 return acceptBit;
 
-            // no need to evaluate ferries - already included here
+            // no need to evaluate ferries or fords - already included here
             if (way.hasTag("foot", intended))
                 return acceptBit;
 
@@ -108,8 +108,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             if (way.hasTag("motorroad", "yes"))
                 return 0;
 
-            // do not get our feet wet
-            if (way.hasTag( "ford" ))
+            // do not get our feet wet, "yes" is already included above
+            if( way.hasTag( "highway", "ford" ) || way.hasTag( "ford" ))
                 return 0;
 
             if (way.hasTag("bicycle", "official"))

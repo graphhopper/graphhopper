@@ -20,6 +20,10 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.Assert.*;
 
 /**
@@ -28,16 +32,60 @@ import static org.junit.Assert.*;
  */
 public class BikeFlagEncoderTest {
 
+    private BikeFlagEncoder encoder = (BikeFlagEncoder) new EncodingManager("CAR,BIKE").getEncoder("BIKE");
+
     @Test
     public void testGetSpeed() {
-        BikeFlagEncoder instance = (BikeFlagEncoder) new EncodingManager("CAR,BIKE").getEncoder("BIKE");
-        int result = instance.flags(10, true);
-        assertEquals(10, instance.getSpeed(result));
+        int result = encoder.flags(10, true);
+        assertEquals( 10, encoder.getSpeed( result ) );
         OSMWay way = new OSMWay();
         way.setTag("highway", "primary");
-        assertEquals(18, instance.getSpeed(way));
+        assertEquals( 18, encoder.getSpeed( way ) );
 
-        way.setTag("surface", "paved");
-        assertEquals(16, instance.getSpeed(way));
+        way.setTag( "surface", "paved" );
+        assertEquals(16, encoder.getSpeed(way));
     }
+
+    @Test
+    public void testAccess() {
+        Map<String, String> map = new HashMap<String, String>();
+        OSMWay way = new OSMWay(1, map);
+
+        map.put("highway", "motorway");
+        assertFalse(encoder.isAllowed(way) > 0);
+
+        map.put("highway", "footway");
+        assertFalse( encoder.isAllowed(way) > 0);
+
+        map.put("highway", "cycleway");
+        assertTrue(encoder.isAllowed(way) > 0);
+
+        map.put("highway", "path");
+        assertFalse( encoder.isAllowed(way) > 0);
+
+        map.put("foot", "official");
+        assertFalse(encoder.isAllowed(way) > 0);
+
+        map.put("bicycle", "official");
+        assertTrue(encoder.isAllowed(way) > 0);
+
+        map.clear();
+        map.put("highway", "service");
+        map.put("access", "no");
+        assertFalse(encoder.isAllowed(way) > 0);
+
+        map.clear();
+        map.put("highway", "tertiary");
+        map.put("motorroad", "yes");
+        assertFalse(encoder.isAllowed(way) > 0);
+
+        map.clear();
+        map.put("highway", "track");
+        map.put("ford", "yes");
+        assertFalse(encoder.isAllowed(way) > 0);
+        map.put("bicycle", "yes");
+        assertTrue(encoder.isAllowed(way) > 0);
+
+    }
+
 }

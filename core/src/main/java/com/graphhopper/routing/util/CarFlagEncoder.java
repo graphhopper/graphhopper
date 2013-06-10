@@ -85,7 +85,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 return 0;
 
             // do not drive street cars into fords
-            if (way.hasTag( "ford" ) && ! way.hasTag(restrictions, intended))
+            if( (way.hasTag( "highway", "ford" ) || way.hasTag( "ford" ))
+                    && !way.hasTag( restrictions, intended ) )
                 return 0;
 
             // check access restrictions

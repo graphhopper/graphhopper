@@ -99,8 +99,8 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
             if (way.hasTag("motorroad", "yes"))
                 return 0;
 
-            // do not use fords with normal bikes
-            if (way.hasTag( "ford" ))
+            // do not use fords with normal bikes, flagged fords are in included above
+            if( way.hasTag( "highway", "ford" ) || way.hasTag( "ford" ))
                 return 0;
 
             // check access restrictions
