@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
  * @author Peter Karich
  */
 public class OSMReaderHelper {
+
     protected static final int EMPTY = -1;
     // pillar node is >= 3
     protected static final int PILLAR_NODE = 1;
@@ -55,8 +56,8 @@ public class OSMReaderHelper {
     // memory overhead due to open addressing and full rehash:
     //        nodeOsmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
     // smaller memory overhead for bigger data sets because of avoiding a "rehash"
-    private LongIntMap nodeOsmIdToIndexMap;
-    private static final TLongList barrierNodeIDs = new TLongArrayList();
+    private LongIntMap osmNodeIdToIndexMap;
+    private final TLongList barrierNodeIDs = new TLongArrayList();
     // remember how many times a node was used to identify tower nodes
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
@@ -68,7 +69,7 @@ public class OSMReaderHelper {
     public OSMReaderHelper(GraphStorage g, long expectedNodes) {
         this.g = g;
         this.expectedNodes = expectedNodes;
-        nodeOsmIdToIndexMap = new GHLongIntBTree(200);
+        osmNodeIdToIndexMap = new GHLongIntBTree(200);
         dir = g.directory();
         pillarLats = dir.findCreate("tmpLatitudes");
         pillarLons = dir.findCreate("tmpLongitudes");
@@ -87,7 +88,7 @@ public class OSMReaderHelper {
     }
 
     public boolean addNode(OSMNode node) {
-        int nodeType = nodeOsmIdToIndexMap.get(node.id());
+        int nodeType = osmNodeIdToIndexMap.get(node.id());
         if (nodeType == EMPTY)
             return false;
 
@@ -101,7 +102,7 @@ public class OSMReaderHelper {
             pillarLats.setInt(pillarId, Helper.degreeToInt(lat));
             pillarLons.ensureCapacity(tmp);
             pillarLons.setInt(pillarId, Helper.degreeToInt(lon));
-            nodeOsmIdToIndexMap.put(node.id(), pillarId + 3);
+            osmNodeIdToIndexMap.put(node.id(), pillarId + 3);
             pillarId++;
         }
         return true;
@@ -121,7 +122,7 @@ public class OSMReaderHelper {
         int nodes = pointList.size();
         for (int i = 1; i < nodes; i++) {
             lat = pointList.latitude(i);
-            lon = pointList.longitude( i );
+            lon = pointList.longitude(i);
             towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
             prevLat = lat;
             prevLon = lon;
@@ -148,13 +149,13 @@ public class OSMReaderHelper {
     }
 
     public void prepareHighwayNode(long osmId) {
-        int tmpIndex = nodeOsmIdToIndexMap.get(osmId);
+        int tmpIndex = osmNodeIdToIndexMap.get(osmId);
         if (tmpIndex == OSMReaderHelper.EMPTY) {
             // osmId is used exactly once
-            nodeOsmIdToIndexMap.put(osmId, OSMReaderHelper.PILLAR_NODE);
+            osmNodeIdToIndexMap.put(osmId, OSMReaderHelper.PILLAR_NODE);
         } else if (tmpIndex > OSMReaderHelper.EMPTY) {
             // mark node as tower node as it occured at least twice times
-            nodeOsmIdToIndexMap.put(osmId, OSMReaderHelper.TOWER_NODE);
+            osmNodeIdToIndexMap.put(osmId, OSMReaderHelper.TOWER_NODE);
         } else {
             // tmpIndex is already negative (already tower node)
         }
@@ -163,13 +164,13 @@ public class OSMReaderHelper {
     protected int addTowerNode(long osmId, double lat, double lon) {
         g.setNode(towerId, lat, lon);
         int id = -(towerId + 3);
-        nodeOsmIdToIndexMap.put(osmId, id);
+        osmNodeIdToIndexMap.put(osmId, id);
         towerId++;
         return id;
     }
 
     public long foundNodes() {
-        return nodeOsmIdToIndexMap.size();
+        return osmNodeIdToIndexMap.size();
     }
 
     public int addEdge(TLongList osmIds, int flags) {
@@ -181,7 +182,7 @@ public class OSMReaderHelper {
         try {
             for (int i = 0; i < osmIds.size(); i++) {
                 long osmId = osmIds.get(i);
-                int tmpNode = nodeOsmIdToIndexMap.get(osmId);
+                int tmpNode = osmNodeIdToIndexMap.get(osmId);
                 if (tmpNode == EMPTY)
                     continue;
                 // skip osmIds with no associated pillar or tower id (e.g. !OSMReader.isBounds)
@@ -241,7 +242,8 @@ public class OSMReaderHelper {
     /**
      * @return converted tower node
      */
-    private int handlePillarNode(int tmpNode, long osmId, PointList pointList, boolean convertToTowerNode) {
+    private int handlePillarNode(int tmpNode, long osmId, PointList pointList, 
+            boolean convertToTowerNode) {
         tmpNode = tmpNode - 3;
         int intlat = pillarLats.getInt(tmpNode);
         int intlon = pillarLons.getInt(tmpNode);
@@ -265,21 +267,21 @@ public class OSMReaderHelper {
 
     private void printInfo(String str) {
         LoggerFactory.getLogger(getClass()).info("finished " + str + " processing."
-                + " nodes: " + g.nodes() + ", osmIdMap.size:" + nodeOsmIdToIndexMap.size()
-                + ", osmIdMap:" + nodeOsmIdToIndexMap.memoryUsage() + "MB"
-                + ", osmIdMap.toString:" + nodeOsmIdToIndexMap + " "
+                + " nodes: " + g.nodes() + ", osmIdMap.size:" + osmNodeIdToIndexMap.size()
+                + ", osmIdMap:" + osmNodeIdToIndexMap.memoryUsage() + "MB"
+                + ", osmIdMap.toString:" + osmNodeIdToIndexMap + " "
                 + Helper.memInfo());
     }
 
     void finishedReading() {
         // todo: is this necessary before removing it?
-        nodeOsmIdToIndexMap.optimize();
+        osmNodeIdToIndexMap.optimize();
         printInfo("way");
         dir.remove(pillarLats);
         dir.remove(pillarLons);
         pillarLons = null;
         pillarLats = null;
-        nodeOsmIdToIndexMap = null;
+        osmNodeIdToIndexMap = null;
     }
 
     @Override
@@ -288,50 +290,44 @@ public class OSMReaderHelper {
     }
 
     public LongIntMap getNodeMap() {
-        return nodeOsmIdToIndexMap;
+        return osmNodeIdToIndexMap;
     }
 
     /**
      * Create a copy of the barrier node
-     * @param nodeId
      */
-    public long addBarrierNode( long nodeId ) {
+    public long addBarrierNode(long nodeId) {
         // create node
         OSMNode newNode;
-        int graphIndex = nodeOsmIdToIndexMap.get( nodeId );
+        int graphIndex = osmNodeIdToIndexMap.get(nodeId);
         if (graphIndex < TOWER_NODE) {
             graphIndex = -graphIndex - 3;
-            newNode = new OSMNode( g.getLatitude(graphIndex), g.getLongitude(graphIndex) );
-        }
-        else {
+            newNode = new OSMNode(g.getLatitude(graphIndex), g.getLongitude(graphIndex));
+        } else {
             graphIndex = graphIndex - 3;
             newNode = new OSMNode(
-                    Helper.intToDegree( pillarLats.getInt(graphIndex)),
-                    Helper.intToDegree( pillarLons.getInt(graphIndex)) );
+                    Helper.intToDegree(pillarLats.getInt(graphIndex)),
+                    Helper.intToDegree(pillarLons.getInt(graphIndex)));
         }
 
         final long id = newNode.id();
-        prepareHighwayNode( id );
-        addNode( newNode );
+        prepareHighwayNode(id);
+        addNode(newNode);
 
         return id;
     }
 
     /**
      * Add a zero length edge with reduced routing options to the graph.
-     * @param fromId
-     * @param toId
-     * @param flags
-     * @param barrierFlags
      */
-    public void addBarrierEdge( long fromId, long toId, int flags, int barrierFlags ) {
+    public void addBarrierEdge(long fromId, long toId, int flags, int barrierFlags) {
 
         // clear barred directions from routing flags
         flags &= ~barrierFlags;
         // add edge
         barrierNodeIDs.clear();
-        barrierNodeIDs.add( fromId );
-        barrierNodeIDs.add( toId );
-        addEdge( barrierNodeIDs, flags );
+        barrierNodeIDs.add(fromId);
+        barrierNodeIDs.add(toId);
+        addEdge(barrierNodeIDs, flags);
     }
 }
