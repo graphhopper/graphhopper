@@ -30,6 +30,8 @@ import java.util.Set;
  */
 public class CarFlagEncoder extends AbstractFlagEncoder {
 
+    private HashSet<String> intended = new HashSet<String>();
+
     /**
      * Should be only instantied via EncodingManager
      */
@@ -40,6 +42,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         restrictedValues.add("forestry");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
+
+        intended.add("yes");
     }
 
     /**
@@ -81,6 +85,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             return 0;
         } else {
             if (!SPEED.containsKey(highwayValue))
+                return 0;
+
+            // do not drive street cars into fords
+            if ((way.hasTag("highway", "ford") || way.hasTag("ford"))
+                    && !way.hasTag(restrictions, intended))
                 return 0;
 
             // check access restrictions

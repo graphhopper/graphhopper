@@ -43,11 +43,19 @@ public class CarFlagEncoderTest {
         assertTrue(encoder.isAllowed(way) > 0);
         map.put("access", "no");
         assertFalse(encoder.isAllowed(way) > 0);
-        map.clear();
 
+        map.clear();
         map.put("highway", "track");
         map.put("motorcar", "no");
         assertFalse(encoder.isAllowed(way) > 0);
+
+        map.clear();
+        map.put("highway", "unclassified");
+        map.put("ford", "yes");
+        assertFalse(encoder.isAllowed(way) > 0);
+        map.put("motorcar", "yes");
+        assertTrue(encoder.isAllowed(way) > 0);
+
     }
 
     @Test

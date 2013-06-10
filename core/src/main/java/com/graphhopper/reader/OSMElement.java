@@ -168,6 +168,7 @@ public abstract class OSMElement {
 
     /**
      * Check that a given tag has one of the specified values.
+     * If no values are given, just checks for presence of the tag
      */
     public boolean hasTag(String key, String... values) {
         if (tags == null)
@@ -176,6 +177,10 @@ public abstract class OSMElement {
         String osmValue = tags.get(key);
         if (osmValue == null)
             return false;
+
+        // tag present, no values given: success
+        if( values.length == 0)
+            return true;
 
         for (String val : values) {
             if (val.equals(osmValue))

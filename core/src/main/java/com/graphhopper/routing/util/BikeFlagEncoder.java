@@ -91,10 +91,19 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
             if (!HIGHWAY_SPEED.containsKey(highwayValue))
                 return 0;
 
+            // use the way if it is tagged for bikes
             if (way.hasTag("bicycle", intended))
                 return acceptBit;
 
+            // avoid paths that are not tagged for bikes.
+            if( way.hasTag( "highway", "path" ) )
+                return 0;
+
             if (way.hasTag("motorroad", "yes"))
+                return 0;
+
+            // do not use fords with normal bikes, flagged fords are in included above
+            if( way.hasTag( "highway", "ford" ) || way.hasTag( "ford" ))
                 return 0;
 
             // check access restrictions
