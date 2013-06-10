@@ -165,6 +165,11 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
+    public GraphHopper doPrepare(boolean doPrepare) {
+        this.doPrepare = doPrepare;
+        return this;
+    }
+
     /**
      * Enables the use of contraction hierarchies to reduce query times.
      *
@@ -408,9 +413,9 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (encodingManager == null) {
-            encodingManager = new EncodingManager(acceptStr);
             if (acceptStr.isEmpty())
                 throw new IllegalStateException("No EncodingManager was configured. And no one was found in the graph: " + graphHopperFolder);
+            encodingManager = new EncodingManager(acceptStr);
         } else if (!acceptStr.isEmpty() && !encodingManager.encoderList().equals(acceptStr))
             throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.encoderList() + "\nGraph: " + acceptStr);
 

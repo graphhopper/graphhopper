@@ -190,4 +190,32 @@ public class GraphHopperTest {
         assertTrue(res.found());
         assertEquals(3, res.points().size());
     }
+
+    @Test
+    public void testPrepareOnly() throws IOException {
+        instance = new GraphHopper().setInMemory(true, true).
+                chShortcuts(true, true).
+                encodingManager(new EncodingManager("FOOT")).
+                doPrepare(false).
+                graphHopperLocation(ghLoc).osmFile(testOsm3);
+        instance.importOrLoad();
+        instance.close();
+
+        instance = new GraphHopper().setInMemory(true, true).
+                chShortcuts(true, true).
+                graphHopperLocation(ghLoc).osmFile(testOsm3);
+
+        // wrong encoding manager
+        instance.encodingManager(new EncodingManager("CAR"));
+        try {
+            instance.load(ghLoc);
+            assertTrue(false);
+        } catch (IllegalStateException ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match:"));
+        }
+
+        // use the one from the graph
+        instance.encodingManager(null);
+        instance.load(ghLoc);
+    }
 }
