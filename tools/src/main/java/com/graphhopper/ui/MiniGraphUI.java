@@ -28,6 +28,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
@@ -79,6 +80,8 @@ public class MiniGraphUI {
     public MiniGraphUI(GraphHopper hopper, boolean debug) {
         this.graph = hopper.graph();
         prepare = hopper.preparation();
+        if (prepare == null)
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstra", hopper.encodingManager().getEncoder("CAR"), wCalc);
         logger.info("locations:" + graph.nodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().name());
         mg = new GraphicsWrapper(graph);
 
@@ -126,14 +129,14 @@ public class MiniGraphUI {
 //                int loc = index.findID(49.682000, 9.943000);
 //                mg.plotNode(g2, loc, Color.PINK);
 //                plotNodeName(g2, index.findID(49.682000, 9.943000));
-                
+
 //                g2.setColor(Color.RED.brighter().brighter());
 //
 //                path = calcPath(prepare.createAlgo());
 //                System.out.println("now: " + path.toDetailsString());
 //                plotPath(path, g2, 1);
 //                g2.setColor(Color.black);
-                
+
                 for (int nodeIndex = 0; nodeIndex < locs; nodeIndex++) {
                     if (fastPaint && rand.nextInt(30) > 1)
                         continue;
