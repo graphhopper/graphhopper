@@ -43,7 +43,7 @@ public class DijkstraTwoDriversTest {
 
     @Test public void testFindMeetingPointWhenNotCrossing() {
         Graph g = getGraph();
-        DijkstraTwoDrivers d = new DijkstraTwoDrivers(g);
+        DijkstraTwoDrivers d = new DijkstraTwoDrivers(g, carEncoder);
 
         d.setDriverA(12, 36);
         d.setDriverB(30, 45);
@@ -71,7 +71,7 @@ public class DijkstraTwoDriversTest {
 
     @Test public void testFindMeetingPointWhenCrossing() {
         Graph g = getGraph();
-        DijkstraTwoDrivers d = new DijkstraTwoDrivers(g);
+        DijkstraTwoDrivers d = new DijkstraTwoDrivers(g, carEncoder);
         d.setDriverA(12, 36);
         d.setDriverB(30, 15);
         d.calcPath();

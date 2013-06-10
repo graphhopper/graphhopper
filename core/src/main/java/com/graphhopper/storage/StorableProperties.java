@@ -45,10 +45,14 @@ public class StorableProperties implements Storable<StorableProperties> {
         this.name = name;
     }
 
+    private String file() {
+        return dir.location() + name;
+    }
+
     @Override public boolean loadExisting() {
         if (!dir.isLoadRequired())
             return true;
-        String file = dir.location() + name;
+        String file = file();
         if (!new File(file).exists())
             return false;
         try {
@@ -133,5 +137,10 @@ public class StorableProperties implements Storable<StorableProperties> {
             throw new IllegalStateException("Version of " + key + " unsupported: " + str + ", expected:" + vers);
         }
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return file();
     }
 }

@@ -91,7 +91,7 @@ public class GraphHopper implements GraphHopperAPI {
     private int neighborUpdates = 20;
     // for OSM import:
     private String osmFile;
-    private EncodingManager encodingManager = null;
+    private EncodingManager encodingManager;
     private long expectedNodes = 10;
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
@@ -319,6 +319,8 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private GraphHopper importOSM(String graphHopperLocation, String strOsm) {
+        if (encodingManager == null)
+            throw new IllegalStateException("No vehicles are defined (no encoding manager set)");
         graphHopperLocation(graphHopperLocation);
         try {
             OSMReader reader = importOSM(strOsm);
@@ -334,13 +336,15 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    protected OSMReader importOSM(String file) throws IOException {
-        osmFile(file);
+    protected OSMReader importOSM(String _osmFile) throws IOException {
+        if (graph == null)
+            throw new IllegalStateException("Load or init graph before import OSM data");
+        osmFile(_osmFile);
         File osmTmpFile = new File(osmFile);
         if (!osmTmpFile.exists())
             throw new IllegalStateException("Your specified OSM file does not exist:" + osmTmpFile.getAbsolutePath());
 
-        logger.info("start creating graph from " + file);
+        logger.info("start creating graph from " + osmFile);
         OSMReader reader = new OSMReader(graph, expectedNodes).workerThreads(workerThreads);
         reader.encodingManager(encodingManager);
         reader.wayPointMaxDistance(wayPointMaxDistance);
@@ -369,8 +373,6 @@ public class GraphHopper implements GraphHopperAPI {
     public boolean load(String graphHopperFolder) {
         if (Helper.isEmpty(graphHopperFolder))
             throw new IllegalStateException("graphHopperLocation is not specified. call init before");
-        if (encodingManager == null)
-            throw new IllegalStateException("No vehicles are defined (no encoding manager set)");
         if (graph != null)
             throw new IllegalStateException("graph is already loaded");
 
@@ -399,6 +401,19 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalArgumentException("either memory mapped or in-memory has to be specified!");
 
         properties = new StorableProperties(dir, "properties");
+        String acceptStr = "";
+        if (properties.loadExisting()) {
+            // check encoding for compatiblity
+            acceptStr = properties.get("osmreader.acceptWay");
+        }
+
+        if (encodingManager == null) {
+            encodingManager = new EncodingManager(acceptStr);
+            if (acceptStr.isEmpty())
+                throw new IllegalStateException("No EncodingManager was configured. And no one was found in the graph: " + graphHopperFolder);
+        } else if (!acceptStr.isEmpty() && !encodingManager.encoderList().equals(acceptStr))
+            throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.encoderList() + "\nGraph: " + acceptStr);
+
         if (chUsage) {
             graph = new LevelGraphStorage(dir, encodingManager);
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
@@ -423,12 +438,6 @@ public class GraphHopper implements GraphHopperAPI {
         if (!graph.loadExisting())
             return false;
 
-        properties.loadExisting();
-
-        // check encoding for compatiblity
-        String acceptStr = properties.get("osmreader.acceptWay");
-        if (!acceptStr.isEmpty() && !encodingManager.encoderList().equals(acceptStr))
-            throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.encoderList() + "\nGraph: " + acceptStr);
         properties.checkVersions(false);
         if ("false".equals(properties.get("prepare.done")))
             prepare();
@@ -475,7 +484,7 @@ public class GraphHopper implements GraphHopperAPI {
                 // or use defaultAlgorithm here?
                 rsp.addError(new IllegalStateException("Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
         } else {
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm(), 
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm(),
                     encodingManager.getEncoder(request.vehicle()), request.type());
             algo = prepare.createAlgo();
         }
@@ -565,7 +574,10 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     void close() {
-        graph.close();
+        if (graph != null)
+            graph.close();
+        if (index != null)
+            index.close();
     }
 
     StorableProperties properties() {

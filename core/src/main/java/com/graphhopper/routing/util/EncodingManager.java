@@ -43,7 +43,6 @@ public class EncodingManager {
         defaultEncoders.put(BIKE, BikeFlagEncoder.class.getName());
         defaultEncoders.put(FOOT, FootFlagEncoder.class.getName());
     }
-    private static EncodingManager instance = null;
     public static final int MAX_BITS = 32;
     private ArrayList<AbstractFlagEncoder> encoders = new ArrayList<AbstractFlagEncoder>();
     private int encoderCount = 0;
@@ -61,6 +60,7 @@ public class EncodingManager {
      * @param encoderList comma delimited list of encoders. The order does not
      * matter.
      */
+    @SuppressWarnings("unchecked")
     public EncodingManager(String encoderList) {
         String[] entries = encoderList.split(",");
         Arrays.sort(entries);
@@ -99,7 +99,7 @@ public class EncodingManager {
          }
          }
          */
-        instance = this;
+        // instance = this;
     }
 
     public void register(AbstractFlagEncoder encoder) {
@@ -112,14 +112,7 @@ public class EncodingManager {
         nextBit = usedBits;
         encoderCount = encoders.size();
     }
-
-    public static EncodingManager instance() {
-        if (instance == null)
-            throw new IllegalStateException("Encoding Manager still uninitialized.");
-
-        return instance;
-    }
-
+    
     public boolean accepts(String name) {
         return getEncoder(name) != null;
     }

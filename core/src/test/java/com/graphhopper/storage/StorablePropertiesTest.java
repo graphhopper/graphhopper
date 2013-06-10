@@ -28,6 +28,16 @@ import static org.junit.Assert.*;
 public class StorablePropertiesTest {
 
     @Test
+    public void testLoad() {
+        StorableProperties instance = new StorableProperties(new RAMDirectory("", false), "prop");
+        // loading is always possible as purely in-memory
+        assertTrue(instance.loadExisting());
+
+        instance = new StorableProperties(new RAMDirectory("", true), "prop");
+        assertFalse(instance.loadExisting());
+    }
+
+    @Test
     public void testVersionCheck() {
         StorableProperties instance = new StorableProperties(new RAMDirectory("", false), "prop");
         instance.putCurrentVersions();
