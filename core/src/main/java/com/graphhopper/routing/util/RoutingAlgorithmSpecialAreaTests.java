@@ -27,7 +27,6 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.StopWatch;
 import static com.graphhopper.routing.util.NoOpAlgorithmPreparation.*;
-import com.graphhopper.storage.GraphStorage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -80,8 +79,8 @@ public class RoutingAlgorithmSpecialAreaTests {
             testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.0780, 9.1570), idx.findID(49.5860, 9.9750), 93122, 1292);
             testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.2800, 9.7190), idx.findID(49.8960, 10.3890), 77238, 1278);
             testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.8020, 9.2470), idx.findID(50.4940, 10.1970), 125876, 2221);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.7260, 9.2550), idx.findID(50.4140, 10.2750), 136581, 2287);
-            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 74175, 1370);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(49.72449, 9.23482), idx.findID(50.4140, 10.2750), 137191, 2330);
+            testCollector.assertDistance(prepare.createAlgo(), idx.findID(50.1100, 10.7530), idx.findID(49.6500, 10.3410), 73538, 1426);
 
             System.out.println("unterfranken " + prepare.createAlgo() + ": " + (testCollector.errors.size() - failed) + " failed");
         }

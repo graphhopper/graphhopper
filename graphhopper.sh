@@ -190,11 +190,14 @@ elif [ "x$ACTION" = "xtest" ]; then
 elif [ "x$ACTION" = "xmeasurement" ]; then
  ARGS="graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
  echo -e "\ncreate graph via $ARGS, $JAR"
+ START=$(date +%s)
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper $ARGS prepare.doPrepare=false
+ END=$(date +%s)
+ IMPORT_TIME=$(($END - $START))000
 
  function startMeasurement {
     COUNT=5000
-    ARGS="$ARGS prepare.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME"
+    ARGS="$ARGS prepare.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME graph.importTime=$IMPORT_TIME"
     echo -e "\nperform measurement via $ARGS, $JAR"
     "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS
  }
