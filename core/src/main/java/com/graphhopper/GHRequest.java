@@ -99,8 +99,15 @@ public class GHRequest
         return algo;
     }
 
-    public GHRequest putHint( String key, Object value )
-    {
+    public GHPlace from() {
+        return from;
+    }
+
+    public GHPlace to() {
+        return to;
+    }
+    
+    public GHRequest putHint( String key, Object value ) {
         Object old = hints.put(key, value);
         if (old != null)
         {

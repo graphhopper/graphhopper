@@ -18,9 +18,9 @@
  */
 package com.graphhopper.ui;
 
+import com.graphhopper.GHPublicTransit;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
-import com.graphhopper.reader.GTFSReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
@@ -29,11 +29,7 @@ import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.PublicTransitFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
-import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.index.Id2NameIndex;
 import com.graphhopper.storage.index.LocationTime2IDIndex;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
@@ -43,8 +39,6 @@ import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
@@ -65,32 +59,25 @@ import org.slf4j.LoggerFactory;
  */
 public class PublicTransitMiniUI {
 
-    private static String GTFS = "gtfs.zip";
+    private static String GTFS = "/opt/cache/gtfs/gtfs.zip";
     private static String dir = "./target/tmp/";
-    private static int defaultAlightTime = 240;
 
     public static void main(String[] strs) throws Exception {
+        GHPublicTransit gh = new GHPublicTransit().forDesktop();
+        gh.graphHopperLocation(dir);
+        gh.gtfsFile(GTFS);
+        gh.importOrLoad();
+        
         boolean debug = false;
-        Directory directory = new RAMDirectory(dir, false);
-        GraphStorage graph = new GraphStorage(directory);
-        GTFSReader gtfsReader = new GTFSReader(graph);
-        try {
-            File gtfsFile = new File(GTFS);
-            gtfsReader.setDefaultAlightTime(defaultAlightTime);
-            gtfsReader.load(gtfsFile);
-            gtfsReader.close();
-        } catch (IOException ex) {
-            throw new RuntimeException("Could not load GTFS file ", ex);
-        }
 
-        new PublicTransitMiniUI(gtfsReader, directory, debug).visualize();
+        new PublicTransitMiniUI(gh, debug).visualize();
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
     private Path path;
     private AlgorithmPreparation prepare;
     private final Graph graph;
     private LocationTime2IDIndex index;
-    private Id2NameIndex nameIndex;
+    //private Id2NameIndex nameIndex;
     private String latLon = "";
     private GraphicsWrapper mg;
     private JPanel infoPanel;
@@ -101,16 +88,16 @@ public class PublicTransitMiniUI {
     private WeightCalculation wCalc = new ShortestCalc();
     private JSpinner timeSpinner;
 
-    public PublicTransitMiniUI(GTFSReader reader, Directory directory, boolean debug) {
-        this.graph = reader.graph();
+    public PublicTransitMiniUI(GHPublicTransit gh, boolean debug) {
+        this.graph = gh.graph();
 
         logger.info("locations:" + graph.nodes() + ", debug:" + debug);
         mg = new GraphicsWrapper(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
-        this.index = reader.getIndex(directory);
-        this.nameIndex = reader.getNameIndex();
+        this.index = gh.index();
+        //this.nameIndex = reader.getNameIndex();
         //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
         //        this.algo = new DebugAStar(graph, mg);
@@ -252,7 +239,8 @@ public class PublicTransitMiniUI {
     void plotNode(Graphics2D g2, int node) {
         double lat = graph.getLatitude(node);
         double lon = graph.getLongitude(node);
-        mg.plotText(g2, lat, lon, "" + nameIndex.findName(node));
+        mg.plotText(g2, lat, lon, "" + node);
+        // mg.plotText(g2, lat, lon, "" + nameIndex.findName(node));
     }
 
     private Path plotPath(Path tmpPath, final Graphics2D g2, int w) {
@@ -311,7 +299,8 @@ public class PublicTransitMiniUI {
                 double lat = graph.getLatitude(node);
                 double lon = graph.getLongitude(node);
                 if (name) {
-                    mg.plotText(g2, lat, lon, "" + nameIndex.findName(node));
+                    // mg.plotText(g2, lat, lon, "" + nameIndex.findName(node));
+                    mg.plotText(g2, lat, lon, "" + node);
                     mg.plotText(g2, lat, lon, TimeUtils.formatTime((int) time), 5, 20);
                 } else {
                     mg.plotText(g2, lat, lon, TimeUtils.formatTime((int) time), 5, 40);
@@ -321,7 +310,8 @@ public class PublicTransitMiniUI {
             private void plotNode(Graphics2D g2, int node) {
                 double lat = graph.getLatitude(node);
                 double lon = graph.getLongitude(node);
-                mg.plotText(g2, lat, lon, "" + nameIndex.findName(node));
+                // mg.plotText(g2, lat, lon, "" + nameIndex.findName(node));
+                mg.plotText(g2, lat, lon, "" + node);
             }
         };
         path.forEveryEdge(visitor);
