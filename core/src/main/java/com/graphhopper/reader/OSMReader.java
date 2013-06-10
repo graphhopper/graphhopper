@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
+import com.graphhopper.util.StopWatch;
 import java.io.*;
 import javax.xml.stream.XMLStreamException;
 
@@ -60,14 +61,16 @@ public class OSMReader {
         if (encodingManager == null)
             throw new IllegalStateException("Encoding manager not set.");
 
-        long start = System.currentTimeMillis();
+        StopWatch sw1 = new StopWatch().start();
         preProcess(osmFile);
 
-        long pass2 = System.currentTimeMillis();
+        sw1.stop();
+        StopWatch sw2 = new StopWatch().start();
         writeOsm2Graph(osmFile);
+        sw2.stop();
 
-        final long finished = System.currentTimeMillis();
-        logger.info("Times Pass1: " + (pass2 - start) + " Pass2: " + (finished - pass2) + " Total:" + (finished - start));
+        logger.info("time(pass1): " + (int) sw1.getSeconds() + " pass2: " + (int) sw2.getSeconds()
+                + " total:" + ((int) (sw1.getSeconds() + sw2.getSeconds())));
     }
 
     /**
