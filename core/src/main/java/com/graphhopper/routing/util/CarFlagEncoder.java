@@ -44,16 +44,16 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         intended.add("yes");
         intended.add("permissive");
 
-        potentialBarriers.add( "gate" );
-        potentialBarriers.add( "lift_gate" );
-        potentialBarriers.add( "kissing_gate" );
-        potentialBarriers.add( "swing_gate" );
+        potentialBarriers.add("gate");
+        potentialBarriers.add("lift_gate");
+        potentialBarriers.add("kissing_gate");
+        potentialBarriers.add("swing_gate");
 
-        absoluteBarriers.add( "bollard" );
-        absoluteBarriers.add( "stile" );
-        absoluteBarriers.add( "turnstile" );
-        absoluteBarriers.add( "cycle_barrier" );
-        absoluteBarriers.add( "block" );
+        absoluteBarriers.add("bollard");
+        absoluteBarriers.add("stile");
+        absoluteBarriers.add("turnstile");
+        absoluteBarriers.add("cycle_barrier");
+        absoluteBarriers.add("block");
     }
 
     /**
@@ -116,7 +116,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             // get assumed speed from highway type
             Integer speed = getSpeed(highwayValue);
             // apply speed limit
-            int maxspeed = parseSpeed( way.getTag( "maxspeed" ) );
+            int maxspeed = parseSpeed(way.getTag("maxspeed"));
             if (maxspeed > 0 && speed > maxspeed)
                 speed = maxspeed;
 
@@ -146,20 +146,20 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public int analyzeNodeTags( OSMNode node ) {
+    public int analyzeNodeTags(OSMNode node) {
 
         // absolute barriers always block
-        if( node.hasTag( "barrier", absoluteBarriers ))
+        if (node.hasTag("barrier", absoluteBarriers))
             return directionBitMask;
 
         // movable barriers block if they are not marked as passable
-        if( node.hasTag( "barrier", potentialBarriers )
-                && !node.hasTag( restrictions, intended )
-                && !node.hasTag( "locked", "no" ) )
+        if (node.hasTag("barrier", potentialBarriers)
+                && !node.hasTag(restrictions, intended)
+                && !node.hasTag("locked", "no"))
             return directionBitMask;
 
-        if( (node.hasTag( "highway", "ford" ) || node.hasTag( "ford" ))
-            && !node.hasTag( restrictions, intended ) )
+        if ((node.hasTag("highway", "ford") || node.hasTag("ford"))
+                && !node.hasTag(restrictions, intended))
             return directionBitMask;
 
         return 0;
