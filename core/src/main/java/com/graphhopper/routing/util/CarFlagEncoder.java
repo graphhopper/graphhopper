@@ -30,7 +30,10 @@ import java.util.Set;
  */
 public class CarFlagEncoder extends AbstractFlagEncoder {
 
-    public CarFlagEncoder() {
+    /**
+     * Should be only instantied via EncodingManager
+     */
+    protected CarFlagEncoder() {
         restrictions = new String[]{"motorcar", "motor_vehicle", "vehicle", "access"};
         restrictedValues.add("private");
         restrictedValues.add("agricultural");

@@ -35,7 +35,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     protected HashSet<String> intended = new HashSet<String>();
     protected HashSet<String> sidewalks = new HashSet<String>();
 
-    public FootFlagEncoder() {
+    /**
+     * Should be only instantied via EncodingManager
+     */
+    protected FootFlagEncoder() {
         restrictions = new String[]{"foot", "access"};
         restrictedValues.add("private");
         restrictedValues.add("no");
