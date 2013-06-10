@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 
 import java.util.HashMap;
@@ -56,6 +57,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
         ferries.add("shuttle_train");
         ferries.add("ferry");
+
+        potentialBarriers.add( "gate" );
+        //potentialBarriers.add( "lift_gate" );   you can always pass them on foot
+        potentialBarriers.add( "swing_gate" );
     }
 
     @Override
@@ -90,7 +95,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      */
     @Override
     public int isAllowed(OSMWay way) {
-        String highwayValue = way.getTag("highway");
+        String highwayValue = way.getTag( "highway" );
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 if (!way.hasTag("foot", "no"))
@@ -150,12 +155,22 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         return encoded;
     }
 
-    /**
-     * Separate ways for pedestrians.
-     */
-    public boolean isSaveHighway(String highwayValue) {
-        return safeHighwayTags.contains(highwayValue);
+    @Override
+    public int analyzeNodeTags( OSMNode node ) {
+
+        // movable barriers block if they are not marked as passable
+        if( node.hasTag( "barrier", potentialBarriers )
+                && !node.hasTag( restrictions, intended )
+                && !node.hasTag( "locked", "no"))
+            return directionBitMask;
+
+        if( (node.hasTag( "highway", "ford" ) || node.hasTag( "ford" ))
+                && !node.hasTag( restrictions, intended ) )
+            return directionBitMask;
+
+        return 0;
     }
+
     private final Set<String> safeHighwayTags = new HashSet<String>() {
         {
             add("footway");
@@ -187,11 +202,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     };
     private static final Map<String, Integer> SPEED = new HashMap<String, Integer>() {
         {
-            put("min", 2);
-            put("slow", 4);
-            put("mean", 5);
-            put("fast", 6);
-            put("max", 7);
+            put( "min", 2 );
+            put( "slow", 4 );
+            put( "mean", 5 );
+            put( "fast", 6 );
+            put( "max", 7 );
         }
     };
 }
