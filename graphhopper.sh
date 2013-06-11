@@ -221,6 +221,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
    
    "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
    startMeasurement
+   echo -e "\nmeasurement.commit=$commit\n" >> $M_FILE_NAME
  done
 
 fi

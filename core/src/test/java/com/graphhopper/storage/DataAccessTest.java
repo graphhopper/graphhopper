@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import org.junit.After;
@@ -267,6 +268,19 @@ public abstract class DataAccessTest {
         da = createDataAccess(name + "wow");
         assertTrue(da.loadExisting());
         assertEquals(17, da.getInt(17));
+        da.close();
+    }
+
+    @Test
+    public void testSet_GetBytes() {
+        DataAccess da = createDataAccess(name);
+        da.create(100);
+        byte[] bytes = BitUtil.fromInt(Integer.MAX_VALUE / 3);
+        da.setBytes(8, 4, bytes);
+        bytes = new byte[4];
+        da.getBytes(8, 4, bytes);
+        assertEquals(Integer.MAX_VALUE / 3, BitUtil.toInt(bytes));
+
         da.close();
     }
 }

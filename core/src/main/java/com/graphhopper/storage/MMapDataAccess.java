@@ -45,8 +45,6 @@ public class MMapDataAccess extends AbstractDataAccess {
     private ByteOrder order;
     private boolean cleanAndRemap = false;
     private transient boolean closed = false;
-    private transient int segmentSizePower;
-    private transient int indexDivisor;
 
     MMapDataAccess() {
         this(null, null);
@@ -272,11 +270,23 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public DataAccess segmentSize(int bytes) {
-        super.segmentSize(bytes);
-        segmentSizePower = (int) (Math.log(segmentSizeInBytes) / Math.log(2));
-        indexDivisor = segmentSizeInBytes - 1;
-        return this;
+    public void setBytes(long longIndex, int length, byte[] values) {
+        int bufferIndex = (int) (longIndex >>> segmentSizePower);
+        int index = (int) (longIndex & indexDivisor);
+        // TODO bufferIndex++
+        ByteBuffer bb = segments.get(bufferIndex);
+        bb.position(index);
+        bb.put(values, 0, length);
+    }
+
+    @Override
+    public void getBytes(long longIndex, int length, byte[] values) {
+        int bufferIndex = (int) (longIndex >>> segmentSizePower);
+        int index = (int) (longIndex & indexDivisor);
+        // TODO bufferIndex++
+        ByteBuffer bb = segments.get(bufferIndex);
+        bb.position(index);
+        segments.get(bufferIndex).get(values, 0, length);
     }
 
     @Override

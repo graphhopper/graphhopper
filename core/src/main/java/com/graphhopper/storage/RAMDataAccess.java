@@ -32,11 +32,9 @@ import java.util.Arrays;
  */
 public class RAMDataAccess extends AbstractDataAccess {
 
-    private int[][] segments = new int[0][];
+    private byte[][] segments = new byte[0][];
     private boolean closed = false;
     private boolean store;
-    private transient int segmentSizeIntsPower;
-    private transient int indexDivisor;
 
     RAMDataAccess() {
         this("", "", false);
@@ -69,9 +67,9 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (da instanceof RAMDataAccess) {
             RAMDataAccess rda = (RAMDataAccess) da;
             // TODO we could reuse rda segments!
-            rda.segments = new int[segments.length][];
+            rda.segments = new byte[segments.length][];
             for (int i = 0; i < segments.length; i++) {
-                int[] area = segments[i];
+                byte[] area = segments[i];
                 rda.segments[i] = Arrays.copyOf(area, area.length);
             }
             rda.segmentSize(segmentSizeInBytes);
@@ -104,14 +102,14 @@ public class RAMDataAccess extends AbstractDataAccess {
             segmentsToCreate++;
 
         try {
-            int[][] newSegs = Arrays.copyOf(segments, segments.length + segmentsToCreate);
+            byte[][] newSegs = Arrays.copyOf(segments, segments.length + segmentsToCreate);
             for (int i = segments.length; i < newSegs.length; i++) {
-                newSegs[i] = new int[1 << segmentSizeIntsPower];
+                newSegs[i] = new byte[1 << segmentSizePower];
             }
             segments = newSegs;
         } catch (OutOfMemoryError err) {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
-                    + cap + ", new bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizeIntsPower
+                    + cap + ", new bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizePower
                     + ", new segments:" + segmentsToCreate + ", existing:" + segments.length);
         }
     }
@@ -131,21 +129,19 @@ public class RAMDataAccess extends AbstractDataAccess {
                 long byteCount = readHeader(raFile) - HEADER_OFFSET;
                 if (byteCount < 0)
                     return false;
-                byte[] bytes = new byte[segmentSizeInBytes];
+
                 raFile.seek(HEADER_OFFSET);
                 // raFile.readInt() <- too slow                
                 int segmentCount = (int) (byteCount / segmentSizeInBytes);
                 if (byteCount % segmentSizeInBytes != 0)
                     segmentCount++;
-                segments = new int[segmentCount][];
+                segments = new byte[segmentCount][];
                 for (int s = 0; s < segmentCount; s++) {
-                    int read = raFile.read(bytes) / 4;
-                    int area[] = new int[read];
-                    for (int j = 0; j < read; j++) {
-                        // TODO different system have different default byte order!
-                        area[j] = BitUtil.toInt(bytes, j * 4);
-                    }
-                    segments[s] = area;
+                    byte[] bytes = new byte[segmentSizeInBytes];
+                    int read = raFile.read(bytes);
+                    if (read <= 0)
+                        throw new IllegalStateException("segment " + s + " is empty?");
+                    segments[s] = bytes;
                 }
                 return true;
             } finally {
@@ -170,14 +166,8 @@ public class RAMDataAccess extends AbstractDataAccess {
                 raFile.seek(HEADER_OFFSET);
                 // raFile.writeInt() <- too slow, so copy into byte array
                 for (int s = 0; s < segments.length; s++) {
-                    int area[] = segments[s];
-                    int intLen = area.length;
-                    byte[] byteArea = new byte[intLen * 4];
-                    for (int i = 0; i < intLen; i++) {
-                        // TODO different system have different default byte order!
-                        BitUtil.fromInt(byteArea, area[i], i * 4);
-                    }
-                    raFile.write(byteArea);
+                    byte area[] = segments[s];
+                    raFile.write(area);
                 }
             } finally {
                 raFile.close();
@@ -189,24 +179,51 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public final void setInt(long longIndex, int value) {
-        // assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
-        int bufferIndex = (int) (longIndex >>> segmentSizeIntsPower);
+        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        longIndex <<= 2;
+        int bufferIndex = (int) (longIndex >>> segmentSizePower);
         int index = (int) (longIndex & indexDivisor);
-        segments[bufferIndex][index] = value;
+        BitUtil.fromInt(segments[bufferIndex], value, index);
     }
 
     @Override
     public final int getInt(long longIndex) {
-        // assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
-        int bufferIndex = (int) (longIndex >>> segmentSizeIntsPower);
+        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        longIndex <<= 2;
+        int bufferIndex = (int) (longIndex >>> segmentSizePower);
         int index = (int) (longIndex & indexDivisor);
-        return segments[bufferIndex][index];
+        return BitUtil.toInt(segments[bufferIndex], index);
+    }
+
+    @Override
+    public void setBytes(long longIndex, int length, byte[] values) {
+        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (longIndex >>> segmentSizePower);
+        int index = (int) (longIndex & indexDivisor);
+        // TODO use System.copy
+        byte[] seg = segments[bufferIndex];
+        for (int i = 0; i < length; i++) {
+            seg[index + i] = values[i];
+        }
+    }
+
+    @Override
+    public void getBytes(long longIndex, int length, byte[] values) {
+        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (longIndex >>> segmentSizePower);
+        int index = (int) (longIndex & indexDivisor);
+        // TODO use System.copy
+        // TODO bufferIndex++
+        byte[] seg = segments[bufferIndex];
+        for (int i = 0; i < length; i++) {
+            values[i] = seg[index + i];
+        }
     }
 
     @Override
     public void close() {
         super.close();
-        segments = new int[0][];
+        segments = new byte[0][];
         closed = true;
     }
 
@@ -218,14 +235,6 @@ public class RAMDataAccess extends AbstractDataAccess {
     @Override
     public int segments() {
         return segments.length;
-    }
-
-    @Override
-    public DataAccess segmentSize(int bytes) {
-        super.segmentSize(bytes);
-        segmentSizeIntsPower = (int) (Math.log(segmentSizeInBytes / 4) / Math.log(2));
-        indexDivisor = segmentSizeInBytes / 4 - 1;
-        return this;
     }
 
     @Override

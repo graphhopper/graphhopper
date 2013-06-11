@@ -18,7 +18,6 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
@@ -36,8 +35,10 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected static final byte[] EMPTY = new byte[1024];
     protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
     private final String location;
-    protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
     protected String name;
+    protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
+    protected transient int segmentSizePower;
+    protected transient int indexDivisor;
 
     public AbstractDataAccess(String name, String location) {
         this.name = name;
@@ -115,6 +116,8 @@ public abstract class AbstractDataAccess implements DataAccess {
         // segment size should be a power of 2
         int tmp = (int) (Math.log(bytes) / Math.log(2));
         segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
+        segmentSizePower = (int) (Math.log(segmentSizeInBytes) / Math.log(2));
+        indexDivisor = segmentSizeInBytes - 1;
         return this;
     }
 
