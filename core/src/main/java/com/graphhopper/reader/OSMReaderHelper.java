@@ -97,11 +97,11 @@ public class OSMReaderHelper {
         if (nodeType == TOWER_NODE) {
             addTowerNode(node.id(), lat, lon);
         } else if (nodeType == PILLAR_NODE) {
-            int tmp = (pillarId + 1) * 4;
-            pillarLats.ensureCapacity(tmp);
-            pillarLats.setInt(pillarId, Helper.degreeToInt(lat));
-            pillarLons.ensureCapacity(tmp);
-            pillarLons.setInt(pillarId, Helper.degreeToInt(lon));
+            int tmp = pillarId * 4;
+            pillarLats.ensureCapacity(tmp + 4);
+            pillarLats.setInt(tmp, Helper.degreeToInt(lat));
+            pillarLons.ensureCapacity(tmp + 4);
+            pillarLons.setInt(tmp, Helper.degreeToInt(lon));
             osmNodeIdToIndexMap.put(node.id(), pillarId + 3);
             pillarId++;
         }
@@ -245,8 +245,8 @@ public class OSMReaderHelper {
     private int handlePillarNode(int tmpNode, long osmId, PointList pointList, 
             boolean convertToTowerNode) {
         tmpNode = tmpNode - 3;
-        int intlat = pillarLats.getInt(tmpNode);
-        int intlon = pillarLons.getInt(tmpNode);
+        int intlat = pillarLats.getInt(tmpNode * 4);
+        int intlon = pillarLons.getInt(tmpNode * 4);
         if (intlat == Integer.MAX_VALUE || intlon == Integer.MAX_VALUE)
             throw new RuntimeException("Conversation pillarNode to towerNode already happended!? "
                     + "osmId:" + osmId + " pillarIndex:" + tmpNode);
@@ -256,8 +256,8 @@ public class OSMReaderHelper {
 
         if (convertToTowerNode) {
             // convert pillarNode type to towerNode, make pillar values invalid
-            pillarLons.setInt(tmpNode, Integer.MAX_VALUE);
-            pillarLats.setInt(tmpNode, Integer.MAX_VALUE);
+            pillarLons.setInt(tmpNode * 4, Integer.MAX_VALUE);
+            pillarLats.setInt(tmpNode * 4, Integer.MAX_VALUE);
             tmpNode = addTowerNode(osmId, tmpLat, tmpLon);
         } else
             pointList.add(tmpLat, tmpLon);
@@ -306,8 +306,8 @@ public class OSMReaderHelper {
         } else {
             graphIndex = graphIndex - 3;
             newNode = new OSMNode(
-                    Helper.intToDegree(pillarLats.getInt(graphIndex)),
-                    Helper.intToDegree(pillarLons.getInt(graphIndex)));
+                    Helper.intToDegree(pillarLats.getInt(graphIndex * 4)),
+                    Helper.intToDegree(pillarLons.getInt(graphIndex * 4)));
         }
 
         final long id = newNode.id();

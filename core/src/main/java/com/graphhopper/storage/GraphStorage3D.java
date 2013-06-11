@@ -26,11 +26,12 @@ import com.graphhopper.util.Helper;
  */
 public class GraphStorage3D extends GraphStorage implements Graph3D {
 
-    private static final int I_HEIGHT = 3;
+    private final int I_HEIGHT;
 
     public GraphStorage3D(Directory dir, EncodingManager encodingManager) {
         super(dir, encodingManager);
-        nodeEntrySize = 4;
+        I_HEIGHT = nextNodeEntryIndex();
+        initNodeAndEdgeEntrySize();
     }
 
     @Override
@@ -45,12 +46,12 @@ public class GraphStorage3D extends GraphStorage implements Graph3D {
         // TODO 2 location to id index
         // we need to avoid rewriting every algorithm like A*
         // TODO 3 currWeightToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
-        nodes.setInt((long) index * nodeEntrySize + I_HEIGHT, Helper.doubleToInt(height));
+        nodes.setInt((long) index * nodeEntryBytes + I_HEIGHT, Helper.doubleToInt(height));
     }
 
     @Override
     public double getHeight(int index) {
         ensureNodeIndex(index);
-        return Helper.intToDouble(nodes.getInt((long) index * nodeEntrySize + I_HEIGHT));
+        return Helper.intToDouble(nodes.getInt((long) index * nodeEntryBytes + I_HEIGHT));
     }
 }

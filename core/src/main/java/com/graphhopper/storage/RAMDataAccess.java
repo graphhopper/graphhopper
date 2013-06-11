@@ -140,7 +140,7 @@ public class RAMDataAccess extends AbstractDataAccess {
                     byte[] bytes = new byte[segmentSizeInBytes];
                     int read = raFile.read(bytes);
                     if (read <= 0)
-                        throw new IllegalStateException("segment " + s + " is empty?");
+                        throw new IllegalStateException("segment " + s + " is empty? " + toString());
                     segments[s] = bytes;
                 }
                 return true;
@@ -178,46 +178,55 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public final void setInt(long longIndex, int value) {
+    public final void setInt(long bytePos, int value) {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
-        longIndex <<= 2;
-        int bufferIndex = (int) (longIndex >>> segmentSizePower);
-        int index = (int) (longIndex & indexDivisor);
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        assert index + 4 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
         BitUtil.fromInt(segments[bufferIndex], value, index);
     }
 
     @Override
-    public final int getInt(long longIndex) {
+    public final int getInt(long bytePos) {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
-        longIndex <<= 2;
-        int bufferIndex = (int) (longIndex >>> segmentSizePower);
-        int index = (int) (longIndex & indexDivisor);
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        assert index + 4 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
         return BitUtil.toInt(segments[bufferIndex], index);
     }
 
     @Override
-    public void setBytes(long longIndex, int length, byte[] values) {
+    public void setBytes(long bytePos, byte[] values, int length) {
+        assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
-        int bufferIndex = (int) (longIndex >>> segmentSizePower);
-        int index = (int) (longIndex & indexDivisor);
-        // TODO use System.copy
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
         byte[] seg = segments[bufferIndex];
-        for (int i = 0; i < length; i++) {
-            seg[index + i] = values[i];
-        }
+        int delta = index + length - segmentSizeInBytes;
+        if (delta > 0) {
+            length -= delta;
+            System.arraycopy(values, 0, seg, index, length);
+            seg = segments[bufferIndex + 1];
+            System.arraycopy(values, length, seg, 0, delta);
+        } else
+            System.arraycopy(values, 0, seg, index, length);
     }
 
     @Override
-    public void getBytes(long longIndex, int length, byte[] values) {
+    public void getBytes(long bytePos, byte[] values, int length) {
+        assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
-        int bufferIndex = (int) (longIndex >>> segmentSizePower);
-        int index = (int) (longIndex & indexDivisor);
-        // TODO use System.copy
-        // TODO bufferIndex++
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
         byte[] seg = segments[bufferIndex];
-        for (int i = 0; i < length; i++) {
-            values[i] = seg[index + i];
-        }
+        int delta = index + length - segmentSizeInBytes;
+        if (delta > 0) {
+            length -= delta;
+            System.arraycopy(seg, index, values, 0, length);
+            seg = segments[bufferIndex + 1];
+            System.arraycopy(seg, 0, values, length, delta);
+        } else
+            System.arraycopy(seg, index, values, 0, length);
     }
 
     @Override
@@ -239,6 +248,10 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public void trimTo(long capacity) {
+        if (capacity > capacity())
+            throw new IllegalStateException("Cannot increase capacity (" + capacity() + ") to " + capacity
+                    + " via trimTo. Use ensureCapacity instead. ");
+
         if (capacity < segmentSizeInBytes)
             capacity = segmentSizeInBytes;
         int remainingSegments = (int) (capacity / segmentSizeInBytes);
@@ -246,11 +259,6 @@ public class RAMDataAccess extends AbstractDataAccess {
             remainingSegments++;
 
         segments = Arrays.copyOf(segments, remainingSegments);
-    }
-
-    boolean releaseSegment(int segNumber) {
-        segments[segNumber] = null;
-        return true;
     }
 
     @Override

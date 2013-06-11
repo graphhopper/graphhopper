@@ -92,7 +92,7 @@ public class NameIndex implements Storable<NameIndex> {
         names.setInt(nextBytePos, nameAsBytes.length);
         int oldOffset = nextBytePos;
         nextBytePos += 4;
-        names.setBytes(nextBytePos, nameAsBytes.length, nameAsBytes);
+        names.setBytes(nextBytePos, nameAsBytes, nameAsBytes.length);
         nextBytePos += nameAsBytes.length;
         return oldOffset;
     }
@@ -101,7 +101,7 @@ public class NameIndex implements Storable<NameIndex> {
         int size = names.getInt(index);
         byte[] bytes = new byte[size];
         index += 4;
-        names.getBytes(index, size, bytes);
+        names.getBytes(index, bytes, size);
         try {
             return new String(bytes, "UTF-8");
         } catch (java.io.UnsupportedEncodingException e) {

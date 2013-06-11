@@ -65,19 +65,19 @@ public class OSMIDMapTest {
         da.create(100);
 
         da.setInt(0, 0);
-        da.setInt(1, 1);
+        da.setInt(1 * 4, 1);
 
-        da.setInt(2, 0);
-        da.setInt(3, 5);
+        da.setInt(2 * 4, 0);
+        da.setInt(3 * 4, 5);
 
-        da.setInt(4, 0);
-        da.setInt(5, 100);
+        da.setInt(4 * 4, 0);
+        da.setInt(5 * 4, 100);
 
-        da.setInt(6, 0);
-        da.setInt(7, 300);
+        da.setInt(6 * 4, 0);
+        da.setInt(7 * 4, 300);
 
-        da.setInt(8, 0);
-        da.setInt(9, 333);
+        da.setInt(8 * 4, 0);
+        da.setInt(9 * 4, 333);
 
         assertEquals(2, OSMIDMap.binarySearch(da, 0, 5, 100));
         assertEquals(3, OSMIDMap.binarySearch(da, 0, 5, 300));

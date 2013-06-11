@@ -48,12 +48,12 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
     @Override public final void setLevel(int index, int level) {
         ensureNodeIndex(index);
-        nodes.setInt((long) index * nodeEntrySize + I_LEVEL, level);
+        nodes.setInt((long) index * nodeEntryBytes + I_LEVEL, level);
     }
 
     @Override public final int getLevel(int index) {
         ensureNodeIndex(index);
-        return nodes.getInt((long) index * nodeEntrySize + I_LEVEL);
+        return nodes.getInt((long) index * nodeEntryBytes + I_LEVEL);
     }
 
     @Override public EdgeSkipIterator edge(int a, int b, double distance, boolean bothDir) {
@@ -87,7 +87,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
     @Override
     protected EdgeSkipIterator createEdgeIterable(int baseNode, EdgeFilter filter) {
-        int edge = nodes.getInt((long) baseNode * nodeEntrySize + N_EDGE_REF);
+        int edge = nodes.getInt((long) baseNode * nodeEntryBytes + N_EDGE_REF);
         return new EdgeSkipIteratorImpl(edge, baseNode, filter);
     }
 
@@ -99,8 +99,8 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
 
         @Override public final void skippedEdges(int edge1, int edge2) {
             if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2))
-                throw new IllegalStateException("Skipped edges of a shortcuts needs "
-                        + "to be both valid but wasn't " + edge1 + ", " + edge2);
+                throw new IllegalStateException("Skipped edges of a shortcut needs "
+                        + "to be both valid or invalid but they were not " + edge1 + ", " + edge2);
             edges.setInt(edgePointer + I_SKIP_EDGE1, edge1);
             edges.setInt(edgePointer + I_SKIP_EDGE2, edge2);
         }
@@ -140,7 +140,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph {
                 tmpPrevEdge = tmpIter.edge();
             }
             if (found)
-                internalEdgeDisconnect(iter.edge(), (long) tmpPrevEdge * edgeEntrySize, iter.adjNode(), iter.baseNode());
+                internalEdgeDisconnect(iter.edge(), (long) tmpPrevEdge * edgeEntryBytes, iter.adjNode(), iter.baseNode());
         }
         return iter.edge();
     }

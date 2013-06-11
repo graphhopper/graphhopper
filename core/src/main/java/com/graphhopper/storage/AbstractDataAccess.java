@@ -61,13 +61,15 @@ public abstract class AbstractDataAccess implements DataAccess {
     }
 
     @Override
-    public void setHeader(int index, int value) {
-        header[index] = value;
+    public void setHeader(int bytePos, int value) {
+        bytePos >>= 2;
+        header[bytePos] = value;
     }
 
     @Override
-    public int getHeader(int index) {
-        return header[index];
+    public int getHeader(int bytePos) {
+        bytePos >>= 2;
+        return header[bytePos];
     }
 
     /**
@@ -100,13 +102,17 @@ public abstract class AbstractDataAccess implements DataAccess {
 
     @Override
     public DataAccess copyTo(DataAccess da) {
-        for (int h = 0; h < header.length; h++) {
+        for (int h = 0; h < header.length * 4; h += 4) {
             da.setHeader(h, getHeader(h));
         }
         da.ensureCapacity(capacity());
-        long max = capacity() / 4;
-        for (long l = 0; l < max; l++) {
-            da.setInt(l, getInt(l));
+        long cap = capacity();
+        // currently get/setBytes do not support copying more bytes then segmentSize
+        int segSize = Math.min(da.segmentSize(), segmentSize());
+        byte[] bytes = new byte[segSize];
+        for (long bytePos = 0; bytePos < cap; bytePos += segSize) {
+            getBytes(bytePos, bytes, segSize);
+            da.setBytes(bytePos, bytes, segSize);
         }
         return da;
     }

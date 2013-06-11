@@ -72,7 +72,6 @@ public class Location2NodesNtree implements Location2IDIndex {
     private long[] bitmasks;
     SpatialKeyAlgo keyAlgo;
     private int minResolutionInMeter;
-    private double minResolution2InMeterNormed;
     private double deltaLat;
     private double deltaLon;
     private int initSizeLeafEntries = 4;
@@ -100,7 +99,6 @@ public class Location2NodesNtree implements Location2IDIndex {
      */
     public Location2NodesNtree minResolutionInMeter(int minResolutionInMeter) {
         this.minResolutionInMeter = minResolutionInMeter;
-        minResolution2InMeterNormed = distCalc.calcNormalizedDist(minResolutionInMeter * 2);
         return this;
     }
 
@@ -222,9 +220,9 @@ public class Location2NodesNtree implements Location2IDIndex {
 
         if (dataAccess.getHeader(0) != MAGIC_INT)
             throw new IllegalStateException("incorrect location2id index version, expected:" + MAGIC_INT);
-        if (dataAccess.getHeader(1) != calcChecksum())
+        if (dataAccess.getHeader(1 * 4) != calcChecksum())
             throw new IllegalStateException("location2id index was opened with incorrect graph");
-        minResolutionInMeter(dataAccess.getHeader(2));
+        minResolutionInMeter(dataAccess.getHeader(2 * 4));
         prepareAlgo();
         initialized = true;
         return true;
@@ -256,8 +254,8 @@ public class Location2NodesNtree implements Location2IDIndex {
     @Override
     public void flush() {
         dataAccess.setHeader(0, MAGIC_INT);
-        dataAccess.setHeader(1, calcChecksum());
-        dataAccess.setHeader(2, minResolutionInMeter);
+        dataAccess.setHeader(1 * 4, calcChecksum());
+        dataAccess.setHeader(2 * 4, minResolutionInMeter);
 
         // saving space not necessary: dataAccess.trimTo((lastPointer + 1) * 4);
         dataAccess.flush();
@@ -431,45 +429,45 @@ public class Location2NodesNtree implements Location2IDIndex {
         }
 
         // store and freezes tree
-        int store(InMemEntry entry, int pointer) {
-            int refPointer = pointer;
+        int store(InMemEntry entry, int intIndex) {
+            long refPointer = (long) intIndex * 4;
             if (entry.isLeaf()) {
                 InMemLeafEntry leaf = ((InMemLeafEntry) entry);
                 TIntArrayList entries = leaf.getResults();
                 int len = entries.size();
                 if (len == 0)
-                    return pointer;
+                    return intIndex;
                 size += len;
-                pointer++;
+                intIndex++;
                 leafs++;
-                dataAccess.ensureCapacity((pointer + len + 1) * 4);
+                dataAccess.ensureCapacity((intIndex + len + 1) * 4);
                 if (len == 1) {
                     // less disc space for single entries
                     dataAccess.setInt(refPointer, -entries.get(0) - 1);
                 } else {
-                    for (int index = 0; index < len; index++) {
-                        dataAccess.setInt(pointer++, entries.get(index));
+                    for (int index = 0; index < len; index++, intIndex++) {
+                        dataAccess.setInt(intIndex * 4, entries.get(index));
                     }
-                    dataAccess.setInt(refPointer, pointer);
+                    dataAccess.setInt(refPointer, intIndex);
                 }
             } else {
                 InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
                 int len = treeEntry.subEntries.length;
-                pointer += len;
-                for (int subCounter = 0; subCounter < len; subCounter++, refPointer++) {
+                intIndex += len;
+                for (int subCounter = 0; subCounter < len; subCounter++, refPointer += 4) {
                     InMemEntry subEntry = treeEntry.subEntries[subCounter];
                     if (subEntry == null)
                         continue;
-                    dataAccess.ensureCapacity((pointer + 1) * 4);
-                    int beforePointer = pointer;
-                    pointer = store(subEntry, beforePointer);
-                    if (pointer == beforePointer)
+                    dataAccess.ensureCapacity((intIndex + 1) * 4);
+                    int beforeIntIndex = intIndex;
+                    intIndex = store(subEntry, beforeIntIndex);
+                    if (intIndex == beforeIntIndex)
                         dataAccess.setInt(refPointer, 0);
                     else
-                        dataAccess.setInt(refPointer, beforePointer);
+                        dataAccess.setInt(refPointer, beforeIntIndex);
                 }
             }
-            return pointer;
+            return intIndex;
         }
     }
 
@@ -477,23 +475,25 @@ public class Location2NodesNtree implements Location2IDIndex {
         return new TIntArrayList(entries);
     }
 
-    // fillIDs according to how they are stored
-    void fillIDs(long keyPart, int pointer, TIntHashSet set, int depth) {
-        int value;
+    // fillIDs according to how they are stored    
+    void fillIDs(long keyPart, int intIndex, TIntHashSet set, int depth) {
+        long pointer = (long) intIndex << 2;        
         if (depth == entries.length) {
-            value = dataAccess.getInt(pointer);
+            int value = dataAccess.getInt(pointer);
             if (value < 0)
                 // single data entries (less disc space)            
                 set.add(-(value + 1));
-            else
+            else {
+                long max = (long) value * 4;
                 // leaf entry => value is maxPointer
-                for (int leafIndex = pointer + 1; leafIndex < value; leafIndex++) {
+                for (long leafIndex = pointer + 4; leafIndex < max; leafIndex += 4) {
                     set.add(dataAccess.getInt(leafIndex));
                 }
+            }
             return;
         }
-        int offset = (int) (bitmasks[depth] & keyPart);
-        value = dataAccess.getInt(pointer + offset);
+        int offset = (int) (bitmasks[depth] & keyPart) << 2;
+        int value = dataAccess.getInt(pointer + offset);
         if (value > 0) {
             // tree entry => negative value points to subentries
             fillIDs(keyPart >>> shifts[depth], value, set, depth + 1);

@@ -63,21 +63,22 @@ public class OSMIDMap implements LongIntMap {
             if (oldValueIndex < 0)
                 throw new IllegalStateException("Cannot insert keys lower than "
                         + "the last key " + key + " < " + lastKey + ". Only updating supported");
+            oldValueIndex *= 4;
             int oldValue = values.getInt(oldValueIndex);
             values.setInt(oldValueIndex, value);
             return oldValue;
         }
 
-        values.ensureCapacity(size + 1);
+        values.ensureCapacity(size + 4);
         values.setInt(size, value);
         long doubleSize = size * 2;
-        keys.ensureCapacity(doubleSize + 2);
+        keys.ensureCapacity(doubleSize + 8);
 
         // store long => double of the orig size
-        keys.setInt(doubleSize++, (int) (key >>> 32));
-        keys.setInt(doubleSize, (int) (key & 0xFFFFFFFFL));
+        byte[] longBytes = BitUtil.fromLong(key);
+        keys.setBytes(doubleSize, longBytes, 8);
         lastKey = key;
-        size++;
+        size += 4;
         return -1;
     }
 
@@ -86,15 +87,17 @@ public class OSMIDMap implements LongIntMap {
         long retIndex = binarySearch(keys, 0, size(), key);
         if (retIndex < 0)
             return noEntryValue;
-        return values.getInt(retIndex);
+        return values.getInt(retIndex * 4);
     }
 
     static long binarySearch(DataAccess da, long start, long len, long key) {
         long high = start + len, low = start - 1, guess;
+        byte[] longBytes = new byte[8];
         while (high - low > 1) {
             guess = (high + low) >>> 1;
-            long tmp = guess << 1;
-            long guessedKey = BitUtil.toLong(da.getInt(tmp), da.getInt(tmp + 1));
+            long tmp = guess << 3;
+            da.getBytes(tmp, longBytes, 8);
+            long guessedKey = BitUtil.toLong(longBytes);
             if (guessedKey < key)
                 low = guess;
             else
@@ -104,8 +107,9 @@ public class OSMIDMap implements LongIntMap {
         if (high == start + len)
             return ~(start + len);
 
-        long tmp = high << 1;
-        long highKey = BitUtil.toLong(da.getInt(tmp), da.getInt(tmp + 1));
+        long tmp = high << 3;
+        da.getBytes(tmp, longBytes, 8);
+        long highKey = BitUtil.toLong(longBytes);
         if (highKey == key)
             return high;
         else
@@ -114,7 +118,7 @@ public class OSMIDMap implements LongIntMap {
 
     @Override
     public long size() {
-        return size;
+        return size / 4;
     }
 
     public long capacity() {

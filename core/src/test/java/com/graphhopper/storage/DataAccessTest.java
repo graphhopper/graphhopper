@@ -57,17 +57,17 @@ public abstract class DataAccessTest {
         DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
         da.create(300);
-        da.setInt(7, 123);
-        assertEquals(123, da.getInt(7));
-        da.setInt(10, Integer.MAX_VALUE / 3);
-        assertEquals(Integer.MAX_VALUE / 3, da.getInt(10));
+        da.setInt(7 * 4, 123);
+        assertEquals(123, da.getInt(7 * 4));
+        da.setInt(10 * 4, Integer.MAX_VALUE / 3);
+        assertEquals(Integer.MAX_VALUE / 3, da.getInt(10 * 4));
         da.flush();
 
         // check noValue clearing
-        assertEquals(0, da.getInt(2));
-        assertEquals(0, da.getInt(3));
-        assertEquals(123, da.getInt(7));
-        assertEquals(Integer.MAX_VALUE / 3, da.getInt(10));
+        assertEquals(0, da.getInt(2 * 4));
+        assertEquals(0, da.getInt(3 * 4));
+        assertEquals(123, da.getInt(7 * 4));
+        assertEquals(Integer.MAX_VALUE / 3, da.getInt(10 * 4));
         da.close();
 
         // cannot load data if already closed
@@ -75,7 +75,7 @@ public abstract class DataAccessTest {
 
         da = createDataAccess(name);
         assertTrue(da.loadExisting());
-        assertEquals(123, da.getInt(7));
+        assertEquals(123, da.getInt(7 * 4));
         da.close();
     }
 
@@ -85,19 +85,19 @@ public abstract class DataAccessTest {
         assertFalse(da.loadExisting());
         // throw some undefined exception if no ensureCapacity was called
         try {
-            da.setInt(2, 321);
+            da.setInt(2 * 4, 321);
             assertTrue(false);
         } catch (Exception ex) {
         }
 
         da.create(300);
-        da.setInt(2, 321);
+        da.setInt(2 * 4, 321);
         da.flush();
         da.close();
 
         da = createDataAccess(name);
         assertTrue(da.loadExisting());
-        assertEquals(321, da.getInt(2));
+        assertEquals(321, da.getInt(2 * 4));
         da.close();
     }
 
@@ -105,16 +105,19 @@ public abstract class DataAccessTest {
     public void testHeader() {
         DataAccess da = createDataAccess(name);
         da.create(300);
-        da.setHeader(7, 123);
-        assertEquals(123, da.getHeader(7));
-        da.setHeader(10, Integer.MAX_VALUE / 3);
-        assertEquals(Integer.MAX_VALUE / 3, da.getHeader(10));
+        da.setHeader(7 * 4, 123);
+        assertEquals(123, da.getHeader(7 * 4));
+        da.setHeader(10 * 4, Integer.MAX_VALUE / 3);
+        assertEquals(Integer.MAX_VALUE / 3, da.getHeader(10 * 4));
+
+        da.setHeader(11 * 4, Helper.degreeToInt(123.321));
+        assertEquals(123.321, Helper.intToDegree(da.getHeader(11 * 4)), 1e-4);
         da.flush();
         da.close();
 
         da = createDataAccess(name);
         assertTrue(da.loadExisting());
-        assertEquals(123, da.getHeader(7));
+        assertEquals(123, da.getHeader(7 * 4));
         da.close();
     }
 
@@ -122,19 +125,19 @@ public abstract class DataAccessTest {
     public void testEnsureCapacity() {
         DataAccess da = createDataAccess(name);
         da.create(128);
-        da.setInt(31, 200);
+        da.setInt(31 * 4, 200);
         try {
             // this should fail with an index out of bounds exception
-            da.setInt(32, 220);
+            da.setInt(32 * 4, 220);
             assertFalse(true);
         } catch (Exception ex) {
         }
-        assertEquals(200, da.getInt(31));
+        assertEquals(200, da.getInt(31 * 4));
         da.ensureCapacity(2 * 128);
-        assertEquals(200, da.getInt(31));
+        assertEquals(200, da.getInt(31 * 4));
         // now it shouldn't fail now
-        da.setInt(32, 220);
-        assertEquals(220, da.getInt(32));
+        da.setInt(32 * 4, 220);
+        assertEquals(220, da.getInt(32 * 4));
         da.close();
 
         // ensure some bigger area
@@ -148,23 +151,23 @@ public abstract class DataAccessTest {
     public void testCopy() {
         DataAccess da1 = createDataAccess(name);
         da1.create(1001 * 4);
-        da1.setInt(1, 1);
-        da1.setInt(123, 321);
-        da1.setInt(1000, 1111);
+        da1.setInt(1 * 4, 1);
+        da1.setInt(123 * 4, 321);
+        da1.setInt(1000 * 4, 1111);
 
         DataAccess da2 = createDataAccess(name + "2");
         da2.create(10);
         da1.copyTo(da2);
-        assertEquals(1, da2.getInt(1));
-        assertEquals(321, da2.getInt(123));
-        assertEquals(1111, da2.getInt(1000));
+        assertEquals(1, da2.getInt(1 * 4));
+        assertEquals(321, da2.getInt(123 * 4));
+        assertEquals(1111, da2.getInt(1000 * 4));
 
-        da2.setInt(1, 2);
-        assertEquals(2, da2.getInt(1));
+        da2.setInt(1 * 4, 2);
+        assertEquals(2, da2.getInt(1 * 4));
         da2.flush();
         da1.flush();
         // make sure they are independent!
-        assertEquals(1, da1.getInt(1));
+        assertEquals(1, da1.getInt(1 * 4));
         da1.close();
         da2.close();
     }
@@ -179,14 +182,14 @@ public abstract class DataAccessTest {
         int olds = da.segments();
         assertTrue(olds > 3);
 
-        da.setInt(400 / 4, 321);
+        da.setInt(400, 321);
         da.flush();
         da.close();
 
         da = createDataAccess(name);
         assertTrue(da.loadExisting());
         assertEquals(olds, da.segments());
-        assertEquals(321, da.getInt(400 / 4));
+        assertEquals(321, da.getInt(400));
         da.close();
     }
 
@@ -195,11 +198,11 @@ public abstract class DataAccessTest {
         DataAccess da = createDataAccess(name);
         da.segmentSize(128);
         da.create(128 * 11);
-        da.setInt(1, 10);
-        da.setInt(27, 200);
-        da.setInt(31, 301);
-        da.setInt(32, 302);
-        da.setInt(337, 4000);
+        da.setInt(1 * 4, 10);
+        da.setInt(27 * 4, 200);
+        da.setInt(31 * 4, 301);
+        da.setInt(32 * 4, 302);
+        da.setInt(337 * 4, 4000);
 
         // now 11 segments: (337 + 1) * 4 = 1352
         assertEquals(11, da.segments());
@@ -212,15 +215,15 @@ public abstract class DataAccessTest {
         // now 2 segments
         da.trimTo(128 * 2);
         assertEquals(2, da.segments());
-        assertEquals(301, da.getInt(31));
-        assertEquals(302, da.getInt(32));
+        assertEquals(301, da.getInt(31 * 4));
+        assertEquals(302, da.getInt(32 * 4));
 
         // now only one segment
         da.trimTo(128 * 1);
         assertEquals(1, da.segments());
-        assertEquals(301, da.getInt(31));
+        assertEquals(301, da.getInt(31 * 4));
         try {
-            assertEquals(302, da.getInt(32));
+            assertEquals(302, da.getInt(32 * 4));
             assertTrue(false);
         } catch (Exception ex) {
         }
@@ -243,7 +246,7 @@ public abstract class DataAccessTest {
     public void testRenameNoFlush() {
         DataAccess da = createDataAccess(name);
         da.create(100);
-        da.setInt(17, 17);
+        da.setInt(17 * 4, 17);
         try {
             da.rename(name + "wow");
             assertTrue(false);
@@ -256,29 +259,34 @@ public abstract class DataAccessTest {
     public void testRenameFlush() {
         DataAccess da = createDataAccess(name);
         da.create(100);
-        da.setInt(17, 17);
+        da.setInt(17 * 4, 17);
         da.flush();
         assertTrue(new File(directory + name).exists());
         da.rename(name + "wow");
         assertFalse(new File(directory + name).exists());
         assertTrue(new File(directory + name + "wow").exists());
-        assertEquals(17, da.getInt(17));
+        assertEquals(17, da.getInt(17 * 4));
         da.close();
 
         da = createDataAccess(name + "wow");
         assertTrue(da.loadExisting());
-        assertEquals(17, da.getInt(17));
+        assertEquals(17, da.getInt(17 * 4));
         da.close();
     }
 
     @Test
     public void testSet_GetBytes() {
         DataAccess da = createDataAccess(name);
-        da.create(100);
+        da.create(300);
+        assertEquals(128, da.segmentSize());
         byte[] bytes = BitUtil.fromInt(Integer.MAX_VALUE / 3);
-        da.setBytes(8, 4, bytes);
+        da.setBytes(8, bytes, bytes.length);
         bytes = new byte[4];
-        da.getBytes(8, 4, bytes);
+        da.getBytes(8, bytes, bytes.length);
+        assertEquals(Integer.MAX_VALUE / 3, BitUtil.toInt(bytes));
+
+        da.setBytes(127, bytes, bytes.length);
+        da.getBytes(127, bytes, bytes.length);
         assertEquals(Integer.MAX_VALUE / 3, BitUtil.toInt(bytes));
 
         da.close();
