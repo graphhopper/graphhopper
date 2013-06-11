@@ -193,7 +193,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
  START=$(date +%s)
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper $ARGS prepare.doPrepare=false
  END=$(date +%s)
- IMPORT_TIME=$(($END - $START))000
+ IMPORT_TIME=$(($END - $START))
 
  function startMeasurement {
     COUNT=5000
