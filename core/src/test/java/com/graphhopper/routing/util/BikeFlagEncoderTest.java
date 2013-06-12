@@ -43,7 +43,7 @@ public class BikeFlagEncoderTest {
         assertEquals( 18, encoder.getSpeed( way ) );
 
         way.setTag( "surface", "paved" );
-        assertEquals(16, encoder.getSpeed(way));
+        assertEquals(16, encoder.getSpeed(way ));
     }
 
     @Test

@@ -46,7 +46,9 @@ public class OSMReader {
     private long skippedLocations;
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
+    private GeometryAccess geometryAccess = null;
     private EncodingManager encodingManager = null;
+    private String demLocation = null;
     private int workerThreads = -1;
     private LongIntMap nodeOsmIdToBarrierMap;
 
@@ -58,6 +60,11 @@ public class OSMReader {
 
     public OSMReader workerThreads(int numOfWorkers) {
         this.workerThreads = numOfWorkers;
+        return this;
+    }
+
+    public OSMReader demLocation( String demLocation ) {
+        this.demLocation = demLocation;
         return this;
     }
 
@@ -140,6 +147,12 @@ public class OSMReader {
         graphStorage.create(tmp);
         long wayStart = -1;
         long counter = 1;
+
+        // initialize geometry access
+        geometryAccess = new GeometryAccess( this, helper );
+        if( demLocation != null )
+            geometryAccess.initDem( demLocation, graphStorage );
+
         try {
             OSMInputFile in = new OSMInputFile(osmFile).workerThreads(workerThreads).open();
             LongIntMap nodeFilter = helper.getNodeMap();
@@ -190,7 +203,7 @@ public class OSMReader {
 
         int includeWay = encodingManager.accept(way);
         if (includeWay > 0) {
-            int flags = encodingManager.encodeTags(includeWay, way);
+            int flags = encodingManager.encodeTags(includeWay, way, geometryAccess );
             if (flags != 0) {
                 TLongList osmIds = way.nodes();
 

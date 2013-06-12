@@ -68,6 +68,7 @@ public class GraphHopper implements GraphHopperAPI {
     // for graph:
     private GraphStorage graph;
     private String ghLocation = "";
+    private String demLocation = null;
     private boolean inMemory = true;
     private boolean storeOnFlush = true;
     private boolean memoryMapped;
@@ -206,6 +207,20 @@ public class GraphHopper implements GraphHopperAPI {
         return ghLocation;
     }
 
+    public String demLocation() {
+        return demLocation;
+    }
+
+    /**
+     * Sets the location where DEM data is stored and activates DEM processing for import.
+     * @param demLocation
+     * @return
+     */
+    public GraphHopper demLocation( String demLocation ) {
+        this.demLocation = demLocation;
+        return this;
+    }
+
     /**
      * This file can be an osm xml (.osm), a compressed xml (.osm.zip or
      * .osm.gz) or a protobuf file (.pbf).
@@ -297,6 +312,7 @@ public class GraphHopper implements GraphHopperAPI {
         String type = args.get("osmreader.acceptWay", "CAR");
         encodingManager = new EncodingManager(type);
         workerThreads = args.getInt("osmreader.workerThreads", -1);
+        demLocation = args.get( "osmreader.demlocation", null );
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", 1000);
@@ -352,6 +368,7 @@ public class GraphHopper implements GraphHopperAPI {
         logger.info("start creating graph from " + osmFile);
         OSMReader reader = new OSMReader(graph, expectedNodes).workerThreads(workerThreads);
         reader.encodingManager(encodingManager);
+        reader.demLocation( demLocation );
         reader.wayPointMaxDistance(wayPointMaxDistance);
 
         properties.put("osmreader.acceptWay", encodingManager.encoderList());

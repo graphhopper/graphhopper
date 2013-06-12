@@ -334,4 +334,27 @@ public class OSMReaderHelper {
         barrierNodeIDs.add( toId );
         addEdge( barrierNodeIDs, flags );
     }
+
+    /**
+     * Fill in a latlon array with the nodes coordinates
+     * @param nodeId
+     * @param latLon
+     */
+    public boolean getNodeCoordinates( long nodeId, int[] latLon ) {
+        int graphIndex = nodeOsmIdToIndexMap.get( nodeId );
+        if( graphIndex == EMPTY )
+            return false;
+
+        if (graphIndex < TOWER_NODE) {
+            graphIndex = -graphIndex - 3;
+            latLon[0]= Helper.degreeToInt( g.getLatitude(graphIndex));
+            latLon[1] = Helper.degreeToInt( g.getLongitude(graphIndex));
+        }
+        else {
+            graphIndex = graphIndex - 3;
+            latLon[0] = pillarLats.getInt(graphIndex);
+            latLon[1] = pillarLons.getInt(graphIndex);
+        }
+        return true;
+    }
 }
