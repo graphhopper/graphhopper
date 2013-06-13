@@ -145,7 +145,11 @@ public class PathFinisher {
 		this.time = this.path.time();
 		
 		if(this.points.size() == 0) {
-			this.buildEdgeToEdgePath();
+			if(fromLoc.closestNode() == toLoc.closestNode()) {
+				this.buildEdgeToEdgePath();
+			} else {
+				return; // cannot finish path. throw an exception ?
+			}
 		}
 		this.finishEdge(this.fromLoc, this.points, this.from, true);
 		this.finishEdge(this.toLoc, this.points, this.to, false);
@@ -325,7 +329,7 @@ public class PathFinisher {
 	 * Builds a virtual path out of the FromEdge "AB" and the ToEdge "BC" when
 	 * they are connected by (at least) one of their (tower) node "B". This
 	 * allows to handle routing between two adjacent edges when fromNode =
-	 * toNode or event routing in the same edge. This creates a full path as the
+	 * toNode or even routing in the same edge. This creates a full path as the
 	 * sum of both edges, it will later need to be finished.
 	 * 
 	 * @return
