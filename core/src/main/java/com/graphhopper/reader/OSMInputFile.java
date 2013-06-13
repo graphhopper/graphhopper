@@ -20,12 +20,14 @@ package com.graphhopper.reader;
 
 import com.graphhopper.reader.pbf.Sink;
 import com.graphhopper.reader.pbf.PbfReader;
+import com.graphhopper.routing.util.AbstractFlagEncoder;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.*;
+import java.lang.reflect.Constructor;
 import java.util.LinkedList;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
@@ -107,6 +109,16 @@ public class OSMInputFile implements Sink {
         } else if (name.endsWith(".osm") || name.endsWith(".xml")) {
             ips.reset();
             return ips;
+        } else if (name.endsWith(".bz2") || name.endsWith(".bzip2")) {            
+            String clName = "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream";
+            try {
+                Class clazz = Class.forName(clName);
+                ips.reset();
+                Constructor ctor = clazz.getConstructor(InputStream.class, boolean.class);
+                return (InputStream) ctor.newInstance(ips, true);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Cannot instantiate " + clName, e);
+            }
         } else {
             throw new IllegalArgumentException("Input file is not of valid type " + file.getPath());
         }

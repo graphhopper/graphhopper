@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
 
@@ -36,7 +37,10 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
     private HashSet<String> intended = new HashSet<String>();
     private HashSet<String> oppositeLanes = new HashSet<String>();
 
-    public BikeFlagEncoder() {
+    /**
+     * Should be only instantied via EncodingManager
+     */
+    protected BikeFlagEncoder() {
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions = new String[]{"bicycle", "access"};
         restrictedValues.add("private");
@@ -51,6 +55,16 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         oppositeLanes.add("opposite");
         oppositeLanes.add("opposite_lane");
         oppositeLanes.add("opposite_track");
+
+        potentialBarriers.add( "gate" );
+        potentialBarriers.add( "lift_gate" );
+        potentialBarriers.add( "swing_gate" );
+        potentialBarriers.add( "cycle_barrier" );
+        potentialBarriers.add( "block" );
+
+        absoluteBarriers.add( "kissing_gate" );
+        absoluteBarriers.add( "stile" );
+        absoluteBarriers.add( "turnstile" );
     }
 
     @Override
@@ -88,10 +102,19 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
             if (!HIGHWAY_SPEED.containsKey(highwayValue))
                 return 0;
 
+            // use the way if it is tagged for bikes
             if (way.hasTag("bicycle", intended))
                 return acceptBit;
 
+            // avoid paths that are not tagged for bikes.
+            if( way.hasTag( "highway", "path" ) )
+                return 0;
+
             if (way.hasTag("motorroad", "yes"))
+                return 0;
+
+            // do not use fords with normal bikes, flagged fords are in included above
+            if( way.hasTag( "highway", "ford" ) || way.hasTag( "ford" ))
                 return 0;
 
             // check access restrictions
@@ -136,6 +159,27 @@ public class BikeFlagEncoder extends AbstractFlagEncoder {
         }
         return encoded;
     }
+
+    @Override
+    public int analyzeNodeTags( OSMNode node ) {
+
+        // absolute barriers always block
+        if( node.hasTag( "barrier", absoluteBarriers ))
+            return directionBitMask;
+
+        // movable barriers block if they are not marked as passable
+        if( node.hasTag( "barrier", potentialBarriers )
+                && !node.hasTag( restrictions, intended )
+                && !node.hasTag( "locked", "no"))
+            return directionBitMask;
+
+        if( (node.hasTag( "highway", "ford" ) || node.hasTag( "ford" ))
+                && !node.hasTag( restrictions, intended ) )
+            return directionBitMask;
+
+        return 0;
+    }
+
 
     int getSpeed(OSMWay way) {
         String s = way.getTag("surface");

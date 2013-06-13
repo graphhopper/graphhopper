@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,13 +31,32 @@ import java.util.Set;
  */
 public class CarFlagEncoder extends AbstractFlagEncoder {
 
-    public CarFlagEncoder() {
+    private HashSet<String> intended = new HashSet<String>();
+
+    /**
+     * Should be only instantied via EncodingManager
+     */
+    protected CarFlagEncoder() {
         restrictions = new String[]{"motorcar", "motor_vehicle", "vehicle", "access"};
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
+
+        intended.add("yes");
+        intended.add("permissive");
+
+        potentialBarriers.add("gate");
+        potentialBarriers.add("lift_gate");
+        potentialBarriers.add("kissing_gate");
+        potentialBarriers.add("swing_gate");
+
+        absoluteBarriers.add("bollard");
+        absoluteBarriers.add("stile");
+        absoluteBarriers.add("turnstile");
+        absoluteBarriers.add("cycle_barrier");
+        absoluteBarriers.add("block");
     }
 
     /**
@@ -78,6 +98,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             return 0;
         } else {
             if (!SPEED.containsKey(highwayValue))
+                return 0;
+
+            // do not drive street cars into fords
+            if ((way.hasTag("highway", "ford") || way.hasTag("ford"))
+                    && !way.hasTag(restrictions, intended))
                 return 0;
 
             // check access restrictions
@@ -126,6 +151,26 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         }
 
         return encoded;
+    }
+
+    @Override
+    public int analyzeNodeTags(OSMNode node) {
+
+        // absolute barriers always block
+        if (node.hasTag("barrier", absoluteBarriers))
+            return directionBitMask;
+
+        // movable barriers block if they are not marked as passable
+        if (node.hasTag("barrier", potentialBarriers)
+                && !node.hasTag(restrictions, intended)
+                && !node.hasTag("locked", "no"))
+            return directionBitMask;
+
+        if ((node.hasTag("highway", "ford") || node.hasTag("ford"))
+                && !node.hasTag(restrictions, intended))
+            return directionBitMask;
+
+        return 0;
     }
 
     @Override public String toString() {

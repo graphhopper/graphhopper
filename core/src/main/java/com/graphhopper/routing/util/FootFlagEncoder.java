@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 
 import java.util.HashMap;
@@ -35,7 +36,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     protected HashSet<String> intended = new HashSet<String>();
     protected HashSet<String> sidewalks = new HashSet<String>();
 
-    public FootFlagEncoder() {
+    /**
+     * Should be only instantied via EncodingManager
+     */
+    protected FootFlagEncoder() {
         restrictions = new String[]{"foot", "access"};
         restrictedValues.add("private");
         restrictedValues.add("no");
@@ -53,6 +57,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
         ferries.add("shuttle_train");
         ferries.add("ferry");
+
+        potentialBarriers.add( "gate" );
+        //potentialBarriers.add( "lift_gate" );   you can always pass them on foot
+        potentialBarriers.add( "swing_gate" );
     }
 
     @Override
@@ -87,7 +95,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      */
     @Override
     public int isAllowed(OSMWay way) {
-        String highwayValue = way.getTag("highway");
+        String highwayValue = way.getTag( "highway" );
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 if (!way.hasTag("foot", "no"))
@@ -98,7 +106,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             if (way.hasTag("sidewalk", sidewalks))
                 return acceptBit;
 
-            // no need to evaluate ferries - already included here
+            // no need to evaluate ferries or fords - already included here
             if (way.hasTag("foot", intended))
                 return acceptBit;
 
@@ -108,8 +116,13 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             if (way.hasTag("motorroad", "yes"))
                 return 0;
 
+            // do not get our feet wet, "yes" is already included above
+            if( way.hasTag( "highway", "ford" ) || way.hasTag( "ford" ))
+                return 0;
+
             if (way.hasTag("bicycle", "official"))
                 return 0;
+
             // check access restrictions
             if (way.hasTag(restrictions, restrictedValues))
                 return 0;
@@ -142,12 +155,22 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         return encoded;
     }
 
-    /**
-     * Separate ways for pedestrians.
-     */
-    public boolean isSaveHighway(String highwayValue) {
-        return safeHighwayTags.contains(highwayValue);
+    @Override
+    public int analyzeNodeTags( OSMNode node ) {
+
+        // movable barriers block if they are not marked as passable
+        if( node.hasTag( "barrier", potentialBarriers )
+                && !node.hasTag( restrictions, intended )
+                && !node.hasTag( "locked", "no"))
+            return directionBitMask;
+
+        if( (node.hasTag( "highway", "ford" ) || node.hasTag( "ford" ))
+                && !node.hasTag( restrictions, intended ) )
+            return directionBitMask;
+
+        return 0;
     }
+
     private final Set<String> safeHighwayTags = new HashSet<String>() {
         {
             add("footway");
@@ -179,11 +202,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     };
     private static final Map<String, Integer> SPEED = new HashMap<String, Integer>() {
         {
-            put("min", 2);
-            put("slow", 4);
-            put("mean", 5);
-            put("fast", 6);
-            put("max", 7);
+            put( "min", 2 );
+            put( "slow", 4 );
+            put( "mean", 5 );
+            put( "fast", 6 );
+            put( "max", 7 );
         }
     };
 }

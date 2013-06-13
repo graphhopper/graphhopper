@@ -43,7 +43,8 @@ public class TestAlgoCollector {
             int from, int to, double distance, int pointCount) {
         Path path = algo.calcPath(from, to);
         if (!path.found()) {
-            errors.add(algo + " returns no path. from:" + from + ", to:" + to);
+            errors.add(algo + " returns no path! expected distance: " + distance
+                    + ", expected locations: " + pointCount + ". from:" + from + ", to:" + to);
             return this;
         }
 

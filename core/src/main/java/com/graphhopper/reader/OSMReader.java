@@ -18,15 +18,18 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
+import com.graphhopper.util.StopWatch;
 import java.io.*;
 import javax.xml.stream.XMLStreamException;
 
 import gnu.trove.list.TLongList;
+import gnu.trove.list.array.TLongArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +48,12 @@ public class OSMReader {
     private OSMReaderHelper helper;
     private EncodingManager encodingManager = null;
     private int workerThreads = -1;
+    private LongIntMap osmNodeIdToBarrierMap;
 
     public OSMReader(GraphStorage storage, long expectedNodes) {
         this.graphStorage = storage;
         helper = new OSMReaderHelper(graphStorage, expectedNodes);
+        osmNodeIdToBarrierMap = new GHLongIntBTree(200);
     }
 
     public OSMReader workerThreads(int numOfWorkers) {
@@ -60,14 +65,16 @@ public class OSMReader {
         if (encodingManager == null)
             throw new IllegalStateException("Encoding manager not set.");
 
-        long start = System.currentTimeMillis();
+        StopWatch sw1 = new StopWatch().start();
         preProcess(osmFile);
 
-        long pass2 = System.currentTimeMillis();
+        sw1.stop();
+        StopWatch sw2 = new StopWatch().start();
         writeOsm2Graph(osmFile);
+        sw2.stop();
 
-        final long finished = System.currentTimeMillis();
-        logger.info("Times Pass1: " + (pass2 - start) + " Pass2: " + (finished - pass2) + " Total:" + (finished - start));
+        logger.info("time(pass1): " + (int) sw1.getSeconds() + " pass2: " + (int) sw2.getSeconds()
+                + " total:" + ((int) (sw1.getSeconds() + sw2.getSeconds())));
     }
 
     /**
@@ -171,7 +178,6 @@ public class OSMReader {
     /**
      * Process properties, encode flags and create edges for the way
      *
-     *
      * @param way
      * @throws XMLStreamException
      */
@@ -183,17 +189,77 @@ public class OSMReader {
             return;
 
         int includeWay = encodingManager.accept(way);
-        if (includeWay > 0) {
-            int flags = encodingManager.encodeTags(includeWay, way);
-            if (flags != 0)
-                helper.addEdge(way.nodes(), flags);
+        if (includeWay == 0)
+            return;
+
+        int flags = encodingManager.encodeTags(includeWay, way);
+        if (flags == 0)
+            return;
+
+        TLongList osmNodeIds = way.nodes();
+
+        // look for barriers along the way
+        final int size = osmNodeIds.size();
+        int lastBarrier = -1;
+        for (int i = 0; i < size; i++) {
+            final long nodeId = osmNodeIds.get(i);
+            int barrierFlags = osmNodeIdToBarrierMap.get(nodeId);
+            // barrier was spotted and way is otherwise passable for that mode of travel
+            if (barrierFlags > 0 && (barrierFlags & flags) > 0) {
+                // remove barrier to avoid duplicates
+                osmNodeIdToBarrierMap.put(nodeId, 0);
+
+                // create shadow node copy for zero length edge
+                long newNodeId = helper.addBarrierNode(nodeId);
+
+                if (i > 0) {
+                    // start at beginning of array if there was no previous barrier
+                    if (lastBarrier < 0)
+                        lastBarrier = 0;
+                    // add way up to barrier shadow node
+                    long transfer[] = osmNodeIds.toArray(lastBarrier, i - lastBarrier + 1);
+                    transfer[ transfer.length - 1] = newNodeId;
+                    TLongList partIds = new TLongArrayList(transfer);
+                    helper.addEdge(partIds, flags);
+
+                    // create zero length edge for barrier
+                    helper.addBarrierEdge(newNodeId, nodeId, flags, barrierFlags);
+                } else {
+                    // run edge from real first node to shadow node
+                    helper.addBarrierEdge(nodeId, newNodeId, flags, barrierFlags);
+
+                    // exchange first node for created barrier node
+                    osmNodeIds.set(0, newNodeId);
+                }
+                // remember barrier for processing the way behind it
+                lastBarrier = i;
+            }
         }
+
+        // just add remainder of way to graph if barrier was not the last node
+        if (lastBarrier >= 0) {
+            if (lastBarrier < size - 1) {
+                long transfer[] = osmNodeIds.toArray(lastBarrier, size - lastBarrier);
+                TLongList partIds = new TLongArrayList(transfer);
+                helper.addEdge(partIds, flags);
+            }
+        } // no barriers - simply add the whole way
+        else
+            helper.addEdge(way.nodes(), flags);
     }
 
     private void processNode(OSMNode node) throws XMLStreamException {
 
         if (isInBounds(node)) {
             helper.addNode(node);
+
+            // analyze node tags for barriers
+            if (node.hasTags()) {
+                final int barrierFlags = encodingManager.analyzeNode(node);
+                if (barrierFlags != 0)
+                    osmNodeIdToBarrierMap.put(node.id(), barrierFlags);
+            }
+
             locations++;
         } else {
             skippedLocations++;
@@ -203,7 +269,7 @@ public class OSMReader {
     /**
      * Filter method, override in subclass
      */
-    boolean isInBounds(OSMNode node) {
+    protected boolean isInBounds(OSMNode node) {
         return true;
     }
 

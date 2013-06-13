@@ -130,7 +130,7 @@ function initMap() {
     
     // mapquest provider
     var moreAttr = 'Data &copy; <a href="http://www.openstreetmap.org/">OSM</a>,'
-    + 'JS: <a href="http://leafletjs.com/">Leaflet</a>';
+        + 'JS: <a href="http://leafletjs.com/">Leaflet</a>';
     var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
         attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr, 
         subdomains: ['otile1','otile2','otile3','otile4']
@@ -172,7 +172,7 @@ function initMap() {
         L.control.layers(baseMaps).addTo(map);
 
     map.fitBounds(new L.LatLngBounds(new L.LatLng(bounds.minLat, bounds.minLon), 
-        new L.LatLng(bounds.maxLat, bounds.maxLon)));
+    new L.LatLng(bounds.maxLat, bounds.maxLon)));
     
     map.attributionControl.setPrefix('');
 
@@ -186,11 +186,11 @@ function initMap() {
         "geometry": {            
             "type": "LineString",
             "coordinates":[
-            [bounds.minLon, bounds.minLat], 
-            [bounds.maxLon, bounds.minLat], 
-            [bounds.maxLon, bounds.maxLat], 
-            [bounds.minLon, bounds.maxLat],
-            [bounds.minLon, bounds.minLat]]
+                [bounds.minLon, bounds.minLat], 
+                [bounds.maxLon, bounds.minLat], 
+                [bounds.maxLon, bounds.maxLat], 
+                [bounds.minLon, bounds.maxLat],
+                [bounds.minLon, bounds.minLat]]
         }
     };
     
@@ -284,7 +284,7 @@ function getInfoFromLocation(locCoord) {
         // in every case overwrite name
         locCoord.resolvedText = "Error while looking up coordinate";
         url = nominatim_reverse + "?lat=" + locCoord.lat + "&lon="
-        + locCoord.lng + "&format=json&zoom=16&json_callback=reverse_callback" + getInfoTmpCounter;
+            + locCoord.lng + "&format=json&zoom=16&json_callback=reverse_callback" + getInfoTmpCounter;
         return $.ajax({
             url: url,
             type : "GET",
@@ -313,7 +313,7 @@ function getInfoFromLocation(locCoord) {
     } else {
         // see https://trac.openstreetmap.org/ticket/4683 why limit=3 and not 1
         url = nominatim + "?format=json&q=" + encodeURIComponent(locCoord.input)
-        +"&limit=3&json_callback=search_callback" + getInfoTmpCounter;
+            +"&limit=3&json_callback=search_callback" + getInfoTmpCounter;
         if(bounds.initialized) {
             // minLon, minLat, maxLon, maxLat => left, top, right, bottom
             url += "&bounded=1&viewbox=" + bounds.minLon + ","+bounds.maxLat + ","+bounds.maxLon +","+ bounds.minLat;
@@ -326,7 +326,7 @@ function getInfoFromLocation(locCoord) {
             timeout: 3000,
             jsonpCallback: 'search_callback' + getInfoTmpCounter
         }).fail(createCallback("[nominatim] Problem while looking up location " + locCoord.input)).
-        pipe(function(jsonArgs) {
+            pipe(function(jsonArgs) {
             var json = jsonArgs[0];
             if(!json) {
                 locCoord.resolvedText = "No area description found";                
@@ -362,7 +362,7 @@ function routeLatLng(request) {
     clickToRoute = true;
     $("#info").empty();
     $("#info").show();
-    var descriptionDiv = $("<div/>");
+    var descriptionDiv = $("<div/>");    
     $("#info").append(descriptionDiv);
     
     var from = request.from.toString();
@@ -377,7 +377,7 @@ function routeLatLng(request) {
     setFlag(request.to, false);    
     
     $("#vehicles button").removeClass();
-    $("button#"+request.vehicle).addClass("bold");
+    $("button#"+request.vehicle.toUpperCase()).addClass("bold");
 
     var urlForAPI = "point=" + from + "&point=" + to;
     var urlForHistory = "?point=" + request.from.input + "&point=" + request.to.input + "&vehicle=" + request.vehicle;
@@ -386,6 +386,7 @@ function routeLatLng(request) {
         urlForAPI += "&minPathPrecision=" + request.minPathPrecision;
     }
     History.pushState(request, browserTitle, urlForHistory);
+    descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');
     request.doRequest(urlForAPI, function (json) {        
         if(json.info.errors) {
             var tmpErrors = json.info.errors;
@@ -393,11 +394,10 @@ function routeLatLng(request) {
                 descriptionDiv.append("<div class='error'>" + tmpErrors[i].message + "</div>");
             }
             return;
-        } else if(json.info.routeNotFound) {
-            descriptionDiv.html('route not found');
+        } else if(!json.info.routeFound) {
+            descriptionDiv.html('Route not found! Disconnected areas?');
             return;
         }
-        
         var geojsonFeature = {
             "type": "Feature",                   
             // "style": myStyle,                
@@ -457,7 +457,7 @@ function routeLatLng(request) {
             addToBing = "&mode=W";
         } else if(request.vehicle == "bike") {
             addToGoogle = "&dirflg=b";
-        // ? addToBing = "&mode=B";
+            // ? addToBing = "&mode=B";
         }
         googleLink.attr("href", "http://maps.google.com/?q=from:" + from + "+to:" + to + addToGoogle);
         hiddenDiv.append(googleLink);
@@ -563,37 +563,33 @@ function parseUrl(query) {
 
 function initForm() {
     $('#locationform').submit(function(e) {
+        // no page reload        
         e.preventDefault();
+        
+        console.log('NOW');
+        
+        var fromStr = $("#fromInput").val();
+        var toStr = $("#toInput").val();
+        if(toStr == "To" && fromStr == "From") {
+            // TODO print warning
+            return;
+        }
+        if(fromStr == "From") {
+            // no special function
+            return;
+        }
+        if(toStr == "To") {
+            // lookup area
+            ghRequest.from = new GHInput(fromStr);
+            $.when(resolveFrom()).done(function() {                    
+                focus(ghRequest.from);
+            });                
+            return;
+        }
+        // route!
+        resolveCoords(fromStr, toStr);
     });
     
-    // use keyup instead keypress otherwise the val() calls could contain partial values
-    // if FROM will be submitted
-    $('#fromInput').keyup(function(e) {
-        if(e.which == 13) {
-            var from = $("#fromInput").val()
-            var to = $("#toInput").val();
-            // do not resolve 'to'
-            if(to == "To") {                
-                ghRequest.from = new GHInput(from);
-                $.when(resolveFrom()).done(function() {                    
-                    focus(ghRequest.from);
-                });                
-            } else 
-                resolveCoords(from, to);
-        }
-    });
-    
-    // if TO will be submitted
-    $('#toInput').keyup(function(e) {
-        if(e.which == 13) {
-            var from = $("#fromInput").val();            
-            if(from == "From")  {
-            //                resolveFrom();
-            } else
-                resolveCoords(from, $("#toInput").val());
-        }
-    });
-
     $('.defaulting').each(function(index, element) {
         var jqElement = $(element);
         var defaultValue = jqElement.attr('defaultValue');        

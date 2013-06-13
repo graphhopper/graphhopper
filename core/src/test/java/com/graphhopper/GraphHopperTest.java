@@ -23,8 +23,10 @@ import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
+import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Before;
 
 /**
  *
@@ -35,11 +37,22 @@ public class GraphHopperTest {
     private static final String ghLoc = "./target/tmp/ghosm";
     private static final String testOsm = "./src/test/resources/com/graphhopper/reader/test-osm.xml";
     private static final String testOsm3 = "./src/test/resources/com/graphhopper/reader/test-osm3.xml";
+    private GraphHopper instance;
+
+    @Before
+    public void setUp() {
+        Helper.removeDir(new File(ghLoc));
+    }
+
+    @After
+    public void tearDown() {
+        instance.close();
+        Helper.removeDir(new File(ghLoc));
+    }
 
     @Test
     public void testLoadOSM() throws IOException {
-        Helper.removeDir(new File(ghLoc));
-        GraphHopper instance = new GraphHopper().setInMemory(true, true).
+        instance = new GraphHopper().setInMemory(true, true).
                 encodingManager(new EncodingManager("CAR")).
                 graphHopperLocation(ghLoc).osmFile(testOsm).
                 finishPath(false);
@@ -49,18 +62,16 @@ public class GraphHopperTest {
         assertEquals(3, ph.points().size());
 
         instance.close();
-        instance = new GraphHopper().encodingManager(new EncodingManager("CAR")).setInMemory(true, true);
+        instance = new GraphHopper().setInMemory(true, true);
         assertTrue(instance.load(ghLoc));
         ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertTrue(ph.found());
         assertEquals(3, ph.points().size());
-
-        Helper.removeDir(new File(ghLoc));
     }
 
     @Test
     public void testPrepare() throws IOException {
-        GraphHopper instance = new GraphHopper().setInMemory(true, false).
+        instance = new GraphHopper().setInMemory(true, false).
                 encodingManager(new EncodingManager("CAR")).
                 chShortcuts(true, true).
                 graphHopperLocation(ghLoc).osmFile(testOsm);
@@ -73,7 +84,7 @@ public class GraphHopperTest {
     @Test
     public void testFootAndCar() throws IOException {
         // now all ways are imported
-        GraphHopper instance = new GraphHopper().setInMemory(true, false).
+        instance = new GraphHopper().setInMemory(true, false).
                 encodingManager(new EncodingManager("CAR,FOOT")).
                 graphHopperLocation(ghLoc).osmFile(testOsm3).
                 finishPath(false);
@@ -111,12 +122,13 @@ public class GraphHopperTest {
 
     @Test
     public void testFailsForWrongConfig() throws IOException {
-        GraphHopper instance = new GraphHopper().init(
+        instance = new GraphHopper().init(
                 new CmdArgs().put("osmreader.acceptWay", "FOOT,CAR").put("osmreader.osm", testOsm3)).
                 graphHopperLocation(ghLoc).
                 finishPath(false);
         instance.importOrLoad();
         assertEquals(5, instance.graph().nodes());
+        instance.close();
 
         instance = new GraphHopper().init(
                 new CmdArgs().put("osmreader.acceptWay", "FOOT").put("osmreader.osm", testOsm3)).
@@ -136,9 +148,39 @@ public class GraphHopperTest {
     }
 
     @Test
+    public void testFailsForMissingParameters() throws IOException {
+        // missing load of graph
+        instance = new GraphHopper();
+        try {
+            instance.importOSM(testOsm);
+            assertTrue(false);
+        } catch (IllegalStateException ex) {
+            assertEquals("Load or init graph before import OSM data", ex.getMessage());
+        }
+
+        // missing graph location
+        instance = new GraphHopper();
+        try {
+            instance.importOrLoad();
+            assertTrue(false);
+        } catch (IllegalStateException ex) {
+            assertEquals("graphHopperLocation is not specified. call init before", ex.getMessage());
+        }
+
+        // missing encoding manager
+        instance = new GraphHopper().setInMemory(true, true).graphHopperLocation(ghLoc);
+        try {
+            instance.importOrLoad();
+            assertTrue(false);
+        } catch (IllegalStateException ex) {
+            assertEquals("No EncodingManager was configured. And no one was found in the graph: " + ghLoc, ex.getMessage());
+        }
+    }
+
+    @Test
     public void testFootOnly() throws IOException {
         // now only footable ways are imported => no A D C and B D E => the other both ways have pillar nodes!
-        GraphHopper instance = new GraphHopper().setInMemory(true, false).
+        instance = new GraphHopper().setInMemory(true, false).
                 encodingManager(new EncodingManager("FOOT")).
                 graphHopperLocation(ghLoc).osmFile(testOsm3);
         instance.importOrLoad();
@@ -150,5 +192,33 @@ public class GraphHopperTest {
         GHResponse res = instance.route(new GHRequest(11.1, 50, 11.2, 52).vehicle(EncodingManager.FOOT));
         assertTrue(res.found());
         assertEquals(3, res.points().size());
+    }
+
+    @Test
+    public void testPrepareOnly() throws IOException {
+        instance = new GraphHopper().setInMemory(true, true).
+                chShortcuts(true, true).
+                encodingManager(new EncodingManager("FOOT")).
+                doPrepare(false).
+                graphHopperLocation(ghLoc).osmFile(testOsm3);
+        instance.importOrLoad();
+        instance.close();
+
+        instance = new GraphHopper().setInMemory(true, true).
+                chShortcuts(true, true).
+                graphHopperLocation(ghLoc).osmFile(testOsm3);
+
+        // wrong encoding manager
+        instance.encodingManager(new EncodingManager("CAR"));
+        try {
+            instance.load(ghLoc);
+            assertTrue(false);
+        } catch (IllegalStateException ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match:"));
+        }
+
+        // use the one from the graph
+        instance.encodingManager(null);
+        instance.load(ghLoc);
     }
 }

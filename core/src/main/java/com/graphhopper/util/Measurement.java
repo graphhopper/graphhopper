@@ -63,6 +63,9 @@ public class Measurement {
     // creates properties file in the format key=value
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
     void start(CmdArgs args) {
+        long importTook = args.getLong("graph.importTime", -1);
+        put("graph.importTime", importTook);
+
         String graphLocation = args.get("graph.location", "");
         if (Helper.isEmpty(graphLocation))
             throw new IllegalStateException("no graph.location specified");

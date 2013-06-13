@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm">
+    <node id="10" lat="51" lon="9.4317166">
+        <tag k="name" v="Wiesbaden-Naurod" />
+    </node>
+    <node id="20" lat="52" lon="9.4">
+        <tag k="barrier" v="gate" />
+    </node>
+    <node id="30" lat="53" lon="9.4">
+    </node>
+    
+    <node id="40" lat="54" lon="9.4">
+        
+    </node>
+    
+    <way id="10">
+        <nd ref="10"/>
+        <!-- this node has a barrier -->
+        <nd ref="20"/>        
+        <nd ref="30"/>
+        <tag k="highway" v="motorway" />
+    </way>     
+    
+    <way id="20">
+        <nd ref="10"/>
+        <nd ref="40"/>
+        <nd ref="30"/>
+        <tag k="highway" v="motorway" />
+    </way>     
+</osm>
