@@ -19,3 +19,5 @@ scripts/googlecode_upload.py
 deploy.sh
 android/libs/graphhopper-*-android.jar
 */nbactions.xml
+.idea/
+*iml
