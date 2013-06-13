@@ -148,11 +148,6 @@ public class OSMReader {
         long wayStart = -1;
         long counter = 1;
 
-        // initialize geometry access
-        geometryAccess = new GeometryAccess( this, helper );
-        if( demLocation != null )
-            geometryAccess.initDem( demLocation, graphStorage );
-
         try {
             OSMInputFile in = new OSMInputFile(osmFile).workerThreads(workerThreads).open();
             LongIntMap nodeFilter = helper.getNodeMap();
@@ -169,6 +164,12 @@ public class OSMReader {
                         if (wayStart < 0) {
                             logger.info(nf(counter) + ", now parsing ways");
                             wayStart = counter;
+
+                            // initialize geometry access after nodes have processed, we need the bounds for the DEM
+                            geometryAccess = new GeometryAccess( this, helper );
+                            if( demLocation != null )
+                                geometryAccess.initDem( demLocation, graphStorage );
+
                         }
                         processWay((OSMWay) item);
                         break;
