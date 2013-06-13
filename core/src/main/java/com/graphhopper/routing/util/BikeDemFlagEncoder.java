@@ -32,7 +32,7 @@ public class BikeDemFlagEncoder extends BikeFlagEncoder
 
         analyzer.initialize( way, geometryAccess );
         // todo: interpolate
-        analyzer.analyze();
+        analyzer.analyzeElevations();
 
         int speed = getSpeed(way);
         int forwardSpeed = adjustSpeed( speed, analyzer.getAverageIncline(), analyzer.getAscendDistance(), analyzer.getAverageDecline(), analyzer.getDescendDistance(), analyzer.getTotalDistance() );

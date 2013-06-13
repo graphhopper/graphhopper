@@ -60,6 +60,7 @@ public class OSMReaderHelper {
     // remember how many times a node was used to identify tower nodes
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
+    protected DataAccess pillarEles;
     private DistanceCalc distCalc = new DistanceCalc();
     private DouglasPeucker dpAlgo = new DouglasPeucker();
     private int towerId = 0;
@@ -75,6 +76,11 @@ public class OSMReaderHelper {
 
         pillarLats.create(Math.max(expectedNodes / 50, 100));
         pillarLons.create(Math.max(expectedNodes / 50, 100));
+
+        if( g.is3D() ) {
+            pillarEles = dir.findCreate("tmpElevations");
+            pillarEles.create(Math.max(expectedNodes / 50, 100));
+        }
     }
 
     public OSMReaderHelper wayPointMaxDistance(double maxDist) {
@@ -113,7 +119,7 @@ public class OSMReaderHelper {
                     + fromIndex + "->" + toIndex + ", points:" + pointList);
 
         double towerNodeDistance = 0;
-        double prevLat = pointList.latitude(0);
+        double prevLat = pointList.latitude( 0 );
         double prevLon = pointList.longitude(0);
         double lat;
         double lon;
@@ -135,10 +141,10 @@ public class OSMReaderHelper {
             towerNodeDistance = 0.0001;
         }
 
-        EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
+        EdgeIterator iter = g.edge( fromIndex, toIndex, towerNodeDistance, flags );
         if (nodes > 2) {
             dpAlgo.simplify(pillarNodes);
-            iter.wayGeometry(pillarNodes);
+            iter.wayGeometry( pillarNodes );
         }
         return nodes;
     }
@@ -347,14 +353,18 @@ public class OSMReaderHelper {
 
         if (graphIndex < TOWER_NODE) {
             graphIndex = -graphIndex - 3;
-            latLon[0]= Helper.degreeToInt( g.getLatitude(graphIndex));
-            latLon[1] = Helper.degreeToInt( g.getLongitude(graphIndex));
+            g.getLocation( graphIndex, latLon );
         }
         else {
             graphIndex = graphIndex - 3;
             latLon[0] = pillarLats.getInt(graphIndex);
             latLon[1] = pillarLons.getInt(graphIndex);
+            // todo: add pillar elevation
         }
         return true;
+    }
+
+    public void addElevations( GeometryAccess geometryAccess ) {
+
     }
 }

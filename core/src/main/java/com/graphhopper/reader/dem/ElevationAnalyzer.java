@@ -19,7 +19,7 @@ public class ElevationAnalyzer
     public static final int ELEVATION = 2;
     public static final int DISTANCE = 3;
 
-    public static final int RECORD = 4;
+    public static final int RECORD_SIZE = 4;
 
     private static DistanceCalc distCalc = new DistanceCalc();
 
@@ -43,12 +43,20 @@ public class ElevationAnalyzer
     private int maxDecline;
 
 
+    /**
+     * Initialize the Analyzer with the way data.
+     * Calculate total distance.
+     * @param way
+     * @param geometryAccess
+     */
     public void initialize( OSMWay way, GeometryAccess geometryAccess ) {
         this.geometryAccess = geometryAccess;
 
         TLongList nodeIds = way.nodes();
         count = nodeIds.size();
-        nodes = new TIntArrayList( 2 * RECORD * count );
+        nodes = new TIntArrayList( 2 * RECORD_SIZE * count );
+
+        totalDistance = 0;
 
         double lastLat = 0;
         double lastLon = 0;
@@ -58,13 +66,10 @@ public class ElevationAnalyzer
         for( int i = 0; i < count; i++ ) {
             long osmId = nodeIds.get( i );
 
-            // get node coordinates
+            // get node coordinates and elevation from graph
             geometryAccess.getNode( osmId, node );
             lat = Helper.intToDegree(node[0]);
-            lon = Helper.intToDegree(node[1]);
-
-            // get elevations
-            node[2] = geometryAccess.getElevation( lat, lon );
+            lon = Helper.intToDegree( node[1] );
 
             nodes.add( node );
 
@@ -72,21 +77,21 @@ public class ElevationAnalyzer
             if( i == 0 )
                 nodes.add( 0 );
             else {
-                double dist = distCalc.calcDist( lastLat, lastLon, lat, lon );
-                nodes.add( (int) dist );
+                double distance = distCalc.calcDist( lastLat, lastLon, lat, lon );
+                nodes.add( (int) distance );
+                totalDistance += distance;
             }
             lastLat = lat;
             lastLon = lon;
         }
     }
 
-    public void analyze()
+    public void analyzeElevations()
     {
         ascend=0;
         descend=0;
         ascendDistance=0;
         descendDistance=0;
-        totalDistance =0;
 
         maxIncline=0;
         maxDecline=0;
@@ -100,14 +105,13 @@ public class ElevationAnalyzer
         int delta;
         int incline;
         for( int i = 1; i < count; i++ ) {
-            index = i*RECORD;
+            index = i* RECORD_SIZE;
             ele = nodes.get( index + ELEVATION );
             distance = nodes.get( index + DISTANCE );
             if( distance > 0 ) {
                 delta = ele - lastEle;
                 incline = 100*delta/distance;
 
-                totalDistance += distance;
                 if( delta > 0 ) {
                     ascend += delta;
                     ascendDistance += distance;

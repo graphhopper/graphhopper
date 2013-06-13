@@ -120,8 +120,7 @@ public class OSMReader {
     }
 
     /**
-     * Filter ways but do not analyze properties wayNodes will be filled with
-     * participating node ids.
+     * Filter ways but do not analyze properties.
      *
      * @return true the current xml entry is a way entry and has nodes
      */
@@ -161,15 +160,13 @@ public class OSMReader {
                         break;
 
                     case OSMElement.WAY:
+                        // before the first way is processed initialize geometry
                         if (wayStart < 0) {
                             logger.info(nf(counter) + ", now parsing ways");
                             wayStart = counter;
 
                             // initialize geometry access after nodes have processed, we need the bounds for the DEM
-                            geometryAccess = new GeometryAccess( this, helper );
-                            if( demLocation != null )
-                                geometryAccess.initDem( demLocation, graphStorage );
-
+                            initializeGeometry();
                         }
                         processWay((OSMWay) item);
                         break;
@@ -187,6 +184,27 @@ public class OSMReader {
         helper.finishedReading();
         if (graphStorage.nodes() == 0)
             throw new IllegalStateException("osm must not be empty. read " + counter + " lines and " + locations + " locations");
+    }
+
+    /**
+     * Initialize geometry access before processing the first way.
+     * If the graph is 3D enabled, it is filled with elevation data.
+     */
+    private void initializeGeometry() {
+        geometryAccess = new GeometryAccess( this, helper );
+
+        if( graphStorage.is3D() ) {
+            geometryAccess.initDem( demLocation, graphStorage );
+
+            // fill the graph with elevations
+            // todo: do this controlled by region to limit memory usage
+            int nodeCount = graphStorage.nodes();
+            for( int i = 0; i < nodeCount; i++ ) {
+                int ele = geometryAccess.getElevation( graphStorage.getLatitude( i ), graphStorage.getLongitude( i ) );
+                graphStorage.setElevation( i, ele );
+            }
+            helper.addElevations( geometryAccess );
+        }
     }
 
     /**
