@@ -47,6 +47,6 @@ public abstract class DemTile
 
     public abstract boolean isEmpty();
 
-    public abstract float get(int x, int y);
+    public abstract int get( int x, int y );
 
 }
