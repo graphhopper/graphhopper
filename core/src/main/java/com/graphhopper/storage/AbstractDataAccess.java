@@ -119,9 +119,11 @@ public abstract class AbstractDataAccess implements DataAccess {
 
     @Override
     public DataAccess segmentSize(int bytes) {
-        // segment size should be a power of 2
-        int tmp = (int) (Math.log(bytes) / Math.log(2));
-        segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
+        if (bytes > 0) {
+            // segment size should be a power of 2
+            int tmp = (int) (Math.log(bytes) / Math.log(2));
+            segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
+        }
         segmentSizePower = (int) (Math.log(segmentSizeInBytes) / Math.log(2));
         indexDivisor = segmentSizeInBytes - 1;
         return this;

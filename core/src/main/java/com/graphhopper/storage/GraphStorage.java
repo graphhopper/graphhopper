@@ -137,7 +137,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         return dir;
     }
 
-    GraphStorage segmentSize(int bytes) {
+    public GraphStorage segmentSize(int bytes) {
         checkInit();
         nodes.segmentSize(bytes);
         edges.segmentSize(bytes);

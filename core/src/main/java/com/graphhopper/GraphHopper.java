@@ -95,6 +95,7 @@ public class GraphHopper implements GraphHopperAPI {
     private long expectedNodes = 10;
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
+    private int defaultSegmentSize = -1;
     private StorableProperties properties;
 
     public GraphHopper() {
@@ -263,6 +264,7 @@ public class GraphHopper implements GraphHopperAPI {
         // graph
         graphHopperLocation(graphHopperFolder);
         expectedNodes = args.getLong("graph.expectedSize", 10 * 1000);
+        defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", -1);
         String dataAccess = args.get("graph.dataaccess", "inmemory+save");
         if ("mmap".equalsIgnoreCase(dataAccess)) {
             memoryMapped = true;
@@ -440,6 +442,7 @@ public class GraphHopper implements GraphHopperAPI {
             // prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, defaultAlgorithm, encodingManager.getFirst());
         }
 
+        graph.segmentSize(defaultSegmentSize);
         if (!graph.loadExisting())
             return false;
 
