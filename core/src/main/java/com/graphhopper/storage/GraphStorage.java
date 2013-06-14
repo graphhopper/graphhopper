@@ -662,7 +662,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             int len = pillarNodes.size();
             int tmpRef = nextGeoRef(len * 2);
             edges.setInt(edgePointer + E_GEO, tmpRef);
-            long geoRef = tmpRef * 4;
+            long geoRef = (long) tmpRef * 4;
             ensureGeometry(geoRef, len * 8 + 4);
             byte[] bytes = new byte[len * 2 * 4 + 4];
             BitUtil.fromInt(bytes, len, 0);
@@ -698,9 +698,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             int index = bytes.length;
             for (int i = count - 1; i >= 0; i--) {
                 index -= 4;
-                double lon = Helper.intToDegree(BitUtil.toInt(bytes, index));                
+                double lon = Helper.intToDegree(BitUtil.toInt(bytes, index));
                 index -= 4;
-                double lat = Helper.intToDegree(BitUtil.toInt(bytes, index));                
+                double lat = Helper.intToDegree(BitUtil.toInt(bytes, index));
                 pillarNodes.add(lat, lon);
             }
         } else {
