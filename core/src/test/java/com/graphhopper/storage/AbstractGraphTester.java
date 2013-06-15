@@ -588,6 +588,7 @@ public abstract class AbstractGraphTester {
         try {
             graph.copyTo(gs);
         } catch (Exception ex) {
+            ex.printStackTrace();
             assertTrue(ex.toString(), false);
         }
 

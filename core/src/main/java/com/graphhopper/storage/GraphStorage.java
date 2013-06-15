@@ -333,15 +333,12 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         }
 
         long edgePointer = (long) edge * edgeEntryBytes;
-        byte[] bytes = new byte[6 * 4];
-        BitUtil.fromInt(bytes, nodeThis, E_NODEA);
-        BitUtil.fromInt(bytes, nodeOther, E_NODEB);
-        BitUtil.fromInt(bytes, nextEdge, E_LINKA);
-        BitUtil.fromInt(bytes, nextEdgeOther, E_LINKB);
-        BitUtil.fromInt(bytes, distToInt(distance), E_DIST);
-        BitUtil.fromInt(bytes, flags, E_FLAGS);
-
-        edges.setBytes(edgePointer, bytes, bytes.length);
+        edges.setInt(edgePointer + E_NODEA, nodeThis);
+        edges.setInt(edgePointer + E_NODEB, nodeOther);
+        edges.setInt(edgePointer + E_LINKA, nextEdge);
+        edges.setInt(edgePointer + E_LINKB, nextEdgeOther);
+        edges.setInt(edgePointer + E_DIST, distToInt(distance));
+        edges.setInt(edgePointer + E_FLAGS, flags);
         return edgePointer;
     }
 
@@ -768,7 +765,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         int delNodes = removedNodes().cardinality();
         if (delNodes <= 0)
             return;
-        
+
         // Deletes only nodes. 
         // It reduces the fragmentation of the node space but introduces new unused edges.
         inPlaceNodeRemove(delNodes);

@@ -29,12 +29,15 @@ import java.util.Map;
  *
  * @author Peter Karich
  */
-public abstract class AbstractDirectory implements Directory {
+public class GHDirectory implements Directory {
 
     protected Map<String, DataAccess> map = new HashMap<String, DataAccess>();
+    protected Map<String, DAType> types = new HashMap<String, DAType>();
     protected final String location;
+    private DAType defaultType;
 
-    public AbstractDirectory(String _location) {
+    public GHDirectory(String _location, DAType defaultType) {
+        this.defaultType = defaultType;
         if (Helper.isEmpty(_location))
             _location = new File("").getAbsolutePath();
         if (!_location.endsWith("/"))
@@ -43,17 +46,56 @@ public abstract class AbstractDirectory implements Directory {
         File dir = new File(location);
         if (dir.exists() && !dir.isDirectory())
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
+
+        // TODO remove this hack which forces to use integer access for edges+nodes
+        if (!this.defaultType.equals(DAType.MMAP)) {
+            if (isStoring()) {
+                put("edges", DAType.RAM_INT_STORE);
+                put("nodes", DAType.RAM_INT_STORE);
+            } else {
+                put("edges", DAType.RAM_INT);
+                put("nodes", DAType.RAM_INT);
+            }
+        }
+        mkdirs();
     }
 
-    protected abstract DataAccess create(String id, String location);
+    public Directory put(String name, DAType type) {
+        types.put(name, type);
+        return this;
+    }
 
     @Override
     public DataAccess findCreate(String name) {
+        DAType type = types.get(name);
+        if (type == null)
+            type = defaultType;
+        return findCreate(name, type);
+    }
+
+    DataAccess findCreate(String name, DAType type) {
         DataAccess da = map.get(name);
         if (da != null)
             return da;
 
-        da = create(name, location);
+        switch (type) {
+            case MMAP:
+                da = new MMapDataAccess(name, location);
+                break;
+            case RAM:
+                da = new RAMDataAccess(name, location, false);
+                break;
+            case RAM_STORE:
+                da = new RAMDataAccess(name, location, true);
+                break;
+            case RAM_INT:
+                da = new RAMIntDataAccess(name, location, false);
+                break;
+            case RAM_INT_STORE:
+                da = new RAMIntDataAccess(name, location, true);
+                break;
+        }
+
         map.put(name, da);
         return da;
     }
@@ -79,8 +121,19 @@ public abstract class AbstractDirectory implements Directory {
         Helper.removeDir(new File(location + name));
     }
 
+    public boolean isStoring() {
+        return defaultType.equals(DAType.MMAP) || defaultType.equals(DAType.RAM_INT_STORE)
+                || defaultType.equals(DAType.RAM_STORE);
+    }
+
+    @Override
+    public boolean isLoadRequired() {
+        return isStoring();
+    }
+
     protected void mkdirs() {
-        new File(location).mkdirs();
+        if (isStoring())
+            new File(location).mkdirs();
     }
 
     Collection<DataAccess> getAll() {

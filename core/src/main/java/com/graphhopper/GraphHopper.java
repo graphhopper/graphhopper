@@ -24,7 +24,9 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.Directory.DAType;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.LevelGraph;
@@ -68,9 +70,7 @@ public class GraphHopper implements GraphHopperAPI {
     // for graph:
     private GraphStorage graph;
     private String ghLocation = "";
-    private boolean inMemory = true;
-    private boolean storeOnFlush = true;
-    private boolean memoryMapped;
+    private DAType dataAccessType;
     private boolean sortGraph = false;
     boolean removeZipped = true;
     // for routing:
@@ -151,9 +151,10 @@ public class GraphHopper implements GraphHopperAPI {
 
     public GraphHopper setInMemory(boolean inMemory, boolean storeOnFlush) {
         if (inMemory) {
-            this.inMemory = true;
-            this.memoryMapped = false;
-            this.storeOnFlush = storeOnFlush;
+            if (storeOnFlush)
+                dataAccessType = DAType.RAM_STORE;
+            else
+                dataAccessType = DAType.RAM;
         } else {
             memoryMapped();
         }
@@ -161,8 +162,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public GraphHopper memoryMapped() {
-        this.inMemory = false;
-        memoryMapped = true;
+        dataAccessType = DAType.MMAP;
         return this;
     }
 
@@ -265,11 +265,11 @@ public class GraphHopper implements GraphHopperAPI {
         graphHopperLocation(graphHopperFolder);
         expectedNodes = args.getLong("graph.expectedSize", 10 * 1000);
         defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", -1);
-        String dataAccess = args.get("graph.dataaccess", "inmemory+save");
+        String dataAccess = args.get("graph.dataaccess", "ram+save");
         if ("mmap".equalsIgnoreCase(dataAccess)) {
-            memoryMapped = true;
+            memoryMapped();
         } else {
-            if ("inmemory+save".equalsIgnoreCase(dataAccess)) {
+            if ("inmemory+save".equalsIgnoreCase(dataAccess) || "ram+save".equalsIgnoreCase(dataAccess)) {
                 setInMemory(true, true);
             } else
                 setInMemory(true, false);
@@ -399,14 +399,9 @@ public class GraphHopper implements GraphHopperAPI {
             }
         }
         graphHopperLocation(graphHopperFolder);
-        Directory dir;
-        if (memoryMapped) {
-            dir = new MMapDirectory(ghLocation);
-        } else if (inMemory) {
-            dir = new RAMDirectory(ghLocation, storeOnFlush);
-        } else
-            throw new IllegalArgumentException("either memory mapped or in-memory has to be specified!");
-
+        if (dataAccessType == null)
+            this.dataAccessType = DAType.RAM;        
+        GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
         properties = new StorableProperties(dir, "properties");
         String acceptStr = "";
         if (properties.loadExisting()) {

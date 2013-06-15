@@ -51,7 +51,7 @@ public class PrepareRoutingSubnetworks {
         return this;
     }
 
-    public void doWork() {
+    public void doWork() {        
         logger.info("removeZeroDegreeNodes");
         int del = removeZeroDegreeNodes();
         logger.info("findSubnetworks");

@@ -27,6 +27,11 @@ package com.graphhopper.storage;
  */
 public interface Directory {
 
+    public static enum DAType {
+
+        MMAP, RAM, RAM_STORE, RAM_INT, RAM_INT_STORE
+    }
+
     /**
      * @return an id or location in the local filesystem.
      */
@@ -37,6 +42,8 @@ public interface Directory {
      * and associates the location with it. A name is unique in one Directory.
      */
     DataAccess findCreate(String name);
+
+//    DataAccess findCreate(String name, DAType type);
 
     /**
      * Renames the specified DataAccess object into one.
