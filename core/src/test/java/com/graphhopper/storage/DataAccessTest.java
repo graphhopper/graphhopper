@@ -290,5 +290,14 @@ public abstract class DataAccessTest {
         assertEquals(Integer.MAX_VALUE / 3, BitUtil.toInt(bytes));
 
         da.close();
+
+        long bytePos = 4294967296L + 11111;
+        int segmentSizePower = 24;
+        int segmentSizeInBytes = 1 << segmentSizePower;
+        int indexDivisor = segmentSizeInBytes - 1;
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        assertEquals(256, bufferIndex);
+        assertEquals(11111, index);
     }
 }

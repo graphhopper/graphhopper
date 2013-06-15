@@ -52,10 +52,13 @@ public class PrepareRoutingSubnetworks {
     }
 
     public void doWork() {
+        logger.info("removeZeroDegreeNodes");
         int del = removeZeroDegreeNodes();
+        logger.info("findSubnetworks");
         Map<Integer, Integer> map = findSubnetworks();
-        keepLargeNetwork(map);
-        logger.info("optimize to remove subnetworks(" + map.size() + "), zero-degree-nodes(" + del + ")");
+        logger.info("keepLargeNetworks");
+        keepLargeNetworks(map);
+        logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes(" + del + ")");
         g.optimize();
         subNetworks = map.size();
     }
@@ -72,20 +75,17 @@ public class PrepareRoutingSubnetworks {
         for (int start = 0; start < locs; start++) {
             if (g.isNodeRemoved(start) || bs.contains(start))
                 continue;
-
+            System.out.println(start + " MAP " + map.size());
             new XFirstSearch() {
                 @Override protected GHBitSet createBitSet(int size) {
                     return bs;
                 }
 
                 @Override protected boolean goFurther(int nodeId) {
-                    boolean ret = super.goFurther(nodeId);
-                    if (ret)
-                        integ.incrementAndGet();
-                    return ret;
+                    integ.incrementAndGet();
+                    return true;
                 }
             }.start(g, start, false);
-            // System.out.println(start + " MAP "+map.size());
             map.put(start, integ.get());
             integ.set(0);
         }
@@ -95,7 +95,7 @@ public class PrepareRoutingSubnetworks {
     /**
      * Deletes all but the larges subnetworks.
      */
-    void keepLargeNetwork(Map<Integer, Integer> map) {
+    void keepLargeNetworks(Map<Integer, Integer> map) {
         if (map.size() < 2)
             return;
 

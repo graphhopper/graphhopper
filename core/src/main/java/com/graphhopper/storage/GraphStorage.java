@@ -152,11 +152,11 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     public GraphStorage create(long nodeCount) {
         checkInit();
         long initSize = Math.max(nodeCount, 100);
-        nodes.create((long) initSize * nodeEntryBytes);
+        nodes.create(initSize * nodeEntryBytes);
         initNodeRefs(0, nodes.capacity());
 
-        edges.create((long) initSize * edgeEntryBytes);
-        wayGeometry.create((long) initSize);
+        edges.create(initSize * edgeEntryBytes);
+        wayGeometry.create(initSize);
         initialized = true;
         return this;
     }
@@ -428,13 +428,11 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
      */
     protected class AllEdgeIterator implements AllEdgesIterator {
 
-        private byte[] bytes;
         protected long edgePointer = -edgeEntryBytes;
         private int maxEdges = edgeCount * edgeEntryBytes;
         private int nodeA;
 
         public AllEdgeIterator() {
-            bytes = new byte[edgeEntryBytes];
         }
 
         @Override public int maxId() {
@@ -442,7 +440,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         }
 
         @Override public boolean next() {
-            // TODO read full edge
             do {
                 edgePointer += edgeEntryBytes;
                 nodeA = edges.getInt(edgePointer + E_NODEA);
@@ -768,9 +765,13 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
     @Override
     public void optimize() {
+        int delNodes = removedNodes().cardinality();
+        if (delNodes <= 0)
+            return;
+        
         // Deletes only nodes. 
         // It reduces the fragmentation of the node space but introduces new unused edges.
-        inPlaceNodeRemove(removedNodes().cardinality());
+        inPlaceNodeRemove(delNodes);
 
         // Reduce memory usage
         trimToSize();
@@ -816,9 +817,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
      * needs to update the node ids in every edge.
      */
     private void inPlaceNodeRemove(int removeNodeCount) {
-        if (removeNodeCount <= 0)
-            return;
-
         // Prepare edge-update of nodes which are connected to deleted nodes        
         int toMoveNode = nodes();
         int itemsToMove = 0;
