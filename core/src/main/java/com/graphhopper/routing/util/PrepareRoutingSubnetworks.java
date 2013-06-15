@@ -51,7 +51,7 @@ public class PrepareRoutingSubnetworks {
         return this;
     }
 
-    public void doWork() {        
+    public void doWork() {
         logger.info("removeZeroDegreeNodes");
         int del = removeZeroDegreeNodes();
         logger.info("findSubnetworks");
@@ -75,7 +75,7 @@ public class PrepareRoutingSubnetworks {
         for (int start = 0; start < locs; start++) {
             if (g.isNodeRemoved(start) || bs.contains(start))
                 continue;
-            System.out.println(start + " MAP " + map.size());
+            logger.info(start + " MAP " + map.size());
             new XFirstSearch() {
                 @Override protected GHBitSet createBitSet(int size) {
                     return bs;

@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is an in-memory data structure with the possibility to be stored on
@@ -192,6 +193,11 @@ public class RAMDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         assert index + 4 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
+        if (bufferIndex > segments.length) {
+            LoggerFactory.getLogger(getClass()).error(name() + ", segments:" + segments.length
+                    + ", bufIndex:" + bufferIndex + ", bytePos:" + bytePos
+                    + ", segPower:" + segmentSizePower);
+        }
         return BitUtil.toInt(segments[bufferIndex], index);
     }
 

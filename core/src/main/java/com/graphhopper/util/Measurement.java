@@ -57,7 +57,7 @@ public class Measurement {
     public static void main(String[] strs) {
         new Measurement().start(CmdArgs.read(strs));
     }
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private static Logger logger = LoggerFactory.getLogger(Measurement.class);
     private Map<String, String> properties = new TreeMap<String, String>();
 
     // creates properties file in the format key=value
@@ -226,7 +226,7 @@ public class Measurement {
         fileWriter.flush();
     }
 
-    public abstract class MiniPerfTest {
+    public static abstract class MiniPerfTest {
 
         private int counts = 100;
         private double fullTime = 0;

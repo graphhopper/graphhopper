@@ -73,7 +73,7 @@ public class GHDirectory implements Directory {
         return findCreate(name, type);
     }
 
-    DataAccess findCreate(String name, DAType type) {
+    public DataAccess findCreate(String name, DAType type) {
         DataAccess da = map.get(name);
         if (da != null)
             return da;
