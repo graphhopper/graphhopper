@@ -940,10 +940,21 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
                     throw new RuntimeException("Adj.node problem with edge " + str);
                 if (base >= nodeCount)
                     throw new RuntimeException("Base node problem with edge " + str);
+                try {
+                    getEdges(adj).toString();
+                } catch (Exception ex) {
+                    org.slf4j.LoggerFactory.getLogger(getClass()).error("adj:" + adj);
+                }
+                try {
+                    getEdges(base).toString();
+                } catch (Exception ex) {
+                    org.slf4j.LoggerFactory.getLogger(getClass()).error("base:" + base);
+                }
             }
             // access last node -> no error
             getEdges(nodeCount - 1).toString();
         }
+        System.out.println("nodeCount:" + nodeCount);
 
         removedNodes = null;
     }
