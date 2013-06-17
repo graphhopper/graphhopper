@@ -566,10 +566,12 @@ public class GraphHopper implements GraphHopperAPI {
         logger.info("start finding subnetworks, " + Helper.memInfo());
         preparation.doWork();
         int n = graph.nodes();
+        // calculate remaining subnetworks
+        int remainingSubnetworks = preparation.findSubnetworks().size();
         logger.info("edges: " + graph.getAllEdges().maxId()
                 + ", nodes " + n + ", there were " + preparation.subNetworks()
                 + " subnetworks. removed them => " + (prev - n)
-                + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
+                + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
     }
 
     private void flush() {
