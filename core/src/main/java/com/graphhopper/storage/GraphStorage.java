@@ -941,6 +941,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
                 if (base >= nodeCount)
                     throw new RuntimeException("Base node problem with edge " + str);
             }
+            // access last node -> no error
+            getEdges(nodeCount - 1).toString();
         }
 
         removedNodes = null;
