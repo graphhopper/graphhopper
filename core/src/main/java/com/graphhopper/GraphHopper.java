@@ -121,19 +121,18 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper forServer() {
         // simplify to reduce network IO
         simplifyRequest(true);
-        preciseIndexResolution(1000);
+        preciseIndexResolution(500);
         return setInMemory(true, true);
     }
 
     public GraphHopper forDesktop() {
         simplifyRequest(false);
-        preciseIndexResolution(1000);
+        preciseIndexResolution(500);
         return setInMemory(true, true);
     }
 
     public GraphHopper forMobile() {
         simplifyRequest(false);
-        // make new index faster (but unprecise) and disable searchRegion
         preciseIndexResolution(500);
         return memoryMapped();
     }
