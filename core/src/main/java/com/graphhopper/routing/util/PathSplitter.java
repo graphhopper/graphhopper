@@ -83,60 +83,6 @@ public class PathSplitter {
 		
 		return index;
 	}
-
-//	/**
-//	 * Compute the 2D distance from point M:(xM,yM), to the line segment BE.
-//	 * B:(xB,yB) E:(xE,yE) By using the power of a point to a line Advantage of
-//	 * this formula:
-//	 * <ul>
-//	 * <li>it does not compute the distance between the point and line passing
-//	 * by B and E but only the distance between M and BE.</li>
-//	 * <li>it uses simple math operators and avoid quotient as much as possible.
-//	 * </li>
-//	 * </ul>
-//	 * 
-//	 * @param xM
-//	 *            abscissa of M point
-//	 * @param yM
-//	 *            coordinate of M point
-//	 * @param xB
-//	 *            abscissa of B point
-//	 * @param yB
-//	 *            coordinate of B point
-//	 * @param xE
-//	 *            abscissa of E point
-//	 * @param yE
-//	 *            coordinate of E point
-//	 * @return
-//	 */
-//	private double segmentDist(double xM, double yM, double xB, double yB, double xE, double yE) {
-//		// coordinates a,b of vector EB
-//		double a = xE - xB;
-//		double b = yE - yB;
-//		// equation of the perpendicular D1 in B to (EB): ax+by+w1
-//		double w1 = -a * xB - b * yB;
-//		// equation of the perpendicular D2 in E to (EB): ax+by+w2
-//		double w2 = -a * xE - b * yE;
-//		// equation of the line (EB) : bx-ay+w3
-//		double w3 = a * yB - b * xB;
-//		// power of M in relation to D1
-//		double PMD1 = a * xM + b * yM + w1;
-//		// power of M in relation to D2
-//		double PMD2 = a * xM + b * yM + w2;
-//		// power of B in relation to D2
-//		double PBD2 = a * xB + b * yB + w2;
-//		// power of E in relation to D1
-//		double PED1 = a * xE + b * yE + w1;
-//		// at this point, no sqrt nor quotient were computed.
-//		if (PMD1 * PED1 < 0) { // M and E are on either side of D1
-//			return Math.sqrt((xM - xB) * (xM - xB) + (yM - yB) * (yM - yB)); // no quotient
-//		}
-//		if (PMD2 * PBD2 < 0) { // M and B are on either side of D2
-//			return Math.sqrt((xM - xE) * (xM - xE) + (yM - yE) * (yM - yE)); // no quotient
-//		}
-//		return Math.abs(b * xM - a * yM + w3) / Math.sqrt(a * a + b * b); // no choice but doing a quotient
-//	}
-	
 	
 	/**
 	 * Create a full geometry of edge's pillars + towers

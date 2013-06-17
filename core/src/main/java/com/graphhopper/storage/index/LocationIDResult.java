@@ -35,7 +35,7 @@ public class LocationIDResult {
     public LocationIDResult() {
     }
 
-    void closestNode(int node) {
+    public void closestNode(int node) {
         closestNode = node;
     }
 

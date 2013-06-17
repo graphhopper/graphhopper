@@ -31,8 +31,16 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.noderesolver.DummyNodeResolver;
 import com.graphhopper.routing.noderesolver.RouteNodeResolver;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FastestCalc;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
+import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
+import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -559,7 +567,7 @@ public class GraphHopper implements GraphHopperAPI {
         long time;
         if(finishPath) {
 	        sw = new StopWatch().start();
-	        PathFinisher finishedPath = new PathFinisher(from, to, request.from(), request.to(), path, encodingManager.getEncoder(request.vehicle()), graph);
+	        PathFinisher finishedPath = new PathFinisher(from, to, request.from(), request.to(), path);
 	        finishedPath.setScaleDistance(true);
 	        points = finishedPath.getFinishedPointList();
 	        distance = finishedPath.getFinishedDistance();
