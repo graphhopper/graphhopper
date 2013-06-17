@@ -520,16 +520,6 @@ public class GraphHopper implements GraphHopperAPI {
 		int fromId = nodeFinder.findRouteNode(from, request.from().lat, request.from().lon, true, sameEdge);
 		int toId = nodeFinder.findRouteNode(to, request.to().lat, request.to().lon, false, sameEdge);
         GraphStorage wGraph = this.graph;
-        // DISABLED : use graph virtually enhanced with start/end nod corresponding to GPS locations
-//        if(from.closestEdge() != null && to.closestEdge() != null) {
-//        	wGraph = new VirtualGraphStorage(wGraph.directory());
-//        	wGraph.loadExisting();
-//        	fromId = ((VirtualGraphStorage)wGraph).cutEdge(from.closestEdge(), request.from());
-//        	toId = ((VirtualGraphStorage)wGraph).cutEdge(to.closestEdge(), request.to());
-//        } else {
-//        	fromId = from.closestNode();
-//        	toId = to.closestNode();
-//        }
         
         // initialize routing algorithm
         sw = new StopWatch().start();
