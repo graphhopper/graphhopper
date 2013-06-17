@@ -887,7 +887,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             int newI = oldToNewMap.valueAt(i);
             long newOffset = (long) newI * nodeEntryBytes;
             long oldOffset = (long) oldI * nodeEntryBytes;
-            for (int j = 0; j < nodeEntryBytes; j += 4) {
+            for (long j = 0; j < nodeEntryBytes; j += 4) {
                 nodes.setInt(newOffset + j, nodes.getInt(oldOffset + j));
             }
         }
@@ -906,11 +906,11 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
             // now overwrite exiting edge with new node ids 
             // also flags and links could have changed due to different node order
-            int updatedA = (int) oldToNewMap.get(nodeA);
+            int updatedA = oldToNewMap.get(nodeA);
             if (updatedA < 0)
                 updatedA = nodeA;
 
-            int updatedB = (int) oldToNewMap.get(nodeB);
+            int updatedB = oldToNewMap.get(nodeB);
             if (updatedB < 0)
                 updatedB = nodeB;
 
@@ -925,7 +925,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         nodeCount -= removeNodeCount;
 
         // health check         
-        if (isTestingEnabled()) {
+        if (true) {
             iter = getAllEdges();
             while (iter.next()) {
                 int base = iter.baseNode();
