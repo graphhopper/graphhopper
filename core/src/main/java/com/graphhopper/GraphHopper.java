@@ -136,19 +136,18 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper forServer() {
         // simplify to reduce network IO
         simplifyRequest(true);
-        preciseIndexResolution(1000);
+        preciseIndexResolution(500);
         return setInMemory(true, true);
     }
 
     public GraphHopper forDesktop() {
         simplifyRequest(false);
-        preciseIndexResolution(1000);
+        preciseIndexResolution(500);
         return setInMemory(true, true);
     }
 
     public GraphHopper forMobile() {
         simplifyRequest(false);
-        // make new index faster (but unprecise) and disable searchRegion
         preciseIndexResolution(500);
         return memoryMapped();
     }
@@ -636,10 +635,12 @@ public class GraphHopper implements GraphHopperAPI {
         logger.info("start finding subnetworks, " + Helper.memInfo());
         preparation.doWork();
         int n = graph.nodes();
+        // calculate remaining subnetworks
+        int remainingSubnetworks = preparation.findSubnetworks().size();
         logger.info("edges: " + graph.getAllEdges().maxId()
                 + ", nodes " + n + ", there were " + preparation.subNetworks()
                 + " subnetworks. removed them => " + (prev - n)
-                + " less nodes. Remaining subnetworks:" + preparation.findSubnetworks().size());
+                + " less nodes. Remaining subnetworks:" + remainingSubnetworks);
     }
 
     private void flush() {

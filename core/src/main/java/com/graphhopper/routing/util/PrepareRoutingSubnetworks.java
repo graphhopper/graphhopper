@@ -39,7 +39,7 @@ public class PrepareRoutingSubnetworks {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final Graph g;
-    private int minNetworkSize = 10000;
+    private int minNetworkSize = 3000;
     private int subNetworks = -1;
 
     public PrepareRoutingSubnetworks(Graph g) {
@@ -65,14 +65,13 @@ public class PrepareRoutingSubnetworks {
     }
 
     public Map<Integer, Integer> findSubnetworks() {
-        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+        final Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         final AtomicInteger integ = new AtomicInteger(0);
         int locs = g.nodes();
         final GHBitSet bs = new GHBitSetImpl(locs);
         for (int start = 0; start < locs; start++) {
             if (g.isNodeRemoved(start) || bs.contains(start))
                 continue;
-
             new XFirstSearch() {
                 @Override protected GHBitSet createBitSet(int size) {
                     return bs;
