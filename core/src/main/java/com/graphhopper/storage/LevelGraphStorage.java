@@ -72,7 +72,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         int edgeId = internalEdgeAdd(a, b, distance, flags);
         EdgeSkipIterator iter = new EdgeSkipIteratorImpl(edgeId, a, null);
         iter.next();
-        iter.skippedEdges(EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
+        iter.setSkippedEdges(EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
         return iter;
     }
 
@@ -110,7 +110,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         }
 
         @Override
-        public final void skippedEdges( int edge1, int edge2 )
+        public final void setSkippedEdges( int edge1, int edge2 )
         {
             if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2))
             {
@@ -122,13 +122,13 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         }
 
         @Override
-        public final int skippedEdge1()
+        public final int getSkippedEdge1()
         {
             return edges.getInt(edgePointer + I_SKIP_EDGE1);
         }
 
         @Override
-        public final int skippedEdge2()
+        public final int getSkippedEdge2()
         {
             return edges.getInt(edgePointer + I_SKIP_EDGE2);
         }
@@ -136,7 +136,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         @Override
         public final boolean isShortcut()
         {
-            return EdgeIterator.Edge.isValid(skippedEdge1());
+            return EdgeIterator.Edge.isValid(getSkippedEdge1());
         }
     }
 
@@ -148,29 +148,29 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         // open up package protected API for now ...
         if (sameDirection)
         {
-            internalEdgeDisconnect(iter.edge(), prevEdgePointer, iter.baseNode(), iter.adjNode());
+            internalEdgeDisconnect(iter.getEdge(), prevEdgePointer, iter.getBaseNode(), iter.getAdjNode());
         } else
         {
             // prevEdgePointer belongs to baseNode ... but now we need it for adjNode()!
-            EdgeSkipIterator tmpIter = getEdges(iter.adjNode());
+            EdgeSkipIterator tmpIter = getEdges(iter.getAdjNode());
             int tmpPrevEdge = EdgeIterator.NO_EDGE;
             boolean found = false;
             while (tmpIter.next())
             {
-                if (tmpIter.edge() == iter.edge())
+                if (tmpIter.getEdge() == iter.getEdge())
                 {
                     found = true;
                     break;
                 }
 
-                tmpPrevEdge = tmpIter.edge();
+                tmpPrevEdge = tmpIter.getEdge();
             }
             if (found)
             {
-                internalEdgeDisconnect(iter.edge(), (long) tmpPrevEdge * edgeEntryBytes, iter.adjNode(), iter.baseNode());
+                internalEdgeDisconnect(iter.getEdge(), (long) tmpPrevEdge * edgeEntryBytes, iter.getAdjNode(), iter.getBaseNode());
             }
         }
-        return iter.edge();
+        return iter.getEdge();
     }
 
     @Override
@@ -182,20 +182,20 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
     class AllEdgeSkipIterator extends AllEdgeIterator implements AllEdgesSkipIterator
     {
         @Override
-        public void skippedEdges( int edge1, int edge2 )
+        public void setSkippedEdges( int edge1, int edge2 )
         {
             edges.setInt(edgePointer + I_SKIP_EDGE1, edge1);
             edges.setInt(edgePointer + I_SKIP_EDGE2, edge2);
         }
 
         @Override
-        public int skippedEdge1()
+        public int getSkippedEdge1()
         {
             return edges.getInt(edgePointer + I_SKIP_EDGE1);
         }
 
         @Override
-        public int skippedEdge2()
+        public int getSkippedEdge2()
         {
             return edges.getInt(edgePointer + I_SKIP_EDGE2);
         }
@@ -203,7 +203,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         @Override
         public boolean isShortcut()
         {
-            return EdgeIterator.Edge.isValid(skippedEdge1());
+            return EdgeIterator.Edge.isValid(getSkippedEdge1());
         }
     }
 
@@ -227,20 +227,20 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         }
 
         @Override
-        public void skippedEdges( int edge1, int edge2 )
+        public void setSkippedEdges( int edge1, int edge2 )
         {
             edges.setInt(edgePointer + I_SKIP_EDGE1, edge1);
             edges.setInt(edgePointer + I_SKIP_EDGE2, edge2);
         }
 
         @Override
-        public int skippedEdge1()
+        public int getSkippedEdge1()
         {
             return edges.getInt(edgePointer + I_SKIP_EDGE1);
         }
 
         @Override
-        public int skippedEdge2()
+        public int getSkippedEdge2()
         {
             return edges.getInt(edgePointer + I_SKIP_EDGE2);
         }
@@ -248,7 +248,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         @Override
         public boolean isShortcut()
         {
-            return EdgeIterator.Edge.isValid(skippedEdge1());
+            return EdgeIterator.Edge.isValid(getSkippedEdge1());
         }
     }
 }

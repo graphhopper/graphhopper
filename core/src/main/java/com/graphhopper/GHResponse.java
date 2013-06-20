@@ -39,24 +39,29 @@ public class GHResponse
     {
     }
 
-    public GHResponse points( PointList points )
+    public GHResponse setPoints( PointList points )
     {
         list = points;
         return this;
     }
 
-    public GHResponse distance( double distance )
+    public PointList getPoints()
+    {
+        return list;
+    }
+
+    public GHResponse setDistance( double distance )
     {
         this.distance = distance;
         return this;
     }
 
-    public double distance()
+    public double getDistance()
     {
         return distance;
     }
 
-    public GHResponse time( long timeInSec )
+    public GHResponse setTime( long timeInSec )
     {
         this.time = timeInSec;
         return this;
@@ -65,33 +70,28 @@ public class GHResponse
     /**
      * @return time in seconds
      */
-    public long time()
+    public long getTime()
     {
         return time;
     }
 
-    public boolean found()
+    public boolean isFound()
     {
         return list != null && !list.isEmpty();
-    }
-
-    public PointList points()
-    {
-        return list;
     }
 
     public BBox calcRouteBBox( BBox _fallback )
     {
         BBox bounds = BBox.INVERSE.clone();
-        int len = list.size();
+        int len = list.getSize();
         if (len == 0)
         {
             return _fallback;
         }
         for (int i = 0; i < len; i++)
         {
-            double lat = list.latitude(i);
-            double lon = list.longitude(i);
+            double lat = list.getLatitude(i);
+            double lon = list.getLongitude(i);
             if (lat > bounds.maxLat)
             {
                 bounds.maxLat = lat;
@@ -112,12 +112,12 @@ public class GHResponse
         return bounds;
     }
 
-    public String debugInfo()
+    public String getDebugInfo()
     {
         return debugInfo;
     }
 
-    public GHResponse debugInfo( String debugInfo )
+    public GHResponse setDebugInfo( String debugInfo )
     {
         this.debugInfo = debugInfo;
         return this;
@@ -128,7 +128,7 @@ public class GHResponse
         return !errors.isEmpty();
     }
 
-    public List<Throwable> errors()
+    public List<Throwable> getErrors()
     {
         return errors;
     }
@@ -142,6 +142,6 @@ public class GHResponse
     @Override
     public String toString()
     {
-        return "found:" + found() + ", nodes:" + list.size() + ": " + list.toString();
+        return "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
     }
 }

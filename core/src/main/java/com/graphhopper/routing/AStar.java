@@ -49,7 +49,7 @@ public class AStar extends AbstractRoutingAlgorithm
     /**
      * @param fast if true it enables an approximative distance calculation from lat,lon values
      */
-    public AStar approximation( boolean approx )
+    public AStar setApproximation( boolean approx )
     {
         if (approx)
         {
@@ -86,15 +86,15 @@ public class AStar extends AbstractRoutingAlgorithm
                 break;
             }
 
-            EdgeIterator iter = neighbors(currVertex);
+            EdgeIterator iter = getNeighbors(currVertex);
             while (iter.next())
             {
                 if (!accept(iter))
                 {
                     continue;
                 }
-                int neighborNode = iter.adjNode();
-                double alreadyVisitedWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currEdge.weightToCompare;
+                int neighborNode = iter.getAdjNode();
+                double alreadyVisitedWeight = weightCalc.getWeight(iter.getDistance(), iter.getFlags()) + currEdge.weightToCompare;
                 AStarEdge nEdge = map.get(neighborNode);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight)
                 {
@@ -105,12 +105,12 @@ public class AStar extends AbstractRoutingAlgorithm
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;
                     if (nEdge == null)
                     {
-                        nEdge = new AStarEdge(iter.edge(), neighborNode, distEstimation, alreadyVisitedWeight);
+                        nEdge = new AStarEdge(iter.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
                         map.put(neighborNode, nEdge);
                     } else
                     {
                         prioQueueOpenSet.remove(nEdge);
-                        nEdge.edge = iter.edge();
+                        nEdge.edge = iter.getEdge();
                         nEdge.weight = distEstimation;
                         nEdge.weightToCompare = alreadyVisitedWeight;
                     }
@@ -141,14 +141,14 @@ public class AStar extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public int visitedNodes()
+    public int getVisitedNodes()
     {
         return visitedCount;
     }
 
     Path extractPath( EdgeEntry currEdge )
     {
-        return new Path(graph, flagEncoder).edgeEntry(currEdge).extract();
+        return new Path(graph, flagEncoder).setEdgeEntry(currEdge).extract();
     }
 
     public static class AStarEdge extends EdgeEntry
@@ -166,7 +166,7 @@ public class AStar extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public String name()
+    public String getName()
     {
         return "astar";
     }

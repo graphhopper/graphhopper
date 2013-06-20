@@ -86,10 +86,10 @@ public class Location2NodesNtree implements Location2IDIndex
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
         dataAccess = dir.find("locationIndex");
-        minResolutionInMeter(500);
+        setMinResolutionInMeter(500);
     }
 
-    public int minResolutionInMeter()
+    public int getMinResolutionInMeter()
     {
         return minResolutionInMeter;
     }
@@ -98,7 +98,7 @@ public class Location2NodesNtree implements Location2IDIndex
      * Minimum width in meter of one tile. Decrease this if you need faster queries, but keep in
      * mind that then queries with different coordinates are more likely to fail.
      */
-    public Location2NodesNtree minResolutionInMeter( int minResolutionInMeter )
+    public Location2NodesNtree setMinResolutionInMeter( int minResolutionInMeter )
     {
         this.minResolutionInMeter = minResolutionInMeter;
         return this;
@@ -107,7 +107,7 @@ public class Location2NodesNtree implements Location2IDIndex
     /**
      * Calculate edge distance to increase map matching precision.
      */
-    public Location2NodesNtree edgeCalcOnFind( boolean edgeCalcOnSearch )
+    public Location2NodesNtree setEdgeCalcOnFind( boolean edgeCalcOnSearch )
     {
         this.edgeDistCalcOnSearch = edgeCalcOnSearch;
         return this;
@@ -116,7 +116,7 @@ public class Location2NodesNtree implements Location2IDIndex
     /**
      * Searches also neighbouring quadtree entries to increase map matching precision.
      */
-    public Location2NodesNtree searchRegion( boolean regionAround )
+    public Location2NodesNtree setSearchRegion( boolean regionAround )
     {
         this.regionSearch = regionAround;
         return this;
@@ -127,8 +127,8 @@ public class Location2NodesNtree implements Location2IDIndex
         // now calculate the necessary maxDepth d for our current bounds
         // if we assume a minimum resolution like 0.5km for a leaf-tile                
         // n^(depth/2) = toMeter(dLon) / minResolution
-        BBox bounds = graph.bounds();
-        if (graph.nodes() == 0 || !bounds.check())
+        BBox bounds = graph.getBounds();
+        if (graph.getNodes() == 0 || !bounds.check())
         {
             throw new IllegalStateException("graph is not valid. bounds are: " + bounds);
         }
@@ -225,7 +225,7 @@ public class Location2NodesNtree implements Location2IDIndex
         return bm;
     }
 
-    InMemConstructionIndex prepareInMemIndex()
+    InMemConstructionIndex getPrepareInMemIndex()
     {
         InMemConstructionIndex memIndex = new InMemConstructionIndex(entries[0]);
         memIndex.prepare();
@@ -240,7 +240,7 @@ public class Location2NodesNtree implements Location2IDIndex
         {
             return -1;
         }
-        return res.closestNode();
+        return res.getClosestNode();
     }
 
     @Override
@@ -264,26 +264,26 @@ public class Location2NodesNtree implements Location2IDIndex
         {
             throw new IllegalStateException("location2id index was opened with incorrect graph");
         }
-        minResolutionInMeter(dataAccess.getHeader(2 * 4));
+        setMinResolutionInMeter(dataAccess.getHeader(2 * 4));
         prepareAlgo();
         initialized = true;
         return true;
     }
 
     @Override
-    public Location2IDIndex resolution( int minResolutionInMeter )
+    public Location2IDIndex setResolution( int minResolutionInMeter )
     {
         if (minResolutionInMeter <= 0)
         {
             throw new IllegalStateException("Negative precision is not allowed!");
         }
 
-        minResolutionInMeter(minResolutionInMeter);
+        setMinResolutionInMeter(minResolutionInMeter);
         return this;
     }
 
     @Override
-    public Location2IDIndex precision( boolean approx )
+    public Location2IDIndex setApproximation( boolean approx )
     {
         if (approx)
         {
@@ -323,7 +323,7 @@ public class Location2NodesNtree implements Location2IDIndex
         StopWatch sw = new StopWatch().start();
         prepareAlgo();
         // in-memory preparation
-        InMemConstructionIndex inMem = prepareInMemIndex();
+        InMemConstructionIndex inMem = getPrepareInMemIndex();
 
         // compact & store to dataAccess
         dataAccess.create(64 * 1024);
@@ -346,7 +346,7 @@ public class Location2NodesNtree implements Location2IDIndex
     {
         // do not include the edges as we could get problem with LevelGraph due to shortcuts
         // ^ graph.getAllEdges().count();
-        return graph.nodes();
+        return graph.getNodes();
     }
 
     protected void sortNodes( TIntList nodes )
@@ -360,9 +360,9 @@ public class Location2NodesNtree implements Location2IDIndex
     }
 
     @Override
-    public long capacity()
+    public long getCapacity()
     {
-        return dataAccess.capacity();
+        return dataAccess.getCapacity();
     }
 
     class InMemConstructionIndex
@@ -383,18 +383,18 @@ public class Location2NodesNtree implements Location2IDIndex
             {
                 while (allIter.next())
                 {
-                    int nodeA = allIter.baseNode();
-                    int nodeB = allIter.adjNode();
+                    int nodeA = allIter.getBaseNode();
+                    int nodeB = allIter.getAdjNode();
                     double lat1 = graph.getLatitude(nodeA);
                     double lon1 = graph.getLongitude(nodeA);
                     double lat2;
                     double lon2;
-                    PointList points = allIter.wayGeometry();
-                    int len = points.size();
+                    PointList points = allIter.getWayGeometry();
+                    int len = points.getSize();
                     for (int i = 0; i < len; i++)
                     {
-                        lat2 = points.latitude(i);
-                        lon2 = points.longitude(i);
+                        lat2 = points.getLatitude(i);
+                        lon2 = points.getLongitude(i);
                         addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
                         lat1 = lat2;
                         lon1 = lon2;
@@ -406,8 +406,8 @@ public class Location2NodesNtree implements Location2IDIndex
             } catch (Exception ex)
             {
 //                logger.error("Problem!", ex);
-                logger.error("Problem! base:" + allIter.baseNode() + ", adj:" + allIter.adjNode()
-                        + ", edge:" + allIter.edge(), ex);
+                logger.error("Problem! base:" + allIter.getBaseNode() + ", adj:" + allIter.getAdjNode()
+                        + ", edge:" + allIter.getEdge(), ex);
             }
         }
 
@@ -427,7 +427,7 @@ public class Location2NodesNtree implements Location2IDIndex
                 }
             };
             BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter,
-                    graph.bounds().minLat, graph.bounds().minLon,
+                    graph.getBounds().minLat, graph.getBounds().minLon,
                     deltaLat, deltaLon);
         }
 
@@ -493,7 +493,7 @@ public class Location2NodesNtree implements Location2IDIndex
             if (e.isLeaf())
             {
                 InMemLeafEntry leaf = (InMemLeafEntry) e;
-                int bits = keyAlgo.bits();
+                int bits = keyAlgo.getBits();
                 // print reverse keys
                 sb.append(BitUtil.toBitString(BitUtil.reverse(key, bits), bits)).append("  ");
                 TIntArrayList entries = leaf.getResults();
@@ -613,12 +613,12 @@ public class Location2NodesNtree implements Location2IDIndex
     // this method returns the spatial key in reverse order for easier right-shifting
     final long createReverseKey( double lat, double lon )
     {
-        return BitUtil.reverse(keyAlgo.encode(lat, lon), keyAlgo.bits());
+        return BitUtil.reverse(keyAlgo.encode(lat, lon), keyAlgo.getBits());
     }
 
     final long createReverseKey( long key )
     {
-        return BitUtil.reverse(key, keyAlgo.bits());
+        return BitUtil.reverse(key, keyAlgo.getBits());
     }
 
     TIntHashSet findNetworkEntries( double queryLat, double queryLon )
@@ -709,7 +709,7 @@ public class Location2NodesNtree implements Location2IDIndex
                         int tmpNode = currNode;
                         double tmpLat = currLat;
                         double tmpLon = currLon;
-                        int adjNode = currEdge.adjNode();
+                        int adjNode = currEdge.getAdjNode();
                         double adjLat = graph.getLatitude(adjNode);
                         double adjLon = graph.getLongitude(adjNode);
 
@@ -723,12 +723,12 @@ public class Location2NodesNtree implements Location2IDIndex
                             tmpNode = adjNode;
                         }
 
-                        PointList pointList = currEdge.wayGeometry();
-                        int len = pointList.size();
+                        PointList pointList = currEdge.getWayGeometry();
+                        int len = pointList.getSize();
                         for (int pointIndex = 0; pointIndex < len; pointIndex++)
                         {
-                            double wayLat = pointList.latitude(pointIndex);
-                            double wayLon = pointList.longitude(pointIndex);
+                            double wayLat = pointList.getLatitude(pointIndex);
+                            double wayLon = pointList.getLongitude(pointIndex);
                             if (NumHelper.equalsEps(queryLat, wayLat, 1e-6)
                                     && NumHelper.equalsEps(queryLon, wayLon, 1e-6))
                             {
@@ -760,16 +760,16 @@ public class Location2NodesNtree implements Location2IDIndex
                         }
 
                         check(tmpNode, tmpDist, -currNode - 2);
-                        return closestNode.weight() >= 0;
+                        return closestNode.getWeight() >= 0;
                     }
 
                     void check( int node, double dist, int wayIndex )
                     {
-                        if (dist < closestNode.weight())
+                        if (dist < closestNode.getWeight())
                         {
-                            closestNode.weight(dist);
-                            closestNode.closestNode(node);
-                            closestNode.wayIndex(wayIndex);
+                            closestNode.setWeight(dist);
+                            closestNode.setClosestNode(node);
+                            closestNode.setWayIndex(wayIndex);
                         }
                     }
                 }.start(graph, networkEntryNodeId, false);

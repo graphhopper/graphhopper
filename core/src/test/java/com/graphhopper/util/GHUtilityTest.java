@@ -62,7 +62,7 @@ public class GHUtilityTest
     {
         Graph g = initUnsorted(createGraph());
         Graph newG = GHUtility.sortDFS(g, createGraph());
-        assertEquals(g.nodes(), newG.nodes());
+        assertEquals(g.getNodes(), newG.getNodes());
         assertEquals(0, newG.getLatitude(0), 1e-4); // 0
         assertEquals(2.5, newG.getLatitude(1), 1e-4); // 1
         assertEquals(4.5, newG.getLatitude(2), 1e-4); // 2        
@@ -102,31 +102,31 @@ public class GHUtilityTest
     {
         Graph g = initUnsorted(createGraph());
         EdgeIterator iter = g.edge(6, 5, 11, true);
-        iter.wayGeometry(Helper.createPointList(12, 10, -1, 3));
+        iter.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
         LevelGraph lg = new GraphBuilder(encodingManager).levelGraphCreate();
         GHUtility.copyTo(g, lg);
-        iter = lg.getEdgeProps(iter.edge(), 6);
-        assertEquals(Helper.createPointList(-1, 3, 12, 10), iter.wayGeometry());
+        iter = lg.getEdgeProps(iter.getEdge(), 6);
+        assertEquals(Helper.createPointList(-1, 3, 12, 10), iter.getWayGeometry());
         assertEquals(0, lg.getLevel(0));
         assertEquals(0, lg.getLevel(1));
         assertEquals(0, lg.getLatitude(0), 1e-6);
         assertEquals(1, lg.getLongitude(0), 1e-6);
         assertEquals(2.5, lg.getLatitude(1), 1e-6);
         assertEquals(4.5, lg.getLongitude(1), 1e-6);
-        assertEquals(9, lg.nodes());
+        assertEquals(9, lg.getNodes());
         iter = lg.getEdges(8);
         iter.next();
-        assertEquals(2.05, iter.distance(), 1e-6);
-        assertEquals("11", BitUtil.toBitString(iter.flags(), 2));
+        assertEquals(2.05, iter.getDistance(), 1e-6);
+        assertEquals("11", BitUtil.toBitString(iter.getFlags(), 2));
         iter.next();
-        assertEquals(0.5, iter.distance(), 1e-6);
-        assertEquals("11", BitUtil.toBitString(iter.flags(), 2));
+        assertEquals(0.5, iter.getDistance(), 1e-6);
+        assertEquals("11", BitUtil.toBitString(iter.getFlags(), 2));
 
         iter = lg.getEdges(7);
         iter.next();
-        assertEquals(2.1, iter.distance(), 1e-6);
-        assertEquals("01", BitUtil.toBitString(iter.flags(), 2));
+        assertEquals(2.1, iter.getDistance(), 1e-6);
+        assertEquals("01", BitUtil.toBitString(iter.getFlags(), 2));
         assertTrue(iter.next());
-        assertEquals(0.7, iter.distance(), 1e-6);
+        assertEquals(0.7, iter.getDistance(), 1e-6);
     }
 }

@@ -34,7 +34,7 @@ public interface Directory
     /**
      * @return an id or location in the local filesystem.
      */
-    String location();
+    String getLocation();
 
     /**
      * Tries to find the object with that name if not existent it creates one and associates the

@@ -78,9 +78,9 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
     public AStarBidirection( Graph graph, FlagEncoder encoder )
     {
         super(graph, encoder);
-        int nodes = Math.max(20, graph.nodes());
+        int nodes = Math.max(20, graph.getNodes());
         initCollections(nodes);
-        approximation(false);
+        setApproximation(false);
     }
 
     protected void initCollections( int size )
@@ -95,7 +95,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
     /**
      * @param fast if true it enables approximative distance calculation from lat,lon values
      */
-    public AStarBidirection approximation( boolean approx )
+    public AStarBidirection setApproximation( boolean approx )
     {
         if (approx)
         {
@@ -112,7 +112,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
     /**
      * Specify a low value like 0.5 for worse but faster results. Or over 1.1 for more precise.
      */
-    public AStarBidirection approximationFactor( double approxFactor )
+    public AStarBidirection setApproximationFactor( double approxFactor )
     {
         this.approximationFactor = approxFactor;
         return this;
@@ -195,7 +195,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
     // where pi_r_of_t = p_r(t) = 1/2(pi_r(t) - pi_f(t) + pi_f(s)), and pi_f(t)=0
     public boolean checkFinishCondition()
     {
-        double tmp = shortest.weight() * approximationFactor;
+        double tmp = shortest.getWeight() * approximationFactor;
         if (currFrom == null)
         {
             return currTo.weightToCompare >= tmp;
@@ -271,10 +271,10 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
             {
                 continue;
             }
-            int neighborNode = iter.adjNode();
+            int neighborNode = iter.getAdjNode();
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
-            double alreadyVisitedWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + curr.weightToCompare;
+            double alreadyVisitedWeight = weightCalc.getWeight(iter.getDistance(), iter.getFlags()) + curr.weightToCompare;
             AStarEdge de = shortestWeightMap.get(neighborNode);
             if (de == null || de.weightToCompare > alreadyVisitedWeight)
             {
@@ -285,12 +285,12 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
                 double estimationFullDist = alreadyVisitedWeight + currWeightToGoal;
                 if (de == null)
                 {
-                    de = new AStarEdge(iter.edge(), neighborNode, estimationFullDist, alreadyVisitedWeight);
+                    de = new AStarEdge(iter.getEdge(), neighborNode, estimationFullDist, alreadyVisitedWeight);
                     shortestWeightMap.put(neighborNode, de);
                 } else
                 {
                     prioQueueOpenSet.remove(de);
-                    de.edge = iter.edge();
+                    de.edge = iter.getEdge();
                     de.weight = estimationFullDist;
                     de.weightToCompare = alreadyVisitedWeight;
                 }
@@ -313,23 +313,23 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
 
         // update μ
         double newShortest = shortestDE.weightToCompare + entryOther.weightToCompare;
-        if (newShortest < shortest.weight())
+        if (newShortest < shortest.getWeight())
         {
-            shortest.switchToFrom(shortestWeightMapFrom == shortestWeightMapOther);
+            shortest.setSwitchToFrom(shortestWeightMapFrom == shortestWeightMapOther);
             shortest.edgeEntry = shortestDE;
             shortest.edgeTo = entryOther;
-            shortest.weight(newShortest);
+            shortest.setWeight(newShortest);
         }
     }
 
     @Override
-    public String name()
+    public String getName()
     {
         return "astarbi";
     }
 
     @Override
-    public int visitedNodes()
+    public int getVisitedNodes()
     {
         return visitedFromCount + visitedToCount;
     }

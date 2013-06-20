@@ -36,8 +36,8 @@ public class AStarTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new AStar(_graph, encoder).type(calc);
+                return new AStar(_graph, encoder).setType(calc);
             }
-        }.graph(g);
+        }.setGraph(g);
     }
 }

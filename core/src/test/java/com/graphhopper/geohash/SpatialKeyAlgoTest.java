@@ -193,7 +193,7 @@ public class SpatialKeyAlgoTest
     @Test
     public void testNoFurtherIterationIfBitsIs1()
     {
-        SpatialKeyAlgo algo = new SpatialKeyAlgo(4).bounds(0, 5, 0, 5);
+        SpatialKeyAlgo algo = new SpatialKeyAlgo(4).setBounds(0, 5, 0, 5);
         // 1001
         CoordTrig coord = new CoordTrig();
         algo.decode(9, coord);
@@ -224,7 +224,7 @@ public class SpatialKeyAlgoTest
     @Test
     public void testDifferentInitialBounds()
     {
-        SpatialKeyAlgo algo = new SpatialKeyAlgo(8).bounds(0, 5, 0, 5);
+        SpatialKeyAlgo algo = new SpatialKeyAlgo(8).setBounds(0, 5, 0, 5);
         assertEquals(1, algo.encode(0, 0.5));
         assertEquals(5, algo.encode(0, 1));
 

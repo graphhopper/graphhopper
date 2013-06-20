@@ -220,7 +220,7 @@ class QTDataNode<V> implements QTNode<V>
     @Override
     public long getMemoryUsageInBytes( int factor )
     {
-        return Helper.sizeOfLongArray(keys.length, factor) + Helper.sizeOfLongArray(values.length, factor);
+        return Helper.getSizeOfLongArray(keys.length, factor) + Helper.getSizeOfLongArray(values.length, factor);
     }
 
     @Override

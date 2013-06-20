@@ -19,7 +19,6 @@ package com.graphhopper.reader;
 
 import com.graphhopper.reader.pbf.Sink;
 import com.graphhopper.reader.pbf.PbfReader;
-import com.graphhopper.routing.util.AbstractFlagEncoder;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -70,7 +69,7 @@ public class OSMInputFile implements Sink
     /**
      * Currently on for pbf format. Default is number of cores.
      */
-    public OSMInputFile workerThreads( int num )
+    public OSMInputFile setWorkerThreads( int num )
     {
         workerThreads = num;
         return this;
@@ -216,7 +215,7 @@ public class OSMInputFile implements Sink
         return null;
     }
 
-    public boolean eof()
+    public boolean isEOF()
     {
         return eof;
     }

@@ -70,6 +70,7 @@ public class OSMRelation extends OSMElement
         }
     }
 
+    @Override
     public String toString()
     {
         return "Relation (" + id + ", " + members.size() + " members)";

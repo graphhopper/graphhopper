@@ -51,7 +51,7 @@ public class LinearKeyAlgo implements KeyAlgo
     }
 
     @Override
-    public LinearKeyAlgo bounds( double minLonInit, double maxLonInit, double minLatInit, double maxLatInit )
+    public LinearKeyAlgo setBounds( double minLonInit, double maxLonInit, double minLatInit, double maxLatInit )
     {
         bounds = new BBox(minLonInit, maxLonInit, minLatInit, maxLatInit);
         latDelta = (bounds.maxLat - bounds.minLat) / latUnits;
@@ -59,15 +59,15 @@ public class LinearKeyAlgo implements KeyAlgo
         return this;
     }
 
-    public LinearKeyAlgo bounds( BBox bounds )
+    public LinearKeyAlgo setBounds( BBox bounds )
     {
-        bounds(bounds.minLon, bounds.maxLat, bounds.minLat, bounds.maxLat);
+        setBounds(bounds.minLon, bounds.maxLat, bounds.minLat, bounds.maxLat);
         return this;
     }
 
     protected void setWorldBounds()
     {
-        bounds(-180, 180, -90, 90);
+        setBounds(-180, 180, -90, 90);
     }
 
     @Override

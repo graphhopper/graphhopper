@@ -47,12 +47,12 @@ public class Circle implements Shape
         bbox = calc.createBBox(lat, lon, radiusInMeter);
     }
 
-    public double lat()
+    public double getLat()
     {
         return lat;
     }
 
-    public double lon()
+    public double getLon()
     {
         return lon;
     }
@@ -64,7 +64,7 @@ public class Circle implements Shape
     }
 
     @Override
-    public BBox boundingBox()
+    public BBox getBounds()
     {
         return bbox;
     }
@@ -147,7 +147,7 @@ public class Circle implements Shape
     public boolean intersect( Circle c )
     {
         // necessary to improve speed?
-        if (!boundingBox().intersect(c.boundingBox()))
+        if (!getBounds().intersect(c.getBounds()))
         {
             return false;
         }

@@ -82,13 +82,13 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm
         }
     }
 
-    public DijkstraShortestOf2ToPub from( int from )
+    public DijkstraShortestOf2ToPub setFrom( int from )
     {
         fromP1 = from;
         return this;
     }
 
-    public DijkstraShortestOf2ToPub to( int to )
+    public DijkstraShortestOf2ToPub setTo( int to )
     {
         toP2 = to;
         return this;
@@ -178,13 +178,13 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm
                 throw new IllegalStateException("no shortest path!?");
             }
 
-            return currTo.weight >= shortest.weight();
+            return currTo.weight >= shortest.getWeight();
         } else if (currTo == null)
         {
-            return currFrom.weight >= shortest.weight();
+            return currFrom.weight >= shortest.getWeight();
         } else
         {
-            return Math.min(currFrom.weight, currTo.weight) >= shortest.weight();
+            return Math.min(currFrom.weight, currTo.weight) >= shortest.getWeight();
         }
     }
 
@@ -196,19 +196,19 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm
         EdgeIterator iter = graph.getEdges(currVertexFrom, outEdgeFilter);
         while (iter.next())
         {
-            int tmpV = iter.adjNode();
-            double tmp = iter.distance() + curr.weight;
+            int tmpV = iter.getAdjNode();
+            double tmp = iter.getDistance() + curr.weight;
             EdgeEntry de = shortestDistMap.get(tmpV);
             if (de == null)
             {
-                de = new EdgeEntry(iter.edge(), tmpV, tmp);
+                de = new EdgeEntry(iter.getEdge(), tmpV, tmp);
                 de.parent = curr;
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
             } else if (de.weight > tmp)
             {
                 prioQueue.remove(de);
-                de.edge = iter.edge();
+                de.edge = iter.getEdge();
                 de.weight = tmp;
                 de.parent = curr;
                 prioQueue.add(de);
@@ -231,12 +231,12 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm
         {
             // update μ
             double newShortest = shortestDE.weight + entryOther.weight;
-            if (newShortest < shortest.weight())
+            if (newShortest < shortest.getWeight())
             {
-                shortest.switchToFrom(shortestDistMapFrom == shortestDistMapOther);
-                shortest.edgeEntry(shortestDE);
-                shortest.edgeEntryTo(entryOther);
-                shortest.weight(newShortest);
+                shortest.setSwitchToFrom(shortestDistMapFrom == shortestDistMapOther);
+                shortest.setEdgeEntry(shortestDE);
+                shortest.setEdgeEntryTo(entryOther);
+                shortest.setWeight(newShortest);
             }
         }
     }
@@ -245,13 +245,13 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm
     public Path calcPath( int from, int to )
     {
         addPubTransportPoint(from);
-        from(from);
-        to(to);
+        setFrom(from);
+        setTo(to);
         return calcPath();
     }
 
     @Override
-    public int visitedNodes()
+    public int getVisitedNodes()
     {
         return visitedFromCount + visitedToCount;
     }

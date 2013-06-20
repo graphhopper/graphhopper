@@ -46,7 +46,7 @@ public interface EdgeIterator
      * @return the edge id of the current edge. Do not make any assumptions about the concrete
      * values, except that for an implemention it is recommended that they'll be contiguous.
      */
-    int edge();
+    int getEdge();
 
     /**
      * Returns the node used to instantiate the EdgeIterator. Example: "EdgeIterator iter =
@@ -56,13 +56,13 @@ public interface EdgeIterator
      * @return the requested node itself
      * @see EdgeIterator
      */
-    int baseNode();
+    int getBaseNode();
 
     /**
      * @return the adjacent node of baseNode for the current edge.
      * @see EdgeIterator
      */
-    int adjNode();
+    int getAdjNode();
 
     /**
      * For OSM a way is often a curve not just a straight line and so nodes between tower nodes are
@@ -70,24 +70,24 @@ public interface EdgeIterator
      * <p/>
      * @return pillar nodes
      */
-    PointList wayGeometry();
+    PointList getWayGeometry();
 
     /**
      * @param list is a sorted collection of nodes between the baseNode and the current adjacent
      * node
      */
-    void wayGeometry( PointList list );
+    void setWayGeometry( PointList list );
 
     /**
      * @return the distance of the current edge edge
      */
-    double distance();
+    double getDistance();
 
-    void distance( double dist );
+    void setDistance( double dist );
 
-    int flags();
+    int getFlags();
 
-    void flags( int flags );
+    void setFlags( int flags );
 
     /**
      * @return true if no data is available where we could iterate over

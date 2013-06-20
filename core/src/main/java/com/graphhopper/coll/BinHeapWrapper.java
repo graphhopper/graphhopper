@@ -28,7 +28,7 @@ public interface BinHeapWrapper<K, E>
 
     boolean isEmpty();
 
-    int size();
+    int getSize();
 
     E peekElement();
 

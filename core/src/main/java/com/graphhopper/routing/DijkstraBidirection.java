@@ -60,7 +60,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm
     public DijkstraBidirection( Graph graph, FlagEncoder encoder )
     {
         super(graph, encoder);
-        int locs = Math.max(20, graph.nodes());
+        int locs = Math.max(20, graph.getNodes());
         openSetFrom = new IntDoubleBinHeap(locs / 10);
         wrapperFrom = new EdgeWrapper(locs / 10);
 
@@ -133,7 +133,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm
     //    search, update shortest = μ if df (v) + (v, w) + dr (w) < μ            
     boolean checkFinishCondition()
     {
-        return currFromWeight + currToWeight >= shortest.weight();
+        return currFromWeight + currToWeight >= shortest.getWeight();
     }
 
     void fillEdges( int currNode, double currWeight, int currRef,
@@ -147,12 +147,12 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm
             {
                 continue;
             }
-            int neighborNode = iter.adjNode();
-            double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currWeight;
+            int neighborNode = iter.getAdjNode();
+            double tmpWeight = weightCalc.getWeight(iter.getDistance(), iter.getFlags()) + currWeight;
             int newRef = wrapper.getRef(neighborNode);
             if (newRef < 0)
             {
-                newRef = wrapper.add(neighborNode, tmpWeight, iter.edge());
+                newRef = wrapper.add(neighborNode, tmpWeight, iter.getEdge());
                 wrapper.putParent(newRef, currRef);
                 prioQueue.insert_(tmpWeight, newRef);
             } else
@@ -160,7 +160,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm
                 double weight = wrapper.getWeight(newRef);
                 if (weight > tmpWeight)
                 {
-                    wrapper.putEdgeId(newRef, iter.edge());
+                    wrapper.putEdgeId(newRef, iter.getEdge());
                     wrapper.putWeight(newRef, tmpWeight);
                     wrapper.putParent(newRef, currRef);
                     prioQueue.update_(tmpWeight, newRef);
@@ -181,12 +181,12 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm
 
         // update μ
         double newWeight = weight + wrapperOther.getWeight(otherRef);
-        if (newWeight < shortest.weight())
+        if (newWeight < shortest.getWeight())
         {
             shortest.switchWrapper = wrapperFrom == wrapperOther;
             shortest.fromRef = ref;
             shortest.toRef = otherRef;
-            shortest.weight(newWeight);
+            shortest.setWeight(newWeight);
         }
     }
 
@@ -231,7 +231,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public int visitedNodes()
+    public int getVisitedNodes()
     {
         return visitedFromCount + visitedToCount;
     }
@@ -246,7 +246,7 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public String name()
+    public String getName()
     {
         return "dijkstraNativebi";
     }

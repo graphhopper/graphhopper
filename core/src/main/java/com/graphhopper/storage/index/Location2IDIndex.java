@@ -34,7 +34,7 @@ public interface Location2IDIndex extends Storable<Location2IDIndex>
      * Integer value to specify the resolution of this location index. The higher the better the
      * resolution.
      */
-    Location2IDIndex resolution( int resolution );
+    Location2IDIndex setResolution( int resolution );
 
     /**
      * Creates this index - to be called once before findID.
@@ -57,7 +57,7 @@ public interface Location2IDIndex extends Storable<Location2IDIndex>
     LocationIDResult findClosest( double lat, double lon, EdgeFilter edgeFilter );
 
     /**
-     * @param approxDist If false this makes initialization and querying faster but less precise.
+     * @param approx if false this makes initialization and querying faster but less precise.
      */
-    Location2IDIndex precision( boolean approxDist );
+    Location2IDIndex setApproximation( boolean approxDist );
 }

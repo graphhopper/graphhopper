@@ -62,7 +62,7 @@ public class OSMIDMap implements LongIntMap
     {
         if (key <= lastKey)
         {
-            long oldValueIndex = binarySearch(keys, 0, size(), key);
+            long oldValueIndex = binarySearch(keys, 0, getSize(), key);
             if (oldValueIndex < 0)
             {
                 throw new IllegalStateException("Cannot insert keys lower than "
@@ -90,7 +90,7 @@ public class OSMIDMap implements LongIntMap
     @Override
     public int get( long key )
     {
-        long retIndex = binarySearch(keys, 0, size(), key);
+        long retIndex = binarySearch(keys, 0, getSize(), key);
         if (retIndex < 0)
         {
             return noEntryValue;
@@ -135,20 +135,20 @@ public class OSMIDMap implements LongIntMap
     }
 
     @Override
-    public long size()
+    public long getSize()
     {
         return size / 4;
     }
 
-    public long capacity()
+    public long getCapacity()
     {
-        return keys.capacity();
+        return keys.getCapacity();
     }
 
     @Override
-    public int memoryUsage()
+    public int getMemoryUsage()
     {
-        return Math.round(capacity() / Helper.MB);
+        return Math.round(getCapacity() / Helper.MB);
     }
 
     @Override

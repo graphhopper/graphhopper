@@ -39,9 +39,9 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new DijkstraBidirection(_graph, encoder).type(calc);
+                return new DijkstraBidirection(_graph, encoder).setType(calc);
             }
-        }.graph(g);
+        }.setGraph(g);
     }
 
     @Test
@@ -50,6 +50,6 @@ public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester
         Graph g = createGraph();
         DijkstraBidirection algo = new DijkstraBidirection(g, carEncoder);
         Path p = algo.calcPath(0, 2);
-        assertFalse(p.found());
+        assertFalse(p.isFound());
     }
 }

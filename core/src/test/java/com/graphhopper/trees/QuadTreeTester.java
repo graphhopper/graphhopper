@@ -36,7 +36,7 @@ public abstract class QuadTreeTester
     public void testSize()
     {
         QuadTree instance = createQuadTree(100);
-        assertEquals(0, instance.size());
+        assertEquals(0, instance.getSize());
     }
 
     @Test
@@ -45,34 +45,34 @@ public abstract class QuadTreeTester
         QuadTree<Long> instance = createQuadTree(100);
         assertEquals(0, instance.getNodesFromValue(12, 10, null).size());
         instance.add(12, 10, 111L);
-        assertEquals(1, instance.size());
+        assertEquals(1, instance.getSize());
         assertEquals(111, (long) instance.getNodesFromValue(12, 10, null).iterator().next().getValue());
 
         instance.add(12, 10, 222L);
-        assertEquals(2, instance.size());
+        assertEquals(2, instance.getSize());
 
         instance.add(12, 12, 333L);
-        assertEquals(3, instance.size());
+        assertEquals(3, instance.getSize());
 
         assertEquals(2, instance.getNodesFromValue(12, 10, null).size());
         instance.add(12.0001, 12.0001, 444L);
-        assertEquals(4, instance.size());
+        assertEquals(4, instance.getSize());
         assertEquals(444, (long) instance.getNodesFromValue(12.0001, 12.0001, null).iterator().next().getValue());
         assertEquals(0, instance.getNodesFromValue(12.0001, 12.0001, 445L).size());
 
         instance.add(10, 10, 1010L);
-        assertEquals(5, instance.size());
+        assertEquals(5, instance.getSize());
         assertEquals(1010, (long) instance.getNodesFromValue(10, 10, null).iterator().next().getValue());
 
         instance.add(10, 12, 1012L);
 
-        assertEquals(6, instance.size());
+        assertEquals(6, instance.getSize());
         assertEquals(444, (long) instance.getNodesFromValue(12.0001, 12.0001, null).iterator().next().getValue());
         assertEquals(1010, (long) instance.getNodesFromValue(10, 10, null).iterator().next().getValue());
         assertEquals(1012, (long) instance.getNodesFromValue(10, 12, null).iterator().next().getValue());
 
         instance.clear();
-        assertEquals(0, instance.size());
+        assertEquals(0, instance.getSize());
     }
 
     @Test
@@ -83,10 +83,10 @@ public abstract class QuadTreeTester
         for (long i = 0; i < max; i++)
         {
             instance.add(i / 100.0, i / 100.0, i);
-            assertEquals(i + 1, instance.size());
+            assertEquals(i + 1, instance.getSize());
         }
 
-        assertEquals(max, instance.size());
+        assertEquals(max, instance.getSize());
         for (int i = 0; i < max; i++)
         {
             Collection<CoordTrig<Long>> coll = instance.getNodesFromValue(i / 100.0, i / 100.0, null);
@@ -98,7 +98,7 @@ public abstract class QuadTreeTester
 
         for (int i = 0; i < max; i++)
         {
-            assertEquals(max - i, instance.size());
+            assertEquals(max - i, instance.getSize());
             Collection<CoordTrig<Long>> res = instance.getNodes(i / 100.0, i / 100.0, 1d);
             CoordTrig<Long> coord = res.iterator().next();
             assertEquals("couldn't remove " + i / 100.0 + " -> " + coord, 1, instance.remove(coord.lat, coord.lon));
@@ -112,19 +112,19 @@ public abstract class QuadTreeTester
 
         assertEquals(0, instance.remove(7.002f, 7.001f));
         instance.add(12, 10, 111L);
-        assertEquals(1, instance.size());
+        assertEquals(1, instance.getSize());
 
         assertEquals(1, instance.remove(12, 10));
         assertEquals(0, instance.getNodesFromValue(12, 10, null).size());
-        assertEquals(0, instance.size());
+        assertEquals(0, instance.getSize());
 
         instance.add(12, 10, 111L);
         instance.add(12, 10.1, 222L);
-        assertEquals(2, instance.size());
+        assertEquals(2, instance.getSize());
         // System.out.println(instance.toDetailString());
         assertEquals(1, instance.remove(12, 10));
         // System.out.println(instance.toDetailString());
-        assertEquals(1, instance.size());
+        assertEquals(1, instance.getSize());
         assertEquals(0, instance.getNodesFromValue(12, 10, null).size());
         assertEquals(222, (long) instance.getNodesFromValue(12, 10.1, null).iterator().next().getValue());
     }
@@ -139,7 +139,7 @@ public abstract class QuadTreeTester
         instance.add(8.124, 8.123, 1L);
         instance.add(8.123, 8.123, 2L);
         instance.add(9.124, 8.123, 3l);
-        assertEquals(3, instance.size());
+        assertEquals(3, instance.getSize());
 
         // search in 10km - exact hit
         coll = instance.getNodes(8.124, 8.123, 10000);
@@ -192,7 +192,7 @@ public abstract class QuadTreeTester
 //        System.out.println("8,7:" + c.calcDistKm(8, 7, 8.12, 8.12));
 //        System.out.println("9,7:" + c.calcDistKm(9, 7, 8.12, 8.12));
 
-        assertEquals(10, instance.size());
+        assertEquals(10, instance.getSize());
 
         assertEquals(2, instance.getNodes(8.12, 8.12, 10000).size());
         assertEquals(2, instance.getNodes(8.12, 8.12, 50000).size());

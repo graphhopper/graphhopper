@@ -53,7 +53,7 @@ public class Path4CH extends PathBidirRef
     @Override
     public void calcDistance( EdgeIterator mainIter )
     {
-        distance += calc.revertWeight(mainIter.distance(), mainIter.flags());
+        distance += calc.revertWeight(mainIter.getDistance(), mainIter.getFlags());
     }
 
     private void expandEdge( EdgeSkipIterator mainIter, boolean revert )
@@ -61,15 +61,15 @@ public class Path4CH extends PathBidirRef
         if (!mainIter.isShortcut())
         {
             calcDistance(mainIter);
-            int flags = mainIter.flags();
-            calcTime(calc.revertWeight(mainIter.distance(), flags), flags);
-            addEdge(mainIter.edge());
+            int flags = mainIter.getFlags();
+            calcTime(calc.revertWeight(mainIter.getDistance(), flags), flags);
+            addEdge(mainIter.getEdge());
             return;
         }
 
-        int skippedEdge1 = mainIter.skippedEdge1();
-        int skippedEdge2 = mainIter.skippedEdge2();
-        int from = mainIter.baseNode(), to = mainIter.adjNode();
+        int skippedEdge1 = mainIter.getSkippedEdge1();
+        int skippedEdge2 = mainIter.getSkippedEdge2();
+        int from = mainIter.getBaseNode(), to = mainIter.getAdjNode();
         if (revert)
         {
             int tmp = from;

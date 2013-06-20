@@ -72,6 +72,6 @@ public class XFirstSearchTest
         bfs.start(g, 0, false);
 
         assertTrue(counter > 0);
-        assertEquals(g.nodes(), counter);
+        assertEquals(g.getNodes(), counter);
     }
 }

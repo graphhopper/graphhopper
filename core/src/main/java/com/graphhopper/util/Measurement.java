@@ -103,8 +103,8 @@ public class Measurement
             AlgorithmPreparation prepare;
             if (doPrepare)
             {
-                PrepareContractionHierarchies p = new PrepareContractionHierarchies().vehicle(vehicle).graph(g);
-                logger.info("nodes:" + g.nodes() + ", edges:" + g.getAllEdges().maxId());
+                PrepareContractionHierarchies p = new PrepareContractionHierarchies().setVehicle(vehicle).setGraph(g);
+                logger.info("nodes:" + g.getNodes() + ", edges:" + g.getAllEdges().getMaxId());
                 printPreparationDetails(g, p);
                 prepare = p;
             } else
@@ -116,7 +116,7 @@ public class Measurement
                     {
                         return new Dijkstra(_graph, vehicle);
                     }
-                }.graph(g);
+                }.setGraph(g);
             }
 
             TIntList list = printLocation2IDQuery(g, dir, count, rand);
@@ -134,8 +134,8 @@ public class Measurement
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getTime());
             System.gc();
-            put("measurement.totalMB", Helper.totalMB());
-            put("measurement.usedMB", Helper.usedMB());
+            put("measurement.totalMB", Helper.getTotalMB());
+            put("measurement.usedMB", Helper.getUsedMB());
             try
             {
                 store(new FileWriter(propLocation), "measurement finish, "
@@ -150,9 +150,9 @@ public class Measurement
     private void printGraphDetails( GraphStorage g )
     {
         // graph size (edge, node and storage size)
-        put("graph.nodes", g.nodes());
-        put("graph.edges", g.getAllEdges().maxId());
-        put("graph.sizeInMB", g.capacity() / Helper.MB);
+        put("graph.nodes", g.getNodes());
+        put("graph.edges", g.getAllEdges().getMaxId());
+        put("graph.sizeInMB", g.getCapacity() / Helper.MB);
     }
 
     private void printPreparationDetails( Graph g, PrepareContractionHierarchies prepare )
@@ -161,7 +161,7 @@ public class Measurement
         StopWatch sw = new StopWatch().start();
         prepare.doWork();
         put("prepare.time", sw.stop().getTime());
-        put("prepare.shortcuts", prepare.shortcuts());
+        put("prepare.shortcuts", prepare.getShortcuts());
     }
 
     private TIntList printLocation2IDQuery( LevelGraph g, Directory dir, int count, final Random rand )
@@ -169,7 +169,7 @@ public class Measurement
         // time(location2id)
         count *= 2;
         final TIntArrayList list = new TIntArrayList(count);
-        final BBox bbox = g.bounds();
+        final BBox bbox = g.getBounds();
         final Location2NodesNtreeLG idx = new Location2NodesNtreeLG(g, dir);
         if (!idx.loadExisting())
         {
@@ -216,7 +216,7 @@ public class Measurement
                 Path p = prepare.createAlgo().calcPath(from, to);
                 if (!warmup)
                 {
-                    long dist = (long) p.distance();
+                    long dist = (long) p.getDistance();
                     sum.addAndGet(dist);
                     if (dist > maxDistance.get())
                     {
@@ -228,7 +228,7 @@ public class Measurement
                     }
                 }
 
-                return p.calcPoints().size();
+                return p.calcPoints().getSize();
             }
         }.count(count).start();
 
@@ -265,87 +265,5 @@ public class Measurement
             fileWriter.append("\n");
         }
         fileWriter.flush();
-    }
-
-    public static abstract class MiniPerfTest
-    {
-        private int counts = 100;
-        private double fullTime = 0;
-        private double max;
-        private double min = Double.MAX_VALUE;
-        private int dummySum;
-
-        public MiniPerfTest start()
-        {
-            int warmupCount = Math.max(1, counts / 3);
-            for (int i = 0; i < warmupCount; i++)
-            {
-                dummySum += doCalc(true, i);
-            }
-            long startFull = System.nanoTime();
-            for (int i = 0; i < counts; i++)
-            {
-                long start = System.nanoTime();
-                dummySum += doCalc(false, i);
-                long time = System.nanoTime() - start;
-                if (time < min)
-                {
-                    min = time;
-                }
-                if (time > max)
-                {
-                    max = time;
-                }
-            }
-            fullTime = System.nanoTime() - startFull;
-            logger.info("dummySum:" + dummySum);
-            return this;
-        }
-
-        public MiniPerfTest count( int counts )
-        {
-            this.counts = counts;
-            return this;
-        }
-
-        // in ms
-        public double getMin()
-        {
-            return min / 1e6;
-        }
-
-        // in ms
-        public double getMax()
-        {
-            return max / 1e6;
-        }
-
-        // in ms
-        public double getSum()
-        {
-            return fullTime / 1e6;
-        }
-
-        // in ms
-        public double getMean()
-        {
-            return getSum() / counts;
-        }
-
-        public String report()
-        {
-            return "sum:" + nf(getSum() / 1000f) + "s, time/call:" + nf(getMean() / 1000f) + "s";
-        }
-
-        public String nf( Number num )
-        {
-            return new DecimalFormat("#.#").format(num);
-        }
-
-        /**
-         * @return return some integer as result from your processing to make sure that the JVM
-         * cannot optimize (away) the call or within the call something.
-         */
-        public abstract int doCalc( boolean warmup, int run );
     }
 }

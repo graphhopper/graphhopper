@@ -30,7 +30,7 @@ public interface KeyAlgo
     /**
      * Sets the bounds of the underlying key algorithm.
      */
-    KeyAlgo bounds( double minLonInit, double maxLonInit, double minLatInit, double maxLatInit );
+    KeyAlgo setBounds( double minLonInit, double maxLonInit, double minLatInit, double maxLatInit );
 
     long encode( CoordTrig coord );
 

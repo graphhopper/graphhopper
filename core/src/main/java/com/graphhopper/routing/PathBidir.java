@@ -79,7 +79,7 @@ public class PathBidir extends Path
             currRef = edgeWFrom.getParent(currRef);
             nodeFrom = edgeWFrom.getNode(currRef);
         }
-        fromNode(nodeFrom);
+        setFromNode(nodeFrom);
         reverseOrder();
 
         // skip node of toRef (equal to fromRef)
@@ -96,6 +96,6 @@ public class PathBidir extends Path
             nodeTo = edgeWTo.getNode(tmpRef);
             currRef = tmpRef;
         }
-        return found(true);
+        return setFound(true);
     }
 }

@@ -45,12 +45,12 @@ public class VLongStorage
         pointer = (int) pos;
     }
 
-    public long position()
+    public long getPosition()
     {
         return pointer;
     }
 
-    public long length()
+    public long getLength()
     {
         return bytes.length;
     }
@@ -178,7 +178,7 @@ public class VLongStorage
         }
     }
 
-    public byte[] bytes()
+    public byte[] getBytes()
     {
         return bytes;
     }

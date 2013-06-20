@@ -55,10 +55,10 @@ public class DijkstraTwoDriversTest
         TIntHashSet set = new TIntHashSet();
         for (int pointI = 10; pointI < 50; pointI++)
         {
-            double sum = new DijkstraBidirectionRef(g, carEncoder).calcPath(12, pointI).weight();
-            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(pointI, 36).weight();
-            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(30, pointI).weight();
-            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(pointI, 45).weight();
+            double sum = new DijkstraBidirectionRef(g, carEncoder).calcPath(12, pointI).getWeight();
+            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(pointI, 36).getWeight();
+            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(30, pointI).getWeight();
+            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(pointI, 45).getWeight();
             if (sum < shortest)
             {
                 shortest = sum;
@@ -70,7 +70,7 @@ public class DijkstraTwoDriversTest
             }
         }
 
-        assertEquals(shortest, d.getBestForA().weight() + d.getBestForB().weight(), 1e-5);
+        assertEquals(shortest, d.getBestForA().getWeight() + d.getBestForB().getWeight(), 1e-5);
         assertTrue("meeting points " + set.toString() + " do not contain " + d.getMeetingPoint(),
                 set.contains(d.getMeetingPoint()));
     }
@@ -88,7 +88,7 @@ public class DijkstraTwoDriversTest
         Path pB = new DijkstraBidirectionRef(g, carEncoder).calcPath(30, 15);
         TIntSet set = pA.calculateIdenticalNodes(pB);
         assertTrue(set.toString(), set.contains(d.getMeetingPoint()));
-        assertEquals(pA.weight(), d.getBestForA().weight(), 1e-5);
-        assertEquals(pB.weight(), d.getBestForB().weight(), 1e-5);
+        assertEquals(pA.getWeight(), d.getBestForA().getWeight(), 1e-5);
+        assertEquals(pB.getWeight(), d.getBestForB().getWeight(), 1e-5);
     }
 }

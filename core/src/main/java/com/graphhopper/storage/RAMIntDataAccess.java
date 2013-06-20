@@ -55,7 +55,7 @@ public class RAMIntDataAccess extends AbstractDataAccess
     /**
      * @param store true if in-memory data should be saved when calling flush
      */
-    public RAMIntDataAccess store( boolean store )
+    public RAMIntDataAccess setStore( boolean store )
     {
         this.store = store;
         return this;
@@ -80,7 +80,7 @@ public class RAMIntDataAccess extends AbstractDataAccess
                 int[] area = segments[i];
                 rda.segments[i] = Arrays.copyOf(area, area.length);
             }
-            rda.segmentSize(segmentSizeInBytes);
+            rda.setSegmentSize(segmentSizeInBytes);
             // leave id, store and close unchanged
             return da;
         } else
@@ -98,7 +98,7 @@ public class RAMIntDataAccess extends AbstractDataAccess
         }
 
         // initialize transient values
-        segmentSize(segmentSizeInBytes);
+        setSegmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10 * 4, bytes));
         return this;
     }
@@ -106,7 +106,7 @@ public class RAMIntDataAccess extends AbstractDataAccess
     @Override
     public void ensureCapacity( long bytes )
     {
-        long cap = capacity();
+        long cap = getCapacity();
         long todoBytes = bytes - cap;
         if (todoBytes <= 0)
         {
@@ -146,14 +146,14 @@ public class RAMIntDataAccess extends AbstractDataAccess
         {
             return false;
         }
-        File file = new File(fullName());
+        File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
         {
             return false;
         }
         try
         {
-            RandomAccessFile raFile = new RandomAccessFile(fullName(), "r");
+            RandomAccessFile raFile = new RandomAccessFile(getFullName(), "r");
             try
             {
                 long byteCount = readHeader(raFile) - HEADER_OFFSET;
@@ -188,7 +188,7 @@ public class RAMIntDataAccess extends AbstractDataAccess
             }
         } catch (IOException ex)
         {
-            throw new RuntimeException("Problem while loading " + fullName(), ex);
+            throw new RuntimeException("Problem while loading " + getFullName(), ex);
         }
     }
 
@@ -205,10 +205,10 @@ public class RAMIntDataAccess extends AbstractDataAccess
         }
         try
         {
-            RandomAccessFile raFile = new RandomAccessFile(fullName(), "rw");
+            RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw");
             try
             {
-                long len = capacity();
+                long len = getCapacity();
                 writeHeader(raFile, len, segmentSizeInBytes);
                 raFile.seek(HEADER_OFFSET);
                 // raFile.writeInt() <- too slow, so copy into byte array
@@ -275,21 +275,21 @@ public class RAMIntDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public long capacity()
+    public long getCapacity()
     {
-        return (long) segments() * segmentSizeInBytes;
+        return (long) getSegments() * segmentSizeInBytes;
     }
 
     @Override
-    public int segments()
+    public int getSegments()
     {
         return segments.length;
     }
 
     @Override
-    public DataAccess segmentSize( int bytes )
+    public DataAccess setSegmentSize( int bytes )
     {
-        super.segmentSize(bytes);
+        super.setSegmentSize(bytes);
         segmentSizeIntsPower = (int) (Math.log(segmentSizeInBytes / 4) / Math.log(2));
         indexDivisor = segmentSizeInBytes / 4 - 1;
         return this;

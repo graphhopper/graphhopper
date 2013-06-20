@@ -41,10 +41,10 @@ public class DefaultModule extends AbstractModule
             GraphHopper hopper = new GraphHopper().init(args)
                     .forServer();
             hopper.importOrLoad();
-            logger.info("loaded graph at:" + hopper.graphHopperLocation()
-                    + ", source:" + hopper.osmFile()
-                    + ", acceptWay:" + hopper.encodingManager()
-                    + ", class:" + hopper.graph().getClass().getSimpleName());
+            logger.info("loaded graph at:" + hopper.getGraphHopperLocation()
+                    + ", source:" + hopper.getOSMFile()
+                    + ", acceptWay:" + hopper.getEncodingManager()
+                    + ", class:" + hopper.getGraph().getClass().getSimpleName());
 
             bind(GraphHopper.class).toInstance(hopper);
 
@@ -53,8 +53,9 @@ public class DefaultModule extends AbstractModule
 
             long timeout = args.getLong("web.timeout", 3000);
             bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
-            bind(Geocoding.class).toInstance(new NominatimGeocoder().timeout((int) timeout).
-                    bounds(hopper.graph().bounds()));
+            bind(Geocoding.class).toInstance(new NominatimGeocoder().
+                    setTimeout((int) timeout).
+                    setBounds(hopper.getGraph().getBounds()));
             bind(GHThreadPool.class).toInstance(new GHThreadPool(1000, 50).startService());
         } catch (Exception ex)
         {

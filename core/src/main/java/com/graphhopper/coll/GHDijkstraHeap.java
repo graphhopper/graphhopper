@@ -171,7 +171,7 @@ public class GHDijkstraHeap implements BinHeapWrapper<Number, Integer>
     }
 
     @Override
-    public int size()
+    public int getSize()
     {
         return size;
     }
@@ -263,7 +263,7 @@ public class GHDijkstraHeap implements BinHeapWrapper<Number, Integer>
 
     private boolean handleSmallOverflow()
     {
-        if (smallHeap.size() < smallCapacity)
+        if (smallHeap.getSize() < smallCapacity)
         {
             return false;
         }
@@ -312,7 +312,7 @@ public class GHDijkstraHeap implements BinHeapWrapper<Number, Integer>
 
     private boolean handleMidOverflow()
     {
-        if (midHeap.size() < midCapacity)
+        if (midHeap.getSize() < midCapacity)
         {
             return false;
         }
@@ -339,7 +339,7 @@ public class GHDijkstraHeap implements BinHeapWrapper<Number, Integer>
         // put the smaller values into the 'newFrom' heap
         IntDoubleBinHeap newFrom = new IntDoubleBinHeap(capacity);
         List<Entry<Double, Integer>> sortedList = new ArrayList<Entry<Double, Integer>>();
-        int len = from.size();
+        int len = from.getSize();
         for (int i = 1; i <= len; i++)
         {
             sortedList.add(new MapEntry<Double, Integer>((double) from.getKey(i), from.getElement(i)));
@@ -362,13 +362,13 @@ public class GHDijkstraHeap implements BinHeapWrapper<Number, Integer>
         return newFrom;
     }
 
-    public String stats()
+    public String getStatsInfo()
     {
-        return "size:" + size()
+        return "size:" + getSize()
                 + ", midMin:" + midMin + ", largeMin:" + largeMin
-                + ", smallSize: " + smallHeap.size() + "(" + smallHeap.getCapacity() + ")"
-                + ", midSize: " + midHeap.size() + "(" + midHeap.getCapacity() + ")"
-                + ", largeSize: " + largeHeap.size() + "(" + largeHeap.getCapacity() + ")"
+                + ", smallSize: " + smallHeap.getSize() + "(" + smallHeap.getCapacity() + ")"
+                + ", midSize: " + midHeap.getSize() + "(" + midHeap.getCapacity() + ")"
+                + ", largeSize: " + largeHeap.getSize() + "(" + largeHeap.getCapacity() + ")"
                 + ", overflows:" + overflows + ", underflows:" + underflows;
     }
 

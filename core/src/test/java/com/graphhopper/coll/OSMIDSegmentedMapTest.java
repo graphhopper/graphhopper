@@ -31,7 +31,7 @@ public class OSMIDSegmentedMapTest
     {
         OSMIDSegmentedMap map = new OSMIDSegmentedMap();
         map.write(0);
-        assertEquals(1, map.size());
+        assertEquals(1, map.getSize());
         assertEquals(0, map.get(0));
         assertEquals(-1, map.get(1));
     }
@@ -48,7 +48,7 @@ public class OSMIDSegmentedMapTest
         map.write(21);
         map.write(31);
 
-        assertEquals(7, map.size());
+        assertEquals(7, map.getSize());
         assertEquals(-1, map.get(8));
         assertEquals(0, map.get(9));
         assertEquals(1, map.get(10));
@@ -65,7 +65,7 @@ public class OSMIDSegmentedMapTest
         {
             map.write(i + 50);
         }
-        assertEquals(207, map.size());
+        assertEquals(207, map.getSize());
         assertEquals(-1, map.get(49));
         assertEquals(7, map.get(50));
     }
@@ -84,7 +84,7 @@ public class OSMIDSegmentedMapTest
         map.write(18);
         map.write(19);
 
-        assertEquals(9, map.size());
+        assertEquals(9, map.getSize());
         assertEquals(-1, map.get(8));
         assertEquals(0, map.get(9));
         assertEquals(1, map.get(10));

@@ -152,13 +152,13 @@ public class DijkstraTwoDrivers
         {
             if (currFrom == null)
             {
-                return currTo.weight >= shortest.weight();
+                return currTo.weight >= shortest.getWeight();
             } else if (currTo == null)
             {
-                return currFrom.weight >= shortest.weight();
+                return currFrom.weight >= shortest.getWeight();
             }
 
-            return Math.min(currFrom.weight, currTo.weight) >= shortest.weight();
+            return Math.min(currFrom.weight, currTo.weight) >= shortest.getWeight();
         }
 
         @Override
@@ -182,13 +182,13 @@ public class DijkstraTwoDrivers
                 overallDistance = newShortest;
                 meetingPoint = currLoc;
 
-                getOtherDriver().shortest.edgeEntry(fromOther);
-                getOtherDriver().shortest.edgeEntryTo(toOther);
-                getOtherDriver().shortest.weight(shortestOther);
+                getOtherDriver().shortest.setEdgeEntry(fromOther);
+                getOtherDriver().shortest.setEdgeEntryTo(toOther);
+                getOtherDriver().shortest.setWeight(shortestOther);
 
-                shortest.edgeEntry(shortestDE);
-                shortest.edgeEntryTo(entryOther);
-                shortest.weight(shortestCurrent);
+                shortest.setEdgeEntry(shortestDE);
+                shortest.setEdgeEntryTo(entryOther);
+                shortest.setWeight(shortestCurrent);
             }
         }
     }

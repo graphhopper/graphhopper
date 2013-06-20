@@ -51,12 +51,12 @@ public abstract class AbstractDataAccess implements DataAccess
     }
 
     @Override
-    public String name()
+    public String getName()
     {
         return name;
     }
 
-    protected String fullName()
+    protected String getFullName()
     {
         return location + name;
     }
@@ -108,7 +108,7 @@ public abstract class AbstractDataAccess implements DataAccess
             throw new IllegalArgumentException("Not a GraphHopper file! Expected 'GH' as file marker but was " + versionHint);
         }
         long bytes = raFile.readLong();
-        segmentSize(raFile.readInt());
+        setSegmentSize(raFile.readInt());
         for (int i = 0; i < header.length; i++)
         {
             header[i] = raFile.readInt();
@@ -123,10 +123,10 @@ public abstract class AbstractDataAccess implements DataAccess
         {
             da.setHeader(h, getHeader(h));
         }
-        da.ensureCapacity(capacity());
-        long cap = capacity();
+        da.ensureCapacity(getCapacity());
+        long cap = getCapacity();
         // currently get/setBytes does not support copying more bytes then segmentSize
-        int segSize = Math.min(da.segmentSize(), segmentSize());
+        int segSize = Math.min(da.getSegmentSize(), getSegmentSize());
         byte[] bytes = new byte[segSize];
         boolean externalIntBased = ((AbstractDataAccess) da).isIntBased();
         for (long bytePos = 0; bytePos < cap; bytePos += segSize)
@@ -159,7 +159,7 @@ public abstract class AbstractDataAccess implements DataAccess
     }
 
     @Override
-    public DataAccess segmentSize( int bytes )
+    public DataAccess setSegmentSize( int bytes )
     {
         if (bytes > 0)
         {
@@ -173,7 +173,7 @@ public abstract class AbstractDataAccess implements DataAccess
     }
 
     @Override
-    public int segmentSize()
+    public int getSegmentSize()
     {
         return segmentSizeInBytes;
     }
@@ -181,7 +181,7 @@ public abstract class AbstractDataAccess implements DataAccess
     @Override
     public String toString()
     {
-        return fullName();
+        return getFullName();
     }
 
     @Override
@@ -203,7 +203,7 @@ public abstract class AbstractDataAccess implements DataAccess
             }
         } else
         {
-            throw new IllegalStateException("File does not exist!? " + fullName()
+            throw new IllegalStateException("File does not exist!? " + getFullName()
                     + " Make sure that you flushed before renaming. Otherwise it could make problems"
                     + " for memory mapped DataAccess objects");
         }

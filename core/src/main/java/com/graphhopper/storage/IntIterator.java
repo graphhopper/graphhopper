@@ -24,7 +24,7 @@ public interface IntIterator
 {
     boolean next();
 
-    int value();
+    int getValue();
 
     void remove();
 

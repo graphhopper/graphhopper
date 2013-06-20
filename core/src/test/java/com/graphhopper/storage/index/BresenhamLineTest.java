@@ -95,7 +95,7 @@ public class BresenhamLineTest
         int bits = (int) (Math.log(parts * parts) / Math.log(2));
         double minLon = -1, maxLon = 1.6;
         double minLat = -1, maxLat = 0.5;
-        final KeyAlgo keyAlgo = new SpatialKeyAlgo(bits).bounds(minLon, maxLon, minLat, maxLat);
+        final KeyAlgo keyAlgo = new SpatialKeyAlgo(bits).setBounds(minLon, maxLon, minLat, maxLat);
         double deltaLat = (maxLat - minLat) / parts;
         double deltaLon = (maxLon - minLon) / parts;
         final ArrayList<Long> keys = new ArrayList<Long>();
@@ -120,6 +120,6 @@ public class BresenhamLineTest
         BresenhamLine.calcPoints(
                 47.57383, 9.61984,
                 47.57382, 9.61890, emitter, 47, 9, 0.00647, 0.00964);
-        assertEquals(points.toString(), 1, points.size());
+        assertEquals(points.toString(), 1, points.getSize());
     }
 }

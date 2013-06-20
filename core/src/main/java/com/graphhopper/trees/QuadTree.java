@@ -38,7 +38,7 @@ public interface QuadTree<V>
      */
     QuadTree init( long maxItemsHint );
 
-    long size();
+    long getSize();
 
     boolean isEmpty();
 
@@ -77,7 +77,7 @@ public interface QuadTree<V>
     {
         public static void fill( QuadTree<Long> quadTree, Graph graph )
         {
-            int locs = graph.nodes();
+            int locs = graph.getNodes();
             for (int i = 0; i < locs; i++)
             {
                 double lat = graph.getLatitude(i);

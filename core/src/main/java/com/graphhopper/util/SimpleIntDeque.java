@@ -76,7 +76,7 @@ public class SimpleIntDeque
         int smallerSize = (int) (arr.length / growFactor);
         if (frontIndex > smallerSize)
         {
-            endIndexPlusOne = size();
+            endIndexPlusOne = getSize();
             // ensure that there are at least 10 entries
             int[] newArr = new int[endIndexPlusOne + 10];
             System.arraycopy(arr, frontIndex, newArr, 0, endIndexPlusOne);
@@ -87,7 +87,7 @@ public class SimpleIntDeque
         return tmp;
     }
 
-    public int size()
+    public int getSize()
     {
         return endIndexPlusOne - frontIndex;
     }

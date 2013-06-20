@@ -180,12 +180,12 @@ public class GHThreadPool
             return (System.currentTimeMillis() - startTime) > maxLiveTimeInMillis;
         }
 
-        public abstract String name();
+        public abstract String getName();
 
         @Override
         public String toString()
         {
-            return name();
+            return getName();
         }
 
         private void finish()

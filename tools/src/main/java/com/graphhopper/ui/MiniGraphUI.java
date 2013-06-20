@@ -79,18 +79,18 @@ public class MiniGraphUI
 
     public MiniGraphUI( GraphHopper hopper, boolean debug )
     {
-        this.graph = hopper.graph();
-        prepare = hopper.preparation();
+        this.graph = hopper.getGraph();
+        prepare = hopper.getPreparation();
         if (prepare == null)
         {
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstra", hopper.encodingManager().getEncoder("CAR"), wCalc);
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstra", hopper.getEncodingManager().getEncoder("CAR"), wCalc);
         }
-        logger.info("locations:" + graph.nodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().name());
+        logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().getName());
         mg = new GraphicsWrapper(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
-        this.index = hopper.index();
+        this.index = hopper.getIndex();
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
         // this.algo = new DijkstraBidirection(graph);
 //        this.algo = new DebugAStar(graph, mg);
@@ -118,7 +118,7 @@ public class MiniGraphUI
         mainPanel = new LayeredPanel();
 
         // TODO make it correct with bitset-skipping too
-        final GHBitSet bitset = new GHTBitSet(graph.nodes());
+        final GHBitSet bitset = new GHTBitSet(graph.getNodes());
         mainPanel.addLayer(roadsLayer = new DefaultMapLayer()
         {
             Random rand = new Random();
@@ -127,7 +127,7 @@ public class MiniGraphUI
             public void paintComponent( Graphics2D g2 )
             {
                 clearGraphics(g2);
-                int locs = graph.nodes();
+                int locs = graph.getNodes();
                 Rectangle d = getBounds();
                 BBox b = mg.setBounds(0, d.width, 0, d.height);
                 if (fastPaint)
@@ -171,7 +171,7 @@ public class MiniGraphUI
 //                    });
                     while (iter.next())
                     {
-                        int nodeId = iter.adjNode();
+                        int nodeId = iter.getAdjNode();
                         int sum = nodeIndex + nodeId;
                         if (fastPaint)
                         {
@@ -208,13 +208,13 @@ public class MiniGraphUI
 
                 StopWatch sw = new StopWatch().start();
                 logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + wCalc);
-                path = algo.type(wCalc).calcPath(dijkstraFromId, dijkstraToId);
+                path = algo.setType(wCalc).calcPath(dijkstraFromId, dijkstraToId);
 //                mg.plotNode(g2, dijkstraFromId, Color.red);
 //                mg.plotNode(g2, dijkstraToId, Color.BLUE);
                 sw.stop();
 
                 // if directed edges
-                if (!path.found())
+                if (!path.isFound())
                 {
                     logger.warn("path not found! direction not valid?");
                     return;
@@ -258,7 +258,7 @@ public class MiniGraphUI
 
     private Path plotPath( Path tmpPath, Graphics2D g2, int w )
     {
-        if (!tmpPath.found())
+        if (!tmpPath.isFound())
         {
             logger.info("nothing found " + w);
             return tmpPath;
@@ -276,10 +276,10 @@ public class MiniGraphUI
             }
         }
         PointList list = tmpPath.calcPoints();
-        for (int i = 0; i < list.size(); i++)
+        for (int i = 0; i < list.getSize(); i++)
         {
-            double lat = list.latitude(i);
-            double lon = list.longitude(i);
+            double lat = list.getLatitude(i);
+            double lon = list.getLongitude(i);
             if (!Double.isNaN(prevLat))
             {
                 mg.plotEdge(g2, prevLat, prevLon, lat, lon, w);
@@ -290,7 +290,7 @@ public class MiniGraphUI
             prevLat = lat;
             prevLon = lon;
         }
-        logger.info("dist:" + tmpPath.distance() + ", path points:" + list + ", nodes:" + nodes);
+        logger.info("dist:" + tmpPath.getDistance() + ", path points:" + list + ", nodes:" + nodes);
         return tmpPath;
     }
     private int dijkstraFromId = -1;

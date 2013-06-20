@@ -110,7 +110,7 @@ public abstract class AbstractMyBitSetTest
         assertFalse(bs.contains(1));
         assertFalse(bs.contains(2));
         assertFalse(bs.contains(12));
-        assertEquals(0, bs.cardinality());
+        assertEquals(0, bs.getCardinality());
         bs.add(12);
         bs.add(1);
         assertTrue(bs.contains(1));

@@ -17,11 +17,6 @@
  */
 package com.graphhopper.util;
 
-import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 

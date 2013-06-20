@@ -33,7 +33,7 @@ public interface Graph
     /**
      * @return the number of created locations - via setNode() or edge()
      */
-    int nodes();
+    int getNodes();
 
     /**
      * This method ensures that the node with the specified index exists and sets the lat+lon to the
@@ -51,7 +51,7 @@ public interface Graph
     /**
      * Returns the implicit bounds of this graph calculated from the lat,lon input of setNode
      */
-    BBox bounds();
+    BBox getBounds();
 
     /**
      * Creates an edge between the nodes a and b.

@@ -84,12 +84,12 @@ public class OSMWay extends OSMElement
         nodes = new TLongArrayList();
         for (int i = 0; i < geometry.length; i++)
         {
-            nodes.add(geometry[i].id());
+            nodes.add(geometry[i].getId());
         }
         // close polygon
         if (closed)
         {
-            nodes.add(geometry[0].id());
+            nodes.add(geometry[0].getId());
         }
     }
 
@@ -109,28 +109,14 @@ public class OSMWay extends OSMElement
         }
     }
 
-    public TLongList nodes()
+    public TLongList getNodes()
     {
         return nodes;
     }
-
-    public void addNodeRef( long id )
-    {
-        nodes.add(id);
-    }
-
+    
+    @Override
     public String toString()
     {
         return "Way (" + id + ", " + nodes.size() + " nodes)";
-    }
-
-    public void clearNodes()
-    {
-        nodes.clear();
-    }
-
-    public void setNodes( TLongList nodes )
-    {
-        this.nodes = nodes;
     }
 }

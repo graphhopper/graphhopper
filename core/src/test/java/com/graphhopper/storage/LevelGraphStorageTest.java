@@ -55,7 +55,7 @@ public class LevelGraphStorageTest extends GraphStorageTest
         g.flush();
         g.close();
 
-        g = new GraphBuilder(encodingManager).location(defaultGraph).mmap(false).store(true).create();
+        g = new GraphBuilder(encodingManager).setLocation(defaultGraph).setMmap(false).setStore(true).create();
         try
         {
             g.loadExisting();
@@ -80,7 +80,7 @@ public class LevelGraphStorageTest extends GraphStorageTest
         g.optimize();
         assertEquals(9, g.getLevel(9));
         assertNotSame(10, g.getLevel(10));
-        assertEquals(19, g.nodes());
+        assertEquals(19, g.getNodes());
     }
 
     @Test
@@ -104,8 +104,8 @@ public class LevelGraphStorageTest extends GraphStorageTest
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);
         EdgeSkipIterator tmpIter = g.edge(3, 4, 40, true);
-        assertEquals(EdgeIterator.NO_EDGE, tmpIter.skippedEdge1());
-        assertEquals(EdgeIterator.NO_EDGE, tmpIter.skippedEdge2());
+        assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge1());
+        assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge2());
 
         // shortcut
         g.edge(0, 4, 40, true);
@@ -127,20 +127,20 @@ public class LevelGraphStorageTest extends GraphStorageTest
         g.edge(3, 1, 30, false);
         EdgeIterator iter = g.getEdges(1);
         iter.next();
-        assertEquals(2, iter.adjNode());
+        assertEquals(2, iter.getAdjNode());
         assertEquals(1, GHUtility.count(g.getEdges(2, carOutFilter)));
         g.disconnect(iter, EdgeIterator.NO_EDGE, false);
         assertEquals(0, GHUtility.count(g.getEdges(2, carOutFilter)));
 
         // even directed ways change!
         assertTrue(iter.next());
-        assertEquals(0, iter.adjNode());
+        assertEquals(0, iter.getAdjNode());
         assertEquals(1, GHUtility.count(g.getEdges(0, carInFilter)));
         g.disconnect(iter, EdgeIterator.NO_EDGE, false);
         assertEquals(0, GHUtility.count(g.getEdges(0, carInFilter)));
 
         iter.next();
-        assertEquals(3, iter.adjNode());
+        assertEquals(3, iter.getAdjNode());
         assertEquals(1, GHUtility.count(g.getEdges(3, carOutFilter)));
         g.disconnect(iter, EdgeIterator.NO_EDGE, false);
         assertEquals(0, GHUtility.count(g.getEdges(3, carOutFilter)));

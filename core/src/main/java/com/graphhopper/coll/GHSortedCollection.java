@@ -142,7 +142,7 @@ public class GHSortedCollection
         return val;
     }
 
-    public int size()
+    public int getSize()
     {
         return size;
     }

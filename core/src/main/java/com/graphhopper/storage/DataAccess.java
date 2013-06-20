@@ -32,7 +32,7 @@ public interface DataAccess extends Storable<DataAccess>
     /**
      * The logical identification of this object.
      */
-    String name();
+    String getName();
 
     /**
      * Renames the underlying DataAccess object. (Flushing shouldn't be necessary before or
@@ -101,15 +101,15 @@ public interface DataAccess extends Storable<DataAccess>
      * In order to increase allocated space one needs to layout the underlying storage in segments.
      * This is how you can customize the size.
      */
-    DataAccess segmentSize( int bytes );
+    DataAccess setSegmentSize( int bytes );
 
     /**
      * @return the size of one segment in bytes
      */
-    int segmentSize();
+    int getSegmentSize();
 
     /**
      * @return the number of segments.
      */
-    int segments();
+    int getSegments();
 }

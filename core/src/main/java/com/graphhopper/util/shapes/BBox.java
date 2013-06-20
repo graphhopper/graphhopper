@@ -144,7 +144,7 @@ public class BBox implements Shape, Cloneable
 
     public boolean contains( Circle c )
     {
-        return contains(c.boundingBox());
+        return contains(c.getBounds());
     }
 
     @Override
@@ -159,7 +159,7 @@ public class BBox implements Shape, Cloneable
     }
 
     @Override
-    public BBox boundingBox()
+    public BBox getBounds()
     {
         return this;
     }

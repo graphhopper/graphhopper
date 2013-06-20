@@ -32,7 +32,7 @@ public class GraphBuilder
     private boolean mmap;
     private boolean store;
     private boolean level;
-    private int size = 100;
+    private long byteCapacity = 100;
 
     public GraphBuilder( EncodingManager encodingManager )
     {
@@ -44,39 +44,39 @@ public class GraphBuilder
      * <p/>
      * @see LevelGraph
      */
-    GraphBuilder levelGraph( boolean level )
+    GraphBuilder setLevelGraph( boolean level )
     {
         this.level = level;
         return this;
     }
 
-    public GraphBuilder location( String location )
+    public GraphBuilder setLocation( String location )
     {
         this.location = location;
         return this;
     }
 
-    public GraphBuilder store( boolean store )
+    public GraphBuilder setStore( boolean store )
     {
         this.store = store;
         return this;
     }
 
-    public GraphBuilder mmap( boolean mmap )
+    public GraphBuilder setMmap( boolean mmap )
     {
         this.mmap = mmap;
         return this;
     }
 
-    public GraphBuilder size( int size )
+    public GraphBuilder setExpectedSize( byte cap )
     {
-        this.size = size;
+        this.byteCapacity = cap;
         return this;
     }
 
     public LevelGraphStorage levelGraphBuild()
     {
-        return (LevelGraphStorage) levelGraph(true).build();
+        return (LevelGraphStorage) setLevelGraph(true).build();
     }
 
     /**
@@ -84,7 +84,7 @@ public class GraphBuilder
      */
     public LevelGraphStorage levelGraphCreate()
     {
-        return (LevelGraphStorage) levelGraph(true).create();
+        return (LevelGraphStorage) setLevelGraph(true).create();
     }
 
     /**
@@ -118,7 +118,7 @@ public class GraphBuilder
      */
     public GraphStorage create()
     {
-        return build().create(size);
+        return build().create(byteCapacity);
     }
 
     /**

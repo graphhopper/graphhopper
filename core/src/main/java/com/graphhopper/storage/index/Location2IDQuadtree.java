@@ -62,11 +62,11 @@ public class Location2IDQuadtree implements Location2IDIndex
     {
         this.graph = g;
         index = dir.find("loc2idIndex");
-        resolution(100 * 100);
+        setResolution(100 * 100);
     }
 
     @Override
-    public Location2IDIndex precision( boolean approxDist )
+    public Location2IDIndex setApproximation( boolean approxDist )
     {
         if (approxDist)
         {
@@ -79,9 +79,9 @@ public class Location2IDQuadtree implements Location2IDIndex
     }
 
     @Override
-    public long capacity()
+    public long getCapacity()
     {
-        return index.capacity() / 4;
+        return index.getCapacity() / 4;
     }
 
     /**
@@ -105,10 +105,10 @@ public class Location2IDQuadtree implements Location2IDIndex
         int lat = index.getHeader(1 * 4);
         int lon = index.getHeader(2 * 4);
         int checksum = index.getHeader(3 * 4);
-        if (checksum != graph.nodes())
+        if (checksum != graph.getNodes())
         {
             throw new IllegalStateException("index was created from a different graph with "
-                    + checksum + ". Current nodes:" + graph.nodes());
+                    + checksum + ". Current nodes:" + graph.getNodes());
         }
 
         initAlgo(lat, lon);
@@ -122,7 +122,7 @@ public class Location2IDQuadtree implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex resolution( int resolution )
+    public Location2IDIndex setResolution( int resolution )
     {
         initLatLonSize(resolution);
         return this;
@@ -144,12 +144,12 @@ public class Location2IDQuadtree implements Location2IDIndex
         initAlgo(latSize, lonSize);
         StopWatch sw = new StopWatch().start();
         GHBitSet filledIndices = fillQuadtree(latSize * lonSize);
-        int fillQT = filledIndices.cardinality();
+        int fillQT = filledIndices.getCardinality();
         float res1 = sw.stop().getSeconds();
         sw = new StopWatch().start();
         int counter = fillEmptyIndices(filledIndices);
         float fillEmpty = sw.stop().getSeconds();
-        logger.info("filled quadtree index array in " + res1 + "s. size is " + capacity()
+        logger.info("filled quadtree index array in " + res1 + "s. size is " + getCapacity()
                 + " (" + fillQT + "). filled empty " + counter + " in " + fillEmpty + "s");
         flush();
         return this;
@@ -167,7 +167,7 @@ public class Location2IDQuadtree implements Location2IDIndex
     private void initBuffer()
     {
         // avoid default big segment size and use one segment only:
-        index.segmentSize(latSize * lonSize * 4);
+        index.setSegmentSize(latSize * lonSize * 4);
         index.create(latSize * lonSize * 4);
     }
 
@@ -175,11 +175,11 @@ public class Location2IDQuadtree implements Location2IDIndex
     {
         this.latSize = lat;
         this.lonSize = lon;
-        BBox b = graph.bounds();
-        keyAlgo = new LinearKeyAlgo(lat, lon).bounds(b);
+        BBox b = graph.getBounds();
+        keyAlgo = new LinearKeyAlgo(lat, lon).setBounds(b);
         double max = Math.max(distCalc.calcDist(b.minLat, b.minLon, b.minLat, b.maxLon),
                 distCalc.calcDist(b.minLat, b.minLon, b.maxLat, b.minLon));
-        maxRasterWidth2InMeterNormed = distCalc.calcNormalizedDist(max / Math.sqrt(capacity()) * 2);
+        maxRasterWidth2InMeterNormed = distCalc.calcNormalizedDist(max / Math.sqrt(getCapacity()) * 2);
 
         // as long as we have "dist < PI*R/2" it is save to compare the normalized distances instead of the real
         // distances. because sin(x) is only monotonic increasing for x <= PI/2 (and positive for x >= 0)
@@ -192,7 +192,7 @@ public class Location2IDQuadtree implements Location2IDIndex
 
     private GHBitSet fillQuadtree( int size )
     {
-        int locs = graph.nodes();
+        int locs = graph.getNodes();
         if (locs <= 0)
         {
             throw new IllegalStateException("check your graph - it is empty!");
@@ -233,9 +233,9 @@ public class Location2IDQuadtree implements Location2IDIndex
     {
         int len = latSize * lonSize;
         DataAccess indexCopy = new RAMDirectory().find("tempIndexCopy");
-        indexCopy.segmentSize(index.segmentSize()).create(index.capacity());
+        indexCopy.setSegmentSize(index.getSegmentSize()).create(index.getCapacity());
         GHBitSet indicesCopy = new GHBitSetImpl(len);
-        int initializedCounter = filledIndices.cardinality();
+        int initializedCounter = filledIndices.getCardinality();
         // fan out initialized entries to avoid "nose-artifacts"
         // we 1. do not use the same index for check and set and iterate until all indices are set
         // and 2. use a taken-from array to decide which of the colliding should be prefered
@@ -254,7 +254,7 @@ public class Location2IDQuadtree implements Location2IDIndex
         {
             index.copyTo(indexCopy);
             filledIndices.copyTo(indicesCopy);
-            initializedCounter = filledIndices.cardinality();
+            initializedCounter = filledIndices.getCardinality();
             for (int i = 0; i < len; i++)
             {
                 int to = -1, from = -1;
@@ -293,7 +293,7 @@ public class Location2IDQuadtree implements Location2IDIndex
                     {
                         // takenFrom[to] == to -> special case for normedDist == 0
                         if (takenFrom[to] == to
-                                || normedDist(from, to) >= normedDist(takenFrom[to], to))
+                                || getNormedDist(from, to) >= getNormedDist(takenFrom[to], to))
                         {
                             continue;
                         }
@@ -310,7 +310,7 @@ public class Location2IDQuadtree implements Location2IDIndex
         return initializedCounter - tmp;
     }
 
-    double normedDist( int from, int to )
+    double getNormedDist( int from, int to )
     {
         int fromX = from % lonSize;
         int fromY = from / lonSize;
@@ -327,7 +327,7 @@ public class Location2IDQuadtree implements Location2IDIndex
     @Override
     public int findID( final double lat, final double lon )
     {
-        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).closestNode();
+        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
     }
 
     @Override
@@ -359,8 +359,8 @@ public class Location2IDQuadtree implements Location2IDIndex
         double mainLat = graph.getLatitude(id);
         double mainLon = graph.getLongitude(id);
         final LocationIDResult res = new LocationIDResult();
-        res.closestNode(id);
-        res.weight(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
+        res.setClosestNode(id);
+        res.setWeight(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
         goFurtherHook(id);
         new XFirstSearch()
         {
@@ -382,10 +382,10 @@ public class Location2IDQuadtree implements Location2IDIndex
                 double currLat = graph.getLatitude(baseNode);
                 double currLon = graph.getLongitude(baseNode);
                 double currDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
-                if (currDist < res.weight())
+                if (currDist < res.getWeight())
                 {
-                    res.weight(currDist);
-                    res.closestNode(baseNode);
+                    res.setWeight(currDist);
+                    res.setClosestNode(baseNode);
                     return true;
                 }
 
@@ -405,7 +405,7 @@ public class Location2IDQuadtree implements Location2IDIndex
         index.setHeader(0, MAGIC_INT);
         index.setHeader(1 * 4, latSize);
         index.setHeader(2 * 4, lonSize);
-        index.setHeader(3 * 4, graph.nodes());
+        index.setHeader(3 * 4, graph.getNodes());
         index.flush();
     }
 

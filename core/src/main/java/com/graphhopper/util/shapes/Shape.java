@@ -43,5 +43,5 @@ public interface Shape
     /**
      * @return the minimal rectangular bounding box of this shape
      */
-    BBox boundingBox();
+    BBox getBounds();
 }

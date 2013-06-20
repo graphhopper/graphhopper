@@ -32,13 +32,13 @@ public class PointListTest
         PointList instance = new PointList();
         instance.add(1, 1);
         instance.reverse();
-        assertEquals(1, instance.longitude(0), 1e-7);
+        assertEquals(1, instance.getLongitude(0), 1e-7);
 
         instance = new PointList();
         instance.add(1, 1);
         instance.add(2, 2);
         instance.reverse();
-        assertEquals(2, instance.longitude(0), 1e-7);
-        assertEquals(1, instance.longitude(1), 1e-7);
+        assertEquals(2, instance.getLongitude(0), 1e-7);
+        assertEquals(1, instance.getLongitude(1), 1e-7);
     }
 }

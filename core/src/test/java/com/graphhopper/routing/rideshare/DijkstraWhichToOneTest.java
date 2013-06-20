@@ -53,9 +53,9 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new DijkstraWhichToOne(_graph, encoder).type(calc);
+                return new DijkstraWhichToOne(_graph, encoder).setType(calc);
             }
-        }.graph(g);
+        }.setGraph(g);
     }
 
     @Test
@@ -104,13 +104,13 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester
         for (int i = 0; i < points.length; i++)
         {
             Path manualPath = new DijkstraBidirectionRef(getGraph(), carEncoder).calcPath(points[i], dest);
-            if (bestManualPath == null || manualPath.distance() < bestManualPath.distance())
+            if (bestManualPath == null || manualPath.getDistance() < bestManualPath.getDistance())
             {
                 bestManualPath = manualPath;
             }
         }
 
-        assertEquals(bestManualPath.distance(), path.distance(), 1e-3);
+        assertEquals(bestManualPath.getDistance(), path.getDistance(), 1e-3);
         assertEquals(bestManualPath.calcNodes(), path.calcNodes());
     }
 }

@@ -49,7 +49,7 @@ public class StorableProperties implements Storable<StorableProperties>
             return false;
         }
 
-        int len = (int) da.capacity();
+        int len = (int) da.getCapacity();
         byte[] bytes = new byte[len];
         da.getBytes(0, bytes, len);
         try
@@ -115,9 +115,9 @@ public class StorableProperties implements Storable<StorableProperties>
     }
 
     @Override
-    public long capacity()
+    public long getCapacity()
     {
-        return da.capacity();
+        return da.getCapacity();
     }
 
     public void putCurrentVersions()

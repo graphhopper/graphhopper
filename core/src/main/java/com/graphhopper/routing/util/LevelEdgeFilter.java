@@ -37,6 +37,6 @@ public class LevelEdgeFilter implements EdgeFilter
     @Override
     public boolean accept( EdgeIterator edgeIter )
     {
-        return graph.getLevel(edgeIter.baseNode()) <= graph.getLevel(edgeIter.adjNode());
+        return graph.getLevel(edgeIter.getBaseNode()) <= graph.getLevel(edgeIter.getAdjNode());
     }
 }

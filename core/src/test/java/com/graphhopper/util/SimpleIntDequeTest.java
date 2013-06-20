@@ -31,7 +31,7 @@ public class SimpleIntDequeTest
     {
         SimpleIntDeque deque = new SimpleIntDeque(8, 2f);
         assertTrue(deque.isEmpty());
-        assertEquals(0, deque.size());
+        assertEquals(0, deque.getSize());
     }
 
     @Test
@@ -39,11 +39,11 @@ public class SimpleIntDequeTest
     {
         SimpleIntDeque deque = new SimpleIntDeque(1, 2f);
         deque.push(1);
-        assertEquals(1, deque.size());
+        assertEquals(1, deque.getSize());
         deque.pop();
-        assertEquals(0, deque.size());
+        assertEquals(0, deque.getSize());
         deque.push(2);
-        assertEquals(1, deque.size());
+        assertEquals(1, deque.getSize());
     }
 
     @Test
@@ -54,34 +54,34 @@ public class SimpleIntDequeTest
         for (int i = 0; i < 60; i++)
         {
             deque.push(i);
-            assertEquals(i + 1, deque.size());
+            assertEquals(i + 1, deque.getSize());
         }
 
-        assertEquals(60, deque.size());
+        assertEquals(60, deque.getSize());
 
         assertEquals(0, deque.pop());
-        assertEquals(59, deque.size());
+        assertEquals(59, deque.getSize());
 
         assertEquals(1, deque.pop());
-        assertEquals(58, deque.size());
+        assertEquals(58, deque.getSize());
 
         deque.push(2);
-        assertEquals(59, deque.size());
+        assertEquals(59, deque.getSize());
         deque.push(3);
-        assertEquals(60, deque.size());
+        assertEquals(60, deque.getSize());
 
         for (int i = 0; i < 50; i++)
         {
             assertEquals(i + 2, deque.pop());
         }
 
-        assertEquals(10, deque.size());
+        assertEquals(10, deque.getSize());
         assertEquals(39, deque.getCapacity());
 
         deque.push(123);
-        assertEquals(11, deque.size());
+        assertEquals(11, deque.getSize());
 
         assertEquals(52, deque.pop());
-        assertEquals(10, deque.size());
+        assertEquals(10, deque.getSize());
     }
 }

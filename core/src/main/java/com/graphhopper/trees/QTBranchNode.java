@@ -85,7 +85,7 @@ class QTBranchNode<V> implements QTNode<V>
     public long getMemoryUsageInBytes( int factor )
     {
         // recursivly fetch the results
-        long all = 4 * Helper.sizeOfObjectRef(factor);
+        long all = 4 * Helper.getSizeOfObjectRef(factor);
         if (node0 != null)
         {
             all += node0.getMemoryUsageInBytes(factor);

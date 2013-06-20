@@ -69,7 +69,7 @@ public class BigLongIntMap implements LongIntMap
         return maps[segment].get(key);
     }
 
-    public long capacity()
+    public long getCapacity()
     {
         long cap = 0;
         for (int i = 0; i < maps.length; i++)
@@ -80,7 +80,7 @@ public class BigLongIntMap implements LongIntMap
     }
 
     @Override
-    public long size()
+    public long getSize()
     {
         long size = 0;
         for (int i = 0; i < maps.length; i++)
@@ -113,9 +113,9 @@ public class BigLongIntMap implements LongIntMap
      * memory usage in MB
      */
     @Override
-    public int memoryUsage()
+    public int getMemoryUsage()
     {
-        return Math.round(capacity() * (8 + 4 + 1) / Helper.MB);
+        return Math.round(getCapacity() * (8 + 4 + 1) / Helper.MB);
     }
 
     @Override

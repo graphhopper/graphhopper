@@ -188,11 +188,11 @@ public abstract class DataAccessTest
     public void testSegments()
     {
         DataAccess da = createDataAccess(name);
-        da.segmentSize(128);
+        da.setSegmentSize(128);
         da.create(10);
-        assertEquals(1, da.segments());
+        assertEquals(1, da.getSegments());
         da.ensureCapacity(500);
-        int olds = da.segments();
+        int olds = da.getSegments();
         assertTrue(olds > 3);
 
         da.setInt(400, 321);
@@ -201,7 +201,7 @@ public abstract class DataAccessTest
 
         da = createDataAccess(name);
         assertTrue(da.loadExisting());
-        assertEquals(olds, da.segments());
+        assertEquals(olds, da.getSegments());
         assertEquals(321, da.getInt(400));
         da.close();
     }
@@ -210,7 +210,7 @@ public abstract class DataAccessTest
     public void testTrimTo()
     {
         DataAccess da = createDataAccess(name);
-        da.segmentSize(128);
+        da.setSegmentSize(128);
         da.create(128 * 11);
         da.setInt(1 * 4, 10);
         da.setInt(27 * 4, 200);
@@ -219,22 +219,22 @@ public abstract class DataAccessTest
         da.setInt(337 * 4, 4000);
 
         // now 11 segments: (337 + 1) * 4 = 1352
-        assertEquals(11, da.segments());
-        assertEquals(11 * 128, da.capacity());
+        assertEquals(11, da.getSegments());
+        assertEquals(11 * 128, da.getCapacity());
 
         // now 3 segments
         da.trimTo(128 * 2 + 1);
-        assertEquals(3, da.segments());
+        assertEquals(3, da.getSegments());
 
         // now 2 segments
         da.trimTo(128 * 2);
-        assertEquals(2, da.segments());
+        assertEquals(2, da.getSegments());
         assertEquals(301, da.getInt(31 * 4));
         assertEquals(302, da.getInt(32 * 4));
 
         // now only one segment
         da.trimTo(128 * 1);
-        assertEquals(1, da.segments());
+        assertEquals(1, da.getSegments());
         assertEquals(301, da.getInt(31 * 4));
         try
         {
@@ -246,7 +246,7 @@ public abstract class DataAccessTest
 
         // at least one segment
         da.trimTo(0);
-        assertEquals(1, da.segments());
+        assertEquals(1, da.getSegments());
         da.close();
     }
 
@@ -254,8 +254,8 @@ public abstract class DataAccessTest
     public void testSegmentSize()
     {
         DataAccess da = createDataAccess(name);
-        da.segmentSize(20);
-        assertEquals(128, da.segmentSize());
+        da.setSegmentSize(20);
+        assertEquals(128, da.getSegmentSize());
         da.close();
     }
 
@@ -300,7 +300,7 @@ public abstract class DataAccessTest
     {
         DataAccess da = createDataAccess(name);
         da.create(300);
-        assertEquals(128, da.segmentSize());
+        assertEquals(128, da.getSegmentSize());
         byte[] bytes = BitUtil.fromInt(Integer.MAX_VALUE / 3);
         da.setBytes(8, bytes, bytes.length);
         bytes = new byte[4];

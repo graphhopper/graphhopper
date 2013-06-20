@@ -46,7 +46,7 @@ public class IntIntBinHeap implements BinHeapWrapper<Number, Integer>
     }
 
     @Override
-    public int size()
+    public int getSize()
     {
         return size;
     }

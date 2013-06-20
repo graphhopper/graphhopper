@@ -431,10 +431,10 @@ public class MainActivity extends MapActivity
         // TODO sometimes the center is wrong
         mapView.getOverlays().clear();
         mapView.getOverlays().add(pathOverlay);
-        prepareGraph();
+        loadGraphStorage();
     }
 
-    void prepareGraph()
+    void loadGraphStorage()
     {
         logUser("loading graph (" + Constants.VERSION + "|" + Constants.VERSION + ") ... ");
         new GHAsyncTask<Void, Void, Path>()
@@ -442,9 +442,9 @@ public class MainActivity extends MapActivity
             protected Path saveDoInBackground( Void... v ) throws Exception
             {
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
-                tmpHopp.chShortcuts(true, true);
+                tmpHopp.setCHShortcuts(true, true);
                 tmpHopp.load(mapsFolder + currentArea);
-                log("found graph with " + tmpHopp.graph().nodes() + " nodes.");
+                log("found graph with " + tmpHopp.getGraph().getNodes() + " nodes.");
                 hopper = tmpHopp;
                 return null;
             }
@@ -472,12 +472,12 @@ public class MainActivity extends MapActivity
 
     private Polyline createPolyline( GHResponse response )
     {
-        int points = response.points().size();
+        int points = response.getPoints().getSize();
         List<GeoPoint> geoPoints = new ArrayList<GeoPoint>(points);
-        PointList tmp = response.points();
-        for (int i = 0; i < response.points().size(); i++)
+        PointList tmp = response.getPoints();
+        for (int i = 0; i < response.getPoints().getSize(); i++)
         {
-            geoPoints.add(new GeoPoint(tmp.latitude(i), tmp.longitude(i)));
+            geoPoints.add(new GeoPoint(tmp.getLatitude(i), tmp.getLongitude(i)));
         }
         PolygonalChain polygonalChain = new PolygonalChain(geoPoints);
         Paint paintStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -513,7 +513,7 @@ public class MainActivity extends MapActivity
             {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon)
-                        .algorithm("dijkstrabi").putHint("douglas.minprecision", 1);
+                        .setAlgorithm("dijkstrabi").putHint("douglas.minprecision", 1);
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
                 return resp;
@@ -524,17 +524,17 @@ public class MainActivity extends MapActivity
                 if (!resp.hasError())
                 {
                     log("from:" + fromLat + "," + fromLon + " to:" + toLat + ","
-                            + toLon + " found path with distance:" + resp.distance()
-                            / 1000f + ", nodes:" + resp.points().size() + ", time:"
-                            + time + " " + resp.debugInfo());
-                    logUser("the route is " + (int) (resp.distance() / 100) / 10f
-                            + "km long, time:" + resp.time() / 60f + "min, debug:" + time);
+                            + toLon + " found path with distance:" + resp.getDistance()
+                            / 1000f + ", nodes:" + resp.getPoints().getSize() + ", time:"
+                            + time + " " + resp.getDebugInfo());
+                    logUser("the route is " + (int) (resp.getDistance() / 100) / 10f
+                            + "km long, time:" + resp.getTime() / 60f + "min, debug:" + time);
 
                     pathOverlay.getOverlayItems().add(createPolyline(resp));
                     mapView.redraw();
                 } else
                 {
-                    logUser("Error:" + resp.errors());
+                    logUser("Error:" + resp.getErrors());
                 }
                 shortestPathRunning = false;
             }

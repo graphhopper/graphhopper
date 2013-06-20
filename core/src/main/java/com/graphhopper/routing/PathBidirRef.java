@@ -45,13 +45,13 @@ public class PathBidirRef extends Path
         switchWrapper = p.switchWrapper;
     }
 
-    public PathBidirRef switchToFrom( boolean b )
+    public PathBidirRef setSwitchToFrom( boolean b )
     {
         switchWrapper = b;
         return this;
     }
 
-    public PathBidirRef edgeEntryTo( EdgeEntry edgeTo )
+    public PathBidirRef setEdgeEntryTo( EdgeEntry edgeTo )
     {
         this.edgeTo = edgeTo;
         return this;
@@ -89,7 +89,7 @@ public class PathBidirRef extends Path
             processDistance(currEdge.edge, currEdge.endNode);
             currEdge = currEdge.parent;
         }
-        fromNode(currEdge.endNode);
+        setFromNode(currEdge.endNode);
         reverseOrder();
         currEdge = edgeTo;
         int tmpEdge = currEdge.edge;
@@ -100,6 +100,6 @@ public class PathBidirRef extends Path
             tmpEdge = currEdge.edge;
         }
         sw.stop();
-        return found(true);
+        return setFound(true);
     }
 }

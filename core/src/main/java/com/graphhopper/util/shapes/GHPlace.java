@@ -37,12 +37,12 @@ public class GHPlace
 
     public GHPlace( String name )
     {
-        name(name);
+        setName(name);
     }
 
     public GHPlace( int nodeId )
     {
-        nodeId(nodeId);
+        setNodeId(nodeId);
     }
 
     public GHPlace( double lat, double lon )
@@ -51,24 +51,24 @@ public class GHPlace
         this.lon = lon;
     }
 
-    public GHPlace nodeId( int node )
+    public GHPlace setNodeId( int node )
     {
         this.nodeId = node;
         return this;
     }
 
-    public int nodeId()
+    public int getNodeId()
     {
         return nodeId;
     }
 
-    public GHPlace name( String name )
+    public GHPlace setName( String name )
     {
         this.name = name;
         return this;
     }
 
-    public String name()
+    public String getName()
     {
         return name;
     }

@@ -39,7 +39,7 @@ public class PathNative extends Path
         this.pathEdgeIds = pathEdgeIds;
     }
 
-    public PathNative found( int end )
+    public PathNative setEndNode( int end )
     {
         endNode = end;
         return this;
@@ -67,6 +67,6 @@ public class PathNative extends Path
             endNode = parents[endNode];
         }
         reverseOrder();
-        return found(true);
+        return setFound(true);
     }
 }

@@ -38,11 +38,11 @@ public abstract class AbstractBinHeapTest
         BinHeapWrapper<Number, Integer> binHeap = createHeap(100);
         binHeap.insert(123, 0);
         assertEquals(123, binHeap.peekKey().intValue());
-        assertEquals(1, binHeap.size());
+        assertEquals(1, binHeap.getSize());
 
         binHeap.update(12, 0);
         assertEquals(12, binHeap.peekKey().intValue());
-        assertEquals(1, binHeap.size());
+        assertEquals(1, binHeap.getSize());
     }
 
     @Test
@@ -57,7 +57,7 @@ public abstract class AbstractBinHeapTest
         assertEquals(1, (int) binHeap.pollElement());
         assertEquals(3, (int) binHeap.pollElement());
         assertEquals(2, (int) binHeap.pollElement());
-        assertEquals(1, (int) binHeap.size());
+        assertEquals(1, (int) binHeap.getSize());
     }
 
     @Test
@@ -66,12 +66,12 @@ public abstract class AbstractBinHeapTest
         BinHeapWrapper<Number, Integer> binHeap = createHeap(100);
         binHeap.insert(20, 1);
         binHeap.insert(123, 2);
-        assertEquals(2, binHeap.size());
+        assertEquals(2, binHeap.getSize());
         binHeap.clear();
 
-        assertEquals(0, binHeap.size());
+        assertEquals(0, binHeap.getSize());
         binHeap.insert(123, 2);
-        assertEquals(1, binHeap.size());
+        assertEquals(1, binHeap.getSize());
         assertEquals(2, (int) binHeap.pollElement());
     }
 
@@ -90,7 +90,7 @@ public abstract class AbstractBinHeapTest
         binHeap.insert(59, 61);
         binHeap.insert(160, 161);
 
-        assertEquals(26, binHeap.size());
+        assertEquals(26, binHeap.getSize());
         assertEquals(0, binHeap.pollElement().intValue());
         assertEquals(11, binHeap.pollElement().intValue());
         assertEquals(22, binHeap.pollElement().intValue());
@@ -102,7 +102,7 @@ public abstract class AbstractBinHeapTest
         assertEquals(61, binHeap.pollElement().intValue());
         assertEquals(66, binHeap.pollElement().intValue());
         assertEquals(77, binHeap.pollElement().intValue());
-        assertEquals(15, binHeap.size());
+        assertEquals(15, binHeap.getSize());
     }
 
     @Test
@@ -117,7 +117,7 @@ public abstract class AbstractBinHeapTest
 
         assertEquals(1, (int) binHeap.pollElement());
         assertEquals(2, (int) binHeap.pollElement());
-        assertEquals(2, binHeap.size());
+        assertEquals(2, binHeap.getSize());
     }
 
     @Test
@@ -135,13 +135,13 @@ public abstract class AbstractBinHeapTest
             juQueue.add(new Edge(EdgeIterator.NO_EDGE, i, val));
         }
 
-        assertEquals(juQueue.size(), binHeap.size());
+        assertEquals(juQueue.size(), binHeap.getSize());
 
         for (int i = 0; i < N; i++)
         {
             assertEquals(juQueue.poll().endNode, binHeap.pollElement(), 1e-5);
         }
 
-        assertEquals(binHeap.size(), 0);
+        assertEquals(binHeap.getSize(), 0);
     }
 }

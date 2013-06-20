@@ -25,5 +25,5 @@ import com.graphhopper.util.EdgeIterator;
  */
 public interface AllEdgesIterator extends EdgeIterator
 {
-    int maxId();
+    int getMaxId();
 }

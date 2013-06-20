@@ -33,12 +33,12 @@ public class GHSortedCollectionTest
         assertTrue(instance.isEmpty());
         instance.insert(0, 10);
         assertEquals(10, instance.peekValue());
-        assertEquals(1, instance.size());
+        assertEquals(1, instance.getSize());
         instance.insert(1, 2);
         assertEquals(2, instance.peekValue());
         assertEquals(1, instance.pollKey());
         assertEquals(0, instance.pollKey());
-        assertEquals(0, instance.size());
+        assertEquals(0, instance.getSize());
     }
 
     @Test
@@ -47,18 +47,18 @@ public class GHSortedCollectionTest
         GHSortedCollection instance = new GHSortedCollection(100);
         assertTrue(instance.isEmpty());
         instance.insert(0, 10);
-        assertEquals(1, instance.size());
+        assertEquals(1, instance.getSize());
         assertEquals(10, instance.peekValue());
         assertEquals(0, instance.peekKey());
         instance.update(0, 10, 2);
         assertEquals(2, instance.peekValue());
-        assertEquals(1, instance.size());
+        assertEquals(1, instance.getSize());
         instance.insert(0, 11);
         assertEquals(2, instance.peekValue());
-        assertEquals(2, instance.size());
+        assertEquals(2, instance.getSize());
         instance.insert(1, 0);
         assertEquals(0, instance.peekValue());
-        assertEquals(3, instance.size());
+        assertEquals(3, instance.getSize());
     }
 
     @Test
@@ -69,9 +69,9 @@ public class GHSortedCollectionTest
         instance.insert(0, 10);
         instance.insert(1, 11);
         assertEquals(10, instance.peekValue());
-        assertEquals(2, instance.size());
+        assertEquals(2, instance.getSize());
         instance.update(0, 10, 12);
         assertEquals(11, instance.peekValue());
-        assertEquals(2, instance.size());
+        assertEquals(2, instance.getSize());
     }
 }

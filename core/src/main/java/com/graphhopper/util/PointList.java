@@ -74,7 +74,7 @@ public class PointList
         size = newSize;
     }
 
-    public int size()
+    public int getSize()
     {
         return size;
     }
@@ -84,7 +84,7 @@ public class PointList
         return size == 0;
     }
 
-    public double latitude( int index )
+    public double getLatitude( int index )
     {
         if (index >= size)
         {
@@ -94,7 +94,7 @@ public class PointList
         return latitudes[index];
     }
 
-    public double longitude( int index )
+    public double getLongitude( int index )
     {
         if (index >= size)
         {
@@ -165,7 +165,7 @@ public class PointList
         {
             points.add(new Double[]
                     {
-                        longitude(i), latitude(i)
+                        getLongitude(i), getLatitude(i)
                     });
         }
         return points;
@@ -254,13 +254,13 @@ public class PointList
         }
 
         @Override
-        public double latitude( int index )
+        public double getLatitude( int index )
         {
             throw new RuntimeException("cannot access EMPTY PointList");
         }
 
         @Override
-        public double longitude( int index )
+        public double getLongitude( int index )
         {
             throw new RuntimeException("cannot access EMPTY PointList");
         }

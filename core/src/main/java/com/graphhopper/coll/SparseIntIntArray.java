@@ -207,7 +207,7 @@ public class SparseIntIntArray
     /**
      * Returns the number of key-value mappings that this SparseIntIntArray currently stores.
      */
-    public int size()
+    public int getSize()
     {
         if (mGarbage)
         {
@@ -372,7 +372,7 @@ public class SparseIntIntArray
     public String toString()
     {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < size(); i++)
+        for (int i = 0; i < getSize(); i++)
         {
             int k = mKeys[i];
             int v = mValues[i];

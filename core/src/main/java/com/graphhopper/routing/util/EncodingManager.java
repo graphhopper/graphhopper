@@ -176,7 +176,7 @@ public class EncodingManager
         return flags;
     }
 
-    public int countVehicles()
+    public int getVehicleCount()
     {
         return encoderCount;
     }
@@ -216,7 +216,7 @@ public class EncodingManager
 
     public FlagEncoder getSingle()
     {
-        if (countVehicles() > 1)
+        if (getVehicleCount() > 1)
         {
             throw new IllegalStateException("multiple encoders are active. cannot return one:" + toString());
         }
@@ -225,7 +225,7 @@ public class EncodingManager
 
     private FlagEncoder getFirst()
     {
-        if (countVehicles() == 0)
+        if (getVehicleCount() == 0)
         {
             throw new IllegalStateException("no encoder is active!");
         }

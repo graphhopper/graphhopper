@@ -84,7 +84,7 @@ public class GHTreeMapComposed
         return (int) (key & 0xFFFFFFFFL);
     }
 
-    public int size()
+    public int getSize()
     {
         return map.size();
     }

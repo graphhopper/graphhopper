@@ -70,7 +70,7 @@ public class OSMReaderHelper
         this.g = g;
         this.expectedNodes = expectedNodes;
         osmNodeIdToIndexMap = new GHLongIntBTree(200);
-        dir = g.directory();
+        dir = g.getDirectory();
         pillarLats = dir.find("tmpLatitudes");
         pillarLons = dir.find("tmpLongitudes");
 
@@ -78,30 +78,30 @@ public class OSMReaderHelper
         pillarLons.create(Math.max(expectedNodes / 50, 100));
     }
 
-    public OSMReaderHelper wayPointMaxDistance( double maxDist )
+    public OSMReaderHelper setWayPointMaxDistance( double maxDist )
     {
-        dpAlgo.maxDistance(maxDist);
+        dpAlgo.setMaxDistance(maxDist);
         return this;
     }
 
-    public long edgeCount()
+    public long getEdgeCount()
     {
-        return g.getAllEdges().maxId();
+        return g.getAllEdges().getMaxId();
     }
 
     public boolean addNode( OSMNode node )
     {
-        int nodeType = osmNodeIdToIndexMap.get(node.id());
+        int nodeType = osmNodeIdToIndexMap.get(node.getId());
         if (nodeType == EMPTY)
         {
             return false;
         }
 
-        double lat = node.lat();
-        double lon = node.lon();
+        double lat = node.getLat();
+        double lon = node.getLon();
         if (nodeType == TOWER_NODE)
         {
-            addTowerNode(node.id(), lat, lon);
+            addTowerNode(node.getId(), lat, lon);
         } else if (nodeType == PILLAR_NODE)
         {
             int tmp = pillarId * 4;
@@ -109,7 +109,7 @@ public class OSMReaderHelper
             pillarLats.setInt(tmp, Helper.degreeToInt(lat));
             pillarLons.ensureCapacity(tmp + 4);
             pillarLons.setInt(tmp, Helper.degreeToInt(lon));
-            osmNodeIdToIndexMap.put(node.id(), pillarId + 3);
+            osmNodeIdToIndexMap.put(node.getId(), pillarId + 3);
             pillarId++;
         }
         return true;
@@ -124,16 +124,16 @@ public class OSMReaderHelper
         }
 
         double towerNodeDistance = 0;
-        double prevLat = pointList.latitude(0);
-        double prevLon = pointList.longitude(0);
+        double prevLat = pointList.getLatitude(0);
+        double prevLon = pointList.getLongitude(0);
         double lat;
         double lon;
-        PointList pillarNodes = new PointList(pointList.size() - 2);
-        int nodes = pointList.size();
+        PointList pillarNodes = new PointList(pointList.getSize() - 2);
+        int nodes = pointList.getSize();
         for (int i = 1; i < nodes; i++)
         {
-            lat = pointList.latitude(i);
-            lon = pointList.longitude(i);
+            lat = pointList.getLatitude(i);
+            lon = pointList.getLongitude(i);
             towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
             prevLat = lat;
             prevLon = lon;
@@ -154,7 +154,7 @@ public class OSMReaderHelper
         if (nodes > 2)
         {
             dpAlgo.simplify(pillarNodes);
-            iter.wayGeometry(pillarNodes);
+            iter.setWayGeometry(pillarNodes);
         }
         return nodes;
     }
@@ -190,9 +190,9 @@ public class OSMReaderHelper
         return id;
     }
 
-    public long foundNodes()
+    public long getFoundNodes()
     {
-        return osmNodeIdToIndexMap.size();
+        return osmNodeIdToIndexMap.getSize();
     }
 
     public int addEdge( TLongList osmIds, int flags )
@@ -228,7 +228,7 @@ public class OSMReaderHelper
                         tmpNode = lastInBoundsPillarNode;
                         tmpNode = handlePillarNode(tmpNode, osmId, null, true);
                         tmpNode = -tmpNode - 3;
-                        if (pointList.size() > 1 && firstNode >= 0)
+                        if (pointList.getSize() > 1 && firstNode >= 0)
                         {
                             // TOWER node
                             successfullyAdded += addEdge(firstNode, tmpNode, pointList, flags);
@@ -314,10 +314,10 @@ public class OSMReaderHelper
     private void printInfo( String str )
     {
         LoggerFactory.getLogger(getClass()).info("finished " + str + " processing."
-                + " nodes: " + g.nodes() + ", osmIdMap.size:" + osmNodeIdToIndexMap.size()
-                + ", osmIdMap:" + osmNodeIdToIndexMap.memoryUsage() + "MB"
+                + " nodes: " + g.getNodes() + ", osmIdMap.size:" + osmNodeIdToIndexMap.getSize()
+                + ", osmIdMap:" + osmNodeIdToIndexMap.getMemoryUsage() + "MB"
                 + ", osmIdMap.toString:" + osmNodeIdToIndexMap + " "
-                + Helper.memInfo());
+                + Helper.getMemInfo());
     }
 
     void finishedReading()
@@ -363,7 +363,7 @@ public class OSMReaderHelper
                     Helper.intToDegree(pillarLons.getInt(graphIndex * 4)));
         }
 
-        final long id = newNode.id();
+        final long id = newNode.getId();
         prepareHighwayNode(id);
         addNode(newNode);
 

@@ -98,9 +98,9 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
         return new AllEdgesIterator()
         {
             @Override
-            public int maxId()
+            public int getMaxId()
             {
-                return tmpIter.maxId();
+                return tmpIter.getMaxId();
             }
 
             @Override
@@ -117,57 +117,57 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
             }
 
             @Override
-            public int edge()
+            public int getEdge()
             {
-                return tmpIter.edge();
+                return tmpIter.getEdge();
             }
 
             @Override
-            public int baseNode()
+            public int getBaseNode()
             {
-                return tmpIter.baseNode();
+                return tmpIter.getBaseNode();
             }
 
             @Override
-            public int adjNode()
+            public int getAdjNode()
             {
-                return tmpIter.adjNode();
+                return tmpIter.getAdjNode();
             }
 
             @Override
-            public PointList wayGeometry()
+            public PointList getWayGeometry()
             {
-                return tmpIter.wayGeometry();
+                return tmpIter.getWayGeometry();
             }
 
             @Override
-            public void wayGeometry( PointList list )
+            public void setWayGeometry( PointList list )
             {
-                tmpIter.wayGeometry(list);
+                tmpIter.setWayGeometry(list);
             }
 
             @Override
-            public double distance()
+            public double getDistance()
             {
-                return tmpIter.distance();
+                return tmpIter.getDistance();
             }
 
             @Override
-            public void distance( double dist )
+            public void setDistance( double dist )
             {
-                tmpIter.distance(dist);
+                tmpIter.setDistance(dist);
             }
 
             @Override
-            public int flags()
+            public int getFlags()
             {
-                return tmpIter.flags();
+                return tmpIter.getFlags();
             }
 
             @Override
-            public void flags( int flags )
+            public void setFlags( int flags )
             {
-                tmpIter.flags(flags);
+                tmpIter.setFlags(flags);
             }
 
             @Override

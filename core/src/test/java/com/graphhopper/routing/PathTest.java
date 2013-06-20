@@ -33,8 +33,8 @@ public class PathTest
     public void testFound()
     {
         Path p = new Path(null, null);
-        assertFalse(p.found());
-        assertEquals(0, p.distance(), 1e-7);
+        assertFalse(p.isFound());
+        assertEquals(0, p.getDistance(), 1e-7);
         assertEquals(0, p.calcNodes().size());
     }
 
@@ -44,6 +44,6 @@ public class PathTest
         FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
         Path p = new Path(null, encoder);
         p.calcTime(100000, encoder.flags(100, true));
-        assertEquals(60 * 60, p.time());
+        assertEquals(60 * 60, p.getTime());
     }
 }

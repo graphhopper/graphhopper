@@ -54,11 +54,11 @@ public class WebHelperTest
         PointList list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 50.3139, 10.612793, 50.04303, 9.497681);
         String str = WebHelper.encodePolyline(list);
-        assertEquals(list, WebHelper.decodePolyline(str, list.size()));
+        assertEquals(list, WebHelper.decodePolyline(str, list.getSize()));
 
         list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 40.70001, -120.95001);
         str = WebHelper.encodePolyline(list);
-        assertEquals(list, WebHelper.decodePolyline(str, list.size()));
+        assertEquals(list, WebHelper.decodePolyline(str, list.getSize()));
     }
 }

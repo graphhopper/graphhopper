@@ -67,7 +67,7 @@ public class GraphHopperWeb implements GraphHopperAPI
         return true;
     }
 
-    public GraphHopperWeb encodePolyline( boolean b )
+    public GraphHopperWeb setEncodePolyline( boolean b )
     {
         encodePolyline = b;
         return this;
@@ -82,12 +82,12 @@ public class GraphHopperWeb implements GraphHopperAPI
         try
         {
             String url = serviceUrl
-                    + "?from=" + request.from().lat + "," + request.from().lon
-                    + "&to=" + request.to().lat + "," + request.to().lon
+                    + "?from=" + request.getFrom().lat + "," + request.getFrom().lon
+                    + "&to=" + request.getTo().lat + "," + request.getTo().lon
                     + "&type=json"
                     + "&encodedPolyline=" + encodePolyline
                     + "&minPathPrecision=" + request.getHint("douglas.minprecision", 1)
-                    + "&algo=" + request.algorithm();
+                    + "&algo=" + request.getAlgorithm();
             String str = WebHelper.readString(fetch(url));
             JSONObject json = new JSONObject(str);
             took = json.getJSONObject("info").getDouble("took");
@@ -110,10 +110,10 @@ public class GraphHopperWeb implements GraphHopperAPI
                     list.add(lat, lon);
                 }
             }
-            return new GHResponse().points(list).distance(distance).time(timeInSeconds);
+            return new GHResponse().setPoints(list).setDistance(distance).setTime(timeInSeconds);
         } catch (Exception ex)
         {
-            throw new RuntimeException("Problem while fetching path " + request.from() + "->" + request.to(), ex);
+            throw new RuntimeException("Problem while fetching path " + request.getFrom() + "->" + request.getTo(), ex);
         } finally
         {
             logger.info("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);

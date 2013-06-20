@@ -217,7 +217,7 @@ public class SparseArray<E> implements Cloneable
     /**
      * Returns the number of key-value mappings that this SparseArray currently stores.
      */
-    public int size()
+    public int getSize()
     {
         if (mGarbage)
         {

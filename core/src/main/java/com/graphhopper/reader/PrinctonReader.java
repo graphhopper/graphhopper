@@ -38,7 +38,7 @@ public class PrinctonReader
         g = graph;
     }
 
-    public PrinctonReader stream( InputStream is )
+    public PrinctonReader setStream( InputStream is )
     {
         this.is = is;
         return this;

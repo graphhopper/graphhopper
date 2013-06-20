@@ -66,8 +66,8 @@ public class GHLongIntBTreeTest
         assertEquals(3, instance.height());
 
         assertEquals(3, instance.height());
-        assertEquals(10, instance.size());
-        assertEquals(0, instance.memoryUsage());
+        assertEquals(10, instance.getSize());
+        assertEquals(0, instance.getMemoryUsage());
 
         check(instance, 1);
     }
@@ -81,7 +81,7 @@ public class GHLongIntBTreeTest
         instance.put(3, 6);
         instance.put(2, 5);
 
-        assertEquals(3, instance.size());
+        assertEquals(3, instance.getSize());
         assertEquals(1, instance.height());
 
         assertEquals(5, instance.get(2));
@@ -90,7 +90,7 @@ public class GHLongIntBTreeTest
 
     void check( GHLongIntBTree instance, int from )
     {
-        for (int i = from; i < instance.size(); i++)
+        for (int i = from; i < instance.getSize(); i++)
         {
             assertEquals(i * 2, instance.get(i));
         }
@@ -117,7 +117,7 @@ public class GHLongIntBTreeTest
         instance.put(10, 20);
         instance.put(11, 22);
 
-        assertEquals(12, instance.size());
+        assertEquals(12, instance.getSize());
         assertEquals(3, instance.height());
 
         assertEquals(12, instance.get(6));
@@ -166,7 +166,7 @@ public class GHLongIntBTreeTest
                     assertFalse(j + "| Problem with " + i + " " + ex, true);
                 }
 
-                assertEquals(j + "| Size not equal to set! In " + i + " added " + val, addedValues.size(), instance.size());
+                assertEquals(j + "| Size not equal to set! In " + i + " added " + val, addedValues.size(), instance.getSize());
             }
             int i = 0;
             for (int val : addedValues)

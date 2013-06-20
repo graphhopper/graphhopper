@@ -49,12 +49,12 @@ public class GHDijkstraHeapTest extends AbstractBinHeapTest
         IntDoubleBinHeap to = new IntDoubleBinHeap();
         to.insert(99, 91);
 
-        assertEquals(26, from.size());
-        assertEquals(1, to.size());
+        assertEquals(26, from.getSize());
+        assertEquals(1, to.getSize());
 
         from = GHDijkstraHeap.move(20, from, to);
-        assertEquals(13, from.size());
-        assertEquals(14, to.size());
+        assertEquals(13, from.getSize());
+        assertEquals(14, to.getSize());
 
         assertEquals("0.0, 10.0, 20.0, 30.0, 30.0, 40.0, 50.0, 50.0, 59.0, 60.0, 70.0, 70.0, 80.0", from.toKeyString());
         assertEquals("90.0, 99.0, 100.0, 100.0, 110.0, 120.0, 130.0, 140.0, "

@@ -28,7 +28,7 @@ public class MMapDataAccessTest extends DataAccessTest
     @Override
     public DataAccess createDataAccess( String name )
     {
-        return new MMapDataAccess(name, directory).segmentSize(128);
+        return new MMapDataAccess(name, directory).setSegmentSize(128);
     }
 
     @Test

@@ -124,7 +124,7 @@ public class GHDirectory implements Directory
     @Override
     public DataAccess rename( DataAccess da, String newName )
     {
-        String oldName = da.name();
+        String oldName = da.getName();
         da.rename(newName);
         removeByName(oldName);
         map.put(newName, da);
@@ -134,7 +134,7 @@ public class GHDirectory implements Directory
     @Override
     public void remove( DataAccess da )
     {
-        removeByName(da.name());
+        removeByName(da.getName());
     }
 
     void removeByName( String name )
@@ -169,11 +169,11 @@ public class GHDirectory implements Directory
     @Override
     public String toString()
     {
-        return location();
+        return getLocation();
     }
 
     @Override
-    public String location()
+    public String getLocation()
     {
         return location;
     }

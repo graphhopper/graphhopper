@@ -42,8 +42,8 @@ public class PrinctonReaderTest
     public void testRead()
     {
         Graph graph = new GraphBuilder(encodingManager).create();
-        new PrinctonReader(graph).stream(PrinctonReader.class.getResourceAsStream("tinyEWD.txt")).read();
-        assertEquals(8, graph.nodes());
+        new PrinctonReader(graph).setStream(PrinctonReader.class.getResourceAsStream("tinyEWD.txt")).read();
+        assertEquals(8, graph.getNodes());
         assertEquals(2, count(graph.getEdges(0, carOutEdges)));
         assertEquals(3, count(graph.getEdges(6, carOutEdges)));
     }
@@ -52,8 +52,8 @@ public class PrinctonReaderTest
     public void testMediumRead() throws IOException
     {
         Graph graph = new GraphBuilder(encodingManager).create();
-        new PrinctonReader(graph).stream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
-        assertEquals(250, graph.nodes());
+        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
+        assertEquals(250, graph.getNodes());
         assertEquals(13, count(graph.getEdges(244, carOutEdges)));
         assertEquals(11, count(graph.getEdges(16, carOutEdges)));
     }

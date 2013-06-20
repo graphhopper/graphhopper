@@ -48,7 +48,7 @@ public class GHUtility
     public static List<String> getProblems( Graph g )
     {
         List<String> problems = new ArrayList<String>();
-        int nodes = g.nodes();
+        int nodes = g.getNodes();
         int nodeIndex = 0;
         try
         {
@@ -68,13 +68,13 @@ public class GHUtility
                 EdgeIterator iter = g.getEdges(nodeIndex);
                 while (iter.next())
                 {
-                    if (iter.adjNode() >= nodes)
+                    if (iter.getAdjNode() >= nodes)
                     {
-                        problems.add("edge of " + nodeIndex + " has a node " + iter.adjNode() + " greater or equal to getNodes");
+                        problems.add("edge of " + nodeIndex + " has a node " + iter.getAdjNode() + " greater or equal to getNodes");
                     }
-                    if (iter.adjNode() < 0)
+                    if (iter.getAdjNode() < 0)
                     {
-                        problems.add("edge of " + nodeIndex + " has a negative node " + iter.adjNode());
+                        problems.add("edge of " + nodeIndex + " has a negative node " + iter.getAdjNode());
                     }
                 }
             }
@@ -100,12 +100,12 @@ public class GHUtility
         return counter;
     }
 
-    public static List<Integer> neighbors( EdgeIterator iter )
+    public static List<Integer> getNeighbors( EdgeIterator iter )
     {
         List<Integer> list = new ArrayList<Integer>();
         while (iter.next())
         {
-            list.add(iter.adjNode());
+            list.add(iter.getAdjNode());
         }
         return list;
     }
@@ -135,8 +135,8 @@ public class GHUtility
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next())
         {
-            str += "  ->" + iter.adjNode() + "(" + iter.skippedEdge1() + "," + iter.skippedEdge2() + ") "
-                    + iter.edge() + " \t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
+            str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
+                    + iter.getEdge() + " \t" + BitUtil.toBitString(iter.getFlags(), 8) + "\n";
         }
         return str;
     }
@@ -147,16 +147,16 @@ public class GHUtility
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next())
         {
-            str += "  ->" + iter.adjNode() + " (" + iter.distance() + ") pillars:"
-                    + iter.wayGeometry().size() + ", edgeId:" + iter.edge()
-                    + "\t" + BitUtil.toBitString(iter.flags(), 8) + "\n";
+            str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
+                    + iter.getWayGeometry().getSize() + ", edgeId:" + iter.getEdge()
+                    + "\t" + BitUtil.toBitString(iter.getFlags(), 8) + "\n";
         }
         return str;
     }
 
     public static Graph shuffle( Graph g, Graph sortedGraph )
     {
-        int len = g.nodes();
+        int len = g.getNodes();
         TIntList list = new TIntArrayList(len, -1);
         list.fill(0, len, -1);
         for (int i = 0; i < len; i++)
@@ -173,8 +173,8 @@ public class GHUtility
      */
     public static Graph sortDFS( Graph g, Graph sortedGraph )
     {
-        final TIntList list = new TIntArrayList(g.nodes(), -1);
-        int nodes = g.nodes();
+        final TIntList list = new TIntArrayList(g.getNodes(), -1);
+        int nodes = g.getNodes();
         list.fill(0, nodes, -1);
         final GHBitSetImpl bitset = new GHBitSetImpl(nodes);
         final IntRef ref = new IntRef(0);
@@ -219,7 +219,7 @@ public class GHUtility
             EdgeIterator eIter = g.getEdges(old);
             while (eIter.next())
             {
-                int newNodeIndex = oldToNewNodeList.get(eIter.adjNode());
+                int newNodeIndex = oldToNewNodeList.get(eIter.getAdjNode());
                 if (newNodeIndex < 0)
                 {
                     throw new IllegalStateException("empty entries should be connected to the others");
@@ -228,8 +228,8 @@ public class GHUtility
                 {
                     continue;
                 }
-                sortedGraph.edge(newIndex, newNodeIndex, eIter.distance(), eIter.flags()).
-                        wayGeometry(eIter.wayGeometry());
+                sortedGraph.edge(newIndex, newNodeIndex, eIter.getDistance(), eIter.getFlags()).
+                        setWayGeometry(eIter.getWayGeometry());
             }
         }
         return sortedGraph;
@@ -237,16 +237,16 @@ public class GHUtility
 
     static Directory guessDirectory( GraphStorage store )
     {
-        String location = store.directory().location();
+        String location = store.getDirectory().getLocation();
         Directory outdir;
-        if (store.directory() instanceof MMapDirectory)
+        if (store.getDirectory() instanceof MMapDirectory)
         {
             // TODO mmap will overwrite existing storage at the same location!                
             throw new IllegalStateException("not supported yet");
             // outdir = new MMapDirectory(location);                
         } else
         {
-            boolean isStoring = ((RAMDirectory) store.directory()).isStoring();
+            boolean isStoring = ((RAMDirectory) store.getDirectory()).isStoring();
             outdir = new RAMDirectory(location, isStoring);
         }
         return outdir;
@@ -270,7 +270,7 @@ public class GHUtility
      */
     public static GraphStorage newStorage( GraphStorage store )
     {
-        return guessStorage(store, guessDirectory(store), store.encodingManager()).create(store.nodes());
+        return guessStorage(store, guessDirectory(store), store.getEncodingManager()).create(store.getNodes());
     }
 
     /**
@@ -278,7 +278,7 @@ public class GHUtility
      */
     public static Graph clone( Graph g, GraphStorage outGraph )
     {
-        return g.copyTo(outGraph.create(g.nodes()));
+        return g.copyTo(outGraph.create(g.getNodes()));
     }
 
     /**
@@ -287,7 +287,7 @@ public class GHUtility
     // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
     public static Graph copyTo( Graph from, Graph to )
     {
-        int len = from.nodes();
+        int len = from.getNodes();
         // important to avoid creating two edges for edges with both directions        
         GHBitSet bitset = new GHBitSetImpl(len);
         for (int oldNode = 0; oldNode < len; oldNode++)
@@ -297,12 +297,12 @@ public class GHUtility
             EdgeIterator eIter = from.getEdges(oldNode);
             while (eIter.next())
             {
-                int adjacentNodeIndex = eIter.adjNode();
+                int adjacentNodeIndex = eIter.getAdjNode();
                 if (bitset.contains(adjacentNodeIndex))
                 {
                     continue;
                 }
-                to.edge(oldNode, adjacentNodeIndex, eIter.distance(), eIter.flags()).wayGeometry(eIter.wayGeometry());
+                to.edge(oldNode, adjacentNodeIndex, eIter.getDistance(), eIter.getFlags()).setWayGeometry(eIter.getWayGeometry());
             }
         }
         return to;
@@ -313,7 +313,7 @@ public class GHUtility
         if (EdgeIterator.Edge.isValid(edge))
         {
             EdgeIterator iterTo = g.getEdgeProps(edge, endNode);
-            return iterTo.adjNode();
+            return iterTo.getAdjNode();
         }
         return endNode;
     }
@@ -326,31 +326,31 @@ public class GHUtility
         }
 
         @Override
-        public int skippedEdge1()
+        public int getSkippedEdge1()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public int skippedEdge2()
+        public int getSkippedEdge2()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public void skippedEdges( int edge1, int edge2 )
+        public void setSkippedEdges( int edge1, int edge2 )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public void distance( double dist )
+        public void setDistance( double dist )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public void flags( int flags )
+        public void setFlags( int flags )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -362,43 +362,43 @@ public class GHUtility
         }
 
         @Override
-        public int edge()
+        public int getEdge()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public int baseNode()
+        public int getBaseNode()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public int adjNode()
+        public int getAdjNode()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public double distance()
+        public double getDistance()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public int flags()
+        public int getFlags()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public PointList wayGeometry()
+        public PointList getWayGeometry()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public void wayGeometry( PointList list )
+        public void setWayGeometry( PointList list )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }

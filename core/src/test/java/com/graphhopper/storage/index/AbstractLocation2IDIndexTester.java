@@ -143,7 +143,7 @@ public abstract class AbstractLocation2IDIndexTester
     public void testGrid()
     {
         Graph g = createSampleGraph(new EncodingManager("CAR"));
-        int locs = g.nodes();
+        int locs = g.getNodes();
 
         Location2IDIndex index = createIndex(g, 120);
         // if we would use less array entries then some points gets the same key so avoid that for this test
@@ -353,11 +353,11 @@ public abstract class AbstractLocation2IDIndexTester
         CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
         while (iter.next())
         {
-            iter.flags(carEncoder.flags(50, true));
+            iter.setFlags(carEncoder.flags(50, true));
         }
 
         idx = createIndex(g, 32);
         FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
-        assertEquals(2, idx.findClosest(1, -1, new DefaultEdgeFilter(footEncoder)).closestNode());
+        assertEquals(2, idx.findClosest(1, -1, new DefaultEdgeFilter(footEncoder)).getClosestNode());
     }
 }

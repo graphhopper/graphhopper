@@ -47,11 +47,11 @@ public class RoutingAlgorithmSpecialAreaTests
 
     public RoutingAlgorithmSpecialAreaTests( GraphHopper graphhopper )
     {
-        this.unterfrankenGraph = graphhopper.graph();
+        this.unterfrankenGraph = graphhopper.getGraph();
         StopWatch sw = new StopWatch().start();
-        idx = graphhopper.index();
+        idx = graphhopper.getIndex();
         logger.info(idx.getClass().getSimpleName() + " index. Size:"
-                + (float) idx.capacity() / (1 << 20) + " MB, took:" + sw.stop().getSeconds());
+                + (float) idx.getCapacity() / (1 << 20) + " MB, took:" + sw.stop().getSeconds());
     }
 
     public void start()
@@ -106,8 +106,7 @@ public class RoutingAlgorithmSpecialAreaTests
         if (withCh)
         {
             LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder(manager).levelGraphCreate());
-            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().
-                    graph(graphCH).vehicle(encoder).type(weightCalc);
+            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().setGraph(graphCH).setVehicle(encoder).setType(weightCalc);
             prepareCH.doWork();
             prepare.add(prepareCH);
             // TODO prepare.add(prepareCH.createAStar().approximation(true).approximationFactor(.9));

@@ -106,12 +106,12 @@ public class SpatialKeyAlgo implements KeyAlgo
     /**
      * @return the number of involved bits
      */
-    public int bits()
+    public int getBits()
     {
         return allBits;
     }
 
-    public int exactPrecision()
+    public int getExactPrecision()
     {
         // 360 / 2^(allBits/2) = 1/precision
         int p = (int) (Math.pow(2, allBits) / 360);
@@ -127,7 +127,7 @@ public class SpatialKeyAlgo implements KeyAlgo
     }
 
     @Override
-    public SpatialKeyAlgo bounds( double minLonInit, double maxLonInit, double minLatInit, double maxLatInit )
+    public SpatialKeyAlgo setBounds( double minLonInit, double maxLonInit, double minLatInit, double maxLatInit )
     {
         bounds(new BBox(minLonInit, maxLonInit, minLatInit, maxLatInit));
         return this;
@@ -135,7 +135,7 @@ public class SpatialKeyAlgo implements KeyAlgo
 
     protected void setWorldBounds()
     {
-        bounds(-180, 180, -90, 90);
+        setBounds(-180, 180, -90, 90);
     }
 
     @Override

@@ -34,14 +34,14 @@ public class BigLongIntMapTest
         BigLongIntMap instance = new BigLongIntMap(1000, segments, -1);
         assertEquals(-1, instance.put(Long.MAX_VALUE / 2, 123));
         assertEquals(123, instance.get(Long.MAX_VALUE / 2));
-        assertEquals(1, instance.size());
+        assertEquals(1, instance.getSize());
         instance.clear();
 
         for (int i = 0; i < segments; i++)
         {
             assertEquals(-1, instance.put(Integer.MAX_VALUE * i, 123));
         }
-        assertEquals(segments, instance.size());
+        assertEquals(segments, instance.getSize());
         // assertEquals("1, 2, 0, ...", instance.toString());
     }
 }

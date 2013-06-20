@@ -119,7 +119,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm
         }
 
         int finish = 0;
-        while (finish < 2 && currFrom.weight + currTo.weight < shortest.weight())
+        while (finish < 2 && currFrom.weight + currTo.weight < shortest.getWeight())
         {
             // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
             // a node from overlap may not be on the shortest path!!
@@ -149,7 +149,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm
         }
 
         Path p = shortest.extract();
-        if (!p.found())
+        if (!p.isFound())
         {
             return p;
         }
@@ -165,19 +165,19 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm
         EdgeIterator iter = graph.getEdges(currNode, filter);
         while (iter.next())
         {
-            int tmpV = iter.adjNode();
-            double tmp = weightCalc.getWeight(iter.distance(), iter.flags()) + curr.weight;
+            int tmpV = iter.getAdjNode();
+            double tmp = weightCalc.getWeight(iter.getDistance(), iter.getFlags()) + curr.weight;
             EdgeEntry de = shortestDistMap.get(tmpV);
             if (de == null)
             {
-                de = new EdgeEntry(iter.edge(), tmpV, tmp);
+                de = new EdgeEntry(iter.getEdge(), tmpV, tmp);
                 de.parent = curr;
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
             } else if (de.weight > tmp)
             {
                 prioQueue.remove(de);
-                de.edge = iter.edge();
+                de.edge = iter.getEdge();
                 de.weight = tmp;
                 de.parent = curr;
                 prioQueue.add(de);
@@ -195,12 +195,12 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm
         {
             // update μ
             double newShortest = de.weight + entryOther.weight;
-            if (newShortest < shortest.weight())
+            if (newShortest < shortest.getWeight())
             {
-                shortest.switchToFrom(shortestDistMapFrom == shortestDistMapOther);
-                shortest.edgeEntry(de);
-                shortest.edgeEntryTo(entryOther);
-                shortest.weight(newShortest);
+                shortest.setSwitchToFrom(shortestDistMapFrom == shortestDistMapOther);
+                shortest.setEdgeEntry(de);
+                shortest.setEdgeEntryTo(entryOther);
+                shortest.setWeight(newShortest);
             }
         }
     }
@@ -214,7 +214,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public int visitedNodes()
+    public int getVisitedNodes()
     {
         return visitedFromCount + visitedToCount;
     }

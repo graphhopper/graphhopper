@@ -72,7 +72,7 @@ public class Path
         edgeEntry = p.edgeEntry;
     }
 
-    public Path edgeEntry( EdgeEntry edgeEntry )
+    public Path setEdgeEntry( EdgeEntry edgeEntry )
     {
         this.edgeEntry = edgeEntry;
         return this;
@@ -86,7 +86,7 @@ public class Path
     /**
      * We need to remember fromNode explicitely as its not saved in one edgeId of edgeIds.
      */
-    protected Path fromNode( int node )
+    protected Path setFromNode( int node )
     {
         fromNode = node;
         return this;
@@ -95,7 +95,7 @@ public class Path
     /**
      * @return the first node of this Path.
      */
-    public int fromNode()
+    public int getFromNode()
     {
         if (!EdgeIterator.Edge.isValid(fromNode))
         {
@@ -104,12 +104,12 @@ public class Path
         return fromNode;
     }
 
-    public boolean found()
+    public boolean isFound()
     {
         return found;
     }
 
-    public Path found( boolean found )
+    public Path setFound( boolean found )
     {
         this.found = found;
         return this;
@@ -124,7 +124,7 @@ public class Path
     /**
      * @return distance in meter
      */
-    public double distance()
+    public double getDistance()
     {
         return distance;
     }
@@ -132,7 +132,7 @@ public class Path
     /**
      * @return time in seconds
      */
-    public long time()
+    public long getTime()
     {
         return time;
     }
@@ -140,12 +140,12 @@ public class Path
     /**
      * This weight will be updated during the algorithm. The initial value is maximum double.
      */
-    public double weight()
+    public double getWeight()
     {
         return weight;
     }
 
-    public void weight( double w )
+    public void setWeight( double w )
     {
         this.weight = w;
     }
@@ -163,13 +163,13 @@ public class Path
             goalEdge = goalEdge.parent;
         }
 
-        fromNode(goalEdge.endNode);
+        setFromNode(goalEdge.endNode);
         reverseOrder();
         sw.stop();
-        return found(true);
+        return setFound(true);
     }
 
-    public String debugInfo()
+    public String getDebugInfo()
     {
         return sw.toString();
     }
@@ -181,7 +181,7 @@ public class Path
     {
         EdgeIterator iter = graph.getEdgeProps(edgeId, endNode);
         calcDistance(iter);
-        calcTime(iter.distance(), iter.flags());
+        calcTime(iter.getDistance(), iter.getFlags());
         addEdge(edgeId);
     }
 
@@ -191,7 +191,7 @@ public class Path
      */
     protected void calcDistance( EdgeIterator iter )
     {
-        distance += iter.distance();
+        distance += iter.getDistance();
     }
 
     protected void calcTime( double distance, int flags )
@@ -212,7 +212,7 @@ public class Path
      */
     public void forEveryEdge( EdgeVisitor visitor )
     {
-        int tmpNode = fromNode();
+        int tmpNode = getFromNode();
         int len = edgeIds.size();
         for (int i = 0; i < len; i++)
         {
@@ -223,7 +223,7 @@ public class Path
                         + " was empty when requested with node " + tmpNode
                         + ", array index:" + i + ", edges:" + edgeIds.size());
             }
-            tmpNode = iter.baseNode();
+            tmpNode = iter.getBaseNode();
             visitor.next(iter);
         }
     }
@@ -239,14 +239,14 @@ public class Path
             return nodes;
         }
 
-        int tmpNode = fromNode();
+        int tmpNode = getFromNode();
         nodes.add(tmpNode);
         forEveryEdge(new EdgeVisitor()
         {
             @Override
             public void next( EdgeIterator iter )
             {
-                nodes.add(iter.baseNode());
+                nodes.add(iter.getBaseNode());
             }
         });
         return nodes;
@@ -266,20 +266,20 @@ public class Path
         {
             return cachedPoints;
         }
-        int tmpNode = fromNode();
+        int tmpNode = getFromNode();
         cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
         forEveryEdge(new EdgeVisitor()
         {
             @Override
             public void next( EdgeIterator iter )
             {
-                PointList pl = iter.wayGeometry();
+                PointList pl = iter.getWayGeometry();
                 pl.reverse();
-                for (int j = 0; j < pl.size(); j++)
+                for (int j = 0; j < pl.getSize(); j++)
                 {
-                    cachedPoints.add(pl.latitude(j), pl.longitude(j));
+                    cachedPoints.add(pl.getLatitude(j), pl.getLongitude(j));
                 }
-                int baseNode = iter.baseNode();
+                int baseNode = iter.getBaseNode();
                 cachedPoints.add(graph.getLatitude(baseNode), graph.getLongitude(baseNode));
             }
         });
@@ -299,7 +299,7 @@ public class Path
             @Override
             public void next( EdgeIterator iter )
             {
-                distances.add(iter.distance());
+                distances.add(iter.getDistance());
             }
         });
         return distances;
@@ -331,7 +331,7 @@ public class Path
     @Override
     public String toString()
     {
-        return "distance:" + distance() + ", edges:" + edgeIds.size();
+        return "distance:" + getDistance() + ", edges:" + edgeIds.size();
     }
 
     public String toDetailsString()

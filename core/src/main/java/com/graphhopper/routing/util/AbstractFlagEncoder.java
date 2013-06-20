@@ -224,7 +224,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     @Override
     public int getMaxSpeed()
     {
-        return speedEncoder.maxValue();
+        return speedEncoder.getMaxValue();
     }
 
     @Override

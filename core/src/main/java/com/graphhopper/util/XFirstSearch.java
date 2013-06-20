@@ -57,7 +57,7 @@ public class XFirstSearch
             coll = new MyHelperIntQueue();
         }
 
-        GHBitSet visited = createBitSet(g.nodes());
+        GHBitSet visited = createBitSet(g.getNodes());
         visited.add(startNode);
         coll.push(startNode);
         int current;
@@ -69,7 +69,7 @@ public class XFirstSearch
                 EdgeIterator iter = getEdges(g, current);
                 while (iter.next())
                 {
-                    int connectedId = iter.adjNode();
+                    int connectedId = iter.getAdjNode();
                     if (checkAdjacent(iter) && !visited.contains(connectedId))
                     {
                         visited.add(connectedId);

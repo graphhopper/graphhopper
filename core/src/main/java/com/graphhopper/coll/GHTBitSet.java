@@ -63,7 +63,7 @@ public class GHTBitSet implements GHBitSet
     }
 
     @Override
-    public int cardinality()
+    public int getCardinality()
     {
         return tHash.size();
     }

@@ -60,7 +60,7 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graph = createTestGraph();
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 7);
-        assertEquals(p.toString(), 13, p.distance(), 1e-4);
+        assertEquals(p.toString(), 13, p.getDistance(), 1e-4);
         assertEquals(p.toString(), 5, p.calcNodes().size());
     }
 
@@ -72,15 +72,15 @@ public abstract class AbstractRoutingAlgorithmTester
         initFastVsShort(graphShortest);
         Path p1 = prepareGraph(graphShortest, new ShortestCalc(), carEncoder).createAlgo().calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
-        assertEquals(p1.toString(), 24000, p1.distance(), 1e-6);
-        assertEquals(p1.toString(), 8640, p1.time());
+        assertEquals(p1.toString(), 24000, p1.getDistance(), 1e-6);
+        assertEquals(p1.toString(), 8640, p1.getTime());
 
         Graph graphFastest = createGraph();
         initFastVsShort(graphFastest);
         Path p2 = prepareGraph(graphFastest, new FastestCalc(carEncoder), carEncoder).createAlgo().calcPath(0, 3);
         assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
-        assertEquals(p2.toString(), 31000, p2.distance(), 1e-6);
-        assertEquals(p2.toString(), 5580, p2.time());
+        assertEquals(p2.toString(), 31000, p2.getDistance(), 1e-6);
+        assertEquals(p2.toString(), 5580, p2.getTime());
     }
 
     // 0-1-2-3
@@ -118,8 +118,8 @@ public abstract class AbstractRoutingAlgorithmTester
         Graph graphShortest = createGraph();
         initFootVsCar(graphShortest);
         Path p1 = prepareGraph(graphShortest, new ShortestCalc(), footEncoder).createAlgo().calcPath(0, 7);
-        assertEquals(p1.toString(), 17000, p1.distance(), 1e-6);
-        assertEquals(p1.toString(), 12240, p1.time());
+        assertEquals(p1.toString(), 17000, p1.getDistance(), 1e-6);
+        assertEquals(p1.toString(), 12240, p1.getTime());
         assertEquals(Helper.createTList(0, 4, 5, 7), p1.calcNodes());
     }
 
@@ -179,7 +179,7 @@ public abstract class AbstractRoutingAlgorithmTester
     public void testNoPathFound()
     {
         Graph graph = createGraph();
-        assertFalse(prepareGraph(graph).createAlgo().calcPath(0, 1).found());
+        assertFalse(prepareGraph(graph).createAlgo().calcPath(0, 1).isFound());
     }
 
     @Test
@@ -187,7 +187,7 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graph = createWikipediaTestGraph();
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 4);
-        assertEquals(p.toString(), 20, p.distance(), 1e-4);
+        assertEquals(p.toString(), 20, p.getDistance(), 1e-4);
         assertEquals(p.toString(), 4, p.calcNodes().size());
     }
 
@@ -197,7 +197,7 @@ public abstract class AbstractRoutingAlgorithmTester
         Graph graph = createTestGraph();
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 0);
         assertEquals(p.toString(), 0, p.calcNodes().size());
-        assertEquals(p.toString(), 0, p.distance(), 1e-4);
+        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
     }
 
     @Test
@@ -206,7 +206,7 @@ public abstract class AbstractRoutingAlgorithmTester
         Graph graph = createTestGraph();
         Path p = prepareGraph(graph).createAlgo().calcPath(1, 2);
         assertEquals(Helper.createTList(1, 2), p.calcNodes());
-        assertEquals(p.toString(), 2, p.distance(), 1e-4);
+        assertEquals(p.toString(), 2, p.getDistance(), 1e-4);
     }
 
     // see wikipedia-graph.svg !
@@ -254,10 +254,10 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 4);
         // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
         assertEquals(p.toString(), Helper.createTList(0, 7, 6, 8, 3, 4), p.calcNodes());
-        assertEquals(p.toString(), 51, p.distance(), 1e-4);
+        assertEquals(p.toString(), 51, p.getDistance(), 1e-4);
 
         p = prepareGraph(graph).createAlgo().calcPath(1, 2);
-        assertEquals(p.toString(), 1, p.distance(), 1e-4);
+        assertEquals(p.toString(), 1, p.getDistance(), 1e-4);
         assertEquals(p.toString(), Helper.createTList(1, 2), p.calcNodes());
     }
 
@@ -283,7 +283,7 @@ public abstract class AbstractRoutingAlgorithmTester
         graph.edge(8, 6, 20, true);
 
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 4);
-        assertEquals(p.toString(), 40, p.distance(), 1e-4);
+        assertEquals(p.toString(), 40, p.getDistance(), 1e-4);
         assertEquals(p.toString(), 5, p.calcNodes().size());
         assertEquals(Helper.createTList(0, 7, 6, 5, 4), p.calcNodes());
     }
@@ -301,7 +301,7 @@ public abstract class AbstractRoutingAlgorithmTester
         {
             assertTrue("wrong locations: " + list.toString(), false);
         }
-        assertEquals(66f, p.distance(), 1e-3);
+        assertEquals(66f, p.getDistance(), 1e-3);
     }
 
     @Test
@@ -310,7 +310,7 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p = prepareGraph(getMatrixGraph()).createAlgo().calcPath(34, 36);
         assertEquals(Helper.createTList(34, 35, 36), p.calcNodes());
         assertEquals(3, p.calcNodes().size());
-        assertEquals(17, p.distance(), 1e-5);
+        assertEquals(17, p.getDistance(), 1e-5);
     }
 
     @Test
@@ -318,7 +318,7 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Path p = prepareGraph(getMatrixGraph()).createAlgo().calcPath(45, 72);
         assertEquals(Helper.createTList(45, 44, 54, 64, 74, 73, 72), p.calcNodes());
-        assertEquals(38f, p.distance(), 1e-3);
+        assertEquals(38f, p.getDistance(), 1e-3);
     }
 
     @Test
@@ -345,7 +345,7 @@ public abstract class AbstractRoutingAlgorithmTester
 
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 2);
         assertEquals(Helper.createTList(0, 1, 2), p.calcNodes());
-        assertEquals(p.toString(), 5.99, p.distance(), 1e-4);
+        assertEquals(p.toString(), 5.99, p.getDistance(), 1e-4);
         assertEquals(p.toString(), 3, p.calcNodes().size());
     }
 
@@ -377,11 +377,11 @@ public abstract class AbstractRoutingAlgorithmTester
         graph.setNode(3, 1.5, 2.5);
         graph.setNode(4, 0.5, 4.5);
 
-        graph.edge(0, 1, 2, true).wayGeometry(Helper.createPointList(0, 3));
+        graph.edge(0, 1, 2, true).setWayGeometry(Helper.createPointList(0, 3));
         graph.edge(2, 3, 2, true);
-        graph.edge(3, 4, 2, true).wayGeometry(Helper.createPointList(1, 3.5));
+        graph.edge(3, 4, 2, true).setWayGeometry(Helper.createPointList(1, 3.5));
 
-        graph.edge(0, 2, 0.8, true).wayGeometry(Helper.createPointList(0, 1.6, 0, 0, 1, 0));
+        graph.edge(0, 2, 0.8, true).setWayGeometry(Helper.createPointList(0, 1.6, 0, 0, 1, 0));
         graph.edge(0, 2, 1.2, true);
         graph.edge(1, 3, 1.3, true);
         graph.edge(1, 4, 1, true);
@@ -411,13 +411,13 @@ public abstract class AbstractRoutingAlgorithmTester
         Graph graph = createGraph();
 
         String bigFile = "10000EWD.txt.gz";
-        new PrinctonReader(graph).stream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
+        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
         AlgorithmPreparation prepare = prepareGraph(graph);
         StopWatch sw = new StopWatch();
         for (int i = 0; i < N; i++)
         {
-            int index1 = Math.abs(rand.nextInt(graph.nodes()));
-            int index2 = Math.abs(rand.nextInt(graph.nodes()));
+            int index1 = Math.abs(rand.nextInt(graph.getNodes()));
+            int index2 = Math.abs(rand.nextInt(graph.getNodes()));
             RoutingAlgorithm d = prepare.createAlgo();
             if (i >= noJvmWarming)
             {
@@ -425,7 +425,7 @@ public abstract class AbstractRoutingAlgorithmTester
             }
             Path p = d.calcPath(index1, index2);
             // avoid jvm optimization => call p.distance
-            if (i >= noJvmWarming && p.distance() > -1)
+            if (i >= noJvmWarming && p.getDistance() > -1)
             {
                 sw.stop();
             }

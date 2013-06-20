@@ -110,7 +110,7 @@ public class OSMIDSegmentedMap implements LongIntMap
             }
 
             VLongStorage buck = buckets[retBucket];
-            long tmp = buck.position();
+            long tmp = buck.getPosition();
             buck.seek(0);
             int max = currentBucket == retBucket ? currentIndex + 1 : bucketSize;
             int ret = getNoEntryValue();
@@ -139,7 +139,7 @@ public class OSMIDSegmentedMap implements LongIntMap
     }
 
     @Override
-    public long size()
+    public long getSize()
     {
         return size;
     }
@@ -150,14 +150,14 @@ public class OSMIDSegmentedMap implements LongIntMap
     }
 
     @Override
-    public int memoryUsage()
+    public int getMemoryUsage()
     {
         long bytes = 0;
         for (int i = 0; i < buckets.length; i++)
         {
             if (buckets[i] != null)
             {
-                bytes += buckets[i].length();
+                bytes += buckets[i].getLength();
             }
         }
         return Math.round((keys.length * 4 + bytes) / Helper.MB);

@@ -46,7 +46,7 @@ public class Location2IDFullIndex implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex precision( boolean approxDist )
+    public Location2IDIndex setApproximation( boolean approxDist )
     {
         if (approxDist)
         {
@@ -59,7 +59,7 @@ public class Location2IDFullIndex implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex resolution( int resolution )
+    public Location2IDIndex setResolution( int resolution )
     {
         return this;
     }
@@ -87,18 +87,18 @@ public class Location2IDFullIndex implements Location2IDIndex
             {
                 if (i == 0)
                 {
-                    node = iter.baseNode();
+                    node = iter.getBaseNode();
                 } else
                 {
-                    node = iter.adjNode();
+                    node = iter.getAdjNode();
                 }
                 double tmpLat = g.getLatitude(node);
                 double tmpLon = g.getLongitude(node);
                 double dist = calc.calcDist(tmpLat, tmpLon, queryLat, queryLon);
-                if (circle == null || dist < calc.calcDist(circle.lat(), circle.lon(), queryLat, queryLon))
+                if (circle == null || dist < calc.calcDist(circle.getLat(), circle.getLon(), queryLat, queryLon))
                 {
-                    res.closestNode(node);
-                    res.weight(dist);
+                    res.setClosestNode(node);
+                    res.setWeight(dist);
                     if (dist <= 0)
                     {
                         break;
@@ -114,7 +114,7 @@ public class Location2IDFullIndex implements Location2IDIndex
     @Override
     public int findID( double lat, double lon )
     {
-        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).closestNode();
+        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
     }
 
     @Override
@@ -134,7 +134,7 @@ public class Location2IDFullIndex implements Location2IDIndex
     }
 
     @Override
-    public long capacity()
+    public long getCapacity()
     {
         return 0;
     }

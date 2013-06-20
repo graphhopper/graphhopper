@@ -28,7 +28,7 @@ public abstract class AbstractAlgoPreparation<T extends AlgorithmPreparation> im
     private boolean prepared = false;
 
     @Override
-    public AlgorithmPreparation graph( Graph g )
+    public AlgorithmPreparation setGraph( Graph g )
     {
         _graph = g;
         return this;

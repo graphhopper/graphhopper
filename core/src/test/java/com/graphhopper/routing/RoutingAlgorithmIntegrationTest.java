@@ -183,14 +183,13 @@ public class RoutingAlgorithmIntegrationTest
         {
             // make sure we are using the latest file format
             Helper.removeDir(new File(graphFile));
-            GraphHopper hopper = new GraphHopper().setInMemory(true, true).
-                    osmFile(osmFile).graphHopperLocation(graphFile).
-                    encodingManager(new EncodingManager(importVehicles)).
+            GraphHopper hopper = new GraphHopper().setInMemory(true, true).setOSMFile(osmFile).
+                    setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
                     importOrLoad();
 
-            Graph g = hopper.graph();
-            Location2IDIndex idx = hopper.index();
-            final AbstractFlagEncoder encoder = hopper.encodingManager().getEncoder(vehicle);
+            Graph g = hopper.getGraph();
+            Location2IDIndex idx = hopper.getIndex();
+            final AbstractFlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             WeightCalculation weightCalc = new ShortestCalc();
             if ("fastest".equals(weightCalcStr))
             {
@@ -198,14 +197,14 @@ public class RoutingAlgorithmIntegrationTest
             }
 
             Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
-                    createAlgos(g, encoder, ch, weightCalc, hopper.encodingManager());
+                    createAlgos(g, encoder, ch, weightCalc, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (AlgorithmPreparation prepare : prepares)
             {
                 for (OneRun or : forEveryAlgo)
                 {
-                    int from = idx.findClosest(or.fromLat, or.fromLon, edgeFilter).closestNode();
-                    int to = idx.findClosest(or.toLat, or.toLon, edgeFilter).closestNode();
+                    int from = idx.findClosest(or.fromLat, or.fromLon, edgeFilter).getClosestNode();
+                    int to = idx.findClosest(or.toLat, or.toLon, edgeFilter).getClosestNode();
                     testCollector.assertDistance(prepare.createAlgo(), from, to, or.dist, or.locs);
                 }
             }
@@ -225,12 +224,11 @@ public class RoutingAlgorithmIntegrationTest
         String graphFile = "target/graph-monaco";
         Helper.removeDir(new File(graphFile));
         final EncodingManager encodingManager = new EncodingManager("CAR");
-        GraphHopper hopper = new GraphHopper().setInMemory(true, true).
-                encodingManager(encodingManager).
-                osmFile("files/monaco.osm.gz").graphHopperLocation(graphFile).
+        GraphHopper hopper = new GraphHopper().setInMemory(true, true).setEncodingManager(encodingManager).
+                setOSMFile("files/monaco.osm.gz").setGraphHopperLocation(graphFile).
                 importOrLoad();
-        final Graph g = hopper.graph();
-        final Location2IDIndex idx = hopper.index();
+        final Graph g = hopper.getGraph();
+        final Location2IDIndex idx = hopper.getIndex();
         final List<OneRun> instances = createMonacoCar();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);

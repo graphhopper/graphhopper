@@ -40,10 +40,10 @@ public class GraphHopperWebTest
             {
                 return getClass().getResourceAsStream("test.json");
             }
-        }.encodePolyline(false);
+        }.setEncodePolyline(false);
         GHResponse res = instance.route(new GHRequest(11.561415, 49.9516, 11.560439, 49.950357));
-        assertEquals(0.218915, res.distance(), 1e-5);
-        assertEquals(7, res.points().size());
+        assertEquals(0.218915, res.getDistance(), 1e-5);
+        assertEquals(7, res.getPoints().getSize());
     }
 
     @Test
@@ -58,7 +58,7 @@ public class GraphHopperWebTest
             }
         };
         GHResponse res = instance.route(new GHRequest(11.561415, 49.9516, 11.560439, 49.950357));
-        assertEquals(0.218915, res.distance(), 1e-5);
-        assertEquals(7, res.points().size());
+        assertEquals(0.218915, res.getDistance(), 1e-5);
+        assertEquals(7, res.getPoints().getSize());
     }
 }

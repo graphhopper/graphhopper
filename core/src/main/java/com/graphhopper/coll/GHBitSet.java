@@ -29,7 +29,7 @@ public interface GHBitSet
 
     void add( int index );
 
-    int cardinality();
+    int getCardinality();
 
     void clear();
 

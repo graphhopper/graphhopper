@@ -37,8 +37,8 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new AStarBidirection(_graph, encoder).type(calc);
+                return new AStarBidirection(_graph, encoder).setType(calc);
             }
-        }.graph(g);
+        }.setGraph(g);
     }
 }

@@ -87,7 +87,7 @@ public class PrepareRoutingSubnetworksTest
         instance.keepLargeNetworks(map);
         g.optimize();
 
-        assertEquals(7, g.nodes());
+        assertEquals(7, g.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(g));
         map = instance.findSubnetworks();
         assertEquals(1, map.size());

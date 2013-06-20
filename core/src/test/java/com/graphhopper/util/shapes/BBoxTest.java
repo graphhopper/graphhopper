@@ -54,7 +54,7 @@ public class BBoxTest
         assertFalse(new BBox(1, 2, 0, 0.5).contains(new BBox(1.5, 2, 0.5, 1)));
 
         Circle c = new Circle(10, 10, 120000);
-        assertTrue(c.boundingBox().contains(c));
+        assertTrue(c.getBounds().contains(c));
         assertFalse(new BBox(8.9, 11.09, 8.9, 11.2).contains(c));
     }
 

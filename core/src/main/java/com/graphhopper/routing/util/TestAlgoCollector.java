@@ -43,7 +43,7 @@ public class TestAlgoCollector
             int from, int to, double distance, int pointCount )
     {
         Path path = algo.calcPath(from, to);
-        if (!path.found())
+        if (!path.isFound())
         {
             errors.add(algo + " returns no path! expected distance: " + distance
                     + ", expected locations: " + pointCount + ". from:" + from + ", to:" + to);
@@ -53,17 +53,17 @@ public class TestAlgoCollector
         PointList pointList = path.calcPoints();
         // Yes, there are indeed real world instances where A-B-C is identical to A-C (in meter precision).
         // And for from:501620, to:155552 the node difference of astar to bi-dijkstra gets even bigger (7!).
-        if (Math.abs(path.distance() - distance) > 10)
+        if (Math.abs(path.getDistance() - distance) > 10)
         {
             errors.add(algo + " returns path not matching the expected distance of " + distance
-                    + "\t Returned was " + path.distance() + "\t (expected points " + pointCount
-                    + ", was " + pointList.size() + ") from:" + from + ", to:" + to);
+                    + "\t Returned was " + path.getDistance() + "\t (expected points " + pointCount
+                    + ", was " + pointList.getSize() + ") from:" + from + ", to:" + to);
         }
-        if (Math.abs(pointList.size() - pointCount) > 7)
+        if (Math.abs(pointList.getSize() - pointCount) > 7)
         {
             errors.add(algo + " returns path not matching the expected points of " + pointCount
-                    + "\t Returned was " + pointList.size() + "\t (expected distance " + distance
-                    + ", was " + path.distance() + ") from:" + from + ", to:" + to);
+                    + "\t Returned was " + pointList.getSize() + "\t (expected distance " + distance
+                    + ", was " + path.getDistance() + ") from:" + from + ", to:" + to);
         }
         return this;
     }

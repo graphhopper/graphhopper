@@ -282,7 +282,7 @@ public class PbfBlobDecoder implements Runnable
             // delta encoded meaning that each id is stored as a delta against
             // the previous one.
             long nodeId = 0;
-            TLongList wayNodes = osmWay.nodes();
+            TLongList wayNodes = osmWay.getNodes();
             for (long nodeIdOffset : way.getRefsList())
             {
                 nodeId += nodeIdOffset;

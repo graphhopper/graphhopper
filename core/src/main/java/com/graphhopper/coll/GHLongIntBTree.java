@@ -108,7 +108,7 @@ public class GHLongIntBTree implements LongIntMap
     }
 
     @Override
-    public long size()
+    public long getSize()
     {
         return size;
     }
@@ -117,9 +117,9 @@ public class GHLongIntBTree implements LongIntMap
      * @return memory usage in MB
      */
     @Override
-    public int memoryUsage()
+    public int getMemoryUsage()
     {
-        return Math.round(root.capacity() / Helper.MB);
+        return Math.round(root.getCapacity() / Helper.MB);
     }
 
     void clear()
@@ -142,9 +142,9 @@ public class GHLongIntBTree implements LongIntMap
         throw new IllegalStateException("not supported yet");
     }
 
-    private int entries()
+    private int getEntries()
     {
-        return root.entries();
+        return root.getEntries();
     }
 
     static class ReturnValue
@@ -343,7 +343,7 @@ public class GHLongIntBTree implements LongIntMap
         /**
          * @return used bytes
          */
-        long capacity()
+        long getCapacity()
         {
             long cap = keys.length * (8 + 4) + 3 * 12 + 4 + 1;
             if (!isLeaf)
@@ -353,14 +353,14 @@ public class GHLongIntBTree implements LongIntMap
                 {
                     if (children[i] != null)
                     {
-                        cap += children[i].capacity();
+                        cap += children[i].getCapacity();
                     }
                 }
             }
             return cap;
         }
 
-        int entries()
+        int getEntries()
         {
             int entries = 1;
             if (!isLeaf)
@@ -369,7 +369,7 @@ public class GHLongIntBTree implements LongIntMap
                 {
                     if (children[i] != null)
                     {
-                        entries += children[i].entries();
+                        entries += children[i].getEntries();
                     }
                 }
             }
@@ -451,7 +451,7 @@ public class GHLongIntBTree implements LongIntMap
     @Override
     public void optimize()
     {
-        if (size() > 10000)
+        if (getSize() > 10000)
         {
 //            StopWatch sw = new StopWatch().start();
 //            int old = memoryUsage();
@@ -464,7 +464,7 @@ public class GHLongIntBTree implements LongIntMap
     @Override
     public String toString()
     {
-        return "Height:" + height() + ", entries:" + entries();
+        return "Height:" + height() + ", entries:" + getEntries();
     }
 
     void print()

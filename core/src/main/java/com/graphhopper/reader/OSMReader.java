@@ -56,13 +56,13 @@ public class OSMReader
         osmNodeIdToBarrierMap = new GHLongIntBTree(200);
     }
 
-    public OSMReader workerThreads( int numOfWorkers )
+    public OSMReader setWorkerThreads( int numOfWorkers )
     {
         this.workerThreads = numOfWorkers;
         return this;
     }
 
-    public void osm2Graph( File osmFile ) throws IOException
+    public void doOSM2Graph( File osmFile ) throws IOException
     {
         if (encodingManager == null)
         {
@@ -89,7 +89,7 @@ public class OSMReader
     {
         try
         {
-            OSMInputFile in = new OSMInputFile(osmFile).workerThreads(workerThreads).open();
+            OSMInputFile in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
 
             long tmpCounter = 1;
 
@@ -102,7 +102,7 @@ public class OSMReader
                     boolean valid = filterWay(way);
                     if (valid)
                     {
-                        TLongList wayNodes = way.nodes();
+                        TLongList wayNodes = way.getNodes();
                         int s = wayNodes.size();
                         for (int index = 0; index < s; index++)
                         {
@@ -112,8 +112,8 @@ public class OSMReader
                         if (++tmpCounter % 500000 == 0)
                         {
                             logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
-                                    + nf(helper.getNodeMap().size()) + " (" + helper.getNodeMap().memoryUsage() + "MB) "
-                                    + Helper.memInfo());
+                                    + nf(helper.getNodeMap().getSize()) + " (" + helper.getNodeMap().getMemoryUsage() + "MB) "
+                                    + Helper.getMemInfo());
                         }
                     }
                 }
@@ -135,7 +135,7 @@ public class OSMReader
     {
 
         // ignore broken geometry
-        if (item.nodes().size() < 2)
+        if (item.getNodes().size() < 2)
         {
             return false;
         }
@@ -151,26 +151,26 @@ public class OSMReader
     /**
      * Creates the edges and nodes files from the specified osm file.
      */
-    void writeOsm2Graph( File osmFile )
+    private void writeOsm2Graph( File osmFile )
     {
 
-        int tmp = (int) Math.max(helper.foundNodes() / 50, 100);
-        logger.info("creating graph. Found nodes (pillar+tower):" + nf(helper.foundNodes()) + ", " + Helper.memInfo());
+        int tmp = (int) Math.max(helper.getFoundNodes() / 50, 100);
+        logger.info("creating graph. Found nodes (pillar+tower):" + nf(helper.getFoundNodes()) + ", " + Helper.getMemInfo());
         graphStorage.create(tmp);
         long wayStart = -1;
         long counter = 1;
         try
         {
-            OSMInputFile in = new OSMInputFile(osmFile).workerThreads(workerThreads).open();
+            OSMInputFile in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
             LongIntMap nodeFilter = helper.getNodeMap();
 
             OSMElement item;
             while ((item = in.getNext()) != null)
             {
-                switch (item.type())
+                switch (item.getType())
                 {
                     case OSMElement.NODE:
-                        if (nodeFilter.get(item.id()) != -1)
+                        if (nodeFilter.get(item.getId()) != -1)
                         {
                             processNode((OSMNode) item);
                         }
@@ -188,7 +188,7 @@ public class OSMReader
                 if (++counter % 5000000 == 0)
                 {
                     logger.info(nf(counter) + ", locs:" + nf(locations)
-                            + " (" + skippedLocations + ") " + Helper.memInfo());
+                            + " (" + skippedLocations + ") " + Helper.getMemInfo());
                 }
             }
             in.close();
@@ -198,7 +198,7 @@ public class OSMReader
             throw new RuntimeException("Couldn't process file " + osmFile, ex);
         }
         helper.finishedReading();
-        if (graphStorage.nodes() == 0)
+        if (graphStorage.getNodes() == 0)
         {
             throw new IllegalStateException("osm must not be empty. read " + counter + " lines and " + locations + " locations");
         }
@@ -212,7 +212,7 @@ public class OSMReader
      */
     public void processWay( OSMWay way ) throws XMLStreamException
     {
-        if (way.nodes().size() < 2)
+        if (way.getNodes().size() < 2)
         {
             return;
         }
@@ -234,7 +234,7 @@ public class OSMReader
             return;
         }
 
-        TLongList osmNodeIds = way.nodes();
+        TLongList osmNodeIds = way.getNodes();
 
         // look for barriers along the way
         final int size = osmNodeIds.size();
@@ -292,7 +292,7 @@ public class OSMReader
         } // no barriers - simply add the whole way
         else
         {
-            helper.addEdge(way.nodes(), flags);
+            helper.addEdge(way.getNodes(), flags);
         }
     }
 
@@ -309,7 +309,7 @@ public class OSMReader
                 final int barrierFlags = encodingManager.analyzeNode(node);
                 if (barrierFlags != 0)
                 {
-                    osmNodeIdToBarrierMap.put(node.id(), barrierFlags);
+                    osmNodeIdToBarrierMap.put(node.getId(), barrierFlags);
                 }
             }
 
@@ -328,7 +328,7 @@ public class OSMReader
         return true;
     }
 
-    public GraphStorage graph()
+    public GraphStorage getGraph()
     {
         return graphStorage;
     }
@@ -336,19 +336,19 @@ public class OSMReader
     /**
      * Specify the type of the path calculation (car, bike, ...).
      */
-    public OSMReader encodingManager( EncodingManager acceptWay )
+    public OSMReader setEncodingManager( EncodingManager acceptWay )
     {
         this.encodingManager = acceptWay;
         return this;
     }
 
-    OSMReaderHelper helper()
+    OSMReaderHelper getHelper()
     {
         return helper;
     }
 
-    public void wayPointMaxDistance( double maxDist )
+    public void setWayPointMaxDistance( double maxDist )
     {
-        helper.wayPointMaxDistance(maxDist);
+        helper.setWayPointMaxDistance(maxDist);
     }
 }

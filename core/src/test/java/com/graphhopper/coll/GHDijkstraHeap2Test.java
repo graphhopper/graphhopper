@@ -42,7 +42,7 @@ public class GHDijkstraHeap2Test extends AbstractBinHeapTest
         heap.insert(3, 5);
         heap.insert(3, 6);
         heap.insert(4, 7);
-        assertEquals(4, heap.size());
+        assertEquals(4, heap.getSize());
         List<Integer> list = Arrays.asList(6, 5, 4);
         assertTrue(list.contains(heap.pollElement()));
         assertTrue(list.contains(heap.pollElement()));

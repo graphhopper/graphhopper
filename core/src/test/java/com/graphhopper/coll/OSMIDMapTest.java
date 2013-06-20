@@ -40,7 +40,7 @@ public class OSMIDMapTest
         map.put(21, 5);
         map.put(31, 2);
 
-        assertEquals(7, map.size());
+        assertEquals(7, map.getSize());
         assertEquals(-1, map.get(8));
         assertEquals(0, map.get(9));
         assertEquals(-50, map.get(10));
@@ -57,7 +57,7 @@ public class OSMIDMapTest
         {
             map.put(i + 50, i + 7);
         }
-        assertEquals(57, map.size());
+        assertEquals(57, map.getSize());
     }
 
     @Test
@@ -116,7 +116,7 @@ public class OSMIDMapTest
         map.put(18, 7);
         map.put(19, 8);
 
-        assertEquals(9, map.size());
+        assertEquals(9, map.getSize());
         assertEquals(-1, map.get(8));
         assertEquals(0, map.get(9));
         assertEquals(1, map.get(10));

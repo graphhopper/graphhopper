@@ -63,16 +63,17 @@ public class OSMNode extends OSMElement
         super(NODE);
     }
 
-    public double lat()
+    public double getLat()
     {
         return lat;
     }
 
-    public double lon()
+    public double getLon()
     {
         return lon;
     }
 
+    @Override
     public String toString()
     {
         if (tags == null)

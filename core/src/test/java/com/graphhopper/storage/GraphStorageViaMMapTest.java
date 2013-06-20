@@ -25,6 +25,6 @@ public class GraphStorageViaMMapTest extends AbstractGraphTester
     @Override
     public GraphStorage createGraph( String location, int size )
     {
-        return new GraphBuilder(encodingManager).location(location).mmap(true).build().segmentSize(size / 2).create(size);
+        return new GraphBuilder(encodingManager).setLocation(location).setMmap(true).build().setSegmentSize(size / 2).create(size);
     }
 }

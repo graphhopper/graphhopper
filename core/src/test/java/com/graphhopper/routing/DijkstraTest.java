@@ -37,8 +37,8 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new Dijkstra(_graph, encoder).type(calc);
+                return new Dijkstra(_graph, encoder).setType(calc);
             }
-        }.graph(g);
+        }.setGraph(g);
     }
 }

@@ -46,8 +46,8 @@ public class DijkstraShortestOf2ToPubTest
         d.addPubTransportPoints(DijkstraWhichToOneTest.pubTransportPath);
         int from = 13;
         int dest = 65;
-        d.from(from);
-        d.to(dest);
+        d.setFrom(from);
+        d.setTo(dest);
         Path path = d.calcPath();
         assertWithBiDijkstra(DijkstraWhichToOneTest.pubTransportPath, path, from, dest, g);
     }
@@ -60,8 +60,8 @@ public class DijkstraShortestOf2ToPubTest
         d.addPubTransportPoints(DijkstraWhichToOneTest.pubTransportPath);
         int from = 13;
         int dest = 70;
-        d.from(from);
-        d.to(dest);
+        d.setFrom(from);
+        d.setTo(dest);
 
         Path path = d.calcPath();
         assertWithBiDijkstra(DijkstraWhichToOneTest.pubTransportPath, path, from, dest, g);
@@ -84,8 +84,8 @@ public class DijkstraShortestOf2ToPubTest
         d.addPubTransportPoints(pubTransport);
         int from = 1;
         int dest = 53;
-        d.from(from);
-        d.to(dest);
+        d.setFrom(from);
+        d.setTo(dest);
         Path path = d.calcPath();
         assertWithBiDijkstra(pubTransport, path, from, dest, g);
     }
@@ -99,8 +99,8 @@ public class DijkstraShortestOf2ToPubTest
             Path manualFrom = new DijkstraBidirectionRef(g, carEncoder).calcPath(points[i], from);
             Path manualTo = new DijkstraBidirectionRef(g, carEncoder).calcPath(points[i], to);
             if (bestManualPathFrom == null
-                    || manualFrom.weight() + manualTo.weight()
-                    < bestManualPathFrom.weight() + bestManualPathTo.weight())
+                    || manualFrom.getWeight() + manualTo.getWeight()
+                    < bestManualPathFrom.getWeight() + bestManualPathTo.getWeight())
             {
                 bestManualPathFrom = manualFrom;
                 bestManualPathTo = manualTo;
@@ -108,6 +108,6 @@ public class DijkstraShortestOf2ToPubTest
         }
 
         assertEquals(bestManualPathFrom.calcNodes().size() + bestManualPathTo.calcNodes().size() - 1, path.calcNodes().size());
-        assertEquals(bestManualPathFrom.weight() + bestManualPathTo.weight(), path.weight(), 1e-3);
+        assertEquals(bestManualPathFrom.getWeight() + bestManualPathTo.getWeight(), path.getWeight(), 1e-3);
     }
 }

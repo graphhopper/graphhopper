@@ -40,7 +40,7 @@ public class GraphicsWrapper
     public GraphicsWrapper( Graph g )
     {
         this.g = g;
-        BBox b = g.bounds();
+        BBox b = g.getBounds();
         scaleX = scaleY = 0.002 * (b.maxLat - b.minLat);
         offsetY = b.maxLat - 90;
         offsetX = -b.minLon;

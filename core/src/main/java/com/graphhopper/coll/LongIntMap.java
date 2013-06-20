@@ -27,9 +27,9 @@ public interface LongIntMap
 
     int get( long key );
 
-    long size();
+    long getSize();
 
     void optimize();
 
-    int memoryUsage();
+    int getMemoryUsage();
 }

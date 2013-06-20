@@ -46,7 +46,7 @@ public class GHBitSetImpl extends BitSet implements GHBitSet
     }
 
     @Override
-    public int cardinality()
+    public int getCardinality()
     {
         return super.cardinality();
     }

@@ -72,7 +72,7 @@ public class MMapDataAccess extends AbstractDataAccess
         try
         {
             // raFile necessary for loadExisting and create
-            raFile = new RandomAccessFile(fullName(), "rw");
+            raFile = new RandomAccessFile(getFullName(), "rw");
         } catch (IOException ex)
         {
             throw new RuntimeException(ex);
@@ -88,7 +88,7 @@ public class MMapDataAccess extends AbstractDataAccess
         }
         initRandomAccessFile();
         bytes = Math.max(10 * 4, bytes);
-        segmentSize(segmentSizeInBytes);
+        setSegmentSize(segmentSizeInBytes);
         ensureCapacity(bytes);
         return this;
     }
@@ -108,7 +108,7 @@ public class MMapDataAccess extends AbstractDataAccess
      * Makes it possible to force the order. E.g. if we create the file on a host system and copy it
      * to a different like android. http://en.wikipedia.org/wiki/Endianness
      */
-    public MMapDataAccess byteOrder( ByteOrder order )
+    public MMapDataAccess setByteOrder( ByteOrder order )
     {
         this.order = order;
         return this;
@@ -122,7 +122,7 @@ public class MMapDataAccess extends AbstractDataAccess
 
     protected void mapIt( long offset, long byteCount, boolean clearNew )
     {
-        if (byteCount <= capacity())
+        if (byteCount <= getCapacity())
         {
             return;
         }
@@ -249,7 +249,7 @@ public class MMapDataAccess extends AbstractDataAccess
         {
             return false;
         }
-        File file = new File(fullName());
+        File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
         {
             return false;
@@ -266,7 +266,7 @@ public class MMapDataAccess extends AbstractDataAccess
             return true;
         } catch (IOException ex)
         {
-            throw new RuntimeException("Problem while loading " + fullName(), ex);
+            throw new RuntimeException("Problem while loading " + getFullName(), ex);
         }
     }
 
@@ -375,7 +375,7 @@ public class MMapDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public long capacity()
+    public long getCapacity()
     {
         long cap = 0;
         for (ByteBuffer bb : segments)
@@ -386,7 +386,7 @@ public class MMapDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public int segments()
+    public int getSegments()
     {
         return segments.size();
     }

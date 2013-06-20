@@ -27,7 +27,7 @@ public class BitUtil
     public static void main( String[] args )
     {
         final byte[] bytes = BitUtil.fromInt(123);
-        System.out.println(new Measurement.MiniPerfTest()
+        System.out.println(new MiniPerfTest()
         {
             @Override
             public int doCalc( boolean warmup, int run )

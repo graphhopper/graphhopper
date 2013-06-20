@@ -91,7 +91,7 @@ public class EncodedValue
         return setValue(flags, defaultValue);
     }
 
-    public int maxValue()
+    public int getMaxValue()
     {
         return defaultMax;
     }

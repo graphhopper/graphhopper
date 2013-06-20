@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.Helper;
 
 /**
  * @author Peter Karich
@@ -40,7 +39,7 @@ public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<N
     public static AlgorithmPreparation createAlgoPrepare( Graph g, final String algorithmStr,
             FlagEncoder encoder, WeightCalculation weightCalc )
     {
-        return p(new RoutingAlgorithmFactory(algorithmStr, false), encoder, weightCalc).graph(g);
+        return p(new RoutingAlgorithmFactory(algorithmStr, false), encoder, weightCalc).setGraph(g);
     }
 
     private static AlgorithmPreparation p( final RoutingAlgorithmFactory factory,
@@ -53,7 +52,7 @@ public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<N
             {
                 try
                 {
-                    return factory.createAlgo(_graph, encoder).type(weightCalc);
+                    return factory.createAlgo(_graph, encoder).setType(weightCalc);
                 } catch (Exception ex)
                 {
                     throw new RuntimeException(ex);

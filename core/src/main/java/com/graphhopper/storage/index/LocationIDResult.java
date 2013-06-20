@@ -33,29 +33,29 @@ public class LocationIDResult
     {
     }
 
-    void closestNode( int node )
+    void setClosestNode( int node )
     {
         closestNode = node;
     }
 
-    public int closestNode()
+    public int getClosestNode()
     {
         return closestNode;
     }
 
-    public void weight( double dist )
+    public void setWeight( double w )
     {
-        weight = dist;
+        weight = w;
     }
 
-    public void wayIndex( int wayIndex )
-    {
-        this.wayIndex = wayIndex;
-    }
-
-    public double weight()
+    public double getWeight()
     {
         return weight;
+    }
+
+    public void setWayIndex( int wayIndex )
+    {
+        this.wayIndex = wayIndex;
     }
 
     /**

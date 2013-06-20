@@ -79,9 +79,9 @@ public class FootFlagEncoderTest
         g.edge(0, 2, 10, footEncoder.flags(5, true));
         g.edge(1, 3, 10, footEncoder.flags(10, true));
         EdgeFilter out = new DefaultEdgeFilter(footEncoder, false, true);
-        assertEquals(Arrays.asList(1, 2), GHUtility.neighbors(g.getEdges(0, out)));
-        assertEquals(Arrays.asList(0, 3), GHUtility.neighbors(g.getEdges(1, out)));
-        assertEquals(Arrays.asList(0), GHUtility.neighbors(g.getEdges(2, out)));
+        assertEquals(Arrays.asList(1, 2), GHUtility.getNeighbors(g.getEdges(0, out)));
+        assertEquals(Arrays.asList(0, 3), GHUtility.getNeighbors(g.getEdges(1, out)));
+        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(g.getEdges(2, out)));
     }
 
     @Test

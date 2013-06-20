@@ -17,8 +17,6 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.shapes.GHPlace;
@@ -72,23 +70,23 @@ public class GHRequest
      * Possible values: astar (A* algorithm, default), astarbi (bidirectional A*) dijkstra
      * (Dijkstra), dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
      */
-    public GHRequest algorithm( String algo )
+    public GHRequest setAlgorithm( String algo )
     {
         this.algo = algo;
         return this;
     }
 
-    public String algorithm()
+    public String getAlgorithm()
     {
         return algo;
     }
 
-    public GHPlace from()
+    public GHPlace getFrom()
     {
         return from;
     }
 
-    public GHPlace to()
+    public GHPlace getTo()
     {
         return to;
     }
@@ -120,24 +118,24 @@ public class GHRequest
         return from + " " + to + " (" + algo + ")";
     }
 
-    public GHRequest type( WeightCalculation weightCalc )
+    public GHRequest setType( WeightCalculation weightCalc )
     {
         this.weightCalc = weightCalc;
         return this;
     }
 
-    public WeightCalculation type()
+    public WeightCalculation getType()
     {
         return weightCalc;
     }
 
-    public GHRequest vehicle( String encoder )
+    public GHRequest setVehicle( String encoder )
     {
         this.encoderName = encoder;
         return this;
     }
 
-    public String vehicle()
+    public String getVehicle()
     {
         return encoderName;
     }

@@ -38,15 +38,15 @@ public interface RoutingAlgorithm
     /**
      * Changes the used weight calculation (e.g. fastest, shortest). Default is shortest.
      */
-    RoutingAlgorithm type( WeightCalculation calc );
+    RoutingAlgorithm setType( WeightCalculation calc );
 
     /**
      * @return name of this algorithm
      */
-    String name();
+    String getName();
 
     /**
      * Returns the visited nodes after searching. Useful for debugging.
      */
-    int visitedNodes();
+    int getVisitedNodes();
 }

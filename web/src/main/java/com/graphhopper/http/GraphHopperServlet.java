@@ -92,7 +92,7 @@ public class GraphHopperServlet extends HttpServlet
 
     void writeInfos( HttpServletRequest req, HttpServletResponse res ) throws JSONException
     {
-        BBox bb = hopper.graph().bounds();
+        BBox bb = hopper.getGraph().getBounds();
         List<Double> list = new ArrayList<Double>(4);
         list.add(bb.minLon);
         list.add(bb.minLat);
@@ -100,7 +100,7 @@ public class GraphHopperServlet extends HttpServlet
         list.add(bb.maxLat);
         JSONBuilder json = new JSONBuilder().
                 object("bbox", list).
-                object("supportedVehicles", hopper.encodingManager()).
+                object("supportedVehicles", hopper.getEncodingManager()).
                 object("version", Constants.VERSION).
                 object("buildDate", Constants.BUILD_DATE);
         writeJson(req, res, json.build());
@@ -122,7 +122,7 @@ public class GraphHopperServlet extends HttpServlet
         {
         }
         String vehicleStr = getParam(req, "vehicle");
-        FlagEncoder algoVehicle = hopper.encodingManager().getEncoder(vehicleStr.toUpperCase());
+        FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr.toUpperCase());
         WeightCalculation algoType = new FastestCalc(algoVehicle);
         if ("shortest".equalsIgnoreCase(getParam(req, "algoType")))
         {
@@ -139,14 +139,15 @@ public class GraphHopperServlet extends HttpServlet
         {
             sw = new StopWatch().start();
             GHResponse rsp = hopper.route(new GHRequest(start, end).
-                    vehicle(algoVehicle.toString()).type(algoType).
-                    algorithm(algoStr).
+                    setVehicle(algoVehicle.toString()).
+                    setType(algoType).
+                    setAlgorithm(algoStr).
                     putHint("douglas.minprecision", minPathPrecision));
             if (rsp.hasError())
             {
                 JSONBuilder builder = new JSONBuilder().startObject("info");
                 List<Map<String, String>> list = new ArrayList<Map<String, String>>();
-                for (Throwable t : rsp.errors())
+                for (Throwable t : rsp.getErrors())
                 {
                     Map<String, String> map = new HashMap<String, String>();
                     map.put("message", t.getMessage());
@@ -160,14 +161,14 @@ public class GraphHopperServlet extends HttpServlet
 
             float took = sw.stop().getSeconds();
             String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
-            PointList points = rsp.points();
+            PointList points = rsp.getPoints();
 
-            double distInKM = rsp.distance() / 1000;
+            double distInKM = rsp.getDistance() / 1000;
             String encodedParam = getParam(req, "encodedPolyline");
 
             JSONBuilder builder = new JSONBuilder().
                     startObject("info").
-                    object("routeFound", rsp.found()).
+                    object("routeFound", rsp.isFound()).
                     object("took", took).
                     object("tookGeocoding", tookGeocoding).
                     endObject();
@@ -181,10 +182,10 @@ public class GraphHopperServlet extends HttpServlet
                         end.lon, end.lat
                     }).
                     object("distance", distInKM).
-                    object("time", rsp.time());
-            if (points.size() > 2)
+                    object("time", rsp.getTime());
+            if (points.getSize() > 2)
             {
-                builder.object("bbox", rsp.calcRouteBBox(hopper.graph().bounds()).toGeoJson());
+                builder.object("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
             }
             if ("true".equals(encodedParam))
             {
@@ -201,9 +202,9 @@ public class GraphHopperServlet extends HttpServlet
 
             writeJson(req, res, builder.build());
             logger.info(req.getQueryString() + " " + infoStr + " " + start + "->" + end
-                    + ", distance: " + distInKM + ", time:" + Math.round(rsp.time() / 60f)
-                    + "min, points:" + points.size() + ", took:" + took
-                    + ", debug - " + rsp.debugInfo() + ", " + algoStr + ", "
+                    + ", distance: " + distInKM + ", time:" + Math.round(rsp.getTime() / 60f)
+                    + "min, points:" + points.getSize() + ", took:" + took
+                    + ", debug - " + rsp.getDebugInfo() + ", " + algoStr + ", "
                     + algoType + ", " + algoVehicle);
         } catch (Exception ex)
         {
@@ -325,11 +326,11 @@ public class GraphHopperServlet extends HttpServlet
             }
 
             final int index = infoPoints.size();
-            infoPoints.add(new GHPlace(Double.NaN, Double.NaN).name(str));
+            infoPoints.add(new GHPlace(Double.NaN, Double.NaN).setName(str));
             GHThreadPool.GHWorker worker = new GHThreadPool.GHWorker(timeOutInMillis)
             {
                 @Override
-                public String name()
+                public String getName()
                 {
                     return "geocoding search " + str;
                 }

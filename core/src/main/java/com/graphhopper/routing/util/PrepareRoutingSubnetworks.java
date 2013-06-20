@@ -45,7 +45,7 @@ public class PrepareRoutingSubnetworks
         this.g = g;
     }
 
-    public PrepareRoutingSubnetworks minNetworkSize( int minNetworkSize )
+    public PrepareRoutingSubnetworks setMinNetworkSize( int minNetworkSize )
     {
         this.minNetworkSize = minNetworkSize;
         return this;
@@ -64,7 +64,7 @@ public class PrepareRoutingSubnetworks
         subNetworks = map.size();
     }
 
-    public int subNetworks()
+    public int getSubNetworks()
     {
         return subNetworks;
     }
@@ -73,7 +73,7 @@ public class PrepareRoutingSubnetworks
     {
         final Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         final AtomicInteger integ = new AtomicInteger(0);
-        int locs = g.nodes();
+        int locs = g.getNodes();
         final GHBitSet bs = new GHBitSetImpl(locs);
         for (int start = 0; start < locs; start++)
         {
@@ -114,7 +114,7 @@ public class PrepareRoutingSubnetworks
 
         int biggestStart = -1;
         int maxCount = -1;
-        GHBitSetImpl bs = new GHBitSetImpl(g.nodes());
+        GHBitSetImpl bs = new GHBitSetImpl(g.getNodes());
         for (Entry<Integer, Integer> e : map.entrySet())
         {
             if (biggestStart < 0)
@@ -173,7 +173,7 @@ public class PrepareRoutingSubnetworks
     int removeZeroDegreeNodes()
     {
         int removed = 0;
-        int locs = g.nodes();
+        int locs = g.getNodes();
         for (int start = 0; start < locs; start++)
         {
             if (!g.getEdges(start).next())

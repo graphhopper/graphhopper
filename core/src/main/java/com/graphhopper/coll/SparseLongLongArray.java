@@ -210,7 +210,7 @@ public class SparseLongLongArray
     /**
      * Returns the number of key-value mappings that this SparseLongLongArray currently stores.
      */
-    public int size()
+    public int getSize()
     {
         if (mGarbage)
         {

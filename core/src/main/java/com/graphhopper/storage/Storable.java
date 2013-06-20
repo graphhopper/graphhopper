@@ -34,7 +34,7 @@ public interface Storable<T> extends Closeable
     /**
      * Creates the underlying storage. First operation if it cannot be loaded.
      */
-    T create( long size );
+    T create( long byteCount );
 
     /**
      * This method makes sure that the underlying data is written to the storage. Keep in mind that
@@ -53,5 +53,5 @@ public interface Storable<T> extends Closeable
     /**
      * @return the allocated storage size in bytes
      */
-    long capacity();
+    long getCapacity();
 }

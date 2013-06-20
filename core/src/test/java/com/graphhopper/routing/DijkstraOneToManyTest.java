@@ -43,9 +43,9 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new DijkstraOneToMany(_graph, encoder).type(calc);
+                return new DijkstraOneToMany(_graph, encoder).setType(calc);
             }
-        }.graph(g);
+        }.setGraph(g);
     }
 
     @Test
@@ -77,12 +77,12 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
 
         AlgorithmPreparation prep = prepareGraph(g);
         DijkstraOneToMany algo = (DijkstraOneToMany) prep.createAlgo();
-        algo.edgeFilter(new EdgeFilter()
+        algo.setEdgeFilter(new EdgeFilter()
         {
             @Override
             public boolean accept( EdgeIterator iter )
             {
-                return iter.adjNode() != 5;
+                return iter.getAdjNode() != 5;
             }
         });
         Path p = algo.calcPath(4, 6);
@@ -90,12 +90,12 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
 
         // important call!
         algo.clear();
-        algo.edgeFilter(new EdgeFilter()
+        algo.setEdgeFilter(new EdgeFilter()
         {
             @Override
             public boolean accept( EdgeIterator iter )
             {
-                return iter.adjNode() != 3;
+                return iter.getAdjNode() != 3;
             }
         });
         p = algo.calcPath(4, 6);

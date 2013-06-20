@@ -42,13 +42,13 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     {
         this.graph = graph;
         this.additionalEdgeFilter = EdgeFilter.ALL_EDGES;
-        type(new ShortestCalc());
+        setType(new ShortestCalc());
         this.flagEncoder = encoder;
         outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
         inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
     }
 
-    public RoutingAlgorithm edgeFilter( EdgeFilter additionalEdgeFilter )
+    public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
     {
         this.additionalEdgeFilter = additionalEdgeFilter;
         return this;
@@ -59,13 +59,13 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         return additionalEdgeFilter.accept(iter);
     }
 
-    protected EdgeIterator neighbors( int neighborNode )
+    protected EdgeIterator getNeighbors( int neighborNode )
     {
         return graph.getEdges(neighborNode, outEdgeFilter);
     }
 
     @Override
-    public RoutingAlgorithm type( WeightCalculation wc )
+    public RoutingAlgorithm setType( WeightCalculation wc )
     {
         this.weightCalc = wc;
         return this;
@@ -78,11 +78,11 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     @Override
     public String toString()
     {
-        return name() + "|" + weightCalc;
+        return getName() + "|" + weightCalc;
     }
 
     @Override
-    public String name()
+    public String getName()
     {
         return getClass().getSimpleName();
     }

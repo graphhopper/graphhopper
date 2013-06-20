@@ -45,7 +45,7 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest
     {
         Directory dir = new RAMDirectory(location);
         Location2NodesNtreeLG idx = new Location2NodesNtreeLG((LevelGraph) g, dir);
-        idx.resolution(1000000).prepareIndex();
+        idx.setResolution(1000000).prepareIndex();
         return idx;
     }
 
@@ -78,10 +78,10 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest
 
         // create shortcuts
         EdgeSkipIterator iter5 = g.edge(0, 2, 20, true);
-        iter5.skippedEdges(iter1.edge(), iter2.edge());
+        iter5.setSkippedEdges(iter1.getEdge(), iter2.getEdge());
         EdgeSkipIterator iter6 = g.edge(2, 4, 28, true);
-        iter6.skippedEdges(iter3.edge(), iter4.edge());
-        g.edge(0, 4, 40, true).skippedEdges(iter5.edge(), iter6.edge());
+        iter6.setSkippedEdges(iter3.getEdge(), iter4.getEdge());
+        g.edge(0, 4, 40, true).setSkippedEdges(iter5.getEdge(), iter6.getEdge());
 
         Location2IDIndex index = createIndex(g, -1);
         assertEquals(2, index.findID(0, 0.5));
@@ -127,7 +127,7 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest
         lg.disconnect(iter1, EdgeIterator.NO_EDGE, false);
 
         Location2NodesNtreeLG index = new Location2NodesNtreeLG(lg, new RAMDirectory());
-        index.resolution(100000);
+        index.setResolution(100000);
         index.prepareIndex();
         // very close to 2, but should match the edge 0--1
         TIntHashSet set = index.findNetworkEntries(0.51, 0.2);

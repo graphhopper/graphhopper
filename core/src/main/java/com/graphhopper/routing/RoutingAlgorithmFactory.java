@@ -18,11 +18,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.FastestCalc;
-import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 
 /**
@@ -56,7 +52,7 @@ public class RoutingAlgorithmFactory
             return new Dijkstra(g, encoder);
         } else if ("astarbi".equalsIgnoreCase(algoStr))
         {
-            return new AStarBidirection(g, encoder).approximation(approx);
+            return new AStarBidirection(g, encoder).setApproximation(approx);
         } else if ("dijkstraOneToMany".equalsIgnoreCase(algoStr))
         {
             return new DijkstraOneToMany(g, encoder);

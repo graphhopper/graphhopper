@@ -33,7 +33,7 @@ public class Location2IDQuadtreeTest extends AbstractLocation2IDIndexTester
     @Override
     public Location2IDIndex createIndex( Graph g, int resolution )
     {
-        return new Location2IDQuadtree(g, new MMapDirectory(location + "loc2idIndex")).resolution(resolution).prepareIndex();
+        return new Location2IDQuadtree(g, new MMapDirectory(location + "loc2idIndex")).setResolution(resolution).prepareIndex();
     }
 
     @Test
@@ -41,12 +41,12 @@ public class Location2IDQuadtreeTest extends AbstractLocation2IDIndexTester
     {
         Location2IDQuadtree index = new Location2IDQuadtree(createGraph(new EncodingManager()), new RAMDirectory());
         index.initAlgo(5, 6);
-        assertEquals(1, index.normedDist(0, 1), 1e-6);
-        assertEquals(2, index.normedDist(0, 7), 1e-6);
-        assertEquals(2, index.normedDist(7, 2), 1e-6);
-        assertEquals(1, index.normedDist(7, 1), 1e-6);
-        assertEquals(4, index.normedDist(13, 25), 1e-6);
-        assertEquals(8, index.normedDist(15, 25), 1e-6);
+        assertEquals(1, index.getNormedDist(0, 1), 1e-6);
+        assertEquals(2, index.getNormedDist(0, 7), 1e-6);
+        assertEquals(2, index.getNormedDist(7, 2), 1e-6);
+        assertEquals(1, index.getNormedDist(7, 1), 1e-6);
+        assertEquals(4, index.getNormedDist(13, 25), 1e-6);
+        assertEquals(8, index.getNormedDist(15, 25), 1e-6);
     }
 
     @Override

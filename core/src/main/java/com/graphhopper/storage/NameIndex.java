@@ -119,9 +119,9 @@ public class NameIndex implements Storable<NameIndex>
         }
     }
 
-    public void segmentSize( int bytes )
+    public void setSegmentSize( int bytes )
     {
-        names.segmentSize(bytes);
+        names.setSegmentSize(bytes);
     }
 
     @Override
@@ -138,8 +138,8 @@ public class NameIndex implements Storable<NameIndex>
     }
 
     @Override
-    public long capacity()
+    public long getCapacity()
     {
-        return names.capacity();
+        return names.getCapacity();
     }
 }

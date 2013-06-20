@@ -150,7 +150,7 @@ public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer>
     }
 
     @Override
-    public int size()
+    public int getSize()
     {
         return size;
     }
@@ -237,21 +237,21 @@ public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer>
         Object old = sorted.remove(key);
         if (old == null)
         {
-            throw new IllegalStateException("cannot remove " + key + " " + stats());
+            throw new IllegalStateException("cannot remove " + key + " " + getStatsInfo());
         }
 
         if (old instanceof Integer)
         {
             if (!old.equals(value))
             {
-                throw new IllegalStateException("cannot remove " + key + " " + stats());
+                throw new IllegalStateException("cannot remove " + key + " " + getStatsInfo());
             }
             return;
         }
         MyList list = (MyList) old;
         if (!list.remove((Integer) value))
         {
-            throw new IllegalStateException("cannot remove " + key + " " + stats());
+            throw new IllegalStateException("cannot remove " + key + " " + getStatsInfo());
         }
         if (!list.isEmpty())
         {
@@ -301,7 +301,7 @@ public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer>
         }
         if (sorted.isEmpty())
         {
-            throw new IllegalStateException("sorted tree wasn't fill with data? " + stats());
+            throw new IllegalStateException("sorted tree wasn't fill with data? " + getStatsInfo());
         }
         underflows++;
         return true;
@@ -341,19 +341,19 @@ public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer>
         sorted = newSorted;
         if (largeHeap.isEmpty())
         {
-            throw new IllegalStateException("largeHeap wasn't filled with data from small heap!? " + stats());
+            throw new IllegalStateException("largeHeap wasn't filled with data from small heap!? " + getStatsInfo());
         }
         splitter = largeHeap.peek_key();
         overflows++;
         return true;
     }
 
-    public String stats()
+    public String getStatsInfo()
     {
-        return "size:" + size()
+        return "size:" + getSize()
                 + ", smallSize: " + sorted.size() + " " + sorted
                 + ", split:" + splitter
-                + ", largeSize: " + largeHeap.size() + "(" + largeHeap.getCapacity() + ")"
+                + ", largeSize: " + largeHeap.getSize() + "(" + largeHeap.getCapacity() + ")"
                 + ", overflows:" + overflows + ", underflows:" + underflows;
     }
 

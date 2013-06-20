@@ -48,12 +48,12 @@ public class PathBidirRefTest
         PathBidirRef pw = new PathBidirRef(g, carEncoder);
         EdgeIterator iter = g.getEdges(1, carOutEdges);
         iter.next();
-        pw.edgeEntry = new EdgeEntry(iter.edge(), 2, 0);
+        pw.edgeEntry = new EdgeEntry(iter.getEdge(), 2, 0);
         pw.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 10);
         pw.edgeTo = new EdgeEntry(EdgeIterator.NO_EDGE, 2, 0);
         Path p = pw.extract();
         assertEquals(Helper.createTList(1, 2), p.calcNodes());
-        assertEquals(10, p.distance(), 1e-4);
+        assertEquals(10, p.getDistance(), 1e-4);
     }
 
     @Test
@@ -65,15 +65,15 @@ public class PathBidirRefTest
         EdgeIterator iter = g.getEdges(1, carOutEdges);
         iter.next();
         PathBidirRef pw = new PathBidirRef(g, carEncoder);
-        pw.edgeEntry = new EdgeEntry(iter.edge(), 2, 10);
+        pw.edgeEntry = new EdgeEntry(iter.getEdge(), 2, 10);
         pw.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 0);
 
         iter = g.getEdges(3, new DefaultEdgeFilter(carEncoder, true, false));
         iter.next();
-        pw.edgeTo = new EdgeEntry(iter.edge(), 2, 20);
+        pw.edgeTo = new EdgeEntry(iter.getEdge(), 2, 20);
         pw.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 3, 0);
         Path p = pw.extract();
         assertEquals(Helper.createTList(1, 2, 3), p.calcNodes());
-        assertEquals(30, p.distance(), 1e-4);
+        assertEquals(30, p.getDistance(), 1e-4);
     }
 }

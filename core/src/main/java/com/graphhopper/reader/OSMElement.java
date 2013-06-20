@@ -72,12 +72,12 @@ public abstract class OSMElement
         // no use case where tags need to be copied yet
     }
 
-    public long id()
+    public long getId()
     {
         return id;
     }
 
-    public void id( long id )
+    public void setId( long id )
     {
         if (this.id != 0)
         {
@@ -288,7 +288,7 @@ public abstract class OSMElement
         id = nextID++;
     }
 
-    public int type()
+    public int getType()
     {
         return type;
     }

@@ -73,26 +73,26 @@ public class Dijkstra extends AbstractRoutingAlgorithm
             }
 
             int neighborNode = currEdge.endNode;
-            EdgeIterator iter = neighbors(neighborNode);
+            EdgeIterator iter = getNeighbors(neighborNode);
             while (iter.next())
             {
                 if (!accept(iter))
                 {
                     continue;
                 }
-                int tmpNode = iter.adjNode();
-                double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currEdge.weight;
+                int tmpNode = iter.getAdjNode();
+                double tmpWeight = weightCalc.getWeight(iter.getDistance(), iter.getFlags()) + currEdge.weight;
                 EdgeEntry nEdge = map.get(tmpNode);
                 if (nEdge == null)
                 {
-                    nEdge = new EdgeEntry(iter.edge(), tmpNode, tmpWeight);
+                    nEdge = new EdgeEntry(iter.getEdge(), tmpNode, tmpWeight);
                     nEdge.parent = currEdge;
                     map.put(tmpNode, nEdge);
                     heap.add(nEdge);
                 } else if (nEdge.weight > tmpWeight)
                 {
                     heap.remove(nEdge);
-                    nEdge.edge = iter.edge();
+                    nEdge.edge = iter.getEdge();
                     nEdge.weight = tmpWeight;
                     nEdge.parent = currEdge;
                     heap.add(nEdge);
@@ -121,17 +121,17 @@ public class Dijkstra extends AbstractRoutingAlgorithm
 
     public Path extractPath( EdgeEntry goalEdge )
     {
-        return new Path(graph, flagEncoder).edgeEntry(goalEdge).extract();
+        return new Path(graph, flagEncoder).setEdgeEntry(goalEdge).extract();
     }
 
     @Override
-    public String name()
+    public String getName()
     {
         return "dijkstra";
     }
 
     @Override
-    public int visitedNodes()
+    public int getVisitedNodes()
     {
         return visitedNodes;
     }

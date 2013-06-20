@@ -111,7 +111,7 @@ public class QuadTreeSimple<T> implements QuadTree<T>
     }
 
     @Override
-    public long size()
+    public long getSize()
     {
         return size;
     }
@@ -259,7 +259,7 @@ public class QuadTreeSimple<T> implements QuadTree<T>
                 }
             }
         };
-        double err = 1.0 / Math.pow(10, algo.exactPrecision());
+        double err = 1.0 / Math.pow(10, algo.getExactPrecision());
         getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err), root, worker);
         return removedWrapper.get();
     }
@@ -299,7 +299,7 @@ public class QuadTreeSimple<T> implements QuadTree<T>
                 }
             }
         };
-        double err = 1.0 / Math.pow(10, algo.exactPrecision());
+        double err = 1.0 / Math.pow(10, algo.getExactPrecision());
         getNeighbours(BBox.createEarthMax(), new BBox(lon - err, lon + err, lat - err, lat + err), root, worker);
         return nodes;
     }
@@ -466,7 +466,7 @@ public class QuadTreeSimple<T> implements QuadTree<T>
         QTNode node = root;
 
         // + some bytes for the deep objects
-        long offset = 3 * 4 + 8 + 3 * Helper.sizeOfObjectRef(factor);
+        long offset = 3 * 4 + 8 + 3 * Helper.getSizeOfObjectRef(factor);
         if (root != null)
         {
             return node.getMemoryUsageInBytes(factor) + offset;

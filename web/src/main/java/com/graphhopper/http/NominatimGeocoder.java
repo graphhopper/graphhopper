@@ -64,7 +64,7 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding
         this.nominatimReverseUrl = reverseUrl;
     }
 
-    public NominatimGeocoder bounds( BBox bounds )
+    public NominatimGeocoder setBounds( BBox bounds )
     {
         this.bounds = bounds;
         return this;
@@ -77,7 +77,7 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding
         for (GHPlace place : places)
         {
             // see https://trac.openstreetmap.org/ticket/4683 why limit=3 and not 1
-            String url = nominatimUrl + "?format=json&q=" + WebHelper.encodeURL(place.name()) + "&limit=3";
+            String url = nominatimUrl + "?format=json&q=" + WebHelper.encodeURL(place.getName()) + "&limit=3";
             if (bounds != null)
             {
                 // minLon, minLat, maxLon, maxLat => left, top, right, bottom
@@ -94,7 +94,7 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding
                 double lat = json.getDouble("lat");
                 double lon = json.getDouble("lon");
                 GHPlace p = new GHPlace(lat, lon);
-                p.name(json.getString("display_name"));
+                p.setName(json.getString("display_name"));
                 resList.add(p);
             } catch (Exception ex)
             {
@@ -146,7 +146,7 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding
                 {
                     name += address.get("country");
                 }
-                resList.add(new GHPlace(lat, lon).name(name));
+                resList.add(new GHPlace(lat, lon).setName(name));
             } catch (Exception ex)
             {
                 logger.error("problem while geocoding (reverse " + point + "): " + ex.getMessage());
@@ -166,7 +166,7 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding
         return hConn;
     }
 
-    public NominatimGeocoder timeout( int timeout )
+    public NominatimGeocoder setTimeout( int timeout )
     {
         this.timeoutInMillis = timeout;
         return this;

@@ -170,34 +170,34 @@ public class Helper
         return file.delete();
     }
 
-    public static long totalMB()
+    public static long getTotalMB()
     {
         return Runtime.getRuntime().totalMemory() / MB;
     }
 
-    public static long usedMB()
+    public static long getUsedMB()
     {
         return (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / MB;
     }
 
-    public static String memInfo()
+    public static String getMemInfo()
     {
-        return "totalMB:" + totalMB() + ", usedMB:" + usedMB();
+        return "totalMB:" + getTotalMB() + ", usedMB:" + getUsedMB();
     }
 
-    public static int sizeOfObjectRef( int factor )
+    public static int getSizeOfObjectRef( int factor )
     {
         // pointer to class, flags, lock
         return factor * (4 + 4 + 4);
     }
 
-    public static int sizeOfLongArray( int length, int factor )
+    public static int getSizeOfLongArray( int length, int factor )
     {
         // pointer to class, flags, lock, size
         return factor * (4 + 4 + 4 + 4) + 8 * length;
     }
 
-    public static int sizeOfObjectArray( int length, int factor )
+    public static int getSizeOfObjectArray( int length, int factor )
     {
         // TODO add 4byte to make a multiple of 8 in some cases
         // TODO compressed oop

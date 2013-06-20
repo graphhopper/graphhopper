@@ -45,13 +45,13 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
     }
 
     @Override
-    public Location2IDIndex resolution( int resolution )
+    public Location2IDIndex setResolution( int resolution )
     {
         return this;
     }
 
     @Override
-    public Location2IDIndex precision( boolean approxDist )
+    public Location2IDIndex setApproximation( boolean approxDist )
     {
         if (approxDist)
         {
@@ -72,13 +72,13 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
     @Override
     public int findID( double lat, double lon )
     {
-        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).closestNode();
+        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
     }
 
     @Override
     public LocationIDResult findClosest( double queryLat, double queryLon, EdgeFilter filter )
     {
-        int nodes = g.nodes();
+        int nodes = g.getNodes();
         LocationIDResult res = new LocationIDResult();
         double foundDist = Double.MAX_VALUE;
         AllEdgesIterator iter = g.getAllEdges();
@@ -92,10 +92,10 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
             {
                 if (i == 0)
                 {
-                    node = iter.baseNode();
+                    node = iter.getBaseNode();
                 } else
                 {
-                    node = iter.adjNode();
+                    node = iter.getAdjNode();
                 }
 
                 double fromLat = g.getLatitude(node);
@@ -108,7 +108,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
 
                 if (fromDist < foundDist)
                 {
-                    res.closestNode(node);
+                    res.setClosestNode(node);
                     foundDist = fromDist;
                 }
 
@@ -117,7 +117,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
                 {
                     continue;
                 }
-                int toNode = iter.adjNode();
+                int toNode = iter.getAdjNode();
                 double toLat = g.getLatitude(toNode);
                 double toLon = g.getLongitude(toNode);
 
@@ -128,10 +128,10 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
                             fromLat, fromLon, toLat, toLon));
                     if (distEdge < foundDist)
                     {
-                        res.closestNode(node);
+                        res.setClosestNode(node);
                         if (fromDist > calc.calcDist(toLat, toLon, queryLat, queryLon))
                         {
-                            res.closestNode(toNode);
+                            res.setClosestNode(toNode);
                         }
                         foundDist = distEdge;
                     }
@@ -158,7 +158,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
     }
 
     @Override
-    public long capacity()
+    public long getCapacity()
     {
         return 0;
     }

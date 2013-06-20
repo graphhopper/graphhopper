@@ -54,7 +54,7 @@ public class GraphStorage3DTest
 
         Path p = new DijkstraBidirection(g, encodingManager.getEncoder("CAR")).calcPath(0, 1);
         assertEquals(Helper.createTList(0, 3, 1), p.calcNodes());
-        assertEquals(100, p.distance(), .1);
+        assertEquals(100, p.getDistance(), .1);
     }
 
     public static void edge( GraphStorage3D g, DistanceCalc3D dist, int from, int to )
