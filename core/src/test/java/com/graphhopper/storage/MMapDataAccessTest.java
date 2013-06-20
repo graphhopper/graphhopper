@@ -36,12 +36,12 @@ public class MMapDataAccessTest extends DataAccessTest {
         DataAccess da = new RAMDataAccess(name, directory, true);
         assertFalse(da.loadExisting());
         da.create(100);
-        da.setInt(7, 123);
+        da.setInt(7 * 4, 123);
         da.flush();
         da.close();
         da = createDataAccess(name);
         assertTrue(da.loadExisting());
-        assertEquals(123, da.getInt(7));
+        assertEquals(123, da.getInt(7* 4));
         da.close();
     }
 
@@ -50,14 +50,14 @@ public class MMapDataAccessTest extends DataAccessTest {
         DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
         da.create(100);
-        da.setInt(7, 123);
+        da.setInt(7 * 4, 123);
 
         // TODO "memory mapped flush" is expensive and not required. only writing the header is required.
         da.flush();
         da.close();
         da = new RAMDataAccess(name, directory, true);
         assertTrue(da.loadExisting());
-        assertEquals(123, da.getInt(7));
+        assertEquals(123, da.getInt(7* 4));
         da.close();
     }
 }

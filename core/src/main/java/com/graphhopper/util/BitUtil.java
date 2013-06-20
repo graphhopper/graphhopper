@@ -19,11 +19,21 @@
 package com.graphhopper.util;
 
 /**
- * Conversation between integers/longs/float/doubles to bytes.
+ * Conversation between integer/long/float/double to bytes.
  *
  * @author Peter Karich
  */
 public class BitUtil {
+
+    public static void main(String[] args) {
+        final byte[] bytes = BitUtil.fromInt(123);
+        System.out.println(new Measurement.MiniPerfTest() {
+            @Override public int doCalc(boolean warmup, int run) {
+                BitUtil.fromInt(bytes, run, 0);
+                return bytes[3];
+            }
+        }.count(10000000).start().report());
+    }
 
     private BitUtil() {
         // do not instantiate
@@ -81,10 +91,6 @@ public class BitUtil {
         return (b[offset] & 0xFF) << 24 | (b[++offset] & 0xFF) << 16 | (b[++offset] & 0xFF) << 8 | (b[++offset] & 0xFF);
     }
 
-    public static int toIntLittle(byte[] b, int offset) {
-        return (b[offset] & 0xFF) << 24 | (b[++offset] & 0xFF) << 16 | (b[++offset] & 0xFF) << 8 | (b[++offset] & 0xFF);
-    }
-
     public static byte[] fromInt(int value) {
         byte[] bytes = new byte[4];
         fromInt(bytes, value, 0);
@@ -96,9 +102,9 @@ public class BitUtil {
     }
 
     public static void fromInt(byte[] bytes, int value, int offset) {
-        bytes[offset] = (byte) (value >>> 24);
-        bytes[++offset] = (byte) (value >>> 16);
-        bytes[++offset] = (byte) (value >>> 8);
+        bytes[offset] = (byte) (value >> 24);
+        bytes[++offset] = (byte) (value >> 16);
+        bytes[++offset] = (byte) (value >> 8);
         bytes[++offset] = (byte) (value);
     }
 
@@ -125,13 +131,13 @@ public class BitUtil {
     }
 
     public static void fromLong(byte[] bytes, long value, int offset) {
-        bytes[offset] = (byte) (value >>> 56);
-        bytes[++offset] = (byte) (value >>> 48);
-        bytes[++offset] = (byte) (value >>> 40);
-        bytes[++offset] = (byte) (value >>> 32);
-        bytes[++offset] = (byte) (value >>> 24);
-        bytes[++offset] = (byte) (value >>> 16);
-        bytes[++offset] = (byte) (value >>> 8);
+        bytes[offset] = (byte) (value >> 56);
+        bytes[++offset] = (byte) (value >> 48);
+        bytes[++offset] = (byte) (value >> 40);
+        bytes[++offset] = (byte) (value >> 32);
+        bytes[++offset] = (byte) (value >> 24);
+        bytes[++offset] = (byte) (value >> 16);
+        bytes[++offset] = (byte) (value >> 8);
         bytes[++offset] = (byte) (value);
     }
 

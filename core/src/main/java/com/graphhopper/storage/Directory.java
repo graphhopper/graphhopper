@@ -27,6 +27,11 @@ package com.graphhopper.storage;
  */
 public interface Directory {
 
+    public static enum DAType {
+
+        MMAP, RAM, RAM_STORE, RAM_INT, RAM_INT_STORE
+    }
+
     /**
      * @return an id or location in the local filesystem.
      */
@@ -36,7 +41,9 @@ public interface Directory {
      * Tries to find the object with that name if not existent it creates one
      * and associates the location with it. A name is unique in one Directory.
      */
-    DataAccess findCreate(String name);
+    DataAccess find(String name);
+
+    DataAccess find(String name, DAType type);
 
     /**
      * Renames the specified DataAccess object into one.
@@ -47,11 +54,4 @@ public interface Directory {
      * Removes the specified object from the directory.
      */
     void remove(DataAccess da);
-
-    /**
-     * @return true if the underlying implementation requires loading upfront.
-     * E.g. RAMDirectory returns true if it stores the data on disc while
-     * flushing and needs a loadExisting call.
-     */
-    boolean isLoadRequired();
 }

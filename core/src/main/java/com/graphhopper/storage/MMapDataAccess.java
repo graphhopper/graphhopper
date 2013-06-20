@@ -45,8 +45,6 @@ public class MMapDataAccess extends AbstractDataAccess {
     private ByteOrder order;
     private boolean cleanAndRemap = false;
     private transient boolean closed = false;
-    private transient int segmentSizePower;
-    private transient int indexDivisor;
 
     MMapDataAccess() {
         this(null, null);
@@ -255,28 +253,54 @@ public class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public final void setInt(long longIndex, int value) {
-        // convert longIndex to byte index => *4
-        longIndex <<= 2;
-        int bufferIndex = (int) (longIndex >>> segmentSizePower);
-        int index = (int) (longIndex & indexDivisor);
+    public final void setInt(long bytePos, int value) {
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
         segments.get(bufferIndex).putInt(index, value);
     }
 
     @Override
-    public final int getInt(long longIndex) {
-        longIndex <<= 2;
-        int bufferIndex = (int) (longIndex >>> segmentSizePower);
-        int index = (int) (longIndex & indexDivisor);
+    public final int getInt(long bytePos) {
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
         return segments.get(bufferIndex).getInt(index);
     }
 
     @Override
-    public DataAccess segmentSize(int bytes) {
-        super.segmentSize(bytes);
-        segmentSizePower = (int) (Math.log(segmentSizeInBytes) / Math.log(2));
-        indexDivisor = segmentSizeInBytes - 1;
-        return this;
+    public void setBytes(long bytePos, byte[] values, int length) {
+        assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        ByteBuffer bb = segments.get(bufferIndex);
+        bb.position(index);
+
+        int delta = index + length - segmentSizeInBytes;
+        if (delta > 0) {
+            length -= delta;
+            bb.put(values, 0, length);
+            bb = segments.get(bufferIndex + 1);
+            bb.position(0);
+            bb.put(values, length, delta);
+        } else
+            bb.put(values, 0, length);
+    }
+
+    @Override
+    public void getBytes(long bytePos, byte[] values, int length) {
+        assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        ByteBuffer bb = segments.get(bufferIndex);
+        bb.position(index);
+        int delta = index + length - segmentSizeInBytes;
+        if (delta > 0) {
+            length -= delta;
+            bb.get(values, 0, length);
+            bb = segments.get(bufferIndex + 1);
+            bb.position(0);
+            bb.get(values, length, delta);
+        } else
+            bb.get(values, 0, length);
     }
 
     @Override

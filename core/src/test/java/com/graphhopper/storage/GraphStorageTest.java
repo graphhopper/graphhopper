@@ -132,7 +132,7 @@ public class GraphStorageTest extends AbstractGraphTester {
         assertEquals(Arrays.asList(1, 3), GHUtility.neighbors(gs.getEdges(0)));
         assertEquals(Arrays.asList(0, 2), GHUtility.neighbors(gs.getEdges(1)));
         // remove edge "1-2" but only from 1
-        gs.internalEdgeDisconnect(iter1.edge(), (long) iter0.edge() * gs.edgeEntrySize, iter1.baseNode(), iter1.adjNode());
+        gs.internalEdgeDisconnect(iter1.edge(), (long) iter0.edge() * gs.edgeEntryBytes, iter1.baseNode(), iter1.adjNode());
         assertEquals(Arrays.asList(0), GHUtility.neighbors(gs.getEdges(1)));
         // let 0 unchanged -> no side effects
         assertEquals(Arrays.asList(1, 3), GHUtility.neighbors(gs.getEdges(0)));
@@ -142,7 +142,10 @@ public class GraphStorageTest extends AbstractGraphTester {
     public void testEnsureSize() {
         Directory dir = new RAMDirectory();
         gs = new GraphStorage(dir, encodingManager).create(defaultSize);
-        int testIndex = dir.findCreate("edges").segmentSize() * 3;
+        int testIndex = dir.find("edges").segmentSize() * 3;
         gs.edge(0, testIndex, 10, true);
+        
+        // test if optimize works without error
+        gs.optimize();
     }
 }

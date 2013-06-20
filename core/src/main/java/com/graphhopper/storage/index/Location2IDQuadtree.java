@@ -30,7 +30,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
@@ -63,7 +62,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
     public Location2IDQuadtree(Graph g, Directory dir) {
         this.graph = g;
-        index = dir.findCreate("loc2idIndex");
+        index = dir.find("loc2idIndex");
         resolution(100 * 100);
     }
 
@@ -94,9 +93,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
         if (index.getHeader(0) != MAGIC_INT)
             throw new IllegalStateException("incorrect loc2id index version");
-        int lat = index.getHeader(1);
-        int lon = index.getHeader(2);
-        int checksum = index.getHeader(3);
+        int lat = index.getHeader(1 * 4);
+        int lon = index.getHeader(2 * 4);
+        int checksum = index.getHeader(3 * 4);
         if (checksum != graph.nodes())
             throw new IllegalStateException("index was created from a different graph with "
                     + checksum + ". Current nodes:" + graph.nodes());
@@ -183,8 +182,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
             double lat = graph.getLatitude(nodeId);
             double lon = graph.getLongitude(nodeId);
             int key = (int) keyAlgo.encode(lat, lon);
+            long bytePos = (long) key * 4;
             if (filledIndices.contains(key)) {
-                int oldNodeId = index.getInt(key);
+                int oldNodeId = index.getInt(bytePos);
                 keyAlgo.decode(key, coord);
                 // decide which one is closer to 'key'
                 double distNew = distCalc.calcNormalizedDist(coord.lat, coord.lon, lat, lon);
@@ -193,9 +193,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 double distOld = distCalc.calcNormalizedDist(coord.lat, coord.lon, oldLat, oldLon);
                 // new point is closer to quad tree point (key) so overwrite old
                 if (distNew < distOld)
-                    index.setInt(key, nodeId);
+                    index.setInt(bytePos, nodeId);
             } else {
-                index.setInt(key, nodeId);
+                index.setInt(bytePos, nodeId);
                 filledIndices.add(key);
             }
         }
@@ -204,8 +204,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
 
     private int fillEmptyIndices(GHBitSet filledIndices) {
         int len = latSize * lonSize;
-        DataAccess indexCopy = new RAMDirectory().findCreate("tempIndexCopy");
-        indexCopy.create(index.capacity());
+        DataAccess indexCopy = new RAMDirectory().find("tempIndexCopy");
+        indexCopy.segmentSize(index.segmentSize()).create(index.capacity());
         GHBitSet indicesCopy = new GHBitSetImpl(len);
         int initializedCounter = filledIndices.cardinality();
         // fan out initialized entries to avoid "nose-artifacts"
@@ -256,7 +256,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
                             continue;
                     }
 
-                    index.setInt(to, indexCopy.getInt(from));
+                    index.setInt(to * 4, indexCopy.getInt(from * 4));
                     takenFrom[to] = takenFrom[from];
                     filledIndices.add(to);
                     initializedCounter++;
@@ -306,7 +306,7 @@ public class Location2IDQuadtree implements Location2IDIndex {
          */
 
         long key = keyAlgo.encode(queryLat, queryLon);
-        final int id = index.getInt((int) key);
+        final int id = index.getInt(key * 4);
         double mainLat = graph.getLatitude(id);
         double mainLon = graph.getLongitude(id);
         final LocationIDResult res = new LocationIDResult();
@@ -344,9 +344,9 @@ public class Location2IDQuadtree implements Location2IDIndex {
     @Override
     public void flush() {
         index.setHeader(0, MAGIC_INT);
-        index.setHeader(1, latSize);
-        index.setHeader(2, lonSize);
-        index.setHeader(3, graph.nodes());
+        index.setHeader(1 * 4, latSize);
+        index.setHeader(2 * 4, lonSize);
+        index.setHeader(3 * 4, graph.nodes());
         index.flush();
     }
 

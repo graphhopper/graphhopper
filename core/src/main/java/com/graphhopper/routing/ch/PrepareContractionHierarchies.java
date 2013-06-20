@@ -32,10 +32,11 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.Directory.DAType;
+import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.util.Helper;
@@ -95,7 +96,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     public PrepareContractionHierarchies() {
         type(new ShortestCalc());
-        originalEdges = new RAMDirectory().findCreate("originalEdges");
+        originalEdges = new GHDirectory("", DAType.RAM_INT).find("originalEdges");
         originalEdges.create(1000);
     }
 
@@ -609,13 +610,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     }
 
     private void setOrigEdgeCount(int index, int value) {
-        originalEdges.ensureCapacity(index * 4 + 4);
-        originalEdges.setInt(index, value);
+        long tmp = (long) index * 4;
+        originalEdges.ensureCapacity(tmp + 4);
+        originalEdges.setInt(tmp, value);
     }
 
     private int getOrigEdgeCount(int index) {
-        originalEdges.ensureCapacity(index * 4 + 4);
-        return originalEdges.getInt(index);
+        long tmp = (long) index * 4;
+        originalEdges.ensureCapacity(tmp + 4);
+        return originalEdges.getInt(tmp);
     }
 
     @Override

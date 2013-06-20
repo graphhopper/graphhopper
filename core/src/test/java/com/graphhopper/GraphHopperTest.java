@@ -170,7 +170,7 @@ public class GraphHopperTest {
             instance.importOrLoad();
             assertTrue(false);
         } catch (IllegalStateException ex) {
-            assertEquals("No EncodingManager was configured. And no one was found in the graph: " + ghLoc, ex.getMessage());
+            assertEquals("No encodingManager was specified", ex.getMessage());
         }
     }
 
@@ -214,8 +214,10 @@ public class GraphHopperTest {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match:"));
         }
 
-        // use the one from the graph
-        instance.encodingManager(null);
+        // use the encoding manager from the graph
+        instance = new GraphHopper().setInMemory(true, true).
+                chShortcuts(true, true).
+                graphHopperLocation(ghLoc).osmFile(testOsm3);        
         instance.load(ghLoc);
     }
 }

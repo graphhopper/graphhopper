@@ -24,16 +24,17 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.Directory.DAType;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.index.Location2IDQuadtree;
-import com.graphhopper.storage.MMapDirectory;
-import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.StorableProperties;
+// import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.Location2NodesNtree;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
 import com.graphhopper.util.CmdArgs;
@@ -68,9 +69,7 @@ public class GraphHopper implements GraphHopperAPI {
     // for graph:
     private GraphStorage graph;
     private String ghLocation = "";
-    private boolean inMemory = true;
-    private boolean storeOnFlush = true;
-    private boolean memoryMapped;
+    private DAType dataAccessType;
     private boolean sortGraph = false;
     boolean removeZipped = true;
     // for routing:
@@ -95,7 +94,7 @@ public class GraphHopper implements GraphHopperAPI {
     private long expectedNodes = 10;
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
-    private StorableProperties properties;
+    private int defaultSegmentSize = -1;
 
     public GraphHopper() {
     }
@@ -149,9 +148,10 @@ public class GraphHopper implements GraphHopperAPI {
 
     public GraphHopper setInMemory(boolean inMemory, boolean storeOnFlush) {
         if (inMemory) {
-            this.inMemory = true;
-            this.memoryMapped = false;
-            this.storeOnFlush = storeOnFlush;
+            if (storeOnFlush)
+                dataAccessType = DAType.RAM_STORE;
+            else
+                dataAccessType = DAType.RAM;
         } else {
             memoryMapped();
         }
@@ -159,8 +159,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public GraphHopper memoryMapped() {
-        this.inMemory = false;
-        memoryMapped = true;
+        dataAccessType = DAType.MMAP;
         return this;
     }
 
@@ -262,11 +261,12 @@ public class GraphHopper implements GraphHopperAPI {
         // graph
         graphHopperLocation(graphHopperFolder);
         expectedNodes = args.getLong("graph.expectedSize", 10 * 1000);
-        String dataAccess = args.get("graph.dataaccess", "inmemory+save");
+        defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", -1);
+        String dataAccess = args.get("graph.dataaccess", "ram+save");
         if ("mmap".equalsIgnoreCase(dataAccess)) {
-            memoryMapped = true;
+            memoryMapped();
         } else {
-            if ("inmemory+save".equalsIgnoreCase(dataAccess)) {
+            if ("inmemory+save".equalsIgnoreCase(dataAccess) || "ram+save".equalsIgnoreCase(dataAccess)) {
                 setInMemory(true, true);
             } else
                 setInMemory(true, false);
@@ -302,36 +302,32 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    private void printInfo(StorableProperties props) {
-        String versionInfoStr = "";
-        if (props != null)
-            versionInfoStr = " | load:" + props.versionsToString();
-
+    private void printInfo() {
         logger.info("version " + Constants.VERSION
-                + "|" + Constants.BUILD_DATE + " (" + Constants.getVersions() + ")"
-                + versionInfoStr);
+                + "|" + Constants.BUILD_DATE + " (" + Constants.getVersions() + ")");
         logger.info("graph " + graph.toString());
     }
 
     public GraphHopper importOrLoad() {
         if (!load(ghLocation)) {
-            printInfo(null);
+            printInfo();
             importOSM(ghLocation, osmFile);
         } else
-            printInfo(properties());
+            printInfo();
         return this;
     }
 
-    private GraphHopper importOSM(String graphHopperLocation, String strOsm) {
+    private GraphHopper importOSM(String graphHopperLocation, String osmFileStr) {
         if (encodingManager == null)
-            throw new IllegalStateException("No vehicles are defined (no encoding manager set)");
+            throw new IllegalStateException("No encodingManager was specified");
         graphHopperLocation(graphHopperLocation);
         try {
-            OSMReader reader = importOSM(strOsm);
+            OSMReader reader = importOSM(osmFileStr);
             graph = reader.graph();
         } catch (IOException ex) {
-            throw new RuntimeException("Cannot parse file " + strOsm, ex);
+            throw new RuntimeException("Cannot parse OSM file " + osmFileStr, ex);
         }
+        postProcessing();
         cleanUp();
         optimize();
         prepare();
@@ -353,11 +349,9 @@ public class GraphHopper implements GraphHopperAPI {
         reader.encodingManager(encodingManager);
         reader.wayPointMaxDistance(wayPointMaxDistance);
 
-        properties.put("osmreader.acceptWay", encodingManager.encoderList());
-        properties.putCurrentVersions();
         String info = graph.getClass().getSimpleName()
                 + "|" + graph.directory().getClass().getSimpleName()
-                + "|" + properties.versionsToString();
+                + "|" + graph.properties().versionsToString();
         logger.info("using " + info + ", accepts:" + encodingManager + ", memory:" + Helper.memInfo());
         reader.osm2Graph(osmTmpFile);
         return reader;
@@ -396,32 +390,28 @@ public class GraphHopper implements GraphHopperAPI {
             }
         }
         graphHopperLocation(graphHopperFolder);
-        Directory dir;
-        if (memoryMapped) {
-            dir = new MMapDirectory(ghLocation);
-        } else if (inMemory) {
-            dir = new RAMDirectory(ghLocation, storeOnFlush);
-        } else
-            throw new IllegalArgumentException("either memory mapped or in-memory has to be specified!");
-
-        properties = new StorableProperties(dir, "properties");
-        String acceptStr = "";
-        if (properties.loadExisting()) {
-            // check encoding for compatiblity
-            acceptStr = properties.get("osmreader.acceptWay");
-        }
-
-        if (encodingManager == null) {
-            if (acceptStr.isEmpty())
-                throw new IllegalStateException("No EncodingManager was configured. And no one was found in the graph: " + graphHopperFolder);
-            encodingManager = new EncodingManager(acceptStr);
-        } else if (!acceptStr.isEmpty() && !encodingManager.encoderList().equals(acceptStr))
-            throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.encoderList() + "\nGraph: " + acceptStr);
-
+        if (dataAccessType == null)
+            this.dataAccessType = DAType.RAM;
+        GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
         if (chUsage) {
             graph = new LevelGraphStorage(dir, encodingManager);
-            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
+        } else {
+            graph = new GraphStorage(dir, encodingManager);
+        }
 
+        graph.segmentSize(defaultSegmentSize);
+        if (!graph.loadExisting())
+            return false;
+
+        postProcessing();
+        initIndex();
+        return true;
+    }
+
+    private void postProcessing() {
+        encodingManager = graph.encodingManager();
+        if (chUsage) {
+            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
             FlagEncoder encoder = encodingManager.getSingle();
             if (chFast)
                 tmpPrepareCH.type(new FastestCalc(encoder));
@@ -434,20 +424,10 @@ public class GraphHopper implements GraphHopperAPI {
 
             prepare = tmpPrepareCH;
             prepare.graph(graph);
-        } else {
-            graph = new GraphStorage(dir, encodingManager);
-            // prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, defaultAlgorithm, encodingManager.getFirst());
         }
 
-        if (!graph.loadExisting())
-            return false;
-
-        properties.checkVersions(false);
-        if ("false".equals(properties.get("prepare.done")))
+        if ("false".equals(graph.properties().get("prepare.done")))
             prepare();
-
-        initIndex();
-        return true;
     }
 
     private boolean supportsVehicle(String encoder) {
@@ -549,7 +529,7 @@ public class GraphHopper implements GraphHopperAPI {
 
     public void prepare() {
         boolean tmpPrepare = doPrepare && prepare != null;
-        properties.put("prepare.done", tmpPrepare);
+        graph.properties().put("prepare.done", tmpPrepare);
         if (tmpPrepare) {
             if (prepare instanceof PrepareContractionHierarchies && encodingManager.countVehicles() > 1)
                 throw new IllegalArgumentException("Contraction hierarchies preparation "
@@ -576,7 +556,6 @@ public class GraphHopper implements GraphHopperAPI {
     private void flush() {
         logger.info("flushing graph " + graph.toString() + ", " + Helper.memInfo() + ")");
         graph.flush();
-        properties.flush();
     }
 
     void close() {
@@ -584,9 +563,5 @@ public class GraphHopper implements GraphHopperAPI {
             graph.close();
         if (index != null)
             index.close();
-    }
-
-    StorableProperties properties() {
-        return properties;
     }
 }
