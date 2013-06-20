@@ -49,10 +49,10 @@ public class OSMReader
     private int workerThreads = -1;
     private LongIntMap osmNodeIdToBarrierMap;
 
-    public OSMReader( GraphStorage storage, long expectedNodes )
+    public OSMReader( GraphStorage storage, long expectedCap )
     {
         this.graphStorage = storage;
-        helper = new OSMReaderHelper(graphStorage, expectedNodes);
+        helper = new OSMReaderHelper(graphStorage, expectedCap);
         osmNodeIdToBarrierMap = new GHLongIntBTree(200);
     }
 

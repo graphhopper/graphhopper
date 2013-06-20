@@ -376,21 +376,23 @@ public class OSMReaderTest
     {
         GraphHopper hopper = new GraphHopperTest(fileBarriers).importOrLoad();
         Graph graph = hopper.getGraph();
-        assertEquals(4, graph.getNodes());
+        assertEquals(8, graph.getNodes());
 
         int n10 = AbstractGraphTester.getIdOf(graph, 51);
         int n20 = AbstractGraphTester.getIdOf(graph, 52);
         int n30 = AbstractGraphTester.getIdOf(graph, 53);
+        int n50 = AbstractGraphTester.getIdOf(graph, 55);
 
         // separate id
-        int new20 = 3;
+        int new20 = 4;
+        assertNotEquals(n20, new20);
         assertEquals(graph.getLatitude(n20), graph.getLatitude(new20), 1e-5);
         assertEquals(graph.getLongitude(n20), graph.getLongitude(new20), 1e-5);
 
         assertEquals(n20, hopper.getIndex().findClosest(52, 9.4, EdgeFilter.ALL_EDGES).getClosestNode());
 
         assertEquals(Arrays.asList(n20, n30), GHUtility.getNeighbors(graph.getEdges(n10, carOutFilter)));
-        assertEquals(Arrays.asList(new20, n10), GHUtility.getNeighbors(graph.getEdges(n30, carOutFilter)));
+        assertEquals(Arrays.asList(new20, n10, n50), GHUtility.getNeighbors(graph.getEdges(n30, carOutFilter)));
 
         EdgeIterator iter = graph.getEdges(n20, carOutFilter);
         assertTrue(iter.next());
@@ -400,6 +402,29 @@ public class OSMReaderTest
         iter = graph.getEdges(new20, carOutFilter);
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
+        assertFalse(iter.next());
+    }
+
+    @Test
+    public void testBarriersOnTowerNodes()
+    {
+        GraphHopper hopper = new GraphHopperTest(fileBarriers).importOrLoad();
+        Graph graph = hopper.getGraph();
+        assertEquals(8, graph.getNodes());
+
+        int n60 = AbstractGraphTester.getIdOf(graph, 56);
+
+        int newId = 5;
+        assertEquals(Arrays.asList(newId), GHUtility.getNeighbors(graph.getEdges(n60, carOutFilter)));
+
+        EdgeIterator iter = graph.getEdges(n60, carOutFilter);
+        assertTrue(iter.next());
+        assertEquals(newId, iter.getAdjNode());
+        assertFalse(iter.next());
+
+        iter = graph.getEdges(newId, carOutFilter);
+        assertTrue(iter.next());
+        assertEquals(n60, iter.getAdjNode());
         assertFalse(iter.next());
     }
 }

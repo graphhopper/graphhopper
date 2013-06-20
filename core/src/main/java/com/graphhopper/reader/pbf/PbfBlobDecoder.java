@@ -26,11 +26,7 @@ import java.util.zip.Inflater;
 public class PbfBlobDecoder implements Runnable
 {
     private static Logger log = Logger.getLogger(PbfBlobDecoder.class.getName());
-    public static final boolean checkData = false;
-    private static final double COORDINATE_SCALING_FACTOR = 0.000000001;
-    private static final int EMPTY_VERSION = -1;
-    private static final Date EMPTY_TIMESTAMP = new Date(0);
-    private static final long EMPTY_CHANGESET = -1;
+    private final boolean checkData = false;
     private String blobType;
     private byte[] rawBlob;
     private PbfBlobDecoderListener listener;

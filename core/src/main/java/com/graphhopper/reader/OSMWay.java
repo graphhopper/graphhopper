@@ -43,7 +43,7 @@ public class OSMWay extends OSMElement
      */
     public OSMWay( long id, XMLStreamReader parser ) throws XMLStreamException
     {
-        super(WAY, id, parser);
+        super(id, WAY, parser);
         nodes = new TLongArrayList();
 
         parser.nextTag();
@@ -59,38 +59,15 @@ public class OSMWay extends OSMElement
      */
     public OSMWay( long id, Map<String, String> tags )
     {
-        super(WAY, id, tags);
+        super(id, WAY, tags);
 
         nodes = new TLongArrayList();
     }
 
-    public OSMWay( OSMWay src )
+    public OSMWay( long id )
     {
-        super(src);
-
-        nodes = new TLongArrayList(src.nodes);
-    }
-
-    public OSMWay()
-    {
-        type = WAY;
+        super(id, WAY);
         nodes = new TLongArrayList();
-    }
-
-    public OSMWay( OSMNode geometry[], boolean closed )
-    {
-        super(WAY);
-
-        nodes = new TLongArrayList();
-        for (int i = 0; i < geometry.length; i++)
-        {
-            nodes.add(geometry[i].getId());
-        }
-        // close polygon
-        if (closed)
-        {
-            nodes.add(geometry[0].getId());
-        }
     }
 
     protected void readNodes( XMLStreamReader parser ) throws XMLStreamException
@@ -113,7 +90,7 @@ public class OSMWay extends OSMElement
     {
         return nodes;
     }
-    
+
     @Override
     public String toString()
     {

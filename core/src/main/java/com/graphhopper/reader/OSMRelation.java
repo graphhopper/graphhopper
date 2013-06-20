@@ -32,15 +32,9 @@ public class OSMRelation extends OSMElement
 {
     protected ArrayList<Member> members;
 
-    public OSMRelation()
-    {
-        super(RELATION);
-        members = new ArrayList<Member>();
-    }
-
     public OSMRelation( long id, XMLStreamReader parser ) throws XMLStreamException
     {
-        super(RELATION, id, parser);
+        super(id, RELATION, parser);
         members = new ArrayList<Member>();
 
         parser.nextTag();
@@ -50,7 +44,7 @@ public class OSMRelation extends OSMElement
 
     public OSMRelation( long id, Map<String, String> tags )
     {
-        super(RELATION, id, tags);
+        super(id, RELATION, tags);
 
         members = new ArrayList<Member>();
     }
@@ -124,10 +118,6 @@ public class OSMRelation extends OSMElement
         }
         return false;
     }
-    /*   private static String[] memberType = new String[]{
-     "node", "way", "relation"
-     };
-     */
 
     public void removeRelations()
     {

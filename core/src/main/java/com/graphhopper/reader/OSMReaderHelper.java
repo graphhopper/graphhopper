@@ -46,8 +46,7 @@ public class OSMReaderHelper
     protected long zeroCounter = 0;
     protected final Graph g;
     protected final long expectedNodes;
-    // Using the correct Map<Long, Integer> is hard. We need a memory
-    // efficient and fast solution for big data sets!
+    // Using the correct Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
     //
     // very slow: new SparseLongLongArray
     // only append and update possible (no unordered storage like with this doubleParse): new OSMIDMap
@@ -55,27 +54,29 @@ public class OSMReaderHelper
     // memory overhead due to open addressing and full rehash:
     //        nodeOsmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
     // smaller memory overhead for bigger data sets because of avoiding a "rehash"
+    // remember how many times a node was used to identify tower nodes
     private LongIntMap osmNodeIdToIndexMap;
     private final TLongList barrierNodeIDs = new TLongArrayList();
-    // remember how many times a node was used to identify tower nodes
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
     private DistanceCalc distCalc = new DistanceCalc();
     private DouglasPeucker dpAlgo = new DouglasPeucker();
     private int towerId = 0;
     private int pillarId = 0;
+    // negative but increasing to avoid clash with custom created OSM files
+    private long newUniqueOSMId = -Long.MAX_VALUE;
 
-    public OSMReaderHelper( GraphStorage g, long expectedNodes )
+    public OSMReaderHelper( GraphStorage g, long expectedCap )
     {
         this.g = g;
-        this.expectedNodes = expectedNodes;
+        this.expectedNodes = expectedCap;
         osmNodeIdToIndexMap = new GHLongIntBTree(200);
         dir = g.getDirectory();
         pillarLats = dir.find("tmpLatitudes");
         pillarLons = dir.find("tmpLongitudes");
 
-        pillarLats.create(Math.max(expectedNodes / 50, 100));
-        pillarLons.create(Math.max(expectedNodes / 50, 100));
+        pillarLats.create(Math.max(expectedCap, 100));
+        pillarLons.create(Math.max(expectedCap, 100));
     }
 
     public OSMReaderHelper setWayPointMaxDistance( double maxDist )
@@ -195,18 +196,18 @@ public class OSMReaderHelper
         return osmNodeIdToIndexMap.getSize();
     }
 
-    public int addEdge( TLongList osmIds, int flags )
+    public int addEdge( TLongList osmNodeIds, int flags )
     {
-        PointList pointList = new PointList(osmIds.size());
+        PointList pointList = new PointList(osmNodeIds.size());
         int successfullyAdded = 0;
         int firstNode = -1;
-        int lastIndex = osmIds.size() - 1;
+        int lastIndex = osmNodeIds.size() - 1;
         int lastInBoundsPillarNode = -1;
         try
         {
-            for (int i = 0; i < osmIds.size(); i++)
+            for (int i = 0; i < osmNodeIds.size(); i++)
             {
-                long osmId = osmIds.get(i);
+                long osmId = osmNodeIds.get(i);
                 int tmpNode = osmNodeIdToIndexMap.get(osmId);
                 if (tmpNode == EMPTY)
                 {
@@ -274,7 +275,7 @@ public class OSMReaderHelper
             }
         } catch (RuntimeException ex)
         {
-            logger.error("Couldn't properly add edge with osm ids:" + osmIds, ex);
+            logger.error("Couldn't properly add edge with osm ids:" + osmNodeIds, ex);
         }
         return successfullyAdded;
     }
@@ -354,11 +355,12 @@ public class OSMReaderHelper
         if (graphIndex < TOWER_NODE)
         {
             graphIndex = -graphIndex - 3;
-            newNode = new OSMNode(g.getLatitude(graphIndex), g.getLongitude(graphIndex));
+            newNode = new OSMNode(createNewNodeId(),
+                    g.getLatitude(graphIndex), g.getLongitude(graphIndex));
         } else
         {
             graphIndex = graphIndex - 3;
-            newNode = new OSMNode(
+            newNode = new OSMNode(createNewNodeId(),
                     Helper.intToDegree(pillarLats.getInt(graphIndex * 4)),
                     Helper.intToDegree(pillarLons.getInt(graphIndex * 4)));
         }
@@ -368,6 +370,11 @@ public class OSMReaderHelper
         addNode(newNode);
 
         return id;
+    }
+
+    private long createNewNodeId()
+    {
+        return newUniqueOSMId++;
     }
 
     /**

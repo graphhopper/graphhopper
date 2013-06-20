@@ -78,7 +78,7 @@ public class GraphHopper implements GraphHopperAPI
     private String defaultAlgorithm = "bidijkstra";
     // for index:
     private Location2IDIndex index;
-    private int preciseIndexResolution = 1000;
+    private int preciseIndexResolution = 500;
     private boolean edgeCalcOnSearch = true;
     private boolean searchRegion = true;
     // for prepare
@@ -92,7 +92,7 @@ public class GraphHopper implements GraphHopperAPI
     // for OSM import:
     private String osmFile;
     private EncodingManager encodingManager;
-    private long expectedNodes = 10;
+    private long expectedCapacity = 100;
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
     private int defaultSegmentSize = -1;
@@ -300,8 +300,8 @@ public class GraphHopper implements GraphHopperAPI
 
         // graph
         setGraphHopperLocation(graphHopperFolder);
-        expectedNodes = args.getLong("graph.expectedSize", 10 * 1000);
-        defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", -1);
+        expectedCapacity = args.getLong("graph.expectedCapacity", expectedCapacity);
+        defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", defaultSegmentSize);
         String dataAccess = args.get("graph.dataaccess", "ram+save");
         if ("mmap".equalsIgnoreCase(dataAccess))
         {
@@ -316,11 +316,11 @@ public class GraphHopper implements GraphHopperAPI
                 setInMemory(true, false);
             }
         }
-        sortGraph = args.getBool("graph.doSort", false);
-        removeZipped = args.getBool("graph.removeZipped", true);
+        sortGraph = args.getBool("graph.doSort", sortGraph);
+        removeZipped = args.getBool("graph.removeZipped", removeZipped);
 
         // prepare
-        doPrepare = args.getBool("prepare.doPrepare", true);
+        doPrepare = args.getBool("prepare.doPrepare", doPrepare);
         String chShortcuts = args.get("prepare.chShortcuts", "no");
         boolean levelGraph = "true".equals(chShortcuts)
                 || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
@@ -330,28 +330,28 @@ public class GraphHopper implements GraphHopperAPI
         }
         if (args.has("prepare.updates.periodic"))
         {
-            periodicUpdates = args.getInt("prepare.updates.periodic", -1);
+            periodicUpdates = args.getInt("prepare.updates.periodic", periodicUpdates);
         }
         if (args.has("prepare.updates.lazy"))
         {
-            lazyUpdates = args.getInt("prepare.updates.lazy", -1);
+            lazyUpdates = args.getInt("prepare.updates.lazy", lazyUpdates);
         }
         if (args.has("prepare.updates.neighbor"))
         {
-            neighborUpdates = args.getInt("prepare.updates.neighbor", -1);
+            neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);
         }
 
         // routing
         defaultAlgorithm = args.get("routing.defaultAlgorithm", defaultAlgorithm);
 
         // osm import
-        wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", 1);
+        wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);
         String type = args.get("osmreader.acceptWay", "CAR");
         encodingManager = new EncodingManager(type);
-        workerThreads = args.getInt("osmreader.workerThreads", -1);
+        workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
 
         // index
-        preciseIndexResolution = args.getInt("index.highResolution", 1000);
+        preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
         return this;
     }
 
@@ -413,7 +413,7 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(graph, expectedNodes).setWorkerThreads(workerThreads);
+        OSMReader reader = new OSMReader(graph, expectedCapacity).setWorkerThreads(workerThreads);
         reader.setEncodingManager(encodingManager);
         reader.setWayPointMaxDistance(wayPointMaxDistance);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());

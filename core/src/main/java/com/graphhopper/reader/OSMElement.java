@@ -33,63 +33,32 @@ public abstract class OSMElement
 {
     public static final int NODE = 0;
     public static final int WAY = 1;
-    public static final int RELATION = 2;
-    private static long nextID = 20000000000L;
-    private static String[] className = new String[]
-    {
-        "OSMNode", "OSMWay", "OSMRelation"
-    };
-    protected int type;
-    protected long id;
+    public static final int RELATION = 2;    
+    protected final int type;
+    protected final long id;
     protected Map<String, String> tags;
 
-    public OSMElement( int type, long id, XMLStreamReader parser )
+    public OSMElement( long id, int type, XMLStreamReader parser)
     {
         this.type = type;
         this.id = id;
     }
 
-    public OSMElement( int type, long id, Map<String, String> tags )
+    public OSMElement( long id, int type, Map<String, String> tags)
     {
-        this.type = type;
-        this.id = id;
+        this(id, type);
         this.tags = tags;
     }
 
-    protected OSMElement( int type )
+    protected OSMElement( long id, int type )
     {
-        this.type = type;
-        createId();
-    }
-
-    protected OSMElement()
-    {
-    }
-
-    public OSMElement( OSMElement src )
-    {
-        type = src.type;
-        // no use case where tags need to be copied yet
+        this.id = id;
+        this.type = type;        
     }
 
     public long getId()
     {
         return id;
-    }
-
-    public void setId( long id )
-    {
-        if (this.id != 0)
-        {
-            throw new IllegalArgumentException("Overwriting id ");
-        }
-
-        this.id = id;
-    }
-
-    public void replaceId( long id )
-    {
-        this.id = id;
     }
 
     public void copyTags( OSMElement input )
@@ -281,11 +250,6 @@ public abstract class OSMElement
     public void clearTags()
     {
         tags = null;
-    }
-
-    protected void createId()
-    {
-        id = nextID++;
     }
 
     public int getType()

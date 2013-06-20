@@ -33,7 +33,7 @@ public class OSMNode extends OSMElement
 
     public OSMNode( long id, XMLStreamReader parser ) throws XMLStreamException
     {
-        super(NODE, id, parser);
+        super(id, NODE, parser);
 
         // read location
         lat = Double.parseDouble(parser.getAttributeValue(null, "lat"));
@@ -45,22 +45,17 @@ public class OSMNode extends OSMElement
 
     public OSMNode( long id, Map<String, String> tags, double lat, double lon )
     {
-        super(NODE, id, tags);
+        super(id, NODE, tags);
         this.lat = lat;
         this.lon = lon;
     }
 
-    public OSMNode( double lat, double lon )
+    public OSMNode( long id, double lat, double lon )
     {
-        super(NODE);
+        super(id, NODE);
 
         this.lat = lat;
         this.lon = lon;
-    }
-
-    public OSMNode()
-    {
-        super(NODE);
     }
 
     public double getLat()
