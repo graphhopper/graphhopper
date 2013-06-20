@@ -1340,7 +1340,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     public String toString()
     {
         return getClass().getSimpleName()
-                + "|" + encodingManager.toString()
+                + "|" + encodingManager
                 + "|" + getDirectory().getDefaultType()
                 + "|" + getProperties().versionsToString();
     }
