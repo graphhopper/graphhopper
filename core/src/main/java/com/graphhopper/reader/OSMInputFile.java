@@ -75,6 +75,7 @@ public class OSMInputFile implements Sink
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     private InputStream decode( File file ) throws IOException
     {
         final String name = file.getName();
@@ -127,8 +128,8 @@ public class OSMInputFile implements Sink
             {
                 Class clazz = Class.forName(clName);
                 ips.reset();
-                Constructor ctor = clazz.getConstructor(InputStream.class, boolean.class);
-                return (InputStream) ctor.newInstance(ips, true);
+                Constructor<InputStream> ctor = clazz.getConstructor(InputStream.class, boolean.class);
+                return ctor.newInstance(ips, true);
             } catch (Exception e)
             {
                 throw new IllegalArgumentException("Cannot instantiate " + clName, e);
