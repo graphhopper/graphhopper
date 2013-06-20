@@ -18,28 +18,28 @@
 package com.graphhopper.trees;
 
 /**
- * Avoid ugly casting and use the same interface for data and branch nodes.
- * although not really any method in common
- *
+ * Avoid ugly casting and use the same interface for data and branch nodes. although not really any
+ * method in common
+ * <p/>
  * @author Peter Karich
  */
-interface QTNode<V> {
+interface QTNode<V>
+{
+    QTNode<V> get( int num );
 
-    QTNode<V> get(int num);
-
-    void set(int num, QTNode<V> n);
+    void set( int num, QTNode<V> n );
 
     boolean hasData();
 
     /**
-     * This methods returns the memory usage for PerfTest without the memory of
-     * the values. I.e. you need to add sizeOf(V)*noOfNodes
-     *
+     * This methods returns the memory usage for PerfTest without the memory of the values. I.e. you
+     * need to add sizeOf(V)*noOfNodes
+     * <p/>
      * @param factor is 1 for 32 bit and 2 for 64 bit systems
      */
-    long getMemoryUsageInBytes(int factor);
+    long getMemoryUsageInBytes( int factor );
 
     int count();
 
-    long getEmptyEntries(boolean onlyBranches);
+    long getEmptyEntries( boolean onlyBranches );
 }

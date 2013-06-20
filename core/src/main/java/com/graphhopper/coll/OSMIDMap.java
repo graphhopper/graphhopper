@@ -23,14 +23,13 @@ import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 
 /**
- * This is a special purpose map for writing increasing OSM IDs with consecutive
- * values. It stores long->int in a memory friendly way and but does NOT provide
- * O(1) access.
- *
+ * This is a special purpose map for writing increasing OSM IDs with consecutive values. It stores
+ * long->int in a memory friendly way and but does NOT provide O(1) access.
+ * <p/>
  * @author Peter Karich
  */
-public class OSMIDMap implements LongIntMap {
-
+public class OSMIDMap implements LongIntMap
+{
     private final DataAccess keys;
     private final DataAccess values;
     private long lastKey = Long.MIN_VALUE;
@@ -38,11 +37,13 @@ public class OSMIDMap implements LongIntMap {
     private final int noEntryValue;
     private final Directory dir;
 
-    public OSMIDMap(Directory dir) {
+    public OSMIDMap( Directory dir )
+    {
         this(dir, -1);
     }
 
-    public OSMIDMap(Directory dir, int noNumber) {
+    public OSMIDMap( Directory dir, int noNumber )
+    {
         this.dir = dir;
         this.noEntryValue = noNumber;
         keys = dir.find("osmidMapKeys");
@@ -51,17 +52,22 @@ public class OSMIDMap implements LongIntMap {
         values.create(1000);
     }
 
-    public void remove() {
+    public void remove()
+    {
         dir.remove(keys);
     }
 
     @Override
-    public int put(long key, int value) {
-        if (key <= lastKey) {
+    public int put( long key, int value )
+    {
+        if (key <= lastKey)
+        {
             long oldValueIndex = binarySearch(keys, 0, size(), key);
             if (oldValueIndex < 0)
+            {
                 throw new IllegalStateException("Cannot insert keys lower than "
                         + "the last key " + key + " < " + lastKey + ". Only updating supported");
+            }
             oldValueIndex *= 4;
             int oldValue = values.getInt(oldValueIndex);
             values.setInt(oldValueIndex, value);
@@ -82,54 +88,71 @@ public class OSMIDMap implements LongIntMap {
     }
 
     @Override
-    public int get(long key) {
+    public int get( long key )
+    {
         long retIndex = binarySearch(keys, 0, size(), key);
         if (retIndex < 0)
+        {
             return noEntryValue;
+        }
         return values.getInt(retIndex * 4);
     }
 
-    static long binarySearch(DataAccess da, long start, long len, long key) {
+    static long binarySearch( DataAccess da, long start, long len, long key )
+    {
         long high = start + len, low = start - 1, guess;
         byte[] longBytes = new byte[8];
-        while (high - low > 1) {
+        while (high - low > 1)
+        {
             guess = (high + low) >>> 1;
             long tmp = guess << 3;
             da.getBytes(tmp, longBytes, 8);
             long guessedKey = BitUtil.toLong(longBytes);
             if (guessedKey < key)
+            {
                 low = guess;
-            else
+            } else
+            {
                 high = guess;
+            }
         }
 
         if (high == start + len)
+        {
             return ~(start + len);
+        }
 
         long tmp = high << 3;
         da.getBytes(tmp, longBytes, 8);
         long highKey = BitUtil.toLong(longBytes);
         if (highKey == key)
+        {
             return high;
-        else
+        } else
+        {
             return ~high;
+        }
     }
 
     @Override
-    public long size() {
+    public long size()
+    {
         return size / 4;
     }
 
-    public long capacity() {
+    public long capacity()
+    {
         return keys.capacity();
     }
 
     @Override
-    public int memoryUsage() {
+    public int memoryUsage()
+    {
         return Math.round(capacity() / Helper.MB);
     }
 
     @Override
-    public void optimize() {
+    public void optimize()
+    {
     }
 }

@@ -26,15 +26,17 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class GHDijkstraHeap2Test extends AbstractBinHeapTest {
-
+public class GHDijkstraHeap2Test extends AbstractBinHeapTest
+{
     @Override
-    public BinHeapWrapper<Number, Integer> createHeap(int capacity) {
+    public BinHeapWrapper<Number, Integer> createHeap( int capacity )
+    {
         return new GHDijkstraHeap2(capacity / 5);
     }
 
     @Test
-    public void testDups() {
+    public void testDups()
+    {
         BinHeapWrapper<Number, Integer> heap = createHeap(100);
         heap.insert(3, 4);
         heap.insert(3, 5);
@@ -49,7 +51,8 @@ public class GHDijkstraHeap2Test extends AbstractBinHeapTest {
     }
 
     @Test
-    public void testRemove() {
+    public void testRemove()
+    {
         GHDijkstraHeap2 heap = new GHDijkstraHeap2(5);
 
         heap.insert(4, 3);
@@ -62,10 +65,12 @@ public class GHDijkstraHeap2Test extends AbstractBinHeapTest {
         assertEquals(3, heap.pollElement().intValue());
         assertEquals(6, heap.pollElement().intValue());
 
-        try {
+        try
+        {
             heap.removeSorted(4, 6);
             assertTrue(false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
     }
 }

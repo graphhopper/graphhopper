@@ -22,11 +22,11 @@ import com.graphhopper.storage.Graph;
 
 /**
  * Holds an algorithm which can be prepared and created.
- *
+ * <p/>
  * @author Peter Karich
  */
-public interface AlgorithmPreparation {
-
+public interface AlgorithmPreparation
+{
     /**
      * Prepares the underlying graph to be used by a specialized algorithm.
      */
@@ -37,7 +37,7 @@ public interface AlgorithmPreparation {
      */
     boolean isPrepared();
 
-    AlgorithmPreparation graph(Graph g);
+    AlgorithmPreparation graph( Graph g );
 
     RoutingAlgorithm createAlgo();
 }

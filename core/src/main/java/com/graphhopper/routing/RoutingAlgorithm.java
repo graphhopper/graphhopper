@@ -21,27 +21,24 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.NotThreadSafe;
 
 /**
- * Calculates the shortest path from the specified node ids. Can be used only
- * once.
- *
+ * Calculates the shortest path from the specified node ids. Can be used only once.
+ * <p/>
  * @author Peter Karich
  */
 @NotThreadSafe
-public interface RoutingAlgorithm {
-
+public interface RoutingAlgorithm
+{
     /**
      * Calculates the fastest or shortest path.
-     *
-     * @return the path but check the method found() to make sure if the path is
-     * valid.
+     * <p/>
+     * @return the path but check the method found() to make sure if the path is valid.
      */
-    Path calcPath(int from, int to);
+    Path calcPath( int from, int to );
 
     /**
-     * Changes the used weight calculation (e.g. fastest, shortest). Default is
-     * shortest.
+     * Changes the used weight calculation (e.g. fastest, shortest). Default is shortest.
      */
-    RoutingAlgorithm type(WeightCalculation calc);
+    RoutingAlgorithm type( WeightCalculation calc );
 
     /**
      * @return name of this algorithm

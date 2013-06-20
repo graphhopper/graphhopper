@@ -30,18 +30,20 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class EdgeSkipIteratorTest {
-
+public class EdgeSkipIteratorTest
+{
     private final EncodingManager encodingManager = new EncodingManager("CAR");
     private CarFlagEncoder carFlagsEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
     private EdgeFilter carOutFilter = new DefaultEdgeFilter(carFlagsEncoder, false, true);
 
-    LevelGraph createGraph() {
+    LevelGraph createGraph()
+    {
         return new GraphBuilder(encodingManager).levelGraphCreate();
     }
 
     @Test
-    public void testUpdateFlags() {
+    public void testUpdateFlags()
+    {
         LevelGraph g = createGraph();
         g.edge(0, 1, 12, carFlagsEncoder.flags(10, true));
         g.edge(0, 2, 13, carFlagsEncoder.flags(20, true));

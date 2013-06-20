@@ -25,10 +25,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class BigLongIntMapTest {
-
+public class BigLongIntMapTest
+{
     @Test
-    public void testPut() {
+    public void testPut()
+    {
         int segments = 10;
         BigLongIntMap instance = new BigLongIntMap(1000, segments, -1);
         assertEquals(-1, instance.put(Long.MAX_VALUE / 2, 123));
@@ -36,7 +37,8 @@ public class BigLongIntMapTest {
         assertEquals(1, instance.size());
         instance.clear();
 
-        for (int i = 0; i < segments; i++) {
+        for (int i = 0; i < segments; i++)
+        {
             assertEquals(-1, instance.put(Integer.MAX_VALUE * i, 123));
         }
         assertEquals(segments, instance.size());

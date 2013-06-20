@@ -22,8 +22,8 @@ import com.graphhopper.util.DistanceCalc;
 /**
  * @author Peter Karich
  */
-public class Circle implements Shape {
-
+public class Circle implements Shape
+{
     private final static DistanceCalc SINGLETON = new DistanceCalc();
     private DistanceCalc calc = new DistanceCalc();
     private final double radiusInKm;
@@ -32,11 +32,13 @@ public class Circle implements Shape {
     private final double normedDist;
     private final BBox bbox;
 
-    public Circle(double lat, double lon, double radiusInMeter) {
+    public Circle( double lat, double lon, double radiusInMeter )
+    {
         this(lat, lon, radiusInMeter, SINGLETON);
     }
 
-    public Circle(double lat, double lon, double radiusInMeter, DistanceCalc calc) {
+    public Circle( double lat, double lon, double radiusInMeter, DistanceCalc calc )
+    {
         this.calc = calc;
         this.lat = lat;
         this.lon = lon;
@@ -45,101 +47,139 @@ public class Circle implements Shape {
         bbox = calc.createBBox(lat, lon, radiusInMeter);
     }
 
-    public double lat() {
+    public double lat()
+    {
         return lat;
     }
 
-    public double lon() {
+    public double lon()
+    {
         return lon;
     }
 
     @Override
-    public boolean contains(double lat1, double lon1) {
+    public boolean contains( double lat1, double lon1 )
+    {
         return normDist(lat1, lon1) <= normedDist;
     }
 
     @Override
-    public BBox boundingBox() {
+    public BBox boundingBox()
+    {
         return bbox;
     }
 
-    private double normDist(double lat1, double lon1) {
+    private double normDist( double lat1, double lon1 )
+    {
         return calc.calcNormalizedDist(lat, lon, lat1, lon1);
     }
 
     @Override
-    public boolean intersect(Shape o) {
-        if (o instanceof Circle) {
+    public boolean intersect( Shape o )
+    {
+        if (o instanceof Circle)
+        {
             return intersect((Circle) o);
         } else if (o instanceof BBox)
+        {
             return intersect((BBox) o);
+        }
 
         return o.intersect(this);
     }
 
     @Override
-    public boolean contains(Shape o) {
-        if (o instanceof Circle) {
+    public boolean contains( Shape o )
+    {
+        if (o instanceof Circle)
+        {
             return contains((Circle) o);
         } else if (o instanceof BBox)
+        {
             return contains((BBox) o);
+        }
 
         throw new UnsupportedOperationException("unsupported shape");
     }
 
-    public boolean intersect(BBox b) {
+    public boolean intersect( BBox b )
+    {
         // test top intersect
-        if (lat > b.maxLat) {
+        if (lat > b.maxLat)
+        {
             if (lon < b.minLon)
+            {
                 return normDist(b.maxLat, b.minLon) <= normedDist;
+            }
             if (lon > b.maxLon)
+            {
                 return normDist(b.maxLat, b.maxLon) <= normedDist;
+            }
             return b.maxLat - bbox.minLat > 0;
         }
 
         // test bottom intersect
-        if (lat < b.minLat) {
+        if (lat < b.minLat)
+        {
             if (lon < b.minLon)
+            {
                 return normDist(b.minLat, b.minLon) <= normedDist;
+            }
             if (lon > b.maxLon)
+            {
                 return normDist(b.minLat, b.maxLon) <= normedDist;
+            }
             return bbox.maxLat - b.minLat > 0;
         }
 
         // test middle intersect
         if (lon < b.minLon)
+        {
             return bbox.maxLon - b.minLon > 0;
+        }
         if (lon > b.maxLon)
+        {
             return b.maxLon - bbox.minLon > 0;
+        }
         return true;
     }
 
-    public boolean intersect(Circle c) {
+    public boolean intersect( Circle c )
+    {
         // necessary to improve speed?
         if (!boundingBox().intersect(c.boundingBox()))
+        {
             return false;
+        }
 
         return normDist(c.lat, c.lon) <= calc.calcNormalizedDist(radiusInKm + c.radiusInKm);
     }
 
-    public boolean contains(BBox b) {
+    public boolean contains( BBox b )
+    {
         if (bbox.contains(b))
+        {
             return contains(b.maxLat, b.minLon) && contains(b.minLat, b.minLon)
                     && contains(b.maxLat, b.maxLon) && contains(b.minLat, b.maxLon);
+        }
 
         return false;
     }
 
-    public boolean contains(Circle c) {
+    public boolean contains( Circle c )
+    {
         double res = radiusInKm - c.radiusInKm;
         if (res < 0)
+        {
             return false;
+        }
 
         return calc.calcDist(lat, lon, c.lat, c.lon) <= res;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return lat + "," + lon + ", radius:" + radiusInKm;
     }
 }

@@ -23,41 +23,41 @@ import com.graphhopper.util.shapes.Shape;
 import java.util.Collection;
 
 /**
- * A quad tree interface - think Map<latitude+longitude, V> with the possibility
- * to get neighbouring entries fast.
- *
+ * A quad tree interface - think Map<latitude+longitude, V> with the possibility to get neighbouring
+ * entries fast.
+ * <p/>
  * @author Peter Karich
  */
-public interface QuadTree<V> {
-
+public interface QuadTree<V>
+{
     /**
-     * The quadtree could be configured with implementation specific values.
-     * After this it needs to be configured.
-     *
+     * The quadtree could be configured with implementation specific values. After this it needs to
+     * be configured.
+     * <p/>
      * @throws RuntimeException could be thrown
      */
-    QuadTree init(long maxItemsHint);
+    QuadTree init( long maxItemsHint );
 
     long size();
 
     boolean isEmpty();
 
-    void add(double lat, double lon, V value);
+    void add( double lat, double lon, V value );
 
-    int remove(double lat, double lon);
+    int remove( double lat, double lon );
 
     /**
-     * @return The nodes matching the specified latitude and longitude. If value
-     * is null all values will be returned
+     * @return The nodes matching the specified latitude and longitude. If value is null all values
+     * will be returned
      */
-    Collection<CoordTrig<V>> getNodesFromValue(double lat, double lon, V value);
+    Collection<CoordTrig<V>> getNodesFromValue( double lat, double lon, V value );
 
     /**
      * @return points near the specified latitude/longitude
      */
-    Collection<CoordTrig<V>> getNodes(double lat, double lon, double distanceInKm);
+    Collection<CoordTrig<V>> getNodes( double lat, double lon, double distanceInKm );
 
-    Collection<CoordTrig<V>> getNodes(Shape boundingBox);
+    Collection<CoordTrig<V>> getNodes( Shape boundingBox );
 
     void clear();
 
@@ -66,18 +66,20 @@ public interface QuadTree<V> {
      */
     String toDetailString();
 
-    long getMemoryUsageInBytes(int factor);
+    long getMemoryUsageInBytes( int factor );
 
     /**
      * Good for memory estimation
      */
-    long getEmptyEntries(boolean onlyBranches);
+    long getEmptyEntries( boolean onlyBranches );
 
-    class Util {
-
-        public static void fill(QuadTree<Long> quadTree, Graph graph) {
+    class Util
+    {
+        public static void fill( QuadTree<Long> quadTree, Graph graph )
+        {
             int locs = graph.nodes();
-            for (int i = 0; i < locs; i++) {
+            for (int i = 0; i < locs; i++)
+            {
                 double lat = graph.getLatitude(i);
                 double lon = graph.getLongitude(i);
                 quadTree.add(lat, lon, 1L);

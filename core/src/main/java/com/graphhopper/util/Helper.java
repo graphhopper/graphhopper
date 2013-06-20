@@ -35,40 +35,51 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Several utility classes which are compatible with Java6 on Android.
- *
+ * <p/>
  * @see Helper7 for none-Android compatible methods.
  * @author Peter Karich
  */
-public class Helper {
-
+public class Helper
+{
     private static Logger logger = LoggerFactory.getLogger(Helper.class);
     public static final int MB = 1 << 20;
 
-    public static ArrayList<Integer> tIntListToArrayList(TIntList from) {
+    public static ArrayList<Integer> tIntListToArrayList( TIntList from )
+    {
         int len = from.size();
         ArrayList<Integer> list = new ArrayList<Integer>(len);
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < len; i++)
+        {
             list.add(from.get(i));
         }
         return list;
     }
 
-    private Helper() {
+    private Helper()
+    {
     }
 
-    public static void loadProperties(Map<String, String> map, Reader tmpReader) throws IOException {
+    public static void loadProperties( Map<String, String> map, Reader tmpReader ) throws IOException
+    {
         BufferedReader reader = new BufferedReader(tmpReader);
         String line;
-        try {
-            while ((line = reader.readLine()) != null) {
+        try
+        {
+            while ((line = reader.readLine()) != null)
+            {
                 if (line.startsWith("//") || line.startsWith("#"))
+                {
                     continue;
+                }
 
                 if (Helper.isEmpty(line))
+                {
                     continue;
+                }
 
                 int index = line.indexOf("=");
-                if (index < 0) {
+                if (index < 0)
+                {
                     logger.warn("Skipping configuration at line:" + line);
                     continue;
                 }
@@ -77,62 +88,81 @@ public class Helper {
                 String value = line.substring(index + 1);
                 map.put(field, value);
             }
-        } finally {
+        } finally
+        {
             reader.close();
         }
     }
 
-    public static void saveProperties(Map<String, String> map, Writer tmpWriter) throws IOException {
+    public static void saveProperties( Map<String, String> map, Writer tmpWriter ) throws IOException
+    {
         BufferedWriter writer = new BufferedWriter(tmpWriter);
-        try {
-            for (Entry<String, String> e : map.entrySet()) {
+        try
+        {
+            for (Entry<String, String> e : map.entrySet())
+            {
                 writer.append(e.getKey());
                 writer.append('=');
                 writer.append(e.getValue());
                 writer.append('\n');
             }
-        } finally {
+        } finally
+        {
             writer.close();
         }
     }
 
-    public static List<String> readFile(String file) throws IOException {
+    public static List<String> readFile( String file ) throws IOException
+    {
         return readFile(new InputStreamReader(new FileInputStream(file), "UTF-8"));
     }
 
-    public static List<String> readFile(Reader simpleReader) throws IOException {
+    public static List<String> readFile( Reader simpleReader ) throws IOException
+    {
         BufferedReader reader = new BufferedReader(simpleReader);
-        try {
+        try
+        {
             List<String> res = new ArrayList<String>();
             String line;
-            while ((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null)
+            {
                 res.add(line);
             }
             return res;
-        } finally {
+        } finally
+        {
             reader.close();
         }
     }
 
-    public static int idealIntArraySize(int need) {
+    public static int idealIntArraySize( int need )
+    {
         return idealByteArraySize(need * 4) / 4;
     }
 
-    public static int idealByteArraySize(int need) {
-        for (int i = 4; i < 32; i++) {
-            if (need <= (1 << i) - 12) {
+    public static int idealByteArraySize( int need )
+    {
+        for (int i = 4; i < 32; i++)
+        {
+            if (need <= (1 << i) - 12)
+            {
                 return (1 << i) - 12;
             }
         }
         return need;
     }
 
-    public static boolean removeDir(File file) {
+    public static boolean removeDir( File file )
+    {
         if (!file.exists())
+        {
             return true;
+        }
 
-        if (file.isDirectory()) {
-            for (File f : file.listFiles()) {
+        if (file.isDirectory())
+        {
+            for (File f : file.listFiles())
+            {
                 removeDir(f);
             }
         }
@@ -140,45 +170,56 @@ public class Helper {
         return file.delete();
     }
 
-    public static long totalMB() {
+    public static long totalMB()
+    {
         return Runtime.getRuntime().totalMemory() / MB;
     }
 
-    public static long usedMB() {
+    public static long usedMB()
+    {
         return (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / MB;
     }
 
-    public static String memInfo() {
+    public static String memInfo()
+    {
         return "totalMB:" + totalMB() + ", usedMB:" + usedMB();
     }
 
-    public static int sizeOfObjectRef(int factor) {
+    public static int sizeOfObjectRef( int factor )
+    {
         // pointer to class, flags, lock
         return factor * (4 + 4 + 4);
     }
 
-    public static int sizeOfLongArray(int length, int factor) {
+    public static int sizeOfLongArray( int length, int factor )
+    {
         // pointer to class, flags, lock, size
         return factor * (4 + 4 + 4 + 4) + 8 * length;
     }
 
-    public static int sizeOfObjectArray(int length, int factor) {
+    public static int sizeOfObjectArray( int length, int factor )
+    {
         // TODO add 4byte to make a multiple of 8 in some cases
         // TODO compressed oop
         return factor * (4 + 4 + 4 + 4) + 4 * length;
     }
 
-    public static void close(Closeable cl) {
-        try {
-            if (cl != null) {
+    public static void close( Closeable cl )
+    {
+        try
+        {
+            if (cl != null)
+            {
                 cl.close();
             }
-        } catch (IOException ex) {
+        } catch (IOException ex)
+        {
             throw new RuntimeException("Couldn't close resource", ex);
         }
     }
 
-    public static boolean isEmpty(String strOsm) {
+    public static boolean isEmpty( String strOsm )
+    {
         return strOsm == null || strOsm.trim().length() == 0;
     }
 
@@ -197,66 +238,89 @@ public class Helper {
     /**
      * Determines if the specified ByteBuffer is one which maps to a file!
      */
-    public static boolean isFileMapped(ByteBuffer bb) {
-        if (bb instanceof MappedByteBuffer) {
-            try {
+    public static boolean isFileMapped( ByteBuffer bb )
+    {
+        if (bb instanceof MappedByteBuffer)
+        {
+            try
+            {
                 ((MappedByteBuffer) bb).isLoaded();
                 return true;
-            } catch (UnsupportedOperationException ex) {
+            } catch (UnsupportedOperationException ex)
+            {
             }
         }
         return false;
     }
 
-    public static void unzip(String from, boolean remove) throws IOException {
+    public static void unzip( String from, boolean remove ) throws IOException
+    {
         String to = pruneFileEnd(from);
         unzip(from, to, remove);
     }
 
-    public static boolean unzip(String fromStr, String toStr, boolean remove) throws IOException {
+    public static boolean unzip( String fromStr, String toStr, boolean remove ) throws IOException
+    {
         File from = new File(fromStr);
         File to = new File(toStr);
         if (!from.exists() || fromStr.equals(toStr))
+        {
             return false;
+        }
 
         if (!to.exists())
+        {
             to.mkdirs();
+        }
 
         ZipInputStream zis = new ZipInputStream(new FileInputStream(from));
-        try {
+        try
+        {
             ZipEntry ze = zis.getNextEntry();
             byte[] buffer = new byte[1024];
-            while (ze != null) {
-                if (ze.isDirectory()) {
+            while (ze != null)
+            {
+                if (ze.isDirectory())
+                {
                     new File(to, ze.getName()).mkdir();
-                } else {
+                } else
+                {
                     File newFile = new File(to, ze.getName());
                     FileOutputStream fos = new FileOutputStream(newFile);
-                    try {
+                    try
+                    {
                         int len;
-                        while ((len = zis.read(buffer)) > 0) {
+                        while ((len = zis.read(buffer)) > 0)
+                        {
                             fos.write(buffer, 0, len);
                         }
-                    } finally {
+                    } finally
+                    {
                         fos.close();
                     }
                 }
                 ze = zis.getNextEntry();
             }
             zis.closeEntry();
-        } finally {
+        } finally
+        {
             zis.close();
         }
 
         if (remove)
+        {
             Helper.removeDir(from);
+        }
 
         return true;
     }
 
-    public static int calcIndexSize(BBox graphBounds) {
+    public static int calcIndexSize( BBox graphBounds )
+    {
         if (!graphBounds.isValid())
+        {
             throw new IllegalArgumentException("Bounding box is not valid to calculate index size: " + graphBounds);
+        }
         double dist = new DistanceCalc().calcDist(graphBounds.maxLat, graphBounds.minLon,
                 graphBounds.minLat, graphBounds.maxLon);
         // convert to km and maximum is 50000km => 1GB
@@ -264,27 +328,36 @@ public class Helper {
         return Math.max(2000, (int) (dist * dist));
     }
 
-    public static String pruneFileEnd(String file) {
+    public static String pruneFileEnd( String file )
+    {
         int index = file.lastIndexOf(".");
         if (index < 0)
+        {
             return file;
+        }
         return file.substring(0, index);
     }
 
-    public static TIntList createTList(int... list) {
+    public static TIntList createTList( int... list )
+    {
         TIntList res = new TIntArrayList(list.length);
-        for (int val : list) {
+        for (int val : list)
+        {
             res.add(val);
         }
         return res;
     }
 
-    public static PointList createPointList(double... list) {
+    public static PointList createPointList( double... list )
+    {
         if (list.length % 2 != 0)
+        {
             throw new IllegalArgumentException("list should consist of lat,lon pairs!");
+        }
         PointList res = new PointList(list.length);
         int max = list.length / 2;
-        for (int i = 0; i < max; i++) {
+        for (int i = 0; i < max; i++)
+        {
             res.add(list[2 * i], list[2 * i + 1]);
         }
         return res;
@@ -292,38 +365,41 @@ public class Helper {
 
     /**
      * Converts a double (maximum value 10000) into an integer.
-     *
+     * <p/>
      * @return the integer to be stored
      */
-    public static int doubleToInt(double deg) {
+    public static int doubleToInt( double deg )
+    {
         return (int) (deg * INT_FACTOR);
     }
 
     /**
      * Converts back the once transformed storedInt from doubleToInt
      */
-    public static double intToDouble(int storedInt) {
+    public static double intToDouble( int storedInt )
+    {
         return (double) storedInt / INT_FACTOR;
     }
 
     /**
-     * Converts into an integer to be compatible with the still limited
-     * DataAccess class (accepts only integer values). But this conversation
-     * also reduces memory consumption where the precision loss is accceptable.
-     * As +- 180° and +-90° are assumed as maximum values.
-     *
+     * Converts into an integer to be compatible with the still limited DataAccess class (accepts
+     * only integer values). But this conversation also reduces memory consumption where the
+     * precision loss is accceptable. As +- 180° and +-90° are assumed as maximum values.
+     * <p/>
      * @return the integer of the specified degree
      */
-    public static int degreeToInt(double deg) {
+    public static int degreeToInt( double deg )
+    {
         return (int) (deg * DEGREE_FACTOR);
     }
 
     /**
      * Converts back the integer value.
-     *
+     * <p/>
      * @return the degree value of the specified integer
      */
-    public static double intToDegree(int storedInt) {
+    public static double intToDegree( int storedInt )
+    {
         // Double.longBitsToDouble();
         return (double) storedInt / DEGREE_FACTOR;
     }
@@ -331,24 +407,33 @@ public class Helper {
     private static final float DEGREE_FACTOR = Integer.MAX_VALUE / 400f;
     private static final float INT_FACTOR = Integer.MAX_VALUE / 10000f;
 
-    public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
-        try {
-            AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-                @Override public Object run() throws Exception {
+    public static void cleanMappedByteBuffer( final ByteBuffer buffer )
+    {
+        try
+        {
+            AccessController.doPrivileged(new PrivilegedExceptionAction<Object>()
+            {
+                @Override
+                public Object run() throws Exception
+                {
                     final Method getCleanerMethod = buffer.getClass().getMethod("cleaner");
                     getCleanerMethod.setAccessible(true);
                     final Object cleaner = getCleanerMethod.invoke(buffer);
                     if (cleaner != null)
+                    {
                         cleaner.getClass().getMethod("clean").invoke(cleaner);
+                    }
                     return null;
                 }
             });
-        } catch (PrivilegedActionException e) {
+        } catch (PrivilegedActionException e)
+        {
             throw new RuntimeException("unable to unmap the mapped buffer", e);
         }
     }
 
-    public static String nf(long no) {
+    public static String nf( long no )
+    {
         // I like french localization the most: 123654 will be 123 654 instead
         // of comma vs. point confusion for english/german guys.
         // NumberFormat is not thread safe => but getInstance looks like it's cached

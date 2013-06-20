@@ -39,16 +39,18 @@ import org.junit.Test;
 /**
  * @author Peter Karich
  */
-public class PrepareContractionHierarchiesTest {
-
+public class PrepareContractionHierarchiesTest
+{
     private EncodingManager encodingManager = new EncodingManager("CAR");
     private CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
 
-    LevelGraph createGraph() {
+    LevelGraph createGraph()
+    {
         return new GraphBuilder(encodingManager).levelGraphCreate();
     }
 
-    LevelGraph createExampleGraph() {
+    LevelGraph createExampleGraph()
+    {
         LevelGraph g = createGraph();
 
         //5-1-----2
@@ -68,7 +70,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testShortestPathSkipNode() {
+    public void testShortestPathSkipNode()
+    {
         LevelGraph g = createExampleGraph();
         double normalDist = new Dijkstra(g, carEncoder).calcPath(4, 2).distance();
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder);
@@ -78,7 +81,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testShortestPathSkipNode2() {
+    public void testShortestPathSkipNode2()
+    {
         LevelGraph g = createExampleGraph();
         double normalDist = new Dijkstra(g, carEncoder).calcPath(4, 2).distance();
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder);
@@ -90,7 +94,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testShortestPathLimit() {
+    public void testShortestPathLimit()
+    {
         LevelGraph g = createExampleGraph();
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder);
         algo.edgeFilter(new PrepareContractionHierarchies.LevelEdgeFilterCH(g).avoidNode(0));
@@ -100,7 +105,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testAddShortcuts() {
+    public void testAddShortcuts()
+    {
         LevelGraph g = createExampleGraph();
         int old = g.getAllEdges().maxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().vehicle(carEncoder).graph(g);
@@ -109,7 +115,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testMoreComplexGraph() {
+    public void testMoreComplexGraph()
+    {
         LevelGraph g = initShortcutsGraph(createGraph());
         int old = g.getAllEdges().maxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().vehicle(carEncoder).graph(g);
@@ -118,7 +125,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testDirectedGraph() {
+    public void testDirectedGraph()
+    {
         LevelGraph g = createGraph();
         g.edge(5, 4, 3, false);
         g.edge(4, 5, 10, false);
@@ -138,7 +146,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testDirectedGraph2() {
+    public void testDirectedGraph2()
+    {
         LevelGraph g = createGraph();
         initDirected2(g);
         int old = GHUtility.count(g.getAllEdges());
@@ -153,7 +162,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testDirectedGraph3() {
+    public void testDirectedGraph3()
+    {
         LevelGraph g = createGraph();
         g.edge(0, 2, 2, true);
         g.edge(10, 2, 2, true);
@@ -176,7 +186,8 @@ public class PrepareContractionHierarchiesTest {
         Iterator<Shortcut> iter = scs.iterator();
         Shortcut sc1 = iter.next();
         Shortcut sc2 = iter.next();
-        if (sc1.distance > sc2.distance) {
+        if (sc1.distance > sc2.distance)
+        {
             Shortcut tmp = sc1;
             sc1 = sc2;
             sc2 = tmp;
@@ -189,7 +200,8 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(sc2.toString(), 12, sc2.distance, 1e-4);
     }
 
-    void initRoundaboutGraph(Graph g) {
+    void initRoundaboutGraph( Graph g )
+    {
         //              roundabout:
         //16-0-9-10--11   12<-13
         //    \       \  /      \
@@ -241,7 +253,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testRoundaboutUnpacking() {
+    public void testRoundaboutUnpacking()
+    {
         LevelGraph g = createGraph();
         initRoundaboutGraph(g);
         int old = g.getAllEdges().maxId();
@@ -254,7 +267,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testFindShortcuts_Roundabout() {
+    public void testFindShortcuts_Roundabout()
+    {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
         EdgeSkipIterator iter1_1 = g.edge(1, 3, 1, true);
         EdgeSkipIterator iter1_2 = g.edge(3, 4, 1, true);
@@ -280,7 +294,8 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(2, sc.size());
     }
 
-    void initUnpackingGraph(LevelGraphStorage g, WeightCalculation w) {
+    void initUnpackingGraph( LevelGraphStorage g, WeightCalculation w )
+    {
         double dist = 1;
         int flags = carEncoder.flags(30, false);
         g.edge(10, 0, w.getWeight(dist, flags), flags);
@@ -318,7 +333,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testUnpackingOrder() {
+    public void testUnpackingOrder()
+    {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
         WeightCalculation calc = new ShortestCalc();
         initUnpackingGraph(g, calc);
@@ -330,7 +346,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testUnpackingOrder_Fastest() {
+    public void testUnpackingOrder_Fastest()
+    {
         LevelGraphStorage g = (LevelGraphStorage) createGraph();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().graph(g);
         WeightCalculation calc = new FastestCalc(carEncoder);
@@ -342,7 +359,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testCircleBug() {
+    public void testCircleBug()
+    {
         LevelGraph g = createGraph();
         //  /--1
         // -0--/
@@ -361,7 +379,8 @@ public class PrepareContractionHierarchiesTest {
     // |    8  |
     // \   /   /
     //  7-6-5-/
-    void initBiGraph(Graph graph) {
+    void initBiGraph( Graph graph )
+    {
         graph.edge(0, 1, 100, true);
         graph.edge(1, 2, 1, true);
         graph.edge(2, 3, 1, true);
@@ -378,7 +397,8 @@ public class PrepareContractionHierarchiesTest {
     // |         ^   \
     // |         |    |
     // 17-16-...-11<-/
-    public static void initDirected2(Graph g) {
+    public static void initDirected2( Graph g )
+    {
         g.edge(0, 1, 1, true);
         g.edge(1, 2, 1, true);
         g.edge(2, 3, 1, true);
@@ -407,7 +427,8 @@ public class PrepareContractionHierarchiesTest {
     //    |        v
     //10<-2---4<---5
     //    9
-    public static void initDirected1(Graph g) {
+    public static void initDirected1( Graph g )
+    {
         g.edge(0, 8, 1, true);
         g.edge(0, 1, 1, false);
         g.edge(1, 3, 1, false);
@@ -422,7 +443,8 @@ public class PrepareContractionHierarchiesTest {
     }
 
     // prepare-routing.svg
-    public static LevelGraph initShortcutsGraph(LevelGraph g) {
+    public static LevelGraph initShortcutsGraph( LevelGraph g )
+    {
         g.edge(0, 1, 1, true);
         g.edge(0, 2, 1, true);
         g.edge(1, 2, 1, true);
@@ -461,7 +483,8 @@ public class PrepareContractionHierarchiesTest {
 //        System.out.println("---");
 //    }
     @Test
-    public void testBits() {
+    public void testBits()
+    {
         int fromNode = Integer.MAX_VALUE / 3 * 2;
         int endNode = Integer.MAX_VALUE / 37 * 17;
 

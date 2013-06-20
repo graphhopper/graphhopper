@@ -25,10 +25,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class GHTreeMapComposedTest {
-
+public class GHTreeMapComposedTest
+{
     @Test
-    public void testInsert() {
+    public void testInsert()
+    {
         GHTreeMapComposed instance = new GHTreeMapComposed();
         instance.insert(1, 100);
         assertEquals(1, instance.peekKey());

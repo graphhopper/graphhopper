@@ -33,38 +33,45 @@ import java.util.Collections;
 import java.util.Comparator;
 
 /**
- * The LevelGraph has some edges disconnected (to be more efficient), but this
- * happens before the index is created! So we need to take care of this and also
- * ignore the introduced shortcuts e.g. for calculating closest edges.
- *
- * TODO avoid some of the tricks if we move a disconnected edge to the end of
- * the edge-list (instead of just disconnecting them). And then while accessing
- * them break iteration if we encounter the first of those disconnected edges
- * (this should have the same speed). Therefor we also need to change the
- * EdgeFilter interface and add a stop(EdgeIterator) method or similar.
- *
+ * The LevelGraph has some edges disconnected (to be more efficient), but this happens before the
+ * index is created! So we need to take care of this and also ignore the introduced shortcuts e.g.
+ * for calculating closest edges.
+ * <p/>
+ * TODO avoid some of the tricks if we move a disconnected edge to the end of the edge-list (instead
+ * of just disconnecting them). And then while accessing them break iteration if we encounter the
+ * first of those disconnected edges (this should have the same speed). Therefor we also need to
+ * change the EdgeFilter interface and add a stop(EdgeIterator) method or similar.
+ * <p/>
  * @author Peter Karich
  */
-public class Location2NodesNtreeLG extends Location2NodesNtree {
-
-    private final static EdgeFilter NO_SHORTCUT = new EdgeFilter() {
-        @Override public boolean accept(EdgeIterator iter) {
+public class Location2NodesNtreeLG extends Location2NodesNtree
+{
+    private final static EdgeFilter NO_SHORTCUT = new EdgeFilter()
+    {
+        @Override
+        public boolean accept( EdgeIterator iter )
+        {
             return !((EdgeSkipIterator) iter).isShortcut();
         }
     };
     private LevelGraph lg;
 
-    public Location2NodesNtreeLG(LevelGraph g, Directory dir) {
+    public Location2NodesNtreeLG( LevelGraph g, Directory dir )
+    {
         super(g, dir);
         lg = g;
     }
 
     @Override
-    protected void sortNodes(TIntList nodes) {
+    protected void sortNodes( TIntList nodes )
+    {
         // nodes with high level should come first to be covered by lower level nodes
         ArrayList<Integer> list = Helper.tIntListToArrayList(nodes);
-        Collections.sort(list, new Comparator<Integer>() {
-            @Override public int compare(Integer o1, Integer o2) {
+        Collections.sort(list, new Comparator<Integer>()
+        {
+            @Override
+            public int compare( Integer o1, Integer o2 )
+            {
                 return lg.getLevel(o2) - lg.getLevel(o1);
             }
         });
@@ -73,74 +80,107 @@ public class Location2NodesNtreeLG extends Location2NodesNtree {
     }
 
     @Override
-    protected int pickBestNode(int nodeA, int nodeB) {
+    protected int pickBestNode( int nodeA, int nodeB )
+    {
         // return lower level nodes as those nodes are always connected to higher ones
         // (high level nodes are potentially disconnected from lower ones in order to improve performance on Android)
         if (lg.getLevel(nodeA) < lg.getLevel(nodeB))
+        {
             return nodeA;
+        }
         return nodeB;
     }
 
     @Override
-    protected AllEdgesIterator getAllEdges() {
+    protected AllEdgesIterator getAllEdges()
+    {
         final AllEdgesSkipIterator tmpIter = lg.getAllEdges();
-        return new AllEdgesIterator() {
-            @Override public int maxId() {
+        return new AllEdgesIterator()
+        {
+            @Override
+            public int maxId()
+            {
                 return tmpIter.maxId();
             }
 
-            @Override public boolean next() {
-                while (tmpIter.next()) {
+            @Override
+            public boolean next()
+            {
+                while (tmpIter.next())
+                {
                     if (!tmpIter.isShortcut())
+                    {
                         return true;
+                    }
                 }
                 return false;
             }
 
-            @Override public int edge() {
+            @Override
+            public int edge()
+            {
                 return tmpIter.edge();
             }
 
-            @Override public int baseNode() {
+            @Override
+            public int baseNode()
+            {
                 return tmpIter.baseNode();
             }
 
-            @Override public int adjNode() {
+            @Override
+            public int adjNode()
+            {
                 return tmpIter.adjNode();
             }
 
-            @Override public PointList wayGeometry() {
+            @Override
+            public PointList wayGeometry()
+            {
                 return tmpIter.wayGeometry();
             }
 
-            @Override public void wayGeometry(PointList list) {
+            @Override
+            public void wayGeometry( PointList list )
+            {
                 tmpIter.wayGeometry(list);
             }
 
-            @Override public double distance() {
+            @Override
+            public double distance()
+            {
                 return tmpIter.distance();
             }
 
-            @Override public void distance(double dist) {
+            @Override
+            public void distance( double dist )
+            {
                 tmpIter.distance(dist);
             }
 
-            @Override public int flags() {
+            @Override
+            public int flags()
+            {
                 return tmpIter.flags();
             }
 
-            @Override public void flags(int flags) {
+            @Override
+            public void flags( int flags )
+            {
                 tmpIter.flags(flags);
             }
 
-            @Override public boolean isEmpty() {
+            @Override
+            public boolean isEmpty()
+            {
                 return tmpIter.isEmpty();
             }
         };
     }
 
     @Override
-    protected EdgeIterator getEdges(int node) {
+    protected EdgeIterator getEdges( int node )
+    {
         return lg.getEdges(node, NO_SHORTCUT);
     }
 }

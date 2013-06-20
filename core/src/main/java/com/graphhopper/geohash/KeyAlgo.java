@@ -20,21 +20,21 @@ package com.graphhopper.geohash;
 import com.graphhopper.util.shapes.CoordTrig;
 
 /**
- * Defines the mapping between a one dimensional 'number' and a point (lat, lon)
- * which is limited to a defined bounds.
- *
+ * Defines the mapping between a one dimensional 'number' and a point (lat, lon) which is limited to
+ * a defined bounds.
+ * <p/>
  * @author Peter Karich
  */
-public interface KeyAlgo {
-
+public interface KeyAlgo
+{
     /**
      * Sets the bounds of the underlying key algorithm.
      */
-    KeyAlgo bounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit);
+    KeyAlgo bounds( double minLonInit, double maxLonInit, double minLatInit, double maxLatInit );
 
-    long encode(CoordTrig coord);
+    long encode( CoordTrig coord );
 
-    long encode(double lat, double lon);
+    long encode( double lat, double lon );
 
-    void decode(long spatialKey, CoordTrig latLon);
+    void decode( long spatialKey, CoordTrig latLon );
 }

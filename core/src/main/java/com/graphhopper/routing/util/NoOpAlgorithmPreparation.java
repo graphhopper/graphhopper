@@ -25,30 +25,37 @@ import com.graphhopper.util.Helper;
 /**
  * @author Peter Karich
  */
-public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<NoOpAlgorithmPreparation> {
-
-    public NoOpAlgorithmPreparation() {
+public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<NoOpAlgorithmPreparation>
+{
+    public NoOpAlgorithmPreparation()
+    {
     }
 
     /**
-     * Creates a preparation wrapper for the specified algorithm. Warning/TODO:
-     * set the _graph for the instance otherwise you'll get NPE when calling
-     * createAlgo. Possible values for algorithmStr: astar (A* algorithm),
-     * astarbi (bidirectional A*) dijkstra (Dijkstra), dijkstrabi and
-     * dijkstraNative (a bit faster bidirectional Dijkstra).
+     * Creates a preparation wrapper for the specified algorithm. Warning/TODO: set the _graph for
+     * the instance otherwise you'll get NPE when calling createAlgo. Possible values for
+     * algorithmStr: astar (A* algorithm), astarbi (bidirectional A*) dijkstra (Dijkstra),
+     * dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
      */
-    public static AlgorithmPreparation createAlgoPrepare(Graph g, final String algorithmStr, 
-            FlagEncoder encoder, WeightCalculation weightCalc) {
+    public static AlgorithmPreparation createAlgoPrepare( Graph g, final String algorithmStr,
+            FlagEncoder encoder, WeightCalculation weightCalc )
+    {
         return p(new RoutingAlgorithmFactory(algorithmStr, false), encoder, weightCalc).graph(g);
     }
 
-    private static AlgorithmPreparation p(final RoutingAlgorithmFactory factory, 
-            final FlagEncoder encoder, final WeightCalculation weightCalc) {
-        return new NoOpAlgorithmPreparation() {
-            @Override public RoutingAlgorithm createAlgo() {
-                try {
+    private static AlgorithmPreparation p( final RoutingAlgorithmFactory factory,
+            final FlagEncoder encoder, final WeightCalculation weightCalc )
+    {
+        return new NoOpAlgorithmPreparation()
+        {
+            @Override
+            public RoutingAlgorithm createAlgo()
+            {
+                try
+                {
                     return factory.createAlgo(_graph, encoder).type(weightCalc);
-                } catch (Exception ex) {
+                } catch (Exception ex)
+                {
                     throw new RuntimeException(ex);
                 }
             }

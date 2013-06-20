@@ -24,7 +24,7 @@ import java.util.Collection;
 /**
  * @author Peter Karich
  */
-public interface CoordResolver<T> {
-
-    void add(Collection<CoordTrig<T>> coll, int edgeId);
+public interface CoordResolver<T>
+{
+    void add( Collection<CoordTrig<T>> coll, int edgeId );
 }

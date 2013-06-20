@@ -27,10 +27,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class GraphHopperAPITest {
-
+public class GraphHopperAPITest
+{
     @Test
-    public void testLoad() {
+    public void testLoad()
+    {
         final EncodingManager encodingManager = new EncodingManager("CAR");
         GraphStorage graph = new GraphBuilder(encodingManager).create();
         graph.setNode(0, 42, 10);

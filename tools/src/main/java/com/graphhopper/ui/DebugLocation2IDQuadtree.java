@@ -26,17 +26,19 @@ import java.awt.Graphics2D;
 /**
  * @author Peter Karich
  */
-class DebugLocation2IDQuadtree extends Location2IDQuadtree {
-
+class DebugLocation2IDQuadtree extends Location2IDQuadtree
+{
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugLocation2IDQuadtree(Graph g, GraphicsWrapper mg, Directory dir) {
+    public DebugLocation2IDQuadtree( Graph g, GraphicsWrapper mg, Directory dir )
+    {
         super(g, dir);
         this.mg = mg;
     }
 
-    public void setGraphics(Graphics2D g2) {
+    public void setGraphics( Graphics2D g2 )
+    {
         this.g2 = g2;
         double w = getMaxRasterWidthMeter();
         // System.out.println("w:" + w);
@@ -45,7 +47,8 @@ class DebugLocation2IDQuadtree extends Location2IDQuadtree {
         double lat2 = mg.getLat(500);
         g2.setColor(Color.ORANGE);
         int lines = 1000;
-        for (int i = 0; i < lines; i++) {
+        for (int i = 0; i < lines; i++)
+        {
             double c1 = distCalc.calcCircumference(lat1);
             double addLon1 = 360 * i * w / c1;
             double c2 = distCalc.calcCircumference(lat1);
@@ -57,15 +60,18 @@ class DebugLocation2IDQuadtree extends Location2IDQuadtree {
     }
 
     @Override
-    public int findID(double lat, double lon) {
+    public int findID( double lat, double lon )
+    {
         int ret = super.findID(lat, lon);
         mg.plotNode(g2, ret, Color.GREEN);
         return ret;
     }
 
     @Override
-    public void goFurtherHook(int n) {
-        if (g2 != null) {
+    public void goFurtherHook( int n )
+    {
+        if (g2 != null)
+        {
             mg.plotNode(g2, n, Color.RED);
         }
     }

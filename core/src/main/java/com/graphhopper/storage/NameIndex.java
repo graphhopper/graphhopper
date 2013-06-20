@@ -22,25 +22,29 @@ package com.graphhopper.storage;
  * @author Ottavio Campana
  * @author Peter Karich
  */
-public class NameIndex implements Storable<NameIndex> {
-
+public class NameIndex implements Storable<NameIndex>
+{
     // currently only 4 * 2GB is supported
     private int nextBytePos;
     private DataAccess names;
 
-    public NameIndex(Directory dir) {
+    public NameIndex( Directory dir )
+    {
         names = dir.find("names");
     }
 
     @Override
-    public NameIndex create(long cap) {
+    public NameIndex create( long cap )
+    {
         names.create(cap);
         return this;
     }
 
     @Override
-    public boolean loadExisting() {
-        if (names.loadExisting()) {
+    public boolean loadExisting()
+    {
+        if (names.loadExisting())
+        {
             nextBytePos = names.getHeader(0);
             return true;
         }
@@ -48,11 +52,14 @@ public class NameIndex implements Storable<NameIndex> {
         return false;
     }
 
-    public int put(String name) {
+    public int put( String name )
+    {
         byte[] nameAsBytes;
-        try {
+        try
+        {
             nameAsBytes = name.getBytes("UTF-8");
-        } catch (java.io.UnsupportedEncodingException ex) {
+        } catch (java.io.UnsupportedEncodingException ex)
+        {
             throw new RuntimeException(ex);
         }
 
@@ -97,35 +104,42 @@ public class NameIndex implements Storable<NameIndex> {
         return oldOffset;
     }
 
-    public String get(int index) {
+    public String get( int index )
+    {
         int size = names.getInt(index);
         byte[] bytes = new byte[size];
         index += 4;
         names.getBytes(index, bytes, size);
-        try {
+        try
+        {
             return new String(bytes, "UTF-8");
-        } catch (java.io.UnsupportedEncodingException e) {
+        } catch (java.io.UnsupportedEncodingException e)
+        {
             throw new RuntimeException(e);
         }
     }
 
-    public void segmentSize(int bytes) {
+    public void segmentSize( int bytes )
+    {
         names.segmentSize(bytes);
     }
 
     @Override
-    public void flush() {
+    public void flush()
+    {
         names.setHeader(0, nextBytePos);
         names.flush();
     }
 
     @Override
-    public void close() {
+    public void close()
+    {
         names.close();
     }
 
     @Override
-    public long capacity() {
+    public long capacity()
+    {
         return names.capacity();
     }
 }

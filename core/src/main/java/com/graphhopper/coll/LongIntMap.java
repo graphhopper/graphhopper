@@ -21,11 +21,11 @@ package com.graphhopper.coll;
 /**
  * @author Peter Karich
  */
-public interface LongIntMap {
+public interface LongIntMap
+{
+    int put( long key, int value );
 
-    int put(long key, int value);
-
-    int get(long key);
+    int get( long key );
 
     long size();
 

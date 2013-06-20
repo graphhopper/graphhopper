@@ -24,17 +24,15 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
- * A simple two staged heap where the first N values are stored in a sorted
- * tree.
- *
- * TODO some bug remaining if it over or underflows (or same problem as with
- * MyDijkstraHeap?) ... use dijkstra simple => cannot remove 8243.565 size:32,
- * smallSize: 22 ...
- *
+ * A simple two staged heap where the first N values are stored in a sorted tree.
+ * <p/>
+ * TODO some bug remaining if it over or underflows (or same problem as with MyDijkstraHeap?) ...
+ * use dijkstra simple => cannot remove 8243.565 size:32, smallSize: 22 ...
+ * <p/>
  * @author Peter Karich
  */
-public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer> {
-
+public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer>
+{
     private static final double noKey = Double.MAX_VALUE;
     private TreeMap<Double, Object> sorted;
     private double splitter = noKey;
@@ -44,44 +42,57 @@ public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer> {
     private int underflows = 0;
     private int overflows = 0;
 
-    public GHDijkstraHeap2() {
+    public GHDijkstraHeap2()
+    {
         this(102);
     }
 
-    public GHDijkstraHeap2(int cap) {
+    public GHDijkstraHeap2( int cap )
+    {
         this(cap < 100 ? 25 : cap / 4, cap < 100 ? 100 : cap);
     }
 
-    public GHDijkstraHeap2(int smallCap, int largeCap) {
+    public GHDijkstraHeap2( int smallCap, int largeCap )
+    {
         smallCapacity = smallCap;
         sorted = new TreeMap<Double, Object>();
         largeHeap = new IntDoubleBinHeap(largeCap);
     }
 
     @Override
-    public void update(Number key, Integer element) {
-        if (!largeHeap.update_(key.doubleValue(), element)) {
+    public void update( Number key, Integer element )
+    {
+        if (!largeHeap.update_(key.doubleValue(), element))
+        {
             // remove
             Iterator<Entry<Double, Object>> iter = sorted.entrySet().iterator();
             boolean removed = false;
-            while (iter.hasNext()) {
+            while (iter.hasNext())
+            {
                 Entry<Double, Object> e = iter.next();
-                if (e.getValue() instanceof MyList) {
+                if (e.getValue() instanceof MyList)
+                {
                     MyList list = (MyList) e.getValue();
-                    if (list.contains(element)) {
+                    if (list.contains(element))
+                    {
                         list.remove((Integer) element);
                         if (list.isEmpty())
+                        {
                             iter.remove();
+                        }
                         removed = true;
                         break;
                     }
-                } else if (((Integer) e.getValue()).equals(element)) {
+                } else if (((Integer) e.getValue()).equals(element))
+                {
                     iter.remove();
                     removed = true;
                 }
             }
             if (!removed)
+            {
                 throw new IllegalStateException("couldn't remove " + element + " with new key " + key);
+            }
 
             // update
             putSorted(key.doubleValue(), element);
@@ -89,11 +100,15 @@ public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer> {
         // TODO throw new RuntimeException("update is problematic -> see todo in MyDijkstraHeapTest!");
     }
 
-    public void update_(double oldKey, double key, int element) {
-        if (oldKey >= splitter) {
+    public void update_( double oldKey, double key, int element )
+    {
+        if (oldKey >= splitter)
+        {
             largeHeap.update_(key, element);
-        } else {
-            if (handleSmallOverflow()) {
+        } else
+        {
+            if (handleSmallOverflow())
+            {
                 insert_(key, element);
                 return;
             }
@@ -105,15 +120,20 @@ public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer> {
     }
 
     @Override
-    public void insert(Number key, Integer element) {
+    public void insert( Number key, Integer element )
+    {
         insert_(key.doubleValue(), element);
     }
 
-    public void insert_(double key, int element) {
-        if (key >= splitter) {
+    public void insert_( double key, int element )
+    {
+        if (key >= splitter)
+        {
             largeHeap.insert_(key, element);
-        } else {
-            if (handleSmallOverflow()) {
+        } else
+        {
+            if (handleSmallOverflow())
+            {
                 insert_(key, element);
                 return;
             }
@@ -124,100 +144,134 @@ public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer> {
     }
 
     @Override
-    public boolean isEmpty() {
+    public boolean isEmpty()
+    {
         return size == 0;
     }
 
     @Override
-    public int size() {
+    public int size()
+    {
         return size;
     }
 
     @Override
-    public Integer peekElement() {
+    public Integer peekElement()
+    {
         return peek_element();
     }
 
-    public int peek_element() {
+    public int peek_element()
+    {
         handleSmallUnderflow();
         Object o = sorted.firstEntry().getValue();
         if (o instanceof MyList)
+        {
             return ((MyList) o).get(0);
+        }
 
         return (Integer) o;
     }
 
     @Override
-    public Number peekKey() {
+    public Number peekKey()
+    {
         return peek_key();
     }
 
-    public double peek_key() {
+    public double peek_key()
+    {
         handleSmallUnderflow();
         return sorted.firstKey();
     }
 
     @Override
-    public Integer pollElement() {
+    public Integer pollElement()
+    {
         return poll_element();
     }
 
-    public int poll_element() {
+    public int poll_element()
+    {
         handleSmallUnderflow();
         Object o = sorted.firstEntry().getValue();
         int el;
-        if (o instanceof MyList) {
+        if (o instanceof MyList)
+        {
             MyList list = (MyList) o;
             el = list.remove(list.size() - 1);
             if (list.isEmpty())
+            {
                 sorted.pollFirstEntry();
+            }
         } else
+        {
             el = (Integer) sorted.pollFirstEntry().getValue();
+        }
 
         size--;
         return el;
     }
 
     @Override
-    public void clear() {
+    public void clear()
+    {
         sorted.clear();
         largeHeap.clear();
         size = 0;
     }
 
     @Override
-    public void ensureCapacity(int size) {
+    public void ensureCapacity( int size )
+    {
         size = size - smallCapacity;
         if (size <= 0)
+        {
             return;
+        }
         largeHeap.ensureCapacity(size);
     }
 
-    void removeSorted(double key, int value) {
+    void removeSorted( double key, int value )
+    {
         Object old = sorted.remove(key);
         if (old == null)
+        {
             throw new IllegalStateException("cannot remove " + key + " " + stats());
+        }
 
-        if (old instanceof Integer) {
+        if (old instanceof Integer)
+        {
             if (!old.equals(value))
+            {
                 throw new IllegalStateException("cannot remove " + key + " " + stats());
+            }
             return;
         }
         MyList list = (MyList) old;
         if (!list.remove((Integer) value))
+        {
             throw new IllegalStateException("cannot remove " + key + " " + stats());
+        }
         if (!list.isEmpty())
+        {
             sorted.put(key, list);
+        }
     }
 
-    void putSorted(double key, int el) {
+    void putSorted( double key, int el )
+    {
         Object old = sorted.put(key, el);
         if (old == null)
+        {
             return;
+        }
         MyList list;
-        if (old instanceof MyList) {
+        if (old instanceof MyList)
+        {
             list = (MyList) old;
-        } else {
+        } else
+        {
             list = new MyList(5);
             list.add((Integer) old);
         }
@@ -225,55 +279,77 @@ public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer> {
         list.add(el);
     }
 
-    private boolean handleSmallUnderflow() {
+    private boolean handleSmallUnderflow()
+    {
         if (!sorted.isEmpty())
+        {
             return false;
+        }
 
-        for (int i = 0; !largeHeap.isEmpty() && i < smallCapacity; i++) {
+        for (int i = 0; !largeHeap.isEmpty() && i < smallCapacity; i++)
+        {
             double key = largeHeap.peek_key();
             int el = largeHeap.poll_element();
             putSorted(key, el);
         }
         if (largeHeap.isEmpty())
+        {
             splitter = noKey;
-        else
+        } else
+        {
             splitter = largeHeap.peek_key();
+        }
         if (sorted.isEmpty())
+        {
             throw new IllegalStateException("sorted tree wasn't fill with data? " + stats());
+        }
         underflows++;
         return true;
     }
 
-    private boolean handleSmallOverflow() {
+    private boolean handleSmallOverflow()
+    {
         if (sorted.size() < smallCapacity)
+        {
             return false;
+        }
 
         // TODO only approximated as there could be duplicates!!
         int mid = sorted.size() / 2;
         int counter = 0;
         TreeMap<Double, Object> newSorted = new TreeMap<Double, Object>();
-        for (Entry<Double, Object> e : sorted.entrySet()) {
-            if (counter < mid) {
+        for (Entry<Double, Object> e : sorted.entrySet())
+        {
+            if (counter < mid)
+            {
                 newSorted.put(e.getKey(), e.getValue());
-            } else {
-                if (e.getValue() instanceof MyList) {
-                    for (Integer i : (MyList) e.getValue()) {
+            } else
+            {
+                if (e.getValue() instanceof MyList)
+                {
+                    for (Integer i : (MyList) e.getValue())
+                    {
                         largeHeap.insert(e.getKey(), i);
                     }
                 } else
+                {
                     largeHeap.insert(e.getKey(), (Integer) e.getValue());
+                }
             }
             counter++;
         }
         sorted = newSorted;
         if (largeHeap.isEmpty())
+        {
             throw new IllegalStateException("largeHeap wasn't filled with data from small heap!? " + stats());
+        }
         splitter = largeHeap.peek_key();
         overflows++;
         return true;
     }
 
-    public String stats() {
+    public String stats()
+    {
         return "size:" + size()
                 + ", smallSize: " + sorted.size() + " " + sorted
                 + ", split:" + splitter
@@ -282,17 +358,20 @@ public class GHDijkstraHeap2 implements BinHeapWrapper<Number, Integer> {
     }
 
     // in case of duplicates the value gets a list!
-    private static class MyList extends ArrayList<Integer> {
-
-        public MyList(int initialCapacity) {
+    private static class MyList extends ArrayList<Integer>
+    {
+        public MyList( int initialCapacity )
+        {
             super(initialCapacity);
         }
     }
     private static ReverseComparator comparator = new ReverseComparator();
 
-    private static class ReverseComparator implements Comparator<Double> {
-
-        @Override public int compare(Double o1, Double o2) {
+    private static class ReverseComparator implements Comparator<Double>
+    {
+        @Override
+        public int compare( Double o1, Double o2 )
+        {
             return -o1.compareTo(o2);
         }
     }

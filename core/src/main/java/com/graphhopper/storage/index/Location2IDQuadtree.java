@@ -38,18 +38,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class implements map matching and returns a node index from lat,lon
- * coordinate. This implementation is the a very memory efficient representation
- * for areas with lots of node and edges, but lacks precision. No edge distances
- * are measured.
- *
- * @see Location2NodesNtree for a more precise but more complicated and also
- * slightly slower implementation of Location2IDIndex.
- *
+ * This class implements map matching and returns a node index from lat,lon coordinate. This
+ * implementation is the a very memory efficient representation for areas with lots of node and
+ * edges, but lacks precision. No edge distances are measured.
+ * <p/>
+ * @see Location2NodesNtree for a more precise but more complicated and also slightly slower
+ * implementation of Location2IDIndex.
+ * <p/>
  * @author Peter Karich
  */
-public class Location2IDQuadtree implements Location2IDIndex {
-
+public class Location2IDQuadtree implements Location2IDIndex
+{
     private final static int MAGIC_INT = Integer.MAX_VALUE / 12306;
     private Logger logger = LoggerFactory.getLogger(getClass());
     private KeyAlgo keyAlgo;
@@ -59,73 +58,88 @@ public class Location2IDQuadtree implements Location2IDIndex {
     private Graph graph;
     private int lonSize, latSize;
 
-    public Location2IDQuadtree(Graph g, Directory dir) {
+    public Location2IDQuadtree( Graph g, Directory dir )
+    {
         this.graph = g;
         index = dir.find("loc2idIndex");
         resolution(100 * 100);
     }
 
     @Override
-    public Location2IDIndex precision(boolean approxDist) {
+    public Location2IDIndex precision( boolean approxDist )
+    {
         if (approxDist)
+        {
             distCalc = new DistancePlaneProjection();
-        else
+        } else
+        {
             distCalc = new DistanceCalc();
+        }
         return this;
     }
 
     @Override
-    public long capacity() {
+    public long capacity()
+    {
         return index.capacity() / 4;
     }
 
     /**
-     * Loads the index from disc if exists. Make sure you are using the
-     * identical graph which was used while flusing this index.
-     *
+     * Loads the index from disc if exists. Make sure you are using the identical graph which was
+     * used while flusing this index.
+     * <p/>
      * @return if loading from file was successfully.
      */
     @Override
-    public boolean loadExisting() {
+    public boolean loadExisting()
+    {
         if (!index.loadExisting())
+        {
             return false;
+        }
 
         if (index.getHeader(0) != MAGIC_INT)
+        {
             throw new IllegalStateException("incorrect loc2id index version");
+        }
         int lat = index.getHeader(1 * 4);
         int lon = index.getHeader(2 * 4);
         int checksum = index.getHeader(3 * 4);
         if (checksum != graph.nodes())
+        {
             throw new IllegalStateException("index was created from a different graph with "
                     + checksum + ". Current nodes:" + graph.nodes());
+        }
 
         initAlgo(lat, lon);
         return true;
     }
 
     @Override
-    public Location2IDIndex create(long size) {
+    public Location2IDIndex create( long size )
+    {
         throw new UnsupportedOperationException("Not supported. Use prepareIndex instead.");
     }
 
     @Override
-    public Location2IDIndex resolution(int resolution) {
+    public Location2IDIndex resolution( int resolution )
+    {
         initLatLonSize(resolution);
         return this;
     }
 
     /**
-     * Fill quadtree which will span a raster over the entire specified graph g.
-     * But do this in a pre-defined resolution which is controlled via capacity.
-     * This datastructure then uses approx. capacity * 4 bytes. So maximum
-     * capacity is 2^30 where the quadtree would cover the world boundaries
-     * every 1.3km - IMO enough for EU or US networks.
-     *
-     * TODO it should be additionally possible to specify the minimum raster
-     * width instead of the memory usage
+     * Fill quadtree which will span a raster over the entire specified graph g. But do this in a
+     * pre-defined resolution which is controlled via capacity. This datastructure then uses approx.
+     * capacity * 4 bytes. So maximum capacity is 2^30 where the quadtree would cover the world
+     * boundaries every 1.3km - IMO enough for EU or US networks.
+     * <p/>
+     * TODO it should be additionally possible to specify the minimum raster width instead of the
+     * memory usage
      */
     @Override
-    public Location2IDIndex prepareIndex() {
+    public Location2IDIndex prepareIndex()
+    {
         initBuffer();
         initAlgo(latSize, lonSize);
         StopWatch sw = new StopWatch().start();
@@ -141,19 +155,24 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return this;
     }
 
-    private void initLatLonSize(int size) {
+    private void initLatLonSize( int size )
+    {
         latSize = lonSize = (int) Math.sqrt(size);
         if (latSize * lonSize < size)
+        {
             lonSize++;
+        }
     }
 
-    private void initBuffer() {
+    private void initBuffer()
+    {
         // avoid default big segment size and use one segment only:
         index.segmentSize(latSize * lonSize * 4);
         index.create(latSize * lonSize * 4);
     }
 
-    void initAlgo(int lat, int lon) {
+    void initAlgo( int lat, int lon )
+    {
         this.latSize = lat;
         this.lonSize = lon;
         BBox b = graph.bounds();
@@ -166,23 +185,29 @@ public class Location2IDQuadtree implements Location2IDIndex {
         // distances. because sin(x) is only monotonic increasing for x <= PI/2 (and positive for x >= 0)
     }
 
-    protected double getMaxRasterWidthMeter() {
+    protected double getMaxRasterWidthMeter()
+    {
         return distCalc.calcDenormalizedDist(maxRasterWidth2InMeterNormed) / 2;
     }
 
-    private GHBitSet fillQuadtree(int size) {
+    private GHBitSet fillQuadtree( int size )
+    {
         int locs = graph.nodes();
         if (locs <= 0)
+        {
             throw new IllegalStateException("check your graph - it is empty!");
+        }
 
         GHBitSet filledIndices = new GHBitSetImpl(size);
         CoordTrig coord = new CoordTrig();
-        for (int nodeId = 0; nodeId < locs; nodeId++) {
+        for (int nodeId = 0; nodeId < locs; nodeId++)
+        {
             double lat = graph.getLatitude(nodeId);
             double lon = graph.getLongitude(nodeId);
             int key = (int) keyAlgo.encode(lat, lon);
             long bytePos = (long) key * 4;
-            if (filledIndices.contains(key)) {
+            if (filledIndices.contains(key))
+            {
                 int oldNodeId = index.getInt(bytePos);
                 keyAlgo.decode(key, coord);
                 // decide which one is closer to 'key'
@@ -192,8 +217,11 @@ public class Location2IDQuadtree implements Location2IDIndex {
                 double distOld = distCalc.calcNormalizedDist(coord.lat, coord.lon, oldLat, oldLon);
                 // new point is closer to quad tree point (key) so overwrite old
                 if (distNew < distOld)
+                {
                     index.setInt(bytePos, nodeId);
-            } else {
+                }
+            } else
+            {
                 index.setInt(bytePos, nodeId);
                 filledIndices.add(key);
             }
@@ -201,7 +229,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return filledIndices;
     }
 
-    private int fillEmptyIndices(GHBitSet filledIndices) {
+    private int fillEmptyIndices( GHBitSet filledIndices )
+    {
         int len = latSize * lonSize;
         DataAccess indexCopy = new RAMDirectory().find("tempIndexCopy");
         indexCopy.segmentSize(index.segmentSize()).create(index.capacity());
@@ -212,47 +241,62 @@ public class Location2IDQuadtree implements Location2IDIndex {
         // and 2. use a taken-from array to decide which of the colliding should be prefered
         int[] takenFrom = new int[len];
         Arrays.fill(takenFrom, -1);
-        for (int i = filledIndices.next(0); i >= 0; i = filledIndices.next(i + 1)) {
+        for (int i = filledIndices.next(0); i >= 0; i = filledIndices.next(i + 1))
+        {
             takenFrom[i] = i;
         }
         if (initializedCounter == 0)
+        {
             throw new IllegalStateException("at least one entry has to be != null, which should have happened in initIndex");
+        }
         int tmp = initializedCounter;
-        while (initializedCounter < len) {
+        while (initializedCounter < len)
+        {
             index.copyTo(indexCopy);
             filledIndices.copyTo(indicesCopy);
             initializedCounter = filledIndices.cardinality();
-            for (int i = 0; i < len; i++) {
+            for (int i = 0; i < len; i++)
+            {
                 int to = -1, from = -1;
-                if (indicesCopy.contains(i)) {
+                if (indicesCopy.contains(i))
+                {
                     // check change "initialized to empty"                    
-                    if ((i + 1) % lonSize != 0 && !indicesCopy.contains(i + 1)) {
+                    if ((i + 1) % lonSize != 0 && !indicesCopy.contains(i + 1))
+                    {
                         // set right from current
                         from = i;
                         to = i + 1;
-                    } else if (i + lonSize < len && !indicesCopy.contains(i + lonSize)) {
+                    } else if (i + lonSize < len && !indicesCopy.contains(i + lonSize))
+                    {
                         // set below from current
                         from = i;
                         to = i + lonSize;
                     }
-                } else {
+                } else
+                {
                     // check change "empty to initialized"
-                    if ((i + 1) % lonSize != 0 && indicesCopy.contains(i + 1)) {
+                    if ((i + 1) % lonSize != 0 && indicesCopy.contains(i + 1))
+                    {
                         // set from right
                         from = i + 1;
                         to = i;
-                    } else if (i + lonSize < len && indicesCopy.contains(i + lonSize)) {
+                    } else if (i + lonSize < len && indicesCopy.contains(i + lonSize))
+                    {
                         // set from below
                         from = i + lonSize;
                         to = i;
                     }
                 }
-                if (to >= 0) {
-                    if (takenFrom[to] >= 0) {
+                if (to >= 0)
+                {
+                    if (takenFrom[to] >= 0)
+                    {
                         // takenFrom[to] == to -> special case for normedDist == 0
                         if (takenFrom[to] == to
                                 || normedDist(from, to) >= normedDist(takenFrom[to], to))
+                        {
                             continue;
+                        }
                     }
 
                     index.setInt(to * 4, indexCopy.getInt(from * 4));
@@ -266,7 +310,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return initializedCounter - tmp;
     }
 
-    double normedDist(int from, int to) {
+    double normedDist( int from, int to )
+    {
         int fromX = from % lonSize;
         int fromY = from / lonSize;
         int toX = to % lonSize;
@@ -277,17 +322,22 @@ public class Location2IDQuadtree implements Location2IDIndex {
     }
 
     /**
-     * @return the node id (corresponding to a coordinate) closest to the
-     * specified lat,lon.
+     * @return the node id (corresponding to a coordinate) closest to the specified lat,lon.
      */
-    @Override public int findID(final double lat, final double lon) {
+    @Override
+    public int findID( final double lat, final double lon )
+    {
         return findClosest(lat, lon, EdgeFilter.ALL_EDGES).closestNode();
     }
 
-    @Override public LocationIDResult findClosest(final double queryLat, final double queryLon,
-            final EdgeFilter edgeFilter) {
+    @Override
+    public LocationIDResult findClosest( final double queryLat, final double queryLon,
+            final EdgeFilter edgeFilter )
+    {
         if (edgeFilter != EdgeFilter.ALL_EDGES)
+        {
             throw new UnsupportedOperationException("edge filters are not yet implemented for " + Location2IDQuadtree.class.getSimpleName());
+        }
 
         // The following cases (e.g. dead ends or motorways crossing a normal way) could be problematic:
         // |     |
@@ -312,20 +362,28 @@ public class Location2IDQuadtree implements Location2IDIndex {
         res.closestNode(id);
         res.weight(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
         goFurtherHook(id);
-        new XFirstSearch() {
-            @Override protected GHBitSet createBitSet(int size) {
+        new XFirstSearch()
+        {
+            @Override
+            protected GHBitSet createBitSet( int size )
+            {
                 return new GHTBitSet(10);
             }
 
-            @Override protected boolean goFurther(int baseNode) {
+            @Override
+            protected boolean goFurther( int baseNode )
+            {
                 if (baseNode == id)
+                {
                     return true;
+                }
 
                 goFurtherHook(baseNode);
                 double currLat = graph.getLatitude(baseNode);
                 double currLon = graph.getLongitude(baseNode);
                 double currDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
-                if (currDist < res.weight()) {
+                if (currDist < res.weight())
+                {
                     res.weight(currDist);
                     res.closestNode(baseNode);
                     return true;
@@ -337,11 +395,13 @@ public class Location2IDQuadtree implements Location2IDIndex {
         return res;
     }
 
-    public void goFurtherHook(int n) {
+    public void goFurtherHook( int n )
+    {
     }
 
     @Override
-    public void flush() {
+    public void flush()
+    {
         index.setHeader(0, MAGIC_INT);
         index.setHeader(1 * 4, latSize);
         index.setHeader(2 * 4, lonSize);
@@ -350,7 +410,8 @@ public class Location2IDQuadtree implements Location2IDIndex {
     }
 
     @Override
-    public void close() {
+    public void close()
+    {
         index.close();
     }
 }

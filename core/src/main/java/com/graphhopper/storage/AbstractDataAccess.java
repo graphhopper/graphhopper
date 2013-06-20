@@ -26,8 +26,8 @@ import java.io.RandomAccessFile;
 /**
  * @author Peter Karich
  */
-public abstract class AbstractDataAccess implements DataAccess {
-
+public abstract class AbstractDataAccess implements DataAccess
+{
     protected static final int SEGMENT_SIZE_MIN = 1 << 7;
     private static final int SEGMENT_SIZE_DEFAULT = 1 << 20;
     // reserve some space for downstream usage (in classes using/exting this)
@@ -40,34 +40,42 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected transient int segmentSizePower;
     protected transient int indexDivisor;
 
-    public AbstractDataAccess(String name, String location) {
+    public AbstractDataAccess( String name, String location )
+    {
         this.name = name;
         if (!Helper.isEmpty(location) && !location.endsWith("/"))
+        {
             throw new IllegalArgumentException("Create DataAccess object via its corresponding Directory!");
+        }
         this.location = location;
     }
 
     @Override
-    public String name() {
+    public String name()
+    {
         return name;
     }
 
-    protected String fullName() {
+    protected String fullName()
+    {
         return location + name;
     }
 
     @Override
-    public void close() {
+    public void close()
+    {
     }
 
     @Override
-    public void setHeader(int bytePos, int value) {
+    public void setHeader( int bytePos, int value )
+    {
         bytePos >>= 2;
         header[bytePos] = value;
     }
 
     @Override
-    public int getHeader(int bytePos) {
+    public int getHeader( int bytePos )
+    {
         bytePos >>= 2;
         return header[bytePos];
     }
@@ -75,34 +83,44 @@ public abstract class AbstractDataAccess implements DataAccess {
     /**
      * @return the remaining space in bytes
      */
-    protected void writeHeader(RandomAccessFile file, long length, int segmentSize) throws IOException {
+    protected void writeHeader( RandomAccessFile file, long length, int segmentSize ) throws IOException
+    {
         file.seek(0);
         file.writeUTF("GH");
         file.writeLong(length);
         file.writeInt(segmentSize);
-        for (int i = 0; i < header.length; i++) {
+        for (int i = 0; i < header.length; i++)
+        {
             file.writeInt(header[i]);
         }
     }
 
-    protected long readHeader(RandomAccessFile raFile) throws IOException {
+    protected long readHeader( RandomAccessFile raFile ) throws IOException
+    {
         raFile.seek(0);
         if (raFile.length() == 0)
+        {
             return -1;
+        }
         String versionHint = raFile.readUTF();
         if (!"GH".equals(versionHint))
+        {
             throw new IllegalArgumentException("Not a GraphHopper file! Expected 'GH' as file marker but was " + versionHint);
+        }
         long bytes = raFile.readLong();
         segmentSize(raFile.readInt());
-        for (int i = 0; i < header.length; i++) {
+        for (int i = 0; i < header.length; i++)
+        {
             header[i] = raFile.readInt();
         }
         return bytes;
     }
 
     @Override
-    public DataAccess copyTo(DataAccess da) {
-        for (int h = 0; h < header.length * 4; h += 4) {
+    public DataAccess copyTo( DataAccess da )
+    {
+        for (int h = 0; h < header.length * 4; h += 4)
+        {
             da.setHeader(h, getHeader(h));
         }
         da.ensureCapacity(capacity());
@@ -111,29 +129,40 @@ public abstract class AbstractDataAccess implements DataAccess {
         int segSize = Math.min(da.segmentSize(), segmentSize());
         byte[] bytes = new byte[segSize];
         boolean externalIntBased = ((AbstractDataAccess) da).isIntBased();
-        for (long bytePos = 0; bytePos < cap; bytePos += segSize) {
+        for (long bytePos = 0; bytePos < cap; bytePos += segSize)
+        {
             // read
-            if (isIntBased()) {
-                for (int offset = 0; offset < segSize; offset += 4) {
+            if (isIntBased())
+            {
+                for (int offset = 0; offset < segSize; offset += 4)
+                {
                     BitUtil.fromInt(bytes, getInt(bytePos + offset), offset);
                 }
             } else
+            {
                 getBytes(bytePos, bytes, segSize);
+            }
 
             // write
-            if (externalIntBased) {
-                for (int offset = 0; offset < segSize; offset += 4) {
+            if (externalIntBased)
+            {
+                for (int offset = 0; offset < segSize; offset += 4)
+                {
                     da.setInt(bytePos + offset, BitUtil.toInt(bytes, offset));
                 }
             } else
+            {
                 da.setBytes(bytePos, bytes, segSize);
+            }
         }
         return da;
     }
 
     @Override
-    public DataAccess segmentSize(int bytes) {
-        if (bytes > 0) {
+    public DataAccess segmentSize( int bytes )
+    {
+        if (bytes > 0)
+        {
             // segment size should be a power of 2
             int tmp = (int) (Math.log(bytes) / Math.log(2));
             segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
@@ -144,47 +173,66 @@ public abstract class AbstractDataAccess implements DataAccess {
     }
 
     @Override
-    public int segmentSize() {
+    public int segmentSize()
+    {
         return segmentSizeInBytes;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return fullName();
     }
 
     @Override
-    public void rename(String newName) {
+    public void rename( String newName )
+    {
         File file = new File(location + name);
         if (file.exists())
-            try {
+        {
+            try
+            {
                 if (!file.renameTo(new File(location + newName)))
+                {
                     throw new IllegalStateException("Couldn't rename this RAMDataAccess object to " + newName);
+                }
                 name = newName;
-            } catch (Exception ex) {
+            } catch (Exception ex)
+            {
                 throw new IllegalStateException("Couldn't rename this RAMDataAccess object!", ex);
             }
-        else
+        } else
+        {
             throw new IllegalStateException("File does not exist!? " + fullName()
                     + " Make sure that you flushed before renaming. Otherwise it could make problems"
                     + " for memory mapped DataAccess objects");
+        }
     }
 
-    protected boolean checkBeforeRename(String newName) {
+    protected boolean checkBeforeRename( String newName )
+    {
         if (Helper.isEmpty(newName))
+        {
             throw new IllegalArgumentException("newName mustn't be empty!");
+        }
         if (newName.equals(name))
+        {
             return false;
+        }
         if (isStoring() && new File(location + newName).exists())
+        {
             throw new IllegalArgumentException("file newName already exists!");
+        }
         return true;
     }
 
-    public boolean isStoring() {
+    public boolean isStoring()
+    {
         return true;
     }
 
-    protected boolean isIntBased() {
+    protected boolean isIntBased()
+    {
         return false;
     }
 }

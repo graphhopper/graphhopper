@@ -33,13 +33,14 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class DijkstraShortestOf2ToPubTest {
-
+public class DijkstraShortestOf2ToPubTest
+{
     EncodingManager manager = new EncodingManager("CAR");
     CarFlagEncoder carEncoder = (CarFlagEncoder) manager.getEncoder("CAR");
 
     @Test
-    public void testCalcShortestPath() {
+    public void testCalcShortestPath()
+    {
         Graph g = AbstractRoutingAlgorithmTester.getMatrixAlikeGraph();
         DijkstraShortestOf2ToPub d = new DijkstraShortestOf2ToPub(g, carEncoder);
         d.addPubTransportPoints(DijkstraWhichToOneTest.pubTransportPath);
@@ -52,7 +53,8 @@ public class DijkstraShortestOf2ToPubTest {
     }
 
     @Test
-    public void testCalcShortestPath2() {
+    public void testCalcShortestPath2()
+    {
         Graph g = AbstractRoutingAlgorithmTester.getMatrixAlikeGraph();
         DijkstraShortestOf2ToPub d = new DijkstraShortestOf2ToPub(g, carEncoder);
         d.addPubTransportPoints(DijkstraWhichToOneTest.pubTransportPath);
@@ -66,9 +68,13 @@ public class DijkstraShortestOf2ToPubTest {
     }
 
     @Test
-    public void testCalculateShortestPathWithSpecialFinishCondition() {
-        int[] pubTransport = new int[]{20, 21, 31, 41, 51, 52, 62, 72};
-        Graph g = GHUtility.clone(AbstractRoutingAlgorithmTester.getMatrixAlikeGraph(), 
+    public void testCalculateShortestPathWithSpecialFinishCondition()
+    {
+        int[] pubTransport = new int[]
+        {
+            20, 21, 31, 41, 51, 52, 62, 72
+        };
+        Graph g = GHUtility.clone(AbstractRoutingAlgorithmTester.getMatrixAlikeGraph(),
                 new GraphStorage(new RAMDirectory(), manager));
         g.edge(21, 31, 100, true);
         g.edge(31, 41, 100, true);
@@ -84,15 +90,18 @@ public class DijkstraShortestOf2ToPubTest {
         assertWithBiDijkstra(pubTransport, path, from, dest, g);
     }
 
-    private void assertWithBiDijkstra(int[] points, Path path, int from, int to, Graph g) {
+    private void assertWithBiDijkstra( int[] points, Path path, int from, int to, Graph g )
+    {
         Path bestManualPathFrom = null;
         Path bestManualPathTo = null;
-        for (int i = 0; i < points.length; i++) {
+        for (int i = 0; i < points.length; i++)
+        {
             Path manualFrom = new DijkstraBidirectionRef(g, carEncoder).calcPath(points[i], from);
             Path manualTo = new DijkstraBidirectionRef(g, carEncoder).calcPath(points[i], to);
             if (bestManualPathFrom == null
                     || manualFrom.weight() + manualTo.weight()
-                    < bestManualPathFrom.weight() + bestManualPathTo.weight()) {
+                    < bestManualPathFrom.weight() + bestManualPathTo.weight())
+            {
                 bestManualPathFrom = manualFrom;
                 bestManualPathTo = manualTo;
             }

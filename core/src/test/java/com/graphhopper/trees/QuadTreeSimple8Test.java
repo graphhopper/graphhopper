@@ -21,10 +21,11 @@ package com.graphhopper.trees;
  *
  * @author Peter Karich
  */
-public class QuadTreeSimple8Test extends QuadTreeTester {
-
+public class QuadTreeSimple8Test extends QuadTreeTester
+{
     @Override
-    protected QuadTree<Long> createQuadTree(long items) {
+    protected QuadTree<Long> createQuadTree( long items )
+    {
         QuadTreeSimple<Long> qt = new QuadTreeSimple<Long>(8);
         qt.init(items);
         return qt;

@@ -24,9 +24,11 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class PointListTest {
-
-    @Test public void testReverse() {
+public class PointListTest
+{
+    @Test
+    public void testReverse()
+    {
         PointList instance = new PointList();
         instance.add(1, 1);
         instance.reverse();

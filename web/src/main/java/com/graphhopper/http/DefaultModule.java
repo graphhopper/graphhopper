@@ -28,13 +28,15 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Peter Karich, pkarich@pannous.info
  */
-public class DefaultModule extends AbstractModule {
-
+public class DefaultModule extends AbstractModule
+{
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     @Override
-    protected void configure() {
-        try {
+    protected void configure()
+    {
+        try
+        {
             CmdArgs args = CmdArgs.readFromConfig("config.properties", "graphhopper.config");
             GraphHopper hopper = new GraphHopper().init(args)
                     .forServer();
@@ -54,7 +56,8 @@ public class DefaultModule extends AbstractModule {
             bind(Geocoding.class).toInstance(new NominatimGeocoder().timeout((int) timeout).
                     bounds(hopper.graph().bounds()));
             bind(GHThreadPool.class).toInstance(new GHThreadPool(1000, 50).startService());
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
             throw new IllegalStateException("Couldn't load graph", ex);
         }
     }

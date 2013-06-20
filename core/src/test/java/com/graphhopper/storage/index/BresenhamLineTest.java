@@ -32,55 +32,65 @@ import org.junit.Before;
  *
  * @author Peter Karich
  */
-public class BresenhamLineTest {
-
+public class BresenhamLineTest
+{
     final PointList points = new PointList();
-    PointEmitter emitter = new PointEmitter() {
-        @Override public void set(double lat, double lon) {
+    PointEmitter emitter = new PointEmitter()
+    {
+        @Override
+        public void set( double lat, double lon )
+        {
             points.add(lat, lon);
         }
     };
 
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         points.clear();
     }
 
     @Test
-    public void testBresenhamLineLeftDown() {
+    public void testBresenhamLineLeftDown()
+    {
         BresenhamLine.calcPoints(2, 1, -3, -1, emitter);
         assertEquals(Helper.createPointList(2, 1, 1, 1, 0, 0, -1, 0, -2, 0, -3, -1), points);
     }
 
     @Test
-    public void testBresenhamLineLeftUp() {
+    public void testBresenhamLineLeftUp()
+    {
         BresenhamLine.calcPoints(2, 1, 3, -1, emitter);
         assertEquals(Helper.createPointList(2, 1, 2, 0, 3, -1), points);
     }
 
     @Test
-    public void testBresenhamBug() {
+    public void testBresenhamBug()
+    {
         BresenhamLine.calcPoints(0.5, -0.5, -0.6, 1.6, emitter, -1, -1, 0.75, 1.3);
 //        assertEquals(Helper.createPointList(0.875, -0.35, 0.125, 0.95, -0.625, 2.25), points);
         assertEquals(Helper.createPointList(0.5, -1, 0.5, 0.3, -0.25, 1.6), points);
     }
 
     @Test
-    public void testBresenhamHorizontal() {
+    public void testBresenhamHorizontal()
+    {
         BresenhamLine.calcPoints(.5, -.5, .5, 1, emitter, -1, -1, 0.6, 0.4);
         // assertEquals(Helper.createPointList(.5, -.4, .5, 0, .5, .4, .5, .8, .5, 1.2), points);
         assertEquals(Helper.createPointList(.8, -.6, .8, -0.2, .8, .2, .8, .6, .8, 1.0), points);
     }
 
     @Test
-    public void testBresenhamVertical() {
+    public void testBresenhamVertical()
+    {
         BresenhamLine.calcPoints(-.5, .5, 1, 0.5, emitter, 0, 0, 0.4, 0.6);
 //        assertEquals(Helper.createPointList(-.2, .3, 0.2, .3, 0.6, 0.3, 1.0, 0.3), points);
         assertEquals(Helper.createPointList(-.4, .6, 0, .6, 0.4, 0.6, .8, .6, 1.2, 0.6), points);
     }
 
     @Test
-    public void testRealBresenham() {
+    public void testRealBresenham()
+    {
         int parts = 4;
         int bits = (int) (Math.log(parts * parts) / Math.log(2));
         double minLon = -1, maxLon = 1.6;
@@ -89,8 +99,11 @@ public class BresenhamLineTest {
         double deltaLat = (maxLat - minLat) / parts;
         double deltaLon = (maxLon - minLon) / parts;
         final ArrayList<Long> keys = new ArrayList<Long>();
-        PointEmitter tmpEmitter = new PointEmitter() {
-            @Override public void set(double lat, double lon) {
+        PointEmitter tmpEmitter = new PointEmitter()
+        {
+            @Override
+            public void set( double lat, double lon )
+            {
                 keys.add(keyAlgo.encode(lat, lon));
             }
         };
@@ -102,7 +115,8 @@ public class BresenhamLineTest {
     }
 
     @Test
-    public void testBresenhamToLeft() {
+    public void testBresenhamToLeft()
+    {
         BresenhamLine.calcPoints(
                 47.57383, 9.61984,
                 47.57382, 9.61890, emitter, 47, 9, 0.00647, 0.00964);

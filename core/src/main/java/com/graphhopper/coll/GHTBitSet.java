@@ -21,61 +21,76 @@ import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.hash.TIntHashSet;
 
 /**
- * Implements the bitset interface via a trove THashSet. More efficient for a
- * few entries.
- *
+ * Implements the bitset interface via a trove THashSet. More efficient for a few entries.
+ * <p/>
  * @author Peter Karich
  */
-public class GHTBitSet implements GHBitSet {
-
+public class GHTBitSet implements GHBitSet
+{
     private final TIntHashSet tHash;
 
-    public GHTBitSet(TIntHashSet set) {
+    public GHTBitSet( TIntHashSet set )
+    {
         tHash = set;
     }
 
-    public GHTBitSet(int no) {
+    public GHTBitSet( int no )
+    {
         tHash = new TIntHashSet(no, 0.7f, -1);
     }
 
-    public GHTBitSet() {
+    public GHTBitSet()
+    {
         this(1000);
     }
 
-    @Override public boolean contains(int index) {
+    @Override
+    public boolean contains( int index )
+    {
         return tHash.contains(index);
     }
 
-    @Override public void add(int index) {
+    @Override
+    public void add( int index )
+    {
         tHash.add(index);
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString()
+    {
         return tHash.toString();
     }
 
     @Override
-    public int cardinality() {
+    public int cardinality()
+    {
         return tHash.size();
     }
 
     @Override
-    public void clear() {
+    public void clear()
+    {
         tHash.clear();
     }
 
     @Override
-    public void ensureCapacity(int index) {
+    public void ensureCapacity( int index )
+    {
     }
 
     @Override
-    public GHBitSet copyTo(GHBitSet bs) {
+    public GHBitSet copyTo( GHBitSet bs )
+    {
         bs.clear();
-        if (bs instanceof GHTBitSet) {
+        if (bs instanceof GHTBitSet)
+        {
             ((GHTBitSet) bs).tHash.addAll(this.tHash);
-        } else {
+        } else
+        {
             TIntIterator iter = tHash.iterator();
-            while (iter.hasNext()) {
+            while (iter.hasNext())
+            {
                 bs.add(iter.next());
             }
         }
@@ -83,7 +98,8 @@ public class GHTBitSet implements GHBitSet {
     }
 
     @Override
-    public int next(int index) {
+    public int next( int index )
+    {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

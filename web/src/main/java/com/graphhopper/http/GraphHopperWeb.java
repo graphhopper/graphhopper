@@ -36,12 +36,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Main wrapper of the offline API for a simple and efficient usage.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class GraphHopperWeb implements GraphHopperAPI {
-
-    public static void main(String[] args) {
+public class GraphHopperWeb implements GraphHopperAPI
+{
+    public static void main( String[] args )
+    {
         GraphHopperAPI gh = new GraphHopperWeb();
         gh.load("http://localhost:8989/api");
         //GHResponse ph = gh.route(new GHRequest(53.080827, 9.074707, 50.597186, 11.184082));
@@ -52,28 +53,34 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private String serviceUrl;
     private boolean encodePolyline = true;
 
-    public GraphHopperWeb() {
+    public GraphHopperWeb()
+    {
     }
 
     /**
      * Example url: http://localhost:8989/api or http://217.92.216.224:8080/api
      */
-    @Override public boolean load(String url) {
+    @Override
+    public boolean load( String url )
+    {
         this.serviceUrl = url;
         return true;
     }
 
-    public GraphHopperWeb encodePolyline(boolean b) {
+    public GraphHopperWeb encodePolyline( boolean b )
+    {
         encodePolyline = b;
         return this;
     }
 
     @Override
-    public GHResponse route(GHRequest request) {
+    public GHResponse route( GHRequest request )
+    {
         request.check();
         StopWatch sw = new StopWatch().start();
         double took = 0;
-        try {
+        try
+        {
             String url = serviceUrl
                     + "?from=" + request.from().lat + "," + request.from().lon
                     + "&to=" + request.to().lat + "," + request.to().lon
@@ -89,11 +96,14 @@ public class GraphHopperWeb implements GraphHopperAPI {
             int timeInSeconds = route.getInt("time");
             PointList list;
             if (encodePolyline)
+            {
                 list = WebHelper.decodePolyline(route.getString("coordinates"), 100);
-            else {
+            } else
+            {
                 JSONArray coords = route.getJSONObject("data").getJSONArray("coordinates");
                 list = new PointList(coords.length());
-                for (int i = 0; i < coords.length(); i++) {
+                for (int i = 0; i < coords.length(); i++)
+                {
                     JSONArray arr = coords.getJSONArray(i);
                     double lon = arr.getDouble(0);
                     double lat = arr.getDouble(1);
@@ -101,30 +111,37 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 }
             }
             return new GHResponse().points(list).distance(distance).time(timeInSeconds);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
             throw new RuntimeException("Problem while fetching path " + request.from() + "->" + request.to(), ex);
-        } finally {
+        } finally
+        {
             logger.info("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);
         }
     }
 
-    InputStream fetch(String url) throws IOException {
+    InputStream fetch( String url ) throws IOException
+    {
         HttpURLConnection conn = (HttpURLConnection) createConnection(url);
         // create connection but before reading get the correct inputstream based on the compression
         conn.connect();
         String encoding = conn.getContentEncoding();
         InputStream is;
-        if (encoding != null && encoding.equalsIgnoreCase("gzip")) {
+        if (encoding != null && encoding.equalsIgnoreCase("gzip"))
+        {
             is = new GZIPInputStream(conn.getInputStream());
-        } else if (encoding != null && encoding.equalsIgnoreCase("deflate")) {
+        } else if (encoding != null && encoding.equalsIgnoreCase("deflate"))
+        {
             is = new InflaterInputStream(conn.getInputStream(), new Inflater(true));
-        } else {
+        } else
+        {
             is = conn.getInputStream();
         }
         return is;
     }
 
-    HttpURLConnection createConnection(String urlStr) throws IOException {
+    HttpURLConnection createConnection( String urlStr ) throws IOException
+    {
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setDoOutput(true);

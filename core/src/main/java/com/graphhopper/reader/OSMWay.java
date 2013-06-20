@@ -27,21 +27,22 @@ import java.util.Map;
 
 /**
  * Represents an OSM Way
- *
+ * <p/>
  * @author Nop
  */
-public class OSMWay extends OSMElement {
-
+public class OSMWay extends OSMElement
+{
     protected TLongList nodes;
 
     /**
      * Constructor for XML Parser
-     *
+     * <p/>
      * @param id
      * @param parser
      * @throws XMLStreamException
      */
-    public OSMWay(long id, XMLStreamReader parser) throws XMLStreamException {
+    public OSMWay( long id, XMLStreamReader parser ) throws XMLStreamException
+    {
         super(WAY, id, parser);
         nodes = new TLongArrayList();
 
@@ -52,43 +53,53 @@ public class OSMWay extends OSMElement {
 
     /**
      * Constructor for PBF Parser
-     *
+     * <p/>
      * @param id
      * @param tags
      */
-    public OSMWay(long id, Map<String, String> tags) {
+    public OSMWay( long id, Map<String, String> tags )
+    {
         super(WAY, id, tags);
 
         nodes = new TLongArrayList();
     }
 
-    public OSMWay(OSMWay src) {
+    public OSMWay( OSMWay src )
+    {
         super(src);
 
         nodes = new TLongArrayList(src.nodes);
     }
 
-    public OSMWay() {
+    public OSMWay()
+    {
         type = WAY;
         nodes = new TLongArrayList();
     }
 
-    public OSMWay(OSMNode geometry[], boolean closed) {
+    public OSMWay( OSMNode geometry[], boolean closed )
+    {
         super(WAY);
 
         nodes = new TLongArrayList();
-        for (int i = 0; i < geometry.length; i++) {
+        for (int i = 0; i < geometry.length; i++)
+        {
             nodes.add(geometry[i].id());
         }
         // close polygon
         if (closed)
+        {
             nodes.add(geometry[0].id());
+        }
     }
 
-    protected void readNodes(XMLStreamReader parser) throws XMLStreamException {
+    protected void readNodes( XMLStreamReader parser ) throws XMLStreamException
+    {
         int event = parser.getEventType();
-        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("nd")) {
-            if (event == XMLStreamConstants.START_ELEMENT) {
+        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("nd"))
+        {
+            if (event == XMLStreamConstants.START_ELEMENT)
+            {
                 // read node reference
                 String ref = parser.getAttributeValue(null, "ref");
                 nodes.add(Long.parseLong(ref));
@@ -98,23 +109,28 @@ public class OSMWay extends OSMElement {
         }
     }
 
-    public TLongList nodes() {
+    public TLongList nodes()
+    {
         return nodes;
     }
 
-    public void addNodeRef(long id) {
+    public void addNodeRef( long id )
+    {
         nodes.add(id);
     }
 
-    public String toString() {
+    public String toString()
+    {
         return "Way (" + id + ", " + nodes.size() + " nodes)";
     }
 
-    public void clearNodes() {
+    public void clearNodes()
+    {
         nodes.clear();
     }
 
-    public void setNodes(TLongList nodes) {
+    public void setNodes( TLongList nodes )
+    {
         this.nodes = nodes;
     }
 }

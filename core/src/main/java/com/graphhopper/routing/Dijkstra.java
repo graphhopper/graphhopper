@@ -28,54 +28,69 @@ import java.util.PriorityQueue;
 /**
  * Implements a single source shortest path algorithm
  * http://en.wikipedia.org/wiki/Dijkstra's_algorithm
- *
+ * <p/>
  * @author Peter Karich
  */
-public class Dijkstra extends AbstractRoutingAlgorithm {
-
+public class Dijkstra extends AbstractRoutingAlgorithm
+{
     protected TIntObjectMap<EdgeEntry> map = new TIntObjectHashMap<EdgeEntry>();
     protected PriorityQueue<EdgeEntry> heap = new PriorityQueue<EdgeEntry>();
     protected boolean alreadyRun;
     protected int visitedNodes;
 
-    public Dijkstra(Graph graph, FlagEncoder encoder) {
+    public Dijkstra( Graph graph, FlagEncoder encoder )
+    {
         super(graph, encoder);
     }
 
     @Override
-    public Path calcPath(int from, int to) {
+    public Path calcPath( int from, int to )
+    {
         if (alreadyRun)
+        {
             throw new IllegalStateException("Create a new instance per call");
+        }
         alreadyRun = true;
         EdgeEntry fromEdge = new EdgeEntry(EdgeIterator.NO_EDGE, from, 0d);
         map.put(from, fromEdge);
         EdgeEntry currEdge = calcEdgeEntry(fromEdge, to);
         if (currEdge == null || currEdge.endNode != to)
+        {
             return new Path(graph, flagEncoder);
+        }
 
         return extractPath(currEdge);
     }
 
-    public EdgeEntry calcEdgeEntry(EdgeEntry currEdge, int to) {
-        while (true) {
+    public EdgeEntry calcEdgeEntry( EdgeEntry currEdge, int to )
+    {
+        while (true)
+        {
             visitedNodes++;
             if (finished(currEdge, to))
+            {
                 break;
+            }
 
             int neighborNode = currEdge.endNode;
             EdgeIterator iter = neighbors(neighborNode);
-            while (iter.next()) {
+            while (iter.next())
+            {
                 if (!accept(iter))
+                {
                     continue;
+                }
                 int tmpNode = iter.adjNode();
                 double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currEdge.weight;
                 EdgeEntry nEdge = map.get(tmpNode);
-                if (nEdge == null) {
+                if (nEdge == null)
+                {
                     nEdge = new EdgeEntry(iter.edge(), tmpNode, tmpWeight);
                     nEdge.parent = currEdge;
                     map.put(tmpNode, nEdge);
                     heap.add(nEdge);
-                } else if (nEdge.weight > tmpWeight) {
+                } else if (nEdge.weight > tmpWeight)
+                {
                     heap.remove(nEdge);
                     nEdge.edge = iter.edge();
                     nEdge.weight = tmpWeight;
@@ -87,28 +102,37 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
             }
 
             if (heap.isEmpty())
+            {
                 return null;
+            }
             currEdge = heap.poll();
             if (currEdge == null)
+            {
                 throw new AssertionError("cannot happen?");
+            }
         }
         return currEdge;
     }
 
-    protected boolean finished(EdgeEntry currEdge, int to) {
+    protected boolean finished( EdgeEntry currEdge, int to )
+    {
         return currEdge.endNode == to;
     }
 
-    public Path extractPath(EdgeEntry goalEdge) {
+    public Path extractPath( EdgeEntry goalEdge )
+    {
         return new Path(graph, flagEncoder).edgeEntry(goalEdge).extract();
     }
 
-    @Override public String name() {
+    @Override
+    public String name()
+    {
         return "dijkstra";
     }
 
     @Override
-    public int visitedNodes() {
+    public int visitedNodes()
+    {
         return visitedNodes;
     }
 }

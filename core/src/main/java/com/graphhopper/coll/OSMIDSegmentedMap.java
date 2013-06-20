@@ -22,14 +22,13 @@ import com.graphhopper.util.Helper;
 import java.util.Arrays;
 
 /**
- * This is a special purpose map for writing increasing OSM IDs with consecutive
- * values. It stores the keys in vlong format and values are determined by the
- * resulting index.
- *
+ * This is a special purpose map for writing increasing OSM IDs with consecutive values. It stores
+ * the keys in vlong format and values are determined by the resulting index.
+ * <p/>
  * @author Peter Karich
  */
-public class OSMIDSegmentedMap implements LongIntMap {
-
+public class OSMIDSegmentedMap implements LongIntMap
+{
     private int bucketSize;
     private long[] keys;
     private VLongStorage[] buckets;
@@ -39,39 +38,50 @@ public class OSMIDSegmentedMap implements LongIntMap {
     private int currentIndex = -1;
     private long size;
 
-    public OSMIDSegmentedMap() {
+    public OSMIDSegmentedMap()
+    {
         this(100, 10);
     }
 
-    public OSMIDSegmentedMap(int initialCapacity, int maxEntryPerBucket) {
+    public OSMIDSegmentedMap( int initialCapacity, int maxEntryPerBucket )
+    {
         this.bucketSize = maxEntryPerBucket;
         int cap = initialCapacity / bucketSize;
         keys = new long[cap];
         buckets = new VLongStorage[cap];
     }
 
-    public void write(long key) {
+    public void write( long key )
+    {
         if (key <= lastKey)
+        {
             throw new IllegalStateException("Not supported: key " + key + " is lower than last one " + lastKey);
+        }
 
         currentIndex++;
-        if (currentIndex >= bucketSize) {
+        if (currentIndex >= bucketSize)
+        {
             currentBucket++;
             currentIndex = 0;
         }
 
-        if (currentBucket >= buckets.length) {
+        if (currentBucket >= buckets.length)
+        {
             int cap = (int) (currentBucket * 1.5f);
             buckets = Arrays.copyOf(buckets, cap);
             keys = Arrays.copyOf(keys, cap);
         }
 
-        if (buckets[currentBucket] == null) {
+        if (buckets[currentBucket] == null)
+        {
             keys[currentBucket] = key;
             if (currentBucket > 0)
+            {
                 buckets[currentBucket - 1].trimToSize();
+            }
             buckets[currentBucket] = new VLongStorage(bucketSize);
-        } else {
+        } else
+        {
             long delta = key - lastKey;
             buckets[currentBucket].writeVLong(delta);
         }
@@ -81,30 +91,40 @@ public class OSMIDSegmentedMap implements LongIntMap {
     }
 
     @Override
-    public int get(long key) {
+    public int get( long key )
+    {
         int retBucket = SparseLongLongArray.binarySearch(keys, 0, currentBucket + 1, key);
-        if (retBucket < 0) {
+        if (retBucket < 0)
+        {
             retBucket = ~retBucket;
             retBucket--;
             if (retBucket < 0)
+            {
                 return (int) getNoEntryValue();
+            }
 
             long storedKey = keys[retBucket];
             if (storedKey == key)
+            {
                 return retBucket * bucketSize;
+            }
 
             VLongStorage buck = buckets[retBucket];
             long tmp = buck.position();
             buck.seek(0);
             int max = currentBucket == retBucket ? currentIndex + 1 : bucketSize;
             int ret = getNoEntryValue();
-            for (int i = 1; i < max; i++) {
+            for (int i = 1; i < max; i++)
+            {
                 storedKey += buck.readVLong();
-                if (storedKey == key) {
+                if (storedKey == key)
+                {
                     ret = retBucket * bucketSize + i;
                     break;
                 } else if (storedKey > key)
+                {
                     break;
+                }
             }
             buck.seek(tmp);
             return ret;
@@ -113,31 +133,39 @@ public class OSMIDSegmentedMap implements LongIntMap {
         return retBucket * bucketSize;
     }
 
-    public int getNoEntryValue() {
+    public int getNoEntryValue()
+    {
         return -1;
     }
 
     @Override
-    public long size() {
+    public long size()
+    {
         return size;
     }
 
     @Override
-    public void optimize() {
+    public void optimize()
+    {
     }
 
     @Override
-    public int memoryUsage() {
+    public int memoryUsage()
+    {
         long bytes = 0;
-        for (int i = 0; i < buckets.length; i++) {
+        for (int i = 0; i < buckets.length; i++)
+        {
             if (buckets[i] != null)
+            {
                 bytes += buckets[i].length();
+            }
         }
         return Math.round((keys.length * 4 + bytes) / Helper.MB);
     }
 
     @Override
-    public int put(long key, int value) {
+    public int put( long key, int value )
+    {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

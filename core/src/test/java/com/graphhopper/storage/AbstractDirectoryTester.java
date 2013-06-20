@@ -27,27 +27,32 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public abstract class AbstractDirectoryTester {
-
+public abstract class AbstractDirectoryTester
+{
     protected String location = "./target/tmp/dir";
     private DataAccess da;
 
     abstract Directory createDir();
 
     @After
-    public void tearDown() {
+    public void tearDown()
+    {
         Helper.removeDir(new File(location));
         if (da != null)
+        {
             da.close();
+        }
     }
 
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         Helper.removeDir(new File(location));
     }
 
     @Test
-    public void testRename() {
+    public void testRename()
+    {
         Directory dir = createDir();
         da = dir.find("testing");
         da.create(100);
@@ -56,7 +61,8 @@ public abstract class AbstractDirectoryTester {
     }
 
     @Test
-    public void testNoDuplicates() {
+    public void testNoDuplicates()
+    {
         Directory dir = createDir();
         DataAccess da1 = dir.find("testing");
         DataAccess da2 = dir.find("testing");
@@ -66,7 +72,8 @@ public abstract class AbstractDirectoryTester {
     }
 
     @Test
-    public void testNoErrorForDACreate() {
+    public void testNoErrorForDACreate()
+    {
         Directory dir = createDir();
         da = dir.find("testing");
         da.create(100);

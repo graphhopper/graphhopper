@@ -28,29 +28,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Removes nodes which are not part of the largest network. Ie. mostly nodes
- * with no edges at all but also small subnetworks which are nearly always bugs
- * in OSM data.
- *
+ * Removes nodes which are not part of the largest network. Ie. mostly nodes with no edges at all
+ * but also small subnetworks which are nearly always bugs in OSM data.
+ * <p/>
  * @author Peter Karich
  */
-public class PrepareRoutingSubnetworks {
-
+public class PrepareRoutingSubnetworks
+{
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final Graph g;
     private int minNetworkSize = 3000;
     private int subNetworks = -1;
 
-    public PrepareRoutingSubnetworks(Graph g) {
+    public PrepareRoutingSubnetworks( Graph g )
+    {
         this.g = g;
     }
 
-    public PrepareRoutingSubnetworks minNetworkSize(int minNetworkSize) {
+    public PrepareRoutingSubnetworks minNetworkSize( int minNetworkSize )
+    {
         this.minNetworkSize = minNetworkSize;
         return this;
     }
 
-    public void doWork() {
+    public void doWork()
+    {
         logger.info("removeZeroDegreeNodes");
         int del = removeZeroDegreeNodes();
         logger.info("findSubnetworks");
@@ -62,24 +64,34 @@ public class PrepareRoutingSubnetworks {
         subNetworks = map.size();
     }
 
-    public int subNetworks() {
+    public int subNetworks()
+    {
         return subNetworks;
     }
 
-    public Map<Integer, Integer> findSubnetworks() {
+    public Map<Integer, Integer> findSubnetworks()
+    {
         final Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         final AtomicInteger integ = new AtomicInteger(0);
         int locs = g.nodes();
         final GHBitSet bs = new GHBitSetImpl(locs);
-        for (int start = 0; start < locs; start++) {
+        for (int start = 0; start < locs; start++)
+        {
             if (g.isNodeRemoved(start) || bs.contains(start))
+            {
                 continue;
-            new XFirstSearch() {
-                @Override protected GHBitSet createBitSet(int size) {
+            }
+            new XFirstSearch()
+            {
+                @Override
+                protected GHBitSet createBitSet( int size )
+                {
                     return bs;
                 }
 
-                @Override protected boolean goFurther(int nodeId) {
+                @Override
+                protected boolean goFurther( int nodeId )
+                {
                     integ.incrementAndGet();
                     return true;
                 }
@@ -93,45 +105,60 @@ public class PrepareRoutingSubnetworks {
     /**
      * Deletes all but the larges subnetworks.
      */
-    void keepLargeNetworks(Map<Integer, Integer> map) {
+    void keepLargeNetworks( Map<Integer, Integer> map )
+    {
         if (map.size() < 2)
+        {
             return;
+        }
 
         int biggestStart = -1;
         int maxCount = -1;
         GHBitSetImpl bs = new GHBitSetImpl(g.nodes());
-        for (Entry<Integer, Integer> e : map.entrySet()) {
-            if (biggestStart < 0) {
+        for (Entry<Integer, Integer> e : map.entrySet())
+        {
+            if (biggestStart < 0)
+            {
                 biggestStart = e.getKey();
                 maxCount = e.getValue();
                 continue;
             }
 
-            if (maxCount < e.getValue()) {
+            if (maxCount < e.getValue())
+            {
                 // new biggest area found. remove old
                 removeNetwork(biggestStart, maxCount, bs);
 
                 biggestStart = e.getKey();
                 maxCount = e.getValue();
             } else
+            {
                 removeNetwork(e.getKey(), e.getValue(), bs);
+            }
         }
     }
 
     /**
      * Deletes the complete subnetwork reachable through start
      */
-    void removeNetwork(int start, int entries, final GHBitSet bs) {
-        if (entries > minNetworkSize) {
+    void removeNetwork( int start, int entries, final GHBitSet bs )
+    {
+        if (entries > minNetworkSize)
+        {
             logger.info("did not remove large network (" + entries + ")");
             return;
         }
-        new XFirstSearch() {
-            @Override protected GHBitSet createBitSet(int size) {
+        new XFirstSearch()
+        {
+            @Override
+            protected GHBitSet createBitSet( int size )
+            {
                 return bs;
             }
 
-            @Override protected boolean goFurther(int nodeId) {
+            @Override
+            protected boolean goFurther( int nodeId )
+            {
                 g.markNodeRemoved(nodeId);
                 return super.goFurther(nodeId);
             }
@@ -139,16 +166,18 @@ public class PrepareRoutingSubnetworks {
     }
 
     /**
-     * To avoid large processing and a large HashMap remove nodes with no edges
-     * up front
-     *
+     * To avoid large processing and a large HashMap remove nodes with no edges up front
+     * <p/>
      * @return removed nodes
      */
-    int removeZeroDegreeNodes() {
+    int removeZeroDegreeNodes()
+    {
         int removed = 0;
         int locs = g.nodes();
-        for (int start = 0; start < locs; start++) {
-            if (!g.getEdges(start).next()) {
+        for (int start = 0; start < locs; start++)
+        {
+            if (!g.getEdges(start).next())
+            {
                 removed++;
                 g.markNodeRemoved(start);
             }

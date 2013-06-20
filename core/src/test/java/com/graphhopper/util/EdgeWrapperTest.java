@@ -24,10 +24,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class EdgeWrapperTest {
-
+public class EdgeWrapperTest
+{
     @Test
-    public void testPut() {
+    public void testPut()
+    {
         EdgeWrapper instance = new EdgeWrapper(5);
         int ref = instance.add(10, 100f, -1);
         assertEquals(100f, instance.getWeight(ref), 1e-4);
@@ -36,7 +37,8 @@ public class EdgeWrapperTest {
     }
 
     @Test
-    public void testClear() {
+    public void testClear()
+    {
         EdgeWrapper instance = new EdgeWrapper(5);
         assertEquals(0, instance.add(1, 10, 10));
         instance.add(2, 20, 20);

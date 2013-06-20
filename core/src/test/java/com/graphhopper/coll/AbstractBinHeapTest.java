@@ -28,12 +28,13 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public abstract class AbstractBinHeapTest {
-
-    public abstract BinHeapWrapper<Number, Integer> createHeap(int capacity);
+public abstract class AbstractBinHeapTest
+{
+    public abstract BinHeapWrapper<Number, Integer> createHeap( int capacity );
 
     @Test
-    public void test0() {
+    public void test0()
+    {
         BinHeapWrapper<Number, Integer> binHeap = createHeap(100);
         binHeap.insert(123, 0);
         assertEquals(123, binHeap.peekKey().intValue());
@@ -45,7 +46,8 @@ public abstract class AbstractBinHeapTest {
     }
 
     @Test
-    public void testBasic() {
+    public void testBasic()
+    {
         BinHeapWrapper<Number, Integer> binHeap = createHeap(100);
         binHeap.insert(20, 1);
         binHeap.insert(123, 2);
@@ -59,7 +61,8 @@ public abstract class AbstractBinHeapTest {
     }
 
     @Test
-    public void testClear() {
+    public void testClear()
+    {
         BinHeapWrapper<Number, Integer> binHeap = createHeap(100);
         binHeap.insert(20, 1);
         binHeap.insert(123, 2);
@@ -73,13 +76,15 @@ public abstract class AbstractBinHeapTest {
     }
 
     @Test
-    public void testSpreading() {
+    public void testSpreading()
+    {
         BinHeapWrapper<Number, Integer> binHeap = createHeap(100);
         binHeap.insert(100, 101);
         binHeap.insert(49, 51);
         binHeap.insert(71, 71);
         binHeap.insert(29, 31);
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 20; i++)
+        {
             binHeap.insert(i * 10, i * 11);
         }
         binHeap.insert(59, 61);
@@ -101,7 +106,8 @@ public abstract class AbstractBinHeapTest {
     }
 
     @Test
-    public void testRekey() {
+    public void testRekey()
+    {
         BinHeapWrapper<Number, Integer> binHeap = createHeap(100);
         binHeap.insert(20, 1);
         binHeap.insert(123, 2);
@@ -115,13 +121,15 @@ public abstract class AbstractBinHeapTest {
     }
 
     @Test
-    public void testSize() {
+    public void testSize()
+    {
         PriorityQueue<Edge> juQueue = new PriorityQueue<Edge>(100);
         BinHeapWrapper<Number, Integer> binHeap = createHeap(100);
 
         Random rand = new Random(1);
         int N = 1000;
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             int val = rand.nextInt();
             binHeap.insert(val, i);
             juQueue.add(new Edge(EdgeIterator.NO_EDGE, i, val));
@@ -129,7 +137,8 @@ public abstract class AbstractBinHeapTest {
 
         assertEquals(juQueue.size(), binHeap.size());
 
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             assertEquals(juQueue.poll().endNode, binHeap.pollElement(), 1e-5);
         }
 

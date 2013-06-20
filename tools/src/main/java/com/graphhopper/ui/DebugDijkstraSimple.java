@@ -27,24 +27,30 @@ import java.awt.Graphics2D;
 /**
  * @author Peter Karich
  */
-public class DebugDijkstraSimple extends Dijkstra implements DebugAlgo {
-
+public class DebugDijkstraSimple extends Dijkstra implements DebugAlgo
+{
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraSimple(Graph graph, FlagEncoder encoder, GraphicsWrapper mg) {
+    public DebugDijkstraSimple( Graph graph, FlagEncoder encoder, GraphicsWrapper mg )
+    {
         super(graph, encoder);
         this.mg = mg;
     }
 
     @Override
-    public void setGraphics2D(Graphics2D g2) {
+    public void setGraphics2D( Graphics2D g2 )
+    {
         this.g2 = g2;
     }
 
-    @Override public void updateShortest(EdgeEntry shortestDE, int currLoc) {
+    @Override
+    public void updateShortest( EdgeEntry shortestDE, int currLoc )
+    {
         if (g2 != null)
+        {
             mg.plotNode(g2, currLoc, Color.YELLOW);
+        }
         super.updateShortest(shortestDE, currLoc);
     }
 }

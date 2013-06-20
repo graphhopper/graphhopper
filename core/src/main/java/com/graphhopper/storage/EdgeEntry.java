@@ -19,27 +19,31 @@ package com.graphhopper.storage;
 
 /**
  * This class is used to create the shortest-path-tree from linked entities.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class EdgeEntry extends Edge implements Cloneable {
-
+public class EdgeEntry extends Edge implements Cloneable
+{
     public EdgeEntry parent;
 
-    public EdgeEntry(int edgeId, int endNode, double distance) {
+    public EdgeEntry( int edgeId, int endNode, double distance )
+    {
         super(edgeId, endNode, distance);
     }
 
     @Override
-    public EdgeEntry clone() {
+    public EdgeEntry clone()
+    {
         return new EdgeEntry(edge, endNode, weight);
     }
 
-    public EdgeEntry cloneFull() {
+    public EdgeEntry cloneFull()
+    {
         EdgeEntry de = clone();
         EdgeEntry tmpPrev = parent;
         EdgeEntry cl = de;
-        while (tmpPrev != null) {
+        while (tmpPrev != null)
+        {
             cl.parent = tmpPrev.clone();
             cl = cl.parent;
             tmpPrev = tmpPrev.parent;

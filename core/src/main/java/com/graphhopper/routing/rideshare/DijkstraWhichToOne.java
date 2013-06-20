@@ -31,16 +31,15 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 /**
- * Public transport represents a collection of Locations. Now it is the aim to
- * find the shortest path of a path ('the public transport') to the destination.
- * In contrast to manyToOne this class only find one shortest path and not all,
- * but it it more memory efficient (ie. the shortest-path-trees do not overlap
- * here)
- *
+ * Public transport represents a collection of Locations. Now it is the aim to find the shortest
+ * path of a path ('the public transport') to the destination. In contrast to manyToOne this class
+ * only find one shortest path and not all, but it it more memory efficient (ie. the
+ * shortest-path-trees do not overlap here)
+ * <p/>
  * @author Peter Karich
  */
-public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
-
+public class DijkstraWhichToOne extends AbstractRoutingAlgorithm
+{
     private PathBidirRef shortest;
     private TIntObjectMap<EdgeEntry> shortestDistMapOther;
     private TIntObjectMap<EdgeEntry> shortestDistMapFrom;
@@ -50,32 +49,44 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     private int visitedFromCount;
     private int visitedToCount;
 
-    public DijkstraWhichToOne(Graph graph, FlagEncoder encoder) {
+    public DijkstraWhichToOne( Graph graph, FlagEncoder encoder )
+    {
         super(graph, encoder);
     }
 
-    public void addPubTransportPoints(int... indices) {
+    public void addPubTransportPoints( int... indices )
+    {
         if (indices.length == 0)
+        {
             throw new IllegalStateException("You need to add something");
+        }
 
-        for (int i = 0; i < indices.length; i++) {
+        for (int i = 0; i < indices.length; i++)
+        {
             addPubTransportPoint(indices[i]);
         }
     }
 
-    public void addPubTransportPoint(int index) {
+    public void addPubTransportPoint( int index )
+    {
         if (!pubTransport.contains(index))
+        {
             pubTransport.add(index);
+        }
     }
 
-    public void setDestination(int index) {
+    public void setDestination( int index )
+    {
         destination = index;
     }
 
-    public Path calcPath() {
+    public Path calcPath()
+    {
         // identical
         if (pubTransport.contains(destination))
+        {
             return new Path(graph, flagEncoder);
+        }
 
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
@@ -90,20 +101,26 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
 
         // create several starting points
         if (pubTransport.isEmpty())
+        {
             throw new IllegalStateException("You'll need at least one starting point. Set it via addPubTransportPoint");
+        }
 
         EdgeEntry currFrom = null;
-        for (int i = 0; i < pubTransport.size(); i++) {
+        for (int i = 0; i < pubTransport.size(); i++)
+        {
             EdgeEntry tmpFrom = new EdgeEntry(EdgeIterator.NO_EDGE, pubTransport.get(i), 0);
             if (i == 0)
+            {
                 currFrom = tmpFrom;
+            }
 
             shortestDistMapOther = shortestDistMapTo;
             fillEdges(shortest, tmpFrom, prioQueueFrom, shortestDistMapFrom, outEdgeFilter);
         }
 
         int finish = 0;
-        while (finish < 2 && currFrom.weight + currTo.weight < shortest.weight()) {
+        while (finish < 2 && currFrom.weight + currTo.weight < shortest.weight())
+        {
             // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
             // a node from overlap may not be on the shortest path!!
             // => when scanning an arc (v, w) in the forward search and w is scanned in the reverse 
@@ -112,41 +129,53 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
             finish = 0;
             shortestDistMapOther = shortestDistMapTo;
             fillEdges(shortest, currFrom, prioQueueFrom, shortestDistMapFrom, outEdgeFilter);
-            if (!prioQueueFrom.isEmpty()) {
+            if (!prioQueueFrom.isEmpty())
+            {
                 currFrom = prioQueueFrom.poll();
             } else
+            {
                 finish++;
+            }
 
             shortestDistMapOther = shortestDistMapFrom;
             fillEdges(shortest, currTo, prioQueueTo, shortestDistMapTo, inEdgeFilter);
-            if (!prioQueueTo.isEmpty()) {
+            if (!prioQueueTo.isEmpty())
+            {
                 currTo = prioQueueTo.poll();
             } else
+            {
                 finish++;
+            }
         }
 
         Path p = shortest.extract();
         if (!p.found())
+        {
             return p;
+        }
         return p;
     }
 
-    void fillEdges(PathBidirRef shortest, EdgeEntry curr,
+    void fillEdges( PathBidirRef shortest, EdgeEntry curr,
             PriorityQueue<EdgeEntry> prioQueue,
-            TIntObjectMap<EdgeEntry> shortestDistMap, EdgeFilter filter) {
+            TIntObjectMap<EdgeEntry> shortestDistMap, EdgeFilter filter )
+    {
 
         int currNode = curr.endNode;
         EdgeIterator iter = graph.getEdges(currNode, filter);
-        while (iter.next()) {
+        while (iter.next())
+        {
             int tmpV = iter.adjNode();
             double tmp = weightCalc.getWeight(iter.distance(), iter.flags()) + curr.weight;
             EdgeEntry de = shortestDistMap.get(tmpV);
-            if (de == null) {
+            if (de == null)
+            {
                 de = new EdgeEntry(iter.edge(), tmpV, tmp);
                 de.parent = curr;
                 shortestDistMap.put(tmpV, de);
                 prioQueue.add(de);
-            } else if (de.weight > tmp) {
+            } else if (de.weight > tmp)
+            {
                 prioQueue.remove(de);
                 de.edge = iter.edge();
                 de.weight = tmp;
@@ -159,12 +188,15 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
     }
 
     @Override
-    public void updateShortest(EdgeEntry de, int currLoc) {
+    public void updateShortest( EdgeEntry de, int currLoc )
+    {
         EdgeEntry entryOther = shortestDistMapOther.get(currLoc);
-        if (entryOther != null) {
+        if (entryOther != null)
+        {
             // update μ
             double newShortest = de.weight + entryOther.weight;
-            if (newShortest < shortest.weight()) {
+            if (newShortest < shortest.weight())
+            {
                 shortest.switchToFrom(shortestDistMapFrom == shortestDistMapOther);
                 shortest.edgeEntry(de);
                 shortest.edgeEntryTo(entryOther);
@@ -173,14 +205,17 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm {
         }
     }
 
-    @Override public Path calcPath(int from, int to) {
+    @Override
+    public Path calcPath( int from, int to )
+    {
         addPubTransportPoint(from);
         setDestination(to);
         return calcPath();
     }
 
     @Override
-    public int visitedNodes() {
+    public int visitedNodes()
+    {
         return visitedFromCount + visitedToCount;
     }
 }

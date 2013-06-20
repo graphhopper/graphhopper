@@ -23,16 +23,23 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class SparseLongLongArrayTest {
-
+public class SparseLongLongArrayTest
+{
     @Test
-    public void testBinarySearch() {
-        long a[] = new long[]{9, 53, 100};
+    public void testBinarySearch()
+    {
+        long a[] = new long[]
+        {
+            9, 53, 100
+        };
         assertEquals(~1, SparseLongLongArray.binarySearch(a, 0, 3, 50));
         assertEquals(~2, SparseLongLongArray.binarySearch(a, 0, 3, 55));
         assertEquals(~3, SparseLongLongArray.binarySearch(a, 0, 3, 155));
 
-        a = new long[]{9};
+        a = new long[]
+        {
+            9
+        };
         assertEquals(~0, SparseLongLongArray.binarySearch(a, 0, 1, 5));
         assertEquals(~1, SparseLongLongArray.binarySearch(a, 0, 1, 50));
     }

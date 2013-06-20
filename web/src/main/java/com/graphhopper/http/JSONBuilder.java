@@ -24,43 +24,53 @@ import org.json.JSONObject;
 /**
  * @author Peter Karich
  */
-public class JSONBuilder {
-
+public class JSONBuilder
+{
     private String lastObjectName;
     private JSONBuilder parent;
     private Map<String, Object> map;
 
-    public JSONBuilder() {
+    public JSONBuilder()
+    {
         map = new HashMap<String, Object>(5);
     }
 
-    public JSONBuilder setParent(JSONBuilder p) {
+    public JSONBuilder setParent( JSONBuilder p )
+    {
         parent = p;
         return this;
     }
 
-    public JSONBuilder startObject(String entry) {
+    public JSONBuilder startObject( String entry )
+    {
         lastObjectName = entry;
         return new JSONBuilder().setParent(this);
     }
 
-    public JSONBuilder endObject() {
+    public JSONBuilder endObject()
+    {
         if (parent == null)
+        {
             throw new IllegalStateException("object not opened?");
+        }
 
         parent.map.put(parent.lastObjectName, map);
         parent.lastObjectName = null;
         return parent;
     }
 
-    public JSONBuilder object(String key, Object val) {
+    public JSONBuilder object( String key, Object val )
+    {
         map.put(key, val);
         return this;
     }
 
-    public JSONObject build() {
+    public JSONObject build()
+    {
         if (parent != null || lastObjectName != null)
+        {
             throw new IllegalStateException("json with name " + lastObjectName + " not closed");
+        }
 
         return new JSONObject(map);
     }

@@ -36,12 +36,13 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
-
+public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest
+{
     EncodingManager encodingManager = new EncodingManager("CAR");
 
     @Override
-    public Location2NodesNtreeLG createIndex(Graph g, int resolution) {
+    public Location2NodesNtreeLG createIndex( Graph g, int resolution )
+    {
         Directory dir = new RAMDirectory(location);
         Location2NodesNtreeLG idx = new Location2NodesNtreeLG((LevelGraph) g, dir);
         idx.resolution(1000000).prepareIndex();
@@ -49,12 +50,14 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
     }
 
     @Override
-    LevelGraph createGraph(Directory dir, EncodingManager encodingManager) {
+    LevelGraph createGraph( Directory dir, EncodingManager encodingManager )
+    {
         return new LevelGraphStorage(dir, encodingManager).create(100);
     }
 
     @Test
-    public void testLevelGraph() {
+    public void testLevelGraph()
+    {
         LevelGraph g = createGraph(new RAMDirectory(), encodingManager);
         // 0
         // 1
@@ -85,7 +88,8 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
     }
 
     @Test
-    public void testSortHighLevelFirst() {
+    public void testSortHighLevelFirst()
+    {
         LevelGraph lg = createGraph(new RAMDirectory(), encodingManager);
         lg.setLevel(1, 10);
         lg.setLevel(2, 30);
@@ -96,7 +100,8 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest {
     }
 
     @Test
-    public void testLevelGraphBug() {
+    public void testLevelGraphBug()
+    {
         // 0
         // |
         // | X  2--3

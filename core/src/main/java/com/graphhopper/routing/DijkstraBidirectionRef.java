@@ -28,15 +28,14 @@ import java.util.PriorityQueue;
 
 /**
  * Calculates extractPath path in bidirectional way.
- *
- * 'Ref' stands for reference implementation and is using the normal
- * Java-'reference'-way.
- *
+ * <p/>
+ * 'Ref' stands for reference implementation and is using the normal Java-'reference'-way.
+ * <p/>
  * @see DijkstraBidirection for an optimized but more complicated version
  * @author Peter Karich
  */
-public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
-
+public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm
+{
     private int from, to;
     private int visitedFromCount;
     private PriorityQueue<EdgeEntry> openSetFrom;
@@ -50,12 +49,14 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     protected TIntObjectMap<EdgeEntry> shortestWeightMapOther;
     public PathBidirRef shortest;
 
-    public DijkstraBidirectionRef(Graph graph, FlagEncoder encoder) {
+    public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder )
+    {
         super(graph, encoder);
         initCollections(Math.max(20, graph.nodes()));
     }
 
-    protected void initCollections(int nodes) {
+    protected void initCollections( int nodes )
+    {
         openSetFrom = new PriorityQueue<EdgeEntry>(nodes / 10);
         shortestWeightMapFrom = new TIntObjectHashMap<EdgeEntry>(nodes / 10);
 
@@ -63,23 +64,29 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         shortestWeightMapTo = new TIntObjectHashMap<EdgeEntry>(nodes / 10);
     }
 
-    public DijkstraBidirectionRef initFrom(int from) {
+    public DijkstraBidirectionRef initFrom( int from )
+    {
         this.from = from;
         currFrom = new EdgeEntry(EdgeIterator.NO_EDGE, from, 0);
         shortestWeightMapFrom.put(from, currFrom);
         return this;
     }
 
-    public DijkstraBidirectionRef initTo(int to) {
+    public DijkstraBidirectionRef initTo( int to )
+    {
         this.to = to;
         currTo = new EdgeEntry(EdgeIterator.NO_EDGE, to, 0);
         shortestWeightMapTo.put(to, currTo);
         return this;
     }
 
-    @Override public Path calcPath(int from, int to) {
+    @Override
+    public Path calcPath( int from, int to )
+    {
         if (alreadyRun)
+        {
             throw new IllegalStateException("Create a new instance per call");
+        }
         alreadyRun = true;
         initPath();
         initFrom(from);
@@ -87,22 +94,30 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
 
         Path p = checkIndenticalFromAndTo();
         if (p != null)
+        {
             return p;
+        }
 
         int finish = 0;
-        while (finish < 2) {
+        while (finish < 2)
+        {
             finish = 0;
             if (!fillEdgesFrom())
+            {
                 finish++;
+            }
 
             if (!fillEdgesTo())
+            {
                 finish++;
+            }
         }
 
         return extractPath();
     }
 
-    public Path extractPath() {
+    public Path extractPath()
+    {
         return shortest.extract();
     }
 
@@ -110,31 +125,41 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     // a node from overlap may not be on the extractPath path!!
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder 
     //    search, update extractPath = μ if df (v) + (v, w) + dr (w) < μ            
-    public boolean checkFinishCondition() {
+    public boolean checkFinishCondition()
+    {
         if (currFrom == null)
+        {
             return currTo.weight >= shortest.weight();
-        else if (currTo == null)
+        } else if (currTo == null)
+        {
             return currFrom.weight >= shortest.weight();
+        }
         return currFrom.weight + currTo.weight >= shortest.weight();
     }
 
-    void fillEdges(EdgeEntry curr, PriorityQueue<EdgeEntry> prioQueue,
-            TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeFilter filter) {
+    void fillEdges( EdgeEntry curr, PriorityQueue<EdgeEntry> prioQueue,
+            TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeFilter filter )
+    {
 
         int currNode = curr.endNode;
         EdgeIterator iter = graph.getEdges(currNode, filter);
-        while (iter.next()) {
+        while (iter.next())
+        {
             if (!accept(iter))
+            {
                 continue;
+            }
             int neighborNode = iter.adjNode();
             double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + curr.weight;
             EdgeEntry de = shortestWeightMap.get(neighborNode);
-            if (de == null) {
+            if (de == null)
+            {
                 de = new EdgeEntry(iter.edge(), neighborNode, tmpWeight);
                 de.parent = curr;
                 shortestWeightMap.put(neighborNode, de);
                 prioQueue.add(de);
-            } else if (de.weight > tmpWeight) {
+            } else if (de.weight > tmpWeight)
+            {
                 prioQueue.remove(de);
                 de.edge = iter.edge();
                 de.weight = tmpWeight;
@@ -147,14 +172,18 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
     }
 
     @Override
-    protected void updateShortest(EdgeEntry shortestEE, int currLoc) {
+    protected void updateShortest( EdgeEntry shortestEE, int currLoc )
+    {
         EdgeEntry entryOther = shortestWeightMapOther.get(currLoc);
         if (entryOther == null)
+        {
             return;
+        }
 
         // update μ
         double newShortest = shortestEE.weight + entryOther.weight;
-        if (newShortest < shortest.weight()) {
+        if (newShortest < shortest.weight())
+        {
             shortest.switchToFrom(shortestWeightMapFrom == shortestWeightMapOther);
             shortest.edgeEntry(shortestEE);
             shortest.edgeTo = entryOther;
@@ -162,61 +191,82 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
         }
     }
 
-    public boolean fillEdgesFrom() {
-        if (currFrom != null) {
+    public boolean fillEdgesFrom()
+    {
+        if (currFrom != null)
+        {
             shortestWeightMapOther = shortestWeightMapTo;
             fillEdges(currFrom, openSetFrom, shortestWeightMapFrom, outEdgeFilter);
             visitedFromCount++;
-            if (openSetFrom.isEmpty()) {
+            if (openSetFrom.isEmpty())
+            {
                 currFrom = null;
                 return false;
             }
 
             currFrom = openSetFrom.poll();
             if (checkFinishCondition())
+            {
                 return false;
+            }
         } else if (currTo == null)
+        {
             return false;
+        }
         return true;
     }
 
-    public boolean fillEdgesTo() {
-        if (currTo != null) {
+    public boolean fillEdgesTo()
+    {
+        if (currTo != null)
+        {
             shortestWeightMapOther = shortestWeightMapFrom;
             fillEdges(currTo, openSetTo, shortestWeightMapTo, inEdgeFilter);
             visitedToCount++;
-            if (openSetTo.isEmpty()) {
+            if (openSetTo.isEmpty())
+            {
                 currTo = null;
                 return false;
             }
 
             currTo = openSetTo.poll();
             if (checkFinishCondition())
+            {
                 return false;
+            }
         } else if (currFrom == null)
+        {
             return false;
+        }
         return true;
     }
 
-    private Path checkIndenticalFromAndTo() {
+    private Path checkIndenticalFromAndTo()
+    {
         if (from == to)
+        {
             return new Path(graph, flagEncoder);
+        }
         return null;
     }
 
-    public EdgeEntry shortestWeightFrom(int nodeId) {
+    public EdgeEntry shortestWeightFrom( int nodeId )
+    {
         return shortestWeightMapFrom.get(nodeId);
     }
 
-    public EdgeEntry shortestWeightTo(int nodeId) {
+    public EdgeEntry shortestWeightTo( int nodeId )
+    {
         return shortestWeightMapTo.get(nodeId);
     }
 
-    protected PathBidirRef createPath() {
+    protected PathBidirRef createPath()
+    {
         return new PathBidirRef(graph, flagEncoder);
     }
 
-    public DijkstraBidirectionRef initPath() {
+    public DijkstraBidirectionRef initPath()
+    {
         shortest = createPath();
         return this;
     }
@@ -225,11 +275,14 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm {
      * @return number of visited nodes.
      */
     @Override
-    public int visitedNodes() {
+    public int visitedNodes()
+    {
         return visitedFromCount + visitedToCount;
     }
 
-    @Override public String name() {
+    @Override
+    public String name()
+    {
         return "dijkstrabi";
     }
 }

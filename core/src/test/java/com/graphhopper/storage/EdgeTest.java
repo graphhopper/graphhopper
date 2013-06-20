@@ -25,10 +25,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class EdgeTest {
-
+public class EdgeTest
+{
     @Test
-    public void testCloneFull() {
+    public void testCloneFull()
+    {
         EdgeEntry de = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 10);
         EdgeEntry de2 = de.parent = new EdgeEntry(EdgeIterator.NO_EDGE, -2, 20);
         EdgeEntry de3 = de2.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 3, 30);
@@ -38,7 +39,8 @@ public class EdgeTest {
         EdgeEntry tmp2 = cloning;
 
         assertNotNull(tmp1);
-        while (tmp1 != null) {
+        while (tmp1 != null)
+        {
             assertFalse(tmp1 == tmp2);
             assertEquals(tmp1.edge, tmp2.edge);
             tmp1 = tmp1.parent;

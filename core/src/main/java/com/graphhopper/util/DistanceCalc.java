@@ -21,16 +21,15 @@ import com.graphhopper.util.shapes.BBox;
 import static java.lang.Math.*;
 
 /**
- * Calculates the distance of two points or one point and an edge on earth via
- * haversine formula. Allows subclasses to implement less or more precise
- * calculations.
- *
+ * Calculates the distance of two points or one point and an edge on earth via haversine formula.
+ * Allows subclasses to implement less or more precise calculations.
+ * <p/>
  * @see http://en.wikipedia.org/wiki/Haversine_formula
- *
+ * <p/>
  * @author Peter Karich
  */
-public class DistanceCalc {
-
+public class DistanceCalc
+{
     /**
      * mean radius of the earth
      */
@@ -46,11 +45,12 @@ public class DistanceCalc {
 
     /**
      * Calculates distance of (from, to) in meter.
-     *
+     * <p/>
      * http://en.wikipedia.org/wiki/Haversine_formula a = sin²(Δlat/2) +
      * cos(lat1).cos(lat2).sin²(Δlong/2) c = 2.atan2(√a, √(1−a)) d = R.c
      */
-    public double calcDist(double fromLat, double fromLon, double toLat, double toLon) {
+    public double calcDist( double fromLat, double fromLon, double toLat, double toLon )
+    {
         double sinDeltaLat = sin(toRadians(toLat - fromLat) / 2);
         double sinDeltaLon = sin(toRadians(toLon - fromLon) / 2);
         double normedDist = sinDeltaLat * sinDeltaLat
@@ -58,14 +58,16 @@ public class DistanceCalc {
         return R * 2 * asin(sqrt(normedDist));
     }
 
-    public double calcDenormalizedDist(double normedDist) {
+    public double calcDenormalizedDist( double normedDist )
+    {
         return R * 2 * asin(sqrt(normedDist));
     }
 
     /**
      * Returns the specified length in normalized meter.
      */
-    public double calcNormalizedDist(double dist) {
+    public double calcNormalizedDist( double dist )
+    {
         double tmp = sin(dist / 2 / R);
         return tmp * tmp;
     }
@@ -73,7 +75,8 @@ public class DistanceCalc {
     /**
      * Calculates in normalized meter
      */
-    public double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
+    public double calcNormalizedDist( double fromLat, double fromLon, double toLat, double toLon )
+    {
         double sinDeltaLat = sin(toRadians(toLat - fromLat) / 2);
         double sinDeltaLon = sin(toRadians(toLon - fromLon) / 2);
         return sinDeltaLat * sinDeltaLat
@@ -83,22 +86,28 @@ public class DistanceCalc {
     /**
      * Circumference of the earth at different latitudes (breitengrad)
      */
-    public double calcCircumference(double lat) {
+    public double calcCircumference( double lat )
+    {
         return 2 * PI * R * cos(toRadians(lat));
     }
 
-    public double calcSpatialKeyMaxDist(int bit) {
+    public double calcSpatialKeyMaxDist( int bit )
+    {
         bit = bit / 2 + 1;
         return (int) C >> bit;
     }
 
-    public boolean isDateLineCrossOver(double lon1, double lon2) {
+    public boolean isDateLineCrossOver( double lon1, double lon2 )
+    {
         return abs(lon1 - lon2) > 180.0;
     }
 
-    public BBox createBBox(double lat, double lon, double radiusInMeter) {
+    public BBox createBBox( double lat, double lon, double radiusInMeter )
+    {
         if (radiusInMeter <= 0)
+        {
             throw new IllegalArgumentException("Distance must not be zero or negative! " + radiusInMeter + " lat,lon:" + lat + "," + lon);
+        }
 
         // length of a circle at specified lat / dist
         double dLon = (360 / (calcCircumference(lat) / radiusInMeter));
@@ -111,25 +120,29 @@ public class DistanceCalc {
     }
 
     /**
-     * This method calculates the distance from r to edge g=(a to b) where the
-     * crossing point is t
-     *
+     * This method calculates the distance from r to edge g=(a to b) where the crossing point is t
+     * <p/>
      * @return the distance in normalized meter
      */
-    public double calcNormalizedEdgeDistance(double r_lat, double r_lon,
+    public double calcNormalizedEdgeDistance( double r_lat, double r_lon,
             double a_lat, double a_lon,
-            double b_lat, double b_lon) {
+            double b_lat, double b_lon )
+    {
         // x <=> lon
         // y <=> lat
         double dY_a = a_lat - b_lat;
         if (dY_a == 0)
-            // special case: horizontal edge
+        // special case: horizontal edge
+        {
             return calcNormalizedDist(a_lat, r_lon, r_lat, r_lon);
+        }
 
         double dX_a = a_lon - b_lon;
         if (dX_a == 0)
-            // special case: vertical edge
+        // special case: vertical edge
+        {
             return calcNormalizedDist(r_lat, a_lon, r_lat, r_lon);
+        }
 
         double m = dY_a / dX_a;
         double n = a_lat - m * a_lon;
@@ -143,10 +156,9 @@ public class DistanceCalc {
     }
 
     /**
-     * This method decides case 1: if we should use distance(r to edge) where
-     * r=(lat,lon) or case 2: min(distance(r to a), distance(r to b)) where
-     * edge=(a to b)
-     *
+     * This method decides case 1: if we should use distance(r to edge) where r=(lat,lon) or case 2:
+     * min(distance(r to a), distance(r to b)) where edge=(a to b)
+     * <p/>
      * @return true for case 1
      */
     // case 1:
@@ -158,9 +170,10 @@ public class DistanceCalc {
     // r
     //  .
     //    a-------b
-    public boolean validEdgeDistance(double r_lat, double r_lon,
+    public boolean validEdgeDistance( double r_lat, double r_lon,
             double a_lat, double a_lon,
-            double b_lat, double b_lon) {
+            double b_lat, double b_lon )
+    {
         double ar_x = r_lon - a_lon;
         double ar_y = r_lat - a_lat;
         double ab_x = b_lon - a_lon;
@@ -179,7 +192,8 @@ public class DistanceCalc {
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "EXACT";
     }
 }

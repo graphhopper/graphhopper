@@ -20,10 +20,11 @@ package com.graphhopper.storage;
 /**
  * @author Peter Karich
  */
-public class GraphStorageViaMMapTest extends AbstractGraphTester {
-
+public class GraphStorageViaMMapTest extends AbstractGraphTester
+{
     @Override
-    public GraphStorage createGraph(String location, int size) {
+    public GraphStorage createGraph( String location, int size )
+    {
         return new GraphBuilder(encodingManager).location(location).mmap(true).build().segmentSize(size / 2).create(size);
     }
 }

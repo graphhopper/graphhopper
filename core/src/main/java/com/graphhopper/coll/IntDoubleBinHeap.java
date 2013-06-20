@@ -17,21 +17,25 @@ import java.util.Arrays;
 /**
  * Taken from opentripplanner.
  */
-public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
-
+public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer>
+{
     private static final double GROW_FACTOR = 2.0;
     private float[] keys;
     private int[] elem;
     private int size;
     private int capacity;
 
-    public IntDoubleBinHeap() {
+    public IntDoubleBinHeap()
+    {
         this(1000);
     }
 
-    public IntDoubleBinHeap(int capacity) {
+    public IntDoubleBinHeap( int capacity )
+    {
         if (capacity < 10)
+        {
             capacity = 10;
+        }
         this.capacity = capacity;
         size = 0;
         elem = new int[capacity + 1];
@@ -42,61 +46,83 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
     }
 
     @Override
-    public int size() {
+    public int size()
+    {
         return size;
     }
 
     @Override
-    public boolean isEmpty() {
+    public boolean isEmpty()
+    {
         return size == 0;
     }
 
     @Override
-    public Double peekKey() {
+    public Double peekKey()
+    {
         return peek_key();
     }
 
-    public double peek_key() {
+    public double peek_key()
+    {
         if (size > 0)
+        {
             return keys[1];
-        else
+        } else
+        {
             throw new IllegalStateException("An empty queue does not have a minimum key.");
+        }
     }
 
     @Override
-    public Integer peekElement() {
+    public Integer peekElement()
+    {
         return peek_element();
     }
 
-    public int peek_element() {
+    public int peek_element()
+    {
         if (size > 0)
+        {
             return elem[1];
-        else
+        } else
+        {
             throw new IllegalStateException("An empty queue does not have a minimum value.");
+        }
     }
 
     @Override
-    public Integer pollElement() {
+    public Integer pollElement()
+    {
         return poll_element();
     }
 
-    public int poll_element() {
+    public int poll_element()
+    {
         int i, child;
         int minElem = elem[1];
         int lastElem = elem[size];
         double lastPrio = keys[size];
         if (size <= 0)
+        {
             throw new IllegalStateException("An empty queue does not have a minimum value.");
+        }
         size -= 1;
-        for (i = 1; i * 2 <= size; i = child) {
+        for (i = 1; i * 2 <= size; i = child)
+        {
             child = i * 2;
             if (child != size && keys[child + 1] < keys[child])
+            {
                 child++;
-            if (lastPrio > keys[child]) {
+            }
+            if (lastPrio > keys[child])
+            {
                 elem[i] = elem[child];
                 keys[i] = keys[child];
             } else
+            {
                 break;
+            }
         }
         elem[i] = lastElem;
         keys[i] = (float) lastPrio;
@@ -104,39 +130,55 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
     }
 
     @Override
-    public void update(Number key, Integer element) {
+    public void update( Number key, Integer element )
+    {
         update_(key.doubleValue(), element);
     }
 
-    public boolean update_(double key, int element) {
+    public boolean update_( double key, int element )
+    {
         // Perform "inefficient" but straightforward linear search 
         // for an element then change its key by sifting up or down
         int i;
-        for (i = 1; i <= size; i++) {
+        for (i = 1; i <= size; i++)
+        {
             if (elem[i] == element)
+            {
                 break;
+            }
         }
         if (i > size)
+        {
             return false;
+        }
 
-        if (key > keys[i]) {
+        if (key > keys[i])
+        {
             // sift up (as in extract)
-            while (i * 2 <= size) {
+            while (i * 2 <= size)
+            {
                 int child = i * 2;
                 if (child != size && keys[child + 1] < keys[child])
+                {
                     child++;
-                if (key > keys[child]) {
+                }
+                if (key > keys[child])
+                {
                     elem[i] = elem[child];
                     keys[i] = keys[child];
                     i = child;
                 } else
+                {
                     break;
+                }
             }
             elem[i] = element;
             keys[i] = (float) key;
-        } else {
+        } else
+        {
             // sift down (as in insert_)
-            while (keys[i / 2] > key) {
+            while (keys[i / 2] > key)
+            {
                 elem[i] = elem[i / 2];
                 keys[i] = keys[i / 2];
                 i /= 2;
@@ -148,16 +190,21 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
     }
 
     @Override
-    public void insert(Number key, Integer element) {
+    public void insert( Number key, Integer element )
+    {
         insert_(key.doubleValue(), element);
     }
 
-    public void insert_(double key, int element) {
+    public void insert_( double key, int element )
+    {
         int i;
         size += 1;
         if (size > capacity)
+        {
             ensureCapacity((int) (capacity * GROW_FACTOR));
-        for (i = size; keys[i / 2] > key; i /= 2) {
+        }
+        for (i = size; keys[i / 2] > key; i /= 2)
+        {
             elem[i] = elem[i / 2];
             keys[i] = keys[i / 2];
         }
@@ -166,33 +213,41 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
     }
 
     @Override
-    public void ensureCapacity(int capacity) {
+    public void ensureCapacity( int capacity )
+    {
         // System.out.println("Growing queue to " + capacity);
         if (capacity < size)
+        {
             throw new IllegalStateException("BinHeap contains too many elements to fit in new capacity.");
+        }
         this.capacity = capacity;
         keys = Arrays.copyOf(keys, capacity + 1);
         elem = Arrays.copyOf(elem, capacity + 1);
     }
 
-    public int getCapacity() {
+    public int getCapacity()
+    {
         return capacity;
     }
 
-    float getKey(int index) {
+    float getKey( int index )
+    {
         return keys[index];
     }
 
-    int getElement(int index) {
+    int getElement( int index )
+    {
         return elem[index];
     }
 
-    void set(int index, float key, int element) {
+    void set( int index, float key, int element )
+    {
         keys[index] = key;
         elem[index] = element;
     }
 
-    void trimTo(int toSize) {
+    void trimTo( int toSize )
+    {
         this.size = toSize;
         toSize++;
         // necessary?
@@ -201,35 +256,48 @@ public class IntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
     }
 
     @Override
-    public void clear() {
+    public void clear()
+    {
         trimTo(0);
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         StringBuilder sb = new StringBuilder();
-        for (int i = 1; i <= size; i++) {
+        for (int i = 1; i <= size; i++)
+        {
             if (i > 1)
+            {
                 sb.append(", ");
+            }
             sb.append(keys[i]).append(":").append(elem[i]);
         }
         return sb.toString();
     }
 
-    public String toKeyString() {
+    public String toKeyString()
+    {
         StringBuilder sb = new StringBuilder();
-        for (int i = 1; i <= size; i++) {
+        for (int i = 1; i <= size; i++)
+        {
             if (i > 1)
+            {
                 sb.append(", ");
+            }
             sb.append(keys[i]);
         }
         return sb.toString();
     }
 
-    public int indexOfValue(int value) {
-        for (int i = 0; i <= size; i++) {
+    public int indexOfValue( int value )
+    {
+        for (int i = 0; i <= size; i++)
+        {
             if (elem[i] == value)
+            {
                 return i;
+            }
         }
         return -1;
     }

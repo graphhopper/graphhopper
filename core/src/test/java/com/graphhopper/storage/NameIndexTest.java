@@ -25,10 +25,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class NameIndexTest {
-
+public class NameIndexTest
+{
     @Test
-    public void testCreate() {
+    public void testCreate()
+    {
         NameIndex result = new NameIndex(new RAMDirectory()).create(1000);
         String str1 = "nice";
         int pointer1 = result.put(str1);

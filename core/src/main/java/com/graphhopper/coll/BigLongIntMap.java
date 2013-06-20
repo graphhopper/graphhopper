@@ -23,71 +23,88 @@ import gnu.trove.map.hash.TLongIntHashMap;
 
 /**
  * Segmented HashMap to make it possible to store more than Integer.MAX values.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class BigLongIntMap implements LongIntMap {
-
+public class BigLongIntMap implements LongIntMap
+{
     private TLongIntHashMap[] maps;
 //    private MyLongIntHashMap[] maps;
 
-    public BigLongIntMap(long maxSize, int noNumber) {
+    public BigLongIntMap( long maxSize, int noNumber )
+    {
         this(maxSize, Math.max(1, (int) (maxSize / 10000000)), noNumber);
     }
 
-    public BigLongIntMap(long maxSize, int minSegments, int noNumber) {
+    public BigLongIntMap( long maxSize, int minSegments, int noNumber )
+    {
         if (maxSize < 0)
+        {
             throw new IllegalArgumentException("Maximum size illegal " + maxSize);
+        }
         if (minSegments < 1)
+        {
             throw new IllegalArgumentException("Minimun segment number illegal " + minSegments);
+        }
         minSegments = Math.max((int) (maxSize / Integer.MAX_VALUE), minSegments);
         maps = new TLongIntHashMap[minSegments];
         int size = (int) (maxSize / minSegments) + 1;
-        for (int i = 0; i < maps.length; i++) {
+        for (int i = 0; i < maps.length; i++)
+        {
             maps[i] = new TLongIntHashMap(size, 1.4f, noNumber, noNumber);
         }
     }
 
     @Override
-    public int put(long key, int value) {
+    public int put( long key, int value )
+    {
         int segment = Math.abs((int) ((key >> 32) ^ key)) % maps.length;
         return maps[segment].put(key, value);
     }
 
     @Override
-    public int get(long key) {
+    public int get( long key )
+    {
         int segment = Math.abs((int) ((key >> 32) ^ key)) % maps.length;
         return maps[segment].get(key);
     }
 
-    public long capacity() {
+    public long capacity()
+    {
         long cap = 0;
-        for (int i = 0; i < maps.length; i++) {
+        for (int i = 0; i < maps.length; i++)
+        {
             cap += maps[i].capacity();
         }
         return cap;
     }
 
     @Override
-    public long size() {
+    public long size()
+    {
         long size = 0;
-        for (int i = 0; i < maps.length; i++) {
+        for (int i = 0; i < maps.length; i++)
+        {
             size += maps[i].size();
         }
         return size;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         String str = "";
-        for (int i = 0; i < maps.length; i++) {
+        for (int i = 0; i < maps.length; i++)
+        {
             str += Helper.nf(maps[i].size()) + ", ";
         }
         return str;
     }
 
-    public void clear() {
-        for (int i = 0; i < maps.length; i++) {
+    public void clear()
+    {
+        for (int i = 0; i < maps.length; i++)
+        {
             maps[i].clear();
         }
     }
@@ -96,11 +113,13 @@ public class BigLongIntMap implements LongIntMap {
      * memory usage in MB
      */
     @Override
-    public int memoryUsage() {
+    public int memoryUsage()
+    {
         return Math.round(capacity() * (8 + 4 + 1) / Helper.MB);
     }
 
     @Override
-    public void optimize() {
+    public void optimize()
+    {
     }
 }

@@ -27,20 +27,23 @@ import org.junit.Before;
  *
  * @author Peter Karich
  */
-public class HelperTest {
-
+public class HelperTest
+{
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         Helper.removeDir(new File("test"));
     }
 
     @After
-    public void tearDown() {
+    public void tearDown()
+    {
         Helper.removeDir(new File("test"));
     }
 
     @Test
-    public void testUnzip() throws Exception {
+    public void testUnzip() throws Exception
+    {
         String to = "./target/tmp/test";
         Helper.removeDir(new File(to));
         Helper.unzip("./src/test/resources/com/graphhopper/util/test.zip", to, false);

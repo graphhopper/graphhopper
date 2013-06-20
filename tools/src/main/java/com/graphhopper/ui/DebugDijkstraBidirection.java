@@ -27,23 +27,28 @@ import java.awt.Graphics2D;
 /**
  * @author Peter Karich
  */
-public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements DebugAlgo {
-
+public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements DebugAlgo
+{
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraBidirection(Graph graph, FlagEncoder encoder, GraphicsWrapper mg) {
+    public DebugDijkstraBidirection( Graph graph, FlagEncoder encoder, GraphicsWrapper mg )
+    {
         super(graph, encoder);
         this.mg = mg;
     }
 
     @Override
-    public void setGraphics2D(Graphics2D g2) {
+    public void setGraphics2D( Graphics2D g2 )
+    {
         this.g2 = g2;
     }
 
-    @Override public void updateShortest(EdgeEntry shortestDE, int currLoc) {
-        if (g2 != null) {
+    @Override
+    public void updateShortest( EdgeEntry shortestDE, int currLoc )
+    {
+        if (g2 != null)
+        {
             mg.plotNode(g2, currLoc, Color.BLUE);
         }
         // System.out.println("new node:" + currLoc);

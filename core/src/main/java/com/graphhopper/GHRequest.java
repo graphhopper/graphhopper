@@ -27,11 +27,11 @@ import java.util.Map;
 
 /**
  * GraphHopper request wrapper to simplify requesting GraphHopper.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class GHRequest {
-
+public class GHRequest
+{
     private String algo = "astar";
     private GHPlace from;
     private GHPlace to;
@@ -40,85 +40,105 @@ public class GHRequest {
     private WeightCalculation weightCalc = new ShortestCalc();
 
     /**
-     * Calculate the path from specified startPoint (fromLat, fromLon) to
-     * endPoint (toLat, toLon).
+     * Calculate the path from specified startPoint (fromLat, fromLon) to endPoint (toLat, toLon).
      */
-    public GHRequest(double fromLat, double fromLon, double toLat, double toLon) {
+    public GHRequest( double fromLat, double fromLon, double toLat, double toLon )
+    {
         this(new GHPlace(fromLat, fromLon), new GHPlace(toLat, toLon));
     }
 
     /**
      * Calculate the path from specified startPoint to endPoint.
      */
-    public GHRequest(GHPlace startPoint, GHPlace endPoint) {
+    public GHRequest( GHPlace startPoint, GHPlace endPoint )
+    {
         this.from = startPoint;
         this.to = endPoint;
     }
 
-    public void check() {
+    public void check()
+    {
         if (from == null)
+        {
             throw new IllegalStateException("the 'from' point needs to be initialized but was null");
+        }
         if (to == null)
+        {
             throw new IllegalStateException("the 'to' point needs to be initialized but was null");
+        }
     }
 
     /**
-     * Possible values: astar (A* algorithm, default), astarbi (bidirectional
-     * A*) dijkstra (Dijkstra), dijkstrabi and dijkstraNative (a bit faster
-     * bidirectional Dijkstra).
+     * Possible values: astar (A* algorithm, default), astarbi (bidirectional A*) dijkstra
+     * (Dijkstra), dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
      */
-    public GHRequest algorithm(String algo) {
+    public GHRequest algorithm( String algo )
+    {
         this.algo = algo;
         return this;
     }
 
-    public String algorithm() {
+    public String algorithm()
+    {
         return algo;
     }
 
-    public GHPlace from() {
+    public GHPlace from()
+    {
         return from;
     }
 
-    public GHPlace to() {
+    public GHPlace to()
+    {
         return to;
     }
 
-    public GHRequest putHint(String key, Object value) {
+    public GHRequest putHint( String key, Object value )
+    {
         Object old = hints.put(key, value);
         if (old != null)
+        {
             throw new RuntimeException("Key is already associated with " + old + ", your value:" + value);
+        }
         return this;
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T getHint(String key, T defaultValue) {
+    public <T> T getHint( String key, T defaultValue )
+    {
         Object obj = hints.get(key);
         if (obj == null)
+        {
             return defaultValue;
+        }
         return (T) obj;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return from + " " + to + " (" + algo + ")";
     }
 
-    public GHRequest type(WeightCalculation weightCalc) {
+    public GHRequest type( WeightCalculation weightCalc )
+    {
         this.weightCalc = weightCalc;
         return this;
     }
 
-    public WeightCalculation type() {
+    public WeightCalculation type()
+    {
         return weightCalc;
     }
 
-    public GHRequest vehicle(String encoder) {
+    public GHRequest vehicle( String encoder )
+    {
         this.encoderName = encoder;
         return this;
     }
 
-    public String vehicle() {
+    public String vehicle()
+    {
         return encoderName;
     }
 }

@@ -48,18 +48,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This implementation implements an n-tree to get node ids from GPS location.
- * This replaces Location2IDQuadtree except for cases when you only need rough
- * precision or when you need better support for out-of-bounds queries.
- *
- * All leafs are at the same depth, otherwise it is quite complicated to
- * calculate the bresenham line for different resolutions, especially if a leaf
- * node could be split into a tree-node and resolution changes.
- *
+ * This implementation implements an n-tree to get node ids from GPS location. This replaces
+ * Location2IDQuadtree except for cases when you only need rough precision or when you need better
+ * support for out-of-bounds queries.
+ * <p/>
+ * All leafs are at the same depth, otherwise it is quite complicated to calculate the bresenham
+ * line for different resolutions, especially if a leaf node could be split into a tree-node and
+ * resolution changes.
+ * <p/>
  * @author Peter Karich
  */
-public class Location2NodesNtree implements Location2IDIndex {
-
+public class Location2NodesNtree implements Location2IDIndex
+{
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
     private DistanceCalc preciseDistCalc = new DistanceCalc();
@@ -81,23 +81,25 @@ public class Location2NodesNtree implements Location2IDIndex {
     private boolean edgeDistCalcOnSearch = true;
     private boolean regionSearch = true;
 
-    public Location2NodesNtree(Graph g, Directory dir) {
+    public Location2NodesNtree( Graph g, Directory dir )
+    {
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
         dataAccess = dir.find("locationIndex");
         minResolutionInMeter(500);
     }
 
-    public int minResolutionInMeter() {
+    public int minResolutionInMeter()
+    {
         return minResolutionInMeter;
     }
 
     /**
-     * Minimum width in meter of one tile. Decrease this if you need faster
-     * queries, but keep in mind that then queries with different coordinates
-     * are more likely to fail.
+     * Minimum width in meter of one tile. Decrease this if you need faster queries, but keep in
+     * mind that then queries with different coordinates are more likely to fail.
      */
-    public Location2NodesNtree minResolutionInMeter(int minResolutionInMeter) {
+    public Location2NodesNtree minResolutionInMeter( int minResolutionInMeter )
+    {
         this.minResolutionInMeter = minResolutionInMeter;
         return this;
     }
@@ -105,27 +107,31 @@ public class Location2NodesNtree implements Location2IDIndex {
     /**
      * Calculate edge distance to increase map matching precision.
      */
-    public Location2NodesNtree edgeCalcOnFind(boolean edgeCalcOnSearch) {
+    public Location2NodesNtree edgeCalcOnFind( boolean edgeCalcOnSearch )
+    {
         this.edgeDistCalcOnSearch = edgeCalcOnSearch;
         return this;
     }
 
     /**
-     * Searches also neighbouring quadtree entries to increase map matching
-     * precision.
+     * Searches also neighbouring quadtree entries to increase map matching precision.
      */
-    public Location2NodesNtree searchRegion(boolean regionAround) {
+    public Location2NodesNtree searchRegion( boolean regionAround )
+    {
         this.regionSearch = regionAround;
         return this;
     }
 
-    void prepareAlgo() {
+    void prepareAlgo()
+    {
         // now calculate the necessary maxDepth d for our current bounds
         // if we assume a minimum resolution like 0.5km for a leaf-tile                
         // n^(depth/2) = toMeter(dLon) / minResolution
         BBox bounds = graph.bounds();
         if (graph.nodes() == 0 || !bounds.check())
+        {
             throw new IllegalStateException("graph is not valid. bounds are: " + bounds);
+        }
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
                 (bounds.maxLat - bounds.minLat) / 360 * DistanceCalc.C,
@@ -135,16 +141,22 @@ public class Location2NodesNtree implements Location2IDIndex {
         TIntArrayList tmpEntries = new TIntArrayList();
         // the last one is always 4 to reduce costs if only a single entry
         tmp /= 4;
-        while (tmp > 1) {
+        while (tmp > 1)
+        {
             int tmpNo;
             if (tmp >= 64)
+            {
                 tmpNo = 64;
-            else if (tmp >= 16)
+            } else if (tmp >= 16)
+            {
                 tmpNo = 16;
-            else if (tmp >= 4)
+            } else if (tmp >= 4)
+            {
                 tmpNo = 4;
-            else
+            } else
+            {
                 break;
+            }
             tmpEntries.add(tmpNo);
             tmp /= tmpNo;
         }
@@ -152,31 +164,40 @@ public class Location2NodesNtree implements Location2IDIndex {
         initEntries(tmpEntries.toArray());
         int shiftSum = 0;
         long parts = 1;
-        for (int i = 0; i < shifts.length; i++) {
+        for (int i = 0; i < shifts.length; i++)
+        {
             shiftSum += shifts[i];
             parts *= entries[i];
         }
         if (shiftSum > 64)
+        {
             throw new IllegalStateException("sum of all shifts does not fit into a long variable");
+        }
         keyAlgo = new SpatialKeyAlgo(shiftSum).bounds(bounds);
         parts = Math.round(Math.sqrt(parts));
         deltaLat = (bounds.maxLat - bounds.minLat) / parts;
         deltaLon = (bounds.maxLon - bounds.minLon) / parts;
     }
 
-    private Location2NodesNtree initEntries(int[] entries) {
+    private Location2NodesNtree initEntries( int[] entries )
+    {
         if (entries.length < 1)
-            // at least one depth should have been specified
+        // at least one depth should have been specified
+        {
             throw new IllegalStateException("depth needs to be at least 1");
+        }
         this.entries = entries;
         int depth = entries.length;
         shifts = new byte[depth];
         bitmasks = new long[depth];
         int lastEntry = entries[0];
-        for (int i = 0; i < depth; i++) {
+        for (int i = 0; i < depth; i++)
+        {
             if (lastEntry < entries[i])
+            {
                 throw new IllegalStateException("entries should decrease or stay but was:"
                         + Arrays.toString(entries));
+            }
             lastEntry = entries[i];
             shifts[i] = getShift(entries[i]);
             bitmasks[i] = getBitmask(shifts[i]);
@@ -184,44 +205,65 @@ public class Location2NodesNtree implements Location2IDIndex {
         return this;
     }
 
-    private byte getShift(int entries) {
+    private byte getShift( int entries )
+    {
         byte b = (byte) Math.round(Math.log(entries) / Math.log(2));
         if (b <= 0)
+        {
             throw new IllegalStateException("invalid shift:" + b);
+        }
         return b;
     }
 
-    private long getBitmask(int shift) {
+    private long getBitmask( int shift )
+    {
         long bm = (1 << shift) - 1;
         if (bm <= 0)
+        {
             throw new IllegalStateException("invalid bitmask:" + bm);
+        }
         return bm;
     }
 
-    InMemConstructionIndex prepareInMemIndex() {
+    InMemConstructionIndex prepareInMemIndex()
+    {
         InMemConstructionIndex memIndex = new InMemConstructionIndex(entries[0]);
         memIndex.prepare();
         return memIndex;
     }
 
-    @Override public int findID(double lat, double lon) {
+    @Override
+    public int findID( double lat, double lon )
+    {
         LocationIDResult res = findClosest(lat, lon, EdgeFilter.ALL_EDGES);
         if (res == null)
+        {
             return -1;
+        }
         return res.closestNode();
     }
 
-    @Override public boolean loadExisting() {
+    @Override
+    public boolean loadExisting()
+    {
         if (initialized)
+        {
             throw new IllegalStateException("Call loadExisting only once");
+        }
 
         if (!dataAccess.loadExisting())
+        {
             return false;
+        }
 
         if (dataAccess.getHeader(0) != MAGIC_INT)
+        {
             throw new IllegalStateException("incorrect location2id index version, expected:" + MAGIC_INT);
+        }
         if (dataAccess.getHeader(1 * 4) != calcChecksum())
+        {
             throw new IllegalStateException("location2id index was opened with incorrect graph");
+        }
         minResolutionInMeter(dataAccess.getHeader(2 * 4));
         prepareAlgo();
         initialized = true;
@@ -229,30 +271,39 @@ public class Location2NodesNtree implements Location2IDIndex {
     }
 
     @Override
-    public Location2IDIndex resolution(int minResolutionInMeter) {
+    public Location2IDIndex resolution( int minResolutionInMeter )
+    {
         if (minResolutionInMeter <= 0)
+        {
             throw new IllegalStateException("Negative precision is not allowed!");
+        }
 
         minResolutionInMeter(minResolutionInMeter);
         return this;
     }
 
     @Override
-    public Location2IDIndex precision(boolean approx) {
+    public Location2IDIndex precision( boolean approx )
+    {
         if (approx)
+        {
             distCalc = new DistancePlaneProjection();
-        else
+        } else
+        {
             distCalc = new DistanceCalc();
+        }
         return this;
     }
 
     @Override
-    public Location2NodesNtree create(long size) {
+    public Location2NodesNtree create( long size )
+    {
         throw new UnsupportedOperationException("Not supported. Use prepareIndex instead.");
     }
 
     @Override
-    public void flush() {
+    public void flush()
+    {
         dataAccess.setHeader(0, MAGIC_INT);
         dataAccess.setHeader(1 * 4, calcChecksum());
         dataAccess.setHeader(2 * 4, minResolutionInMeter);
@@ -262,9 +313,12 @@ public class Location2NodesNtree implements Location2IDIndex {
     }
 
     @Override
-    public Location2IDIndex prepareIndex() {
+    public Location2IDIndex prepareIndex()
+    {
         if (initialized)
+        {
             throw new IllegalStateException("Call prepareIndex only once");
+        }
 
         StopWatch sw = new StopWatch().start();
         prepareAlgo();
@@ -288,39 +342,47 @@ public class Location2NodesNtree implements Location2IDIndex {
         return this;
     }
 
-    int calcChecksum() {
+    int calcChecksum()
+    {
         // do not include the edges as we could get problem with LevelGraph due to shortcuts
         // ^ graph.getAllEdges().count();
         return graph.nodes();
     }
 
-    protected void sortNodes(TIntList nodes) {
+    protected void sortNodes( TIntList nodes )
+    {
     }
 
     @Override
-    public void close() {
+    public void close()
+    {
         dataAccess.close();
     }
 
     @Override
-    public long capacity() {
+    public long capacity()
+    {
         return dataAccess.capacity();
     }
 
-    class InMemConstructionIndex {
-
+    class InMemConstructionIndex
+    {
         int size;
         int leafs;
         InMemTreeEntry root;
 
-        public InMemConstructionIndex(int noOfSubEntries) {
+        public InMemConstructionIndex( int noOfSubEntries )
+        {
             root = new InMemTreeEntry(noOfSubEntries);
         }
 
-        void prepare() {
+        void prepare()
+        {
             final EdgeIterator allIter = getAllEdges();
-            try {
-                while (allIter.next()) {
+            try
+            {
+                while (allIter.next())
+                {
                     int nodeA = allIter.baseNode();
                     int nodeB = allIter.adjNode();
                     double lat1 = graph.getLatitude(nodeA);
@@ -329,7 +391,8 @@ public class Location2NodesNtree implements Location2IDIndex {
                     double lon2;
                     PointList points = allIter.wayGeometry();
                     int len = points.size();
-                    for (int i = 0; i < len; i++) {
+                    for (int i = 0; i < len; i++)
+                    {
                         lat2 = points.latitude(i);
                         lon2 = points.longitude(i);
                         addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
@@ -340,18 +403,23 @@ public class Location2NodesNtree implements Location2IDIndex {
                     lon2 = graph.getLongitude(nodeB);
                     addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
                 }
-            } catch (Exception ex) {
+            } catch (Exception ex)
+            {
 //                logger.error("Problem!", ex);
                 logger.error("Problem! base:" + allIter.baseNode() + ", adj:" + allIter.adjNode()
                         + ", edge:" + allIter.edge(), ex);
             }
         }
 
-        void addNode(final int nodeA, final int nodeB,
+        void addNode( final int nodeA, final int nodeB,
                 final double lat1, final double lon1,
-                final double lat2, final double lon2) {
-            PointEmitter pointEmitter = new PointEmitter() {
-                @Override public void set(double lat, double lon) {
+                final double lat2, final double lon2 )
+        {
+            PointEmitter pointEmitter = new PointEmitter()
+            {
+                @Override
+                public void set( double lat, double lon )
+                {
                     long key = keyAlgo.encode(lat, lon);
                     long keyPart = createReverseKey(key);
                     // no need to feed both nodes as we search neighbors in fillIDs
@@ -363,21 +431,28 @@ public class Location2NodesNtree implements Location2IDIndex {
                     deltaLat, deltaLon);
         }
 
-        void addNode(InMemEntry entry, int nodeId, int depth, long keyPart, long key) {
-            if (entry.isLeaf()) {
+        void addNode( InMemEntry entry, int nodeId, int depth, long keyPart, long key )
+        {
+            if (entry.isLeaf())
+            {
                 InMemLeafEntry leafEntry = (InMemLeafEntry) entry;
                 leafEntry.addNode(nodeId);
-            } else {
+            } else
+            {
                 int index = (int) (bitmasks[depth] & keyPart);
                 keyPart = keyPart >>> shifts[depth];
                 InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
                 InMemEntry subentry = treeEntry.getSubEntry(index);
                 depth++;
-                if (subentry == null) {
+                if (subentry == null)
+                {
                     if (depth == entries.length)
+                    {
                         subentry = new InMemLeafEntry(initSizeLeafEntries, key);
-                    else
+                    } else
+                    {
                         subentry = new InMemTreeEntry(entries[depth]);
+                    }
                     treeEntry.setSubEntry(index, subentry);
                 }
 
@@ -385,108 +460,142 @@ public class Location2NodesNtree implements Location2IDIndex {
             }
         }
 
-        Collection<InMemEntry> getEntriesOf(int selectDepth) {
+        Collection<InMemEntry> getEntriesOf( int selectDepth )
+        {
             List<InMemEntry> list = new ArrayList<InMemEntry>();
             fillLayer(list, selectDepth, 0, ((InMemTreeEntry) root).getSubEntriesForDebug());
             return list;
         }
 
-        void fillLayer(Collection<InMemEntry> list, int selectDepth, int depth, Collection<InMemEntry> entries) {
-            for (InMemEntry entry : entries) {
+        void fillLayer( Collection<InMemEntry> list, int selectDepth, int depth, Collection<InMemEntry> entries )
+        {
+            for (InMemEntry entry : entries)
+            {
                 if (selectDepth == depth)
+                {
                     list.add(entry);
-                else if (entry instanceof InMemTreeEntry)
+                } else if (entry instanceof InMemTreeEntry)
+                {
                     fillLayer(list, selectDepth, depth + 1, ((InMemTreeEntry) entry).getSubEntriesForDebug());
+                }
             }
         }
 
-        String print() {
+        String print()
+        {
             StringBuilder sb = new StringBuilder();
             print(root, sb, 0, 0);
             return sb.toString();
         }
 
-        void print(InMemEntry e, StringBuilder sb, long key, int depth) {
-            if (e.isLeaf()) {
+        void print( InMemEntry e, StringBuilder sb, long key, int depth )
+        {
+            if (e.isLeaf())
+            {
                 InMemLeafEntry leaf = (InMemLeafEntry) e;
                 int bits = keyAlgo.bits();
                 // print reverse keys
                 sb.append(BitUtil.toBitString(BitUtil.reverse(key, bits), bits)).append("  ");
                 TIntArrayList entries = leaf.getResults();
-                for (int i = 0; i < entries.size(); i++) {
+                for (int i = 0; i < entries.size(); i++)
+                {
                     sb.append(leaf.get(i)).append(',');
                 }
                 sb.append('\n');
-            } else {
+            } else
+            {
                 InMemTreeEntry tree = (InMemTreeEntry) e;
                 key = key << shifts[depth];
-                for (int counter = 0; counter < tree.subEntries.length; counter++) {
+                for (int counter = 0; counter < tree.subEntries.length; counter++)
+                {
                     InMemEntry sube = tree.subEntries[counter];
                     if (sube != null)
+                    {
                         print(sube, sb, key | counter, depth + 1);
+                    }
                 }
             }
         }
 
         // store and freezes tree
-        int store(InMemEntry entry, int intIndex) {
+        int store( InMemEntry entry, int intIndex )
+        {
             long refPointer = (long) intIndex * 4;
-            if (entry.isLeaf()) {
+            if (entry.isLeaf())
+            {
                 InMemLeafEntry leaf = ((InMemLeafEntry) entry);
                 TIntArrayList entries = leaf.getResults();
                 int len = entries.size();
                 if (len == 0)
+                {
                     return intIndex;
+                }
                 size += len;
                 intIndex++;
                 leafs++;
                 dataAccess.ensureCapacity((intIndex + len + 1) * 4);
-                if (len == 1) {
+                if (len == 1)
+                {
                     // less disc space for single entries
                     dataAccess.setInt(refPointer, -entries.get(0) - 1);
-                } else {
-                    for (int index = 0; index < len; index++, intIndex++) {
+                } else
+                {
+                    for (int index = 0; index < len; index++, intIndex++)
+                    {
                         dataAccess.setInt(intIndex * 4, entries.get(index));
                     }
                     dataAccess.setInt(refPointer, intIndex);
                 }
-            } else {
+            } else
+            {
                 InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
                 int len = treeEntry.subEntries.length;
                 intIndex += len;
-                for (int subCounter = 0; subCounter < len; subCounter++, refPointer += 4) {
+                for (int subCounter = 0; subCounter < len; subCounter++, refPointer += 4)
+                {
                     InMemEntry subEntry = treeEntry.subEntries[subCounter];
                     if (subEntry == null)
+                    {
                         continue;
+                    }
                     dataAccess.ensureCapacity((intIndex + 1) * 4);
                     int beforeIntIndex = intIndex;
                     intIndex = store(subEntry, beforeIntIndex);
                     if (intIndex == beforeIntIndex)
+                    {
                         dataAccess.setInt(refPointer, 0);
-                    else
+                    } else
+                    {
                         dataAccess.setInt(refPointer, beforeIntIndex);
+                    }
                 }
             }
             return intIndex;
         }
     }
 
-    TIntArrayList getEntries() {
+    TIntArrayList getEntries()
+    {
         return new TIntArrayList(entries);
     }
 
     // fillIDs according to how they are stored    
-    void fillIDs(long keyPart, int intIndex, TIntHashSet set, int depth) {
-        long pointer = (long) intIndex << 2;        
-        if (depth == entries.length) {
+    void fillIDs( long keyPart, int intIndex, TIntHashSet set, int depth )
+    {
+        long pointer = (long) intIndex << 2;
+        if (depth == entries.length)
+        {
             int value = dataAccess.getInt(pointer);
             if (value < 0)
-                // single data entries (less disc space)            
+            // single data entries (less disc space)            
+            {
                 set.add(-(value + 1));
-            else {
+            } else
+            {
                 long max = (long) value * 4;
                 // leaf entry => value is maxPointer
-                for (long leafIndex = pointer + 4; leafIndex < max; leafIndex += 4) {
+                for (long leafIndex = pointer + 4; leafIndex < max; leafIndex += 4)
+                {
                     set.add(dataAccess.getInt(leafIndex));
                 }
             }
@@ -494,35 +603,43 @@ public class Location2NodesNtree implements Location2IDIndex {
         }
         int offset = (int) (bitmasks[depth] & keyPart) << 2;
         int value = dataAccess.getInt(pointer + offset);
-        if (value > 0) {
+        if (value > 0)
+        {
             // tree entry => negative value points to subentries
             fillIDs(keyPart >>> shifts[depth], value, set, depth + 1);
         }
     }
 
     // this method returns the spatial key in reverse order for easier right-shifting
-    final long createReverseKey(double lat, double lon) {
+    final long createReverseKey( double lat, double lon )
+    {
         return BitUtil.reverse(keyAlgo.encode(lat, lon), keyAlgo.bits());
     }
 
-    final long createReverseKey(long key) {
+    final long createReverseKey( long key )
+    {
         return BitUtil.reverse(key, keyAlgo.bits());
     }
 
-    TIntHashSet findNetworkEntries(double queryLat, double queryLon) {
+    TIntHashSet findNetworkEntries( double queryLat, double queryLon )
+    {
         TIntHashSet storedNetworkEntryIds = new TIntHashSet();
-        if (regionSearch) {
+        if (regionSearch)
+        {
             // search all rasters around minResolutionInMeter as we did not fill empty entries
             double maxLat = queryLat + deltaLat;
             double maxLon = queryLon + deltaLon;
-            for (double tmpLat = queryLat - deltaLat; tmpLat <= maxLat; tmpLat += deltaLat) {
-                for (double tmpLon = queryLon - deltaLon; tmpLon <= maxLon; tmpLon += deltaLon) {
+            for (double tmpLat = queryLat - deltaLat; tmpLat <= maxLat; tmpLat += deltaLat)
+            {
+                for (double tmpLon = queryLon - deltaLon; tmpLon <= maxLon; tmpLon += deltaLon)
+                {
                     long keyPart = createReverseKey(tmpLat, tmpLon);
                     // System.out.println(BitUtil.toBitString(key, keyAlgo.bits()));
                     fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
                 }
             }
-        } else {
+        } else
+        {
             long keyPart = createReverseKey(queryLat, queryLon);
             fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
         }
@@ -530,34 +647,47 @@ public class Location2NodesNtree implements Location2IDIndex {
     }
 
     @Override
-    public LocationIDResult findClosest(final double queryLat, final double queryLon,
-            final EdgeFilter edgeFilter) {
+    public LocationIDResult findClosest( final double queryLat, final double queryLon,
+            final EdgeFilter edgeFilter )
+    {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
         final LocationIDResult closestNode = new LocationIDResult();
         if (storedNetworkEntryIds.isEmpty())
+        {
             return closestNode;
+        }
 
         // clone storedIds to avoid interference with forEach
         final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
         // find nodes from the network entries which are close to 'point'
-        storedNetworkEntryIds.forEach(new TIntProcedure() {
-            @Override public boolean execute(final int networkEntryNodeId) {
-                new XFirstSearch() {
+        storedNetworkEntryIds.forEach(new TIntProcedure()
+        {
+            @Override
+            public boolean execute( final int networkEntryNodeId )
+            {
+                new XFirstSearch()
+                {
                     boolean goFurther = true;
                     double currDist;
                     double currLat;
                     double currLon;
                     int currNode;
 
-                    @Override protected GHBitSet createBitSet(int size) {
+                    @Override
+                    protected GHBitSet createBitSet( int size )
+                    {
                         return checkBitset;
                     }
 
-                    @Override protected EdgeIterator getEdges(Graph g, int current) {
+                    @Override
+                    protected EdgeIterator getEdges( Graph g, int current )
+                    {
                         return Location2NodesNtree.this.getEdges(current);
                     }
 
-                    @Override protected boolean goFurther(int baseNode) {
+                    @Override
+                    protected boolean goFurther( int baseNode )
+                    {
                         currNode = baseNode;
                         currLat = graph.getLatitude(baseNode);
                         currLon = graph.getLongitude(baseNode);
@@ -566,9 +696,11 @@ public class Location2NodesNtree implements Location2IDIndex {
                     }
 
                     @Override
-                    protected boolean checkAdjacent(EdgeIterator currEdge) {
+                    protected boolean checkAdjacent( EdgeIterator currEdge )
+                    {
                         goFurther = false;
-                        if (!edgeFilter.accept(currEdge)) {
+                        if (!edgeFilter.accept(currEdge))
+                        {
                             // only limit the adjNode to a certain radius as currNode could be the wrong side of a valid edge
                             // goFurther = currDist < minResolution2InMeterNormed;
                             return true;
@@ -587,21 +719,26 @@ public class Location2NodesNtree implements Location2IDIndex {
                         double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
                         // if there are wayPoints this is only an approximation
                         if (edgeDistCalcOnSearch && adjDist < currDist)
+                        {
                             tmpNode = adjNode;
+                        }
 
                         PointList pointList = currEdge.wayGeometry();
                         int len = pointList.size();
-                        for (int pointIndex = 0; pointIndex < len; pointIndex++) {
+                        for (int pointIndex = 0; pointIndex < len; pointIndex++)
+                        {
                             double wayLat = pointList.latitude(pointIndex);
                             double wayLon = pointList.longitude(pointIndex);
                             if (NumHelper.equalsEps(queryLat, wayLat, 1e-6)
-                                    && NumHelper.equalsEps(queryLon, wayLon, 1e-6)) {
+                                    && NumHelper.equalsEps(queryLon, wayLon, 1e-6))
+                            {
                                 // equal point found
                                 check(tmpNode, 0d, pointIndex);
                                 break;
                             } else if (edgeDistCalcOnSearch
                                     && distCalc.validEdgeDistance(queryLat, queryLon,
-                                    tmpLat, tmpLon, wayLat, wayLon)) {
+                                    tmpLat, tmpLon, wayLat, wayLon))
+                            {
                                 tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                         tmpLat, tmpLon, wayLat, wayLon);
                                 check(tmpNode, tmpDist, pointIndex);
@@ -614,17 +751,22 @@ public class Location2NodesNtree implements Location2IDIndex {
                         if (edgeDistCalcOnSearch
                                 && distCalc.validEdgeDistance(queryLat, queryLon,
                                 tmpLat, tmpLon, adjLat, adjLon))
+                        {
                             tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                     tmpLat, tmpLon, adjLat, adjLon);
-                        else
+                        } else
+                        {
                             tmpDist = adjDist;
+                        }
 
                         check(tmpNode, tmpDist, -currNode - 2);
                         return closestNode.weight() >= 0;
                     }
 
-                    void check(int node, double dist, int wayIndex) {
-                        if (dist < closestNode.weight()) {
+                    void check( int node, double dist, int wayIndex )
+                    {
+                        if (dist < closestNode.weight())
+                        {
                             closestNode.weight(dist);
                             closestNode.closestNode(node);
                             closestNode.wayIndex(wayIndex);
@@ -638,105 +780,131 @@ public class Location2NodesNtree implements Location2IDIndex {
         return closestNode;
     }
 
-    protected int pickBestNode(int nodeA, int nodeB) {
+    protected int pickBestNode( int nodeA, int nodeB )
+    {
         // For normal graph the node does not matter because if nodeA is conntected to nodeB
         // then nodeB is also connect to nodeA, but for a LevelGraph this does not apply.
         return nodeA;
     }
 
-    protected EdgeIterator getEdges(int node) {
+    protected EdgeIterator getEdges( int node )
+    {
         return graph.getEdges(node);
     }
 
-    protected AllEdgesIterator getAllEdges() {
+    protected AllEdgesIterator getAllEdges()
+    {
         return graph.getAllEdges();
     }
 
     // make entries static as otherwise we get an additional reference to this class (memory waste)
-    static interface InMemEntry {
-
+    static interface InMemEntry
+    {
         boolean isLeaf();
     }
 
-    static class InMemLeafEntry extends SortedIntSet implements InMemEntry {
-
+    static class InMemLeafEntry extends SortedIntSet implements InMemEntry
+    {
         private long key;
 
-        public InMemLeafEntry(int count, long key) {
+        public InMemLeafEntry( int count, long key )
+        {
             super(count);
             this.key = key;
         }
 
-        public boolean addNode(int nodeId) {
+        public boolean addNode( int nodeId )
+        {
             return addOnce(nodeId);
         }
 
-        @Override public final boolean isLeaf() {
+        @Override
+        public final boolean isLeaf()
+        {
             return true;
         }
 
-        @Override public String toString() {
+        @Override
+        public String toString()
+        {
             return "LEAF " + key + " " + super.toString();
         }
 
-        TIntArrayList getResults() {
+        TIntArrayList getResults()
+        {
             return this;
         }
     }
 
     // Space efficient sorted integer set. Suited for only a few entries.
-    static class SortedIntSet extends TIntArrayList {
-
-        public SortedIntSet() {
+    static class SortedIntSet extends TIntArrayList
+    {
+        public SortedIntSet()
+        {
         }
 
-        public SortedIntSet(int capacity) {
+        public SortedIntSet( int capacity )
+        {
             super(capacity);
         }
 
         /**
          * Allow adding a value only once
          */
-        public boolean addOnce(int value) {
+        public boolean addOnce( int value )
+        {
             int foundIndex = binarySearch(value);
             if (foundIndex >= 0)
+            {
                 return false;
+            }
             foundIndex = -foundIndex - 1;
             insert(foundIndex, value);
             return true;
         }
     }
 
-    static class InMemTreeEntry implements InMemEntry {
-
+    static class InMemTreeEntry implements InMemEntry
+    {
         InMemEntry[] subEntries;
 
-        public InMemTreeEntry(int subEntryNo) {
+        public InMemTreeEntry( int subEntryNo )
+        {
             subEntries = new InMemEntry[subEntryNo];
         }
 
-        public InMemEntry getSubEntry(int index) {
+        public InMemEntry getSubEntry( int index )
+        {
             return subEntries[index];
         }
 
-        public void setSubEntry(int index, InMemEntry subEntry) {
+        public void setSubEntry( int index, InMemEntry subEntry )
+        {
             this.subEntries[index] = subEntry;
         }
 
-        public Collection<InMemEntry> getSubEntriesForDebug() {
+        public Collection<InMemEntry> getSubEntriesForDebug()
+        {
             List<InMemEntry> list = new ArrayList<InMemEntry>();
-            for (InMemEntry e : subEntries) {
+            for (InMemEntry e : subEntries)
+            {
                 if (e != null)
+                {
                     list.add(e);
+                }
             }
             return list;
         }
 
-        @Override public final boolean isLeaf() {
+        @Override
+        public final boolean isLeaf()
+        {
             return false;
         }
 
-        @Override public String toString() {
+        @Override
+        public String toString()
+        {
             return "TREE";
         }
     }

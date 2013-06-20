@@ -27,9 +27,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class PathTest {
-
-    @Test public void testFound() {
+public class PathTest
+{
+    @Test
+    public void testFound()
+    {
         Path p = new Path(null, null);
         assertFalse(p.found());
         assertEquals(0, p.distance(), 1e-7);
@@ -37,7 +39,8 @@ public class PathTest {
     }
 
     @Test
-    public void testTime() {
+    public void testTime()
+    {
         FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
         Path p = new Path(null, encoder);
         p.calcTime(100000, encoder.flags(100, true));

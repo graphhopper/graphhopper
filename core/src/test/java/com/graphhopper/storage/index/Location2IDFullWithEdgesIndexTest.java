@@ -26,25 +26,29 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class Location2IDFullWithEdgesIndexTest extends AbstractLocation2IDIndexTester {
-
+public class Location2IDFullWithEdgesIndexTest extends AbstractLocation2IDIndexTester
+{
     @Override
-    public Location2IDIndex createIndex(Graph g, int resolution) {
+    public Location2IDIndex createIndex( Graph g, int resolution )
+    {
         return new Location2IDFullWithEdgesIndex(g);
     }
 
     @Override
-    public boolean hasEdgeSupport() {
+    public boolean hasEdgeSupport()
+    {
         return true;
     }
 
     @Override
-    public void testGrid() {
+    public void testGrid()
+    {
         // do not test against itself
     }
 
     @Test
-    public void testFullIndex() {
+    public void testFullIndex()
+    {
         Location2IDIndex idx = new Location2IDFullWithEdgesIndex(createSampleGraph(new EncodingManager("CAR")));
         assertEquals(5, idx.findID(2, 3));
         assertEquals(10, idx.findID(4, 1));

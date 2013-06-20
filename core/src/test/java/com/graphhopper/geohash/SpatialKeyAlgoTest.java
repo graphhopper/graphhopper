@@ -27,17 +27,19 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class SpatialKeyAlgoTest {
-
+public class SpatialKeyAlgoTest
+{
     @Test
-    public void testEncode() {
+    public void testEncode()
+    {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(32);
         long val = algo.encode(-24.235345f, 47.234234f);
         assertEquals("01100110101000111100000110010100", BitUtil.toBitString(val, 32));
     }
 
     @Test
-    public void testEncode3BytesPrecision() {
+    public void testEncode3BytesPrecision()
+    {
         // 3 bytes => c / 1^12 = ~10km
         int bits = 3 * 8;
         SpatialKeyAlgo algo = new SpatialKeyAlgo(bits);
@@ -58,7 +60,8 @@ public class SpatialKeyAlgoTest {
     }
 
     @Test
-    public void testEncode4BytesPrecision() {
+    public void testEncode4BytesPrecision()
+    {
         int bits = 4 * 8;
         SpatialKeyAlgo algo = new SpatialKeyAlgo(bits);
         float lat = 24.235345f;
@@ -77,7 +80,8 @@ public class SpatialKeyAlgoTest {
     }
 
     @Test
-    public void testEncode6BytesPrecision() {
+    public void testEncode6BytesPrecision()
+    {
         int bits = 6 * 8;
         SpatialKeyAlgo algo = new SpatialKeyAlgo(bits);
         float lat = 24.235345f;
@@ -96,8 +100,10 @@ public class SpatialKeyAlgoTest {
     }
 
     @Test
-    public void testBijectionBug2() {
-        for (long i = 4; i <= 64; i += 4) {
+    public void testBijectionBug2()
+    {
+        for (long i = 4; i <= 64; i += 4)
+        {
             SpatialKeyAlgo algo = new SpatialKeyAlgo((int) i);
             long keyX = algo.encode(1, 1);
 
@@ -118,7 +124,8 @@ public class SpatialKeyAlgoTest {
     }
 
     @Test
-    public void testBijection() {
+    public void testBijection()
+    {
         // fix bijection precision problem!
         //
         // the latitude encoding "10" would result in 1.0 but a rounding error could lead to e.g. 0.99
@@ -136,7 +143,8 @@ public class SpatialKeyAlgoTest {
         testBijection(8 * 8);
     }
 
-    public void testBijection(int bits) {
+    public void testBijection( int bits )
+    {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(bits);
         CoordTrig coord11 = new CoordTrig();
         long key = algo.encode(1, 1);
@@ -183,7 +191,8 @@ public class SpatialKeyAlgoTest {
     }
 
     @Test
-    public void testNoFurtherIterationIfBitsIs1() {
+    public void testNoFurtherIterationIfBitsIs1()
+    {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(4).bounds(0, 5, 0, 5);
         // 1001
         CoordTrig coord = new CoordTrig();
@@ -193,7 +202,8 @@ public class SpatialKeyAlgoTest {
     }
 
     @Test
-    public void testOddBits() {
+    public void testOddBits()
+    {
         CoordTrig coord = new CoordTrig();
         SpatialKeyAlgo algo = new SpatialKeyAlgo(8);
         long key = algo.encode(5, 30);
@@ -212,7 +222,8 @@ public class SpatialKeyAlgoTest {
     }
 
     @Test
-    public void testDifferentInitialBounds() {
+    public void testDifferentInitialBounds()
+    {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(8).bounds(0, 5, 0, 5);
         assertEquals(1, algo.encode(0, 0.5));
         assertEquals(5, algo.encode(0, 1));

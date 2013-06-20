@@ -28,33 +28,41 @@ import com.graphhopper.storage.Graph;
 /**
  * @author Peter Karich
  */
-public class RoutingAlgorithmFactory {
-
+public class RoutingAlgorithmFactory
+{
     private String algoStr;
     private boolean approx;
 
     /**
-     * @param algo possible values are astar (A* algorithm), astarbi
-     * (bidirectional A*) dijkstra (Dijkstra), dijkstrabi and dijkstraNative (a
-     * bit faster bidirectional Dijkstra).
+     * @param algo possible values are astar (A* algorithm), astarbi (bidirectional A*) dijkstra
+     * (Dijkstra), dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
      */
-    public RoutingAlgorithmFactory(String algo, boolean approx) {
+    public RoutingAlgorithmFactory( String algo, boolean approx )
+    {
         this.algoStr = algo;
         this.approx = approx;
     }
 
-    public RoutingAlgorithm createAlgo(Graph g, FlagEncoder encoder) {
-        if ("dijkstrabi".equalsIgnoreCase(algoStr)) {
+    public RoutingAlgorithm createAlgo( Graph g, FlagEncoder encoder )
+    {
+        if ("dijkstrabi".equalsIgnoreCase(algoStr))
+        {
             return new DijkstraBidirectionRef(g, encoder);
-        } else if ("dijkstraNative".equalsIgnoreCase(algoStr)) {
+        } else if ("dijkstraNative".equalsIgnoreCase(algoStr))
+        {
             return new DijkstraBidirection(g, encoder);
-        } else if ("dijkstra".equalsIgnoreCase(algoStr)) {
+        } else if ("dijkstra".equalsIgnoreCase(algoStr))
+        {
             return new Dijkstra(g, encoder);
-        } else if ("astarbi".equalsIgnoreCase(algoStr)) {
+        } else if ("astarbi".equalsIgnoreCase(algoStr))
+        {
             return new AStarBidirection(g, encoder).approximation(approx);
-        } else if ("dijkstraOneToMany".equalsIgnoreCase(algoStr)) {
+        } else if ("dijkstraOneToMany".equalsIgnoreCase(algoStr))
+        {
             return new DijkstraOneToMany(g, encoder);
         } else
+        {
             return new AStar(g, encoder);
+        }
     }
 }

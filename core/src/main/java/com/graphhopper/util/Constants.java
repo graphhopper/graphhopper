@@ -1,17 +1,15 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with this
- * work for additional information regarding copyright ownership. The ASF
- * licenses this file to You under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+ * agreements. See the NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The ASF licenses this file to You under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * <p/>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.graphhopper.util;
@@ -23,8 +21,8 @@ import java.util.List;
 /**
  * Taken from Lucene
  */
-public class Constants {
-
+public class Constants
+{
     /**
      * The value of <tt>System.getProperty("java.version")<tt>. *
      */
@@ -63,39 +61,48 @@ public class Constants {
     public static final String BUILD_DATE;
     public static final boolean SNAPSHOT;
 
-    public static String getVersions() {
+    public static String getVersions()
+    {
         return VERSION_NODE + "," + VERSION_EDGE + "," + VERSION_GEOMETRY + "," + VERSION_LOCATION_IDX;
     }
 
-    static {
+    static
+    {
         String version = "0.0";
-        try {
+        try
+        {
             List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/version"), "UTF-8"));
             version = v.get(0);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
             System.err.println("GraphHopper Initialization ERROR: cannot read version!? " + ex.getMessage());
         }
         int indexM = version.indexOf("-");
         int indexP = version.indexOf(".");
-        if ("${project.version}".equals(version)) {
+        if ("${project.version}".equals(version))
+        {
             VERSION = "0.0";
             SNAPSHOT = true;
             System.err.println("GraphHopper Initialization WARNING: maven did not preprocess the version file! Do not use the jar for a release!");
-        } else if ("0.0".equals(version) || indexM < 0 || indexP >= indexM) {
+        } else if ("0.0".equals(version) || indexM < 0 || indexP >= indexM)
+        {
             VERSION = "0.0";
             SNAPSHOT = true;
             System.err.println("GraphHopper Initialization WARNING: cannot get version!?");
-        } else {
+        } else
+        {
             // throw away the "-SNAPSHOT"
             String tmp = version.substring(0, indexM);
             SNAPSHOT = version.toLowerCase().contains("-snapshot");
             VERSION = tmp;
         }
         String buildDate = "";
-        try {
+        try
+        {
             List<String> v = readFile(new InputStreamReader(Helper.class.getResourceAsStream("/builddate"), "UTF-8"));
             buildDate = v.get(0);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
         BUILD_DATE = buildDate;
     }

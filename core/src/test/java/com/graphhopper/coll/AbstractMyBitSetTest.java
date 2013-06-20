@@ -24,12 +24,13 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public abstract class AbstractMyBitSetTest {
-
-    public abstract GHBitSet createBitSet(int no);
+public abstract class AbstractMyBitSetTest
+{
+    public abstract GHBitSet createBitSet( int no );
 
     @Test
-    public void testCopy() {
+    public void testCopy()
+    {
         GHBitSet bs = createBitSet(100);
         bs.add(100);
         bs.add(70);
@@ -56,7 +57,8 @@ public abstract class AbstractMyBitSetTest {
     }
 
     @Test
-    public void testToString() {
+    public void testToString()
+    {
         GHBitSet bs = createBitSet(100);
         bs.add(12);
         bs.add(1);
@@ -64,7 +66,8 @@ public abstract class AbstractMyBitSetTest {
     }
 
     @Test
-    public void testNext() {
+    public void testNext()
+    {
         GHBitSet bs = createBitSet(100);
         bs.add(7);
         bs.add(90);
@@ -75,13 +78,16 @@ public abstract class AbstractMyBitSetTest {
     }
 
     @Test
-    public void testEnsureCapacity() {
+    public void testEnsureCapacity()
+    {
         GHBitSet bs = createBitSet(8);
         bs.add(7);
-        try {
+        try
+        {
             bs.add(8);
             assertTrue(false);
-        } catch (Throwable ex) {
+        } catch (Throwable ex)
+        {
         }
         bs.ensureCapacity(16);
         bs.add(8);
@@ -92,7 +98,8 @@ public abstract class AbstractMyBitSetTest {
     }
 
     @Test
-    public void testClear() {
+    public void testClear()
+    {
         GHBitSet bs = createBitSet(100);
         bs.add(12);
         bs.add(1);

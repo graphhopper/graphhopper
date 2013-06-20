@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeIterator;
 /**
  * @author Peter Karich
  */
-public interface AllEdgesIterator extends EdgeIterator {
-
+public interface AllEdgesIterator extends EdgeIterator
+{
     int maxId();
 }

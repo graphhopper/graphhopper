@@ -21,42 +21,39 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.CoordTrig;
 
 /**
- * This class implements the idea of a geohash but in 'binary form' - to avoid
- * confusion this is called 'spatial key'. The idea of mixing the latitude and
- * longitude is also taken to allow removing the insignificant (right side) bits
- * to make a geo-query or the coordinate less precise. E.g. for a 3 bit
- * precision the spatial key would need 6 bits and look like:
- *
+ * This class implements the idea of a geohash but in 'binary form' - to avoid confusion this is
+ * called 'spatial key'. The idea of mixing the latitude and longitude is also taken to allow
+ * removing the insignificant (right side) bits to make a geo-query or the coordinate less precise.
+ * E.g. for a 3 bit precision the spatial key would need 6 bits and look like:
+ * <p/>
  * lat0 lon0 | lat1 lon1 | lat2 lon2
- *
+ * <p/>
  * Detailed information is available in this blog post:
  * http://karussell.wordpress.com/2012/05/23/spatial-keys-memory-efficient-geohashes/
- *
- * The bits are usable as key for hash tables like our SpatialKeyHashtable or
- * for a spatial tree like QuadTreeSimple. Also the binary form makes it
- * relative simple for implementations using this encoding scheme to expand to
- * arbitrary dimension (e.g. shifting n-times if n would be the dimension).
- *
+ * <p/>
+ * The bits are usable as key for hash tables like our SpatialKeyHashtable or for a spatial tree
+ * like QuadTreeSimple. Also the binary form makes it relative simple for implementations using this
+ * encoding scheme to expand to arbitrary dimension (e.g. shifting n-times if n would be the
+ * dimension).
+ * <p/>
  * A 32 bit representation has a precision of approx 600 meters = 40000/2^16
- *
- * There are different possibilities how to handle different precision and order
- * of bits. Either:
- *
+ * <p/>
+ * There are different possibilities how to handle different precision and order of bits. Either:
+ * <p/>
  * lat0 lon0 | lat1 lon1 | lat2 lon2
- *
+ * <p/>
  * 0 0 | lat0 lon0 | lat1 lon1
- *
- * as it is done now. Advantage: A single shift is only necessary to make it
- * less precise. Or:
- *
+ * <p/>
+ * as it is done now. Advantage: A single shift is only necessary to make it less precise. Or:
+ * <p/>
  * lat2 lon2 | lat1 lon1 | lat0 lon0
- *
+ * <p/>
  * 0 0 | lat1 lon1 | lat0 lon0
- *
- * Advantage: the bit mask to get lat0 lon0 is simple: 000..0011 and independent
- * of the precision! But when stored e.g. as int one would need to (left) shift
- * several times if precision is only 3bits.
- *
+ * <p/>
+ * Advantage: the bit mask to get lat0 lon0 is simple: 000..0011 and independent of the precision!
+ * But when stored e.g. as int one would need to (left) shift several times if precision is only
+ * 3bits.
+ * <p/>
  * @author Peter Karich
  */
 // A 2 bit precision spatial key could look like
@@ -72,26 +69,31 @@ import com.graphhopper.util.shapes.CoordTrig;
 //  |----|----|----|----|
 //            |
 //  lon0 == 0 | lon0 == 1
-public class SpatialKeyAlgo implements KeyAlgo {
-
+public class SpatialKeyAlgo implements KeyAlgo
+{
     private BBox bbox;
     private int allBits;
     private long initialBits;
 
     /**
-     * @param allBits how many bits should be used for the spatial key when
-     * encoding/decoding
+     * @param allBits how many bits should be used for the spatial key when encoding/decoding
      */
-    public SpatialKeyAlgo(int allBits) {
+    public SpatialKeyAlgo( int allBits )
+    {
         myinit(allBits);
     }
 
-    private void myinit(int allBits) {
+    private void myinit( int allBits )
+    {
         if (allBits > 64)
+        {
             throw new IllegalStateException("allBits is too big and does not fit into 8 bytes");
+        }
 
         if (allBits <= 0)
+        {
             throw new IllegalStateException("allBits must be positive");
+        }
 
 //        if ((allBits & 0x1) == 1)
 //            throw new IllegalStateException("allBits needs to be even to use the same amount for lat and lon");
@@ -104,11 +106,13 @@ public class SpatialKeyAlgo implements KeyAlgo {
     /**
      * @return the number of involved bits
      */
-    public int bits() {
+    public int bits()
+    {
         return allBits;
     }
 
-    public int exactPrecision() {
+    public int exactPrecision()
+    {
         // 360 / 2^(allBits/2) = 1/precision
         int p = (int) (Math.pow(2, allBits) / 360);
         // no rounding error
@@ -116,33 +120,38 @@ public class SpatialKeyAlgo implements KeyAlgo {
         return (int) Math.log10(p);
     }
 
-    public SpatialKeyAlgo bounds(BBox box) {
+    public SpatialKeyAlgo bounds( BBox box )
+    {
         bbox = box.clone();
         return this;
     }
 
     @Override
-    public SpatialKeyAlgo bounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit) {
+    public SpatialKeyAlgo bounds( double minLonInit, double maxLonInit, double minLatInit, double maxLatInit )
+    {
         bounds(new BBox(minLonInit, maxLonInit, minLatInit, maxLatInit));
         return this;
     }
 
-    protected void setWorldBounds() {
+    protected void setWorldBounds()
+    {
         bounds(-180, 180, -90, 90);
     }
 
     @Override
-    public long encode(CoordTrig coord) {
+    public long encode( CoordTrig coord )
+    {
         return encode(coord.lat, coord.lon);
     }
 
     /**
      * Take latitude and longitude as input.
-     *
+     * <p/>
      * @return the spatial key
      */
     @Override
-    public final long encode(double lat, double lon) {
+    public final long encode( double lat, double lon )
+    {
         // PERFORMANCE: int operations would be faster than double (for further comparison etc)
         // but we would need 'long' because 'int factorForPrecision' is not enough (problem: coord!=decode(encode(coord)) see testBijection)
         // and 'long'-ops are more expensive than double (at least on 32bit systems)
@@ -152,47 +161,62 @@ public class SpatialKeyAlgo implements KeyAlgo {
         double minLonTmp = bbox.minLon;
         double maxLonTmp = bbox.maxLon;
         int i = 0;
-        while (true) {
-            if (minLatTmp < maxLatTmp) {
+        while (true)
+        {
+            if (minLatTmp < maxLatTmp)
+            {
                 double midLat = (minLatTmp + maxLatTmp) / 2;
-                if (lat > midLat) {
+                if (lat > midLat)
+                {
                     hash |= 1;
                     minLatTmp = midLat;
                 } else
+                {
                     maxLatTmp = midLat;
+                }
             }
             i++;
             if (i < allBits)
+            {
                 hash <<= 1;
-            // if allBits is an odd number
+            } // if allBits is an odd number
             else
+            {
                 break;
+            }
 
-            if (minLonTmp < maxLonTmp) {
+            if (minLonTmp < maxLonTmp)
+            {
                 double midLon = (minLonTmp + maxLonTmp) / 2;
-                if (lon > midLon) {
+                if (lon > midLon)
+                {
                     hash |= 1;
                     minLonTmp = midLon;
                 } else
+                {
                     maxLonTmp = midLon;
+                }
             }
             i++;
             if (i < allBits)
+            {
                 hash <<= 1;
-            else
+            } else
+            {
                 break;
+            }
         }
         return hash;
     }
 
     /**
-     * This method returns latitude and longitude via latLon - calculated from
-     * specified spatialKey
-     *
+     * This method returns latitude and longitude via latLon - calculated from specified spatialKey
+     * <p/>
      * @param spatialKey is the input
      */
     @Override
-    public final void decode(long spatialKey, CoordTrig latLon) {
+    public final void decode( long spatialKey, CoordTrig latLon )
+    {
         // Performance: calculating 'midLon' and 'midLat' on the fly is not slower than using 
         // precalculated values from arrays and for 'bits' a precalculated array is even slightly slower!
 
@@ -202,20 +226,28 @@ public class SpatialKeyAlgo implements KeyAlgo {
         double lat = bbox.minLat;
         double lon = bbox.minLon;
         long bits = initialBits;
-        while (true) {
+        while (true)
+        {
             if ((spatialKey & bits) != 0)
+            {
                 lat += midLat;
+            }
 
             midLat /= 2;
             bits >>>= 1;
             if ((spatialKey & bits) != 0)
+            {
                 lon += midLon;
+            }
 
             midLon /= 2;
             if (bits > 1)
+            {
                 bits >>>= 1;
-            else
+            } else
+            {
                 break;
+            }
         }
 
         // stable rounding - see testBijection
@@ -226,7 +258,8 @@ public class SpatialKeyAlgo implements KeyAlgo {
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "bits:" + allBits + ", bounds:" + bbox;
     }
 }

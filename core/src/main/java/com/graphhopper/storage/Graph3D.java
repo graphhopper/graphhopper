@@ -20,9 +20,9 @@ package com.graphhopper.storage;
 /**
  * @author Peter Karich
  */
-public interface Graph3D extends Graph {
+public interface Graph3D extends Graph
+{
+    void setNode( int index, double lat, double lon, double height );
 
-    void setNode(int index, double lat, double lon, double height);
-
-    double getHeight(int index);
+    double getHeight( int index );
 }

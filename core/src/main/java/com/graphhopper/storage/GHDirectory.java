@@ -25,35 +25,45 @@ import java.util.Map;
 
 /**
  * Implements some common methods for the subclasses.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class GHDirectory implements Directory {
-
+public class GHDirectory implements Directory
+{
     protected Map<String, DataAccess> map = new HashMap<String, DataAccess>();
     protected Map<String, DAType> types = new HashMap<String, DAType>();
     protected final String location;
     private DAType defaultType;
 
-    public GHDirectory(String _location, DAType defaultType) {
+    public GHDirectory( String _location, DAType defaultType )
+    {
         this.defaultType = defaultType;
         if (Helper.isEmpty(_location))
+        {
             _location = new File("").getAbsolutePath();
+        }
         if (!_location.endsWith("/"))
+        {
             _location += "/";
+        }
         location = _location;
         File dir = new File(location);
         if (dir.exists() && !dir.isDirectory())
+        {
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
+        }
 
         // set default access to integer based
         // improves performance on server side, 10% faster for queries, 20% faster for preparation
-        if (!this.defaultType.equals(DAType.MMAP)) {
-            if (isStoring()) {
+        if (!this.defaultType.equals(DAType.MMAP))
+        {
+            if (isStoring())
+            {
                 put("locationIndex", DAType.RAM_INT_STORE);
                 put("edges", DAType.RAM_INT_STORE);
                 put("nodes", DAType.RAM_INT_STORE);
-            } else {
+            } else
+            {
                 put("locationIndex", DAType.RAM_INT);
                 put("edges", DAType.RAM_INT);
                 put("nodes", DAType.RAM_INT);
@@ -62,26 +72,34 @@ public class GHDirectory implements Directory {
         mkdirs();
     }
 
-    public Directory put(String name, DAType type) {
+    public Directory put( String name, DAType type )
+    {
         types.put(name, type);
         return this;
     }
 
     @Override
-    public DataAccess find(String name) {
+    public DataAccess find( String name )
+    {
         DAType type = types.get(name);
         if (type == null)
+        {
             type = defaultType;
+        }
         return find(name, type);
     }
 
     @Override
-    public DataAccess find(String name, DAType type) {
+    public DataAccess find( String name, DAType type )
+    {
         DataAccess da = map.get(name);
         if (da != null)
+        {
             return da;
+        }
 
-        switch (type) {
+        switch (type)
+        {
             case MMAP:
                 da = new MMapDataAccess(name, location);
                 break;
@@ -104,7 +122,8 @@ public class GHDirectory implements Directory {
     }
 
     @Override
-    public DataAccess rename(DataAccess da, String newName) {
+    public DataAccess rename( DataAccess da, String newName )
+    {
         String oldName = da.name();
         da.rename(newName);
         removeByName(oldName);
@@ -113,38 +132,49 @@ public class GHDirectory implements Directory {
     }
 
     @Override
-    public void remove(DataAccess da) {
+    public void remove( DataAccess da )
+    {
         removeByName(da.name());
     }
 
-    void removeByName(String name) {
+    void removeByName( String name )
+    {
         if (map.remove(name) == null)
+        {
             throw new IllegalStateException("Couldn't remove dataAccess object:" + name);
+        }
 
         Helper.removeDir(new File(location + name));
     }
 
-    public boolean isStoring() {
+    public boolean isStoring()
+    {
         return defaultType.equals(DAType.MMAP) || defaultType.equals(DAType.RAM_INT_STORE)
                 || defaultType.equals(DAType.RAM_STORE);
     }
 
-    protected void mkdirs() {
+    protected void mkdirs()
+    {
         if (isStoring())
+        {
             new File(location).mkdirs();
+        }
     }
 
-    Collection<DataAccess> getAll() {
+    Collection<DataAccess> getAll()
+    {
         return map.values();
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return location();
     }
 
     @Override
-    public String location() {
+    public String location()
+    {
         return location;
     }
 }

@@ -24,10 +24,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class QTDataNodeTest {
-
+public class QTDataNodeTest
+{
     @Test
-    public void testGetMemoryUsageInBytes() {
+    public void testGetMemoryUsageInBytes()
+    {
         QTDataNode<Integer> dn = new QTDataNode<Integer>(8);
         dn.keys[1] = 111;
         // dn.values[1] = (Integer) 222;
@@ -37,7 +38,8 @@ public class QTDataNodeTest {
     }
 
     @Test
-    public void testAddDuplicates() {
+    public void testAddDuplicates()
+    {
         QTDataNode<String> dn = new QTDataNode<String>(4);
         dn.add(1, "test1");
         assertEquals(1, dn.count());
@@ -47,7 +49,8 @@ public class QTDataNodeTest {
     }
 
     @Test
-    public void testNodeAdd() {
+    public void testNodeAdd()
+    {
         QTDataNode<String> dn = new QTDataNode<String>(2);
         assertFalse(dn.add(1, "test1"));
         assertFalse(dn.add(5, "test5"));
@@ -55,7 +58,8 @@ public class QTDataNodeTest {
     }
 
     @Test
-    public void testNodeRemove() {
+    public void testNodeRemove()
+    {
         QTDataNode<String> dn = new QTDataNode<String>(4);
         dn.add(1, "test1");
         dn.add(5, "test5");
@@ -72,7 +76,8 @@ public class QTDataNodeTest {
     }
 
     @Test
-    public void testNodeRemoveWithDuplicates() {
+    public void testNodeRemoveWithDuplicates()
+    {
         QTDataNode<String> dn = new QTDataNode<String>(4);
         dn.add(1, "test1");
         dn.add(1, "test5");

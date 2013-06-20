@@ -23,22 +23,24 @@ import com.graphhopper.util.EdgeIterator;
 
 /**
  * This class creates a Path from a DijkstraOneToMany node
- *
+ * <p/>
  * @author Peter Karich
  */
-public class PathNative extends Path {
-
+public class PathNative extends Path
+{
     int endNode = -1;
     int[] parents;
     int[] pathEdgeIds;
 
-    public PathNative(Graph g, FlagEncoder encoder, int[] parents, int[] pathEdgeIds) {
+    public PathNative( Graph g, FlagEncoder encoder, int[] parents, int[] pathEdgeIds )
+    {
         super(g, encoder);
         this.parents = parents;
         this.pathEdgeIds = pathEdgeIds;
     }
 
-    public PathNative found(int end) {
+    public PathNative found( int end )
+    {
         endNode = end;
         return this;
     }
@@ -47,14 +49,20 @@ public class PathNative extends Path {
      * Extracts path from two shortest-path-tree
      */
     @Override
-    public Path extract() {
+    public Path extract()
+    {
         if (endNode < 0)
+        {
             return this;
+        }
 
-        while (true) {
+        while (true)
+        {
             int edgeId = pathEdgeIds[endNode];
             if (!EdgeIterator.Edge.isValid(edgeId))
+            {
                 break;
+            }
             processDistance(edgeId, endNode);
             endNode = parents[endNode];
         }

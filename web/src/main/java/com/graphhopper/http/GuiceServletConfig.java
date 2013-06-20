@@ -28,24 +28,31 @@ import java.util.Map;
 
 /**
  * Replacement of web.xml
- *
+ * <p/>
  * http://code.google.com/p/google-guice/wiki/ServletModule
- *
+ * <p/>
  * @author Peter Karich, pkarich@pannous.info
  */
-public class GuiceServletConfig extends GuiceServletContextListener {
-
-    @Override protected Injector getInjector() {
+public class GuiceServletConfig extends GuiceServletContextListener
+{
+    @Override
+    protected Injector getInjector()
+    {
         return Guice.createInjector(createDefaultModule(), createServletModule());
     }
 
-    protected Module createDefaultModule() {
+    protected Module createDefaultModule()
+    {
         return new DefaultModule();
     }
 
-    protected Module createServletModule() {
-        return new ServletModule() {
-            @Override protected void configureServlets() {                
+    protected Module createServletModule()
+    {
+        return new ServletModule()
+        {
+            @Override
+            protected void configureServlets()
+            {
                 Map<String, String> params = new HashMap<String, String>();
                 params.put("mimeTypes", "text/html,"
                         + "text/plain,"
@@ -58,9 +65,9 @@ public class GuiceServletConfig extends GuiceServletContextListener {
 
                 filter("/*").through(MyGZIPHook.class, params);
                 bind(MyGZIPHook.class).in(Singleton.class);
-                
+
                 serve("/api*").with(GraphHopperServlet.class);
-                bind(GraphHopperServlet.class).in(Singleton.class);                
+                bind(GraphHopperServlet.class).in(Singleton.class);
             }
         };
     }

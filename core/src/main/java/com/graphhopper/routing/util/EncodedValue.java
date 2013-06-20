@@ -20,11 +20,11 @@ package com.graphhopper.routing.util;
 
 /**
  * Encapsulates a bit-encoded value.
- *
+ * <p/>
  * @author Nop
  */
-public class EncodedValue {
-
+public class EncodedValue
+{
     private String name;
     private int shift;
     private int mask;
@@ -35,7 +35,7 @@ public class EncodedValue {
 
     /**
      * Define a bit-encoded value
-     *
+     * <p/>
      * @param name Description for debugging
      * @param shift bit index of this value
      * @param bits number of bits reserved
@@ -43,7 +43,8 @@ public class EncodedValue {
      * @param defaultValue default value
      * @param defaultMax default maximum value
      */
-    public EncodedValue(String name, int shift, int bits, int factor, int defaultValue, int defaultMax) {
+    public EncodedValue( String name, int shift, int bits, int factor, int defaultValue, int defaultMax )
+    {
         this.name = name;
         this.shift = shift;
         this.factor = factor;
@@ -59,9 +60,12 @@ public class EncodedValue {
         setValue(0, defaultMax);
     }
 
-    public int setValue(int flags, int value) {
+    public int setValue( int flags, int value )
+    {
         if (value > maxValue)
+        {
             throw new IllegalArgumentException(name + " value too large for encoding: " + value);
+        }
 
         // scale down value
         value /= factor;
@@ -74,18 +78,21 @@ public class EncodedValue {
         return flags | value;
     }
 
-    public int getValue(int flags) {
+    public int getValue( int flags )
+    {
         // find value
         flags &= mask;
         flags >>= shift;
         return flags * factor;
     }
 
-    public int setDefaultValue(int flags) {
+    public int setDefaultValue( int flags )
+    {
         return setValue(flags, defaultValue);
     }
 
-    public int maxValue() {
+    public int maxValue()
+    {
         return defaultMax;
     }
 }

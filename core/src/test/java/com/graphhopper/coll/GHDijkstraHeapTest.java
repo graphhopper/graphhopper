@@ -24,21 +24,24 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class GHDijkstraHeapTest extends AbstractBinHeapTest {
-
+public class GHDijkstraHeapTest extends AbstractBinHeapTest
+{
     @Override
-    public BinHeapWrapper<Number, Integer> createHeap(int capacity) {
+    public BinHeapWrapper<Number, Integer> createHeap( int capacity )
+    {
         return new GHDijkstraHeap(capacity / 5);
     }
 
     @Test
-    public void testMove() {
+    public void testMove()
+    {
         IntDoubleBinHeap from = new IntDoubleBinHeap();
         from.insert(100, 101);
         from.insert(50, 51);
         from.insert(70, 71);
         from.insert(30, 31);
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 20; i++)
+        {
             from.insert(i * 10, i * 11);
         }
         from.insert(59, 61);

@@ -26,10 +26,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class OSMIDMapTest {
-
+public class OSMIDMapTest
+{
     @Test
-    public void testGet() {
+    public void testGet()
+    {
         OSMIDMap map = new OSMIDMap(new RAMDirectory());
         map.put(9, 0);
         map.put(10, -50);
@@ -52,14 +53,16 @@ public class OSMIDMapTest {
         assertEquals(2, map.get(31));
         assertEquals(-1, map.get(32));
 
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 50; i++)
+        {
             map.put(i + 50, i + 7);
         }
         assertEquals(57, map.size());
     }
 
     @Test
-    public void testBinSearch() {
+    public void testBinSearch()
+    {
         DataAccess da = new RAMDirectory().find("");
         da.create(100);
 
@@ -86,7 +89,8 @@ public class OSMIDMapTest {
     }
 
     @Test
-    public void testGetLong() {
+    public void testGetLong()
+    {
         OSMIDMap map = new OSMIDMap(new RAMDirectory());
         map.put(12, 0);
         map.put(Long.MAX_VALUE / 10, 1);
@@ -99,7 +103,8 @@ public class OSMIDMapTest {
     }
 
     @Test
-    public void testGet2() {
+    public void testGet2()
+    {
         OSMIDMap map = new OSMIDMap(new RAMDirectory());
         map.put(9, 0);
         map.put(10, 1);
@@ -126,7 +131,8 @@ public class OSMIDMapTest {
     }
 
     @Test
-    public void testUpdateOfLowerKeys() {
+    public void testUpdateOfLowerKeys()
+    {
         OSMIDMap map = new OSMIDMap(new RAMDirectory());
         map.put(9, 0);
         map.put(10, 1);

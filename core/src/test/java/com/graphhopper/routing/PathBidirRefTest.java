@@ -29,18 +29,20 @@ import org.junit.Test;
 /**
  * @author Peter Karich
  */
-public class PathBidirRefTest {
-
+public class PathBidirRefTest
+{
     private final EncodingManager encodingManager = new EncodingManager("CAR");
     private FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
 
-    Graph createGraph() {
+    Graph createGraph()
+    {
         return new GraphBuilder(encodingManager).create();
     }
 
     @Test
-    public void testExtract() {
+    public void testExtract()
+    {
         Graph g = createGraph();
         g.edge(1, 2, 10, true);
         PathBidirRef pw = new PathBidirRef(g, carEncoder);
@@ -55,7 +57,8 @@ public class PathBidirRefTest {
     }
 
     @Test
-    public void testExtract2() {
+    public void testExtract2()
+    {
         Graph g = createGraph();
         g.edge(1, 2, 10, false);
         g.edge(2, 3, 20, false);

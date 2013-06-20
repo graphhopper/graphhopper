@@ -29,21 +29,25 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class XFirstSearchTest {
-
+public class XFirstSearchTest
+{
     int counter;
     TIntHashSet set = new TIntHashSet();
 
     @Before
-    public void setup() {
+    public void setup()
+    {
         counter = 0;
     }
 
     @Test
-    public void testBFS() {
-        XFirstSearch bfs = new XFirstSearch() {
+    public void testBFS()
+    {
+        XFirstSearch bfs = new XFirstSearch()
+        {
             @Override
-            public boolean goFurther(int v) {
+            public boolean goFurther( int v )
+            {
                 counter++;
                 assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
                 set.add(v);

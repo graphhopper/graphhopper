@@ -21,10 +21,11 @@ package com.graphhopper.storage;
  *
  * @author Peter Karich
  */
-public class MMapDirectoryTest extends AbstractDirectoryTester {
-
+public class MMapDirectoryTest extends AbstractDirectoryTester
+{
     @Override
-    Directory createDir() {
+    Directory createDir()
+    {
         return new MMapDirectory(location);
     }
 }

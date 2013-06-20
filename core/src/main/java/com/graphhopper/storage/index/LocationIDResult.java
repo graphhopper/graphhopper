@@ -20,47 +20,55 @@ package com.graphhopper.storage.index;
 
 /**
  * Result of Location2IDIndex lookup
- *
+ * <p/>
  * @author Peter Karich
  */
-public class LocationIDResult {
-
+public class LocationIDResult
+{
     private double weight = Double.MAX_VALUE;
     private int wayIndex = -3;
     private int closestNode = -1;
 
-    public LocationIDResult() {
+    public LocationIDResult()
+    {
     }
 
-    void closestNode(int node) {
+    void closestNode( int node )
+    {
         closestNode = node;
     }
 
-    public int closestNode() {
+    public int closestNode()
+    {
         return closestNode;
     }
 
-    public void weight(double dist) {
+    public void weight( double dist )
+    {
         weight = dist;
     }
 
-    public void wayIndex(int wayIndex) {
+    public void wayIndex( int wayIndex )
+    {
         this.wayIndex = wayIndex;
     }
 
-    public double weight() {
+    public double weight()
+    {
         return weight;
     }
 
     /**
      * @return true if a close node was found
      */
-    public boolean isValid() {
+    public boolean isValid()
+    {
         return closestNode >= 0;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return closestNode + ", " + weight + ", " + wayIndex;
     }
 }

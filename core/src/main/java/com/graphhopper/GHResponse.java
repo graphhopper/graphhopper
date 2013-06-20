@@ -24,35 +24,40 @@ import java.util.List;
 
 /**
  * Wrapper to simplify output of GraphHopper.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class GHResponse {
-
+public class GHResponse
+{
     private PointList list;
     private double distance;
     private long time;
     private String debugInfo = "";
     private List<Throwable> errors = new ArrayList<Throwable>(4);
 
-    public GHResponse() {
+    public GHResponse()
+    {
     }
 
-    public GHResponse points(PointList points) {
+    public GHResponse points( PointList points )
+    {
         list = points;
         return this;
     }
 
-    public GHResponse distance(double distance) {
+    public GHResponse distance( double distance )
+    {
         this.distance = distance;
         return this;
     }
 
-    public double distance() {
+    public double distance()
+    {
         return distance;
     }
 
-    public GHResponse time(long timeInSec) {
+    public GHResponse time( long timeInSec )
+    {
         this.time = timeInSec;
         return this;
     }
@@ -60,62 +65,83 @@ public class GHResponse {
     /**
      * @return time in seconds
      */
-    public long time() {
+    public long time()
+    {
         return time;
     }
 
-    public boolean found() {
+    public boolean found()
+    {
         return list != null && !list.isEmpty();
     }
 
-    public PointList points() {
+    public PointList points()
+    {
         return list;
     }
 
-    public BBox calcRouteBBox(BBox _fallback) {
+    public BBox calcRouteBBox( BBox _fallback )
+    {
         BBox bounds = BBox.INVERSE.clone();
         int len = list.size();
         if (len == 0)
+        {
             return _fallback;
-        for (int i = 0; i < len; i++) {
+        }
+        for (int i = 0; i < len; i++)
+        {
             double lat = list.latitude(i);
             double lon = list.longitude(i);
             if (lat > bounds.maxLat)
+            {
                 bounds.maxLat = lat;
+            }
             if (lat < bounds.minLat)
+            {
                 bounds.minLat = lat;
+            }
             if (lon > bounds.maxLon)
+            {
                 bounds.maxLon = lon;
+            }
             if (lon < bounds.minLon)
+            {
                 bounds.minLon = lon;
+            }
         }
         return bounds;
     }
 
-    public String debugInfo() {
+    public String debugInfo()
+    {
         return debugInfo;
     }
 
-    public GHResponse debugInfo(String debugInfo) {
+    public GHResponse debugInfo( String debugInfo )
+    {
         this.debugInfo = debugInfo;
         return this;
     }
 
-    public boolean hasError() {
+    public boolean hasError()
+    {
         return !errors.isEmpty();
     }
 
-    public List<Throwable> errors() {
+    public List<Throwable> errors()
+    {
         return errors;
     }
 
-    public GHResponse addError(Throwable error) {
+    public GHResponse addError( Throwable error )
+    {
         errors.add(error);
         return this;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "found:" + found() + ", nodes:" + list.size() + ": " + list.toString();
     }
 }

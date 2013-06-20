@@ -35,19 +35,21 @@ import org.junit.Test;
 
 /**
  * Try algorithms, indices and graph storages with real data
- *
+ * <p/>
  * @author Peter Karich
  */
-public class RoutingAlgorithmIntegrationTest {
-
+public class RoutingAlgorithmIntegrationTest
+{
     TestAlgoCollector testCollector;
 
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         testCollector = new TestAlgoCollector("integration tests");
     }
 
-    List<OneRun> createMonacoCar() {
+    List<OneRun> createMonacoCar()
+    {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.730729, 7.42135, 43.72775, 7.418737, 2524, 87));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3605, 126));
@@ -57,14 +59,16 @@ public class RoutingAlgorithmIntegrationTest {
     }
 
     @Test
-    public void testMonaco() {
+    public void testMonaco()
+    {
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 createMonacoCar(), "CAR", true, "CAR", "shortest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     @Test
-    public void testMonacoFastest() {
+    public void testMonacoFastest()
+    {
         List<OneRun> list = createMonacoCar();
         list.get(3).dist = 2353;
         list.get(3).locs = 110;
@@ -74,7 +78,8 @@ public class RoutingAlgorithmIntegrationTest {
     }
 
     @Test
-    public void testMonacoMixed() {
+    public void testMonacoMixed()
+    {
         // Additional locations are inserted because of new crossings from foot to highway paths!
         // Distance is the same.
         List<OneRun> list = createMonacoCar();
@@ -90,7 +95,8 @@ public class RoutingAlgorithmIntegrationTest {
     }
 
     @Test
-    public void testMonacoFoot() {
+    public void testMonacoFoot()
+    {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 1536, 80));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3455, 123));
@@ -102,7 +108,8 @@ public class RoutingAlgorithmIntegrationTest {
     }
 
     @Test
-    public void testMonacoBike() {
+    public void testMonacoBike()
+    {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.730729, 7.421288, 43.727687, 7.418737, 2543, 86));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3604, 125));
@@ -113,7 +120,8 @@ public class RoutingAlgorithmIntegrationTest {
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
-    List<OneRun> createAndorra() {
+    List<OneRun> createAndorra()
+    {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 17345, 435));
         list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 11093, 250));
@@ -121,21 +129,24 @@ public class RoutingAlgorithmIntegrationTest {
     }
 
     @Test
-    public void testAndorra() {
+    public void testAndorra()
+    {
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
                 createAndorra(), "CAR", true, "CAR", "shortest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     @Test
-    public void testAndorraPbf() {
+    public void testAndorraPbf()
+    {
         runAlgo(testCollector, "files/andorra.osm.pbf", "target/graph-andorra",
                 createAndorra(), "CAR", true, "CAR", "shortest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     @Test
-    public void testAndorraFoot() {
+    public void testAndorraFoot()
+    {
         List<OneRun> list = createAndorra();
         list.get(0).dist = 16023;
         list.get(0).locs = 514;
@@ -148,7 +159,8 @@ public class RoutingAlgorithmIntegrationTest {
     }
 
     @Test
-    public void testCampoGrande() {
+    public void testCampoGrande()
+    {
         // test not only NE quadrant of earth!
 
         // bzcat campo-grande.osm.bz2 
@@ -163,10 +175,12 @@ public class RoutingAlgorithmIntegrationTest {
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
-    void runAlgo(TestAlgoCollector testCollector, String osmFile,
+    void runAlgo( TestAlgoCollector testCollector, String osmFile,
             String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-            boolean ch, String vehicle, String weightCalcStr) {
-        try {
+            boolean ch, String vehicle, String weightCalcStr )
+    {
+        try
+        {
             // make sure we are using the latest file format
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopper().setInMemory(true, true).
@@ -179,27 +193,34 @@ public class RoutingAlgorithmIntegrationTest {
             final AbstractFlagEncoder encoder = hopper.encodingManager().getEncoder(vehicle);
             WeightCalculation weightCalc = new ShortestCalc();
             if ("fastest".equals(weightCalcStr))
+            {
                 weightCalc = new FastestCalc(encoder);
+            }
 
             Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
                     createAlgos(g, encoder, ch, weightCalc, hopper.encodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-            for (AlgorithmPreparation prepare : prepares) {
-                for (OneRun or : forEveryAlgo) {
+            for (AlgorithmPreparation prepare : prepares)
+            {
+                for (OneRun or : forEveryAlgo)
+                {
                     int from = idx.findClosest(or.fromLat, or.fromLon, edgeFilter).closestNode();
                     int to = idx.findClosest(or.toLat, or.toLon, edgeFilter).closestNode();
                     testCollector.assertDistance(prepare.createAlgo(), from, to, or.dist, or.locs);
                 }
             }
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
             throw new RuntimeException("cannot handle osm file " + osmFile, ex);
-        } finally {
+        } finally
+        {
             Helper.removeDir(new File(graphFile));
         }
     }
 
     @Test
-    public void testMonacoParallel() throws IOException {
+    public void testMonacoParallel() throws IOException
+    {
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/graph-monaco";
         Helper.removeDir(new File(graphFile));
@@ -219,15 +240,24 @@ public class RoutingAlgorithmIntegrationTest {
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
-        for (int no = 0; no < MAX; no++) {
-            for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
-                RoutingAlgorithm[] algos = new RoutingAlgorithm[]{new AStar(g, carEncoder),
-                    new DijkstraBidirectionRef(g, carEncoder)};
-                for (final RoutingAlgorithm algo : algos) {
+        for (int no = 0; no < MAX; no++)
+        {
+            for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++)
+            {
+                RoutingAlgorithm[] algos = new RoutingAlgorithm[]
+                {
+                    new AStar(g, carEncoder),
+                    new DijkstraBidirectionRef(g, carEncoder)
+                };
+                for (final RoutingAlgorithm algo : algos)
+                {
                     // an algorithm is not thread safe! reuse via clear() is ONLY appropriated if used from same thread!
                     final int instanceIndex = instanceNo;
-                    Thread t = new Thread() {
-                        @Override public void run() {
+                    Thread t = new Thread()
+                    {
+                        @Override
+                        public void run()
+                        {
                             OneRun o = instances.get(instanceIndex);
                             int from = idx.findID(o.fromLat, o.fromLon);
                             int to = idx.findID(o.toLat, o.toLon);
@@ -241,10 +271,13 @@ public class RoutingAlgorithmIntegrationTest {
             }
         }
 
-        for (Thread t : threads) {
-            try {
+        for (Thread t : threads)
+        {
+            try
+            {
                 t.join();
-            } catch (InterruptedException ex) {
+            } catch (InterruptedException ex)
+            {
                 throw new RuntimeException(ex);
             }
         }
@@ -253,14 +286,15 @@ public class RoutingAlgorithmIntegrationTest {
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
-    class OneRun {
-
+    class OneRun
+    {
         double fromLat, fromLon;
         double toLat, toLon;
         double dist;
         int locs;
 
-        public OneRun(double fromLat, double fromLon, double toLat, double toLon, double dist, int locs) {
+        public OneRun( double fromLat, double fromLon, double toLat, double toLon, double dist, int locs )
+        {
             this.fromLat = fromLat;
             this.fromLon = fromLon;
             this.toLat = toLat;

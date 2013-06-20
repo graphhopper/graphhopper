@@ -18,32 +18,38 @@
 package com.graphhopper.routing.util;
 
 /**
- * Calculates the shortest route - independent of a vehicle as the calculation
- * is based on the distance only.
- *
+ * Calculates the shortest route - independent of a vehicle as the calculation is based on the
+ * distance only.
+ * <p/>
  * @author Peter Karich
  */
-public class ShortestCalc implements WeightCalculation {
-
-    public ShortestCalc() {
+public class ShortestCalc implements WeightCalculation
+{
+    public ShortestCalc()
+    {
     }
 
     @Override
-    public double getMinWeight(double currDistToGoal) {
+    public double getMinWeight( double currDistToGoal )
+    {
         return currDistToGoal;
     }
 
     @Override
-    public double getWeight(double distance, int flags) {
+    public double getWeight( double distance, int flags )
+    {
         return distance;
     }
 
     @Override
-    public double revertWeight(double weight, int flags) {
+    public double revertWeight( double weight, int flags )
+    {
         return weight;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString()
+    {
         return "SHORTEST";
     }
 }

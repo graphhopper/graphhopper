@@ -24,10 +24,11 @@ import org.junit.Test;
 /**
  * @author Peter Karich
  */
-public class LinearKeyAlgoTest {
-
+public class LinearKeyAlgoTest
+{
     @Test
-    public void testEncode() {
+    public void testEncode()
+    {
         KeyAlgo algo = new LinearKeyAlgo(3, 4).bounds(-1, 9, -2, 20);
         assertEquals(2L, algo.encode(-1, 5));
         assertEquals(11L, algo.encode(14, 7));
@@ -44,7 +45,8 @@ public class LinearKeyAlgoTest {
     }
 
     @Test
-    public void testDecode() {
+    public void testDecode()
+    {
         KeyAlgo algo = new LinearKeyAlgo(3, 4).bounds(-1, 9, -2, 20);
         CoordTrig latLon = new CoordTrig();
 

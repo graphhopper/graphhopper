@@ -33,13 +33,14 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class PrinctonReaderTest {
-
+public class PrinctonReaderTest
+{
     private EncodingManager encodingManager = new EncodingManager("CAR");
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(new EncodingManager("CAR").getEncoder("CAR"), false, true);
 
     @Test
-    public void testRead() {
+    public void testRead()
+    {
         Graph graph = new GraphBuilder(encodingManager).create();
         new PrinctonReader(graph).stream(PrinctonReader.class.getResourceAsStream("tinyEWD.txt")).read();
         assertEquals(8, graph.nodes());
@@ -48,7 +49,8 @@ public class PrinctonReaderTest {
     }
 
     @Test
-    public void testMediumRead() throws IOException {
+    public void testMediumRead() throws IOException
+    {
         Graph graph = new GraphBuilder(encodingManager).create();
         new PrinctonReader(graph).stream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
         assertEquals(250, graph.nodes());

@@ -24,13 +24,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An in-memory simple B-Tree. Later we'll use DataAccess to allow on-disc
- * storage for very large data sets. Delete not supported.
- *
+ * An in-memory simple B-Tree. Later we'll use DataAccess to allow on-disc storage for very large
+ * data sets. Delete not supported.
+ * <p/>
  * @author Peter Karich
  */
-public class GHLongIntBTree implements LongIntMap {
-
+public class GHLongIntBTree implements LongIntMap
+{
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final int noNumberValue = -1;
     private long size;
@@ -41,21 +41,29 @@ public class GHLongIntBTree implements LongIntMap {
     private int height;
     private BTreeEntry root;
 
-    public GHLongIntBTree(int maxLeafEntries) {
+    public GHLongIntBTree( int maxLeafEntries )
+    {
         this.maxLeafEntries = maxLeafEntries;
         if (maxLeafEntries < 1)
+        {
             throw new IllegalArgumentException("illegal maxLeafEntries:" + maxLeafEntries);
+        }
         if (maxLeafEntries % 2 == 0)
+        {
             maxLeafEntries++;
+        }
 
         splitIndex = maxLeafEntries / 2;
-        if (maxLeafEntries < 10) {
+        if (maxLeafEntries < 10)
+        {
             factor = 2;
             initLeafSize = 1;
-        } else if (maxLeafEntries < 20) {
+        } else if (maxLeafEntries < 20)
+        {
             factor = 2;
             initLeafSize = 4;
-        } else {
+        } else
+        {
             factor = 1.7f;
             initLeafSize = maxLeafEntries / 10;
         }
@@ -63,35 +71,45 @@ public class GHLongIntBTree implements LongIntMap {
     }
 
     @Override
-    public int put(long key, int value) {
+    public int put( long key, int value )
+    {
         if (key == noNumberValue)
+        {
             throw new IllegalArgumentException("Illegal key " + key);
+        }
 
         ReturnValue rv = root.put(key, value);
-        if (rv.tree != null) {
+        if (rv.tree != null)
+        {
             height++;
             root = rv.tree;
         }
-        if (rv.oldValue == noNumberValue) {
+        if (rv.oldValue == noNumberValue)
+        {
             // successfully inserted
             size++;
             if (size % 1000000 == 0)
+            {
                 optimize();
+            }
         }
         return rv.oldValue;
     }
 
     @Override
-    public int get(long key) {
+    public int get( long key )
+    {
         return root.get(key);
     }
 
-    int height() {
+    int height()
+    {
         return height;
     }
 
     @Override
-    public long size() {
+    public long size()
+    {
         return size;
     }
 
@@ -99,69 +117,81 @@ public class GHLongIntBTree implements LongIntMap {
      * @return memory usage in MB
      */
     @Override
-    public int memoryUsage() {
+    public int memoryUsage()
+    {
         return Math.round(root.capacity() / Helper.MB);
     }
 
-    void clear() {
+    void clear()
+    {
         size = 0;
         height = 1;
         root = new BTreeEntry(initLeafSize, true);
     }
 
-    int getNoNumberValue() {
+    int getNoNumberValue()
+    {
         return noNumberValue;
     }
 
-    void flush() {
+    void flush()
+    {
         // TODO set headers with prefix, loadFactor etc
 //        keys.flush();
 //        values.flush();
         throw new IllegalStateException("not supported yet");
     }
 
-    private int entries() {
+    private int entries()
+    {
         return root.entries();
     }
 
-    static class ReturnValue {
-
+    static class ReturnValue
+    {
         int oldValue;
         BTreeEntry tree;
 
-        public ReturnValue() {
+        public ReturnValue()
+        {
         }
 
-        public ReturnValue(int oldValue) {
+        public ReturnValue( int oldValue )
+        {
             this.oldValue = oldValue;
         }
     }
 
-    class BTreeEntry {
-
+    class BTreeEntry
+    {
         int entrySize;
         long keys[];
         int values[];
         BTreeEntry children[];
         boolean isLeaf;
 
-        public BTreeEntry(int tmpSize, boolean leaf) {
+        public BTreeEntry( int tmpSize, boolean leaf )
+        {
             this.isLeaf = leaf;
             keys = new long[tmpSize];
             values = new int[tmpSize];
 
             if (!isLeaf)
-                // in a b-tree we need one more entry to point to all children!
+            // in a b-tree we need one more entry to point to all children!
+            {
                 children = new BTreeEntry[tmpSize + 1];
+            }
         }
 
         /**
-         * @return the old value which was associated with the specified key or
-         * if no update it returns noNumberValue
+         * @return the old value which was associated with the specified key or if no update it
+         * returns noNumberValue
          */
-        ReturnValue put(long key, int newValue) {
+        ReturnValue put( long key, int newValue )
+        {
             int index = binarySearch(keys, 0, entrySize, key);
-            if (index >= 0) {
+            if (index >= 0)
+            {
                 // update
                 int oldValue = values[index];
                 values[index] = newValue;
@@ -170,35 +200,48 @@ public class GHLongIntBTree implements LongIntMap {
 
             index = ~index;
             ReturnValue downTreeRV;
-            if (isLeaf || children[index] == null) {
+            if (isLeaf || children[index] == null)
+            {
                 // insert
                 downTreeRV = new ReturnValue(noNumberValue);
                 downTreeRV.tree = checkSplitEntry();
-                if (downTreeRV.tree == null) {
+                if (downTreeRV.tree == null)
+                {
                     insertKeyValue(index, key, newValue);
-                } else {
+                } else
+                {
                     if (index <= splitIndex)
+                    {
                         downTreeRV.tree.children[0].insertKeyValue(index, key, newValue);
-                    else
+                    } else
+                    {
                         downTreeRV.tree.children[1].insertKeyValue(index - splitIndex - 1, key, newValue);
+                    }
                 }
                 return downTreeRV;
             }
 
             downTreeRV = children[index].put(key, newValue);
             if (downTreeRV.oldValue != noNumberValue)
-                // only update
+            // only update
+            {
                 return downTreeRV;
+            }
 
-            if (downTreeRV.tree != null) {
+            if (downTreeRV.tree != null)
+            {
                 // split this treeEntry if it is too big
                 BTreeEntry returnTree, downTree = returnTree = checkSplitEntry();
                 if (downTree == null)
+                {
                     insertTree(index, downTreeRV.tree);
-                else {
-                    if (index <= splitIndex) {
+                } else
+                {
+                    if (index <= splitIndex)
+                    {
                         downTree.children[0].insertTree(index, downTreeRV.tree);
-                    } else {
+                    } else
+                    {
                         downTree.children[1].insertTree(index - splitIndex - 1, downTreeRV.tree);
                     }
                 }
@@ -209,12 +252,15 @@ public class GHLongIntBTree implements LongIntMap {
         }
 
         /**
-         * @return null if nothing to do or a new sub tree if this tree capacity
-         * is no longer sufficient.
+         * @return null if nothing to do or a new sub tree if this tree capacity is no longer
+         * sufficient.
          */
-        BTreeEntry checkSplitEntry() {
+        BTreeEntry checkSplitEntry()
+        {
             if (entrySize < maxLeafEntries)
+            {
                 return null;
+            }
 
             // right child: copy from this
             int count = entrySize - splitIndex - 1;
@@ -236,23 +282,30 @@ public class GHLongIntBTree implements LongIntMap {
             return newTree;
         }
 
-        void copy(BTreeEntry fromChild, BTreeEntry toChild, int from, int count) {
+        void copy( BTreeEntry fromChild, BTreeEntry toChild, int from, int count )
+        {
             System.arraycopy(fromChild.keys, from, toChild.keys, 0, count);
             System.arraycopy(fromChild.values, from, toChild.values, 0, count);
             if (!fromChild.isLeaf)
+            {
                 System.arraycopy(fromChild.children, from, toChild.children, 0, count + 1);
+            }
 
             toChild.entrySize = count;
         }
 
-        void insertKeyValue(int index, long key, int newValue) {
+        void insertKeyValue( int index, long key, int newValue )
+        {
             ensureSize(entrySize + 1);
             int count = entrySize - index;
-            if (count > 0) {
+            if (count > 0)
+            {
                 System.arraycopy(keys, index, keys, index + 1, count);
                 System.arraycopy(values, index, values, index + 1, count);
                 if (!isLeaf)
+                {
                     System.arraycopy(children, index + 1, children, index + 2, count);
+                }
             }
 
             keys[index] = key;
@@ -260,9 +313,11 @@ public class GHLongIntBTree implements LongIntMap {
             entrySize++;
         }
 
-        void insertTree(int index, BTreeEntry tree) {
+        void insertTree( int index, BTreeEntry tree )
+        {
             insertKeyValue(index, tree.keys[0], tree.values[0]);
-            if (!isLeaf) {
+            if (!isLeaf)
+            {
                 // overwrite children
                 children[index] = tree.children[0];
                 // set
@@ -270,90 +325,134 @@ public class GHLongIntBTree implements LongIntMap {
             }
         }
 
-        int get(long key) {
+        int get( long key )
+        {
             int index = binarySearch(keys, 0, entrySize, key);
             if (index >= 0)
+            {
                 return values[index];
+            }
             index = ~index;
             if (isLeaf || children[index] == null)
+            {
                 return noNumberValue;
+            }
             return children[index].get(key);
         }
 
         /**
          * @return used bytes
          */
-        long capacity() {
+        long capacity()
+        {
             long cap = keys.length * (8 + 4) + 3 * 12 + 4 + 1;
-            if (!isLeaf) {
+            if (!isLeaf)
+            {
                 cap += children.length * 4;
-                for (int i = 0; i < children.length; i++) {
+                for (int i = 0; i < children.length; i++)
+                {
                     if (children[i] != null)
+                    {
                         cap += children[i].capacity();
+                    }
                 }
             }
             return cap;
         }
 
-        int entries() {
+        int entries()
+        {
             int entries = 1;
             if (!isLeaf)
-                for (int i = 0; i < children.length; i++) {
+            {
+                for (int i = 0; i < children.length; i++)
+                {
                     if (children[i] != null)
+                    {
                         entries += children[i].entries();
+                    }
                 }
+            }
             return entries;
         }
 
-        void ensureSize(int size) {
+        void ensureSize( int size )
+        {
             if (size <= keys.length)
+            {
                 return;
+            }
             int newSize = Math.min(maxLeafEntries, Math.max(size + 1, Math.round(size * factor)));
             keys = Arrays.copyOf(keys, newSize);
             values = Arrays.copyOf(values, newSize);
             if (!isLeaf)
+            {
                 children = Arrays.copyOf(children, newSize + 1);
+            }
         }
 
-        void compact() {
+        void compact()
+        {
             int tolerance = 1;
-            if (entrySize + tolerance < keys.length) {
+            if (entrySize + tolerance < keys.length)
+            {
                 keys = Arrays.copyOf(keys, entrySize);
                 values = Arrays.copyOf(values, entrySize);
                 if (!isLeaf)
+                {
                     children = Arrays.copyOf(children, entrySize + 1);
+                }
             }
 
             if (!isLeaf)
-                for (int i = 0; i < children.length; i++) {
+            {
+                for (int i = 0; i < children.length; i++)
+                {
                     if (children[i] != null)
+                    {
                         children[i].compact();
+                    }
                 }
+            }
         }
 
-        String toString(int height) {
+        String toString( int height )
+        {
             String str = height + ": ";
-            for (int i = 0; i < entrySize; i++) {
+            for (int i = 0; i < entrySize; i++)
+            {
                 if (i > 0)
+                {
                     str += ",";
+                }
                 if (keys[i] == noNumberValue)
+                {
                     str += "-";
-                else
+                } else
+                {
                     str += keys[i];
+                }
             }
             str += "\n";
             if (!isLeaf)
-                for (int i = 0; i < entrySize + 1; i++) {
+            {
+                for (int i = 0; i < entrySize + 1; i++)
+                {
                     if (children[i] != null)
+                    {
                         str += children[i].toString(height + 1) + "| ";
+                    }
                 }
+            }
             return str;
         }
     }
 
     @Override
-    public void optimize() {
-        if (size() > 10000) {
+    public void optimize()
+    {
+        if (size() > 10000)
+        {
 //            StopWatch sw = new StopWatch().start();
 //            int old = memoryUsage();
             root.compact();
@@ -363,33 +462,45 @@ public class GHLongIntBTree implements LongIntMap {
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "Height:" + height() + ", entries:" + entries();
     }
 
-    void print() {
+    void print()
+    {
         logger.info(root.toString(1));
     }
 
     // LATER: see OSMIDMap for a version where we use DataAccess
-    static int binarySearch(long keys[], int start, int len, long key) {
+    static int binarySearch( long keys[], int start, int len, long key )
+    {
         int high = start + len, low = start - 1, guess;
-        while (high - low > 1) {
+        while (high - low > 1)
+        {
             guess = (high + low) >>> 1;
             long guessedKey = keys[guess];
             if (guessedKey < key)
+            {
                 low = guess;
-            else
+            } else
+            {
                 high = guess;
+            }
         }
 
         if (high == start + len)
+        {
             return ~(start + len);
+        }
 
         long highKey = keys[high];
         if (highKey == key)
+        {
             return high;
-        else
+        } else
+        {
             return ~high;
+        }
     }
 }

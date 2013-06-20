@@ -30,19 +30,24 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
-
+public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
+{
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final FlagEncoder encoder) {
-        return new NoOpAlgorithmPreparation() {
-            @Override public RoutingAlgorithm createAlgo() {
+    public AlgorithmPreparation prepareGraph( Graph g, final WeightCalculation calc, final FlagEncoder encoder )
+    {
+        return new NoOpAlgorithmPreparation()
+        {
+            @Override
+            public RoutingAlgorithm createAlgo()
+            {
                 return new DijkstraBidirectionRef(_graph, encoder).type(calc);
             }
         }.graph(g);
     }
 
     @Test
-    public void testCannotCalculateSP2() {
+    public void testCannotCalculateSP2()
+    {
         Graph g = createGraph();
         DijkstraBidirectionRef db = new DijkstraBidirectionRef(g, carEncoder);
         Path p = db.calcPath(0, 2);

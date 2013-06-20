@@ -29,13 +29,15 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class PrepareRoutingSubnetworksTest {
-
-    Graph createGraph() {
+public class PrepareRoutingSubnetworksTest
+{
+    Graph createGraph()
+    {
         return new GraphBuilder(new EncodingManager("CAR")).create();
     }
 
-    Graph createSubnetworkTestGraph() {
+    Graph createSubnetworkTestGraph()
+    {
         Graph g = createGraph();
         // big network
         g.edge(1, 2, 1, true);
@@ -62,7 +64,8 @@ public class PrepareRoutingSubnetworksTest {
     }
 
     @Test
-    public void testFindSubnetworks() {
+    public void testFindSubnetworks()
+    {
         Graph g = createSubnetworkTestGraph();
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g);
         Map<Integer, Integer> map = instance.findSubnetworks();
@@ -76,7 +79,8 @@ public class PrepareRoutingSubnetworksTest {
     }
 
     @Test
-    public void testKeepLargestNetworks() {
+    public void testKeepLargestNetworks()
+    {
         Graph g = createSubnetworkTestGraph();
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g);
         Map<Integer, Integer> map = instance.findSubnetworks();

@@ -21,10 +21,11 @@ package com.graphhopper.storage;
  *
  * @author Peter Karich
  */
-public class RAMDataAccessTest extends DataAccessTest {
-
+public class RAMDataAccessTest extends DataAccessTest
+{
     @Override
-    public DataAccess createDataAccess(String name) {
+    public DataAccess createDataAccess( String name )
+    {
         return new RAMDataAccess(name, directory, true).segmentSize(128);
     }
 }

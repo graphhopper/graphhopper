@@ -33,24 +33,34 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
+public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester
+{
+    public static int[] pubTransportPath = new int[]
+    {
+        20, 21, 31, 41, 51, 52, 42, 43, 53, 63, 62, 72, 73, 74, 75
+    };
 
-    public static int[] pubTransportPath = new int[]{20, 21, 31, 41, 51, 52, 42, 43, 53, 63, 62, 72, 73, 74, 75};
-
-    Graph getGraph() {
+    Graph getGraph()
+    {
         return AbstractRoutingAlgorithmTester.getMatrixAlikeGraph();
     }
 
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final FlagEncoder encoder) {
-        return new NoOpAlgorithmPreparation() {
-            @Override public RoutingAlgorithm createAlgo() {
+    public AlgorithmPreparation prepareGraph( Graph g, final WeightCalculation calc, final FlagEncoder encoder )
+    {
+        return new NoOpAlgorithmPreparation()
+        {
+            @Override
+            public RoutingAlgorithm createAlgo()
+            {
                 return new DijkstraWhichToOne(_graph, encoder).type(calc);
             }
         }.graph(g);
     }
 
-    @Test public void testDirectlyOnPubTransport() {
+    @Test
+    public void testDirectlyOnPubTransport()
+    {
         DijkstraWhichToOne d = new DijkstraWhichToOne(getGraph(), carEncoder);
         d.addPubTransportPoints(pubTransportPath);
         int dest = 51;
@@ -60,7 +70,9 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
         assertWithBiDijkstra(pubTransportPath, path, dest);
     }
 
-    @Test public void testABitAway() {
+    @Test
+    public void testABitAway()
+    {
         DijkstraWhichToOne d = new DijkstraWhichToOne(getGraph(), carEncoder);
         d.addPubTransportPoints(pubTransportPath);
         int dest = 49;
@@ -70,9 +82,14 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
         assertWithBiDijkstra(pubTransportPath, path, dest);
     }
 
-    @Test public void testABitAway_DifferentPubTransport() {
+    @Test
+    public void testABitAway_DifferentPubTransport()
+    {
         DijkstraWhichToOne d = new DijkstraWhichToOne(getGraph(), carEncoder);
-        int[] pubT = new int[]{20, 21, 22, 23, 24, 34, 33, 32, 31, 41, 51, 61, 62, 63, 64, 74, 73};
+        int[] pubT = new int[]
+        {
+            20, 21, 22, 23, 24, 34, 33, 32, 31, 41, 51, 61, 62, 63, 64, 74, 73
+        };
         d.addPubTransportPoints(pubT);
         int dest = 49;
         d.setDestination(dest);
@@ -81,12 +98,16 @@ public class DijkstraWhichToOneTest extends AbstractRoutingAlgorithmTester {
         assertWithBiDijkstra(pubT, path, dest);
     }
 
-    private void assertWithBiDijkstra(int[] points, Path path, int dest) {
+    private void assertWithBiDijkstra( int[] points, Path path, int dest )
+    {
         Path bestManualPath = null;
-        for (int i = 0; i < points.length; i++) {
+        for (int i = 0; i < points.length; i++)
+        {
             Path manualPath = new DijkstraBidirectionRef(getGraph(), carEncoder).calcPath(points[i], dest);
             if (bestManualPath == null || manualPath.distance() < bestManualPath.distance())
+            {
                 bestManualPath = manualPath;
+            }
         }
 
         assertEquals(bestManualPath.distance(), path.distance(), 1e-3);

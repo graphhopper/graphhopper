@@ -19,27 +19,26 @@ package com.graphhopper.util.shapes;
 
 /**
  * A shape interface to implement circles or rectangles.
- *
+ * <p/>
  * @author Peter Karich
  */
-public interface Shape {
-
+public interface Shape
+{
     /**
      * @return true if edges or areas of this and the specified shapes overlap
      */
-    boolean intersect(Shape o);
+    boolean intersect( Shape o );
 
     /**
-     * @return true only if lat and lon are inside (or on the edge) of this
-     * shape
+     * @return true only if lat and lon are inside (or on the edge) of this shape
      */
-    boolean contains(double lat, double lon);
+    boolean contains( double lat, double lon );
 
     /**
-     * @return true if the specified shape is fully contained in this shape.
-     * Only iff s1.contains(s2) && && s2.contains(s1) then s1 is equal to s2
+     * @return true if the specified shape is fully contained in this shape. Only iff
+     * s1.contains(s2) && && s2.contains(s1) then s1 is equal to s2
      */
-    boolean contains(Shape s);
+    boolean contains( Shape s );
 
     /**
      * @return the minimal rectangular bounding box of this shape

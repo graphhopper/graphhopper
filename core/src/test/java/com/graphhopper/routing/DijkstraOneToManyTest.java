@@ -33,19 +33,24 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
-
+public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
+{
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final FlagEncoder encoder) {
-        return new NoOpAlgorithmPreparation() {
-            @Override public RoutingAlgorithm createAlgo() {
+    public AlgorithmPreparation prepareGraph( Graph g, final WeightCalculation calc, final FlagEncoder encoder )
+    {
+        return new NoOpAlgorithmPreparation()
+        {
+            @Override
+            public RoutingAlgorithm createAlgo()
+            {
                 return new DijkstraOneToMany(_graph, encoder).type(calc);
             }
         }.graph(g);
     }
 
     @Test
-    public void testUseCache() {
+    public void testUseCache()
+    {
         AlgorithmPreparation prep = prepareGraph(createTestGraph());
         RoutingAlgorithm algo = prep.createAlgo();
         Path p = algo.calcPath(0, 4);
@@ -61,7 +66,8 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Test
-    public void testDifferentEdgeFilter() {
+    public void testDifferentEdgeFilter()
+    {
         Graph g = new GraphBuilder(encodingManager).levelGraphCreate();
         g.edge(4, 3, 10, true);
         g.edge(3, 6, 10, true);
@@ -71,8 +77,11 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
 
         AlgorithmPreparation prep = prepareGraph(g);
         DijkstraOneToMany algo = (DijkstraOneToMany) prep.createAlgo();
-        algo.edgeFilter(new EdgeFilter() {
-            @Override public boolean accept(EdgeIterator iter) {
+        algo.edgeFilter(new EdgeFilter()
+        {
+            @Override
+            public boolean accept( EdgeIterator iter )
+            {
                 return iter.adjNode() != 5;
             }
         });
@@ -81,8 +90,11 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
 
         // important call!
         algo.clear();
-        algo.edgeFilter(new EdgeFilter() {
-            @Override public boolean accept(EdgeIterator iter) {
+        algo.edgeFilter(new EdgeFilter()
+        {
+            @Override
+            public boolean accept( EdgeIterator iter )
+            {
                 return iter.adjNode() != 3;
             }
         });

@@ -24,21 +24,25 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class QuadTreeSimpleTest extends QuadTreeTester {
-
+public class QuadTreeSimpleTest extends QuadTreeTester
+{
     @Override
-    protected QuadTree<Long> createQuadTree(long items) {
+    protected QuadTree<Long> createQuadTree( long items )
+    {
         QuadTreeSimple<Long> qt = new QuadTreeSimple<Long>();
         qt.init(items);
         return qt;
     }
 
     @Test
-    public void testNodePutNull() {
-        try {
+    public void testNodePutNull()
+    {
+        try
+        {
             createQuadTree(10).add(10, 10, null);
             assertTrue("an exception should be thrown on 'storing null' as we rely on this in datanode", false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
     }
 }

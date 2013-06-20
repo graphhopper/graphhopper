@@ -24,10 +24,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class OSMIDSegmentedMapTest {
-
+public class OSMIDSegmentedMapTest
+{
     @Test
-    public void testZeroKey() {
+    public void testZeroKey()
+    {
         OSMIDSegmentedMap map = new OSMIDSegmentedMap();
         map.write(0);
         assertEquals(1, map.size());
@@ -36,7 +37,8 @@ public class OSMIDSegmentedMapTest {
     }
 
     @Test
-    public void testGet() {
+    public void testGet()
+    {
         OSMIDSegmentedMap map = new OSMIDSegmentedMap();
         map.write(9);
         map.write(10);
@@ -59,7 +61,8 @@ public class OSMIDSegmentedMapTest {
         assertEquals(6, map.get(31));
         assertEquals(-1, map.get(32));
 
-        for (int i = 0; i < 200; i++) {
+        for (int i = 0; i < 200; i++)
+        {
             map.write(i + 50);
         }
         assertEquals(207, map.size());
@@ -68,7 +71,8 @@ public class OSMIDSegmentedMapTest {
     }
 
     @Test
-    public void testGet2() {
+    public void testGet2()
+    {
         OSMIDSegmentedMap map = new OSMIDSegmentedMap();
         map.write(9);
         map.write(10);

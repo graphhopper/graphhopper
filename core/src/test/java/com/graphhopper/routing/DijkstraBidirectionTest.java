@@ -29,19 +29,24 @@ import org.junit.Test;
 /**
  * @author Peter Karich
  */
-public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester {
-
+public class DijkstraBidirectionTest extends AbstractRoutingAlgorithmTester
+{
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final FlagEncoder encoder) {
-        return new NoOpAlgorithmPreparation() {
-            @Override public RoutingAlgorithm createAlgo() {
+    public AlgorithmPreparation prepareGraph( Graph g, final WeightCalculation calc, final FlagEncoder encoder )
+    {
+        return new NoOpAlgorithmPreparation()
+        {
+            @Override
+            public RoutingAlgorithm createAlgo()
+            {
                 return new DijkstraBidirection(_graph, encoder).type(calc);
             }
         }.graph(g);
     }
 
     @Test
-    public void testCannotCalculateSP2() {
+    public void testCannotCalculateSP2()
+    {
         Graph g = createGraph();
         DijkstraBidirection algo = new DijkstraBidirection(g, carEncoder);
         Path p = algo.calcPath(0, 2);

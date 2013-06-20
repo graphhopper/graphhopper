@@ -19,26 +19,29 @@ package com.graphhopper.storage;
 
 /**
  * Manages in-memory DataAccess objects.
- *
+ * <p/>
  * @see RAMDataAccess
  * @see RAMIntDataAccess
  * @author Peter Karich
  */
-public class RAMDirectory extends GHDirectory {
-
-    public RAMDirectory() {
+public class RAMDirectory extends GHDirectory
+{
+    public RAMDirectory()
+    {
         this("", false);
     }
 
-    public RAMDirectory(String location) {
+    public RAMDirectory( String location )
+    {
         this(location, false);
     }
 
     /**
-     * @param store true if you want that the RAMDirectory can be loaded or
-     * saved on demand, false if it should be entirely in RAM
+     * @param store true if you want that the RAMDirectory can be loaded or saved on demand, false
+     * if it should be entirely in RAM
      */
-    public RAMDirectory(String _location, boolean store) {
+    public RAMDirectory( String _location, boolean store )
+    {
         super(_location, store ? DAType.RAM_STORE : DAType.RAM);
     }
 }

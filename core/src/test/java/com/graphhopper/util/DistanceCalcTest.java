@@ -24,15 +24,17 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class DistanceCalcTest {
-
+public class DistanceCalcTest
+{
     @Test
-    public void testCalcCircumference() {
+    public void testCalcCircumference()
+    {
         assertEquals(DistanceCalc.C, new DistanceCalc().calcCircumference(0), 1e-7);
     }
 
     @Test
-    public void testGeohashMaxDist() {
+    public void testGeohashMaxDist()
+    {
         assertEquals(DistanceCalc.C / 2, new DistanceCalc().calcSpatialKeyMaxDist(0), 1);
         assertEquals(DistanceCalc.C / 2, new DistanceCalc().calcSpatialKeyMaxDist(1), 1);
         assertEquals(DistanceCalc.C / 4, new DistanceCalc().calcSpatialKeyMaxDist(2), 1);
@@ -42,7 +44,8 @@ public class DistanceCalcTest {
     }
 
     @Test
-    public void testDistance() {
+    public void testDistance()
+    {
         float lat = 24.235f;
         float lon = 47.234f;
         DistanceCalc approxDist = new DistancePlaneProjection();
@@ -91,7 +94,8 @@ public class DistanceCalcTest {
     }
 
     @Test
-    public void testEdgeDistance() {
+    public void testEdgeDistance()
+    {
         DistanceCalc calc = new DistanceCalc();
         double dist = calc.calcNormalizedEdgeDistance(49.94241, 11.544356,
                 49.937964, 11.541824,
@@ -110,7 +114,8 @@ public class DistanceCalcTest {
     }
 
     @Test
-    public void testValidEdgeDistance() {
+    public void testValidEdgeDistance()
+    {
         DistanceCalc calc = new DistanceCalc();
         assertTrue(calc.validEdgeDistance(49.94241, 11.544356, 49.937964, 11.541824, 49.942272, 11.555643));
         assertTrue(calc.validEdgeDistance(49.936624, 11.547636, 49.937964, 11.541824, 49.942272, 11.555643));

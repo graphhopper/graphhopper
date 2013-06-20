@@ -29,12 +29,13 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class GraphStorage3DTest {
-
+public class GraphStorage3DTest
+{
     final EncodingManager encodingManager = new EncodingManager("CAR");
 
     @Test
-    public void testGetHeight() {
+    public void testGetHeight()
+    {
         GraphStorage3D g = new GraphStorage3D(new RAMDirectory(), encodingManager).create(100);
         g.setNode(0, 50, 20000.00, 100);
         g.setNode(1, 50, 20000.02, 100);
@@ -56,7 +57,8 @@ public class GraphStorage3DTest {
         assertEquals(100, p.distance(), .1);
     }
 
-    public static void edge(GraphStorage3D g, DistanceCalc3D dist, int from, int to) {
+    public static void edge( GraphStorage3D g, DistanceCalc3D dist, int from, int to )
+    {
         double tmpDist = dist.calcDist(g.getLatitude(from), g.getLongitude(from), g.getHeight(from),
                 g.getLatitude(to), g.getLongitude(to), g.getHeight(to));
         // System.out.println(from + "->" + to + " " + tmpDist);

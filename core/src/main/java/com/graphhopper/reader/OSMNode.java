@@ -23,15 +23,16 @@ import java.util.Map;
 
 /**
  * Represents an OSM Node
- *
+ * <p/>
  * @author Nop
  */
-public class OSMNode extends OSMElement {
-
+public class OSMNode extends OSMElement
+{
     private double lat;
     private double lon;
 
-    public OSMNode(long id, XMLStreamReader parser) throws XMLStreamException {
+    public OSMNode( long id, XMLStreamReader parser ) throws XMLStreamException
+    {
         super(NODE, id, parser);
 
         // read location
@@ -42,35 +43,43 @@ public class OSMNode extends OSMElement {
         readTags(parser);
     }
 
-    public OSMNode(long id, Map<String, String> tags, double lat, double lon) {
+    public OSMNode( long id, Map<String, String> tags, double lat, double lon )
+    {
         super(NODE, id, tags);
         this.lat = lat;
         this.lon = lon;
     }
 
-    public OSMNode(double lat, double lon) {
+    public OSMNode( double lat, double lon )
+    {
         super(NODE);
 
         this.lat = lat;
         this.lon = lon;
     }
 
-    public OSMNode() {
+    public OSMNode()
+    {
         super(NODE);
     }
 
-    public double lat() {
+    public double lat()
+    {
         return lat;
     }
 
-    public double lon() {
+    public double lon()
+    {
         return lon;
     }
 
-    public String toString() {
-        if (tags == null) {
+    public String toString()
+    {
+        if (tags == null)
+        {
             return "Node (" + id + ")";
-        } else {
+        } else
+        {
 //            return "Node (" + id + ", " + tags.size() + " tags)";
             StringBuilder txt = new StringBuilder();
             txt.append("Node: ");

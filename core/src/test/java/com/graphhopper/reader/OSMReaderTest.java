@@ -40,11 +40,11 @@ import org.junit.Test;
 
 /**
  * Tests the OSMReader with the normal helper initialized.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class OSMReaderTest {
-
+public class OSMReaderTest
+{
     private String file1 = "test-osm.xml";
     private String file2 = "test-osm2.xml";
     private String file3 = "test-osm3.xml";
@@ -56,23 +56,29 @@ public class OSMReaderTest {
     private FootFlagEncoder footEncoder;
     private EdgeFilter carOutFilter;
 
-    @Before public void setUp() {
+    @Before
+    public void setUp()
+    {
         new File(dir).mkdirs();
     }
 
-    @After public void tearDown() {
+    @After
+    public void tearDown()
+    {
         Helper.removeDir(new File(dir));
     }
 
-    GraphStorage buildGraph(String directory, EncodingManager encodingManager) {
+    GraphStorage buildGraph( String directory, EncodingManager encodingManager )
+    {
         return new GraphStorage(new RAMDirectory(directory, false), encodingManager);
     }
 
-    class GraphHopperTest extends GraphHopper {
-
+    class GraphHopperTest extends GraphHopper
+    {
         String testFile;
 
-        public GraphHopperTest(String file) {
+        public GraphHopperTest( String file )
+        {
             this.testFile = file;
             graphHopperLocation(dir);
             encodingManager(new EncodingManager("CAR,FOOT"));
@@ -83,12 +89,16 @@ public class OSMReaderTest {
 
         }
 
-        @Override protected OSMReader importOSM(String ignore) throws IOException {
+        @Override
+        protected OSMReader importOSM( String ignore ) throws IOException
+        {
             OSMReader osmReader = new OSMReader(buildGraph(dir, encodingManager()), 1000);
             osmReader.encodingManager(encodingManager());
-            try {
+            try
+            {
                 osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
-            } catch (URISyntaxException e) {
+            } catch (URISyntaxException e)
+            {
                 throw new RuntimeException(e);
             }
             //osmReader.writeOsm2Graph(getResource(testFile));
@@ -96,11 +106,14 @@ public class OSMReaderTest {
         }
     }
 
-    InputStream getResource(String file) {
+    InputStream getResource( String file )
+    {
         return getClass().getResourceAsStream(file);
     }
 
-    @Test public void testMain() {
+    @Test
+    public void testMain()
+    {
         GraphHopper hopper = new GraphHopperTest(file1).importOrLoad();
         Graph graph = hopper.graph();
         assertEquals(4, graph.nodes());
@@ -142,25 +155,37 @@ public class OSMReaderTest {
         assertEquals(9, graph.getLongitude(hopper.index().findID(51.25, 9.43)), 1e-3);
     }
 
-    @Test public void testSort() {
+    @Test
+    public void testSort()
+    {
         GraphHopper hopper = new GraphHopperTest(file1).sortGraph(true).importOrLoad();
         Graph graph = hopper.graph();
         assertEquals(10, graph.getLongitude(hopper.index().findID(49, 10)), 1e-3);
         assertEquals(51.249, graph.getLatitude(hopper.index().findID(51.2492152, 9.4317166)), 1e-3);
     }
 
-    @Test public void testWithBounds() {
-        GraphHopper hopper = new GraphHopperTest(file1) {
-            @Override protected OSMReader importOSM(String ignore) throws IOException {
-                OSMReader osmReader = new OSMReader(buildGraph(dir, encodingManager()), 1000) {
-                    @Override public boolean isInBounds(OSMNode node) {
+    @Test
+    public void testWithBounds()
+    {
+        GraphHopper hopper = new GraphHopperTest(file1)
+        {
+            @Override
+            protected OSMReader importOSM( String ignore ) throws IOException
+            {
+                OSMReader osmReader = new OSMReader(buildGraph(dir, encodingManager()), 1000)
+                {
+                    @Override
+                    public boolean isInBounds( OSMNode node )
+                    {
                         return node.lat() > 49 && node.lon() > 8;
                     }
                 };
                 osmReader.encodingManager(encodingManager());
-                try {
+                try
+                {
                     osmReader.osm2Graph(new File(getClass().getResource(testFile).toURI()));
-                } catch (URISyntaxException e) {
+                } catch (URISyntaxException e)
+                {
                     throw new RuntimeException(e);
                 }
                 return osmReader;
@@ -198,7 +223,9 @@ public class OSMReaderTest {
         assertFalse(iter.next());
     }
 
-    @Test public void testOneWay() {
+    @Test
+    public void testOneWay()
+    {
         GraphHopper hopper = new GraphHopperTest(file2).importOrLoad();
         Graph graph = hopper.graph();
 
@@ -242,9 +269,14 @@ public class OSMReaderTest {
         assertFalse(encoder.isBackward(iter.flags()));
     }
 
-    @Test public void testFerry() {
-        GraphHopper hopper = new GraphHopperTest(file2) {
-            @Override public void cleanUp() {
+    @Test
+    public void testFerry()
+    {
+        GraphHopper hopper = new GraphHopperTest(file2)
+        {
+            @Override
+            public void cleanUp()
+            {
             }
         }.importOrLoad();
         Graph graph = hopper.graph();
@@ -254,9 +286,14 @@ public class OSMReaderTest {
         assertEquals(Arrays.asList(n40), GHUtility.neighbors(graph.getEdges(n50)));
     }
 
-    @Test public void testMaxSpeed() {
-        GraphHopper hopper = new GraphHopperTest(file2) {
-            @Override public void cleanUp() {
+    @Test
+    public void testMaxSpeed()
+    {
+        GraphHopper hopper = new GraphHopperTest(file2)
+        {
+            @Override
+            public void cleanUp()
+            {
             }
         }.importOrLoad();
         Graph graph = hopper.graph();
@@ -267,7 +304,9 @@ public class OSMReaderTest {
         assertEquals(40, carEncoder.getSpeed(iter.flags()));
     }
 
-    @Test public void testWayReferencesNotExistingAdjNode() {
+    @Test
+    public void testWayReferencesNotExistingAdjNode()
+    {
         GraphHopper hopper = new GraphHopperTest(file4).
                 importOrLoad();
         Graph graph = hopper.graph();
@@ -279,7 +318,9 @@ public class OSMReaderTest {
         assertEquals(Arrays.asList(n30), GHUtility.neighbors(graph.getEdges(n10)));
     }
 
-    @Test public void testFoot() {
+    @Test
+    public void testFoot()
+    {
         GraphHopper hopper = new GraphHopperTest(file3).
                 importOrLoad();
         Graph graph = hopper.graph();
@@ -308,7 +349,9 @@ public class OSMReaderTest {
                 footOutFilter)));
     }
 
-    @Test public void testNegativeIds() {
+    @Test
+    public void testNegativeIds()
+    {
         GraphHopper hopper = new GraphHopperTest(fileNegIds).importOrLoad();
         Graph graph = hopper.graph();
         assertEquals(4, graph.nodes());
@@ -328,7 +371,9 @@ public class OSMReaderTest {
         assertEquals(93147, iter.distance(), 1);
     }
 
-    @Test public void testBarriers() {
+    @Test
+    public void testBarriers()
+    {
         GraphHopper hopper = new GraphHopperTest(fileBarriers).importOrLoad();
         Graph graph = hopper.graph();
         assertEquals(4, graph.nodes());
@@ -351,7 +396,7 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(n10, iter.adjNode());
         assertFalse(iter.next());
-        
+
         iter = graph.getEdges(new20, carOutFilter);
         assertTrue(iter.next());
         assertEquals(n30, iter.adjNode());

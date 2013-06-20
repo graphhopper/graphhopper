@@ -22,7 +22,7 @@ import java.awt.Graphics2D;
 /**
  * @author Peter Karich
  */
-public interface DebugAlgo {
-
-    void setGraphics2D(Graphics2D g2);
+public interface DebugAlgo
+{
+    void setGraphics2D( Graphics2D g2 );
 }

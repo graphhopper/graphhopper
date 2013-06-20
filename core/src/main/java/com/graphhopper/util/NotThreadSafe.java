@@ -19,8 +19,9 @@ package com.graphhopper.util;
 
 /**
  * Marks classes or methods as none thread-safe
- *
+ * <p/>
  * @author Peter Karich
  */
-public @interface NotThreadSafe {
+public @interface NotThreadSafe
+{
 }

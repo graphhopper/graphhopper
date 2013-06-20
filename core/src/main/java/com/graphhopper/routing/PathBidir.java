@@ -22,21 +22,21 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeWrapper;
 
 /**
- * This class creates a Path from two Edge's resulting from a
- * BidirectionalDijkstra
- *
+ * This class creates a Path from two Edge's resulting from a BidirectionalDijkstra
+ * <p/>
  * @author Peter Karich
  */
-public class PathBidir extends Path {
-
+public class PathBidir extends Path
+{
     public boolean switchWrapper = false;
     public int fromRef = -1;
     public int toRef = -1;
     private EdgeWrapper edgeWFrom;
     private EdgeWrapper edgeWTo;
 
-    public PathBidir(Graph g, FlagEncoder encoder,
-            EdgeWrapper edgesFrom, EdgeWrapper edgesTo) {
+    public PathBidir( Graph g, FlagEncoder encoder,
+            EdgeWrapper edgesFrom, EdgeWrapper edgesTo )
+    {
         super(g, encoder);
         this.edgeWFrom = edgesFrom;
         this.edgeWTo = edgesTo;
@@ -46,11 +46,15 @@ public class PathBidir extends Path {
      * Extracts path from two shortest-path-tree
      */
     @Override
-    public Path extract() {
+    public Path extract()
+    {
         if (fromRef < 0 || toRef < 0)
+        {
             return this;
+        }
 
-        if (switchWrapper) {
+        if (switchWrapper)
+        {
             int tmp = fromRef;
             fromRef = toRef;
             toRef = tmp;
@@ -59,13 +63,18 @@ public class PathBidir extends Path {
         int nodeFrom = edgeWFrom.getNode(fromRef);
         int nodeTo = edgeWTo.getNode(toRef);
         if (nodeFrom != nodeTo)
+        {
             throw new IllegalStateException("Locations of 'to' and 'from' DistEntries has to be the same." + toString());
+        }
 
         int currRef = fromRef;
-        while (currRef > 0) {
+        while (currRef > 0)
+        {
             int edgeId = edgeWFrom.getEdgeId(currRef);
             if (edgeId < 0)
+            {
                 break;
+            }
             processDistance(edgeId, nodeFrom);
             currRef = edgeWFrom.getParent(currRef);
             nodeFrom = edgeWFrom.getNode(currRef);
@@ -75,10 +84,13 @@ public class PathBidir extends Path {
 
         // skip node of toRef (equal to fromRef)
         currRef = toRef;
-        while (currRef > 0) {
+        while (currRef > 0)
+        {
             int edgeId = edgeWTo.getEdgeId(currRef);
             if (edgeId < 0)
+            {
                 break;
+            }
             processDistance(edgeId, nodeTo);
             int tmpRef = edgeWTo.getParent(currRef);
             nodeTo = edgeWTo.getNode(tmpRef);

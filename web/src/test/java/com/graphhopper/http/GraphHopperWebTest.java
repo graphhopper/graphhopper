@@ -28,13 +28,16 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class GraphHopperWebTest {
-
+public class GraphHopperWebTest
+{
     @Test
-    public void testReadUnencoded() throws Exception {
-        GraphHopperWeb instance = new GraphHopperWeb() {
+    public void testReadUnencoded() throws Exception
+    {
+        GraphHopperWeb instance = new GraphHopperWeb()
+        {
             @Override
-            InputStream fetch(String url) throws IOException {
+            InputStream fetch( String url ) throws IOException
+            {
                 return getClass().getResourceAsStream("test.json");
             }
         }.encodePolyline(false);
@@ -44,10 +47,13 @@ public class GraphHopperWebTest {
     }
 
     @Test
-    public void testReadEncoded() throws Exception {
-        GraphHopperWeb instance = new GraphHopperWeb() {
+    public void testReadEncoded() throws Exception
+    {
+        GraphHopperWeb instance = new GraphHopperWeb()
+        {
             @Override
-            InputStream fetch(String url) throws IOException {
+            InputStream fetch( String url ) throws IOException
+            {
                 return getClass().getResourceAsStream("test_encoded.json");
             }
         };

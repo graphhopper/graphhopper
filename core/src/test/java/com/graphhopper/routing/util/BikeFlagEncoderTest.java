@@ -30,24 +30,26 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class BikeFlagEncoderTest {
-
+public class BikeFlagEncoderTest
+{
     private BikeFlagEncoder encoder = (BikeFlagEncoder) new EncodingManager("CAR,BIKE").getEncoder("BIKE");
 
     @Test
-    public void testGetSpeed() {
+    public void testGetSpeed()
+    {
         int result = encoder.flags(10, true);
-        assertEquals( 10, encoder.getSpeed( result ) );
+        assertEquals(10, encoder.getSpeed(result));
         OSMWay way = new OSMWay();
         way.setTag("highway", "primary");
-        assertEquals( 18, encoder.getSpeed( way ) );
+        assertEquals(18, encoder.getSpeed(way));
 
-        way.setTag( "surface", "paved" );
+        way.setTag("surface", "paved");
         assertEquals(16, encoder.getSpeed(way));
     }
 
     @Test
-    public void testAccess() {
+    public void testAccess()
+    {
         Map<String, String> map = new HashMap<String, String>();
         OSMWay way = new OSMWay(1, map);
 
@@ -55,13 +57,13 @@ public class BikeFlagEncoderTest {
         assertFalse(encoder.isAllowed(way) > 0);
 
         map.put("highway", "footway");
-        assertFalse( encoder.isAllowed(way) > 0);
+        assertFalse(encoder.isAllowed(way) > 0);
 
         map.put("highway", "cycleway");
         assertTrue(encoder.isAllowed(way) > 0);
 
         map.put("highway", "path");
-        assertFalse( encoder.isAllowed(way) > 0);
+        assertFalse(encoder.isAllowed(way) > 0);
 
         map.put("foot", "official");
         assertFalse(encoder.isAllowed(way) > 0);
@@ -87,5 +89,4 @@ public class BikeFlagEncoderTest {
         assertTrue(encoder.isAllowed(way) > 0);
 
     }
-
 }

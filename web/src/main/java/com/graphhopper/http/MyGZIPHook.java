@@ -28,15 +28,16 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Just to check if response is really gzipped
- *
+ * <p/>
  * @author Peter Karich
  */
-public class MyGZIPHook extends GzipFilter {
-
+public class MyGZIPHook extends GzipFilter
+{
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     @Override
-    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
+    public void doFilter( ServletRequest req, ServletResponse res, FilterChain chain ) throws IOException, ServletException
+    {
         // logger.info("NOW " + req.getParameterMap().toString() + ", filter:" + chain);
         // if response contains "Content-Encoding" => do not filter
         super.doFilter(req, res, chain);

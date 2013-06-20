@@ -29,19 +29,22 @@ import java.util.List;
 /**
  * @author Peter Karich
  */
-public class TestAlgoCollector {
-
+public class TestAlgoCollector
+{
     private String name;
     public List<String> errors = new ArrayList<String>();
 
-    public TestAlgoCollector(String name) {
+    public TestAlgoCollector( String name )
+    {
         this.name = name;
     }
 
-    public TestAlgoCollector assertDistance(RoutingAlgorithm algo,
-            int from, int to, double distance, int pointCount) {
+    public TestAlgoCollector assertDistance( RoutingAlgorithm algo,
+            int from, int to, double distance, int pointCount )
+    {
         Path path = algo.calcPath(from, to);
-        if (!path.found()) {
+        if (!path.found())
+        {
             errors.add(algo + " returns no path! expected distance: " + distance
                     + ", expected locations: " + pointCount + ". from:" + from + ", to:" + to);
             return this;
@@ -51,19 +54,25 @@ public class TestAlgoCollector {
         // Yes, there are indeed real world instances where A-B-C is identical to A-C (in meter precision).
         // And for from:501620, to:155552 the node difference of astar to bi-dijkstra gets even bigger (7!).
         if (Math.abs(path.distance() - distance) > 10)
+        {
             errors.add(algo + " returns path not matching the expected distance of " + distance
                     + "\t Returned was " + path.distance() + "\t (expected points " + pointCount
                     + ", was " + pointList.size() + ") from:" + from + ", to:" + to);
+        }
         if (Math.abs(pointList.size() - pointCount) > 7)
+        {
             errors.add(algo + " returns path not matching the expected points of " + pointCount
                     + "\t Returned was " + pointList.size() + "\t (expected distance " + distance
                     + ", was " + path.distance() + ") from:" + from + ", to:" + to);
+        }
         return this;
     }
 
-    void queryIndex(Graph g, Location2IDIndex idx, double lat, double lon, double expectedDist) {
+    void queryIndex( Graph g, Location2IDIndex idx, double lat, double lon, double expectedDist )
+    {
         int id = idx.findID(lat, lon);
-        if (id < 0) {
+        if (id < 0)
+        {
             errors.add("node not found for " + lat + "," + lon);
             return;
         }
@@ -72,26 +81,34 @@ public class TestAlgoCollector {
         double foundLon = g.getLongitude(id);
         double dist = new DistanceCalc().calcDist(lat, lon, foundLat, foundLon);
         if (Math.abs(dist - expectedDist) > .1)
+        {
             errors.add("queried lat,lon=" + (float) lat + "," + (float) lon
                     + " (found: " + (float) foundLat + "," + (float) foundLon + ")"
                     + "\n   expected distance:" + expectedDist + ", but was:" + dist);
+        }
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         String str = "";
         str += "FOUND " + errors.size() + " ERRORS.\n";
-        for (String s : errors) {
+        for (String s : errors)
+        {
             str += s + ".\n";
         }
         return str;
     }
 
-    void printSummary() {
-        if (errors.size() > 0) {
+    void printSummary()
+    {
+        if (errors.size() > 0)
+        {
             System.out.println("\n-------------------------------\n");
             System.out.println(toString());
         } else
+        {
             System.out.println("SUCCESS for " + name + "!");
+        }
     }
 }

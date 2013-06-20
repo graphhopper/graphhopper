@@ -30,47 +30,57 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class GraphStorageTest extends AbstractGraphTester {
-
+public class GraphStorageTest extends AbstractGraphTester
+{
     private GraphStorage gs;
 
     @Override
-    public void setUp() {
+    public void setUp()
+    {
         super.setUp();
-        if (gs != null) {
+        if (gs != null)
+        {
             gs.close();
         }
     }
 
     @Override
-    public GraphStorage createGraph(String location, int size) {
+    public GraphStorage createGraph( String location, int size )
+    {
         // reduce segment size in order to test the case where multiple segments come into the game
         return newGraph(new RAMDirectory(location)).segmentSize(size / 2).create(size);
     }
 
-    protected GraphStorage newGraph(Directory dir) {
+    protected GraphStorage newGraph( Directory dir )
+    {
         return new GraphStorage(dir, encodingManager);
     }
 
-    protected GraphStorage createGraphStorage(Directory dir) {
+    protected GraphStorage createGraphStorage( Directory dir )
+    {
         return newGraph(dir).create(defaultSize);
     }
 
     @Test
-    public void testNoCreateCalled() throws IOException {
+    public void testNoCreateCalled() throws IOException
+    {
         gs = new GraphBuilder(encodingManager).build();
-        try {
+        try
+        {
             gs.ensureNodeIndex(123);
             assertFalse("IllegalStateException should be raised", true);
-        } catch (IllegalStateException ex) {
+        } catch (IllegalStateException ex)
+        {
             assertTrue(true);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
             assertFalse("IllegalStateException should be raised", true);
         }
     }
 
     @Test
-    public void testSave_and_fileFormat() throws IOException {
+    public void testSave_and_fileFormat() throws IOException
+    {
         GraphStorage graph = createGraphStorage(new RAMDirectory(defaultGraph, true));
         graph.setNode(0, 10, 10);
         graph.setNode(1, 11, 20);
@@ -96,7 +106,8 @@ public class GraphStorageTest extends AbstractGraphTester {
         graph.close();
     }
 
-    protected void checkGraph(Graph g) {
+    protected void checkGraph( Graph g )
+    {
         assertEquals(new BBox(10, 20, 10, 12), g.bounds());
         assertEquals(10, g.getLatitude(0), 1e-2);
         assertEquals(10, g.getLongitude(0), 1e-2);
@@ -122,7 +133,8 @@ public class GraphStorageTest extends AbstractGraphTester {
     }
 
     @Test
-    public void internalDisconnect() {
+    public void internalDisconnect()
+    {
         gs = (GraphStorage) createGraph();
         EdgeIterator iter0 = gs.edge(0, 1, 10, true);
         EdgeIterator iter1 = gs.edge(1, 2, 10, true);
@@ -138,12 +150,13 @@ public class GraphStorageTest extends AbstractGraphTester {
     }
 
     @Test
-    public void testEnsureSize() {
+    public void testEnsureSize()
+    {
         Directory dir = new RAMDirectory();
         gs = new GraphStorage(dir, encodingManager).create(defaultSize);
         int testIndex = dir.find("edges").segmentSize() * 3;
         gs.edge(0, testIndex, 10, true);
-        
+
         // test if optimize works without error
         gs.optimize();
     }

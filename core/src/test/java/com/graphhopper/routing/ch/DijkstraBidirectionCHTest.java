@@ -32,19 +32,21 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
- * Tests if a graph optimized by contraction hierarchies returns the same
- * results as a none optimized one. Additionally fine grained path unpacking is
- * tested.
- *
+ * Tests if a graph optimized by contraction hierarchies returns the same results as a none
+ * optimized one. Additionally fine grained path unpacking is tested.
+ * <p/>
  * @author Peter Karich
  */
-public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
-
+public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
+{
     // graph is expensive to create and to prepare!
     private static Graph preparedMatrixGraph;
 
-    @Override public Graph getMatrixGraph() {
-        if (preparedMatrixGraph == null) {
+    @Override
+    public Graph getMatrixGraph()
+    {
+        if (preparedMatrixGraph == null)
+        {
             LevelGraph lg = createGraph();
             getMatrixAlikeGraph().copyTo(lg);
             prepareGraph(lg);
@@ -54,27 +56,35 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Override
-    protected LevelGraph createGraph() {
+    protected LevelGraph createGraph()
+    {
         return new GraphBuilder(encodingManager).levelGraphCreate();
     }
 
     @Override
-    public PrepareContractionHierarchies prepareGraph(Graph g, WeightCalculation calc, FlagEncoder encoder) {
+    public PrepareContractionHierarchies prepareGraph( Graph g, WeightCalculation calc, FlagEncoder encoder )
+    {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies().graph(g).
                 type(calc).vehicle(encoder);
         // hack: prepare matrixgraph only once
         if (g != preparedMatrixGraph)
+        {
             ch.doWork();
+        }
         return ch;
     }
 
-    @Test @Override public void testPerformance() throws IOException {
+    @Test
+    @Override
+    public void testPerformance() throws IOException
+    {
         // TODO hmmh preparation takes a bit tooo long
         // super.testPerformance();
     }
 
     @Test
-    public void testPathRecursiveUnpacking() {
+    public void testPathRecursiveUnpacking()
+    {
         LevelGraphStorage g2 = (LevelGraphStorage) createGraph();
         g2.edge(0, 1, 1, true);
         EdgeSkipIterator iter1_1 = g2.edge(0, 2, 1.4, true);

@@ -19,24 +19,29 @@ package com.graphhopper.storage.index;
 
 /**
  * Helper class used in some Location2IDIndex implementations for findID
- *
+ * <p/>
  * @author Peter Karich
  */
-class WeightedNode implements Comparable<WeightedNode> {
-
+class WeightedNode implements Comparable<WeightedNode>
+{
     public int node;
     public double weight;
 
-    WeightedNode(int node, double distance) {
+    WeightedNode( int node, double distance )
+    {
         this.node = node;
         this.weight = distance;
     }
 
-    @Override public int compareTo(WeightedNode o) {
+    @Override
+    public int compareTo( WeightedNode o )
+    {
         return Double.compare(weight, o.weight);
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString()
+    {
         return node + " weight is " + weight;
     }
 }

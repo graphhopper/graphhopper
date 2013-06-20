@@ -29,15 +29,19 @@ import java.util.Set;
  * @author Peter Karich
  * @author Nop
  */
-public class CarFlagEncoder extends AbstractFlagEncoder {
-
+public class CarFlagEncoder extends AbstractFlagEncoder
+{
     private HashSet<String> intended = new HashSet<String>();
 
     /**
      * Should be only instantied via EncodingManager
      */
-    protected CarFlagEncoder() {
-        restrictions = new String[]{"motorcar", "motor_vehicle", "vehicle", "access"};
+    protected CarFlagEncoder()
+    {
+        restrictions = new String[]
+        {
+            "motorcar", "motor_vehicle", "vehicle", "access"
+        };
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -61,13 +65,14 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
     /**
      * Define the encoding flags for car
-     *
+     * <p/>
      * @param index
      * @param shift bit offset for the first bit used by this encoder
      * @return adjusted shift pointing behind the last used field
      */
     @Override
-    public int defineBits(int index, int shift) {
+    public int defineBits( int index, int shift )
+    {
         // first two bits are reserved for route handling in superclass
         shift = super.defineBits(index, shift);
 
@@ -77,74 +82,106 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         return shift + 5;
     }
 
-    int getSpeed(String string) {
+    int getSpeed( String string )
+    {
         Integer speed = SPEED.get(string);
         if (speed == null)
+        {
             throw new IllegalStateException("car, no speed found for:" + string);
+        }
         return speed;
     }
 
     @Override
-    public int isAllowed(OSMWay way) {
+    public int isAllowed( OSMWay way )
+    {
         String highwayValue = way.getTag("highway");
-        if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
+        if (highwayValue == null)
+        {
+            if (way.hasTag("route", ferries))
+            {
                 String markedFor = way.getTag("motorcar");
                 if (markedFor == null)
+                {
                     markedFor = way.getTag("motor_vehicle");
+                }
                 if ("yes".equals(markedFor))
+                {
                     return acceptBit | ferryBit;
+                }
             }
             return 0;
-        } else {
+        } else
+        {
             if (!SPEED.containsKey(highwayValue))
+            {
                 return 0;
+            }
 
             // do not drive street cars into fords
             if ((way.hasTag("highway", "ford") || way.hasTag("ford"))
                     && !way.hasTag(restrictions, intended))
+            {
                 return 0;
+            }
 
             // check access restrictions
             if (way.hasTag(restrictions, restrictedValues))
+            {
                 return 0;
+            }
 
             return acceptBit;
         }
     }
 
     @Override
-    public int handleWayTags(int allowed, OSMWay way) {
+    public int handleWayTags( int allowed, OSMWay way )
+    {
         if ((allowed & acceptBit) == 0)
+        {
             return 0;
+        }
 
         int encoded;
-        if ((allowed & ferryBit) == 0) {
+        if ((allowed & ferryBit) == 0)
+        {
             String highwayValue = way.getTag("highway");
             // get assumed speed from highway type
             Integer speed = getSpeed(highwayValue);
             // apply speed limit
             int maxspeed = parseSpeed(way.getTag("maxspeed"));
             if (maxspeed > 0 && speed > maxspeed)
+            {
                 speed = maxspeed;
+            }
 
             // limit speed to max 30 km/h if bad surface
             if (speed > 30 && way.hasTag("surface", BAD_SURFACE))
+            {
                 speed = 30;
+            }
 
             encoded = speedEncoder.setValue(0, speed);
 
             // usually used with a node, this does not work as intended
             // if( "toll_booth".equals( osmProperties.get( "barrier" ) ) )
-            if (way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout")) {
+            if (way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
+            {
                 if (way.hasTag("oneway", "-1"))
+                {
                     encoded |= backwardBit;
-                else
+                } else
+                {
                     encoded |= forwardBit;
+                }
             } else
+            {
                 encoded |= directionBitMask;
+            }
 
-        } else {
+        } else
+        {
             // TODO read duration and calculate speed 00:30 for ferry
             encoded = speedEncoder.setValue(0, 10);
             encoded |= directionBitMask;
@@ -154,29 +191,40 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public int analyzeNodeTags(OSMNode node) {
+    public int analyzeNodeTags( OSMNode node )
+    {
 
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
+        {
             return directionBitMask;
+        }
 
         // movable barriers block if they are not marked as passable
         if (node.hasTag("barrier", potentialBarriers)
                 && !node.hasTag(restrictions, intended)
                 && !node.hasTag("locked", "no"))
+        {
             return directionBitMask;
+        }
 
         if ((node.hasTag("highway", "ford") || node.hasTag("ford"))
                 && !node.hasTag(restrictions, intended))
+        {
             return directionBitMask;
+        }
 
         return 0;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString()
+    {
         return "CAR";
     }
-    private static final Set<String> BAD_SURFACE = new HashSet<String>() {
+    private static final Set<String> BAD_SURFACE = new HashSet<String>()
+    {
+        
         {
             add("cobblestone");
             add("grass_paver");
@@ -193,7 +241,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
      * http://www.itoworld.com/map/124#fullscreen
      * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
      */
-    private static final Map<String, Integer> SPEED = new HashMap<String, Integer>() {
+    private static final Map<String, Integer> SPEED = new HashMap<String, Integer>()
+    {
+        
         {
             // autobahn
             put("motorway", 100);

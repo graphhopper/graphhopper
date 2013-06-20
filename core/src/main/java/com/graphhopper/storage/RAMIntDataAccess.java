@@ -24,27 +24,30 @@ import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 /**
- * This is an in-memory data structure based on an integer array. With the
- * possibility to be stored on flush().
- *
+ * This is an in-memory data structure based on an integer array. With the possibility to be stored
+ * on flush().
+ * <p/>
  * @author Peter Karich
  */
-public class RAMIntDataAccess extends AbstractDataAccess {
-
+public class RAMIntDataAccess extends AbstractDataAccess
+{
     private int[][] segments = new int[0][];
     private boolean closed = false;
     private boolean store;
     private transient int segmentSizeIntsPower;
 
-    RAMIntDataAccess() {
+    RAMIntDataAccess()
+    {
         this("", "", false);
     }
 
-    RAMIntDataAccess(String name) {
+    RAMIntDataAccess( String name )
+    {
         this(name, name, false);
     }
 
-    RAMIntDataAccess(String name, String location, boolean store) {
+    RAMIntDataAccess( String name, String location, boolean store )
+    {
         super(name, location);
         this.store = store;
     }
@@ -52,23 +55,28 @@ public class RAMIntDataAccess extends AbstractDataAccess {
     /**
      * @param store true if in-memory data should be saved when calling flush
      */
-    public RAMIntDataAccess store(boolean store) {
+    public RAMIntDataAccess store( boolean store )
+    {
         this.store = store;
         return this;
     }
 
     @Override
-    public boolean isStoring() {
+    public boolean isStoring()
+    {
         return store;
     }
 
     @Override
-    public DataAccess copyTo(DataAccess da) {
-        if (da instanceof RAMIntDataAccess) {
+    public DataAccess copyTo( DataAccess da )
+    {
+        if (da instanceof RAMIntDataAccess)
+        {
             RAMIntDataAccess rda = (RAMIntDataAccess) da;
             // TODO we could reuse rda segments!
             rda.segments = new int[segments.length][];
-            for (int i = 0; i < segments.length; i++) {
+            for (int i = 0; i < segments.length; i++)
+            {
                 int[] area = segments[i];
                 rda.segments[i] = Arrays.copyOf(area, area.length);
             }
@@ -76,13 +84,18 @@ public class RAMIntDataAccess extends AbstractDataAccess {
             // leave id, store and close unchanged
             return da;
         } else
+        {
             return super.copyTo(da);
+        }
     }
 
     @Override
-    public RAMIntDataAccess create(long bytes) {
+    public RAMIntDataAccess create( long bytes )
+    {
         if (segments.length > 0)
+        {
             throw new IllegalThreadStateException("already created");
+        }
 
         // initialize transient values
         segmentSize(segmentSizeInBytes);
@@ -91,23 +104,31 @@ public class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void ensureCapacity(long bytes) {
+    public void ensureCapacity( long bytes )
+    {
         long cap = capacity();
         long todoBytes = bytes - cap;
         if (todoBytes <= 0)
+        {
             return;
+        }
 
         int segmentsToCreate = (int) (todoBytes / segmentSizeInBytes);
         if (todoBytes % segmentSizeInBytes != 0)
+        {
             segmentsToCreate++;
+        }
 
-        try {
+        try
+        {
             int[][] newSegs = Arrays.copyOf(segments, segments.length + segmentsToCreate);
-            for (int i = segments.length; i < newSegs.length; i++) {
+            for (int i = segments.length; i < newSegs.length; i++)
+            {
                 newSegs[i] = new int[1 << segmentSizeIntsPower];
             }
             segments = newSegs;
-        } catch (OutOfMemoryError err) {
+        } catch (OutOfMemoryError err)
+        {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
                     + cap + ", new bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizeIntsPower
                     + ", new segments:" + segmentsToCreate + ", existing:" + segments.length);
@@ -115,78 +136,107 @@ public class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public boolean loadExisting() {
+    public boolean loadExisting()
+    {
         if (segments.length > 0)
+        {
             throw new IllegalStateException("already initialized");
+        }
         if (!store || closed)
+        {
             return false;
+        }
         File file = new File(fullName());
         if (!file.exists() || file.length() == 0)
+        {
             return false;
-        try {
+        }
+        try
+        {
             RandomAccessFile raFile = new RandomAccessFile(fullName(), "r");
-            try {
+            try
+            {
                 long byteCount = readHeader(raFile) - HEADER_OFFSET;
                 if (byteCount < 0)
+                {
                     return false;
+                }
                 byte[] bytes = new byte[segmentSizeInBytes];
                 raFile.seek(HEADER_OFFSET);
                 // raFile.readInt() <- too slow                
                 int segmentCount = (int) (byteCount / segmentSizeInBytes);
                 if (byteCount % segmentSizeInBytes != 0)
+                {
                     segmentCount++;
+                }
                 segments = new int[segmentCount][];
-                for (int s = 0; s < segmentCount; s++) {
+                for (int s = 0; s < segmentCount; s++)
+                {
                     int read = raFile.read(bytes) / 4;
                     int area[] = new int[read];
-                    for (int j = 0; j < read; j++) {
+                    for (int j = 0; j < read; j++)
+                    {
                         // TODO different system have different default byte order!
                         area[j] = BitUtil.toInt(bytes, j * 4);
                     }
                     segments[s] = area;
                 }
                 return true;
-            } finally {
+            } finally
+            {
                 raFile.close();
             }
-        } catch (IOException ex) {
+        } catch (IOException ex)
+        {
             throw new RuntimeException("Problem while loading " + fullName(), ex);
         }
     }
 
     @Override
-    public void flush() {
+    public void flush()
+    {
         if (closed)
+        {
             throw new IllegalStateException("already closed");
+        }
         if (!store)
+        {
             return;
-        try {
+        }
+        try
+        {
             RandomAccessFile raFile = new RandomAccessFile(fullName(), "rw");
-            try {
+            try
+            {
                 long len = capacity();
                 writeHeader(raFile, len, segmentSizeInBytes);
                 raFile.seek(HEADER_OFFSET);
                 // raFile.writeInt() <- too slow, so copy into byte array
-                for (int s = 0; s < segments.length; s++) {
+                for (int s = 0; s < segments.length; s++)
+                {
                     int area[] = segments[s];
                     int intLen = area.length;
                     byte[] byteArea = new byte[intLen * 4];
-                    for (int i = 0; i < intLen; i++) {
+                    for (int i = 0; i < intLen; i++)
+                    {
                         // TODO different system have different default byte order!
                         BitUtil.fromInt(byteArea, area[i], i * 4);
                     }
                     raFile.write(byteArea);
                 }
-            } finally {
+            } finally
+            {
                 raFile.close();
             }
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
             throw new RuntimeException("Couldn't store integers to " + toString(), ex);
         }
     }
 
     @Override
-    public final void setInt(long longIndex, int value) {
+    public final void setInt( long longIndex, int value )
+    {
         assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
         longIndex >>>= 2;
         int bufferIndex = (int) (longIndex >>> segmentSizeIntsPower);
@@ -195,7 +245,8 @@ public class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public final int getInt(long longIndex) {
+    public final int getInt( long longIndex )
+    {
         assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
         longIndex >>>= 2;
         int bufferIndex = (int) (longIndex >>> segmentSizeIntsPower);
@@ -204,34 +255,40 @@ public class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void getBytes(long bytePos, byte[] values, int length) {
+    public void getBytes( long bytePos, byte[] values, int length )
+    {
         throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
     }
 
     @Override
-    public void setBytes(long bytePos, byte[] values, int length) {
+    public void setBytes( long bytePos, byte[] values, int length )
+    {
         throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
     }
 
     @Override
-    public void close() {
+    public void close()
+    {
         super.close();
         segments = new int[0][];
         closed = true;
     }
 
     @Override
-    public long capacity() {
+    public long capacity()
+    {
         return (long) segments() * segmentSizeInBytes;
     }
 
     @Override
-    public int segments() {
+    public int segments()
+    {
         return segments.length;
     }
 
     @Override
-    public DataAccess segmentSize(int bytes) {
+    public DataAccess segmentSize( int bytes )
+    {
         super.segmentSize(bytes);
         segmentSizeIntsPower = (int) (Math.log(segmentSizeInBytes / 4) / Math.log(2));
         indexDivisor = segmentSizeInBytes / 4 - 1;
@@ -239,34 +296,46 @@ public class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void trimTo(long capacity) {
+    public void trimTo( long capacity )
+    {
         if (capacity < segmentSizeInBytes)
+        {
             capacity = segmentSizeInBytes;
+        }
         int remainingSegments = (int) (capacity / segmentSizeInBytes);
         if (capacity % segmentSizeInBytes != 0)
+        {
             remainingSegments++;
+        }
 
         segments = Arrays.copyOf(segments, remainingSegments);
     }
 
-    boolean releaseSegment(int segNumber) {
+    boolean releaseSegment( int segNumber )
+    {
         segments[segNumber] = null;
         return true;
     }
 
     @Override
-    public void rename(String newName) {
+    public void rename( String newName )
+    {
         if (!checkBeforeRename(newName))
+        {
             return;
+        }
         if (store)
+        {
             super.rename(newName);
+        }
 
         // in every case set the name
         name = newName;
     }
 
     @Override
-    protected boolean isIntBased() {
+    protected boolean isIntBased()
+    {
         return true;
     }
 }

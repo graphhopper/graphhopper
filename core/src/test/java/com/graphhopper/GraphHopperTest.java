@@ -32,26 +32,29 @@ import org.junit.Before;
  *
  * @author Peter Karich
  */
-public class GraphHopperTest {
-
+public class GraphHopperTest
+{
     private static final String ghLoc = "./target/tmp/ghosm";
     private static final String testOsm = "./src/test/resources/com/graphhopper/reader/test-osm.xml";
     private static final String testOsm3 = "./src/test/resources/com/graphhopper/reader/test-osm3.xml";
     private GraphHopper instance;
 
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         Helper.removeDir(new File(ghLoc));
     }
 
     @After
-    public void tearDown() {
+    public void tearDown()
+    {
         instance.close();
         Helper.removeDir(new File(ghLoc));
     }
 
     @Test
-    public void testLoadOSM() throws IOException {
+    public void testLoadOSM() throws IOException
+    {
         instance = new GraphHopper().setInMemory(true, true).
                 encodingManager(new EncodingManager("CAR")).
                 graphHopperLocation(ghLoc).osmFile(testOsm);
@@ -69,7 +72,8 @@ public class GraphHopperTest {
     }
 
     @Test
-    public void testPrepare() throws IOException {
+    public void testPrepare() throws IOException
+    {
         instance = new GraphHopper().setInMemory(true, false).
                 encodingManager(new EncodingManager("CAR")).
                 chShortcuts(true, true).
@@ -81,7 +85,8 @@ public class GraphHopperTest {
     }
 
     @Test
-    public void testFootAndCar() throws IOException {
+    public void testFootAndCar() throws IOException
+    {
         // now all ways are imported
         instance = new GraphHopper().setInMemory(true, false).
                 encodingManager(new EncodingManager("CAR,FOOT")).
@@ -119,7 +124,8 @@ public class GraphHopperTest {
     }
 
     @Test
-    public void testFailsForWrongConfig() throws IOException {
+    public void testFailsForWrongConfig() throws IOException
+    {
         instance = new GraphHopper().init(
                 new CmdArgs().put("osmreader.acceptWay", "FOOT,CAR").put("osmreader.osm", testOsm3)).
                 graphHopperLocation(ghLoc);
@@ -130,10 +136,12 @@ public class GraphHopperTest {
         instance = new GraphHopper().init(
                 new CmdArgs().put("osmreader.acceptWay", "FOOT").put("osmreader.osm", testOsm3)).
                 osmFile(testOsm3);
-        try {
+        try
+        {
             instance.load(ghLoc);
             assertTrue(false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
 
         // different order should be ok
@@ -145,37 +153,45 @@ public class GraphHopperTest {
     }
 
     @Test
-    public void testFailsForMissingParameters() throws IOException {
+    public void testFailsForMissingParameters() throws IOException
+    {
         // missing load of graph
         instance = new GraphHopper();
-        try {
+        try
+        {
             instance.importOSM(testOsm);
             assertTrue(false);
-        } catch (IllegalStateException ex) {
+        } catch (IllegalStateException ex)
+        {
             assertEquals("Load or init graph before import OSM data", ex.getMessage());
         }
 
         // missing graph location
         instance = new GraphHopper();
-        try {
+        try
+        {
             instance.importOrLoad();
             assertTrue(false);
-        } catch (IllegalStateException ex) {
+        } catch (IllegalStateException ex)
+        {
             assertEquals("graphHopperLocation is not specified. call init before", ex.getMessage());
         }
 
         // missing encoding manager
         instance = new GraphHopper().setInMemory(true, true).graphHopperLocation(ghLoc);
-        try {
+        try
+        {
             instance.importOrLoad();
             assertTrue(false);
-        } catch (IllegalStateException ex) {
+        } catch (IllegalStateException ex)
+        {
             assertEquals("No encodingManager was specified", ex.getMessage());
         }
     }
 
     @Test
-    public void testFootOnly() throws IOException {
+    public void testFootOnly() throws IOException
+    {
         // now only footable ways are imported => no A D C and B D E => the other both ways have pillar nodes!
         instance = new GraphHopper().setInMemory(true, false).
                 encodingManager(new EncodingManager("FOOT")).
@@ -192,7 +208,8 @@ public class GraphHopperTest {
     }
 
     @Test
-    public void testPrepareOnly() throws IOException {
+    public void testPrepareOnly() throws IOException
+    {
         instance = new GraphHopper().setInMemory(true, true).
                 chShortcuts(true, true).
                 encodingManager(new EncodingManager("FOOT")).
@@ -207,17 +224,19 @@ public class GraphHopperTest {
 
         // wrong encoding manager
         instance.encodingManager(new EncodingManager("CAR"));
-        try {
+        try
+        {
             instance.load(ghLoc);
             assertTrue(false);
-        } catch (IllegalStateException ex) {
+        } catch (IllegalStateException ex)
+        {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match:"));
         }
 
         // use the encoding manager from the graph
         instance = new GraphHopper().setInMemory(true, true).
                 chShortcuts(true, true).
-                graphHopperLocation(ghLoc).osmFile(testOsm3);        
+                graphHopperLocation(ghLoc).osmFile(testOsm3);
         instance.load(ghLoc);
     }
 }

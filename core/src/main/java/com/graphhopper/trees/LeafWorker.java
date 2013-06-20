@@ -19,13 +19,13 @@ package com.graphhopper.trees;
 
 /**
  * specify work on the leaf nodes of a quadtree
- *
+ * <p/>
  * @author Peter Karich
  */
-interface LeafWorker<T> {
-
+interface LeafWorker<T>
+{
     /**
      * @return true if no further search necessary
      */
-    void doWork(QTDataNode<T> entry, int index);
+    void doWork( QTDataNode<T> entry, int index );
 }

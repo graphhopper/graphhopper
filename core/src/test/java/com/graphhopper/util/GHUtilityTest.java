@@ -28,15 +28,17 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class GHUtilityTest {
-
+public class GHUtilityTest
+{
     private EncodingManager encodingManager = new EncodingManager("CAR");
 
-    Graph createGraph() {
+    Graph createGraph()
+    {
         return new GraphBuilder(encodingManager).create();
     }
 
-    Graph initUnsorted(Graph g) {
+    Graph initUnsorted( Graph g )
+    {
         g.setNode(0, 0, 1);
         g.setNode(1, 2.5, 4.5);
         g.setNode(2, 4.5, 4.5);
@@ -56,7 +58,8 @@ public class GHUtilityTest {
     }
 
     @Test
-    public void testSort() {
+    public void testSort()
+    {
         Graph g = initUnsorted(createGraph());
         Graph newG = GHUtility.sortDFS(g, createGraph());
         assertEquals(g.nodes(), newG.nodes());
@@ -70,7 +73,8 @@ public class GHUtilityTest {
     }
 
     @Test
-    public void testSort2() {
+    public void testSort2()
+    {
         Graph g = initUnsorted(createGraph());
         Graph newG = GHUtility.sortDFS(g, createGraph());
         // TODO does not handle subnetworks
@@ -82,7 +86,8 @@ public class GHUtilityTest {
     }
 
     @Test
-    public void testSortDirected() {
+    public void testSortDirected()
+    {
         Graph g = createGraph();
         g.setNode(0, 0, 1);
         g.setNode(1, 2.5, 2);
@@ -93,7 +98,8 @@ public class GHUtilityTest {
     }
 
     @Test
-    public void testCopy() {
+    public void testCopy()
+    {
         Graph g = initUnsorted(createGraph());
         EdgeIterator iter = g.edge(6, 5, 11, true);
         iter.wayGeometry(Helper.createPointList(12, 10, -1, 3));

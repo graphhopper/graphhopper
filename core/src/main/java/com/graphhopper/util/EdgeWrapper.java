@@ -23,13 +23,13 @@ import java.util.Arrays;
 
 /**
  * Used to implement references for a dijkstra written the "none-java" way.
- *
+ * <p/>
  * @see DijkstraBidirection
  * @author Peter Karich
  */
 @NotThreadSafe
-public class EdgeWrapper {
-
+public class EdgeWrapper
+{
     private static final float GROW_FACTOR = 1.5f;
     private int refCounter;
     private int[] nodes;
@@ -38,11 +38,13 @@ public class EdgeWrapper {
     private float[] weights;
     protected TIntIntHashMap node2ref;
 
-    public EdgeWrapper() {
+    public EdgeWrapper()
+    {
         this(10);
     }
 
-    public EdgeWrapper(int size) {
+    public EdgeWrapper( int size )
+    {
         nodes = new int[size];
         parents = new int[size];
         edgeIds = new int[size];
@@ -53,7 +55,8 @@ public class EdgeWrapper {
     /**
      * @return edge id of current added (node,distance) tuple
      */
-    public int add(int nodeId, double distance, int edgeId) {
+    public int add( int nodeId, double distance, int edgeId )
+    {
         int ref = refCounter;
         refCounter++;
         node2ref.put(nodeId, ref);
@@ -65,48 +68,65 @@ public class EdgeWrapper {
         return ref;
     }
 
-    public void putWeight(int ref, double dist) {
+    public void putWeight( int ref, double dist )
+    {
         if (ref < 1)
+        {
             throw new IllegalStateException("You cannot save a reference with values smaller 1. 0 is reserved");
+        }
         weights[ref] = (float) dist;
     }
 
-    public void putEdgeId(int ref, int edgeId) {
+    public void putEdgeId( int ref, int edgeId )
+    {
         if (ref < 1)
+        {
             throw new IllegalStateException("You cannot save a reference with values smaller 1. 0 is reserved");
+        }
         edgeIds[ref] = edgeId;
     }
 
-    public void putParent(int ref, int link) {
+    public void putParent( int ref, int link )
+    {
         if (ref < 1)
+        {
             throw new IllegalStateException("You cannot save a reference with values smaller 1. 0 is reserved");
+        }
         parents[ref] = link;
     }
 
-    public double getWeight(int ref) {
+    public double getWeight( int ref )
+    {
         return weights[ref];
     }
 
-    public int getNode(int ref) {
+    public int getNode( int ref )
+    {
         return nodes[ref];
     }
 
-    public int getParent(int ref) {
+    public int getParent( int ref )
+    {
         return parents[ref];
     }
 
-    public int getEdgeId(int ref) {
+    public int getEdgeId( int ref )
+    {
         return edgeIds[ref];
     }
 
-    private void ensureCapacity(int size) {
+    private void ensureCapacity( int size )
+    {
         if (size < nodes.length)
+        {
             return;
+        }
 
         resize(Math.round(GROW_FACTOR * size));
     }
 
-    private void resize(int cap) {
+    private void resize( int cap )
+    {
         weights = Arrays.copyOf(weights, cap);
         nodes = Arrays.copyOf(nodes, cap);
         parents = Arrays.copyOf(parents, cap);
@@ -114,7 +134,8 @@ public class EdgeWrapper {
         node2ref.ensureCapacity(cap);
     }
 
-    public void clear() {
+    public void clear()
+    {
         refCounter = 0;
         Arrays.fill(weights, 0);
         Arrays.fill(nodes, 0);
@@ -123,7 +144,8 @@ public class EdgeWrapper {
         node2ref.clear();
     }
 
-    public int getRef(int node) {
+    public int getRef( int node )
+    {
         return node2ref.get(node);
     }
 }

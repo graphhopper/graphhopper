@@ -21,27 +21,35 @@ package com.graphhopper.util.shapes;
  *
  * @author Peter Karich
  */
-public class CoordTrigIntEntry extends CoordTrig<Integer> {
-
+public class CoordTrigIntEntry extends CoordTrig<Integer>
+{
     private int v;
 
-    public CoordTrigIntEntry() {
+    public CoordTrigIntEntry()
+    {
     }
 
-    public CoordTrigIntEntry(int o, double lat, double lon) {
+    public CoordTrigIntEntry( int o, double lat, double lon )
+    {
         super(lat, lon);
         this.v = o;
     }
 
-    @Override public void setValue(Integer t) {
+    @Override
+    public void setValue( Integer t )
+    {
         v = t;
     }
 
-    @Override public Integer getValue() {
+    @Override
+    public Integer getValue()
+    {
         return v;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString()
+    {
         return super.toString() + " value:" + v;
     }
 }

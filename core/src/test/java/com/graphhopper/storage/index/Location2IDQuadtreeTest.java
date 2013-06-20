@@ -28,15 +28,17 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class Location2IDQuadtreeTest extends AbstractLocation2IDIndexTester {
-
+public class Location2IDQuadtreeTest extends AbstractLocation2IDIndexTester
+{
     @Override
-    public Location2IDIndex createIndex(Graph g, int resolution) {
+    public Location2IDIndex createIndex( Graph g, int resolution )
+    {
         return new Location2IDQuadtree(g, new MMapDirectory(location + "loc2idIndex")).resolution(resolution).prepareIndex();
     }
 
     @Test
-    public void testNormedDist() {
+    public void testNormedDist()
+    {
         Location2IDQuadtree index = new Location2IDQuadtree(createGraph(new EncodingManager()), new RAMDirectory());
         index.initAlgo(5, 6);
         assertEquals(1, index.normedDist(0, 1), 1e-6);
@@ -48,16 +50,20 @@ public class Location2IDQuadtreeTest extends AbstractLocation2IDIndexTester {
     }
 
     @Override
-    boolean testGridIgnore(int i) {
+    boolean testGridIgnore( int i )
+    {
         // conceptual limitation where we are stuck in a blind alley limited
         // to the current tile
         if (i == 6 || i == 36 || i == 90 || i == 96)
+        {
             return true;
+        }
         return false;
     }
 
     @Override
-    public void testDifferentVehicles() {
+    public void testDifferentVehicles()
+    {
         // currently unsupported
     }
 }

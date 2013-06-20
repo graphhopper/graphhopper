@@ -23,15 +23,17 @@ import org.junit.Test;
 /**
  * @author Peter Karich
  */
-public class MMapDataAccessTest extends DataAccessTest {
-
+public class MMapDataAccessTest extends DataAccessTest
+{
     @Override
-    public DataAccess createDataAccess(String name) {
+    public DataAccess createDataAccess( String name )
+    {
         return new MMapDataAccess(name, directory).segmentSize(128);
     }
 
     @Test
-    public void textMixRAM2MMAP() {
+    public void textMixRAM2MMAP()
+    {
         DataAccess da = new RAMDataAccess(name, directory, true);
         assertFalse(da.loadExisting());
         da.create(100);
@@ -40,12 +42,13 @@ public class MMapDataAccessTest extends DataAccessTest {
         da.close();
         da = createDataAccess(name);
         assertTrue(da.loadExisting());
-        assertEquals(123, da.getInt(7* 4));
+        assertEquals(123, da.getInt(7 * 4));
         da.close();
     }
 
     @Test
-    public void textMixMMAP2RAM() {
+    public void textMixMMAP2RAM()
+    {
         DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
         da.create(100);
@@ -56,7 +59,7 @@ public class MMapDataAccessTest extends DataAccessTest {
         da.close();
         da = new RAMDataAccess(name, directory, true);
         assertTrue(da.loadExisting());
-        assertEquals(123, da.getInt(7* 4));
+        assertEquals(123, da.getInt(7 * 4));
         da.close();
     }
 }

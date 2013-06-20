@@ -33,12 +33,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Online request for (reverse) geocoding.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class NominatimGeocoder implements Geocoding, ReverseGeocoding {
-
-    public static void main(String[] args) {
+public class NominatimGeocoder implements Geocoding, ReverseGeocoding
+{
+    public static void main( String[] args )
+    {
         System.out.println("search " + new NominatimGeocoder().name2point(new GHPlace("bayreuth"), new GHPlace("berlin")));
 
         System.out.println("reverse " + new NominatimGeocoder().point2name(new GHPlace(49.9027606, 11.577197),
@@ -51,32 +52,40 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding {
     private int timeoutInMillis = 10000;
     private String userAgent = "GraphHopper Web Service";
 
-    public NominatimGeocoder() {
+    public NominatimGeocoder()
+    {
         this("http://open.mapquestapi.com/nominatim/v1/search.php",
                 "http://open.mapquestapi.com/nominatim/v1/reverse.php");
     }
 
-    public NominatimGeocoder(String url, String reverseUrl) {
+    public NominatimGeocoder( String url, String reverseUrl )
+    {
         this.nominatimUrl = url;
         this.nominatimReverseUrl = reverseUrl;
     }
 
-    public NominatimGeocoder bounds(BBox bounds) {
+    public NominatimGeocoder bounds( BBox bounds )
+    {
         this.bounds = bounds;
         return this;
     }
 
-    @Override public List<GHPlace> name2point(GHPlace... places) {
+    @Override
+    public List<GHPlace> name2point( GHPlace... places )
+    {
         List<GHPlace> resList = new ArrayList<GHPlace>();
-        for (GHPlace place : places) {
+        for (GHPlace place : places)
+        {
             // see https://trac.openstreetmap.org/ticket/4683 why limit=3 and not 1
             String url = nominatimUrl + "?format=json&q=" + WebHelper.encodeURL(place.name()) + "&limit=3";
-            if (bounds != null) {
+            if (bounds != null)
+            {
                 // minLon, minLat, maxLon, maxLat => left, top, right, bottom
                 url += "&bounded=1&viewbox=" + bounds.minLon + "," + bounds.maxLat + "," + bounds.maxLon + "," + bounds.minLat;
             }
 
-            try {
+            try
+            {
                 HttpURLConnection hConn = openConnection(url);
                 String str = WebHelper.readString(hConn.getInputStream());
                 // System.out.println(str);
@@ -87,17 +96,22 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding {
                 GHPlace p = new GHPlace(lat, lon);
                 p.name(json.getString("display_name"));
                 resList.add(p);
-            } catch (Exception ex) {
+            } catch (Exception ex)
+            {
                 logger.error("problem while geocoding (search " + place + "): " + ex.getMessage());
             }
         }
         return resList;
     }
 
-    @Override public List<GHPlace> point2name(GHPlace... points) {
+    @Override
+    public List<GHPlace> point2name( GHPlace... points )
+    {
         List<GHPlace> resList = new ArrayList<GHPlace>();
-        for (GHPlace point : points) {
-            try {
+        for (GHPlace point : points)
+        {
+            try
+            {
                 String url = nominatimReverseUrl + "?lat=" + point.lat + "&lon=" + point.lon
                         + "&format=json&zoom=16";
                 HttpURLConnection hConn = openConnection(url);
@@ -110,26 +124,39 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding {
                 JSONObject address = json.getJSONObject("address");
                 String name = "";
                 if (address.has("road"))
+                {
                     name += address.get("road") + ", ";
+                }
                 if (address.has("postcode"))
+                {
                     name += address.get("postcode") + " ";
+                }
                 if (address.has("city"))
+                {
                     name += address.get("city") + ", ";
-                else if (address.has("county"))
+                } else if (address.has("county"))
+                {
                     name += address.get("county") + ", ";
+                }
                 if (address.has("state"))
+                {
                     name += address.get("state") + ", ";
+                }
                 if (address.has("country"))
+                {
                     name += address.get("country");
+                }
                 resList.add(new GHPlace(lat, lon).name(name));
-            } catch (Exception ex) {
+            } catch (Exception ex)
+            {
                 logger.error("problem while geocoding (reverse " + point + "): " + ex.getMessage());
             }
         }
         return resList;
     }
 
-    HttpURLConnection openConnection(String url) throws IOException {
+    HttpURLConnection openConnection( String url ) throws IOException
+    {
         HttpURLConnection hConn = (HttpURLConnection) new URL(url).openConnection();;
         hConn.setRequestProperty("User-Agent", userAgent);
         hConn.setRequestProperty("content-charset", "UTF-8");
@@ -139,7 +166,8 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding {
         return hConn;
     }
 
-    public NominatimGeocoder timeout(int timeout) {
+    public NominatimGeocoder timeout( int timeout )
+    {
         this.timeoutInMillis = timeout;
         return this;
     }

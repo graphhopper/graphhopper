@@ -19,7 +19,7 @@ package com.graphhopper;
 
 /**
  * Wrapper of the graphhopper online or offline API. Provides read only access.
- *
+ * <p/>
  * Usage:
  * <pre>
  *
@@ -40,20 +40,20 @@ package com.graphhopper;
  * }
  *
  * </pre>
- *
+ * <p/>
  * @author Peter Karich
  */
-public interface GraphHopperAPI {
-
+public interface GraphHopperAPI
+{
     /**
      * Load the specified service or graph file (graphhopper or OSM).
      */
-    boolean load(String urlOrFile);
+    boolean load( String urlOrFile );
 
     /**
      * Calculates the path from specified request with startPoint to endPoint.
-     *
+     * <p/>
      * @throws Exceptions if points not found or other problems occur.
      */
-    GHResponse route(GHRequest request);
+    GHResponse route( GHRequest request );
 }

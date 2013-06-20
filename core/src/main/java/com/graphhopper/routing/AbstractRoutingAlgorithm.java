@@ -29,8 +29,8 @@ import com.graphhopper.util.EdgeIterator;
 /**
  * @author Peter Karich
  */
-public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
-
+public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
+{
     protected Graph graph;
     private EdgeFilter additionalEdgeFilter;
     protected WeightCalculation weightCalc;
@@ -38,7 +38,8 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected final EdgeFilter inEdgeFilter;
     protected final FlagEncoder flagEncoder;
 
-    public AbstractRoutingAlgorithm(Graph graph, FlagEncoder encoder) {
+    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder )
+    {
         this.graph = graph;
         this.additionalEdgeFilter = EdgeFilter.ALL_EDGES;
         type(new ShortestCalc());
@@ -47,32 +48,42 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
     }
 
-    public RoutingAlgorithm edgeFilter(EdgeFilter additionalEdgeFilter) {
+    public RoutingAlgorithm edgeFilter( EdgeFilter additionalEdgeFilter )
+    {
         this.additionalEdgeFilter = additionalEdgeFilter;
         return this;
     }
 
-    protected boolean accept(EdgeIterator iter) {
+    protected boolean accept( EdgeIterator iter )
+    {
         return additionalEdgeFilter.accept(iter);
     }
 
-    protected EdgeIterator neighbors(int neighborNode) {
+    protected EdgeIterator neighbors( int neighborNode )
+    {
         return graph.getEdges(neighborNode, outEdgeFilter);
     }
 
-    @Override public RoutingAlgorithm type(WeightCalculation wc) {
+    @Override
+    public RoutingAlgorithm type( WeightCalculation wc )
+    {
         this.weightCalc = wc;
         return this;
     }
 
-    protected void updateShortest(EdgeEntry shortestDE, int currLoc) {
+    protected void updateShortest( EdgeEntry shortestDE, int currLoc )
+    {
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString()
+    {
         return name() + "|" + weightCalc;
     }
 
-    @Override public String name() {
+    @Override
+    public String name()
+    {
         return getClass().getSimpleName();
     }
 }

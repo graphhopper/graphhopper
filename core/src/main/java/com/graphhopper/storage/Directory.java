@@ -18,16 +18,16 @@
 package com.graphhopper.storage;
 
 /**
- * Maintains a collection of DataAccess objects stored at the same location. One
- * GraphStorage per Directory as we need one to maintain one DataAccess object
- * for nodes, edges and location2id index.
- *
+ * Maintains a collection of DataAccess objects stored at the same location. One GraphStorage per
+ * Directory as we need one to maintain one DataAccess object for nodes, edges and location2id
+ * index.
+ * <p/>
  * @author Peter Karich
  */
-public interface Directory {
-
-    public static enum DAType {
-
+public interface Directory
+{
+    public static enum DAType
+    {
         MMAP, RAM, RAM_STORE, RAM_INT, RAM_INT_STORE
     }
 
@@ -37,20 +37,20 @@ public interface Directory {
     String location();
 
     /**
-     * Tries to find the object with that name if not existent it creates one
-     * and associates the location with it. A name is unique in one Directory.
+     * Tries to find the object with that name if not existent it creates one and associates the
+     * location with it. A name is unique in one Directory.
      */
-    DataAccess find(String name);
+    DataAccess find( String name );
 
-    DataAccess find(String name, DAType type);
+    DataAccess find( String name, DAType type );
 
     /**
      * Renames the specified DataAccess object into one.
      */
-    DataAccess rename(DataAccess da, String newName);
+    DataAccess rename( DataAccess da, String newName );
 
     /**
      * Removes the specified object from the directory.
      */
-    void remove(DataAccess da);
+    void remove( DataAccess da );
 }

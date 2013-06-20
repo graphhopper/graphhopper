@@ -22,31 +22,30 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.EdgeSkipIterator;
 
 /**
- * Extended graph interface which supports storing and retrieving the level for
- * a node.
- *
+ * Extended graph interface which supports storing and retrieving the level for a node.
+ * <p/>
  * @author Peter Karich
  */
-public interface LevelGraph extends Graph {
+public interface LevelGraph extends Graph
+{
+    void setLevel( int index, int level );
 
-    void setLevel(int index, int level);
-
-    int getLevel(int index);
-
-    @Override
-    EdgeSkipIterator edge(int a, int b, double distance, int flags);
+    int getLevel( int index );
 
     @Override
-    EdgeSkipIterator edge(int a, int b, double distance, boolean bothDirections);
+    EdgeSkipIterator edge( int a, int b, double distance, int flags );
 
     @Override
-    EdgeSkipIterator getEdgeProps(int edgeId, int endNode);
+    EdgeSkipIterator edge( int a, int b, double distance, boolean bothDirections );
 
     @Override
-    EdgeSkipIterator getEdges(int nodeId);
+    EdgeSkipIterator getEdgeProps( int edgeId, int endNode );
 
     @Override
-    EdgeSkipIterator getEdges(int nodeId, EdgeFilter filter);
+    EdgeSkipIterator getEdges( int nodeId );
+
+    @Override
+    EdgeSkipIterator getEdges( int nodeId, EdgeFilter filter );
 
     @Override
     AllEdgesSkipIterator getAllEdges();

@@ -31,14 +31,14 @@ import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 
 /**
- * Stores the nodes for the found path of an algorithm. It additionally needs
- * the edgeIds to make edge determination faster and less complex as there could
- * be several edges (u,v) especially for graphs with shortcuts.
- *
+ * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
+ * edge determination faster and less complex as there could be several edges (u,v) especially for
+ * graphs with shortcuts.
+ * <p/>
  * @author Peter Karich
  */
-public class Path {
-
+public class Path
+{
     protected Graph graph;
     protected FlagEncoder encoder;
     protected double distance;
@@ -53,7 +53,8 @@ public class Path {
     private PointList cachedPoints;
     private double weight;
 
-    public Path(Graph graph, FlagEncoder encoder) {
+    public Path( Graph graph, FlagEncoder encoder )
+    {
         this.weight = Double.MAX_VALUE;
         this.graph = graph;
         this.encoder = encoder;
@@ -63,27 +64,30 @@ public class Path {
     /**
      * Populates an unextracted path instances from the specified path p.
      */
-    Path(Path p) {
+    Path( Path p )
+    {
         this(p.graph, p.encoder);
         weight = p.weight;
         edgeIds = new TIntArrayList(edgeIds);
         edgeEntry = p.edgeEntry;
     }
 
-    public Path edgeEntry(EdgeEntry edgeEntry) {
+    public Path edgeEntry( EdgeEntry edgeEntry )
+    {
         this.edgeEntry = edgeEntry;
         return this;
     }
 
-    protected void addEdge(int edge) {
+    protected void addEdge( int edge )
+    {
         edgeIds.add(edge);
     }
 
     /**
-     * We need to remember fromNode explicitely as its not saved in one edgeId
-     * of edgeIds.
+     * We need to remember fromNode explicitely as its not saved in one edgeId of edgeIds.
      */
-    protected Path fromNode(int node) {
+    protected Path fromNode( int node )
+    {
         fromNode = node;
         return this;
     }
@@ -91,22 +95,28 @@ public class Path {
     /**
      * @return the first node of this Path.
      */
-    public int fromNode() {
+    public int fromNode()
+    {
         if (!EdgeIterator.Edge.isValid(fromNode))
+        {
             throw new IllegalStateException("Call extract() before retrieving fromNode");
+        }
         return fromNode;
     }
 
-    public boolean found() {
+    public boolean found()
+    {
         return found;
     }
 
-    public Path found(boolean found) {
+    public Path found( boolean found )
+    {
         this.found = found;
         return this;
     }
 
-    void reverseOrder() {
+    void reverseOrder()
+    {
         reverseOrder = !reverseOrder;
         edgeIds.reverse();
     }
@@ -114,36 +124,41 @@ public class Path {
     /**
      * @return distance in meter
      */
-    public double distance() {
+    public double distance()
+    {
         return distance;
     }
 
     /**
      * @return time in seconds
      */
-    public long time() {
+    public long time()
+    {
         return time;
     }
 
     /**
-     * This weight will be updated during the algorithm. The initial value is
-     * maximum double.
+     * This weight will be updated during the algorithm. The initial value is maximum double.
      */
-    public double weight() {
+    public double weight()
+    {
         return weight;
     }
 
-    public void weight(double w) {
+    public void weight( double w )
+    {
         this.weight = w;
     }
 
     /**
      * Extracts the Path from the shortest-path-tree determined by edgeEntry.
      */
-    public Path extract() {
+    public Path extract()
+    {
         sw.start();
         EdgeEntry goalEdge = edgeEntry;
-        while (EdgeIterator.Edge.isValid(goalEdge.edge)) {
+        while (EdgeIterator.Edge.isValid(goalEdge.edge))
+        {
             processDistance(goalEdge.edge, goalEdge.endNode);
             goalEdge = goalEdge.parent;
         }
@@ -154,14 +169,16 @@ public class Path {
         return found(true);
     }
 
-    public String debugInfo() {
+    public String debugInfo()
+    {
         return sw.toString();
     }
 
     /**
      * Calls calcDistance and adds the edgeId.
      */
-    protected void processDistance(int edgeId, int endNode) {
+    protected void processDistance( int edgeId, int endNode )
+    {
         EdgeIterator iter = graph.getEdgeProps(edgeId, endNode);
         calcDistance(iter);
         calcTime(iter.distance(), iter.flags());
@@ -169,37 +186,43 @@ public class Path {
     }
 
     /**
-     * This method calculates not only the weight but also the distance in
-     * kilometer for the specified edge.
+     * This method calculates not only the weight but also the distance in kilometer for the
+     * specified edge.
      */
-    protected void calcDistance(EdgeIterator iter) {
+    protected void calcDistance( EdgeIterator iter )
+    {
         distance += iter.distance();
     }
 
-    protected void calcTime(double distance, int flags) {
+    protected void calcTime( double distance, int flags )
+    {
         time += (long) (distance * 3.6 / encoder.getSpeed(flags));
     }
 
     /**
      * Used in combination with forEveryEdge.
      */
-    public static interface EdgeVisitor {
-
-        void next(EdgeIterator iter);
+    public static interface EdgeVisitor
+    {
+        void next( EdgeIterator iter );
     }
 
     /**
      * Iterates over all edges in this path and calls the visitor for it.
      */
-    public void forEveryEdge(EdgeVisitor visitor) {
+    public void forEveryEdge( EdgeVisitor visitor )
+    {
         int tmpNode = fromNode();
         int len = edgeIds.size();
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < len; i++)
+        {
             EdgeIterator iter = graph.getEdgeProps(edgeIds.get(i), tmpNode);
             if (iter.isEmpty())
+            {
                 throw new IllegalStateException("Edge " + edgeIds.get(i)
                         + " was empty when requested with node " + tmpNode
                         + ", array index:" + i + ", edges:" + edgeIds.size());
+            }
             tmpNode = iter.baseNode();
             visitor.next(iter);
         }
@@ -208,15 +231,21 @@ public class Path {
     /**
      * @return the uncached node indices of the tower nodes in this path.
      */
-    public TIntList calcNodes() {
+    public TIntList calcNodes()
+    {
         final TIntArrayList nodes = new TIntArrayList(edgeIds.size() + 1);
         if (edgeIds.isEmpty())
+        {
             return nodes;
+        }
 
         int tmpNode = fromNode();
         nodes.add(tmpNode);
-        forEveryEdge(new EdgeVisitor() {
-            @Override public void next(EdgeIterator iter) {
+        forEveryEdge(new EdgeVisitor()
+        {
+            @Override
+            public void next( EdgeIterator iter )
+            {
                 nodes.add(iter.baseNode());
             }
         });
@@ -226,19 +255,28 @@ public class Path {
     /**
      * @return the cached list of lat,lon for this path
      */
-    public PointList calcPoints() {
+    public PointList calcPoints()
+    {
         if (cachedPoints != null)
+        {
             return cachedPoints;
+        }
         cachedPoints = new PointList(edgeIds.size() + 1);
         if (edgeIds.isEmpty())
+        {
             return cachedPoints;
+        }
         int tmpNode = fromNode();
         cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
-        forEveryEdge(new EdgeVisitor() {
-            @Override public void next(EdgeIterator iter) {
+        forEveryEdge(new EdgeVisitor()
+        {
+            @Override
+            public void next( EdgeIterator iter )
+            {
                 PointList pl = iter.wayGeometry();
                 pl.reverse();
-                for (int j = 0; j < pl.size(); j++) {
+                for (int j = 0; j < pl.size(); j++)
+                {
                     cachedPoints.add(pl.latitude(j), pl.longitude(j));
                 }
                 int baseNode = iter.baseNode();
@@ -248,46 +286,63 @@ public class Path {
         return cachedPoints;
     }
 
-    public TDoubleList calcDistances() {
+    public TDoubleList calcDistances()
+    {
         final TDoubleList distances = new TDoubleArrayList(edgeIds.size());
         if (edgeIds.isEmpty())
+        {
             return distances;
+        }
 
-        forEveryEdge(new EdgeVisitor() {
-            @Override public void next(EdgeIterator iter) {
+        forEveryEdge(new EdgeVisitor()
+        {
+            @Override
+            public void next( EdgeIterator iter )
+            {
                 distances.add(iter.distance());
             }
         });
         return distances;
     }
 
-    public TIntSet calculateIdenticalNodes(Path p2) {
+    public TIntSet calculateIdenticalNodes( Path p2 )
+    {
         TIntHashSet thisSet = new TIntHashSet();
         TIntHashSet retSet = new TIntHashSet();
         TIntList nodes = calcNodes();
         int max = nodes.size();
-        for (int i = 0; i < max; i++) {
+        for (int i = 0; i < max; i++)
+        {
             thisSet.add(nodes.get(i));
         }
 
         nodes = p2.calcNodes();
         max = nodes.size();
-        for (int i = 0; i < max; i++) {
+        for (int i = 0; i < max; i++)
+        {
             if (thisSet.contains(nodes.get(i)))
+            {
                 retSet.add(nodes.get(i));
+            }
         }
         return retSet;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString()
+    {
         return "distance:" + distance() + ", edges:" + edgeIds.size();
     }
 
-    public String toDetailsString() {
+    public String toDetailsString()
+    {
         String str = "";
-        for (int i = 0; i < edgeIds.size(); i++) {
+        for (int i = 0; i < edgeIds.size(); i++)
+        {
             if (i > 0)
+            {
                 str += "->";
+            }
 
             str += edgeIds.get(i);
         }

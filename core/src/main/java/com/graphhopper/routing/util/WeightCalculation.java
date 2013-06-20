@@ -18,25 +18,24 @@
 package com.graphhopper.routing.util;
 
 /**
- * Specifies how the best route is calculated. E.g. the fastest or shortest
- * route.
- *
+ * Specifies how the best route is calculated. E.g. the fastest or shortest route.
+ * <p/>
  * @author Peter Karich
  */
-public interface WeightCalculation {
-
+public interface WeightCalculation
+{
     /**
      * @return the calculated weight with the maximum velocity
      */
-    double getMinWeight(double distance);
+    double getMinWeight( double distance );
 
     /**
      * @return the calculated weight with the specified velocity
      */
-    double getWeight(double distance, int flags);
+    double getWeight( double distance, int flags );
 
     /**
      * @return distance from specified weight
      */
-    double revertWeight(double weight, int flags);
+    double revertWeight( double weight, int flags );
 }

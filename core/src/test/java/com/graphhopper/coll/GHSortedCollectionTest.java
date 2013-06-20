@@ -24,10 +24,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class GHSortedCollectionTest {
-
+public class GHSortedCollectionTest
+{
     @Test
-    public void testPoll() {
+    public void testPoll()
+    {
         GHSortedCollection instance = new GHSortedCollection(100);
         assertTrue(instance.isEmpty());
         instance.insert(0, 10);
@@ -41,7 +42,8 @@ public class GHSortedCollectionTest {
     }
 
     @Test
-    public void testInsert() {
+    public void testInsert()
+    {
         GHSortedCollection instance = new GHSortedCollection(100);
         assertTrue(instance.isEmpty());
         instance.insert(0, 10);
@@ -60,7 +62,8 @@ public class GHSortedCollectionTest {
     }
 
     @Test
-    public void testUpdate() {
+    public void testUpdate()
+    {
         GHSortedCollection instance = new GHSortedCollection(100);
         assertTrue(instance.isEmpty());
         instance.insert(0, 10);
