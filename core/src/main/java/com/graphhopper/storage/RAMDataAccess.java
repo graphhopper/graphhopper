@@ -26,8 +26,8 @@ import java.util.Arrays;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is an in-memory data structure with the possibility to be stored on
- * flush().
+ * This is an in-memory byte-based data structure with the possibility to be
+ * stored on flush().
  *
  * @author Peter Karich
  */

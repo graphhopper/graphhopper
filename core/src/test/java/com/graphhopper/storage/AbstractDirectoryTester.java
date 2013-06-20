@@ -50,7 +50,7 @@ public abstract class AbstractDirectoryTester {
     @Test
     public void testRename() {
         Directory dir = createDir();
-        da = dir.findCreate("testing");
+        da = dir.find("testing");
         da.create(100);
         da.flush();
         dir.rename(da, "newtesting");
@@ -59,8 +59,8 @@ public abstract class AbstractDirectoryTester {
     @Test
     public void testNoDuplicates() {
         Directory dir = createDir();
-        DataAccess da1 = dir.findCreate("testing");
-        DataAccess da2 = dir.findCreate("testing");
+        DataAccess da1 = dir.find("testing");
+        DataAccess da2 = dir.find("testing");
         assertTrue(da1 == da2);
         da1.close();
         da2.close();
@@ -69,7 +69,7 @@ public abstract class AbstractDirectoryTester {
     @Test
     public void testNoErrorForDACreate() {
         Directory dir = createDir();
-        da = dir.findCreate("testing");
+        da = dir.find("testing");
         da.create(100);
         da.flush();
     }

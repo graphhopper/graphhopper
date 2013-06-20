@@ -84,16 +84,17 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     private boolean initialized = false;
     private EncodingManager encodingManager;
     protected final EdgeFilter allEdgesFilter;
+    private StorableProperties properties;
 
     public GraphStorage(Directory dir, EncodingManager encodingManager) {
-        if (encodingManager == null)
-            throw new NullPointerException("EncodingManager cannot be null!");
+        // here encoding manager can be null e.g. if we want to load existing graph
         this.encodingManager = encodingManager;
         allEdgesFilter = EdgeFilter.ALL_EDGES;
         this.dir = dir;
-        this.nodes = dir.findCreate("nodes");
-        this.edges = dir.findCreate("edges");
-        this.wayGeometry = dir.findCreate("geometry");
+        this.nodes = dir.find("nodes");
+        this.edges = dir.find("edges");
+        this.wayGeometry = dir.find("geometry");
+        this.properties = new StorableProperties(dir);
         this.bounds = BBox.INVERSE.clone();
         E_NODEA = nextEdgeEntryIndex();
         E_NODEB = nextEdgeEntryIndex();
@@ -157,6 +158,12 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
         edges.create(initSize * edgeEntryBytes);
         wayGeometry.create(initSize);
+
+        if (encodingManager == null)
+            throw new IllegalStateException("EncodingManager can only be null if you call loadExisting");
+        properties.create(100);
+        properties.put("osmreader.acceptWay", encodingManager.encoderList());
+        properties.putCurrentVersions();
         initialized = true;
         return this;
     }
@@ -418,6 +425,10 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
     public EncodingManager encodingManager() {
         return encodingManager;
+    }
+
+    public StorableProperties properties() {
+        return properties;
     }
 
     /**
@@ -721,26 +732,33 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     Graph _copyTo(GraphStorage clonedG) {
         if (clonedG.edgeEntryBytes != edgeEntryBytes)
             throw new IllegalStateException("edgeEntrySize cannot be different for cloned graph");
+        
         if (clonedG.nodeEntryBytes != nodeEntryBytes)
-            throw new IllegalStateException("nodeEntrySize cannot be different for cloned graph");
+            throw new IllegalStateException("nodeEntrySize cannot be different for cloned graph");        
+        
+        // nodes
+        nodes.copyTo(clonedG.nodes);
+        clonedG.nodeCount = nodeCount;
+        clonedG.bounds = bounds.clone();
 
+        // edges
         edges.copyTo(clonedG.edges);
         clonedG.edgeCount = edgeCount;
 
-        nodes.copyTo(clonedG.nodes);
-        clonedG.nodeCount = nodeCount;
-
+        // geometry
         wayGeometry.copyTo(clonedG.wayGeometry);
         clonedG.maxGeoRef = maxGeoRef;
+        
+        properties.copyTo(clonedG.properties);
 
-        clonedG.bounds = bounds;
         if (removedNodes == null)
             clonedG.removedNodes = null;
         else
             clonedG.removedNodes = removedNodes.copyTo(new GHBitSetImpl());
 
         clonedG.encodingManager = encodingManager;
-
+        
+        initialized = true;
         return clonedG;
     }
 
@@ -925,7 +943,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         nodeCount -= removeNodeCount;
 
         // health check         
-        if (true) {
+        if (isTestingEnabled()) {
             iter = getAllEdges();
             while (iter.next()) {
                 int base = iter.baseNode();
@@ -954,8 +972,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             // access last node -> no error
             getEdges(nodeCount - 1).toString();
         }
-        System.out.println("nodeCount:" + nodeCount);
-
         removedNodes = null;
     }
 
@@ -974,12 +990,26 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             if (!wayGeometry.loadExisting())
                 throw new IllegalStateException("cannot load geometry. corrupt file or directory? " + dir);
 
+            String acceptStr = "";
+            if (properties.loadExisting()) {
+                properties.checkVersions(false);
+                // check encoding for compatiblity
+                acceptStr = properties.get("osmreader.acceptWay");
+            } else
+                throw new IllegalStateException("cannot load properties. corrupt file or directory? " + dir);
+
+            if (encodingManager == null) {
+                if (acceptStr.isEmpty())
+                    throw new IllegalStateException("No EncodingManager was configured. And no one was found in the graph: " + dir.location());
+                encodingManager = new EncodingManager(acceptStr);
+            } else if (!acceptStr.isEmpty() && !encodingManager.encoderList().equals(acceptStr))
+                throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.encoderList() + "\nGraph: " + acceptStr);
+
             // nodes
             int hash = nodes.getHeader(0);
             if (hash != getClass().getName().hashCode())
                 throw new IllegalStateException("Cannot load the graph - it wasn't create via "
                         + getClass().getName() + "! " + dir);
-
             nodeEntryBytes = nodes.getHeader(1 * 4);
             nodeCount = nodes.getHeader(2 * 4);
             bounds.minLon = Helper.intToDegree(nodes.getHeader(3 * 4));
@@ -1018,6 +1048,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         // geometry
         wayGeometry.setHeader(0, maxGeoRef);
 
+        properties.flush();
         wayGeometry.flush();
         edges.flush();
         nodes.flush();
@@ -1025,6 +1056,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
     @Override
     public void close() {
+        properties.close();
         wayGeometry.close();
         edges.close();
         nodes.close();
@@ -1032,7 +1064,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
 
     @Override
     public long capacity() {
-        return edges.capacity() + nodes.capacity() + wayGeometry.capacity();
+        return edges.capacity() + nodes.capacity() + wayGeometry.capacity() + properties.capacity();
     }
 
     @Override public String toString() {

@@ -96,7 +96,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     public PrepareContractionHierarchies() {
         type(new ShortestCalc());
-        originalEdges = new GHDirectory("", DAType.RAM_INT).findCreate("originalEdges");
+        originalEdges = new GHDirectory("", DAType.RAM_INT).find("originalEdges");
         originalEdges.create(1000);
     }
 

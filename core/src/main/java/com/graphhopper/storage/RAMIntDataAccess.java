@@ -265,4 +265,9 @@ public class RAMIntDataAccess extends AbstractDataAccess {
         // in every case set the name
         name = newName;
     }
+
+    @Override
+    protected boolean isIntBased() {
+        return true;
+    }
 }

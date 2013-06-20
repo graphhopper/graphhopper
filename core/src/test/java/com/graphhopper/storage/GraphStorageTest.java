@@ -142,7 +142,7 @@ public class GraphStorageTest extends AbstractGraphTester {
     public void testEnsureSize() {
         Directory dir = new RAMDirectory();
         gs = new GraphStorage(dir, encodingManager).create(defaultSize);
-        int testIndex = dir.findCreate("edges").segmentSize() * 3;
+        int testIndex = dir.find("edges").segmentSize() * 3;
         gs.edge(0, testIndex, 10, true);
         
         // test if optimize works without error

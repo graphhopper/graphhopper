@@ -29,7 +29,7 @@ public class NameIndex implements Storable<NameIndex> {
     private DataAccess names;
 
     public NameIndex(Directory dir) {
-        names = dir.findCreate("names");
+        names = dir.find("names");
     }
 
     @Override

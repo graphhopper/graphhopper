@@ -71,8 +71,8 @@ public class OSMReaderHelper {
         this.expectedNodes = expectedNodes;
         osmNodeIdToIndexMap = new GHLongIntBTree(200);
         dir = g.directory();
-        pillarLats = dir.findCreate("tmpLatitudes");
-        pillarLons = dir.findCreate("tmpLongitudes");
+        pillarLats = dir.find("tmpLatitudes");
+        pillarLons = dir.find("tmpLongitudes");
 
         pillarLats.create(Math.max(expectedNodes / 50, 100));
         pillarLons.create(Math.max(expectedNodes / 50, 100));

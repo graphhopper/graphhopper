@@ -47,12 +47,15 @@ public class GHDirectory implements Directory {
         if (dir.exists() && !dir.isDirectory())
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
 
-        // TODO remove this hack which forces to use integer access for edges+nodes
+        // set default access to integer based
+        // improves performance on server side, 10% faster for queries, 20% faster for preparation
         if (!this.defaultType.equals(DAType.MMAP)) {
             if (isStoring()) {
+                put("locationIndex", DAType.RAM_INT_STORE);
                 put("edges", DAType.RAM_INT_STORE);
                 put("nodes", DAType.RAM_INT_STORE);
             } else {
+                put("locationIndex", DAType.RAM_INT);
                 put("edges", DAType.RAM_INT);
                 put("nodes", DAType.RAM_INT);
             }
@@ -66,14 +69,15 @@ public class GHDirectory implements Directory {
     }
 
     @Override
-    public DataAccess findCreate(String name) {
+    public DataAccess find(String name) {
         DAType type = types.get(name);
         if (type == null)
             type = defaultType;
-        return findCreate(name, type);
+        return find(name, type);
     }
 
-    public DataAccess findCreate(String name, DAType type) {
+    @Override
+    public DataAccess find(String name, DAType type) {
         DataAccess da = map.get(name);
         if (da != null)
             return da;
@@ -124,11 +128,6 @@ public class GHDirectory implements Directory {
     public boolean isStoring() {
         return defaultType.equals(DAType.MMAP) || defaultType.equals(DAType.RAM_INT_STORE)
                 || defaultType.equals(DAType.RAM_STORE);
-    }
-
-    @Override
-    public boolean isLoadRequired() {
-        return isStoring();
     }
 
     protected void mkdirs() {

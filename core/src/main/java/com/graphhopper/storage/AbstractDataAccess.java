@@ -18,6 +18,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
@@ -110,9 +111,23 @@ public abstract class AbstractDataAccess implements DataAccess {
         // currently get/setBytes do not support copying more bytes then segmentSize
         int segSize = Math.min(da.segmentSize(), segmentSize());
         byte[] bytes = new byte[segSize];
+        boolean externalIntBased = ((AbstractDataAccess) da).isIntBased();
         for (long bytePos = 0; bytePos < cap; bytePos += segSize) {
-            getBytes(bytePos, bytes, segSize);
-            da.setBytes(bytePos, bytes, segSize);
+            // read
+            if (isIntBased()) {
+                for (int offset = 0; offset < segSize; offset += 4) {
+                    BitUtil.fromInt(bytes, da.getInt(bytePos + offset), offset);
+                }
+            } else
+                getBytes(bytePos, bytes, segSize);
+
+            // write
+            if (externalIntBased) {
+                for (int offset = 0; offset < segSize; offset += 4) {
+                    da.setInt(bytePos + offset, BitUtil.toInt(bytes, offset));
+                }
+            } else
+                da.setBytes(bytePos, bytes, segSize);
         }
         return da;
     }
@@ -168,5 +183,9 @@ public abstract class AbstractDataAccess implements DataAccess {
 
     public boolean isStoring() {
         return true;
+    }
+
+    protected boolean isIntBased() {
+        return false;
     }
 }
