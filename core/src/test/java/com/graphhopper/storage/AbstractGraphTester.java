@@ -242,7 +242,8 @@ public abstract class AbstractGraphTester {
             assertTrue(ex.toString(), false);
         }
 
-        try {            
+        try {
+            close(graph);
             graph = createGraph();
             gs.copyTo(graph);
             checkExampleGraph(graph);

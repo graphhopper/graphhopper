@@ -108,7 +108,7 @@ public abstract class AbstractDataAccess implements DataAccess {
         }
         da.ensureCapacity(capacity());
         long cap = capacity();
-        // currently get/setBytes do not support copying more bytes then segmentSize
+        // currently get/setBytes does not support copying more bytes then segmentSize
         int segSize = Math.min(da.segmentSize(), segmentSize());
         byte[] bytes = new byte[segSize];
         boolean externalIntBased = ((AbstractDataAccess) da).isIntBased();
@@ -116,7 +116,7 @@ public abstract class AbstractDataAccess implements DataAccess {
             // read
             if (isIntBased()) {
                 for (int offset = 0; offset < segSize; offset += 4) {
-                    BitUtil.fromInt(bytes, da.getInt(bytePos + offset), offset);
+                    BitUtil.fromInt(bytes, getInt(bytePos + offset), offset);
                 }
             } else
                 getBytes(bytePos, bytes, segSize);
