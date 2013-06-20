@@ -18,7 +18,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Constants;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
@@ -36,8 +36,10 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected static final byte[] EMPTY = new byte[1024];
     protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
     private final String location;
-    protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
     protected String name;
+    protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
+    protected transient int segmentSizePower;
+    protected transient int indexDivisor;
 
     public AbstractDataAccess(String name, String location) {
         this.name = name;
@@ -60,13 +62,15 @@ public abstract class AbstractDataAccess implements DataAccess {
     }
 
     @Override
-    public void setHeader(int index, int value) {
-        header[index] = value;
+    public void setHeader(int bytePos, int value) {
+        bytePos >>= 2;
+        header[bytePos] = value;
     }
 
     @Override
-    public int getHeader(int index) {
-        return header[index];
+    public int getHeader(int bytePos) {
+        bytePos >>= 2;
+        return header[bytePos];
     }
 
     /**
@@ -99,22 +103,44 @@ public abstract class AbstractDataAccess implements DataAccess {
 
     @Override
     public DataAccess copyTo(DataAccess da) {
-        for (int h = 0; h < header.length; h++) {
+        for (int h = 0; h < header.length * 4; h += 4) {
             da.setHeader(h, getHeader(h));
         }
         da.ensureCapacity(capacity());
-        long max = capacity() / 4;
-        for (long l = 0; l < max; l++) {
-            da.setInt(l, getInt(l));
+        long cap = capacity();
+        // currently get/setBytes do not support copying more bytes then segmentSize
+        int segSize = Math.min(da.segmentSize(), segmentSize());
+        byte[] bytes = new byte[segSize];
+        boolean externalIntBased = ((AbstractDataAccess) da).isIntBased();
+        for (long bytePos = 0; bytePos < cap; bytePos += segSize) {
+            // read
+            if (isIntBased()) {
+                for (int offset = 0; offset < segSize; offset += 4) {
+                    BitUtil.fromInt(bytes, da.getInt(bytePos + offset), offset);
+                }
+            } else
+                getBytes(bytePos, bytes, segSize);
+
+            // write
+            if (externalIntBased) {
+                for (int offset = 0; offset < segSize; offset += 4) {
+                    da.setInt(bytePos + offset, BitUtil.toInt(bytes, offset));
+                }
+            } else
+                da.setBytes(bytePos, bytes, segSize);
         }
         return da;
     }
 
     @Override
     public DataAccess segmentSize(int bytes) {
-        // segment size should be a power of 2
-        int tmp = (int) (Math.log(bytes) / Math.log(2));
-        segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
+        if (bytes > 0) {
+            // segment size should be a power of 2
+            int tmp = (int) (Math.log(bytes) / Math.log(2));
+            segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
+        }
+        segmentSizePower = (int) (Math.log(segmentSizeInBytes) / Math.log(2));
+        indexDivisor = segmentSizeInBytes - 1;
         return this;
     }
 
@@ -157,5 +183,9 @@ public abstract class AbstractDataAccess implements DataAccess {
 
     public boolean isStoring() {
         return true;
+    }
+
+    protected boolean isIntBased() {
+        return false;
     }
 }

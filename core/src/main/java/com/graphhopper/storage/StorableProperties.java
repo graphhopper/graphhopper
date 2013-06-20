@@ -20,44 +20,49 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * TODO instead of a separate 'file' this class should be directly handled from
- * a Directory, but for this DataAccess needs to be extended to support storing
- * clear UTF-text from as well.
+ * Writes an in-memory HashMap into a file on flush.
  *
  * @author Peter Karich
  */
 public class StorableProperties implements Storable<StorableProperties> {
 
     private Map<String, String> map = new LinkedHashMap<String, String>();
-    private Directory dir;
-    private String name;
+    private DataAccess da;
 
-    public StorableProperties(Directory dir, String name) {
-        this.dir = dir;
-        this.name = name;
-    }
-
-    private String file() {
-        return dir.location() + name;
+    public StorableProperties(Directory dir) {
+        this.da = dir.find("properties");
     }
 
     @Override public boolean loadExisting() {
-        if (!dir.isLoadRequired())
-            return true;
-        String file = file();
-        if (!new File(file).exists())
+        if (!da.loadExisting())
             return false;
+
+        int len = (int) da.capacity();
+        byte[] bytes = new byte[len];
+        da.getBytes(0, bytes, len);
         try {
-            Helper.loadProperties(map, new FileReader(file));
+            Helper.loadProperties(map, new StringReader(new String(bytes, "UTF-8")));
             return true;
+        } catch (IOException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    @Override public void flush() {
+        try {
+            StringWriter sw = new StringWriter();
+            Helper.saveProperties(map, sw);
+            // TODO at the moment the size is limited to da.segmentSize() !
+            byte[] bytes = sw.toString().getBytes("UTF-8");
+            da.setBytes(0, bytes, bytes.length);
+            da.flush();
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -80,27 +85,17 @@ public class StorableProperties implements Storable<StorableProperties> {
         return ret;
     }
 
-    @Override public void flush() {
-        if (!dir.isLoadRequired())
-            return;
-
-        try {
-            String file = dir.location() + name;
-            Helper.saveProperties(map, new FileWriter(file));
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
     @Override public void close() {
+        da.close();
     }
 
     @Override public StorableProperties create(long size) {
+        da.create(size);
         return this;
     }
 
     @Override public long capacity() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return da.capacity();
     }
 
     public void putCurrentVersions() {
@@ -139,8 +134,14 @@ public class StorableProperties implements Storable<StorableProperties> {
         return true;
     }
 
+    public void copyTo(StorableProperties properties) {
+        properties.map.clear();
+        properties.map.putAll(map);
+        da.copyTo(properties.da);
+    }
+
     @Override
     public String toString() {
-        return file();
+        return da.toString();
     }
 }

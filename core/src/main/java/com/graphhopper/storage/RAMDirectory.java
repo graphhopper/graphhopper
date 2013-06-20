@@ -22,11 +22,10 @@ package com.graphhopper.storage;
  * Manages in-memory DataAccess objects.
  *
  * @see RAMDataAccess
+ * @see RAMIntDataAccess
  * @author Peter Karich
  */
-public class RAMDirectory extends AbstractDirectory {
-
-    private boolean store;
+public class RAMDirectory extends GHDirectory {
 
     public RAMDirectory() {
         this("", false);
@@ -41,28 +40,6 @@ public class RAMDirectory extends AbstractDirectory {
      * saved on demand, false if it should be entirely in RAM
      */
     public RAMDirectory(String _location, boolean store) {
-        super(_location);
-        this.store = store;
-        mkdirs();
-    }
-
-    @Override
-    protected void mkdirs() {
-        if (store)
-            super.mkdirs();
-    }
-
-    public boolean isStoring() {
-        return store;
-    }
-
-    @Override
-    protected DataAccess create(String id, String location) {
-        return new RAMDataAccess(id, location, store);
-    }
-
-    @Override
-    public boolean isLoadRequired() {
-        return store;
+        super(_location, store ? DAType.RAM_STORE : DAType.RAM);
     }
 }

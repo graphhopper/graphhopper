@@ -47,22 +47,34 @@ public interface DataAccess extends Storable<DataAccess> {
     /**
      * Set 4 bytes at position 'index' to the specified value
      */
-    void setInt(long index, int value);
+    void setInt(long bytePos, int value);
 
     /**
      * Get 4 bytes from position 'index'
      */
-    int getInt(long index);
+    int getInt(long bytePos);
+
+    /**
+     * Set bytes from position 'index' to the specified values
+     */
+    void setBytes(long bytePos, byte[] values, int length);
+
+    /**
+     * Get bytes from position 'index'
+     *
+     * @param values acts as output
+     */
+    void getBytes(long bytePos, byte[] values, int length);
 
     /**
      * Set 4 bytes at the header space index to the specified value
      */
-    void setHeader(int index, int value);
+    void setHeader(int bytePos, int value);
 
     /**
      * Get 4 bytes from the header at 'index'
      */
-    int getHeader(int index);
+    int getHeader(int bytePos);
 
     /**
      * The first time you use a DataAccess object after configuring it you need

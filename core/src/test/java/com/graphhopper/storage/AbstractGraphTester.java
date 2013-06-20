@@ -229,6 +229,36 @@ public abstract class AbstractGraphTester {
         assertEquals(0, graph.nodes());
     }
 
+    @Test
+    public void testCopyTo() {
+        graph = createGraph();
+        initExampleGraph(graph);
+        Graph gs = new GraphStorage(new RAMDirectory(), encodingManager).segmentSize(8000).create(10);
+        try {
+            graph.copyTo(gs);
+            checkExampleGraph(gs);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            assertTrue(ex.toString(), false);
+        }
+
+        try {            
+            graph = createGraph();
+            gs.copyTo(graph);
+            checkExampleGraph(graph);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            assertTrue(ex.toString(), false);
+        }
+    }
+
+    @Test
+    public void testAddLocation() {
+        graph = createGraph();
+        initExampleGraph(graph);
+        checkExampleGraph(graph);
+    }
+
     protected void initExampleGraph(Graph g) {
         g.setNode(0, 12, 23);
         g.setNode(1, 38.33f, 135.3f);
@@ -243,11 +273,7 @@ public abstract class AbstractGraphTester {
         g.edge(0, 5, 212, true);
     }
 
-    @Test
-    public void testAddLocation() {
-        graph = createGraph();
-        initExampleGraph(graph);
-
+    private void checkExampleGraph(Graph graph) {
         assertEquals(12f, graph.getLatitude(0), 1e-6);
         assertEquals(23f, graph.getLongitude(0), 1e-6);
 
@@ -260,8 +286,8 @@ public abstract class AbstractGraphTester {
         assertEquals(78, graph.getLatitude(3), 1e-6);
         assertEquals(89, graph.getLongitude(3), 1e-6);
 
-        assertEquals(1, count(graph.getEdges(1, carOutFilter)));
-        assertEquals(5, count(graph.getEdges(0, carOutFilter)));
+        assertEquals(Arrays.asList(0), GHUtility.neighbors(graph.getEdges(1, carOutFilter)));
+        assertEquals(Arrays.asList(1, 2, 3, 4, 5), GHUtility.neighbors(graph.getEdges(0, carOutFilter)));
         try {
             assertEquals(0, count(graph.getEdges(6, carOutFilter)));
             // for now return empty iterator
@@ -578,24 +604,6 @@ public abstract class AbstractGraphTester {
         iter = graph.getEdges(2);
         assertTrue(iter.next());
         assertEquals(carEncoder.flags(10, false), iter.flags());
-    }
-
-    @Test
-    public void testCopyTo() {
-        graph = createGraph();
-        initExampleGraph(graph);
-        Graph gs = new GraphStorage(new RAMDirectory(), encodingManager).segmentSize(8000).create(10);
-        try {
-            graph.copyTo(gs);
-        } catch (Exception ex) {
-            assertTrue(false);
-        }
-
-        try {
-            gs.copyTo(graph);
-        } catch (Exception ex) {
-            assertTrue(ex.toString(), false);
-        }
     }
 
     @Test
