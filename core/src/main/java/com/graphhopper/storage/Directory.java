@@ -53,4 +53,9 @@ public interface Directory
      * Removes the specified object from the directory.
      */
     void remove( DataAccess da );
+    
+    /**
+     * @return the default type of a newly created DataAccess object
+     */
+    DAType getDefaultType();
 }

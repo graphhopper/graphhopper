@@ -184,7 +184,7 @@ public class MainActivity extends MapActivity
     private void chooseAreaFromLocal()
     {
         List<String> nameList = new ArrayList<String>();
-        for (String file : new File(mapsFolder).list(new FilenameFilter()
+        String[] files = new File(mapsFolder).list(new FilenameFilter()
         {
             @Override
             public boolean accept( File dir, String filename )
@@ -193,7 +193,8 @@ public class MainActivity extends MapActivity
                         && (filename.endsWith(".ghz") || filename
                         .endsWith("-gh"));
             }
-        }))
+        });
+        for (String file : files)
         {
             nameList.add(file);
         }
@@ -206,8 +207,7 @@ public class MainActivity extends MapActivity
                 new MySpinnerListener()
                 {
                     @Override
-                    public void onSelect( String selectedArea,
-                            String selectedFile )
+                    public void onSelect( String selectedArea, String selectedFile )
                     {
                         initFiles(selectedArea);
                     }
@@ -436,7 +436,7 @@ public class MainActivity extends MapActivity
 
     void loadGraphStorage()
     {
-        logUser("loading graph (" + Constants.VERSION + "|" + Constants.VERSION + ") ... ");
+        logUser("loading graph (" + Constants.VERSION + ") ... ");
         new GHAsyncTask<Void, Void, Path>()
         {
             protected Path saveDoInBackground( Void... v ) throws Exception
@@ -444,7 +444,7 @@ public class MainActivity extends MapActivity
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
                 tmpHopp.setCHShortcuts(true, true);
                 tmpHopp.load(mapsFolder + currentArea);
-                log("found graph with " + tmpHopp.getGraph().getNodes() + " nodes.");
+                log("found graph " + tmpHopp.getGraph().toString() + ", nodes:" + tmpHopp.getGraph().getNodes());
                 hopper = tmpHopp;
                 return null;
             }

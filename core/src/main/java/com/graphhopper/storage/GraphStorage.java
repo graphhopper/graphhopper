@@ -1328,12 +1328,20 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         return edges.getCapacity() + nodes.getCapacity() + wayGeometry.getCapacity() + properties.getCapacity();
     }
 
-    @Override
-    public String toString()
+    public String toDetailsString()
     {
         return "edges:" + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "), "
                 + "nodes:" + nf(nodeCount) + "(" + nodes.getCapacity() / Helper.MB + "), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "), "
                 + "bounds:" + bounds;
+    }
+
+    @Override
+    public String toString()
+    {
+        return getClass().getSimpleName()
+                + "|" + encodingManager.toString()
+                + "|" + getDirectory().getDefaultType()
+                + "|" + getProperties().versionsToString();
     }
 }

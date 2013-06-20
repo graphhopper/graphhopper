@@ -359,7 +359,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         logger.info("version " + Constants.VERSION
                 + "|" + Constants.BUILD_DATE + " (" + Constants.getVersions() + ")");
-        logger.info("graph " + graph.toString());
+        logger.info("graph " + graph.toString() + ", details:" + graph.toDetailsString());
     }
 
     public GraphHopper importOrLoad()
@@ -416,11 +416,7 @@ public class GraphHopper implements GraphHopperAPI
         OSMReader reader = new OSMReader(graph, expectedNodes).setWorkerThreads(workerThreads);
         reader.setEncodingManager(encodingManager);
         reader.setWayPointMaxDistance(wayPointMaxDistance);
-
-        String info = graph.getClass().getSimpleName()
-                + "|" + graph.getDirectory().getClass().getSimpleName()
-                + "|" + graph.getProperties().versionsToString();
-        logger.info("using " + info + ", accepts:" + encodingManager + ", memory:" + Helper.getMemInfo());
+        logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
         reader.doOSM2Graph(osmTmpFile);
         return reader;
     }
@@ -561,7 +557,7 @@ public class GraphHopper implements GraphHopperAPI
 
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
-        
+
         if (chUsage)
         {
             if (request.getAlgorithm().equals("dijkstrabi"))
@@ -581,7 +577,7 @@ public class GraphHopper implements GraphHopperAPI
                     encodingManager.getEncoder(request.getVehicle()), request.getType());
             algo = prepare.createAlgo();
         }
-        
+
         if (rsp.hasError())
         {
             return rsp;
@@ -685,7 +681,8 @@ public class GraphHopper implements GraphHopperAPI
 
     private void flush()
     {
-        logger.info("flushing graph " + graph.toString() + ", " + Helper.getMemInfo() + ")");
+        logger.info("flushing graph " + graph.toString() + ", details:" + graph.toDetailsString() + ", "
+                + Helper.getMemInfo() + ")");
         graph.flush();
     }
 

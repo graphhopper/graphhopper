@@ -146,6 +146,11 @@ public class GHDirectory implements Directory
 
         Helper.removeDir(new File(location + name));
     }
+    
+    @Override
+    public DAType getDefaultType() {
+        return defaultType;
+    }
 
     public boolean isStoring()
     {
