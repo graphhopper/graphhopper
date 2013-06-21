@@ -122,6 +122,10 @@ public class MMapDataAccess extends AbstractDataAccess
 
     protected void mapIt( long offset, long byteCount, boolean clearNew )
     {
+        if (byteCount < 0)
+        {
+            throw new IllegalArgumentException("new capacity has to be strictly positive");
+        }
         if (byteCount <= getCapacity())
         {
             return;

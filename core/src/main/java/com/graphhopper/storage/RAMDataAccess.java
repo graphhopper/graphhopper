@@ -105,6 +105,10 @@ public class RAMDataAccess extends AbstractDataAccess
     @Override
     public void ensureCapacity( long bytes )
     {
+        if (bytes < 0)
+        {
+            throw new IllegalArgumentException("new capacity has to be strictly positive");
+        }
         long cap = getCapacity();
         long todoBytes = bytes - cap;
         if (todoBytes <= 0)

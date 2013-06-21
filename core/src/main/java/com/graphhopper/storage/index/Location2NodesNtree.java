@@ -533,7 +533,7 @@ public class Location2NodesNtree implements Location2IDIndex
                 size += len;
                 intIndex++;
                 leafs++;
-                dataAccess.ensureCapacity((intIndex + len + 1) * 4);
+                dataAccess.ensureCapacity((long) (intIndex + len + 1) * 4);
                 if (len == 1)
                 {
                     // less disc space for single entries
@@ -542,7 +542,7 @@ public class Location2NodesNtree implements Location2IDIndex
                 {
                     for (int index = 0; index < len; index++, intIndex++)
                     {
-                        dataAccess.setInt(intIndex * 4, entries.get(index));
+                        dataAccess.setInt((long) intIndex * 4, entries.get(index));
                     }
                     dataAccess.setInt(refPointer, intIndex);
                 }
@@ -558,7 +558,7 @@ public class Location2NodesNtree implements Location2IDIndex
                     {
                         continue;
                     }
-                    dataAccess.ensureCapacity((intIndex + 1) * 4);
+                    dataAccess.ensureCapacity((long) (intIndex + 1) * 4);
                     int beforeIntIndex = intIndex;
                     intIndex = store(subEntry, beforeIntIndex);
                     if (intIndex == beforeIntIndex)
