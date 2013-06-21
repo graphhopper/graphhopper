@@ -160,4 +160,12 @@ public class GraphStorageTest extends AbstractGraphTester
         // test if optimize works without error
         gs.optimize();
     }
+    
+    @Test
+    public void testBigDataEdge() {
+        Directory dir = new RAMDirectory();
+        gs = new GraphStorage(dir, encodingManager).create(defaultSize);
+        gs.setEdgeCount(Integer.MAX_VALUE / 2);
+        assertTrue(gs.getAllEdges().next());
+    }
 }
