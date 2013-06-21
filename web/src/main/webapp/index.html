@@ -13,102 +13,10 @@
         <![endif]-->
         <script src="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.js"></script>
         <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>        
-        <script defer type="text/javascript" src="js/jquery.history.js"></script>
-        <script type="text/javascript" src="js/ghrequest.js?v=1"></script>
-        <script type="text/javascript" src="js/main.js?v=11"></script>
-        <style>
-            body {                
-                color: #000;
-                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;    
-                line-height: 1.4;    
-                color: #111111;
-                background-color: #EEEEEE;
-                margin: 0;
-            }
-            #map { 
-                width: 800px;
-                height: 600px;
-                cursor: default;
-            }
-            #input {
-                float: left;                
-                padding-left: 10px; 
-                padding-right: 20px; 
-            }
-            .defaulting {
-                color: gray;
-            }
-            #info {
-                border: lightgray groove thin;
-                display: none;
-                padding: 5px;
-            }
-            #info a {
-                padding-right: 5px;
-            }
-            #input {
-                width: 225px;
-            }
-            #fromInput, #toInput {
-                width: 200px;
-            }
-            #fromFound, #toFound {
-                font-size: 10px;
-                color: gray;
-                padding-top: 4px;
-                padding-bottom: 5px;
-            }
-            .warn {
-                color: orange;
-            }
-            .error {
-                color: red;
-            }
-            #moreattribution a {
-                text-decoration: none;
-                color: black
-            }
-            #moreattribution {
-                padding-top: 20px;
-                color: #666666                    
-            }
-            #fromDiv img, #toDiv img {
-                margin-top: 4px;
-                padding-right: 3px;                
-                float: left;
-            }
-            .hidden {
-                display: none;
-            }
-            .no_link {
-                text-decoration: none;
-                color: black;
-            }
-            .no_link img {
-                margin-bottom: -10px;
-            }
-            .small_text {
-                font-size: small;
-            }
-            #options {
-                padding-bottom: 10px;
-                padding-left: 20px;
-            }
-            .bold {
-                font-weight: bold;
-            }
-            #header_img {
-                padding-top: 15px;
-                padding-bottom: 15px;
-            }
-            #searchButton {
-                float: right;
-                margin-bottom: 5px;
-            }
-            .clear {
-                clear: both;
-            }
-        </style>
+        <script type="text/javascript" src="js/jquery.history.js?v=2"></script>
+        <script type="text/javascript" src="js/ghrequest.js?v=2"></script>
+        <script type="text/javascript" src="js/main.js?v=12"></script>
+        <link rel="stylesheet" type="text/css" href="css/style.css" />
     </head>
     <body>
         <div id="input">
@@ -135,6 +43,7 @@
                     <input id="toInput" class="defaulting" type="text" name="to" value="To" defaultValue="To"/>
                     <div id="toFound"></div>
                 </div>
+                <div id="exportLink" class="left"><a href="/maps"><img src='../img/link.png'></a></div>
                 <input id="searchButton" type="submit" value="Search">
             </form>      
             <div class="clear"> </div>

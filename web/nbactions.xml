@@ -9,7 +9,7 @@
         <properties>
             <maven.test.skip>true</maven.test.skip>
             <!-- for germany we need roughly 500MB -->
-            <Env.MAVEN_OPTS>-Xms2400m -Xms2400m -XX:PermSize=50m -XX:MaxPermSize=50m</Env.MAVEN_OPTS>
+            <Env.MAVEN_OPTS>-Dgraphhopper.config=../config.properties -Dgraphhopper.osmreader.osm=/media/SAMSUNG/maps/oberfranken -Xms2400m -Xms2400m -XX:PermSize=50m -XX:MaxPermSize=50m</Env.MAVEN_OPTS>
         </properties>
     </action>
     <action>

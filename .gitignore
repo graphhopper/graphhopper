@@ -21,3 +21,4 @@ android/libs/graphhopper-*-android.jar
 */nbactions.xml
 .idea/
 *iml
+debug.sh

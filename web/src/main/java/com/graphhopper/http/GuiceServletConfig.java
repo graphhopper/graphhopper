@@ -31,7 +31,7 @@ import java.util.Map;
  * <p/>
  * http://code.google.com/p/google-guice/wiki/ServletModule
  * <p/>
- * @author Peter Karich, pkarich@pannous.info
+ * @author Peter Karich
  */
 public class GuiceServletConfig extends GuiceServletContextListener
 {
