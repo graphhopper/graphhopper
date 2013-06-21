@@ -25,10 +25,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class EncodingManagerTest {
-
+public class EncodingManagerTest
+{
     @Test
-    public void testCompatibility() {
+    public void testCompatibility()
+    {
         EncodingManager manager = new EncodingManager("CAR,BIKE,FOOT");
         BikeFlagEncoder bike = (BikeFlagEncoder) manager.getEncoder("BIKE");
         CarFlagEncoder car = (CarFlagEncoder) manager.getEncoder("CAR");
@@ -39,14 +40,16 @@ public class EncodingManagerTest {
         assertNotEquals(car.hashCode(), foot.hashCode());
 
         EncodingManager manager2 = new EncodingManager();
-        FootFlagEncoder foot2 = new FootFlagEncoder() {
+        FootFlagEncoder foot2 = new FootFlagEncoder()
+        {
         };
         manager2.register(foot2);
         assertNotEquals(foot, foot2);
         assertNotEquals(foot.hashCode(), foot2.hashCode());
-        
+
         EncodingManager manager3 = new EncodingManager();
-        FootFlagEncoder foot3 = new FootFlagEncoder() {
+        FootFlagEncoder foot3 = new FootFlagEncoder()
+        {
         };
         manager3.register(foot3);
         assertEquals(foot3, foot2);
@@ -55,17 +58,23 @@ public class EncodingManagerTest {
     }
 
     @Test
-    public void testTooManyEncoders() {
+    public void testTooManyEncoders()
+    {
         EncodingManager manager = new EncodingManager();
-        for (int i = 0; i < 4; i++) {
-            manager.register(new FootFlagEncoder() {
+        for (int i = 0; i < 4; i++)
+        {
+            manager.register(new FootFlagEncoder()
+            {
             });
         }
-        try {
-            manager.register(new FootFlagEncoder() {
+        try
+        {
+            manager.register(new FootFlagEncoder()
+            {
             });
             assertTrue(false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
     }
 }

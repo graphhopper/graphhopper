@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -27,17 +26,19 @@ import java.awt.Graphics2D;
 /**
  * @author Peter Karich
  */
-class DebugLocation2IDQuadtree extends Location2IDQuadtree {
-
+class DebugLocation2IDQuadtree extends Location2IDQuadtree
+{
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugLocation2IDQuadtree(Graph g, GraphicsWrapper mg, Directory dir) {
+    public DebugLocation2IDQuadtree( Graph g, GraphicsWrapper mg, Directory dir )
+    {
         super(g, dir);
         this.mg = mg;
     }
 
-    public void setGraphics(Graphics2D g2) {
+    public void setGraphics( Graphics2D g2 )
+    {
         this.g2 = g2;
         double w = getMaxRasterWidthMeter();
         // System.out.println("w:" + w);
@@ -46,7 +47,8 @@ class DebugLocation2IDQuadtree extends Location2IDQuadtree {
         double lat2 = mg.getLat(500);
         g2.setColor(Color.ORANGE);
         int lines = 1000;
-        for (int i = 0; i < lines; i++) {
+        for (int i = 0; i < lines; i++)
+        {
             double c1 = distCalc.calcCircumference(lat1);
             double addLon1 = 360 * i * w / c1;
             double c2 = distCalc.calcCircumference(lat1);
@@ -58,15 +60,18 @@ class DebugLocation2IDQuadtree extends Location2IDQuadtree {
     }
 
     @Override
-    public int findID(double lat, double lon) {
+    public int findID( double lat, double lon )
+    {
         int ret = super.findID(lat, lon);
         mg.plotNode(g2, ret, Color.GREEN);
         return ret;
     }
 
     @Override
-    public void goFurtherHook(int n) {
-        if (g2 != null) {
+    public void goFurtherHook( int n )
+    {
+        if (g2 != null)
+        {
             mg.plotNode(g2, n, Color.RED);
         }
     }

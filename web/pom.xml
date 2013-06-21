@@ -11,9 +11,9 @@
     <description>Example on how to use GraphHopper in a web-based application</description>
         
     <parent>
-    	<groupId>com.graphhopper</groupId>
-    	<artifactId>graphhopper-parent</artifactId>    	
-    	<version>0.1-SNAPSHOT</version>
+        <groupId>com.graphhopper</groupId>
+        <artifactId>graphhopper-parent</artifactId>    	
+        <version>0.1-SNAPSHOT</version>
     </parent>
     <properties>
         <jetty.version>8.1.10.v20130312</jetty.version>

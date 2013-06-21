@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -50,17 +49,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Servlet to use GraphHopper in a remote application (mobile or browser).
- * Attention: If type is json it returns the points in GeoJson format
- * (longitude,latitude) unlike the format "lat,lon" used otherwise.
- *
+ * Servlet to use GraphHopper in a remote application (mobile or browser). Attention: If type is
+ * json it returns the points in GeoJson format (longitude,latitude) unlike the format "lat,lon"
+ * used otherwise.
+ * <p/>
  * @author Peter Karich
  */
-public class GraphHopperServlet extends HttpServlet {
-
+public class GraphHopperServlet extends HttpServlet
+{
     private Logger logger = LoggerFactory.getLogger(getClass());
-    @Inject private GraphHopper hopper;
-    @Inject private Geocoding geocoding;
+    @Inject
+    private GraphHopper hopper;
+    @Inject
+    private Geocoding geocoding;
     @Inject
     @Named("defaultAlgorithm")
     private String defaultAlgorithm;
@@ -71,20 +72,27 @@ public class GraphHopperServlet extends HttpServlet {
     private GHThreadPool threadPool;
 
     @Override
-    public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        try {
+    public void doGet( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
+    {
+        try
+        {
             if ("/info".equals(req.getPathInfo()))
+            {
                 writeInfos(req, res);
-            else if ("/route".equals(req.getPathInfo()))
+            } else if ("/route".equals(req.getPathInfo()))
+            {
                 writePath(req, res);
-        } catch (Exception ex) {
+            }
+        } catch (Exception ex)
+        {
             logger.error("Error while executing request: " + req.getQueryString(), ex);
             writeError(res, SC_INTERNAL_SERVER_ERROR, "Problem occured:" + ex.getMessage());
         }
     }
 
-    void writeInfos(HttpServletRequest req, HttpServletResponse res) throws JSONException {
-        BBox bb = hopper.graph().bounds();
+    void writeInfos( HttpServletRequest req, HttpServletResponse res ) throws JSONException
+    {
+        BBox bb = hopper.getGraph().getBounds();
         List<Double> list = new ArrayList<Double>(4);
         list.add(bb.minLon);
         list.add(bb.minLat);
@@ -92,13 +100,14 @@ public class GraphHopperServlet extends HttpServlet {
         list.add(bb.maxLat);
         JSONBuilder json = new JSONBuilder().
                 object("bbox", list).
-                object("supportedVehicles", hopper.encodingManager()).
+                object("supportedVehicles", hopper.getEncodingManager()).
                 object("version", Constants.VERSION).
                 object("buildDate", Constants.BUILD_DATE);
         writeJson(req, res, json.build());
     }
 
-    void writePath(HttpServletRequest req, HttpServletResponse res) throws Exception {
+    void writePath( HttpServletRequest req, HttpServletResponse res ) throws Exception
+    {
         StopWatch sw = new StopWatch().start();
         List<GHPlace> infoPoints = getPoints(req);
         float tookGeocoding = sw.stop().getSeconds();
@@ -106,30 +115,40 @@ public class GraphHopperServlet extends HttpServlet {
         GHPlace end = infoPoints.get(1);
         // we can reduce the path length based on the maximum differences to the original coordinates
         double minPathPrecision = 1;
-        try {
+        try
+        {
             minPathPrecision = Double.parseDouble(getParam(req, "minPathPrecision"));
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
         String vehicleStr = getParam(req, "vehicle");
-        FlagEncoder algoVehicle = hopper.encodingManager().getEncoder( vehicleStr.toUpperCase() );
+        FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr.toUpperCase());
         WeightCalculation algoType = new FastestCalc(algoVehicle);
         if ("shortest".equalsIgnoreCase(getParam(req, "algoType")))
+        {
             algoType = new ShortestCalc();
+        }
 
         String algoStr = getParam(req, "algorithm");
         if (Helper.isEmpty(algoStr))
+        {
             algoStr = defaultAlgorithm;
+        }
 
-        try {
+        try
+        {
             sw = new StopWatch().start();
             GHResponse rsp = hopper.route(new GHRequest(start, end).
-                    vehicle(algoVehicle.toString()).type(algoType).
-                    algorithm(algoStr).
+                    setVehicle(algoVehicle.toString()).
+                    setType(algoType).
+                    setAlgorithm(algoStr).
                     putHint("douglas.minprecision", minPathPrecision));
-            if (rsp.hasError()) {
+            if (rsp.hasError())
+            {
                 JSONBuilder builder = new JSONBuilder().startObject("info");
                 List<Map<String, String>> list = new ArrayList<Map<String, String>>();
-                for (Throwable t : rsp.errors()) {
+                for (Throwable t : rsp.getErrors())
+                {
                     Map<String, String> map = new HashMap<String, String>();
                     map.put("message", t.getMessage());
                     map.put("details", t.getClass().getName());
@@ -142,28 +161,38 @@ public class GraphHopperServlet extends HttpServlet {
 
             float took = sw.stop().getSeconds();
             String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
-            PointList points = rsp.points();
-            
-            double distInKM = rsp.distance() / 1000;
+            PointList points = rsp.getPoints();
+
+            double distInKM = rsp.getDistance() / 1000;
             String encodedParam = getParam(req, "encodedPolyline");
 
             JSONBuilder builder = new JSONBuilder().
                     startObject("info").
-                    object("routeFound", rsp.found()).
+                    object("routeFound", rsp.isFound()).
                     object("took", took).
                     object("tookGeocoding", tookGeocoding).
                     endObject();
             builder = builder.startObject("route").
-                    object("from", new Double[]{start.lon, start.lat}).
-                    object("to", new Double[]{end.lon, end.lat}).
+                    object("from", new Double[]
+                    {
+                        start.lon, start.lat
+                    }).
+                    object("to", new Double[]
+                    {
+                        end.lon, end.lat
+                    }).
                     object("distance", distInKM).
-                    object("time", rsp.time());
-            if (points.size() > 2)
-                builder.object("bbox", rsp.calcRouteBBox(hopper.graph().bounds()).toGeoJson());
-            if ("true".equals(encodedParam)) {
+                    object("time", rsp.getTime());
+            if (points.getSize() > 2)
+            {
+                builder.object("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
+            }
+            if ("true".equals(encodedParam))
+            {
                 String encodedPolyline = WebHelper.encodePolyline(points);
                 builder.object("coordinates", encodedPolyline);
-            } else {
+            } else
+            {
                 builder.startObject("data").
                         object("type", "LineString").
                         object("coordinates", points.toGeoJson()).
@@ -173,124 +202,172 @@ public class GraphHopperServlet extends HttpServlet {
 
             writeJson(req, res, builder.build());
             logger.info(req.getQueryString() + " " + infoStr + " " + start + "->" + end
-                    + ", distance: " + distInKM + ", time:" + Math.round(rsp.time() / 60f)
-                    + "min, points:" + points.size() + ", took:" + took
-                    + ", debug - " + rsp.debugInfo() + ", " + algoStr + ", "
+                    + ", distance: " + distInKM + ", time:" + Math.round(rsp.getTime() / 60f)
+                    + "min, points:" + points.getSize() + ", took:" + took
+                    + ", debug - " + rsp.getDebugInfo() + ", " + algoStr + ", "
                     + algoType + ", " + algoVehicle);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
             logger.error("Error while query:" + start + "->" + end, ex);
             writeError(res, SC_INTERNAL_SERVER_ERROR, "Problem occured:" + ex.getMessage());
         }
     }
 
-    protected String getParam(HttpServletRequest req, String string) {
+    protected String getParam( HttpServletRequest req, String string )
+    {
         String[] l = req.getParameterMap().get(string);
         if (l != null && l.length > 0)
+        {
             return l[0];
+        }
         return "";
     }
 
-    protected String[] getParams(HttpServletRequest req, String string) {
+    protected String[] getParams( HttpServletRequest req, String string )
+    {
         String[] l = req.getParameterMap().get(string);
         if (l != null && l.length > 0)
+        {
             return l;
+        }
         return new String[0];
     }
 
-    public void writeError(HttpServletResponse res, int code, String str) {
-        try {
+    public void writeError( HttpServletResponse res, int code, String str )
+    {
+        try
+        {
             res.sendError(code, str);
-        } catch (IOException ex) {
+        } catch (IOException ex)
+        {
             logger.error("Cannot write error " + code + " message:" + str, ex);
         }
     }
 
-    public void writeResponse(HttpServletResponse res, String str) {
-        try {
+    public void writeResponse( HttpServletResponse res, String str )
+    {
+        try
+        {
             res.setStatus(SC_OK);
             res.getWriter().append(str);
-        } catch (IOException ex) {
+        } catch (IOException ex)
+        {
             logger.error("Cannot write message:" + str, ex);
         }
     }
 
-    private void writeJson(HttpServletRequest req, HttpServletResponse res, JSONObject json) throws JSONException {
+    private void writeJson( HttpServletRequest req, HttpServletResponse res, JSONObject json ) throws JSONException
+    {
         String type = getParam(req, "type");
         res.setCharacterEncoding("UTF-8");
-        if ("jsonp".equals(type)) {
+        if ("jsonp".equals(type))
+        {
             res.setContentType("application/javascript");
             String callbackName = getParam(req, "callback");
             if ("true".equals(getParam(req, "debug")))
+            {
                 writeResponse(res, callbackName + "(" + json.toString(2) + ")");
-            else
+            } else
+            {
                 writeResponse(res, callbackName + "(" + json.toString() + ")");
-        } else {
+            }
+        } else
+        {
             res.setContentType("application/json");
             if ("true".equals(getParam(req, "debug")))
+            {
                 writeResponse(res, json.toString(2));
-            else
+            } else
+            {
                 writeResponse(res, json.toString());
+            }
         }
     }
 
-    void returnError(HttpServletResponse res, String errorMessage) throws IOException {
+    void returnError( HttpServletResponse res, String errorMessage ) throws IOException
+    {
         res.sendError(SC_BAD_REQUEST, errorMessage);
     }
 
-    private List<GHPlace> getPoints(HttpServletRequest req) throws IOException {
+    private List<GHPlace> getPoints( HttpServletRequest req ) throws IOException
+    {
         String[] pointsAsStr = getParams(req, "point");
         // allow two formats
-        if (pointsAsStr.length == 0) {
+        if (pointsAsStr.length == 0)
+        {
             String from = getParam(req, "from");
             String to = getParam(req, "to");
             if (!Helper.isEmpty(from) && !Helper.isEmpty(to))
-                pointsAsStr = new String[]{from, to};
+            {
+                pointsAsStr = new String[]
+                {
+                    from, to
+                };
+            }
         }
 
         final List<GHPlace> infoPoints = new ArrayList<GHPlace>();
         List<GHThreadPool.GHWorker> workers = new ArrayList<GHThreadPool.GHWorker>();
-        for (int pointNo = 0; pointNo < pointsAsStr.length; pointNo++) {
+        for (int pointNo = 0; pointNo < pointsAsStr.length; pointNo++)
+        {
             final String str = pointsAsStr[pointNo];
-            try {
+            try
+            {
                 String[] fromStrs = str.split(",");
-                if (fromStrs.length == 2) {
+                if (fromStrs.length == 2)
+                {
                     double fromLat = Double.parseDouble(fromStrs[0]);
                     double fromLon = Double.parseDouble(fromStrs[1]);
                     infoPoints.add(new GHPlace(fromLat, fromLon));
                     continue;
                 }
-            } catch (Exception ex) {
+            } catch (Exception ex)
+            {
             }
 
             final int index = infoPoints.size();
-            infoPoints.add(new GHPlace(Double.NaN, Double.NaN).name(str));
-            GHThreadPool.GHWorker worker = new GHThreadPool.GHWorker(timeOutInMillis) {
-                @Override public String name() {
+            infoPoints.add(new GHPlace(Double.NaN, Double.NaN).setName(str));
+            GHThreadPool.GHWorker worker = new GHThreadPool.GHWorker(timeOutInMillis)
+            {
+                @Override
+                public String getName()
+                {
                     return "geocoding search " + str;
                 }
 
-                @Override public void run() {
+                @Override
+                public void run()
+                {
                     List<GHPlace> tmpPoints = geocoding.name2point(new GHPlace(str));
                     if (!tmpPoints.isEmpty())
+                    {
                         infoPoints.set(index, tmpPoints.get(0));
+                    }
                 }
             };
             workers.add(worker);
             threadPool.enqueue(worker);
         }
         threadPool.waitFor(workers, timeOutInMillis);
-        for (GHPlace p : infoPoints) {
+        for (GHPlace p : infoPoints)
+        {
             if (Double.isNaN(p.lat))
+            {
                 throw new IllegalArgumentException("[nominatim] Not all points could be resolved! " + infoPoints);
+            }
         }
 
         // TODO resolve name in a thread if only lat,lon is given but limit to a certain timeout
         if (infoPoints == null || infoPoints.size() < 2)
+        {
             throw new IllegalArgumentException("Did you specify point=<from>&point=<to> ? Use at least 2 points! " + infoPoints);
+        }
 
         // TODO execute algorithm multiple times!
         if (infoPoints.size() != 2)
+        {
             throw new IllegalArgumentException("TODO! At the moment only 2 points can be specified");
+        }
 
         return infoPoints;
     }

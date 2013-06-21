@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -25,19 +24,21 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class OSMIDSegmentedMapTest {
-
+public class OSMIDSegmentedMapTest
+{
     @Test
-    public void testZeroKey() {
+    public void testZeroKey()
+    {
         OSMIDSegmentedMap map = new OSMIDSegmentedMap();
         map.write(0);
-        assertEquals(1, map.size());
+        assertEquals(1, map.getSize());
         assertEquals(0, map.get(0));
         assertEquals(-1, map.get(1));
     }
 
     @Test
-    public void testGet() {
+    public void testGet()
+    {
         OSMIDSegmentedMap map = new OSMIDSegmentedMap();
         map.write(9);
         map.write(10);
@@ -47,7 +48,7 @@ public class OSMIDSegmentedMapTest {
         map.write(21);
         map.write(31);
 
-        assertEquals(7, map.size());
+        assertEquals(7, map.getSize());
         assertEquals(-1, map.get(8));
         assertEquals(0, map.get(9));
         assertEquals(1, map.get(10));
@@ -60,16 +61,18 @@ public class OSMIDSegmentedMapTest {
         assertEquals(6, map.get(31));
         assertEquals(-1, map.get(32));
 
-        for (int i = 0; i < 200; i++) {
+        for (int i = 0; i < 200; i++)
+        {
             map.write(i + 50);
         }
-        assertEquals(207, map.size());
+        assertEquals(207, map.getSize());
         assertEquals(-1, map.get(49));
         assertEquals(7, map.get(50));
     }
 
     @Test
-    public void testGet2() {
+    public void testGet2()
+    {
         OSMIDSegmentedMap map = new OSMIDSegmentedMap();
         map.write(9);
         map.write(10);
@@ -81,7 +84,7 @@ public class OSMIDSegmentedMapTest {
         map.write(18);
         map.write(19);
 
-        assertEquals(9, map.size());
+        assertEquals(9, map.getSize());
         assertEquals(-1, map.get(8));
         assertEquals(0, map.get(9));
         assertEquals(1, map.get(10));

@@ -30,8 +30,8 @@ import java.util.Set;
  * @author Peter Karich
  * @author Nop
  */
-public class FootFlagEncoder extends AbstractFlagEncoder {
-
+public class FootFlagEncoder extends AbstractFlagEncoder
+{
     private int safeWayBit = 0;
     protected HashSet<String> intended = new HashSet<String>();
     protected HashSet<String> sidewalks = new HashSet<String>();
@@ -39,8 +39,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     /**
      * Should be only instantied via EncodingManager
      */
-    protected FootFlagEncoder() {
-        restrictions = new String[]{"foot", "access"};
+    protected FootFlagEncoder()
+    {
+        restrictions = new String[]
+        {
+            "foot", "access"
+        };
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -58,13 +62,14 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         ferries.add("shuttle_train");
         ferries.add("ferry");
 
-        potentialBarriers.add( "gate" );
+        potentialBarriers.add("gate");
         //potentialBarriers.add( "lift_gate" );   you can always pass them on foot
-        potentialBarriers.add( "swing_gate" );
+        potentialBarriers.add("swing_gate");
     }
 
     @Override
-    public int defineBits(int index, int shift) {
+    public int defineBits( int index, int shift )
+    {
         // first two bits are reserved for route handling in superclass
         shift = super.defineBits(index, shift);
 
@@ -77,76 +82,108 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         return shift;
     }
 
-    public Integer getSpeed(String string) {
+    public Integer getSpeed( String string )
+    {
         Integer speed = SPEED.get(string);
         if (speed == null)
+        {
             throw new IllegalStateException("foot, no speed found for:" + string);
+        }
         return speed;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString()
+    {
         return "FOOT";
     }
 
     /**
      * Some ways are okay but not separate for pedestrians.
-     *
+     * <p/>
      * @param way
      */
     @Override
-    public int isAllowed(OSMWay way) {
-        String highwayValue = way.getTag( "highway" );
-        if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
+    public int isAllowed( OSMWay way )
+    {
+        String highwayValue = way.getTag("highway");
+        if (highwayValue == null)
+        {
+            if (way.hasTag("route", ferries))
+            {
                 if (!way.hasTag("foot", "no"))
+                {
                     return acceptBit | ferryBit;
+                }
             }
             return 0;
-        } else {
+        } else
+        {
             if (way.hasTag("sidewalk", sidewalks))
+            {
                 return acceptBit;
+            }
 
             // no need to evaluate ferries or fords - already included here
             if (way.hasTag("foot", intended))
+            {
                 return acceptBit;
+            }
 
             if (!allowedHighwayTags.contains(highwayValue))
+            {
                 return 0;
+            }
 
             if (way.hasTag("motorroad", "yes"))
+            {
                 return 0;
+            }
 
             // do not get our feet wet, "yes" is already included above
-            if( way.hasTag( "highway", "ford" ) || way.hasTag( "ford" ))
+            if (way.hasTag("highway", "ford") || way.hasTag("ford"))
+            {
                 return 0;
+            }
 
             if (way.hasTag("bicycle", "official"))
+            {
                 return 0;
+            }
 
             // check access restrictions
             if (way.hasTag(restrictions, restrictedValues))
+            {
                 return 0;
+            }
 
             return acceptBit;
         }
     }
 
     @Override
-    public int handleWayTags(int allowed, OSMWay way) {
+    public int handleWayTags( int allowed, OSMWay way )
+    {
         if ((allowed & acceptBit) == 0)
+        {
             return 0;
+        }
 
         int encoded;
-        if ((allowed & ferryBit) == 0) {
+        if ((allowed & ferryBit) == 0)
+        {
             encoded = speedEncoder.setDefaultValue(0);
             encoded |= directionBitMask;
 
             // mark safe ways or ways with cycle lanes
             if (safeHighwayTags.contains(way.getTag("highway"))
                     || way.hasTag("sidewalk", sidewalks))
+            {
                 encoded |= safeWayBit;
+            }
 
-        } else {
+        } else
+        {
             // TODO read duration and calculate speed 00:30 for ferry            
             encoded = speedEncoder.setValue(0, 10);
             encoded |= directionBitMask;
@@ -156,22 +193,28 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public int analyzeNodeTags( OSMNode node ) {
+    public int analyzeNodeTags( OSMNode node )
+    {
 
         // movable barriers block if they are not marked as passable
-        if( node.hasTag( "barrier", potentialBarriers )
-                && !node.hasTag( restrictions, intended )
-                && !node.hasTag( "locked", "no"))
+        if (node.hasTag("barrier", potentialBarriers)
+                && !node.hasTag(restrictions, intended)
+                && !node.hasTag("locked", "no"))
+        {
             return directionBitMask;
+        }
 
-        if( (node.hasTag( "highway", "ford" ) || node.hasTag( "ford" ))
-                && !node.hasTag( restrictions, intended ) )
+        if ((node.hasTag("highway", "ford") || node.hasTag("ford"))
+                && !node.hasTag(restrictions, intended))
+        {
             return directionBitMask;
+        }
 
         return 0;
     }
-
-    private final Set<String> safeHighwayTags = new HashSet<String>() {
+    private final Set<String> safeHighwayTags = new HashSet<String>()
+    {
+        
         {
             add("footway");
             add("path");
@@ -183,7 +226,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             add("service");
         }
     };
-    private final Set<String> allowedHighwayTags = new HashSet<String>() {
+    private final Set<String> allowedHighwayTags = new HashSet<String>()
+    {
+        
         {
             addAll(safeHighwayTags);
             add("trunk");
@@ -200,13 +245,15 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             //add("bridleway");
         }
     };
-    private static final Map<String, Integer> SPEED = new HashMap<String, Integer>() {
+    private static final Map<String, Integer> SPEED = new HashMap<String, Integer>()
+    {
+        
         {
-            put( "min", 2 );
-            put( "slow", 4 );
-            put( "mean", 5 );
-            put( "fast", 6 );
-            put( "max", 7 );
+            put("min", 2);
+            put("slow", 4);
+            put("mean", 5);
+            put("fast", 6);
+            put("max", 7);
         }
     };
 }

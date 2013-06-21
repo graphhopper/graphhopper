@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -22,71 +21,89 @@ import com.graphhopper.util.Helper;
 
 /**
  * Specifies a place by its coordinates, name and/or node id.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class GHPlace {
-
+public class GHPlace
+{
     public double lat = Double.NaN;
     public double lon = Double.NaN;
     private int nodeId = -1;
     private String name = "";
 
-    public GHPlace() {
+    public GHPlace()
+    {
     }
 
-    public GHPlace(String name) {
-        name(name);
+    public GHPlace( String name )
+    {
+        setName(name);
     }
 
-    public GHPlace(int nodeId) {
-        nodeId(nodeId);
+    public GHPlace( int nodeId )
+    {
+        setNodeId(nodeId);
     }
 
-    public GHPlace(double lat, double lon) {
+    public GHPlace( double lat, double lon )
+    {
         this.lat = lat;
         this.lon = lon;
     }
 
-    public GHPlace nodeId(int node) {
+    public GHPlace setNodeId( int node )
+    {
         this.nodeId = node;
         return this;
     }
 
-    public int nodeId() {
+    public int getNodeId()
+    {
         return nodeId;
     }
 
-    public GHPlace name(String name) {
+    public GHPlace setName( String name )
+    {
         this.name = name;
         return this;
     }
 
-    public String name() {
+    public String getName()
+    {
         return name;
     }
 
-    public boolean isValidNodeId() {
+    public boolean isValidNodeId()
+    {
         return nodeId != -1;
     }
 
-    public boolean isValidName() {
+    public boolean isValidName()
+    {
         return !Helper.isEmpty(name);
     }
 
-    public boolean isValidPoint() {
+    public boolean isValidPoint()
+    {
         return lat != Double.NaN;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         String str = "";
         if (isValidName())
+        {
             str += name;
+        }
         if (isValidPoint())
+        {
             str += " " + lat + ", " + lon;
+        }
         if (isValidNodeId())
+        {
             str += " (" + nodeId + ")";
+        }
         return str.trim();
     }
     
@@ -97,7 +114,11 @@ public class GHPlace {
     /**
      * Attention: geoJson is LON,LAT
      */
-    public Double[] toGeoJson() {
-        return new Double[]{lon, lat};
+    public Double[] toGeoJson()
+    {
+        return new Double[]
+                {
+                    lon, lat
+                };
     }
 }

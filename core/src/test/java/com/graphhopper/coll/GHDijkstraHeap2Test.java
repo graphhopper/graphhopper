@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -27,21 +26,23 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class GHDijkstraHeap2Test extends AbstractBinHeapTest {
-
+public class GHDijkstraHeap2Test extends AbstractBinHeapTest
+{
     @Override
-    public BinHeapWrapper<Number, Integer> createHeap(int capacity) {
+    public BinHeapWrapper<Number, Integer> createHeap( int capacity )
+    {
         return new GHDijkstraHeap2(capacity / 5);
     }
 
     @Test
-    public void testDups() {
+    public void testDups()
+    {
         BinHeapWrapper<Number, Integer> heap = createHeap(100);
         heap.insert(3, 4);
         heap.insert(3, 5);
         heap.insert(3, 6);
         heap.insert(4, 7);
-        assertEquals(4, heap.size());
+        assertEquals(4, heap.getSize());
         List<Integer> list = Arrays.asList(6, 5, 4);
         assertTrue(list.contains(heap.pollElement()));
         assertTrue(list.contains(heap.pollElement()));
@@ -50,7 +51,8 @@ public class GHDijkstraHeap2Test extends AbstractBinHeapTest {
     }
 
     @Test
-    public void testRemove() {
+    public void testRemove()
+    {
         GHDijkstraHeap2 heap = new GHDijkstraHeap2(5);
 
         heap.insert(4, 3);
@@ -63,10 +65,12 @@ public class GHDijkstraHeap2Test extends AbstractBinHeapTest {
         assertEquals(3, heap.pollElement().intValue());
         assertEquals(6, heap.pollElement().intValue());
 
-        try {
+        try
+        {
             heap.removeSorted(4, 6);
             assertTrue(false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
     }
 }

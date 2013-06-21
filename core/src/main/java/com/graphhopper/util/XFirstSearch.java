@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -24,47 +23,55 @@ import com.graphhopper.storage.Graph;
 import gnu.trove.stack.array.TIntArrayStack;
 
 /**
- * This class can be used for breadth first search (BFS) or depth first search
- * (DFS)
- *
+ * This class can be used for breadth first search (BFS) or depth first search (DFS)
+ * <p/>
  * @author Peter Karich
  */
-public class XFirstSearch {
-
+public class XFirstSearch
+{
     /**
      * interface to use a queue (FIFO) OR a stack (LIFO)
      */
-    interface HelperColl {
-
+    interface HelperColl
+    {
         boolean isEmpty();
 
         int pop();
 
-        void push(int v);
+        void push( int v );
     }
 
-    protected GHBitSet createBitSet(int size) {
+    protected GHBitSet createBitSet( int size )
+    {
         return new GHBitSetImpl(size);
     }
 
-    public void start(Graph g, int startNode, boolean depthFirst) {
+    public void start( Graph g, int startNode, boolean depthFirst )
+    {
         HelperColl coll;
         if (depthFirst)
+        {
             coll = new MyIntStack();
-        else
+        } else
+        {
             coll = new MyHelperIntQueue();
+        }
 
-        GHBitSet visited = createBitSet(g.nodes());
+        GHBitSet visited = createBitSet(g.getNodes());
         visited.add(startNode);
         coll.push(startNode);
         int current;
-        while (!coll.isEmpty()) {
+        while (!coll.isEmpty())
+        {
             current = coll.pop();
-            if (goFurther(current)) {
+            if (goFurther(current))
+            {
                 EdgeIterator iter = getEdges(g, current);
-                while (iter.next()) {
-                    int connectedId = iter.adjNode();
-                    if (checkAdjacent(iter) && !visited.contains(connectedId)) {
+                while (iter.next())
+                {
+                    int connectedId = iter.getAdjNode();
+                    if (checkAdjacent(iter) && !visited.contains(connectedId))
+                    {
                         visited.add(connectedId);
                         coll.push(connectedId);
                     }
@@ -73,26 +80,31 @@ public class XFirstSearch {
         }
     }
 
-    protected EdgeIterator getEdges(Graph g, int current) {
+    protected EdgeIterator getEdges( Graph g, int current )
+    {
         return g.getEdges(current);
     }
 
-    protected boolean goFurther(int nodeId) {
+    protected boolean goFurther( int nodeId )
+    {
         return true;
     }
 
-    protected boolean checkAdjacent(EdgeIterator iter) {
+    protected boolean checkAdjacent( EdgeIterator iter )
+    {
         return true;
     }
 
-    static class MyIntStack extends TIntArrayStack implements HelperColl {
-
+    static class MyIntStack extends TIntArrayStack implements HelperColl
+    {
         @Override
-        public boolean isEmpty() {
+        public boolean isEmpty()
+        {
             return super.size() == 0;
         }
     }
 
-    static class MyHelperIntQueue extends SimpleIntDeque implements HelperColl {
+    static class MyHelperIntQueue extends SimpleIntDeque implements HelperColl
+    {
     }
 }

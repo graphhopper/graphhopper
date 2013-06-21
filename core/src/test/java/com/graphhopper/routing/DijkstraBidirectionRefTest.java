@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -31,22 +30,27 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
-
+public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
+{
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final FlagEncoder encoder) {
-        return new NoOpAlgorithmPreparation() {
-            @Override public RoutingAlgorithm createAlgo() {
-                return new DijkstraBidirectionRef(_graph, encoder).type(calc);
+    public AlgorithmPreparation prepareGraph( Graph g, final WeightCalculation calc, final FlagEncoder encoder )
+    {
+        return new NoOpAlgorithmPreparation()
+        {
+            @Override
+            public RoutingAlgorithm createAlgo()
+            {
+                return new DijkstraBidirectionRef(_graph, encoder).setType(calc);
             }
-        }.graph(g);
+        }.setGraph(g);
     }
 
     @Test
-    public void testCannotCalculateSP2() {
+    public void testCannotCalculateSP2()
+    {
         Graph g = createGraph();
         DijkstraBidirectionRef db = new DijkstraBidirectionRef(g, carEncoder);
         Path p = db.calcPath(0, 2);
-        assertFalse(p.found());
+        assertFalse(p.isFound());
     }
 }

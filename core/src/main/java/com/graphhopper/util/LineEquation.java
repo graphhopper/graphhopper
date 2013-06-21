@@ -9,7 +9,8 @@ import com.graphhopper.util.shapes.GHPlace;
  * 
  * @author philippe.suray, NG
  */
-public class LineEquation {
+public class LineEquation
+{
 	/** 1st point of the line */
 	private double[] p1 = null;
 	/** 2nd point of the line */
@@ -25,7 +26,8 @@ public class LineEquation {
 	 * @param p1
 	 * @param p2
 	 */
-	public LineEquation(double[] p1, double[] p2) {
+	public LineEquation( double[] p1, double[] p2 )
+	{
 		setP1(p1);
 		setP2(p2);
 	}
@@ -42,7 +44,8 @@ public class LineEquation {
 	 * @param b
 	 *            y intercept
 	 */
-	public LineEquation(double a, double b) {
+	public LineEquation( double a, double b )
+	{
 		setA(a);
 		setB(b);
 	}
@@ -53,7 +56,8 @@ public class LineEquation {
 	 * @param p1
 	 * @param p2
 	 */
-	public LineEquation(GHPlace p1, GHPlace p2) {
+	public LineEquation( GHPlace p1, GHPlace p2 )
+	{
 		this(new double[] { p1.lon, p1.lat }, new double[] { p2.lon, p2.lat });
 	}
 
@@ -62,8 +66,10 @@ public class LineEquation {
 	 * 
 	 * @return true if the coefficient was computed (p1 != null && p2 != null)
 	 */
-	private boolean computeCoefficient() {
-		if (p1 != null && p2 != null) {
+	private boolean computeCoefficient()
+	{
+		if (p1 != null && p2 != null)
+		{
 			setA((p2[1] - p1[1]) / (p2[0] - p1[0]));	// a = y2-y1 / x2-x1
 			setB(-a * p1[0] + p1[1]); 					// b = -ax + y
 			//setB((p1[1] * p2[0] - p1[0] * p2[1]) / (p2[0] - p1[0]));
@@ -78,7 +84,8 @@ public class LineEquation {
 	 * @param point
 	 * @return
 	 */
-	public double distanceFromPoint(GHPlace point) {
+	public double distanceFromPoint( GHPlace point )
+	{
 		GHPlace inter = getIntersection(point);
 		return Math.sqrt(Math.pow(point.lon - inter.lon, 2.0d)
 				+ Math.pow(point.lat - inter.lat, 2.0d));
@@ -90,7 +97,8 @@ public class LineEquation {
 	 * @param p
 	 * @return
 	 */
-	public double distanceFromPoint(double[] p) {
+	public double distanceFromPoint( double[] p )
+	{
 		return distanceFromPoint(new GHPlace(p[0], p[1]));
 	}
 
@@ -101,7 +109,8 @@ public class LineEquation {
 	 * @param p
 	 * @return
 	 */
-	public GHPlace getIntersection(GHPlace p) {
+	public GHPlace getIntersection( GHPlace p )
+	{
 		return getIntersection(p.lat, p.lon);
 	}
 	
@@ -112,7 +121,8 @@ public class LineEquation {
 	 * @param p
 	 * @return
 	 */
-	public GHPlace getIntersection(double lat, double lon) {
+	public GHPlace getIntersection( double lat, double lon )
+	{
 		// d1 : y=ax+b
 		// d2 : y=a2x+b2
 		// d1 perpendicular to d2 => a2 = -1/a
@@ -124,12 +134,15 @@ public class LineEquation {
 		double y = a*x+b;		
 		
 		GHPlace p = new GHPlace(y, x);
-		if(Double.isNaN(p.lon)) {
+		if(Double.isNaN(p.lon))
+		{
 			// special rare case handling
-			if(a == 0) {
+			if(a == 0)
+			{
 				// case D1 is horizontal
 				p = new GHPlace(b, lon);
-			} else if(Double.isInfinite(a)) {
+			} else if (Double.isInfinite(a))
+			{
 				// case D1 is vertical
 				p = new GHPlace(b2, p1[0]);
 			}
@@ -149,7 +162,8 @@ public class LineEquation {
 	 * @param point
 	 * @return double
 	 */
-	public double valueOf(GHPlace point) {
+	public double valueOf( GHPlace point )
+	{
 		return point.lat - a * point.lon - b;
 	}
 
@@ -158,7 +172,8 @@ public class LineEquation {
 	 * 
 	 * @return
 	 */
-	public double[] getP1() {
+	public double[] getP1()
+	{
 		return p1;
 	}
 
@@ -167,7 +182,8 @@ public class LineEquation {
 	 * 
 	 * @param p1
 	 */
-	public void setP1(double[] p1) {
+	public void setP1( double[] p1 )
+	{
 		this.p1 = p1;
 		this.computeCoefficient();
 	}
@@ -177,7 +193,8 @@ public class LineEquation {
 	 * 
 	 * @param p1
 	 */
-	public void setP1(GHPlace p1) {
+	public void setP1( GHPlace p1 )
+	{
 		this.setP1(new double[] { p1.lon, p1.lat });
 	}
 
@@ -186,7 +203,8 @@ public class LineEquation {
 	 * 
 	 * @param p2
 	 */
-	public void setP2(double[] p2) {
+	public void setP2( double[] p2 )
+	{
 		this.p2 = p2;
 		this.computeCoefficient();
 	}
@@ -196,7 +214,8 @@ public class LineEquation {
 	 * 
 	 * @param p2
 	 */
-	public void setP2(GHPlace p2) {
+	public void setP2( GHPlace p2 )
+	{
 		this.setP2(new double[] { p2.lon, p2.lat });
 	}
 
@@ -205,7 +224,8 @@ public class LineEquation {
 	 * 
 	 * @return
 	 */
-	public double[] getP2() {
+	public double[] getP2()
+	{
 		return p2;
 	}
 
@@ -214,7 +234,8 @@ public class LineEquation {
 	 * 
 	 * @return
 	 */
-	public double getA() {
+	public double getA()
+	{
 		return a;
 	}
 
@@ -223,7 +244,8 @@ public class LineEquation {
 	 * 
 	 * @return
 	 */
-	public double getB() {
+	public double getB()
+	{
 		return b;
 	}
 
@@ -232,7 +254,8 @@ public class LineEquation {
 	 * 
 	 * @param d
 	 */
-	public void setA(double d) {
+	public void setA( double d )
+	{
 		a = d;
 	}
 
@@ -241,7 +264,8 @@ public class LineEquation {
 	 * 
 	 * @param d
 	 */
-	public void setB(double d) {
+	public void setB( double d )
+	{
 		b = d;
 	}
 }

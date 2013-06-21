@@ -7,7 +7,8 @@ import com.graphhopper.storage.index.LocationIDResult;
  * 
  * @author NG
  */
-public interface RouteNodeResolver {
+public interface RouteNodeResolver 
+{
 
 	/**
 	 * Find the most suitable node for the routing from/to an edge. If the
@@ -28,6 +29,6 @@ public interface RouteNodeResolver {
 	 * 			  true is the from edge = the end edge
 	 * @return
 	 */
-	public int findRouteNode(LocationIDResult closestLocation, double lat,
-			double lon, boolean isOrigin, boolean sameEdge);
+	public int findRouteNode( LocationIDResult closestLocation, double lat,
+			double lon, boolean isOrigin, boolean sameEdge );
 }

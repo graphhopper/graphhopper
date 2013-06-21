@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -28,22 +27,28 @@ import javax.swing.JPanel;
 /**
  * @author Peter Karich
  */
-public class LayeredPanel extends JPanel {
-
+public class LayeredPanel extends JPanel
+{
     private final Collection<MapLayer> layers;
 
-    public LayeredPanel() {
+    public LayeredPanel()
+    {
         this(new ArrayList<MapLayer>());
     }
 
-    public LayeredPanel(Collection<MapLayer> layer) {
+    public LayeredPanel( Collection<MapLayer> layer )
+    {
         this.layers = layer;
-        this.addComponentListener(new ComponentAdapter() {
-            @Override public void componentResized(ComponentEvent e) {
+        this.addComponentListener(new ComponentAdapter()
+        {
+            @Override
+            public void componentResized( ComponentEvent e )
+            {
                 int w = e.getComponent().getWidth();
                 int h = e.getComponent().getHeight();
                 System.out.println("mainResized:" + w + " " + h);
-                for (MapLayer ml : layers) {
+                for (MapLayer ml : layers)
+                {
                     ml.setBounds(new Rectangle(0, 0, w, h));
                 }
                 repaint();
@@ -51,17 +56,22 @@ public class LayeredPanel extends JPanel {
         });
     }
 
-    public void setBuffering(boolean enable) {
-        for (MapLayer ml : layers) {
+    public void setBuffering( boolean enable )
+    {
+        for (MapLayer ml : layers)
+        {
             ml.setBuffering(enable);
         }
     }
 
-    public void addLayer(MapLayer ml) {
+    public void addLayer( MapLayer ml )
+    {
         layers.add(ml);
     }
 
-    @Override protected void paintComponent(Graphics g) {
+    @Override
+    protected void paintComponent( Graphics g )
+    {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 //        StopWatch sw = new StopWatch();
@@ -71,7 +81,8 @@ public class LayeredPanel extends JPanel {
 //        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 //        g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
 //        int counter = 0;
-        for (MapLayer ml : layers) {
+        for (MapLayer ml : layers)
+        {
 //            sw.start();
             ml.paint(g2);
 //            System.out.println(++counter + " | mainRepaint took " + sw.stop().getSeconds() + " sec");

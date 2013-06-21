@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -25,59 +24,64 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class SimpleIntDequeTest {
-
+public class SimpleIntDequeTest
+{
     @Test
-    public void testSmall() {
+    public void testSmall()
+    {
         SimpleIntDeque deque = new SimpleIntDeque(8, 2f);
         assertTrue(deque.isEmpty());
-        assertEquals(0, deque.size());
+        assertEquals(0, deque.getSize());
     }
 
     @Test
-    public void testEmpty() {
+    public void testEmpty()
+    {
         SimpleIntDeque deque = new SimpleIntDeque(1, 2f);
         deque.push(1);
-        assertEquals(1, deque.size());
+        assertEquals(1, deque.getSize());
         deque.pop();
-        assertEquals(0, deque.size());
+        assertEquals(0, deque.getSize());
         deque.push(2);
-        assertEquals(1, deque.size());
+        assertEquals(1, deque.getSize());
     }
 
     @Test
-    public void testPush() {
+    public void testPush()
+    {
         SimpleIntDeque deque = new SimpleIntDeque(8, 2f);
 
-        for (int i = 0; i < 60; i++) {
+        for (int i = 0; i < 60; i++)
+        {
             deque.push(i);
-            assertEquals(i + 1, deque.size());
+            assertEquals(i + 1, deque.getSize());
         }
 
-        assertEquals(60, deque.size());
+        assertEquals(60, deque.getSize());
 
         assertEquals(0, deque.pop());
-        assertEquals(59, deque.size());
+        assertEquals(59, deque.getSize());
 
         assertEquals(1, deque.pop());
-        assertEquals(58, deque.size());
+        assertEquals(58, deque.getSize());
 
         deque.push(2);
-        assertEquals(59, deque.size());
+        assertEquals(59, deque.getSize());
         deque.push(3);
-        assertEquals(60, deque.size());
+        assertEquals(60, deque.getSize());
 
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 50; i++)
+        {
             assertEquals(i + 2, deque.pop());
         }
 
-        assertEquals(10, deque.size());
+        assertEquals(10, deque.getSize());
         assertEquals(39, deque.getCapacity());
 
         deque.push(123);
-        assertEquals(11, deque.size());
+        assertEquals(11, deque.getSize());
 
         assertEquals(52, deque.pop());
-        assertEquals(10, deque.size());
+        assertEquals(10, deque.getSize());
     }
 }

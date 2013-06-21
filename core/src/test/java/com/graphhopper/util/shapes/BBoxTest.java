@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -26,10 +25,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class BBoxTest {
-
+public class BBoxTest
+{
     @Test
-    public void testCreate() {
+    public void testCreate()
+    {
         DistanceCalc c = new DistanceCalc();
         BBox b = c.createBBox(52, 10, 100000);
 
@@ -47,18 +47,20 @@ public class BBoxTest {
     }
 
     @Test
-    public void testContains() {
+    public void testContains()
+    {
         assertTrue(new BBox(1, 2, 0, 1).contains(new BBox(1, 2, 0, 1)));
         assertTrue(new BBox(1, 2, 0, 1).contains(new BBox(1.5, 2, 0.5, 1)));
         assertFalse(new BBox(1, 2, 0, 0.5).contains(new BBox(1.5, 2, 0.5, 1)));
 
         Circle c = new Circle(10, 10, 120000);
-        assertTrue(c.boundingBox().contains(c));
+        assertTrue(c.getBounds().contains(c));
         assertFalse(new BBox(8.9, 11.09, 8.9, 11.2).contains(c));
     }
 
     @Test
-    public void testIntersect() {
+    public void testIntersect()
+    {
         //    ---
         //    | |
         // ---------
@@ -83,34 +85,49 @@ public class BBoxTest {
     }
 
     @Test
-    public void testBasicJavaOverload() {
-        new BBox(2, 4, 0, 1) {
-            @Override public boolean intersect(Circle c) {
+    public void testBasicJavaOverload()
+    {
+        new BBox(2, 4, 0, 1)
+        {
+            @Override
+            public boolean intersect( Circle c )
+            {
                 assertTrue(true);
                 return super.intersect(c);
             }
 
-            @Override public boolean intersect(Shape c) {
+            @Override
+            public boolean intersect( Shape c )
+            {
                 assertTrue(false);
                 return true;
             }
 
-            @Override public boolean intersect(BBox c) {
+            @Override
+            public boolean intersect( BBox c )
+            {
                 assertTrue(false);
                 return true;
             }
-        }.intersect(new Circle(1, 2, 3) {
-            @Override public boolean intersect(Circle c) {
+        }.intersect(new Circle(1, 2, 3)
+        {
+            @Override
+            public boolean intersect( Circle c )
+            {
                 assertTrue(false);
                 return true;
             }
 
-            @Override public boolean intersect(Shape b) {
+            @Override
+            public boolean intersect( Shape b )
+            {
                 assertTrue(false);
                 return true;
             }
 
-            @Override public boolean intersect(BBox b) {
+            @Override
+            public boolean intersect( BBox b )
+            {
                 assertTrue(true);
                 return true;
             }

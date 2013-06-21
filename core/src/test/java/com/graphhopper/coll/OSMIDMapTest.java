@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -27,10 +26,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class OSMIDMapTest {
-
+public class OSMIDMapTest
+{
     @Test
-    public void testGet() {
+    public void testGet()
+    {
         OSMIDMap map = new OSMIDMap(new RAMDirectory());
         map.put(9, 0);
         map.put(10, -50);
@@ -40,7 +40,7 @@ public class OSMIDMapTest {
         map.put(21, 5);
         map.put(31, 2);
 
-        assertEquals(7, map.size());
+        assertEquals(7, map.getSize());
         assertEquals(-1, map.get(8));
         assertEquals(0, map.get(9));
         assertEquals(-50, map.get(10));
@@ -53,14 +53,16 @@ public class OSMIDMapTest {
         assertEquals(2, map.get(31));
         assertEquals(-1, map.get(32));
 
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 50; i++)
+        {
             map.put(i + 50, i + 7);
         }
-        assertEquals(57, map.size());
+        assertEquals(57, map.getSize());
     }
 
     @Test
-    public void testBinSearch() {
+    public void testBinSearch()
+    {
         DataAccess da = new RAMDirectory().find("");
         da.create(100);
 
@@ -87,7 +89,8 @@ public class OSMIDMapTest {
     }
 
     @Test
-    public void testGetLong() {
+    public void testGetLong()
+    {
         OSMIDMap map = new OSMIDMap(new RAMDirectory());
         map.put(12, 0);
         map.put(Long.MAX_VALUE / 10, 1);
@@ -100,7 +103,8 @@ public class OSMIDMapTest {
     }
 
     @Test
-    public void testGet2() {
+    public void testGet2()
+    {
         OSMIDMap map = new OSMIDMap(new RAMDirectory());
         map.put(9, 0);
         map.put(10, 1);
@@ -112,7 +116,7 @@ public class OSMIDMapTest {
         map.put(18, 7);
         map.put(19, 8);
 
-        assertEquals(9, map.size());
+        assertEquals(9, map.getSize());
         assertEquals(-1, map.get(8));
         assertEquals(0, map.get(9));
         assertEquals(1, map.get(10));
@@ -127,7 +131,8 @@ public class OSMIDMapTest {
     }
 
     @Test
-    public void testUpdateOfLowerKeys() {
+    public void testUpdateOfLowerKeys()
+    {
         OSMIDMap map = new OSMIDMap(new RAMDirectory());
         map.put(9, 0);
         map.put(10, 1);

@@ -22,17 +22,20 @@ import com.graphhopper.util.EdgeIterator;
 
 /**
  * Class used to traverse a graph.
- *
+ * <p/>
  * @author Peter Karich
  */
-public interface EdgeFilter {
-
+public interface EdgeFilter
+{
     /**
      * @return true if the current edge should be processed and false otherwise.
      */
-    boolean accept(EdgeIterator iter);
-    static final EdgeFilter ALL_EDGES = new EdgeFilter() {
-        @Override public boolean accept(EdgeIterator iter) {
+    boolean accept( EdgeIterator iter );
+    static final EdgeFilter ALL_EDGES = new EdgeFilter()
+    {
+        @Override
+        public boolean accept( EdgeIterator iter )
+        {
             return true;
         }
     };

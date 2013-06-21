@@ -23,5 +23,6 @@ import com.graphhopper.util.EdgeSkipIterator;
 /**
  * @author Peter Karich
  */
-public interface AllEdgesSkipIterator extends AllEdgesIterator, EdgeSkipIterator {
+public interface AllEdgesSkipIterator extends AllEdgesIterator, EdgeSkipIterator
+{
 }

@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -25,16 +24,18 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class CircleTest {
-
+public class CircleTest
+{
     @Test
-    public void testIntersectCircleCircle() {
+    public void testIntersectCircleCircle()
+    {
         assertTrue(new Circle(0, 0, 80000).intersect(new Circle(1, 1, 80000)));
         assertFalse(new Circle(0, 0, 75000).intersect(new Circle(1, 1, 80000)));
     }
 
     @Test
-    public void testIntersectCircleBBox() {
+    public void testIntersectCircleBBox()
+    {
         assertTrue(new Circle(10, 10, 120000).intersect(new BBox(9, 11, 8, 9)));
         assertTrue(new BBox(9, 11, 8, 9).intersect(new Circle(10, 10, 120000)));
 
@@ -43,7 +44,8 @@ public class CircleTest {
     }
 
     @Test
-    public void testContains() {
+    public void testContains()
+    {
         Circle c = new Circle(10, 10, 120000);
         assertTrue(c.contains(new BBox(9, 11, 10, 10.1)));
         assertFalse(c.contains(new BBox(9, 11, 8, 9)));
@@ -51,7 +53,8 @@ public class CircleTest {
     }
 
     @Test
-    public void testContainsCircle() {
+    public void testContainsCircle()
+    {
         Circle c = new Circle(10, 10, 120000);
         assertTrue(c.contains(new Circle(9.9, 10.2, 90000)));
         assertFalse(c.contains(new Circle(10, 10.4, 90000)));

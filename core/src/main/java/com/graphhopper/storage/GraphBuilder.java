@@ -22,98 +22,115 @@ import com.graphhopper.routing.util.EncodingManager;
 
 /**
  * For now this is just a helper class to quickly create a GraphStorage.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class GraphBuilder {
-
+public class GraphBuilder
+{
     private EncodingManager encodingManager;
     private String location;
     private boolean mmap;
     private boolean store;
     private boolean level;
-    private int size = 100;
+    private long byteCapacity = 100;
 
-    public GraphBuilder(EncodingManager encodingManager) {
+    public GraphBuilder( EncodingManager encodingManager )
+    {
         this.encodingManager = encodingManager;
     }
 
     /**
      * If true builder will create a LevelGraph
-     *
+     * <p/>
      * @see LevelGraph
      */
-    GraphBuilder levelGraph(boolean level) {
+    GraphBuilder setLevelGraph( boolean level )
+    {
         this.level = level;
         return this;
     }
 
-    public GraphBuilder location(String location) {
+    public GraphBuilder setLocation( String location )
+    {
         this.location = location;
         return this;
     }
 
-    public GraphBuilder store(boolean store) {
+    public GraphBuilder setStore( boolean store )
+    {
         this.store = store;
         return this;
     }
 
-    public GraphBuilder mmap(boolean mmap) {
+    public GraphBuilder setMmap( boolean mmap )
+    {
         this.mmap = mmap;
         return this;
     }
 
-    public GraphBuilder size(int size) {
-        this.size = size;
+    public GraphBuilder setExpectedSize( byte cap )
+    {
+        this.byteCapacity = cap;
         return this;
     }
 
-    public LevelGraphStorage levelGraphBuild() {
-        return (LevelGraphStorage) levelGraph(true).build();
+    public LevelGraphStorage levelGraphBuild()
+    {
+        return (LevelGraphStorage) setLevelGraph(true).build();
     }
 
     /**
      * Creates a LevelGraphStorage
      */
-    public LevelGraphStorage levelGraphCreate() {
-        return (LevelGraphStorage) levelGraph(true).create();
+    public LevelGraphStorage levelGraphCreate()
+    {
+        return (LevelGraphStorage) setLevelGraph(true).create();
     }
 
     /**
-     * Default graph is a GraphStorage with an in memory directory and disabled
-     * storing on flush. Afterwards you'll need to call GraphStorage.create to
-     * have a useable object. Better use create.
+     * Default graph is a GraphStorage with an in memory directory and disabled storing on flush.
+     * Afterwards you'll need to call GraphStorage.create to have a useable object. Better use
+     * create.
      */
-    GraphStorage build() {
+    GraphStorage build()
+    {
         Directory dir;
-        if (mmap) {
+        if (mmap)
+        {
             dir = new MMapDirectory(location);
-        } else {
+        } else
+        {
             dir = new RAMDirectory(location, store);
         }
         GraphStorage graph;
         if (level)
+        {
             graph = new LevelGraphStorage(dir, encodingManager);
-        else
+        } else
+        {
             graph = new GraphStorage(dir, encodingManager);
+        }
         return graph;
     }
 
     /**
-     * Default graph is a GraphStorage with an in memory directory and disabled
-     * storing on flush.
+     * Default graph is a GraphStorage with an in memory directory and disabled storing on flush.
      */
-    public GraphStorage create() {
-        return build().create(size);
+    public GraphStorage create()
+    {
+        return build().create(byteCapacity);
     }
 
     /**
      * @throws IllegalStateException if not loadable.
      */
-    public GraphStorage load() {
+    public GraphStorage load()
+    {
         GraphStorage gs = build();
         if (!gs.loadExisting())
+        {
             throw new IllegalStateException("Cannot load graph " + location);
+        }
         return gs;
     }
 }

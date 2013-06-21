@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -25,12 +24,13 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public abstract class AbstractMyBitSetTest {
-
-    public abstract GHBitSet createBitSet(int no);
+public abstract class AbstractMyBitSetTest
+{
+    public abstract GHBitSet createBitSet( int no );
 
     @Test
-    public void testCopy() {
+    public void testCopy()
+    {
         GHBitSet bs = createBitSet(100);
         bs.add(100);
         bs.add(70);
@@ -57,7 +57,8 @@ public abstract class AbstractMyBitSetTest {
     }
 
     @Test
-    public void testToString() {
+    public void testToString()
+    {
         GHBitSet bs = createBitSet(100);
         bs.add(12);
         bs.add(1);
@@ -65,7 +66,8 @@ public abstract class AbstractMyBitSetTest {
     }
 
     @Test
-    public void testNext() {
+    public void testNext()
+    {
         GHBitSet bs = createBitSet(100);
         bs.add(7);
         bs.add(90);
@@ -76,13 +78,16 @@ public abstract class AbstractMyBitSetTest {
     }
 
     @Test
-    public void testEnsureCapacity() {
+    public void testEnsureCapacity()
+    {
         GHBitSet bs = createBitSet(8);
         bs.add(7);
-        try {
+        try
+        {
             bs.add(8);
             assertTrue(false);
-        } catch (Throwable ex) {
+        } catch (Throwable ex)
+        {
         }
         bs.ensureCapacity(16);
         bs.add(8);
@@ -93,7 +98,8 @@ public abstract class AbstractMyBitSetTest {
     }
 
     @Test
-    public void testClear() {
+    public void testClear()
+    {
         GHBitSet bs = createBitSet(100);
         bs.add(12);
         bs.add(1);
@@ -104,7 +110,7 @@ public abstract class AbstractMyBitSetTest {
         assertFalse(bs.contains(1));
         assertFalse(bs.contains(2));
         assertFalse(bs.contains(12));
-        assertEquals(0, bs.cardinality());
+        assertEquals(0, bs.getCardinality());
         bs.add(12);
         bs.add(1);
         assertTrue(bs.contains(1));

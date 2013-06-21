@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -21,20 +20,21 @@ package com.graphhopper.util;
 import static java.lang.Math.*;
 
 /**
- * Calculates the distance of two points or one point and an edge in euclidean
- * space.
- *
+ * Calculates the distance of two points or one point and an edge in euclidean space.
+ * <p/>
  * @author Peter Karich
  */
-public class DistanceCalc2D extends DistanceCalc {
-
+public class DistanceCalc2D extends DistanceCalc
+{
     @Override
-    public double calcDist(double fromY, double fromX, double toY, double toX) {
+    public double calcDist( double fromY, double fromX, double toY, double toX )
+    {
         return sqrt(calcNormalizedDist(fromY, fromX, toY, toX));
     }
 
     @Override
-    public double calcDenormalizedDist(double normedDist) {
+    public double calcDenormalizedDist( double normedDist )
+    {
         return sqrt(normedDist);
     }
 
@@ -42,7 +42,8 @@ public class DistanceCalc2D extends DistanceCalc {
      * Returns the specified length in normalized meter.
      */
     @Override
-    public double calcNormalizedDist(double dist) {
+    public double calcNormalizedDist( double dist )
+    {
         return dist * dist;
     }
 
@@ -50,14 +51,16 @@ public class DistanceCalc2D extends DistanceCalc {
      * Calculates in normalized meter
      */
     @Override
-    public double calcNormalizedDist(double fromY, double fromX, double toY, double toX) {
+    public double calcNormalizedDist( double fromY, double fromX, double toY, double toX )
+    {
         double dX = fromX - toX;
         double dY = fromY - toY;
         return dX * dX + dY * dY;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "2D";
     }
 }

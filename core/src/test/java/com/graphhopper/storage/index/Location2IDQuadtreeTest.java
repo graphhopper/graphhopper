@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -29,36 +28,42 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class Location2IDQuadtreeTest extends AbstractLocation2IDIndexTester {
-
+public class Location2IDQuadtreeTest extends AbstractLocation2IDIndexTester
+{
     @Override
-    public Location2IDIndex createIndex(Graph g, int resolution) {
-        return new Location2IDQuadtree(g, new MMapDirectory(location + "loc2idIndex")).resolution(resolution).prepareIndex();
+    public Location2IDIndex createIndex( Graph g, int resolution )
+    {
+        return new Location2IDQuadtree(g, new MMapDirectory(location + "loc2idIndex")).setResolution(resolution).prepareIndex();
     }
 
     @Test
-    public void testNormedDist() {
+    public void testNormedDist()
+    {
         Location2IDQuadtree index = new Location2IDQuadtree(createGraph(new EncodingManager()), new RAMDirectory());
         index.initAlgo(5, 6);
-        assertEquals(1, index.normedDist(0, 1), 1e-6);
-        assertEquals(2, index.normedDist(0, 7), 1e-6);
-        assertEquals(2, index.normedDist(7, 2), 1e-6);
-        assertEquals(1, index.normedDist(7, 1), 1e-6);
-        assertEquals(4, index.normedDist(13, 25), 1e-6);
-        assertEquals(8, index.normedDist(15, 25), 1e-6);
+        assertEquals(1, index.getNormedDist(0, 1), 1e-6);
+        assertEquals(2, index.getNormedDist(0, 7), 1e-6);
+        assertEquals(2, index.getNormedDist(7, 2), 1e-6);
+        assertEquals(1, index.getNormedDist(7, 1), 1e-6);
+        assertEquals(4, index.getNormedDist(13, 25), 1e-6);
+        assertEquals(8, index.getNormedDist(15, 25), 1e-6);
     }
 
     @Override
-    boolean testGridIgnore(int i) {
+    boolean testGridIgnore( int i )
+    {
         // conceptual limitation where we are stuck in a blind alley limited
         // to the current tile
         if (i == 6 || i == 36 || i == 90 || i == 96)
+        {
             return true;
+        }
         return false;
     }
 
     @Override
-    public void testDifferentVehicles() {
+    public void testDifferentVehicles()
+    {
         // currently unsupported
     }
 }

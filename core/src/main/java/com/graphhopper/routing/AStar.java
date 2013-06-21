@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -31,36 +30,44 @@ import java.util.PriorityQueue;
 /**
  * This class implements the A* algorithm according to
  * http://en.wikipedia.org/wiki/A*_search_algorithm
- *
+ * <p/>
  * Different distance calculations can be used via setApproximation.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class AStar extends AbstractRoutingAlgorithm {
-
+public class AStar extends AbstractRoutingAlgorithm
+{
     private DistanceCalc dist = new DistancePlaneProjection();
     private boolean alreadyRun;
     private int visitedCount;
 
-    public AStar(Graph g, FlagEncoder encoder) {
+    public AStar( Graph g, FlagEncoder encoder )
+    {
         super(g, encoder);
     }
 
     /**
-     * @param fast if true it enables an approximative distance calculation from
-     * lat,lon values
+     * @param fast if true it enables an approximative distance calculation from lat,lon values
      */
-    public AStar approximation(boolean approx) {
+    public AStar setApproximation( boolean approx )
+    {
         if (approx)
+        {
             dist = new DistancePlaneProjection();
-        else
+        } else
+        {
             dist = new DistanceCalc();
+        }
         return this;
     }
 
-    @Override public Path calcPath(int from, int to) {
+    @Override
+    public Path calcPath( int from, int to )
+    {
         if (alreadyRun)
+        {
             throw new IllegalStateException("Create a new instance per call");
+        }
         alreadyRun = true;
         TIntObjectMap<AStarEdge> map = new TIntObjectHashMap<AStarEdge>();
         PriorityQueue<AStarEdge> prioQueueOpenSet = new PriorityQueue<AStarEdge>(1000);
@@ -70,31 +77,40 @@ public class AStar extends AbstractRoutingAlgorithm {
         AStarEdge fromEntry = new AStarEdge(EdgeIterator.NO_EDGE, from, 0, 0);
         map.put(from, fromEntry);
         AStarEdge currEdge = fromEntry;
-        while (true) {
+        while (true)
+        {
             int currVertex = currEdge.endNode;
             visitedCount++;
             if (finished(currEdge, to))
+            {
                 break;
+            }
 
-            EdgeIterator iter = neighbors(currVertex);
-            while (iter.next()) {
+            EdgeIterator iter = getNeighbors(currVertex);
+            while (iter.next())
+            {
                 if (!accept(iter))
+                {
                     continue;
-                int neighborNode = iter.adjNode();
-                double alreadyVisitedWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currEdge.weightToCompare;
+                }
+                int neighborNode = iter.getAdjNode();
+                double alreadyVisitedWeight = weightCalc.getWeight(iter.getDistance(), iter.getFlags()) + currEdge.weightToCompare;
                 AStarEdge nEdge = map.get(neighborNode);
-                if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight) {
+                if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight)
+                {
                     tmpLat = graph.getLatitude(neighborNode);
                     tmpLon = graph.getLongitude(neighborNode);
                     currWeightToGoal = dist.calcDist(toLat, toLon, tmpLat, tmpLon);
                     currWeightToGoal = weightCalc.getMinWeight(currWeightToGoal);
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;
-                    if (nEdge == null) {
-                        nEdge = new AStarEdge(iter.edge(), neighborNode, distEstimation, alreadyVisitedWeight);
+                    if (nEdge == null)
+                    {
+                        nEdge = new AStarEdge(iter.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
                         map.put(neighborNode, nEdge);
-                    } else {
+                    } else
+                    {
                         prioQueueOpenSet.remove(nEdge);
-                        nEdge.edge = iter.edge();
+                        nEdge.edge = iter.getEdge();
                         nEdge.weight = distEstimation;
                         nEdge.weightToCompare = alreadyVisitedWeight;
                     }
@@ -105,43 +121,53 @@ public class AStar extends AbstractRoutingAlgorithm {
             }
 
             if (prioQueueOpenSet.isEmpty())
+            {
                 return new Path(graph, flagEncoder);
+            }
 
             currEdge = prioQueueOpenSet.poll();
             if (currEdge == null)
+            {
                 throw new AssertionError("cannot happen?");
+            }
         }
 
         return extractPath(currEdge);
     }
 
-    boolean finished(EdgeEntry currEdge, int to) {
+    boolean finished( EdgeEntry currEdge, int to )
+    {
         return currEdge.endNode == to;
     }
 
     @Override
-    public int visitedNodes() {
+    public int getVisitedNodes()
+    {
         return visitedCount;
     }
 
-    Path extractPath(EdgeEntry currEdge) {
-        return new Path(graph, flagEncoder).edgeEntry(currEdge).extract();
+    Path extractPath( EdgeEntry currEdge )
+    {
+        return new Path(graph, flagEncoder).setEdgeEntry(currEdge).extract();
     }
 
-    public static class AStarEdge extends EdgeEntry {
-
+    public static class AStarEdge extends EdgeEntry
+    {
         // the variable 'weight' is used to let heap select smallest *full* distance.
         // but to compare distance we need it only from start:
         double weightToCompare;
 
-        public AStarEdge(int edgeId, int node, double weightForHeap, double weightToCompare) {
+        public AStarEdge( int edgeId, int node, double weightForHeap, double weightToCompare )
+        {
             super(edgeId, node, weightForHeap);
             // round makes distance smaller => heuristic should underestimate the distance!
             this.weightToCompare = (float) weightToCompare;
         }
     }
 
-    @Override public String name() {
+    @Override
+    public String getName()
+    {
         return "astar";
     }
 }

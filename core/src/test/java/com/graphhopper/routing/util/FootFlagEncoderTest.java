@@ -32,19 +32,21 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class FootFlagEncoderTest {
-
+public class FootFlagEncoderTest
+{
     private EncodingManager encodingManager = new EncodingManager("CAR,BIKE,FOOT");
     private FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
 
     @Test
-    public void testGetSpeed() {
+    public void testGetSpeed()
+    {
         int fl = footEncoder.flags(10, true);
         assertEquals(10, footEncoder.getSpeed(fl));
     }
 
     @Test
-    public void testBasics() {
+    public void testBasics()
+    {
         int fl = footEncoder.flagsDefault(true);
         assertEquals(footEncoder.getSpeed("mean").intValue(), footEncoder.getSpeed(fl));
 
@@ -54,7 +56,8 @@ public class FootFlagEncoderTest {
     }
 
     @Test
-    public void testCombined() {
+    public void testCombined()
+    {
         FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
         int fl = footEncoder.flags(10, true) | carEncoder.flags(100, false);
         assertEquals(10, footEncoder.getSpeed(fl));
@@ -69,19 +72,21 @@ public class FootFlagEncoderTest {
     }
 
     @Test
-    public void testGraph() {
+    public void testGraph()
+    {
         Graph g = new GraphBuilder(encodingManager).create();
         g.edge(0, 1, 10, footEncoder.flags(10, true));
         g.edge(0, 2, 10, footEncoder.flags(5, true));
         g.edge(1, 3, 10, footEncoder.flags(10, true));
         EdgeFilter out = new DefaultEdgeFilter(footEncoder, false, true);
-        assertEquals(Arrays.asList(1, 2), GHUtility.neighbors(g.getEdges(0, out)));
-        assertEquals(Arrays.asList(0, 3), GHUtility.neighbors(g.getEdges(1, out)));
-        assertEquals(Arrays.asList(0), GHUtility.neighbors(g.getEdges(2, out)));
+        assertEquals(Arrays.asList(1, 2), GHUtility.getNeighbors(g.getEdges(0, out)));
+        assertEquals(Arrays.asList(0, 3), GHUtility.getNeighbors(g.getEdges(1, out)));
+        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(g.getEdges(2, out)));
     }
 
     @Test
-    public void testAccess() {
+    public void testAccess()
+    {
         Map<String, String> map = new HashMap<String, String>();
         OSMWay way = new OSMWay(1, map);
 
@@ -139,21 +144,22 @@ public class FootFlagEncoderTest {
     }
 
     @Test
-    public void testMixSpeedAndSafe() {
+    public void testMixSpeedAndSafe()
+    {
         Map<String, String> map = new HashMap<String, String>();
         OSMWay way = new OSMWay(1, map);
 
-        map.put("highway", "motorway");        
+        map.put("highway", "motorway");
         int flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
         assertEquals(0, flags);
-        
+
         map.put("sidewalk", "yes");
         flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
         assertEquals(5, footEncoder.getSpeed(flags));
-        
+
         map.clear();
-        map.put("highway", "track");        
+        map.put("highway", "track");
         flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
-        assertEquals(5, footEncoder.getSpeed(flags));                
+        assertEquals(5, footEncoder.getSpeed(flags));
     }
 }

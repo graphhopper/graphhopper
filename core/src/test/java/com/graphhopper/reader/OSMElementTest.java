@@ -25,11 +25,12 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class OSMElementTest {
-
+public class OSMElementTest
+{
     @Test
-    public void testHasTag() {
-        OSMElement instance = new OSMWay();
+    public void testHasTag()
+    {
+        OSMElement instance = new OSMWay(1);
         instance.setTag("surface", "something");
         assertTrue(instance.hasTag("surface", "now", "something"));
         assertFalse(instance.hasTag("surface", "now", "not"));

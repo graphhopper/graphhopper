@@ -26,7 +26,8 @@ import com.graphhopper.util.shapes.GHPlace;
  * @author NG
  *
  */
-public class PathFinisherTest {
+public class PathFinisherTest
+{
 
 	private FlagEncoder carEncoder = null;
 	private Graph graph = null;
@@ -35,7 +36,8 @@ public class PathFinisherTest {
 	private Path pathTest;
 	
 	@Before
-	public void prepareTests() {
+	public void prepareTests()
+	{
 		EncodingManager encodingManager = new EncodingManager(EncodingManager.CAR);
 		graph = new GraphBuilder(encodingManager).create();
 		carEncoder = encodingManager.getSingle();
@@ -48,17 +50,17 @@ public class PathFinisherTest {
 		int flag = 43; // 50Km/h bidir 0b101011 with CarFlagEncoder
 		assertTrue(encodingManager.getSingle().getSpeed(flag) == 50); // checks that CarFlagEncoder hasn't changed
 		ab = graph.edge(1, 2, 432.572, flag);
-		ab.wayGeometry(buildPointList(new double[][]{{50.4268054, 4.912115},
+		ab.setWayGeometry(buildPointList(new double[][]{{50.4268054, 4.912115},
 				{50.4268091, 4.9123011},{50.427086, 4.9142088}}));
 		bc = graph.edge(2, 3, 71.28, flag);
 		cd = graph.edge(3, 4, 250.86, flag);
-		cd.wayGeometry(buildPointList(new double[][]{{50.4282386, 4.9177328},
+		cd.setWayGeometry(buildPointList(new double[][]{{50.4282386, 4.9177328},
 			{50.4283039, 4.9179075}, {50.4283644, 4.9180379}, {50.4284529, 4.9181707},
 			{50.428637, 4.9184618},	{50.4287278, 4.9186063}, {50.4290562, 4.9191349},
 			{50.4291773, 4.9193236}, {50.4293217, 4.9195449}, {50.4295429, 4.9198917}}));
 		// create a path from 2nd node to 4th (B - C - D)
 		pathTest = new SimplePath(graph, encodingManager.getSingle());
-		((SimplePath)pathTest).setPoints(new double[][] {{50.4275585, 4.9177794},	{50.428178, 4.917523},
+		((SimplePath)pathTest).setPoints(new double[][] {{50.4275585, 4.9177794}, {50.428178, 4.917523},
 				{50.428178, 4.917523}, {50.4282386, 4.9177328}, {50.4283039, 4.9179075},
 				{50.4283644, 4.9180379}, {50.4284529, 4.9181707}, {50.428637, 4.9184618},
 				{50.4287278, 4.9186063}, {50.4290562, 4.9191349}, {50.4291773, 4.9193236},
@@ -69,13 +71,14 @@ public class PathFinisherTest {
 	 * Test the {@link SimplePath} class to ensure that other tests based on it are reliable.
 	 */
 	@Test
-	public void testSimplePath() {
+	public void testSimplePath() 
+	{
 		// simple 2 nodes path
 		SimplePath path = new SimplePath(graph, carEncoder);
 		path.setPoints(new double[][]{{50.4278663, 4.9231626}, {50.4289459, 4.924928}}, 60);
-		assertEquals(2, path.calcPoints().size());
-		assertEquals(173.3478d, path.distance(), 0.0001);
-		assertEquals(10, path.time());
+		assertEquals(2, path.calcPoints().getSize());
+		assertEquals(173.3478d, path.getDistance(), 0.0001);
+		assertEquals(10, path.getTime());
 		
 		// longer path
 		path = new SimplePath(graph, carEncoder);
@@ -84,9 +87,9 @@ public class PathFinisherTest {
 				{50.4264094, 4.9215992}, {50.4261433, 4.9214904}, {50.425974, 4.9214541},
 				{50.4258409, 4.9214299}, {50.425599, 4.9214299}, {50.4254055, 4.9214299},
 				{50.4251998, 4.9214541}, {50.4250789, 4.9214662}, {50.4248491,4.9215992}}, 20);
-		assertEquals(14, path.calcPoints().size());
-		assertEquals(324.9371d, path.distance(), 0.0001);
-		assertEquals(51, path.time());
+		assertEquals(14, path.calcPoints().getSize());
+		assertEquals(324.9371d, path.getDistance(), 0.0001);
+		assertEquals(51, path.getTime());
 	}
 
 	/**
@@ -95,22 +98,23 @@ public class PathFinisherTest {
 	 * of road between GPS and start node is missing.
 	 */
 	@Test
-	public void testFinishAddPathToStart() {				
+	public void testFinishAddPathToStart()
+	{				
 		LocationIDResult fromLoc = new LocationIDResult();
-		fromLoc.closestEdge(ab);
+		fromLoc.setClosestEdge(ab);
 		LocationIDResult toLoc = new LocationIDResult();
-		toLoc.closestEdge(cd);
+		toLoc.setClosestEdge(cd);
 		GHPlace gpsFrom = new GHPlace(50.42722, 4.91539); // GPS point close to AB
 		GHPlace gpsTo = new GHPlace(50.4296872, 4.92012); // D
 		PathFinisher finisher = new PathFinisher(fromLoc, toLoc, gpsFrom, gpsTo, pathTest);
 		
 		PointList fPts = finisher.getFinishedPointList();
-//		System.out.println("points:" + fPts.size() + " dist:"+finisher.getFinishedDistance() + " time:"+finisher.getFinishedTime());
+//		System.out.println("points:" + fPts.getSize() + " dist:"+finisher.getFinishedDistance() + " time:"+finisher.getFinishedTime());
 //		System.out.println(fPts.toWkt());
-		assertEquals(15, fPts.size());
+		assertEquals(15, fPts.getSize());
 		// check first point coordinates
-		assertEquals(fPts.latitude(0), 50.4272419, 0.0000001);
-		assertEquals(fPts.longitude(0), 4.9153871, 0.0000001);
+		assertEquals(fPts.getLatitude(0), 50.4272419, 0.0000001);
+		assertEquals(fPts.getLongitude(0), 4.9153871, 0.0000001);
 		// check distance and time
 		assertEquals(494.714, finisher.getFinishedDistance(), 0.001);
 		assertEquals(65, finisher.getFinishedTime(), 0.001);
@@ -122,11 +126,12 @@ public class PathFinisherTest {
 	 * road between GPS and end node is exceeding.
 	 */
 	@Test
-	public void testFinishRemovePathToEnd() {
+	public void testFinishRemovePathToEnd()
+	{
 		LocationIDResult fromLoc = new LocationIDResult();
-		fromLoc.closestEdge(ab);
+		fromLoc.setClosestEdge(ab);
 		LocationIDResult toLoc = new LocationIDResult();
-		toLoc.closestEdge(cd);
+		toLoc.setClosestEdge(cd);
 		
 		GHPlace gpsFrom = new GHPlace(50.4268298, 4.9118004); // A
 		GHPlace gpsTo = new GHPlace(50.42945, 4.91932); // GPS point close to CD
@@ -135,10 +140,10 @@ public class PathFinisherTest {
 		PointList fPts = finisher.getFinishedPointList();
 //		System.out.println("points:" + fPts.size() + " dist:"+finisher.getFinishedDistance() + " time:"+finisher.getFinishedTime());
 //		System.out.println(fPts.toWkt());
-		assertEquals(15, fPts.size());
+		assertEquals(15, fPts.getSize());
 		// check end point coordinates
-		assertEquals(fPts.latitude(fPts.size()-1), 50.4292571, 0.0000001);
-		assertEquals(fPts.longitude(fPts.size()-1), 4.9194458, 0.0000001);
+		assertEquals(fPts.getLatitude(fPts.getSize()-1), 50.4292571, 0.0000001);
+		assertEquals(fPts.getLongitude(fPts.getSize()-1), 4.9194458, 0.0000001);
 		// check distance and time
 		assertEquals(615.396, finisher.getFinishedDistance(), 0.001);
 		assertEquals(74, finisher.getFinishedTime(), 0.001);
@@ -150,7 +155,8 @@ public class PathFinisherTest {
 	 * are actually separated.
 	 */
 	@Test
-	public void testEdge2EdgePath() {
+	public void testEdge2EdgePath()
+	{
 		GHPlace gpsFrom = new GHPlace(50.426962, 4.912174); // GPS point close to AB
 		GHPlace gpsTo = new GHPlace(50.427902, 4.917701); // GPS point close to BC
 		
@@ -169,25 +175,25 @@ public class PathFinisherTest {
 		path.setPoints(new double[][]{}, 50);
 		
 		// test each case, all 4 cases should give the same result.
-		for(Map.Entry<String, EdgeIterator[]> _case : testSuite.entrySet()) {
-			
+		for(Map.Entry<String, EdgeIterator[]> _case : testSuite.entrySet())
+		{
 			LocationIDResult fromLoc = new LocationIDResult();
-			fromLoc.closestEdge(_case.getValue()[0]);
+			fromLoc.setClosestEdge(_case.getValue()[0]);
 			LocationIDResult toLoc = new LocationIDResult();
-			toLoc.closestEdge(_case.getValue()[1]);
+			toLoc.setClosestEdge(_case.getValue()[1]);
 			
 			PathFinisher finisher = new PathFinisher(fromLoc, toLoc, gpsFrom, gpsTo, path);
 			
 			PointList fPts = finisher.getFinishedPointList();
 //			System.out.println("points:" + fPts.size() + " dist:"+finisher.getFinishedDistance() + " time:"+finisher.getFinishedTime());
 //			System.out.println(fPts.toWkt());
-			assertEquals(_case.getKey(), 5, fPts.size());
+			assertEquals(_case.getKey(), 5, fPts.getSize());
 			// check first point coordinates
-			assertEquals(_case.getKey(), fPts.latitude(0), 50.4268065, 0.0000001);
-			assertEquals(_case.getKey(), fPts.longitude(0), 4.9121771, 0.0000001);
+			assertEquals(_case.getKey(), fPts.getLatitude(0), 50.4268065, 0.0000001);
+			assertEquals(_case.getKey(), fPts.getLongitude(0), 4.9121771, 0.0000001);
 			// check end point coordinates
-			assertEquals(_case.getKey(), fPts.latitude(fPts.size()-1), 50.4278794, 0.0000001);
-			assertEquals(_case.getKey(), fPts.longitude(fPts.size()-1), 4.9176464, 0.0000001);
+			assertEquals(_case.getKey(), fPts.getLatitude(fPts.getSize()-1), 50.4278794, 0.0000001);
+			assertEquals(_case.getKey(), fPts.getLongitude(fPts.getSize()-1), 4.9176464, 0.0000001);
 			// check distance and time
 			assertEquals(_case.getKey(), 184.338, finisher.getFinishedDistance(), 0.001);
 			assertEquals(_case.getKey(), 13, finisher.getFinishedTime(), 0.001);
@@ -200,34 +206,35 @@ public class PathFinisherTest {
 	 * two tower node of the same edge.
 	 */
 	@Test
-	public void testSameEdge() {
+	public void testSameEdge()
+	{
 		LocationIDResult fromLoc = new LocationIDResult();
-		fromLoc.closestEdge(ab);
+		fromLoc.setClosestEdge(ab);
 		LocationIDResult toLoc = new LocationIDResult();
-		toLoc.closestEdge(ab);
+		toLoc.setClosestEdge(ab);
 
 		GHPlace gpsFrom = new GHPlace(50.426962, 4.912174); // GPS point on AB close to A
 		GHPlace gpsTo = new GHPlace(50.42725, 4.91752); // GPS point on AB close to B
 		
 		// -- Case 1 routed nodes are the same and path is empty
-		fromLoc.closestNode(1);
-		toLoc.closestNode(1);
+		fromLoc.setClosestNode(1);
+		toLoc.setClosestNode(1);
 		// empty path
 		SimplePath path = new SimplePath(graph, carEncoder);
 		path.setPoints(new double[][]{}, 50);
 		PathFinisher finisher = new PathFinisher(fromLoc, toLoc, gpsFrom, gpsTo, path);
-		assertEquals(4, finisher.getFinishedPointList().size());
+		assertEquals(4, finisher.getFinishedPointList().getSize());
 		assertEquals(375.59, finisher.getFinishedDistance(), 0.01);
 		assertEquals(27, finisher.getFinishedTime());
 		
 		// -- Case 2 routed nodes are the tower nodes, path = whole ab edge;
-		fromLoc.closestNode(1);
-		toLoc.closestNode(2);
+		fromLoc.setClosestNode(1);
+		toLoc.setClosestNode(2);
 		// path = ab
 		path.setPoints(new double[][]{{50.4268298, 4.9118004}, {50.4268054, 4.912115},
 			{50.4268091, 4.9123011}, {50.427086, 4.9142088}, {50.4275585, 4.9177794}}, 50);
 		finisher = new PathFinisher(fromLoc, toLoc, gpsFrom, gpsTo, path);
-		assertEquals(4, finisher.getFinishedPointList().size());
+		assertEquals(4, finisher.getFinishedPointList().getSize());
 		assertEquals(375.59, finisher.getFinishedDistance(), 0.01);
 		assertEquals(24, finisher.getFinishedTime());
 		// Note: time and distance between the two cases are slightly different due to rounding errors.
@@ -241,11 +248,12 @@ public class PathFinisherTest {
 	 * sharing any tower.
 	 */
 	@Test
-	public void testEdge2EdgePathFail() {
+	public void testEdge2EdgePathFail()
+	{
 		LocationIDResult fromLoc = new LocationIDResult();
-		fromLoc.closestEdge(ab);
+		fromLoc.setClosestEdge(ab);
 		LocationIDResult toLoc = new LocationIDResult();
-		toLoc.closestEdge(cd);
+		toLoc.setClosestEdge(cd);
 		GHPlace gpsFrom = new GHPlace(50.426962, 4.912174); // GPS point close to AB
 		GHPlace gpsTo = new GHPlace(50.427902, 4.917701); // GPS point close to CD
 		
@@ -254,21 +262,23 @@ public class PathFinisherTest {
 		path.setPoints(new double[][]{}, 50);
 		
 		// case 1 : route not found, no connection between nodes
-		fromLoc.closestNode(2);
-		toLoc.closestNode(3);
+		fromLoc.setClosestNode(2);
+		toLoc.setClosestNode(3);
 		PathFinisher finisher = new PathFinisher(fromLoc, toLoc, gpsFrom, gpsTo, path);
-		assertEquals(0, finisher.getFinishedPointList().size());
+		assertEquals(0, finisher.getFinishedPointList().getSize());
 		assertEquals(0, finisher.getFinishedDistance(), 0.01);
 		assertEquals(0, finisher.getFinishedTime());
 		
 		// case 2 : incorrect edges and node
-		fromLoc.closestNode(2);
-		toLoc.closestNode(2);
+		fromLoc.setClosestNode(2);
+		toLoc.setClosestNode(2);
 		finisher = new PathFinisher(fromLoc, toLoc, gpsFrom, gpsTo, path);
-		try {
+		try
+		{
 			finisher.getFinishedDistance();
 			assertTrue(false);
-		} catch(IllegalArgumentException iae) {
+		} catch(IllegalArgumentException iae)
+		{
 			assertEquals("From and To edges are not connected by their base/adj nodes", iae.getMessage());
 		}
 	}
@@ -278,23 +288,26 @@ public class PathFinisherTest {
 	 * fail properly.
 	 */
 	@Test
-	public void testMatchEdgeFail() {
+	public void testMatchEdgeFail()
+	{
 		SimplePath path = new SimplePath(graph, carEncoder);
 		path.setPoints(new double[][]{{50.4277519, 4.9191771}, {50.4275888, 4.9181358}}, 50);
 		
 		LocationIDResult fromLoc = new LocationIDResult();
-		fromLoc.closestEdge(ab);
+		fromLoc.setClosestEdge(ab);
 		LocationIDResult toLoc = new LocationIDResult();
-		toLoc.closestEdge(cd);
+		toLoc.setClosestEdge(cd);
 		GHPlace gpsFrom = new GHPlace(50.426962, 4.912174); // GPS point close to AB
 		GHPlace gpsTo = new GHPlace(50.427902, 4.917701); // GPS point close to CD
 		
 		PathFinisher finisher = new PathFinisher(fromLoc, toLoc, gpsFrom, gpsTo, path);
 		
-		try {
+		try
+		{
 			finisher.getFinishedTime();
 			assertTrue(false);
-		} catch(IllegalArgumentException iae) {
+		} catch(IllegalArgumentException iae)
+		{
 			assertEquals("Could not find common point between edge and path", iae.getMessage());
 		}
 		
@@ -310,12 +323,14 @@ public class PathFinisherTest {
 	 * @author NGmip
 	 * 
 	 */
-	private class SimplePath extends Path {
+	private class SimplePath extends Path
+	{
 		private PointList points;
 		private long time;
 		private double distance;
 		
-		public SimplePath(Graph graph, FlagEncoder encoder) {
+		public SimplePath( Graph graph, FlagEncoder encoder )
+		{
 			super(graph, encoder);
 		}
 		
@@ -327,16 +342,19 @@ public class PathFinisherTest {
 		 * @param speed
 		 *            path' speed
 		 */
-		public void setPoints(double[][] pts, int speed) {
+		public void setPoints( double[][] pts, int speed )
+		{
 			this.points = new PointList(pts.length);
 			this.distance = 0;
 			this.time = 0;
 			int i=0;
 			double dist;
-			for(double[] pt : pts) {
+			for(double[] pt : pts)
+			{
 				points.add(pt[0], pt[1]);
-				if(i > 0) {
-					dist = calc.calcDist(points.latitude(i-1), points.longitude(i-1), points.latitude(i), points.longitude(i));
+				if(i > 0)
+				{
+					dist = calc.calcDist(points.getLatitude(i-1), points.getLongitude(i-1), points.getLatitude(i), points.getLongitude(i));
 					distance += dist;
 					time += dist * 3.6 / speed;
 				}
@@ -344,15 +362,20 @@ public class PathFinisherTest {
 			}
 		}
 		
-		public long time() {
+		@Override
+		public long getTime()
+		{
 			return this.time;
 		}
 		
-		public double distance() {
+		@Override
+		public double getDistance()
+		{
 			return this.distance;
 		}
 		
-		public PointList calcPoints() {
+		public PointList calcPoints()
+		{
 			return this.points;
 		}
 	}
@@ -364,57 +387,82 @@ public class PathFinisherTest {
 	 * @author NG
 	 * 
 	 */
-	private class RevertedEdge implements EdgeIterator {
+	private class RevertedEdge implements EdgeIterator
+	{
 		private final EdgeIterator baseEdge;
-		public RevertedEdge(EdgeIterator baseEdge) {
+		public RevertedEdge( EdgeIterator baseEdge )
+		{
 			this.baseEdge = baseEdge;
 		}
-		public boolean next() {
+		@Override
+		public boolean next()
+		{
 			return baseEdge.next();
 		}
-		public int edge() {
-			return baseEdge.edge();
-		}
-		public int baseNode() {
-			return baseEdge.adjNode();
-		}
-		public int adjNode() {
-			return baseEdge.baseNode();
+		@Override
+		public int getEdge()
+		{
+			return baseEdge.getEdge();
 		}
 		@Override
-		public PointList wayGeometry() {
+		public int getBaseNode()
+		{
+			return baseEdge.getAdjNode();
+		}
+		@Override
+		public int getAdjNode()
+		{
+			return baseEdge.getBaseNode();
+		}
+		@Override
+		public PointList getWayGeometry()
+		{
 			// revert geometry
-			PointList baseList = baseEdge.wayGeometry();
-			int size = baseList.size();
+			PointList baseList = baseEdge.getWayGeometry();
+			int size = baseList.getSize();
 			PointList revList = new PointList();
-			for(int i=0 ; i < size ; i++) {
-				revList.add(baseList.latitude(size-1-i), baseList.longitude(size-1-i));
+			for( int i=0 ; i < size ; i++ )
+			{
+				revList.add(baseList.getLatitude(size-1-i), baseList.getLongitude(size-1-i));
 			}
 			return revList;
 		}
-		public void wayGeometry(PointList list) {
+		@Override
+		public void setWayGeometry( PointList list )
+		{
 			throw new IllegalStateException("RevertedEdge is read only");
 		}
-		public double distance() {
-			return baseEdge.distance();
+		@Override
+		public double getDistance()
+		{
+			return baseEdge.getDistance();
 		}
-		public void distance(double dist) {
+		@Override
+		public void setDistance( double dist )
+		{
 			throw new IllegalStateException("RevertedEdge is read only");
 		}
-		public int flags() {
+		@Override
+		public int getFlags()
+		{
 			// revert flags directions
-			int flag = ((AbstractFlagEncoder)carEncoder).swapDirection(baseEdge.flags());
+			int flag = ((AbstractFlagEncoder)carEncoder).swapDirection(baseEdge.getFlags());
 			return flag;
 		}
-		public void flags(int flags) {
+		@Override
+		public void setFlags( int flags )
+		{
 			throw new IllegalStateException("RevertedEdge is read only");
 		}
-		public boolean isEmpty() {
+		@Override
+		public boolean isEmpty()
+		{
 			return baseEdge.isEmpty();
 		}
 	}
 	
-	private static PointList buildPointList(double[][] pts) {
+	private static PointList buildPointList( double[][] pts )
+	{
 		return PathSplitterTest.buildPointList(pts);
 	}
 }

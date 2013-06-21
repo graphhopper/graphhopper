@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -34,19 +33,24 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
-
+public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
+{
     @Override
-    public AlgorithmPreparation prepareGraph(Graph g, final WeightCalculation calc, final FlagEncoder encoder) {
-        return new NoOpAlgorithmPreparation() {
-            @Override public RoutingAlgorithm createAlgo() {
-                return new DijkstraOneToMany(_graph, encoder).type(calc);
+    public AlgorithmPreparation prepareGraph( Graph g, final WeightCalculation calc, final FlagEncoder encoder )
+    {
+        return new NoOpAlgorithmPreparation()
+        {
+            @Override
+            public RoutingAlgorithm createAlgo()
+            {
+                return new DijkstraOneToMany(_graph, encoder).setType(calc);
             }
-        }.graph(g);
+        }.setGraph(g);
     }
 
     @Test
-    public void testUseCache() {
+    public void testUseCache()
+    {
         AlgorithmPreparation prep = prepareGraph(createTestGraph());
         RoutingAlgorithm algo = prep.createAlgo();
         Path p = algo.calcPath(0, 4);
@@ -62,7 +66,8 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Test
-    public void testDifferentEdgeFilter() {
+    public void testDifferentEdgeFilter()
+    {
         Graph g = new GraphBuilder(encodingManager).levelGraphCreate();
         g.edge(4, 3, 10, true);
         g.edge(3, 6, 10, true);
@@ -72,9 +77,12 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
 
         AlgorithmPreparation prep = prepareGraph(g);
         DijkstraOneToMany algo = (DijkstraOneToMany) prep.createAlgo();
-        algo.edgeFilter(new EdgeFilter() {
-            @Override public boolean accept(EdgeIterator iter) {
-                return iter.adjNode() != 5;
+        algo.setEdgeFilter(new EdgeFilter()
+        {
+            @Override
+            public boolean accept( EdgeIterator iter )
+            {
+                return iter.getAdjNode() != 5;
             }
         });
         Path p = algo.calcPath(4, 6);
@@ -82,9 +90,12 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
 
         // important call!
         algo.clear();
-        algo.edgeFilter(new EdgeFilter() {
-            @Override public boolean accept(EdgeIterator iter) {
-                return iter.adjNode() != 3;
+        algo.setEdgeFilter(new EdgeFilter()
+        {
+            @Override
+            public boolean accept( EdgeIterator iter )
+            {
+                return iter.getAdjNode() != 3;
             }
         });
         p = algo.calcPath(4, 6);

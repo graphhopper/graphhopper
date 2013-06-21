@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -21,21 +20,21 @@ package com.graphhopper.geohash;
 import com.graphhopper.util.shapes.CoordTrig;
 
 /**
- * Defines the mapping between a one dimensional 'number' and a point (lat, lon)
- * which is limited to a defined bounds.
- *
+ * Defines the mapping between a one dimensional 'number' and a point (lat, lon) which is limited to
+ * a defined bounds.
+ * <p/>
  * @author Peter Karich
  */
-public interface KeyAlgo {
-
+public interface KeyAlgo
+{
     /**
      * Sets the bounds of the underlying key algorithm.
      */
-    KeyAlgo bounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit);
+    KeyAlgo setBounds( double minLonInit, double maxLonInit, double minLatInit, double maxLatInit );
 
-    long encode(CoordTrig coord);
+    long encode( CoordTrig coord );
 
-    long encode(double lat, double lon);
+    long encode( double lat, double lon );
 
-    void decode(long spatialKey, CoordTrig latLon);
+    void decode( long spatialKey, CoordTrig latLon );
 }

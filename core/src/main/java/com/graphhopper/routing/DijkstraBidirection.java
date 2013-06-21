@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -26,22 +25,21 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeWrapper;
 
 /**
- * Calculates shortest path in bidirectional way. Compared to
- * DijkstraBidirectionRef this class is more memory efficient as it does not go
- * the normal Java way via references. In first tests this class saves 30%
- * memory, but as you can see it is more complicated.
- *
- * TODO: use only one EdgeWrapper to save memory. This is not easy if we want it
- * to be as fast as the current solution. But we need to try it out if a
- * forwardSearchBitset.contains(ref) is that expensive
- *
- * TODO EdgeWrapper: instead of creating references point to the edges itself =>
- * we only need an edge+node array and from that can retrieve eg. the distance
- *
+ * Calculates shortest path in bidirectional way. Compared to DijkstraBidirectionRef this class is
+ * more memory efficient as it does not go the normal Java way via references. In first tests this
+ * class saves 30% memory, but as you can see it is more complicated.
+ * <p/>
+ * TODO: use only one EdgeWrapper to save memory. This is not easy if we want it to be as fast as
+ * the current solution. But we need to try it out if a forwardSearchBitset.contains(ref) is that
+ * expensive
+ * <p/>
+ * TODO EdgeWrapper: instead of creating references point to the edges itself => we only need an
+ * edge+node array and from that can retrieve eg. the distance
+ * <p/>
  * @author Peter Karich
  */
-public class DijkstraBidirection extends AbstractRoutingAlgorithm {
-
+public class DijkstraBidirection extends AbstractRoutingAlgorithm
+{
     private int from, to;
     protected int currFrom;
     protected double currFromWeight;
@@ -59,9 +57,10 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     private int visitedToCount;
     private boolean alreadyRun;
 
-    public DijkstraBidirection(Graph graph, FlagEncoder encoder) {
+    public DijkstraBidirection( Graph graph, FlagEncoder encoder )
+    {
         super(graph, encoder);
-        int locs = Math.max(20, graph.nodes());
+        int locs = Math.max(20, graph.getNodes());
         openSetFrom = new IntDoubleBinHeap(locs / 10);
         wrapperFrom = new EdgeWrapper(locs / 10);
 
@@ -69,7 +68,8 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         wrapperTo = new EdgeWrapper(locs / 10);
     }
 
-    DijkstraBidirection initFrom(int from) {
+    DijkstraBidirection initFrom( int from )
+    {
         this.from = from;
         currFrom = from;
         currFromWeight = 0;
@@ -77,7 +77,8 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         return this;
     }
 
-    DijkstraBidirection initTo(int to) {
+    DijkstraBidirection initTo( int to )
+    {
         this.to = to;
         currTo = to;
         currToWeight = 0;
@@ -85,9 +86,13 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         return this;
     }
 
-    @Override public Path calcPath(int from, int to) {
+    @Override
+    public Path calcPath( int from, int to )
+    {
         if (alreadyRun)
+        {
             throw new IllegalStateException("Create a new instance per call");
+        }
         alreadyRun = true;
         initPath();
         initFrom(from);
@@ -95,22 +100,30 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
 
         Path p = checkIndenticalFromAndTo();
         if (p != null)
+        {
             return p;
+        }
 
         int finish = 0;
-        while (finish < 2) {
+        while (finish < 2)
+        {
             finish = 0;
             if (!fillEdgesFrom())
+            {
                 finish++;
+            }
 
             if (!fillEdgesTo())
+            {
                 finish++;
+            }
         }
 
         return shortest.extract();
     }
 
-    void initPath() {
+    void initPath()
+    {
         shortest = new PathBidir(graph, flagEncoder, wrapperFrom, wrapperTo);
     }
 
@@ -118,28 +131,36 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
     // a node from overlap may not be on the shortest path!!
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder 
     //    search, update shortest = μ if df (v) + (v, w) + dr (w) < μ            
-    boolean checkFinishCondition() {
-        return currFromWeight + currToWeight >= shortest.weight();
+    boolean checkFinishCondition()
+    {
+        return currFromWeight + currToWeight >= shortest.getWeight();
     }
 
-    void fillEdges(int currNode, double currWeight, int currRef,
-            IntDoubleBinHeap prioQueue, EdgeWrapper wrapper, EdgeFilter filter) {
+    void fillEdges( int currNode, double currWeight, int currRef,
+            IntDoubleBinHeap prioQueue, EdgeWrapper wrapper, EdgeFilter filter )
+    {
 
         EdgeIterator iter = graph.getEdges(currNode, filter);
-        while (iter.next()) {
+        while (iter.next())
+        {
             if (!accept(iter))
+            {
                 continue;
-            int neighborNode = iter.adjNode();
-            double tmpWeight = weightCalc.getWeight(iter.distance(), iter.flags()) + currWeight;
+            }
+            int neighborNode = iter.getAdjNode();
+            double tmpWeight = weightCalc.getWeight(iter.getDistance(), iter.getFlags()) + currWeight;
             int newRef = wrapper.getRef(neighborNode);
-            if (newRef < 0) {
-                newRef = wrapper.add(neighborNode, tmpWeight, iter.edge());
+            if (newRef < 0)
+            {
+                newRef = wrapper.add(neighborNode, tmpWeight, iter.getEdge());
                 wrapper.putParent(newRef, currRef);
                 prioQueue.insert_(tmpWeight, newRef);
-            } else {
+            } else
+            {
                 double weight = wrapper.getWeight(newRef);
-                if (weight > tmpWeight) {
-                    wrapper.putEdgeId(newRef, iter.edge());
+                if (weight > tmpWeight)
+                {
+                    wrapper.putEdgeId(newRef, iter.getEdge());
                     wrapper.putWeight(newRef, tmpWeight);
                     wrapper.putParent(newRef, currRef);
                     prioQueue.update_(tmpWeight, newRef);
@@ -150,63 +171,83 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm {
         }
     }
 
-    void updateShortest(int nodeId, int ref, double weight) {
+    void updateShortest( int nodeId, int ref, double weight )
+    {
         int otherRef = wrapperOther.getRef(nodeId);
         if (otherRef < 0)
+        {
             return;
+        }
 
         // update μ
         double newWeight = weight + wrapperOther.getWeight(otherRef);
-        if (newWeight < shortest.weight()) {
+        if (newWeight < shortest.getWeight())
+        {
             shortest.switchWrapper = wrapperFrom == wrapperOther;
             shortest.fromRef = ref;
             shortest.toRef = otherRef;
-            shortest.weight(newWeight);
+            shortest.setWeight(newWeight);
         }
     }
 
-    boolean fillEdgesFrom() {
+    boolean fillEdgesFrom()
+    {
         wrapperOther = wrapperTo;
         fillEdges(currFrom, currFromWeight, currFromRef, openSetFrom, wrapperFrom, outEdgeFilter);
         visitedFromCount++;
         if (openSetFrom.isEmpty())
+        {
             return false;
+        }
 
         currFromRef = openSetFrom.poll_element();
         currFrom = wrapperFrom.getNode(currFromRef);
         currFromWeight = wrapperFrom.getWeight(currFromRef);
         if (checkFinishCondition())
+        {
             return false;
+        }
         return true;
     }
 
-    boolean fillEdgesTo() {
+    boolean fillEdgesTo()
+    {
         wrapperOther = wrapperFrom;
         fillEdges(currTo, currToWeight, currToRef, openSetTo, wrapperTo, inEdgeFilter);
         visitedToCount++;
         if (openSetTo.isEmpty())
+        {
             return false;
+        }
 
         currToRef = openSetTo.poll_element();
         currTo = wrapperTo.getNode(currToRef);
         currToWeight = wrapperTo.getWeight(currToRef);
         if (checkFinishCondition())
+        {
             return false;
+        }
         return true;
     }
 
     @Override
-    public int visitedNodes() {
+    public int getVisitedNodes()
+    {
         return visitedFromCount + visitedToCount;
     }
 
-    private Path checkIndenticalFromAndTo() {
+    private Path checkIndenticalFromAndTo()
+    {
         if (from == to)
+        {
             return new Path(graph, flagEncoder);
+        }
         return null;
     }
 
-    @Override public String name() {
+    @Override
+    public String getName()
+    {
         return "dijkstraNativebi";
     }
 }

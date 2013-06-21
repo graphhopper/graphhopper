@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -27,10 +26,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class WebHelperTest {
-
+public class WebHelperTest
+{
     @Test
-    public void testDecode() throws Exception {
+    public void testDecode() throws Exception
+    {
         PointList list = WebHelper.decodePolyline("_p~iF~ps|U", 1);
         assertEquals(Helper.createPointList(38.5, -120.2), list);
 
@@ -39,7 +39,8 @@ public class WebHelperTest {
     }
 
     @Test
-    public void testEncode() throws Exception {
+    public void testEncode() throws Exception
+    {
         assertEquals("_p~iF~ps|U", WebHelper.encodePolyline(
                 Helper.createPointList(38.5, -120.2)));
 
@@ -48,15 +49,16 @@ public class WebHelperTest {
     }
 
     @Test
-    public void testBoth() throws Exception {
+    public void testBoth() throws Exception
+    {
         PointList list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 50.3139, 10.612793, 50.04303, 9.497681);
         String str = WebHelper.encodePolyline(list);
-        assertEquals(list, WebHelper.decodePolyline(str, list.size()));
+        assertEquals(list, WebHelper.decodePolyline(str, list.getSize()));
 
         list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 40.70001, -120.95001);
         str = WebHelper.encodePolyline(list);
-        assertEquals(list, WebHelper.decodePolyline(str, list.size()));
+        assertEquals(list, WebHelper.decodePolyline(str, list.getSize()));
     }
 }

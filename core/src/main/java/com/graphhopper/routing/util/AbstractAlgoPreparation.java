@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -23,26 +22,34 @@ import com.graphhopper.storage.Graph;
 /**
  * @author Peter Karich
  */
-public abstract class AbstractAlgoPreparation<T extends AlgorithmPreparation> implements AlgorithmPreparation {
-
+public abstract class AbstractAlgoPreparation<T extends AlgorithmPreparation> implements AlgorithmPreparation
+{
     protected Graph _graph;
     private boolean prepared = false;
 
-    @Override public AlgorithmPreparation graph(Graph g) {
+    @Override
+    public AlgorithmPreparation setGraph( Graph g )
+    {
         _graph = g;
         return this;
     }
 
     @SuppressWarnings("unchecked")
-    @Override public T doWork() {
+    @Override
+    public T doWork()
+    {
         if (prepared)
+        {
             throw new IllegalStateException("Call doWork only once!");
+        }
         prepared = true;
         // no operation
         return (T) this;
     }
 
-    @Override public boolean isPrepared() {
+    @Override
+    public boolean isPrepared()
+    {
         return prepared;
     }
 }

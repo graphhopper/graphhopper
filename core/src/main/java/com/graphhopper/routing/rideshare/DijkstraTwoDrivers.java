@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -28,8 +27,8 @@ import com.graphhopper.storage.EdgeEntry;
 /**
  * @author Peter Karich
  */
-public class DijkstraTwoDrivers {
-
+public class DijkstraTwoDrivers
+{
     private Graph graph;
     private DijkstraBidirectionRef driverA;
     private DijkstraBidirectionRef driverB;
@@ -39,22 +38,26 @@ public class DijkstraTwoDrivers {
     private double overallDistance = Double.MAX_VALUE;
     private FlagEncoder carEncoder;
 
-    public DijkstraTwoDrivers(Graph graph, CarFlagEncoder encoder) {
+    public DijkstraTwoDrivers( Graph graph, CarFlagEncoder encoder )
+    {
         this.graph = graph;
         this.carEncoder = encoder;
     }
 
-    public void setDriverA(int fromA, int toA) {
+    public void setDriverA( int fromA, int toA )
+    {
         this.fromA = fromA;
         this.toA = toA;
     }
 
-    public void setDriverB(int fromB, int toB) {
+    public void setDriverB( int fromB, int toB )
+    {
         this.fromB = fromB;
         this.toB = toB;
     }
 
-    public void calcPath() {
+    public void calcPath()
+    {
         // There are two bidirectional dijkstras going on: two for driver A and two for B.
         // Now update the overall extractPath path only when all 4 extractPath-path-trees (spt's) contain the vertex (from the relaxed edges of the current spt).
         // The breaking condition is different to normal bi-dijkstra - see **
@@ -88,81 +91,104 @@ public class DijkstraTwoDrivers {
         // default is personalFactor=1.1?
         // -> hmmh should this be lower to make it faster? because it is min(currA1, currA2) and not currA1+currA2
 
-        driverA = new DijkstraBidirectionCombined(graph, carEncoder) {
-            @Override public DijkstraBidirectionRef getOtherDriver() {
+        driverA = new DijkstraBidirectionCombined(graph, carEncoder)
+        {
+            @Override
+            public DijkstraBidirectionRef getOtherDriver()
+            {
                 return driverB;
             }
         }.initFrom(fromA).initTo(toA).initPath();
 
-        driverB = new DijkstraBidirectionCombined(graph, carEncoder) {
-            @Override public DijkstraBidirectionRef getOtherDriver() {
+        driverB = new DijkstraBidirectionCombined(graph, carEncoder)
+        {
+            @Override
+            public DijkstraBidirectionRef getOtherDriver()
+            {
                 return driverA;
             }
         }.initFrom(fromB).initTo(toB).initPath();
 
-        while (true) {
+        while (true)
+        {
             driverA.fillEdgesFrom();
             driverA.fillEdgesTo();
             driverB.fillEdgesFrom();
             driverB.fillEdgesTo();
 
             if (driverA.checkFinishCondition() && driverB.checkFinishCondition())
+            {
                 break;
+            }
         }
     }
 
-    public Path getBestForA() {
+    public Path getBestForA()
+    {
         return driverA.extractPath();
     }
 
-    public Path getBestForB() {
+    public Path getBestForB()
+    {
         return driverB.extractPath();
     }
 
-    public int getMeetingPoint() {
+    public int getMeetingPoint()
+    {
         return meetingPoint;
     }
 
-    private abstract class DijkstraBidirectionCombined extends DijkstraBidirectionRef {
-
-        public DijkstraBidirectionCombined(Graph graph, FlagEncoder encoder) {
+    private abstract class DijkstraBidirectionCombined extends DijkstraBidirectionRef
+    {
+        public DijkstraBidirectionCombined( Graph graph, FlagEncoder encoder )
+        {
             super(graph, encoder);
         }
 
         public abstract DijkstraBidirectionRef getOtherDriver();
 
-        @Override public boolean checkFinishCondition() {
+        @Override
+        public boolean checkFinishCondition()
+        {
             if (currFrom == null)
-                return currTo.weight >= shortest.weight();
-            else if (currTo == null)
-                return currFrom.weight >= shortest.weight();
+            {
+                return currTo.weight >= shortest.getWeight();
+            } else if (currTo == null)
+            {
+                return currFrom.weight >= shortest.getWeight();
+            }
 
-            return Math.min(currFrom.weight, currTo.weight) >= shortest.weight();
+            return Math.min(currFrom.weight, currTo.weight) >= shortest.getWeight();
         }
 
-        @Override protected void updateShortest(EdgeEntry shortestDE, int currLoc) {
+        @Override
+        protected void updateShortest( EdgeEntry shortestDE, int currLoc )
+        {
             EdgeEntry fromOther = getOtherDriver().shortestWeightFrom(currLoc);
             EdgeEntry toOther = getOtherDriver().shortestWeightTo(currLoc);
             EdgeEntry entryOther = shortestWeightMapOther.get(currLoc);
             if (fromOther == null || toOther == null || entryOther == null)
+            {
                 return;
+            }
 
             // update μ
             double shortestOther = fromOther.weight + toOther.weight;
             double shortestCurrent = shortestDE.weight + entryOther.weight;
             double newShortest = shortestCurrent + shortestOther;
-            if (newShortest < overallDistance) {
+            if (newShortest < overallDistance)
+            {
                 // LATER: minimize not only the sum but also the difference => multi modal search!
                 overallDistance = newShortest;
                 meetingPoint = currLoc;
 
-                getOtherDriver().shortest.edgeEntry(fromOther);
-                getOtherDriver().shortest.edgeEntryTo(toOther);
-                getOtherDriver().shortest.weight(shortestOther);
+                getOtherDriver().shortest.setEdgeEntry(fromOther);
+                getOtherDriver().shortest.setEdgeEntryTo(toOther);
+                getOtherDriver().shortest.setWeight(shortestOther);
 
-                shortest.edgeEntry(shortestDE);
-                shortest.edgeEntryTo(entryOther);
-                shortest.weight(shortestCurrent);
+                shortest.setEdgeEntry(shortestDE);
+                shortest.setEdgeEntryTo(entryOther);
+                shortest.setWeight(shortestCurrent);
             }
         }
     }

@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -35,34 +34,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Integration tests for one bigger area - at the moment Unterfranken (Germany).
- * Execute via ./graphhopper.sh test unterfranken.osm
- *
+ * Integration tests for one bigger area - at the moment Unterfranken (Germany). Execute via
+ * ./graphhopper.sh test unterfranken.osm
+ * <p/>
  * @author Peter Karich
  */
-public class RoutingAlgorithmSpecialAreaTests {
-
+public class RoutingAlgorithmSpecialAreaTests
+{
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final Graph unterfrankenGraph;
     private final Location2IDIndex idx;
 
-    public RoutingAlgorithmSpecialAreaTests(GraphHopper graphhopper) {
-        this.unterfrankenGraph = graphhopper.graph();
+    public RoutingAlgorithmSpecialAreaTests( GraphHopper graphhopper )
+    {
+        this.unterfrankenGraph = graphhopper.getGraph();
         StopWatch sw = new StopWatch().start();
-        idx = graphhopper.index();
+        idx = graphhopper.getIndex();
         logger.info(idx.getClass().getSimpleName() + " index. Size:"
-                + (float) idx.capacity() / (1 << 20) + " MB, took:" + sw.stop().getSeconds());
+                + (float) idx.getCapacity() / (1 << 20) + " MB, took:" + sw.stop().getSeconds());
     }
 
-    public void start() {
+    public void start()
+    {
         testIndex();
         testAlgos();
     }
 
-    void testAlgos() {
+    void testAlgos()
+    {
         if (unterfrankenGraph instanceof LevelGraph)
+        {
             throw new IllegalStateException("run testAlgos only with a none-LevelGraph. Use prepare.chShortcuts=false "
                     + "Or use prepare.chShortcuts=shortest and avoid the preparation");
+        }
 
         TestAlgoCollector testCollector = new TestAlgoCollector("testAlgos");
         final EncodingManager encodingManager = new EncodingManager("CAR");
@@ -70,7 +74,8 @@ public class RoutingAlgorithmSpecialAreaTests {
         boolean ch = true;
         Collection<AlgorithmPreparation> prepares = createAlgos(unterfrankenGraph, carEncoder,
                 ch, new ShortestCalc(), encodingManager);
-        for (AlgorithmPreparation prepare : prepares) {
+        for (AlgorithmPreparation prepare : prepares)
+        {
             int failed = testCollector.errors.size();
 
             // using index.highResolution=1000
@@ -88,8 +93,9 @@ public class RoutingAlgorithmSpecialAreaTests {
         testCollector.printSummary();
     }
 
-    public static Collection<AlgorithmPreparation> createAlgos(Graph g,
-            FlagEncoder encoder, boolean withCh, WeightCalculation weightCalc, EncodingManager manager) {
+    public static Collection<AlgorithmPreparation> createAlgos( Graph g,
+            FlagEncoder encoder, boolean withCh, WeightCalculation weightCalc, EncodingManager manager )
+    {
         List<AlgorithmPreparation> prepare = new ArrayList<AlgorithmPreparation>(Arrays.<AlgorithmPreparation>asList(
                 createAlgoPrepare(g, "astar", encoder, weightCalc),
                 createAlgoPrepare(g, "dijkstraOneToMany", encoder, weightCalc),
@@ -97,10 +103,10 @@ public class RoutingAlgorithmSpecialAreaTests {
                 createAlgoPrepare(g, "dijkstraNative", encoder, weightCalc),
                 createAlgoPrepare(g, "dijkstrabi", encoder, weightCalc),
                 createAlgoPrepare(g, "dijkstra", encoder, weightCalc)));
-        if (withCh) {
+        if (withCh)
+        {
             LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder(manager).levelGraphCreate());
-            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().
-                    graph(graphCH).vehicle(encoder).type(weightCalc);
+            PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies().setGraph(graphCH).setVehicle(encoder).setType(weightCalc);
             prepareCH.doWork();
             prepare.add(prepareCH);
             // TODO prepare.add(prepareCH.createAStar().approximation(true).approximationFactor(.9));
@@ -108,7 +114,8 @@ public class RoutingAlgorithmSpecialAreaTests {
         return prepare;
     }
 
-    void testIndex() {
+    void testIndex()
+    {
         TestAlgoCollector testCollector = new TestAlgoCollector("testIndex");
         testCollector.queryIndex(unterfrankenGraph, idx, 50.081241, 10.124366, 14.0);
         testCollector.queryIndex(unterfrankenGraph, idx, 50.081146, 10.124496, 0.0);

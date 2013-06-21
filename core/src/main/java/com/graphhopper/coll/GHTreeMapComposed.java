@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -22,47 +21,56 @@ import com.graphhopper.util.BitUtil;
 import java.util.TreeMap;
 
 /**
- * A priority queue implemented by a TreeMap. As the tree map does not allow
- * duplicated we compose the key via priority | nodeId.
- *
+ * A priority queue implemented by a TreeMap. As the tree map does not allow duplicated we compose
+ * the key via priority | nodeId.
+ * <p/>
  * @author Peter Karich
  */
-public class GHTreeMapComposed {
-
+public class GHTreeMapComposed
+{
     private static final Integer NOT_EMPTY = new Integer(-3);
     private TreeMap<Long, Integer> map;
 
-    public GHTreeMapComposed() {
+    public GHTreeMapComposed()
+    {
         map = new TreeMap<Long, Integer>();
     }
 
-    public void clear() {
+    public void clear()
+    {
         map.clear();
     }
 
-    void remove(int key, int value) {
+    void remove( int key, int value )
+    {
         long v = BitUtil.toLong(value, key);
         if (map.remove(v) != NOT_EMPTY)
+        {
             throw new IllegalStateException("cannot remove key " + key + " with value " + value
                     + " - did you insert " + key + "," + value + " before?");
+        }
     }
 
-    public void update(int key, int oldValue, int value) {
+    public void update( int key, int oldValue, int value )
+    {
         remove(key, oldValue);
         insert(key, value);
     }
 
-    public void insert(int key, int value) {
+    public void insert( int key, int value )
+    {
         long v = BitUtil.toLong(value, key);
         map.put(v, NOT_EMPTY);
     }
 
-    public int peekValue() {
+    public int peekValue()
+    {
         long key = map.firstEntry().getKey();
         return (int) (key >>> 32);
     }
 
-    public int peekKey() {
+    public int peekKey()
+    {
         long key = map.firstEntry().getKey();
         return (int) (key & 0xFFFFFFFFL);
     }
@@ -70,21 +78,25 @@ public class GHTreeMapComposed {
     /**
      * @return removes the smallest entry (key and value) from this collection
      */
-    public int pollKey() {
+    public int pollKey()
+    {
         long key = map.pollFirstEntry().getKey();
         return (int) (key & 0xFFFFFFFFL);
     }
 
-    public int size() {
+    public int getSize()
+    {
         return map.size();
     }
 
-    public boolean isEmpty() {
+    public boolean isEmpty()
+    {
         return map.isEmpty();
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return map.toString();
     }
 }

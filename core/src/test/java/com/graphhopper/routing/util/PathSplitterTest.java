@@ -21,19 +21,23 @@ import com.graphhopper.util.shapes.GHPlace;
  * @author NG
  * 
  */
-public class PathSplitterTest {
+public class PathSplitterTest
+{
 
 	@Test
-	public void testFindCutIndex() {
+	public void testFindCutIndex()
+	{
 		PathSplitter splitter = new PathSplitter();
 		
 		List<PathSplitterTestCase> cases = this.buildCases();
 		
-		for(PathSplitterTestCase c : cases) {
+		for(PathSplitterTestCase c : cases)
+		{
 			int idx = splitter.findInsertIndex(c.points, c.lat, c.lon);
 			Assert.assertTrue(c.caseId + " index don't match", idx == c.expIdx);
 			GHPlace cutPt = splitter.getCutPoint(c.getGpsPoint(), c.getPointBeforeCut(), c.getPointAfterCut());
-			if(c.expLon != Double.NaN) {
+			if(c.expLon != Double.NaN)
+			{
 				Assert.assertEquals(c.caseId + " incorrect lon : " + c.expLon, c.expLon, cutPt.lon, 0.000000005d); // 5.00E-09 tolerance for rounding loss
 				Assert.assertEquals(c.caseId + " incorrect lat : " + c.expLat, c.expLat, cutPt.lat, 0.000000005d); //
 			}
@@ -44,9 +48,9 @@ public class PathSplitterTest {
 	 * Test extractFullGeom method.
 	 */
 	@Test
-	public void testExtractFullGeom() {
-		EncodingManager encodingManager = new EncodingManager(
-				EncodingManager.CAR);
+	public void testExtractFullGeom()
+	{
+		EncodingManager encodingManager = new EncodingManager(EncodingManager.CAR);
 		Graph graph = new GraphBuilder(encodingManager).create();
 		// add 2 nodes
 		graph.setNode(1, 50.4268298, 4.9118004); // A
@@ -55,7 +59,7 @@ public class PathSplitterTest {
 		int flag = 43; // 50Km/h bidir 0b101011 with CarFlagEncoder
 		assertTrue(encodingManager.getSingle().getSpeed(flag) == 50); // checks that CarFlagEncoder hasn't changed
 		EdgeIterator ab = graph.edge(1, 2, 432.572, flag);
-		ab.wayGeometry(buildPointList(new double[][] {
+		ab.setWayGeometry(buildPointList(new double[][] {
 				{50.4268054, 4.912115}, {50.4268091, 4.9123011},
 				{50.427086, 4.9142088}}));
 		
@@ -63,17 +67,18 @@ public class PathSplitterTest {
 		PointList fullGeom = splitter.extractFullGeom(ab, graph);
 		
 		// returned points should be edge's wayGeometry + edges tower nodes 
-		int size = fullGeom.size();
+		int size = fullGeom.getSize();
 		Assert.assertEquals(5, size);
 		// check first node = A
-		Assert.assertEquals(50.4268298, fullGeom.latitude(0), 0.000001);
-		Assert.assertEquals(4.9118004, fullGeom.longitude(0), 0.000001);
+		Assert.assertEquals(50.4268298, fullGeom.getLatitude(0), 0.000001);
+		Assert.assertEquals(4.9118004, fullGeom.getLongitude(0), 0.000001);
 		// check last node = B
-		Assert.assertEquals(50.4275585, fullGeom.latitude(size-1), 0.000001);
-		Assert.assertEquals(4.9177794, fullGeom.longitude(size-1), 0.000001);
+		Assert.assertEquals(50.4275585, fullGeom.getLatitude(size-1), 0.000001);
+		Assert.assertEquals(4.9177794, fullGeom.getLongitude(size-1), 0.000001);
 	}
 	
-	public List<PathSplitterTestCase> buildCases() {
+	public List<PathSplitterTestCase> buildCases()
+	{
 		
 		List<PathSplitterTestCase> cases = new ArrayList<PathSplitterTestCase>();
 		PathSplitterTestCase c;
@@ -121,7 +126,8 @@ public class PathSplitterTest {
 		return cases;
 	}
 	
-	private class PathSplitterTestCase {
+	private class PathSplitterTestCase
+	{
 		protected String caseId;
 		protected PointList points;
 		/** lon / lat of the gps point around the segment */
@@ -131,53 +137,63 @@ public class PathSplitterTest {
 		/** expected index where to cut the path */
 		protected int expIdx;
 		
-		public PathSplitterTestCase(String caseId) {
+		public PathSplitterTestCase( String caseId )
+		{
 			this.caseId = caseId;
 			expLat = expLon = Double.NaN;
 			expIdx = -1;
 		}
 		
-		public PathSplitterTestCase withPoints(double[][] pts) {
+		public PathSplitterTestCase withPoints( double[][] pts )
+		{
 			this.points = new PointList(pts.length);
-			for (double[] lonlat : pts) {
+			for (double[] lonlat : pts)
+			{
 				this.points.add(lonlat[0], lonlat[1]);
 			}
 			return this;
 		}
 		
-		public PathSplitterTestCase withGpsCoord(double lat, double lon) {
+		public PathSplitterTestCase withGpsCoord( double lat, double lon )
+		{
 			this.lat = lat;
 			this.lon = lon;
 			return this;
 		}
 		
-		public PathSplitterTestCase withExpectedCutIndex(int idx) {
+		public PathSplitterTestCase withExpectedCutIndex( int idx )
+		{
 			this.expIdx = idx;
 			return this;
 		}
 		
-		public PathSplitterTestCase withExpectedCutPoint(double lat, double lon) {
+		public PathSplitterTestCase withExpectedCutPoint( double lat, double lon )
+		{
 			this.expLat = lat;
 			this.expLon = lon;
 			return this;
 		}
 		
-		public GHPlace getGpsPoint() {
+		public GHPlace getGpsPoint()
+		{
 			return new GHPlace(lat, lon);
 		}
 		
-		public GHPlace getPointBeforeCut() {
-			return new GHPlace(points.latitude(expIdx - 1),
-					points.longitude(expIdx - 1));
+		public GHPlace getPointBeforeCut()
+		{
+			return new GHPlace(points.getLatitude(expIdx - 1),
+					points.getLongitude(expIdx - 1));
 		}
 		
-		public GHPlace getPointAfterCut() {
-			return new GHPlace(points.latitude(expIdx),
-					points.longitude(expIdx));
+		public GHPlace getPointAfterCut()
+		{
+			return new GHPlace(points.getLatitude(expIdx),
+					points.getLongitude(expIdx));
 		}
 	}
 	
-	public static PointList buildPointList(double[][] pts) {
+	public static PointList buildPointList( double[][] pts )
+	{
 		PointList points = new PointList(pts.length);
 		for (double[] pt : pts) {
 			points.add(pt[0], pt[1]);

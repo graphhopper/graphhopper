@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -25,21 +24,25 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class QuadTreeSimpleTest extends QuadTreeTester {
-
+public class QuadTreeSimpleTest extends QuadTreeTester
+{
     @Override
-    protected QuadTree<Long> createQuadTree(long items) {
+    protected QuadTree<Long> createQuadTree( long items )
+    {
         QuadTreeSimple<Long> qt = new QuadTreeSimple<Long>();
         qt.init(items);
         return qt;
     }
 
     @Test
-    public void testNodePutNull() {
-        try {
+    public void testNodePutNull()
+    {
+        try
+        {
             createQuadTree(10).add(10, 10, null);
             assertTrue("an exception should be thrown on 'storing null' as we rely on this in datanode", false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
     }
 }

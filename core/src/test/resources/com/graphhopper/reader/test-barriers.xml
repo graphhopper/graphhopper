@@ -7,15 +7,28 @@
         <tag k="barrier" v="gate" />
     </node>
     <node id="30" lat="53" lon="9.4">
+    </node>    
+    <node id="40" lat="54" lon="9.4">        
     </node>
     
-    <node id="40" lat="54" lon="9.4">
-        
+    <!--     barrier on tower node -->
+    <node id="50" lat="55" lon="9.4">        
+        <tag k="barrier" v="gate" />
+    </node>
+    <node id="60" lat="56" lon="9.4">
+    </node>
+    <node id="70" lat="57" lon="9.4">
+    </node>    
+    <node id="80" lat="58" lon="9.4">        
     </node>
     
+    <!-- 10-20|-30- - 50|-..         
+         |       |     |
+         40- - -/      ..
+    -->
     <way id="10">
         <nd ref="10"/>
-        <!-- this node has a barrier -->
+        <!-- this pillar node has a barrier -->
         <nd ref="20"/>        
         <nd ref="30"/>
         <tag k="highway" v="motorway" />
@@ -27,4 +40,24 @@
         <nd ref="30"/>
         <tag k="highway" v="motorway" />
     </way>     
+    
+    <way id="30">
+        <!-- this tower node has a barrier -->
+        <nd ref="50"/>
+        <nd ref="60"/>        
+        <tag k="highway" v="motorway" />
+    </way>     
+    
+    <way id="40">
+        <nd ref="50"/>
+        <nd ref="70"/>
+        <nd ref="80"/>
+        <tag k="highway" v="motorway" />
+    </way>    
+    
+    <way id="50">
+        <nd ref="50"/>        
+        <nd ref="30"/>        
+        <tag k="highway" v="motorway" />
+    </way>   
 </osm>

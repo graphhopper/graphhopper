@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -30,13 +29,15 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class PrepareRoutingSubnetworksTest {
-
-    Graph createGraph() {
+public class PrepareRoutingSubnetworksTest
+{
+    Graph createGraph()
+    {
         return new GraphBuilder(new EncodingManager("CAR")).create();
     }
 
-    Graph createSubnetworkTestGraph() {
+    Graph createSubnetworkTestGraph()
+    {
         Graph g = createGraph();
         // big network
         g.edge(1, 2, 1, true);
@@ -63,7 +64,8 @@ public class PrepareRoutingSubnetworksTest {
     }
 
     @Test
-    public void testFindSubnetworks() {
+    public void testFindSubnetworks()
+    {
         Graph g = createSubnetworkTestGraph();
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g);
         Map<Integer, Integer> map = instance.findSubnetworks();
@@ -77,14 +79,15 @@ public class PrepareRoutingSubnetworksTest {
     }
 
     @Test
-    public void testKeepLargestNetworks() {
+    public void testKeepLargestNetworks()
+    {
         Graph g = createSubnetworkTestGraph();
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g);
         Map<Integer, Integer> map = instance.findSubnetworks();
         instance.keepLargeNetworks(map);
         g.optimize();
 
-        assertEquals(7, g.nodes());
+        assertEquals(7, g.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(g));
         map = instance.findSubnetworks();
         assertEquals(1, map.size());

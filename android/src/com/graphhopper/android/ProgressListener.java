@@ -1,5 +1,6 @@
 package com.graphhopper.android;
 
-public interface ProgressListener {
-	void update(int val);
+public interface ProgressListener
+{
+    void update( int val );
 }

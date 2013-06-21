@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -24,17 +23,18 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class VLongStorageTest {
-
+public class VLongStorageTest
+{
     @Test
-    public void testWrite() {
+    public void testWrite()
+    {
         VLongStorage store = new VLongStorage();
         store.seek(0);
         store.writeVLong(1);
         store.writeVLong(7);
-        assertEquals(2, store.position());
+        assertEquals(2, store.getPosition());
         store.writeVLong(777666555);
-        assertEquals(7, store.position());
+        assertEquals(7, store.getPosition());
 
         store.seek(0);
         assertEquals(1L, store.readVLong());
@@ -43,18 +43,19 @@ public class VLongStorageTest {
     }
 
     @Test
-    public void testWriteWithTrim() {
+    public void testWriteWithTrim()
+    {
         VLongStorage store = new VLongStorage();
         store.seek(0);
         store.writeVLong(1);
         store.trimToSize();
-        assertEquals(1, store.position());
+        assertEquals(1, store.getPosition());
         store.writeVLong(7);
         store.trimToSize();
-        assertEquals(2, store.position());
+        assertEquals(2, store.getPosition());
         store.writeVLong(777666555);
         store.trimToSize();
-        assertEquals(7, store.position());
+        assertEquals(7, store.getPosition());
 
         store.seek(0);
         assertEquals(1L, store.readVLong());

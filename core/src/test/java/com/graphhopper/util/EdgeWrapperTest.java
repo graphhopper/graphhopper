@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -25,10 +24,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class EdgeWrapperTest {
-
+public class EdgeWrapperTest
+{
     @Test
-    public void testPut() {
+    public void testPut()
+    {
         EdgeWrapper instance = new EdgeWrapper(5);
         int ref = instance.add(10, 100f, -1);
         assertEquals(100f, instance.getWeight(ref), 1e-4);
@@ -37,7 +37,8 @@ public class EdgeWrapperTest {
     }
 
     @Test
-    public void testClear() {
+    public void testClear()
+    {
         EdgeWrapper instance = new EdgeWrapper(5);
         assertEquals(0, instance.add(1, 10, 10));
         instance.add(2, 20, 20);

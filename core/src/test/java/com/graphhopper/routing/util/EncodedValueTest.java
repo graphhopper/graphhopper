@@ -25,16 +25,17 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class EncodedValueTest {
-
+public class EncodedValueTest
+{
     @Test
-    public void testSetValue() {
+    public void testSetValue()
+    {
         EncodedValue instance = new EncodedValue("test", 6, 4, 1, 5, 10);
         assertEquals(10, instance.getValue(instance.setValue(0, 10)));
 
         instance = new EncodedValue("test", 0, 4, 1, 5, 10);
         assertEquals(10, instance.getValue(instance.setValue(0, 10)));
-        
+
         instance = new EncodedValue("test", 0, 4, 1, 5, 10);
         assertEquals(5, instance.getValue(instance.setDefaultValue(0)));
     }

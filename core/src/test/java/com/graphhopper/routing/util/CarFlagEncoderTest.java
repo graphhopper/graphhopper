@@ -29,13 +29,14 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class CarFlagEncoderTest {
-
+public class CarFlagEncoderTest
+{
     private EncodingManager em = new EncodingManager("CAR,BIKE,FOOT");
     private CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("CAR");
 
     @Test
-    public void testAccess() {
+    public void testAccess()
+    {
         Map<String, String> map = new HashMap<String, String>();
         OSMWay way = new OSMWay(1, map);
         assertFalse(encoder.isAllowed(way) > 0);
@@ -59,7 +60,8 @@ public class CarFlagEncoderTest {
     }
 
     @Test
-    public void testBasics() {
+    public void testBasics()
+    {
         assertTrue(encoder.isForward(encoder.flagsDefault(true)));
         assertTrue(encoder.isBackward(encoder.flagsDefault(true)));
         assertTrue(encoder.isBoth(encoder.flagsDefault(true)));
@@ -70,7 +72,8 @@ public class CarFlagEncoderTest {
     }
 
     @Test
-    public void testOverwrite() {
+    public void testOverwrite()
+    {
         int forward = encoder.flags(10, false);
         int backward = encoder.swapDirection(forward);
         int both = encoder.flags(20, true);
@@ -87,7 +90,8 @@ public class CarFlagEncoderTest {
     }
 
     @Test
-    public void testSwapDir() {
+    public void testSwapDir()
+    {
         int swappedFlags = encoder.swapDirection(encoder.flagsDefault(true));
         assertTrue(encoder.isForward(swappedFlags));
         assertTrue(encoder.isBackward(swappedFlags));

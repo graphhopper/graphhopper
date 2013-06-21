@@ -21,11 +21,12 @@ package com.graphhopper.util;
 /**
  * @author Peter Karich
  */
-public class IntRef {
-
+public class IntRef
+{
     public int val;
 
-    public IntRef(int val) {
+    public IntRef( int val )
+    {
         this.val = val;
     }
 }

@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -28,24 +27,30 @@ import java.net.URLEncoder;
 /**
  * @author Peter Karich
  */
-public class WebHelper {
-
-    public static String encodeURL(String str) {
-        try {
+public class WebHelper
+{
+    public static String encodeURL( String str )
+    {
+        try
+        {
             return URLEncoder.encode(str, "UTF-8");
-        } catch (Exception _ignore) {
+        } catch (Exception _ignore)
+        {
             return str;
         }
     }
 
-    public static PointList decodePolyline(String encoded, int initCap) {
+    public static PointList decodePolyline( String encoded, int initCap )
+    {
         PointList poly = new PointList(initCap);
         int index = 0, len = encoded.length();
         int lat = 0, lng = 0;
-        while (index < len) {
+        while (index < len)
+        {
             // latitude
             int b, shift = 0, result = 0;
-            do {
+            do
+            {
                 b = encoded.charAt(index++) - 63;
                 result |= (b & 0x1f) << shift;
                 shift += 5;
@@ -56,7 +61,8 @@ public class WebHelper {
             // longitute
             shift = 0;
             result = 0;
-            do {
+            do
+            {
                 b = encoded.charAt(index++) - 63;
                 result |= (b & 0x1f) << shift;
                 shift += 5;
@@ -69,27 +75,33 @@ public class WebHelper {
     }
 
     // https://developers.google.com/maps/documentation/utilities/polylinealgorithm?hl=de
-    public static String encodePolyline(PointList poly) {
+    public static String encodePolyline( PointList poly )
+    {
         StringBuilder sb = new StringBuilder();
-        int size = poly.size();
+        int size = poly.getSize();
         int prevLat = 0;
         int prevLon = 0;
-        for (int i = 0; i < size; i++) {
-            int num = (int) Math.floor(poly.latitude(i) * 1e5);
+        for (int i = 0; i < size; i++)
+        {
+            int num = (int) Math.floor(poly.getLatitude(i) * 1e5);
             encodeNumber(sb, num - prevLat);
             prevLat = num;
-            num = (int) Math.floor(poly.longitude(i) * 1e5);
+            num = (int) Math.floor(poly.getLongitude(i) * 1e5);
             encodeNumber(sb, num - prevLon);
             prevLon = num;
         }
         return sb.toString();
     }
 
-    private static void encodeNumber(StringBuilder sb, int num) {
+    private static void encodeNumber( StringBuilder sb, int num )
+    {
         num = num << 1;
         if (num < 0)
+        {
             num = ~num;
-        while (num >= 0x20) {
+        }
+        while (num >= 0x20)
+        {
             int nextValue = (0x20 | (num & 0x1f)) + 63;
             sb.append((char) (nextValue));
             num >>= 5;
@@ -98,18 +110,22 @@ public class WebHelper {
         sb.append((char) (num));
     }
 
-    public static String readString(InputStream inputStream) throws IOException {
+    public static String readString( InputStream inputStream ) throws IOException
+    {
         String encoding = "UTF-8";
         InputStream in = new BufferedInputStream(inputStream, 4096);
-        try {
+        try
+        {
             byte[] buffer = new byte[4096];
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             int numRead;
-            while ((numRead = in.read(buffer)) != -1) {
+            while ((numRead = in.read(buffer)) != -1)
+            {
                 output.write(buffer, 0, numRead);
             }
             return output.toString(encoding);
-        } finally {
+        } finally
+        {
             in.close();
         }
     }

@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -24,34 +23,38 @@ import com.graphhopper.util.Helper;
 /**
  * @author Peter Karich
  */
-public class GraphStorage3D extends GraphStorage implements Graph3D {
+public class GraphStorage3D extends GraphStorage implements Graph3D
+{
+    private final int N_HEIGHT;
 
-    private final int I_HEIGHT;
-
-    public GraphStorage3D(Directory dir, EncodingManager encodingManager) {
+    public GraphStorage3D( Directory dir, EncodingManager encodingManager )
+    {
         super(dir, encodingManager);
-        I_HEIGHT = nextNodeEntryIndex();
+        N_HEIGHT = nextNodeEntryIndex();
         initNodeAndEdgeEntrySize();
     }
 
     @Override
-    public GraphStorage3D create(long nodeCount) {
+    public GraphStorage3D create( long nodeCount )
+    {
         return (GraphStorage3D) super.create(nodeCount);
     }
 
     @Override
-    public void setNode(int index, double lat, double lon, double height) {
+    public void setNode( int index, double lat, double lon, double height )
+    {
         setNode(index, lat, lon);
         // TODO 1 bounds for index
         // TODO 2 location to id index
         // we need to avoid rewriting every algorithm like A*
         // TODO 3 currWeightToGoal = dist.calcDistKm(toLat, toLon, tmpLat, tmpLon);
-        nodes.setInt((long) index * nodeEntryBytes + I_HEIGHT, Helper.doubleToInt(height));
+        nodes.setInt((long) index * nodeEntryBytes + N_HEIGHT, Helper.doubleToInt(height));
     }
 
     @Override
-    public double getHeight(int index) {
+    public double getHeight( int index )
+    {
         ensureNodeIndex(index);
-        return Helper.intToDouble(nodes.getInt((long) index * nodeEntryBytes + I_HEIGHT));
+        return Helper.intToDouble(nodes.getInt((long) index * nodeEntryBytes + N_HEIGHT));
     }
 }

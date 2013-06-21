@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -35,14 +34,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Abstract test class to be extended for implementations of the Graph
- * interface. Graphs implementing GraphStorage should extend GraphStorageTest
- * instead.
- *
+ * Abstract test class to be extended for implementations of the Graph interface. Graphs
+ * implementing GraphStorage should extend GraphStorageTest instead.
+ * <p/>
  * @author Peter Karich
  */
-public abstract class AbstractGraphTester {
-
+public abstract class AbstractGraphTester
+{
     private String location = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraph = "./target/graphstorage/default";
@@ -53,27 +51,32 @@ public abstract class AbstractGraphTester {
     EdgeFilter carInFilter = new DefaultEdgeFilter(carEncoder, true, false);
     private Graph graph;
 
-    protected Graph createGraph() {
+    protected Graph createGraph()
+    {
         return createGraph(defaultGraph, defaultSize);
     }
 
-    abstract Graph createGraph(String location, int size);
+    abstract Graph createGraph( String location, int size );
 
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         Helper.removeDir(new File(location));
     }
 
     @After
-    public void tearDown() {
+    public void tearDown()
+    {
         close(graph);
         Helper.removeDir(new File(location));
     }
 
     @Test
-    public void testSetNodes() {
+    public void testSetNodes()
+    {
         graph = createGraph();
-        for (int i = 0; i < defaultSize * 2; i++) {
+        for (int i = 0; i < defaultSize * 2; i++)
+        {
             graph.setNode(i, 2 * i, 3 * i);
         }
         graph.edge(defaultSize + 1, defaultSize + 2, 10, true);
@@ -82,7 +85,8 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testCreateLocation() {
+    public void testCreateLocation()
+    {
         graph = createGraph();
         graph.edge(3, 1, 50, true);
         assertEquals(1, count(graph.getEdges(1, carOutFilter)));
@@ -92,7 +96,8 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testEdges() {
+    public void testEdges()
+    {
         graph = createGraph();
         graph.edge(2, 1, 12, true);
         assertEquals(1, count(graph.getEdges(2, carOutFilter)));
@@ -104,7 +109,8 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testUnidirectional() {
+    public void testUnidirectional()
+    {
         graph = createGraph();
 
         graph.edge(1, 2, 12, false);
@@ -124,20 +130,21 @@ public abstract class AbstractGraphTester {
         assertEquals(1, GHUtility.count(graph.getEdges(3, carOutFilter)));
         i = graph.getEdges(3, carOutFilter);
         i.next();
-        assertEquals(2, i.adjNode());
+        assertEquals(2, i.getAdjNode());
 
         i = graph.getEdges(1, carOutFilter);
         assertTrue(i.next());
-        assertEquals(2, i.adjNode());
+        assertEquals(2, i.getAdjNode());
         assertTrue(i.next());
-        assertEquals(11, i.adjNode());
+        assertEquals(11, i.getAdjNode());
         assertTrue(i.next());
-        assertEquals(12, i.adjNode());
+        assertEquals(12, i.getAdjNode());
         assertFalse(i.next());
     }
 
     @Test
-    public void testUnidirectionalEdgeFilter() {
+    public void testUnidirectionalEdgeFilter()
+    {
         graph = createGraph();
 
         graph.edge(1, 2, 12, false);
@@ -157,20 +164,21 @@ public abstract class AbstractGraphTester {
         assertEquals(1, GHUtility.count(graph.getEdges(3, carOutFilter)));
         i = graph.getEdges(3, carOutFilter);
         i.next();
-        assertEquals(2, i.adjNode());
+        assertEquals(2, i.getAdjNode());
 
         i = graph.getEdges(1, carOutFilter);
         assertTrue(i.next());
-        assertEquals(2, i.adjNode());
+        assertEquals(2, i.getAdjNode());
         assertTrue(i.next());
-        assertEquals(11, i.adjNode());
+        assertEquals(11, i.getAdjNode());
         assertTrue(i.next());
-        assertEquals(12, i.adjNode());
+        assertEquals(12, i.getAdjNode());
         assertFalse(i.next());
     }
 
     @Test
-    public void testUpdateUnidirectional() {
+    public void testUpdateUnidirectional()
+    {
         graph = createGraph();
 
         graph.edge(1, 2, 12, false);
@@ -179,21 +187,22 @@ public abstract class AbstractGraphTester {
         assertFalse(i.next());
         i = graph.getEdges(3, carOutFilter);
         assertTrue(i.next());
-        assertEquals(2, i.adjNode());
+        assertEquals(2, i.getAdjNode());
         assertFalse(i.next());
 
         graph.edge(2, 3, 112, false);
         i = graph.getEdges(2, carOutFilter);
         assertTrue(i.next());
-        assertEquals(3, i.adjNode());
+        assertEquals(3, i.getAdjNode());
         i = graph.getEdges(3, carOutFilter);
         i.next();
-        assertEquals(2, i.adjNode());
+        assertEquals(2, i.getAdjNode());
         assertFalse(i.next());
     }
 
     @Test
-    public void testClone() {
+    public void testClone()
+    {
         graph = createGraph();
         graph.edge(1, 2, 10, true);
         graph.setNode(0, 12, 23);
@@ -203,63 +212,72 @@ public abstract class AbstractGraphTester {
         graph.edge(1, 3, 10, true);
 
         Graph clone = graph.copyTo(createGraph(location + "/clone", defaultSize));
-        assertEquals(graph.nodes(), clone.nodes());
+        assertEquals(graph.getNodes(), clone.getNodes());
         assertEquals(count(graph.getEdges(1, carOutFilter)), count(clone.getEdges(1, carOutFilter)));
         clone.edge(1, 4, 10, true);
         assertEquals(3, count(clone.getEdges(1, carOutFilter)));
-        assertEquals(graph.bounds(), clone.bounds());
+        assertEquals(graph.getBounds(), clone.getBounds());
         close(clone);
     }
 
     @Test
-    public void testGetLocations() {
+    public void testGetLocations()
+    {
         graph = createGraph();
         graph.setNode(0, 12, 23);
         graph.setNode(1, 22, 23);
-        assertEquals(2, graph.nodes());
+        assertEquals(2, graph.getNodes());
 
         graph.edge(0, 1, 10, true);
-        assertEquals(2, graph.nodes());
+        assertEquals(2, graph.getNodes());
 
         graph.edge(0, 2, 10, true);
-        assertEquals(3, graph.nodes());
+        assertEquals(3, graph.getNodes());
         close(graph);
 
         graph = createGraph();
-        assertEquals(0, graph.nodes());
+        assertEquals(0, graph.getNodes());
     }
 
     @Test
-    public void testCopyTo() {
+    public void testCopyTo()
+    {
         graph = createGraph();
         initExampleGraph(graph);
-        Graph gs = new GraphStorage(new RAMDirectory(), encodingManager).segmentSize(8000).create(10);
-        try {
+        Graph gs = new GraphStorage(new RAMDirectory(), encodingManager).setSegmentSize(8000).create(10);
+        try
+        {
             graph.copyTo(gs);
             checkExampleGraph(gs);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
             ex.printStackTrace();
             assertTrue(ex.toString(), false);
         }
 
-        try {            
+        try
+        {
+            close(graph);
             graph = createGraph();
             gs.copyTo(graph);
             checkExampleGraph(graph);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
             ex.printStackTrace();
             assertTrue(ex.toString(), false);
         }
     }
 
     @Test
-    public void testAddLocation() {
+    public void testAddLocation()
+    {
         graph = createGraph();
         initExampleGraph(graph);
         checkExampleGraph(graph);
     }
 
-    protected void initExampleGraph(Graph g) {
+    protected void initExampleGraph( Graph g )
+    {
         g.setNode(0, 12, 23);
         g.setNode(1, 38.33f, 135.3f);
         g.setNode(2, 6, 139);
@@ -273,7 +291,8 @@ public abstract class AbstractGraphTester {
         g.edge(0, 5, 212, true);
     }
 
-    private void checkExampleGraph(Graph graph) {
+    private void checkExampleGraph( Graph graph )
+    {
         assertEquals(12f, graph.getLatitude(0), 1e-6);
         assertEquals(23f, graph.getLongitude(0), 1e-6);
 
@@ -286,18 +305,21 @@ public abstract class AbstractGraphTester {
         assertEquals(78, graph.getLatitude(3), 1e-6);
         assertEquals(89, graph.getLongitude(3), 1e-6);
 
-        assertEquals(Arrays.asList(0), GHUtility.neighbors(graph.getEdges(1, carOutFilter)));
-        assertEquals(Arrays.asList(1, 2, 3, 4, 5), GHUtility.neighbors(graph.getEdges(0, carOutFilter)));
-        try {
+        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(graph.getEdges(1, carOutFilter)));
+        assertEquals(Arrays.asList(1, 2, 3, 4, 5), GHUtility.getNeighbors(graph.getEdges(0, carOutFilter)));
+        try
+        {
             assertEquals(0, count(graph.getEdges(6, carOutFilter)));
             // for now return empty iterator
             // assertFalse(true);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
     }
 
     @Test
-    public void testDirectional() {
+    public void testDirectional()
+    {
         graph = createGraph();
         graph.edge(1, 2, 12, true);
         graph.edge(2, 3, 12, false);
@@ -327,7 +349,8 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testDozendEdges() {
+    public void testDozendEdges()
+    {
         graph = createGraph();
         graph.edge(1, 2, 12, true);
         assertEquals(1, count(graph.getEdges(1)));
@@ -358,7 +381,8 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testCheckFirstNode() {
+    public void testCheckFirstNode()
+    {
         graph = createGraph();
         assertEquals(0, count(graph.getEdges(1)));
         graph.edge(0, 1, 12, true);
@@ -366,7 +390,8 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testDeleteNodeForUnidir() {
+    public void testDeleteNodeForUnidir()
+    {
         graph = createGraph();
         graph.setNode(10, 10, 1);
         graph.setNode(6, 6, 1);
@@ -378,9 +403,9 @@ public abstract class AbstractGraphTester {
 
         graph.markNodeRemoved(0);
         graph.markNodeRemoved(7);
-        assertEquals(22, graph.nodes());
+        assertEquals(22, graph.getNodes());
         graph.optimize();
-        assertEquals(20, graph.nodes());
+        assertEquals(20, graph.getNodes());
 
         assertEquals(1, GHUtility.count(graph.getEdges(getIdOf(graph, 20), carInFilter)));
         assertEquals(0, GHUtility.count(graph.getEdges(getIdOf(graph, 20), carOutFilter)));
@@ -396,16 +421,19 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testComplexDeleteNode() {
+    public void testComplexDeleteNode()
+    {
         testDeleteNodes(21);
     }
 
     @Test
-    public void testComplexDeleteNode2() {
+    public void testComplexDeleteNode2()
+    {
         testDeleteNodes(6);
     }
 
-    public void testDeleteNodes(int fillToSize) {
+    public void testDeleteNodes( int fillToSize )
+    {
         graph = createGraph();
         graph.setNode(0, 12, 23);
         graph.setNode(1, 38.33f, 135.3f);
@@ -415,12 +443,15 @@ public abstract class AbstractGraphTester {
         graph.setNode(5, 2.5f, 1);
 
         int deleted = 2;
-        for (int i = 6; i < fillToSize; i++) {
+        for (int i = 6; i < fillToSize; i++)
+        {
             graph.setNode(i, i * 1.5, i * 1.6);
-            if (i % 3 == 0) {
+            if (i % 3 == 0)
+            {
                 graph.markNodeRemoved(i);
                 deleted++;
-            } else {
+            } else
+            {
                 // connect to
                 // ... a deleted node
                 graph.edge(i, 0, 10 * i, true);
@@ -439,7 +470,7 @@ public abstract class AbstractGraphTester {
         graph.markNodeRemoved(0);
         graph.markNodeRemoved(2);
         // no deletion happend
-        assertEquals(fillToSize, graph.nodes());
+        assertEquals(fillToSize, graph.getNodes());
 
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(graph));
 
@@ -448,7 +479,7 @@ public abstract class AbstractGraphTester {
 
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(graph));
 
-        assertEquals(fillToSize - deleted, graph.nodes());
+        assertEquals(fillToSize - deleted, graph.getNodes());
         int id1 = getIdOf(graph, 38.33f);
         assertEquals(135.3f, graph.getLongitude(id1), 1e-4);
         assertTrue(containsLatitude(graph, graph.getEdges(id1), 2.5));
@@ -460,9 +491,12 @@ public abstract class AbstractGraphTester {
         assertFalse(containsLatitude(graph, graph.getEdges(id3), 12));
     }
 
-    public boolean containsLatitude(Graph g, EdgeIterator iter, double latitude) {
-        while (iter.next()) {
-            if (Math.abs(g.getLatitude(iter.adjNode()) - latitude) < 1e-4) {
+    public boolean containsLatitude( Graph g, EdgeIterator iter, double latitude )
+    {
+        while (iter.next())
+        {
+            if (Math.abs(g.getLatitude(iter.getAdjNode()) - latitude) < 1e-4)
+            {
                 return true;
             }
         }
@@ -470,7 +504,8 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testSimpleDelete() {
+    public void testSimpleDelete()
+    {
         graph = createGraph();
         graph.setNode(0, 12, 23);
         graph.setNode(1, 38.33f, 135.3f);
@@ -484,22 +519,23 @@ public abstract class AbstractGraphTester {
         graph.markNodeRemoved(0);
         graph.markNodeRemoved(3);
 
-        assertEquals(6, graph.nodes());
+        assertEquals(6, graph.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(graph));
 
         // now actually perform deletion
         graph.optimize();
 
-        assertEquals(4, graph.nodes());
+        assertEquals(4, graph.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(graph));
         // shouldn't change anything
         graph.optimize();
-        assertEquals(4, graph.nodes());
+        assertEquals(4, graph.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(graph));
     }
 
     @Test
-    public void testSimpleDelete2() {
+    public void testSimpleDelete2()
+    {
         graph = createGraph();
         assertEquals(-1, getIdOf(graph, 12));
         graph.setNode(9, 9, 1);
@@ -517,25 +553,26 @@ public abstract class AbstractGraphTester {
         graph.edge(9, 11, 911, true);
         graph.edge(9, 12, 912, true);
 
-        assertEquals(13, graph.nodes());
+        assertEquals(13, graph.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(graph));
 
         // perform deletion
         graph.optimize();
 
-        assertEquals(11, graph.nodes());
+        assertEquals(11, graph.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(graph));
 
         int id11 = getIdOf(graph, 11); // is now 10
         int id12 = getIdOf(graph, 12); // is now 5
         int id9 = getIdOf(graph, 9);   // is now 9
-        assertEquals(Arrays.asList(id11, id12), GHUtility.neighbors(graph.getEdges(id9)));
-        assertEquals(Arrays.asList(id9), GHUtility.neighbors(graph.getEdges(id11)));
-        assertEquals(Arrays.asList(id9), GHUtility.neighbors(graph.getEdges(id12)));
+        assertEquals(Arrays.asList(id11, id12), GHUtility.getNeighbors(graph.getEdges(id9)));
+        assertEquals(Arrays.asList(id9), GHUtility.getNeighbors(graph.getEdges(id11)));
+        assertEquals(Arrays.asList(id9), GHUtility.getNeighbors(graph.getEdges(id12)));
     }
 
     @Test
-    public void testSimpleDelete3() {
+    public void testSimpleDelete3()
+    {
         graph = createGraph();
         graph.setNode(7, 7, 1);
         graph.setNode(8, 8, 1);
@@ -565,7 +602,8 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testDeleteAndOptimize() {
+    public void testDeleteAndOptimize()
+    {
         graph = createGraph();
         graph.setNode(20, 10, 10);
         graph.setNode(21, 10, 11);
@@ -575,9 +613,10 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testBounds() {
+    public void testBounds()
+    {
         graph = createGraph();
-        BBox b = graph.bounds();
+        BBox b = graph.getBounds();
         assertEquals(BBox.INVERSE.maxLat, b.maxLat, 1e-6);
 
         graph.setNode(0, 10, 20);
@@ -592,46 +631,48 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testFlags() {
+    public void testFlags()
+    {
         graph = createGraph();
         graph.edge(0, 1, 10, carEncoder.flags(120, true));
         graph.edge(2, 3, 10, carEncoder.flags(10, false));
 
         EdgeIterator iter = graph.getEdges(0);
         assertTrue(iter.next());
-        assertEquals(carEncoder.flags(120, true), iter.flags());
+        assertEquals(carEncoder.flags(120, true), iter.getFlags());
 
         iter = graph.getEdges(2);
         assertTrue(iter.next());
-        assertEquals(carEncoder.flags(10, false), iter.flags());
+        assertEquals(carEncoder.flags(10, false), iter.getFlags());
     }
 
     @Test
-    public void testEdgeProperties() {
+    public void testEdgeProperties()
+    {
         graph = createGraph();
         EdgeIterator iter1 = graph.edge(0, 1, 10, true);
         EdgeIterator iter2 = graph.edge(0, 2, 20, true);
 
-        int edgeId = iter1.edge();
+        int edgeId = iter1.getEdge();
         EdgeIterator iter = graph.getEdgeProps(edgeId, 0);
-        assertEquals(10, iter.distance(), 1e-5);
+        assertEquals(10, iter.getDistance(), 1e-5);
 
-        edgeId = iter2.edge();
+        edgeId = iter2.getEdge();
         iter = graph.getEdgeProps(edgeId, 0);
-        assertEquals(2, iter.baseNode());
-        assertEquals(0, iter.adjNode());
-        assertEquals(20, iter.distance(), 1e-5);
+        assertEquals(2, iter.getBaseNode());
+        assertEquals(0, iter.getAdjNode());
+        assertEquals(20, iter.getDistance(), 1e-5);
 
         iter = graph.getEdgeProps(edgeId, 2);
-        assertEquals(0, iter.baseNode());
-        assertEquals(2, iter.adjNode());
-        assertEquals(20, iter.distance(), 1e-5);
+        assertEquals(0, iter.getBaseNode());
+        assertEquals(2, iter.getAdjNode());
+        assertEquals(20, iter.getDistance(), 1e-5);
 
         // minor API glitch: should be RawEdgeIterator
         iter = graph.getEdgeProps(edgeId, -1);
         assertFalse(iter.isEmpty());
-        assertEquals(0, iter.baseNode());
-        assertEquals(2, iter.adjNode());
+        assertEquals(0, iter.getBaseNode());
+        assertEquals(2, iter.getAdjNode());
 
         iter = graph.getEdgeProps(edgeId, 1);
         assertTrue(iter.isEmpty());
@@ -641,15 +682,18 @@ public abstract class AbstractGraphTester {
         graph.optimize();
 
         // throw exception if accessing deleted edge
-        try {
-            graph.getEdgeProps(iter1.edge(), -1);
+        try
+        {
+            graph.getEdgeProps(iter1.getEdge(), -1);
             assertTrue(false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
     }
 
     @Test
-    public void testCreateDuplicateEdges() {
+    public void testCreateDuplicateEdges()
+    {
         graph = createGraph();
         graph.edge(2, 1, 12, true);
         graph.edge(2, 3, 12, true);
@@ -660,46 +704,52 @@ public abstract class AbstractGraphTester {
         graph.getEdgeProps(1, 3);
 
         // raise exception
-        try {
+        try
+        {
             graph.getEdgeProps(4, 3);
             assertTrue(false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
-        try {
+        try
+        {
             graph.getEdgeProps(-1, 3);
             assertTrue(false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
 
         EdgeIterator iter = graph.getEdges(2, carOutFilter);
         iter.next();
         iter.next();
         assertTrue(iter.next());
-        EdgeIterator oneIter = graph.getEdgeProps(iter.edge(), 3);
-        assertEquals(13, oneIter.distance(), 1e-6);
-        assertEquals(2, oneIter.baseNode());
-        assertTrue(carEncoder.isForward(oneIter.flags()));
-        assertFalse(carEncoder.isBoth(oneIter.flags()));
+        EdgeIterator oneIter = graph.getEdgeProps(iter.getEdge(), 3);
+        assertEquals(13, oneIter.getDistance(), 1e-6);
+        assertEquals(2, oneIter.getBaseNode());
+        assertTrue(carEncoder.isForward(oneIter.getFlags()));
+        assertFalse(carEncoder.isBoth(oneIter.getFlags()));
 
-        oneIter = graph.getEdgeProps(iter.edge(), 2);
-        assertEquals(13, oneIter.distance(), 1e-6);
-        assertEquals(3, oneIter.baseNode());
-        assertTrue(carEncoder.isBackward(oneIter.flags()));
-        assertFalse(carEncoder.isBoth(oneIter.flags()));
+        oneIter = graph.getEdgeProps(iter.getEdge(), 2);
+        assertEquals(13, oneIter.getDistance(), 1e-6);
+        assertEquals(3, oneIter.getBaseNode());
+        assertTrue(carEncoder.isBackward(oneIter.getFlags()));
+        assertFalse(carEncoder.isBoth(oneIter.getFlags()));
 
         graph.edge(3, 2, 14, true);
         assertEquals(4, GHUtility.count(graph.getEdges(2, carOutFilter)));
     }
 
     @Test
-    public void testIdenticalNodes() {
+    public void testIdenticalNodes()
+    {
         graph = createGraph();
         graph.edge(0, 0, 100, true);
         assertEquals(1, GHUtility.count(graph.getEdges(0)));
     }
 
     @Test
-    public void testIdenticalNodes2() {
+    public void testIdenticalNodes2()
+    {
         graph = createGraph();
         graph.edge(0, 0, 100, false);
         graph.edge(0, 0, 100, false);
@@ -707,63 +757,67 @@ public abstract class AbstractGraphTester {
     }
 
     @Test
-    public void testEdgeReturn() {
+    public void testEdgeReturn()
+    {
         graph = createGraph();
         EdgeIterator iter = graph.edge(4, 10, 100, carEncoder.flags(10, false));
-        assertEquals(4, iter.baseNode());
-        assertEquals(10, iter.adjNode());
+        assertEquals(4, iter.getBaseNode());
+        assertEquals(10, iter.getAdjNode());
         iter = graph.edge(14, 10, 100, carEncoder.flags(10, false));
-        assertEquals(14, iter.baseNode());
-        assertEquals(10, iter.adjNode());
+        assertEquals(14, iter.getBaseNode());
+        assertEquals(10, iter.getAdjNode());
     }
 
     @Test
-    public void testPillarNodes() {
+    public void testPillarNodes()
+    {
         graph = createGraph();
         PointList pointList = Helper.createPointList(1, 1, 1, 2, 1, 3);
-        graph.edge(0, 4, 100, carEncoder.flags(10, false)).wayGeometry(pointList);
+        graph.edge(0, 4, 100, carEncoder.flags(10, false)).setWayGeometry(pointList);
         pointList = Helper.createPointList(1, 5, 1, 6, 1, 7, 1, 8, 1, 9);
-        graph.edge(4, 10, 100, carEncoder.flags(10, false)).wayGeometry(pointList);
+        graph.edge(4, 10, 100, carEncoder.flags(10, false)).setWayGeometry(pointList);
         pointList = Helper.createPointList(1, 13, 1, 12, 1, 11);
-        graph.edge(14, 0, 100, carEncoder.flags(10, false)).wayGeometry(pointList);
+        graph.edge(14, 0, 100, carEncoder.flags(10, false)).setWayGeometry(pointList);
 
         // if tower node requested => return only tower nodes
         EdgeIterator iter = graph.getEdges(0);
         assertTrue(iter.next());
-        assertEquals(4, iter.adjNode());
-        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.wayGeometry());
+        assertEquals(4, iter.getAdjNode());
+        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.getWayGeometry());
         assertTrue(iter.next());
-        assertPList(Helper.createPointList(1, 11, 1, 12, 1, 13.0), iter.wayGeometry());
-        assertEquals(14, iter.adjNode());
+        assertPList(Helper.createPointList(1, 11, 1, 12, 1, 13.0), iter.getWayGeometry());
+        assertEquals(14, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = graph.getEdges(0, carOutFilter);
         assertTrue(iter.next());
-        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.wayGeometry());
-        assertEquals(4, iter.adjNode());
+        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.getWayGeometry());
+        assertEquals(4, iter.getAdjNode());
         assertFalse(iter.next());
 
         iter = graph.getEdges(10, carInFilter);
         assertTrue(iter.next());
-        assertPList(Helper.createPointList(1, 9, 1, 8, 1, 7, 1, 6, 1, 5), iter.wayGeometry());
-        assertEquals(4, iter.adjNode());
+        assertPList(Helper.createPointList(1, 9, 1, 8, 1, 7, 1, 6, 1, 5), iter.getWayGeometry());
+        assertEquals(4, iter.getAdjNode());
         assertFalse(iter.next());
     }
 
     @Test
-    public void testFootMix() {
+    public void testFootMix()
+    {
         graph = createGraph();
         graph.edge(0, 1, 10, footEncoder.flags(10, true));
         graph.edge(0, 2, 10, carEncoder.flags(10, true));
         graph.edge(0, 3, 10, footEncoder.flags(10, true) | carEncoder.flags(10, true));
         assertEquals(Arrays.asList(1, 3),
-                GHUtility.neighbors(graph.getEdges(0, new DefaultEdgeFilter(footEncoder, false, true))));
+                GHUtility.getNeighbors(graph.getEdges(0, new DefaultEdgeFilter(footEncoder, false, true))));
         assertEquals(Arrays.asList(2, 3),
-                GHUtility.neighbors(graph.getEdges(0, new DefaultEdgeFilter(carEncoder, false, true))));
+                GHUtility.getNeighbors(graph.getEdges(0, new DefaultEdgeFilter(carEncoder, false, true))));
     }
 
     @Test
-    public void testGetAllEdges() {
+    public void testGetAllEdges()
+    {
         graph = createGraph();
         graph.edge(0, 1, 2, true);
         graph.edge(3, 1, 1, false);
@@ -771,26 +825,27 @@ public abstract class AbstractGraphTester {
 
         EdgeIterator iter = graph.getAllEdges();
         assertTrue(iter.next());
-        int edgeId = iter.edge();
-        assertEquals(0, iter.baseNode());
-        assertEquals(1, iter.adjNode());
-        assertEquals(2, iter.distance(), 1e-6);
+        int edgeId = iter.getEdge();
+        assertEquals(0, iter.getBaseNode());
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(2, iter.getDistance(), 1e-6);
 
         assertTrue(iter.next());
-        int edgeId2 = iter.edge();
+        int edgeId2 = iter.getEdge();
         assertEquals(1, edgeId2 - edgeId);
-        assertEquals(1, iter.baseNode());
-        assertEquals(3, iter.adjNode());
+        assertEquals(1, iter.getBaseNode());
+        assertEquals(3, iter.getAdjNode());
 
         assertTrue(iter.next());
-        assertEquals(2, iter.baseNode());
-        assertEquals(3, iter.adjNode());
+        assertEquals(2, iter.getBaseNode());
+        assertEquals(3, iter.getAdjNode());
 
         assertFalse(iter.next());
     }
 
     @Test
-    public void testGetAllEdgesWithDelete() {
+    public void testGetAllEdgesWithDelete()
+    {
         graph = createGraph();
         graph.setNode(0, 0, 5);
         graph.setNode(1, 1, 5);
@@ -802,28 +857,33 @@ public abstract class AbstractGraphTester {
         graph.edge(2, 3, 1, true);
         AllEdgesIterator iter = graph.getAllEdges();
         assertEquals(4, GHUtility.count(iter));
-        assertEquals(4, iter.maxId());
+        assertEquals(4, iter.getMaxId());
 
         // delete
         graph.markNodeRemoved(1);
         graph.optimize();
         iter = graph.getAllEdges();
         assertEquals(2, GHUtility.count(iter));
-        assertEquals(4, iter.maxId());
+        assertEquals(4, iter.getMaxId());
     }
 
-    public static void assertPList(PointList expected, PointList list) {
-        assertEquals("size of point lists is not equal", expected.size(), list.size());
-        for (int i = 0; i < expected.size(); i++) {
-            assertEquals(expected.latitude(i), list.latitude(i), 1e-4);
-            assertEquals(expected.longitude(i), list.longitude(i), 1e-4);
+    public static void assertPList( PointList expected, PointList list )
+    {
+        assertEquals("size of point lists is not equal", expected.getSize(), list.getSize());
+        for (int i = 0; i < expected.getSize(); i++)
+        {
+            assertEquals(expected.getLatitude(i), list.getLatitude(i), 1e-4);
+            assertEquals(expected.getLongitude(i), list.getLongitude(i), 1e-4);
         }
     }
 
-    public static int getIdOf(Graph g, double latitude) {
-        int s = g.nodes();
-        for (int i = 0; i < s; i++) {
-            if (Math.abs(g.getLatitude(i) - latitude) < 1e-4) {
+    public static int getIdOf( Graph g, double latitude )
+    {
+        int s = g.getNodes();
+        for (int i = 0; i < s; i++)
+        {
+            if (Math.abs(g.getLatitude(i) - latitude) < 1e-4)
+            {
                 return i;
             }
         }
@@ -831,17 +891,22 @@ public abstract class AbstractGraphTester {
     }
 
     /**
-     * Windows forces us to close files properly and so we need to close the
-     * graph properly if it supports closeable
+     * Windows forces us to close files properly and so we need to close the graph properly if it
+     * supports closeable
      */
-    static void close(Object o) {
-        if (o == null) {
+    static void close( Object o )
+    {
+        if (o == null)
+        {
             return;
         }
-        if (o instanceof Closeable) {
-            try {
+        if (o instanceof Closeable)
+        {
+            try
+            {
                 ((Closeable) o).close();
-            } catch (IOException ex) {
+            } catch (IOException ex)
+            {
                 throw new RuntimeException(ex);
             }
         }

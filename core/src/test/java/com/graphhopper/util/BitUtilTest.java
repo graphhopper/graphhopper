@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -25,10 +24,11 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class BitUtilTest {
-
+public class BitUtilTest
+{
     @Test
-    public void testToFloat() {
+    public void testToFloat()
+    {
         byte[] bytes = BitUtil.fromFloat(Float.MAX_VALUE);
         assertEquals(Float.MAX_VALUE, BitUtil.toFloat(bytes), 1e-9);
 
@@ -37,7 +37,8 @@ public class BitUtilTest {
     }
 
     @Test
-    public void testToDouble() {
+    public void testToDouble()
+    {
         byte[] bytes = BitUtil.fromDouble(Double.MAX_VALUE);
         assertEquals(Double.MAX_VALUE, BitUtil.toDouble(bytes), 1e-9);
 
@@ -46,7 +47,8 @@ public class BitUtilTest {
     }
 
     @Test
-    public void testToInt() {
+    public void testToInt()
+    {
         byte[] bytes = BitUtil.fromInt(Integer.MAX_VALUE);
         assertEquals(Integer.MAX_VALUE, BitUtil.toInt(bytes));
 
@@ -55,7 +57,8 @@ public class BitUtilTest {
     }
 
     @Test
-    public void testToLong() {
+    public void testToLong()
+    {
         byte[] bytes = BitUtil.fromLong(Long.MAX_VALUE);
         assertEquals(Long.MAX_VALUE, BitUtil.toLong(bytes));
 
@@ -64,7 +67,8 @@ public class BitUtilTest {
     }
 
     @Test
-    public void testToBitString() {
+    public void testToBitString()
+    {
         assertEquals("0010101010101010101010101010101010101010101010101010101010101010", BitUtil.toBitString(Long.MAX_VALUE / 3));
         assertEquals("0111111111111111111111111111111111111111111111111111111111111111", BitUtil.toBitString(Long.MAX_VALUE));
 
@@ -75,7 +79,8 @@ public class BitUtilTest {
     }
 
     @Test
-    public void testFromBitString() {
+    public void testFromBitString()
+    {
         String str = "011011100";
         assertEquals(str + "0000000", BitUtil.toBitString(BitUtil.fromBitString(str)));
 
@@ -87,13 +92,15 @@ public class BitUtilTest {
     }
 
     @Test
-    public void testBitString2Long() {
+    public void testBitString2Long()
+    {
         String str = "01000000000110000011100000011110";
         assertEquals("00000000000000000000000000000000" + str, BitUtil.toBitString(BitUtil.fromBitString2Long(str)));
     }
 
     @Test
-    public void testReverse() {
+    public void testReverse()
+    {
         long ret = BitUtil.reverse(BitUtil.fromBitString2Long("0111000000000101"), 16);
         assertEquals("1010000000001110", BitUtil.toBitString(ret, 16));
 
@@ -104,7 +111,8 @@ public class BitUtilTest {
         assertEquals("0111000010100000", BitUtil.toBitString(ret, 16));
     }
 
-    String toString(byte[] bytes) {
+    String toString( byte[] bytes )
+    {
         return BitUtil.toBitString(bytes);
     }
 }

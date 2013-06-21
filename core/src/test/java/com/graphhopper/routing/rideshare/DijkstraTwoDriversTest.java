@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -33,15 +32,18 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class DijkstraTwoDriversTest {
-
+public class DijkstraTwoDriversTest
+{
     CarFlagEncoder carEncoder = (CarFlagEncoder) new EncodingManager("CAR").getEncoder("CAR");
 
-    Graph getGraph() {
+    Graph getGraph()
+    {
         return AbstractRoutingAlgorithmTester.getMatrixAlikeGraph();
     }
 
-    @Test public void testFindMeetingPointWhenNotCrossing() {
+    @Test
+    public void testFindMeetingPointWhenNotCrossing()
+    {
         Graph g = getGraph();
         DijkstraTwoDrivers d = new DijkstraTwoDrivers(g, carEncoder);
 
@@ -51,25 +53,31 @@ public class DijkstraTwoDriversTest {
 
         double shortest = Double.MAX_VALUE;
         TIntHashSet set = new TIntHashSet();
-        for (int pointI = 10; pointI < 50; pointI++) {
-            double sum = new DijkstraBidirectionRef(g, carEncoder).calcPath(12, pointI).weight();
-            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(pointI, 36).weight();
-            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(30, pointI).weight();
-            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(pointI, 45).weight();
-            if (sum < shortest) {
+        for (int pointI = 10; pointI < 50; pointI++)
+        {
+            double sum = new DijkstraBidirectionRef(g, carEncoder).calcPath(12, pointI).getWeight();
+            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(pointI, 36).getWeight();
+            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(30, pointI).getWeight();
+            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(pointI, 45).getWeight();
+            if (sum < shortest)
+            {
                 shortest = sum;
                 set.clear();
                 set.add(pointI);
             } else if (sum == shortest)
+            {
                 set.add(pointI);
+            }
         }
 
-        assertEquals(shortest, d.getBestForA().weight() + d.getBestForB().weight(), 1e-5);
+        assertEquals(shortest, d.getBestForA().getWeight() + d.getBestForB().getWeight(), 1e-5);
         assertTrue("meeting points " + set.toString() + " do not contain " + d.getMeetingPoint(),
                 set.contains(d.getMeetingPoint()));
     }
 
-    @Test public void testFindMeetingPointWhenCrossing() {
+    @Test
+    public void testFindMeetingPointWhenCrossing()
+    {
         Graph g = getGraph();
         DijkstraTwoDrivers d = new DijkstraTwoDrivers(g, carEncoder);
         d.setDriverA(12, 36);
@@ -80,7 +88,7 @@ public class DijkstraTwoDriversTest {
         Path pB = new DijkstraBidirectionRef(g, carEncoder).calcPath(30, 15);
         TIntSet set = pA.calculateIdenticalNodes(pB);
         assertTrue(set.toString(), set.contains(d.getMeetingPoint()));
-        assertEquals(pA.weight(), d.getBestForA().weight(), 1e-5);
-        assertEquals(pB.weight(), d.getBestForB().weight(), 1e-5);
+        assertEquals(pA.getWeight(), d.getBestForA().getWeight(), 1e-5);
+        assertEquals(pB.getWeight(), d.getBestForB().getWeight(), 1e-5);
     }
 }

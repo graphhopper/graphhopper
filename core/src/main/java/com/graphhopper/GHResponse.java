@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -25,35 +24,45 @@ import java.util.List;
 
 /**
  * Wrapper to simplify output of GraphHopper.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class GHResponse {
-
+public class GHResponse
+{
     private PointList list;
     private double distance;
     private long time;
     private String debugInfo = "";
     private List<Throwable> errors = new ArrayList<Throwable>(4);
 
-    public GHResponse() {
+    public GHResponse()
+    {
     }
 
-    public GHResponse points(PointList points) {
+    public GHResponse setPoints( PointList points )
+    {
         list = points;
         return this;
     }
 
-    public GHResponse distance(double distance) {
+    public PointList getPoints()
+    {
+        return list;
+    }
+
+    public GHResponse setDistance( double distance )
+    {
         this.distance = distance;
         return this;
     }
 
-    public double distance() {
+    public double getDistance()
+    {
         return distance;
     }
 
-    public GHResponse time(long timeInSec) {
+    public GHResponse setTime( long timeInSec )
+    {
         this.time = timeInSec;
         return this;
     }
@@ -61,62 +70,78 @@ public class GHResponse {
     /**
      * @return time in seconds
      */
-    public long time() {
+    public long getTime()
+    {
         return time;
     }
 
-    public boolean found() {
+    public boolean isFound()
+    {
         return list != null && !list.isEmpty();
     }
 
-    public PointList points() {
-        return list;
-    }
-
-    public BBox calcRouteBBox(BBox _fallback) {
+    public BBox calcRouteBBox( BBox _fallback )
+    {
         BBox bounds = BBox.INVERSE.clone();
-        int len = list.size();
+        int len = list.getSize();
         if (len == 0)
+        {
             return _fallback;
-        for (int i = 0; i < len; i++) {
-            double lat = list.latitude(i);
-            double lon = list.longitude(i);
+        }
+        for (int i = 0; i < len; i++)
+        {
+            double lat = list.getLatitude(i);
+            double lon = list.getLongitude(i);
             if (lat > bounds.maxLat)
+            {
                 bounds.maxLat = lat;
+            }
             if (lat < bounds.minLat)
+            {
                 bounds.minLat = lat;
+            }
             if (lon > bounds.maxLon)
+            {
                 bounds.maxLon = lon;
+            }
             if (lon < bounds.minLon)
+            {
                 bounds.minLon = lon;
+            }
         }
         return bounds;
     }
 
-    public String debugInfo() {
+    public String getDebugInfo()
+    {
         return debugInfo;
     }
 
-    public GHResponse debugInfo(String debugInfo) {
+    public GHResponse setDebugInfo( String debugInfo )
+    {
         this.debugInfo = debugInfo;
         return this;
     }
 
-    public boolean hasError() {
+    public boolean hasError()
+    {
         return !errors.isEmpty();
     }
 
-    public List<Throwable> errors() {
+    public List<Throwable> getErrors()
+    {
         return errors;
     }
 
-    public GHResponse addError(Throwable error) {
+    public GHResponse addError( Throwable error )
+    {
         errors.add(error);
         return this;
     }
 
     @Override
-    public String toString() {
-        return "found:" + found() + ", nodes:" + list.size() + ": " + list.toString();
+    public String toString()
+    {
+        return "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
     }
 }

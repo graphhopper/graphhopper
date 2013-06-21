@@ -28,20 +28,24 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class GHLongIntBTreeTest {
-
+public class GHLongIntBTreeTest
+{
     @Test
-    public void testThrowException_IfPutting_NoNumber() {
+    public void testThrowException_IfPutting_NoNumber()
+    {
         GHLongIntBTree instance = new GHLongIntBTree(2);
-        try {
+        try
+        {
             instance.put(-1, 1);
             assertTrue(false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
     }
 
     @Test
-    public void testTwoSplits() {
+    public void testTwoSplits()
+    {
         GHLongIntBTree instance = new GHLongIntBTree(3);
         instance.put(1, 2);
         instance.put(2, 4);
@@ -62,35 +66,39 @@ public class GHLongIntBTreeTest {
         assertEquals(3, instance.height());
 
         assertEquals(3, instance.height());
-        assertEquals(10, instance.size());
-        assertEquals(0, instance.memoryUsage());
+        assertEquals(10, instance.getSize());
+        assertEquals(0, instance.getMemoryUsage());
 
         check(instance, 1);
     }
 
     @Test
-    public void testSplitAndOverwrite() {
+    public void testSplitAndOverwrite()
+    {
         GHLongIntBTree instance = new GHLongIntBTree(3);
         instance.put(1, 2);
         instance.put(2, 4);
         instance.put(3, 6);
         instance.put(2, 5);
 
-        assertEquals(3, instance.size());
+        assertEquals(3, instance.getSize());
         assertEquals(1, instance.height());
 
         assertEquals(5, instance.get(2));
         assertEquals(6, instance.get(3));
     }
 
-    void check(GHLongIntBTree instance, int from) {
-        for (int i = from; i < instance.size(); i++) {
+    void check( GHLongIntBTree instance, int from )
+    {
+        for (int i = from; i < instance.getSize(); i++)
+        {
             assertEquals(i * 2, instance.get(i));
         }
     }
 
     @Test
-    public void testPut() {
+    public void testPut()
+    {
         GHLongIntBTree instance = new GHLongIntBTree(3);
         instance.put(2, 4);
         instance.put(7, 14);
@@ -109,7 +117,7 @@ public class GHLongIntBTreeTest {
         instance.put(10, 20);
         instance.put(11, 22);
 
-        assertEquals(12, instance.size());
+        assertEquals(12, instance.getSize());
         assertEquals(3, instance.height());
 
         assertEquals(12, instance.get(6));
@@ -117,7 +125,8 @@ public class GHLongIntBTreeTest {
     }
 
     @Test
-    public void testUpdate() {
+    public void testUpdate()
+    {
         GHLongIntBTree instance = new GHLongIntBTree(2);
         int result = instance.put(100, 10);
         assertEquals(instance.getNoNumberValue(), result);
@@ -133,35 +142,42 @@ public class GHLongIntBTreeTest {
     }
 
     @Test
-    public void testRandom() {
-        for (int j = 3; j < 12; j += 4) {
+    public void testRandom()
+    {
+        for (int j = 3; j < 12; j += 4)
+        {
             GHLongIntBTree instance = new GHLongIntBTree(j);
             int size = 500;
             Random rand = new Random(123);
             Set<Integer> addedValues = new LinkedHashSet<Integer>(size);
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < size; i++)
+            {
                 int val = rand.nextInt(size);
                 addedValues.add(val);
-                try {
+                try
+                {
                     instance.put(val, val);
 //                    System.out.println(i + "--------------" + val);
 //                    instance.print();
 //                    System.out.println("\n\n");
-                } catch (Exception ex) {
+                } catch (Exception ex)
+                {
                     ex.printStackTrace();
                     assertFalse(j + "| Problem with " + i + " " + ex, true);
                 }
 
-                assertEquals(j + "| Size not equal to set! In " + i + " added " + val, addedValues.size(), instance.size());
+                assertEquals(j + "| Size not equal to set! In " + i + " added " + val, addedValues.size(), instance.getSize());
             }
             int i = 0;
-            for (int val : addedValues) {
+            for (int val : addedValues)
+            {
                 assertEquals(j + "| Problem with " + i, val, instance.get(val));
                 i++;
             }
             instance.optimize();
             i = 0;
-            for (int val : addedValues) {
+            for (int val : addedValues)
+            {
                 assertEquals(j + "| Problem with " + i, val, instance.get(val));
                 i++;
             }

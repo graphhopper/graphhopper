@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -30,30 +29,35 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public abstract class DataAccessTest {
-
+public abstract class DataAccessTest
+{
     private File folder = new File("./target/tmp/da");
     protected String directory;
     protected String name = "dataacess";
 
-    public abstract DataAccess createDataAccess(String location);
+    public abstract DataAccess createDataAccess( String location );
 
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         if (!Helper.removeDir(folder))
+        {
             throw new IllegalStateException("cannot delete folder " + folder);
+        }
 
         folder.mkdirs();
         directory = folder.getAbsolutePath() + "/";
     }
 
     @After
-    public void tearDown() {
+    public void tearDown()
+    {
         Helper.removeDir(folder);
     }
 
     @Test
-    public void testLoadFlush() {
+    public void testLoadFlush()
+    {
         DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
         da.create(300);
@@ -80,14 +84,17 @@ public abstract class DataAccessTest {
     }
 
     @Test
-    public void testLoadClose() {
+    public void testLoadClose()
+    {
         DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
         // throw some undefined exception if no ensureCapacity was called
-        try {
+        try
+        {
             da.setInt(2 * 4, 321);
             assertTrue(false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
 
         da.create(300);
@@ -102,7 +109,8 @@ public abstract class DataAccessTest {
     }
 
     @Test
-    public void testHeader() {
+    public void testHeader()
+    {
         DataAccess da = createDataAccess(name);
         da.create(300);
         da.setHeader(7 * 4, 123);
@@ -122,15 +130,18 @@ public abstract class DataAccessTest {
     }
 
     @Test
-    public void testEnsureCapacity() {
+    public void testEnsureCapacity()
+    {
         DataAccess da = createDataAccess(name);
         da.create(128);
         da.setInt(31 * 4, 200);
-        try {
+        try
+        {
             // this should fail with an index out of bounds exception
             da.setInt(32 * 4, 220);
             assertFalse(true);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
         assertEquals(200, da.getInt(31 * 4));
         da.ensureCapacity(2 * 128);
@@ -148,7 +159,8 @@ public abstract class DataAccessTest {
     }
 
     @Test
-    public void testCopy() {
+    public void testCopy()
+    {
         DataAccess da1 = createDataAccess(name);
         da1.create(1001 * 4);
         da1.setInt(1 * 4, 1);
@@ -173,13 +185,14 @@ public abstract class DataAccessTest {
     }
 
     @Test
-    public void testSegments() {
+    public void testSegments()
+    {
         DataAccess da = createDataAccess(name);
-        da.segmentSize(128);
+        da.setSegmentSize(128);
         da.create(10);
-        assertEquals(1, da.segments());
+        assertEquals(1, da.getSegments());
         da.ensureCapacity(500);
-        int olds = da.segments();
+        int olds = da.getSegments();
         assertTrue(olds > 3);
 
         da.setInt(400, 321);
@@ -188,15 +201,16 @@ public abstract class DataAccessTest {
 
         da = createDataAccess(name);
         assertTrue(da.loadExisting());
-        assertEquals(olds, da.segments());
+        assertEquals(olds, da.getSegments());
         assertEquals(321, da.getInt(400));
         da.close();
     }
 
     @Test
-    public void testTrimTo() {
+    public void testTrimTo()
+    {
         DataAccess da = createDataAccess(name);
-        da.segmentSize(128);
+        da.setSegmentSize(128);
         da.create(128 * 11);
         da.setInt(1 * 4, 10);
         da.setInt(27 * 4, 200);
@@ -205,58 +219,65 @@ public abstract class DataAccessTest {
         da.setInt(337 * 4, 4000);
 
         // now 11 segments: (337 + 1) * 4 = 1352
-        assertEquals(11, da.segments());
-        assertEquals(11 * 128, da.capacity());
+        assertEquals(11, da.getSegments());
+        assertEquals(11 * 128, da.getCapacity());
 
         // now 3 segments
         da.trimTo(128 * 2 + 1);
-        assertEquals(3, da.segments());
+        assertEquals(3, da.getSegments());
 
         // now 2 segments
         da.trimTo(128 * 2);
-        assertEquals(2, da.segments());
+        assertEquals(2, da.getSegments());
         assertEquals(301, da.getInt(31 * 4));
         assertEquals(302, da.getInt(32 * 4));
 
         // now only one segment
         da.trimTo(128 * 1);
-        assertEquals(1, da.segments());
+        assertEquals(1, da.getSegments());
         assertEquals(301, da.getInt(31 * 4));
-        try {
+        try
+        {
             assertEquals(302, da.getInt(32 * 4));
             assertTrue(false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
 
         // at least one segment
         da.trimTo(0);
-        assertEquals(1, da.segments());
+        assertEquals(1, da.getSegments());
         da.close();
     }
 
     @Test
-    public void testSegmentSize() {
+    public void testSegmentSize()
+    {
         DataAccess da = createDataAccess(name);
-        da.segmentSize(20);
-        assertEquals(128, da.segmentSize());
+        da.setSegmentSize(20);
+        assertEquals(128, da.getSegmentSize());
         da.close();
     }
 
     @Test
-    public void testRenameNoFlush() {
+    public void testRenameNoFlush()
+    {
         DataAccess da = createDataAccess(name);
         da.create(100);
         da.setInt(17 * 4, 17);
-        try {
+        try
+        {
             da.rename(name + "wow");
             assertTrue(false);
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
         }
         da.close();
     }
 
     @Test
-    public void testRenameFlush() {
+    public void testRenameFlush()
+    {
         DataAccess da = createDataAccess(name);
         da.create(100);
         da.setInt(17 * 4, 17);
@@ -275,10 +296,11 @@ public abstract class DataAccessTest {
     }
 
     @Test
-    public void testSet_GetBytes() {
+    public void testSet_GetBytes()
+    {
         DataAccess da = createDataAccess(name);
         da.create(300);
-        assertEquals(128, da.segmentSize());
+        assertEquals(128, da.getSegmentSize());
         byte[] bytes = BitUtil.fromInt(Integer.MAX_VALUE / 3);
         da.setBytes(8, bytes, bytes.length);
         bytes = new byte[4];

@@ -43,7 +43,8 @@ import com.graphhopper.util.shapes.GHPlace;
  * @author NG
  * 
  */
-public class PathFinisher {
+public class PathFinisher
+{
 
 	/** Start edge data */
 	private final LocationIDResult fromLoc;
@@ -91,8 +92,9 @@ public class PathFinisher {
 	 * @param graph
 	 *            graph used to create the path
 	 */
-	public PathFinisher(LocationIDResult fromLoc, LocationIDResult toLoc,
-			GHPlace from, GHPlace to, Path path) {
+	public PathFinisher( LocationIDResult fromLoc, LocationIDResult toLoc,
+			GHPlace from, GHPlace to, Path path )
+	{
 		this.fromLoc = fromLoc;
 		this.toLoc = toLoc;
 		this.from = from;
@@ -106,8 +108,10 @@ public class PathFinisher {
 	 * The path's distance enhanced with with ending edges' data
 	 * @return
 	 */
-	public double getFinishedDistance() {
-		if(!finished) {
+	public double getFinishedDistance()
+	{
+		if(!finished)
+		{
 			this.finishPath();
 		}
 		return this.distance;
@@ -117,7 +121,8 @@ public class PathFinisher {
 	 * The path's time enhanced with ending edges' data
 	 * @return
 	 */
-	public long getFinishedTime() {
+	public long getFinishedTime()
+	{
 		if(!this.finished) {
 			this.finishPath();
 		}
@@ -128,7 +133,8 @@ public class PathFinisher {
 	 * The path's geometry enhanced with ending edges' data
 	 * @return
 	 */
-	public PointList getFinishedPointList() {
+	public PointList getFinishedPointList()
+	{
 		if(!this.finished) {
 			this.finishPath();
 		}
@@ -139,15 +145,19 @@ public class PathFinisher {
 	 * "Finish" the path fixing it's geometry, distance and time to better match
 	 * the start/end GPS points.
 	 */
-	private void finishPath() {
+	private void finishPath()
+	{
 		this.points = this.path.calcPoints();
-		this.distance  = this.path.distance();
-		this.time = this.path.time();
+		this.distance  = this.path.getDistance();
+		this.time = this.path.getTime();
 		
-		if(this.points.size() == 0) {
-			if(fromLoc.closestNode() == toLoc.closestNode()) {
+		if(this.points.getSize() == 0)
+		{
+			if(fromLoc.getClosestNode() == toLoc.getClosestNode())
+			{
 				this.buildEdgeToEdgePath();
-			} else {
+			} else
+			{
 				return; // cannot finish path. throw an exception ?
 			}
 		}
@@ -174,37 +184,45 @@ public class PathFinisher {
 	 *            true if passed edge is the beginning of the path<br>
 	 *            false if it's the ending.
 	 */
-	private void finishEdge(LocationIDResult loc, PointList pathPoints, GHPlace gpsStartPoint, boolean start) {
-		if(loc.closestEdge() == null) {
+	private void finishEdge( LocationIDResult loc, PointList pathPoints, GHPlace gpsStartPoint, boolean start )
+	{
+		if (loc.getClosestEdge() == null)
+		{
 			// the starting edge is unknown, it's not possible to finish the path.
 			return;
 		}
 		
-		PointListIndex edgePointIdx = insertClosestGpsPoint(loc.closestEdge(), gpsStartPoint);
+		PointListIndex edgePointIdx = insertClosestGpsPoint(loc.getClosestEdge(), gpsStartPoint);
 		
 		// find points shared between edge and path
 		PointList edgePoints = edgePointIdx.points;
-		PointList newPoints = new PointList(pathPoints.size()+edgePoints.size()); // slightly too big
+		PointList newPoints = new PointList(pathPoints.getSize()+edgePoints.getSize()); // slightly too big
 		double lat1, lon1;
 		int idx1 = -1, idx2 = -1;
 		// compute an index before/after which it's not necessary to compare edge's node.
-		int skipIndex = (start ? edgePoints.size() : pathPoints.size() - edgePoints.size());
+		int skipIndex = (start ? edgePoints.getSize() : pathPoints.getSize() - edgePoints.getSize());
 		boolean shared;
 		double removedDist = 0;
 		double prevLat = Double.NaN, prevLon = Double.NaN;
-		for(int j=0 ; j < pathPoints.size() ; j++) {
-			lat1 = pathPoints.latitude(j);
-			lon1 = pathPoints.longitude(j);
+		for(int j=0 ; j < pathPoints.getSize() ; j++)
+		{
+			lat1 = pathPoints.getLatitude(j);
+			lon1 = pathPoints.getLongitude(j);
 			shared = false;
 
 			// don't loop for every path's node but only on few first/last points
-			if(start && j <= skipIndex || !start && j >= skipIndex) {
-				for(int i=0 ; i < edgePoints.size() ; i++) {
-					if(samePlace(lat1, lon1, edgePoints.latitude(i), edgePoints.longitude(i))) {
+			if(start && j <= skipIndex || !start && j >= skipIndex)
+			{
+				for(int i=0 ; i < edgePoints.getSize() ; i++)
+				{
+					if(samePlace(lat1, lon1, edgePoints.getLatitude(i), edgePoints.getLongitude(i)))
+					{
 						// init first and last shared nodes
-						if(idx1 < 0) {
+						if(idx1 < 0)
+						{
 							idx1 = i;
-						} else {
+						} else
+						{
 							idx2 = i;
 						}
 						shared = true;
@@ -212,9 +230,11 @@ public class PathFinisher {
 				}
 			}
 			
-			if(!shared) {
+			if (!shared)
+			{
 				newPoints.add(lat1, lon1);
-			} else if(!Double.isNaN(prevLon)) {
+			} else if (!Double.isNaN(prevLon))
+			{
 				// sum the removed distance
 				removedDist += calc.calcDist(prevLat, prevLon, lat1, lon1);				
 			}
@@ -223,35 +243,40 @@ public class PathFinisher {
 		}
 		
 		// update distance/time data
-		updateTimeDist(-removedDist, loc.closestEdge(), edgePoints);
+		updateTimeDist(-removedDist, loc.getClosestEdge(), edgePoints);
 		
 		// invert for endings
-		if(!start && idx2 >= 0) {
+		if(!start && idx2 >= 0)
+		{
 			int tmp = idx1;
 			idx1 = idx2;
 			idx2 = tmp;
 		}
 		
 		// ensure cutIndex is on the edge (may be out if cut point is out of the edge)
-		int cutIdx = Math.min(edgePointIdx.insertedPointIndex, edgePoints.size()-1);
+		int cutIdx = Math.min(edgePointIdx.insertedPointIndex, edgePoints.getSize()-1);
 		cutIdx = Math.max(0, cutIdx);
 		
 		double dist = 0;
-		if(idx1 >= 0) {
-			if(idx2 >= 0) {
+		if(idx1 >= 0)
+		{
+			if(idx2 >= 0)
+			{
 				// edge and path have 2 common points
 				// add all edge's points between cutPoint and idx2
 				dist = appendPath(edgePoints, newPoints, cutIdx, idx2, start);
-			} else {
+			} else
+			{
 				// edges and path are sharing only one point
 				// add all edge's points between cutPoint and idx1
 				dist = appendPath(edgePoints, newPoints, cutIdx, idx1, start);
 			}
-		} else {
+		} else
+		{
 			throw new IllegalArgumentException("Could not find common point between edge and path");
 		}
 		// update distance/time data
-		updateTimeDist(dist, loc.closestEdge(), edgePoints);
+		updateTimeDist(dist, loc.getClosestEdge(), edgePoints);
 	}
 	
 	/**
@@ -276,26 +301,31 @@ public class PathFinisher {
 	 * @param gps
 	 * @return
 	 */
-	private PointListIndex insertClosestGpsPoint(EdgeIterator edge, GHPlace gps) {
+	private PointListIndex insertClosestGpsPoint( EdgeIterator edge, GHPlace gps )
+	{
 		// add start/end edge's point
 		PointList edgePoints = splitter.extractFullGeom(edge, graph);
 
 		// find split index
 		int index = splitter.findInsertIndex(edgePoints, gps.lat, gps.lon);
 		PointList newList;
-		if(index <= 0 || index >= edgePoints.size()) {
+		if(index <= 0 || index >= edgePoints.getSize())
+		{
 			// cut point is outside the edge
 			newList = edgePoints;
-		} else {
+		} else
+		{
 			// insert cut point on the edge
-			newList = new PointList(edgePoints.size()+1);
-			for(int i=0 ; i<edgePoints.size() ; i++) {
-				if(i == index) {
+			newList = new PointList(edgePoints.getSize()+1);
+			for(int i=0 ; i<edgePoints.getSize() ; i++)
+			{
+				if(i == index)
+				{
 					// insert
 					GHPlace intersectPoint = splitter.getCutPoint(gps, edgePoints.point(index-1), edgePoints.point(index));
 					newList.add(intersectPoint.lat, intersectPoint.lon);
 				}
-				newList.add(edgePoints.latitude(i), edgePoints.longitude(i));
+				newList.add(edgePoints.getLatitude(i), edgePoints.getLongitude(i));
 			}
 		}
 		
@@ -311,17 +341,21 @@ public class PathFinisher {
 	 * @param edge
 	 *            edge from which the distance is add/removed
 	 */
-	private void updateTimeDist(double addedDist, EdgeIterator edge, PointList fullEdge) {
-		if(addedDist != 0) {
-			if(scaleDistances) {
+	private void updateTimeDist( double addedDist, EdgeIterator edge, PointList fullEdge )
+	{
+		if(addedDist != 0)
+		{
+			if(scaleDistances)
+			{
 				double totPtDist = 0;
-				for(int i=1 ; i < fullEdge.size() ; i++) {
-					totPtDist += calc.calcDist(fullEdge.longitude(i-1), fullEdge.latitude(i-1), fullEdge.longitude(i), fullEdge.latitude(i)); 
+				for(int i=1 ; i < fullEdge.getSize() ; i++)
+				{
+					totPtDist += calc.calcDist(fullEdge.getLongitude(i-1), fullEdge.getLatitude(i-1), fullEdge.getLongitude(i), fullEdge.getLatitude(i)); 
 				}
-				addedDist = addedDist * edge.distance() / totPtDist;
+				addedDist = addedDist * edge.getDistance() / totPtDist;
 			}
 			this.distance += addedDist;
-			this.time += (long) (addedDist * 3.6 / vehicleEncoder.getSpeed(edge.flags()));
+			this.time += (long) (addedDist * 3.6 / vehicleEncoder.getSpeed(edge.getFlags()));
 		}
 	}
 
@@ -334,10 +368,12 @@ public class PathFinisher {
 	 * 
 	 * @return
 	 */
-	private void buildEdgeToEdgePath() {
-		EdgeIterator fromEdge = this.fromLoc.closestEdge();
-		EdgeIterator toEdge = this.toLoc.closestEdge();
-		if(fromEdge == null || toEdge == null) {
+	private void buildEdgeToEdgePath()
+	{
+		EdgeIterator fromEdge = this.fromLoc.getClosestEdge();
+		EdgeIterator toEdge = this.toLoc.getClosestEdge();
+		if (fromEdge == null || toEdge == null)
+		{
 			// cannot do anything.
 			return;
 		}
@@ -345,54 +381,64 @@ public class PathFinisher {
 		PointList toPts = splitter.extractFullGeom(toEdge, graph);
 		
 		// init path's data
-		this.distance = fromEdge.distance();
-		this.time = (long) (fromEdge.distance() * 3.6 / vehicleEncoder.getSpeed(fromEdge.flags()));
+		this.distance = fromEdge.getDistance();
+		this.time = (long) (fromEdge.getDistance() * 3.6 / vehicleEncoder.getSpeed(fromEdge.getFlags()));
 		
 		// check which id the common node between from and to edges
 		boolean revertFrom = false,
 				revertTo = false;
-		if(fromEdge.edge() != toEdge.edge()) {
-			if(fromEdge.adjNode() == toEdge.adjNode()) {
+		if ( fromEdge.getEdge() != toEdge.getEdge() )
+		{
+			if (fromEdge.getAdjNode() == toEdge.getAdjNode())
+			{
 				// case : A -->-- B --<-- C 
 				revertTo = true;
-			} else if(fromEdge.baseNode() == toEdge.baseNode()) {
+			} else if (fromEdge.getBaseNode() == toEdge.getBaseNode())
+			{
 				// case A --<-- B -->-- C
 				revertFrom = true;
-			} else if(fromEdge.baseNode() == toEdge.adjNode()) {
+			} else if (fromEdge.getBaseNode() == toEdge.getAdjNode())
+			{
 				// case A --<-- B --<-- C
 				revertFrom = revertTo = true;
-			} else if(fromEdge.adjNode() != toEdge.baseNode()) {
+			} else if (fromEdge.getAdjNode() != toEdge.getBaseNode())
+			{
 				throw new IllegalArgumentException("From and To edges are not connected by their base/adj nodes");
 			}
-		} else {
+		} else
+		{
 			// routing from - to the same edge
 			this.points = fromPts;
 			return;
 		}
 		
-		PointList path = new PointList(fromPts.size() + toPts.size());
+		PointList path = new PointList(fromPts.getSize() + toPts.getSize());
 		// add fromEdge's points to path
-		int i, len = fromPts.size();
-		for(i=0 ; i < len ; i++) {
-			if(!revertFrom) {
-				path.add(fromPts.latitude(i), fromPts.longitude(i));
-			} else {
-				path.add(fromPts.latitude(len-1-i), fromPts.longitude(len-1-i));
+		int i, len = fromPts.getSize();
+		for ( i=0 ; i < len ; i++ )
+		{
+			if (!revertFrom)
+			{
+				path.add(fromPts.getLatitude(i), fromPts.getLongitude(i));
+			} else
+			{
+				path.add(fromPts.getLatitude(len-1-i), fromPts.getLongitude(len-1-i));
 			}
 		}
 		
 		// add toEdge's points to path
-		len = toPts.size();
-		for(i=1 ; i < len ; i++) {// do not add 1st point, as it's the shared point between the two edges
+		len = toPts.getSize();
+		for(i=1 ; i < len ; i++)
+		{// do not add 1st point, as it's the shared point between the two edges
 			if(!revertTo) {
-				path.add(toPts.latitude(i), toPts.longitude(i));
+				path.add(toPts.getLatitude(i), toPts.getLongitude(i));
 			} else {
-				path.add(toPts.latitude(len-1-i), toPts.longitude(len-1-i));
+				path.add(toPts.getLatitude(len-1-i), toPts.getLongitude(len-1-i));
 			}
 		}
 		// compute distance
-		this.distance += toEdge.distance();
-		this.time += (long) (toEdge.distance() * 3.6 / vehicleEncoder.getSpeed(toEdge.flags()));
+		this.distance += toEdge.getDistance();
+		this.time += (long) (toEdge.getDistance() * 3.6 / vehicleEncoder.getSpeed(toEdge.getFlags()));
 		this.points = path;
 	}
 	
@@ -410,7 +456,8 @@ public class PathFinisher {
 	 *            2nd point's longitude
 	 * @return
 	 */
-	private boolean samePlace(double lat1, double lon1, double lat2, double lon2) {
+	private boolean samePlace( double lat1, double lon1, double lat2, double lon2 )
+	{
 		return NumHelper.equalsEps(lat1, lat2, 1e-6)
 				&& NumHelper.equalsEps(lon1, lon2, 1e-6);
 	}
@@ -439,17 +486,20 @@ public class PathFinisher {
 	 *            false: edge's nodes are added after the path
 	 * @return the distance appended to the path
 	 */
-	private double appendPath(PointList edgePoints, PointList pathPoints, int edgeFrom, int edgeTo, boolean before) {
+	private double appendPath( PointList edgePoints, PointList pathPoints, int edgeFrom, int edgeTo, boolean before )
+	{
 		int startIdx = Math.min(edgeFrom, edgeTo);
 		int endIdx = Math.max(edgeFrom, edgeTo);
 		// invert index to loop in the positive direction
 		boolean revert = edgeFrom > edgeTo;
 		
 		PointList newList;
-		if(before) {
+		if(before)
+		{
 			// not possible to add before => copy points in a new PoinList
-			newList = new PointList(pathPoints.size());
-		} else {
+			newList = new PointList(pathPoints.getSize());
+		} else
+		{
 			// invert loop for path's endings
 			revert = !revert;
 			newList = pathPoints;
@@ -459,26 +509,32 @@ public class PathFinisher {
 			   prevLon = Double.NaN,
 			   prevLat = Double.NaN;
 		// chain nodes from edge
-		for(int i=startIdx ; i <= endIdx ; i++) {
-			if(!revert) {
-				lat = edgePoints.latitude(i);
-				lon = edgePoints.longitude(i);
-			} else {
-				lat = edgePoints.latitude(endIdx-i+startIdx);
-				lon = edgePoints.longitude(endIdx-i+startIdx);
+		for ( int i=startIdx ; i <= endIdx ; i++ )
+		{
+			if(!revert)
+			{
+				lat = edgePoints.getLatitude(i);
+				lon = edgePoints.getLongitude(i);
+			} else
+			{
+				lat = edgePoints.getLatitude(endIdx-i+startIdx);
+				lon = edgePoints.getLongitude(endIdx-i+startIdx);
 			}
 			newList.add(lat, lon);
-			if(!Double.isNaN(prevLat)) {
+			if(!Double.isNaN(prevLat))
+			{
 				dist += calc.calcDist(prevLat, prevLon, lat, lon);
 			}
 			prevLat = lat;
 			prevLon = lon;
 		}
 		
-		if(before) {
+		if(before)
+		{
 			// add the rest of the points
-			for(int i=0 ; i<pathPoints.size() ; i++) {
-				newList.add(pathPoints.latitude(i), pathPoints.longitude(i));
+			for ( int i=0 ; i<pathPoints.getSize() ; i++ )
+			{
+				newList.add(pathPoints.getLatitude(i), pathPoints.getLongitude(i));
 			}
 		}
 		this.points = newList;
@@ -501,7 +557,8 @@ public class PathFinisher {
 	 * 
 	 * @param b
 	 */
-	public void setScaleDistance(boolean b) {
+	public void setScaleDistance(boolean b)
+	{
 		this.scaleDistances = b;
 	}
 	
@@ -512,12 +569,14 @@ public class PathFinisher {
 	 * @author NG
 	 * 
 	 */
-	private class PointListIndex {
+	private class PointListIndex
+	{
 		/** points including the cut point */
 		final PointList points;
 		/** cut point's index */
 		final int insertedPointIndex;
-		PointListIndex(PointList points, int index) {
+		PointListIndex(PointList points, int index)
+		{
 			this.points = points;
 			this.insertedPointIndex = index;
 		}

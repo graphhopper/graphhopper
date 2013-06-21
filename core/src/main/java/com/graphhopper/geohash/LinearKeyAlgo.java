@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -23,7 +22,7 @@ import com.graphhopper.util.shapes.CoordTrig;
 
 /**
  * This class maps lat,lon to a (tile)number unlike SpatialKeyAlgo.
- *
+ * <p/>
  * @author Peter Karich
  */
 // A 4*3 precision linear key will look like
@@ -37,48 +36,54 @@ import com.graphhopper.util.shapes.CoordTrig;
 //     |----|----|----|----|
 //
 //              lon
-public class LinearKeyAlgo implements KeyAlgo {
-
+public class LinearKeyAlgo implements KeyAlgo
+{
     private BBox bounds;
     private double latDelta, lonDelta;
     private final int latUnits, lonUnits;
     private static final double C = 1 - 1e-15;
 
-    public LinearKeyAlgo(int latUnits, int lonUnits) {
+    public LinearKeyAlgo( int latUnits, int lonUnits )
+    {
         this.latUnits = latUnits;
         this.lonUnits = lonUnits;
         setWorldBounds();
     }
 
     @Override
-    public LinearKeyAlgo bounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit) {
+    public LinearKeyAlgo setBounds( double minLonInit, double maxLonInit, double minLatInit, double maxLatInit )
+    {
         bounds = new BBox(minLonInit, maxLonInit, minLatInit, maxLatInit);
         latDelta = (bounds.maxLat - bounds.minLat) / latUnits;
         lonDelta = (bounds.maxLon - bounds.minLon) / lonUnits;
         return this;
     }
 
-    public LinearKeyAlgo bounds(BBox bounds) {
-        bounds(bounds.minLon, bounds.maxLat, bounds.minLat, bounds.maxLat);
+    public LinearKeyAlgo setBounds( BBox bounds )
+    {
+        setBounds(bounds.minLon, bounds.maxLat, bounds.minLat, bounds.maxLat);
         return this;
     }
 
-    protected void setWorldBounds() {
-        bounds(-180, 180, -90, 90);
+    protected void setWorldBounds()
+    {
+        setBounds(-180, 180, -90, 90);
     }
 
     @Override
-    public long encode(CoordTrig coord) {
+    public long encode( CoordTrig coord )
+    {
         return encode(coord.lat, coord.lon);
     }
 
     /**
      * Take latitude and longitude as input.
-     *
+     * <p/>
      * @return the linear key
      */
     @Override
-    public final long encode(double lat, double lon) {
+    public final long encode( double lat, double lon )
+    {
         lat = Math.min(Math.max(lat, bounds.minLat), bounds.maxLat);
         lon = Math.min(Math.max(lon, bounds.minLon), bounds.maxLon);
         // introduce a minor correction to round to lower grid entry!
@@ -88,13 +93,13 @@ public class LinearKeyAlgo implements KeyAlgo {
     }
 
     /**
-     * This method returns latitude and longitude via latLon - calculated from
-     * specified linearKey
-     *
+     * This method returns latitude and longitude via latLon - calculated from specified linearKey
+     * <p/>
      * @param linearKey is the input
      */
     @Override
-    public final void decode(long linearKey, CoordTrig latLon) {
+    public final void decode( long linearKey, CoordTrig latLon )
+    {
         double lat = linearKey / lonUnits * latDelta + bounds.minLat;
         double lon = linearKey % lonUnits * lonDelta + bounds.minLon;
         latLon.lat = lat + latDelta / 2;

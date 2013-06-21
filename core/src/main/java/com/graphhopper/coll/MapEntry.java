@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -23,58 +22,73 @@ import java.util.Map;
 
 /**
  * Simple impl of Map.Entry. So that we can have ordered maps.
- *
+ * <p/>
  * @author Peter Karich
  */
-public class MapEntry<K, V> implements Map.Entry<K, V>, Serializable {
-
+public class MapEntry<K, V> implements Map.Entry<K, V>, Serializable
+{
     private static final long serialVersionUID = 1L;
     private K key;
     private V value;
 
-    public MapEntry(K key, V value) {
+    public MapEntry( K key, V value )
+    {
         this.key = key;
         this.value = value;
     }
 
     @Override
-    public K getKey() {
+    public K getKey()
+    {
         return key;
     }
 
     @Override
-    public V getValue() {
+    public V getValue()
+    {
         return value;
     }
 
     @Override
-    public V setValue(V value) {
+    public V setValue( V value )
+    {
         this.value = value;
         return value;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return getKey() + ", " + getValue();
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals( Object obj )
+    {
         if (obj == null)
+        {
             return false;
+        }
         if (getClass() != obj.getClass())
+        {
             return false;
+        }
         final MapEntry<K, V> other = (MapEntry<K, V>) obj;
         if (this.key != other.key && (this.key == null || !this.key.equals(other.key)))
+        {
             return false;
+        }
         if (this.value != other.value && (this.value == null || !this.value.equals(other.value)))
+        {
             return false;
+        }
         return true;
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode()
+    {
         int hash = 7;
         hash = 19 * hash + (this.key != null ? this.key.hashCode() : 0);
         hash = 19 * hash + (this.value != null ? this.value.hashCode() : 0);

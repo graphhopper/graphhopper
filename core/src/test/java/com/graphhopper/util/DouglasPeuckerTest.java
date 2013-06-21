@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -25,8 +24,8 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class DouglasPeuckerTest {
-
+public class DouglasPeuckerTest
+{
     // get some real life points from graphhopper API
     // http://217.92.216.224:8080/api?from=49.945642,11.571436&to=49.946001,11.580706
     String points1 = "[[11.571499218899739,49.945605917549265],[11.571664621792689,49.94570668665409],[11.571787742639804,49.94578156499077],[11.572065649302282,49.94590338198625],[11.572209445511016,49.94595944760649],[11.57229438213172,49.94598850487147],"
@@ -36,10 +35,14 @@ public class DouglasPeuckerTest {
             + "[11.577917149169382,49.94702655703634],[11.577969116970207,49.947010724552214],[11.578816061738493,49.94673523932849],[11.579533552666014,49.94648974269233],[11.580073719771365,49.946299007824784],[11.580253092503245,49.946237913062525],"
             + "[11.580604946179799,49.94608871518274],[11.580740546749693,49.94603041438826]]";
 
-    void parse(PointList list, String str) {
-        for (String latlon : str.split("\\[")) {
+    void parse( PointList list, String str )
+    {
+        for (String latlon : str.split("\\["))
+        {
             if (latlon.trim().length() == 0)
+            {
                 continue;
+            }
 
             String ll[] = latlon.split(",");
             String lat = ll[1].replace("]", "").trim();
@@ -49,45 +52,49 @@ public class DouglasPeuckerTest {
     }
 
     @Test
-    public void testParse() {
+    public void testParse()
+    {
         PointList pointList = new PointList();
         parse(pointList, "[[11.571499218899739,49.945605917549265],[11.571664621792689,49.94570668665409]]");
-        assertEquals(49.945605917549265, pointList.latitude(0), 1e-6);
-        assertEquals(11.571499218899739, pointList.longitude(0), 1e-6);
-        assertEquals(49.94570668665409, pointList.latitude(1), 1e-6);
-        assertEquals(11.571664621792689, pointList.longitude(1), 1e-6);
+        assertEquals(49.945605917549265, pointList.getLatitude(0), 1e-6);
+        assertEquals(11.571499218899739, pointList.getLongitude(0), 1e-6);
+        assertEquals(49.94570668665409, pointList.getLatitude(1), 1e-6);
+        assertEquals(11.571664621792689, pointList.getLongitude(1), 1e-6);
     }
 
     @Test
-    public void testPathSimplify() {
+    public void testPathSimplify()
+    {
         PointList pointList = new PointList();
         parse(pointList, points1);
-        assertEquals(32, pointList.size());
-        new DouglasPeucker().maxDistance(.5).simplify(pointList);
+        assertEquals(32, pointList.getSize());
+        new DouglasPeucker().setMaxDistance(.5).simplify(pointList);
         // Arrays.asList(2, 4, 6, 7, 8, 9, 12, 14, 15, 17, 18, 19, 20, 22, 24, 27, 28, 29, 31, 33),
-        assertEquals(20, pointList.size());
+        assertEquals(20, pointList.getSize());
     }
 
     @Test
-    public void testSimplifyCheckPointCount() {
+    public void testSimplifyCheckPointCount()
+    {
         PointList pointList = new PointList();
         parse(pointList, points1);
-        DouglasPeucker dp = new DouglasPeucker().maxDistance(.5);
-        assertEquals(32, pointList.size());
+        DouglasPeucker dp = new DouglasPeucker().setMaxDistance(.5);
+        assertEquals(32, pointList.getSize());
         dp.simplify(pointList);
-        assertEquals(20, pointList.size());
+        assertEquals(20, pointList.getSize());
         assertFalse(pointList.toString(), pointList.toString().contains("NaN"));
     }
     String points2 = "[[9.961074440801317,50.203764443183644],[9.96106605889796,50.20365789987872],[9.960999562464645,50.20318963087774],[9.96094144793469,50.202952888673984],[9.96223002587773,50.20267889356641],[9.962200968612752,50.20262022024289],"
             + "[9.961859918278305,50.201853928011374],[9.961668810881722,50.20138565901039],[9.96216874485095,50.20128507617008],[9.961953795595925,50.20088553877664],[9.961899033827313,50.200686794534775],[9.961716680863127,50.20014066696481],[9.961588158344957,50.199798499043254]]";
 
     @Test
-    public void testSimplifyCheckPointOrder() {
+    public void testSimplifyCheckPointOrder()
+    {
         PointList pointList = new PointList();
         parse(pointList, points2);
-        assertEquals(13, pointList.size());
-        new DouglasPeucker().maxDistance(.5).simplify(pointList);
-        assertEquals(11, pointList.size());
+        assertEquals(13, pointList.getSize());
+        new DouglasPeucker().setMaxDistance(.5).simplify(pointList);
+        assertEquals(11, pointList.getSize());
         assertFalse(pointList.toString(), pointList.toString().contains("NaN"));
         assertEquals("(50.203764443183644,9.961074440801317), (50.20318963087774,9.960999562464645), (50.202952888673984,9.96094144793469), (50.20267889356641,9.96223002587773), (50.201853928011374,9.961859918278305), "
                 + "(50.20138565901039,9.961668810881722), (50.20128507617008,9.96216874485095), (50.20088553877664,9.961953795595925), (50.200686794534775,9.961899033827313), (50.20014066696481,9.961716680863127), (50.199798499043254,9.961588158344957)",

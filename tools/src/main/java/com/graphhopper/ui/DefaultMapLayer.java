@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -27,50 +26,70 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Peter Karich
  */
-public abstract class DefaultMapLayer implements MapLayer {
-
-    private Logger logger = LoggerFactory.getLogger(getClass());    
+public abstract class DefaultMapLayer implements MapLayer
+{
+    private Logger logger = LoggerFactory.getLogger(getClass());
     private Rectangle bounds = new Rectangle();
     private Graphics2D tmpG;
     protected BufferedImage image;
     private boolean buffering = true;
     // a bit transparent:
 //    private RescaleOp op = new RescaleOp(new float[]{1f, 1f, 1f, 0.5f}, new float[4], null);
-    private RescaleOp op = new RescaleOp(new float[]{1f, 1f, 1f, 1f}, new float[4], null);
+    private RescaleOp op = new RescaleOp(new float[]
+            {
+                1f, 1f, 1f, 1f
+            }, new float[4], null);
 
-    protected abstract void paintComponent(Graphics2D createGraphics);
+    protected abstract void paintComponent( Graphics2D createGraphics );
 
-    @Override public void paint(Graphics2D mainGraphics) {
-        if (!buffering) {
-            try {
+    @Override
+    public void paint( Graphics2D mainGraphics )
+    {
+        if (!buffering)
+        {
+            try
+            {
                 paintComponent(mainGraphics);
-            } catch (Exception ex) {
+            } catch (Exception ex)
+            {
                 logger.error("Problem in paintComponent", ex);
             }
             return;
         }
         if (image != null)
+        {
             mainGraphics.drawImage(image, op, bounds.x, bounds.y);
+        }
     }
 
-    @Override public void setBuffering(boolean enable) {
+    @Override
+    public void setBuffering( boolean enable )
+    {
         buffering = enable;
     }
 
-    @Override public final void repaint() {
+    @Override
+    public final void repaint()
+    {
         if (tmpG != null)
+        {
             paintComponent(tmpG);
+        }
     }
 
-    @Override public Rectangle getBounds() {
+    @Override
+    public Rectangle getBounds()
+    {
         return bounds;
     }
 
-    public void makeTransparent(Graphics2D g2) {
+    public void makeTransparent( Graphics2D g2 )
+    {
         Color col = g2.getColor();
         Composite comp = null;
         // force transparence of this layer only. If no buffering we would clear layers below
-        if (buffering) {
+        if (buffering)
+        {
             comp = g2.getComposite();
             g2.setComposite(AlphaComposite.Clear);
         }
@@ -78,15 +97,21 @@ public abstract class DefaultMapLayer implements MapLayer {
         g2.fillRect(0, 0, bounds.width, bounds.height);
         g2.setColor(col);
         if (comp != null)
+        {
             g2.setComposite(comp);
+        }
     }
 
-    public void clearGraphics(Graphics2D g2) {
+    public void clearGraphics( Graphics2D g2 )
+    {
         g2.clearRect(0, 0, bounds.width, bounds.height);
     }
 
-    @Override public void setBounds(Rectangle bounds) {
-        if (image == null || image.getHeight() != bounds.height || image.getWidth() != bounds.width) {
+    @Override
+    public void setBounds( Rectangle bounds )
+    {
+        if (image == null || image.getHeight() != bounds.height || image.getWidth() != bounds.width)
+        {
             image = new BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB);
             tmpG = image.createGraphics();
             tmpG.setColor(Color.BLACK);

@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -26,32 +25,37 @@ import java.io.InputStreamReader;
 
 /**
  * Data taken from here http://algs4.cs.princeton.edu/44sp/
- *
+ * <p/>
  * @author Peter Karich
  */
-public class PrinctonReader {
-
+public class PrinctonReader
+{
     private Graph g;
     private InputStream is;
 
-    public PrinctonReader(Graph graph) {
+    public PrinctonReader( Graph graph )
+    {
         g = graph;
     }
 
-    public PrinctonReader stream(InputStream is) {
+    public PrinctonReader setStream( InputStream is )
+    {
         this.is = is;
         return this;
     }
 
-    public void read() {
+    public void read()
+    {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is), 8 * (1 << 10));
         int lineNo = 0;
-        try {
+        try
+        {
             lineNo++;
             int nodes = Integer.parseInt(reader.readLine());
             lineNo++;
             int edges = Integer.parseInt(reader.readLine());
-            for (int i = 0; i < edges; i++) {
+            for (int i = 0; i < edges; i++)
+            {
                 lineNo++;
                 String line = reader.readLine();
                 String args[] = line.split(" ");
@@ -59,27 +63,38 @@ public class PrinctonReader {
                 int to = -1;
                 double dist = -1;
                 int counter = 0;
-                for (int j = 0; j < args.length; j++) {
+                for (int j = 0; j < args.length; j++)
+                {
                     if (Helper.isEmpty(args[j]))
+                    {
                         continue;
+                    }
 
                     if (counter == 0)
+                    {
                         from = Integer.parseInt(args[j]);
-                    else if (counter == 1)
+                    } else if (counter == 1)
+                    {
                         to = Integer.parseInt(args[j]);
-                    else
+                    } else
+                    {
                         dist = Double.parseDouble(args[j]);
+                    }
 
                     counter++;
                 }
                 if (counter != 3)
+                {
                     throw new RuntimeException("incorrect read!? from:" + from + ", to:" + to + ", dist:" + dist);
+                }
 
                 g.edge(from, to, dist, false);
             }
-        } catch (Exception ex) {
+        } catch (Exception ex)
+        {
             throw new RuntimeException("Problem in line " + lineNo, ex);
-        } finally {
+        } finally
+        {
             Helper.close(reader);
         }
     }

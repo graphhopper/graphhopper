@@ -1,6 +1,6 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
@@ -24,19 +24,21 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class PointListTest {
-
-    @Test public void testReverse() {
+public class PointListTest
+{
+    @Test
+    public void testReverse()
+    {
         PointList instance = new PointList();
         instance.add(1, 1);
         instance.reverse();
-        assertEquals(1, instance.longitude(0), 1e-7);
+        assertEquals(1, instance.getLongitude(0), 1e-7);
 
         instance = new PointList();
         instance.add(1, 1);
         instance.add(2, 2);
         instance.reverse();
-        assertEquals(2, instance.longitude(0), 1e-7);
-        assertEquals(1, instance.longitude(1), 1e-7);
+        assertEquals(2, instance.getLongitude(0), 1e-7);
+        assertEquals(1, instance.getLongitude(1), 1e-7);
     }
 }

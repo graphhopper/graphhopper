@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -18,41 +17,40 @@
  */
 package com.graphhopper.util;
 
-import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 /**
- * Put the usage of proprietary "sun" classes and after jdk6 classes into this
- * class. To use Helper class under Android as well.
- *
+ * Put the usage of proprietary "sun" classes and after jdk6 classes into this class. To use Helper
+ * class under Android as well.
+ * <p/>
  * @author Peter Karich
  */
-public class Helper7 {
-
+public class Helper7
+{
     /**
      * <code>true</code>, if this platform supports unmapping mmapped files.
      */
     public static final boolean UNMAP_SUPPORTED;
 
-    static {
+    static
+    {
         boolean v;
-        try {
+        try
+        {
             Class.forName("sun.misc.Cleaner");
             Class.forName("java.nio.DirectByteBuffer")
                     .getMethod("cleaner");
             v = true;
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             v = false;
         }
         UNMAP_SUPPORTED = v;
     }
 
-    public static String getBeanMemInfo() {
+    public static String getBeanMemInfo()
+    {
         java.lang.management.OperatingSystemMXBean mxbean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
         com.sun.management.OperatingSystemMXBean sunmxbean = (com.sun.management.OperatingSystemMXBean) mxbean;
         long freeMemory = sunmxbean.getFreePhysicalMemorySize();
@@ -61,11 +59,16 @@ public class Helper7 {
                 + ", rfree:" + Runtime.getRuntime().freeMemory() / Helper.MB;
     }
 
-    public static void close(XMLStreamReader r) {
-        try {
+    public static void close( XMLStreamReader r )
+    {
+        try
+        {
             if (r != null)
+            {
                 r.close();
-        } catch (XMLStreamException ex) {
+            }
+        } catch (XMLStreamException ex)
+        {
             throw new RuntimeException("Couldn't close xml reader", ex);
         }
     }

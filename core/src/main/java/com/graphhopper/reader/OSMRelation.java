@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -26,20 +25,16 @@ import java.util.Map;
 
 /**
  * Represents an OSM Relation
- *
+ * <p/>
  * @author Nop
  */
-public class OSMRelation extends OSMElement {
-
+public class OSMRelation extends OSMElement
+{
     protected ArrayList<Member> members;
 
-    public OSMRelation() {
-        super(RELATION);
-        members = new ArrayList<Member>();
-    }
-
-    public OSMRelation(long id, XMLStreamReader parser) throws XMLStreamException {
-        super(RELATION, id, parser);
+    public OSMRelation( long id, XMLStreamReader parser ) throws XMLStreamException
+    {
+        super(id, RELATION, parser);
         members = new ArrayList<Member>();
 
         parser.nextTag();
@@ -47,16 +42,20 @@ public class OSMRelation extends OSMElement {
         readTags(parser);
     }
 
-    public OSMRelation(long id, Map<String, String> tags) {
-        super(RELATION, id, tags);
+    public OSMRelation( long id, Map<String, String> tags )
+    {
+        super(id, RELATION, tags);
 
         members = new ArrayList<Member>();
     }
 
-    protected void readMembers(XMLStreamReader parser) throws XMLStreamException {
+    protected void readMembers( XMLStreamReader parser ) throws XMLStreamException
+    {
         int event = parser.getEventType();
-        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equalsIgnoreCase("member")) {
-            if (event == XMLStreamConstants.START_ELEMENT) {
+        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equalsIgnoreCase("member"))
+        {
+            if (event == XMLStreamConstants.START_ELEMENT)
+            {
                 // read member
                 members.add(new Member(parser));
             }
@@ -65,66 +64,82 @@ public class OSMRelation extends OSMElement {
         }
     }
 
-    public String toString() {
+    @Override
+    public String toString()
+    {
         return "Relation (" + id + ", " + members.size() + " members)";
     }
 
-    public ArrayList<Member> getMembers() {
+    public ArrayList<Member> getMembers()
+    {
         return members;
     }
 
-    public void copyMembers(OSMRelation input) {
+    public void copyMembers( OSMRelation input )
+    {
         members = new ArrayList<Member>();
-        for (int i = 0; i < input.members.size(); i++) {
+        for (int i = 0; i < input.members.size(); i++)
+        {
             members.add(new Member(input.members.get(i)));
         }
     }
 
-    public boolean isMetaRelation() {
-        for (Member member : members) {
+    public boolean isMetaRelation()
+    {
+        for (Member member : members)
+        {
             if (member.type() == RELATION)
+            {
                 return true;
+            }
         }
         return false;
     }
 
-    public boolean isMixedRelation() {
+    public boolean isMixedRelation()
+    {
         boolean hasRel = false;
         boolean hasOther = false;
 
-        for (Member member : members) {
+        for (Member member : members)
+        {
             if (member.type() == RELATION)
+            {
                 hasRel = true;
-            else
+            } else
+            {
                 hasOther = true;
+            }
 
             if (hasRel && hasOther)
+            {
                 return true;
+            }
         }
         return false;
     }
-    /*   private static String[] memberType = new String[]{
-     "node", "way", "relation"
-     };
-     */
 
-    public void removeRelations() {
-        for (int i = members.size() - 1; i >= 0; i--) {
-            if (members.get(i).type() == RELATION) {
+    public void removeRelations()
+    {
+        for (int i = members.size() - 1; i >= 0; i--)
+        {
+            if (members.get(i).type() == RELATION)
+            {
                 members.remove(i);
             }
         }
     }
 
-    public void add(Member member) {
+    public void add( Member member )
+    {
         members.add(member);
     }
 
     /**
      * Container class for relation members
      */
-    public static class Member {
-
+    public static class Member
+    {
         public static final int NODE = 0;
         public static final int WAY = 1;
         public static final int RELATION = 2;
@@ -133,38 +148,45 @@ public class OSMRelation extends OSMElement {
         private long ref;
         private String role;
 
-        public Member(XMLStreamReader parser) {
+        public Member( XMLStreamReader parser )
+        {
             String typeName = parser.getAttributeValue(null, "type");
             type = typeDecode.indexOf(typeName.charAt(0));
             ref = Long.parseLong(parser.getAttributeValue(null, "ref"));
             role = parser.getAttributeValue(null, "role");
         }
 
-        public Member(Member input) {
+        public Member( Member input )
+        {
             type = input.type;
             ref = input.ref;
             role = input.role;
         }
 
-        public Member(int type, long ref, String role) {
+        public Member( int type, long ref, String role )
+        {
             this.type = type;
             this.ref = ref;
             this.role = role;
         }
 
-        public String toString() {
+        public String toString()
+        {
             return "Member " + type + ":" + ref;
         }
 
-        public int type() {
+        public int type()
+        {
             return type;
         }
 
-        public String role() {
+        public String role()
+        {
             return role;
         }
 
-        public long ref() {
+        public long ref()
+        {
             return ref;
         }
     }

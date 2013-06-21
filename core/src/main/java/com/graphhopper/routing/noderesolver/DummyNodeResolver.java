@@ -13,7 +13,8 @@ import com.graphhopper.util.EdgeIterator;
  * @author NG
  * 
  */
-public class DummyNodeResolver implements RouteNodeResolver {
+public class DummyNodeResolver implements RouteNodeResolver
+{
 
 	/** the encoder to read edge flags in node resolution */
 	private final AbstractFlagEncoder edgeEncoder;
@@ -22,33 +23,40 @@ public class DummyNodeResolver implements RouteNodeResolver {
 	 * @param edgenEncoder
 	 *            the encoder to read edge flags in node resolution
 	 */
-	public DummyNodeResolver(AbstractFlagEncoder edgenEncoder) {
+	public DummyNodeResolver( AbstractFlagEncoder edgenEncoder )
+	{
 		this.edgeEncoder = edgenEncoder;
 	}
 
 	@Override
-	public int findRouteNode(LocationIDResult closestLocation, double lat, double lon, boolean isOrigin, boolean sameEdge) {
+	public int findRouteNode( LocationIDResult closestLocation, double lat, double lon, boolean isOrigin, boolean sameEdge )
+	{
 		
-		if (closestLocation.closestEdge() == null) {
+		if (closestLocation.getClosestEdge() == null)
+		{
 			// edge is unknown : return the closest node
-			return closestLocation.closestNode();
+			return closestLocation.getClosestNode();
 		}
 		
-		EdgeIterator closestEdge = closestLocation.closestEdge();
-		int flags = closestEdge.flags();
-		if (edgeEncoder.isBackward(flags) && edgeEncoder.isForward(flags)) {
+		EdgeIterator closestEdge = closestLocation.getClosestEdge();
+		int flags = closestEdge.getFlags();
+		if (edgeEncoder.isBackward(flags) && edgeEncoder.isForward(flags))
+		{
 			// Bidirectional edge
 			return findRouteNodeBidirectional(closestLocation, lat, lon,
 					isOrigin);
-		} else {
+		} else
+		{
 			// one way
 			// (routing from-to the same edge is an exception to the one way behavior)
-			if (isOrigin ^ edgeEncoder.isForward(flags) ^ sameEdge) {
+			if (isOrigin ^ edgeEncoder.isForward(flags) ^ sameEdge)
+			{
 				// start on forward OR arrive on backward => Start node
-				return closestEdge.baseNode();
-			} else {
+				return closestEdge.getBaseNode();
+			} else
+			{
 				// start on backward OR arrive on forward => End node
-				return closestEdge.adjNode();
+				return closestEdge.getAdjNode();
 			}
 		}
 	}
@@ -64,8 +72,9 @@ public class DummyNodeResolver implements RouteNodeResolver {
 	 * @param isOrigin
 	 * @return
 	 */
-	protected int findRouteNodeBidirectional(LocationIDResult closestLocation, double lat, double lon, boolean isOrigin) {
-		return closestLocation.closestNode();
+	protected int findRouteNodeBidirectional( LocationIDResult closestLocation, double lat, double lon, boolean isOrigin )
+	{
+		return closestLocation.getClosestNode();
 	}
 
 }

@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -21,35 +20,41 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.Helper;
 
 /**
  * @author Peter Karich
  */
-public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<NoOpAlgorithmPreparation> {
-
-    public NoOpAlgorithmPreparation() {
+public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<NoOpAlgorithmPreparation>
+{
+    public NoOpAlgorithmPreparation()
+    {
     }
 
     /**
-     * Creates a preparation wrapper for the specified algorithm. Warning/TODO:
-     * set the _graph for the instance otherwise you'll get NPE when calling
-     * createAlgo. Possible values for algorithmStr: astar (A* algorithm),
-     * astarbi (bidirectional A*) dijkstra (Dijkstra), dijkstrabi and
-     * dijkstraNative (a bit faster bidirectional Dijkstra).
+     * Creates a preparation wrapper for the specified algorithm. Warning/TODO: set the _graph for
+     * the instance otherwise you'll get NPE when calling createAlgo. Possible values for
+     * algorithmStr: astar (A* algorithm), astarbi (bidirectional A*) dijkstra (Dijkstra),
+     * dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
      */
-    public static AlgorithmPreparation createAlgoPrepare(Graph g, final String algorithmStr, 
-            FlagEncoder encoder, WeightCalculation weightCalc) {
-        return p(new RoutingAlgorithmFactory(algorithmStr, false), encoder, weightCalc).graph(g);
+    public static AlgorithmPreparation createAlgoPrepare( Graph g, final String algorithmStr,
+            FlagEncoder encoder, WeightCalculation weightCalc )
+    {
+        return p(new RoutingAlgorithmFactory(algorithmStr, false), encoder, weightCalc).setGraph(g);
     }
 
-    private static AlgorithmPreparation p(final RoutingAlgorithmFactory factory, 
-            final FlagEncoder encoder, final WeightCalculation weightCalc) {
-        return new NoOpAlgorithmPreparation() {
-            @Override public RoutingAlgorithm createAlgo() {
-                try {
-                    return factory.createAlgo(_graph, encoder).type(weightCalc);
-                } catch (Exception ex) {
+    private static AlgorithmPreparation p( final RoutingAlgorithmFactory factory,
+            final FlagEncoder encoder, final WeightCalculation weightCalc )
+    {
+        return new NoOpAlgorithmPreparation()
+        {
+            @Override
+            public RoutingAlgorithm createAlgo()
+            {
+                try
+                {
+                    return factory.createAlgo(_graph, encoder).setType(weightCalc);
+                } catch (Exception ex)
+                {
                     throw new RuntimeException(ex);
                 }
             }

@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -22,11 +21,11 @@ import java.io.Closeable;
 
 /**
  * Interface for a storage abstraction.
- *
+ * <p/>
  * @author Peter Karich
  */
-public interface Storable<T> extends Closeable {
-
+public interface Storable<T> extends Closeable
+{
     /**
      * @return true if successfully loaded from persistent storage.
      */
@@ -35,18 +34,18 @@ public interface Storable<T> extends Closeable {
     /**
      * Creates the underlying storage. First operation if it cannot be loaded.
      */
-    T create(long size);
+    T create( long byteCount );
 
     /**
-     * This method makes sure that the underlying data is written to the
-     * storage. Keep in mind that a disc normally has an IO cache so that
-     * flush() is (less) probably not save against power loses.
+     * This method makes sure that the underlying data is written to the storage. Keep in mind that
+     * a disc normally has an IO cache so that flush() is (less) probably not save against power
+     * loses.
      */
     void flush();
 
     /**
-     * This method makes sure that the underlying used resources are released.
-     * WARNING: it does NOT flush on close!
+     * This method makes sure that the underlying used resources are released. WARNING: it does NOT
+     * flush on close!
      */
     @Override
     void close();
@@ -54,5 +53,5 @@ public interface Storable<T> extends Closeable {
     /**
      * @return the allocated storage size in bytes
      */
-    long capacity();
+    long getCapacity();
 }

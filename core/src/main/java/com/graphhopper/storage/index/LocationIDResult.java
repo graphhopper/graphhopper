@@ -22,55 +22,66 @@ import com.graphhopper.util.EdgeIterator;
 
 /**
  * Result of Location2IDIndex lookup
- *
+ * <p/>
  * @author Peter Karich
  */
-public class LocationIDResult {
-
+public class LocationIDResult
+{
     private double weight = Double.MAX_VALUE;
     private int wayIndex = -3;
     private int closestNode = -1;
     private EdgeIterator closestEdge = null;
 
-    public LocationIDResult() {
+    public LocationIDResult()
+    {
     }
 
-    public void closestNode(int node) {
+    public void setClosestNode( int node )
+    {
         closestNode = node;
     }
 
-    public int closestNode() {
+    public int getClosestNode()
+    {
         return closestNode;
     }
 
-    public void weight(double dist) {
-        weight = dist;
+    public void setWeight( double w )
+    {
+        weight = w;
     }
 
-    public void wayIndex(int wayIndex) {
-        this.wayIndex = wayIndex;
-    }
-
-    public double weight() {
+    public double getWeight()
+    {
         return weight;
+    }
+
+    public void setWayIndex( int wayIndex )
+    {
+        this.wayIndex = wayIndex;
     }
 
     /**
      * @return true if a close node was found
      */
-    public boolean isValid() {
+    public boolean isValid()
+    {
         return closestNode >= 0;
     }
     
-    public void closestEdge(EdgeIterator edge) {
+    public void setClosestEdge(EdgeIterator edge)
+    {
     	this.closestEdge = edge;
     }
     
-    public EdgeIterator closestEdge() {
+    public EdgeIterator getClosestEdge()
+    {
     	return this.closestEdge;
     }
+    
     @Override
-    public String toString() {
+    public String toString()
+    {
         return closestNode + ", " + weight + ", " + wayIndex;
     }
 }

@@ -34,28 +34,32 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
-
+public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
+{
     protected final EncodingManager encodingManager = new EncodingManager("CAR");
 
     @Override
-    public Location2NodesNtree createIndex(Graph g, int resolution) {
+    public Location2NodesNtree createIndex( Graph g, int resolution )
+    {
         return internalCreateIndex(g, 500000);
     }
 
-    public Location2NodesNtree internalCreateIndex(Graph g, int minMeter) {
+    public Location2NodesNtree internalCreateIndex( Graph g, int minMeter )
+    {
         Directory dir = new RAMDirectory(location);
         Location2NodesNtree idx = new Location2NodesNtree(g, dir);
-        idx.resolution(minMeter).prepareIndex();
+        idx.setResolution(minMeter).prepareIndex();
         return idx;
     }
 
     @Override
-    public boolean hasEdgeSupport() {
+    public boolean hasEdgeSupport()
+    {
         return true;
     }
 
-    Graph createTestGraph() {
+    Graph createTestGraph()
+    {
         Graph graph = createGraph(new RAMDirectory(), encodingManager);
         graph.setNode(0, 0.5, -0.5);
         graph.setNode(1, -0.5, -0.5);
@@ -73,11 +77,12 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     }
 
     @Test
-    public void testInMemIndex() {
+    public void testInMemIndex()
+    {
         Graph graph = createTestGraph();
         Location2NodesNtree index = new Location2NodesNtree(graph, new RAMDirectory());
-        index.minResolutionInMeter(50000).prepareAlgo();
-        Location2NodesNtree.InMemConstructionIndex inMemIndex = index.prepareInMemIndex();
+        index.setMinResolutionInMeter(50000).prepareAlgo();
+        Location2NodesNtree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
         assertEquals(Helper.createTList(4, 4), index.getEntries());
 
         assertEquals(3, inMemIndex.getEntriesOf(0).size());
@@ -91,7 +96,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         // [LEAF 0 {2} {},    LEAF 2 {1} {},    LEAF 1 {2} {}, LEAF 3 {1} {}, LEAF 8 {0} {}, LEAF 10 {0} {}, LEAF 9 {0} {}, LEAF 4 {2} {}, LEAF 6 {0, 3} {},       LEAF 5 {0, 2, 3} {}, LEAF 7 {1, 2, 3} {}, LEAF 13 {1} {}]
         // System.out.println(inMemIndex.getLayer(2));
 
-        index.searchRegion(false);
+        index.setSearchRegion(false);
         TIntHashSet set = new TIntHashSet();
         set.add(0);
         assertEquals(set, index.findNetworkEntries(0.5, -0.5));
@@ -112,11 +117,12 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     }
 
     @Test
-    public void testInMemIndex2() {
+    public void testInMemIndex2()
+    {
         Graph graph = createTestGraph2();
         Location2NodesNtree index = new Location2NodesNtree(graph, new RAMDirectory());
-        index.minResolutionInMeter(500).prepareAlgo();
-        Location2NodesNtree.InMemConstructionIndex inMemIndex = index.prepareInMemIndex();
+        index.setMinResolutionInMeter(500).prepareAlgo();
+        Location2NodesNtree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
         assertEquals(Helper.createTList(4, 4), index.getEntries());
         assertEquals(1, inMemIndex.getEntriesOf(0).size());
         assertEquals(4, inMemIndex.getEntriesOf(1).size());
@@ -124,7 +130,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
 
         index.dataAccess.create(10);
         inMemIndex.store(inMemIndex.root, Location2NodesNtree.START_POINTER);
-        index.searchRegion(false);
+        index.setSearchRegion(false);
 
         // 0
         assertEquals(2L, index.keyAlgo.encode(49.94653, 11.57114));
@@ -153,11 +159,12 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     }
 
     @Test
-    public void testInMemIndex3() {
+    public void testInMemIndex3()
+    {
         Graph graph = createTestGraph();
         Location2NodesNtree index = new Location2NodesNtree(graph, new RAMDirectory());
-        index.minResolutionInMeter(10000).prepareAlgo();
-        Location2NodesNtree.InMemConstructionIndex inMemIndex = index.prepareInMemIndex();
+        index.setMinResolutionInMeter(10000).prepareAlgo();
+        Location2NodesNtree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
         assertEquals(Helper.createTList(64, 4), index.getEntries());
 
         assertEquals(33, inMemIndex.getEntriesOf(0).size());
@@ -166,16 +173,17 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
 
         index.dataAccess.create(1024);
         inMemIndex.store(inMemIndex.root, Location2NodesNtree.START_POINTER);
-        assertEquals(1 << 20, index.capacity());
+        assertEquals(1 << 20, index.getCapacity());
 
         LocationIDResult res = index.findClosest(-.5, -.5, EdgeFilter.ALL_EDGES);
-        assertEquals(1, res.closestNode());
+        assertEquals(1, res.getClosestNode());
     }
 
     @Test
-    public void testReverseSpatialKey() {
+    public void testReverseSpatialKey()
+    {
         Location2NodesNtree index = new Location2NodesNtree(createTestGraph(), new RAMDirectory());
-        index.minResolutionInMeter(200).prepareAlgo();
+        index.setMinResolutionInMeter(200).prepareAlgo();
         assertEquals(Helper.createTList(64, 64, 64, 4), index.getEntries());
 
         // 10111110111110101010
@@ -183,7 +191,8 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     }
 
     @Test
-    public void testMoreReal() {
+    public void testMoreReal()
+    {
         Graph graph = createGraph(new EncodingManager("CAR"));
         graph.setNode(1, 51.2492152, 9.4317166);
         graph.setNode(0, 52, 9);
@@ -192,7 +201,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
 
         graph.edge(1, 0, 1000, true);
         graph.edge(0, 2, 1000, true);
-        graph.edge(0, 3, 1000, true).wayGeometry(Helper.createPointList(51.21, 9.43));
+        graph.edge(0, 3, 1000, true).setWayGeometry(Helper.createPointList(51.21, 9.43));
         Location2IDIndex index = internalCreateIndex(graph, 1000);
         assertEquals(2, index.findID(51.2, 9.4));
     }
@@ -206,7 +215,8 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     //  |  |/------/  /
     //-1|  2---------/
     //  |
-    private Graph createTestGraphWithWayGeometry() {
+    private Graph createTestGraphWithWayGeometry()
+    {
         Graph graph = createGraph(encodingManager);
         graph.setNode(0, 0.5, -0.5);
         graph.setNode(1, -0.5, -0.5);
@@ -216,8 +226,8 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
         graph.edge(0, 1, 1, true);
         graph.edge(0, 2, 1, true);
         // insert A and B, without this we would get 0 for 0,0
-        graph.edge(0, 4, 1, true).wayGeometry(Helper.createPointList(1, 1));
-        graph.edge(1, 3, 1, true).wayGeometry(Helper.createPointList(0, 0));
+        graph.edge(0, 4, 1, true).setWayGeometry(Helper.createPointList(1, 1));
+        graph.edge(1, 3, 1, true).setWayGeometry(Helper.createPointList(0, 0));
         graph.edge(2, 3, 1, true);
         graph.edge(2, 4, 1, true);
         graph.edge(3, 4, 1, true);
@@ -225,7 +235,8 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     }
 
     @Test
-    public void testWayGeometry() {
+    public void testWayGeometry()
+    {
         Graph g = createTestGraphWithWayGeometry();
         Location2IDIndex index = createIndex(g, 1000);
         assertEquals(1, index.findID(0, 0));
@@ -235,13 +246,14 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     }
 
     @Test
-    public void testMore() {
+    public void testMore()
+    {
         Graph g = createGraph(encodingManager);
         g.setNode(10, 51.2492152, 9.4317166);
         g.setNode(20, 52, 9);
         g.setNode(30, 51.2, 9.4);
         g.setNode(50, 49, 10);
-        g.edge(20, 50, 1, true).wayGeometry(Helper.createPointList(51.25, 9.43));
+        g.edge(20, 50, 1, true).setWayGeometry(Helper.createPointList(51.25, 9.43));
         g.edge(10, 20, 1, true);
         g.edge(20, 30, 1, true);
 
@@ -250,20 +262,25 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester {
     }
 
     @Test
-    public void testEdgeFilter() {
+    public void testEdgeFilter()
+    {
         Graph g = createTestGraph();
         Location2NodesNtree index = (Location2NodesNtree) createIndex(g, 1000);
 
-        assertEquals(1, index.findClosest(-.6, -.6, EdgeFilter.ALL_EDGES).closestNode());
-        assertEquals(2, index.findClosest(-.6, -.6, new EdgeFilter() {
-            @Override public boolean accept(EdgeIterator iter) {
-                return iter.baseNode() == 2 || iter.adjNode() == 2;
+        assertEquals(1, index.findClosest(-.6, -.6, EdgeFilter.ALL_EDGES).getClosestNode());
+        assertEquals(2, index.findClosest(-.6, -.6, new EdgeFilter()
+        {
+            @Override
+            public boolean accept( EdgeIterator iter )
+            {
+                return iter.getBaseNode() == 2 || iter.getAdjNode() == 2;
             }
-        }).closestNode());
+        }).getClosestNode());
     }
 
     // see testgraph2.jpg
-    Graph createTestGraph2() {
+    Graph createTestGraph2()
+    {
         Graph graph = createGraph(new RAMDirectory(), encodingManager);
 
         graph.setNode(8, 49.94553, 11.57214);

@@ -53,8 +53,8 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 
-public class MainActivity extends MapActivity {
-
+public class MainActivity extends MapActivity
+{
     private MapView mapView;
     private GraphHopperAPI hopper;
     private GeoPoint start;
@@ -72,14 +72,18 @@ public class MainActivity extends MapActivity {
     private String downloadURL;
     private String mapsFolder;
     private String mapFile;
-    private SimpleOnGestureListener gestureListener = new SimpleOnGestureListener() {
+    private SimpleOnGestureListener gestureListener = new SimpleOnGestureListener()
+    {
         // why does this fail? public boolean onDoubleTap(MotionEvent e) {};
-        public boolean onSingleTapConfirmed(MotionEvent motionEvent) {
-            if (!initFiles(currentArea)) {
+        public boolean onSingleTapConfirmed( MotionEvent motionEvent )
+        {
+            if (!initFiles(currentArea))
+            {
                 return false;
             }
 
-            if (shortestPathRunning) {
+            if (shortestPathRunning)
+            {
                 logUser("Calculation still in progress");
                 return false;
             }
@@ -88,23 +92,27 @@ public class MainActivity extends MapActivity {
             Projection p = mapView.getProjection();
             GeoPoint tmpPoint = p.fromPixels((int) x, (int) y);
 
-            if (start != null && end == null) {
+            if (start != null && end == null)
+            {
                 end = tmpPoint;
                 shortestPathRunning = true;
                 Marker marker = createMarker(tmpPoint, R.drawable.flag_red);
-                if (marker != null) {
+                if (marker != null)
+                {
                     pathOverlay.getOverlayItems().add(marker);
                     mapView.redraw();
                 }
 
                 calcPath(start.latitude, start.longitude, end.latitude,
                         end.longitude);
-            } else {
+            } else
+            {
                 start = tmpPoint;
                 end = null;
                 pathOverlay.getOverlayItems().clear();
                 Marker marker = createMarker(start, R.drawable.flag_green);
-                if (marker != null) {
+                if (marker != null)
+                {
                     pathOverlay.getOverlayItems().add(marker);
                     mapView.redraw();
                 }
@@ -116,14 +124,18 @@ public class MainActivity extends MapActivity {
             gestureListener);
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate( Bundle savedInstanceState )
+    {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        mapView = new MapView(this) {
+        mapView = new MapView(this)
+        {
             @Override
-            public boolean onTouchEvent(MotionEvent event) {
-                if (gestureDetector.onTouchEvent(event)) {
+            public boolean onTouchEvent( MotionEvent event )
+            {
+                if (gestureDetector.onTouchEvent(event))
+                {
                     return true;
                 }
                 return super.onTouchEvent(event);
@@ -136,7 +148,8 @@ public class MainActivity extends MapActivity {
         input.setText(currentArea);
         mapsFolder = Environment.getExternalStorageDirectory()
                 .getAbsolutePath() + "/graphhopper/maps/";
-        if (!new File(mapsFolder).exists()) {
+        if (!new File(mapsFolder).exists())
+        {
             new File(mapsFolder).mkdirs();
         }
 
@@ -150,12 +163,15 @@ public class MainActivity extends MapActivity {
         chooseAreaFromLocal();
     }
 
-    private boolean initFiles(String area) {
+    private boolean initFiles( String area )
+    {
         // only return true if already loaded
-        if (hopper != null) {
+        if (hopper != null)
+        {
             return true;
         }
-        if (prepareInProgress) {
+        if (prepareInProgress)
+        {
             logUser("Preparation still in progress");
             return false;
         }
@@ -165,45 +181,58 @@ public class MainActivity extends MapActivity {
         return false;
     }
 
-    private void chooseAreaFromLocal() {
+    private void chooseAreaFromLocal()
+    {
         List<String> nameList = new ArrayList<String>();
-        for (String file : new File(mapsFolder).list(new FilenameFilter() {
+        String[] files = new File(mapsFolder).list(new FilenameFilter()
+        {
             @Override
-            public boolean accept(File dir, String filename) {
+            public boolean accept( File dir, String filename )
+            {
                 return filename != null
                         && (filename.endsWith(".ghz") || filename
                         .endsWith("-gh"));
             }
-        })) {
+        });
+        for (String file : files)
+        {
             nameList.add(file);
         }
-        if (nameList.isEmpty()) {
+        if (nameList.isEmpty())
+        {
             return;
         }
 
         chooseArea(localButton, localSpinner, nameList,
-                new MySpinnerListener() {
+                new MySpinnerListener()
+                {
                     @Override
-                    public void onSelect(String selectedArea,
-                            String selectedFile) {
+                    public void onSelect( String selectedArea, String selectedFile )
+                    {
                         initFiles(selectedArea);
                     }
                 });
     }
 
-    private void chooseAreaFromRemote() {
-        new GHAsyncTask<Void, Void, List<String>>() {
-            protected List<String> saveDoInBackground(Void... params)
-                    throws Exception {
+    private void chooseAreaFromRemote()
+    {
+        new GHAsyncTask<Void, Void, List<String>>()
+        {
+            protected List<String> saveDoInBackground( Void... params )
+                    throws Exception
+            {
                 String filesList = mapsFolder + "files.txt";
                 AndroidHelper.download(fileListURL, filesList, null);
                 List<String> res = new ArrayList<String>();
                 for (String str : AndroidHelper.readFile(new FileReader(
-                        filesList))) {
+                        filesList)))
+                {
                     int index = str.indexOf("/files/");
-                    if (index >= 0) {
+                    if (index >= 0)
+                    {
                         int lastIndex = str.indexOf(".ghz", index);
-                        if (lastIndex >= 0) {
+                        if (lastIndex >= 0)
+                        {
                             res.add(prefixURL + str.substring(index, lastIndex)
                                     + ".ghz");
                         }
@@ -213,24 +242,30 @@ public class MainActivity extends MapActivity {
             }
 
             @Override
-            protected void onPostExecute(List<String> nameList) {
-                if (hasError()) {
+            protected void onPostExecute( List<String> nameList )
+            {
+                if (hasError())
+                {
                     logUser("To get downloadable areas restart when connected to internet. "
                             + "Problem while fetching remote area list: "
                             + getErrorMessage());
                     return;
                 }
-                MySpinnerListener spinnerListener = new MySpinnerListener() {
+                MySpinnerListener spinnerListener = new MySpinnerListener()
+                {
                     @Override
-                    public void onSelect(String selectedArea,
-                            String selectedFile) {
+                    public void onSelect( String selectedArea,
+                            String selectedFile )
+                    {
                         if (selectedFile == null
                                 || new File(mapsFolder + selectedArea + ".ghz")
                                 .exists()
                                 || new File(mapsFolder + selectedArea + "-gh")
-                                .exists()) {
+                                .exists())
+                        {
                             downloadURL = null;
-                        } else {
+                        } else
+                        {
                             downloadURL = selectedFile;
                         }
                         initFiles(selectedArea);
@@ -242,12 +277,15 @@ public class MainActivity extends MapActivity {
         }.execute();
     }
 
-    private void chooseArea(Button button, final Spinner spinner,
-            List<String> nameList, final MySpinnerListener mylistener) {
+    private void chooseArea( Button button, final Spinner spinner,
+            List<String> nameList, final MySpinnerListener mylistener )
+    {
         final Map<String, String> nameToFullName = new TreeMap<String, String>();
-        for (String fullName : nameList) {
+        for (String fullName : nameList)
+        {
             String tmp = Helper.pruneFileEnd(fullName);
-            if (tmp.endsWith("-gh")) {
+            if (tmp.endsWith("-gh"))
+            {
                 tmp = tmp.substring(0, tmp.length() - 3);
             }
             tmp = AndroidHelper.getFileName(tmp);
@@ -258,27 +296,33 @@ public class MainActivity extends MapActivity {
         ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(
                 this, android.R.layout.simple_spinner_dropdown_item, nameList);
         spinner.setAdapter(spinnerArrayAdapter);
-        button.setOnClickListener(new OnClickListener() {
+        button.setOnClickListener(new OnClickListener()
+        {
             @Override
-            public void onClick(View v) {
+            public void onClick( View v )
+            {
                 Object o = spinner.getSelectedItem();
-                if (o != null && o.toString().length() > 0) {
+                if (o != null && o.toString().length() > 0)
+                {
                     String area = o.toString();
                     mylistener.onSelect(area, nameToFullName.get(area));
-                } else {
+                } else
+                {
                     mylistener.onSelect(null, null);
                 }
             }
         });
     }
 
-    public interface MySpinnerListener {
-
-        void onSelect(String selectedArea, String selectedFile);
+    public interface MySpinnerListener
+    {
+        void onSelect( String selectedArea, String selectedFile );
     }
 
-    void downloadingFiles() {
-        if (downloadURL == null) {
+    void downloadingFiles()
+    {
+        if (downloadURL == null)
+        {
             unzipping();
             return;
         }
@@ -290,55 +334,68 @@ public class MainActivity extends MapActivity {
         dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         dialog.show();
 
-        new GHAsyncTask<Void, Integer, Object>() {
-            protected Object saveDoInBackground(Void... _ignore)
-                    throws Exception {
+        new GHAsyncTask<Void, Integer, Object>()
+        {
+            protected Object saveDoInBackground( Void... _ignore )
+                    throws Exception
+            {
                 final String localFile = mapsFolder
                         + AndroidHelper.getFileName(downloadURL);
                 log("downloading " + downloadURL + " to " + localFile);
                 AndroidHelper.download(downloadURL, localFile,
-                        new ProgressListener() {
+                        new ProgressListener()
+                        {
                             @Override
-                            public void update(int val) {
+                            public void update( int val )
+                            {
                                 publishProgress(val);
                             }
                         });
                 return null;
             }
 
-            protected void onProgressUpdate(Integer... values) {
+            protected void onProgressUpdate( Integer... values )
+            {
                 super.onProgressUpdate(values);
                 dialog.setProgress(values[0]);
             }
 
-            protected void onPostExecute(Object _ignore) {
+            protected void onPostExecute( Object _ignore )
+            {
                 dialog.hide();
-                if (hasError()) {
+                if (hasError())
+                {
                     String str = "An error happend while retrieving maps:" + getErrorMessage();
                     log(str, getError());
                     logUser(str);
-                } else {
+                } else
+                {
                     unzipping();
                 }
             }
         }.execute();
     }
 
-    void unzipping() {
+    void unzipping()
+    {
         final File compressed = new File(mapsFolder + currentArea + ".ghz");
         final boolean uncompress = compressed.exists()
                 && !compressed.isDirectory();
-        if (!uncompress) {
+        if (!uncompress)
+        {
             loadMap();
             return;
         }
 
         logUser("uncompressing file " + compressed.getAbsolutePath());
-        new GHAsyncTask<Void, Void, Object>() {
+        new GHAsyncTask<Void, Void, Object>()
+        {
             @Override
-            protected Object saveDoInBackground(Void... params)
-                    throws Exception {
-                if (uncompress) {
+            protected Object saveDoInBackground( Void... params )
+                    throws Exception
+            {
+                if (uncompress)
+                {
                     boolean deleteZipped = true;
                     Helper.unzip(compressed.getAbsolutePath(), mapsFolder
                             + currentArea + "-gh", deleteZipped);
@@ -346,21 +403,26 @@ public class MainActivity extends MapActivity {
                 return null;
             }
 
-            protected void onPostExecute(Object result) {
-                if (hasError()) {
+            protected void onPostExecute( Object result )
+            {
+                if (hasError())
+                {
                     logUser("Error while uncompressing: " + getErrorMessage());
-                } else {
+                } else
+                {
                     loadMap();
                 }
             }
         }.execute();
     }
 
-    void loadMap() {
+    void loadMap()
+    {
         logUser("loading map");
         mapFile = mapsFolder + currentArea + "-gh/" + currentArea + ".map";
         FileOpenResult fileOpenResult = mapView.setMapFile(new File(mapFile));
-        if (!fileOpenResult.isSuccess()) {
+        if (!fileOpenResult.isSuccess())
+        {
             logUser(fileOpenResult.getErrorMessage());
             finishPrepare();
             return;
@@ -369,26 +431,32 @@ public class MainActivity extends MapActivity {
         // TODO sometimes the center is wrong
         mapView.getOverlays().clear();
         mapView.getOverlays().add(pathOverlay);
-        prepareGraph();
+        loadGraphStorage();
     }
 
-    void prepareGraph() {
-        logUser("loading graph (" + Constants.VERSION + "|" + Constants.VERSION + ") ... ");
-        new GHAsyncTask<Void, Void, Path>() {
-            protected Path saveDoInBackground(Void... v) throws Exception {
+    void loadGraphStorage()
+    {
+        logUser("loading graph (" + Constants.VERSION + ") ... ");
+        new GHAsyncTask<Void, Void, Path>()
+        {
+            protected Path saveDoInBackground( Void... v ) throws Exception
+            {
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
-                tmpHopp.chShortcuts(true, true);
+                tmpHopp.setCHShortcuts(true, true);
                 tmpHopp.load(mapsFolder + currentArea);
-                log("found graph with " + tmpHopp.graph().nodes() + " nodes.");
+                log("found graph " + tmpHopp.getGraph().toString() + ", nodes:" + tmpHopp.getGraph().getNodes());
                 hopper = tmpHopp;
                 return null;
             }
 
-            protected void onPostExecute(Path o) {
-                if (hasError()) {
+            protected void onPostExecute( Path o )
+            {
+                if (hasError())
+                {
                     logUser("An error happend while creating graph:"
                             + getErrorMessage());
-                } else {
+                } else
+                {
                     logUser("Finished loading graph. Touch to route.");
                 }
 
@@ -397,16 +465,19 @@ public class MainActivity extends MapActivity {
         }.execute();
     }
 
-    private void finishPrepare() {
+    private void finishPrepare()
+    {
         prepareInProgress = false;
     }
 
-    private Polyline createPolyline(GHResponse response) {
-        int points = response.points().size();
+    private Polyline createPolyline( GHResponse response )
+    {
+        int points = response.getPoints().getSize();
         List<GeoPoint> geoPoints = new ArrayList<GeoPoint>(points);
-        PointList tmp = response.points();
-        for (int i = 0; i < response.points().size(); i++) {
-            geoPoints.add(new GeoPoint(tmp.latitude(i), tmp.longitude(i)));
+        PointList tmp = response.getPoints();
+        for (int i = 0; i < response.getPoints().getSize(); i++)
+        {
+            geoPoints.add(new GeoPoint(tmp.getLatitude(i), tmp.getLongitude(i)));
         }
         PolygonalChain polygonalChain = new PolygonalChain(geoPoints);
         Paint paintStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -415,76 +486,93 @@ public class MainActivity extends MapActivity {
         paintStroke.setAlpha(128);
         paintStroke.setStrokeWidth(8);
         paintStroke
-                .setPathEffect(new DashPathEffect(new float[]{25, 15}, 0));
+                .setPathEffect(new DashPathEffect(new float[]
+                {
+                    25, 15
+                }, 0));
 
         return new Polyline(polygonalChain, paintStroke);
     }
 
-    private Marker createMarker(GeoPoint p, int resource) {
+    private Marker createMarker( GeoPoint p, int resource )
+    {
         Drawable drawable = getResources().getDrawable(resource);
         return new Marker(p, Marker.boundCenterBottom(drawable));
     }
 
-    public void calcPath(final double fromLat, final double fromLon,
-            final double toLat, final double toLon) {
+    public void calcPath( final double fromLat, final double fromLon,
+            final double toLat, final double toLon )
+    {
 
         log("calculating path ...");
-        new AsyncTask<Void, Void, GHResponse>() {
+        new AsyncTask<Void, Void, GHResponse>()
+        {
             float time;
 
-            protected GHResponse doInBackground(Void... v) {
+            protected GHResponse doInBackground( Void... v )
+            {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon)
-                        .algorithm("dijkstrabi").putHint("douglas.minprecision", 1);
+                        .setAlgorithm("dijkstrabi").putHint("douglas.minprecision", 1);
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
                 return resp;
             }
 
-            protected void onPostExecute(GHResponse resp) {
-                if (!resp.hasError()) {
+            protected void onPostExecute( GHResponse resp )
+            {
+                if (!resp.hasError())
+                {
                     log("from:" + fromLat + "," + fromLon + " to:" + toLat + ","
-                            + toLon + " found path with distance:" + resp.distance()
-                            / 1000f + ", nodes:" + resp.points().size() + ", time:"
-                            + time + " " + resp.debugInfo());
-                    logUser("the route is " + (int) (resp.distance() / 100) / 10f
-                            + "km long, time:" + resp.time() / 60f + "min, debug:" + time);
+                            + toLon + " found path with distance:" + resp.getDistance()
+                            / 1000f + ", nodes:" + resp.getPoints().getSize() + ", time:"
+                            + time + " " + resp.getDebugInfo());
+                    logUser("the route is " + (int) (resp.getDistance() / 100) / 10f
+                            + "km long, time:" + resp.getTime() / 60f + "min, debug:" + time);
 
                     pathOverlay.getOverlayItems().add(createPolyline(resp));
                     mapView.redraw();
-                } else {
-                    logUser("Error:" + resp.errors());
+                } else
+                {
+                    logUser("Error:" + resp.getErrors());
                 }
                 shortestPathRunning = false;
             }
         }.execute();
     }
 
-    private void log(String str) {
+    private void log( String str )
+    {
         Log.i("GH", str);
     }
 
-    private void log(String str, Throwable t) {
+    private void log( String str, Throwable t )
+    {
         Log.i("GH", str, t);
     }
 
-    private void logUser(String str) {
+    private void logUser( String str )
+    {
         Toast.makeText(this, str, Toast.LENGTH_LONG).show();
     }
     private static final int NEW_MENU_ID = Menu.FIRST + 1;
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu( Menu menu )
+    {
         super.onCreateOptionsMenu(menu);
         menu.add(0, NEW_MENU_ID, 0, "Google");
         // menu.add(0, NEW_MENU_ID + 1, 0, "Other");
         return true;
     }
 
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+    public boolean onOptionsItemSelected( MenuItem item )
+    {
+        switch (item.getItemId())
+        {
             case NEW_MENU_ID:
-                if (start == null || end == null) {
+                if (start == null || end == null)
+                {
                     logUser("tap screen to set start and end of route");
                     break;
                 }

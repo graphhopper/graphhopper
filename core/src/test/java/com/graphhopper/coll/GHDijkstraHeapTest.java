@@ -1,12 +1,11 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
  *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -25,21 +24,24 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class GHDijkstraHeapTest extends AbstractBinHeapTest {
-
+public class GHDijkstraHeapTest extends AbstractBinHeapTest
+{
     @Override
-    public BinHeapWrapper<Number, Integer> createHeap(int capacity) {
+    public BinHeapWrapper<Number, Integer> createHeap( int capacity )
+    {
         return new GHDijkstraHeap(capacity / 5);
     }
 
     @Test
-    public void testMove() {
+    public void testMove()
+    {
         IntDoubleBinHeap from = new IntDoubleBinHeap();
         from.insert(100, 101);
         from.insert(50, 51);
         from.insert(70, 71);
         from.insert(30, 31);
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 20; i++)
+        {
             from.insert(i * 10, i * 11);
         }
         from.insert(59, 61);
@@ -47,12 +49,12 @@ public class GHDijkstraHeapTest extends AbstractBinHeapTest {
         IntDoubleBinHeap to = new IntDoubleBinHeap();
         to.insert(99, 91);
 
-        assertEquals(26, from.size());
-        assertEquals(1, to.size());
+        assertEquals(26, from.getSize());
+        assertEquals(1, to.getSize());
 
         from = GHDijkstraHeap.move(20, from, to);
-        assertEquals(13, from.size());
-        assertEquals(14, to.size());
+        assertEquals(13, from.getSize());
+        assertEquals(14, to.getSize());
 
         assertEquals("0.0, 10.0, 20.0, 30.0, 30.0, 40.0, 50.0, 50.0, 59.0, 60.0, 70.0, 70.0, 80.0", from.toKeyString());
         assertEquals("90.0, 99.0, 100.0, 100.0, 110.0, 120.0, 130.0, 140.0, "
