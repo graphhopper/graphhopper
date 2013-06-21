@@ -38,6 +38,7 @@ import org.onebusaway.gtfs.impl.GtfsRelationalDaoImpl;
 import org.onebusaway.gtfs.model.Frequency;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.StopTime;
+import org.onebusaway.gtfs.model.Transfer;
 import org.onebusaway.gtfs.model.Trip;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,7 @@ public class GTFSReader {
     private int defaultAlightTime = 240;
     
     
-    private int defaultFlags;
+    private int travelFlags;
     private static int nodeId = 0;
 
     private Map<Stop, TransitStop> stopNodes;
@@ -69,7 +70,7 @@ public class GTFSReader {
         this.stopNodes = new HashMap<Stop, TransitStop>();
         this.graph = graph;
         this.nameIndex = new Id2NameIndex();
-        this.defaultFlags = new PublicTransitFlagEncoder().flags(false);
+        this.travelFlags = new PublicTransitFlagEncoder().flags(false);
 
     }
 
@@ -91,6 +92,7 @@ public class GTFSReader {
         prepare(expectedNodes);
         loadStops(store);
         loadTrips(store);
+        loadTransfers(store);
     }
 
     /**
@@ -160,7 +162,7 @@ public class GTFSReader {
                     int arrivalNode = transitStop.addArrivalNode(stopTime);
                     int travelTime = stopTime.getArrivalTime() - departureTime;
                     checkTime(travelTime);
-                    graph.edge(departureNode, arrivalNode, travelTime, defaultFlags);
+                    graph.edge(departureNode, arrivalNode, travelTime, travelFlags);
 
                     // Check if it is the last stop in the trip
                     if (iterator.hasNext()) {
@@ -168,13 +170,25 @@ public class GTFSReader {
                         departureTime = stopTime.getDepartureTime();
                         int waitingTime = departureTime - stopTime.getArrivalTime();
                         checkTime(waitingTime);
-                        graph.edge(arrivalNode, departureNode, waitingTime, defaultFlags);
+                        graph.edge(arrivalNode, departureNode, waitingTime, travelFlags);
                     }
                 }
             }
 
         }
 
+    }
+    
+    private void loadTransfers(GtfsRelationalDaoImpl store) {
+        logger.info("Importing transfers ...");
+        for (Transfer transfer : store.getAllTransfers()){
+            TransitStop from = stopNodes.get(transfer.getFromStop());
+            TransitStop to = stopNodes.get(transfer.getToStop());
+            if (from != null && to != null) {
+                int time = transfer.getMinTransferTime();
+                from.addTransfer(to, time);
+            }
+        }
     }
 
     /**

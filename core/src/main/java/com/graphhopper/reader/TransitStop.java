@@ -47,6 +47,7 @@ public class TransitStop {
     private int transitFlags;
     private int boardingFlags;
     private int alignFlags;
+    private int travelFlags;
     
     // All transit nodes
     private TreeSet<TransitNode> transitNodes = new TreeSet<TransitNode>();
@@ -77,6 +78,7 @@ public class TransitStop {
         transitFlags = encoder.getTransitFlags(false);
         boardingFlags = encoder.getBoardingFlags(false);
         alignFlags = encoder.getAlightFlags(false);
+        travelFlags = encoder.flags(false);
     }
 
     /**
@@ -198,6 +200,35 @@ public class TransitStop {
      */
     private void connect2ExitNode(int nodeId) {
         graph.edge(nodeId, exitNodeId, 0, exitFlags);
+    }
+    
+    /**
+     * Adds all transfers from this node to the to
+     * @param to Endpoint for the transfer
+     * @param time min travel time
+     */
+    void addTransfer(TransitStop to, int time) {
+        for (TransitNode fromNode : transitNodes ) {
+            TransitNode toNode = to.findNode(fromNode.time + time);
+            if (toNode == null){
+                // Connect to exit node
+                graph.edge(fromNode.id,  to.getExitNodeId(), time, exitFlags);
+            } else {
+                int tmpTime = toNode.time - fromNode.time;
+                graph.edge(fromNode.id, toNode.id, tmpTime, travelFlags);
+            }
+        }
+        // Connect exit node with exit node
+        graph.edge(this.getExitNodeId(),  to.getExitNodeId(), time, exitFlags);
+    }
+    
+    /**
+     * Finds a an transit node with later or same time. Returns Null if none is found.
+     * @param time time in seconds
+     * @return transitNode
+     */
+    private TransitNode findNode(int time) {
+        return transitNodes.ceiling(new TransitNode(0, time));
     }
 
     private static class TransitNode implements Comparable<TransitNode> {

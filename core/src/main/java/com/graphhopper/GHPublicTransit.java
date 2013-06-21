@@ -114,7 +114,7 @@ public class GHPublicTransit implements GraphHopperAPI {
     public Graph graph() {
         return graph;
     }
-    
+
     public GHPublicTransit gtfsFile(String file) {
         if (Helper.isEmpty(file)) {
             throw new IllegalArgumentException("OSM file cannot be empty.");
@@ -133,23 +133,34 @@ public class GHPublicTransit implements GraphHopperAPI {
 
     private GHPublicTransit importGTFS(String graphHopperLocation, String gtfsFile) {
         graphHopperLocation(graphHopperLocation);
-        logger.info("start creating graph from " + gtfsFile);
-        GTFSReader reader = new GTFSReader(graph);
-        try {
-            File file = new File(gtfsFile);
-            reader.setDefaultAlightTime(defaultAlightTime);
-            reader.load(file);
-            reader.close();
-            graph = reader.graph();
-        } catch (IOException ex) {
-            throw new RuntimeException("Could not load GTFS file ", ex);
-        }
+
+        GTFSReader reader = importGTFS(gtfsFile);
+        graph = reader.graph();
+        reader.close();
         properties.putCurrentVersions();
         initTransitIndex();
         flush();
         optimize();
 
         return this;
+    }
+
+    protected GTFSReader importGTFS(String file) {
+        gtfsFile(file);
+        File tmpFile = new File(file);
+        if (!tmpFile.exists()) {
+            throw new IllegalStateException("Your specified GTFS file does not exist:" + tmpFile.getAbsolutePath());
+        }
+        logger.info("start creating graph from " + gtfsFile);
+        GTFSReader reader = new GTFSReader(graph);
+        try {
+            reader.setDefaultAlightTime(defaultAlightTime);
+            reader.load(tmpFile);
+        } catch (IOException ex) {
+            throw new RuntimeException("Could not load GTFS file ", ex);
+        }
+
+        return reader;
     }
 
     private void printInfo(StorableProperties props) {
@@ -176,6 +187,10 @@ public class GHPublicTransit implements GraphHopperAPI {
 
     StorableProperties properties() {
         return properties;
+    }
+
+    public void setDefaultAlightTime(int defaultAlightTime) {
+        this.defaultAlightTime = defaultAlightTime;
     }
 
     /**
