@@ -3,5 +3,5 @@
  * agouge, discussion and API refactoring
  * karussell, lead developer
  * khuebner, pushes turn instructions forward
- * NopMap, several OSM parse improvements
- * quintona, initial implementation for instructions
+ * NopMap, massive improvements regarding OSM, parsing and encoding
+ * ocampana, initial implementation for instructions
