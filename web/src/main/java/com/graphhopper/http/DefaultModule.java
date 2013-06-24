@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author Peter Karich, pkarich@pannous.info
+ * @author Peter Karich
  */
 public class DefaultModule extends AbstractModule
 {

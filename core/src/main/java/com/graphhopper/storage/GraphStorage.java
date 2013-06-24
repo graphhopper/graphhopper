@@ -353,6 +353,12 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         return newOrExistingEdge;
     }
 
+    // for test only
+    void setEdgeCount( int cnt )
+    {
+        edgeCount = cnt;
+    }
+
     private int nextEdge()
     {
         int nextEdge = edgeCount;
@@ -518,7 +524,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     protected class AllEdgeIterator implements AllEdgesIterator
     {
         protected long edgePointer = -edgeEntryBytes;
-        private int maxEdges = edgeCount * edgeEntryBytes;
+        private long maxEdges = (long) edgeCount * edgeEntryBytes;
         private int nodeA;
 
         public AllEdgeIterator()

@@ -212,6 +212,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
    exit
  fi
 
+ current_commit=`git log -n 1 --pretty=oneline | cut -d' ' -f1`
  commits=$(git rev-list HEAD -n $last_commits)
  for commit in $commits; do
    git checkout $commit -q
@@ -223,5 +224,6 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
    startMeasurement
    echo -e "\nmeasurement.commit=$commit\n" >> $M_FILE_NAME
  done
-
+ # revert checkout
+ git checkout $current_commit
 fi
