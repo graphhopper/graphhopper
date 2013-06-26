@@ -77,10 +77,10 @@ public class OSMReaderHelper {
         pillarLats.create(Math.max(expectedNodes / 50, 100));
         pillarLons.create(Math.max(expectedNodes / 50, 100));
 
-        if( g.is3D() ) {
+        // todo if( g.is3D() ) {
             pillarEles = dir.findCreate("tmpElevations");
             pillarEles.create(Math.max(expectedNodes / 50, 100));
-        }
+        //}
     }
 
     public OSMReaderHelper wayPointMaxDistance(double maxDist) {
@@ -353,7 +353,7 @@ public class OSMReaderHelper {
 
         if (graphIndex < TOWER_NODE) {
             graphIndex = -graphIndex - 3;
-            g.getLocation( graphIndex, latLon );
+           // todo  g.getLocation( graphIndex, latLon );
         }
         else {
             graphIndex = graphIndex - 3;

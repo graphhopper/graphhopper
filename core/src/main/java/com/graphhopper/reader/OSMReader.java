@@ -193,18 +193,18 @@ public class OSMReader {
     private void initializeGeometry() {
         geometryAccess = new GeometryAccess( this, helper );
 
-        if( graphStorage.is3D() ) {
-            geometryAccess.initDem( demLocation, graphStorage );
+        // todo if( graphStorage.is3D() ) {
+            geometryAccess.initDem( demLocation, graphStorage.bounds() );
 
             // fill the graph with elevations
             // todo: do this controlled by region to limit memory usage
             int nodeCount = graphStorage.nodes();
             for( int i = 0; i < nodeCount; i++ ) {
                 int ele = geometryAccess.getElevation( graphStorage.getLatitude( i ), graphStorage.getLongitude( i ) );
-                graphStorage.setElevation( i, ele );
+                // todo graphStorage.setElevation( i, ele );
             }
             helper.addElevations( geometryAccess );
-        }
+        //}
     }
 
     /**

@@ -52,14 +52,6 @@ public interface Graph {
     double getLongitude(int node);
 
     /**
-     * Returns a 2D or 3D node from the graph.
-     * @param index node id
-     * @param node int[3] array to take the coordinates
-     * @return the int array
-     */
-    public int[] getLocation( int index, int[] node );
-
-    /**
      * Returns the implicit bounds of this graph calculated from the lat,lon
      * input of setNode
      */

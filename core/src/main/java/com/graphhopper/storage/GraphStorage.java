@@ -61,16 +61,13 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
      */
     private int edgeCount = 0;
     // node memory layout: edgeRef,lat,lon
-    protected final int N_EDGE_REF, N_LAT, N_LON, N_ELE;
+    protected final int N_EDGE_REF, N_LAT, N_LON;
     /**
      * specified how many entries (integers) are used per node
      */
     protected int nodeEntrySize;
     protected DataAccess nodes;
 
-    // mark this graph as 3D
-    protected boolean is3D;
-    protected int nodeSize;
     /**
      * interval [0,n)
      */
@@ -88,11 +85,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
     private EncodingManager encodingManager;
     protected final EdgeFilter allEdgesFilter;
 
-    public GraphStorage(Directory dir, EncodingManager encodingManager) {
-        this( dir, encodingManager, false );
-    }
-
-    public GraphStorage(Directory dir, EncodingManager encodingManager, boolean activate3D ) {
+    public GraphStorage(Directory dir, EncodingManager encodingManager ) {
         if (encodingManager == null)
             throw new NullPointerException("EncodingManager cannot be null!");
         this.encodingManager = encodingManager;
@@ -113,16 +106,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         N_EDGE_REF = nextNodeEntryIndex();
         N_LAT = nextNodeEntryIndex();
         N_LON = nextNodeEntryIndex();
-
-        is3D = activate3D;
-        if( activate3D ) {
-            N_ELE = nextNodeEntryIndex();
-            nodeSize = 3;
-        }
-        else {
-            N_ELE = Integer.MAX_VALUE;
-            nodeSize = 2;
-        }
 
         initNodeAndEdgeEntrySize();
     }
@@ -194,19 +177,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         return Helper.intToDegree(nodes.getInt((long) index * nodeEntrySize + N_LON));
     }
 
-    public int[] getLocation( int index, int[] node ) {
-        long pos = (long) index * nodeEntrySize;
-        node[0] = nodes.getInt( pos + N_LAT );
-        node[1] = nodes.getInt( pos + N_LON );
-        if( is3D )
-            node[2] = nodes.getInt( pos + N_ELE );
-        return node;
-    };
-
-    public boolean is3D() {
-        return is3D;
-    }
-
     /**
      * Translates double VALUE to integer in order to save it in a DataAccess
      * object
@@ -233,8 +203,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
         long tmp = (long) index * nodeEntrySize;
         nodes.setInt(tmp + N_LAT, Helper.degreeToInt(lat));
         nodes.setInt(tmp + N_LON, Helper.degreeToInt(lon));
-        if( is3D )
-            nodes.setInt(tmp + N_ELE, 0);
 
         if (lat > bounds.maxLat)
             bounds.maxLat = lat;
@@ -244,19 +212,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage> {
             bounds.maxLon = lon;
         if (lon < bounds.minLon)
             bounds.minLon = lon;
-    }
-
-    /**
-     * Set the elevation for an existing node.
-     * Throws an exception if graph is not in 3D mode.
-     * @param index
-     * @param elevation
-     */
-    public void setElevation( int index, int elevation ) {
-        if( is3D )
-            nodes.setInt((long) index * nodeEntrySize + N_ELE, elevation );
-        else
-            throw new IllegalStateException( "Attempt to set elevation in a 2D graph." );
     }
 
     private long incCapacity(DataAccess da, long deltaCap) {

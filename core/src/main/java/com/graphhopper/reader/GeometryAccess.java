@@ -19,12 +19,11 @@ public class GeometryAccess
         this.helper = helper;
     }
 
-    public void initDem( String demLocation, GraphStorage graphStorage ) {
+    public void initDem( String demLocation, BBox bounds ) {
 
         if( demLocation == null )
             throw new IllegalArgumentException( "Path to DEM data cannot be empty." );
 
-        BBox bounds = graphStorage.bounds();
         dem = new DemArea( demLocation, 4, bounds.minLon, bounds.minLat, bounds.maxLon, bounds.maxLat  );
         dem.load();
     }
