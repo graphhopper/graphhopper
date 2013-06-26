@@ -23,7 +23,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.WayList;
+import com.graphhopper.util.InstructionList;
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -53,7 +53,7 @@ public class Path
     private int fromNode = EdgeIterator.NO_EDGE;
     private TIntList edgeIds;
     private PointList cachedPoints;
-    private WayList cachedWays;
+    private InstructionList cachedWays;
     private double weight;
 
     public Path( Graph graph, FlagEncoder encoder )
@@ -292,10 +292,10 @@ public class Path
     /**
      * @return the cached list of ways for this path
      */
-    public WayList calcInstructions() {
+    public InstructionList calcInstructions() {
         if (cachedWays != null)
             return cachedWays;
-        cachedWays = new WayList(edgeIds.size() / 4);
+        cachedWays = new InstructionList(edgeIds.size() / 4);
         if (edgeIds.isEmpty())
             return cachedWays;
 
@@ -350,7 +350,7 @@ public class Path
                 if (name == null) {
                     prevDist = 0;
                     name = iter.getName();
-                    cachedWays.add(WayList.CONTINUE_ON_STREET, name, iter.getDistance());
+                    cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, iter.getDistance());
                 } else {
                     double tmpOrientation = 0;
                     orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
@@ -374,12 +374,12 @@ public class Path
                         // we have a tolerance of approx +/- 10 degrees to 
                         // indicate that we have to go straight and not to turn.                         
                         if (Math.abs(tmpOrientation - prevOrientation) < 0.2)
-                            cachedWays.add(WayList.CONTINUE_ON_STREET, name, prevDist);
+                            cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, prevDist);
                         else {
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(WayList.TURN_LEFT, name, prevDist);
+                                cachedWays.add(InstructionList.TURN_LEFT, name, prevDist);
                             else
-                                cachedWays.add(WayList.TURN_RIGHT, name, prevDist);
+                                cachedWays.add(InstructionList.TURN_RIGHT, name, prevDist);
                         }
                         prevDist = 0;
                     }

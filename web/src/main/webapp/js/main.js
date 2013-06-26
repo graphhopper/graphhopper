@@ -130,7 +130,7 @@ function initMap() {
     
     // mapquest provider
     var moreAttr = 'Data &copy; <a href="http://www.openstreetmap.org/">OSM</a>,'
-    + 'JS: <a href="http://leafletjs.com/">Leaflet</a>';
+        + 'JS: <a href="http://leafletjs.com/">Leaflet</a>';
     var mapquest = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
         attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr, 
         subdomains: ['otile1','otile2','otile3','otile4']
@@ -172,7 +172,7 @@ function initMap() {
         L.control.layers(baseMaps).addTo(map);
 
     map.fitBounds(new L.LatLngBounds(new L.LatLng(bounds.minLat, bounds.minLon), 
-        new L.LatLng(bounds.maxLat, bounds.maxLon)));
+    new L.LatLng(bounds.maxLat, bounds.maxLon)));
     
     map.attributionControl.setPrefix('');
 
@@ -186,11 +186,11 @@ function initMap() {
         "geometry": {            
             "type": "LineString",
             "coordinates":[
-            [bounds.minLon, bounds.minLat], 
-            [bounds.maxLon, bounds.minLat], 
-            [bounds.maxLon, bounds.maxLat], 
-            [bounds.minLon, bounds.maxLat],
-            [bounds.minLon, bounds.minLat]]
+                [bounds.minLon, bounds.minLat], 
+                [bounds.maxLon, bounds.minLat], 
+                [bounds.maxLon, bounds.maxLat], 
+                [bounds.minLon, bounds.maxLat],
+                [bounds.minLon, bounds.minLat]]
         }
     };
     
@@ -295,7 +295,7 @@ function getInfoFromLocation(locCoord) {
         // in every case overwrite name
         locCoord.resolvedText = "Error while looking up coordinate";
         url = nominatim_reverse + "?lat=" + locCoord.lat + "&lon="
-        + locCoord.lng + "&format=json&zoom=16&json_callback=reverse_callback" + getInfoTmpCounter;
+            + locCoord.lng + "&format=json&zoom=16&json_callback=reverse_callback" + getInfoTmpCounter;
         return $.ajax({
             url: url,
             type : "GET",
@@ -324,7 +324,7 @@ function getInfoFromLocation(locCoord) {
     } else {
         // see https://trac.openstreetmap.org/ticket/4683 why limit=3 and not 1
         url = nominatim + "?format=json&q=" + encodeURIComponent(locCoord.input)
-        +"&limit=3&json_callback=search_callback" + getInfoTmpCounter;
+            +"&limit=3&json_callback=search_callback" + getInfoTmpCounter;
         if(bounds.initialized) {
             // minLon, minLat, maxLon, maxLat => left, top, right, bottom
             url += "&bounded=1&viewbox=" + bounds.minLon + ","+bounds.maxLat + ","+bounds.maxLon +","+ bounds.minLat;
@@ -337,7 +337,7 @@ function getInfoFromLocation(locCoord) {
             timeout: 3000,
             jsonpCallback: 'search_callback' + getInfoTmpCounter
         }).fail(createCallback("[nominatim] Problem while looking up location " + locCoord.input)).
-        pipe(function(jsonArgs) {
+            pipe(function(jsonArgs) {
             var json = jsonArgs[0];
             if(!json) {
                 locCoord.resolvedText = "No area description found";                
@@ -472,7 +472,7 @@ function routeLatLng(request) {
             addToBing = "&mode=W";
         } else if(request.vehicle == "bike") {
             addToGoogle = "&dirflg=b";
-        // ? addToBing = "&mode=B";
+            // ? addToBing = "&mode=B";
         }
         googleLink.attr("href", "http://maps.google.com/?q=from:" + from + "+to:" + to + addToGoogle);
         hiddenDiv.append(googleLink);
@@ -488,25 +488,35 @@ function routeLatLng(request) {
         });
         
         if(json.route.instructions) {
-            var instructionsDiv = $("<div id='instructions'/>");
-            $("#info").append(instructionsDiv);        
+            var instructionsElement = $("<table id='instructions'><colgroup>"
+                + "<col width='1*'><col width='6*'><col width='1*'></colgroup>");
+            $("#info").append(instructionsElement);        
             var descriptions = json.route.instructions.descriptions;
             var distances = json.route.instructions.distances;
             var indications = json.route.instructions.indications;
-            instructionsDiv.append($("<div class='clear'/>"));
             for(var m = 0; m < descriptions.length; m++) {                
-                var instructionDiv = $("<div class='instruction'/>");
                 var indi = indications[m];
-                var indiPic = "/img/" + indi + ".png";
-                instructionDiv.html(
-                    "<img class='instr_pic' alt='"+indi+"' src='"+indiPic+"'/>"
-                    + " <span class='instr_title'>"  + descriptions[m] + "</span>"
-                    + " <span class='instr_distance'>" + distances[m] + "</span>");
-                instructionsDiv.append(instructionDiv);
-                instructionsDiv.append($("<div class='clear'/>"));
+                if(m == 0)
+                    indi = "marker-from";                
+                    
+                addInstruction(instructionsElement, indi, descriptions[m], distances[m]);                
             }
+            addInstruction(instructionsElement, "marker-to", "Finish!", "");
         }
     });
+}
+
+function addInstruction(main, indi, title, distance) {
+    var indiPic = "<img class='instr_pic' src='/img/" + indi + ".png'/>";                    
+    var str = "<td class='instr_title'>"  + title + "</td>"
+        + " <td class='instr_distance_td'><span class='instr_distance'>" + distance + "</span></td>";
+    if(indi !== "continue")
+        str = "<td>" + indiPic + "</td>"+ str;
+    else
+        str = "<td/>" + str;
+    var instructionDiv = $("<tr class='instruction'/>");
+    instructionDiv.html(str);
+    main.append(instructionDiv);
 }
     
 function decodePath(encoded, geoJson) {

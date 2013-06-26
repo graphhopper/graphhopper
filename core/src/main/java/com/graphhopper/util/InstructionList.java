@@ -29,8 +29,9 @@ import java.util.*;
  * Slim list to store several points (without the need for a point object).
  * <p/>
  * @author Ottavio Campana
+ * @author Peter Karich
  */
-public class WayList
+public class InstructionList
 {
     private static final TranslationMap translations = new TranslationMap();
     public static final int CONTINUE_ON_STREET = 0;
@@ -40,12 +41,12 @@ public class WayList
     private List<String> names;
     private TDoubleArrayList distances;
 
-    public WayList()
+    public InstructionList()
     {
         this(10);
     }
 
-    public WayList( int cap )
+    public InstructionList( int cap )
     {
         if (cap < 5)
         {

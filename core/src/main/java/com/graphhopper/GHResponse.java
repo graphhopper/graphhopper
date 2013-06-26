@@ -18,7 +18,7 @@
 package com.graphhopper;
 
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.WayList;
+import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.shapes.BBox;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ public class GHResponse
     private long time;
     private String debugInfo = "";
     private List<Throwable> errors = new ArrayList<Throwable>(4);
-    private WayList instructions = new WayList(0);
+    private InstructionList instructions = new InstructionList(0);
 
     public GHResponse()
     {
@@ -147,12 +147,12 @@ public class GHResponse
         return "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
     }
 
-    public void setInstructions( WayList instructions )
+    public void setInstructions( InstructionList instructions )
     {
         this.instructions = instructions;
     }
 
-    public WayList getInstructions()
+    public InstructionList getInstructions()
     {
         return instructions;
     }

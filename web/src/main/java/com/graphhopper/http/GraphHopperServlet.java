@@ -176,7 +176,7 @@ public class GraphHopperServlet extends HttpServlet
 
             if (enableInstructions)
             {
-                WayList instructions = rsp.getInstructions();
+                InstructionList instructions = rsp.getInstructions();
                 builder.startObject("instructions").
                         object("descriptions", instructions.createDescription(locale)).
                         object("distances", instructions.createDistances(locale)).

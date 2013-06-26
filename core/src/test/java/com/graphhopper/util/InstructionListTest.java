@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class WayListTest
+public class InstructionListTest
 {
     @Test
     public void testWayList()
@@ -85,7 +85,7 @@ public class WayListTest
         iter2.setWayGeometry(list);
 
         Path p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(0, 10);
-        WayList wayList = p.calcInstructions();
+        InstructionList wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
                 "Turn left onto 7-8", "Continue onto 8-9", "Turn right"),
                 wayList.createDescription(Locale.CANADA));

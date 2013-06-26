@@ -27,7 +27,7 @@ body {
 #info a {
     padding-right: 5px;
 }
-#input {
+#input, #instructions {
     width: 225px;
 }
 #fromInput, #toInput {
@@ -102,17 +102,25 @@ body {
 #hosting a {
     color: gray;                
 }
-.instruction {
-    border-bottom: beige groove thin;
+
+.instruction {    
     padding-top: 5px;
     padding-bottom: 5px;
 }
+tr.instruction td {
+    border-bottom: beige groove thin;
+}
+#instructions {
+    padding-top: 10px;
+    width: 100%;
+}
 .instr_title {
-    position: absolute;
-    left: 40px;
+}
+.instr_distance_td {
+/*    min-width: 150px;*/
 }
 .instr_distance {
-    float: right;
+    float: right;    
     color: gray;
 }
 .instr_pic {    
