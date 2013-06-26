@@ -51,6 +51,7 @@ public class OSMReader
     private EncodingManager encodingManager = null;
     private int workerThreads = -1;
     private LongIntMap osmNodeIdToBarrierMap;
+    private boolean enableInstructions = true;
 
     public OSMReader( GraphStorage storage, long expectedCap )
     {
@@ -298,24 +299,27 @@ public class OSMReader
             createdEdges.addAll(helper.addOSMWay(way.getNodes(), flags));
         }
 
-        // http://wiki.openstreetmap.org/wiki/Key:name
-        String name = (String) way.getTag("name");
-        // http://wiki.openstreetmap.org/wiki/Key:ref
-        String refName = (String) way.getTag("ref");
-        if (!Helper.isEmpty(refName))
+        if (enableInstructions)
         {
-            if (Helper.isEmpty(name))
+            // http://wiki.openstreetmap.org/wiki/Key:name
+            String name = (String) way.getTag("name");
+            // http://wiki.openstreetmap.org/wiki/Key:ref
+            String refName = (String) way.getTag("ref");
+            if (!Helper.isEmpty(refName))
             {
-                name = refName;
-            } else
-            {
-                name += " (" + refName + ")";
+                if (Helper.isEmpty(name))
+                {
+                    name = refName;
+                } else
+                {
+                    name += " (" + refName + ")";
+                }
             }
-        }
 
-        for (EdgeIterator iter : createdEdges)
-        {
-            iter.setName(name);
+            for (EdgeIterator iter : createdEdges)
+            {
+                iter.setName(name);
+            }
         }
     }
 
@@ -370,8 +374,15 @@ public class OSMReader
         return helper;
     }
 
-    public void setWayPointMaxDistance( double maxDist )
+    public OSMReader setWayPointMaxDistance( double maxDist )
     {
         helper.setWayPointMaxDistance(maxDist);
+        return this;
+    }
+
+    public OSMReader setEnableInstructions( boolean enableInstructions )
+    {
+        this.enableInstructions = enableInstructions;
+        return this;
     }
 }

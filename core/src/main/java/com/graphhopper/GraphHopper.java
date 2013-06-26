@@ -44,7 +44,6 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import java.io.File;
 import java.io.IOException;
-import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,6 +96,7 @@ public class GraphHopper implements GraphHopperAPI
     private double wayPointMaxDistance = 1;
     private int workerThreads = -1;
     private int defaultSegmentSize = -1;
+    private boolean enableInstructions = true;
 
     public GraphHopper()
     {
@@ -199,6 +199,16 @@ public class GraphHopper implements GraphHopperAPI
         {
             defaultAlgorithm = "bidijkstra";
         }
+        return this;
+    }
+
+    /**
+     * This method specifies if the import should include way names to be able to return
+     * instructions for a route.
+     */
+    public GraphHopper setEnableInstructions( boolean b )
+    {
+        enableInstructions = b;
         return this;
     }
 
@@ -350,6 +360,7 @@ public class GraphHopper implements GraphHopperAPI
         String type = args.get("osmreader.acceptWay", "CAR");
         encodingManager = new EncodingManager(type);
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
+        enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
@@ -414,9 +425,11 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(graph, expectedCapacity).setWorkerThreads(workerThreads);
-        reader.setEncodingManager(encodingManager);
-        reader.setWayPointMaxDistance(wayPointMaxDistance);
+        OSMReader reader = new OSMReader(graph, expectedCapacity).
+                setWorkerThreads(workerThreads).
+               setEncodingManager(encodingManager).
+                setWayPointMaxDistance(wayPointMaxDistance).
+                setEnableInstructions(enableInstructions);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
         reader.doOSM2Graph(osmTmpFile);
         return reader;
@@ -603,8 +616,8 @@ public class GraphHopper implements GraphHopperAPI
             debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
         }
 
-        boolean instructions = request.getHint("instructions", false);
-        if (instructions)
+        enableInstructions = request.getHint("instructions", enableInstructions);
+        if (enableInstructions)
         {
             sw = new StopWatch().start();
             rsp.setInstructions(path.calcInstructions());
