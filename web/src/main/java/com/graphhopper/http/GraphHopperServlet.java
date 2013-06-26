@@ -114,34 +114,25 @@ public class GraphHopperServlet extends HttpServlet
         GHPlace start = infoPoints.get(0);
         GHPlace end = infoPoints.get(1);
         // we can reduce the path length based on the maximum differences to the original coordinates
-        double minPathPrecision = 1;
-        try
-        {
-            minPathPrecision = Double.parseDouble(getParam(req, "minPathPrecision"));
-        } catch (Exception ex)
-        {
-        }
-        String vehicleStr = getParam(req, "vehicle");
+        double minPathPrecision = getDoubleParam(req, "minPathPrecision", 1d);
+        boolean instructions = getBooleanParam(req, "instructions", false);
+        String vehicleStr = getParam(req, "vehicle", "CAR");
         FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr.toUpperCase());
         WeightCalculation algoType = new FastestCalc(algoVehicle);
-        if ("shortest".equalsIgnoreCase(getParam(req, "algoType")))
+        if ("shortest".equalsIgnoreCase(getParam(req, "algoType", null)))
         {
             algoType = new ShortestCalc();
         }
 
-        String algoStr = getParam(req, "algorithm");
-        if (Helper.isEmpty(algoStr))
-        {
-            algoStr = defaultAlgorithm;
-        }
-
+        String algoStr = getParam(req, "algorithm", defaultAlgorithm);
         try
         {
             sw = new StopWatch().start();
-            GHResponse rsp = hopper.route(new GHRequest(start, end).
+            GHResponse rsp = hopper.route(new GHRequest(start, end).                    
                     setVehicle(algoVehicle.toString()).
                     setType(algoType).
                     setAlgorithm(algoStr).
+                    putHint("instructions", instructions).
                     putHint("douglas.minprecision", minPathPrecision));
             if (rsp.hasError())
             {
@@ -164,7 +155,7 @@ public class GraphHopperServlet extends HttpServlet
             PointList points = rsp.getPoints();
 
             double distInKM = rsp.getDistance() / 1000;
-            String encodedParam = getParam(req, "encodedPolyline");
+            boolean encodedPolylineParam = getBooleanParam(req, "encodedPolyline", true);
 
             JSONBuilder builder = new JSONBuilder().
                     startObject("info").
@@ -182,12 +173,13 @@ public class GraphHopperServlet extends HttpServlet
                         end.lon, end.lat
                     }).
                     object("distance", distInKM).
+                    object("instructions", rsp.getInstructions()).
                     object("time", rsp.getTime());
             if (points.getSize() > 2)
             {
                 builder.object("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
             }
-            if ("true".equals(encodedParam))
+            if (encodedPolylineParam)
             {
                 String encodedPolyline = WebHelper.encodePolyline(points);
                 builder.object("coordinates", encodedPolyline);
@@ -213,14 +205,14 @@ public class GraphHopperServlet extends HttpServlet
         }
     }
 
-    protected String getParam( HttpServletRequest req, String string )
+    protected String getParam( HttpServletRequest req, String string, String _default )
     {
         String[] l = req.getParameterMap().get(string);
         if (l != null && l.length > 0)
         {
             return l[0];
         }
-        return "";
+        return _default;
     }
 
     protected String[] getParams( HttpServletRequest req, String string )
@@ -231,6 +223,28 @@ public class GraphHopperServlet extends HttpServlet
             return l;
         }
         return new String[0];
+    }
+
+    protected boolean getBooleanParam( HttpServletRequest req, String string, boolean _default )
+    {
+        try
+        {
+            return Boolean.parseBoolean(getParam(req, string, null));
+        } catch (Exception ex)
+        {
+            return _default;
+        }
+    }
+
+    protected double getDoubleParam( HttpServletRequest req, String string, double _default )
+    {
+        try
+        {
+            return Double.parseDouble(getParam(req, string, null));
+        } catch (Exception ex)
+        {
+            return _default;
+        }
     }
 
     public void writeError( HttpServletResponse res, int code, String str )
@@ -258,13 +272,14 @@ public class GraphHopperServlet extends HttpServlet
 
     private void writeJson( HttpServletRequest req, HttpServletResponse res, JSONObject json ) throws JSONException
     {
-        String type = getParam(req, "type");
+        String type = getParam(req, "type", "json");
         res.setCharacterEncoding("UTF-8");
+        boolean debug = getBooleanParam(req, "debug", false);
         if ("jsonp".equals(type))
         {
             res.setContentType("application/javascript");
-            String callbackName = getParam(req, "callback");
-            if ("true".equals(getParam(req, "debug")))
+            String callbackName = getParam(req, "callback", null);
+            if (debug)
             {
                 writeResponse(res, callbackName + "(" + json.toString(2) + ")");
             } else
@@ -274,7 +289,7 @@ public class GraphHopperServlet extends HttpServlet
         } else
         {
             res.setContentType("application/json");
-            if ("true".equals(getParam(req, "debug")))
+            if (debug)
             {
                 writeResponse(res, json.toString(2));
             } else
@@ -295,8 +310,8 @@ public class GraphHopperServlet extends HttpServlet
         // allow two formats
         if (pointsAsStr.length == 0)
         {
-            String from = getParam(req, "from");
-            String to = getParam(req, "to");
+            String from = getParam(req, "from", "");
+            String to = getParam(req, "to", "");
             if (!Helper.isEmpty(from) && !Helper.isEmpty(to))
             {
                 pointsAsStr = new String[]

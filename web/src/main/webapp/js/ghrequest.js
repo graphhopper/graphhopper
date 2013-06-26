@@ -4,6 +4,9 @@ GHRequest = function(host) {
     this.from = new GHInput("");
     this.to = new GHInput("");    
     this.vehicle = "car";
+    this.encodedPolyline = true;
+    this.instructions = true;
+    this.debug = false;
 };
 
 GHRequest.prototype.init = function(params) {    
@@ -18,10 +21,10 @@ GHRequest.prototype.init = function(params) {
         this.algorithm = params.algorithm;
 }
 
-GHRequest.prototype.doRequest = function(demoUrl, callback) {
-    var encodedPolyline = true;
-    var debug = false;
-    var url = this.host + "/api/route?" + demoUrl + "&type=jsonp";
+GHRequest.prototype.createURL = function(demoUrl) {    
+    return this.createPath(this.host + "/api/route?" + demoUrl + "&type=jsonp");
+}
+GHRequest.prototype.createPath = function(url) {    
     // car
     url += "&vehicle=" + this.vehicle;
     // fastest or shortest
@@ -30,15 +33,24 @@ GHRequest.prototype.doRequest = function(demoUrl, callback) {
     // dijkstra, dijkstrabi, astar, astarbi
     if(this.algorithm)
         url += "&algorithm=" + this.algorithm;
-    if (encodedPolyline)
+    if (this.instructions)
+        url += "&instructions=true";
+    if (this.encodedPolyline)
         url += "&encodedPolyline=true";
-    if (debug)
+    if(this.minPathPrecision != 1)
+        url += "&minPathPrecision=" + this.minPathPrecision;
+    if (this.debug)
         url += "&debug=true";
+    return url;
+}
+
+GHRequest.prototype.doRequest = function(url, callback) {   
+    var tmp = this.encodedPolyline;
     $.ajax({
         "url": url,
         "success": function(json) {
             // convert encoded polyline stuff to normal json
-            if (encodedPolyline && json.route) {
+            if (tmp && json.route) {
                 var tmpArray = decodePath(json.route.coordinates, true);
                 json.route.coordinates = null;
                 json.route.data = {

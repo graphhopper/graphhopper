@@ -292,7 +292,7 @@ public class Path
     /**
      * @return the cached list of ways for this path
      */
-    public WayList calcWays() {
+    public WayList calcInstructions() {
         if (cachedWays != null)
             return cachedWays;
         cachedWays = new WayList(edgeIds.size() / 4);

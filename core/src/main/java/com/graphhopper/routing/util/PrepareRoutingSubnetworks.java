@@ -53,11 +53,8 @@ public class PrepareRoutingSubnetworks
 
     public void doWork()
     {
-        logger.info("removeZeroDegreeNodes");
         int del = removeZeroDegreeNodes();
-        logger.info("findSubnetworks");
-        Map<Integer, Integer> map = findSubnetworks();
-        logger.info("keepLargeNetworks");
+        Map<Integer, Integer> map = findSubnetworks();        
         keepLargeNetworks(map);
         logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes(" + del + ")");
         g.optimize();

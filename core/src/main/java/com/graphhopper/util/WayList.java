@@ -97,7 +97,7 @@ public class WayList {
         return this;
     }
 
-    public List<String> createInstructions(String language) {
+    public List<String> createDescription(String language) {
         List<String> instructions = new ArrayList<String>(names.length);
         for (int i = 0; i < size; i++) {
             String n = names[i];

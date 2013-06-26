@@ -101,10 +101,10 @@ public class PathTest
         iter2.setWayGeometry(list);
 
         Path p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(0, 10);
-        WayList wayList = p.calcWays();
+        WayList wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4",
                 "Continue onto 4-7", "Turn left onto 7-8", "Continue onto 8-9",
                 "Turn right onto unknown street"),
-                wayList.createInstructions("en"));
+                wayList.createDescription("en"));
     }
 }

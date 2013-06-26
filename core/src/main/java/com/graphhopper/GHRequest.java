@@ -35,7 +35,7 @@ public class GHRequest
     private GHPlace to;
     private Map<String, Object> hints = new HashMap<String, Object>(5);
     private String encoderName = "CAR";
-    private WeightCalculation weightCalc = new ShortestCalc();
+    private WeightCalculation weightCalc = new ShortestCalc();    
 
     /**
      * Calculate the path from specified startPoint (fromLat, fromLon) to endPoint (toLat, toLon).
@@ -66,6 +66,16 @@ public class GHRequest
         }
     }
 
+    public GHPlace getFrom()
+    {
+        return from;
+    }
+
+    public GHPlace getTo()
+    {
+        return to;
+    }
+
     /**
      * Possible values: astar (A* algorithm, default), astarbi (bidirectional A*) dijkstra
      * (Dijkstra), dijkstrabi and dijkstraNative (a bit faster bidirectional Dijkstra).
@@ -79,16 +89,6 @@ public class GHRequest
     public String getAlgorithm()
     {
         return algo;
-    }
-
-    public GHPlace getFrom()
-    {
-        return from;
-    }
-
-    public GHPlace getTo()
-    {
-        return to;
     }
 
     public GHRequest putHint( String key, Object value )

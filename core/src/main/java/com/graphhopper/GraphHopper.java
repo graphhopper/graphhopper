@@ -601,6 +601,12 @@ public class GraphHopper implements GraphHopperAPI
             }
             debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
         }
+
+        boolean instructions = request.getHint("instructions", false);
+        if (instructions)
+        {
+            rsp.setInstructions(path.calcInstructions().createDescription("en"));
+        }
         return rsp.setPoints(points).setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
     }
 

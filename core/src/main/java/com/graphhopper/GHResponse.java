@@ -20,6 +20,7 @@ package com.graphhopper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,6 +35,7 @@ public class GHResponse
     private long time;
     private String debugInfo = "";
     private List<Throwable> errors = new ArrayList<Throwable>(4);
+    private List<String> instructions = Collections.emptyList();
 
     public GHResponse()
     {
@@ -143,5 +145,15 @@ public class GHResponse
     public String toString()
     {
         return "found:" + isFound() + ", nodes:" + list.getSize() + ": " + list.toString();
+    }
+
+    public void setInstructions( List<String> instructions )
+    {
+        this.instructions = instructions;
+    }
+
+    public List<String> getInstructions()
+    {
+        return instructions;
     }
 }

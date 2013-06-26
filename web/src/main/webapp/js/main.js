@@ -19,7 +19,7 @@ var iconFrom = L.icon({
 });
 
 var bounds = {};
-LOCAL=false;
+LOCAL=true;
 var host;
 if(LOCAL)
     host = "http://localhost:8989";
@@ -391,20 +391,19 @@ function routeLatLng(request) {
     $("button#"+request.vehicle.toUpperCase()).addClass("bold");
 
     var urlForAPI = "point=" + from + "&point=" + to;
-    var urlForHistory = "?point=" + request.from.input + "&point=" + request.to.input + "&vehicle=" + request.vehicle;
-    if(request.minPathPrecision != 1) {
-        urlForHistory += "&minPathPrecision=" + request.minPathPrecision;
-        urlForAPI += "&minPathPrecision=" + request.minPathPrecision;
-    }
+    urlForAPI = request.createURL(urlForAPI);        
     
-    if (History.enabled)
+    if (History.enabled) {
+        var urlForHistory = "?point=" + request.from.input + "&point=" + request.to.input;    
+        urlForHistory = request.createPath(urlForHistory);
         History.pushState(request, browserTitle, urlForHistory);
+    }
     descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');
     request.doRequest(urlForAPI, function (json) {        
         if(json.info.errors) {
             var tmpErrors = json.info.errors;
-            for (var i = 0; i < tmpErrors.length; i++) {
-                descriptionDiv.append("<div class='error'>" + tmpErrors[i].message + "</div>");
+            for (var m = 0; m < tmpErrors.length; m++) {
+                descriptionDiv.append("<div class='error'>" + tmpErrors[m].message + "</div>");
             }
             return;
         } 
@@ -487,6 +486,15 @@ function routeLatLng(request) {
         $('.defaulting').each(function(index, element) {
             $(element).css("color", "black");
         });
+        
+        if(json.route.instructions) {
+            var instructionsDiv = $("<div id='instructions'/>");
+            $("#info").append(instructionsDiv);        
+            var istr = json.route.instructions
+            for(var m = 0; m < istr.length; m++) {
+                instructionsDiv.append(istr[m] + "</br>");
+            }
+        }
     });
 }
     
