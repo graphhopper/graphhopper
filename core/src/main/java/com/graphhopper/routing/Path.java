@@ -46,7 +46,7 @@ public class Path
     protected double distance;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
-    private long time;
+    protected long time;
     private boolean found;
     protected EdgeEntry edgeEntry;
     StopWatch sw = new StopWatch("extract");
@@ -183,23 +183,25 @@ public class Path
     protected void processDistance( int edgeId, int endNode )
     {
         EdgeIterator iter = graph.getEdgeProps(edgeId, endNode);
-        calcDistance(iter);
-        calcTime(iter.getDistance(), iter.getFlags());
+        distance += calcDistance(iter);
+        time += calcTime(iter.getDistance(), iter.getFlags());
         addEdge(edgeId);
     }
 
     /**
-     * This method calculates not only the weight but also the distance in kilometer for the
-     * specified edge.
+     * This method returns the distance in kilometer for the specified edge.
      */
-    protected void calcDistance( EdgeIterator iter )
+    protected double calcDistance( EdgeIterator iter )
     {
-        distance += iter.getDistance();
+        return iter.getDistance();
     }
 
-    protected void calcTime( double distance, int flags )
+    /**
+     * Calculates the time in minutes for the specified distance and speed (via flags)
+     */
+    protected long calcTime( double distance, int flags )
     {
-        time += (long) (distance * 3.6 / encoder.getSpeed(flags));
+        return (long) (distance * 3.6 / encoder.getSpeed(flags));
     }
 
     /**
@@ -292,15 +294,21 @@ public class Path
     /**
      * @return the cached list of ways for this path
      */
-    public InstructionList calcInstructions() {
+    public InstructionList calcInstructions()
+    {
         if (cachedWays != null)
+        {
             return cachedWays;
+        }
         cachedWays = new InstructionList(edgeIds.size() / 4);
         if (edgeIds.isEmpty())
+        {
             return cachedWays;
+        }
 
         final int tmpNode = getFromNode();
-        forEveryEdge(new EdgeVisitor() {
+        forEveryEdge(new EdgeVisitor()
+        {
             String name = null;
             /*
              * We need three points to make directions
@@ -327,7 +335,9 @@ public class Path
             double prevOrientation;
             double prevDist;
 
-            @Override public void next(EdgeIterator iter) {
+            @Override
+            public void next( EdgeIterator iter )
+            {
                 double orientation = 0;
                 // Hmmh, a bit ugly: 'iter' links to the previous node of the path!
                 // Ie. baseNode is the current node and adjNode is the previous.
@@ -336,60 +346,80 @@ public class Path
                 double baseLon = graph.getLongitude(baseNode);
                 double latitude, longitude;
                 PointList wayGeo = iter.getWayGeometry();
-                if (wayGeo.isEmpty()) {
+                if (wayGeo.isEmpty())
+                {
                     latitude = baseLat;
                     longitude = baseLon;
-                } else {
+                } else
+                {
                     int adjNode = iter.getAdjNode();
                     prevLat = graph.getLatitude(adjNode);
                     prevLon = graph.getLongitude(adjNode);
                     latitude = wayGeo.getLatitude(wayGeo.getSize() - 1);
                     longitude = wayGeo.getLongitude(wayGeo.getSize() - 1);
                 }
-                
-                if (name == null) {
-                    prevDist = 0;
+
+                if (name == null)
+                {
                     name = iter.getName();
-                    cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, iter.getDistance());
-                } else {
+                    cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, calcDistance(iter));
+                    prevDist = 0;
+                } else
+                {
                     double tmpOrientation = 0;
                     orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
-                    if (prevOrientation >= 0) {
+                    if (prevOrientation >= 0)
+                    {
                         if (orientation < -Math.PI + prevOrientation)
+                        {
                             tmpOrientation = orientation + 2 * Math.PI;
-                        else
+                        } else
+                        {
                             tmpOrientation = orientation;
-                    } else if (prevOrientation < 0) {
+                        }
+                    } else if (prevOrientation < 0)
+                    {
                         if (orientation > +Math.PI + prevOrientation)
+                        {
                             tmpOrientation = orientation - 2 * Math.PI;
-                        else
+                        } else
+                        {
                             tmpOrientation = orientation;
+                        }
                     }
 
-                    prevDist += iter.getDistance();
+                    prevDist += calcDistance(iter);
                     String tmpName = iter.getName();
-                    if (!name.equals(tmpName)) {
+                    if (!name.equals(tmpName))
+                    {
                         name = tmpName;
 
                         // we have a tolerance of approx +/- 10 degrees to 
                         // indicate that we have to go straight and not to turn.                         
                         if (Math.abs(tmpOrientation - prevOrientation) < 0.2)
+                        {
                             cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, prevDist);
-                        else {
+                        } else
+                        {
                             if (tmpOrientation > prevOrientation)
+                            {
                                 cachedWays.add(InstructionList.TURN_LEFT, name, prevDist);
-                            else
+                            } else
+                            {
                                 cachedWays.add(InstructionList.TURN_RIGHT, name, prevDist);
+                            }
                         }
                         prevDist = 0;
                     }
                 }
 
-                if (wayGeo.isEmpty()) {
+                if (wayGeo.isEmpty())
+                {
                     prevLat = latitude;
                     prevLon = longitude;
                     prevOrientation = orientation;
-                } else {
+                } else
+                {
                     prevLat = wayGeo.getLatitude(0);
                     prevLon = wayGeo.getLongitude(0);
                     prevOrientation = Math.atan2(baseLat - prevLat, baseLon - prevLon);
@@ -398,24 +428,6 @@ public class Path
         });
 
         return cachedWays;
-    }
-
-    public TDoubleList calcDistances() {
-        final TDoubleList distances = new TDoubleArrayList(edgeIds.size());
-        if (edgeIds.isEmpty())
-        {
-            return distances;
-        }
-
-        forEveryEdge(new EdgeVisitor()
-        {
-            @Override
-            public void next( EdgeIterator iter )
-            {
-                distances.add(iter.getDistance());
-            }
-        });
-        return distances;
     }
 
     public TIntSet calculateIdenticalNodes( Path p2 )

@@ -90,8 +90,8 @@ public class InstructionListTest
                 "Turn left onto 7-8", "Continue onto 8-9", "Turn right"),
                 wayList.createDescription(Locale.CANADA));
 
-        assertEquals(Arrays.asList("Folgen Sie der 0-1", "Rechts abbiegen auf die 1-4", "Folgen Sie der 4-7",
-                "Links abbiegen auf die 7-8", "Folgen Sie der 8-9", "Rechts abbiegen"),
+        assertEquals(Arrays.asList("Weiter auf 0-1", "Rechts abbiegen auf 1-4", "Weiter auf 4-7",
+                "Links abbiegen auf 7-8", "Weiter auf 8-9", "Rechts abbiegen"),
                 wayList.createDescription(Locale.GERMAN));
 
         TDoubleList distList = wayList.getDistances();

@@ -19,15 +19,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.util.*;
-import gnu.trove.list.TDoubleList;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.procedure.TDoubleProcedure;
-import java.util.Arrays;
-import java.util.Dictionary;
-import java.util.Locale;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -50,8 +41,7 @@ public class PathTest
     public void testTime()
     {
         FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
-        Path p = new Path(null, encoder);
-        p.calcTime(100000, encoder.flags(100, true));
-        assertEquals(60 * 60, p.getTime());
+        Path p = new Path(null, encoder);        
+        assertEquals(60 * 60, p.calcTime(100000, encoder.flags(100, true)));
     }
 }

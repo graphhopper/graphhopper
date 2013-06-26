@@ -33,10 +33,10 @@ public class TranslationMap
         translations.put("de", de);
         de.put("left", "links");
         de.put("right", "rechts");
-        de.put("continue", "Folgen Sie");
-        de.put("continue onto %s", "Folgen Sie der %s");
+        de.put("continue", "Weiter");
+        de.put("continue onto %s", "Weiter auf %s");
         de.put("turn %s", "%s abbiegen");
-        de.put("turn %s onto %s", "%s abbiegen auf die %s");
+        de.put("turn %s onto %s", "%s abbiegen auf %s");
 
         TranslationHashMap en = new TranslationHashMap()
         {

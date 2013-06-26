@@ -606,7 +606,9 @@ public class GraphHopper implements GraphHopperAPI
         boolean instructions = request.getHint("instructions", false);
         if (instructions)
         {
+            sw = new StopWatch().start();
             rsp.setInstructions(path.calcInstructions());
+            debug += ", instructions:" + sw.stop().getSeconds() + "s";
         }
         return rsp.setPoints(points).setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
     }

@@ -50,6 +50,7 @@ GHRequest.prototype.createPath = function(url) {
 GHRequest.prototype.doRequest = function(url, callback) {   
     var tmp = this.encodedPolyline;
     $.ajax({
+        "timeout" : 30000,
         "url": url,
         "success": function(json) {
             // convert encoded polyline stuff to normal json
