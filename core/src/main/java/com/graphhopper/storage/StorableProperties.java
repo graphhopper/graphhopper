@@ -126,6 +126,7 @@ public class StorableProperties implements Storable<StorableProperties>
         put("edges.version", Constants.VERSION_EDGE);
         put("geometry.version", Constants.VERSION_GEOMETRY);
         put("locationIndex.version", Constants.VERSION_LOCATION_IDX);
+        put("nameIndex.version", Constants.VERSION_NAME_IDX);
     }
 
     public String versionsToString()
@@ -133,7 +134,8 @@ public class StorableProperties implements Storable<StorableProperties>
         return get("nodes.version") + ","
                 + get("edges.version") + ","
                 + get("geometry.version") + ","
-                + get("locationIndex.version");
+                + get("locationIndex.version") + ","
+                + get("nameIndex.version");
     }
 
     public boolean checkVersions( boolean silent )
@@ -151,6 +153,10 @@ public class StorableProperties implements Storable<StorableProperties>
             return false;
         }
         if (!check("locationIndex", Constants.VERSION_LOCATION_IDX, silent))
+        {
+            return false;
+        }
+        if (!check("nameIndex", Constants.VERSION_NAME_IDX, silent))
         {
             return false;
         }

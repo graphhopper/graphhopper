@@ -23,6 +23,7 @@ import com.graphhopper.coll.SparseIntIntArray;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.search.NameIndex;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
@@ -50,8 +51,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     // distance of around +-1000 000 meter are ok
     private static final float INT_DIST_FACTOR = 1000f;
     private Directory dir;
-    // edge memory layout: nodeA,nodeB,linkA,linkB,dist,flags,geometryRef
-    protected final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS, E_GEO;
+    // edge memory layout: nodeA,nodeB,linkA,linkB,dist,flags,geometryRef,streetNameRef
+    protected final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS, E_GEO, E_NAME;
     protected int edgeEntryBytes;
     protected DataAccess edges;
     /**
@@ -80,6 +81,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     private int maxGeoRef = 4;
     private boolean initialized = false;
     private EncodingManager encodingManager;
+    private NameIndex nameIndex;
     protected final EdgeFilter allEdgesFilter;
     private StorableProperties properties;
 
@@ -91,7 +93,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         this.dir = dir;
         this.nodes = dir.find("nodes");
         this.edges = dir.find("edges");
-        this.wayGeometry = dir.find("geometry");
+        this.wayGeometry = dir.find("geometry");        
+        this.nameIndex = new NameIndex(dir);
         this.properties = new StorableProperties(dir);
         this.bounds = BBox.INVERSE.clone();
         E_NODEA = nextEdgeEntryIndex();
@@ -99,8 +102,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         E_LINKA = nextEdgeEntryIndex();
         E_LINKB = nextEdgeEntryIndex();
         E_DIST = nextEdgeEntryIndex();
-        E_FLAGS = nextEdgeEntryIndex();
+        E_FLAGS = nextEdgeEntryIndex();        
         E_GEO = nextEdgeEntryIndex();
+        E_NAME = nextEdgeEntryIndex();
 
         N_EDGE_REF = nextNodeEntryIndex();
         N_LAT = nextNodeEntryIndex();
@@ -149,6 +153,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         nodes.setSegmentSize(bytes);
         edges.setSegmentSize(bytes);
         wayGeometry.setSegmentSize(bytes);
+        nameIndex.setSegmentSize(bytes);
         return this;
     }
 
@@ -159,20 +164,20 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     public GraphStorage create( long byteCount )
     {
         checkInit();
+        if (encodingManager == null)
+        {
+            throw new IllegalStateException("EncodingManager can only be null if you call loadExisting");
+        }
         long initSize = Math.max(byteCount, 100);
         nodes.create(initSize);
         initNodeRefs(0, nodes.getCapacity());
 
         edges.create(initSize);
         wayGeometry.create(initSize);
-
-        if (encodingManager == null)
-        {
-            throw new IllegalStateException("EncodingManager can only be null if you call loadExisting");
-        }
+        nameIndex.create(1000);                
         properties.create(100);
         properties.put("osmreader.acceptWay", encodingManager.encoderList());
-        properties.putCurrentVersions();
+        properties.putCurrentVersions();        
         initialized = true;
         return this;
     }
@@ -294,7 +299,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
 
     private void ensureEdgeIndex( int edgeIndex )
     {
-        long deltaCap = (long) edgeIndex * edgeEntryBytes - edges.getCapacity();
+        long deltaCap = ((long) edgeIndex + 1) * edgeEntryBytes - edges.getCapacity();
         if (deltaCap <= 0)
         {
             return;
@@ -610,6 +615,19 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         @Override
+        public String getName() 
+        {
+            int nameIndexRef = edges.getInt(edgePointer + E_NAME);
+            return nameIndex.get(nameIndexRef);
+        }
+
+        @Override
+        public void setName(String name) {
+            int nameIndexRef = nameIndex.put(name);
+            edges.setInt(edgePointer + E_NAME, nameIndexRef);
+        }
+        
+        @Override
         public String toString()
         {
             return getEdge() + " " + getBaseNode() + "-" + getAdjNode();
@@ -818,7 +836,19 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         {
             return edgeId;
         }
+        
+        @Override
+        public String getName() {
+            int nameIndexRef = edges.getInt(edgePointer + E_NAME);
+            return nameIndex.get(nameIndexRef);
+        }
 
+        @Override
+        public void setName(String name) {
+            int nameIndexRef = nameIndex.put(name);
+            edges.setInt(edgePointer + E_NAME, nameIndexRef);
+        }
+        
         @Override
         public final boolean isEmpty()
         {
@@ -1243,7 +1273,10 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             {
                 throw new IllegalStateException("cannot load geometry. corrupt file or directory? " + dir);
             }
-
+            if (!nameIndex.loadExisting())
+            {
+                throw new IllegalStateException("cannot load name index. corrupt file or directory? " + dir);
+            }
             String acceptStr = "";
             if (properties.loadExisting())
             {
@@ -1315,6 +1348,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
 
         properties.flush();
         wayGeometry.flush();
+        nameIndex.flush();
         edges.flush();
         nodes.flush();
     }

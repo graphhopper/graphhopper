@@ -127,23 +127,30 @@ public class OSMReaderTest
 
         EdgeIterator iter = graph.getEdges(n20, carOutFilter);
         assertTrue(iter.next());
+        assertEquals("route 666", iter.getName());
+        
         assertEquals(n10, iter.getAdjNode());
         assertEquals(88643, iter.getDistance(), 1);
         assertTrue(iter.next());
+        assertEquals("route 666", iter.getName());
+        
         assertEquals(n30, iter.getAdjNode());
         assertEquals(93147, iter.getDistance(), 1);
         CarFlagEncoder flags = carEncoder;
         assertTrue(flags.isForward(iter.getFlags()));
         assertTrue(flags.isBackward(iter.getFlags()));
         assertTrue(iter.next());
+
+        assertEquals("street 123", iter.getName());
         assertEquals(n50, iter.getAdjNode());
         AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.getWayGeometry());
         assertTrue(flags.isForward(iter.getFlags()));
         assertTrue(flags.isBackward(iter.getFlags()));
-
+        
         // get third added location id=30
         iter = graph.getEdges(n30, carOutFilter);
         assertTrue(iter.next());
+        assertEquals("route 666", iter.getName());
         assertEquals(n20, iter.getAdjNode());
         assertEquals(93146.888, iter.getDistance(), 1);
 

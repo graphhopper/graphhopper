@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for
+ *  Licensed to Peter Karich under one or more contributor license
+ *  agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
- *  GraphHopper licenses this file to you under the Apache License,
+ *  Peter Karich licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the
  *  License at
@@ -16,8 +16,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
+package com.graphhopper.search;
 
+import com.graphhopper.storage.RAMDirectory;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -25,8 +26,25 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class NameIndexTest
-{
+public class NameIndexTest {
+
+    @Test
+    public void testPut() {
+        NameIndex instance = new NameIndex(new RAMDirectory()).create(1000);
+        int result = instance.put("Something Streetä");
+        assertEquals("Something Streetä", instance.get(result));
+
+        int existing = instance.put("Something Streetä");
+        assertEquals(result, existing);
+
+        result = instance.put("testing");
+        assertEquals("testing", instance.get(result));                
+        
+        assertEquals(0, instance.put(""));
+        assertEquals(0, instance.put(null));
+        assertEquals("", instance.get(0));
+    }
+    
     @Test
     public void testCreate()
     {

@@ -54,6 +54,7 @@ public class Constants
     public static final int VERSION_EDGE = 2;
     public static final int VERSION_GEOMETRY = 1;
     public static final int VERSION_LOCATION_IDX = 1;
+    public static final int VERSION_NAME_IDX = 1;
     /**
      * The version without the snapshot string
      */
@@ -63,7 +64,8 @@ public class Constants
 
     public static String getVersions()
     {
-        return VERSION_NODE + "," + VERSION_EDGE + "," + VERSION_GEOMETRY + "," + VERSION_LOCATION_IDX;
+        return VERSION_NODE + "," + VERSION_EDGE + "," + VERSION_GEOMETRY + "," + VERSION_LOCATION_IDX
+                + "," + VERSION_NAME_IDX;
     }
 
     static

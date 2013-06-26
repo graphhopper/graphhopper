@@ -21,6 +21,7 @@ import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
 import com.graphhopper.util.StopWatch;
@@ -29,6 +30,8 @@ import javax.xml.stream.XMLStreamException;
 
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -233,9 +236,9 @@ public class OSMReader
         {
             return;
         }
-
+        
         TLongList osmNodeIds = way.getNodes();
-
+        List<EdgeIterator> createdEdges = new ArrayList<EdgeIterator>();
         // look for barriers along the way
         final int size = osmNodeIds.size();
         int lastBarrier = -1;
@@ -263,14 +266,14 @@ public class OSMReader
                     long transfer[] = osmNodeIds.toArray(lastBarrier, i - lastBarrier + 1);
                     transfer[ transfer.length - 1] = newNodeId;
                     TLongList partIds = new TLongArrayList(transfer);
-                    helper.addEdge(partIds, flags);
+                    createdEdges.addAll(helper.addOSMWay(partIds, flags));
 
                     // create zero length edge for barrier
-                    helper.addBarrierEdge(newNodeId, nodeId, flags, barrierFlags);
+                    createdEdges.addAll(helper.addBarrierEdge(newNodeId, nodeId, flags, barrierFlags));
                 } else
                 {
                     // run edge from real first node to shadow node
-                    helper.addBarrierEdge(nodeId, newNodeId, flags, barrierFlags);
+                    createdEdges.addAll(helper.addBarrierEdge(nodeId, newNodeId, flags, barrierFlags));
 
                     // exchange first node for created barrier node
                     osmNodeIds.set(0, newNodeId);
@@ -286,13 +289,18 @@ public class OSMReader
             if (lastBarrier < size - 1)
             {
                 long transfer[] = osmNodeIds.toArray(lastBarrier, size - lastBarrier);
-                TLongList partIds = new TLongArrayList(transfer);
-                helper.addEdge(partIds, flags);
+                TLongList partNodeIds = new TLongArrayList(transfer);
+                createdEdges.addAll(helper.addOSMWay(partNodeIds, flags));
             }
-        } // no barriers - simply add the whole way
-        else
+        } else
         {
-            helper.addEdge(way.getNodes(), flags);
+            // no barriers - simply add the whole way
+            createdEdges.addAll(helper.addOSMWay(way.getNodes(), flags));
+        }
+        
+        String name = (String) way.getTag("name");
+        for(EdgeIterator iter : createdEdges) {
+            iter.setName(name);
         }
     }
 

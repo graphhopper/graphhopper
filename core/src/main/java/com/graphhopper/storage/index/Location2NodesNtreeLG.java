@@ -175,6 +175,16 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
             {
                 return tmpIter.isEmpty();
             }
+            
+            @Override
+            public String getName() {
+                return tmpIter.getName();
+            }
+
+            @Override
+            public void setName(String name) {
+                tmpIter.setName(name);
+            }
         };
     }
 

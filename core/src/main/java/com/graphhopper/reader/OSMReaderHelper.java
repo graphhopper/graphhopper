@@ -27,6 +27,9 @@ import com.graphhopper.util.*;
 import gnu.trove.list.TLongList;
 
 import gnu.trove.list.array.TLongArrayList;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,50 +119,6 @@ public class OSMReaderHelper
         return true;
     }
 
-    int addEdge( int fromIndex, int toIndex, PointList pointList, int flags )
-    {
-        if (fromIndex < 0 || toIndex < 0)
-        {
-            throw new AssertionError("to or from index is invalid for this edge "
-                    + fromIndex + "->" + toIndex + ", points:" + pointList);
-        }
-
-        double towerNodeDistance = 0;
-        double prevLat = pointList.getLatitude(0);
-        double prevLon = pointList.getLongitude(0);
-        double lat;
-        double lon;
-        PointList pillarNodes = new PointList(pointList.getSize() - 2);
-        int nodes = pointList.getSize();
-        for (int i = 1; i < nodes; i++)
-        {
-            lat = pointList.getLatitude(i);
-            lon = pointList.getLongitude(i);
-            towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
-            prevLat = lat;
-            prevLon = lon;
-            if (nodes > 2 && i < nodes - 1)
-            {
-                pillarNodes.add(lat, lon);
-            }
-        }
-        if (towerNodeDistance == 0)
-        {
-            // As investigation shows often two paths should have crossed via one identical point 
-            // but end up in two very close points.
-            zeroCounter++;
-            towerNodeDistance = 0.0001;
-        }
-
-        EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
-        if (nodes > 2)
-        {
-            dpAlgo.simplify(pillarNodes);
-            iter.setWayGeometry(pillarNodes);
-        }
-        return nodes;
-    }
-
     String getInfo()
     {
         return "Found " + zeroCounter + " zero distances.";
@@ -196,10 +155,13 @@ public class OSMReaderHelper
         return osmNodeIdToIndexMap.getSize();
     }
 
-    public int addEdge( TLongList osmNodeIds, int flags )
+    /**
+     * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
+     */
+    public Collection<EdgeIterator> addOSMWay( TLongList osmNodeIds, int flags )
     {
         PointList pointList = new PointList(osmNodeIds.size());
-        int successfullyAdded = 0;
+        List<EdgeIterator> newEdges = new ArrayList<EdgeIterator>(5);
         int firstNode = -1;
         int lastIndex = osmNodeIds.size() - 1;
         int lastInBoundsPillarNode = -1;
@@ -232,7 +194,7 @@ public class OSMReaderHelper
                         if (pointList.getSize() > 1 && firstNode >= 0)
                         {
                             // TOWER node
-                            successfullyAdded += addEdge(firstNode, tmpNode, pointList, flags);
+                            newEdges.add(addEdge(firstNode, tmpNode, pointList, flags));
                             pointList.clear();
                             pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
                         }
@@ -266,7 +228,7 @@ public class OSMReaderHelper
                     pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
                     if (firstNode >= 0)
                     {
-                        successfullyAdded += addEdge(firstNode, tmpNode, pointList, flags);
+                        newEdges.add(addEdge(firstNode, tmpNode, pointList, flags));
                         pointList.clear();
                         pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
                     }
@@ -277,7 +239,51 @@ public class OSMReaderHelper
         {
             logger.error("Couldn't properly add edge with osm ids:" + osmNodeIds, ex);
         }
-        return successfullyAdded;
+        return newEdges;
+    }
+
+    EdgeIterator addEdge( int fromIndex, int toIndex, PointList pointList, int flags )
+    {
+        if (fromIndex < 0 || toIndex < 0)
+        {
+            throw new AssertionError("to or from index is invalid for this edge "
+                    + fromIndex + "->" + toIndex + ", points:" + pointList);
+        }
+
+        double towerNodeDistance = 0;
+        double prevLat = pointList.getLatitude(0);
+        double prevLon = pointList.getLongitude(0);
+        double lat;
+        double lon;
+        PointList pillarNodes = new PointList(pointList.getSize() - 2);
+        int nodes = pointList.getSize();
+        for (int i = 1; i < nodes; i++)
+        {
+            lat = pointList.getLatitude(i);
+            lon = pointList.getLongitude(i);
+            towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
+            prevLat = lat;
+            prevLon = lon;
+            if (nodes > 2 && i < nodes - 1)
+            {
+                pillarNodes.add(lat, lon);
+            }
+        }
+        if (towerNodeDistance == 0)
+        {
+            // As investigation shows often two paths should have crossed via one identical point 
+            // but end up in two very close points.
+            zeroCounter++;
+            towerNodeDistance = 0.0001;
+        }
+
+        EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);        
+        if (nodes > 2)
+        {
+            dpAlgo.simplify(pillarNodes);
+            iter.setWayGeometry(pillarNodes);
+        }
+        return iter;
     }
 
     /**
@@ -380,15 +386,14 @@ public class OSMReaderHelper
     /**
      * Add a zero length edge with reduced routing options to the graph.
      */
-    public void addBarrierEdge( long fromId, long toId, int flags, int barrierFlags )
+    public Collection<EdgeIterator> addBarrierEdge( long fromId, long toId, int flags, int barrierFlags )
     {
-
         // clear barred directions from routing flags
         flags &= ~barrierFlags;
         // add edge
         barrierNodeIDs.clear();
         barrierNodeIDs.add(fromId);
         barrierNodeIDs.add(toId);
-        addEdge(barrierNodeIDs, flags);
+        return addOSMWay(barrierNodeIDs, flags);
     }
 }
