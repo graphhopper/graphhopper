@@ -25,16 +25,14 @@ import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -115,8 +113,9 @@ public class GraphHopperServlet extends HttpServlet
         GHPlace end = infoPoints.get(1);
         // we can reduce the path length based on the maximum differences to the original coordinates
         double minPathPrecision = getDoubleParam(req, "minPathPrecision", 1d);
-        boolean instructions = getBooleanParam(req, "instructions", false);
+        boolean enableInstructions = getBooleanParam(req, "instructions", false);
         String vehicleStr = getParam(req, "vehicle", "CAR");
+        Locale locale = Locale.forLanguageTag(getParam(req, "locale", "en"));
         FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr.toUpperCase());
         WeightCalculation algoType = new FastestCalc(algoVehicle);
         if ("shortest".equalsIgnoreCase(getParam(req, "algoType", null)))
@@ -128,11 +127,11 @@ public class GraphHopperServlet extends HttpServlet
         try
         {
             sw = new StopWatch().start();
-            GHResponse rsp = hopper.route(new GHRequest(start, end).                    
+            GHResponse rsp = hopper.route(new GHRequest(start, end).
                     setVehicle(algoVehicle.toString()).
                     setType(algoType).
                     setAlgorithm(algoStr).
-                    putHint("instructions", instructions).
+                    putHint("instructions", enableInstructions).
                     putHint("douglas.minprecision", minPathPrecision));
             if (rsp.hasError())
             {
@@ -173,8 +172,17 @@ public class GraphHopperServlet extends HttpServlet
                         end.lon, end.lat
                     }).
                     object("distance", distInKM).
-                    object("instructions", rsp.getInstructions()).
                     object("time", rsp.getTime());
+
+            if (enableInstructions)
+            {
+                WayList instructions = rsp.getInstructions();
+                builder.startObject("instructions").
+                        object("descriptions", instructions.createDescription(locale)).
+                        object("distances", instructions.createDistances(locale)).
+                        object("indications", instructions.createIndications()).
+                        endObject();
+            }
             if (points.getSize() > 2)
             {
                 builder.object("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
@@ -190,6 +198,7 @@ public class GraphHopperServlet extends HttpServlet
                         object("coordinates", points.toGeoJson()).
                         endObject();
             }
+            // end route
             builder = builder.endObject();
 
             writeJson(req, res, builder.build());

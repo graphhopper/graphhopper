@@ -236,7 +236,7 @@ public class OSMReader
         {
             return;
         }
-        
+
         TLongList osmNodeIds = way.getNodes();
         List<EdgeIterator> createdEdges = new ArrayList<EdgeIterator>();
         // look for barriers along the way
@@ -297,9 +297,24 @@ public class OSMReader
             // no barriers - simply add the whole way
             createdEdges.addAll(helper.addOSMWay(way.getNodes(), flags));
         }
-        
+
+        // http://wiki.openstreetmap.org/wiki/Key:name
         String name = (String) way.getTag("name");
-        for(EdgeIterator iter : createdEdges) {
+        // http://wiki.openstreetmap.org/wiki/Key:ref
+        String refName = (String) way.getTag("ref");
+        if (!Helper.isEmpty(refName))
+        {
+            if (Helper.isEmpty(name))
+            {
+                name = refName;
+            } else
+            {
+                name += " (" + refName + ")";
+            }
+        }
+
+        for (EdgeIterator iter : createdEdges)
+        {
             iter.setName(name);
         }
     }

@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 
 import java.util.HashSet;
@@ -79,7 +80,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
             {
                 str = str.substring(0, mpInteger).trim();
                 val = Integer.parseInt(str);
-                return (int) Math.round(val * 1.609);
+                return (int) Math.round(val * DistanceCalc.KM_MILE);
             }
 
             int knotInteger = str.indexOf("knots");

@@ -44,6 +44,7 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -605,7 +606,7 @@ public class GraphHopper implements GraphHopperAPI
         boolean instructions = request.getHint("instructions", false);
         if (instructions)
         {
-            rsp.setInstructions(path.calcInstructions().createDescription("en"));
+            rsp.setInstructions(path.calcInstructions());
         }
         return rsp.setPoints(points).setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
     }

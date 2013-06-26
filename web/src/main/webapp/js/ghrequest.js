@@ -7,6 +7,7 @@ GHRequest = function(host) {
     this.encodedPolyline = true;
     this.instructions = true;
     this.debug = false;
+    this.locale = "en";
 };
 
 GHRequest.prototype.init = function(params) {    
@@ -30,6 +31,8 @@ GHRequest.prototype.createPath = function(url) {
     // fastest or shortest
     if(this.algoType)
         url += "&algoType=" + this.algoType;
+    if(this.locale)
+        url += "&locale=" + this.locale;
     // dijkstra, dijkstrabi, astar, astarbi
     if(this.algorithm)
         url += "&algorithm=" + this.algorithm;

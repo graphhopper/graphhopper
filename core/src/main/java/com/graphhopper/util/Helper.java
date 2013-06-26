@@ -439,4 +439,14 @@ public class Helper
         // NumberFormat is not thread safe => but getInstance looks like it's cached
         return NumberFormat.getInstance(Locale.FRANCE).format(no);
     }
+
+    public static String firstBig( String sayText )
+    {
+        if (sayText == null || sayText.length() <= 0)
+        {
+            return sayText;
+        }
+
+        return Character.toUpperCase(sayText.charAt(0)) + sayText.substring(1);
+    }
 }

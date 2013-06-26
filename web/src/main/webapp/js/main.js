@@ -490,9 +490,20 @@ function routeLatLng(request) {
         if(json.route.instructions) {
             var instructionsDiv = $("<div id='instructions'/>");
             $("#info").append(instructionsDiv);        
-            var istr = json.route.instructions
-            for(var m = 0; m < istr.length; m++) {
-                instructionsDiv.append(istr[m] + "</br>");
+            var descriptions = json.route.instructions.descriptions;
+            var distances = json.route.instructions.distances;
+            var indications = json.route.instructions.indications;
+            instructionsDiv.append($("<div class='clear'/>"));
+            for(var m = 0; m < descriptions.length; m++) {                
+                var instructionDiv = $("<div class='instruction'/>");
+                var indi = indications[m];
+                var indiPic = "/img/" + indi + ".png";
+                instructionDiv.html(
+                    "<img class='instr_pic' alt='"+indi+"' src='"+indiPic+"'/>"
+                    + " <span class='instr_title'>"  + descriptions[m] + "</span>"
+                    + " <span class='instr_distance'>" + distances[m] + "</span>");
+                instructionsDiv.append(instructionDiv);
+                instructionsDiv.append($("<div class='clear'/>"));
             }
         }
     });

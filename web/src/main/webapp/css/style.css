@@ -102,3 +102,20 @@ body {
 #hosting a {
     color: gray;                
 }
+.instruction {
+    border-bottom: beige groove thin;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+.instr_title {
+    position: absolute;
+    left: 40px;
+}
+.instr_distance {
+    float: right;
+    color: gray;
+}
+.instr_pic {    
+    max-height: 24px;
+    max-width: 16px;
+}

@@ -325,10 +325,11 @@ public class Path
             double prevLat = graph.getLatitude(tmpNode);
             double prevLon = graph.getLongitude(tmpNode);
             double prevOrientation;
+            double prevDist;
 
             @Override public void next(EdgeIterator iter) {
                 double orientation = 0;
-                // Hmmh, a bit ugly: edge points to the previous node of the path!
+                // Hmmh, a bit ugly: 'iter' links to the previous node of the path!
                 // Ie. baseNode is the current node and adjNode is the previous.
                 int baseNode = iter.getBaseNode();
                 double baseLat = graph.getLatitude(baseNode);
@@ -345,10 +346,11 @@ public class Path
                     latitude = wayGeo.getLatitude(wayGeo.getSize() - 1);
                     longitude = wayGeo.getLongitude(wayGeo.getSize() - 1);
                 }
-
+                
                 if (name == null) {
+                    prevDist = 0;
                     name = iter.getName();
-                    cachedWays.add(WayList.CONTINUE_ON_STREET, name);
+                    cachedWays.add(WayList.CONTINUE_ON_STREET, name, iter.getDistance());
                 } else {
                     double tmpOrientation = 0;
                     orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
@@ -364,24 +366,22 @@ public class Path
                             tmpOrientation = orientation;
                     }
 
+                    prevDist += iter.getDistance();
                     String tmpName = iter.getName();
                     if (!name.equals(tmpName)) {
-                        // if empty use 'unknown'
-                        if (tmpName.isEmpty())
-                            name = "unknown street";
-                        else
-                            name = tmpName;
+                        name = tmpName;
 
                         // we have a tolerance of approx +/- 10 degrees to 
                         // indicate that we have to go straight and not to turn.                         
                         if (Math.abs(tmpOrientation - prevOrientation) < 0.2)
-                            cachedWays.add(WayList.CONTINUE_ON_STREET, name);
+                            cachedWays.add(WayList.CONTINUE_ON_STREET, name, prevDist);
                         else {
                             if (tmpOrientation > prevOrientation)
-                                cachedWays.add(WayList.TURN_LEFT, name);
+                                cachedWays.add(WayList.TURN_LEFT, name, prevDist);
                             else
-                                cachedWays.add(WayList.TURN_RIGHT, name);
+                                cachedWays.add(WayList.TURN_RIGHT, name, prevDist);
                         }
+                        prevDist = 0;
                     }
                 }
 
