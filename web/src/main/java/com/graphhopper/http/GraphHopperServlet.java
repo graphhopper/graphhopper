@@ -115,7 +115,7 @@ public class GraphHopperServlet extends HttpServlet
         double minPathPrecision = getDoubleParam(req, "minPathPrecision", 1d);
         boolean enableInstructions = getBooleanParam(req, "instructions", false);
         String vehicleStr = getParam(req, "vehicle", "CAR");
-        Locale locale = Locale.forLanguageTag(getParam(req, "locale", "en"));
+        Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
         FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr.toUpperCase());
         WeightCalculation algoType = new FastestCalc(algoVehicle);
         if ("shortest".equalsIgnoreCase(getParam(req, "algoType", null)))

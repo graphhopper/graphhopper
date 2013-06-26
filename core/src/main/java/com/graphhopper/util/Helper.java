@@ -55,6 +55,16 @@ public class Helper
         return list;
     }
 
+    public static Locale getLocale( String param )
+    {        
+        param = param.replace("-", "_");
+        int index = param.indexOf("_");
+        if(index < 0) {
+            return new Locale(param);
+        }
+        return new Locale(param.substring(0, index), param.substring(index + 1));
+    }
+
     private Helper()
     {
     }

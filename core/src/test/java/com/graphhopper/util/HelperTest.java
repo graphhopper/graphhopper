@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import java.io.File;
+import java.util.Locale;
 import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -51,5 +52,15 @@ public class HelperTest
         assertTrue(new File("./target/tmp/test/folder1").isDirectory());
         assertTrue(new File("./target/tmp/test/folder1/folder 3").isDirectory());
         Helper.removeDir(new File(to));
+    }
+
+    @Test
+    public void testGetLocale() throws Exception
+    {
+        assertEquals(Locale.GERMAN, Helper.getLocale("de"));
+        assertEquals(Locale.GERMANY, Helper.getLocale("de_DE"));
+        assertEquals(Locale.GERMANY, Helper.getLocale("de-DE"));
+        assertEquals(Locale.ENGLISH, Helper.getLocale("en"));
+        assertEquals(Locale.US, Helper.getLocale("en_US"));
     }
 }
