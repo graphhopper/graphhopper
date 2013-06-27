@@ -48,7 +48,9 @@ public class OSMReader
     private long skippedLocations;
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
+    private GeometryAccess geometryAccess = null;
     private EncodingManager encodingManager = null;
+    private String demLocation = null;
     private int workerThreads = -1;
     private LongIntMap osmNodeIdToBarrierMap;
     private boolean enableInstructions = true;
@@ -185,6 +187,9 @@ public class OSMReader
                         {
                             logger.info(nf(counter) + ", now parsing ways");
                             wayStart = counter;
+
+                            // initialize geometry access after nodes have processed, we need the bounds for the DEM
+                            initializeGeometry();
                         }
                         processWay((OSMWay) item);
                         break;
@@ -206,6 +211,27 @@ public class OSMReader
         {
             throw new IllegalStateException("osm must not be empty. read " + counter + " lines and " + locations + " locations");
         }
+    }
+
+    /**
+     * Initialize geometry access before processing the first way.
+     * If the graph is 3D enabled, it is filled with elevation data.
+     */
+    private void initializeGeometry() {
+        geometryAccess = new GeometryAccess( this, helper );
+
+        // todo if( graphStorage.is3D() ) {
+            geometryAccess.initDem( demLocation, graphStorage.bounds() );
+
+            // fill the graph with elevations
+            // todo: do this controlled by region to limit memory usage
+            int nodeCount = graphStorage.nodes();
+            for( int i = 0; i < nodeCount; i++ ) {
+                int ele = geometryAccess.getElevation( graphStorage.getLatitude( i ), graphStorage.getLongitude( i ) );
+                // todo graphStorage.setElevation( i, ele );
+            }
+            helper.addElevations( geometryAccess );
+        //}
     }
 
     /**

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.GeometryAccess;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 
@@ -165,12 +166,10 @@ public class EncodingManager
      * <p/>
      * @return the encoded flags
      */
-    public int encodeTags( int includeWay, OSMWay way )
-    {
+    public int encodeTags( int includeWay, OSMWay way, GeometryAccess geometryAccess ) {
         int flags = 0;
-        for (int i = 0; i < encoderCount; i++)
-        {
-            flags |= encoders.get(i).handleWayTags(includeWay, way);
+        for (int i = 0; i < encoderCount; i++) {
+            flags |= encoders.get(i).handleWayTags(includeWay, way, geometryAccess);
         }
 
         return flags;

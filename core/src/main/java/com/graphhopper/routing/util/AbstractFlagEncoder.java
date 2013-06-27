@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.GeometryAccess;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.DistanceCalc;
@@ -145,8 +146,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      * Analyze properties of a way and create the routing flags
      * <p/>
      * @param allowed
+     * @param geometryAccess
      */
-    public abstract int handleWayTags( int allowed, OSMWay way );
+    public abstract int handleWayTags( int allowed, OSMWay way, GeometryAccess geometryAccess );
 
     /**
      * Parse tags on nodes, looking for barriers.

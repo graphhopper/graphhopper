@@ -66,6 +66,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
      */
     protected int nodeEntryBytes;
     protected DataAccess nodes;
+
     /**
      * interval [0,n)
      */
@@ -109,6 +110,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         N_EDGE_REF = nextNodeEntryIndex();
         N_LAT = nextNodeEntryIndex();
         N_LON = nextNodeEntryIndex();
+
         initNodeAndEdgeEntrySize();
     }
 
@@ -229,6 +231,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         long tmp = (long) index * nodeEntryBytes;
         nodes.setInt(tmp + N_LAT, Helper.degreeToInt(lat));
         nodes.setInt(tmp + N_LON, Helper.degreeToInt(lon));
+
         if (lat > bounds.maxLat)
         {
             bounds.maxLat = lat;

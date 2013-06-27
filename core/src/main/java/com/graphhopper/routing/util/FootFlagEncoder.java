@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.GeometryAccess;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 
@@ -162,8 +163,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int handleWayTags( int allowed, OSMWay way )
-    {
+    public int handleWayTags( int allowed, OSMWay way, GeometryAccess geometryAccess ) {
         if ((allowed & acceptBit) == 0)
         {
             return 0;

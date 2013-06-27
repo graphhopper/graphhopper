@@ -95,4 +95,17 @@ public class EncodedValue
     {
         return defaultMax;
     }
+
+    /**
+     * Swap the contents controlled by this value encoder with the given value.
+     * @param flags
+     * @param otherEncoder
+     * @return the new flags
+     */
+    public int swap( int flags, EncodedValue otherEncoder ) {
+
+        int otherValue = otherEncoder.getValue( flags );
+        flags = otherEncoder.setValue( flags, getValue( flags ) );
+        return setValue( flags, otherValue );
+    }
 }
