@@ -33,8 +33,8 @@ public class TranslationMap
         translations.put("de", de);
         de.put("left", "links");
         de.put("right", "rechts");
-        de.put("continue", "Weiter");
-        de.put("continue onto %s", "Weiter auf %s");
+        de.put("continue", "geradeaus");
+        de.put("continue onto %s", "geradeaus auf %s");
         de.put("turn %s", "%s abbiegen");
         de.put("turn %s onto %s", "%s abbiegen auf %s");
 

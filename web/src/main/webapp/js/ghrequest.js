@@ -10,41 +10,99 @@ GHRequest = function(host) {
     this.locale = "en";
 };
 
-GHRequest.prototype.init = function(params) {    
+GHRequest.prototype.init = function(params) {
+    //    for(var key in params) {
+    //        var val = params[key];
+    //        if(val === "false")
+    //            val = false;
+    //        else if(val === "true")
+    //            val = true;
+    //        else {            
+    //            if(parseFloat(val) != NaN)
+    //                val = parseFloat(val)
+    //        }
+    //        this[key] = val;
+    //    } 
     if(params.minPathPrecision)
-        this.minPathPrecision = params.minPathPrecision;    
-    
+        this.minPathPrecision = params.minPathPrecision;
     if(params.vehicle)
         this.vehicle = params.vehicle;
     if(params.algoType)
-        this.algoType = params.algoType;    
+        this.algoType = params.algoType;
     if(params.algorithm)
         this.algorithm = params.algorithm;
+    if(params.locale)
+        this.locale = params.locale;
+    
+    if("instructions" in params)
+        this.instructions = params.instructions == "true";
+    if("encodedPolyline" in params)
+        this.encodedPolyline = params.encodedPolyline == "true";
 }
 
 GHRequest.prototype.createURL = function(demoUrl) {    
     return this.createPath(this.host + "/api/route?" + demoUrl + "&type=jsonp");
 }
 GHRequest.prototype.createPath = function(url) {    
-    // car
-    url += "&vehicle=" + this.vehicle;
+    if(this.vehicle && this.vehicle != "car")
+        url += "&vehicle=" + this.vehicle;    
     // fastest or shortest
-    if(this.algoType)
+    if(this.algoType && this.algoType != "fastest")
         url += "&algoType=" + this.algoType;
-    if(this.locale)
+    if(this.locale && this.locale != "en")
         url += "&locale=" + this.locale;
     // dijkstra, dijkstrabi, astar, astarbi
-    if(this.algorithm)
+    if(this.algorithm && this.algorithm != "dijkstrabi")
         url += "&algorithm=" + this.algorithm;
-    if (this.instructions)
-        url += "&instructions=true";
-    if (this.encodedPolyline)
-        url += "&encodedPolyline=true";
+    if (!this.instructions)
+        url += "&instructions=false";
+    if (!this.encodedPolyline)
+        url += "&encodedPolyline=false";
     if(this.minPathPrecision != 1)
         url += "&minPathPrecision=" + this.minPathPrecision;
     if (this.debug)
         url += "&debug=true";
     return url;
+}
+
+function decodePath(encoded, geoJson) {
+    var start = new Date().getTime();
+    var len = encoded.length;        
+    var index = 0;
+    var array = [];
+    var lat = 0;
+    var lng = 0;
+
+    while (index < len) {
+        var b;
+        var shift = 0;
+        var result = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+        } while (b >= 0x20);
+        var deltaLat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        lat += deltaLat;
+
+        shift = 0;
+        result = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+        } while (b >= 0x20);
+        var deltaLon = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        lng += deltaLon;
+
+        if(geoJson)
+            array.push([lng * 1e-5, lat * 1e-5]);
+        else
+            array.push([lat * 1e-5, lng * 1e-5]);
+    }
+    var end = new Date().getTime();    
+    console.log("decoded " + len + " coordinates in " + ((end - start)/1000)+ "s");
+    return array;
 }
 
 GHRequest.prototype.doRequest = function(url, callback) {   
@@ -53,8 +111,10 @@ GHRequest.prototype.doRequest = function(url, callback) {
         "timeout" : 30000,
         "url": url,
         "success": function(json) {
+            if(tmp && !json.route.coordinates)
+                console.log("something wrong on server? as we have encodedPolyline=" + tmp + " but no encoded data was return?");
             // convert encoded polyline stuff to normal json
-            if (tmp && json.route) {
+            if (tmp && json.route.coordinates) {
                 var tmpArray = decodePath(json.route.coordinates, true);
                 json.route.coordinates = null;
                 json.route.data = {

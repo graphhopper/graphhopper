@@ -170,6 +170,8 @@ function initMap() {
     // no layers for small browser windows
     if($(window).width() > 400)
         L.control.layers(baseMaps).addTo(map);
+    
+    L.control.scale().addTo(map);
 
     map.fitBounds(new L.LatLngBounds(new L.LatLng(bounds.minLat, bounds.minLon), 
         new L.LatLng(bounds.maxLat, bounds.maxLon)));
@@ -304,7 +306,7 @@ function getInfoFromLocation(locCoord) {
             jsonpCallback: 'reverse_callback' + getInfoTmpCounter            
         }).fail(function(err) { 
             // not critical => no alert
-            console.err(err);
+            console.log(err);
         }).pipe(function(json) {
             if(!json) {
                 locCoord.resolvedText = "No description found for coordinate";
@@ -520,44 +522,6 @@ function addInstruction(main, indi, title, distance) {
     var instructionDiv = $("<tr class='instruction'/>");
     instructionDiv.html(str);
     main.append(instructionDiv);
-}
-    
-function decodePath(encoded, geoJson) {
-    var len = encoded.length;
-    var index = 0;
-    var array = [];
-    var lat = 0;
-    var lng = 0;
-
-    while (index < len) {
-        var b;
-        var shift = 0;
-        var result = 0;
-        do {
-            b = encoded.charCodeAt(index++) - 63;
-            result |= (b & 0x1f) << shift;
-            shift += 5;
-        } while (b >= 0x20);
-        var deltaLat = ((result & 1) ? ~(result >> 1) : (result >> 1));
-        lat += deltaLat;
-
-        shift = 0;
-        result = 0;
-        do {
-            b = encoded.charCodeAt(index++) - 63;
-            result |= (b & 0x1f) << shift;
-            shift += 5;
-        } while (b >= 0x20);
-        var deltaLon = ((result & 1) ? ~(result >> 1) : (result >> 1));
-        lng += deltaLon;
-
-        if(geoJson)
-            array.push([lng * 1e-5, lat * 1e-5]);
-        else
-            array.push([lat * 1e-5, lng * 1e-5]);
-    }
-
-    return array;
 }
 
 function getCenter(bounds) {    

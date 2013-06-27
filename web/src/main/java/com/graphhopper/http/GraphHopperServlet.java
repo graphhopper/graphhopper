@@ -113,7 +113,7 @@ public class GraphHopperServlet extends HttpServlet
         GHPlace end = infoPoints.get(1);
         // we can reduce the path length based on the maximum differences to the original coordinates
         double minPathPrecision = getDoubleParam(req, "minPathPrecision", 1d);
-        boolean enableInstructions = getBooleanParam(req, "instructions", false);
+        boolean enableInstructions = getBooleanParam(req, "instructions", true);
         String vehicleStr = getParam(req, "vehicle", "CAR");
         Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
         FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr.toUpperCase());
@@ -238,7 +238,7 @@ public class GraphHopperServlet extends HttpServlet
     {
         try
         {
-            return Boolean.parseBoolean(getParam(req, string, null));
+            return Boolean.parseBoolean(getParam(req, string, "" + _default));
         } catch (Exception ex)
         {
             return _default;
@@ -249,7 +249,7 @@ public class GraphHopperServlet extends HttpServlet
     {
         try
         {
-            return Double.parseDouble(getParam(req, string, null));
+            return Double.parseDouble(getParam(req, string, "" + _default));
         } catch (Exception ex)
         {
             return _default;
