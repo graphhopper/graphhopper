@@ -68,6 +68,12 @@ public class OSMReader
         return this;
     }
 
+    public OSMReader setDemLocation( String demLocation ) {
+        this.demLocation = demLocation;
+        return this;
+    }
+
+
     public void doOSM2Graph( File osmFile ) throws IOException
     {
         if (encodingManager == null)
@@ -76,7 +82,7 @@ public class OSMReader
         }
 
         StopWatch sw1 = new StopWatch().start();
-        preProcess(osmFile);
+        preProcess( osmFile );
 
         sw1.stop();
         StopWatch sw2 = new StopWatch().start();
@@ -167,7 +173,7 @@ public class OSMReader
         long counter = 1;
         try
         {
-            OSMInputFile in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
+            OSMInputFile in = new OSMInputFile(osmFile).setWorkerThreads( workerThreads ).open();
             LongIntMap nodeFilter = helper.getNodeMap();
 
             OSMElement item;
@@ -221,11 +227,11 @@ public class OSMReader
         geometryAccess = new GeometryAccess( this, helper );
 
         // todo if( graphStorage.is3D() ) {
-            geometryAccess.initDem( demLocation, graphStorage.bounds() );
+            geometryAccess.initDem( demLocation, graphStorage.getBounds() );
 
             // fill the graph with elevations
             // todo: do this controlled by region to limit memory usage
-            int nodeCount = graphStorage.nodes();
+            int nodeCount = graphStorage.getNodes();
             for( int i = 0; i < nodeCount; i++ ) {
                 int ele = geometryAccess.getElevation( graphStorage.getLatitude( i ), graphStorage.getLongitude( i ) );
                 // todo graphStorage.setElevation( i, ele );
@@ -258,7 +264,7 @@ public class OSMReader
             return;
         }
 
-        int flags = encodingManager.encodeTags(includeWay, way);
+        int flags = encodingManager.encodeTags(includeWay, way, geometryAccess);
         if (flags == 0)
         {
             return;

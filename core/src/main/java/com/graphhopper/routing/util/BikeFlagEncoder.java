@@ -300,16 +300,16 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             put("cobblestone", 6);
         }
     };
-    private static final Map<String, Integer> HIGHWAY_SPEED = new HashMap<String, Integer>() {
+    protected static final Map<String, Integer> HIGHWAY_SPEED = new HashMap<String, Integer>() {
         {
-            put("living_street", 6);
+            put( "living_street", 6 );
 
-            put("cycleway", 14);
-            put("path", 10);
-            put("road", 10);
-            put("track", 10);
-            put("service", 8);
-            put("unclassified", 14);
+            put( "cycleway", 14 );
+            put( "path", 10 );
+            put( "road", 10 );
+            put( "track", 10 );
+            put( "service", 8 );
+            put( "unclassified", 14 );
             put("residential", 10);
 
             put("trunk", 18);

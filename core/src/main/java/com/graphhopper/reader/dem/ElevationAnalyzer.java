@@ -52,7 +52,7 @@ public class ElevationAnalyzer
     public void initialize( OSMWay way, GeometryAccess geometryAccess ) {
         this.geometryAccess = geometryAccess;
 
-        TLongList nodeIds = way.nodes();
+        TLongList nodeIds = way.getNodes();
         count = nodeIds.size();
         nodes = new TIntArrayList( 2 * RECORD_SIZE * count );
 
