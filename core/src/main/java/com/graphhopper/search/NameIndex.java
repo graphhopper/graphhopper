@@ -22,6 +22,8 @@ import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Storable;
 import java.io.UnsupportedEncodingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Ottavio Campana
@@ -29,6 +31,7 @@ import java.io.UnsupportedEncodingException;
  */
 public class NameIndex implements Storable<NameIndex>
 {
+    private static Logger logger = LoggerFactory.getLogger(NameIndex.class);
     private static final int START_POINTER = 1;
     private int bytePointer = START_POINTER;
     private DataAccess names;
@@ -73,22 +76,9 @@ public class NameIndex implements Storable<NameIndex>
         {
             return lastIndex;
         }
-        byte[] bytes;
-        try
-        {
-            bytes = name.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException ex)
-        {
-            throw new RuntimeException("Encoding not supported", ex);
-        }
+        byte[] bytes = getBytes(name);
         int oldPointer = bytePointer;
         names.ensureCapacity(bytePointer + 1 + bytes.length);
-        // store size into one byte
-        if (bytes.length > 255)
-        {
-            throw new IllegalStateException("Way name is too long: " + name);
-        }
-
         byte[] sizeBytes = new byte[]
         {
             (byte) bytes.length
@@ -104,6 +94,35 @@ public class NameIndex implements Storable<NameIndex>
         lastName = name;
         lastIndex = oldPointer;
         return oldPointer;
+    }
+    
+    private byte[] getBytes(String name) {
+        byte[] bytes = null;
+        for (int i = 0; i < 2; i++)
+        {
+            try
+            {
+                bytes = name.getBytes("UTF-8");
+                // we have to store the size of the array into *one* byte
+                if (bytes.length > 255)
+                {
+                    String newName = name.substring(0, 256 / 4);
+                    logger.warn("Way name is too long: " + name + " truncated to " + newName);
+                    name = newName;
+                    continue;
+                }
+                break;
+            } catch (UnsupportedEncodingException ex)
+            {
+                throw new RuntimeException("Encoding not supported", ex);
+            }
+        }
+        if (bytes.length > 255)
+        {
+            // really make sure no such problem exists
+            throw new IllegalStateException("Way name is too long: " + name);
+        }
+        return bytes;
     }
 
     public String get( int pointer )
