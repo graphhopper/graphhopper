@@ -323,9 +323,9 @@ public class Path
              * orientation is the angle of the vector(1->2) expressed
              * as atan2, while previousOrientation is the angle of the
              * vector(0->1)
-             * Intuitively, if orientation is minor than
+             * Intuitively, if orientation is smaller than
              * previousOrientation, then we have to turn right, while
-             * if is greater we have to turn left. To make this
+             * if it is greater we have to turn left. To make this
              * algorithm work, we need to make the comparison by
              * considering orientation belonging to the interval
              * [ - pi + previousOrientation , + pi + previousOrientation ]
@@ -359,6 +359,7 @@ public class Path
                     longitude = wayGeo.getLongitude(wayGeo.getSize() - 1);
                 }
 
+                orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
                 if (name == null)
                 {
                     name = iter.getName();
@@ -366,8 +367,7 @@ public class Path
                     prevDist = 0;
                 } else
                 {
-                    double tmpOrientation = 0;
-                    orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
+                    double tmpOrientation;
                     if (prevOrientation >= 0)
                     {
                         if (orientation < -Math.PI + prevOrientation)
@@ -377,7 +377,7 @@ public class Path
                         {
                             tmpOrientation = orientation;
                         }
-                    } else if (prevOrientation < 0)
+                    } else
                     {
                         if (orientation > +Math.PI + prevOrientation)
                         {
@@ -413,16 +413,14 @@ public class Path
                     }
                 }
 
+                prevLat = baseLat;
+                prevLon = baseLon;
                 if (wayGeo.isEmpty())
                 {
-                    prevLat = latitude;
-                    prevLon = longitude;
                     prevOrientation = orientation;
                 } else
                 {
-                    prevLat = wayGeo.getLatitude(0);
-                    prevLon = wayGeo.getLongitude(0);
-                    prevOrientation = Math.atan2(baseLat - prevLat, baseLon - prevLon);
+                    prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(0), baseLon - wayGeo.getLongitude(0));
                 }
             }
         });

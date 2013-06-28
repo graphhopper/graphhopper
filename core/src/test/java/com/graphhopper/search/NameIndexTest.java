@@ -64,7 +64,7 @@ public class NameIndexTest {
     @Test
     public void testTooLongNameNoError() {
         NameIndex index = new NameIndex(new RAMDirectory()).create(1000);
-        // WTH are the doing in OSM?
+        // WTH are they doing in OSM? There are exactly two names in the full planet export which violates this limitation!
         index.put("Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))");
         
         String str = "sdfsdfds";

@@ -22,7 +22,7 @@
         <properties>
             <maven.test.skip>true</maven.test.skip>
             <!-- for germany we need a bit more RAM -->
-            <Env.MAVEN_OPTS>-Xms1500m -Xms1500m -XX:PermSize=50m -XX:MaxPermSize=50m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=8000</Env.MAVEN_OPTS>
+            <Env.MAVEN_OPTS>-Dgraphhopper.config=../config.properties -Dgraphhopper.osmreader.osm=/media/SAMSUNG/maps/oberfranken -Xms1500m -Xms1500m -XX:PermSize=50m -XX:MaxPermSize=50m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=8000</Env.MAVEN_OPTS>
         </properties>
     </action>
 </actions>

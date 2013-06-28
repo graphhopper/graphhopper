@@ -63,13 +63,13 @@ public class InstructionListTest
 
         g.edge(0, 3, 110, true);
         g.edge(1, 4, 100, true).setName("1-4");
-        g.edge(2, 5, 110, true);
+        g.edge(2, 5, 110, true).setName("5-2");
 
         g.edge(3, 6, 100, true);
         g.edge(4, 7, 100, true).setName("4-7");
-        g.edge(5, 8, 100, true);
+        g.edge(5, 8, 100, true).setName("5-8");
 
-        g.edge(6, 7, 110, true);
+        g.edge(6, 7, 110, true).setName("6-7");
         EdgeIterator iter = g.edge(7, 8, 100, true);
         PointList list = new PointList();
         list.add(1.0, 1.15);
@@ -111,6 +111,76 @@ public class InstructionListTest
         assertEquals(Arrays.asList("100 m", "100 m", "100 m", "100 m", "100 m", "100 m"), distStrings);
 
         distStrings = wayList.createDistances(Locale.US);
-        assertEquals(Arrays.asList("328 ft", "328 ft", "328 ft", "328 ft", "328 ft", "328 ft"), distStrings);        
+        assertEquals(Arrays.asList("328 ft", "328 ft", "328 ft", "328 ft", "328 ft", "328 ft"), distStrings);
+
+        p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(6, 2);
+        wayList = p.calcInstructions();
+        assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2"),
+                wayList.createDescription(Locale.CANADA));
+    }
+
+    @Test
+    public void testWayList2()
+    {
+        EncodingManager carManager = new EncodingManager("CAR");
+        Graph g = new GraphBuilder(carManager).create();
+        //   2
+        //    \.  5
+        //      \/
+        //      4
+        //     /
+        //    3
+        g.setNode(2, 10.3, 10.15);
+        g.setNode(3, 10.0, 10.05);
+        g.setNode(4, 10.1, 10.10);
+        g.setNode(5, 10.2, 10.15);
+        g.edge(3, 4, 100, true).setName("3-4");
+        g.edge(4, 5, 100, true).setName("4-5");
+
+        EdgeIterator iter = g.edge(2, 4, 100, true);
+        iter.setName("2-4");
+        PointList list = new PointList();
+        list.add(10.20, 10.05);
+        iter.setWayGeometry(list);
+
+        Path p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(2, 3);
+        InstructionList wayList = p.calcInstructions();
+        assertEquals(Arrays.asList("Continue onto 2-4", "Turn right onto 3-4"),
+                wayList.createDescription(Locale.CANADA));
+
+        p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(3, 5);
+        wayList = p.calcInstructions();
+        assertEquals(Arrays.asList("Continue onto 3-4", "Continue onto 4-5"),
+                wayList.createDescription(Locale.CANADA));
+    }
+
+    // problem: we normally don't want instructions if streetname stays but here it is suboptimal:
+    @Test
+    public void testNoInstructionIfSameStreet()
+    {
+        EncodingManager carManager = new EncodingManager("CAR");
+        Graph g = new GraphBuilder(carManager).create();
+        //   2
+        //    \.  5
+        //      \/
+        //      4
+        //     /
+        //    3
+        g.setNode(2, 10.3, 10.15);
+        g.setNode(3, 10.0, 10.05);
+        g.setNode(4, 10.1, 10.10);
+        g.setNode(5, 10.2, 10.15);
+        g.edge(3, 4, 100, true).setName("street");
+        g.edge(4, 5, 100, true).setName("4-5");
+
+        EdgeIterator iter = g.edge(2, 4, 100, true);
+        iter.setName("street");
+        PointList list = new PointList();
+        list.add(10.20, 10.05);
+        iter.setWayGeometry(list);
+
+        Path p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(2, 3);
+        InstructionList wayList = p.calcInstructions();
+        assertEquals(Arrays.asList("Continue onto street"), wayList.createDescription(Locale.CANADA));
     }
 }
