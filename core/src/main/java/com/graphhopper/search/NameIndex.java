@@ -107,7 +107,7 @@ public class NameIndex implements Storable<NameIndex>
                 if (bytes.length > 255)
                 {
                     String newName = name.substring(0, 256 / 4);
-                    logger.warn("Way name is too long: " + name + " truncated to " + newName);
+                    logger.info("Way name is too long: " + name + " truncated to " + newName);
                     name = newName;
                     continue;
                 }
