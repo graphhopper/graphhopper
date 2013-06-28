@@ -302,6 +302,7 @@ public class OSMReader
         if (enableInstructions)
         {
 
+            String wayInfo = encodingManager.getWayInfo(way);
             // http://wiki.openstreetmap.org/wiki/Key:name
             String name = fixWayName(way.getTag("name"));
             // http://wiki.openstreetmap.org/wiki/Key:ref
@@ -316,7 +317,10 @@ public class OSMReader
                     name += ", " + refName;
                 }
             }
-
+            if (!wayInfo.isEmpty())
+            {
+                name += "; " + wayInfo;
+            }
             for (EdgeIterator iter : createdEdges)
             {
                 iter.setName(name);

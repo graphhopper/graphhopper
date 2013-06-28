@@ -254,4 +254,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         }
         return this.toString().equals(other.toString());
     }
+    
+    public String getWayInfo(OSMWay way) {
+        return "";
+    }
 }

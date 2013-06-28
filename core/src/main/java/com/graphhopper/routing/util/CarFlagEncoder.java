@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.Helper;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -215,6 +216,33 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         }
 
         return 0;
+    }
+
+    @Override
+    public String getWayInfo( OSMWay way )
+    {
+        String str = "";
+        String highwayValue = way.getTag("highway");
+        // for now only motorway links
+        if ("motorway_link".equals(highwayValue))
+        {
+            String destination = way.getTag("destination");
+            if(!Helper.isEmpty(destination)) {
+                int counter = 0;
+                for(String d : destination.split(";")) {
+                    if(d.trim().isEmpty())
+                        continue;
+                    if(counter > 0)
+                        str += ", ";
+                    str += d.trim();
+                    counter++;
+                }
+            }
+        }
+        if(str.isEmpty())
+            return str;
+        // I18N
+        return "to: " + str;
     }
 
     @Override
