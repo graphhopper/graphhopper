@@ -301,10 +301,11 @@ public class OSMReader
 
         if (enableInstructions)
         {
+
             // http://wiki.openstreetmap.org/wiki/Key:name
-            String name = (String) way.getTag("name");
+            String name = fixWayName(way.getTag("name"));
             // http://wiki.openstreetmap.org/wiki/Key:ref
-            String refName = (String) way.getTag("ref");
+            String refName = fixWayName(way.getTag("ref"));
             if (!Helper.isEmpty(refName))
             {
                 if (Helper.isEmpty(name))
@@ -312,7 +313,7 @@ public class OSMReader
                     name = refName;
                 } else
                 {
-                    name += " (" + refName + ")";
+                    name += ", " + refName;
                 }
             }
 
@@ -321,6 +322,15 @@ public class OSMReader
                 iter.setName(name);
             }
         }
+    }
+
+    static String fixWayName( String str )
+    {
+        if (str == null)
+        {
+            return "";
+        }
+        return str.replaceAll(";[ ]*", ", ");
     }
 
     private void processNode( OSMNode node ) throws XMLStreamException
