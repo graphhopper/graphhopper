@@ -115,12 +115,12 @@ tr.instruction td {
     border-collapse: collapse;
     padding-top: 10px;
     width: 100%;
+    font-size: smaller;
 }
 #instructions th, #instructions td {
     padding: 3px;
 }
-.instr_title {
-    font-size: smaller;
+.instr_title {    
 }
 .instr_distance_td {
     min-width: 40px;

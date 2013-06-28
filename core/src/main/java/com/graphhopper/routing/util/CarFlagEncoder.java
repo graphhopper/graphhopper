@@ -227,22 +227,29 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if ("motorway_link".equals(highwayValue))
         {
             String destination = way.getTag("destination");
-            if(!Helper.isEmpty(destination)) {
+            if (!Helper.isEmpty(destination))
+            {
                 int counter = 0;
-                for(String d : destination.split(";")) {
-                    if(d.trim().isEmpty())
+                for (String d : destination.split(";"))
+                {
+                    if (d.trim().isEmpty())
                         continue;
-                    if(counter > 0)
+
+                    if (counter > 0)
                         str += ", ";
+
                     str += d.trim();
                     counter++;
                 }
             }
         }
-        if(str.isEmpty())
+        if (str.isEmpty())
             return str;
         // I18N
-        return "to: " + str;
+        if (str.contains(","))
+            return "destinations: " + str;
+        else
+            return "destination: " + str;
     }
 
     @Override

@@ -18,7 +18,7 @@
         </goals>
         <properties>
             <exec.classpathScope>runtime</exec.classpathScope>
-            <exec.args>-Xms1000m -Xmx1000m -XX:PermSize=20m -XX:MaxPermSize=20m -classpath %classpath com.graphhopper.GraphHopper -Dgraphhopper.config=../config.properties osmreader.algo=dijkstra osmreader.osm=/media/SAMSUNG/maps/unterfranken.osm</exec.args>
+            <exec.args>-Xms1000m -Xmx1000m -XX:PermSize=20m -XX:MaxPermSize=20m -classpath %classpath com.graphhopper.GraphHopper -Dgraphhopper.config=../config.properties osmreader.algo=dijkstra osmreader.osm=/media/SAMSUNG/maps/oberfranken.osm</exec.args>
             <exec.executable>java</exec.executable>
         </properties>
     </action>
@@ -30,7 +30,7 @@
         </goals>
         <properties>
             <exec.classpathScope>runtime</exec.classpathScope>
-            <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -Xms1000m -Xmx1000m -XX:PermSize=20m -XX:MaxPermSize=20m -classpath %classpath com.graphhopper.GraphHopper -Dgraphhopper.config=../config.properties osmreader.algo=dijkstra osmreader.osm=/media/SAMSUNG/maps/unterfranken.osm</exec.args>
+            <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -Xms1000m -Xmx1000m -XX:PermSize=20m -XX:MaxPermSize=20m -classpath %classpath com.graphhopper.GraphHopper -Dgraphhopper.config=../config.properties osmreader.algo=dijkstra osmreader.osm=/media/SAMSUNG/maps/oberfranken.osm</exec.args>
             <jpda.listen>true</jpda.listen>
             <exec.executable>java</exec.executable>
         </properties>
@@ -42,7 +42,7 @@
             <goal>org.codehaus.mojo:exec-maven-plugin:1.1.1:exec</goal>
         </goals>
         <properties>
-            <exec.args>${profiler.args} -Xms1000m -Xmx1000m -XX:PermSize=20m -XX:MaxPermSize=20m -classpath %classpath com.graphhopper.GraphHopper -Dgraphhopper.config=../config.properties osmreader.algo=dijkstra osmreader.osm=/media/SAMSUNG/maps/unterfranken.osm</exec.args>
+            <exec.args>${profiler.args} -Xms1000m -Xmx1000m -XX:PermSize=20m -XX:MaxPermSize=20m -classpath %classpath com.graphhopper.GraphHopper -Dgraphhopper.config=../config.properties osmreader.algo=dijkstra osmreader.osm=/media/SAMSUNG/maps/oberfranken.osm</exec.args>
             <profiler.action>profile</profiler.action>
             <exec.executable>${profiler.java}</exec.executable>
         </properties>
