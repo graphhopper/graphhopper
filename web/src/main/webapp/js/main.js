@@ -121,11 +121,14 @@ function resolveCoords(fromStr, toStr) {
 
 function initMap() {
     var mapDiv = $("#map");
-    var width = $(window).width() - 270;
+    var width = $(window).width() - 300;
     if(width < 100)
         width = $(window).width() - 5;
     var height = $(window).height() - 5;
     mapDiv.width(width).height(height);
+    if(height > 350)
+        height -= 250;
+    $("#info").css("max-height", height);
     console.log("init map at " + JSON.stringify(bounds));
     
     // mapquest provider
@@ -494,15 +497,31 @@ function routeLatLng(request) {
         
         if(json.route.instructions) {
             var instructionsElement = $("<table id='instructions'><colgroup>"
-                + "<col width='1*'><col width='6*'><col width='1*'></colgroup>");
+                + "<col width='10%'><col width='65%'><col width='25%'></colgroup>");
             $("#info").append(instructionsElement);        
             var descriptions = json.route.instructions.descriptions;
             var distances = json.route.instructions.distances;
             var indications = json.route.instructions.indications;
             for(var m = 0; m < descriptions.length; m++) {                
-                var indi = indications[m];
+                var indi = indications[m];                
                 if(m == 0)
-                    indi = "marker-from";                
+                    indi = "marker-from";
+                else if(indi == -3)
+                    indi = "sharp_left";
+                else if(indi == -2)
+                    indi = "left";
+                else if(indi == -1)
+                    indi = "slight_left";
+                else if(indi == 0)
+                    indi = "continue";
+                else if(indi == 1)
+                    indi = "slight_right";
+                else if(indi == 2)
+                    indi = "right";
+                else if(indi == 3)
+                    indi = "sharp_right";
+                else
+                    throw "did not found indication " + indi;
                     
                 addInstruction(instructionsElement, indi, descriptions[m], distances[m]);                
             }

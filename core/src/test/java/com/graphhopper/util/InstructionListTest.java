@@ -131,9 +131,9 @@ public class InstructionListTest
         //     /
         //    3
         g.setNode(2, 10.3, 10.15);
-        g.setNode(3, 10.0, 10.05);
+        g.setNode(3, 10.0, 10.08);
         g.setNode(4, 10.1, 10.10);
-        g.setNode(5, 10.2, 10.15);
+        g.setNode(5, 10.2, 10.13);
         g.edge(3, 4, 100, true).setName("3-4");
         g.edge(4, 5, 100, true).setName("4-5");
 
@@ -145,7 +145,7 @@ public class InstructionListTest
 
         Path p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(2, 3);
         InstructionList wayList = p.calcInstructions();
-        assertEquals(Arrays.asList("Continue onto 2-4", "Turn right onto 3-4"),
+        assertEquals(Arrays.asList("Continue onto 2-4", "Turn slight right onto 3-4"),
                 wayList.createDescription(Locale.CANADA));
 
         p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(3, 5);

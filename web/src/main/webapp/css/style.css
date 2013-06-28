@@ -23,15 +23,16 @@ body {
     border: lightgray groove thin;
     display: none;
     padding: 5px;
+    overflow: auto;
 }
 #info a {
     padding-right: 5px;
 }
 #input, #instructions {
-    width: 225px;
+    width: 255px;
 }
 #fromInput, #toInput {
-    width: 200px;
+    width: 230px;
 }
 #fromFound, #toFound {
     font-size: 10px;
@@ -111,8 +112,12 @@ tr.instruction td {
     border-bottom: beige groove thin;
 }
 #instructions {
+    border-collapse: collapse;
     padding-top: 10px;
     width: 100%;
+}
+#instructions th, #instructions td {
+    padding: 3px;
 }
 .instr_title {
     font-size: smaller;

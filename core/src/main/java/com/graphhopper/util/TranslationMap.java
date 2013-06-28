@@ -31,8 +31,12 @@ public class TranslationMap
     {
         TranslationHashMap de = new TranslationHashMap();
         translations.put("de", de);
+        de.put("sharp left", "scharf links");
+        de.put("sharp right", "scharf rechts");        
         de.put("left", "links");
         de.put("right", "rechts");
+        de.put("slight left", "leicht links");
+        de.put("slight right", "leicht rechts");
         de.put("continue", "geradeaus");
         de.put("continue onto %s", "geradeaus auf %s");
         de.put("turn %s", "%s abbiegen");

@@ -34,9 +34,13 @@ import java.util.*;
 public class InstructionList
 {
     private static final TranslationMap translations = new TranslationMap();
+    public static final int TURN_SHARP_LEFT = -3;
+    public static final int TURN_LEFT = -2;
+    public static final int TURN_SLIGHT_LEFT = -1;
     public static final int CONTINUE_ON_STREET = 0;
-    public static final int TURN_LEFT = -1;
-    public static final int TURN_RIGHT = 1;
+    public static final int TURN_SLIGHT_RIGHT = 1;
+    public static final int TURN_RIGHT = 2;
+    public static final int TURN_SHARP_RIGHT = 3;
     private TIntList indications;
     private List<String> names;
     private TDoubleArrayList distances;
@@ -106,25 +110,12 @@ public class InstructionList
     /**
      * @return list of indications useful to create images
      */
-    public List<String> createIndications()
+    public List<Integer> createIndications()
     {
-        List<String> res = new ArrayList<String>(indications.size());
+        List<Integer> res = new ArrayList<Integer>(indications.size());
         for (int i = 0; i < indications.size(); i++)
         {
-            switch (indications.get(i))
-            {
-                case CONTINUE_ON_STREET:
-                    res.add("continue");
-                    break;
-                case TURN_LEFT:
-                    res.add("left");
-                    break;
-                case TURN_RIGHT:
-                    res.add("right");
-                    break;
-                default:
-                    throw new IllegalArgumentException("unknown indication " + indications.get(i));
-            }
+            res.add(indications.get(i));
         }
         return res;
     }
@@ -195,6 +186,10 @@ public class InstructionList
                 tr = translations.get("en");
             }
         }
+        String shLeftTr = tr.tr("sharp left");
+        String shRightTr = tr.tr("sharp right");
+        String slLeftTr = tr.tr("slight left");
+        String slRightTr = tr.tr("slight right");
         String leftTr = tr.tr("left");
         String rightTr = tr.tr("right");
         String continueTr = tr.tr("continue");
@@ -209,10 +204,35 @@ public class InstructionList
                 str = Helper.isEmpty(n) ? continueTr : tr.tr("continue onto %s", n);
             } else
             {
-                String dir = (indi == TURN_LEFT) ? leftTr : rightTr;
+                String dir = null;
+                switch (indi)
+                {
+                    case TURN_SHARP_LEFT:
+                        dir = shLeftTr;
+                        break;
+                    case TURN_LEFT:
+                        dir = leftTr;
+                        break;
+                    case TURN_SLIGHT_LEFT:
+                        dir = slLeftTr;
+                        break;
+                    case TURN_SLIGHT_RIGHT:
+                        dir = slRightTr;
+                        break;
+                    case TURN_RIGHT:
+                        dir = rightTr;
+                        break;
+                    case TURN_SHARP_RIGHT:
+                        dir = shRightTr;
+                        break;
+                }
+                if (dir == null)
+                {
+                    throw new IllegalStateException("Indication not found " + indi);
+                }
+
                 str = Helper.isEmpty(n) ? tr.tr("turn %s", dir) : tr.tr("turn %s onto %s", dir, n);
             }
-
             instructions.add(Helper.firstBig(str));
         }
         return instructions;

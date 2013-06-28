@@ -24,9 +24,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.InstructionList;
-import gnu.trove.list.TDoubleList;
 import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -392,21 +390,41 @@ public class Path
                     String tmpName = iter.getName();
                     if (!name.equals(tmpName))
                     {
-                        name = tmpName;
-
-                        // we have a tolerance of approx +/- 10 degrees to 
-                        // indicate that we have to go straight and not to turn.                         
-                        if (Math.abs(tmpOrientation - prevOrientation) < 0.2)
+                        name = tmpName;                        
+                        double delta = Math.abs(tmpOrientation - prevOrientation);
+                        if (delta < 0.2)
                         {
+                            // 0.2 ~= 11°
                             cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, prevDist);
-                        } else
+                           
+                        } else if (delta < 0.8)
                         {
+                            // 0.8 ~= 40°
+                            if (tmpOrientation > prevOrientation)
+                            {
+                                cachedWays.add(InstructionList.TURN_SLIGHT_LEFT, name, prevDist);
+                            } else
+                            {
+                                cachedWays.add(InstructionList.TURN_SLIGHT_RIGHT, name, prevDist);
+                            }
+                        } else if (delta < 1.8)
+                        {
+                            // 1.8 ~= 103°
                             if (tmpOrientation > prevOrientation)
                             {
                                 cachedWays.add(InstructionList.TURN_LEFT, name, prevDist);
                             } else
                             {
                                 cachedWays.add(InstructionList.TURN_RIGHT, name, prevDist);
+                            }
+                        } else
+                        {
+                            if (tmpOrientation > prevOrientation)
+                            {
+                                cachedWays.add(InstructionList.TURN_SHARP_LEFT, name, prevDist);
+                            } else
+                            {
+                                cachedWays.add(InstructionList.TURN_SHARP_RIGHT, name, prevDist);
                             }
                         }
                         prevDist = 0;
