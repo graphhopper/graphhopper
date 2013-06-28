@@ -237,4 +237,11 @@ public class InstructionList
         }
         return instructions;
     }
+
+    public void updateLastDistance( double prevDist )
+    {
+        if(distances.isEmpty())
+            throw new IllegalStateException("Cannot update last distance with:" + prevDist);
+        distances.set(distances.size() - 1, prevDist);        
+    }
 }

@@ -215,7 +215,7 @@ public class Path
      */
     public static interface EdgeVisitor
     {
-        void next( EdgeIterator iter );
+        void next( EdgeIterator iter, int index );
     }
 
     /**
@@ -235,7 +235,7 @@ public class Path
                         + ", array index:" + i + ", edges:" + edgeIds.size());
             }
             tmpNode = iter.getBaseNode();
-            visitor.next(iter);
+            visitor.next(iter, i);
         }
     }
 
@@ -255,7 +255,7 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             @Override
-            public void next( EdgeIterator iter )
+            public void next( EdgeIterator iter, int i )
             {
                 nodes.add(iter.getBaseNode());
             }
@@ -282,7 +282,7 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             @Override
-            public void next( EdgeIterator iter )
+            public void next( EdgeIterator iter, int i )
             {
                 PointList pl = iter.getWayGeometry();
                 pl.reverse();
@@ -342,9 +342,8 @@ public class Path
             double prevDist;
 
             @Override
-            public void next( EdgeIterator iter )
-            {
-                double orientation = 0;
+            public void next( EdgeIterator iter, int index )
+            {                
                 // Hmmh, a bit ugly: 'iter' links to the previous node of the path!
                 // Ie. baseNode is the current node and adjNode is the previous.
                 int baseNode = iter.getBaseNode();
@@ -365,12 +364,12 @@ public class Path
                     longitude = wayGeo.getLongitude(wayGeo.getSize() - 1);
                 }
 
-                orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
+                double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
                 if (name == null)
                 {
                     name = iter.getName();
-                    cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, calcDistance(iter));
-                    prevDist = 0;
+                    prevDist = calcDistance(iter);
+                    cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, prevDist);
                 } else
                 {
                     double tmpOrientation;
@@ -393,11 +392,12 @@ public class Path
                             tmpOrientation = orientation;
                         }
                     }
-
-                    prevDist += calcDistance(iter);
+                                                           
                     String tmpName = iter.getName();
                     if (!name.equals(tmpName))
                     {
+                        cachedWays.updateLastDistance(prevDist);
+                        prevDist = calcDistance(iter);
                         name = tmpName;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         if (delta < 0.2)
@@ -435,8 +435,8 @@ public class Path
                                 cachedWays.add(InstructionList.TURN_SHARP_RIGHT, name, prevDist);
                             }
                         }
-                        prevDist = 0;
-                    }
+                    } else
+                        prevDist += calcDistance(iter);
                 }
 
                 prevLat = baseLat;
@@ -448,6 +448,10 @@ public class Path
                 {
                     prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(0), baseLon - wayGeo.getLongitude(0));
                 }
+                
+                boolean lastEdgeIter = index == edgeIds.size() - 1;
+                if(lastEdgeIter)
+                    cachedWays.updateLastDistance(prevDist);
             }
         });
 
