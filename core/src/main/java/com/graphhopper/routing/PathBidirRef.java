@@ -99,6 +99,7 @@ public class PathBidirRef extends Path
             processDistance(tmpEdge, currEdge.endNode);
             tmpEdge = currEdge.edge;
         }
+        setEndNode(currEdge.endNode);
         sw.stop();
         return setFound(true);
     }

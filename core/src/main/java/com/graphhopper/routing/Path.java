@@ -48,7 +48,8 @@ public class Path
     private boolean found;
     protected EdgeEntry edgeEntry;
     StopWatch sw = new StopWatch("extract");
-    private int fromNode = EdgeIterator.NO_EDGE;
+    private int fromNode = -1;
+    protected int endNode = -1;
     private TIntList edgeIds;
     private PointList cachedPoints;
     private InstructionList cachedWays;
@@ -84,19 +85,25 @@ public class Path
         edgeIds.add(edge);
     }
 
+    protected Path setEndNode( int end )
+    {
+        endNode = end;
+        return this;
+    }
+
     /**
      * We need to remember fromNode explicitely as its not saved in one edgeId of edgeIds.
      */
-    protected Path setFromNode( int node )
+    protected Path setFromNode( int from )
     {
-        fromNode = node;
+        fromNode = from;
         return this;
     }
 
     /**
      * @return the first node of this Path.
      */
-    public int getFromNode()
+    private int getFromNode()
     {
         if (!EdgeIterator.Edge.isValid(fromNode))
         {
@@ -158,6 +165,7 @@ public class Path
     {
         sw.start();
         EdgeEntry goalEdge = edgeEntry;
+        setEndNode(goalEdge.endNode);
         while (EdgeIterator.Edge.isValid(goalEdge.edge))
         {
             processDistance(goalEdge.edge, goalEdge.endNode);
@@ -390,13 +398,13 @@ public class Path
                     String tmpName = iter.getName();
                     if (!name.equals(tmpName))
                     {
-                        name = tmpName;                        
+                        name = tmpName;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         if (delta < 0.2)
                         {
                             // 0.2 ~= 11°
                             cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, prevDist);
-                           
+
                         } else if (delta < 0.8)
                         {
                             // 0.8 ~= 40°

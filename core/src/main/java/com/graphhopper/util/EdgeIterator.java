@@ -23,13 +23,13 @@ package com.graphhopper.util;
  * <p/>
  * Usage:
  * <pre>
- * // calls to iter.node(), distance() without next() will cause undefined behaviour
+ * // calls to iter.adjNode(), distance() without next() will cause undefined behaviour
  * EdgeIterator iter = graph.getOutgoing(nodeId);
  * // or similar
  * EdgeIterator iter = graph.getIncoming(nodeId);
  * while(iter.next()) {
  *   int baseNodeId = iter.baseNode(); // equal to nodeId
- *   int adjacentNodeId = iter.node();
+ *   int adjacentNodeId = iter.adjNode();
  *   ...
  * }
  *

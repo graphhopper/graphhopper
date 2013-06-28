@@ -27,8 +27,7 @@ import com.graphhopper.util.EdgeIterator;
  * @author Peter Karich
  */
 public class PathNative extends Path
-{
-    int endNode = -1;
+{    
     int[] parents;
     int[] pathEdgeIds;
 
@@ -37,12 +36,6 @@ public class PathNative extends Path
         super(g, encoder);
         this.parents = parents;
         this.pathEdgeIds = pathEdgeIds;
-    }
-
-    public PathNative setEndNode( int end )
-    {
-        endNode = end;
-        return this;
     }
 
     /**
