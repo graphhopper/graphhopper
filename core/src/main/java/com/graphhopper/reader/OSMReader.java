@@ -20,6 +20,7 @@ package com.graphhopper.reader;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
@@ -51,15 +52,18 @@ public class OSMReader
     private GeometryAccess geometryAccess = null;
     private EncodingManager encodingManager = null;
     private String demLocation = null;
+    private boolean is3DMode = false;
     private int workerThreads = -1;
     private LongIntMap osmNodeIdToBarrierMap;
     private boolean enableInstructions = true;
+    protected long expectedCap = 100;
 
     public OSMReader( GraphStorage storage, long expectedCap )
     {
         this.graphStorage = storage;
         helper = new OSMReaderHelper(graphStorage, expectedCap);
         osmNodeIdToBarrierMap = new GHLongIntBTree(200);
+        this.expectedCap = expectedCap;
     }
 
     public OSMReader setWorkerThreads( int numOfWorkers )
@@ -69,10 +73,19 @@ public class OSMReader
     }
 
     public OSMReader setDemLocation( String demLocation ) {
+
+        if( graphStorage.getNodes() > 0  || helper.getFoundNodes() > 0 )
+            throw new IllegalStateException( "3D mode must be activated before processing starts.");
+
         this.demLocation = demLocation;
+        is3DMode = true;
+        helper.activateElevations();
         return this;
     }
 
+    public boolean is3D() {
+        return is3DMode;
+    }
 
     public void doOSM2Graph( File osmFile ) throws IOException
     {
@@ -131,6 +144,8 @@ public class OSMReader
                 }
             }
             in.close();
+
+            helper.preprocessingFinished();
         } catch (Exception ex)
         {
             throw new RuntimeException("Problem while parsing file", ex);
@@ -174,7 +189,6 @@ public class OSMReader
         try
         {
             OSMInputFile in = new OSMInputFile(osmFile).setWorkerThreads( workerThreads ).open();
-            LongIntMap nodeFilter = helper.getNodeMap();
 
             OSMElement item;
             while ((item = in.getNext()) != null)
@@ -182,7 +196,7 @@ public class OSMReader
                 switch (item.getType())
                 {
                     case OSMElement.NODE:
-                        if (nodeFilter.get(item.getId()) != -1)
+                        if (helper.getNodeIndex(item.getId()) != -1)
                         {
                             processNode((OSMNode) item);
                         }
@@ -224,20 +238,15 @@ public class OSMReader
      * If the graph is 3D enabled, it is filled with elevation data.
      */
     private void initializeGeometry() {
-        geometryAccess = new GeometryAccess( this, helper );
+        geometryAccess = new GeometryAccess( graphStorage, helper );
 
-        // todo if( graphStorage.is3D() ) {
+        if( is3D() ) {
+            // todo: do this controlled by region to limit memory usage
             geometryAccess.initDem( demLocation, graphStorage.getBounds() );
 
-            // fill the graph with elevations
-            // todo: do this controlled by region to limit memory usage
-            int nodeCount = graphStorage.getNodes();
-            for( int i = 0; i < nodeCount; i++ ) {
-                int ele = geometryAccess.getElevation( graphStorage.getLatitude( i ), graphStorage.getLongitude( i ) );
-                // todo graphStorage.setElevation( i, ele );
-            }
-            helper.addElevations( geometryAccess );
-        //}
+            // fill elevations for graph nodes
+            geometryAccess.initializeElevations(  );
+        }
     }
 
     /**
@@ -264,7 +273,7 @@ public class OSMReader
             return;
         }
 
-        int flags = encodingManager.encodeTags(includeWay, way, geometryAccess);
+        int flags = encodingManager.encodeTags( includeWay, way, geometryAccess );
         if (flags == 0)
         {
             return;
@@ -286,7 +295,7 @@ public class OSMReader
                 osmNodeIdToBarrierMap.put(nodeId, 0);
 
                 // create shadow node copy for zero length edge
-                long newNodeId = helper.addBarrierNode(nodeId);
+                long newNodeId = helper.addBarrierNode(nodeId, geometryAccess );
 
                 if (i > 0)
                 {
@@ -299,14 +308,14 @@ public class OSMReader
                     long transfer[] = osmNodeIds.toArray(lastBarrier, i - lastBarrier + 1);
                     transfer[ transfer.length - 1] = newNodeId;
                     TLongList partIds = new TLongArrayList(transfer);
-                    createdEdges.addAll(helper.addOSMWay(partIds, flags));
+                    createdEdges.addAll(helper.addOSMWay(partIds, flags, geometryAccess));
 
                     // create zero length edge for barrier
-                    createdEdges.addAll(helper.addBarrierEdge(newNodeId, nodeId, flags, barrierFlags));
+                    createdEdges.addAll(helper.addBarrierEdge(newNodeId, nodeId, flags, barrierFlags, geometryAccess));
                 } else
                 {
                     // run edge from real first node to shadow node
-                    createdEdges.addAll(helper.addBarrierEdge(nodeId, newNodeId, flags, barrierFlags));
+                    createdEdges.addAll(helper.addBarrierEdge(nodeId, newNodeId, flags, barrierFlags, geometryAccess));
 
                     // exchange first node for created barrier node
                     osmNodeIds.set(0, newNodeId);
@@ -323,12 +332,12 @@ public class OSMReader
             {
                 long transfer[] = osmNodeIds.toArray(lastBarrier, size - lastBarrier);
                 TLongList partNodeIds = new TLongArrayList(transfer);
-                createdEdges.addAll(helper.addOSMWay(partNodeIds, flags));
+                createdEdges.addAll(helper.addOSMWay(partNodeIds, flags, geometryAccess));
             }
         } else
         {
             // no barriers - simply add the whole way
-            createdEdges.addAll(helper.addOSMWay(way.getNodes(), flags));
+            createdEdges.addAll(helper.addOSMWay(way.getNodes(), flags, geometryAccess));
         }
 
         if (enableInstructions)

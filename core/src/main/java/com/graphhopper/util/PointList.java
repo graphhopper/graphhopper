@@ -25,27 +25,45 @@ import java.util.List;
 /**
  * Slim list to store several points (without the need for a point object).
  * <p/>
+ *
  * @author Peter Karich
  */
 public class PointList
 {
     private double[] latitudes;
     private double[] longitudes;
+    private double[] elevations;
     private int size = 0;
+    private boolean is3D;
+
+    public PointList( boolean is3D )
+    {
+        this(10, is3D);
+    }
 
     public PointList()
     {
-        this(10);
+        this(10, false);
     }
 
     public PointList( int cap )
     {
+        this(cap, false);
+    }
+
+    public PointList( int cap, boolean is3D )
+    {
+        this.is3D = is3D;
         if (cap < 5)
         {
             cap = 5;
         }
         latitudes = new double[cap];
         longitudes = new double[cap];
+        if (is3D)
+        {
+            elevations = new double[cap];
+        }
     }
 
     public void set( int index, double lat, double lon )
@@ -61,16 +79,34 @@ public class PointList
 
     public void add( double lat, double lon )
     {
+        add(lat, lon, 0);
+    }
+
+    public void add( int[] coords )
+    {
+        add( Helper.intToDegree(coords[0]), Helper.intToDegree(coords[1]), coords[2] );
+    }
+
+    public void add( double lat, double lon, double ele )
+    {
         int newSize = size + 1;
         if (newSize >= latitudes.length)
         {
             int cap = (int) (newSize * 1.7);
             latitudes = Arrays.copyOf(latitudes, cap);
             longitudes = Arrays.copyOf(longitudes, cap);
+            if (is3D)
+            {
+                elevations = Arrays.copyOf(elevations, cap);
+            }
         }
 
         latitudes[size] = lat;
         longitudes[size] = lon;
+        if (is3D)
+        {
+            elevations[size] = ele;
+        }
         size = newSize;
     }
 
@@ -104,6 +140,20 @@ public class PointList
         return longitudes[index];
     }
 
+    public double getElevation( int index )
+    {
+        if (!is3D)
+        {
+            return 0;
+        }
+        if (index >= size)
+        {
+            throw new ArrayIndexOutOfBoundsException("Tried to access PointList with too big index! "
+                    + "index:" + index + ", size:" + size);
+        }
+        return elevations[index];
+    }
+
     public void reverse()
     {
         int max = size / 2;
@@ -118,6 +168,14 @@ public class PointList
             tmp = longitudes[i];
             longitudes[i] = longitudes[swapIndex];
             longitudes[swapIndex] = tmp;
+
+            if (is3D)
+            {
+                tmp = elevations[i];
+                elevations[i] = elevations[swapIndex];
+                elevations[swapIndex] = tmp;
+            }
+
         }
     }
 
@@ -150,6 +208,11 @@ public class PointList
             sb.append(latitudes[i]);
             sb.append(',');
             sb.append(longitudes[i]);
+            if (is3D)
+            {
+                sb.append(',');
+                sb.append(longitudes[i]);
+            }
             sb.append(')');
         }
         return sb.toString();
@@ -165,11 +228,12 @@ public class PointList
         {
             points.add(new Double[]
                     {
-                        getLongitude(i), getLatitude(i)
+                            getLongitude(i), getLatitude(i)
                     });
         }
         return points;
     }
+
     private final static int PRECISION = 100000;
 
     @Override
@@ -184,6 +248,11 @@ public class PointList
         {
             return false;
         }
+        if (this.is3D != other.is3D)
+        {
+            return false;
+        }
+
         for (int i = 0; i < size; i++)
         {
             if (Math.round(latitudes[i] * PRECISION) != Math.round(other.latitudes[i] * PRECISION))
@@ -191,6 +260,10 @@ public class PointList
                 return false;
             }
             if (Math.round(longitudes[i] * PRECISION) != Math.round(other.longitudes[i] * PRECISION))
+            {
+                return false;
+            }
+            if (is3D && Math.round(elevations[i]) != Math.round(other.elevations[i]))
             {
                 return false;
             }
@@ -210,6 +283,7 @@ public class PointList
         return hash;
     }
 
+    // only called in tests
     public double calculateDistance( DistanceCalc calc )
     {
         double lat = -1;
@@ -237,9 +311,14 @@ public class PointList
 
         latitudes = Arrays.copyOf(latitudes, size);
         longitudes = Arrays.copyOf(longitudes, size);
+        if (is3D)
+        {
+            elevations = Arrays.copyOf(elevations, size);
+        }
         return this;
     }
-    public static final PointList EMPTY = new PointList(0)
+
+    public static final PointList EMPTY = new PointList(0, false)
     {
         @Override
         public void set( int index, double lat, double lon )
@@ -249,6 +328,12 @@ public class PointList
 
         @Override
         public void add( double lat, double lon )
+        {
+            throw new RuntimeException("cannot change EMPTY PointList");
+        }
+
+        @Override
+        public void add( double lat, double lon, double ele )
         {
             throw new RuntimeException("cannot change EMPTY PointList");
         }

@@ -222,7 +222,7 @@ public class EncodingManager
         return getFirst();
     }
 
-    private FlagEncoder getFirst()
+    public FlagEncoder getFirst()
     {
         if (getVehicleCount() == 0)
         {

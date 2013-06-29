@@ -24,7 +24,7 @@ import static java.lang.Math.*;
  * Calculates the distance of two points or one point and an edge on earth via haversine formula.
  * Allows subclasses to implement less or more precise calculations.
  * <p/>
- * @see http://en.wikipedia.org/wiki/Haversine_formula
+ * see http://en.wikipedia.org/wiki/Haversine_formula
  * <p/>
  * @author Peter Karich
  */
@@ -202,5 +202,16 @@ public class DistanceCalc
     {
         double factor = Math.pow(10, i);
         return Math.round(someDouble * factor) / factor;
+    }
+
+    /**
+     * Pythagoras
+     * @param edge1
+     * @param edge2
+     * @return
+     */
+    public double calcOrthogonal( double edge1, double edge2 )
+    {
+        return Math.sqrt( Math.pow(edge1,2) + Math.pow(edge2, 2));
     }
 }
