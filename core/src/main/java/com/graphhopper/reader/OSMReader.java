@@ -76,6 +76,8 @@ public class OSMReader
 
         if( graphStorage.getNodes() > 0  || helper.getFoundNodes() > 0 )
             throw new IllegalStateException( "3D mode must be activated before processing starts.");
+        if( demLocation == null )
+            return this;
 
         this.demLocation = demLocation;
         is3DMode = true;
@@ -92,6 +94,10 @@ public class OSMReader
         if (encodingManager == null)
         {
             throw new IllegalStateException("Encoding manager not set.");
+        }
+        if( encodingManager.needs3D() && !is3D() )
+        {
+            throw new IllegalStateException("Active encoders require elevation data.");
         }
 
         StopWatch sw1 = new StopWatch().start();
@@ -186,11 +192,11 @@ public class OSMReader
         graphStorage.create(tmp);
         long wayStart = -1;
         long counter = 1;
+        OSMElement item = null;
         try
         {
             OSMInputFile in = new OSMInputFile(osmFile).setWorkerThreads( workerThreads ).open();
 
-            OSMElement item;
             while ((item = in.getNext()) != null)
             {
                 switch (item.getType())
@@ -224,7 +230,8 @@ public class OSMReader
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
         } catch (Exception ex)
         {
-            throw new RuntimeException("Couldn't process file " + osmFile, ex);
+            throw new RuntimeException("Couldn't process file " + osmFile +
+                    (item!=null?" Item" + item:""), ex);
         }
         helper.finishedReading();
         if (graphStorage.getNodes() == 0)

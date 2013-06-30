@@ -15,6 +15,12 @@ public class BikeDemFlagEncoder extends BikeFlagEncoder
     private ElevationAnalyzer analyzer;
 
     @Override
+    public boolean needs3D()
+    {
+        return true;
+    }
+
+    @Override
     public int defineBits( int index, int shift ) {
         shift = super.defineBits( index, shift );
 

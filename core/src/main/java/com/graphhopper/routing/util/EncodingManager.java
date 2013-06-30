@@ -50,6 +50,8 @@ public class EncodingManager
     private int encoderCount = 0;
     private int nextBit = 0;
 
+    private boolean needs3D;
+
     public EncodingManager()
     {
     }
@@ -66,6 +68,7 @@ public class EncodingManager
     {
         String[] entries = encoderList.split(",");
         Arrays.sort(entries);
+        needs3D = false;
 
         for (String entry : entries)
         {
@@ -116,6 +119,8 @@ public class EncodingManager
     public void register( AbstractFlagEncoder encoder )
     {
         encoders.add(encoder);
+
+        needs3D |= encoder.needs3D();
 
         int usedBits = encoder.defineBits(encoderCount, nextBit);
         if (usedBits >= MAX_BITS)
@@ -252,6 +257,21 @@ public class EncodingManager
         }
         return flags;
     }
+
+    /**
+     *
+     * @return
+     */
+    public boolean needs3D()
+    {
+        return needs3D;
+    }
+
+    /**
+     *
+     * @return
+     */
+
 
     @Override
     public int hashCode()

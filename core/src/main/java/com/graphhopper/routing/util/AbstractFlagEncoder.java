@@ -158,6 +158,15 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      */
     public abstract int analyzeNodeTags( OSMNode node );
 
+    /**
+     * Override this method for encoders using a DEM model
+     * @return
+     */
+    public boolean needs3D()
+    {
+        return false;
+    }
+
     public boolean hasAccepted( int acceptedValue )
     {
         return (acceptedValue & acceptBit) > 0;
