@@ -86,8 +86,43 @@ public class ElevationAnalyzer
         }
     }
 
+    public void interpolate( int step )
+    {
+        int[] node = new int[4];
+
+        for( int i = 1; i < count; i++ ) {
+            int index = i* RECORD_SIZE;
+            int distance = nodes.get( index + DISTANCE );
+            int parts = distance / step;
+            if( parts > 1 )
+            {
+                int baseLat = nodes.get( index - RECORD_SIZE + LAT );
+                int baseLon = nodes.get( index - RECORD_SIZE + LON );
+                int destLat = nodes.get( index + LAT );
+                int destLon = nodes.get( index + LON );
+
+                final int part = distance / parts;
+                nodes.set( index + DISTANCE, part );
+                node[3] = part;
+                for( int j=1; j<parts; j++)
+                {
+                    node[0] = baseLat + j * (destLat-baseLat) / parts;
+                    node[1] = baseLon + j * (destLon-baseLon) / parts;
+                    node[2] = geometryAccess.getElevation( Helper.intToDegree( node[0]), Helper.intToDegree( node[1]));
+
+                    nodes.insert( index, node );
+                    i++;
+                    count++;
+                    index += 4;
+                }
+            }
+        }
+    }
+
     public void analyzeElevations()
     {
+        // calculate total distance again, might be modified by interpolation rounding errors.
+        totalDistance = 0;
         ascend=0;
         descend=0;
         ascendDistance=0;
@@ -108,6 +143,7 @@ public class ElevationAnalyzer
             index = i* RECORD_SIZE;
             ele = nodes.get( index + ELEVATION );
             distance = nodes.get( index + DISTANCE );
+            totalDistance += distance;
             if( distance > 0 ) {
                 delta = ele - lastEle;
                 incline = 100*delta/distance;
@@ -121,9 +157,10 @@ public class ElevationAnalyzer
                     descendDistance += distance;
                 }
 
-                if( maxIncline < incline )
+                // minimum length for local incline is 5m to avoid extreme values caused by rounding errors
+                if( distance > 5 && maxIncline < incline )
                     maxIncline=incline;
-                if( maxDecline > incline )
+                if( distance > 5 && maxDecline > incline )
                     maxDecline = incline;
             }
             lastEle = ele;

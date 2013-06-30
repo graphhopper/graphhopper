@@ -37,7 +37,7 @@ public class BikeDemFlagEncoder extends BikeFlagEncoder
     protected int encodeSpeed( OSMWay way, GeometryAccess geometryAccess ) {
 
         analyzer.initialize( way, geometryAccess );
-        // todo: interpolate
+        analyzer.interpolate( 90 );
         analyzer.analyzeElevations();
 
         int speed = getSpeed(way);
