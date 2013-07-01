@@ -127,7 +127,7 @@ function initMap() {
     var height = $(window).height() - 5;
     mapDiv.width(width).height(height);
     if(height > 350)
-        height -= 250;
+        height -= 255;
     $("#info").css("max-height", height);
     console.log("init map at " + JSON.stringify(bounds));
     
