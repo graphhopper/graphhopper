@@ -42,6 +42,7 @@ public class DistanceCalc
      * Circumference of the earth
      */
     public final static double C = 2 * PI * R;
+    public final static double KM_MILE = 1.609344;
 
     /**
      * Calculates distance of (from, to) in meter.
@@ -195,5 +196,11 @@ public class DistanceCalc
     public String toString()
     {
         return "EXACT";
+    }
+
+    public static double round( double someDouble, int i )
+    {
+        double factor = Math.pow(10, i);
+        return Math.round(someDouble * factor) / factor;
     }
 }

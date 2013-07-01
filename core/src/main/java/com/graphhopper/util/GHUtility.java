@@ -317,6 +317,7 @@ public class GHUtility
         }
         return endNode;
     }
+
     public static final EdgeSkipIterator EMPTY = new EdgeSkipIterator()
     {
         @Override
@@ -401,6 +402,16 @@ public class GHUtility
         public void setWayGeometry( PointList list )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public String getName() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void setName(String name) {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override

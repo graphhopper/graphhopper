@@ -70,8 +70,8 @@ public interface Graph
     /**
      * Returns a wrapper over the specified edgeId.
      * <p/>
-     * @param endNode will be returned via node(). If endNode is -1 then baseNode() will be the
-     * smaller node.
+     * @param endNode will be returned via adjNode(). If endNode is -1 then adjNode() will be the
+     * bigger node.
      * @return an edge iterator over one element where the method next() will always return false.
      * @throws IllegalStateException if edgeId is not valid
      */

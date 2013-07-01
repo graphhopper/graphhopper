@@ -21,6 +21,6 @@
         -->
         <netbeans.hint.jdkPlatform>JDK_1.6</netbeans.hint.jdkPlatform>
         <org-netbeans-modules-whitelist.whitelist-oracle>false</org-netbeans-modules-whitelist.whitelist-oracle>
-        <netbeans.compile.on.save>all</netbeans.compile.on.save>       
+        <netbeans.compile.on.save>all</netbeans.compile.on.save>        
     </properties>
 </project-shared-configuration>

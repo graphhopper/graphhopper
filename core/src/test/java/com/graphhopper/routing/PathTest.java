@@ -17,9 +17,8 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -42,8 +41,7 @@ public class PathTest
     public void testTime()
     {
         FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
-        Path p = new Path(null, encoder);
-        p.calcTime(100000, encoder.flags(100, true));
-        assertEquals(60 * 60, p.getTime());
+        Path p = new Path(null, encoder);        
+        assertEquals(60 * 60, p.calcTime(100000, encoder.flags(100, true)));
     }
 }

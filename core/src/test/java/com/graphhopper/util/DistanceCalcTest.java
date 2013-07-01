@@ -33,6 +33,14 @@ public class DistanceCalcTest
     }
 
     @Test
+    public void testRound()
+    {
+        assertEquals(100.94, DistanceCalc.round(100.94, 2), 1e-7);
+        assertEquals(100.9, DistanceCalc.round(100.94, 1), 1e-7);
+        assertEquals(101.0, DistanceCalc.round(100.95, 1), 1e-7);
+    }
+
+    @Test
     public void testGeohashMaxDist()
     {
         assertEquals(DistanceCalc.C / 2, new DistanceCalc().calcSpatialKeyMaxDist(0), 1);

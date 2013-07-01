@@ -911,4 +911,18 @@ public abstract class AbstractGraphTester
             }
         }
     }
+
+    @Test
+    public void testNameIndex()
+    {
+        Graph g = createGraph();
+        EdgeIterator iter1 = g.edge(0, 1, 10, true);
+        iter1.setName("named street1");
+
+        EdgeIterator iter2 = g.edge(0, 1, 10, true);
+        iter2.setName("named street2");
+
+        assertEquals("named street1", g.getEdgeProps(iter1.getEdge(), -1).getName());
+        assertEquals("named street2", g.getEdgeProps(iter2.getEdge(), -1).getName());
+    }
 }

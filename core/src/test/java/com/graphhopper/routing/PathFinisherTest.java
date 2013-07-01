@@ -459,6 +459,17 @@ public class PathFinisherTest
 		{
 			return baseEdge.isEmpty();
 		}
+		@Override
+		public String getName()
+		{
+			return baseEdge.getName();
+		}
+		@Override
+		public void setName(String name)
+		{
+			throw new IllegalStateException("RevertedEdge is read only");
+			
+		}
 	}
 	
 	private static PointList buildPointList( double[][] pts )

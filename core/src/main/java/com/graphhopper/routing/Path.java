@@ -23,9 +23,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
-import gnu.trove.list.TDoubleList;
+import com.graphhopper.util.InstructionList;
 import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -36,6 +35,7 @@ import gnu.trove.set.hash.TIntHashSet;
  * graphs with shortcuts.
  * <p/>
  * @author Peter Karich
+ * @author Ottavio Campana
  */
 public class Path
 {
@@ -44,13 +44,15 @@ public class Path
     protected double distance;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
-    private long time;
+    protected long time;
     private boolean found;
     protected EdgeEntry edgeEntry;
     StopWatch sw = new StopWatch("extract");
-    private int fromNode = EdgeIterator.NO_EDGE;
+    private int fromNode = -1;
+    protected int endNode = -1;
     private TIntList edgeIds;
     private PointList cachedPoints;
+    private InstructionList cachedWays;
     private double weight;
 
     public Path( Graph graph, FlagEncoder encoder )
@@ -83,19 +85,25 @@ public class Path
         edgeIds.add(edge);
     }
 
+    protected Path setEndNode( int end )
+    {
+        endNode = end;
+        return this;
+    }
+
     /**
      * We need to remember fromNode explicitely as its not saved in one edgeId of edgeIds.
      */
-    protected Path setFromNode( int node )
+    protected Path setFromNode( int from )
     {
-        fromNode = node;
+        fromNode = from;
         return this;
     }
 
     /**
      * @return the first node of this Path.
      */
-    public int getFromNode()
+    private int getFromNode()
     {
         if (!EdgeIterator.Edge.isValid(fromNode))
         {
@@ -169,6 +177,7 @@ public class Path
     {
         sw.start();
         EdgeEntry goalEdge = edgeEntry;
+        setEndNode(goalEdge.endNode);
         while (EdgeIterator.Edge.isValid(goalEdge.edge))
         {
             processDistance(goalEdge.edge, goalEdge.endNode);
@@ -192,23 +201,25 @@ public class Path
     protected void processDistance( int edgeId, int endNode )
     {
         EdgeIterator iter = graph.getEdgeProps(edgeId, endNode);
-        calcDistance(iter);
-        calcTime(iter.getDistance(), iter.getFlags());
+        distance += calcDistance(iter);
+        time += calcTime(iter.getDistance(), iter.getFlags());
         addEdge(edgeId);
     }
 
     /**
-     * This method calculates not only the weight but also the distance in kilometer for the
-     * specified edge.
+     * This method returns the distance in kilometer for the specified edge.
      */
-    protected void calcDistance( EdgeIterator iter )
+    protected double calcDistance( EdgeIterator iter )
     {
-        distance += iter.getDistance();
+        return iter.getDistance();
     }
 
-    protected void calcTime( double distance, int flags )
+    /**
+     * Calculates the time in minutes for the specified distance and speed (via flags)
+     */
+    protected long calcTime( double distance, int flags )
     {
-        time += (long) (distance * 3.6 / encoder.getSpeed(flags));
+        return (long) (distance * 3.6 / encoder.getSpeed(flags));
     }
 
     /**
@@ -216,7 +227,7 @@ public class Path
      */
     public static interface EdgeVisitor
     {
-        void next( EdgeIterator iter );
+        void next( EdgeIterator iter, int index );
     }
 
     /**
@@ -236,7 +247,7 @@ public class Path
                         + ", array index:" + i + ", edges:" + edgeIds.size());
             }
             tmpNode = iter.getBaseNode();
-            visitor.next(iter);
+            visitor.next(iter, i);
         }
     }
 
@@ -256,7 +267,7 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             @Override
-            public void next( EdgeIterator iter )
+            public void next( EdgeIterator iter, int i )
             {
                 nodes.add(iter.getBaseNode());
             }
@@ -283,7 +294,7 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             @Override
-            public void next( EdgeIterator iter )
+            public void next( EdgeIterator iter, int i )
             {
                 PointList pl = iter.getWayGeometry();
                 pl.reverse();
@@ -298,23 +309,165 @@ public class Path
         return cachedPoints;
     }
 
-    public TDoubleList calcDistances()
+    /**
+     * @return the cached list of ways for this path
+     */
+    public InstructionList calcInstructions()
     {
-        final TDoubleList distances = new TDoubleArrayList(edgeIds.size());
+        if (cachedWays != null)
+        {
+            return cachedWays;
+        }
+        cachedWays = new InstructionList(edgeIds.size() / 4);
         if (edgeIds.isEmpty())
         {
-            return distances;
+            return cachedWays;
         }
 
+        final int tmpNode = getFromNode();
         forEveryEdge(new EdgeVisitor()
         {
+            String name = null;
+            /*
+             * We need three points to make directions
+             *
+             *        (1)----(2)
+             *        /
+             *       /
+             *    (0)
+             *
+             * 0 is the node visited at t-2, 1 is the node visited
+             * at t-1 and 2 is the node being visited at instant t.
+             * orientation is the angle of the vector(1->2) expressed
+             * as atan2, while previousOrientation is the angle of the
+             * vector(0->1)
+             * Intuitively, if orientation is smaller than
+             * previousOrientation, then we have to turn right, while
+             * if it is greater we have to turn left. To make this
+             * algorithm work, we need to make the comparison by
+             * considering orientation belonging to the interval
+             * [ - pi + previousOrientation , + pi + previousOrientation ]
+             */
+            double prevLat = graph.getLatitude(tmpNode);
+            double prevLon = graph.getLongitude(tmpNode);
+            double prevOrientation;
+            double prevDist;
+
             @Override
-            public void next( EdgeIterator iter )
-            {
-                distances.add(iter.getDistance());
+            public void next( EdgeIterator iter, int index )
+            {                
+                // Hmmh, a bit ugly: 'iter' links to the previous node of the path!
+                // Ie. baseNode is the current node and adjNode is the previous.
+                int baseNode = iter.getBaseNode();
+                double baseLat = graph.getLatitude(baseNode);
+                double baseLon = graph.getLongitude(baseNode);
+                double latitude, longitude;
+                PointList wayGeo = iter.getWayGeometry();
+                if (wayGeo.isEmpty())
+                {
+                    latitude = baseLat;
+                    longitude = baseLon;
+                } else
+                {
+                    int adjNode = iter.getAdjNode();
+                    prevLat = graph.getLatitude(adjNode);
+                    prevLon = graph.getLongitude(adjNode);
+                    latitude = wayGeo.getLatitude(wayGeo.getSize() - 1);
+                    longitude = wayGeo.getLongitude(wayGeo.getSize() - 1);
+                }
+
+                double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
+                if (name == null)
+                {
+                    name = iter.getName();
+                    prevDist = calcDistance(iter);
+                    cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, prevDist);
+                } else
+                {
+                    double tmpOrientation;
+                    if (prevOrientation >= 0)
+                    {
+                        if (orientation < -Math.PI + prevOrientation)
+                        {
+                            tmpOrientation = orientation + 2 * Math.PI;
+                        } else
+                        {
+                            tmpOrientation = orientation;
+                        }
+                    } else
+                    {
+                        if (orientation > +Math.PI + prevOrientation)
+                        {
+                            tmpOrientation = orientation - 2 * Math.PI;
+                        } else
+                        {
+                            tmpOrientation = orientation;
+                        }
+                    }
+                                                           
+                    String tmpName = iter.getName();
+                    if (!name.equals(tmpName))
+                    {
+                        cachedWays.updateLastDistance(prevDist);
+                        prevDist = calcDistance(iter);
+                        name = tmpName;
+                        double delta = Math.abs(tmpOrientation - prevOrientation);
+                        if (delta < 0.2)
+                        {
+                            // 0.2 ~= 11°
+                            cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, prevDist);
+
+                        } else if (delta < 0.8)
+                        {
+                            // 0.8 ~= 40°
+                            if (tmpOrientation > prevOrientation)
+                            {
+                                cachedWays.add(InstructionList.TURN_SLIGHT_LEFT, name, prevDist);
+                            } else
+                            {
+                                cachedWays.add(InstructionList.TURN_SLIGHT_RIGHT, name, prevDist);
+                            }
+                        } else if (delta < 1.8)
+                        {
+                            // 1.8 ~= 103°
+                            if (tmpOrientation > prevOrientation)
+                            {
+                                cachedWays.add(InstructionList.TURN_LEFT, name, prevDist);
+                            } else
+                            {
+                                cachedWays.add(InstructionList.TURN_RIGHT, name, prevDist);
+                            }
+                        } else
+                        {
+                            if (tmpOrientation > prevOrientation)
+                            {
+                                cachedWays.add(InstructionList.TURN_SHARP_LEFT, name, prevDist);
+                            } else
+                            {
+                                cachedWays.add(InstructionList.TURN_SHARP_RIGHT, name, prevDist);
+                            }
+                        }
+                    } else
+                        prevDist += calcDistance(iter);
+                }
+
+                prevLat = baseLat;
+                prevLon = baseLon;
+                if (wayGeo.isEmpty())
+                {
+                    prevOrientation = orientation;
+                } else
+                {
+                    prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(0), baseLon - wayGeo.getLongitude(0));
+                }
+                
+                boolean lastEdgeIter = index == edgeIds.size() - 1;
+                if(lastEdgeIter)
+                    cachedWays.updateLastDistance(prevDist);
             }
         });
-        return distances;
+
+        return cachedWays;
     }
 
     public TIntSet calculateIdenticalNodes( Path p2 )

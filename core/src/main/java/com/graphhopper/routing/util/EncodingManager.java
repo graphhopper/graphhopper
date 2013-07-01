@@ -296,4 +296,19 @@ public class EncodingManager
 
         return flags;
     }
+
+    public String getWayInfo( OSMWay way )
+    {
+        String str = "";
+        for (int i = 0; i < encoderCount; i++)
+        {
+            String tmpWayInfo = encoders.get(i).getWayInfo(way);
+            if(tmpWayInfo.isEmpty())
+                continue;
+            if(!str.isEmpty())
+                str += ", ";
+            str += tmpWayInfo;
+        }
+        return str;
+    }
 }

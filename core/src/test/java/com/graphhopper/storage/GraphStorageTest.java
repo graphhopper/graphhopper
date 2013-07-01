@@ -86,21 +86,29 @@ public class GraphStorageTest extends AbstractGraphTester
         graph.setNode(1, 11, 20);
         graph.setNode(2, 12, 12);
 
-        graph.edge(0, 1, 100, true).setWayGeometry(Helper.createPointList(1.5, 1, 2, 3));
-        graph.edge(0, 2, 200, true).setWayGeometry(Helper.createPointList(3.5, 4.5, 5, 6));
+        EdgeIterator iter2 = graph.edge(0, 1, 100, true);
+        iter2.setWayGeometry(Helper.createPointList(1.5, 1, 2, 3));
+        EdgeIterator iter1 = graph.edge(0, 2, 200, true);
+        iter1.setWayGeometry(Helper.createPointList(3.5, 4.5, 5, 6));
         graph.edge(9, 10, 200, true);
         graph.edge(9, 11, 200, true);
         graph.edge(1, 2, 120, false);
-
+      
+        iter1.setName("named street1");
+        iter2.setName("named street2");
+        
         checkGraph(graph);
         graph.flush();
         graph.close();
 
         graph = newGraph(new MMapDirectory(defaultGraph));
         assertTrue(graph.loadExisting());
+
         assertEquals(12, graph.getNodes());
         checkGraph(graph);
-
+        
+        assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), -1).getName());
+        assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), -1).getName());
         graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList(4.4, 5.5, 6.6, 7.7));
         checkGraph(graph);
         graph.close();

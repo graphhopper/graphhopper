@@ -19,7 +19,7 @@ var iconFrom = L.icon({
 });
 
 var bounds = {};
-LOCAL=false;
+LOCAL=true;
 var host;
 if(LOCAL)
     host = "http://localhost:8989";
@@ -121,11 +121,14 @@ function resolveCoords(fromStr, toStr) {
 
 function initMap() {
     var mapDiv = $("#map");
-    var width = $(window).width() - 270;
+    var width = $(window).width() - 300;
     if(width < 100)
         width = $(window).width() - 5;
     var height = $(window).height() - 5;
     mapDiv.width(width).height(height);
+    if(height > 350)
+        height -= 250;
+    $("#info").css("max-height", height);
     console.log("init map at " + JSON.stringify(bounds));
     
     // mapquest provider
@@ -170,6 +173,8 @@ function initMap() {
     // no layers for small browser windows
     if($(window).width() > 400)
         L.control.layers(baseMaps).addTo(map);
+    
+    L.control.scale().addTo(map);
 
     map.fitBounds(new L.LatLngBounds(new L.LatLng(bounds.minLat, bounds.minLon), 
         new L.LatLng(bounds.maxLat, bounds.maxLon)));
@@ -304,7 +309,7 @@ function getInfoFromLocation(locCoord) {
             jsonpCallback: 'reverse_callback' + getInfoTmpCounter            
         }).fail(function(err) { 
             // not critical => no alert
-            console.err(err);
+            console.log(err);
         }).pipe(function(json) {
             if(!json) {
                 locCoord.resolvedText = "No description found for coordinate";
@@ -391,20 +396,19 @@ function routeLatLng(request) {
     $("button#"+request.vehicle.toUpperCase()).addClass("bold");
 
     var urlForAPI = "point=" + from + "&point=" + to;
-    var urlForHistory = "?point=" + request.from.input + "&point=" + request.to.input + "&vehicle=" + request.vehicle;
-    if(request.minPathPrecision != 1) {
-        urlForHistory += "&minPathPrecision=" + request.minPathPrecision;
-        urlForAPI += "&minPathPrecision=" + request.minPathPrecision;
-    }
+    urlForAPI = request.createURL(urlForAPI);        
     
-    if (History.enabled)
+    if (History.enabled) {
+        var urlForHistory = "?point=" + request.from.input + "&point=" + request.to.input;    
+        urlForHistory = request.createPath(urlForHistory);
         History.pushState(request, browserTitle, urlForHistory);
+    }
     descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');
     request.doRequest(urlForAPI, function (json) {        
         if(json.info.errors) {
             var tmpErrors = json.info.errors;
-            for (var i = 0; i < tmpErrors.length; i++) {
-                descriptionDiv.append("<div class='error'>" + tmpErrors[i].message + "</div>");
+            for (var m = 0; m < tmpErrors.length; m++) {
+                descriptionDiv.append("<div class='error'>" + tmpErrors[m].message + "</div>");
             }
             return;
         } 
@@ -448,9 +452,12 @@ function routeLatLng(request) {
         toggly.click(function() {
             hiddenDiv.toggle();
         })
-        $("#info").prepend(toggly);        
-        hiddenDiv.append("<span>took: " + round(json.info.took, 1000) + "s, "
-            +"points: " + json.route.data.coordinates.length + "</span>");
+        $("#info").prepend(toggly);
+        var infoStr = "took: " + round(json.info.took, 1000) + "s"
+        +", points: " + json.route.data.coordinates.length;
+        if(json.route.instructions)
+            infoStr += ", instructions: " + json.route.instructions.descriptions.length;
+        hiddenDiv.append("<span>" + infoStr + "</span>");
         $("#info").append(hiddenDiv);
         
         var exportLink = $("#exportLink a");
@@ -487,45 +494,53 @@ function routeLatLng(request) {
         $('.defaulting').each(function(index, element) {
             $(element).css("color", "black");
         });
+        
+        if(json.route.instructions) {
+            var instructionsElement = $("<table id='instructions'><colgroup>"
+                + "<col width='10%'><col width='65%'><col width='25%'></colgroup>");
+            $("#info").append(instructionsElement);        
+            var descriptions = json.route.instructions.descriptions;
+            var distances = json.route.instructions.distances;
+            var indications = json.route.instructions.indications;
+            for(var m = 0; m < descriptions.length; m++) {                
+                var indi = indications[m];                
+                if(m == 0)
+                    indi = "marker-from";
+                else if(indi == -3)
+                    indi = "sharp_left";
+                else if(indi == -2)
+                    indi = "left";
+                else if(indi == -1)
+                    indi = "slight_left";
+                else if(indi == 0)
+                    indi = "continue";
+                else if(indi == 1)
+                    indi = "slight_right";
+                else if(indi == 2)
+                    indi = "right";
+                else if(indi == 3)
+                    indi = "sharp_right";
+                else
+                    throw "did not found indication " + indi;
+                    
+                addInstruction(instructionsElement, indi, descriptions[m], distances[m]);                
+            }
+            addInstruction(instructionsElement, "marker-to", "Finish!", "");
+        }
     });
 }
-    
-function decodePath(encoded, geoJson) {
-    var len = encoded.length;
-    var index = 0;
-    var array = [];
-    var lat = 0;
-    var lng = 0;
 
-    while (index < len) {
-        var b;
-        var shift = 0;
-        var result = 0;
-        do {
-            b = encoded.charCodeAt(index++) - 63;
-            result |= (b & 0x1f) << shift;
-            shift += 5;
-        } while (b >= 0x20);
-        var deltaLat = ((result & 1) ? ~(result >> 1) : (result >> 1));
-        lat += deltaLat;
-
-        shift = 0;
-        result = 0;
-        do {
-            b = encoded.charCodeAt(index++) - 63;
-            result |= (b & 0x1f) << shift;
-            shift += 5;
-        } while (b >= 0x20);
-        var deltaLon = ((result & 1) ? ~(result >> 1) : (result >> 1));
-        lng += deltaLon;
-
-        if(geoJson)
-            array.push([lng * 1e-5, lat * 1e-5]);
-        else
-            array.push([lat * 1e-5, lng * 1e-5]);
-    }
-
-    return array;
+function addInstruction(main, indi, title, distance) {
+    var indiPic = "<img class='instr_pic' src='/img/" + indi + ".png'/>";                    
+    var str = "<td class='instr_title'>"  + title + "</td>"
+    + " <td class='instr_distance_td'><span class='instr_distance'>" + distance + "</span></td>";
+    if(indi !== "continue")
+        str = "<td>" + indiPic + "</td>"+ str;
+    else
+        str = "<td/>" + str;
+    var instructionDiv = $("<tr class='instruction'/>");
+    instructionDiv.html(str);
+    main.append(instructionDiv);
 }
 
 function getCenter(bounds) {    

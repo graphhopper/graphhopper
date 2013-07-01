@@ -65,8 +65,7 @@ public class PathBidir extends Path
         if (nodeFrom != nodeTo)
         {
             throw new IllegalStateException("Locations of 'to' and 'from' DistEntries has to be the same." + toString());
-        }
-
+        }        
         int currRef = fromRef;
         while (currRef > 0)
         {
@@ -78,10 +77,9 @@ public class PathBidir extends Path
             processDistance(edgeId, nodeFrom);
             currRef = edgeWFrom.getParent(currRef);
             nodeFrom = edgeWFrom.getNode(currRef);
-        }
-        setFromNode(nodeFrom);
+        }        
         reverseOrder();
-
+        setFromNode(nodeFrom);
         // skip node of toRef (equal to fromRef)
         currRef = toRef;
         while (currRef > 0)
@@ -96,6 +94,7 @@ public class PathBidir extends Path
             nodeTo = edgeWTo.getNode(tmpRef);
             currRef = tmpRef;
         }
+        setEndNode(nodeTo);
         return setFound(true);
     }
 }

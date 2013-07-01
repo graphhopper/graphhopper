@@ -23,15 +23,16 @@ body {
     border: lightgray groove thin;
     display: none;
     padding: 5px;
+    overflow: auto;
 }
 #info a {
     padding-right: 5px;
 }
-#input {
-    width: 225px;
+#input, #instructions {
+    width: 255px;
 }
 #fromInput, #toInput {
-    width: 200px;
+    width: 230px;
 }
 #fromFound, #toFound {
     font-size: 10px;
@@ -101,4 +102,34 @@ body {
 }
 #hosting a {
     color: gray;                
+}
+
+.instruction {    
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+tr.instruction td {
+    border-bottom: beige groove thin;
+}
+#instructions {
+    border-collapse: collapse;
+    padding-top: 10px;
+    width: 100%;
+    font-size: smaller;
+}
+#instructions th, #instructions td {
+    padding: 3px;
+}
+.instr_title {    
+}
+.instr_distance_td {
+    min-width: 40px;
+}
+.instr_distance {
+    float: right;    
+    color: gray;
+}
+.instr_pic {    
+    max-height: 24px;
+    max-width: 16px;
 }

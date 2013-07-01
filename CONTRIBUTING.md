@@ -19,8 +19,7 @@ a test!
 Syntax:
 
 * Tell this your IDE or just use NetBeans:
-    * No tabs - use 4 spaces instead!
-    * One line if statements shouldn't get brackets
-* Use [Java conventions](http://www.oracle.com/technetwork/java/codeconv-138413.html), but instead of setters we use `property(Object value)`, instead getters we use `Object property()`
+    * No tabs - use 4 spaces instead!!
 * Follow the conventions you see used in the source already.
+
 And in case we didn't emphasize it enough: we love tests!

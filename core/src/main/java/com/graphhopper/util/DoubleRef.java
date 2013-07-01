@@ -4,9 +4,8 @@
  *  additional information regarding copyright ownership.
  *
  *  GraphHopper licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License. You may obtain a copy of the
- *  License at
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
  *
  *       http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -16,28 +15,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
-
-import org.junit.Test;
-import static org.junit.Assert.*;
+package com.graphhopper.util;
 
 /**
- *
  * @author Peter Karich
  */
-public class NameIndexTest
+public class DoubleRef
 {
-    @Test
-    public void testCreate()
+    public double val;
+
+    public DoubleRef( double val )
     {
-        NameIndex result = new NameIndex(new RAMDirectory()).create(1000);
-        String str1 = "nice";
-        int pointer1 = result.put(str1);
-
-        String str2 = "nice work äöß";
-        int pointer2 = result.put(str2);
-
-        assertEquals(str2, result.get(pointer2));
-        assertEquals(str1, result.get(pointer1));
+        this.val = val;
     }
 }
