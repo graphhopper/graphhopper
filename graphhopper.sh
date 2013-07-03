@@ -155,7 +155,10 @@ else
    LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
  else
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
+   OSM_FILE=$NAME.pbf
  fi
+ echo $LINK
+ echo $OSM_FILE
  if [ "x$JAVA_OPTS" = "x" ]; then
   JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1000m -Xms1000m" 
  fi
