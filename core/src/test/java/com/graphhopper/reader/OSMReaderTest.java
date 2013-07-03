@@ -308,7 +308,7 @@ public class OSMReaderTest
         int n60 = AbstractGraphTester.getIdOf(graph, 56.0);
         EdgeIterator iter = graph.getEdges(n60);
         iter.next();
-        assertEquals(40, carEncoder.getSpeed(iter.getFlags()));
+        assertEquals(35, carEncoder.getSpeed(iter.getFlags()));
     }
 
     @Test
