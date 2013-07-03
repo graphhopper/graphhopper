@@ -152,16 +152,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             Integer speed = getSpeed(highwayValue);            
             int maxspeed = parseSpeed(way.getTag("maxspeed"));
             // apply speed limit no matter of the road type
-            if (maxspeed > 0)
-            {
-                speed = maxspeed;
-            }
+            if (maxspeed >= 0)
+                // reduce speed limit to reflect average speed
+                speed = Math.round(maxspeed * 0.9f);            
 
             // limit speed to max 30 km/h if bad surface
             if (speed > 30 && way.hasTag("surface", BAD_SURFACE))
-            {
                 speed = 30;
-            }
 
             encoded = speedEncoder.setValue(0, speed);
 

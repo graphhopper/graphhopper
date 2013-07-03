@@ -66,7 +66,7 @@ public class CarFlagEncoderTest
         map.put("maxspeed", "110");
         int allowed = encoder.isAllowed(way);
         int encoded = encoder.handleWayTags(allowed, way);
-        assertEquals(110, encoder.getSpeed(encoded));
+        assertEquals(95, encoder.getSpeed(encoded));
     }
 
     @Test
