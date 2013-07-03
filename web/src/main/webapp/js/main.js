@@ -139,6 +139,16 @@ function initMap() {
         subdomains: ['otile1','otile2','otile3','otile4']
     });
     
+    var mapquestAerial = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png', {
+        attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr, 
+        subdomains: ['otile1','otile2','otile3','otile4']
+    });
+    
+    //    var mapbox = L.tileLayer('http://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png', {
+    //        attribution: '<a href="http://www.mapbox.com">MapBox</a>,' + moreAttr, 
+    //        subdomains: ['a','b','c']
+    //    });    
+    
     var wrk = L.tileLayer('http://{s}.wanderreitkarte.de/topo/{z}/{x}/{y}.png', {
         attribution: '<a href="http://wanderreitkarte.de">WanderReitKarte</a>,' + moreAttr, 
         subdomains: ['topo4','topo','topo2','topo3']
@@ -164,15 +174,23 @@ function initMap() {
     });
     
     var baseMaps = {
-        "MapQuest": mapquest,
+        "MapQuest": mapquest,        
+        "MapQuest Aerial": mapquestAerial,
+        //        "MapBox": mapbox,
         "WanderReitKarte": wrk,
         "Cloudmade": cloudmade,
         "OpenStreetMap": osm,
         "OpenStreetMap.de": osmde
     };
+    
+    //    var overlays = {
+    //        "MapQuest Hybrid": mapquest
+    //    };
+    
     // no layers for small browser windows
-    if($(window).width() > 400)
-        L.control.layers(baseMaps).addTo(map);
+    if($(window).width() > 400) {
+        L.control.layers(baseMaps/*, overlays*/).addTo(map);
+    }
     
     L.control.scale().addTo(map);
 
@@ -412,10 +430,10 @@ function routeLatLng(request) {
             }
             return;
         } 
-        //        else if(!json.info.routeFound) {
-        //            descriptionDiv.html('Route not found! Disconnected areas?');
-        //            return;
-        //        }
+        else if(json.info.routeFound === false) {
+            descriptionDiv.html('Route not found! Disconnected areas?');
+            return;
+        }
         var geojsonFeature = {
             "type": "Feature",                   
             // "style": myStyle,                

@@ -106,21 +106,23 @@ function decodePath(encoded, geoJson) {
 }
 
 GHRequest.prototype.doRequest = function(url, callback) {   
-    var tmp = this.encodedPolyline;
+    var tmpEncodedPolyline = this.encodedPolyline;
     $.ajax({
         "timeout" : 30000,
         "url": url,
         "success": function(json) {
-            if(tmp && !json.route.coordinates)
-                console.log("something wrong on server? as we have encodedPolyline=" + tmp + " but no encoded data was return?");
-            // convert encoded polyline stuff to normal json
-            if (tmp && json.route.coordinates) {
-                var tmpArray = decodePath(json.route.coordinates, true);
-                json.route.coordinates = null;
-                json.route.data = {
-                    "type": "LineString",
-                    "coordinates": tmpArray
-                };
+            if(tmpEncodedPolyline && json.route) {
+                if(!json.route.coordinates)
+                    console.log("something wrong on server? as we have encodedPolyline=" + tmpEncodedPolyline + " but no encoded data was return?");
+                // convert encoded polyline stuff to normal json
+                if (json.route.coordinates) {
+                    var tmpArray = decodePath(json.route.coordinates, true);
+                    json.route.coordinates = null;
+                    json.route.data = {
+                        "type": "LineString",
+                        "coordinates": tmpArray
+                    };
+                }
             }
             callback(json);
         },
