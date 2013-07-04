@@ -8,6 +8,7 @@ GHRequest = function(host) {
     this.instructions = true;
     this.debug = false;
     this.locale = "en";
+    this.doZoom = false;
 };
 
 GHRequest.prototype.init = function(params) {
@@ -34,6 +35,8 @@ GHRequest.prototype.init = function(params) {
     if(params.locale)
         this.locale = params.locale;
     
+    if("doZoom" in params)
+        this.doZoom = params.doZoom == "true";
     if("instructions" in params)
         this.instructions = params.instructions == "true";
     if("encodedPolyline" in params)
@@ -45,8 +48,8 @@ GHRequest.prototype.createURL = function(demoUrl) {
 }
 
 GHRequest.prototype.createFullURL = function() {
-    return this.createPath("?point=" + encodeURIComponent(this.from.input) 
-        + "&point=" + encodeURIComponent(this.to.input));
+    var str = "?point=" + encodeURIComponent(this.from.input) + "&point=" + encodeURIComponent(this.to.input);    
+    return this.createPath(str);
 }
     
 GHRequest.prototype.createPath = function(url) {    

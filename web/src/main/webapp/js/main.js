@@ -8,7 +8,7 @@ var nominatim_reverse = "http://nominatim.openstreetmap.org/reverse";
 var routingLayer;
 var map;
 var browserTitle = "GraphHopper Maps";
-var clickToRoute;
+var firstClickToRoute;
 var iconTo = L.icon({
     iconUrl: './img/marker-to.png', 
     iconAnchor: [10, 16]
@@ -45,7 +45,7 @@ $(document).ready(function(e) {
             if (onloadPop) return;
             var state = History.getState();
             console.log(state);            
-//             initFromParams(parseUrl(state.url), true);
+            //             initFromParams(parseUrl(state.url), true);
             initFromParams(state.data, true);
         });
     }
@@ -242,13 +242,13 @@ function initMap() {
         }).addTo(map); 
     
     routingLayer = L.geoJson().addTo(map);    
-    clickToRoute = true;
+    firstClickToRoute = true;
     function onMapClick(e) {       
         var latlng = e.latlng;
-        if(clickToRoute) {
+        if(firstClickToRoute) {
             // set start point
             routingLayer.clearLayers();
-            clickToRoute = false;
+            firstClickToRoute = false;
             ghRequest.from.setCoord(latlng.lat, latlng.lng);
             resolveFrom();            
         } else {
@@ -267,7 +267,7 @@ function setFlag(latlng, isFrom) {
     if(latlng.lat) {
         var marker = L.marker([latlng.lat, latlng.lng], {
             icon: (isFrom? iconFrom : iconTo),
-            draggable: true            
+            draggable: true
         }).addTo(routingLayer).bindPopup(isFrom? "Start" : "End");                  
         marker.on('dragend', function(e) {
             routingLayer.clearLayers();
@@ -280,8 +280,9 @@ function setFlag(latlng, isFrom) {
                 ghRequest.to.setCoord(latlng.lat, latlng.lng);
                 resolveTo();
             }
-            // do not wait for resolving
-            routeLatLng(ghRequest);
+            // do not wait for resolving and avoid zooming when dragging
+            ghRequest.doZoom = false;
+            routeLatLng(ghRequest, false);
         });
     } 
 }
@@ -412,6 +413,10 @@ function focus(coord) {
     }
 }
 function routeLatLng(request, doQuery) {
+    // doZoom should not show up in the URL but in the request object to avoid zooming for history change
+    var doZoom = request.doZoom;
+    request.doZoom = true;
+        
     var urlForHistory = request.createFullURL();
     // not enabled e.g. if no cookies allowed (?)
     // if disabled we have to do the query and cannot rely on the statechange history event    
@@ -419,9 +424,10 @@ function routeLatLng(request, doQuery) {
         // 2. important workaround for encoding problems in history.js
         var params = parseUrl(urlForHistory);
         console.log(params);
+        params.doZoom = doZoom;
         History.pushState(params, browserTitle, urlForHistory);
         return;
-    }
+    }    
     // BUT if this is the very first query and no history support skip the query
     if(!History.enabled && !everPushedSomething) {
         return;
@@ -467,7 +473,7 @@ function routeLatLng(request, doQuery) {
         };
         
         routingLayer.addData(geojsonFeature);        
-        if(json.route.bbox) {
+        if(json.route.bbox && doZoom) {
             var minLon = json.route.bbox[0];
             var minLat = json.route.bbox[1];
             var maxLon = json.route.bbox[2];
