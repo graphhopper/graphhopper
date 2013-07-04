@@ -1,3 +1,5 @@
+alert(window.location.pathname)
+
 // fixing cross domain support e.g in Opera
 jQuery.support.cors = true;
 
@@ -544,7 +546,7 @@ function routeLatLng(request, doQuery) {
         $('.defaulting').each(function(index, element) {
             $(element).css("color", "black");
         });
-        
+               
         if(json.route.instructions) {
             var instructionsElement = $("<table id='instructions'><colgroup>"
                 + "<col width='10%'><col width='65%'><col width='25%'></colgroup>");
@@ -580,8 +582,8 @@ function routeLatLng(request, doQuery) {
     });
 }
 
-function addInstruction(main, indi, title, distance) {
-    var indiPic = "<img class='instr_pic' src='/img/" + indi + ".png'/>";                    
+function addInstruction(main, indi, title, distance) {    
+    var indiPic = "<img class='instr_pic' src='" + window.location.pathname + "img/" + indi + ".png'/>";                    
     var str = "<td class='instr_title'>"  + title + "</td>"
     + " <td class='instr_distance_td'><span class='instr_distance'>" + distance + "</span></td>";
     if(indi !== "continue")
