@@ -8,7 +8,7 @@ GHRequest = function(host) {
     this.instructions = true;
     this.debug = false;
     this.locale = "en";
-    this.doZoom = false;
+    this.doZoom = true;
 };
 
 GHRequest.prototype.init = function(params) {
