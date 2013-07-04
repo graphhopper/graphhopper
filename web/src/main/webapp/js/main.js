@@ -7,7 +7,7 @@ var nominatim_reverse = "http://open.mapquestapi.com/nominatim/v1/reverse.php";
 // var nominatim_reverse = "http://nominatim.openstreetmap.org/reverse";
 var routingLayer;
 var map;
-var browserTitle = "GraphHopper Web Demo";
+var browserTitle = "GraphHopper Maps";
 var clickToRoute;
 var iconTo = L.icon({
     iconUrl: './img/marker-to.png', 
@@ -32,15 +32,15 @@ ghRequest.algoType = "fastest";
 //ghRequest.algorithm = "dijkstra";
 
 $(document).ready(function(e) {
-    // I'm really angry about you history.js :/ (triggering double events) ... but let us just use the url rewriting thing
-    //    var History = window.History;
-    //    if (History.enabled) {
-    //        History.Adapter.bind(window, 'statechange', function(){
-    //            var state = History.getState();
-    //            console.log(state);            
-    //            initFromParams(parseUrl(state.url));
-    //        });
-    //    }
+    // Chrome and Safari always emit a popstate event on page load, but Firefox doesn’t
+    var History = window.History;
+    if (History.enabled) {
+        History.Adapter.bind(window, 'statechange', function(){
+            var state = History.getState();
+            console.log(state);            
+            initFromParams(parseUrl(state.url));
+        });
+    }
     initForm();
     ghRequest.getInfo(function(json) {
         // OK bounds            
@@ -76,17 +76,9 @@ $(document).ready(function(e) {
         console.log(err);
         $('#error').html('GraphHopper API offline? ' + host);
     }).done(function() {
-        var params = parseUrlWithHisto();
-        ghRequest.init(params);
+        var params = parseUrlWithHisto();        
         initMap();
-        var fromAndTo = params.from && params.to;    
-        var routeNow = params.point && params.point.length == 2 || fromAndTo;
-        if(routeNow) {
-            if(fromAndTo)
-                resolveCoords(params.from, params.to);
-            else
-                resolveCoords(params.point[0], params.point[1]);                
-        }
+        initFromParams(params);        
     }).error(function() {
         bounds = {
             "minLon" : -180, 
@@ -98,7 +90,20 @@ $(document).ready(function(e) {
     });
 });
 
-function resolveCoords(fromStr, toStr) { 
+function initFromParams(params) {
+    var doQuery = true;
+    ghRequest.init(params);
+    var fromAndTo = params.from && params.to;    
+    var routeNow = params.point && params.point.length == 2 || fromAndTo;
+    if(routeNow) {
+        if(fromAndTo)
+            resolveCoords(params.from, params.to, doQuery);
+        else
+            resolveCoords(params.point[0], params.point[1], doQuery);
+    }
+}
+
+function resolveCoords(fromStr, toStr, doQuery) { 
     routingLayer.clearLayers();
     if(fromStr !== ghRequest.from.input || !ghRequest.from.isResolved())
         ghRequest.from = new GHInput(fromStr);
@@ -110,11 +115,11 @@ function resolveCoords(fromStr, toStr) {
         // do not wait for resolve
         resolveFrom();
         resolveTo();
-        routeLatLng(ghRequest);
+        routeLatLng(ghRequest, doQuery);
     } else {
         // wait for resolve as we need the coord for routing     
         $.when(resolveFrom(), resolveTo()).done(function(fromArgs, toArgs) {                
-            routeLatLng(ghRequest);
+            routeLatLng(ghRequest, doQuery);
         });    
     }
 }
@@ -377,7 +382,7 @@ function getInfoFromLocation(locCoord) {
 function createCallback(errorFallback) {
     return function(err) {
         if (err.statusText && err.statusText != "OK")
-            alert(err.statusText);
+            alert(errorFallback + ", " + err.statusText);
         else
             alert(errorFallback);
 
@@ -392,7 +397,15 @@ function focus(coord) {
         setFlag(coord, true);
     }
 }
-function routeLatLng(request) {    
+function routeLatLng(request, doQuery) {
+    var urlForHistory = request.createFullURL();
+    // not enabled e.g. if no cookies allowed (?)
+    // if disabled we have to do the query and cannot rely on the statechange history event
+    if(!doQuery && History.enabled) {        
+        History.pushState(request, browserTitle, urlForHistory);
+        return;
+    }
+    
     clickToRoute = true;
     $("#info").empty();
     $("#info").show();
@@ -412,15 +425,8 @@ function routeLatLng(request) {
     
     $("#vehicles button").removeClass();
     $("button#"+request.vehicle.toUpperCase()).addClass("bold");
-
-    var urlForAPI = "point=" + from + "&point=" + to;
-    urlForAPI = request.createURL(urlForAPI);        
     
-    if (History.enabled) {
-        var urlForHistory = "?point=" + request.from.input + "&point=" + request.to.input;    
-        urlForHistory = request.createPath(urlForHistory);
-        History.pushState(request, browserTitle, urlForHistory);
-    }
+    var urlForAPI = request.createURL("point=" + from + "&point=" + to);    
     descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');
     request.doRequest(urlForAPI, function (json) {        
         if(json.info.errors) {
@@ -429,8 +435,7 @@ function routeLatLng(request) {
                 descriptionDiv.append("<div class='error'>" + tmpErrors[m].message + "</div>");
             }
             return;
-        } 
-        else if(json.info.routeFound === false) {
+        } else if(json.info.routeFound === false) {
             descriptionDiv.html('Route not found! Disconnected areas?');
             return;
         }

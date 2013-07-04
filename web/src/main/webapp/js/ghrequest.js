@@ -43,6 +43,11 @@ GHRequest.prototype.init = function(params) {
 GHRequest.prototype.createURL = function(demoUrl) {    
     return this.createPath(this.host + "/api/route?" + demoUrl + "&type=jsonp");
 }
+
+GHRequest.prototype.createFullURL = function() {
+    return this.createPath("?point=" + this.from.input + "&point=" + this.to.input);
+}
+    
 GHRequest.prototype.createPath = function(url) {    
     if(this.vehicle && this.vehicle != "car")
         url += "&vehicle=" + this.vehicle;    
