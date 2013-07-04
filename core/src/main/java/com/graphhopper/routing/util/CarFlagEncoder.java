@@ -124,7 +124,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // do not drive street cars over railways (sometimes incorrectly mapped!)
-        if (way.getTag("railway") != null)
+        if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
         return acceptBit;

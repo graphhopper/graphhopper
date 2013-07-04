@@ -44,11 +44,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     protected int ferryBit = 0;
     // restriction definitions
     protected String[] restrictions;
-    protected HashSet<String> restrictedValues = new HashSet<String>();
-    protected HashSet<String> ferries = new HashSet<String>();
-    protected HashSet<String> oneways = new HashSet<String>();
-    protected HashSet<String> absoluteBarriers = new HashSet<String>();
-    protected HashSet<String> potentialBarriers = new HashSet<String>();
+    protected HashSet<String> restrictedValues = new HashSet<String>(5);
+    protected HashSet<String> ferries = new HashSet<String>(5);
+    protected HashSet<String> oneways = new HashSet<String>(5);
+    protected HashSet<String> acceptedRailways = new HashSet<String>(5);
+    protected HashSet<String> absoluteBarriers = new HashSet<String>(5);
+    protected HashSet<String> potentialBarriers = new HashSet<String>(5);
 
     public AbstractFlagEncoder()
     {
@@ -59,6 +60,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
 
         ferries.add("shuttle_train");
         ferries.add("ferry");
+
+        acceptedRailways.add("level_crossing");
     }
 
     /**
@@ -254,8 +257,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         }
         return this.toString().equals(other.toString());
     }
-    
-    public String getWayInfo(OSMWay way) {
+
+    public String getWayInfo( OSMWay way )
+    {
         return "";
     }
 }

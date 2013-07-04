@@ -90,6 +90,11 @@ public class CarFlagEncoderTest
         map.put("highway", "service");
         map.put("railway", "rail");
         assertEquals(0, encoder.isAllowed(way));
+        
+        way = new OSMWay(1, map);
+        map.put("highway", "service");
+        map.put("railway", "level_crossing");
+        assertNotSame(0, encoder.isAllowed(way));
     }
 
     @Test

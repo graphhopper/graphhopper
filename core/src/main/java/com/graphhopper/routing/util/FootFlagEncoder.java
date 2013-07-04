@@ -65,6 +65,15 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         potentialBarriers.add("gate");
         //potentialBarriers.add( "lift_gate" );   you can always pass them on foot
         potentialBarriers.add("swing_gate");
+
+        acceptedRailways.add("station");
+        acceptedRailways.add("platform");
+        acceptedRailways.add("crossing");
+        acceptedRailways.add("tram_stop");
+        acceptedRailways.add("stop");
+        acceptedRailways.add("halt");
+        acceptedRailways.add("subway_entrance");
+        acceptedRailways.add("miniature");
     }
 
     @Override
@@ -142,7 +151,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // do not accept railways (sometimes incorrectly mapped!)
-        if (way.getTag("railway") != null)
+        if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
         return acceptBit;
