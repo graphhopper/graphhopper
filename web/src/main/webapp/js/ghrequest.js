@@ -45,7 +45,8 @@ GHRequest.prototype.createURL = function(demoUrl) {
 }
 
 GHRequest.prototype.createFullURL = function() {
-    return this.createPath("?point=" + this.from.input + "&point=" + this.to.input);
+    return this.createPath("?point=" + encodeURIComponent(this.from.input) 
+        + "&point=" + encodeURIComponent(this.to.input));
 }
     
 GHRequest.prototype.createPath = function(url) {    

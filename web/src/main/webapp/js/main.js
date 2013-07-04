@@ -1,10 +1,10 @@
 // fixing cross domain support e.g in Opera
 jQuery.support.cors = true;
 
-var nominatim = "http://open.mapquestapi.com/nominatim/v1/search.php";
-var nominatim_reverse = "http://open.mapquestapi.com/nominatim/v1/reverse.php";
-// var nominatim = "http://nominatim.openstreetmap.org/search";
-// var nominatim_reverse = "http://nominatim.openstreetmap.org/reverse";
+//var nominatim = "http://open.mapquestapi.com/nominatim/v1/search.php";
+//var nominatim_reverse = "http://open.mapquestapi.com/nominatim/v1/reverse.php";
+var nominatim = "http://nominatim.openstreetmap.org/search";
+var nominatim_reverse = "http://nominatim.openstreetmap.org/reverse";
 var routingLayer;
 var map;
 var browserTitle = "GraphHopper Maps";
@@ -30,15 +30,23 @@ else {
 var ghRequest = new GHRequest(host);
 ghRequest.algoType = "fastest";
 //ghRequest.algorithm = "dijkstra";
+var everPushedSomething = false;
 
-$(document).ready(function(e) {
-    // Chrome and Safari always emit a popstate event on page load, but Firefox doesn’t
+$(document).ready(function(e) {    
+    var initialUrl = location.href;
+
     var History = window.History;
     if (History.enabled) {
         History.Adapter.bind(window, 'statechange', function(){
+            // First important workaround:
+            // Chrome and Safari always emit a popstate event on page load, but Firefox doesn’t
+            // https://github.com/defunkt/jquery-pjax/issues/143#issuecomment-6194330
+            var onloadPop = !everPushedSomething && location.href == initialUrl;
+            if (onloadPop) return;
             var state = History.getState();
             console.log(state);            
-            initFromParams(parseUrl(state.url));
+//             initFromParams(parseUrl(state.url), true);
+            initFromParams(state.data, true);
         });
     }
     initForm();
@@ -78,7 +86,14 @@ $(document).ready(function(e) {
     }).done(function() {
         var params = parseUrlWithHisto();        
         initMap();
-        initFromParams(params);        
+        // force same behaviour for all browsers: on page load no history event will be fired
+        // 
+        // put into history, (first popstate is muted -> see above)
+        initFromParams(params, false);
+        // force to true even if history.js is disabled due to cookie disallow etc
+        everPushedSomething = true;
+        // execute query
+        initFromParams(params, true);        
     }).error(function() {
         bounds = {
             "minLon" : -180, 
@@ -90,8 +105,7 @@ $(document).ready(function(e) {
     });
 });
 
-function initFromParams(params) {
-    var doQuery = true;
+function initFromParams(params, doQuery) {
     ghRequest.init(params);
     var fromAndTo = params.from && params.to;    
     var routeNow = params.point && params.point.length == 2 || fromAndTo;
@@ -400,9 +414,16 @@ function focus(coord) {
 function routeLatLng(request, doQuery) {
     var urlForHistory = request.createFullURL();
     // not enabled e.g. if no cookies allowed (?)
-    // if disabled we have to do the query and cannot rely on the statechange history event
-    if(!doQuery && History.enabled) {        
-        History.pushState(request, browserTitle, urlForHistory);
+    // if disabled we have to do the query and cannot rely on the statechange history event    
+    if(!doQuery && History.enabled) {
+        // 2. important workaround for encoding problems in history.js
+        var params = parseUrl(urlForHistory);
+        console.log(params);
+        History.pushState(params, browserTitle, urlForHistory);
+        return;
+    }
+    // BUT if this is the very first query and no history support skip the query
+    if(!History.enabled && !everPushedSomething) {
         return;
     }
     
