@@ -1,5 +1,3 @@
-alert(window.location.pathname)
-
 // fixing cross domain support e.g in Opera
 jQuery.support.cors = true;
 
