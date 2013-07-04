@@ -103,37 +103,31 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             {
                 String markedFor = way.getTag("motorcar");
                 if (markedFor == null)
-                {
                     markedFor = way.getTag("motor_vehicle");
-                }
+
                 if ("yes".equals(markedFor))
-                {
                     return acceptBit | ferryBit;
-                }
             }
             return 0;
-        } else
-        {
-            if (!SPEED.containsKey(highwayValue))
-            {
-                return 0;
-            }
-
-            // do not drive street cars into fords
-            if ((way.hasTag("highway", "ford") || way.hasTag("ford"))
-                    && !way.hasTag(restrictions, intended))
-            {
-                return 0;
-            }
-
-            // check access restrictions
-            if (way.hasTag(restrictions, restrictedValues))
-            {
-                return 0;
-            }
-
-            return acceptBit;
         }
+
+        if (!SPEED.containsKey(highwayValue))
+            return 0;
+
+        // do not drive street cars into fords
+        if ((way.hasTag("highway", "ford") || way.hasTag("ford"))
+                && !way.hasTag(restrictions, intended))
+            return 0;
+
+        // check access restrictions
+        if (way.hasTag(restrictions, restrictedValues))
+            return 0;
+
+        // do not drive street cars over railways (sometimes incorrectly mapped!)
+        if (way.getTag("railway") != null)
+            return 0;
+
+        return acceptBit;
     }
 
     @Override
@@ -149,7 +143,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         {
             String highwayValue = way.getTag("highway");
             // get assumed speed from highway type
-            Integer speed = getSpeed(highwayValue);            
+            Integer speed = getSpeed(highwayValue);
             int maxspeed = parseSpeed(way.getTag("maxspeed"));
             // apply speed limit no matter of the road type
             if (maxspeed >= 0)
@@ -159,9 +153,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             // limit speed to max 30 km/h if bad surface
             if (speed > 30 && way.hasTag("surface", BAD_SURFACE))
                 speed = 30;
-            
-            if(speed > getMaxSpeed())
-                speed = getMaxSpeed();            
+
+            if (speed > getMaxSpeed())
+                speed = getMaxSpeed();
 
             encoded = speedEncoder.setValue(0, speed);
 

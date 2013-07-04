@@ -83,6 +83,16 @@ public class CarFlagEncoderTest
     }
 
     @Test
+    public void testNoRailway()
+    {
+        Map<String, String> map = new HashMap<String, String>();
+        OSMWay way = new OSMWay(1, map);
+        map.put("highway", "service");
+        map.put("railway", "rail");
+        assertEquals(0, encoder.isAllowed(way));
+    }
+
+    @Test
     public void testBasics()
     {
         assertTrue(encoder.isForward(encoder.flagsDefault(true)));

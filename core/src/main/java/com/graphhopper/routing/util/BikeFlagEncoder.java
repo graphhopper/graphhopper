@@ -109,53 +109,42 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             }
 
             return 0;
-        } else
-        {
-            if (!HIGHWAY_SPEED.containsKey(highwayValue))
-            {
-                return 0;
-            }
-
-            // use the way if it is tagged for bikes
-            if (way.hasTag("bicycle", intended))
-            {
-                return acceptBit;
-            }
-
-            // avoid paths that are not tagged for bikes.
-            if (way.hasTag("highway", "path"))
-            {
-                return 0;
-            }
-
-            if (way.hasTag("motorroad", "yes"))
-            {
-                return 0;
-            }
-
-            // do not use fords with normal bikes, flagged fords are in included above
-            if (way.hasTag("highway", "ford") || way.hasTag("ford"))
-            {
-                return 0;
-            }
-
-            // check access restrictions
-            if (way.hasTag(restrictions, restrictedValues))
-            {
-                return 0;
-            }
-
-            return acceptBit;
         }
+
+        if (!HIGHWAY_SPEED.containsKey(highwayValue))
+            return 0;
+
+        // use the way if it is tagged for bikes
+        if (way.hasTag("bicycle", intended))
+            return acceptBit;
+
+        // avoid paths that are not tagged for bikes.
+        if (way.hasTag("highway", "path"))
+            return 0;
+
+        if (way.hasTag("motorroad", "yes"))
+            return 0;
+
+        // do not use fords with normal bikes, flagged fords are in included above
+        if (way.hasTag("highway", "ford") || way.hasTag("ford"))
+            return 0;
+
+        // check access restrictions
+        if (way.hasTag(restrictions, restrictedValues))
+            return 0;
+
+        // do not accept railways (sometimes incorrectly mapped!)
+        if (way.getTag("railway") != null)
+            return 0;
+
+        return acceptBit;
     }
 
     @Override
     public int handleWayTags( int allowed, OSMWay way )
     {
         if ((allowed & acceptBit) == 0)
-        {
             return 0;
-        }
 
         int encoded;
         if ((allowed & ferryBit) == 0)

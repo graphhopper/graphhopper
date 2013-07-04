@@ -133,10 +133,8 @@ public abstract class OSMElement
     public String getTag( String name )
     {
         if (tags == null)
-        {
             return null;
-        }
-
+    
         return tags.get(name);
     }
 
