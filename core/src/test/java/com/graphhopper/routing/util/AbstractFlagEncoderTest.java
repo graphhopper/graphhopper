@@ -25,7 +25,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class AcceptWayTest
+public class AbstractFlagEncoderTest
 {
     @Test
     public void testAcceptsCar()
@@ -34,6 +34,7 @@ public class AcceptWayTest
         assertEquals(40, AbstractFlagEncoder.parseSpeed("40km/h"));
         assertEquals(40, AbstractFlagEncoder.parseSpeed("40kmh"));
         assertEquals(64, AbstractFlagEncoder.parseSpeed("40mph"));
+        assertEquals(48, AbstractFlagEncoder.parseSpeed("30 mph"));
         assertEquals(-1, AbstractFlagEncoder.parseSpeed(null));
         assertEquals(19, AbstractFlagEncoder.parseSpeed("10 knots"));
         assertEquals(19, AbstractFlagEncoder.parseSpeed("19 kph"));
