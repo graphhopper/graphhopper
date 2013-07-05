@@ -95,8 +95,9 @@ public class NameIndex implements Storable<NameIndex>
         lastIndex = oldPointer;
         return oldPointer;
     }
-    
-    private byte[] getBytes(String name) {
+
+    private byte[] getBytes( String name )
+    {
         byte[] bytes = null;
         for (int i = 0; i < 2; i++)
         {
@@ -171,5 +172,10 @@ public class NameIndex implements Storable<NameIndex>
     public long getCapacity()
     {
         return names.getCapacity();
+    }
+
+    public void copyTo( NameIndex nameIndex )
+    {
+        names.copyTo(nameIndex.names);
     }
 }

@@ -968,9 +968,12 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         edges.copyTo(clonedG.edges);
         clonedG.edgeCount = edgeCount;
 
+        // name
+        nameIndex.copyTo(clonedG.nameIndex);
+        
         // geometry
         wayGeometry.copyTo(clonedG.wayGeometry);
-        clonedG.maxGeoRef = maxGeoRef;
+        clonedG.maxGeoRef = maxGeoRef;                
 
         properties.copyTo(clonedG.properties);
 
@@ -1358,6 +1361,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     {
         properties.close();
         wayGeometry.close();
+        nameIndex.close();
         edges.close();
         nodes.close();
     }
@@ -1365,13 +1369,15 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     @Override
     public long getCapacity()
     {
-        return edges.getCapacity() + nodes.getCapacity() + wayGeometry.getCapacity() + properties.getCapacity();
+        return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity() 
+                + wayGeometry.getCapacity() + properties.getCapacity();
     }
 
     public String toDetailsString()
     {
         return "edges:" + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "), "
                 + "nodes:" + nf(nodeCount) + "(" + nodes.getCapacity() / Helper.MB + "), "
+                + "name: - (" + nameIndex.getCapacity() / Helper.MB + "), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "), "
                 + "bounds:" + bounds;
     }
