@@ -50,7 +50,7 @@ public class EncodingManager
     private int encoderCount = 0;
     private int nextBit = 0;
 
-    private boolean needs3D;
+    private int needs;
 
     public EncodingManager()
     {
@@ -68,7 +68,7 @@ public class EncodingManager
     {
         String[] entries = encoderList.split(",");
         Arrays.sort(entries);
-        needs3D = false;
+        needs = 0;
 
         for (String entry : entries)
         {
@@ -120,7 +120,7 @@ public class EncodingManager
     {
         encoders.add(encoder);
 
-        needs3D |= encoder.needs3D();
+        needs |= encoder.queryNeeds();
 
         int usedBits = encoder.defineBits(encoderCount, nextBit);
         if (usedBits >= MAX_BITS)
@@ -259,12 +259,21 @@ public class EncodingManager
     }
 
     /**
-     *
+     * Find out whether at least one of the encoders needs a DEM to work.
      * @return
      */
     public boolean needs3D()
     {
-        return needs3D;
+        return (needs & AbstractFlagEncoder.NEEDS_DEM) > 0;
+    }
+
+    /**
+     * Find out whether at least one of the encoders needs a DEM for the whole time of the import.
+     * @return
+     */
+    public boolean needs3DInterpolation()
+    {
+        return (needs & AbstractFlagEncoder.NEEDS_DEM_INTERPOLATION) > 0;
     }
 
     /**

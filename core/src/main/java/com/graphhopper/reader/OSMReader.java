@@ -24,15 +24,20 @@ import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
+
 import static com.graphhopper.util.Helper.*;
+
 import com.graphhopper.util.StopWatch;
+
 import java.io.*;
 import javax.xml.stream.XMLStreamException;
 
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +45,7 @@ import org.slf4j.LoggerFactory;
  * This class parses an OSM xml file and creates a graph from it. See run.sh on how to use it from
  * command line.
  * <p/>
+ *
  * @author Peter Karich
  */
 public class OSMReader
@@ -72,12 +78,17 @@ public class OSMReader
         return this;
     }
 
-    public OSMReader setDemLocation( String demLocation ) {
+    public OSMReader setDemLocation( String demLocation )
+    {
 
-        if( graphStorage.getNodes() > 0  || helper.getFoundNodes() > 0 )
-            throw new IllegalStateException( "3D mode must be activated before processing starts.");
-        if( demLocation == null )
+        if (graphStorage.getNodes() > 0 || helper.getFoundNodes() > 0)
+        {
+            throw new IllegalStateException("3D mode must be activated before processing starts.");
+        }
+        if (demLocation == null)
+        {
             return this;
+        }
 
         this.demLocation = demLocation;
         is3DMode = true;
@@ -85,7 +96,8 @@ public class OSMReader
         return this;
     }
 
-    public boolean is3D() {
+    public boolean is3D()
+    {
         return is3DMode;
     }
 
@@ -95,13 +107,13 @@ public class OSMReader
         {
             throw new IllegalStateException("Encoding manager not set.");
         }
-        if( encodingManager.needs3D() && !is3D() )
+        if (encodingManager.needs3D() && !is3D())
         {
-            throw new IllegalStateException("Active encoders require elevation data.");
+            throw new IllegalStateException("Active encoders require elevation data. No DEM present.");
         }
 
         StopWatch sw1 = new StopWatch().start();
-        preProcess( osmFile );
+        preProcess(osmFile);
 
         sw1.stop();
         StopWatch sw2 = new StopWatch().start();
@@ -162,6 +174,7 @@ public class OSMReader
      * Filter ways but do not analyze properties wayNodes will be filled with participating node
      * ids.
      * <p/>
+     *
      * @return true the current xml entry is a way entry and has nodes
      */
     boolean filterWay( OSMWay item ) throws XMLStreamException
@@ -195,7 +208,7 @@ public class OSMReader
         OSMElement item = null;
         try
         {
-            OSMInputFile in = new OSMInputFile(osmFile).setWorkerThreads( workerThreads ).open();
+            OSMInputFile in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
 
             while ((item = in.getNext()) != null)
             {
@@ -231,7 +244,7 @@ public class OSMReader
         } catch (Exception ex)
         {
             throw new RuntimeException("Couldn't process file " + osmFile +
-                    (item!=null?" Item" + item:""), ex);
+                    (item != null ? " Item" + item : ""), ex);
         }
         helper.finishedReading();
         if (graphStorage.getNodes() == 0)
@@ -242,23 +255,32 @@ public class OSMReader
 
     /**
      * Initialize geometry access before processing the first way.
-     * If the graph is 3D enabled, it is filled with elevation data.
+     * If GH is 3D enabled, nodes are assigned their elevation.
      */
-    private void initializeGeometry() {
-        geometryAccess = new GeometryAccess( graphStorage, helper );
+    private void initializeGeometry()
+    {
+        geometryAccess = new GeometryAccess(graphStorage, helper);
 
-        if( is3D() ) {
+        if (is3D())
+        {
             // todo: do this controlled by region to limit memory usage
-            geometryAccess.initDem( demLocation, graphStorage.getBounds() );
+            geometryAccess.initDem(demLocation, graphStorage.getBounds());
 
             // fill elevations for graph nodes
-            geometryAccess.initializeElevations(  );
+            geometryAccess.initializeElevations();
+
+            // clear DEM after transfer of node elevations if it is not needed for interpolation
+            if (!encodingManager.needs3DInterpolation())
+            {
+                geometryAccess.clearDem();
+            }
         }
     }
 
     /**
      * Process properties, encode flags and create edges for the way
      * <p/>
+     *
      * @param way
      * @throws XMLStreamException
      */
@@ -280,7 +302,7 @@ public class OSMReader
             return;
         }
 
-        int flags = encodingManager.encodeTags( includeWay, way, geometryAccess );
+        int flags = encodingManager.encodeTags(includeWay, way, geometryAccess);
         if (flags == 0)
         {
             return;
@@ -302,7 +324,7 @@ public class OSMReader
                 osmNodeIdToBarrierMap.put(nodeId, 0);
 
                 // create shadow node copy for zero length edge
-                long newNodeId = helper.addBarrierNode(nodeId, geometryAccess );
+                long newNodeId = helper.addBarrierNode(nodeId, geometryAccess);
 
                 if (i > 0)
                 {
@@ -313,7 +335,7 @@ public class OSMReader
                     }
                     // add way up to barrier shadow node
                     long transfer[] = osmNodeIds.toArray(lastBarrier, i - lastBarrier + 1);
-                    transfer[ transfer.length - 1] = newNodeId;
+                    transfer[transfer.length - 1] = newNodeId;
                     TLongList partIds = new TLongArrayList(transfer);
                     createdEdges.addAll(helper.addOSMWay(partIds, flags, geometryAccess));
 

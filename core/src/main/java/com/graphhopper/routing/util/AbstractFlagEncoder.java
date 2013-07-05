@@ -36,6 +36,9 @@ import java.util.HashSet;
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder
 {
+    public static final int NEEDS_DEM = 1;
+    public static final int NEEDS_DEM_INTERPOLATION = 2;
+
     protected int forwardBit = 0;
     protected int backwardBit = 0;
     protected int directionBitMask = 0;
@@ -159,12 +162,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     public abstract int analyzeNodeTags( OSMNode node );
 
     /**
-     * Override this method for encoders using a DEM model
+     * Override this method in encoders to report their needs
      * @return
      */
-    public boolean needs3D()
+    public int queryNeeds()
     {
-        return false;
+        return 0;
     }
 
     public boolean hasAccepted( int acceptedValue )

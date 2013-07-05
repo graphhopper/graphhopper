@@ -96,10 +96,12 @@ public class GeometryAccess
             {
                 int index = nodeTranslation.getIndex(osmId);
 
+/*
                 if (index == -1)
                 {
                     System.out.println("Node id does not exist??? " + osmId );
                 }
+*/
 
                 // get coordinates from graph or pillar lists
                 if(index < OSMReaderHelper.TOWER_NODE)
@@ -118,5 +120,11 @@ public class GeometryAccess
             }
         });
 
+    }
+
+    public void clearDem()
+    {
+        dem = null;
+        is3D = false;
     }
 }
