@@ -65,6 +65,15 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         potentialBarriers.add("gate");
         //potentialBarriers.add( "lift_gate" );   you can always pass them on foot
         potentialBarriers.add("swing_gate");
+
+        acceptedRailways.add("station");
+        acceptedRailways.add("platform");
+        acceptedRailways.add("crossing");
+        acceptedRailways.add("tram_stop");
+        acceptedRailways.add("stop");
+        acceptedRailways.add("halt");
+        acceptedRailways.add("subway_entrance");
+        acceptedRailways.add("miniature");
     }
 
     @Override
@@ -112,53 +121,40 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             if (way.hasTag("route", ferries))
             {
                 if (!way.hasTag("foot", "no"))
-                {
                     return acceptBit | ferryBit;
-                }
             }
             return 0;
-        } else
-        {
-            if (way.hasTag("sidewalk", sidewalks))
-            {
-                return acceptBit;
-            }
-
-            // no need to evaluate ferries or fords - already included here
-            if (way.hasTag("foot", intended))
-            {
-                return acceptBit;
-            }
-
-            if (!allowedHighwayTags.contains(highwayValue))
-            {
-                return 0;
-            }
-
-            if (way.hasTag("motorroad", "yes"))
-            {
-                return 0;
-            }
-
-            // do not get our feet wet, "yes" is already included above
-            if (way.hasTag("highway", "ford") || way.hasTag("ford"))
-            {
-                return 0;
-            }
-
-            if (way.hasTag("bicycle", "official"))
-            {
-                return 0;
-            }
-
-            // check access restrictions
-            if (way.hasTag(restrictions, restrictedValues))
-            {
-                return 0;
-            }
-
-            return acceptBit;
         }
+
+        if (way.hasTag("sidewalk", sidewalks))
+            return acceptBit;
+
+        // no need to evaluate ferries or fords - already included here
+        if (way.hasTag("foot", intended))
+            return acceptBit;
+
+        if (!allowedHighwayTags.contains(highwayValue))
+            return 0;
+
+        if (way.hasTag("motorroad", "yes"))
+            return 0;
+
+        // do not get our feet wet, "yes" is already included above
+        if (way.hasTag("highway", "ford") || way.hasTag("ford"))
+            return 0;
+
+        if (way.hasTag("bicycle", "official"))
+            return 0;
+
+        // check access restrictions
+        if (way.hasTag(restrictions, restrictedValues))
+            return 0;
+
+        // do not accept railways (sometimes incorrectly mapped!)
+        if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
+            return 0;
+
+        return acceptBit;
     }
 
     @Override

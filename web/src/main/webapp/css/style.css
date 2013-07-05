@@ -6,7 +6,8 @@ body {
     background-color: #EEEEEE;
     margin: 0;
 }
-#map { 
+#map {
+/*    float: right;*/
     width: 800px;
     height: 600px;
     cursor: default;

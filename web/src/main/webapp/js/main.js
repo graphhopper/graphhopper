@@ -1,14 +1,14 @@
 // fixing cross domain support e.g in Opera
 jQuery.support.cors = true;
 
-var nominatim = "http://open.mapquestapi.com/nominatim/v1/search.php";
-var nominatim_reverse = "http://open.mapquestapi.com/nominatim/v1/reverse.php";
-// var nominatim = "http://nominatim.openstreetmap.org/search";
-// var nominatim_reverse = "http://nominatim.openstreetmap.org/reverse";
+//var nominatim = "http://open.mapquestapi.com/nominatim/v1/search.php";
+//var nominatim_reverse = "http://open.mapquestapi.com/nominatim/v1/reverse.php";
+var nominatim = "http://nominatim.openstreetmap.org/search";
+var nominatim_reverse = "http://nominatim.openstreetmap.org/reverse";
 var routingLayer;
 var map;
-var browserTitle = "GraphHopper Web Demo";
-var clickToRoute;
+var browserTitle = "GraphHopper Maps";
+var firstClickToRoute;
 var iconTo = L.icon({
     iconUrl: './img/marker-to.png', 
     iconAnchor: [10, 16]
@@ -30,17 +30,25 @@ else {
 var ghRequest = new GHRequest(host);
 ghRequest.algoType = "fastest";
 //ghRequest.algorithm = "dijkstra";
+var everPushedSomething = false;
 
-$(document).ready(function(e) {
-    // I'm really angry about you history.js :/ (triggering double events) ... but let us just use the url rewriting thing
-    //    var History = window.History;
-    //    if (History.enabled) {
-    //        History.Adapter.bind(window, 'statechange', function(){
-    //            var state = History.getState();
-    //            console.log(state);            
-    //            initFromParams(parseUrl(state.url));
-    //        });
-    //    }
+$(document).ready(function(e) {    
+    var initialUrl = location.href;
+
+    var History = window.History;
+    if (History.enabled) {
+        History.Adapter.bind(window, 'statechange', function(){
+            // First important workaround:
+            // Chrome and Safari always emit a popstate event on page load, but Firefox doesn’t
+            // https://github.com/defunkt/jquery-pjax/issues/143#issuecomment-6194330
+            var onloadPop = !everPushedSomething && location.href == initialUrl;
+            if (onloadPop) return;
+            var state = History.getState();
+            console.log(state);            
+            //             initFromParams(parseUrl(state.url), true);
+            initFromParams(state.data, true);
+        });
+    }
     initForm();
     ghRequest.getInfo(function(json) {
         // OK bounds            
@@ -76,17 +84,16 @@ $(document).ready(function(e) {
         console.log(err);
         $('#error').html('GraphHopper API offline? ' + host);
     }).done(function() {
-        var params = parseUrlWithHisto();
-        ghRequest.init(params);
+        var params = parseUrlWithHisto();        
         initMap();
-        var fromAndTo = params.from && params.to;    
-        var routeNow = params.point && params.point.length == 2 || fromAndTo;
-        if(routeNow) {
-            if(fromAndTo)
-                resolveCoords(params.from, params.to);
-            else
-                resolveCoords(params.point[0], params.point[1]);                
-        }
+        // force same behaviour for all browsers: on page load no history event will be fired
+        // 
+        // put into history, (first popstate is muted -> see above)
+        initFromParams(params, false);
+        // force to true even if history.js is disabled due to cookie disallow etc
+        everPushedSomething = true;
+        // execute query
+        initFromParams(params, true);        
     }).error(function() {
         bounds = {
             "minLon" : -180, 
@@ -98,7 +105,19 @@ $(document).ready(function(e) {
     });
 });
 
-function resolveCoords(fromStr, toStr) { 
+function initFromParams(params, doQuery) {
+    ghRequest.init(params);
+    var fromAndTo = params.from && params.to;    
+    var routeNow = params.point && params.point.length == 2 || fromAndTo;
+    if(routeNow) {
+        if(fromAndTo)
+            resolveCoords(params.from, params.to, doQuery);
+        else
+            resolveCoords(params.point[0], params.point[1], doQuery);
+    }
+}
+
+function resolveCoords(fromStr, toStr, doQuery) { 
     routingLayer.clearLayers();
     if(fromStr !== ghRequest.from.input || !ghRequest.from.isResolved())
         ghRequest.from = new GHInput(fromStr);
@@ -110,11 +129,11 @@ function resolveCoords(fromStr, toStr) {
         // do not wait for resolve
         resolveFrom();
         resolveTo();
-        routeLatLng(ghRequest);
+        routeLatLng(ghRequest, doQuery);
     } else {
         // wait for resolve as we need the coord for routing     
         $.when(resolveFrom(), resolveTo()).done(function(fromArgs, toArgs) {                
-            routeLatLng(ghRequest);
+            routeLatLng(ghRequest, doQuery);
         });    
     }
 }
@@ -127,7 +146,7 @@ function initMap() {
     var height = $(window).height() - 5;
     mapDiv.width(width).height(height);
     if(height > 350)
-        height -= 250;
+        height -= 255;
     $("#info").css("max-height", height);
     console.log("init map at " + JSON.stringify(bounds));
     
@@ -138,6 +157,16 @@ function initMap() {
         attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr, 
         subdomains: ['otile1','otile2','otile3','otile4']
     });
+    
+    var mapquestAerial = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png', {
+        attribution: '<a href="http://open.mapquest.co.uk">MapQuest</a>,' + moreAttr, 
+        subdomains: ['otile1','otile2','otile3','otile4']
+    });
+    
+    //    var mapbox = L.tileLayer('http://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png', {
+    //        attribution: '<a href="http://www.mapbox.com">MapBox</a>,' + moreAttr, 
+    //        subdomains: ['a','b','c']
+    //    });    
     
     var wrk = L.tileLayer('http://{s}.wanderreitkarte.de/topo/{z}/{x}/{y}.png', {
         attribution: '<a href="http://wanderreitkarte.de">WanderReitKarte</a>,' + moreAttr, 
@@ -164,15 +193,23 @@ function initMap() {
     });
     
     var baseMaps = {
-        "MapQuest": mapquest,
+        "MapQuest": mapquest,        
+        "MapQuest Aerial": mapquestAerial,
+        //        "MapBox": mapbox,
         "WanderReitKarte": wrk,
         "Cloudmade": cloudmade,
         "OpenStreetMap": osm,
         "OpenStreetMap.de": osmde
     };
+    
+    //    var overlays = {
+    //        "MapQuest Hybrid": mapquest
+    //    };
+    
     // no layers for small browser windows
-    if($(window).width() > 400)
-        L.control.layers(baseMaps).addTo(map);
+    if($(window).width() > 400) {
+        L.control.layers(baseMaps/*, overlays*/).addTo(map);
+    }
     
     L.control.scale().addTo(map);
 
@@ -205,13 +242,13 @@ function initMap() {
         }).addTo(map); 
     
     routingLayer = L.geoJson().addTo(map);    
-    clickToRoute = true;
+    firstClickToRoute = true;
     function onMapClick(e) {       
         var latlng = e.latlng;
-        if(clickToRoute) {
+        if(firstClickToRoute) {
             // set start point
             routingLayer.clearLayers();
-            clickToRoute = false;
+            firstClickToRoute = false;
             ghRequest.from.setCoord(latlng.lat, latlng.lng);
             resolveFrom();            
         } else {
@@ -230,7 +267,7 @@ function setFlag(latlng, isFrom) {
     if(latlng.lat) {
         var marker = L.marker([latlng.lat, latlng.lng], {
             icon: (isFrom? iconFrom : iconTo),
-            draggable: true            
+            draggable: true
         }).addTo(routingLayer).bindPopup(isFrom? "Start" : "End");                  
         marker.on('dragend', function(e) {
             routingLayer.clearLayers();
@@ -243,8 +280,9 @@ function setFlag(latlng, isFrom) {
                 ghRequest.to.setCoord(latlng.lat, latlng.lng);
                 resolveTo();
             }
-            // do not wait for resolving
-            routeLatLng(ghRequest);
+            // do not wait for resolving and avoid zooming when dragging
+            ghRequest.doZoom = false;
+            routeLatLng(ghRequest, false);
         });
     } 
 }
@@ -359,7 +397,7 @@ function getInfoFromLocation(locCoord) {
 function createCallback(errorFallback) {
     return function(err) {
         if (err.statusText && err.statusText != "OK")
-            alert(err.statusText);
+            alert(errorFallback + ", " + err.statusText);
         else
             alert(errorFallback);
 
@@ -374,7 +412,27 @@ function focus(coord) {
         setFlag(coord, true);
     }
 }
-function routeLatLng(request) {    
+function routeLatLng(request, doQuery) {
+    // doZoom should not show up in the URL but in the request object to avoid zooming for history change
+    var doZoom = request.doZoom;
+    request.doZoom = true;
+        
+    var urlForHistory = request.createFullURL();
+    // not enabled e.g. if no cookies allowed (?)
+    // if disabled we have to do the query and cannot rely on the statechange history event    
+    if(!doQuery && History.enabled) {
+        // 2. important workaround for encoding problems in history.js
+        var params = parseUrl(urlForHistory);
+        console.log(params);
+        params.doZoom = doZoom;
+        History.pushState(params, browserTitle, urlForHistory);
+        return;
+    }    
+    // BUT if this is the very first query and no history support skip the query
+    if(!History.enabled && !everPushedSomething) {
+        return;
+    }
+    
     clickToRoute = true;
     $("#info").empty();
     $("#info").show();
@@ -394,15 +452,8 @@ function routeLatLng(request) {
     
     $("#vehicles button").removeClass();
     $("button#"+request.vehicle.toUpperCase()).addClass("bold");
-
-    var urlForAPI = "point=" + from + "&point=" + to;
-    urlForAPI = request.createURL(urlForAPI);        
     
-    if (History.enabled) {
-        var urlForHistory = "?point=" + request.from.input + "&point=" + request.to.input;    
-        urlForHistory = request.createPath(urlForHistory);
-        History.pushState(request, browserTitle, urlForHistory);
-    }
+    var urlForAPI = request.createURL("point=" + from + "&point=" + to);    
     descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');
     request.doRequest(urlForAPI, function (json) {        
         if(json.info.errors) {
@@ -411,11 +462,10 @@ function routeLatLng(request) {
                 descriptionDiv.append("<div class='error'>" + tmpErrors[m].message + "</div>");
             }
             return;
-        } 
-        //        else if(!json.info.routeFound) {
-        //            descriptionDiv.html('Route not found! Disconnected areas?');
-        //            return;
-        //        }
+        } else if(json.info.routeFound === false) {
+            descriptionDiv.html('Route not found! Disconnected areas?');
+            return;
+        }
         var geojsonFeature = {
             "type": "Feature",                   
             // "style": myStyle,                
@@ -423,7 +473,7 @@ function routeLatLng(request) {
         };
         
         routingLayer.addData(geojsonFeature);        
-        if(json.route.bbox) {
+        if(json.route.bbox && doZoom) {
             var minLon = json.route.bbox[0];
             var minLat = json.route.bbox[1];
             var maxLon = json.route.bbox[2];
@@ -494,7 +544,7 @@ function routeLatLng(request) {
         $('.defaulting').each(function(index, element) {
             $(element).css("color", "black");
         });
-        
+               
         if(json.route.instructions) {
             var instructionsElement = $("<table id='instructions'><colgroup>"
                 + "<col width='10%'><col width='65%'><col width='25%'></colgroup>");
@@ -530,8 +580,8 @@ function routeLatLng(request) {
     });
 }
 
-function addInstruction(main, indi, title, distance) {
-    var indiPic = "<img class='instr_pic' src='/img/" + indi + ".png'/>";                    
+function addInstruction(main, indi, title, distance) {    
+    var indiPic = "<img class='instr_pic' src='" + window.location.pathname + "img/" + indi + ".png'/>";                    
     var str = "<td class='instr_title'>"  + title + "</td>"
     + " <td class='instr_distance_td'><span class='instr_distance'>" + distance + "</span></td>";
     if(indi !== "continue")
