@@ -17,8 +17,6 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.coll.GHLongIntBTree;
-import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -27,9 +25,11 @@ import com.graphhopper.util.*;
 import gnu.trove.list.TLongList;
 
 import gnu.trove.list.array.TLongArrayList;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,21 +44,14 @@ public class OSMReaderHelper
     protected static final int PILLAR_NODE = 1;
     // tower node is <= -3
     protected static final int TOWER_NODE = -2;
+
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected final Directory dir;
     protected long zeroCounter = 0;
     protected final Graph g;
     protected final long expectedNodes;
-    // Using the correct Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
-    //
-    // very slow: new SparseLongLongArray
-    // only append and update possible (no unordered storage like with this doubleParse): new OSMIDMap
-    // same here: not applicable as ways introduces the nodes in 'wrong' order: new OSMIDSegmentedMap
-    // memory overhead due to open addressing and full rehash:
-    //        nodeOsmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
-    // smaller memory overhead for bigger data sets because of avoiding a "rehash"
-    // remember how many times a node was used to identify tower nodes
-    private LongIntMap osmNodeIdToIndexMap;
+    protected OsmNodeTranslation osmNodeTranslation;
+    protected boolean is3D = false;
     private final TLongList barrierNodeIDs = new TLongArrayList();
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
@@ -73,13 +66,15 @@ public class OSMReaderHelper
     {
         this.g = g;
         this.expectedNodes = expectedCap;
-        osmNodeIdToIndexMap = new GHLongIntBTree(200);
+        osmNodeTranslation = new OsmNodeTranslation2D();
+
         dir = g.getDirectory();
         pillarLats = dir.find("tmpLatitudes");
         pillarLons = dir.find("tmpLongitudes");
 
         pillarLats.create(Math.max(expectedCap, 100));
         pillarLons.create(Math.max(expectedCap, 100));
+
     }
 
     public OSMReaderHelper setWayPointMaxDistance( double maxDist )
@@ -95,7 +90,7 @@ public class OSMReaderHelper
 
     public boolean addNode( OSMNode node )
     {
-        int nodeType = osmNodeIdToIndexMap.get(node.getId());
+        int nodeType = osmNodeTranslation.getIndex(node.getId());
         if (nodeType == EMPTY)
         {
             return false;
@@ -113,7 +108,7 @@ public class OSMReaderHelper
             pillarLats.setInt(tmp, Helper.degreeToInt(lat));
             pillarLons.ensureCapacity(tmp + 4);
             pillarLons.setInt(tmp, Helper.degreeToInt(lon));
-            osmNodeIdToIndexMap.put(node.getId(), pillarId + 3);
+            osmNodeTranslation.putIndex(node.getId(), pillarId + 3);
             pillarId++;
         }
         return true;
@@ -124,53 +119,64 @@ public class OSMReaderHelper
         return "Found " + zeroCounter + " zero distances.";
     }
 
+    /**
+     * Count usage to determine type during preprocessing
+     * @param osmId
+     */
     public void prepareHighwayNode( long osmId )
     {
-        int tmpIndex = osmNodeIdToIndexMap.get(osmId);
+        int tmpIndex = osmNodeTranslation.getIndex(osmId);
         if (tmpIndex == OSMReaderHelper.EMPTY)
         {
             // osmId is used exactly once
-            osmNodeIdToIndexMap.put(osmId, OSMReaderHelper.PILLAR_NODE);
+            osmNodeTranslation.putIndex(osmId, OSMReaderHelper.PILLAR_NODE);
         } else if (tmpIndex > OSMReaderHelper.EMPTY)
         {
             // mark node as tower node as it occured at least twice times
-            osmNodeIdToIndexMap.put(osmId, OSMReaderHelper.TOWER_NODE);
+            osmNodeTranslation.putIndex(osmId, OSMReaderHelper.TOWER_NODE);
         } else
         {
             // tmpIndex is already negative (already tower node)
         }
     }
 
+    public void preprocessingFinished()
+    {
+        osmNodeTranslation.optimize();
+    }
+
     protected int addTowerNode( long osmId, double lat, double lon )
     {
         g.setNode(towerId, lat, lon);
         int id = -(towerId + 3);
-        osmNodeIdToIndexMap.put(osmId, id);
+        osmNodeTranslation.putIndex(osmId, id);
         towerId++;
         return id;
     }
 
     public long getFoundNodes()
     {
-        return osmNodeIdToIndexMap.getSize();
+        return osmNodeTranslation.getSize();
     }
 
     /**
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
-    public Collection<EdgeIterator> addOSMWay( TLongList osmNodeIds, int flags )
+    public Collection<EdgeIterator> addOSMWay( TLongList osmNodeIds, int flags, GeometryAccess geometryAccess )
     {
-        PointList pointList = new PointList(osmNodeIds.size());
+        PointList pointList = new PointList(osmNodeIds.size(), is3D);
         List<EdgeIterator> newEdges = new ArrayList<EdgeIterator>(5);
         int firstNode = -1;
         int lastIndex = osmNodeIds.size() - 1;
         int lastInBoundsPillarNode = -1;
+        long lastInBoundsOsmId = 0;
+        int[] coords = new int[3];
         try
         {
             for (int i = 0; i < osmNodeIds.size(); i++)
             {
                 long osmId = osmNodeIds.get(i);
-                int tmpNode = osmNodeIdToIndexMap.get(osmId);
+                int tmpNode = osmNodeTranslation.getIndex(osmId);
                 if (tmpNode == EMPTY)
                 {
                     continue;
@@ -189,14 +195,17 @@ public class OSMReaderHelper
                     {
                         // transform the pillar node to a tower node
                         tmpNode = lastInBoundsPillarNode;
-                        tmpNode = handlePillarNode(tmpNode, osmId, null, true);
+                        geometryAccess.getNode(lastInBoundsOsmId, coords);
+                        tmpNode = handlePillarNode(tmpNode, osmId, null, true, coords);
                         tmpNode = -tmpNode - 3;
                         if (pointList.getSize() > 1 && firstNode >= 0)
                         {
                             // TOWER node
                             newEdges.add(addEdge(firstNode, tmpNode, pointList, flags));
                             pointList.clear();
-                            pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
+                            // todo: is this correct? Just connecting in spite of missing nodes will create invalid shortcuts.
+//                            pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode), geometryAccess.getElevation(lastInBoundsOsmId));
+                            pointList.add(coords);
                         }
                         firstNode = tmpNode;
                         lastInBoundsPillarNode = -1;
@@ -209,28 +218,35 @@ public class OSMReaderHelper
                     throw new AssertionError("Mapped index not in correct bounds " + tmpNode + ", " + osmId);
                 }
 
+                // handle normal pillar nodes
                 if (tmpNode > -TOWER_NODE)
                 {
                     boolean convertToTowerNode = i == 0 || i == lastIndex;
                     if (!convertToTowerNode)
                     {
                         lastInBoundsPillarNode = tmpNode;
+                        lastInBoundsOsmId = osmId;
                     }
 
                     // PILLAR node, but convert to towerNode if end-standing
-                    tmpNode = handlePillarNode(tmpNode, osmId, pointList, convertToTowerNode);
+                    geometryAccess.getNode( osmId, coords );
+                    tmpNode = handlePillarNode(tmpNode, osmId, pointList, convertToTowerNode, coords);
                 }
 
+                // handle normal tower nodes
                 if (tmpNode < TOWER_NODE)
                 {
                     // TOWER node
                     tmpNode = -tmpNode - 3;
-                    pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
+                    geometryAccess.getNode( osmId, coords );
+                    pointList.add( coords );
+                    //pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode), geometryAccess.getElevation( osmId ));
                     if (firstNode >= 0)
                     {
                         newEdges.add(addEdge(firstNode, tmpNode, pointList, flags));
                         pointList.clear();
-                        pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
+                        pointList.add(coords);
+//                        pointList.add(g.getLatitude(tmpNode), g.getLongitude(tmpNode));
                     }
                     firstNode = tmpNode;
                 }
@@ -253,20 +269,28 @@ public class OSMReaderHelper
         double towerNodeDistance = 0;
         double prevLat = pointList.getLatitude(0);
         double prevLon = pointList.getLongitude(0);
+        double prevEle = pointList.getElevation(0);
         double lat;
         double lon;
-        PointList pillarNodes = new PointList(pointList.getSize() - 2);
+        double ele;
+        PointList pillarNodes = new PointList(pointList.getSize() - 2, is3D);
         int nodes = pointList.getSize();
         for (int i = 1; i < nodes; i++)
         {
             lat = pointList.getLatitude(i);
             lon = pointList.getLongitude(i);
-            towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
+            ele = pointList.getElevation(i);
+            double edgeDistance = distCalc.calcDist(prevLat, prevLon, lat, lon);
+            // longer ways due to elevations. Use pythagoras ignoring spherical geometry.
+            if( is3D )
+                edgeDistance = distCalc.calcOrthogonal( edgeDistance, ele-prevEle );
+            towerNodeDistance += edgeDistance;
             prevLat = lat;
             prevLon = lon;
+            prevEle = ele;
             if (nodes > 2 && i < nodes - 1)
             {
-                pillarNodes.add(lat, lon);
+                pillarNodes.add(lat, lon, ele);
             }
         }
         if (towerNodeDistance == 0)
@@ -277,7 +301,7 @@ public class OSMReaderHelper
             towerNodeDistance = 0.0001;
         }
 
-        EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);        
+        EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
         if (nodes > 2)
         {
             dpAlgo.simplify(pillarNodes);
@@ -290,29 +314,18 @@ public class OSMReaderHelper
      * @return converted tower node
      */
     private int handlePillarNode( int tmpNode, long osmId, PointList pointList,
-            boolean convertToTowerNode )
+                                  boolean convertToTowerNode, int[] coords )
     {
         tmpNode = tmpNode - 3;
-        int intlat = pillarLats.getInt(tmpNode * 4);
-        int intlon = pillarLons.getInt(tmpNode * 4);
-        if (intlat == Integer.MAX_VALUE || intlon == Integer.MAX_VALUE)
-        {
-            throw new RuntimeException("Conversation pillarNode to towerNode already happended!? "
-                    + "osmId:" + osmId + " pillarIndex:" + tmpNode);
-        }
-
-        double tmpLat = Helper.intToDegree(intlat);
-        double tmpLon = Helper.intToDegree(intlon);
-
         if (convertToTowerNode)
         {
             // convert pillarNode type to towerNode, make pillar values invalid
             pillarLons.setInt(tmpNode * 4, Integer.MAX_VALUE);
             pillarLats.setInt(tmpNode * 4, Integer.MAX_VALUE);
-            tmpNode = addTowerNode(osmId, tmpLat, tmpLon);
+            tmpNode = addTowerNode(osmId, Helper.intToDegree(coords[0]), Helper.intToDegree(coords[1]));
         } else
         {
-            pointList.add(tmpLat, tmpLon);
+            pointList.add(coords);
         }
 
         return tmpNode;
@@ -321,22 +334,20 @@ public class OSMReaderHelper
     private void printInfo( String str )
     {
         LoggerFactory.getLogger(getClass()).info("finished " + str + " processing."
-                + " nodes: " + g.getNodes() + ", osmIdMap.size:" + osmNodeIdToIndexMap.getSize()
-                + ", osmIdMap:" + osmNodeIdToIndexMap.getMemoryUsage() + "MB"
-                + ", osmIdMap.toString:" + osmNodeIdToIndexMap + " "
+                + " nodes: " + g.getNodes() + ", osmIdMap.size:" + osmNodeTranslation.getSize()
+                + ", osmIdMap:" + osmNodeTranslation.getMemoryUsage() + "MB"
+                + ", osmIdMap.toString:" + osmNodeTranslation + " "
                 + Helper.getMemInfo());
     }
 
     void finishedReading()
     {
-        // todo: is this necessary before removing it?
-        osmNodeIdToIndexMap.optimize();
         printInfo("way");
         dir.remove(pillarLats);
         dir.remove(pillarLons);
         pillarLons = null;
         pillarLats = null;
-        osmNodeIdToIndexMap = null;
+        osmNodeTranslation = null;
     }
 
     @Override
@@ -345,34 +356,26 @@ public class OSMReaderHelper
         return getClass().getSimpleName();
     }
 
-    public LongIntMap getNodeMap()
+    public OsmNodeTranslation getNodeMap()
     {
-        return osmNodeIdToIndexMap;
+        return osmNodeTranslation;
     }
 
     /**
      * Create a copy of the barrier node
      */
-    public long addBarrierNode( long nodeId )
+    public long addBarrierNode( long nodeId, GeometryAccess geometryAccess )
     {
         // create node
-        OSMNode newNode;
-        int graphIndex = osmNodeIdToIndexMap.get(nodeId);
-        if (graphIndex < TOWER_NODE)
-        {
-            graphIndex = -graphIndex - 3;
-            newNode = new OSMNode(createNewNodeId(),
-                    g.getLatitude(graphIndex), g.getLongitude(graphIndex));
-        } else
-        {
-            graphIndex = graphIndex - 3;
-            newNode = new OSMNode(createNewNodeId(),
-                    Helper.intToDegree(pillarLats.getInt(graphIndex * 4)),
-                    Helper.intToDegree(pillarLons.getInt(graphIndex * 4)));
-        }
+        int node[] = new int[3];
+        geometryAccess.getNode( nodeId, node );
 
+        OSMNode newNode = new OSMNode(createNewNodeId(),
+                    Helper.intToDegree(node[0]), Helper.intToDegree(node[1]));
+
+        // add the new node
         final long id = newNode.getId();
-        prepareHighwayNode(id);
+        osmNodeTranslation.copyNode(nodeId, id, OSMReaderHelper.TOWER_NODE);
         addNode(newNode);
 
         return id;
@@ -386,7 +389,8 @@ public class OSMReaderHelper
     /**
      * Add a zero length edge with reduced routing options to the graph.
      */
-    public Collection<EdgeIterator> addBarrierEdge( long fromId, long toId, int flags, int barrierFlags )
+    public Collection<EdgeIterator> addBarrierEdge( long fromId, long toId, int flags, int barrierFlags,
+                                                    GeometryAccess geometryAccess )
     {
         // clear barred directions from routing flags
         flags &= ~barrierFlags;
@@ -394,6 +398,30 @@ public class OSMReaderHelper
         barrierNodeIDs.clear();
         barrierNodeIDs.add(fromId);
         barrierNodeIDs.add(toId);
-        return addOSMWay(barrierNodeIDs, flags);
+        return addOSMWay(barrierNodeIDs, flags, geometryAccess );
     }
+
+    public int getNodeIndex( long osmId )
+    {
+        return osmNodeTranslation.getIndex(osmId);
+    }
+
+    public void getLocation( int index, int[] latLon )
+    {
+        index *= 4;
+        latLon[0] = pillarLats.getInt(index);
+        latLon[1] = pillarLons.getInt(index);
+
+        if (latLon[0] == Integer.MAX_VALUE || latLon[1] == Integer.MAX_VALUE)
+        {
+            throw new RuntimeException("Pillar entry has been removed pillarIndex:" + index/4 );
+        }
+    }
+
+    public void activateElevations()
+    {
+        is3D = true;
+        osmNodeTranslation = new OsmNodeTranslation3D();
+    }
+
 }

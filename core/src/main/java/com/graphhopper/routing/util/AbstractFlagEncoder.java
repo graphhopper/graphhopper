@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.GeometryAccess;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.DistanceCalc;
@@ -35,6 +36,9 @@ import java.util.HashSet;
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder
 {
+    public static final int NEEDS_DEM = 1;
+    public static final int NEEDS_DEM_INTERPOLATION = 2;
+
     protected int forwardBit = 0;
     protected int backwardBit = 0;
     protected int directionBitMask = 0;
@@ -148,8 +152,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      * Analyze properties of a way and create the routing flags
      * <p/>
      * @param allowed
+     * @param geometryAccess
      */
-    public abstract int handleWayTags( int allowed, OSMWay way );
+    public abstract int handleWayTags( int allowed, OSMWay way, GeometryAccess geometryAccess );
 
     /**
      * Parse tags on nodes, looking for barriers.
@@ -158,6 +163,15 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      * @return
      */
     public abstract int analyzeNodeTags( OSMNode node );
+
+    /**
+     * Override this method in encoders to report their needs
+     * @return
+     */
+    public int queryNeeds()
+    {
+        return 0;
+    }
 
     public boolean hasAccepted( int acceptedValue )
     {

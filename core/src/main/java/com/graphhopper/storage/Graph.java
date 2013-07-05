@@ -48,6 +48,8 @@ public interface Graph
 
     double getLongitude( int node );
 
+    void getLocation( int node, int[] latLon );
+
     /**
      * Returns the implicit bounds of this graph calculated from the lat,lon input of setNode
      */

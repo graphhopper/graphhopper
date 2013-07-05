@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.GeometryAccess;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 
@@ -49,6 +50,8 @@ public class EncodingManager
     private int encoderCount = 0;
     private int nextBit = 0;
 
+    private int needs;
+
     public EncodingManager()
     {
     }
@@ -65,6 +68,7 @@ public class EncodingManager
     {
         String[] entries = encoderList.split(",");
         Arrays.sort(entries);
+        needs = 0;
 
         for (String entry : entries)
         {
@@ -116,6 +120,8 @@ public class EncodingManager
     {
         encoders.add(encoder);
 
+        needs |= encoder.queryNeeds();
+
         int usedBits = encoder.defineBits(encoderCount, nextBit);
         if (usedBits >= MAX_BITS)
         {
@@ -165,12 +171,10 @@ public class EncodingManager
      * <p/>
      * @return the encoded flags
      */
-    public int encodeTags( int includeWay, OSMWay way )
-    {
+    public int encodeTags( int includeWay, OSMWay way, GeometryAccess geometryAccess ) {
         int flags = 0;
-        for (int i = 0; i < encoderCount; i++)
-        {
-            flags |= encoders.get(i).handleWayTags(includeWay, way);
+        for (int i = 0; i < encoderCount; i++) {
+            flags |= encoders.get(i).handleWayTags(includeWay, way, geometryAccess);
         }
 
         return flags;
@@ -223,7 +227,7 @@ public class EncodingManager
         return getFirst();
     }
 
-    private FlagEncoder getFirst()
+    public FlagEncoder getFirst()
     {
         if (getVehicleCount() == 0)
         {
@@ -253,6 +257,30 @@ public class EncodingManager
         }
         return flags;
     }
+
+    /**
+     * Find out whether at least one of the encoders needs a DEM to work.
+     * @return
+     */
+    public boolean needs3D()
+    {
+        return (needs & AbstractFlagEncoder.NEEDS_DEM) > 0;
+    }
+
+    /**
+     * Find out whether at least one of the encoders needs a DEM for the whole time of the import.
+     * @return
+     */
+    public boolean needs3DInterpolation()
+    {
+        return (needs & AbstractFlagEncoder.NEEDS_DEM_INTERPOLATION) > 0;
+    }
+
+    /**
+     *
+     * @return
+     */
+
 
     @Override
     public int hashCode()

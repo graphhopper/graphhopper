@@ -18,6 +18,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.GeometryAccess;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
@@ -141,8 +142,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int handleWayTags( int allowed, OSMWay way )
-    {
+    public int handleWayTags( int allowed, OSMWay way, GeometryAccess geometryAccess ) {
         if ((allowed & acceptBit) == 0)
             return 0;
 
@@ -150,7 +150,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         if ((allowed & ferryBit) == 0)
         {
             // set speed
-            encoded = speedEncoder.setValue(0, getSpeed(way));
+            encoded = encodeSpeed( way, geometryAccess );
 
             // handle oneways
             if ((way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
@@ -183,6 +183,11 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             encoded = speedEncoder.setValue(0, 10);
             encoded |= directionBitMask;
         }
+        return encoded;
+    }
+
+    protected int encodeSpeed( OSMWay way, GeometryAccess geometryAccess ) {
+        int encoded = speedEncoder.setValue(0, getSpeed(way));
         return encoded;
     }
 
@@ -284,18 +289,16 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             put("cobblestone", 6);
         }
     };
-    private static final Map<String, Integer> HIGHWAY_SPEED = new HashMap<String, Integer>()
-    {
-        
+    protected static final Map<String, Integer> HIGHWAY_SPEED = new HashMap<String, Integer>() {
         {
-            put("living_street", 6);
+            put( "living_street", 6 );
 
-            put("cycleway", 14);
-            put("path", 10);
-            put("road", 10);
-            put("track", 10);
-            put("service", 8);
-            put("unclassified", 14);
+            put( "cycleway", 14 );
+            put( "path", 10 );
+            put( "road", 10 );
+            put( "track", 10 );
+            put( "service", 8 );
+            put( "unclassified", 14 );
             put("residential", 10);
 
             put("trunk", 18);

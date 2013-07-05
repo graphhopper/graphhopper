@@ -66,6 +66,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
      */
     protected int nodeEntryBytes;
     protected DataAccess nodes;
+
     /**
      * interval [0,n)
      */
@@ -109,6 +110,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         N_EDGE_REF = nextNodeEntryIndex();
         N_LAT = nextNodeEntryIndex();
         N_LON = nextNodeEntryIndex();
+
         initNodeAndEdgeEntrySize();
     }
 
@@ -200,6 +202,13 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         return Helper.intToDegree(nodes.getInt((long) index * nodeEntryBytes + N_LON));
     }
 
+    @Override
+    public void getLocation( int index, int[] latLon )
+    {
+        latLon[0] = nodes.getInt( index * nodeEntryBytes + N_LAT);
+        latLon[1] = nodes.getInt( index * nodeEntryBytes + N_LON);
+    }
+
     /**
      * Translates double VALUE to integer in order to save it in a DataAccess object
      */
@@ -229,6 +238,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         long tmp = (long) index * nodeEntryBytes;
         nodes.setInt(tmp + N_LAT, Helper.degreeToInt(lat));
         nodes.setInt(tmp + N_LON, Helper.degreeToInt(lon));
+
         if (lat > bounds.maxLat)
         {
             bounds.maxLat = lat;
@@ -354,7 +364,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         {
             connectNewEdge(toNodeId, newOrExistingEdge);
         }
-        writeEdge(newOrExistingEdge, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE, dist, flags);
+        writeEdge( newOrExistingEdge, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE, dist, flags );
         return newOrExistingEdge;
     }
 
@@ -379,7 +389,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     private void connectNewEdge( int fromNodeId, int newOrExistingEdge )
     {
         long nodePointer = (long) fromNodeId * nodeEntryBytes;
-        int edge = nodes.getInt(nodePointer + N_EDGE_REF);
+        int edge = nodes.getInt( nodePointer + N_EDGE_REF );
         if (edge > EdgeIterator.NO_EDGE)
         {
             // append edge and overwrite EMPTY_LINK
