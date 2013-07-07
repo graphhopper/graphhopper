@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.GeometryAccess;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.RouteRelationHandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -171,10 +172,10 @@ public class EncodingManager
      * <p/>
      * @return the encoded flags
      */
-    public int encodeTags( int includeWay, OSMWay way, GeometryAccess geometryAccess ) {
+    public int encodeTags( int includeWay, OSMWay way, GeometryAccess geometryAccess, RouteRelationHandler routeRelations ) {
         int flags = 0;
         for (int i = 0; i < encoderCount; i++) {
-            flags |= encoders.get(i).handleWayTags(includeWay, way, geometryAccess);
+            flags |= encoders.get(i).handleWayTags(includeWay, way, geometryAccess, routeRelations);
         }
 
         return flags;
@@ -277,10 +278,29 @@ public class EncodingManager
     }
 
     /**
-     *
+     * Check whether hiking routes are required by at least one encoder.
      * @return
      */
-
+    public boolean needsHikingRoutes()
+    {
+        return (needs & AbstractFlagEncoder.NEEDS_HIKING_ROUTES) > 0;
+    }
+    /**
+     * Check whether bicycle routes are required by at least one encoder.
+     * @return
+     */
+    public boolean needsBicycleRoutes()
+    {
+        return (needs & AbstractFlagEncoder.NEEDS_BICYCLE_ROUTES) > 0;
+    }
+    /**
+     * Check whether hiking routes are required by at least one encoder.
+     * @return
+     */
+    public boolean needsHorseRoutes()
+    {
+        return (needs & AbstractFlagEncoder.NEEDS_HORSE_ROUTES) > 0;
+    }
 
     @Override
     public int hashCode()

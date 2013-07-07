@@ -21,6 +21,8 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.GeometryAccess;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.RouteRelationHandler;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -137,7 +139,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int handleWayTags( int allowed, OSMWay way, GeometryAccess geometryAccess ) {
+    public int handleWayTags( int allowed, OSMWay way, GeometryAccess geometryAccess, RouteRelationHandler routes ) {
         if ((allowed & acceptBit) == 0)
         {
             return 0;

@@ -21,6 +21,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.GeometryAccess;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.RouteRelationHandler;
 import com.graphhopper.util.Helper;
 
 import java.util.HashMap;
@@ -151,7 +152,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int handleWayTags( int allowed, OSMWay way, GeometryAccess geometryAccess ) {
+    public int handleWayTags( int allowed, OSMWay way, GeometryAccess geometryAccess, RouteRelationHandler routes ) {
         if ((allowed & acceptBit) == 0)
         {
             return 0;
@@ -161,7 +162,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         if ((allowed & ferryBit) == 0)
         {
             // set speed
-            encoded = encodeSpeed( way, geometryAccess );
+            encoded = encodeSpeed( way, geometryAccess, routes );
 
             // handle oneways
             if ((way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
@@ -197,7 +198,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         return encoded;
     }
 
-    protected int encodeSpeed( OSMWay way, GeometryAccess geometryAccess ) {
+    protected int encodeSpeed( OSMWay way, GeometryAccess geometryAccess, RouteRelationHandler routes ) {
         int encoded = speedEncoder.setValue(0, getSpeed(way));
         return encoded;
     }

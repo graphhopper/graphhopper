@@ -21,6 +21,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.GeometryAccess;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.RouteRelationHandler;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 
@@ -38,6 +39,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
 {
     public static final int NEEDS_DEM = 1;
     public static final int NEEDS_DEM_INTERPOLATION = 2;
+    public static final int NEEDS_HIKING_ROUTES = 4;
+    public static final int NEEDS_BICYCLE_ROUTES = 8;
+    public static final int NEEDS_HORSE_ROUTES = 16;
 
     protected int forwardBit = 0;
     protected int backwardBit = 0;
@@ -150,8 +154,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      * <p/>
      * @param allowed
      * @param geometryAccess
+     * @param routes
      */
-    public abstract int handleWayTags( int allowed, OSMWay way, GeometryAccess geometryAccess );
+    public abstract int handleWayTags( int allowed, OSMWay way, GeometryAccess geometryAccess, RouteRelationHandler routes );
 
     /**
      * Parse tags on nodes, looking for barriers.

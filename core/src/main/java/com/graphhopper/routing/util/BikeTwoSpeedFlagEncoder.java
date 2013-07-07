@@ -3,11 +3,12 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.GeometryAccess;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.dem.ElevationAnalyzer;
+import com.graphhopper.reader.RouteRelationHandler;
 
 /**
  * Sample bike encoder that modifies speed by elevation difference.
  * Has a forward speed and a backward speed that are switched around.
- *
+ * Also prefers bicycle routes by applying a speed bonus.
  * @author Nop
  */
 public class BikeTwoSpeedFlagEncoder extends BikeFlagEncoder
@@ -18,7 +19,7 @@ public class BikeTwoSpeedFlagEncoder extends BikeFlagEncoder
     @Override
     public int queryNeeds()
     {
-        return NEEDS_DEM | NEEDS_DEM_INTERPOLATION;
+        return NEEDS_DEM | NEEDS_DEM_INTERPOLATION | NEEDS_BICYCLE_ROUTES;
     }
 
     @Override
@@ -36,7 +37,7 @@ public class BikeTwoSpeedFlagEncoder extends BikeFlagEncoder
 
 
     @Override
-    protected int encodeSpeed( OSMWay way, GeometryAccess geometryAccess )
+    protected int encodeSpeed( OSMWay way, GeometryAccess geometryAccess, RouteRelationHandler routes )
     {
 
         analyzer.initialize(way, geometryAccess);
@@ -44,8 +45,14 @@ public class BikeTwoSpeedFlagEncoder extends BikeFlagEncoder
         analyzer.analyzeElevations();
 
         int speed = getSpeed(way);
-        int forwardSpeed = adjustSpeed(speed, analyzer.getAverageIncline(), analyzer.getAscendDistance(), analyzer.getAverageDecline(), analyzer.getDescendDistance(), analyzer.getTotalDistance());
-        int backwardSpeed = adjustSpeed(speed, -analyzer.getAverageDecline(), analyzer.getDescendDistance(), -analyzer.getAverageIncline(), analyzer.getAscendDistance(), analyzer.getTotalDistance());
+        // apply a speed bonus of 15% on marked bicycle routes
+        if( routes.isOnBicycleRoute( way.getId() ))
+            speed = 115 * speed / 100;
+        // modify speed by inclines/declines
+        int forwardSpeed = adjustSpeed(speed, analyzer.getAverageIncline(), analyzer.getAscendDistance(),
+                analyzer.getAverageDecline(), analyzer.getDescendDistance(), analyzer.getTotalDistance());
+        int backwardSpeed = adjustSpeed(speed, -analyzer.getAverageDecline(), analyzer.getDescendDistance(),
+                -analyzer.getAverageIncline(), analyzer.getAscendDistance(), analyzer.getTotalDistance());
         int encoded = speedEncoder.setValue(0, forwardSpeed);
         encoded = backwardSpeedEncoder.setValue(encoded, backwardSpeed);
 

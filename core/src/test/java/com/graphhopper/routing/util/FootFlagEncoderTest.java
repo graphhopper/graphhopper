@@ -150,16 +150,16 @@ public class FootFlagEncoderTest
         OSMWay way = new OSMWay(1, map);
 
         map.put("highway", "motorway");
-        int flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way, null);
+        int flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way, null, null);
         assertEquals(0, flags);
 
         map.put("sidewalk", "yes");
-        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way, null);
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way, null, null);
         assertEquals(5, footEncoder.getSpeed(flags));
 
         map.clear();
         map.put("highway", "track");
-        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way, null);
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way, null, null);
         assertEquals(5, footEncoder.getSpeed(flags));
     }
 }

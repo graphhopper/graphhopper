@@ -19,8 +19,8 @@ package com.graphhopper.reader;
 
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
+import com.graphhopper.reader.RouteRelationHandler;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
@@ -56,6 +56,7 @@ public class OSMReader
     private GraphStorage graphStorage;
     private OSMReaderHelper helper;
     private GeometryAccess geometryAccess = null;
+    private RouteRelationHandler routeRelations = null;
     private EncodingManager encodingManager = null;
     private String demLocation = null;
     private boolean is3DMode = false;
@@ -112,6 +113,11 @@ public class OSMReader
             throw new IllegalStateException("Active encoders require elevation data. No DEM present.");
         }
 
+        if (encodingManager.needsHikingRoutes() || encodingManager.needsBicycleRoutes() || encodingManager.needsHorseRoutes())
+        {
+            routeRelations = new RouteRelationHandler(encodingManager.needsHikingRoutes(), encodingManager.needsBicycleRoutes(), encodingManager.needsHorseRoutes());
+        }
+
         StopWatch sw1 = new StopWatch().start();
         preProcess(osmFile);
 
@@ -139,26 +145,35 @@ public class OSMReader
             OSMElement item;
             while ((item = in.getNext()) != null)
             {
-                if (item.isType(OSMElement.WAY))
+                switch (item.getType())
                 {
-                    final OSMWay way = (OSMWay) item;
-                    boolean valid = filterWay(way);
-                    if (valid)
-                    {
-                        TLongList wayNodes = way.getNodes();
-                        int s = wayNodes.size();
-                        for (int index = 0; index < s; index++)
+                    case OSMElement.WAY:
+                        final OSMWay way = (OSMWay) item;
+                        boolean valid = filterWay(way);
+                        if (valid)
                         {
-                            helper.prepareHighwayNode(wayNodes.get(index));
-                        }
+                            TLongList wayNodes = way.getNodes();
+                            int s = wayNodes.size();
+                            for (int index = 0; index < s; index++)
+                            {
+                                helper.prepareHighwayNode(wayNodes.get(index));
+                            }
 
-                        if (++tmpCounter % 500000 == 0)
-                        {
-                            logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
-                                    + nf(helper.getNodeMap().getSize()) + " (" + helper.getNodeMap().getMemoryUsage() + "MB) "
-                                    + Helper.getMemInfo());
+                            if (++tmpCounter % 500000 == 0)
+                            {
+                                logger.info(nf(tmpCounter) + " (preprocess), osmIdMap:"
+                                        + nf(helper.getNodeMap().getSize()) + " (" + helper.getNodeMap().getMemoryUsage() + "MB) "
+                                        + Helper.getMemInfo());
+                            }
                         }
-                    }
+                        break;
+
+                    case OSMElement.RELATION:
+                        if (routeRelations != null)
+                        {
+                            routeRelations.processRelation((OSMRelation) item);
+                        }
+                        break;
                 }
             }
             in.close();
@@ -206,11 +221,12 @@ public class OSMReader
         long wayStart = -1;
         long counter = 1;
         OSMElement item = null;
+        boolean isRunning = true;
         try
         {
             OSMInputFile in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
 
-            while ((item = in.getNext()) != null)
+            while (isRunning && (item = in.getNext()) != null)
             {
                 switch (item.getType())
                 {
@@ -232,6 +248,8 @@ public class OSMReader
                         }
                         processWay((OSMWay) item);
                         break;
+
+                    // ignore relations, but read until the end to terminate PBF reader properly
                 }
                 if (++counter % 5000000 == 0)
                 {
@@ -302,7 +320,7 @@ public class OSMReader
             return;
         }
 
-        int flags = encodingManager.encodeTags(includeWay, way, geometryAccess);
+        int flags = encodingManager.encodeTags(includeWay, way, geometryAccess, routeRelations);
         if (flags == 0)
         {
             return;
