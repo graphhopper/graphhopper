@@ -22,3 +22,4 @@ android/libs/graphhopper-*-android.jar
 .idea/
 *iml
 debug.sh
+*.dem

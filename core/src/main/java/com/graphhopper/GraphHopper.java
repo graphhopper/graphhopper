@@ -241,20 +241,22 @@ public class GraphHopper implements GraphHopperAPI
         return ghLocation;
     }
 
-    public String demLocation() {
+    public String getDemLocation()
+    {
         return demLocation;
     }
 
     /**
-     * Sets the location where DEM data is stored and activates DEM processing for import.
+     * Sets the location where DEM files are stored and activates DEM processing for import
+     * of elevation data.
+     * <p/>
      * @param demLocation
-     * @return
      */
-    public GraphHopper setDemLocation( String demLocation ) {
+    public GraphHopper setDemLocation( String demLocation )
+    {
         this.demLocation = demLocation;
         return this;
     }
-
 
     /**
      * This file can be an osm xml (.osm), a compressed xml (.osm.zip or .osm.gz) or a protobuf file
@@ -378,7 +380,7 @@ public class GraphHopper implements GraphHopperAPI
         workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
 
-        demLocation = args.get( "osmreader.demlocation", null );
+        demLocation = args.get("osmreader.demlocation", demLocation);
 
         // index
         preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
@@ -445,8 +447,8 @@ public class GraphHopper implements GraphHopperAPI
         logger.info("start creating graph from " + osmFile);
         OSMReader reader = new OSMReader(graph, expectedCapacity).
                 setWorkerThreads(workerThreads).
-               setEncodingManager(encodingManager).
-                setDemLocation( demLocation ).
+                setEncodingManager(encodingManager).
+                setDemLocation(demLocation).
                 setWayPointMaxDistance(wayPointMaxDistance).
                 setEnableInstructions(enableInstructions);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
