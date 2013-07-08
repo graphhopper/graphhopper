@@ -1,6 +1,7 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.reader.RouteRelationHandler;
+import com.graphhopper.routing.util.AbstractFlagEncoder;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -18,7 +19,8 @@ public class RelationHandlerTest
     @Test
     public void testRouteRelations()
     {
-        RouteRelationHandler handler = new RouteRelationHandler(true, true, true);
+        RouteRelationHandler handler = new RouteRelationHandler(
+                AbstractFlagEncoder.NEEDS_BICYCLE_ROUTES | AbstractFlagEncoder.NEEDS_HIKING_ROUTES | AbstractFlagEncoder.NEEDS_HORSE_ROUTES);
 
         Map<String,String> tags1 = new HashMap<String, String>();
         tags1.put( "type", "route");

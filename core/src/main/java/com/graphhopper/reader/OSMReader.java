@@ -113,9 +113,9 @@ public class OSMReader
             throw new IllegalStateException("Active encoders require elevation data. No DEM present.");
         }
 
-        if (encodingManager.needsHikingRoutes() || encodingManager.needsBicycleRoutes() || encodingManager.needsHorseRoutes())
+        if (encodingManager.needsRoutes())
         {
-            routeRelations = new RouteRelationHandler(encodingManager.needsHikingRoutes(), encodingManager.needsBicycleRoutes(), encodingManager.needsHorseRoutes());
+            routeRelations = new RouteRelationHandler(encodingManager.queryNeeds());
         }
 
         StopWatch sw1 = new StopWatch().start();

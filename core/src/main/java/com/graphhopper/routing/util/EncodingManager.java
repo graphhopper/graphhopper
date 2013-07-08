@@ -278,20 +278,21 @@ public class EncodingManager
     }
 
     /**
-     * Check whether hiking routes are required by at least one encoder.
+     * Query bit-encoded cumulative needs of all encoders.
      * @return
      */
-    public boolean needsHikingRoutes()
+    public int queryNeeds()
     {
-        return (needs & AbstractFlagEncoder.NEEDS_HIKING_ROUTES) > 0;
+        return needs;
     }
     /**
-     * Check whether bicycle routes are required by at least one encoder.
+     * Check whether route handling is required by at least one encoder.
      * @return
      */
-    public boolean needsBicycleRoutes()
+    public boolean needsRoutes()
     {
-        return (needs & AbstractFlagEncoder.NEEDS_BICYCLE_ROUTES) > 0;
+        return 0 < (needs &
+                (AbstractFlagEncoder.NEEDS_BICYCLE_ROUTES | AbstractFlagEncoder.NEEDS_HIKING_ROUTES | AbstractFlagEncoder.NEEDS_HORSE_ROUTES ));
     }
     /**
      * Check whether hiking routes are required by at least one encoder.

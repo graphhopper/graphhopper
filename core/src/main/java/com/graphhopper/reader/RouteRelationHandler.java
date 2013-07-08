@@ -1,6 +1,7 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.reader.OSMRelation;
+import com.graphhopper.routing.util.AbstractFlagEncoder;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
 
@@ -21,11 +22,11 @@ public class RouteRelationHandler
     private TLongSet cycleWays;
     private TLongSet horseWays;
 
-    public RouteRelationHandler( boolean trackHikingRoutes, boolean trackBicylceRoutes, boolean trackHorseRoutes )
+    public RouteRelationHandler( int routeFlags )
     {
-        this.trackHikingRoutes = trackHikingRoutes;
-        this.trackBicylceRoutes = trackBicylceRoutes;
-        this.trackHorseRoutes = trackHorseRoutes;
+        this.trackHikingRoutes = (routeFlags & AbstractFlagEncoder.NEEDS_HIKING_ROUTES) > 0;
+        this.trackBicylceRoutes = (routeFlags & AbstractFlagEncoder.NEEDS_BICYCLE_ROUTES) > 0;;
+        this.trackHorseRoutes = (routeFlags & AbstractFlagEncoder.NEEDS_HORSE_ROUTES) > 0;
 
         if( trackHikingRoutes )
             hikingWays = new TLongHashSet(10000);
