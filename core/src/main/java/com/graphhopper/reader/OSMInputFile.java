@@ -26,7 +26,8 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.*;
 import java.lang.reflect.Constructor;
-import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
 
@@ -35,23 +36,22 @@ import java.util.zip.ZipInputStream;
  * <p/>
  * @author Nop
  */
-public class OSMInputFile implements Sink
+public class OSMInputFile implements Sink, Closeable
 {
     private boolean eof;
     private InputStream bis;
-    private boolean autoClose;
     // for xml parsing
     private XMLStreamReader parser;
     // for pbf parsing
     private boolean binary = false;
-    private final LinkedList<OSMElement> itemQueue = new LinkedList<OSMElement>();
+    private final Queue<OSMElement> itemQueue;
     private boolean incomingData;
     private int workerThreads = -1;
 
     public OSMInputFile( File file ) throws IOException
     {
         bis = decode(file);
-        autoClose = true;
+        itemQueue = new LinkedBlockingQueue<OSMElement>(50000);
     }
 
     public OSMInputFile open() throws XMLStreamException
@@ -140,11 +140,6 @@ public class OSMInputFile implements Sink
         }
     }
 
-    public OSMInputFile( InputStream in ) throws XMLStreamException
-    {
-        openXMLStream(in);
-    }
-
     private void openXMLStream( InputStream in )
             throws XMLStreamException
     {
@@ -163,22 +158,16 @@ public class OSMInputFile implements Sink
     public OSMElement getNext() throws XMLStreamException
     {
         if (eof)
-        {
             throw new IllegalStateException("EOF reached");
-        }
 
         OSMElement item;
         if (binary)
-        {
             item = getNextPBF();
-        } else
-        {
+        else
             item = getNextXML();
-        }
+
         if (item != null)
-        {
             return item;
-        }
 
         eof = true;
         return null;
@@ -221,15 +210,19 @@ public class OSMInputFile implements Sink
         return eof;
     }
 
-    public void close() throws XMLStreamException, IOException
+    @Override
+    public void close() throws IOException
     {
-        if (!binary)
+        try
         {
-            parser.close();
-        }
-        eof = true;
-        if (autoClose)
+            if (!binary)
+                parser.close();
+        } catch (XMLStreamException ex)
         {
+            throw new IOException(ex);
+        } finally
+        {
+            eof = true;
             bis.close();
         }
     }
@@ -237,11 +230,9 @@ public class OSMInputFile implements Sink
     private void openPBFReader( InputStream stream )
     {
         incomingData = true;
-
         if (workerThreads <= 0)
-        {
             workerThreads = 2;
-        }
+
         PbfReader reader = new PbfReader(stream, this, workerThreads);
         new Thread(reader, "PBF Reader").start();
     }
@@ -249,32 +240,17 @@ public class OSMInputFile implements Sink
     @Override
     public void process( OSMElement item )
     {
-        synchronized (itemQueue)
-        {
-            itemQueue.addLast(item);
-            itemQueue.notifyAll();
-            // keep queue from overrunning
-            if (itemQueue.size() > 50000)
-            {
-                try
-                {
-                    itemQueue.wait();
-                } catch (InterruptedException e)
-                {
-                    // ignore
-                }
-            }
-        }
+        // blocks if full
+        // itemQueue.offer(item);
+
+        // throw exception if full
+        itemQueue.add(item);
     }
 
     @Override
     public void complete()
     {
-        synchronized (itemQueue)
-        {
-            incomingData = false;
-            itemQueue.notifyAll();
-        }
+        incomingData = false;
     }
 
     private OSMElement getNextPBF()
@@ -282,35 +258,15 @@ public class OSMInputFile implements Sink
         OSMElement next = null;
         do
         {
-            synchronized (itemQueue)
+            // try to read next object
+            next = itemQueue.poll();
+            if (next == null)
             {
-                // try to read next object
-                next = itemQueue.pollFirst();
-
-                if (next == null)
-                {
-                    // if we have no items to process but parser is still working: wait
-                    if (incomingData)
-                    {
-                        try
-                        {
-                            itemQueue.wait();
-                        } catch (InterruptedException e)
-                        {
-                            // ignored
-                        }
-                    } // we are done, stop waiting
-                    else
-                    {
-                        break;
-                    }
-                } else
-                {
-                    itemQueue.notifyAll();
-                }
+                if (!incomingData)
+                    // we are done, stop waiting
+                    break;
             }
         } while (next == null);
-
         return next;
     }
 }

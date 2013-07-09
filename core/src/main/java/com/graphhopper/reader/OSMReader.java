@@ -91,9 +91,10 @@ public class OSMReader
      */
     public void preProcess( File osmFile )
     {
+        OSMInputFile in = null;
         try
         {
-            OSMInputFile in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
+            in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
 
             long tmpCounter = 1;
 
@@ -122,10 +123,13 @@ public class OSMReader
                     }
                 }
             }
-            in.close();
         } catch (Exception ex)
         {
             throw new RuntimeException("Problem while parsing file", ex);
+        } finally
+        {
+            if (in != null)
+                Helper.close(in);
         }
     }
 
@@ -315,7 +319,7 @@ public class OSMReader
                     name += ", " + refName;
                 }
             }
-            
+
             for (EdgeIterator iter : createdEdges)
             {
                 iter.setName(name);

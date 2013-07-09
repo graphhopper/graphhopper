@@ -13,9 +13,10 @@ import gnu.trove.list.TLongList;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Converts PBF block data into decoded entities ready to be passed into an Osmosis pipeline. This
@@ -25,7 +26,7 @@ import java.util.zip.Inflater;
  */
 public class PbfBlobDecoder implements Runnable
 {
-    private static Logger log = Logger.getLogger(PbfBlobDecoder.class.getName());
+    private static Logger log = LoggerFactory.getLogger(PbfBlobDecoder.class);
     private final boolean checkData = false;
     private String blobType;
     private byte[] rawBlob;
@@ -365,7 +366,7 @@ public class PbfBlobDecoder implements Runnable
 
         for (Osmformat.PrimitiveGroup primitiveGroup : block.getPrimitivegroupList())
         {
-            log.finer("Processing OSM primitive group.");
+            log.debug("Processing OSM primitive group.");
             processNodes(primitiveGroup.getDense(), fieldDecoder);
             processNodes(primitiveGroup.getNodesList(), fieldDecoder);
             processWays(primitiveGroup.getWaysList(), fieldDecoder);
@@ -378,7 +379,6 @@ public class PbfBlobDecoder implements Runnable
         try
         {
             decodedEntities = new ArrayList<OSMElement>();
-
             if ("OSMHeader".equals(blobType))
             {
                 processOsmHeader(readBlobContent());
@@ -389,12 +389,9 @@ public class PbfBlobDecoder implements Runnable
 
             } else
             {
-                if (log.isLoggable(Level.FINER))
-                {
-                    log.finer("Skipping unrecognised blob type " + blobType);
-                }
+                if (log.isDebugEnabled())
+                    log.debug("Skipping unrecognised blob type " + blobType);
             }
-
         } catch (IOException e)
         {
             throw new RuntimeException("Unable to process PBF blob", e);
@@ -407,7 +404,6 @@ public class PbfBlobDecoder implements Runnable
         try
         {
             runAndTrapExceptions();
-
             listener.complete(decodedEntities);
 
         } catch (RuntimeException e)
