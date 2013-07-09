@@ -241,10 +241,10 @@ public class OSMInputFile implements Sink, Closeable
     public void process( OSMElement item )
     {
         // blocks if full
-        // itemQueue.offer(item);
+        itemQueue.offer(item);
 
         // throw exception if full
-        itemQueue.add(item);
+        // itemQueue.add(item);
     }
 
     @Override
