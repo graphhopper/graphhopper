@@ -29,8 +29,6 @@ import java.lang.reflect.Constructor;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
 
@@ -227,8 +225,12 @@ public class OSMInputFile implements Sink, Closeable
         {
             eof = true;
             bis.close();
+            // if exception happend on OSMInputFile-thread we need to shutdown the pbf handling
+            if (pbfReaderThread != null && pbfReaderThread.isAlive())
+                pbfReaderThread.interrupt();
         }
     }
+    Thread pbfReaderThread;
 
     private void openPBFReader( InputStream stream )
     {
@@ -237,7 +239,8 @@ public class OSMInputFile implements Sink, Closeable
             workerThreads = 2;
 
         PbfReader reader = new PbfReader(stream, this, workerThreads);
-        new Thread(reader, "PBF Reader").start();
+        pbfReaderThread = new Thread(reader, "PBF Reader");
+        pbfReaderThread.start();
     }
 
     @Override
@@ -251,7 +254,7 @@ public class OSMInputFile implements Sink, Closeable
         {
             throw new RuntimeException(ex);
         }
-        
+
         // throw exception if full
         // itemQueue.add(item);
     }
@@ -266,15 +269,15 @@ public class OSMInputFile implements Sink, Closeable
     {
         OSMElement next = null;
         while (next == null)
-        {            
+        {
             if (!hasIncomingData && itemQueue.isEmpty())
             {
                 // we are done, stop polling
                 eof = true;
                 break;
             }
-            
-            try                
+
+            try
             {
                 // we cannot use "itemQueue.take()" as it blocks and hasIncomingData can change
                 next = itemQueue.poll(10, TimeUnit.MILLISECONDS);

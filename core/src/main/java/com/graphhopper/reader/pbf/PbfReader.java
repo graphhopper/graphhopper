@@ -34,7 +34,6 @@ public class PbfReader implements Runnable
     public void run()
     {        
         ExecutorService executorService = Executors.newFixedThreadPool(workers);
-
         try
         {
             // Create a stream splitter to break the PBF stream into blobs.
@@ -47,15 +46,14 @@ public class PbfReader implements Runnable
             // The main thread is responsible for splitting blobs from the
             // request stream, and sending decoded entities to the sink.
             PbfDecoder pbfDecoder = new PbfDecoder(streamSplitter, executorService, workers + 1, sink);
-            pbfDecoder.run();
-
-            sink.complete();
+            pbfDecoder.run();            
 
         } catch (Exception e)
         {
             throw new RuntimeException("Unable to read PBF file.", e);
         } finally
         {
+            sink.complete();
             executorService.shutdownNow();
         }
     }
