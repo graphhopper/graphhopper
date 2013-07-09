@@ -38,7 +38,6 @@ import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
@@ -83,6 +82,8 @@ public class Measurement
         long seed = args.getLong("measurement.seed", 123);
         Random rand = new Random(seed);
         boolean doPrepare = args.getBool("prepare.doPrepare", true);
+        String gitCommit = args.get("measurement.gitinfo", "");
+        System.out.println("GIT: " + gitCommit);
         int count = args.getInt("measurement.count", 1000);
         int lookupCount = 0;
 
@@ -129,6 +130,7 @@ public class Measurement
             put("error", ex.toString());
         } finally
         {
+            put("measurement.gitinfo", gitCommit);
             put("measurement.count", count);
             put("measurement.lookups", lookupCount);
             put("measurement.seed", seed);

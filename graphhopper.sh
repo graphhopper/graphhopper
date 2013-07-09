@@ -200,14 +200,15 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
 
  function startMeasurement {
     COUNT=5000
-    ARGS="$ARGS prepare.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME graph.importTime=$IMPORT_TIME"
-    echo -e "\nperform measurement via $ARGS, $JAR"
-    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS
+    commit_info=`git log -n 1 --pretty=oneline`     
+    echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
+    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS prepare.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME \
+            graph.importTime=$IMPORT_TIME measurement.gitinfo="$commit_info"
  }
  
  # use all <last_commits> versions starting from HEAD
  last_commits=$3
- 
+  
  if [ "x$last_commits" = "x" ]; then
    # use current version
    "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/core/pom.xml" -DskipTests clean install assembly:single
@@ -215,7 +216,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
    exit
  fi
 
- current_commit=`git log -n 1 --pretty=oneline | cut -d' ' -f1`
+ current_commit=`git log -n 1 --pretty=oneline | cut -d' ' -f1` 
  commits=$(git rev-list HEAD -n $last_commits)
  for commit in $commits; do
    git checkout $commit -q
