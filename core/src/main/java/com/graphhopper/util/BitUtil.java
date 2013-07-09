@@ -18,7 +18,7 @@
 package com.graphhopper.util;
 
 /**
- * Conversation between integer/long/float/double to bytes.
+ * Conversion between integer/long/float/double to bytes.
  * <p/>
  * @author Peter Karich
  */

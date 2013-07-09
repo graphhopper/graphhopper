@@ -26,8 +26,11 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.*;
 import java.lang.reflect.Constructor;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
 
@@ -44,8 +47,8 @@ public class OSMInputFile implements Sink, Closeable
     private XMLStreamReader parser;
     // for pbf parsing
     private boolean binary = false;
-    private final Queue<OSMElement> itemQueue;
-    private boolean incomingData;
+    private final BlockingQueue<OSMElement> itemQueue;
+    private boolean hasIncomingData;
     private int workerThreads = -1;
 
     public OSMInputFile( File file ) throws IOException
@@ -229,7 +232,7 @@ public class OSMInputFile implements Sink, Closeable
 
     private void openPBFReader( InputStream stream )
     {
-        incomingData = true;
+        hasIncomingData = true;
         if (workerThreads <= 0)
             workerThreads = 2;
 
@@ -240,9 +243,15 @@ public class OSMInputFile implements Sink, Closeable
     @Override
     public void process( OSMElement item )
     {
-        // blocks if full
-        itemQueue.offer(item);
-
+        try
+        {
+            // blocks if full
+            itemQueue.put(item);
+        } catch (InterruptedException ex)
+        {
+            throw new RuntimeException(ex);
+        }
+        
         // throw exception if full
         // itemQueue.add(item);
     }
@@ -250,23 +259,31 @@ public class OSMInputFile implements Sink, Closeable
     @Override
     public void complete()
     {
-        incomingData = false;
+        hasIncomingData = false;
     }
 
     private OSMElement getNextPBF()
     {
         OSMElement next = null;
-        do
-        {
-            // try to read next object
-            next = itemQueue.poll();
-            if (next == null)
+        while (next == null)
+        {            
+            if (!hasIncomingData && itemQueue.isEmpty())
             {
-                if (!incomingData)
-                    // we are done, stop waiting
-                    break;
+                // we are done, stop polling
+                eof = true;
+                break;
             }
-        } while (next == null);
+            
+            try                
+            {
+                // we cannot use "itemQueue.take()" as it blocks and hasIncomingData can change
+                next = itemQueue.poll(10, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ex)
+            {
+                eof = true;
+                break;
+            }
+        }
         return next;
     }
 }

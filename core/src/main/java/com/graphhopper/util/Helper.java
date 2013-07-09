@@ -219,18 +219,16 @@ public class Helper
         try
         {
             if (cl != null)
-            {
                 cl.close();
-            }
         } catch (IOException ex)
         {
             throw new RuntimeException("Couldn't close resource", ex);
         }
     }
 
-    public static boolean isEmpty( String strOsm )
+    public static boolean isEmpty( String str )
     {
-        return strOsm == null || strOsm.trim().length() == 0;
+        return str == null || str.trim().length() == 0;
     }
 
     /*
@@ -393,7 +391,7 @@ public class Helper
 
     /**
      * Converts into an integer to be compatible with the still limited DataAccess class (accepts
-     * only integer values). But this conversation also reduces memory consumption where the
+     * only integer values). But this conversion also reduces memory consumption where the
      * precision loss is accceptable. As +- 180° and +-90° are assumed as maximum values.
      * <p/>
      * @return the integer of the specified degree

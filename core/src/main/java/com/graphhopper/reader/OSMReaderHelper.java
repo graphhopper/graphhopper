@@ -68,6 +68,7 @@ public class OSMReaderHelper
     private int pillarId = 0;
     // negative but increasing to avoid clash with custom created OSM files
     private long newUniqueOSMId = -Long.MAX_VALUE;
+    private boolean exitOnlyPillarNodeException = true;
 
     public OSMReaderHelper( GraphStorage g, long expectedCap )
     {
@@ -238,6 +239,8 @@ public class OSMReaderHelper
         } catch (RuntimeException ex)
         {
             logger.error("Couldn't properly add edge with osm ids:" + osmNodeIds, ex);
+            if (exitOnlyPillarNodeException)
+                throw ex;
         }
         return newEdges;
     }
@@ -277,7 +280,7 @@ public class OSMReaderHelper
             towerNodeDistance = 0.0001;
         }
 
-        EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);        
+        EdgeIterator iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
         if (nodes > 2)
         {
             dpAlgo.simplify(pillarNodes);
@@ -297,7 +300,7 @@ public class OSMReaderHelper
         int intlon = pillarLons.getInt(tmpNode * 4);
         if (intlat == Integer.MAX_VALUE || intlon == Integer.MAX_VALUE)
         {
-            throw new RuntimeException("Conversation pillarNode to towerNode already happended!? "
+            throw new RuntimeException("Conversion pillarNode to towerNode already happended!? "
                     + "osmId:" + osmId + " pillarIndex:" + tmpNode);
         }
 
