@@ -91,9 +91,10 @@ public class OSMReader
      */
     public void preProcess( File osmFile )
     {
+        OSMInputFile in = null;
         try
         {
-            OSMInputFile in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
+            in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
 
             long tmpCounter = 1;
 
@@ -122,10 +123,12 @@ public class OSMReader
                     }
                 }
             }
-            in.close();
         } catch (Exception ex)
         {
             throw new RuntimeException("Problem while parsing file", ex);
+        } finally
+        {
+            Helper.close(in);
         }
     }
 
@@ -163,9 +166,10 @@ public class OSMReader
         graphStorage.create(tmp);
         long wayStart = -1;
         long counter = 1;
+        OSMInputFile in = null;
         try
         {
-            OSMInputFile in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
+            in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
             LongIntMap nodeFilter = helper.getNodeMap();
 
             OSMElement item;
@@ -195,11 +199,14 @@ public class OSMReader
                             + " (" + skippedLocations + ") " + Helper.getMemInfo());
                 }
             }
-            in.close();
+
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
         } catch (Exception ex)
         {
             throw new RuntimeException("Couldn't process file " + osmFile, ex);
+        } finally
+        {
+            Helper.close(in);
         }
         helper.finishedReading();
         if (graphStorage.getNodes() == 0)
@@ -217,14 +224,11 @@ public class OSMReader
     public void processWay( OSMWay way ) throws XMLStreamException
     {
         if (way.getNodes().size() < 2)
-        {
             return;
-        }
+
         // ignore multipolygon geometry
         if (!way.hasTags())
-        {
             return;
-        }
 
         int includeWay = encodingManager.accept(way);
         if (includeWay == 0)
@@ -315,7 +319,7 @@ public class OSMReader
                     name += ", " + refName;
                 }
             }
-            
+
             for (EdgeIterator iter : createdEdges)
             {
                 iter.setName(name);

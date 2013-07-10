@@ -35,12 +35,14 @@ GHRequest.prototype.init = function(params) {
     if(params.locale)
         this.locale = params.locale;
     
-    if("doZoom" in params)
-        this.doZoom = params.doZoom == "true";
-    if("instructions" in params)
-        this.instructions = params.instructions == "true";
-    if("encodedPolyline" in params)
-        this.encodedPolyline = params.encodedPolyline == "true";
+    this.handleBoolean("doZoom", params);
+    this.handleBoolean("instructions", params);
+    this.handleBoolean("encodedPolyline", params);
+}
+
+GHRequest.prototype.handleBoolean = function(key, params) {
+    if(key in params)
+        this.doZoom = params[key] == "true" || params[key] == true;
 }
 
 GHRequest.prototype.createURL = function(demoUrl) {    
