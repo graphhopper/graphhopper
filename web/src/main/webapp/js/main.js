@@ -19,7 +19,7 @@ var iconFrom = L.icon({
 });
 
 var bounds = {};
-LOCAL=false;
+LOCAL=true;
 var host;
 if(LOCAL)
     host = "http://localhost:8989";
