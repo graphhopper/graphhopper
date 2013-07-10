@@ -186,6 +186,13 @@ function initMap() {
     var osmde = L.tileLayer('http://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', {
         attribution: moreAttr
     });
+        
+    // only work if you zoom a bit deeper
+    var lang = "en_US";
+    var apple = L.tileLayer('http://gsp2.apple.com/tile?api=1&style=slideshow&layers=default&lang='+lang+'&z={z}&x={x}&y={y}&v=9', {
+        maxZoom: 17,
+        attribution: 'Map data and Imagery &copy; <a href="http://www.apple.com/ios/maps/">Apple</a>,' + moreAttr
+    });
     
     // default
     map = L.map('map' , {
@@ -195,7 +202,7 @@ function initMap() {
     var baseMaps = {
         "MapQuest": mapquest,        
         "MapQuest Aerial": mapquestAerial,
-        //        "MapBox": mapbox,
+        // didn't found a usage policy for this "Apple": apple,
         "WanderReitKarte": wrk,
         "Cloudmade": cloudmade,
         "OpenStreetMap": osm,
