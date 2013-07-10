@@ -20,7 +20,7 @@ var iconFrom = L.icon({
 
 var bounds = {};
 LOCAL=true;
-if(window.location.search && window.location.search.indexOf("locale=false"))
+if(window.location.search && window.location.search.indexOf("externalAPI=true"))
     LOCAL=false;
 var host;
 if(LOCAL)
