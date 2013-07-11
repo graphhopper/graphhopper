@@ -58,6 +58,14 @@ public class EncodingManagerTest
     }
 
     @Test
+    public void testEncoderAcceptNoException()
+    {
+        EncodingManager manager = new EncodingManager("CAR");
+        assertTrue(manager.supports("CAR"));
+        assertFalse(manager.supports("FOOT"));
+    }
+
+    @Test
     public void testTooManyEncoders()
     {
         EncodingManager manager = new EncodingManager();

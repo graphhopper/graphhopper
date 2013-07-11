@@ -19,7 +19,9 @@ var iconFrom = L.icon({
 });
 
 var bounds = {};
-LOCAL=false;
+LOCAL=true;
+if(window.location.search && window.location.search.indexOf("externalAPI=true") >= 0)
+    LOCAL=false;
 var host;
 if(LOCAL)
     host = "http://localhost:8989";
@@ -186,6 +188,13 @@ function initMap() {
     var osmde = L.tileLayer('http://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', {
         attribution: moreAttr
     });
+        
+    // only work if you zoom a bit deeper
+    var lang = "en_US";
+    var apple = L.tileLayer('http://gsp2.apple.com/tile?api=1&style=slideshow&layers=default&lang='+lang+'&z={z}&x={x}&y={y}&v=9', {
+        maxZoom: 17,
+        attribution: 'Map data and Imagery &copy; <a href="http://www.apple.com/ios/maps/">Apple</a>,' + moreAttr
+    });
     
     // default
     map = L.map('map' , {
@@ -195,7 +204,7 @@ function initMap() {
     var baseMaps = {
         "MapQuest": mapquest,        
         "MapQuest Aerial": mapquestAerial,
-        //        "MapBox": mapbox,
+        // didn't found a usage policy for this "Apple": apple,
         "WanderReitKarte": wrk,
         "Cloudmade": cloudmade,
         "OpenStreetMap": osm,
@@ -456,8 +465,9 @@ function routeLatLng(request, doQuery) {
     var urlForAPI = request.createURL("point=" + from + "&point=" + to);    
     descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');
     request.doRequest(urlForAPI, function (json) {        
+        descriptionDiv.html("");
         if(json.info.errors) {
-            var tmpErrors = json.info.errors;
+            var tmpErrors = json.info.errors;            
             for (var m = 0; m < tmpErrors.length; m++) {
                 descriptionDiv.append("<div class='error'>" + tmpErrors[m].message + "</div>");
             }

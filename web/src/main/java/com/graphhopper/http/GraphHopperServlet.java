@@ -111,31 +111,46 @@ public class GraphHopperServlet extends HttpServlet
         float tookGeocoding = sw.stop().getSeconds();
         GHPlace start = infoPoints.get(0);
         GHPlace end = infoPoints.get(1);
-        // we can reduce the path length based on the maximum differences to the original coordinates
-        double minPathPrecision = getDoubleParam(req, "minPathPrecision", 1d);
-        boolean enableInstructions = getBooleanParam(req, "instructions", true);
-        String vehicleStr = getParam(req, "vehicle", "CAR");
-        Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
-        FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr.toUpperCase());
-        WeightCalculation algoType = new FastestCalc(algoVehicle);
-        if ("shortest".equalsIgnoreCase(getParam(req, "algoType", null)))
-        {
-            algoType = new ShortestCalc();
-        }
-
-        String algoStr = getParam(req, "algorithm", defaultAlgorithm);
         try
         {
+            // we can reduce the path length based on the maximum differences to the original coordinates
+            double minPathPrecision = getDoubleParam(req, "minPathPrecision", 1d);
+            boolean enableInstructions = getBooleanParam(req, "instructions", true);
+            String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
+            Locale locale = Helper.getLocale(getParam(req, "locale", "en"));
+            String algoTypeStr = getParam(req, "algoType", "fastest");
+            String algoStr = getParam(req, "algorithm", defaultAlgorithm);
+            boolean encodedPolylineParam = getBooleanParam(req, "encodedPolyline", true);
+
             sw = new StopWatch().start();
-            GHResponse rsp = hopper.route(new GHRequest(start, end).
-                    setVehicle(algoVehicle.toString()).
-                    setType(algoType).
-                    setAlgorithm(algoStr).
-                    putHint("instructions", enableInstructions).
-                    putHint("douglas.minprecision", minPathPrecision));
-            if (rsp.hasError())
+            GHResponse rsp;
+            if (hopper.getEncodingManager().supports(vehicleStr))
             {
-                JSONBuilder builder = new JSONBuilder().startObject("info");
+                FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
+                WeightCalculation algoType = new FastestCalc(algoVehicle);
+                if ("shortest".equalsIgnoreCase(algoTypeStr))
+                    algoType = new ShortestCalc();
+
+                rsp = hopper.route(new GHRequest(start, end).
+                        setVehicle(algoVehicle.toString()).
+                        setType(algoType).
+                        setAlgorithm(algoStr).
+                        putHint("instructions", enableInstructions).
+                        putHint("douglas.minprecision", minPathPrecision));
+            } else
+            {
+                rsp = new GHResponse().addError(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
+            }
+
+            float took = sw.stop().getSeconds();
+            String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
+            PointList points = rsp.getPoints();
+            double distInKM = rsp.getDistance() / 1000;
+            JSONBuilder builder;
+
+            if (rsp.hasErrors())
+            {
+                builder = new JSONBuilder().startObject("info");
                 List<Map<String, String>> list = new ArrayList<Map<String, String>>();
                 for (Throwable t : rsp.getErrors())
                 {
@@ -145,68 +160,65 @@ public class GraphHopperServlet extends HttpServlet
                     list.add(map);
                 }
                 builder = builder.object("errors", list).endObject();
-                writeJson(req, res, builder.build());
-                return;
-            }
-
-            float took = sw.stop().getSeconds();
-            String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
-            PointList points = rsp.getPoints();
-
-            double distInKM = rsp.getDistance() / 1000;
-            boolean encodedPolylineParam = getBooleanParam(req, "encodedPolyline", true);
-
-            JSONBuilder builder = new JSONBuilder().
-                    startObject("info").
-                    object("routeFound", rsp.isFound()).
-                    object("took", took).
-                    object("tookGeocoding", tookGeocoding).
-                    endObject();
-            builder = builder.startObject("route").
-                    object("from", new Double[]
-                    {
-                        start.lon, start.lat
-                    }).
-                    object("to", new Double[]
-                    {
-                        end.lon, end.lat
-                    }).
-                    object("distance", distInKM).
-                    object("time", rsp.getTime());
-
-            if (enableInstructions)
-            {
-                InstructionList instructions = rsp.getInstructions();
-                builder.startObject("instructions").
-                        object("descriptions", instructions.createDescription(locale)).
-                        object("distances", instructions.createDistances(locale)).
-                        object("indications", instructions.createIndications()).
-                        endObject();
-            }
-            if (points.getSize() > 2)
-            {
-                builder.object("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
-            }
-            if (encodedPolylineParam)
-            {
-                String encodedPolyline = WebHelper.encodePolyline(points);
-                builder.object("coordinates", encodedPolyline);
             } else
             {
-                builder.startObject("data").
-                        object("type", "LineString").
-                        object("coordinates", points.toGeoJson()).
+                builder = new JSONBuilder().
+                        startObject("info").
+                        object("routeFound", rsp.isFound()).
+                        object("took", took).
+                        object("tookGeocoding", tookGeocoding).
                         endObject();
+                builder = builder.startObject("route").
+                        object("from", new Double[]
+                        {
+                            start.lon, start.lat
+                        }).
+                        object("to", new Double[]
+                        {
+                            end.lon, end.lat
+                        }).
+                        object("distance", distInKM).
+                        object("time", rsp.getTime());
+
+                if (enableInstructions)
+                {
+                    InstructionList instructions = rsp.getInstructions();
+                    builder.startObject("instructions").
+                            object("descriptions", instructions.createDescription(locale)).
+                            object("distances", instructions.createDistances(locale)).
+                            object("indications", instructions.createIndications()).
+                            endObject();
+                }
+                if (points.getSize() > 2)
+                {
+                    builder.object("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
+                }
+                if (encodedPolylineParam)
+                {
+                    String encodedPolyline = WebHelper.encodePolyline(points);
+                    builder.object("coordinates", encodedPolyline);
+                } else
+                {
+                    builder.startObject("data").
+                            object("type", "LineString").
+                            object("coordinates", points.toGeoJson()).
+                            endObject();
+                }
+                // end route
+                builder = builder.endObject();
             }
-            // end route
-            builder = builder.endObject();
 
             writeJson(req, res, builder.build());
-            logger.info(req.getQueryString() + " " + infoStr + " " + start + "->" + end
+            String logStr = req.getQueryString() + " " + infoStr + " " + start + "->" + end
                     + ", distance: " + distInKM + ", time:" + Math.round(rsp.getTime() / 60f)
                     + "min, points:" + points.getSize() + ", took:" + took
                     + ", debug - " + rsp.getDebugInfo() + ", " + algoStr + ", "
-                    + algoType + ", " + algoVehicle);
+                    + algoTypeStr + ", " + vehicleStr;
+            if (rsp.hasErrors())
+                logger.error(logStr + ", errors:" + rsp.getErrors());
+            else
+                logger.info(logStr);
+
         } catch (Exception ex)
         {
             logger.error("Error while query:" + start + "->" + end, ex);
@@ -335,18 +347,20 @@ public class GraphHopperServlet extends HttpServlet
         for (int pointNo = 0; pointNo < pointsAsStr.length; pointNo++)
         {
             final String str = pointsAsStr[pointNo];
-            try
+            // if the point is in the format of lat,lon we don't need to call geocoding service
+            String[] fromStrs = str.split(",");
+            if (fromStrs.length == 2)
             {
-                String[] fromStrs = str.split(",");
-                if (fromStrs.length == 2)
+                try
                 {
                     double fromLat = Double.parseDouble(fromStrs[0]);
                     double fromLon = Double.parseDouble(fromStrs[1]);
                     infoPoints.add(new GHPlace(fromLat, fromLon));
-                    continue;
+
+                } catch (Exception ex)
+                {
                 }
-            } catch (Exception ex)
-            {
+                continue;
             }
 
             final int index = infoPoints.size();
