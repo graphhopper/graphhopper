@@ -181,7 +181,7 @@ public class RoutingAlgorithmIntegrationTest
     {
         try
         {
-            // make sure we are using the latest file format
+            // make sure we are using fresh graphhopper files with correct vehicle
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopper().setInMemory(true, true).setOSMFile(osmFile).
                     setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
@@ -191,10 +191,8 @@ public class RoutingAlgorithmIntegrationTest
             Location2IDIndex idx = hopper.getIndex();
             final AbstractFlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             WeightCalculation weightCalc = new ShortestCalc();
-            if ("fastest".equals(weightCalcStr))
-            {
+            if ("fastest".equals(weightCalcStr))            
                 weightCalc = new FastestCalc(encoder);
-            }
 
             Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
                     createAlgos(g, encoder, ch, weightCalc, hopper.getEncodingManager());
