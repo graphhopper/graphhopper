@@ -51,8 +51,9 @@ public interface Location2IDIndex extends Storable<Location2IDIndex>
      * node into the graph is accessible from a selected vehicle. E.g. if you have a FOOT-query do:      <pre>
      *   new DefaultEdgeFilter(new FootFlagEncoder());
      * </pre>
-     * @return node id for the specfied location. The node id has at least one edge which is
-     * accepted from the specified edgeFilter
+     * @return An object containing the closest node and edge for the specfied location. The node id
+     * has at least one edge which is accepted from the specified edgeFilter. If nothing is found it
+     * returns null.
      */
     LocationIDResult findClosest( double lat, double lon, EdgeFilter edgeFilter );
 

@@ -93,7 +93,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         this.dir = dir;
         this.nodes = dir.find("nodes");
         this.edges = dir.find("edges");
-        this.wayGeometry = dir.find("geometry");        
+        this.wayGeometry = dir.find("geometry");
         this.nameIndex = new NameIndex(dir);
         this.properties = new StorableProperties(dir);
         this.bounds = BBox.INVERSE.clone();
@@ -102,7 +102,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         E_LINKA = nextEdgeEntryIndex();
         E_LINKB = nextEdgeEntryIndex();
         E_DIST = nextEdgeEntryIndex();
-        E_FLAGS = nextEdgeEntryIndex();        
+        E_FLAGS = nextEdgeEntryIndex();
         E_GEO = nextEdgeEntryIndex();
         E_NAME = nextEdgeEntryIndex();
 
@@ -174,10 +174,10 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
 
         edges.create(initSize);
         wayGeometry.create(initSize);
-        nameIndex.create(1000);                
+        nameIndex.create(1000);
         properties.create(100);
         properties.put("osmreader.acceptWay", encodingManager.encoderList());
-        properties.putCurrentVersions();        
+        properties.putCurrentVersions();
         initialized = true;
         return this;
     }
@@ -529,7 +529,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     protected class AllEdgeIterator implements AllEdgesIterator
     {
         protected long edgePointer = -edgeEntryBytes;
-        private long maxEdges = (long) edgeCount * edgeEntryBytes;
+        private final long maxEdges = (long) edgeCount * edgeEntryBytes;
         private int nodeA;
 
         public AllEdgeIterator()
@@ -615,18 +615,30 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         @Override
-        public String getName() 
+        public String getName()
         {
             int nameIndexRef = edges.getInt(edgePointer + E_NAME);
             return nameIndex.get(nameIndexRef);
         }
 
         @Override
-        public void setName(String name) {
+        public void setName( String name )
+        {
             int nameIndexRef = nameIndex.put(name);
             edges.setInt(edgePointer + E_NAME, nameIndexRef);
         }
-        
+
+        @Override
+        public EdgeIterator detach()
+        {
+            if (edgePointer < 0)
+                throw new IllegalStateException("call next before detaching");
+            AllEdgeIterator iter = new AllEdgeIterator();
+            iter.edgePointer = edgePointer;
+            iter.nodeA = nodeA;
+            return iter;
+        }
+
         @Override
         public String toString()
         {
@@ -836,23 +848,36 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         {
             return edgeId;
         }
-        
+
         @Override
-        public String getName() {
+        public String getName()
+        {
             int nameIndexRef = edges.getInt(edgePointer + E_NAME);
             return nameIndex.get(nameIndexRef);
         }
 
         @Override
-        public void setName(String name) {
+        public void setName( String name )
+        {
             int nameIndexRef = nameIndex.put(name);
             edges.setInt(edgePointer + E_NAME, nameIndexRef);
         }
-        
+
         @Override
         public final boolean isEmpty()
         {
             return false;
+        }
+
+        @Override
+        public EdgeIterator detach()
+        {
+            if (edgeId == nextEdge)
+                throw new IllegalStateException("call next before detaching");
+
+            EdgeIterable iter = new EdgeIterable(edgeId, baseNode, filter);
+            iter.next();
+            return iter;
         }
 
         @Override
@@ -970,10 +995,10 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
 
         // name
         nameIndex.copyTo(clonedG.nameIndex);
-        
+
         // geometry
         wayGeometry.copyTo(clonedG.wayGeometry);
-        clonedG.maxGeoRef = maxGeoRef;                
+        clonedG.maxGeoRef = maxGeoRef;
 
         properties.copyTo(clonedG.properties);
 
@@ -1369,7 +1394,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     @Override
     public long getCapacity()
     {
-        return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity() 
+        return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity()
                 + wayGeometry.getCapacity() + properties.getCapacity();
     }
 

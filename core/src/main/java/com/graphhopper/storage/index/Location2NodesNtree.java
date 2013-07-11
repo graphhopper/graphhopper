@@ -651,11 +651,9 @@ public class Location2NodesNtree implements Location2IDIndex
             final EdgeFilter edgeFilter )
     {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
-        final LocationIDResult closestNode = new LocationIDResult();
+        final LocationIDResult closestMatch = new LocationIDResult();
         if (storedNetworkEntryIds.isEmpty())
-        {
-            return closestNode;
-        }
+            return closestMatch;
 
         // clone storedIds to avoid interference with forEach
         final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
@@ -713,7 +711,7 @@ public class Location2NodesNtree implements Location2IDIndex
                         double adjLat = graph.getLatitude(adjNode);
                         double adjLon = graph.getLongitude(adjNode);
 
-                        check(tmpNode, currDist, -adjNode - 2);
+                        check(tmpNode, currDist, -adjNode - 2, currEdge);
 
                         double tmpDist;
                         double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
@@ -733,7 +731,7 @@ public class Location2NodesNtree implements Location2IDIndex
                                     && NumHelper.equalsEps(queryLon, wayLon, 1e-6))
                             {
                                 // equal point found
-                                check(tmpNode, 0d, pointIndex);
+                                check(tmpNode, 0d, pointIndex, currEdge);
                                 break;
                             } else if (edgeDistCalcOnSearch
                                     && distCalc.validEdgeDistance(queryLat, queryLon,
@@ -741,7 +739,7 @@ public class Location2NodesNtree implements Location2IDIndex
                             {
                                 tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                         tmpLat, tmpLon, wayLat, wayLon);
-                                check(tmpNode, tmpDist, pointIndex);
+                                check(tmpNode, tmpDist, pointIndex, currEdge);
                             }
 
                             tmpLat = wayLat;
@@ -759,17 +757,18 @@ public class Location2NodesNtree implements Location2IDIndex
                             tmpDist = adjDist;
                         }
 
-                        check(tmpNode, tmpDist, -currNode - 2);
-                        return closestNode.getWeight() >= 0;
+                        check(tmpNode, tmpDist, -currNode - 2, currEdge);
+                        return closestMatch.getWeight() >= 0;
                     }
 
-                    void check( int node, double dist, int wayIndex )
+                    void check( int node, double dist, int wayIndex, EdgeIterator iter )
                     {
-                        if (dist < closestNode.getWeight())
+                        if (dist < closestMatch.getWeight())
                         {
-                            closestNode.setWeight(dist);
-                            closestNode.setClosestNode(node);
-                            closestNode.setWayIndex(wayIndex);
+                            closestMatch.setWeight(dist);
+                            closestMatch.setClosestNode(node);
+                            closestMatch.setClosestEdge(iter.detach());                            
+                            closestMatch.setWayIndex(wayIndex);
                         }
                     }
                 }.start(graph, networkEntryNodeId, false);
@@ -777,7 +776,7 @@ public class Location2NodesNtree implements Location2IDIndex
             }
         });
 
-        return closestNode;
+        return closestMatch;
     }
 
     protected int pickBestNode( int nodeA, int nodeB )

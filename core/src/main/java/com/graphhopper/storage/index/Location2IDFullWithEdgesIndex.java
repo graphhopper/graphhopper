@@ -108,6 +108,8 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
 
                 if (fromDist < foundDist)
                 {
+                    res.setWeight(fromDist);
+                    res.setClosestEdge(iter.detach());
                     res.setClosestNode(node);
                     foundDist = fromDist;
                 }
@@ -128,7 +130,9 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
                             fromLat, fromLon, toLat, toLon));
                     if (distEdge < foundDist)
                     {
+                        res.setWeight(distEdge);
                         res.setClosestNode(node);
+                        res.setClosestEdge(iter);
                         if (fromDist > calc.calcDist(toLat, toLon, queryLat, queryLon))
                         {
                             res.setClosestNode(toNode);

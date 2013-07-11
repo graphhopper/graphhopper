@@ -317,9 +317,14 @@ public class GHUtility
         }
         return endNode;
     }
-
     public static final EdgeSkipIterator EMPTY = new EdgeSkipIterator()
     {
+        @Override
+        public EdgeIterator detach()
+        {
+            return this;
+        }
+
         @Override
         public boolean isShortcut()
         {
@@ -405,12 +410,14 @@ public class GHUtility
         }
 
         @Override
-        public String getName() {
+        public String getName()
+        {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public void setName(String name) {
+        public void setName( String name )
+        {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
@@ -420,4 +427,19 @@ public class GHUtility
             return true;
         }
     };
+
+    /**
+     * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if not
+     * found.
+     */
+    public static EdgeIterator getEdge( GraphStorage graph, int base, int adj )
+    {
+        EdgeIterator iter = graph.getEdges(base);
+        while (iter.next())
+        {
+            if (iter.getAdjNode() == adj)
+                return iter;
+        }
+        return null;
+    }
 }

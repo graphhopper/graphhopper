@@ -97,12 +97,19 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
         final AllEdgesSkipIterator tmpIter = lg.getAllEdges();
         return new AllEdgesIterator()
         {
+
+            @Override
+            public EdgeIterator detach()
+            {
+                return tmpIter.detach();
+            }            
+            
             @Override
             public int getMaxId()
             {
                 return tmpIter.getMaxId();
             }
-
+            
             @Override
             public boolean next()
             {

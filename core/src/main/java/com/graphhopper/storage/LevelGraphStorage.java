@@ -138,6 +138,16 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         {
             return EdgeIterator.Edge.isValid(getSkippedEdge1());
         }
+
+        @Override
+        public EdgeIterator detach()
+        {
+            if (edgeId == nextEdge)
+                throw new IllegalStateException("call next before detaching");
+            EdgeIterator iter = new EdgeSkipIteratorImpl(edgeId, node, filter);
+            iter.next();
+            return iter;
+        }
     }
 
     /**

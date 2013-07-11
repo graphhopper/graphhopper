@@ -98,6 +98,13 @@ public interface EdgeIterator
      * @return true if no data is available where we could iterate over
      */
     boolean isEmpty();
+
+    /**
+     * This method returns an EdgeIterator (B) which holds the current state of this EdgeIterator
+     * (A) to make it independent. So (A) can be used for further iteration while (B) still points
+     * to the same edge - calling B.next() will throw an IllegalStateException.
+     */
+    EdgeIterator detach();
     /**
      * integer value to indicate if an edge is valid or not which then would be initialized with
      * this value

@@ -97,6 +97,7 @@ public class Location2IDFullIndex implements Location2IDIndex
                 double dist = calc.calcDist(tmpLat, tmpLon, queryLat, queryLon);
                 if (circle == null || dist < calc.calcDist(circle.getLat(), circle.getLon(), queryLat, queryLon))
                 {
+                    res.setClosestEdge(iter.detach());
                     res.setClosestNode(node);
                     res.setWeight(dist);
                     if (dist <= 0)
