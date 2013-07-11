@@ -146,10 +146,10 @@ GHRequest.prototype.doRequest = function(url, callback) {
             var details = "Error for " + url;
             var json = {
                 "info" : {
-                    "errors" : {
+                    "errors" : [{
                         "message" : msg, 
                         "details" : details
-                    }
+                    }]
                 }
             };
             callback(json);

@@ -535,7 +535,7 @@ public class GraphHopper implements GraphHopperAPI
 
     private boolean setSupportsVehicle( String encoder )
     {
-        return encodingManager.accepts(encoder);
+        return encodingManager.supports(encoder);
     }
 
     @Override
@@ -592,7 +592,7 @@ public class GraphHopper implements GraphHopperAPI
             algo = prepare.createAlgo();
         }
 
-        if (rsp.hasError())
+        if (rsp.hasErrors())
         {
             return rsp;
         }

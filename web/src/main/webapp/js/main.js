@@ -465,8 +465,9 @@ function routeLatLng(request, doQuery) {
     var urlForAPI = request.createURL("point=" + from + "&point=" + to);    
     descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');
     request.doRequest(urlForAPI, function (json) {        
+        descriptionDiv.html("");
         if(json.info.errors) {
-            var tmpErrors = json.info.errors;
+            var tmpErrors = json.info.errors;            
             for (var m = 0; m < tmpErrors.length; m++) {
                 descriptionDiv.append("<div class='error'>" + tmpErrors[m].message + "</div>");
             }

@@ -70,9 +70,7 @@ public class EncodingManager
         {
             entry = entry.trim();
             if (entry.isEmpty())
-            {
                 continue;
-            }
 
             String className = null;
             int pos = entry.indexOf(":");
@@ -83,9 +81,7 @@ public class EncodingManager
             {
                 className = defaultEncoders.get(entry);
                 if (className == null)
-                {
                     throw new IllegalArgumentException("Unknown encoder name " + entry);
-                }
             }
 
             try
@@ -126,12 +122,20 @@ public class EncodingManager
         encoderCount = encoders.size();
     }
 
-    public boolean accepts( String name )
+    /**
+     * @return true if the specified encoder is found
+     */
+    public boolean supports( String encoder )
     {
-        return getEncoder(name) != null;
+        return getEncoder(encoder, false) != null;
     }
 
     public AbstractFlagEncoder getEncoder( String name )
+    {
+        return getEncoder(name, true);
+    }
+
+    private AbstractFlagEncoder getEncoder( String name, boolean throwExc )
     {
         for (int i = 0; i < encoderCount; i++)
         {
@@ -140,13 +144,13 @@ public class EncodingManager
                 return encoders.get(i);
             }
         }
-        throw new IllegalArgumentException("Encoder for " + name + " not found.");
+        if (throwExc)
+            throw new IllegalArgumentException("Encoder for " + name + " not found.");
+        return null;
     }
 
     /**
-     * Determine whether an osm way is a routable way
-     * <p/>
-     * @param way
+     * Determine whether an osm way is a routable way for one of its encoders.
      */
     public int accept( OSMWay way )
     {
@@ -303,9 +307,9 @@ public class EncodingManager
         for (int i = 0; i < encoderCount; i++)
         {
             String tmpWayInfo = encoders.get(i).getWayInfo(way);
-            if(tmpWayInfo.isEmpty())
+            if (tmpWayInfo.isEmpty())
                 continue;
-            if(!str.isEmpty())
+            if (!str.isEmpty())
                 str += ", ";
             str += tmpWayInfo;
         }

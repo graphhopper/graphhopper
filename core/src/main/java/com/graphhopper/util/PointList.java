@@ -40,10 +40,6 @@ public class PointList
 
     public PointList( int cap )
     {
-        if (cap < 5)
-        {
-            cap = 5;
-        }
         latitudes = new double[cap];
         longitudes = new double[cap];
     }
@@ -65,6 +61,8 @@ public class PointList
         if (newSize >= latitudes.length)
         {
             int cap = (int) (newSize * 1.7);
+            if(cap < 8)
+                cap = 8;
             latitudes = Arrays.copyOf(latitudes, cap);
             longitudes = Arrays.copyOf(longitudes, cap);
         }

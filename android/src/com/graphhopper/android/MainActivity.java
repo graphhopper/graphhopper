@@ -521,7 +521,7 @@ public class MainActivity extends MapActivity
 
             protected void onPostExecute( GHResponse resp )
             {
-                if (!resp.hasError())
+                if (!resp.hasErrors())
                 {
                     log("from:" + fromLat + "," + fromLon + " to:" + toLat + ","
                             + toLon + " found path with distance:" + resp.getDistance()

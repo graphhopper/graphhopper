@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class GHResponse
 {
-    private PointList list;
+    private PointList list = PointList.EMPTY;
     private double distance;
     private long time;
     private String debugInfo = "";
@@ -125,7 +125,10 @@ public class GHResponse
         return this;
     }
 
-    public boolean hasError()
+    /**
+     * @return true if one or more error found
+     */
+    public boolean hasErrors()
     {
         return !errors.isEmpty();
     }
