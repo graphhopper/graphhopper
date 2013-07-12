@@ -226,7 +226,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         while (iter.next())
         {
             c++;
-            iter.setDistance(prepareWeightCalc.getWeight(iter.getDistance(), iter.getFlags()));
+            iter.setDistance(prepareWeightCalc.getWeight(iter));
             setOrigEdgeCount(iter.getEdge(), 1);
         }
         return c > 0;
@@ -842,7 +842,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             @Override
             public String toString()
             {
-                return "INVERSE";
+                return "CH_DIST_ONLY";
             }
 
             @Override
@@ -852,15 +852,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             @Override
-            public double getWeight( double distance, int flags )
+            public double getWeight( EdgeIterator edge )
             {
-                return distance;
+                return edge.getDistance();
             }
 
             @Override
-            public double revertWeight( double weight, int flags )
+            public double revertWeight( EdgeIterator iter, double weight )
             {
-                return prepareWeightCalc.revertWeight(weight, flags);
+                return prepareWeightCalc.revertWeight(iter, weight);
             }
         };
     }

@@ -316,8 +316,10 @@ public class GHUtility
             return iterTo.getAdjNode();
         }
         return endNode;
-    }
-    public static final EdgeSkipIterator EMPTY = new EdgeSkipIterator()
+    }    
+    public static final EdgeSkipIterator EMPTY = new DisabledEdgeIterator();
+
+    public static class DisabledEdgeIterator implements EdgeSkipIterator
     {
         @Override
         public EdgeIterator detach()
@@ -429,8 +431,8 @@ public class GHUtility
     };
 
     /**
-     * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if not
-     * found.
+     * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if
+     * not found.
      */
     public static EdgeIterator getEdge( GraphStorage graph, int base, int adj )
     {

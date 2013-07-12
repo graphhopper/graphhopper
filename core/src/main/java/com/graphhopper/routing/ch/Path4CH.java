@@ -53,7 +53,7 @@ public class Path4CH extends PathBidirRef
     @Override
     public double calcDistance( EdgeIterator mainIter )
     {
-        return calc.revertWeight(mainIter.getDistance(), mainIter.getFlags());
+        return calc.revertWeight(mainIter, mainIter.getDistance());
     }
 
     private void expandEdge( EdgeSkipIterator mainIter, boolean revert )

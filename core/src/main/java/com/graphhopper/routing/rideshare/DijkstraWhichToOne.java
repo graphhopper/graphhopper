@@ -166,7 +166,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm
         while (iter.next())
         {
             int tmpV = iter.getAdjNode();
-            double tmp = weightCalc.getWeight(iter.getDistance(), iter.getFlags()) + curr.weight;
+            double tmp = weightCalc.getWeight(iter) + curr.weight;
             EdgeEntry de = shortestDistMap.get(tmpV);
             if (de == null)
             {

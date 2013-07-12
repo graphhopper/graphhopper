@@ -504,7 +504,7 @@ public class GraphHopper implements GraphHopperAPI
         return true;
     }
 
-    private void postProcessing()
+    protected void postProcessing()
     {
         encodingManager = graph.getEncodingManager();
         if (chUsage)
@@ -626,7 +626,7 @@ public class GraphHopper implements GraphHopperAPI
         return rsp.setPoints(points).setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
     }
 
-    private void initIndex()
+    protected void initIndex()
     {
         Directory dir = graph.getDirectory();
         if (preciseIndexResolution > 0)
@@ -654,7 +654,7 @@ public class GraphHopper implements GraphHopperAPI
         }
     }
 
-    private void optimize()
+    protected void optimize()
     {
         logger.info("optimizing ... (" + Helper.getMemInfo() + ")");
         graph.optimize();
@@ -670,7 +670,7 @@ public class GraphHopper implements GraphHopperAPI
         }
     }
 
-    public void prepare()
+    protected void prepare()
     {
         boolean tmpPrepare = doPrepare && prepare != null;
         graph.getProperties().put("prepare.done", tmpPrepare);

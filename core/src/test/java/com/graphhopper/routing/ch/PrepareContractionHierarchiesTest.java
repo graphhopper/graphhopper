@@ -28,9 +28,7 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.EdgeSkipIterator;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import java.util.Collection;
 import java.util.Iterator;
 import static org.junit.Assert.*;
@@ -296,15 +294,28 @@ public class PrepareContractionHierarchiesTest
 
     void initUnpackingGraph( LevelGraphStorage g, WeightCalculation w )
     {
-        double dist = 1;
-        int flags = carEncoder.flags(30, false);
-        g.edge(10, 0, w.getWeight(dist, flags), flags);
-        EdgeSkipIterator iter1 = g.edge(0, 1, w.getWeight(dist, flags), flags);
-        EdgeSkipIterator iter2 = g.edge(1, 2, w.getWeight(dist, flags), flags);
-        EdgeSkipIterator iter3 = g.edge(2, 3, w.getWeight(dist, flags), flags);
-        EdgeSkipIterator iter4 = g.edge(3, 4, w.getWeight(dist, flags), flags);
-        EdgeSkipIterator iter5 = g.edge(4, 5, w.getWeight(dist, flags), flags);
-        EdgeSkipIterator iter6 = g.edge(5, 6, w.getWeight(dist, flags), flags);
+        final int flags = carEncoder.flags(30, false);
+        EdgeIterator edge = new GHUtility.DisabledEdgeIterator() {
+
+            @Override
+            public double getDistance()
+            {
+                return 1;
+            }
+
+            @Override
+            public int getFlags()
+            {
+                return flags;
+            }
+        };
+        g.edge(10, 0, w.getWeight(edge), flags);
+        EdgeSkipIterator iter1 = g.edge(0, 1, w.getWeight(edge), flags);
+        EdgeSkipIterator iter2 = g.edge(1, 2, w.getWeight(edge), flags);
+        EdgeSkipIterator iter3 = g.edge(2, 3, w.getWeight(edge), flags);
+        EdgeSkipIterator iter4 = g.edge(3, 4, w.getWeight(edge), flags);
+        EdgeSkipIterator iter5 = g.edge(4, 5, w.getWeight(edge), flags);
+        EdgeSkipIterator iter6 = g.edge(5, 6, w.getWeight(edge), flags);
         int oneDirFlags = new PrepareContractionHierarchies().getScOneDir();
 
         int tmp = iter1.getEdge();
