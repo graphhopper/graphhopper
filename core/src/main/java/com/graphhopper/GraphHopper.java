@@ -66,6 +66,25 @@ public class GraphHopper implements GraphHopperAPI
             tests.start();
         }
     }
+
+    /**
+     * @return here you can specify subclasses of GraphHopper to be used instead
+     */
+    public static GraphHopper newInstance( CmdArgs args )
+    {
+        String className = args.get("hopper.classname", "");
+        if (Helper.isEmpty(className))
+            return new GraphHopper();
+
+        try
+        {
+            Class cls = Class.forName(className);
+            return (GraphHopper) cls.getDeclaredConstructor().newInstance();
+        } catch (Exception e)
+        {
+            throw new IllegalArgumentException("Cannot instantiate class " + className, e);
+        }
+    }
     private final Logger logger = LoggerFactory.getLogger(getClass());
     // for graph:
     private GraphStorage graph;
@@ -77,7 +96,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean simplifyRequest = true;
     private String defaultAlgorithm = "bidijkstra";
     // for index:
-    private Location2IDIndex index;
+    private Location2IDIndex locationIndex;
     private int preciseIndexResolution = 500;
     private boolean edgeCalcOnSearch = true;
     private boolean searchRegion = true;
@@ -109,7 +128,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         this();
         this.graph = g;
-        initIndex();
+        initLocationIndex();
     }
 
     public GraphHopper setEncodingManager( EncodingManager acceptWay )
@@ -261,12 +280,18 @@ public class GraphHopper implements GraphHopperAPI
 
     public Graph getGraph()
     {
+        if (graph == null)
+            throw new NullPointerException("Graph not initialized");
+
         return graph;
     }
 
-    public Location2IDIndex getIndex()
+    public Location2IDIndex getLocationIndex()
     {
-        return index;
+        if (locationIndex == null)
+            throw new NullPointerException("Location index not initialized");
+
+        return locationIndex;
     }
 
     public AlgorithmPreparation getPreparation()
@@ -283,16 +308,23 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
-    public GraphHopper init( CmdArgs args ) throws IOException
+    /*
+     * Command line configuration overwrites the ones in the config file
+     */
+    protected CmdArgs mergeArgsFromConfig( CmdArgs args ) throws IOException
     {
         if (!Helper.isEmpty(args.get("config", "")))
         {
             CmdArgs tmp = CmdArgs.readFromConfig(args.get("config", ""), "graphhopper.config");
-            // command line configuration overwrites the ones in the config file
             tmp.merge(args);
-            args = tmp;
+            return tmp;
         }
+        return args;
+    }
 
+    public GraphHopper init( CmdArgs args ) throws IOException
+    {
+        args = mergeArgsFromConfig(args);
         String tmpOsmFile = args.get("osmreader.osm", "");
         if (!Helper.isEmpty(tmpOsmFile))
         {
@@ -407,7 +439,7 @@ public class GraphHopper implements GraphHopperAPI
         optimize();
         prepare();
         flush();
-        initIndex();
+        initLocationIndex();
         return this;
     }
 
@@ -427,7 +459,7 @@ public class GraphHopper implements GraphHopperAPI
         logger.info("start creating graph from " + osmFile);
         OSMReader reader = new OSMReader(graph, expectedCapacity).
                 setWorkerThreads(workerThreads).
-               setEncodingManager(encodingManager).
+                setEncodingManager(encodingManager).
                 setWayPointMaxDistance(wayPointMaxDistance).
                 setEnableInstructions(enableInstructions);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
@@ -500,7 +532,7 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         postProcessing();
-        initIndex();
+        initLocationIndex();
         return true;
     }
 
@@ -552,8 +584,8 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder(request.getVehicle()));
-        int from = index.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter).getClosestNode();
-        int to = index.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter).getClosestNode();
+        int from = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter).getClosestNode();
+        int to = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter).getClosestNode();
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
         if (from < 0)
@@ -626,32 +658,41 @@ public class GraphHopper implements GraphHopperAPI
         return rsp.setPoints(points).setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
     }
 
-    protected void initIndex()
+    protected Location2IDIndex createLocationIndex( Directory dir )
     {
-        Directory dir = graph.getDirectory();
+        Location2IDIndex tmpIndex;
         if (preciseIndexResolution > 0)
         {
-            Location2NodesNtree tmpIndex;
+            Location2NodesNtree tmpNIndex;
             if (graph instanceof LevelGraph)
             {
-                tmpIndex = new Location2NodesNtreeLG((LevelGraph) graph, dir);
+                tmpNIndex = new Location2NodesNtreeLG((LevelGraph) graph, dir);
             } else
             {
-                tmpIndex = new Location2NodesNtree(graph, dir);
+                tmpNIndex = new Location2NodesNtree(graph, dir);
             }
-            tmpIndex.setResolution(preciseIndexResolution);
-            tmpIndex.setEdgeCalcOnFind(edgeCalcOnSearch);
-            tmpIndex.setSearchRegion(searchRegion);
-            index = tmpIndex;
+            tmpNIndex.setResolution(preciseIndexResolution);
+            tmpNIndex.setEdgeCalcOnFind(edgeCalcOnSearch);
+            tmpNIndex.setSearchRegion(searchRegion);
+            tmpIndex = tmpNIndex;
         } else
         {
-            index = new Location2IDQuadtree(graph, dir);
-            index.setResolution(Helper.calcIndexSize(graph.getBounds()));
+            tmpIndex = new Location2IDQuadtree(graph, dir);
+            tmpIndex.setResolution(Helper.calcIndexSize(graph.getBounds()));
         }
-        if (!index.loadExisting())
-        {
-            index.prepareIndex();
-        }
+
+        if (!tmpIndex.loadExisting())
+            tmpIndex.prepareIndex();
+
+        return tmpIndex;
+    }
+
+    protected void initLocationIndex()
+    {
+        if (locationIndex != null)
+            throw new IllegalStateException("Cannot initialize locationIndex twice!");
+
+        locationIndex = createLocationIndex(graph.getDirectory());
     }
 
     protected void optimize()
@@ -711,12 +752,9 @@ public class GraphHopper implements GraphHopperAPI
     void close()
     {
         if (graph != null)
-        {
             graph.close();
-        }
-        if (index != null)
-        {
-            index.close();
-        }
+
+        if (locationIndex != null)
+            locationIndex.close();
     }
 }

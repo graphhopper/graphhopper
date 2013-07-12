@@ -49,7 +49,7 @@ public class RoutingAlgorithmSpecialAreaTests
     {
         this.unterfrankenGraph = graphhopper.getGraph();
         StopWatch sw = new StopWatch().start();
-        idx = graphhopper.getIndex();
+        idx = graphhopper.getLocationIndex();
         logger.info(idx.getClass().getSimpleName() + " index. Size:"
                 + (float) idx.getCapacity() / (1 << 20) + " MB, took:" + sw.stop().getSeconds());
     }
