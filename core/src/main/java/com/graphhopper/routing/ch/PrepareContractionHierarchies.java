@@ -193,25 +193,21 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public PrepareContractionHierarchies doWork()
     {
         if (prepareEncoder == null)
-        {
             throw new IllegalStateException("No vehicle encoder set.");
-        }
+
         if (prepareWeightCalc == null)
-        {
             throw new IllegalStateException("No weight calculation set.");
-        }
+
         allSW.start();
         super.doWork();
-        initFromGraph();
+        
+        initFromGraph();        
         if (!prepareEdges())
-        {
             return this;
-        }
-
+                
         if (!prepareNodes())
-        {
             return this;
-        }
+        
         contractNodes();
         return this;
     }
@@ -252,9 +248,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         }
 
         if (sortedNodes.isEmpty())
-        {
             return false;
-        }
+        
         return true;
     }
 

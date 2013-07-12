@@ -103,7 +103,7 @@ public class GraphHopper implements GraphHopperAPI
     // for prepare
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
-    private boolean chUsage = false;
+    private boolean chEnabled = false;
     private boolean chFast = true;
     private int periodicUpdates = 3;
     private int lazyUpdates = 10;
@@ -212,13 +212,16 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper setCHShortcuts( boolean enable, boolean fast )
     {
-        chUsage = enable;
+        chEnabled = enable;
         chFast = fast;
-        if (chUsage)
-        {
-            defaultAlgorithm = "bidijkstra";
-        }
+        if (chEnabled)
+            defaultAlgorithm = "bidijkstra";        
+        
         return this;
+    }
+    
+    public boolean isCHEnabled() {
+        return chEnabled;
     }
 
     /**
@@ -517,7 +520,7 @@ public class GraphHopper implements GraphHopperAPI
             this.dataAccessType = DAType.RAM;
         }
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
-        if (chUsage)
+        if (chEnabled)
         {
             graph = new LevelGraphStorage(dir, encodingManager);
         } else
@@ -539,7 +542,7 @@ public class GraphHopper implements GraphHopperAPI
     protected void postProcessing()
     {
         encodingManager = graph.getEncodingManager();
-        if (chUsage)
+        if (chEnabled)
         {
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
             FlagEncoder encoder = encodingManager.getSingle();
@@ -560,9 +563,7 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         if ("false".equals(graph.getProperties().get("prepare.done")))
-        {
             prepare();
-        }
     }
 
     private boolean setSupportsVehicle( String encoder )
@@ -604,7 +605,7 @@ public class GraphHopper implements GraphHopperAPI
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
 
-        if (chUsage)
+        if (chEnabled)
         {
             if (request.getAlgorithm().equals("dijkstrabi"))
             {
