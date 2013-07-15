@@ -89,4 +89,17 @@ public class DAType
     {
         return synched;
     }
+
+    @Override
+    public String toString()
+    {
+        String str = isMmap() ? "MMAP" : "RAM";
+        if (isInteg())
+            str += "_INT";
+        if (isStore())
+            str += "_STORE";
+        if (isSynched())
+            str += "_SYNC";
+        return str;
+    }
 }
