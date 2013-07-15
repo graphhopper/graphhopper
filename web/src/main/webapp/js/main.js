@@ -266,6 +266,7 @@ function initMap() {
             resolveTo();            
             // do not wait for resolving
             routeLatLng(ghRequest);
+            firstClickToRoute = true;
         }
     }
 
