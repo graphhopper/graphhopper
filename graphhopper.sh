@@ -148,7 +148,7 @@ elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
 
  # Info: for import we need a more memory than for just loading it
- JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1600m -Xms1600m" 
+ JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1800m -Xms1800m" 
 else 
  LINK=`echo $NAME | tr '_' '/'`
  if [ ${FILE: -4} == ".osm" ]; then 
