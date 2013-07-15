@@ -25,7 +25,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Directory.DAType;
+import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.LevelGraph;

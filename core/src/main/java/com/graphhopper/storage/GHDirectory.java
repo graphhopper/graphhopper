@@ -95,27 +95,34 @@ public class GHDirectory implements Directory
         DataAccess da = map.get(name);
         if (da != null)
         {
+            if (!type.equals(da.getType()))
+                throw new IllegalStateException("Found existing DataAccess object '" + name
+                        + "' but types did not match. Requested:" + type + ", was:" + da.getType());
             return da;
         }
 
-        switch (type)
+        if (type.isMmap())
         {
-            case MMAP:
-                da = new MMapDataAccess(name, location);
-                break;
-            case RAM:
-                da = new RAMDataAccess(name, location, false);
-                break;
-            case RAM_STORE:
-                da = new RAMDataAccess(name, location, true);
-                break;
-            case RAM_INT:
-                da = new RAMIntDataAccess(name, location, false);
-                break;
-            case RAM_INT_STORE:
-                da = new RAMIntDataAccess(name, location, true);
-                break;
+            da = new MMapDataAccess(name, location);
+        } else
+        {
+            if (type.isInteg())
+            {
+                if (type.isStore())
+                    da = new RAMIntDataAccess(name, location, true);
+                else
+                    da = new RAMIntDataAccess(name, location, false);
+            } else
+            {
+                if (type.isStore())
+                    da = new RAMDataAccess(name, location, true);
+                else
+                    da = new RAMDataAccess(name, location, false);
+            }
         }
+
+        if (type.isSynched())
+            da = new SynchedDAWrapper(da);
 
         map.put(name, da);
         return da;
@@ -146,9 +153,10 @@ public class GHDirectory implements Directory
 
         Helper.removeDir(new File(location + name));
     }
-    
+
     @Override
-    public DAType getDefaultType() {
+    public DAType getDefaultType()
+    {
         return defaultType;
     }
 
