@@ -70,7 +70,7 @@ public class GraphHopper implements GraphHopperAPI
     // for graph:
     private GraphStorage graph;
     private String ghLocation = "";
-    private DAType dataAccessType;
+    private DAType dataAccessType = DAType.RAM;
     private boolean sortGraph = false;
     boolean removeZipped = true;
     // for routing:
@@ -161,12 +161,9 @@ public class GraphHopper implements GraphHopperAPI
         if (inMemory)
         {
             if (storeOnFlush)
-            {
                 dataAccessType = DAType.RAM_STORE;
-            } else
-            {
+            else
                 dataAccessType = DAType.RAM;
-            }
         } else
         {
             setMemoryMapped();
@@ -313,20 +310,24 @@ public class GraphHopper implements GraphHopperAPI
         setGraphHopperLocation(graphHopperFolder);
         expectedCapacity = args.getLong("graph.expectedCapacity", expectedCapacity);
         defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", defaultSegmentSize);
-        String dataAccess = args.get("graph.dataaccess", "ram+save");
-        if ("mmap".equalsIgnoreCase(dataAccess))
+        String dataAccess = args.get("graph.dataaccess", "RAM_STORE").toUpperCase();
+        if (dataAccess.contains("MMAP"))
         {
             setMemoryMapped();
         } else
         {
-            if ("inmemory+save".equalsIgnoreCase(dataAccess) || "ram+save".equalsIgnoreCase(dataAccess))
-            {
+            if(dataAccess.contains("SAVE") || dataAccess.contains("INMEMORY"))
+                throw new IllegalStateException("configuration names for dataAccess changed. Use eg. RAM or RAM_STORE");
+            
+            if (dataAccess.contains("RAM_STORE"))
                 setInMemory(true, true);
-            } else
-            {
+            else
                 setInMemory(true, false);
-            }
         }
+        
+        if(dataAccess.contains("SYNC")) 
+            dataAccessType = new DAType(dataAccessType, true);
+        
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
 
@@ -336,21 +337,16 @@ public class GraphHopper implements GraphHopperAPI
         boolean levelGraph = "true".equals(chShortcuts)
                 || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
         if (levelGraph)
-        {
             setCHShortcuts(true, !"shortest".equals(chShortcuts));
-        }
+
         if (args.has("prepare.updates.periodic"))
-        {
             periodicUpdates = args.getInt("prepare.updates.periodic", periodicUpdates);
-        }
+
         if (args.has("prepare.updates.lazy"))
-        {
             lazyUpdates = args.getInt("prepare.updates.lazy", lazyUpdates);
-        }
+
         if (args.has("prepare.updates.neighbor"))
-        {
             neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);
-        }
 
         // routing
         defaultAlgorithm = args.get("routing.defaultAlgorithm", defaultAlgorithm);
@@ -390,9 +386,8 @@ public class GraphHopper implements GraphHopperAPI
     private GraphHopper importOSM( String graphHopperLocation, String osmFileStr )
     {
         if (encodingManager == null)
-        {
             throw new IllegalStateException("No encodingManager was specified");
-        }
+
         setGraphHopperLocation(graphHopperLocation);
         try
         {
@@ -414,9 +409,8 @@ public class GraphHopper implements GraphHopperAPI
     protected OSMReader importOSM( String _osmFile ) throws IOException
     {
         if (graph == null)
-        {
             throw new IllegalStateException("Load or init graph before import OSM data");
-        }
+
         setOSMFile(_osmFile);
         File osmTmpFile = new File(osmFile);
         if (!osmTmpFile.exists())
@@ -427,7 +421,7 @@ public class GraphHopper implements GraphHopperAPI
         logger.info("start creating graph from " + osmFile);
         OSMReader reader = new OSMReader(graph, expectedCapacity).
                 setWorkerThreads(workerThreads).
-               setEncodingManager(encodingManager).
+                setEncodingManager(encodingManager).
                 setWayPointMaxDistance(wayPointMaxDistance).
                 setEnableInstructions(enableInstructions);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
@@ -448,23 +442,18 @@ public class GraphHopper implements GraphHopperAPI
     public boolean load( String graphHopperFolder )
     {
         if (Helper.isEmpty(graphHopperFolder))
-        {
             throw new IllegalStateException("graphHopperLocation is not specified. call init before");
-        }
+
         if (graph != null)
-        {
             throw new IllegalStateException("graph is already loaded");
-        }
 
         if (graphHopperFolder.indexOf(".") < 0)
         {
             if (new File(graphHopperFolder + "-gh").exists())
-            {
                 graphHopperFolder += "-gh";
-            } else if (graphHopperFolder.endsWith(".osm") || graphHopperFolder.endsWith(".xml"))
-            {
+            else if (graphHopperFolder.endsWith(".osm") || graphHopperFolder.endsWith(".xml"))
                 throw new IllegalArgumentException("To import an osm file you need to use importOrLoad");
-            }
+
         } else
         {
             File compressed = new File(graphHopperFolder + ".ghz");
@@ -480,24 +469,16 @@ public class GraphHopper implements GraphHopperAPI
             }
         }
         setGraphHopperLocation(graphHopperFolder);
-        if (dataAccessType == null)
-        {
-            this.dataAccessType = DAType.RAM;
-        }
+
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
         if (chUsage)
-        {
             graph = new LevelGraphStorage(dir, encodingManager);
-        } else
-        {
+        else
             graph = new GraphStorage(dir, encodingManager);
-        }
 
         graph.setSegmentSize(defaultSegmentSize);
         if (!graph.loadExisting())
-        {
             return false;
-        }
 
         postProcessing();
         initIndex();
@@ -512,12 +493,10 @@ public class GraphHopper implements GraphHopperAPI
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
             FlagEncoder encoder = encodingManager.getSingle();
             if (chFast)
-            {
                 tmpPrepareCH.setType(new FastestCalc(encoder));
-            } else
-            {
+            else
                 tmpPrepareCH.setType(new ShortestCalc());
-            }
+
             tmpPrepareCH.setVehicle(encoder);
             tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                     setLazyUpdates(lazyUpdates).
@@ -528,9 +507,7 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         if ("false".equals(graph.getProperties().get("prepare.done")))
-        {
             prepare();
-        }
     }
 
     private boolean setSupportsVehicle( String encoder )
@@ -557,17 +534,13 @@ public class GraphHopper implements GraphHopperAPI
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
         if (from < 0)
-        {
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.getFrom()));
-        }
+
         if (to < 0)
-        {
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.getTo()));
-        }
+
         if (from == to)
-        {
             rsp.addError(new IllegalArgumentException("Point 1 is equal to point 2"));
-        }
 
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
@@ -575,16 +548,12 @@ public class GraphHopper implements GraphHopperAPI
         if (chUsage)
         {
             if (request.getAlgorithm().equals("dijkstrabi"))
-            {
                 algo = prepare.createAlgo();
-            } else if (request.getAlgorithm().equals("astarbi"))
-            {
+            else if (request.getAlgorithm().equals("astarbi"))
                 algo = ((PrepareContractionHierarchies) prepare).createAStar();
-            } else
-            // or use defaultAlgorithm here?
-            {
+            else
                 rsp.addError(new IllegalStateException("Only dijkstrabi and astarbi is supported for LevelGraph (using contraction hierarchies)!"));
-            }
+
         } else
         {
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(),

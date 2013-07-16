@@ -30,23 +30,23 @@ public class DAType
     public static final DAType RAM = new DAType(false, false, false);
     public static final DAType MMAP = new DAType(true, true, false);
     private final boolean mmap;
-    private final boolean store;
+    private final boolean storing;
     private final boolean integ;
     private final boolean synched;
 
     public DAType( DAType type, boolean synched )
     {
-        this(type.isMmap(), type.isStore(), type.isInteg(), synched);
+        this(type.isMmap(), type.isStoring(), type.isInteg(), synched);
         if (!synched)
             throw new IllegalStateException("constructor can only be used with synched=true");
         if (type.isSynched())
             throw new IllegalStateException("something went wrong as DataAccess object is already synched!?");
     }
 
-    public DAType( boolean mmap, boolean store, boolean integ, boolean synched )
+    public DAType( boolean mmap, boolean storing, boolean integ, boolean synched )
     {
         this.mmap = mmap;
-        this.store = store;
+        this.storing = storing;
         this.integ = integ;
         this.synched = synched;
     }
@@ -67,9 +67,9 @@ public class DAType
     /**
      * Temporary data or store (with loading and storing)? default is false
      */
-    public boolean isStore()
+    public boolean isStoring()
     {
-        return store;
+        return storing;
     }
 
     /**
@@ -96,10 +96,40 @@ public class DAType
         String str = isMmap() ? "MMAP" : "RAM";
         if (isInteg())
             str += "_INT";
-        if (isStore())
+        if (isStoring())
             str += "_STORE";
         if (isSynched())
             str += "_SYNC";
         return str;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int hash = 7;
+        hash = 59 * hash + (this.mmap ? 1 : 0);
+        hash = 59 * hash + (this.storing ? 1 : 0);
+        hash = 59 * hash + (this.integ ? 1 : 0);
+        hash = 59 * hash + (this.synched ? 1 : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals( Object obj )
+    {
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final DAType other = (DAType) obj;
+        if (this.mmap != other.mmap)
+            return false;
+        if (this.storing != other.storing)
+            return false;
+        if (this.integ != other.integ)
+            return false;
+        if (this.synched != other.synched)
+            return false;
+        return true;
     }
 }

@@ -49,13 +49,11 @@ public class GHDirectory implements Directory
         location = _location;
         File dir = new File(location);
         if (dir.exists() && !dir.isDirectory())
-        {
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
-        }
 
         // set default access to integer based
         // improves performance on server side, 10% faster for queries, 20% faster for preparation
-        if (!this.defaultType.equals(DAType.MMAP))
+        if (!this.defaultType.isMmap())
         {
             if (isStoring())
             {
@@ -83,9 +81,8 @@ public class GHDirectory implements Directory
     {
         DAType type = types.get(name);
         if (type == null)
-        {
             type = defaultType;
-        }
+
         return find(name, type);
     }
 
@@ -108,13 +105,13 @@ public class GHDirectory implements Directory
         {
             if (type.isInteg())
             {
-                if (type.isStore())
+                if (type.isStoring())
                     da = new RAMIntDataAccess(name, location, true);
                 else
                     da = new RAMIntDataAccess(name, location, false);
             } else
             {
-                if (type.isStore())
+                if (type.isStoring())
                     da = new RAMDataAccess(name, location, true);
                 else
                     da = new RAMDataAccess(name, location, false);
@@ -162,8 +159,7 @@ public class GHDirectory implements Directory
 
     public boolean isStoring()
     {
-        return defaultType.equals(DAType.MMAP) || defaultType.equals(DAType.RAM_INT_STORE)
-                || defaultType.equals(DAType.RAM_STORE);
+        return defaultType.isStoring();
     }
 
     protected void mkdirs()
