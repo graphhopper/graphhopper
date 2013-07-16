@@ -67,24 +67,6 @@ public class GraphHopper implements GraphHopperAPI
         }
     }
 
-    /**
-     * @return here you can specify subclasses of GraphHopper to be used instead
-     */
-    public static GraphHopper newInstance( CmdArgs args )
-    {
-        String className = args.get("hopper.classname", "");
-        if (Helper.isEmpty(className))
-            return new GraphHopper();
-
-        try
-        {
-            Class cls = Class.forName(className);
-            return (GraphHopper) cls.getDeclaredConstructor().newInstance();
-        } catch (Exception e)
-        {
-            throw new IllegalArgumentException("Cannot instantiate class " + className, e);
-        }
-    }
     private final Logger logger = LoggerFactory.getLogger(getClass());
     // for graph:
     private GraphStorage graph;
@@ -141,7 +123,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         return encodingManager;
     }
-
+    
     public GraphHopper forServer()
     {
         // simplify to reduce network IO
