@@ -174,7 +174,7 @@ echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
  export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
  "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Dgraphhopper.config=$CONFIG \
-      -Dgraphhopper.osmreader.osm=$OSM_FILE -Dgraphhopper.hopper.classname=$GH_CLASS -Djetty.reload=manual jetty:run
+      -Dgraphhopper.osmreader.osm=$OSM_FILE -Djetty.reload=manual jetty:run
 
 
 elif [ "x$ACTION" = "ximport" ]; then
