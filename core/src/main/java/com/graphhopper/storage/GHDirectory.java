@@ -49,13 +49,11 @@ public class GHDirectory implements Directory
         location = _location;
         File dir = new File(location);
         if (dir.exists() && !dir.isDirectory())
-        {
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
-        }
 
         // set default access to integer based
         // improves performance on server side, 10% faster for queries, 20% faster for preparation
-        if (!this.defaultType.equals(DAType.MMAP))
+        if (!this.defaultType.isMmap())
         {
             if (isStoring())
             {
@@ -83,9 +81,8 @@ public class GHDirectory implements Directory
     {
         DAType type = types.get(name);
         if (type == null)
-        {
             type = defaultType;
-        }
+
         return find(name, type);
     }
 
@@ -95,27 +92,34 @@ public class GHDirectory implements Directory
         DataAccess da = map.get(name);
         if (da != null)
         {
+            if (!type.equals(da.getType()))
+                throw new IllegalStateException("Found existing DataAccess object '" + name
+                        + "' but types did not match. Requested:" + type + ", was:" + da.getType());
             return da;
         }
 
-        switch (type)
+        if (type.isMmap())
         {
-            case MMAP:
-                da = new MMapDataAccess(name, location);
-                break;
-            case RAM:
-                da = new RAMDataAccess(name, location, false);
-                break;
-            case RAM_STORE:
-                da = new RAMDataAccess(name, location, true);
-                break;
-            case RAM_INT:
-                da = new RAMIntDataAccess(name, location, false);
-                break;
-            case RAM_INT_STORE:
-                da = new RAMIntDataAccess(name, location, true);
-                break;
+            da = new MMapDataAccess(name, location);
+        } else
+        {
+            if (type.isInteg())
+            {
+                if (type.isStoring())
+                    da = new RAMIntDataAccess(name, location, true);
+                else
+                    da = new RAMIntDataAccess(name, location, false);
+            } else
+            {
+                if (type.isStoring())
+                    da = new RAMDataAccess(name, location, true);
+                else
+                    da = new RAMDataAccess(name, location, false);
+            }
         }
+
+        if (type.isSynched())
+            da = new SynchedDAWrapper(da);
 
         map.put(name, da);
         return da;
@@ -146,16 +150,16 @@ public class GHDirectory implements Directory
 
         Helper.removeDir(new File(location + name));
     }
-    
+
     @Override
-    public DAType getDefaultType() {
+    public DAType getDefaultType()
+    {
         return defaultType;
     }
 
     public boolean isStoring()
     {
-        return defaultType.equals(DAType.MMAP) || defaultType.equals(DAType.RAM_INT_STORE)
-                || defaultType.equals(DAType.RAM_STORE);
+        return defaultType.isStoring();
     }
 
     protected void mkdirs()

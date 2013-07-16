@@ -61,6 +61,30 @@ public abstract class AbstractDirectoryTester
     }
 
     @Test
+    public void testRequestedDataAccessHasToBeTheIdenticalType()
+    {
+        Directory dir = createDir();
+        da = dir.find("testing", new DAType(false, false, false, false));
+        try
+        {
+            dir.find("testing", new DAType(false, false, false, true));
+            assertFalse(true);
+        } catch (Exception ex)
+        {
+        }
+    }
+
+    @Test
+    public void testSynched()
+    {
+        Directory dir = createDir();
+        DataAccess da1 = dir.find("testing", new DAType(false, false, false, false));
+        da = dir.find("testing_synched", new DAType(false, false, false, true));
+        assertFalse(da.getClass() == da1.getClass());
+        da1.close();
+    }
+
+    @Test
     public void testNoDuplicates()
     {
         Directory dir = createDir();

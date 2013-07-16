@@ -472,4 +472,10 @@ public class MMapDataAccess extends AbstractDataAccess
         closed = false;
         loadExisting();
     }
+
+    @Override
+    public DAType getType()
+    {
+        return DAType.MMAP;
+    }        
 }

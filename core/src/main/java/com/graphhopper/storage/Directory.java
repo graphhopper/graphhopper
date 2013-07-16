@@ -26,10 +26,6 @@ package com.graphhopper.storage;
  */
 public interface Directory
 {
-    public static enum DAType
-    {
-        MMAP, RAM, RAM_STORE, RAM_INT, RAM_INT_STORE
-    }
 
     /**
      * @return an id or location in the local filesystem.

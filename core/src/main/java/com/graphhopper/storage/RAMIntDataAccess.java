@@ -29,7 +29,7 @@ import java.util.Arrays;
  * <p/>
  * @author Peter Karich
  */
-public class RAMIntDataAccess extends AbstractDataAccess
+class RAMIntDataAccess extends AbstractDataAccess
 {
     private int[][] segments = new int[0][];
     private boolean closed = false;
@@ -341,5 +341,13 @@ public class RAMIntDataAccess extends AbstractDataAccess
     protected boolean isIntBased()
     {
         return true;
+    }
+    
+    @Override
+    public DAType getType()
+    {
+        if (isStoring())
+            return DAType.RAM_INT_STORE;
+        return DAType.RAM_INT;
     }
 }

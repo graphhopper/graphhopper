@@ -112,4 +112,6 @@ public interface DataAccess extends Storable<DataAccess>
      * @return the number of segments.
      */
     int getSegments();
+
+    DAType getType();
 }

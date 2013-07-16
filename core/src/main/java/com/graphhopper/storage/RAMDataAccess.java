@@ -354,4 +354,12 @@ public class RAMDataAccess extends AbstractDataAccess
         // in every case set the name
         name = newName;
     }
+
+    @Override
+    public DAType getType()
+    {
+        if (isStoring())
+            return DAType.RAM_STORE;
+        return DAType.RAM;
+    }
 }
