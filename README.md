@@ -14,7 +14,7 @@ sign up to the [mailing list](http://graphhopper.com/#developers).
 **Please only email me directly if you need consultancy** or can't explain your problem in the public.
 
 There are subprojects to make GraphHopper working on [Android](https://github.com/graphhopper/graphhopper/wiki/Android) or 
-as a [web application](https://github.com/graphhopper/graphhopper/tree/master/web).
+as a [web application](https://github.com/graphhopper/graphhopper/tree/master/web). Have a look into our [live application](http://graphhopper.com/maps)
 
 
 Features
