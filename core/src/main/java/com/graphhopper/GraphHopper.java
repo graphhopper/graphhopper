@@ -658,7 +658,7 @@ public class GraphHopper implements GraphHopperAPI
     protected void cleanUp()
     {
         int prev = graph.getNodes();
-        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graph);
+        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graph, encodingManager);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
         int n = graph.getNodes();

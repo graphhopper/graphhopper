@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.XFirstSearch;
 import java.util.*;
 import java.util.Map.Entry;
@@ -29,7 +30,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Removes nodes which are not part of the largest network. Ie. mostly nodes with no edges at all
- * but also small subnetworks which are nearly always bugs in OSM data.
+ * but also small subnetworks which are nearly always bugs in OSM data or indicate otherwise
+ * disconnected areas e.g. via barriers - see #86.
  * <p/>
  * @author Peter Karich
  */
@@ -37,12 +39,19 @@ public class PrepareRoutingSubnetworks
 {
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final Graph g;
+    private final EdgeFilter edgeFilter;
     private int minNetworkSize = 3000;
     private int subNetworks = -1;
 
-    public PrepareRoutingSubnetworks( Graph g )
+    public PrepareRoutingSubnetworks( Graph g, EncodingManager em )
     {
         this.g = g;
+        if (em.getVehicleCount() == 0)
+            throw new IllegalStateException("No vehicles found");
+        else if (em.getVehicleCount() > 1)
+            edgeFilter = EdgeFilter.ALL_EDGES;
+        else
+            edgeFilter = new DefaultEdgeFilter(em.getSingle());
     }
 
     public PrepareRoutingSubnetworks setMinNetworkSize( int minNetworkSize )
@@ -54,7 +63,7 @@ public class PrepareRoutingSubnetworks
     public void doWork()
     {
         int del = removeZeroDegreeNodes();
-        Map<Integer, Integer> map = findSubnetworks();        
+        Map<Integer, Integer> map = findSubnetworks();
         keepLargeNetworks(map);
         logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes(" + del + ")");
         g.optimize();
@@ -75,9 +84,8 @@ public class PrepareRoutingSubnetworks
         for (int start = 0; start < locs; start++)
         {
             if (g.isNodeRemoved(start) || bs.contains(start))
-            {
                 continue;
-            }
+
             new XFirstSearch()
             {
                 @Override
@@ -92,6 +100,12 @@ public class PrepareRoutingSubnetworks
                     integ.incrementAndGet();
                     return true;
                 }
+
+                @Override
+                protected EdgeIterator getEdges( Graph g, int current )
+                {
+                    return g.getEdges(current, edgeFilter);
+                }
             }.start(g, start, false);
             map.put(start, integ.get());
             integ.set(0);
@@ -105,9 +119,7 @@ public class PrepareRoutingSubnetworks
     void keepLargeNetworks( Map<Integer, Integer> map )
     {
         if (map.size() < 2)
-        {
             return;
-        }
 
         int biggestStart = -1;
         int maxCount = -1;
@@ -140,7 +152,7 @@ public class PrepareRoutingSubnetworks
      */
     void removeNetwork( int start, int entries, final GHBitSet bs )
     {
-        if (entries > minNetworkSize)
+        if (entries >= minNetworkSize)
         {
             logger.info("did not remove large network (" + entries + ")");
             return;
@@ -158,6 +170,12 @@ public class PrepareRoutingSubnetworks
             {
                 g.markNodeRemoved(nodeId);
                 return super.goFurther(nodeId);
+            }
+
+            @Override
+            protected EdgeIterator getEdges( Graph g, int current )
+            {
+                return g.getEdges(current, edgeFilter);
             }
         }.start(g, start, true);
     }
