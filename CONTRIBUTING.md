@@ -1,5 +1,5 @@
-Before submitting a new issue discuss the topic on the mailing list. If you are sure
-it is a missing feature or a bug you can skip this.
+Submit a new issue only if you are sure it is a missing feature or a bug. Otherwise discuss the topic on the 
+[mailing list](http://graphhopper.com/#developers) first.
 
 We love pull requests. Here's a quick guide:
 
@@ -18,8 +18,7 @@ a test!
 
 Syntax:
 
-* Tell this your IDE or just use NetBeans:
-    * No tabs - use 4 spaces instead!!
+* Tell this your IDE or just use NetBeans which picks the format from pom.xml. E.g. no tabs - use 4 spaces instead!!
 * Follow the conventions you see used in the source already.
 
 And in case we didn't emphasize it enough: we love tests!
