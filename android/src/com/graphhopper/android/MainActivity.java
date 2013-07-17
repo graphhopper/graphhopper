@@ -67,8 +67,8 @@ public class MainActivity extends MapActivity
     private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
     private String currentArea = "berlin";
-    private String fileListURL = "https://code.google.com/p/graphhopper/downloads/list";
-    private String prefixURL = "http://graphhopper.googlecode.com/";
+    private String fileListURL = "http://graphhopper.com/public/maps/0.1/";
+    private String prefixURL = fileListURL;
     private String downloadURL;
     private String mapsFolder;
     private String mapFile;
@@ -224,12 +224,12 @@ public class MainActivity extends MapActivity
                 String filesList = mapsFolder + "files.txt";
                 AndroidHelper.download(fileListURL, filesList, null);
                 List<String> res = new ArrayList<String>();
-                for (String str : AndroidHelper.readFile(new FileReader(
-                        filesList)))
+                for (String str : AndroidHelper.readFile(new FileReader(filesList)))
                 {
-                    int index = str.indexOf("/files/");
+                    int index = str.indexOf("href=\"");
                     if (index >= 0)
                     {
+                        index += 6;
                         int lastIndex = str.indexOf(".ghz", index);
                         if (lastIndex >= 0)
                         {
@@ -238,6 +238,7 @@ public class MainActivity extends MapActivity
                         }
                     }
                 }
+                log(res.toString());
                 return res;
             }
 
