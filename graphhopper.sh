@@ -35,15 +35,15 @@ function ensureOsmXml {
     echo "## now downloading OSM file from $LINK and extracting to $OSM_FILE"
     
     if [ ${OSM_FILE: -4} == ".pbf" ]; then
-       wget -O $OSM_FILE $LINK
+       wget -S -nv -O $OSM_FILE $LINK
     else    
        # make sure aborting download does not result in loading corrupt osm file
        TMP_OSM=temp.osm
-       wget -O - $LINK | bzip2 -d > $TMP_OSM
+       wget -S -nv -O - $LINK | bzip2 -d > $TMP_OSM
        mv $TMP_OSM $OSM_FILE
     fi
   
-    if [ ! -f "$OSM_FILE" ]; then
+    if [[ ! -s "$OSM_FILE" ]]; then
       echo "ERROR couldn't download or extract OSM file $OSM_FILE ... exiting"
       exit
     fi
