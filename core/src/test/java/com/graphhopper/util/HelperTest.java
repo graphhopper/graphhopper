@@ -47,7 +47,7 @@ public class HelperTest
     {
         String to = "./target/tmp/test";
         Helper.removeDir(new File(to));
-        Helper.unzip("./src/test/resources/com/graphhopper/util/test.zip", to, false);
+        new Unzipper().unzip("./src/test/resources/com/graphhopper/util/test.zip", to, false);
         assertTrue(new File("./target/tmp/test/file2 bäh").exists());
         assertTrue(new File("./target/tmp/test/folder1").isDirectory());
         assertTrue(new File("./target/tmp/test/folder1/folder 3").isDirectory());

@@ -35,13 +35,7 @@ import com.graphhopper.storage.index.Location2IDQuadtree;
 // import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.Location2NodesNtree;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.DouglasPeucker;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import java.io.File;
 import java.io.IOException;
 import org.slf4j.Logger;
@@ -461,7 +455,7 @@ public class GraphHopper implements GraphHopperAPI
             {
                 try
                 {
-                    Helper.unzip(compressed.getAbsolutePath(), graphHopperFolder, removeZipped);
+                    new Unzipper().unzip(compressed.getAbsolutePath(), graphHopperFolder, removeZipped);
                 } catch (IOException ex)
                 {
                     throw new RuntimeException("Couldn't extract file " + compressed.getAbsolutePath() + " to " + graphHopperFolder, ex);
