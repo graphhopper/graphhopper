@@ -676,7 +676,7 @@ function initForm() {
             return;
         }
         // route!
-        resolveCoords(fromStr, toStr);
+        resolveCoords(fromStr, toStr, true);
     });
     
     $('.defaulting').each(function(index, element) {
