@@ -32,7 +32,7 @@ public class TranslationMap
         TranslationHashMap de = new TranslationHashMap();
         translations.put("de", de);
         de.put("sharp left", "scharf links");
-        de.put("sharp right", "scharf rechts");        
+        de.put("sharp right", "scharf rechts");
         de.put("left", "links");
         de.put("right", "rechts");
         de.put("slight left", "leicht links");
@@ -41,6 +41,19 @@ public class TranslationMap
         de.put("continue onto %s", "geradeaus auf %s");
         de.put("turn %s", "%s abbiegen");
         de.put("turn %s onto %s", "%s abbiegen auf %s");
+
+        TranslationHashMap es = new TranslationHashMap();
+        translations.put("es", es);
+        es.put("sharp left", "izquierda");
+        es.put("sharp right", "derecha");
+        es.put("left", "izquierda");
+        es.put("right", "derecha");
+        es.put("slight left", "un poco a la izquierda");
+        es.put("slight right", "un poco a la derecha");
+        es.put("continue", "continue");
+        es.put("continue onto %s", "siga por %s");
+        es.put("turn %s", "gire por %s");
+        es.put("turn %s onto %s", "gire %s por %s");
 
         TranslationHashMap en = new TranslationHashMap()
         {
@@ -88,12 +101,12 @@ public class TranslationMap
         public String toString()
         {
             return map.toString();
-        }        
+        }
     }
 
     @Override
     public String toString()
     {
         return translations.toString();
-    }        
+    }
 }
