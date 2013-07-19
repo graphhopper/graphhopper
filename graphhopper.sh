@@ -27,7 +27,10 @@ if [ "x$ACTION" = "x" ]; then
 fi
 
 function ensureOsmXml { 
-  if [ ! -s "$OSM_FILE" ]; then
+  if [ "x$OSM_FILE" = "x" ]; then
+    # skip
+    return
+  elif [ ! -s "$OSM_FILE" ]; then
     echo "File not found '$OSM_FILE'. Press ENTER to get it from: $LINK"
     echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
     read -e
@@ -36,6 +39,9 @@ function ensureOsmXml {
     
     if [ ${OSM_FILE: -4} == ".pbf" ]; then
        wget -S -nv -O $OSM_FILE $LINK
+    elif [ ${OSM_FILE: -4} == ".ghz" ]; then
+       wget -S -nv -O $OSM_FILE $LINK
+       unzip $FILE -d $NAME-gh             
     else    
        # make sure aborting download does not result in loading corrupt osm file
        TMP_OSM=temp.osm
@@ -125,17 +131,25 @@ if [ ${FILE: -4} == ".osm" ]; then
 elif [ ${FILE: -4} == ".pbf" ]; then
    OSM_FILE=$FILE
 elif [ ${FILE: -7} == ".osm.gz" ]; then
+   OSM_FILE=$FILE   
+elif [ ${FILE: -3} == "-gh" ]; then
    OSM_FILE=$FILE
+   NAME=${NAME%%???}
+elif [ ${FILE: -4} == ".ghz" ]; then
+   OSM_FILE=$FILE
+   if [[ ! -d "$NAME-gh" ]]; then
+      unzip $FILE -d $NAME-gh
+   fi
 else
-   # no end default to osm
-   OSM_FILE=$NAME.osm
+   # no known end -> no import
+   OSM_FILE=
 fi
 
 GRAPH=$NAME-gh
 VERSION=`grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1`
 JAR=core/target/graphhopper-$VERSION-jar-with-dependencies.jar
 
-# file without path (.osm.gz or osm.bz2 is also possible)
+# file without path
 TMP=$(basename "$FILE")
 TMP="${TMP%.*}"
 TMP="${TMP%.*}"
@@ -153,9 +167,13 @@ else
  LINK=`echo $NAME | tr '_' '/'`
  if [ ${FILE: -4} == ".osm" ]; then 
    LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
- else
+ elif [ ${FILE: -4} == ".ghz" ]; then
+   LINK="http://graphhopper.com/public/maps/0.1/$FILE"      
+ elif [ ${FILE: -4} == ".pbf" ]; then
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
-   OSM_FILE=$NAME.pbf
+ else
+   # e.g. if directory ends on '-gh'
+   LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
  fi
  if [ "x$JAVA_OPTS" = "x" ]; then
   JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1000m -Xms1000m" 
@@ -173,7 +191,8 @@ echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
  export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
  "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Dgraphhopper.config=$CONFIG \
-      -Dgraphhopper.osmreader.osm=$OSM_FILE -Djetty.reload=manual jetty:run
+      -Dgraphhopper.graph.location="$GRAPH" \
+      -Dgraphhopper.osmreader.osm="$OSM_FILE" -Djetty.reload=manual jetty:run
 
 
 elif [ "x$ACTION" = "ximport" ]; then

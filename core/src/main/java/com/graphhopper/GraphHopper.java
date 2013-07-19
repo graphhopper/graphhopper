@@ -219,9 +219,8 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setGraphHopperLocation( String ghLocation )
     {
         if (ghLocation == null)
-        {
             throw new NullPointerException("graphhopper location cannot be null");
-        }
+
         this.ghLocation = ghLocation;
         return this;
     }
@@ -286,16 +285,13 @@ public class GraphHopper implements GraphHopperAPI
 
         String tmpOsmFile = args.get("osmreader.osm", "");
         if (!Helper.isEmpty(tmpOsmFile))
-        {
             osmFile = tmpOsmFile;
-        }
+
         String graphHopperFolder = args.get("graph.location", "");
         if (Helper.isEmpty(graphHopperFolder) && Helper.isEmpty(ghLocation))
         {
             if (Helper.isEmpty(osmFile))
-            {
                 throw new IllegalArgumentException("You need to specify an OSM file.");
-            }
 
             graphHopperFolder = Helper.pruneFileEnd(osmFile) + "-gh";
         }
@@ -310,18 +306,18 @@ public class GraphHopper implements GraphHopperAPI
             setMemoryMapped();
         } else
         {
-            if(dataAccess.contains("SAVE") || dataAccess.contains("INMEMORY"))
+            if (dataAccess.contains("SAVE") || dataAccess.contains("INMEMORY"))
                 throw new IllegalStateException("configuration names for dataAccess changed. Use eg. RAM or RAM_STORE");
-            
+
             if (dataAccess.contains("RAM_STORE"))
                 setInMemory(true, true);
             else
                 setInMemory(true, false);
         }
-        
-        if(dataAccess.contains("SYNC")) 
+
+        if (dataAccess.contains("SYNC"))
             dataAccessType = new DAType(dataAccessType, true);
-        
+
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
 
@@ -440,8 +436,10 @@ public class GraphHopper implements GraphHopperAPI
 
         if (graph != null)
             throw new IllegalStateException("graph is already loaded");
-
-        if (graphHopperFolder.indexOf(".") < 0)
+        
+        if (graphHopperFolder.endsWith("-gh"))
+            graphHopperFolder = graphHopperFolder;
+        else if (graphHopperFolder.indexOf(".") < 0)
         {
             if (new File(graphHopperFolder + "-gh").exists())
                 graphHopperFolder += "-gh";
