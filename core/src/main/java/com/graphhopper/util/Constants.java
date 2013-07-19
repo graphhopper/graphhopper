@@ -86,15 +86,18 @@ public class Constants
             VERSION = "0.0";
             SNAPSHOT = true;
             System.err.println("GraphHopper Initialization WARNING: maven did not preprocess the version file! Do not use the jar for a release!");
-        } else if ("0.0".equals(version) || indexM < 0 || indexP >= indexM)
+        } else if ("0.0".equals(version))
         {
             VERSION = "0.0";
             SNAPSHOT = true;
             System.err.println("GraphHopper Initialization WARNING: cannot get version!?");
         } else
         {
+            String tmp = version;
             // throw away the "-SNAPSHOT"
-            String tmp = version.substring(0, indexM);
+            if (indexM >= 0)
+                tmp = version.substring(0, indexM);
+
             SNAPSHOT = version.toLowerCase().contains("-snapshot");
             VERSION = tmp;
         }
