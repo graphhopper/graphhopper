@@ -472,8 +472,10 @@ public class MainActivity extends MapActivity
             protected GHResponse doInBackground( Void... v )
             {
                 StopWatch sw = new StopWatch().start();
-                GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon)
-                        .setAlgorithm("dijkstrabi").putHint("douglas.minprecision", 1);
+                GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
+                        setAlgorithm("dijkstrabi").
+                        putHint("instructions", false).
+                        putHint("douglas.minprecision", 1);
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
                 return resp;

@@ -53,7 +53,7 @@ GHRequest.prototype.createFullURL = function() {
     var str = "?point=" + encodeURIComponent(this.from.input) + "&point=" + encodeURIComponent(this.to.input);    
     return this.createPath(str);
 }
-    
+
 GHRequest.prototype.createPath = function(url) {    
     if(this.vehicle && this.vehicle != "car")
         url += "&vehicle=" + this.vehicle;    
@@ -116,15 +116,13 @@ function decodePath(encoded, geoJson) {
     return array;
 }
 
-GHRequest.prototype.doRequest = function(url, callback) {   
+GHRequest.prototype.doRequest = function(url, callback) {
     var tmpEncodedPolyline = this.encodedPolyline;
     $.ajax({
         "timeout" : 30000,
         "url": url,
         "success": function(json) {
-            if(tmpEncodedPolyline && json.route) {
-                if(!json.route.coordinates)
-                    console.log("something wrong on server? as we have encodedPolyline=" + tmpEncodedPolyline + " but no encoded data was return?");
+            if(tmpEncodedPolyline && json.route) {                
                 // convert encoded polyline stuff to normal json
                 if (json.route.coordinates) {
                     var tmpArray = decodePath(json.route.coordinates, true);
@@ -133,7 +131,8 @@ GHRequest.prototype.doRequest = function(url, callback) {
                         "type": "LineString",
                         "coordinates": tmpArray
                     };
-                }
+                } else 
+                    console.log("something wrong on server? wrong server version? as we have encodedPolyline=" + tmpEncodedPolyline + " but no encoded data was return?");
             }
             callback(json);
         },
