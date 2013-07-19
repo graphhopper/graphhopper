@@ -111,11 +111,13 @@
                 <artifactId>jetty-maven-plugin</artifactId>
                 <version>${jetty.version}</version>
                 <configuration>
+                    <!--
                     <connectors>
                         <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">	
                             <port>8989</port>
                         </connector>
                     </connectors>
+                    -->
                                         
                     <!-- to be used in combination with netbeans compile on save feature -->
                     <scanTargets>
