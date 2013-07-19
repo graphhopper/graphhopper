@@ -50,7 +50,7 @@ public class GraphHopperIntegrationTest
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopper().setInMemory(true, true).setOSMFile(osmFile).
                     setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
-                    importOrLoad();
+                    importOrLoad().setFinishPath(false);
 
             Graph g = hopper.getGraph();
             final AbstractFlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);

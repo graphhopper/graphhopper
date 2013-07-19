@@ -24,3 +24,5 @@ android/libs/graphhopper-*-android.jar
 debug.sh
 *.pbf
 *.dem
+/.settings
+/.project

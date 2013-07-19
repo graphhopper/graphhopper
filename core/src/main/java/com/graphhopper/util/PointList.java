@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.graphhopper.util.shapes.GHPlace;
+
 /**
  * Slim list to store several points (without the need for a point object).
  * <p/>
@@ -82,6 +84,12 @@ public class PointList
         return size == 0;
     }
 
+    /**
+     * Get the latitude of the point at the passed index in the list
+     * @param index
+     * @return
+     * @throws ArrayIndexOutOfBoundsException if index is out of bounds
+     */
     public double getLatitude( int index )
     {
         if (index >= size)
@@ -92,7 +100,15 @@ public class PointList
         return latitudes[index];
     }
 
-    public double getLongitude( int index )
+	/**
+	 * Get the longitude of the point at the passed index in the list
+	 * 
+	 * @param index
+	 * @return
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if index is out of bounds
+	 */
+	public double getLongitude( int index )
     {
         if (index >= size)
         {
@@ -101,6 +117,24 @@ public class PointList
         }
         return longitudes[index];
     }
+
+	/**
+	 * Get the lat/lon of the point at the passed index in the list
+	 * 
+	 * @param index
+	 * @return
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if index is out of bounds
+	 */
+	public GHPlace point(int index)
+	{
+		if (index >= size)
+        {
+            throw new ArrayIndexOutOfBoundsException("Tried to access PointList with too big index! "
+                    + "index:" + index + ", size:" + size);
+        }
+		return new GHPlace(latitudes[index], longitudes[index]);
+	}
 
     public void reverse()
     {
@@ -151,6 +185,24 @@ public class PointList
             sb.append(')');
         }
         return sb.toString();
+    }
+    
+    public String toWkt()
+    {
+    	StringBuilder sb = new StringBuilder("LINESTRING(");
+    	for (int i = 0; i < size; i++)
+    	{
+            if (i > 0)
+            {
+                sb.append(", ");
+            }
+
+            sb.append(longitudes[i])
+              .append(' ')
+              .append(latitudes[i]);
+        }
+    	sb.append(')');
+    	return sb.toString();
     }
 
     /**

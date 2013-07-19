@@ -106,6 +106,10 @@ public class GHPlace
         }
         return str.trim();
     }
+    
+    public String toWkt() {
+    	return new StringBuilder("POINT(").append(lon).append(' ').append(lat).append(')').toString();
+    }
 
     /**
      * Attention: geoJson is LON,LAT

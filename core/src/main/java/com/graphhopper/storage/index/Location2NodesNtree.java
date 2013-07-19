@@ -18,6 +18,19 @@
  */
 package com.graphhopper.storage.index;
 
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.procedure.TIntProcedure;
+import gnu.trove.set.hash.TIntHashSet;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
@@ -36,16 +49,6 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.set.hash.TIntHashSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This implementation implements an n-tree to get node ids from GPS location. This replaces
@@ -713,7 +716,7 @@ public class Location2NodesNtree implements Location2IDIndex
                         double adjLat = graph.getLatitude(adjNode);
                         double adjLon = graph.getLongitude(adjNode);
 
-                        check(tmpNode, currDist, -adjNode - 2);
+                        check(tmpNode, currDist, -adjNode - 2, currEdge);
 
                         double tmpDist;
                         double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
@@ -733,7 +736,7 @@ public class Location2NodesNtree implements Location2IDIndex
                                     && NumHelper.equalsEps(queryLon, wayLon, 1e-6))
                             {
                                 // equal point found
-                                check(tmpNode, 0d, pointIndex);
+                                check(tmpNode, 0d, pointIndex, currEdge);
                                 break;
                             } else if (edgeDistCalcOnSearch
                                     && distCalc.validEdgeDistance(queryLat, queryLon,
@@ -741,7 +744,7 @@ public class Location2NodesNtree implements Location2IDIndex
                             {
                                 tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                         tmpLat, tmpLon, wayLat, wayLon);
-                                check(tmpNode, tmpDist, pointIndex);
+                                check(tmpNode, tmpDist, pointIndex, currEdge);
                             }
 
                             tmpLat = wayLat;
@@ -759,17 +762,18 @@ public class Location2NodesNtree implements Location2IDIndex
                             tmpDist = adjDist;
                         }
 
-                        check(tmpNode, tmpDist, -currNode - 2);
+                        check(tmpNode, tmpDist, -currNode - 2, currEdge);
                         return closestNode.getWeight() >= 0;
                     }
 
-                    void check( int node, double dist, int wayIndex )
+                    void check( int node, double dist, int wayIndex, EdgeIterator edge )
                     {
                         if (dist < closestNode.getWeight())
                         {
                             closestNode.setWeight(dist);
                             closestNode.setClosestNode(node);
                             closestNode.setWayIndex(wayIndex);
+                            closestNode.setClosestEdge(graph.getEdgeProps(edge.getEdge(), -1));
                         }
                     }
                 }.start(graph, networkEntryNodeId, false);
