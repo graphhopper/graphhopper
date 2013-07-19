@@ -20,15 +20,9 @@ package com.graphhopper.http;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.util.Downloader;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.Inflater;
-import java.util.zip.InflaterInputStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -52,10 +46,16 @@ public class GraphHopperWeb implements GraphHopperAPI
     private Logger logger = LoggerFactory.getLogger(getClass());
     private String serviceUrl;
     private boolean encodePolyline = true;
+    private Downloader downloader = new Downloader();
 
     public GraphHopperWeb()
     {
     }
+
+    public void setDownloader( Downloader downloader )
+    {
+        this.downloader = downloader;
+    }        
 
     /**
      * Example url: http://localhost:8989/api or http://217.92.216.224:8080/api
@@ -88,7 +88,7 @@ public class GraphHopperWeb implements GraphHopperAPI
                     + "&encodedPolyline=" + encodePolyline
                     + "&minPathPrecision=" + request.getHint("douglas.minprecision", 1)
                     + "&algo=" + request.getAlgorithm();
-            String str = WebHelper.readString(fetch(url));
+            String str = downloader.downloadAsString(url);
             JSONObject json = new JSONObject(str);
             took = json.getJSONObject("info").getDouble("took");
             JSONObject route = json.getJSONObject("route");
@@ -118,41 +118,5 @@ public class GraphHopperWeb implements GraphHopperAPI
         {
             logger.info("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);
         }
-    }
-
-    InputStream fetch( String url ) throws IOException
-    {
-        HttpURLConnection conn = (HttpURLConnection) createConnection(url);
-        // create connection but before reading get the correct inputstream based on the compression
-        conn.connect();
-        String encoding = conn.getContentEncoding();
-        InputStream is;
-        if (encoding != null && encoding.equalsIgnoreCase("gzip"))
-        {
-            is = new GZIPInputStream(conn.getInputStream());
-        } else if (encoding != null && encoding.equalsIgnoreCase("deflate"))
-        {
-            is = new InflaterInputStream(conn.getInputStream(), new Inflater(true));
-        } else
-        {
-            is = conn.getInputStream();
-        }
-        return is;
-    }
-
-    HttpURLConnection createConnection( String urlStr ) throws IOException
-    {
-        URL url = new URL(urlStr);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setDoOutput(true);
-        conn.setUseCaches(true);
-        conn.setRequestProperty("Referrer", "http://graphhopper.com");
-        conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Online GraphHopperAPI)");
-        // suggest respond to be gzipped or deflated (which is just another compression)
-        // http://stackoverflow.com/q/3932117
-        conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
-        conn.setReadTimeout(4000);
-        conn.setConnectTimeout(4000);
-        return conn;
     }
 }
