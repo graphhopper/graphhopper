@@ -189,8 +189,11 @@ packageCoreJar
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
 if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
- export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
- "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Dgraphhopper.config=$CONFIG \
+  export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
+  if [ "x$JETTY_PORT" = "x" ]; then  
+    JETTY_PORT=8989
+  fi
+  "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Djetty.port=$JETTY_PORT -Dgraphhopper.config=$CONFIG \
       -Dgraphhopper.graph.location="$GRAPH" \
       -Dgraphhopper.osmreader.osm="$OSM_FILE" -Djetty.reload=manual jetty:run
 
