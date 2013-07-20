@@ -221,10 +221,9 @@ public class MainActivity extends MapActivity
             protected List<String> saveDoInBackground( Void... params )
                     throws Exception
             {
-                String filesList = mapsFolder + "files.txt";
-                new Downloader().downloadAndUnzip(fileListURL, filesList, null);
+                String[] lines = new Downloader().downloadAsString(fileListURL).split("\n");
                 List<String> res = new ArrayList<String>();
-                for (String str : AndroidHelper.readFile(new FileReader(filesList)))
+                for (String str : lines)
                 {
                     int index = str.indexOf("href=\"");
                     if (index >= 0)
