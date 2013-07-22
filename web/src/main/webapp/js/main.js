@@ -33,19 +33,15 @@ else {
 var ghRequest = new GHRequest(host);
 ghRequest.algoType = "fastest";
 //ghRequest.algorithm = "dijkstra";
-var everPushedSomething = false;
 
-$(document).ready(function(e) {    
-    var initialUrl = location.href;
-
+$(document).ready(function(e) {
     var History = window.History;
     if (History.enabled) {
         History.Adapter.bind(window, 'statechange', function(){
-            // First important workaround:
+            // No need for workaround?
             // Chrome and Safari always emit a popstate event on page load, but Firefox doesn’t
             // https://github.com/defunkt/jquery-pjax/issues/143#issuecomment-6194330
-            var onloadPop = !everPushedSomething && location.href == initialUrl;
-            if (onloadPop) return;
+            
             var state = History.getState();
             console.log(state);            
             //             initFromParams(parseUrl(state.url), true);
@@ -89,12 +85,7 @@ $(document).ready(function(e) {
     }).done(function() {
         var params = parseUrlWithHisto();        
         initMap();
-        // force same behaviour for all browsers: on page load no history event will be fired
-        // 
-        // put into history, (first popstate is muted -> see above)
-        initFromParams(params, false);
-        // force to true even if history.js is disabled due to cookie disallow etc
-        everPushedSomething = true;
+        
         // execute query
         initFromParams(params, true);        
     }).error(function() {
@@ -440,10 +431,6 @@ function routeLatLng(request, doQuery) {
         console.log(params);
         params.doZoom = doZoom;
         History.pushState(params, browserTitle, urlForHistory);
-        return;
-    }    
-    // BUT if this is the very first query and no history support skip the query
-    if(!History.enabled && !everPushedSomething) {
         return;
     }
     
