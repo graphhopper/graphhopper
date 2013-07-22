@@ -149,7 +149,7 @@ function initMap() {
     var height = $(window).height() - 5;
     mapDiv.width(width).height(height);
     if(height > 350)
-        height -= 255;
+        height -= 265;
     $("#info").css("max-height", height);
     console.log("init map at " + JSON.stringify(bounds));
     
@@ -313,8 +313,11 @@ function resolve(fromOrTo, point) {
     $("#" + fromOrTo + "Indicator").show();
     return getInfoFromLocation(point).done(function() {        
         $("#" + fromOrTo + "Input").val(point.input);
-        if(point.resolvedText)
-            $("#" + fromOrTo + "Found").html(point.resolvedText);        
+        if(point.resolvedText) {
+            var foundDiv = $("#" + fromOrTo + "Found");
+            foundDiv.html(point.resolvedText);
+            foundDiv.attr("title", point.resolvedText);
+        }
         
         $("#" + fromOrTo + "Flag").show();
         $("#" + fromOrTo + "Indicator").hide();

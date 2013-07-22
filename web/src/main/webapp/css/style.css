@@ -36,6 +36,8 @@ body {
     width: 230px;
 }
 #fromFound, #toFound {
+    overflow: hidden;
+    max-height: 24px;
     font-size: 10px;
     color: gray;
     padding-top: 4px;
@@ -89,6 +91,9 @@ body {
 #header_img {
     padding-top: 15px;
     padding-bottom: 15px;
+}
+#header_img img {
+    width: 200px;
 }
 #searchButton {
     float: right;
