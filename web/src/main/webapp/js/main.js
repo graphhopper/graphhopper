@@ -27,7 +27,8 @@ if(LOCAL)
     host = "http://localhost:8989";
 else {
     // cross origin:
-    host = "http://graphhopper.gpsies.com";
+    // host = "http://graphhopper.gpsies.com";
+    host = "http://graphhopper.com/routing";
 }
 var ghRequest = new GHRequest(host);
 ghRequest.algoType = "fastest";
@@ -469,6 +470,7 @@ function routeLatLng(request, doQuery) {
         descriptionDiv.html("");
         if(json.info.errors) {
             var tmpErrors = json.info.errors;            
+            console.log(tmpErrors);
             for (var m = 0; m < tmpErrors.length; m++) {
                 descriptionDiv.append("<div class='error'>" + tmpErrors[m].message + "</div>");
             }
