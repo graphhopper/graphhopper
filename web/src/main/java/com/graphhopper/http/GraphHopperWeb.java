@@ -38,7 +38,7 @@ public class GraphHopperWeb implements GraphHopperAPI
     public static void main( String[] args )
     {
         GraphHopperAPI gh = new GraphHopperWeb();
-        gh.load("http://localhost:8989/api");
+        gh.load("http://localhost:8989/api/route");
         //GHResponse ph = gh.route(new GHRequest(53.080827, 9.074707, 50.597186, 11.184082));
         GHResponse ph = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180));
         System.out.println(ph);
