@@ -106,7 +106,8 @@ public class OSMInputFile implements Sink, Closeable
             ips.reset();
             return new GZIPInputStream(ips, 50000);
         } else if (header[0] == 0 && header[1] == 0 && header[2] == 0
-                && header[3] == 13 && header[4] == 10 && header[5] == 9)
+                && header[4] == 10 && header[5] == 9
+                && (header[3] == 13 || header[3] == 14))
         {
             ips.reset();
             binary = true;
