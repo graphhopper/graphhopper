@@ -254,6 +254,11 @@ public class GraphHopper implements GraphHopperAPI
         return graph;
     }
 
+    public void setGraph( GraphStorage graph )
+    {
+        this.graph = graph;
+    }        
+
     public Location2IDIndex getIndex()
     {
         return index;
@@ -381,8 +386,7 @@ public class GraphHopper implements GraphHopperAPI
         setGraphHopperLocation(graphHopperLocation);
         try
         {
-            OSMReader reader = importOSM(osmFileStr);
-            graph = reader.getGraph();
+            importOSM(osmFileStr);
         } catch (IOException ex)
         {
             throw new RuntimeException("Cannot parse OSM file " + osmFileStr, ex);
@@ -436,16 +440,17 @@ public class GraphHopper implements GraphHopperAPI
 
         if (graph != null)
             throw new IllegalStateException("graph is already loaded");
-        
+
         if (graphHopperFolder.endsWith("-gh"))
-            graphHopperFolder = graphHopperFolder;
-        else if (graphHopperFolder.indexOf(".") < 0)
+        {
+            // do nothing  
+        } else if (graphHopperFolder.endsWith(".osm") || graphHopperFolder.endsWith(".xml"))
+        {
+            throw new IllegalArgumentException("To import an osm file you need to use importOrLoad");
+        } else if (graphHopperFolder.indexOf(".") < 0)
         {
             if (new File(graphHopperFolder + "-gh").exists())
-                graphHopperFolder += "-gh";
-            else if (graphHopperFolder.endsWith(".osm") || graphHopperFolder.endsWith(".xml"))
-                throw new IllegalArgumentException("To import an osm file you need to use importOrLoad");
-
+                graphHopperFolder += "-gh";            
         } else
         {
             File compressed = new File(graphHopperFolder + ".ghz");
