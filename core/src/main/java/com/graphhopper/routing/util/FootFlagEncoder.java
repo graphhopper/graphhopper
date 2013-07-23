@@ -59,9 +59,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         sidewalks.add("left");
         sidewalks.add("right");
 
-        ferries.add("shuttle_train");
-        ferries.add("ferry");
-
         potentialBarriers.add("gate");
         //potentialBarriers.add( "lift_gate" );   you can always pass them on foot
         potentialBarriers.add("swing_gate");
