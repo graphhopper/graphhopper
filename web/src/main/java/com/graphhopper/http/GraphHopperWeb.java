@@ -46,7 +46,7 @@ public class GraphHopperWeb implements GraphHopperAPI
     private Logger logger = LoggerFactory.getLogger(getClass());
     private String serviceUrl;
     private boolean encodePolyline = true;
-    private Downloader downloader = new Downloader();
+    private Downloader downloader = new Downloader("GraphHopperWeb");
 
     public GraphHopperWeb()
     {
