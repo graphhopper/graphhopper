@@ -92,7 +92,9 @@ public class OSMReaderTest
         @Override
         protected OSMReader importOSM( String ignore ) throws IOException
         {
-            OSMReader osmReader = new OSMReader(buildGraph(dir, getEncodingManager()), 1000);
+            GraphStorage tmpGraph = buildGraph(dir, getEncodingManager());
+            setGraph(tmpGraph);
+            OSMReader osmReader = new OSMReader(tmpGraph, 1000);
             osmReader.setEncodingManager(getEncodingManager());
             try
             {
@@ -179,7 +181,9 @@ public class OSMReaderTest
             @Override
             protected OSMReader importOSM( String ignore ) throws IOException
             {
-                OSMReader osmReader = new OSMReader(buildGraph(dir, getEncodingManager()), 1000)
+                GraphStorage tmpGraph = buildGraph(dir, getEncodingManager());
+                setGraph(tmpGraph);
+                OSMReader osmReader = new OSMReader(tmpGraph, 1000)
                 {
                     @Override
                     public boolean isInBounds( OSMNode node )

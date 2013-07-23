@@ -21,13 +21,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.MMapDirectory;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.ArrayList;
@@ -246,7 +240,7 @@ public class GHUtility
             // outdir = new MMapDirectory(location);                
         } else
         {
-            boolean isStoring = ((RAMDirectory) store.getDirectory()).isStoring();
+            boolean isStoring = ((GHDirectory) store.getDirectory()).isStoring();
             outdir = new RAMDirectory(location, isStoring);
         }
         return outdir;
