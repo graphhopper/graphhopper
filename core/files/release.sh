@@ -20,6 +20,10 @@ TARGET=./target
 GIT_E=true
 
 mvn versions:set -DnewVersion=$VERSION -DgenerateBackupPoms=false
+# as android is not referenced in parent we need to do it manually
+cd android
+mvn versions:set -DnewVersion=$VERSION -DgenerateBackupPoms=false
+cd ..
 
 if [ "x$GIT_E" = "xtrue" ]; then
   git checkout -b $VERSION

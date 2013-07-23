@@ -19,8 +19,10 @@ package com.graphhopper.http;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
+import com.graphhopper.util.Downloader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -33,14 +35,16 @@ public class GraphHopperWebTest
     @Test
     public void testReadUnencoded() throws Exception
     {
-        GraphHopperWeb instance = new GraphHopperWeb()
+        Downloader downloader = new Downloader()
         {
             @Override
-            InputStream fetch( String url ) throws IOException
+            public InputStream fetch( String url ) throws IOException
             {
                 return getClass().getResourceAsStream("test.json");
             }
-        }.setEncodePolyline(false);
+        };
+        GraphHopperWeb instance = new GraphHopperWeb().setEncodePolyline(false);
+        instance.setDownloader(downloader);
         GHResponse res = instance.route(new GHRequest(11.561415, 49.9516, 11.560439, 49.950357));
         assertEquals(0.218915, res.getDistance(), 1e-5);
         assertEquals(7, res.getPoints().getSize());
@@ -49,14 +53,16 @@ public class GraphHopperWebTest
     @Test
     public void testReadEncoded() throws Exception
     {
-        GraphHopperWeb instance = new GraphHopperWeb()
+        Downloader downloader = new Downloader()
         {
             @Override
-            InputStream fetch( String url ) throws IOException
+            public InputStream fetch( String url ) throws IOException
             {
                 return getClass().getResourceAsStream("test_encoded.json");
             }
         };
+        GraphHopperWeb instance = new GraphHopperWeb().setEncodePolyline(true);
+        instance.setDownloader(downloader);
         GHResponse res = instance.route(new GHRequest(11.561415, 49.9516, 11.560439, 49.950357));
         assertEquals(0.218915, res.getDistance(), 1e-5);
         assertEquals(7, res.getPoints().getSize());

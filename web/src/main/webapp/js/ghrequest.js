@@ -9,6 +9,8 @@ GHRequest = function(host) {
     this.debug = false;
     this.locale = "en";
     this.doZoom = true;
+    // if your server allows CORS you can use json here
+    this.dataType = "jsonp";
 };
 
 GHRequest.prototype.init = function(params) {
@@ -46,14 +48,14 @@ GHRequest.prototype.handleBoolean = function(key, params) {
 }
 
 GHRequest.prototype.createURL = function(demoUrl) {    
-    return this.createPath(this.host + "/api/route?" + demoUrl + "&type=jsonp");
+    return this.createPath(this.host + "/api/route?" + demoUrl + "&type=" + this.dataType);
 }
 
 GHRequest.prototype.createFullURL = function() {
     var str = "?point=" + encodeURIComponent(this.from.input) + "&point=" + encodeURIComponent(this.to.input);    
     return this.createPath(str);
 }
-    
+
 GHRequest.prototype.createPath = function(url) {    
     if(this.vehicle && this.vehicle != "car")
         url += "&vehicle=" + this.vehicle;    
@@ -116,15 +118,13 @@ function decodePath(encoded, geoJson) {
     return array;
 }
 
-GHRequest.prototype.doRequest = function(url, callback) {   
+GHRequest.prototype.doRequest = function(url, callback) {
     var tmpEncodedPolyline = this.encodedPolyline;
     $.ajax({
         "timeout" : 30000,
         "url": url,
         "success": function(json) {
-            if(tmpEncodedPolyline && json.route) {
-                if(!json.route.coordinates)
-                    console.log("something wrong on server? as we have encodedPolyline=" + tmpEncodedPolyline + " but no encoded data was return?");
+            if(tmpEncodedPolyline && json.route) {                
                 // convert encoded polyline stuff to normal json
                 if (json.route.coordinates) {
                     var tmpArray = decodePath(json.route.coordinates, true);
@@ -133,7 +133,8 @@ GHRequest.prototype.doRequest = function(url, callback) {
                         "type": "LineString",
                         "coordinates": tmpArray
                     };
-                }
+                } else 
+                    console.log("something wrong on server? wrong server version? as we have encodedPolyline=" + tmpEncodedPolyline + " but no encoded data was return?");
             }
             callback(json);
         },
@@ -155,12 +156,12 @@ GHRequest.prototype.doRequest = function(url, callback) {
             callback(json);
         },
         "type": "GET",
-        "dataType": "jsonp"
+        "dataType": this.dataType
     });
 };
 
 GHRequest.prototype.getInfo = function(success, error) {
-    var url = this.host + "/api/info?type=jsonp";
+    var url = this.host + "/api/info?type=" + this.dataType;
     console.log(url);    
     return $.ajax({
         "url": url,
@@ -168,7 +169,7 @@ GHRequest.prototype.getInfo = function(success, error) {
         "error" : error,
         "timeout" : 3000,
         "type" : "GET",
-        "dataType": 'jsonp'
+        "dataType": this.dataType
     });
 }
 

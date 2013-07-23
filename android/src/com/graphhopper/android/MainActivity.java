@@ -49,8 +49,10 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.Constants;
+import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.ProgressListener;
 import com.graphhopper.util.StopWatch;
 
 public class MainActivity extends MapActivity
@@ -167,9 +169,8 @@ public class MainActivity extends MapActivity
     {
         // only return true if already loaded
         if (hopper != null)
-        {
             return true;
-        }
+
         if (prepareInProgress)
         {
             logUser("Preparation still in progress");
@@ -198,10 +199,9 @@ public class MainActivity extends MapActivity
         {
             nameList.add(file);
         }
+
         if (nameList.isEmpty())
-        {
             return;
-        }
 
         chooseArea(localButton, localSpinner, nameList,
                 new MySpinnerListener()
@@ -221,10 +221,9 @@ public class MainActivity extends MapActivity
             protected List<String> saveDoInBackground( Void... params )
                     throws Exception
             {
-                String filesList = mapsFolder + "files.txt";
-                AndroidHelper.download(fileListURL, filesList, null);
+                String[] lines = new Downloader().downloadAsString(fileListURL).split("\n");
                 List<String> res = new ArrayList<String>();
-                for (String str : AndroidHelper.readFile(new FileReader(filesList)))
+                for (String str : lines)
                 {
                     int index = str.indexOf("href=\"");
                     if (index >= 0)
@@ -286,9 +285,8 @@ public class MainActivity extends MapActivity
         {
             String tmp = Helper.pruneFileEnd(fullName);
             if (tmp.endsWith("-gh"))
-            {
                 tmp = tmp.substring(0, tmp.length() - 3);
-            }
+
             tmp = AndroidHelper.getFileName(tmp);
             nameToFullName.put(tmp, fullName);
         }
@@ -324,12 +322,12 @@ public class MainActivity extends MapActivity
     {
         if (downloadURL == null)
         {
-            unzipping();
+            loadMap();
             return;
         }
 
         final ProgressDialog dialog = new ProgressDialog(this);
-        dialog.setMessage("Downloading " + downloadURL);
+        dialog.setMessage("Downloading and uncompressing " + downloadURL);
         dialog.setIndeterminate(false);
         dialog.setMax(100);
         dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
@@ -340,16 +338,16 @@ public class MainActivity extends MapActivity
             protected Object saveDoInBackground( Void... _ignore )
                     throws Exception
             {
-                final String localFile = mapsFolder
-                        + AndroidHelper.getFileName(downloadURL);
-                log("downloading " + downloadURL + " to " + localFile);
-                AndroidHelper.download(downloadURL, localFile,
+                String localFolder = Helper.pruneFileEnd(AndroidHelper.getFileName(downloadURL));
+                localFolder = mapsFolder + localFolder + "-gh";
+                log("downloading & unzipping " + downloadURL + " to " + localFolder);
+                new Downloader().setUserAgent("GraphHopper Android").downloadAndUnzip(downloadURL, localFolder,
                         new ProgressListener()
                         {
                             @Override
-                            public void update( int val )
+                            public void update( long val )
                             {
-                                publishProgress(val);
+                                publishProgress((int) val);
                             }
                         });
                 return null;
@@ -369,46 +367,6 @@ public class MainActivity extends MapActivity
                     String str = "An error happend while retrieving maps:" + getErrorMessage();
                     log(str, getError());
                     logUser(str);
-                } else
-                {
-                    unzipping();
-                }
-            }
-        }.execute();
-    }
-
-    void unzipping()
-    {
-        final File compressed = new File(mapsFolder + currentArea + ".ghz");
-        final boolean uncompress = compressed.exists()
-                && !compressed.isDirectory();
-        if (!uncompress)
-        {
-            loadMap();
-            return;
-        }
-
-        logUser("uncompressing file " + compressed.getAbsolutePath());
-        new GHAsyncTask<Void, Void, Object>()
-        {
-            @Override
-            protected Object saveDoInBackground( Void... params )
-                    throws Exception
-            {
-                if (uncompress)
-                {
-                    boolean deleteZipped = true;
-                    Helper.unzip(compressed.getAbsolutePath(), mapsFolder
-                            + currentArea + "-gh", deleteZipped);
-                }
-                return null;
-            }
-
-            protected void onPostExecute( Object result )
-            {
-                if (hasError())
-                {
-                    logUser("Error while uncompressing: " + getErrorMessage());
                 } else
                 {
                     loadMap();
@@ -513,8 +471,10 @@ public class MainActivity extends MapActivity
             protected GHResponse doInBackground( Void... v )
             {
                 StopWatch sw = new StopWatch().start();
-                GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon)
-                        .setAlgorithm("dijkstrabi").putHint("douglas.minprecision", 1);
+                GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
+                        setAlgorithm("dijkstrabi").
+                        putHint("instructions", false).
+                        putHint("douglas.minprecision", 1);
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
                 return resp;

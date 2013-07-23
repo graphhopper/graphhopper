@@ -186,6 +186,13 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     {
         return weights[currNode] >= limit || currNode == to;
     }
+    
+    public void close() {
+        weights = null;
+        parents = null;
+        edgeIds = null;
+        heap = null;
+    }
 
     @Override
     public int getVisitedNodes()

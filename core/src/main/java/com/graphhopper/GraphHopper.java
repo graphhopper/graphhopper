@@ -53,13 +53,7 @@ import com.graphhopper.storage.index.Location2IDQuadtree;
 import com.graphhopper.storage.index.Location2NodesNtree;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
 import com.graphhopper.storage.index.LocationIDResult;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.DouglasPeucker;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 
 /**
  * Main wrapper of the offline API for a simple and efficient usage.
@@ -240,9 +234,8 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setGraphHopperLocation( String ghLocation )
     {
         if (ghLocation == null)
-        {
             throw new NullPointerException("graphhopper location cannot be null");
-        }
+
         this.ghLocation = ghLocation;
         return this;
     }
@@ -328,16 +321,13 @@ public class GraphHopper implements GraphHopperAPI
 
         String tmpOsmFile = args.get("osmreader.osm", "");
         if (!Helper.isEmpty(tmpOsmFile))
-        {
             osmFile = tmpOsmFile;
-        }
+
         String graphHopperFolder = args.get("graph.location", "");
         if (Helper.isEmpty(graphHopperFolder) && Helper.isEmpty(ghLocation))
         {
             if (Helper.isEmpty(osmFile))
-            {
                 throw new IllegalArgumentException("You need to specify an OSM file.");
-            }
 
             graphHopperFolder = Helper.pruneFileEnd(osmFile) + "-gh";
         }
@@ -352,18 +342,18 @@ public class GraphHopper implements GraphHopperAPI
             setMemoryMapped();
         } else
         {
-            if(dataAccess.contains("SAVE") || dataAccess.contains("INMEMORY"))
+            if (dataAccess.contains("SAVE") || dataAccess.contains("INMEMORY"))
                 throw new IllegalStateException("configuration names for dataAccess changed. Use eg. RAM or RAM_STORE");
-            
+
             if (dataAccess.contains("RAM_STORE"))
                 setInMemory(true, true);
             else
                 setInMemory(true, false);
         }
-        
-        if(dataAccess.contains("SYNC")) 
+
+        if (dataAccess.contains("SYNC"))
             dataAccessType = new DAType(dataAccessType, true);
-        
+
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
 
@@ -482,8 +472,10 @@ public class GraphHopper implements GraphHopperAPI
 
         if (graph != null)
             throw new IllegalStateException("graph is already loaded");
-
-        if (graphHopperFolder.indexOf(".") < 0)
+        
+        if (graphHopperFolder.endsWith("-gh"))
+            graphHopperFolder = graphHopperFolder;
+        else if (graphHopperFolder.indexOf(".") < 0)
         {
             if (new File(graphHopperFolder + "-gh").exists())
                 graphHopperFolder += "-gh";
@@ -497,7 +489,7 @@ public class GraphHopper implements GraphHopperAPI
             {
                 try
                 {
-                    Helper.unzip(compressed.getAbsolutePath(), graphHopperFolder, removeZipped);
+                    new Unzipper().unzip(compressed.getAbsolutePath(), graphHopperFolder, removeZipped);
                 } catch (IOException ex)
                 {
                     throw new RuntimeException("Couldn't extract file " + compressed.getAbsolutePath() + " to " + graphHopperFolder, ex);

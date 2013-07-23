@@ -56,10 +56,11 @@ public class Helper
     }
 
     public static Locale getLocale( String param )
-    {        
+    {
         param = param.replace("-", "_");
         int index = param.indexOf("_");
-        if(index < 0) {
+        if (index < 0)
+        {
             return new Locale(param);
         }
         return new Locale(param.substring(0, index), param.substring(index + 1));
@@ -260,69 +261,6 @@ public class Helper
         }
         return false;
     }
-
-    public static void unzip( String from, boolean remove ) throws IOException
-    {
-        String to = pruneFileEnd(from);
-        unzip(from, to, remove);
-    }
-
-    public static boolean unzip( String fromStr, String toStr, boolean remove ) throws IOException
-    {
-        File from = new File(fromStr);
-        File to = new File(toStr);
-        if (!from.exists() || fromStr.equals(toStr))
-        {
-            return false;
-        }
-
-        if (!to.exists())
-        {
-            to.mkdirs();
-        }
-
-        ZipInputStream zis = new ZipInputStream(new FileInputStream(from));
-        try
-        {
-            ZipEntry ze = zis.getNextEntry();
-            byte[] buffer = new byte[1024];
-            while (ze != null)
-            {
-                if (ze.isDirectory())
-                {
-                    new File(to, ze.getName()).mkdir();
-                } else
-                {
-                    File newFile = new File(to, ze.getName());
-                    FileOutputStream fos = new FileOutputStream(newFile);
-                    try
-                    {
-                        int len;
-                        while ((len = zis.read(buffer)) > 0)
-                        {
-                            fos.write(buffer, 0, len);
-                        }
-                    } finally
-                    {
-                        fos.close();
-                    }
-                }
-                ze = zis.getNextEntry();
-            }
-            zis.closeEntry();
-        } finally
-        {
-            zis.close();
-        }
-
-        if (remove)
-        {
-            Helper.removeDir(from);
-        }
-
-        return true;
-    }
-
     public static int calcIndexSize( BBox graphBounds )
     {
         if (!graphBounds.isValid())
@@ -391,8 +329,8 @@ public class Helper
 
     /**
      * Converts into an integer to be compatible with the still limited DataAccess class (accepts
-     * only integer values). But this conversion also reduces memory consumption where the
-     * precision loss is accceptable. As +- 180° and +-90° are assumed as maximum values.
+     * only integer values). But this conversion also reduces memory consumption where the precision
+     * loss is accceptable. As +- 180° and +-90° are assumed as maximum values.
      * <p/>
      * @return the integer of the specified degree
      */
