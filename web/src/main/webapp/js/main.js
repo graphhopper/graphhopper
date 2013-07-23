@@ -251,11 +251,11 @@ function initMap() {
             routingLayer.clearLayers();
             firstClickToRoute = false;
             ghRequest.from.setCoord(latlng.lat, latlng.lng);
-            resolveFrom();            
+            resolveFrom();
         } else {
             // set end point
             ghRequest.to.setCoord(latlng.lat, latlng.lng);
-            resolveTo();            
+            resolveTo();
             // do not wait for resolving
             routeLatLng(ghRequest);
             firstClickToRoute = true;
@@ -333,16 +333,13 @@ function getInfoFromLocation(locCoord) {
         var tmpDefer = $.Deferred();
         tmpDefer.resolve([locCoord]);
         return tmpDefer;   
-    }
-        
-    // Every call to getInfoFromLocation needs to get its own callback. Sadly we need to overwrite 
-    // the callback method name for nominatim and cannot use the default jQuery behaviour.
-    getInfoTmpCounter++;
-    var url;
+    }            
+    
     if(locCoord.lat && locCoord.lng) {
+        newCallback();
         // in every case overwrite name
         locCoord.resolvedText = "Error while looking up coordinate";
-        url = nominatim_reverse + "?lat=" + locCoord.lat + "&lon="
+        var url = nominatim_reverse + "?lat=" + locCoord.lat + "&lon="
         + locCoord.lng + "&format=json&zoom=16&json_callback=reverse_callback" + getInfoTmpCounter;
         return $.ajax({
             url: url,
@@ -370,33 +367,47 @@ function getInfoFromLocation(locCoord) {
             return [locCoord];
         });        
     } else {
-        // see https://trac.openstreetmap.org/ticket/4683 why limit=3 and not 1
-        url = nominatim + "?format=json&q=" + encodeURIComponent(locCoord.input)
-        +"&limit=3&json_callback=search_callback" + getInfoTmpCounter;
-        if(bounds.initialized) {
-            // minLon, minLat, maxLon, maxLat => left, top, right, bottom
-            url += "&bounded=1&viewbox=" + bounds.minLon + ","+bounds.maxLat + ","+bounds.maxLon +","+ bounds.minLat;
-        }
         locCoord.resolvedText = "Error while looking up area description";
-        return $.ajax({
-            url: url,
-            type : "GET",
-            dataType: "jsonp",
-            timeout: 3000,
-            jsonpCallback: 'search_callback' + getInfoTmpCounter
-        }).fail(createCallback("[nominatim] Problem while looking up location " + locCoord.input)).
-        pipe(function(jsonArgs) {
+        return geoCoding(locCoord.input).pipe(function(jsonArgs) {
             var json = jsonArgs[0];
             if(!json) {
                 locCoord.resolvedText = "No area description found";                
                 return [locCoord];
-            }        
+            }
             locCoord.resolvedText = json.display_name;
             locCoord.lat = round(json.lat);
             locCoord.lng = round(json.lon);            
             return [locCoord];
         });
     }
+}
+
+function newCallback() {
+    // Every call to getInfoFromLocation needs to get its own callback. Sadly we need to overwrite 
+    // the callback method name for nominatim and cannot use the default jQuery behaviour.
+    getInfoTmpCounter++;
+}
+
+// TODO show list of possible locations (disambiguation)
+function geoCoding(input, limit) {
+    newCallback();
+    // see https://trac.openstreetmap.org/ticket/4683 why limit=3 and not 1
+    if(!limit)
+        limit = 3;
+    var url = nominatim + "?format=json&q=" + encodeURIComponent(input)
+    +"&limit="+ limit +"&json_callback=search_callback" + getInfoTmpCounter;
+    if(bounds.initialized) {
+        // minLon, minLat, maxLon, maxLat => left, top, right, bottom
+        url += "&bounded=1&viewbox=" + bounds.minLon + ","+bounds.maxLat + ","+bounds.maxLon +","+ bounds.minLat;
+    }
+    
+    return $.ajax({
+        url: url,
+        type : "GET",
+        dataType: "jsonp",
+        timeout: 3000,
+        jsonpCallback: 'search_callback' + getInfoTmpCounter
+    }).fail(createCallback("[nominatim] Problem while looking up location " + input));
 }
 
 function createCallback(errorFallback) {
@@ -430,11 +441,12 @@ function routeLatLng(request, doQuery) {
         var params = parseUrl(urlForHistory);
         console.log(params);
         params.doZoom = doZoom;
+        // force a new request even if we have the same parameters
+        params.mathRandom = Math.random();
         History.pushState(params, browserTitle, urlForHistory);
         return;
     }
     
-    clickToRoute = true;
     $("#info").empty();
     $("#info").show();
     var descriptionDiv = $("<div/>");    
@@ -449,7 +461,7 @@ function routeLatLng(request, doQuery) {
     
     routingLayer.clearLayers();    
     setFlag(request.from, true);
-    setFlag(request.to, false);    
+    setFlag(request.to, false);
     
     $("#vehicles button").removeClass();
     $("button#"+request.vehicle.toUpperCase()).addClass("bold");
@@ -618,6 +630,7 @@ function parseUrlWithHisto() {
 function parseUrlAndRequest() {
     return parseUrl(window.location.search);
 }
+
 function parseUrl(query) {
     var index = query.indexOf('?');
     if(index >= 0)
@@ -645,30 +658,34 @@ function parseUrl(query) {
     return res;
 }
 
+function mySubmit() {
+    var fromStr = $("#fromInput").val();
+    var toStr = $("#toInput").val();
+    if(toStr == "To" && fromStr == "From") {
+        // TODO print warning
+        return;
+    }
+    if(fromStr == "From") {
+        // no special function
+        return;
+    }
+    if(toStr == "To") {
+        // lookup area
+        ghRequest.from = new GHInput(fromStr);
+        $.when(resolveFrom()).done(function() {                    
+            focus(ghRequest.from);
+        });                
+        return;
+    }
+    // route!
+    resolveCoords(fromStr, toStr);
+}
+
 function initForm() {
     $('#locationform').submit(function(e) {
-        // no page reload        
-        e.preventDefault();        
-        var fromStr = $("#fromInput").val();
-        var toStr = $("#toInput").val();
-        if(toStr == "To" && fromStr == "From") {
-            // TODO print warning
-            return;
-        }
-        if(fromStr == "From") {
-            // no special function
-            return;
-        }
-        if(toStr == "To") {
-            // lookup area
-            ghRequest.from = new GHInput(fromStr);
-            $.when(resolveFrom()).done(function() {                    
-                focus(ghRequest.from);
-            });                
-            return;
-        }
-        // route!
-        resolveCoords(fromStr, toStr, true);
+        // no page reload
+        e.preventDefault();
+        mySubmit();        
     });
     
     $('.defaulting').each(function(index, element) {
