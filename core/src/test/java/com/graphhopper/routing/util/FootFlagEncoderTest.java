@@ -48,7 +48,7 @@ public class FootFlagEncoderTest
     public void testBasics()
     {
         int fl = footEncoder.flagsDefault(true);
-        assertEquals(footEncoder.getSpeed("mean").intValue(), footEncoder.getSpeed(fl));
+        assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(fl));
 
         int fl1 = footEncoder.flagsDefault(false);
         int fl2 = footEncoder.swapDirection(fl1);
@@ -160,5 +160,29 @@ public class FootFlagEncoderTest
         map.put("highway", "track");
         flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
         assertEquals(5, footEncoder.getSpeed(flags));
+    }
+
+    @Test
+    public void testParseDuration()
+    {
+        assertEquals(10, FootFlagEncoder.parseDuration("00:10"));
+        assertEquals(70, FootFlagEncoder.parseDuration("01:10"));
+        assertEquals(0, FootFlagEncoder.parseDuration("oh"));
+    }
+
+    @Test
+    public void testSlowHiking()
+    {
+        Map<String, String> map = new HashMap<String, String>();
+        OSMWay way = new OSMWay(1, map);
+        map.put("highway", "track");
+        map.put("sac_scale", "hiking");
+        int flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(flags));
+        
+        map.put("highway", "track");
+        map.put("sac_scale", "mountain_hiking");
+        flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
+        assertEquals(FootFlagEncoder.SLOW, footEncoder.getSpeed(flags));
     }
 }

@@ -38,7 +38,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     protected int forwardBit = 0;
     protected int backwardBit = 0;
     protected int directionBitMask = 0;
-    protected EncodedValue speedEncoder = null;
+    protected EncodedValue speedEncoder;
     // bit to signal that way is accepted
     protected int acceptBit = 0;
     protected int ferryBit = 0;
