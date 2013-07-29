@@ -21,9 +21,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -100,7 +98,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         {
             if (way.hasTag("route", ferries))
             {
-                if (!way.hasTag("foot", "no"))
+                String footTag = way.getTag("foot");
+                if (footTag == null || "yes".equals(footTag))
                     return acceptBit | ferryBit;
             }
             return 0;

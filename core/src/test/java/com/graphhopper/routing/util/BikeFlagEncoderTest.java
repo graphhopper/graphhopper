@@ -87,6 +87,17 @@ public class BikeFlagEncoderTest
         assertFalse(encoder.isAllowed(way) > 0);
         map.put("bicycle", "yes");
         assertTrue(encoder.isAllowed(way) > 0);
+        
+        map.clear();
+        map.put("route", "ferry");
+        assertTrue(encoder.isAllowed(way) > 0);
+        map.put("bicycle", "no");
+        assertFalse(encoder.isAllowed(way) > 0);
+        
+        map.clear();
+        map.put("route", "ferry");
+        map.put("foot", "yes");
+        assertFalse(encoder.isAllowed(way) > 0);
     }
     
     @Test

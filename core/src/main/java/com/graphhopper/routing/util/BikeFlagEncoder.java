@@ -105,9 +105,14 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
         {
-            if (way.hasTag("route", ferries) && way.hasTag("bicycle", "yes"))
-                return acceptBit | ferryBit;
 
+            if (way.hasTag("route", ferries))
+            {
+                // if bike is NOT explictly tagged allow bike but only if foot is not specified
+                String bikeTag = way.getTag("bicycle");
+                if (bikeTag == null && !way.hasTag("foot") || "yes".equals(bikeTag))
+                    return acceptBit | ferryBit;
+            }
             return 0;
         }
 
