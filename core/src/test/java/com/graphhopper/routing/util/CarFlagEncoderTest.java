@@ -55,7 +55,7 @@ public class CarFlagEncoderTest
         map.put("ford", "yes");
         assertFalse(encoder.isAllowed(way) > 0);
         map.put("motorcar", "yes");
-        assertTrue(encoder.isAllowed(way) > 0);
+        assertTrue(encoder.isAllowed(way) > 0);        
     }
 
     @Test
@@ -67,12 +67,13 @@ public class CarFlagEncoderTest
         map.put("maxspeed", "500");
         int allowed = encoder.isAllowed(way);
         int encoded = encoder.handleWayTags(allowed, way);
-        assertEquals(100, encoder.getSpeed(encoded));
+        assertEquals(100, encoder.getSpeed(encoded));                
     }
 
     @Test
-    public void testSpeedLimitBiggerThanDefaultRoadSpeed()
+    public void testSpeed()
     {
+        // limit bigger than default road speed
         Map<String, String> map = new HashMap<String, String>();
         OSMWay way = new OSMWay(1, map);
         map.put("highway", "trunk");
@@ -80,6 +81,13 @@ public class CarFlagEncoderTest
         int allowed = encoder.isAllowed(way);
         int encoded = encoder.handleWayTags(allowed, way);
         assertEquals(95, encoder.getSpeed(encoded));
+        
+        map.clear();
+        map.put("highway", "residential");
+        map.put("surface", "cobblestone");
+        allowed = encoder.isAllowed(way);        
+        encoded = encoder.handleWayTags(allowed, way);
+        assertEquals(30, encoder.getSpeed(encoded));
     }
 
     @Test

@@ -540,10 +540,10 @@ function routeLatLng(request, doQuery) {
         var googleLink = $("<a>Google</a> ");
         var addToGoogle = "";
         var addToBing = "";
-        if(request.vehicle == "foot") {
+        if(request.vehicle.toUpperCase() == "FOOT") {
             addToGoogle = "&dirflg=w";
             addToBing = "&mode=W";
-        } else if(request.vehicle == "bike") {
+        } else if(request.vehicle.toUpperCase() == "BIKE") {
             addToGoogle = "&dirflg=b";
         // ? addToBing = "&mode=B";
         }

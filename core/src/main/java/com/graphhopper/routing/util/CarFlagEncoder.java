@@ -134,9 +134,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     public int handleWayTags( int allowed, OSMWay way )
     {
         if ((allowed & acceptBit) == 0)
-        {
             return 0;
-        }
 
         int encoded;
         if ((allowed & ferryBit) == 0)
@@ -164,16 +162,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             if (way.hasTag("oneway", oneways) || way.hasTag("junction", "roundabout"))
             {
                 if (way.hasTag("oneway", "-1"))
-                {
                     encoded |= backwardBit;
-                } else
-                {
+                else
                     encoded |= forwardBit;
-                }
             } else
-            {
                 encoded |= directionBitMask;
-            }
 
         } else
         {
