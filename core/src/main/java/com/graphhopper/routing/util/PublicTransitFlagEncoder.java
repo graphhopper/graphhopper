@@ -15,11 +15,14 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMNode;
+import com.graphhopper.reader.OSMWay;
+
 /**
  *
  * @author Thomas Buerli <tbuerli@student.ethz.ch>
  */
-public class PublicTransitFlagEncoder implements EdgePropertyEncoder {
+public class PublicTransitFlagEncoder extends AbstractFlagEncoder {
 
     private final int FORWARD;
     private final int BACKWARD;
@@ -160,5 +163,30 @@ public class PublicTransitFlagEncoder implements EdgePropertyEncoder {
     public boolean isExit(int flags) {
         return (flags & EXIT) != 0;
     }
+    
+    @Override
+    public String toString()
+    {
+        return "PUBLIC";
+    }
+
+    @Override
+    public int isAllowed( OSMWay way )
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public int handleWayTags( int allowed, OSMWay way )
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public int analyzeNodeTags( OSMNode node )
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
 
 }

@@ -28,7 +28,7 @@ public class PublicTransitRouting implements RoutingAlgorithm{
     
     public PublicTransitRouting(RoutingAlgorithm algorithm) {
         this.algorithm = algorithm;
-        this.algorithm.type(new ShortestCalc());
+        this.algorithm.setType(new ShortestCalc());
     }
     
     public Path calcPath(int from, int to, int timeOffset){
@@ -43,18 +43,18 @@ public class PublicTransitRouting implements RoutingAlgorithm{
     }
 
     @Override
-    public RoutingAlgorithm type(WeightCalculation calc) {
-        return algorithm.type(calc);
+    public RoutingAlgorithm setType(WeightCalculation calc) {
+        return algorithm.setType(calc);
     }
 
     @Override
-    public String name() {
-        return "publictranport_" + algorithm.name();
+    public String getName() {
+        return "publictranport_" + algorithm.getName();
     }
 
     @Override
-    public int visitedNodes() {
-        return algorithm.visitedNodes();
+    public int getVisitedNodes() {
+        return algorithm.getVisitedNodes();
     }
 
 }

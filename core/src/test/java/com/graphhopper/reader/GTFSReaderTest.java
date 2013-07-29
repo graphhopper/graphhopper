@@ -18,6 +18,7 @@ package com.graphhopper.reader;
 import com.graphhopper.GHPublicTransit;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PublicTransitFlagEncoder;
 import com.graphhopper.storage.AbstractGraphTester;
 import com.graphhopper.storage.Graph;
@@ -41,7 +42,6 @@ import org.junit.Before;
 public class GTFSReaderTest {
 
     private String dir = "./target/tmp/";
-    private String file1 = "test-gtfs1.zip";
     private String file2 = "test-gtfs2.zip";
     private PublicTransitFlagEncoder encoder = new PublicTransitFlagEncoder();
     private EdgeFilter outFilter = new DefaultEdgeFilter(encoder, false, true);
@@ -57,9 +57,10 @@ public class GTFSReaderTest {
         Helper.removeDir(new File(dir));
     }
 
-    GraphStorage buildGraph(String directory) {
-        return new GraphStorage(new RAMDirectory(directory, false));
+    GraphStorage buildGraph( String directory, EncodingManager encodingManager ) {
+        return new GraphStorage(new RAMDirectory(directory, false), encodingManager);
     }
+
 
     private File getFile(String file) throws URISyntaxException  {
         return new File(getClass().getResource(file).toURI());
@@ -71,9 +72,9 @@ public class GTFSReaderTest {
 
     @Test
     public void testRead() {
-        GHPublicTransit hopper = new GHPublicTransitTest(file2).importOrLoad();
+        GHPublicTransit hopper = new GTFSReaderTest.GHPublicTransitTest(file2).importOrLoad();
         Graph graph = hopper.graph();
-        assertEquals(142, graph.nodes());
+        assertEquals(142, graph.getNodes());
         assertEquals(0, AbstractGraphTester.getIdOf(graph, 36.915682));
         assertEquals(88, AbstractGraphTester.getIdOf(graph, 36.425288));
         assertEquals(72, AbstractGraphTester.getIdOf(graph, 36.868446));
@@ -85,31 +86,38 @@ public class GTFSReaderTest {
         assertTrue(iter.next());
 
         // Exit node
-        assertEquals(1, iter.adjNode());
-        assertEquals(0, iter.distance(), 1e-3);
-        assertTrue(flags.isExit(iter.flags()));
-        assertTrue(flags.isForward(iter.flags()));
-        assertFalse(flags.isBackward(iter.flags()));
-        assertFalse(flags.isTransit(iter.flags()));
-        assertFalse(flags.isBoarding(iter.flags()));
-        assertFalse(flags.isAlight(iter.flags()));
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(0, iter.getDistance(), 1e-3);
+        assertTrue(flags.isExit(iter.getFlags()));
+        assertTrue(flags.isForward(iter.getFlags()));
+        assertFalse(flags.isBackward(iter.getFlags()));
+        assertFalse(flags.isTransit(iter.getFlags()));
+        assertFalse(flags.isBoarding(iter.getFlags()));
+        assertFalse(flags.isAlight(iter.getFlags()));
 
         // Entry Node
         assertTrue(iter.next());
-        assertEquals(21600, iter.distance(), 1);
-        assertEquals(3, iter.adjNode());
-        assertTrue(flags.isTransit(iter.flags()));
-        assertTrue(flags.isEntry(iter.flags()));
-        assertTrue(flags.isForward(iter.flags()));
-        assertFalse(flags.isBackward(iter.flags()));
-        assertFalse(flags.isBoarding(iter.flags()));
-        assertFalse(flags.isAlight(iter.flags()));
+        assertEquals(21600, iter.getDistance(), 1);
+        assertEquals(3, iter.getAdjNode());
+        assertTrue(flags.isTransit(iter.getFlags()));
+        assertTrue(flags.isEntry(iter.getFlags()));
+        assertTrue(flags.isForward(iter.getFlags()));
+        assertFalse(flags.isBackward(iter.getFlags()));
+        assertFalse(flags.isBoarding(iter.getFlags()));
+        assertFalse(flags.isAlight(iter.getFlags()));
         assertFalse(iter.next());
 
         iter = graph.getEdges(3, outFilter);
         assertTrue(iter.next());
         assertTrue(iter.next());
-        assertEquals(5, iter.adjNode());
+        assertEquals(2, iter.getAdjNode());
+    }
+    
+    @Test
+    public void testTransfer() {
+        GHPublicTransit hopper = new GTFSReaderTest.GHPublicTransitTest(file2).importOrLoad();
+        Graph graph = hopper.graph();
+        
     }
 
     private class GHPublicTransitTest extends GHPublicTransit {
@@ -134,7 +142,8 @@ public class GTFSReaderTest {
             if (!tmpFile.exists()) {
                 throw new IllegalStateException("Your specified GTFS file does not exist:" + tmpFile.getAbsolutePath());
             }
-            GTFSReader reader = new GTFSReader(buildGraph(dir));
+            EncodingManager manager = new EncodingManager("TRANSIT:com.graphhopper.routing.util.PublicTransitFlagEncoder");
+            GTFSReader reader = new GTFSReader(buildGraph(dir, manager));
             try {
                 reader.setDefaultAlightTime(defaultAlightTime);
                 reader.load(tmpFile);

@@ -75,8 +75,8 @@ public class LocationTime2NodeNtree extends Location2NodesNtree implements Locat
                 EdgeIterator iter = graph.getEdges(node, transitOutEdgeFilter);
                 if(!iter.next())
                     return node;
-                node = iter.adjNode();
-                time = time + iter.distance();
+                node = iter.getAdjNode();
+                time = time + iter.getDistance();
                 if (iter.next()) {
                     logger.error("Wrong graph structure! Multiple transit edges from a transit node!");
                     return -1;
@@ -91,7 +91,7 @@ public class LocationTime2NodeNtree extends Location2NodesNtree implements Locat
         int node = findID(lat, lon);
         EdgeIterator iter = graph.getEdges(node, exitEdgeFilter);
         if (iter.next()) {
-            return iter.adjNode();
+            return iter.getAdjNode();
         } else {
             return -1;
         }
@@ -110,8 +110,8 @@ public class LocationTime2NodeNtree extends Location2NodesNtree implements Locat
                 EdgeIterator iter = graph.getEdges(node, transitOutEdgeFilter);
                 if (!iter.next())
                     return 0;
-                node = iter.adjNode();
-                time = time + (int) iter.distance();
+                node = iter.getAdjNode();
+                time = time + (int) iter.getDistance();
                 if (iter.next()) {
                     logger.error("Wrong graph structure! Multiple transit edges from a transit node!");
                     return 0;
@@ -136,8 +136,8 @@ public class LocationTime2NodeNtree extends Location2NodesNtree implements Locat
         }
 
         @Override
-        public int maxId() {
-            return allEdgesIterator.maxId();
+        public int getMaxId() {
+            return allEdgesIterator.getMaxId();
         }
 
         @Override
@@ -151,53 +151,65 @@ public class LocationTime2NodeNtree extends Location2NodesNtree implements Locat
         }
 
         @Override
-        public int edge() {
-            return allEdgesIterator.edge();
+        public int getEdge() {
+            return allEdgesIterator.getEdge();
         }
 
         @Override
-        public int baseNode() {
-            return allEdgesIterator.baseNode();
+        public int getBaseNode() {
+            return allEdgesIterator.getBaseNode();
         }
 
         @Override
-        public int adjNode() {
-            return allEdgesIterator.adjNode();
+        public int getAdjNode() {
+            return allEdgesIterator.getAdjNode();
         }
 
         @Override
-        public PointList wayGeometry() {
-            return allEdgesIterator.wayGeometry();
+        public PointList getWayGeometry() {
+            return allEdgesIterator.getWayGeometry();
         }
 
         @Override
-        public void wayGeometry(PointList list) {
-            allEdgesIterator.wayGeometry(list);
+        public void setWayGeometry(PointList list) {
+            allEdgesIterator.setWayGeometry(list);
         }
 
         @Override
-        public double distance() {
-            return allEdgesIterator.distance();
+        public double getDistance() {
+            return allEdgesIterator.getDistance();
         }
 
         @Override
-        public void distance(double dist) {
-            allEdgesIterator.distance(dist);
+        public void setDistance(double dist) {
+            allEdgesIterator.setDistance(dist);
         }
 
         @Override
-        public int flags() {
-            return allEdgesIterator.flags();
+        public int getFlags() {
+            return allEdgesIterator.getFlags();
         }
 
         @Override
-        public void flags(int flags) {
-            allEdgesIterator.flags(flags);
+        public void setFlags(int flags) {
+            allEdgesIterator.setFlags(flags);
         }
 
         @Override
         public boolean isEmpty() {
             return allEdgesIterator.isEmpty();
+        }
+
+        @Override
+        public String getName()
+        {
+            return allEdgesIterator.getName();
+        }
+
+        @Override
+        public void setName( String name )
+        {
+            allEdgesIterator.setName(name);
         }
     }
 }

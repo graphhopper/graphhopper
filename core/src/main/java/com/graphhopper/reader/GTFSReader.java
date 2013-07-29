@@ -15,17 +15,12 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.PublicTransitEdgeFilter;
 import com.graphhopper.routing.util.PublicTransitFlagEncoder;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.index.Id2NameIndex;
 import com.graphhopper.storage.index.LocationTime2IDIndex;
 import com.graphhopper.storage.index.LocationTime2NodeNtree;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.TimeUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -103,10 +98,15 @@ public class GTFSReader {
     private void loadStops(GtfsRelationalDaoImpl store) {
         logger.info("Importing stations ...");
         for (Stop stop : store.getAllStops()) {
+            // Check if stop has any stoptimes
+            Collection<StopTime> stopTimes = store.getStopTimesForStop(stop);
+            if (stopTimes.isEmpty())
+                // Has no stoptimes, so ignore this stop
+                continue;
             TransitStop transitStop = new TransitStop(graph, stop,defaultAlightTime);
             stopNodes.put(stop, transitStop);
 
-            for (StopTime stopTime : store.getStopTimesForStop(stop)) {
+            for (StopTime stopTime : stopTimes) {
                 transitStop.addTransitNode(stopTime);
             }
             transitStop.buildTransitNodes();
@@ -186,7 +186,7 @@ public class GTFSReader {
             TransitStop to = stopNodes.get(transfer.getToStop());
             if (from != null && to != null) {
                 int time = transfer.getMinTransferTime();
-                from.addTransfer(to, time);
+                to.addTransfer(from, time);
             }
         }
     }
@@ -252,75 +252,12 @@ public class GTFSReader {
     public synchronized void close(){
         nodeId = 0;
     }
-    
-    /**
-     * Just for debugging path which generated which uses graph generated with
-     * GTFSReader
-     * 
-     * Patterns used:
-     * Transit      ---
-     * Traveling     ===
-     * Boarding     __/
-     * Alight       \__
-     * Finish       --|
-     * Error        < E >
-     * @param path 
-     */
-    public void debugPath(Path path, final int startTime) {
-        
-        
-        // Make sure name index is generated
-        getNameIndex();
-        
-        Path.EdgeVisitor visitor = new Path.EdgeVisitor() {
-            private final PublicTransitFlagEncoder encoder = new PublicTransitFlagEncoder();
-            private boolean onTrain = false;
-            private double time = startTime;
-
-            @Override
-            public void next(EdgeIterator iter) {
-                int flags = iter.flags();
-                String output = new String();
-                output += "(" + iter.adjNode() + ")";
-                time += iter.distance();
-                if (!onTrain && encoder.isTransit(flags)) {
-                    // Transit edge
-                    output += " --- ";
-                } else if (!onTrain && encoder.isBoarding(flags)) {
-                    // Boarding edge
-                    onTrain = true;
-                    output += " __/ ";
-                } else if (onTrain && encoder.isAlight(flags)) {
-                    // Alight edge
-                    onTrain = false;
-                    output += " \\__ ";
-                } else if (!onTrain && encoder.isExit(flags)) {
-                        // Get off
-                        output += " --| ";
-                } else if (onTrain && encoder.isBackward(flags)) {
-                        // Travling
-                        output += " === ";
-                } else {
-                    // Wrong edge
-                    output += " < E > ";
-                }
-
-                output +=  nameIndex.findName(iter.baseNode()) + " (" + iter.baseNode() + ")";
-                output += " " + TimeUtils.formatTime((int) time);
-                System.out.println(output);
-            }
-        };
-        path.forEveryEdge(visitor);
-    }
+  
 
     private void checkTime(int travelTime) {
         if (travelTime < 0) {
             throw new RuntimeException("Negative travel time!");
         }
-    }
-
-    void debugPath(Path path) {
-        debugPath(path,0);
     }
 
     private void prepare(long expectedNodes) {

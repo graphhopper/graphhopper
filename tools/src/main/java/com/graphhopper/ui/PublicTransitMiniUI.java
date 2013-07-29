@@ -25,7 +25,6 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EdgePropertyEncoder;
 import com.graphhopper.routing.util.PublicTransitFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
@@ -91,7 +90,7 @@ public class PublicTransitMiniUI {
     public PublicTransitMiniUI(GHPublicTransit gh, boolean debug) {
         this.graph = gh.graph();
 
-        logger.info("locations:" + graph.nodes() + ", debug:" + debug);
+        logger.info("locations:" + graph.getNodes() + ", debug:" + debug);
         mg = new GraphicsWrapper(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
@@ -133,14 +132,14 @@ public class PublicTransitMiniUI {
         mainPanel = new LayeredPanel();
 
         // TODO make it correct with bitset-skipping too
-        final GHBitSet bitset = new GHTBitSet(graph.nodes());
+        final GHBitSet bitset = new GHTBitSet(graph.getNodes());
         mainPanel.addLayer(roadsLayer = new DefaultMapLayer() {
             Random rand = new Random();
 
             @Override
             public void paintComponent(Graphics2D g2) {
                 clearGraphics(g2);
-                int locs = graph.nodes();
+                int locs = graph.getNodes();
                 Rectangle d = getBounds();
                 BBox b = mg.setBounds(0, d.width, 0, d.height);
                 if (fastPaint) {
@@ -179,7 +178,7 @@ public class PublicTransitMiniUI {
 //                        }
 //                    });
                     while (iter.next()) {
-                        int nodeId = iter.adjNode();
+                        int nodeId = iter.getAdjNode();
                         int sum = nodeIndex + nodeId;
                         if (fastPaint) {
                             if (bitset.contains(sum)) {
@@ -203,7 +202,7 @@ public class PublicTransitMiniUI {
                 }
 
                 makeTransparent(g2);
-                EdgePropertyEncoder encoder = new PublicTransitFlagEncoder();
+                PublicTransitFlagEncoder encoder = new PublicTransitFlagEncoder();
                 RoutingAlgorithm algo = new DebugDijkstraSimple(graph, encoder, mg);
                 if (algo instanceof DebugAlgo) {
                     ((DebugAlgo) algo).setGraphics2D(g2);
@@ -211,13 +210,13 @@ public class PublicTransitMiniUI {
 
                 StopWatch sw = new StopWatch().start();
                 logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + wCalc);
-                path = algo.type(wCalc).calcPath(dijkstraFromId, dijkstraToId);
+                path = algo.setType(wCalc).calcPath(dijkstraFromId, dijkstraToId);
 //                mg.plotNode(g2, dijkstraFromId, Color.red);
 //                mg.plotNode(g2, dijkstraToId, Color.BLUE);
                 sw.stop();
 
                 // if directed edges
-                if (!path.found()) {
+                if (!path.isFound()) {
                     logger.warn("path not found! direction not valid?");
                     return;
                 }
@@ -244,11 +243,12 @@ public class PublicTransitMiniUI {
     }
 
     private Path plotPath(Path tmpPath, final Graphics2D g2, int w) {
-        if (!tmpPath.found()) {
+        if (!tmpPath.isFound()) {
             logger.info("nothing found " + w);
             return tmpPath;
         }
-        final int startTime = index.getTime(tmpPath.fromNode());
+        // Get time of the start node
+        final int startTime = index.getTime(tmpPath.calcNodes().get(0));
 
         Path.EdgeVisitor visitor = new Path.EdgeVisitor() {
             private final PublicTransitFlagEncoder encoder = new PublicTransitFlagEncoder();
@@ -257,12 +257,12 @@ public class PublicTransitMiniUI {
             private double time = startTime;
 
             @Override
-            public void next(EdgeIterator iter) {
+            public void next( EdgeIterator iter, int index ) {
                 // Edge is in reversed direction
-                int flags = iter.flags();
-                int startNode = iter.adjNode();
-                int endNode = iter.baseNode();
-                time += iter.distance();
+                int flags = iter.getFlags();
+                int startNode = iter.getAdjNode();
+                int endNode = iter.getBaseNode();
+                time += iter.getDistance();
                 if (!onTrain && encoder.isTransit(flags)) {
                     // Do Nothing
                 } else if (!onTrain && encoder.isBoarding(flags)) {
@@ -313,6 +313,7 @@ public class PublicTransitMiniUI {
                 // mg.plotText(g2, lat, lon, "" + nameIndex.findName(node));
                 mg.plotText(g2, lat, lon, "" + node);
             }
+
         };
         path.forEveryEdge(visitor);
 
@@ -326,9 +327,9 @@ public class PublicTransitMiniUI {
 //            }
 //        }
         PointList list = tmpPath.calcPoints();
-        for (int i = 0; i < list.size(); i++) {
-            double lat = list.latitude(i);
-            double lon = list.longitude(i);
+        for (int i = 0; i < list.getSize(); i++) {
+            double lat = list.getLatitude(i);
+            double lon = list.getLongitude(i);
             if (!Double.isNaN(prevLat)) {
                 mg.plotEdge(g2, prevLat, prevLon, lat, lon, w);
             } else {
@@ -337,7 +338,7 @@ public class PublicTransitMiniUI {
             prevLat = lat;
             prevLon = lon;
         }
-        logger.info("dist:" + tmpPath.distance() + ", path points:" + list + ", nodes:" + nodes);
+        logger.info("dist:" + tmpPath.getDistance() + ", path points:" + list + ", nodes:" + nodes);
         return tmpPath;
     }
     private int dijkstraFromId = -1;

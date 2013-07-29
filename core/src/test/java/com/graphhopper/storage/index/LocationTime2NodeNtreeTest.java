@@ -33,7 +33,7 @@ public class LocationTime2NodeNtreeTest extends AbstractLocationTime2IDIndexTest
     public LocationTime2NodeNtree internalCreateIndex(Graph g, int minMeter) {
         Directory dir = new RAMDirectory(location);
         LocationTime2NodeNtree idx = new LocationTime2NodeNtree(g, dir);
-        idx.resolution(minMeter).prepareIndex();
+        idx.setResolution(minMeter).prepareIndex();
         return idx;
     }
 

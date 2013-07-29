@@ -18,7 +18,6 @@ package com.graphhopper.reader;
 import com.graphhopper.routing.util.PublicTransitFlagEncoder;
 import com.graphhopper.storage.Graph;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
 import org.onebusaway.gtfs.model.Stop;
@@ -36,11 +35,9 @@ public class TransitStop {
     private int alightTime;
     private Graph graph;
     private Stop stop;
-    
     // Start and Exit node of the station
     private int stopId;
     private int exitNodeId;
-    
     // Encoded Flags
     private int entryFlags;
     private int exitFlags;
@@ -48,10 +45,8 @@ public class TransitStop {
     private int boardingFlags;
     private int alignFlags;
     private int travelFlags;
-    
     // All transit nodes
     private TreeSet<TransitNode> transitNodes = new TreeSet<TransitNode>();
-    
     // List of all nodes id used in this station
     private List<Integer> nodesList;
 
@@ -59,9 +54,16 @@ public class TransitStop {
         this.graph = graph;
         this.stop = stop;
         this.alightTime = alightTime;
-        
+
+        init();
+    }
+
+    /**
+     * Setup for TransitStop
+     */
+    private void init() {
         nodesList = new ArrayList<Integer>();
-        
+
         this.stopId = getNewNodeId();
         this.exitNodeId = getNewNodeId();
 
@@ -69,7 +71,7 @@ public class TransitStop {
         graph.setNode(exitNodeId, stop.getLat(), stop.getLon());
 
         // Add midnight node for station
-        transitNodes.add(new TransitNode(stopId, 0));
+        transitNodes.add(new TransitStop.TransitNode(stopId, 0));
 
         // Generate flags for time-expanded graph
         PublicTransitFlagEncoder encoder = new PublicTransitFlagEncoder();
@@ -100,6 +102,7 @@ public class TransitStop {
 
     /**
      * Returns new node id and adds to the list of nodes for this station
+     *
      * @return New node id
      */
     private int getNewNodeId() {
@@ -118,9 +121,9 @@ public class TransitStop {
             graph.setNode(transitNode.getId(), stop.getLat(), stop.getLon());
             connect2ExitNode(transitNode.getId());
             if (previousNode != null) {
-               graph.edge(previousNode.getId(), transitNode.getId(), transitNode.getTime() - previousNode.getTime(), flags);
-               flags = transitFlags;
-            } 
+                graph.edge(previousNode.getId(), transitNode.getId(), transitNode.getTime() - previousNode.getTime(), flags);
+                flags = transitFlags;
+            }
             previousNode = transitNode;
         }
     }
@@ -133,7 +136,7 @@ public class TransitStop {
      */
     public int addDepartureNode(StopTime stopTime) {
         int time = stopTime.getDepartureTime();
-        TransitNode transitNode = transitNodes.floor(new TransitNode(graph.nodes(), time));
+        TransitNode transitNode = transitNodes.floor(new TransitNode(graph.getNodes(), time));
         int departureNodeId = getNewNodeId();
 
         // Add departure node to the graph
@@ -153,7 +156,7 @@ public class TransitStop {
      */
     public int addArrivalNode(StopTime stopTime) {
         int time = stopTime.getArrivalTime() + alightTime;
-        TransitNode transitNode = transitNodes.floor(new TransitNode(graph.nodes(), time));
+        TransitNode transitNode = transitNodes.floor(new TransitNode(graph.getNodes(), time));
         int arrivalNodeId = getNewNodeId();
 
         // Add arrival node to the graph
@@ -192,7 +195,6 @@ public class TransitStop {
         return nodesList;
     }
 
-
     /**
      * Connects a transit node to the exit node of the station
      *
@@ -201,33 +203,45 @@ public class TransitStop {
     private void connect2ExitNode(int nodeId) {
         graph.edge(nodeId, exitNodeId, 0, exitFlags);
     }
-    
+
     /**
-     * Adds all transfers from this node to the to
-     * @param to Endpoint for the transfer
+     * Adds transfer edges from the from transitNode to all transitNodes of this
+     * transitStop
+     *
+     * @param from Endpoint for the transfer
      * @param time min travel time
      */
-    void addTransfer(TransitStop to, int time) {
-        for (TransitNode fromNode : transitNodes ) {
-            TransitNode toNode = to.findNode(fromNode.time + time);
-            if (toNode == null){
-                // Connect to exit node
-                graph.edge(fromNode.id,  to.getExitNodeId(), time, exitFlags);
-            } else {
+    void addTransfer(TransitStop from, int time) {
+        for (TransitNode toNode : transitNodes) {
+            TransitNode fromNode = from.findEarlierNode(toNode.time - time);
+            if (fromNode != null) {
                 int tmpTime = toNode.time - fromNode.time;
                 graph.edge(fromNode.id, toNode.id, tmpTime, travelFlags);
             }
         }
         // Connect exit node with exit node
-        graph.edge(this.getExitNodeId(),  to.getExitNodeId(), time, exitFlags);
+        graph.edge(from.getExitNodeId(), this.getExitNodeId(), time, exitFlags);
     }
-    
+
     /**
-     * Finds a an transit node with later or same time. Returns Null if none is found.
+     * Finds a an transit node with earlier or same time. Returns Null if none
+     * is found.
+     *
      * @param time time in seconds
      * @return transitNode
      */
-    private TransitNode findNode(int time) {
+    private TransitNode findEarlierNode(int time) {
+        return transitNodes.floor(new TransitNode(Integer.MAX_VALUE, time));
+    }
+
+    /**
+     * Finds a an transit node with later or same time. Returns Null if none is
+     * found.
+     *
+     * @param time time in seconds
+     * @return transitNode
+     */
+    private TransitNode findLaterNode(int time) {
         return transitNodes.ceiling(new TransitNode(0, time));
     }
 
@@ -252,11 +266,7 @@ public class TransitStop {
 
         @Override
         public int compareTo(TransitNode o) {
-            if (o.time != this.time) {
-                return Double.compare(this.time, o.time);
-            } else {
-                return Double.compare(this.id, o.id);
-            }
+            return Double.compare(this.time, o.time);
         }
     }
 }

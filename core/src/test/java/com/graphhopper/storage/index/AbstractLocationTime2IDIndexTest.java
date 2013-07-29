@@ -15,6 +15,7 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PublicTransitFlagEncoder;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -47,12 +48,12 @@ public abstract class AbstractLocationTime2IDIndexTest {
         Helper.removeDir(new File(location));
     }
 
-    Graph createGraph() {
-        return createGraph(new RAMDirectory());
+    Graph createGraph(EncodingManager encodingManager) {
+        return createGraph(new RAMDirectory(),encodingManager);
     }
 
-    Graph createGraph(Directory dir) {
-        return new GraphStorage(dir).create(100);
+    Graph createGraph(Directory dir,EncodingManager encodingManager) {
+        return new GraphStorage(dir,encodingManager).create(100);
     }
 
     /**
@@ -121,7 +122,7 @@ public abstract class AbstractLocationTime2IDIndexTest {
     }
 
     public Graph createSimpleGraph() {
-        Graph graph = createGraph();
+        Graph graph = createGraph(new EncodingManager("PUBLIC:com.graphhopper.routing.util.PublicTransitFlagEncoder"));
         PublicTransitFlagEncoder encoder = new PublicTransitFlagEncoder();
         int alightTime = 240;
         

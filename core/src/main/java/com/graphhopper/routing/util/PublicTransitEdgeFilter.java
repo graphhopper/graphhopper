@@ -46,7 +46,7 @@ public class PublicTransitEdgeFilter implements EdgeFilter {
 
     @Override
     public boolean accept(EdgeIterator iter) {
-        int flags = iter.flags();
+        int flags = iter.getFlags();
         return checkEdgeDirection(flags) && checkEdgeType(flags);
     }
 

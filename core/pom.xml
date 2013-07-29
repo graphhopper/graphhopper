@@ -65,6 +65,7 @@
             <groupId>org.openstreetmap.osmosis</groupId>
             <artifactId>osmosis-osm-binary</artifactId>
             <version>0.43.1</version>
+        </dependency>
         <dependency>
             <groupId>org.onebusaway</groupId>
             <artifactId>onebusaway-gtfs</artifactId>

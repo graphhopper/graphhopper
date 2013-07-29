@@ -18,11 +18,7 @@ package com.graphhopper;
 import com.graphhopper.reader.GTFSReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.PublicTransitFlagEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -44,10 +40,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author Thomas Buerli <tbuerli@student.ethz.ch>
  */
-public class GHPublicTransit implements GraphHopperAPI {
-
+public class GHPublicTransit implements GraphHopperAPI
+{
     private Logger logger = LoggerFactory.getLogger(getClass());
     // for graph:
+    private EncodingManager encodingManager;
     private GraphStorage graph;
     private String ghLocation = "";
     private boolean inMemory = true;
@@ -68,70 +65,95 @@ public class GHPublicTransit implements GraphHopperAPI {
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
 
-    public GHPublicTransit forServer() {
+    public GHPublicTransit setEncodingManager( EncodingManager acceptWay )
+    {
+        this.encodingManager = acceptWay;
+        return this;
+    }
+
+    public EncodingManager getEncodingManager()
+    {
+        return encodingManager;
+    }
+
+    public GHPublicTransit forServer()
+    {
         preciseIndexResolution(1000);
         return setInMemory(true, true);
     }
 
-    public GHPublicTransit forDesktop() {
+    public GHPublicTransit forDesktop()
+    {
         preciseIndexResolution(1000);
         return setInMemory(true, true);
     }
 
-    public GHPublicTransit forMobile() {
+    public GHPublicTransit forMobile()
+    {
         // make new index faster (but unprecise) and disable searchRegion
         preciseIndexResolution(500);
         return memoryMapped();
     }
 
     /**
-     * Precise location resolution index means also more space (disc/RAM) could
-     * be consumed and probably slower query times, which would be e.g. not
-     * suitable for Android. The resolution specifies the tile width (in meter).
+     * Precise location resolution index means also more space (disc/RAM) could be consumed and
+     * probably slower query times, which would be e.g. not suitable for Android. The resolution
+     * specifies the tile width (in meter).
      */
-    public GHPublicTransit preciseIndexResolution(int precision) {
+    public GHPublicTransit preciseIndexResolution( int precision )
+    {
         preciseIndexResolution = precision;
         return this;
     }
 
-    public GHPublicTransit setInMemory(boolean inMemory, boolean storeOnFlush) {
-        if (inMemory) {
+    public GHPublicTransit setInMemory( boolean inMemory, boolean storeOnFlush )
+    {
+        if (inMemory)
+        {
             this.inMemory = true;
             this.memoryMapped = false;
             this.storeOnFlush = storeOnFlush;
-        } else {
+        } else
+        {
             memoryMapped();
         }
         return this;
     }
 
-    public GHPublicTransit memoryMapped() {
+    public GHPublicTransit memoryMapped()
+    {
         this.inMemory = false;
         memoryMapped = true;
         return this;
     }
 
-    public Graph graph() {
+    public Graph graph()
+    {
         return graph;
     }
 
-    public GHPublicTransit gtfsFile(String file) {
-        if (Helper.isEmpty(file)) {
+    public GHPublicTransit gtfsFile( String file )
+    {
+        if (Helper.isEmpty(file))
+        {
             throw new IllegalArgumentException("OSM file cannot be empty.");
         }
         this.gtfsFile = file;
         return this;
     }
 
-    public LocationTime2IDIndex index() {
+    public LocationTime2IDIndex index()
+    {
         return index;
     }
 
-    public AlgorithmPreparation preparation() {
+    public AlgorithmPreparation preparation()
+    {
         return prepare;
     }
 
-    private GHPublicTransit importGTFS(String graphHopperLocation, String gtfsFile) {
+    private GHPublicTransit importGTFS( String graphHopperLocation, String gtfsFile )
+    {
         graphHopperLocation(graphHopperLocation);
 
         GTFSReader reader = importGTFS(gtfsFile);
@@ -139,33 +161,40 @@ public class GHPublicTransit implements GraphHopperAPI {
         reader.close();
         properties.putCurrentVersions();
         initTransitIndex();
+        prepare();
         flush();
         optimize();
 
         return this;
     }
 
-    protected GTFSReader importGTFS(String file) {
+    protected GTFSReader importGTFS( String file )
+    {
         gtfsFile(file);
         File tmpFile = new File(file);
-        if (!tmpFile.exists()) {
+        if (!tmpFile.exists())
+        {
             throw new IllegalStateException("Your specified GTFS file does not exist:" + tmpFile.getAbsolutePath());
         }
         logger.info("start creating graph from " + gtfsFile);
         GTFSReader reader = new GTFSReader(graph);
-        try {
+        try
+        {
             reader.setDefaultAlightTime(defaultAlightTime);
             reader.load(tmpFile);
-        } catch (IOException ex) {
+        } catch (IOException ex)
+        {
             throw new RuntimeException("Could not load GTFS file ", ex);
         }
 
         return reader;
     }
 
-    private void printInfo(StorableProperties props) {
+    private void printInfo( StorableProperties props )
+    {
         String versionInfoStr = "";
-        if (props != null) {
+        if (props != null)
+        {
             versionInfoStr = " | load:" + props.versionsToString();
         }
 
@@ -175,70 +204,85 @@ public class GHPublicTransit implements GraphHopperAPI {
         logger.info("graph " + graph.toString());
     }
 
-    public GHPublicTransit importOrLoad() {
-        if (!load(ghLocation)) {
+    public GHPublicTransit importOrLoad()
+    {
+        if (!load(ghLocation))
+        {
             printInfo(null);
             importGTFS(ghLocation, gtfsFile);
-        } else {
+        } else
+        {
             printInfo(properties());
         }
         return this;
     }
 
-    StorableProperties properties() {
+    StorableProperties properties()
+    {
         return properties;
     }
 
-    public void setDefaultAlightTime(int defaultAlightTime) {
+    public void setDefaultAlightTime( int defaultAlightTime )
+    {
         this.defaultAlightTime = defaultAlightTime;
     }
 
     /**
-     * Opens or creates a graph. The specified args need a property 'graph' (a
-     * folder) and if no such folder exist it'll create a graph from the
-     * provided osm file (property 'osm'). A property 'size' is used to
-     * preinstantiate a datastructure/graph to avoid over-memory allocation or
-     * reallocation (default is 5mio)
-     *
-     * @param graphHopperFolder is the folder containing graphhopper files
-     * (which can be compressed too)
+     * Opens or creates a graph. The specified args need a property 'graph' (a folder) and if no
+     * such folder exist it'll create a graph from the provided osm file (property 'osm'). A
+     * property 'size' is used to preinstantiate a datastructure/graph to avoid over-memory
+     * allocation or reallocation (default is 5mio)
+     * <p/>
+     * @param graphHopperFolder is the folder containing graphhopper files (which can be compressed
+     * too)
      */
-    public boolean load(String graphHopperFolder) {
-        if (Helper.isEmpty(graphHopperFolder)) {
+    public boolean load( String graphHopperFolder )
+    {
+        if (Helper.isEmpty(graphHopperFolder))
+        {
             throw new IllegalStateException("graphHopperLocation is not specified. call init before");
         }
-        if (graph != null) {
+        if (graph != null)
+        {
             throw new IllegalStateException("graph is already loaded");
         }
 
-        if (graphHopperFolder.indexOf(".") < 0) {
-            if (new File(graphHopperFolder + "-gh").exists()) {
+        if (graphHopperFolder.indexOf(".") < 0)
+        {
+            if (new File(graphHopperFolder + "-gh").exists())
+            {
                 graphHopperFolder += "-gh";
-            } else if (graphHopperFolder.endsWith(".zip")) {
+            } else if (graphHopperFolder.endsWith(".zip"))
+            {
                 throw new IllegalArgumentException("To import an GTFS file you need to use importOrLoad");
             }
         }
         graphHopperLocation(graphHopperFolder);
         Directory dir;
-        if (memoryMapped) {
+        if (memoryMapped)
+        {
             dir = new MMapDirectory(ghLocation);
-        } else if (inMemory) {
+        } else if (inMemory)
+        {
             dir = new RAMDirectory(ghLocation, storeOnFlush);
-        } else {
+        } else
+        {
             throw new IllegalArgumentException("either memory mapped or in-memory has to be specified!");
         }
+        encodingManager = new EncodingManager("PUBLIC:com.graphhopper.routing.util.PublicTransitFlagEncoder");
+        properties = new StorableProperties(dir);
+        graph = new GraphStorage(dir, encodingManager);
+        //prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, defaultAlgorithm, new PublicTransitFlagEncoder());
 
-        properties = new StorableProperties(dir, "properties");
-        graph = new GraphStorage(dir);
-        prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, defaultAlgorithm, new PublicTransitFlagEncoder());
-
-        if (!graph.loadExisting()) {
+        if (!graph.loadExisting())
+        {
             return false;
         }
 
         properties.loadExisting();
         properties.checkVersions(false);
-        if ("false".equals(properties.get("prepare.done"))) {
+        if ("false".equals(properties.get("prepare.done")))
+        {
             prepare();
         }
 
@@ -246,92 +290,117 @@ public class GHPublicTransit implements GraphHopperAPI {
         return true;
     }
 
-    public void prepare() {
+    public void prepare()
+    {
         boolean tmpPrepare = doPrepare && prepare != null;
         properties.put("prepare.done", tmpPrepare);
-        if (tmpPrepare) {
-            logger.info("calling prepare.doWork ... (" + Helper.memInfo() + ")");
+        if (tmpPrepare)
+        {
+            logger.info("calling prepare.doWork ... (" + Helper.getMemInfo() + ")");
             prepare.doWork();
         }
     }
 
+    private boolean setSupportsVehicle( String encoder )
+    {
+        return encodingManager.supports(encoder);
+    }
+
     @Override
-    public GHResponse route(GHRequest request) {
+    public GHResponse route( GHRequest request )
+    {
         request.check();
         StopWatch sw = new StopWatch().start();
         GHResponse rsp = new GHResponse();
 
 
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(request.vehicle());
+        if (!setSupportsVehicle(request.getVehicle()))
+        {
+            rsp.addError(new IllegalArgumentException("Vehicle " + request.getVehicle() + " unsupported. Supported are: " + getEncodingManager()));
+            return rsp;
+        }
+
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder(request.getVehicle()));
         int from = index.findID(request.from().lat, request.from().lon, request.from().getTime());
         int to = index.findExitNode(request.to().lat, request.to().lon);
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
-        if (from < 0) {
+        if (from < 0)
+        {
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
         }
-        if (to < 0) {
+        if (to < 0)
+        {
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.to()));
         }
-        if (from == to) {
+        if (from == to)
+        {
             rsp.addError(new IllegalArgumentException("Point 1 is equal to point 2"));
         }
 
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
-        prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.algorithm(), request.vehicle());
+        prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(),
+                encodingManager.getEncoder(request.getVehicle()), request.getType());
         algo = prepare.createAlgo();
-        algo.type(request.type());
-        if (rsp.hasError()) {
+
+        if (rsp.hasErrors())
+        {
             return rsp;
         }
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
         sw = new StopWatch().start();
         Path path = algo.calcPath(from, to);
-        debug += ", " + algo.name() + "-routing:" + sw.stop().getSeconds() + "s"
-                + ", " + path.debugInfo();
+        debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s"
+                + ", " + path.getDebugInfo();
         PointList points = path.calcPoints();
-        return rsp.points(points).distance(path.distance()).time(path.time()).debugInfo(debug);
+        return rsp.setPoints(points).setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
     }
 
-    private void initTransitIndex() {
-        Directory dir = graph.directory();
-        if (preciseIndexResolution > 0) {
+    private void initTransitIndex()
+    {
+        Directory dir = graph.getDirectory();
+        if (preciseIndexResolution > 0)
+        {
             LocationTime2NodeNtree tmpIndex = new LocationTime2NodeNtree(graph, dir);
-            tmpIndex.resolution(preciseIndexResolution);
-            tmpIndex.edgeCalcOnFind(edgeCalcOnSearch);
-            tmpIndex.searchRegion(searchRegion);
+            tmpIndex.setResolution(preciseIndexResolution);
+            tmpIndex.setEdgeCalcOnFind(edgeCalcOnSearch);
+            tmpIndex.setSearchRegion(searchRegion);
             index = tmpIndex;
-        } else {
+        } else
+        {
             throw new RuntimeException("Needs a preciseIndexResolution > 0 ");
         }
-        if (!index.loadExisting()) {
+        if (!index.loadExisting())
+        {
             index.prepareIndex();
         }
     }
 
-    private void optimize() {
-        logger.info("optimizing ... (" + Helper.memInfo() + ")");
+    private void optimize()
+    {
+        logger.info("optimizing ... (" + Helper.getMemInfo() + ")");
         graph.optimize();
-        logger.info("finished optimize (" + Helper.memInfo() + ")");
+        logger.info("finished optimize (" + Helper.getMemInfo() + ")");
     }
 
     /**
      * Sets the graphhopper folder.
      */
-    public GHPublicTransit graphHopperLocation(String ghLocation) {
-        if (ghLocation == null) {
+    public GHPublicTransit graphHopperLocation( String ghLocation )
+    {
+        if (ghLocation == null)
+        {
             throw new NullPointerException("graphhopper location cannot be null");
         }
         this.ghLocation = ghLocation;
         return this;
     }
 
-    private void flush() {
-        logger.info("flushing graph " + graph.toString() + ", " + Helper.memInfo() + ")");
+    private void flush()
+    {
+        logger.info("flushing graph " + graph.toString() + ", " + Helper.getMemInfo() + ")");
         graph.flush();
-        properties.flush();
-
     }
 }
