@@ -140,7 +140,6 @@ public class FootFlagEncoderTest
         assertFalse(footEncoder.isAllowed(way) > 0);
         map.put("foot", "yes");
         assertTrue(footEncoder.isAllowed(way) > 0);
-
     }
 
     @Test

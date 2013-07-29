@@ -87,6 +87,36 @@ public class BikeFlagEncoderTest
         assertFalse(encoder.isAllowed(way) > 0);
         map.put("bicycle", "yes");
         assertTrue(encoder.isAllowed(way) > 0);
+    }
+    
+    @Test
+    public void testTramStations()
+    {
+        Map<String, String> map = new HashMap<String, String>();
+        OSMWay way = new OSMWay(1, map);
+        map.put("highway", "secondary");
+        map.put("railway", "rail");
+        // disallow rail
+        assertEquals(0, encoder.isAllowed(way));
 
+        way = new OSMWay(1, map);
+        map.put("highway", "secondary");
+        map.put("railway", "station");
+        // disallow stations
+        assertEquals(0, encoder.isAllowed(way));
+        
+        way = new OSMWay(1, map);
+        map.put("highway", "secondary");
+        map.put("railway", "station");
+        map.put("bicycle", "yes");
+        // allow stations if explicitely tagged
+        assertNotSame(0, encoder.isAllowed(way));
+        
+        way = new OSMWay(1, map);
+        map.put("highway", "secondary");
+        map.put("railway", "station");
+        map.put("bicycle", "no");
+        // disallow
+        assertEquals(0, encoder.isAllowed(way));
     }
 }

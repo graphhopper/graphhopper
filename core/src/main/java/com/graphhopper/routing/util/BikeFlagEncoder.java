@@ -69,6 +69,9 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         absoluteBarriers.add("kissing_gate");
         absoluteBarriers.add("stile");
         absoluteBarriers.add("turnstile");
+
+        // very dangerous
+        // acceptedRailways.remove("tram");
     }
 
     @Override
@@ -102,11 +105,8 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
         {
-            if (way.hasTag("route", ferries)
-                    && way.hasTag("bicycle", "yes"))
-            {
+            if (way.hasTag("route", ferries) && way.hasTag("bicycle", "yes"))
                 return acceptBit | ferryBit;
-            }
 
             return 0;
         }

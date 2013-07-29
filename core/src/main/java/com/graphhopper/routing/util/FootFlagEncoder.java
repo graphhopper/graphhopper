@@ -65,12 +65,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         acceptedRailways.add("station");
         acceptedRailways.add("platform");
-        acceptedRailways.add("crossing");
-        acceptedRailways.add("tram_stop");
-        acceptedRailways.add("stop");
-        acceptedRailways.add("halt");
-        acceptedRailways.add("subway_entrance");
-        acceptedRailways.add("miniature");
     }
 
     @Override

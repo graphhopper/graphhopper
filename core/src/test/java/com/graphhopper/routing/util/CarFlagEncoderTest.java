@@ -83,17 +83,19 @@ public class CarFlagEncoderTest
     }
 
     @Test
-    public void testNoRailway()
-    {
+    public void testRailway()
+    {        
         Map<String, String> map = new HashMap<String, String>();
         OSMWay way = new OSMWay(1, map);
-        map.put("highway", "service");
+        map.put("highway", "secondary");
         map.put("railway", "rail");
+        // disallow rail
         assertEquals(0, encoder.isAllowed(way));
-        
+
         way = new OSMWay(1, map);
-        map.put("highway", "service");
-        map.put("railway", "level_crossing");
+        map.put("highway", "secondary");
+        map.put("railway", "tram");
+        // but allow tram to be on the same way
         assertNotSame(0, encoder.isAllowed(way));
     }
 

@@ -61,7 +61,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         ferries.add("shuttle_train");
         ferries.add("ferry");
 
-        acceptedRailways.add("level_crossing");
+        acceptedRailways.add("tram");
     }
 
     /**
