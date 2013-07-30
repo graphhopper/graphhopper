@@ -105,6 +105,14 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             return 0;
         }
 
+        String sacScale = way.getTag("sac_scale");
+        if (sacScale != null)
+        {
+            if (!"hiking".equals(sacScale) && !"mountain_hiking".equals(sacScale))
+                // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
+                return 0;
+        }
+
         if (way.hasTag("sidewalk", sidewalks))
             return acceptBit;
 
@@ -145,9 +153,13 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         int encoded;
         if ((allowed & ferryBit) == 0)
         {
-            if (way.hasTag("sac_scale") && !way.hasTag("sac_scale", "hiking"))
+            String sacScale = way.getTag("sac_scale");
+            if (sacScale != null)
             {
-                encoded = speedEncoder.setValue(0, SLOW);
+                if ("hiking".equals(sacScale))
+                    encoded = speedEncoder.setValue(0, MEAN);
+                else
+                    encoded = speedEncoder.setValue(0, SLOW);
             } else
             {
                 encoded = speedEncoder.setValue(0, MEAN);
