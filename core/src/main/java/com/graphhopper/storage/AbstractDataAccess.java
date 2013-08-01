@@ -30,7 +30,7 @@ public abstract class AbstractDataAccess implements DataAccess
 {
     protected static final int SEGMENT_SIZE_MIN = 1 << 7;
     private static final int SEGMENT_SIZE_DEFAULT = 1 << 20;
-    // reserve some space for downstream usage (in classes using/exting this)
+    // reserve some space for downstream usage (in classes using/extending this)
     protected static final int HEADER_OFFSET = 20 * 4 + 20;
     protected static final byte[] EMPTY = new byte[1024];
     protected int header[] = new int[(HEADER_OFFSET - 20) / 4];

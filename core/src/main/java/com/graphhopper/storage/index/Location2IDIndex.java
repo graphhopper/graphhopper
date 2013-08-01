@@ -60,4 +60,6 @@ public interface Location2IDIndex extends Storable<Location2IDIndex>
      * @param approx if false this makes initialization and querying faster but less precise.
      */
     Location2IDIndex setApproximation( boolean approxDist );
+
+    void setSegmentSize( int bytes );
 }

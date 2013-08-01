@@ -162,4 +162,9 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
     {
         return 0;
     }
+
+    @Override
+    public void setSegmentSize( int bytes )
+    {
+    }
 }

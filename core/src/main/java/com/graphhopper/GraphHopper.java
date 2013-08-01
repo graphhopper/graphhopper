@@ -614,6 +614,7 @@ public class GraphHopper implements GraphHopperAPI
             index = new Location2IDQuadtree(graph, dir);
             index.setResolution(Helper.calcIndexSize(graph.getBounds()));
         }
+        index.setSegmentSize(defaultSegmentSize);
         if (!index.loadExisting())
         {
             index.prepareIndex();
