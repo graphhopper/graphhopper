@@ -17,6 +17,10 @@
  */
 package com.graphhopper.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,45 +29,17 @@ import java.util.Map;
  */
 public class TranslationMap
 {
+    public static final TranslationMap SINGLETON = new TranslationMap().doImport();
     private Map<String, Translation> translations = new HashMap<String, Translation>();
 
-    
+    public TranslationMap doImport()
     {
-        TranslationHashMap de = new TranslationHashMap();
-        translations.put("de", de);
-        de.put("sharp left", "scharf links");
-        de.put("sharp right", "scharf rechts");
-        de.put("left", "links");
-        de.put("right", "rechts");
-        de.put("slight left", "leicht links");
-        de.put("slight right", "leicht rechts");
-        de.put("continue", "geradeaus");
-        de.put("continue onto %s", "geradeaus auf %s");
-        de.put("turn %s", "%s abbiegen");
-        de.put("turn %s onto %s", "%s abbiegen auf %s");
-
-        TranslationHashMap es = new TranslationHashMap();
-        translations.put("es", es);
-        es.put("sharp left", "izquierda");
-        es.put("sharp right", "derecha");
-        es.put("left", "izquierda");
-        es.put("right", "derecha");
-        es.put("slight left", "un poco a la izquierda");
-        es.put("slight right", "un poco a la derecha");
-        es.put("continue", "continue");
-        es.put("continue onto %s", "siga por %s");
-        es.put("turn %s", "gire por %s");
-        es.put("turn %s onto %s", "gire %s por %s");
-
-        TranslationHashMap en = new TranslationHashMap()
+        for (String key : Arrays.asList("en", "de", "es"))
         {
-            @Override
-            public String tr( String key, Object... params )
-            {
-                return String.format(key, params);
-            }
-        };
-        translations.put("en", en);
+            TranslationHashMap map = new TranslationHashMap(key).doImport(getClass().getResourceAsStream(key + ".properties"));
+            translations.put(key, map);
+        }
+        return this;
     }
 
     public Translation get( String language )
@@ -74,20 +50,35 @@ public class TranslationMap
     public static interface Translation
     {
         String tr( String key, Object... params );
+
+        Map<String, String> asMap();
+
+        String getLanguage();
     }
 
-    public static class TranslationHashMap implements Translation
+    static class TranslationHashMap implements Translation
     {
-        Map<String, String> map = new HashMap<String, String>();
+        final Map<String, String> map = new HashMap<String, String>();
+        final String language;
+
+        TranslationHashMap( String language )
+        {
+            this.language = language;
+        }
+
+        @Override
+        public String getLanguage()
+        {
+            return language;
+        }
 
         @Override
         public String tr( String key, Object... params )
         {
             String val = map.get(key);
             if (Helper.isEmpty(val))
-            {
                 return key;
-            }
+            
             return String.format(val, params);
         }
 
@@ -101,6 +92,35 @@ public class TranslationMap
         public String toString()
         {
             return map.toString();
+        }
+
+        @Override
+        public Map<String, String> asMap()
+        {
+            return map;
+        }
+
+        public TranslationHashMap doImport( InputStream resourceAsStream )
+        {
+            try
+            {
+                for (String line : Helper.readFile(new InputStreamReader(resourceAsStream)))
+                {
+                    if (line.isEmpty() || line.startsWith("//") || line.startsWith("#"))
+                        continue;
+
+                    int index = line.indexOf('=');
+                    if (index < 0)
+                        continue;
+                    String key = line.substring(0, index);
+                    String value = line.substring(index + 1);
+                    put(key, value);
+                }
+            } catch (IOException ex)
+            {
+                throw new RuntimeException(ex);
+            }
+            return this;
         }
     }
 

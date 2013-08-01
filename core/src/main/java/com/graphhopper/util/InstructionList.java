@@ -33,7 +33,7 @@ import java.util.*;
  */
 public class InstructionList
 {
-    private static final TranslationMap translations = new TranslationMap();
+    private static final TranslationMap translations = TranslationMap.SINGLETON;
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;
@@ -182,14 +182,12 @@ public class InstructionList
         {
             tr = translations.get(locale.getLanguage());
             if (tr == null)
-            {
                 tr = translations.get("en");
-            }
         }
-        String shLeftTr = tr.tr("sharp left");
-        String shRightTr = tr.tr("sharp right");
-        String slLeftTr = tr.tr("slight left");
-        String slRightTr = tr.tr("slight right");
+        String shLeftTr = tr.tr("sharp_left");
+        String shRightTr = tr.tr("sharp_right");
+        String slLeftTr = tr.tr("slight_left");
+        String slRightTr = tr.tr("slight_right");
         String leftTr = tr.tr("left");
         String rightTr = tr.tr("right");
         String continueTr = tr.tr("continue");
@@ -201,7 +199,7 @@ public class InstructionList
             int indi = indications.get(i);
             if (indi == CONTINUE_ON_STREET)
             {
-                str = Helper.isEmpty(n) ? continueTr : tr.tr("continue onto %s", n);
+                str = Helper.isEmpty(n) ? continueTr : tr.tr("continue_onto", n);
             } else
             {
                 String dir = null;
@@ -231,7 +229,7 @@ public class InstructionList
                     throw new IllegalStateException("Indication not found " + indi);
                 }
 
-                str = Helper.isEmpty(n) ? tr.tr("turn %s", dir) : tr.tr("turn %s onto %s", dir, n);
+                str = Helper.isEmpty(n) ? tr.tr("turn", dir) : tr.tr("turn_onto", dir, n);
             }
             instructions.add(Helper.firstBig(str));
         }
@@ -240,8 +238,8 @@ public class InstructionList
 
     public void updateLastDistance( double prevDist )
     {
-        if(distances.isEmpty())
+        if (distances.isEmpty())
             throw new IllegalStateException("Cannot update last distance with:" + prevDist);
-        distances.set(distances.size() - 1, prevDist);        
+        distances.set(distances.size() - 1, prevDist);
     }
 }

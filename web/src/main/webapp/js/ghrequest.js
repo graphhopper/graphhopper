@@ -160,13 +160,11 @@ GHRequest.prototype.doRequest = function(url, callback) {
     });
 };
 
-GHRequest.prototype.getInfo = function(success, error) {
+GHRequest.prototype.getInfo = function() {
     var url = this.host + "/api/info?type=" + this.dataType;
     console.log(url);    
     return $.ajax({
         "url": url,
-        "success": success,
-        "error" : error,
         "timeout" : 3000,
         "type" : "GET",
         "dataType": this.dataType
@@ -209,3 +207,22 @@ GHInput.prototype.toString = function() {
         return this.lat + "," + this.lng;
     return undefined;
 };
+
+GHRequest.prototype.setLocale = function(locale) {
+    if(locale)
+        this.locale = locale;
+}
+
+GHRequest.prototype.fetchTranslationMap = function(urlLocaleParam) {
+    if(!urlLocaleParam)
+        // let servlet figure out the locale from the Accept-Language header
+        urlLocaleParam = "";
+    var url = this.host + "/api/i18n/"+urlLocaleParam+"?type=" + this.dataType;
+    console.log(url);    
+    return $.ajax({
+        "url": url,       
+        "timeout" : 3000,
+        "type" : "GET",
+        "dataType": this.dataType
+    });
+}

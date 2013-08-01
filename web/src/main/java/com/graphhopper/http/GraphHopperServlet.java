@@ -37,14 +37,10 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import static javax.servlet.http.HttpServletResponse.*;
 import org.json.JSONException;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Servlet to use GraphHopper in a remote application (mobile or browser). Attention: If type is
@@ -53,9 +49,8 @@ import org.slf4j.LoggerFactory;
  * <p/>
  * @author Peter Karich
  */
-public class GraphHopperServlet extends HttpServlet
+public class GraphHopperServlet extends GHServlet
 {
-    private Logger logger = LoggerFactory.getLogger(getClass());
     @Inject
     private GraphHopper hopper;
     @Inject
@@ -224,105 +219,6 @@ public class GraphHopperServlet extends HttpServlet
             logger.error("Error while query:" + start + "->" + end, ex);
             writeError(res, SC_INTERNAL_SERVER_ERROR, "Problem occured:" + ex.getMessage());
         }
-    }
-
-    protected String getParam( HttpServletRequest req, String string, String _default )
-    {
-        String[] l = req.getParameterMap().get(string);
-        if (l != null && l.length > 0)
-        {
-            return l[0];
-        }
-        return _default;
-    }
-
-    protected String[] getParams( HttpServletRequest req, String string )
-    {
-        String[] l = req.getParameterMap().get(string);
-        if (l != null && l.length > 0)
-        {
-            return l;
-        }
-        return new String[0];
-    }
-
-    protected boolean getBooleanParam( HttpServletRequest req, String string, boolean _default )
-    {
-        try
-        {
-            return Boolean.parseBoolean(getParam(req, string, "" + _default));
-        } catch (Exception ex)
-        {
-            return _default;
-        }
-    }
-
-    protected double getDoubleParam( HttpServletRequest req, String string, double _default )
-    {
-        try
-        {
-            return Double.parseDouble(getParam(req, string, "" + _default));
-        } catch (Exception ex)
-        {
-            return _default;
-        }
-    }
-
-    public void writeError( HttpServletResponse res, int code, String str )
-    {
-        try
-        {
-            res.sendError(code, str);
-        } catch (IOException ex)
-        {
-            logger.error("Cannot write error " + code + " message:" + str, ex);
-        }
-    }
-
-    public void writeResponse( HttpServletResponse res, String str )
-    {
-        try
-        {
-            res.setStatus(SC_OK);
-            res.getWriter().append(str);
-        } catch (IOException ex)
-        {
-            logger.error("Cannot write message:" + str, ex);
-        }
-    }
-
-    private void writeJson( HttpServletRequest req, HttpServletResponse res, JSONObject json ) throws JSONException
-    {
-        String type = getParam(req, "type", "json");
-        res.setCharacterEncoding("UTF-8");
-        boolean debug = getBooleanParam(req, "debug", false);
-        if ("jsonp".equals(type))
-        {
-            res.setContentType("application/javascript");
-            String callbackName = getParam(req, "callback", null);
-            if (debug)
-            {
-                writeResponse(res, callbackName + "(" + json.toString(2) + ")");
-            } else
-            {
-                writeResponse(res, callbackName + "(" + json.toString() + ")");
-            }
-        } else
-        {
-            res.setContentType("application/json");
-            if (debug)
-            {
-                writeResponse(res, json.toString(2));
-            } else
-            {
-                writeResponse(res, json.toString());
-            }
-        }
-    }
-
-    void returnError( HttpServletResponse res, String errorMessage ) throws IOException
-    {
-        res.sendError(SC_BAD_REQUEST, errorMessage);
     }
 
     private List<GHPlace> getPoints( HttpServletRequest req ) throws IOException
