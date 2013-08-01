@@ -174,6 +174,7 @@ public class FootFlagEncoderTest
         assertEquals(10, FootFlagEncoder.parseDuration("00:10"));
         assertEquals(70, FootFlagEncoder.parseDuration("01:10"));
         assertEquals(0, FootFlagEncoder.parseDuration("oh"));
+        assertEquals(0, FootFlagEncoder.parseDuration(null));
     }
 
     @Test

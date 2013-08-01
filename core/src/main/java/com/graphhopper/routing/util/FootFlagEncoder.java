@@ -197,6 +197,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
     static int parseDuration( String str )
     {
+        if (str == null)
+            return 0;
+
         int index = str.indexOf(":");
         if (index > 0)
         {
