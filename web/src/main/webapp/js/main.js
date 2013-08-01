@@ -81,7 +81,7 @@ $(document).ready(function(e) {
         function createButton(text) {
             var button = $("<button/>")            
             button.attr('id', text);
-            button.html(text.charAt(0) + text.substr(1).toLowerCase());
+            button.html(tr(text));
             button.click(function() {
                 ghRequest.vehicle = text;
                 resolveFrom();
