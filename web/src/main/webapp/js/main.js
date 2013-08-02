@@ -745,9 +745,9 @@ function tr(key, args) {
         return key;
     }
     
-    var val = defaultTranslationMap[key];
+    var val = defaultTranslationMap["web." + key];
     if(val == null && enTranslationMap)
-        val = enTranslationMap[key];
+        val = enTranslationMap["web." + key];
     if(val == null)
         return key;
     

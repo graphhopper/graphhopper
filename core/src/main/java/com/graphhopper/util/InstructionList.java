@@ -32,8 +32,7 @@ import java.util.*;
  * @author Peter Karich
  */
 public class InstructionList
-{
-    private static final TranslationMap translations = TranslationMap.SINGLETON;
+{    
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;
@@ -175,15 +174,8 @@ public class InstructionList
         return labels;
     }
 
-    public List<String> createDescription( Locale locale )
-    {
-        Translation tr = translations.get(locale.toString());
-        if (tr == null)
-        {
-            tr = translations.get(locale.getLanguage());
-            if (tr == null)
-                tr = translations.get("en");
-        }
+    public List<String> createDescription( Translation tr )
+    {        
         String shLeftTr = tr.tr("sharp_left");
         String shRightTr = tr.tr("sharp_right");
         String slLeftTr = tr.tr("slight_left");

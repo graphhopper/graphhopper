@@ -59,7 +59,7 @@ public class DefaultModule extends AbstractModule
                     setBounds(hopper.getGraph().getBounds()));
             bind(GHThreadPool.class).toInstance(new GHThreadPool(1000, 50).startService());
             
-            bind(TranslationMap.class).toInstance(TranslationMap.SINGLETON);
+            bind(TranslationMap.class).toInstance(new TranslationMap().doImport());
         } catch (Exception ex)
         {
             throw new IllegalStateException("Couldn't load graph", ex);

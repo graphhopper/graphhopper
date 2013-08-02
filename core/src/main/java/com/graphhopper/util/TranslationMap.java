@@ -17,29 +17,78 @@
  */
 package com.graphhopper.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
+ * A class which manages the translations in-memory.
+ * <p/>
  * @author Peter Karich
  */
 public class TranslationMap
 {
-    public static final TranslationMap SINGLETON = new TranslationMap().doImport();
+    private static final List<String> LANGUAGES = Arrays.asList("en", "de", "es");
     private Map<String, Translation> translations = new HashMap<String, Translation>();
 
+    /**
+     * This loads the translation files from the specified folder.
+     */
+    public TranslationMap doImport( File folder )
+    {
+        try
+        {
+            for (String key : LANGUAGES)
+            {
+                TranslationHashMap trMap = new TranslationHashMap(key);
+                trMap.doImport(new FileInputStream(new File(folder, key + ".txt")));
+                add(trMap);
+            }
+            return this;
+        } catch (Exception ex)
+        {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * This loads the translation files from classpath.
+     */
     public TranslationMap doImport()
     {
-        for (String key : Arrays.asList("en", "de", "es"))
+        try
         {
-            TranslationHashMap map = new TranslationHashMap(key).doImport(getClass().getResourceAsStream(key + ".properties"));
-            translations.put(key, map);
+            for (String key : LANGUAGES)
+            {
+                TranslationHashMap trMap = new TranslationHashMap(key);
+                trMap.doImport(TranslationMap.class.getResourceAsStream(key + ".txt"));
+                add(trMap);
+            }
+            return this;
+        } catch (Exception ex)
+        {
+            throw new RuntimeException(ex);
         }
-        return this;
+    }
+
+    public void add( Translation tr )
+    {
+        translations.put(tr.getLanguage(), tr);
+    }
+
+    public Translation getWithFallBack( Locale locale )
+    {
+        Translation tr = get(locale.toString());
+        if (tr == null)
+        {
+            tr = get(locale.getLanguage());
+            if (tr == null)
+                tr = get("en");
+        }
+        return tr;
     }
 
     public Translation get( String language )
@@ -56,14 +105,19 @@ public class TranslationMap
         String getLanguage();
     }
 
-    static class TranslationHashMap implements Translation
+    public static class TranslationHashMap implements Translation
     {
-        final Map<String, String> map = new HashMap<String, String>();
-        final String language;
+        private final Map<String, String> map = new HashMap<String, String>();
+        private final String language;
 
-        TranslationHashMap( String language )
+        public TranslationHashMap( String language )
         {
             this.language = language;
+        }
+
+        public void clear()
+        {
+            map.clear();
         }
 
         @Override
@@ -78,7 +132,7 @@ public class TranslationMap
             String val = map.get(key);
             if (Helper.isEmpty(val))
                 return key;
-            
+
             return String.format(val, params);
         }
 
@@ -104,7 +158,7 @@ public class TranslationMap
         {
             try
             {
-                for (String line : Helper.readFile(new InputStreamReader(resourceAsStream)))
+                for (String line : Helper.readFile(new InputStreamReader(resourceAsStream, "UTF-8")))
                 {
                     if (line.isEmpty() || line.startsWith("//") || line.startsWith("#"))
                         continue;

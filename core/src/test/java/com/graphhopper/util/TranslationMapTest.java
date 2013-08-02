@@ -17,7 +17,8 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.util.TranslationMap.TranslationHashMap;
+import com.graphhopper.util.TranslationMap.Translation;
+import java.util.Locale;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -27,10 +28,16 @@ import static org.junit.Assert.*;
  */
 public class TranslationMapTest
 {
+    // use a static singleton to parse the I18N files only once per test execution
+    public final static TranslationMap SINGLETON = new TranslationMap().doImport();
+
     @Test
     public void testToString()
     {
-        TranslationHashMap map = new TranslationHashMap("en").doImport(getClass().getResourceAsStream("en.properties"));
-        assertEquals("continue onto blp street", map.tr("continue_onto", "blp street"));
+        Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
+        assertEquals("continue onto blp street", enMap.tr("continue_onto", "blp street"));
+                
+        Translation deMap = SINGLETON.getWithFallBack(Locale.GERMANY);
+        assertEquals("Zu Fuß", deMap.tr("web.FOOT"));
     }
 }

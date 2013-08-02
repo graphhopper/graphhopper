@@ -26,6 +26,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.*;
+import com.graphhopper.util.TranslationMap.Translation;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
 import java.io.IOException;
@@ -63,6 +64,8 @@ public class GraphHopperServlet extends GHServlet
     private Long timeOutInMillis;
     @Inject
     private GHThreadPool threadPool;
+    @Inject
+    private TranslationMap trMap;
 
     @Override
     public void doGet( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
@@ -177,9 +180,10 @@ public class GraphHopperServlet extends GHServlet
 
                 if (enableInstructions)
                 {
+                    Translation tr = trMap.getWithFallBack(locale);
                     InstructionList instructions = rsp.getInstructions();
                     builder.startObject("instructions").
-                            object("descriptions", instructions.createDescription(locale)).
+                            object("descriptions", instructions.createDescription(tr)).
                             object("distances", instructions.createDistances(locale)).
                             object("indications", instructions.createIndications()).
                             endObject();
