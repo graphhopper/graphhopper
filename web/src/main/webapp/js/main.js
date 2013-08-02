@@ -61,7 +61,7 @@ $(document).ready(function(e) {
         // init language
         // 1. determined by Accept-Language header, falls back to 'en' if no translation map available
         // 2. can be overwritten by url parameter        
-        ghRequest.setLocale(translations["language"]);
+        ghRequest.setLocale(translations["locale"]);
         defaultTranslationMap = translations["default"];
         enTranslationMap = translations["en"];        
         if(defaultTranslationMap == null)

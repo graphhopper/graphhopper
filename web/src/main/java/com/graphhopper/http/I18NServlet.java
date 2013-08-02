@@ -41,31 +41,33 @@ public class I18NServlet extends GHServlet
     {
         try
         {
-            String lang = "";
+            String locale = "";
             String path = req.getPathInfo();
             if (!Helper.isEmpty(path) && path.startsWith("/"))
-                lang = path.substring(1);
+                locale = path.substring(1);
 
-            if (Helper.isEmpty(lang))
+            if (Helper.isEmpty(locale))
             {
                 // fall back to language specified in header e.g. via browser settings
                 String acceptLang = req.getHeader("Accept-Language");
                 if (!Helper.isEmpty(acceptLang))
-                    lang = acceptLang.split(",")[0];
+                    locale = acceptLang.split(",")[0];
             }
 
-            lang = lang.replaceAll("_", "-");
-            if (lang.indexOf("-") > 0)
-                lang = lang.substring(0, lang.indexOf("-"));
+            locale = locale.replaceAll("\\-", "_");            
+            String lang = locale;
+            int index = locale.indexOf("_");
+            if (index > 0) {
+                lang = lang.substring(0, lang.indexOf("_"));
+                locale = lang + locale.substring(index).toUpperCase();
+            }
 
             Translation tr = map.get(lang);
             JSONObject json = new JSONObject();
-            if (tr != null && !"en".equals(tr.getLanguage())) {
-                json.put("default", tr.asMap());
-                json.put("language", lang);
-            } else {
-                json.put("language", "en");
-            }
+            if (tr != null && !"en".equals(tr.getLanguage()))
+                json.put("default", tr.asMap());                
+            
+            json.put("locale", locale);
             json.put("en", map.get("en").asMap());
             writeJson(req, res, json);
         } catch (Exception ex)
