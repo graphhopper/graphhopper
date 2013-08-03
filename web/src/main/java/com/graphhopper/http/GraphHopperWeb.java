@@ -116,7 +116,7 @@ public class GraphHopperWeb implements GraphHopperAPI
             throw new RuntimeException("Problem while fetching path " + request.getFrom() + "->" + request.getTo(), ex);
         } finally
         {
-            logger.info("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);
+            logger.debug("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);
         }
     }
 }
