@@ -3,7 +3,9 @@ jdk:
   - openjdk7
   - openjdk6
   - oraclejdk7
-# before_script: cd core
+# do not install anything instead return true via unix command true
+install: true
+script: ./core/files/travis-build.sh
 notifications:
   email:
     - peathal@yahoo.de
