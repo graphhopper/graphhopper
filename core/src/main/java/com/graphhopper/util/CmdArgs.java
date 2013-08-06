@@ -17,10 +17,10 @@
  */
 package com.graphhopper.util;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -142,17 +142,15 @@ public class CmdArgs
     public static CmdArgs readFromConfig( String fileStr, String systemProperty ) throws IOException
     {
         if (systemProperty.startsWith("-D"))
-        {
             systemProperty = systemProperty.substring(2);
-        }
+        
         String configLocation = System.getProperty(systemProperty);
         if (Helper.isEmpty(configLocation))
-        {
             configLocation = fileStr;
-        }
-
+        
         Map<String, String> map = new LinkedHashMap<String, String>();
-        Helper.loadProperties(map, new InputStreamReader(new FileInputStream(configLocation), "UTF-8"));
+        Helper.loadProperties(map, new InputStreamReader(new FileInputStream(
+                new File(configLocation).getAbsoluteFile()), "UTF-8"));
         CmdArgs args = new CmdArgs();
         args.merge(map);
 

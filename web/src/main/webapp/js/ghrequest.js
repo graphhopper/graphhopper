@@ -9,6 +9,8 @@ GHRequest = function(host) {
     this.debug = false;
     this.locale = "en";
     this.doZoom = true;
+    // if your server allows CORS you can use json here
+    this.dataType = "jsonp";
 };
 
 GHRequest.prototype.init = function(params) {
@@ -46,7 +48,7 @@ GHRequest.prototype.handleBoolean = function(key, params) {
 }
 
 GHRequest.prototype.createURL = function(demoUrl) {    
-    return this.createPath(this.host + "/api/route?" + demoUrl + "&type=jsonp");
+    return this.createPath(this.host + "/api/route?" + demoUrl + "&type=" + this.dataType);
 }
 
 GHRequest.prototype.createFullURL = function() {
@@ -154,20 +156,18 @@ GHRequest.prototype.doRequest = function(url, callback) {
             callback(json);
         },
         "type": "GET",
-        "dataType": "jsonp"
+        "dataType": this.dataType
     });
 };
 
-GHRequest.prototype.getInfo = function(success, error) {
-    var url = this.host + "/api/info?type=jsonp";
+GHRequest.prototype.getInfo = function() {
+    var url = this.host + "/api/info?type=" + this.dataType;
     console.log(url);    
     return $.ajax({
         "url": url,
-        "success": success,
-        "error" : error,
         "timeout" : 3000,
         "type" : "GET",
-        "dataType": 'jsonp'
+        "dataType": this.dataType
     });
 }
 
@@ -207,3 +207,22 @@ GHInput.prototype.toString = function() {
         return this.lat + "," + this.lng;
     return undefined;
 };
+
+GHRequest.prototype.setLocale = function(locale) {
+    if(locale)
+        this.locale = locale;
+}
+
+GHRequest.prototype.fetchTranslationMap = function(urlLocaleParam) {
+    if(!urlLocaleParam)
+        // let servlet figure out the locale from the Accept-Language header
+        urlLocaleParam = "";
+    var url = this.host + "/api/i18n/"+urlLocaleParam+"?type=" + this.dataType;
+    console.log(url);    
+    return $.ajax({
+        "url": url,       
+        "timeout" : 3000,
+        "type" : "GET",
+        "dataType": this.dataType
+    });
+}

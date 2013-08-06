@@ -66,6 +66,11 @@ public class Helper
         return new Locale(param.substring(0, index), param.substring(index + 1));
     }
 
+    static String packageToPath( Package pkg )
+    {
+        return pkg.getName().replaceAll("\\.", File.separator);
+    }
+
     private Helper()
     {
     }
@@ -261,6 +266,7 @@ public class Helper
         }
         return false;
     }
+
     public static int calcIndexSize( BBox graphBounds )
     {
         if (!graphBounds.isValid())

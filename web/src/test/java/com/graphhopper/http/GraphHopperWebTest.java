@@ -35,7 +35,7 @@ public class GraphHopperWebTest
     @Test
     public void testReadUnencoded() throws Exception
     {
-        Downloader downloader = new Downloader()
+        Downloader downloader = new Downloader("GraphHopper Test")
         {
             @Override
             public InputStream fetch( String url ) throws IOException
@@ -53,7 +53,7 @@ public class GraphHopperWebTest
     @Test
     public void testReadEncoded() throws Exception
     {
-        Downloader downloader = new Downloader()
+        Downloader downloader = new Downloader("GraphHopper Test")
         {
             @Override
             public InputStream fetch( String url ) throws IOException

@@ -36,6 +36,8 @@ import static org.junit.Assert.*;
  */
 public class InstructionListTest
 {
+    TranslationMap trMap = TranslationMapTest.SINGLETON;
+    
     @Test
     public void testWayList()
     {
@@ -88,11 +90,11 @@ public class InstructionListTest
         InstructionList wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
                 "Turn left onto 7-8", "Continue onto 8-9", "Turn right"),
-                wayList.createDescription(Locale.CANADA));
+                wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
 
         assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Geradeaus auf 4-7",
                 "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen"),
-                wayList.createDescription(Locale.GERMAN));
+                wayList.createDescription(trMap.getWithFallBack(Locale.GERMAN)));
 
         TDoubleList distList = wayList.getDistances();
         final DoubleRef dr = new DoubleRef(0);
@@ -116,7 +118,7 @@ public class InstructionListTest
         p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(6, 2);
         wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2"),
-                wayList.createDescription(Locale.CANADA));
+                wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
     }
 
     @Test
@@ -146,12 +148,12 @@ public class InstructionListTest
         Path p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(2, 3);
         InstructionList wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 2-4", "Turn slight right onto 3-4"),
-                wayList.createDescription(Locale.CANADA));
+                wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
 
         p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(3, 5);
         wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 3-4", "Continue onto 4-5"),
-                wayList.createDescription(Locale.CANADA));
+                wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
     }
 
     // problem: we normally don't want instructions if streetname stays but here it is suboptimal:
@@ -181,6 +183,6 @@ public class InstructionListTest
 
         Path p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(2, 3);
         InstructionList wayList = p.calcInstructions();
-        assertEquals(Arrays.asList("Continue onto street"), wayList.createDescription(Locale.CANADA));
+        assertEquals(Arrays.asList("Continue onto street"), wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
     }
 }

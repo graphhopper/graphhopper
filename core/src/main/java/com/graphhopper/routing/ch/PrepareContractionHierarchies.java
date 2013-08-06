@@ -375,12 +375,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 }
 
                 if (removesHigher2LowerEdges)
-                {
                     ((LevelGraphStorage) g).disconnect(iter, EdgeIterator.NO_EDGE, false);
-                }
             }
         }
 
+        // Preparation works only once so we can release temporary data.
+        // The preparation object itself has to be intact to create the algorithm.
+        close();
         logger.info("new shortcuts " + newShortcuts + ", " + prepareWeightCalc
                 + ", " + prepareEncoder
                 + ", removeHigher2LowerEdges:" + removesHigher2LowerEdges
@@ -394,6 +395,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 + ", periodic:" + periodicUpdatesCount
                 + ", lazy:" + lastNodesLazyUpdatePercentage
                 + ", neighbor:" + neighborUpdatePercentage);
+    }
+
+    public void close()
+    {
+        algo.close();
+        originalEdges.close();
+        sortedNodes = null;
+        refs = null;
     }
     AddShortcutHandler addScHandler = new AddShortcutHandler();
     CalcShortcutHandler calcScHandler = new CalcShortcutHandler();

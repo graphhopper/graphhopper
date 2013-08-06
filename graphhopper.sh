@@ -193,9 +193,10 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
   if [ "x$JETTY_PORT" = "x" ]; then  
     JETTY_PORT=8989
   fi
-  "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Djetty.port=$JETTY_PORT -Dgraphhopper.config=$CONFIG \
-      -Dgraphhopper.graph.location="$GRAPH" \
-      -Dgraphhopper.osmreader.osm="$OSM_FILE" -Djetty.reload=manual jetty:run
+  "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/web/pom.xml" -Djetty.port=$JETTY_PORT -Djetty.reload=manual \
+      -Dgraphhopper.config=$CONFIG \
+      $GH_WEB_OPTS -Dgraphhopper.graph.location="$GRAPH" -Dgraphhopper.osmreader.osm="$OSM_FILE" \
+      jetty:run
 
 
 elif [ "x$ACTION" = "ximport" ]; then

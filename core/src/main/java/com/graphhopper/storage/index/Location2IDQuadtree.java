@@ -414,4 +414,10 @@ public class Location2IDQuadtree implements Location2IDIndex
     {
         index.close();
     }
+
+    @Override
+    public void setSegmentSize( int bytes )
+    {
+        index.setSegmentSize(bytes);
+    }
 }

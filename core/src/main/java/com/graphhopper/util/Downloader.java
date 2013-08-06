@@ -31,7 +31,7 @@ public class Downloader
 {
     public static void main( String[] args ) throws IOException
     {
-        new Downloader().downloadAndUnzip("http://graphhopper.com/public/maps/0.1/europe_germany_berlin.ghz", "somefolder",
+        new Downloader("GraphHopper Downloader").downloadAndUnzip("http://graphhopper.com/public/maps/0.1/europe_germany_berlin.ghz", "somefolder",
                 new ProgressListener()
                 {
                     @Override
@@ -42,20 +42,19 @@ public class Downloader
                 });
     }
     private String referrer = "http://graphhopper.com";
-    private String userAgent = "Mozilla/5.0 (Online GraphHopperAPI)";
+    private final String userAgent;
     private String acceptEncoding = "gzip, deflate";
     private int timeout = 4000;
     private int size = 1024 * 8;
 
+    public Downloader( String userAgent )
+    {
+        this.userAgent = userAgent;
+    }        
+
     public Downloader setTimeout( int timeout )
     {
         this.timeout = timeout;
-        return this;
-    }
-
-    public Downloader setUserAgent( String userAgent )
-    {
-        this.userAgent = userAgent;
         return this;
     }
 

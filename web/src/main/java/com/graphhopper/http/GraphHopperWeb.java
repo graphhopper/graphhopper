@@ -38,7 +38,7 @@ public class GraphHopperWeb implements GraphHopperAPI
     public static void main( String[] args )
     {
         GraphHopperAPI gh = new GraphHopperWeb();
-        gh.load("http://localhost:8989/api");
+        gh.load("http://localhost:8989/api/route");
         //GHResponse ph = gh.route(new GHRequest(53.080827, 9.074707, 50.597186, 11.184082));
         GHResponse ph = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180));
         System.out.println(ph);
@@ -46,7 +46,7 @@ public class GraphHopperWeb implements GraphHopperAPI
     private Logger logger = LoggerFactory.getLogger(getClass());
     private String serviceUrl;
     private boolean encodePolyline = true;
-    private Downloader downloader = new Downloader();
+    private Downloader downloader = new Downloader("GraphHopperWeb");
 
     public GraphHopperWeb()
     {
@@ -116,7 +116,7 @@ public class GraphHopperWeb implements GraphHopperAPI
             throw new RuntimeException("Problem while fetching path " + request.getFrom() + "->" + request.getTo(), ex);
         } finally
         {
-            logger.info("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);
+            logger.debug("Full request took:" + sw.stop().getSeconds() + ", API took:" + took);
         }
     }
 }

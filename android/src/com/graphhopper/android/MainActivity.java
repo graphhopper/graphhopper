@@ -221,10 +221,9 @@ public class MainActivity extends MapActivity
             protected List<String> saveDoInBackground( Void... params )
                     throws Exception
             {
-                String filesList = mapsFolder + "files.txt";
-                new Downloader().downloadAndUnzip(fileListURL, filesList, null);
+                String[] lines = new Downloader("GraphHopper Android").downloadAsString(fileListURL).split("\n");
                 List<String> res = new ArrayList<String>();
-                for (String str : AndroidHelper.readFile(new FileReader(filesList)))
+                for (String str : lines)
                 {
                     int index = str.indexOf("href=\"");
                     if (index >= 0)
@@ -342,7 +341,7 @@ public class MainActivity extends MapActivity
                 String localFolder = Helper.pruneFileEnd(AndroidHelper.getFileName(downloadURL));
                 localFolder = mapsFolder + localFolder + "-gh";
                 log("downloading & unzipping " + downloadURL + " to " + localFolder);
-                new Downloader().setUserAgent("GraphHopper Android").downloadAndUnzip(downloadURL, localFolder,
+                new Downloader("GraphHopper Android").downloadAndUnzip(downloadURL, localFolder,
                         new ProgressListener()
                         {
                             @Override

@@ -39,15 +39,15 @@ public class StorableProperties implements Storable<StorableProperties>
     public StorableProperties( Directory dir )
     {
         this.da = dir.find("properties");
+        // reduce size
+        da.setSegmentSize(1 << 15);
     }
 
     @Override
     public boolean loadExisting()
     {
         if (!da.loadExisting())
-        {
             return false;
-        }
 
         int len = (int) da.getCapacity();
         byte[] bytes = new byte[len];
