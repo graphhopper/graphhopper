@@ -3,15 +3,15 @@ cd $HOME/../..
 
 modules="core web tools"
 for module in $modules; do
-  echo "====== $module ====="
   cd $module
-  # INSTALL    
+  echo "====== INSTALL $module ====="
   mvn install -DskipTests=true
+  EXIT_VAL="$?"    
   if [[ "x$EXIT_VAL" != "x0" ]]; then
     exit $EXIT_VAL
   fi 
   
-  # TEST
+  echo "====== TEST $module ====="
   mvn test
   EXIT_VAL="$?"
   if [[ "x$EXIT_VAL" != "x0" ]]; then
