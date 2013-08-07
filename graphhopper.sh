@@ -223,7 +223,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
     COUNT=5000
     commit_info=`git log -n 1 --pretty=oneline`     
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
-    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS prepare.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME \
+    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS measurement.count=$COUNT measurement.location=$M_FILE_NAME \
             graph.importTime=$IMPORT_TIME measurement.gitinfo="$commit_info"
  }
  
