@@ -105,8 +105,9 @@ public class Measurement
                     return new Dijkstra(_graph, vehicle);
                 }
             }.setGraph(g);            
-            printTimeOfRouteQuery(prepare2, count / 10, "routing");
+            printTimeOfRouteQuery(prepare2, count / 20, "routing");
 
+            System.gc();
             // route via CH -> do preparation before
             PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setVehicle(vehicle).setGraph(g);
             printPreparationDetails(g, prepare);
