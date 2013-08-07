@@ -87,29 +87,23 @@ public class GHResponse
         BBox bounds = BBox.INVERSE.clone();
         int len = list.getSize();
         if (len == 0)
-        {
             return _fallback;
-        }
+        
         for (int i = 0; i < len; i++)
         {
             double lat = list.getLatitude(i);
             double lon = list.getLongitude(i);
             if (lat > bounds.maxLat)
-            {
                 bounds.maxLat = lat;
-            }
+            
             if (lat < bounds.minLat)
-            {
                 bounds.minLat = lat;
-            }
+            
             if (lon > bounds.maxLon)
-            {
                 bounds.maxLon = lon;
-            }
+            
             if (lon < bounds.minLon)
-            {
-                bounds.minLon = lon;
-            }
+                bounds.minLon = lon;            
         }
         return bounds;
     }

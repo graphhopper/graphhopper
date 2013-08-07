@@ -188,10 +188,10 @@ public class GraphHopperServlet extends GHServlet
                             object("indications", instructions.createIndications()).
                             endObject();
                 }
-                if (points.getSize() > 2)
-                {
+                
+                if (points.getSize() >= 2)
                     builder.object("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
-                }
+                
                 if (encodedPolylineParam)
                 {
                     String encodedPolyline = WebHelper.encodePolyline(points);
