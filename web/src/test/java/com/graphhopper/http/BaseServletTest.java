@@ -62,7 +62,7 @@ public class BaseServletTest
         if (server != null)
             return;
 
-        System.setProperty("graphhopper.config", "../config.properties");
+        System.setProperty("graphhopper.config", "../config-example.properties");
         System.setProperty("graphhopper.osmreader.osm", "../core/files/andorra.osm.pbf");
         System.setProperty("graphhopper.graph.location", "./target/andorra-gh/");
 
