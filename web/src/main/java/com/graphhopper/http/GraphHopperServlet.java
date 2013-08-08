@@ -188,10 +188,10 @@ public class GraphHopperServlet extends GHServlet
                             object("indications", instructions.createIndications()).
                             endObject();
                 }
-                
+
                 if (points.getSize() >= 2)
                     builder.object("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
-                
+
                 if (encodedPolylineParam)
                 {
                     String encodedPolyline = WebHelper.encodePolyline(points);
@@ -247,22 +247,16 @@ public class GraphHopperServlet extends GHServlet
         for (int pointNo = 0; pointNo < pointsAsStr.length; pointNo++)
         {
             final String str = pointsAsStr[pointNo];
-            // if the point is in the format of lat,lon we don't need to call geocoding service
             String[] fromStrs = str.split(",");
             if (fromStrs.length == 2)
             {
-                try
-                {
-                    double fromLat = Double.parseDouble(fromStrs[0]);
-                    double fromLon = Double.parseDouble(fromStrs[1]);
-                    infoPoints.add(new GHPlace(fromLat, fromLon));
-
-                } catch (Exception ex)
-                {
-                }
+                GHPlace place = GHPlace.parse(str);
+                if (place != null)
+                    infoPoints.add(place);
                 continue;
             }
-
+            
+            // now it is not a coordinate and we need to call geo resolver
             final int index = infoPoints.size();
             infoPoints.add(new GHPlace(Double.NaN, Double.NaN).setName(str));
             GHThreadPool.GHWorker worker = new GHThreadPool.GHWorker(timeOutInMillis)

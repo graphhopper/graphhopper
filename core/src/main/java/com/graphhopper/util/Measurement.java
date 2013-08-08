@@ -78,7 +78,6 @@ public class Measurement
         seed = args.getLong("measurement.seed", 123);        
         String gitCommit = args.get("measurement.gitinfo", "");
         int count = args.getInt("measurement.count", 1000);
-        int lookupCount = 0;
 
         final EncodingManager encodingManager = new EncodingManager("CAR");
         Directory dir = new RAMDirectory(graphLocation, true);
@@ -120,8 +119,7 @@ public class Measurement
         } finally
         {
             put("measurement.gitinfo", gitCommit);
-            put("measurement.count", count);
-            put("measurement.lookups", lookupCount);
+            put("measurement.count", count);            
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getTime());
             System.gc();
