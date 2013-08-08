@@ -58,6 +58,9 @@ public class GHResponse
         return this;
     }
 
+    /**
+     * @return distance in meter
+     */
     public double getDistance()
     {
         return distance;

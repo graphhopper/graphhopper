@@ -143,7 +143,7 @@ public class GraphHopperServlet extends GHServlet
             float took = sw.stop().getSeconds();
             String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
             PointList points = rsp.getPoints();
-            double distInKM = rsp.getDistance() / 1000;
+            double distInMeter = rsp.getDistance();
             JSONBuilder builder;
 
             if (rsp.hasErrors())
@@ -175,7 +175,7 @@ public class GraphHopperServlet extends GHServlet
                         {
                             end.lon, end.lat
                         }).
-                        object("distance", distInKM).
+                        object("distance", distInMeter).
                         object("time", rsp.getTime());
 
                 if (enableInstructions)
@@ -209,7 +209,7 @@ public class GraphHopperServlet extends GHServlet
 
             writeJson(req, res, builder.build());
             String logStr = req.getQueryString() + " " + infoStr + " " + start + "->" + end
-                    + ", distance: " + distInKM + ", time:" + Math.round(rsp.getTime() / 60f)
+                    + ", distance: " + distInMeter + ", time:" + Math.round(rsp.getTime() / 60f)
                     + "min, points:" + points.getSize() + ", took:" + took
                     + ", debug - " + rsp.getDebugInfo() + ", " + algoStr + ", "
                     + algoTypeStr + ", " + vehicleStr;

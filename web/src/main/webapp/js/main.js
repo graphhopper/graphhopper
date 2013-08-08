@@ -523,7 +523,7 @@ function routeLatLng(request, doQuery) {
                 tmpTime = floor(tmpTime / 60, 1) + "h " + round(tmpTime % 60, 1) + "min";
         } else
             tmpTime = round(tmpTime % 60, 1) + "min";
-        var dist = round(json.route.distance, 100);
+        var dist = round(json.route.distance / 1000, 100);
         if(dist > 100)
             dist = round(dist, 1);
                         
