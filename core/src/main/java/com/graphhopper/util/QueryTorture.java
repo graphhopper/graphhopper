@@ -98,7 +98,7 @@ public class QueryTorture
         logger.info("Queries| read: " + readQueries
                 + ", no dups:" + noDuplicate.size()
                 + ", successful routes:" + successfullQueries.get()
-                + ", skipped:" + skippedTooShort
+                + ", too short:" + skippedTooShort
                 + ", queue.size:" + queryQueue.size()
                 + ", routing errors:" + routingErrorCounter.get()
                 + ", http errors:" + httpErrorCounter.get());

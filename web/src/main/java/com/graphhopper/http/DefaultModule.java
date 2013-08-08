@@ -39,8 +39,7 @@ public class DefaultModule extends AbstractModule
         try
         {
             CmdArgs args = CmdArgs.readFromConfig("config.properties", "graphhopper.config");
-            GraphHopper hopper = new GraphHopper().init(args)
-                    .forServer();
+            GraphHopper hopper = new GraphHopper().forServer().init(args);
             hopper.importOrLoad();
             logger.info("loaded graph at:" + hopper.getGraphHopperLocation()
                     + ", source:" + hopper.getOSMFile()
