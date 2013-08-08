@@ -126,7 +126,9 @@ fi
 # NAME = file without extension if any
 NAME="${FILE%.*}"
 
-if [ ${FILE: -4} == ".osm" ]; then
+if [ "x$FILE" == "x-" ]; then
+   OSM_FILE=
+elif [ ${FILE: -4} == ".osm" ]; then
    OSM_FILE=$FILE
 elif [ ${FILE: -4} == ".pbf" ]; then
    OSM_FILE=$FILE
@@ -165,7 +167,9 @@ elif [ "x$TMP" = "xgermany" ]; then
  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1800m -Xms1800m" 
 else 
  LINK=`echo $NAME | tr '_' '/'`
- if [ ${FILE: -4} == ".osm" ]; then 
+ if [ "x$FILE" == "x-" ]; then
+   LINK=
+ elif [ ${FILE: -4} == ".osm" ]; then 
    LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
  elif [ ${FILE: -4} == ".ghz" ]; then
    LINK="http://graphhopper.com/public/maps/0.1/$FILE"      
@@ -210,6 +214,8 @@ elif [ "x$ACTION" = "xtest" ]; then
        graph.location="$GRAPH" osmreader.osm="$OSM_FILE" prepare.chShortcuts=false \
        graph.testIT=true
 
+elif [ "x$ACTION" = "xtorture" ]; then
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.QueryTorture $3 $4 $5 $6 $7 $8 $9
        
 elif [ "x$ACTION" = "xmeasurement" ]; then
  ARGS="graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
