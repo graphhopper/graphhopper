@@ -44,8 +44,9 @@ public class QueryTorture
     private BlockingQueue<Query> queryQueue;
     private Set<Query> noDuplicate;
     private String baseUrl;
-    private AtomicInteger queryCounter;
-    private AtomicInteger errorCounter;
+    private AtomicInteger successfullQueries;
+    private AtomicInteger httpErrorCounter;
+    private AtomicInteger routingErrorCounter;
     private CountDownLatch workerStartedBarrier;
     private CountDownLatch logfileEOFBarrier;
     private int skippedTooShort;
@@ -75,8 +76,9 @@ public class QueryTorture
         // there should be enough feed available for the workers in the queue
         queryQueue = new LinkedBlockingQueue<Query>(workers * 100);
         noDuplicate = new HashSet<Query>();
-        queryCounter = new AtomicInteger(0);
-        errorCounter = new AtomicInteger(0);
+        successfullQueries = new AtomicInteger(0);
+        httpErrorCounter = new AtomicInteger(0);
+        routingErrorCounter = new AtomicInteger(0);
         workerStartedBarrier = new CountDownLatch(workers);
         logfileEOFBarrier = new CountDownLatch(1);
         StopWatch sw = new StopWatch().start();
@@ -95,13 +97,14 @@ public class QueryTorture
         sw.stop();
         logger.info("Queries| read: " + readQueries
                 + ", no dups:" + noDuplicate.size()
-                + ", executed:" + queryCounter.get()
+                + ", successful routes:" + successfullQueries.get()
                 + ", skipped:" + skippedTooShort
                 + ", queue.size:" + queryQueue.size()
-                + ", errors:" + errorCounter.get());
+                + ", routing errors:" + routingErrorCounter.get()
+                + ", http errors:" + httpErrorCounter.get());
         logger.info("took:" + sw.getSeconds());
-        logger.info("throughput queries/sec:" + queryCounter.get() / sw.getSeconds());
-        logger.info("mean query time in sec:" + sw.getSeconds() / queryCounter.get());
+        logger.info("throughput queries/sec:" + successfullQueries.get() / sw.getSeconds());
+        logger.info("mean query time in sec:" + sw.getSeconds() / successfullQueries.get());
     }
 
     Thread startWorkers( final int workers )
@@ -163,11 +166,14 @@ public class QueryTorture
         try
         {
             String res = new Downloader("QueryTorture!").downloadAsString(baseUrl + query.queryString);
-            queryCounter.incrementAndGet();
+            if (res.contains("errors"))
+                routingErrorCounter.incrementAndGet();
+            else
+                successfullQueries.incrementAndGet();
         } catch (IOException ex)
         {
             logger.error("Error while querying " + query.queryString, ex);
-            errorCounter.incrementAndGet();
+            httpErrorCounter.incrementAndGet();
         }
     }
 
