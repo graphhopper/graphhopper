@@ -19,6 +19,7 @@ package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.GHPlace;
 import java.io.*;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -52,6 +53,7 @@ public class QueryTorture
     private int skippedTooShort;
     private int readQueries;
     private int maxQueries;
+    private int timeout;
 
     public QueryTorture()
     {
@@ -63,6 +65,7 @@ public class QueryTorture
         int workers = read.getInt("workers", 1);
         baseUrl = read.get("baseurl");
         maxQueries = read.getInt("maxqueries", 1000);
+        timeout = read.getInt("timeout", 3000);
         if (Helper.isEmpty(baseUrl))
             throw new IllegalArgumentException("baseUrl cannot be empty!?");
 
@@ -165,14 +168,14 @@ public class QueryTorture
         Query query = queryQueue.take();
         try
         {
-            String res = new Downloader("QueryTorture!").downloadAsString(baseUrl + query.queryString);
+            String res = new Downloader("QueryTorture!").setTimeout(timeout).downloadAsString(baseUrl + query.queryString);
             if (res.contains("errors"))
                 routingErrorCounter.incrementAndGet();
             else
                 successfullQueries.incrementAndGet();
         } catch (IOException ex)
         {
-            logger.error("Error while querying " + query.queryString, ex);
+            // logger.error("Error while querying " + query.queryString, ex);
             httpErrorCounter.incrementAndGet();
         }
     }

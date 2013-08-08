@@ -136,7 +136,7 @@ elif [ ${FILE: -7} == ".osm.gz" ]; then
    OSM_FILE=$FILE   
 elif [ ${FILE: -3} == "-gh" ]; then
    OSM_FILE=$FILE
-   NAME=${NAME%%???}
+   NAME=${FILE%%???}
 elif [ ${FILE: -4} == ".ghz" ]; then
    OSM_FILE=$FILE
    if [[ ! -d "$NAME-gh" ]]; then
@@ -159,12 +159,12 @@ TMP="${TMP%.*}"
 
 if [ "x$TMP" = "xunterfranken" ]; then
  LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx200m -Xms200m" 
+ JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx200m -Xms200m -server" 
 elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
 
  # Info: for import we need a more memory than for just loading it
- JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1800m -Xms1800m" 
+ JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1800m -Xms1800m -server"
 else 
  LINK=`echo $NAME | tr '_' '/'`
  if [ "x$FILE" == "x-" ]; then
@@ -180,7 +180,7 @@ else
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
  fi
  if [ "x$JAVA_OPTS" = "x" ]; then
-  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1000m -Xms1000m" 
+  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1000m -Xms1000m -server"
  fi
 fi
 
