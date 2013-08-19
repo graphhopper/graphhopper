@@ -138,7 +138,7 @@ public class NameIndex implements Storable<NameIndex>
         }
         byte[] sizeBytes = new byte[1];
         names.getBytes(pointer, sizeBytes, 1);
-        int size = sizeBytes[0];
+        int size = sizeBytes[0] & 0xFF;
         byte[] bytes = new byte[size];
         names.getBytes(pointer + sizeBytes.length, bytes, size);
         try

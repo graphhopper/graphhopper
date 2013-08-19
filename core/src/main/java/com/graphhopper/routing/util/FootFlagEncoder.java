@@ -21,9 +21,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -65,12 +63,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         acceptedRailways.add("station");
         acceptedRailways.add("platform");
-        acceptedRailways.add("crossing");
-        acceptedRailways.add("tram_stop");
-        acceptedRailways.add("stop");
-        acceptedRailways.add("halt");
-        acceptedRailways.add("subway_entrance");
-        acceptedRailways.add("miniature");
     }
 
     @Override
@@ -80,22 +72,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         shift = super.defineBits(index, shift);
 
         // larger value required - ferries are faster than pedestrians
-        speedEncoder = new EncodedValue("Speed", shift, 4, 1, SPEED.get("mean"), SPEED.get("max"));
+        speedEncoder = new EncodedValue("Speed", shift, 4, 1, MEAN, FERRY);
         shift += 4;
 
         safeWayBit = 1 << shift++;
-
         return shift;
-    }
-
-    public Integer getSpeed( String string )
-    {
-        Integer speed = SPEED.get(string);
-        if (speed == null)
-        {
-            throw new IllegalStateException("foot, no speed found for:" + string);
-        }
-        return speed;
     }
 
     @Override
@@ -117,10 +98,19 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         {
             if (way.hasTag("route", ferries))
             {
-                if (!way.hasTag("foot", "no"))
+                String footTag = way.getTag("foot");
+                if (footTag == null || "yes".equals(footTag))
                     return acceptBit | ferryBit;
             }
             return 0;
+        }
+
+        String sacScale = way.getTag("sac_scale");
+        if (sacScale != null)
+        {
+            if (!"hiking".equals(sacScale) && !"mountain_hiking".equals(sacScale))
+                // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
+                return 0;
         }
 
         if (way.hasTag("sidewalk", sidewalks))
@@ -158,14 +148,22 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     public int handleWayTags( int allowed, OSMWay way )
     {
         if ((allowed & acceptBit) == 0)
-        {
             return 0;
-        }
 
         int encoded;
         if ((allowed & ferryBit) == 0)
         {
-            encoded = speedEncoder.setDefaultValue(0);
+            String sacScale = way.getTag("sac_scale");
+            if (sacScale != null)
+            {
+                if ("hiking".equals(sacScale))
+                    encoded = speedEncoder.setValue(0, MEAN);
+                else
+                    encoded = speedEncoder.setValue(0, SLOW);
+            } else
+            {
+                encoded = speedEncoder.setValue(0, MEAN);
+            }
             encoded |= directionBitMask;
 
             // mark safe ways or ways with cycle lanes
@@ -177,12 +175,41 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         } else
         {
-            // TODO read duration and calculate speed 00:30 for ferry            
-            encoded = speedEncoder.setValue(0, 10);
+            int durationInMinutes = parseDuration(way.getTag("duration"));
+            if (durationInMinutes == 0)
+            {
+                // unknown speed -> put penalty on ferry transport
+                encoded = speedEncoder.setValue(0, SLOW);
+            } else if (durationInMinutes > 60)
+            {
+                // lengthy ferries should be faster than average hiking
+                encoded = speedEncoder.setValue(0, FERRY);
+            } else
+            {
+                encoded = speedEncoder.setValue(0, MEAN);
+            }
+
             encoded |= directionBitMask;
         }
 
         return encoded;
+    }
+
+    static int parseDuration( String str )
+    {
+        if (str == null)
+            return 0;
+
+        int index = str.indexOf(":");
+        if (index > 0)
+        {
+            int minutes = Integer.parseInt(str.substring(0, index)) * 60;
+            minutes += Integer.parseInt(str.substring(index + 1));
+            return minutes;
+        } else
+        {
+            return 0;
+        }
     }
 
     @Override
@@ -238,15 +265,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             //add("bridleway");
         }
     };
-    private static final Map<String, Integer> SPEED = new HashMap<String, Integer>()
-    {
-        
-        {
-            put("min", 2);
-            put("slow", 4);
-            put("mean", 5);
-            put("fast", 6);
-            put("max", 7);
-        }
-    };
+    static final int SLOW = 2;
+    static final int MEAN = 5;
+    static final int FERRY = 10;
 }

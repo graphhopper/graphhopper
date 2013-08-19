@@ -93,9 +93,8 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     public int findEndNode( int from, int to )
     {
         if (weights.length < 2)
-        {
             return -1;
-        }
+        
         int currNode = from;
         if (doClear)
         {
@@ -107,9 +106,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                 weights[n] = Double.MAX_VALUE;
                 parents[n] = -1;
                 if (edgeIds != null)
-                {
                     edgeIds[n] = EdgeIterator.NO_EDGE;
-                }
             }
 
             heap.clear();
@@ -119,20 +116,18 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             changedNodes.add(currNode);
         } else
         {
-            // re-use existing data structures
+            // Cached! Re-use existing data structures
             int parentNode = parents[to];
             if (parentNode >= 0 || heap.isEmpty())
-            {
                 return to;
-            }
+            
             currNode = heap.poll_element();
         }
 
         visitedNodes = 0;
         if (finished(currNode, to))
-        {
             return currNode;
-        }
+        
         while (true)
         {
             visitedNodes++;
@@ -162,22 +157,18 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                     heap.update_(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
                     if (edgeIds != null)
-                    {
                         edgeIds[adjNode] = iter.getEdge();
-                    }
                 }
             }
 
             if (heap.isEmpty())
-            {
                 return -1;
-            }
-            // calling just peek() is important for cache access of a next query
+            
+            // calling just peek() is important for a cached next query
             currNode = heap.peek_element();
             if (finished(currNode, to))
-            {
                 return currNode;
-            }
+            
             heap.poll_element();
         }
     }

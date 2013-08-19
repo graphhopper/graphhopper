@@ -252,9 +252,8 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setOSMFile( String osmFileStr )
     {
         if (Helper.isEmpty(osmFileStr))
-        {
             throw new IllegalArgumentException("OSM file cannot be empty.");
-        }
+        
         osmFile = osmFileStr;
         return this;
     }
@@ -682,6 +681,7 @@ public class GraphHopper implements GraphHopperAPI
             index = new Location2IDQuadtree(graph, dir);
             index.setResolution(Helper.calcIndexSize(graph.getBounds()));
         }
+        index.setSegmentSize(defaultSegmentSize);
         if (!index.loadExisting())
         {
             index.prepareIndex();

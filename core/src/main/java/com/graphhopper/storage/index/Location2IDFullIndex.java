@@ -138,4 +138,9 @@ public class Location2IDFullIndex implements Location2IDIndex
     {
         return 0;
     }
+
+    @Override
+    public void setSegmentSize( int bytes )
+    {
+    }
 }

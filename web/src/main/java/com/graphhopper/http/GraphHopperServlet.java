@@ -26,6 +26,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.*;
+import com.graphhopper.util.TranslationMap.Translation;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPlace;
 import java.io.IOException;
@@ -37,14 +38,10 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import static javax.servlet.http.HttpServletResponse.*;
 import org.json.JSONException;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Servlet to use GraphHopper in a remote application (mobile or browser). Attention: If type is
@@ -53,9 +50,8 @@ import org.slf4j.LoggerFactory;
  * <p/>
  * @author Peter Karich
  */
-public class GraphHopperServlet extends HttpServlet
+public class GraphHopperServlet extends GHServlet
 {
-    private Logger logger = LoggerFactory.getLogger(getClass());
     @Inject
     private GraphHopper hopper;
     @Inject
@@ -68,6 +64,8 @@ public class GraphHopperServlet extends HttpServlet
     private Long timeOutInMillis;
     @Inject
     private GHThreadPool threadPool;
+    @Inject
+    private TranslationMap trMap;
 
     @Override
     public void doGet( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
@@ -145,7 +143,7 @@ public class GraphHopperServlet extends HttpServlet
             float took = sw.stop().getSeconds();
             String infoStr = req.getRemoteAddr() + " " + req.getLocale() + " " + req.getHeader("User-Agent");
             PointList points = rsp.getPoints();
-            double distInKM = rsp.getDistance() / 1000;
+            double distInMeter = rsp.getDistance();
             JSONBuilder builder;
 
             if (rsp.hasErrors())
@@ -177,22 +175,23 @@ public class GraphHopperServlet extends HttpServlet
                         {
                             end.lon, end.lat
                         }).
-                        object("distance", distInKM).
+                        object("distance", distInMeter).
                         object("time", rsp.getTime());
 
                 if (enableInstructions)
                 {
+                    Translation tr = trMap.getWithFallBack(locale);
                     InstructionList instructions = rsp.getInstructions();
                     builder.startObject("instructions").
-                            object("descriptions", instructions.createDescription(locale)).
+                            object("descriptions", instructions.createDescription(tr)).
                             object("distances", instructions.createDistances(locale)).
                             object("indications", instructions.createIndications()).
                             endObject();
                 }
-                if (points.getSize() > 2)
-                {
+
+                if (points.getSize() >= 2)
                     builder.object("bbox", rsp.calcRouteBBox(hopper.getGraph().getBounds()).toGeoJson());
-                }
+
                 if (encodedPolylineParam)
                 {
                     String encodedPolyline = WebHelper.encodePolyline(points);
@@ -210,7 +209,7 @@ public class GraphHopperServlet extends HttpServlet
 
             writeJson(req, res, builder.build());
             String logStr = req.getQueryString() + " " + infoStr + " " + start + "->" + end
-                    + ", distance: " + distInKM + ", time:" + Math.round(rsp.getTime() / 60f)
+                    + ", distance: " + distInMeter + ", time:" + Math.round(rsp.getTime() / 60f)
                     + "min, points:" + points.getSize() + ", took:" + took
                     + ", debug - " + rsp.getDebugInfo() + ", " + algoStr + ", "
                     + algoTypeStr + ", " + vehicleStr;
@@ -224,105 +223,6 @@ public class GraphHopperServlet extends HttpServlet
             logger.error("Error while query:" + start + "->" + end, ex);
             writeError(res, SC_INTERNAL_SERVER_ERROR, "Problem occured:" + ex.getMessage());
         }
-    }
-
-    protected String getParam( HttpServletRequest req, String string, String _default )
-    {
-        String[] l = req.getParameterMap().get(string);
-        if (l != null && l.length > 0)
-        {
-            return l[0];
-        }
-        return _default;
-    }
-
-    protected String[] getParams( HttpServletRequest req, String string )
-    {
-        String[] l = req.getParameterMap().get(string);
-        if (l != null && l.length > 0)
-        {
-            return l;
-        }
-        return new String[0];
-    }
-
-    protected boolean getBooleanParam( HttpServletRequest req, String string, boolean _default )
-    {
-        try
-        {
-            return Boolean.parseBoolean(getParam(req, string, "" + _default));
-        } catch (Exception ex)
-        {
-            return _default;
-        }
-    }
-
-    protected double getDoubleParam( HttpServletRequest req, String string, double _default )
-    {
-        try
-        {
-            return Double.parseDouble(getParam(req, string, "" + _default));
-        } catch (Exception ex)
-        {
-            return _default;
-        }
-    }
-
-    public void writeError( HttpServletResponse res, int code, String str )
-    {
-        try
-        {
-            res.sendError(code, str);
-        } catch (IOException ex)
-        {
-            logger.error("Cannot write error " + code + " message:" + str, ex);
-        }
-    }
-
-    public void writeResponse( HttpServletResponse res, String str )
-    {
-        try
-        {
-            res.setStatus(SC_OK);
-            res.getWriter().append(str);
-        } catch (IOException ex)
-        {
-            logger.error("Cannot write message:" + str, ex);
-        }
-    }
-
-    private void writeJson( HttpServletRequest req, HttpServletResponse res, JSONObject json ) throws JSONException
-    {
-        String type = getParam(req, "type", "json");
-        res.setCharacterEncoding("UTF-8");
-        boolean debug = getBooleanParam(req, "debug", false);
-        if ("jsonp".equals(type))
-        {
-            res.setContentType("application/javascript");
-            String callbackName = getParam(req, "callback", null);
-            if (debug)
-            {
-                writeResponse(res, callbackName + "(" + json.toString(2) + ")");
-            } else
-            {
-                writeResponse(res, callbackName + "(" + json.toString() + ")");
-            }
-        } else
-        {
-            res.setContentType("application/json");
-            if (debug)
-            {
-                writeResponse(res, json.toString(2));
-            } else
-            {
-                writeResponse(res, json.toString());
-            }
-        }
-    }
-
-    void returnError( HttpServletResponse res, String errorMessage ) throws IOException
-    {
-        res.sendError(SC_BAD_REQUEST, errorMessage);
     }
 
     private List<GHPlace> getPoints( HttpServletRequest req ) throws IOException
@@ -347,22 +247,16 @@ public class GraphHopperServlet extends HttpServlet
         for (int pointNo = 0; pointNo < pointsAsStr.length; pointNo++)
         {
             final String str = pointsAsStr[pointNo];
-            // if the point is in the format of lat,lon we don't need to call geocoding service
             String[] fromStrs = str.split(",");
             if (fromStrs.length == 2)
             {
-                try
-                {
-                    double fromLat = Double.parseDouble(fromStrs[0]);
-                    double fromLon = Double.parseDouble(fromStrs[1]);
-                    infoPoints.add(new GHPlace(fromLat, fromLon));
-
-                } catch (Exception ex)
-                {
-                }
+                GHPlace place = GHPlace.parse(str);
+                if (place != null)
+                    infoPoints.add(place);
                 continue;
             }
-
+            
+            // now it is not a coordinate and we need to call geo resolver
             final int index = infoPoints.size();
             infoPoints.add(new GHPlace(Double.NaN, Double.NaN).setName(str));
             GHThreadPool.GHWorker worker = new GHThreadPool.GHWorker(timeOutInMillis)

@@ -22,6 +22,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.TranslationMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +39,7 @@ public class DefaultModule extends AbstractModule
         try
         {
             CmdArgs args = CmdArgs.readFromConfig("config.properties", "graphhopper.config");
-            GraphHopper hopper = new GraphHopper().init(args)
-                    .forServer();
+            GraphHopper hopper = new GraphHopper().forServer().init(args);
             hopper.importOrLoad();
             logger.info("loaded graph at:" + hopper.getGraphHopperLocation()
                     + ", source:" + hopper.getOSMFile()
@@ -57,6 +57,8 @@ public class DefaultModule extends AbstractModule
                     setTimeout((int) timeout).
                     setBounds(hopper.getGraph().getBounds()));
             bind(GHThreadPool.class).toInstance(new GHThreadPool(1000, 50).startService());
+            
+            bind(TranslationMap.class).toInstance(new TranslationMap().doImport());
         } catch (Exception ex)
         {
             throw new IllegalStateException("Couldn't load graph", ex);

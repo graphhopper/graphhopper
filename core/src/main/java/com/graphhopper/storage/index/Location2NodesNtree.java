@@ -368,6 +368,12 @@ public class Location2NodesNtree implements Location2IDIndex
         return dataAccess.getCapacity();
     }
 
+    @Override
+    public void setSegmentSize( int bytes )
+    {
+        dataAccess.setSegmentSize(bytes);
+    }
+
     class InMemConstructionIndex
     {
         int size;

@@ -111,6 +111,24 @@ public class GHPlace
     	return new StringBuilder("POINT(").append(lon).append(' ').append(lat).append(')').toString();
     }
 
+    public static GHPlace parse( String str )
+    {
+        // if the point is in the format of lat,lon we don't need to call geocoding service
+        String[] fromStrs = str.split(",");
+        if (fromStrs.length == 2)
+        {
+            try
+            {
+                double fromLat = Double.parseDouble(fromStrs[0]);
+                double fromLon = Double.parseDouble(fromStrs[1]);
+                return new GHPlace(fromLat, fromLon);
+            } catch (Exception ex)
+            {
+            }
+        }
+        return null;
+    }
+
     /**
      * Attention: geoJson is LON,LAT
      */

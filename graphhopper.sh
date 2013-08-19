@@ -126,7 +126,9 @@ fi
 # NAME = file without extension if any
 NAME="${FILE%.*}"
 
-if [ ${FILE: -4} == ".osm" ]; then
+if [ "x$FILE" == "x-" ]; then
+   OSM_FILE=
+elif [ ${FILE: -4} == ".osm" ]; then
    OSM_FILE=$FILE
 elif [ ${FILE: -4} == ".pbf" ]; then
    OSM_FILE=$FILE
@@ -134,7 +136,7 @@ elif [ ${FILE: -7} == ".osm.gz" ]; then
    OSM_FILE=$FILE   
 elif [ ${FILE: -3} == "-gh" ]; then
    OSM_FILE=$FILE
-   NAME=${NAME%%???}
+   NAME=${FILE%%???}
 elif [ ${FILE: -4} == ".ghz" ]; then
    OSM_FILE=$FILE
    if [[ ! -d "$NAME-gh" ]]; then
@@ -157,15 +159,17 @@ TMP="${TMP%.*}"
 
 if [ "x$TMP" = "xunterfranken" ]; then
  LINK="http://download.geofabrik.de/openstreetmap/europe/germany/bayern/unterfranken.osm.bz2"
- JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx200m -Xms200m" 
+ JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx200m -Xms200m -server" 
 elif [ "x$TMP" = "xgermany" ]; then
  LINK=http://download.geofabrik.de/openstreetmap/europe/germany.osm.bz2
 
  # Info: for import we need a more memory than for just loading it
- JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1800m -Xms1800m" 
+ JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1800m -Xms1800m -server"
 else 
  LINK=`echo $NAME | tr '_' '/'`
- if [ ${FILE: -4} == ".osm" ]; then 
+ if [ "x$FILE" == "x-" ]; then
+   LINK=
+ elif [ ${FILE: -4} == ".osm" ]; then 
    LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
  elif [ ${FILE: -4} == ".ghz" ]; then
    LINK="http://graphhopper.com/public/maps/0.1/$FILE"      
@@ -176,7 +180,7 @@ else
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
  fi
  if [ "x$JAVA_OPTS" = "x" ]; then
-  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1000m -Xms1000m" 
+  JAVA_OPTS="-XX:PermSize=60m -XX:MaxPermSize=60m -Xmx1000m -Xms1000m -server"
  fi
 fi
 
@@ -210,6 +214,8 @@ elif [ "x$ACTION" = "xtest" ]; then
        graph.location="$GRAPH" osmreader.osm="$OSM_FILE" prepare.chShortcuts=false \
        graph.testIT=true
 
+elif [ "x$ACTION" = "xtorture" ]; then
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.QueryTorture $3 $4 $5 $6 $7 $8 $9
        
 elif [ "x$ACTION" = "xmeasurement" ]; then
  ARGS="graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
@@ -223,7 +229,7 @@ elif [ "x$ACTION" = "xmeasurement" ]; then
     COUNT=5000
     commit_info=`git log -n 1 --pretty=oneline`     
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
-    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS prepare.doPrepare=true measurement.count=$COUNT measurement.location=$M_FILE_NAME \
+    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.Measurement $ARGS measurement.count=$COUNT measurement.location=$M_FILE_NAME \
             graph.importTime=$IMPORT_TIME measurement.gitinfo="$commit_info"
  }
  
