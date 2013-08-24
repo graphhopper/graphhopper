@@ -31,7 +31,8 @@ import java.util.Map;
  */
 public class TranslationMap
 {
-    private static final List<String> LANGUAGES = Arrays.asList("en", "de", "es");
+    // use 'en' as reference
+    private static final List<String> LANGUAGES = Arrays.asList("bg", "de", "en", "es", "fr", "ja", "pt", "ro", "ru");
     private Map<String, Translation> translations = new HashMap<String, Translation>();
 
     /**

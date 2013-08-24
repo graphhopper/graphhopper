@@ -39,5 +39,8 @@ public class TranslationMapTest
                 
         Translation deMap = SINGLETON.getWithFallBack(Locale.GERMANY);
         assertEquals("Zu Fuß", deMap.tr("web.FOOT"));
+        
+        Translation ruMap = SINGLETON.getWithFallBack(new Locale("ru"));
+        assertEquals("Пешком", ruMap.tr("web.FOOT"));
     }
 }
