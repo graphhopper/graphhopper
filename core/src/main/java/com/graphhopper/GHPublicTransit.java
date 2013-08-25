@@ -49,7 +49,7 @@ public class GHPublicTransit implements GraphHopperAPI
     private String ghLocation = "";
     private boolean inMemory = true;
     private boolean storeOnFlush = true;
-    private boolean memoryMapped;
+    private boolean memoryMapped = false;
     // for routing
     private String defaultAlgorithm = "dijkstra";
     // for index:
@@ -64,6 +64,13 @@ public class GHPublicTransit implements GraphHopperAPI
     // for prepare
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
+
+    public GHPublicTransit()
+    {
+        encodingManager = new EncodingManager("PUBLIC:com.graphhopper.routing.util.PublicTransitFlagEncoder");
+    }
+    
+    
 
     public GHPublicTransit setEncodingManager( EncodingManager acceptWay )
     {
@@ -132,7 +139,7 @@ public class GHPublicTransit implements GraphHopperAPI
         return graph;
     }
 
-    public GHPublicTransit gtfsFile( String file )
+    public GHPublicTransit setGtfsFile( String file )
     {
         if (Helper.isEmpty(file))
         {
@@ -154,7 +161,7 @@ public class GHPublicTransit implements GraphHopperAPI
 
     private GHPublicTransit importGTFS( String graphHopperLocation, String gtfsFile )
     {
-        graphHopperLocation(graphHopperLocation);
+        setGraphHopperLocation(graphHopperLocation);
 
         GTFSReader reader = importGTFS(gtfsFile);
         graph = reader.graph();
@@ -170,7 +177,7 @@ public class GHPublicTransit implements GraphHopperAPI
 
     protected GTFSReader importGTFS( String file )
     {
-        gtfsFile(file);
+        setGtfsFile(file);
         File tmpFile = new File(file);
         if (!tmpFile.exists())
         {
@@ -257,7 +264,7 @@ public class GHPublicTransit implements GraphHopperAPI
                 throw new IllegalArgumentException("To import an GTFS file you need to use importOrLoad");
             }
         }
-        graphHopperLocation(graphHopperFolder);
+        setGraphHopperLocation(graphHopperFolder);
         Directory dir;
         if (memoryMapped)
         {
@@ -385,10 +392,16 @@ public class GHPublicTransit implements GraphHopperAPI
         logger.info("finished optimize (" + Helper.getMemInfo() + ")");
     }
 
+    public int getDefaultAlightTime()
+    {
+        return defaultAlightTime;
+    }
+    
+    
     /**
      * Sets the graphhopper folder.
      */
-    public GHPublicTransit graphHopperLocation( String ghLocation )
+    public GHPublicTransit setGraphHopperLocation( String ghLocation )
     {
         if (ghLocation == null)
         {
@@ -402,5 +415,17 @@ public class GHPublicTransit implements GraphHopperAPI
     {
         logger.info("flushing graph " + graph.toString() + ", " + Helper.getMemInfo() + ")");
         graph.flush();
+    }
+
+    void close()
+    {
+        if (graph != null)
+        {
+            graph.close();
+        }
+        if (index != null)
+        {
+            index.close();
+        }
     }
 }

@@ -127,7 +127,7 @@ public class GTFSReaderTest {
         private GHPublicTransitTest(String file) {
             this.testFile = file;
             setDefaultAlightTime(defaultAlightTime);
-            graphHopperLocation(dir);
+            setGraphHopperLocation(dir);
         }
 
         @Override

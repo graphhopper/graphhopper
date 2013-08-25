@@ -63,8 +63,8 @@ public class PublicTransitMiniUI {
 
     public static void main(String[] strs) throws Exception {
         GHPublicTransit gh = new GHPublicTransit().forDesktop();
-        gh.graphHopperLocation(dir);
-        gh.gtfsFile(GTFS);
+        gh.setGraphHopperLocation(dir);
+        gh.setGtfsFile(GTFS);
         gh.importOrLoad();
         
         boolean debug = false;
