@@ -18,6 +18,8 @@
 package com.graphhopper;
 
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FastestCalc;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.GraphBuilder;
 import org.junit.Test;

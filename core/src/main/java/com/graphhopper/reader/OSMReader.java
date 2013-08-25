@@ -21,7 +21,7 @@ import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeBase;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
 import com.graphhopper.util.StopWatch;
@@ -68,10 +68,8 @@ public class OSMReader
 
     public void doOSM2Graph( File osmFile ) throws IOException
     {
-        if (encodingManager == null)
-        {
-            throw new IllegalStateException("Encoding manager not set.");
-        }
+        if (encodingManager == null)        
+            throw new IllegalStateException("Encoding manager not set.");        
 
         StopWatch sw1 = new StopWatch().start();
         preProcess(osmFile);
@@ -243,7 +241,7 @@ public class OSMReader
         }
 
         TLongList osmNodeIds = way.getNodes();
-        List<EdgeIterator> createdEdges = new ArrayList<EdgeIterator>();
+        List<EdgeBase> createdEdges = new ArrayList<EdgeBase>();
         // look for barriers along the way
         final int size = osmNodeIds.size();
         int lastBarrier = -1;
@@ -320,7 +318,7 @@ public class OSMReader
                 }
             }
 
-            for (EdgeIterator iter : createdEdges)
+            for (EdgeBase iter : createdEdges)
             {
                 iter.setName(name);
             }

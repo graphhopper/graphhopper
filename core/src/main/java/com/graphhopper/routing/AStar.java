@@ -18,10 +18,12 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -41,9 +43,9 @@ public class AStar extends AbstractRoutingAlgorithm
     private boolean alreadyRun;
     private int visitedCount;
 
-    public AStar( Graph g, FlagEncoder encoder )
+    public AStar( Graph g, FlagEncoder encoder, WeightCalculation type )
     {
-        super(g, encoder);
+        super(g, encoder, type);
     }
 
     /**
@@ -77,24 +79,22 @@ public class AStar extends AbstractRoutingAlgorithm
         AStarEdge fromEntry = new AStarEdge(EdgeIterator.NO_EDGE, from, 0, 0);
         map.put(from, fromEntry);
         AStarEdge currEdge = fromEntry;
+        EdgeExplorer explorer = outEdgeExplorer;
         while (true)
         {
             int currVertex = currEdge.endNode;
             visitedCount++;
-            if (finished(currEdge, to))
-            {
-                break;
-            }
+            if (finished(currEdge, to))            
+                break;            
 
-            EdgeIterator iter = getNeighbors(currVertex);
-            while (iter.next())
+            explorer.setBaseNode(currVertex);            
+            while (explorer.next())
             {
-                if (!accept(iter))
-                {
+                if (!accept(explorer))               
                     continue;
-                }
-                int neighborNode = iter.getAdjNode();
-                double alreadyVisitedWeight = weightCalc.getWeight(iter.getDistance(), iter.getFlags()) + currEdge.weightToCompare;
+                
+                int neighborNode = explorer.getAdjNode();
+                double alreadyVisitedWeight = weightCalc.getWeight(explorer.getDistance(), explorer.getFlags()) + currEdge.weightToCompare;
                 AStarEdge nEdge = map.get(neighborNode);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight)
                 {
@@ -105,12 +105,12 @@ public class AStar extends AbstractRoutingAlgorithm
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;
                     if (nEdge == null)
                     {
-                        nEdge = new AStarEdge(iter.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
+                        nEdge = new AStarEdge(explorer.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
                         map.put(neighborNode, nEdge);
                     } else
                     {
                         prioQueueOpenSet.remove(nEdge);
-                        nEdge.edge = iter.getEdge();
+                        nEdge.edge = explorer.getEdge();
                         nEdge.weight = distEstimation;
                         nEdge.weightToCompare = alreadyVisitedWeight;
                     }

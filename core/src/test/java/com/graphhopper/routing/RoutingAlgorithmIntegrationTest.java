@@ -236,14 +236,15 @@ public class RoutingAlgorithmIntegrationTest
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
+        WeightCalculation type = new ShortestCalc();
         for (int no = 0; no < MAX; no++)
         {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++)
             {
                 RoutingAlgorithm[] algos = new RoutingAlgorithm[]
                 {
-                    new AStar(g, carEncoder),
-                    new DijkstraBidirectionRef(g, carEncoder)
+                    new AStar(g, carEncoder, type),
+                    new DijkstraBidirectionRef(g, carEncoder, type)
                 };
                 for (final RoutingAlgorithm algo : algos)
                 {

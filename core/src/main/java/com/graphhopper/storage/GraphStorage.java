@@ -24,11 +24,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.search.NameIndex;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import static com.graphhopper.util.Helper.nf;
@@ -93,7 +89,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         this.dir = dir;
         this.nodes = dir.find("nodes");
         this.edges = dir.find("edges");
-        this.wayGeometry = dir.find("geometry");        
+        this.wayGeometry = dir.find("geometry");
         this.nameIndex = new NameIndex(dir);
         this.properties = new StorableProperties(dir);
         this.bounds = BBox.INVERSE.clone();
@@ -102,7 +98,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         E_LINKA = nextEdgeEntryIndex();
         E_LINKB = nextEdgeEntryIndex();
         E_DIST = nextEdgeEntryIndex();
-        E_FLAGS = nextEdgeEntryIndex();        
+        E_FLAGS = nextEdgeEntryIndex();
         E_GEO = nextEdgeEntryIndex();
         E_NAME = nextEdgeEntryIndex();
 
@@ -174,10 +170,10 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
 
         edges.create(initSize);
         wayGeometry.create(initSize);
-        nameIndex.create(1000);                
+        nameIndex.create(1000);
         properties.create(100);
         properties.put("osmreader.acceptWay", encodingManager.encoderList());
-        properties.putCurrentVersions();        
+        properties.putCurrentVersions();
         initialized = true;
         return this;
     }
@@ -301,9 +297,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     {
         long deltaCap = ((long) edgeIndex + 1) * edgeEntryBytes - edges.getCapacity();
         if (deltaCap <= 0)
-        {
             return;
-        }
 
         incCapacity(edges, deltaCap);
     }
@@ -312,9 +306,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     {
         long deltaCap = bytePos + byteLength - wayGeometry.getCapacity();
         if (deltaCap <= 0)
-        {
             return;
-        }
 
         incCapacity(wayGeometry, deltaCap);
     }
@@ -330,7 +322,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     {
         ensureNodeIndex(Math.max(a, b));
         int edge = internalEdgeAdd(a, b, distance, flags);
-        EdgeIterable iter = new EdgeIterable(edge, a, null);
+        EdgeIterable iter = new EdgeIterable(null);
+        iter.setBaseNode(a);
+        iter.setEdgeId(edge);
         iter.next();
         return iter;
     }
@@ -597,12 +591,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         @Override
-        public boolean isEmpty()
-        {
-            return false;
-        }
-
-        @Override
         public void setWayGeometry( PointList pillarNodes )
         {
             GraphStorage.this.setWayGeometry(pillarNodes, edgePointer, getBaseNode() > getAdjNode());
@@ -615,18 +603,19 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         @Override
-        public String getName() 
+        public String getName()
         {
             int nameIndexRef = edges.getInt(edgePointer + E_NAME);
             return nameIndex.get(nameIndexRef);
         }
 
         @Override
-        public void setName(String name) {
+        public void setName( String name )
+        {
             int nameIndexRef = nameIndex.put(name);
             edges.setInt(edgePointer + E_NAME, nameIndexRef);
         }
-        
+
         @Override
         public String toString()
         {
@@ -635,38 +624,36 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     }
 
     @Override
-    public EdgeIterator getEdgeProps( int edgeId, int endNode )
+    public EdgeIterator getEdgeProps( int edgeId, int adjNode )
     {
         if (edgeId <= EdgeIterator.NO_EDGE || edgeId > edgeCount)
-        {
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + nf(edgeCount) + "]");
-        }
-        if (endNode < 0 && endNode != -1)
-        {
-            throw new IllegalStateException("endNode " + endNode + " out of bounds [0," + nf(nodeCount) + "]");
-        }
+
+        if (adjNode < 0 && adjNode != -1)
+            throw new IllegalStateException("adjNode " + adjNode + " out of bounds [0," + nf(nodeCount) + "]");
+
         long edgePointer = (long) edgeId * edgeEntryBytes;
         int nodeA = edges.getInt(edgePointer + E_NODEA);
         if (nodeA == NO_NODE)
-        {
             throw new IllegalStateException("edgeId " + edgeId + " is invalid - already removed!");
-        }
+
         int nodeB = edges.getInt(edgePointer + E_NODEB);
         SingleEdge edge;
-        if (endNode == nodeB || endNode == -1)
+        if (adjNode == nodeB || adjNode == -1)
         {
             // API problem for -1 because then it should be a RawEdgeIterator instead
             edge = createSingleEdge(edgeId, nodeA);
             edge.node = nodeB;
             return edge;
-        } else if (endNode == nodeA)
+        } else if (adjNode == nodeA)
         {
             edge = createSingleEdge(edgeId, nodeB);
             edge.node = nodeA;
             edge.switchFlags = true;
             return edge;
         }
-        return GHUtility.EMPTY;
+        // if edgeId exists but adjacent nodes do not match
+        return null;
     }
 
     protected SingleEdge createSingleEdge( int edgeId, int nodeId )
@@ -680,7 +667,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
 
         public SingleEdge( int edgeId, int nodeId )
         {
-            super(edgeId, nodeId, null);
+            super(null);
+            setBaseNode(nodeId);
+            setEdgeId(edgeId);
             nextEdge = EdgeIterable.NO_EDGE;
         }
 
@@ -689,48 +678,53 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         {
             int flags = edges.getInt(edgePointer + E_FLAGS);
             if (switchFlags)
-            {
                 return encodingManager.swapDirection(flags);
-            }
+
             return flags;
         }
     }
 
     @Override
-    public EdgeIterator getEdges( int node, EdgeFilter filter )
+    public EdgeExplorer createEdgeExplorer( EdgeFilter filter )
     {
-        return createEdgeIterable(node, filter);
+        return new EdgeIterable(filter);
     }
 
     @Override
-    public EdgeIterator getEdges( int node )
+    public EdgeExplorer createEdgeExplorer()
     {
-        return createEdgeIterable(node, allEdgesFilter);
+        return createEdgeExplorer(allEdgesFilter);
     }
 
-    protected EdgeIterator createEdgeIterable( int baseNode, EdgeFilter filter )
-    {
-        int edge = nodes.getInt((long) baseNode * nodeEntryBytes + N_EDGE_REF);
-        return new EdgeIterable(edge, baseNode, filter);
-    }
-
-    protected class EdgeIterable implements EdgeIterator
+    protected class EdgeIterable implements EdgeExplorer
     {
         final EdgeFilter filter;
-        final int baseNode;
+        int baseNode;
         // edge properties
         int node;
         int edgeId;
         long edgePointer;
         int nextEdge;
 
-        // used for SingleEdge and as return value of edge()
-        public EdgeIterable( int edge, int baseNode, EdgeFilter filter )
+        // used for SingleEdge and as return value of edge()        
+        public EdgeIterable( EdgeFilter filter )
         {
-            this.nextEdge = this.edgeId = edge;
-            this.edgePointer = (long) nextEdge * edgeEntryBytes;
-            this.baseNode = baseNode;
             this.filter = filter;
+        }
+
+        protected void setEdgeId( int edgeId )
+        {
+            this.nextEdge = this.edgeId = edgeId;
+            this.edgePointer = (long) nextEdge * edgeEntryBytes;
+        }
+
+        @Override
+        public EdgeExplorer setBaseNode( int baseNode )
+        {
+            int edge = nodes.getInt((long) baseNode * nodeEntryBytes + N_EDGE_REF);
+            setEdgeId(edge);
+            this.baseNode = baseNode;
+            return this;
         }
 
         @Override
@@ -741,9 +735,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             for (; i < 1000; i++)
             {
                 if (nextEdge == EdgeIterator.NO_EDGE)
-                {
                     break;
-                }
+
                 edgePointer = (long) nextEdge * edgeEntryBytes;
                 edgeId = nextEdge;
                 node = getOtherNode(baseNode, edgePointer);
@@ -751,15 +744,11 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
                 // position to next edge
                 nextEdge = edges.getInt(getLinkPosInEdgeArea(baseNode, node, edgePointer));
                 if (nextEdge == edgeId)
-                {
                     throw new AssertionError("endless loop detected for " + baseNode + "," + node + "," + edgePointer);
-                }
 
                 foundNext = filter != null && filter.accept(this);
                 if (foundNext)
-                {
                     break;
-                }
             }
             // road networks typically do not have nodes with plenty of edges!
             if (i > 1000)
@@ -836,23 +825,19 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         {
             return edgeId;
         }
-        
+
         @Override
-        public String getName() {
+        public String getName()
+        {
             int nameIndexRef = edges.getInt(edgePointer + E_NAME);
             return nameIndex.get(nameIndexRef);
         }
 
         @Override
-        public void setName(String name) {
+        public void setName( String name )
+        {
             int nameIndexRef = nameIndex.put(name);
             edges.setInt(edgePointer + E_NAME, nameIndexRef);
-        }
-        
-        @Override
-        public final boolean isEmpty()
-        {
-            return false;
         }
 
         @Override
@@ -970,10 +955,10 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
 
         // name
         nameIndex.copyTo(clonedG.nameIndex);
-        
+
         // geometry
         wayGeometry.copyTo(clonedG.wayGeometry);
-        clonedG.maxGeoRef = maxGeoRef;                
+        clonedG.maxGeoRef = maxGeoRef;
 
         properties.copyTo(clonedG.properties);
 
@@ -1084,12 +1069,13 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         GHBitSet toRemoveSet = new GHBitSetImpl(removeNodeCount);
         removedNodes.copyTo(toRemoveSet);
 
-        // create map of old node ids pointing to new ids
+        EdgeExplorer delEdgesIter = createEdgeExplorer(allEdgesFilter);
+        // create map of old node ids pointing to new ids        
         for (int removeNode = removedNodes.next(0);
                 removeNode >= 0;
                 removeNode = removedNodes.next(removeNode + 1))
         {
-            EdgeIterator delEdgesIter = getEdges(removeNode, allEdgesFilter);
+            delEdgesIter.setBaseNode(removeNode);
             while (delEdgesIter.next())
             {
                 toRemoveSet.add(delEdgesIter.getAdjNode());
@@ -1111,6 +1097,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             itemsToMove++;
         }
 
+        EdgeIterable adjNodesToDelIter = (EdgeIterable) createEdgeExplorer();
         // now similar process to disconnectEdges but only for specific nodes
         // all deleted nodes could be connected to existing. remove the connections
         for (int removeNode = toRemoveSet.next(0);
@@ -1118,7 +1105,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
                 removeNode = toRemoveSet.next(removeNode + 1))
         {
             // remove all edges connected to the deleted nodes
-            EdgeIterable adjNodesToDelIter = (EdgeIterable) getEdges(removeNode);
+            adjNodesToDelIter.setBaseNode(removeNode);
             long prev = EdgeIterator.NO_EDGE;
             while (adjNodesToDelIter.next())
             {
@@ -1138,11 +1125,12 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         GHBitSet toMoveSet = new GHBitSetImpl(removeNodeCount * 3);
+        EdgeExplorer movedEdgeIter = createEdgeExplorer();
         // marks connected nodes to rewrite the edges
         for (int i = 0; i < itemsToMove; i++)
         {
             int oldI = oldToNewMap.keyAt(i);
-            EdgeIterator movedEdgeIter = getEdges(oldI);
+            movedEdgeIter.setBaseNode(oldI);
             while (movedEdgeIter.next())
             {
                 int nodeId = movedEdgeIter.getAdjNode();
@@ -1212,7 +1200,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         // we do not remove the invalid edges => edgeCount stays the same!
         nodeCount -= removeNodeCount;
 
-        // health check         
+        EdgeExplorer explorer = createEdgeExplorer();
+        // health check
         if (isTestingEnabled())
         {
             iter = getAllEdges();
@@ -1236,21 +1225,21 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
                 }
                 try
                 {
-                    getEdges(adj).toString();
+                    explorer.setBaseNode(adj).toString();
                 } catch (Exception ex)
                 {
                     org.slf4j.LoggerFactory.getLogger(getClass()).error("adj:" + adj);
                 }
                 try
                 {
-                    getEdges(base).toString();
+                    explorer.setBaseNode(base).toString();
                 } catch (Exception ex)
                 {
                     org.slf4j.LoggerFactory.getLogger(getClass()).error("base:" + base);
                 }
             }
             // access last node -> no error
-            getEdges(nodeCount - 1).toString();
+            explorer.setBaseNode(nodeCount - 1).toString();
         }
         removedNodes = null;
     }
@@ -1369,7 +1358,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     @Override
     public long getCapacity()
     {
-        return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity() 
+        return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity()
                 + wayGeometry.getCapacity() + properties.getCapacity();
     }
 

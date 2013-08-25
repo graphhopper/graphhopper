@@ -15,30 +15,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper.util;
 
-import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
-import com.graphhopper.routing.util.WeightCalculation;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.LevelGraph;
 
 /**
- *
+ * Support for skipped edge
+ * <p/>
+ * @see LevelGraph
  * @author Peter Karich
  */
-public class DijkstraTest extends AbstractRoutingAlgorithmTester
+public interface EdgeSkipExplorer extends EdgeSkipIterator, EdgeExplorer
 {
-    @Override
-    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final WeightCalculation calc)
-    {
-        return new NoOpAlgorithmPreparation()
-        {
-            @Override
-            public RoutingAlgorithm createAlgo()
-            {
-                return new Dijkstra(_graph, encoder, calc);
-            }
-        }.setGraph(g);
-    }
 }

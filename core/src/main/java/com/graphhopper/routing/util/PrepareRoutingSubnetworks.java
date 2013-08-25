@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.XFirstSearch;
 import java.util.*;
@@ -81,6 +82,7 @@ public class PrepareRoutingSubnetworks
         final AtomicInteger integ = new AtomicInteger(0);
         int locs = g.getNodes();
         final GHBitSet bs = new GHBitSetImpl(locs);
+        EdgeExplorer explorer = g.createEdgeExplorer(edgeFilter);
         for (int start = 0; start < locs; start++)
         {
             if (g.isNodeRemoved(start) || bs.contains(start))
@@ -89,7 +91,7 @@ public class PrepareRoutingSubnetworks
             new XFirstSearch()
             {
                 @Override
-                protected GHBitSet createBitSet( int size )
+                protected GHBitSet createBitSet( )
                 {
                     return bs;
                 }
@@ -100,13 +102,7 @@ public class PrepareRoutingSubnetworks
                     integ.incrementAndGet();
                     return true;
                 }
-
-                @Override
-                protected EdgeIterator getEdges( Graph g, int current )
-                {
-                    return g.getEdges(current, edgeFilter);
-                }
-            }.start(g, start, false);
+            }.start(explorer, start, false);
             map.put(start, integ.get());
             integ.set(0);
         }
@@ -157,10 +153,11 @@ public class PrepareRoutingSubnetworks
             logger.info("did not remove large network (" + entries + ")");
             return;
         }
+        EdgeExplorer explorer = g.createEdgeExplorer(edgeFilter);
         new XFirstSearch()
         {
             @Override
-            protected GHBitSet createBitSet( int size )
+            protected GHBitSet createBitSet(  )
             {
                 return bs;
             }
@@ -170,14 +167,8 @@ public class PrepareRoutingSubnetworks
             {
                 g.markNodeRemoved(nodeId);
                 return super.goFurther(nodeId);
-            }
-
-            @Override
-            protected EdgeIterator getEdges( Graph g, int current )
-            {
-                return g.getEdges(current, edgeFilter);
-            }
-        }.start(g, start, true);
+            }            
+        }.start(explorer, start, true);
     }
 
     /**
@@ -189,9 +180,11 @@ public class PrepareRoutingSubnetworks
     {
         int removed = 0;
         int locs = g.getNodes();
+        EdgeExplorer explorer = g.createEdgeExplorer();
         for (int start = 0; start < locs; start++)
         {
-            if (!g.getEdges(start).next())
+            explorer.setBaseNode(start);
+            if (!explorer.next())
             {
                 removed++;
                 g.markNodeRemoved(start);

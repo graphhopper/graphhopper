@@ -238,7 +238,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         if (Helper.isEmpty(osmFileStr))
             throw new IllegalArgumentException("OSM file cannot be empty.");
-        
+
         osmFile = osmFileStr;
         return this;
     }
@@ -256,7 +256,7 @@ public class GraphHopper implements GraphHopperAPI
     public void setGraph( GraphStorage graph )
     {
         this.graph = graph;
-    }        
+    }
 
     public Location2IDIndex getIndex()
     {
@@ -449,7 +449,7 @@ public class GraphHopper implements GraphHopperAPI
         } else if (graphHopperFolder.indexOf(".") < 0)
         {
             if (new File(graphHopperFolder + "-gh").exists())
-                graphHopperFolder += "-gh";            
+                graphHopperFolder += "-gh";
         } else
         {
             File compressed = new File(graphHopperFolder + ".ghz");
@@ -486,14 +486,13 @@ public class GraphHopper implements GraphHopperAPI
         encodingManager = graph.getEncodingManager();
         if (chUsage)
         {
-            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies();
+            PrepareContractionHierarchies tmpPrepareCH;
             FlagEncoder encoder = encodingManager.getSingle();
             if (chFast)
-                tmpPrepareCH.setType(new FastestCalc(encoder));
+                tmpPrepareCH = new PrepareContractionHierarchies(encoder, new FastestCalc(encoder));
             else
-                tmpPrepareCH.setType(new ShortestCalc());
+                tmpPrepareCH = new PrepareContractionHierarchies(encoder, new ShortestCalc());
 
-            tmpPrepareCH.setVehicle(encoder);
             tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                     setLazyUpdates(lazyUpdates).
                     setNeighborUpdates(neighborUpdates);

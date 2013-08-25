@@ -21,6 +21,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -78,10 +79,10 @@ public class FootFlagEncoderTest
         g.edge(0, 1, 10, footEncoder.flags(10, true));
         g.edge(0, 2, 10, footEncoder.flags(5, true));
         g.edge(1, 3, 10, footEncoder.flags(10, true));
-        EdgeFilter out = new DefaultEdgeFilter(footEncoder, false, true);
-        assertEquals(Arrays.asList(1, 2), GHUtility.getNeighbors(g.getEdges(0, out)));
-        assertEquals(Arrays.asList(0, 3), GHUtility.getNeighbors(g.getEdges(1, out)));
-        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(g.getEdges(2, out)));
+        EdgeExplorer out = g.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
+        assertEquals(Arrays.asList(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
+        assertEquals(Arrays.asList(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
+        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(out.setBaseNode(2)));
     }
 
     @Test

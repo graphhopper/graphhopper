@@ -20,9 +20,11 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.AStar.AStarEdge;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.shapes.CoordTrig;
 import gnu.trove.map.TIntObjectMap;
@@ -75,9 +77,9 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
     private CoordTrig toCoord;
     protected double approximationFactor;
 
-    public AStarBidirection( Graph graph, FlagEncoder encoder )
+    public AStarBidirection( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
-        super(graph, encoder);
+        super(graph, encoder, type);
         int nodes = Math.max(20, graph.getNodes());
         initCollections(nodes);
         setApproximation(false);
@@ -211,7 +213,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
         if (currFrom != null)
         {
             shortestWeightMapOther = shortestWeightMapTo;
-            fillEdges(currFrom, toCoord, prioQueueOpenSetFrom, shortestWeightMapFrom, outEdgeFilter);
+            fillEdges(currFrom, toCoord, prioQueueOpenSetFrom, shortestWeightMapFrom, outEdgeExplorer);
             visitedFromCount++;
             if (prioQueueOpenSetFrom.isEmpty())
             {
@@ -237,7 +239,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
         if (currTo != null)
         {
             shortestWeightMapOther = shortestWeightMapFrom;
-            fillEdges(currTo, fromCoord, prioQueueOpenSetTo, shortestWeightMapTo, inEdgeFilter);
+            fillEdges(currTo, fromCoord, prioQueueOpenSetTo, shortestWeightMapTo, inEdgeExplorer);
             visitedToCount++;
             if (prioQueueOpenSetTo.isEmpty())
             {
@@ -260,17 +262,16 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
 
     private void fillEdges( AStarEdge curr, CoordTrig goal,
             PriorityQueue<AStarEdge> prioQueueOpenSet,
-            TIntObjectMap<AStarEdge> shortestWeightMap, EdgeFilter filter )
+            TIntObjectMap<AStarEdge> shortestWeightMap, EdgeExplorer iter )
     {
 
         int currNode = curr.endNode;
-        EdgeIterator iter = graph.getEdges(currNode, filter);
+        iter.setBaseNode(currNode);
         while (iter.next())
         {
-            if (!accept(iter))
-            {
+            if (!accept(iter))            
                 continue;
-            }
+            
             int neighborNode = iter.getAdjNode();
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!

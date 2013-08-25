@@ -20,11 +20,12 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.Helper;
 import java.io.IOException;
@@ -62,9 +63,9 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    public PrepareContractionHierarchies prepareGraph( Graph g, WeightCalculation calc, FlagEncoder encoder )
+    public PrepareContractionHierarchies prepareGraph( Graph g, FlagEncoder encoder, WeightCalculation calc)
     {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies().setGraph(g).setType(calc).setVehicle(encoder);
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(encoder, calc).setGraph(g);
         // hack: prepare matrixgraph only once
         if (g != preparedMatrixGraph)
         {
@@ -86,8 +87,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     {
         LevelGraphStorage g2 = (LevelGraphStorage) createGraph();
         g2.edge(0, 1, 1, true);
-        EdgeSkipIterator iter1_1 = g2.edge(0, 2, 1.4, true);
-        EdgeSkipIterator iter1_2 = g2.edge(2, 5, 1.4, true);
+        EdgeSkipExplorer iter1_1 = g2.edge(0, 2, 1.4, true);
+        EdgeSkipExplorer iter1_2 = g2.edge(2, 5, 1.4, true);
         g2.edge(1, 2, 1, true);
         g2.edge(1, 3, 3, true);
         g2.edge(2, 3, 1, true);
@@ -100,9 +101,9 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         g2.edge(6, 7, 1, true);
 
         // simulate preparation
-        EdgeSkipIterator iter2_1 = g2.edge(0, 5, 2.8, carEncoder.flags(0, true));
+        EdgeSkipExplorer iter2_1 = g2.edge(0, 5, 2.8, carEncoder.flags(0, true));
         iter2_1.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
-        EdgeSkipIterator iter2_2 = g2.edge(5, 7, 1.4, carEncoder.flags(0, true));
+        EdgeSkipExplorer iter2_2 = g2.edge(5, 7, 1.4, carEncoder.flags(0, true));
         g2.edge(0, 7, 4.2, carEncoder.flags(0, true)).setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
         g2.setLevel(1, 0);
         g2.setLevel(3, 1);
@@ -113,7 +114,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         g2.setLevel(7, 6);
         g2.setLevel(0, 7);
 
-        Path p = new PrepareContractionHierarchies().setVehicle(carEncoder).setGraph(g2).createAlgo().calcPath(0, 7);
+        Path p = new PrepareContractionHierarchies(carEncoder, new ShortestCalc()).setGraph(g2).createAlgo().calcPath(0, 7);
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
         assertEquals(4, p.calcNodes().size());
         assertEquals(4.2, p.getDistance(), 1e-5);

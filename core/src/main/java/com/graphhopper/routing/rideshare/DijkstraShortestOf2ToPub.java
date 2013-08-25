@@ -22,6 +22,7 @@ import com.graphhopper.routing.DijkstraBidirection;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -56,9 +57,9 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm
     private int visitedFromCount;
     private int visitedToCount;
 
-    public DijkstraShortestOf2ToPub( Graph graph, FlagEncoder encoder )
+    public DijkstraShortestOf2ToPub( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
-        super(graph, encoder);
+        super(graph, encoder, type);
     }
 
     public void addPubTransportPoints( int... indices )
@@ -97,10 +98,8 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm
     public Path calcPath()
     {
         // identical
-        if (pubTransport.contains(fromP1) || pubTransport.contains(toP2))
-        {
-            return new DijkstraBidirection(graph, flagEncoder).calcPath(fromP1, toP2);
-        }
+        if (pubTransport.contains(fromP1) || pubTransport.contains(toP2))        
+            return new DijkstraBidirection(graph, flagEncoder, null).calcPath(fromP1, toP2);        
 
         PriorityQueue<EdgeEntry> prioQueueFrom = new PriorityQueue<EdgeEntry>();
         shortestDistMapFrom = new TIntObjectHashMap<EdgeEntry>();
@@ -193,7 +192,7 @@ public class DijkstraShortestOf2ToPub extends AbstractRoutingAlgorithm
     {
 
         int currVertexFrom = curr.endNode;
-        EdgeIterator iter = graph.getEdges(currVertexFrom, outEdgeFilter);
+        EdgeIterator iter = outEdgeExplorer.setBaseNode(currVertexFrom);
         while (iter.next())
         {
             int tmpV = iter.getAdjNode();

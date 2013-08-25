@@ -19,7 +19,6 @@ package com.graphhopper.util;
 
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.storage.Graph;
 import gnu.trove.stack.array.TIntArrayStack;
 
 /**
@@ -41,12 +40,12 @@ public class XFirstSearch
         void push( int v );
     }
 
-    protected GHBitSet createBitSet( int size )
+    protected GHBitSet createBitSet()
     {
-        return new GHBitSetImpl(size);
+        return new GHBitSetImpl();
     }
 
-    public void start( Graph g, int startNode, boolean depthFirst )
+    public void start( EdgeExplorer explorer, int startNode, boolean depthFirst )
     {
         HelperColl coll;
         if (depthFirst)
@@ -57,20 +56,20 @@ public class XFirstSearch
             coll = new MyHelperIntQueue();
         }
 
-        GHBitSet visited = createBitSet(g.getNodes());
+        GHBitSet visited = createBitSet();
         visited.add(startNode);
         coll.push(startNode);
-        int current;
+        int current;        
         while (!coll.isEmpty())
         {
             current = coll.pop();
             if (goFurther(current))
             {
-                EdgeIterator iter = getEdges(g, current);
-                while (iter.next())
+                explorer.setBaseNode(current);
+                while (explorer.next())
                 {
-                    int connectedId = iter.getAdjNode();
-                    if (checkAdjacent(iter) && !visited.contains(connectedId))
+                    int connectedId = explorer.getAdjNode();
+                    if (checkAdjacent(explorer) && !visited.contains(connectedId))
                     {
                         visited.add(connectedId);
                         coll.push(connectedId);
@@ -78,11 +77,6 @@ public class XFirstSearch
                 }
             }
         }
-    }
-
-    protected EdgeIterator getEdges( Graph g, int current )
-    {
-        return g.getEdges(current);
     }
 
     protected boolean goFurther( int nodeId )

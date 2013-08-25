@@ -22,6 +22,8 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -45,20 +47,21 @@ public class DijkstraTwoDriversTest
     public void testFindMeetingPointWhenNotCrossing()
     {
         Graph g = getGraph();
-        DijkstraTwoDrivers d = new DijkstraTwoDrivers(g, carEncoder);
+        WeightCalculation type = new ShortestCalc();
+        DijkstraTwoDrivers d = new DijkstraTwoDrivers(g, carEncoder, type);
 
         d.setDriverA(12, 36);
         d.setDriverB(30, 45);
         d.calcPath();
 
         double shortest = Double.MAX_VALUE;
-        TIntHashSet set = new TIntHashSet();
+        TIntHashSet set = new TIntHashSet();        
         for (int pointI = 10; pointI < 50; pointI++)
         {
-            double sum = new DijkstraBidirectionRef(g, carEncoder).calcPath(12, pointI).getWeight();
-            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(pointI, 36).getWeight();
-            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(30, pointI).getWeight();
-            sum += new DijkstraBidirectionRef(g, carEncoder).calcPath(pointI, 45).getWeight();
+            double sum = new DijkstraBidirectionRef(g, carEncoder, type).calcPath(12, pointI).getWeight();
+            sum += new DijkstraBidirectionRef(g, carEncoder, type).calcPath(pointI, 36).getWeight();
+            sum += new DijkstraBidirectionRef(g, carEncoder, type).calcPath(30, pointI).getWeight();
+            sum += new DijkstraBidirectionRef(g, carEncoder, type).calcPath(pointI, 45).getWeight();
             if (sum < shortest)
             {
                 shortest = sum;
@@ -79,13 +82,14 @@ public class DijkstraTwoDriversTest
     public void testFindMeetingPointWhenCrossing()
     {
         Graph g = getGraph();
-        DijkstraTwoDrivers d = new DijkstraTwoDrivers(g, carEncoder);
+        WeightCalculation type = new ShortestCalc();
+        DijkstraTwoDrivers d = new DijkstraTwoDrivers(g, carEncoder, type);
         d.setDriverA(12, 36);
         d.setDriverB(30, 15);
         d.calcPath();
 
-        Path pA = new DijkstraBidirectionRef(g, carEncoder).calcPath(12, 36);
-        Path pB = new DijkstraBidirectionRef(g, carEncoder).calcPath(30, 15);
+        Path pA = new DijkstraBidirectionRef(g, carEncoder, type).calcPath(12, 36);
+        Path pB = new DijkstraBidirectionRef(g, carEncoder, type).calcPath(30, 15);
         TIntSet set = pA.calculateIdenticalNodes(pB);
         assertTrue(set.toString(), set.contains(d.getMeetingPoint()));
         assertEquals(pA.getWeight(), d.getBestForA().getWeight(), 1e-5);

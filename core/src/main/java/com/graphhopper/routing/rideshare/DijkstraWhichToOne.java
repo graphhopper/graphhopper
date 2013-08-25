@@ -22,8 +22,10 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
@@ -49,9 +51,9 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm
     private int visitedFromCount;
     private int visitedToCount;
 
-    public DijkstraWhichToOne( Graph graph, FlagEncoder encoder )
+    public DijkstraWhichToOne( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
-        super(graph, encoder);
+        super(graph, encoder, type);
     }
 
     public void addPubTransportPoints( int... indices )
@@ -115,7 +117,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm
             }
 
             shortestDistMapOther = shortestDistMapTo;
-            fillEdges(shortest, tmpFrom, prioQueueFrom, shortestDistMapFrom, outEdgeFilter);
+            fillEdges(shortest, tmpFrom, prioQueueFrom, shortestDistMapFrom, outEdgeExplorer);
         }
 
         int finish = 0;
@@ -128,7 +130,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm
 
             finish = 0;
             shortestDistMapOther = shortestDistMapTo;
-            fillEdges(shortest, currFrom, prioQueueFrom, shortestDistMapFrom, outEdgeFilter);
+            fillEdges(shortest, currFrom, prioQueueFrom, shortestDistMapFrom, outEdgeExplorer);
             if (!prioQueueFrom.isEmpty())
             {
                 currFrom = prioQueueFrom.poll();
@@ -138,7 +140,7 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm
             }
 
             shortestDistMapOther = shortestDistMapFrom;
-            fillEdges(shortest, currTo, prioQueueTo, shortestDistMapTo, inEdgeFilter);
+            fillEdges(shortest, currTo, prioQueueTo, shortestDistMapTo, inEdgeExplorer);
             if (!prioQueueTo.isEmpty())
             {
                 currTo = prioQueueTo.poll();
@@ -158,11 +160,10 @@ public class DijkstraWhichToOne extends AbstractRoutingAlgorithm
 
     void fillEdges( PathBidirRef shortest, EdgeEntry curr,
             PriorityQueue<EdgeEntry> prioQueue,
-            TIntObjectMap<EdgeEntry> shortestDistMap, EdgeFilter filter )
+            TIntObjectMap<EdgeEntry> shortestDistMap, EdgeExplorer explorer )
     {
-
         int currNode = curr.endNode;
-        EdgeIterator iter = graph.getEdges(currNode, filter);
+        EdgeIterator iter = explorer.setBaseNode(currNode);
         while (iter.next())
         {
             int tmpV = iter.getAdjNode();

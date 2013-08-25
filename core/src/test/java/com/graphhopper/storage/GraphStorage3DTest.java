@@ -20,6 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.DijkstraBidirection;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.util.DistanceCalc3D;
 import com.graphhopper.util.Helper;
 import static org.junit.Assert.*;
@@ -52,7 +53,7 @@ public class GraphStorage3DTest
         edge(g, dist, 1, 3);
         edge(g, dist, 1, 4);
 
-        Path p = new DijkstraBidirection(g, encodingManager.getEncoder("CAR")).calcPath(0, 1);
+        Path p = new DijkstraBidirection(g, encodingManager.getEncoder("CAR"), new ShortestCalc()).calcPath(0, 1);
         assertEquals(Helper.createTList(0, 3, 1), p.calcNodes());
         assertEquals(100, p.getDistance(), .1);
     }

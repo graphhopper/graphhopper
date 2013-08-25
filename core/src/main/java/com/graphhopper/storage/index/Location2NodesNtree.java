@@ -29,6 +29,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
@@ -670,7 +671,7 @@ public class Location2NodesNtree implements Location2IDIndex
         {
             @Override
             public boolean execute( final int networkEntryNodeId )
-            {
+            {               
                 new XFirstSearch()
                 {
                     boolean goFurther = true;
@@ -680,15 +681,9 @@ public class Location2NodesNtree implements Location2IDIndex
                     int currNode;
 
                     @Override
-                    protected GHBitSet createBitSet( int size )
+                    protected GHBitSet createBitSet(  )
                     {
                         return checkBitset;
-                    }
-
-                    @Override
-                    protected EdgeIterator getEdges( Graph g, int current )
-                    {
-                        return Location2NodesNtree.this.getEdges(current);
                     }
 
                     @Override
@@ -778,7 +773,7 @@ public class Location2NodesNtree implements Location2IDIndex
                             closestNode.setWayIndex(wayIndex);
                         }
                     }
-                }.start(graph, networkEntryNodeId, false);
+                }.start(createEdgeExplorer(), networkEntryNodeId, false);
                 return true;
             }
         });
@@ -793,9 +788,9 @@ public class Location2NodesNtree implements Location2IDIndex
         return nodeA;
     }
 
-    protected EdgeIterator getEdges( int node )
+    protected EdgeExplorer createEdgeExplorer()
     {
-        return graph.getEdges(node);
+        return graph.createEdgeExplorer();
     }
 
     protected AllEdgesIterator getAllEdges()

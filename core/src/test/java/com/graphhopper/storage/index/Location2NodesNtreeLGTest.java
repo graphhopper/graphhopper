@@ -25,7 +25,7 @@ import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.util.Helper;
 import gnu.trove.list.TIntList;
 import gnu.trove.set.TIntSet;
@@ -77,9 +77,9 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest
         EdgeIterator iter4 = g.edge(3, 4, 14, true);
 
         // create shortcuts
-        EdgeSkipIterator iter5 = g.edge(0, 2, 20, true);
+        EdgeSkipExplorer iter5 = g.edge(0, 2, 20, true);
         iter5.setSkippedEdges(iter1.getEdge(), iter2.getEdge());
-        EdgeSkipIterator iter6 = g.edge(2, 4, 28, true);
+        EdgeSkipExplorer iter6 = g.edge(2, 4, 28, true);
         iter6.setSkippedEdges(iter3.getEdge(), iter4.getEdge());
         g.edge(0, 4, 40, true).setSkippedEdges(iter5.getEdge(), iter6.getEdge());
 

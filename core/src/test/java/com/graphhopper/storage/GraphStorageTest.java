@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
@@ -119,10 +120,11 @@ public class GraphStorageTest extends AbstractGraphTester
         assertEquals(new BBox(10, 20, 10, 12), g.getBounds());
         assertEquals(10, g.getLatitude(0), 1e-2);
         assertEquals(10, g.getLongitude(0), 1e-2);
-        assertEquals(2, GHUtility.count(g.getEdges(0, carOutFilter)));
-        assertEquals(Arrays.asList(1, 2), GHUtility.getNeighbors(g.getEdges(0, carOutFilter)));
+        EdgeExplorer explorer = g.createEdgeExplorer(carOutFilter);
+        assertEquals(2, GHUtility.count(explorer.setBaseNode(0)));
+        assertEquals(Arrays.asList(1, 2), GHUtility.getNeighbors(explorer.setBaseNode(0)));
 
-        EdgeIterator iter = g.getEdges(0, carOutFilter);
+        EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
         assertEquals(Helper.createPointList(1.5, 1, 2, 3), iter.getWayGeometry());
 
@@ -131,13 +133,13 @@ public class GraphStorageTest extends AbstractGraphTester
 
         assertEquals(11, g.getLatitude(1), 1e-2);
         assertEquals(20, g.getLongitude(1), 1e-2);
-        assertEquals(2, GHUtility.count(g.getEdges(1, carOutFilter)));
-        assertEquals(Arrays.asList(0, 2), GHUtility.getNeighbors(g.getEdges(1, carOutFilter)));
+        assertEquals(2, GHUtility.count(explorer.setBaseNode(1)));
+        assertEquals(Arrays.asList(0, 2), GHUtility.getNeighbors(explorer.setBaseNode(1)));
 
         assertEquals(12, g.getLatitude(2), 1e-2);
         assertEquals(12, g.getLongitude(2), 1e-2);
-        assertEquals(1, GHUtility.count(g.getEdges(2, carOutFilter)));
-        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(g.getEdges(2, carOutFilter)));
+        assertEquals(1, GHUtility.count(explorer.setBaseNode(2)));
+        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
     }
 
     @Test
@@ -147,14 +149,16 @@ public class GraphStorageTest extends AbstractGraphTester
         EdgeIterator iter0 = gs.edge(0, 1, 10, true);
         EdgeIterator iter1 = gs.edge(1, 2, 10, true);
         gs.edge(0, 3, 10, true);
+        
+        EdgeExplorer explorer = gs.createEdgeExplorer();
 
-        assertEquals(Arrays.asList(1, 3), GHUtility.getNeighbors(gs.getEdges(0)));
-        assertEquals(Arrays.asList(0, 2), GHUtility.getNeighbors(gs.getEdges(1)));
+        assertEquals(Arrays.asList(1, 3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+        assertEquals(Arrays.asList(0, 2), GHUtility.getNeighbors(explorer.setBaseNode(1)));
         // remove edge "1-2" but only from 1
         gs.internalEdgeDisconnect(iter1.getEdge(), (long) iter0.getEdge() * gs.edgeEntryBytes, iter1.getBaseNode(), iter1.getAdjNode());
-        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(gs.getEdges(1)));
+        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
         // let 0 unchanged -> no side effects
-        assertEquals(Arrays.asList(1, 3), GHUtility.getNeighbors(gs.getEdges(0)));
+        assertEquals(Arrays.asList(1, 3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
     }
 
     @Test

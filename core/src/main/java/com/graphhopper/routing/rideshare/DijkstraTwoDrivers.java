@@ -21,6 +21,8 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.EdgeEntry;
 
@@ -37,11 +39,13 @@ public class DijkstraTwoDrivers
     private int fromB, toB;
     private double overallDistance = Double.MAX_VALUE;
     private FlagEncoder carEncoder;
+    private WeightCalculation type;
 
-    public DijkstraTwoDrivers( Graph graph, CarFlagEncoder encoder )
+    public DijkstraTwoDrivers( Graph graph, CarFlagEncoder encoder, WeightCalculation type )
     {
         this.graph = graph;
         this.carEncoder = encoder;
+        this.type = type;
     }
 
     public void setDriverA( int fromA, int toA )
@@ -90,8 +94,8 @@ public class DijkstraTwoDrivers
         //     and the same for the B search    if min(currB1, currB2) > personalFactor * sp-B
         // default is personalFactor=1.1?
         // -> hmmh should this be lower to make it faster? because it is min(currA1, currA2) and not currA1+currA2
-
-        driverA = new DijkstraBidirectionCombined(graph, carEncoder)
+        
+        driverA = new DijkstraBidirectionCombined(graph, carEncoder, type)
         {
             @Override
             public DijkstraBidirectionRef getOtherDriver()
@@ -100,7 +104,7 @@ public class DijkstraTwoDrivers
             }
         }.initFrom(fromA).initTo(toA).initPath();
 
-        driverB = new DijkstraBidirectionCombined(graph, carEncoder)
+        driverB = new DijkstraBidirectionCombined(graph, carEncoder, type)
         {
             @Override
             public DijkstraBidirectionRef getOtherDriver()
@@ -140,9 +144,9 @@ public class DijkstraTwoDrivers
 
     private abstract class DijkstraBidirectionCombined extends DijkstraBidirectionRef
     {
-        public DijkstraBidirectionCombined( Graph graph, FlagEncoder encoder )
+        public DijkstraBidirectionCombined( Graph graph, FlagEncoder encoder, WeightCalculation type )
         {
-            super(graph, encoder);
+            super(graph, encoder, type);
         }
 
         public abstract DijkstraBidirectionRef getOtherDriver();

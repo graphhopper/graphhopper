@@ -20,6 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import gnu.trove.list.TDoubleList;
@@ -72,7 +73,7 @@ public class InstructionListTest
         g.edge(5, 8, 100, true).setName("5-8");
 
         g.edge(6, 7, 110, true).setName("6-7");
-        EdgeIterator iter = g.edge(7, 8, 100, true);
+        EdgeBase iter = g.edge(7, 8, 100, true);
         PointList list = new PointList();
         list.add(1.0, 1.15);
         list.add(1.0, 1.16);
@@ -80,13 +81,13 @@ public class InstructionListTest
         iter.setName("7-8");
         // missing edge name => Unknown
         g.edge(9, 10, 100, true);
-        EdgeIterator iter2 = g.edge(8, 9, 100, true);
+        EdgeBase iter2 = g.edge(8, 9, 100, true);
         list.clear();
         list.add(1.0, 1.3);
         iter2.setName("8-9");
         iter2.setWayGeometry(list);
 
-        Path p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(0, 10);
+        Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestCalc()).calcPath(0, 10);
         InstructionList wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
                 "Turn left onto 7-8", "Continue onto 8-9", "Turn right"),
@@ -115,7 +116,7 @@ public class InstructionListTest
         distStrings = wayList.createDistances(Locale.US);
         assertEquals(Arrays.asList("328 ft", "328 ft", "328 ft", "328 ft", "328 ft", "328 ft"), distStrings);
 
-        p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(6, 2);
+        p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestCalc()).calcPath(6, 2);
         wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
@@ -139,18 +140,18 @@ public class InstructionListTest
         g.edge(3, 4, 100, true).setName("3-4");
         g.edge(4, 5, 100, true).setName("4-5");
 
-        EdgeIterator iter = g.edge(2, 4, 100, true);
+        EdgeBase iter = g.edge(2, 4, 100, true);
         iter.setName("2-4");
         PointList list = new PointList();
         list.add(10.20, 10.05);
         iter.setWayGeometry(list);
 
-        Path p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(2, 3);
+        Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestCalc()).calcPath(2, 3);
         InstructionList wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 2-4", "Turn slight right onto 3-4"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
 
-        p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(3, 5);
+        p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestCalc()).calcPath(3, 5);
         wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 3-4", "Continue onto 4-5"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
@@ -175,13 +176,13 @@ public class InstructionListTest
         g.edge(3, 4, 100, true).setName("street");
         g.edge(4, 5, 100, true).setName("4-5");
 
-        EdgeIterator iter = g.edge(2, 4, 100, true);
+        EdgeBase iter = g.edge(2, 4, 100, true);
         iter.setName("street");
         PointList list = new PointList();
         list.add(10.20, 10.05);
         iter.setWayGeometry(list);
 
-        Path p = new Dijkstra(g, carManager.getEncoder("CAR")).calcPath(2, 3);
+        Path p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestCalc()).calcPath(2, 3);
         InstructionList wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto street"), wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));
     }

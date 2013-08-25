@@ -349,7 +349,7 @@ public abstract class AbstractLocation2IDIndexTester
         assertEquals(1, idx.findID(1, -1));
 
         // now make all edges from node 1 accessible for CAR only
-        EdgeIterator iter = g.getEdges(1);
+        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
         CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
         while (iter.next())
         {

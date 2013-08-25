@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.list.TIntList;
@@ -43,9 +44,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     private boolean doClear = true;
     private double limit = Double.MAX_VALUE;
 
-    public DijkstraOneToMany( Graph graph, FlagEncoder encoder )
+    public DijkstraOneToMany( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
-        super(graph, encoder);
+        super(graph, encoder, type);
         parents = new int[graph.getNodes()];
         Arrays.fill(parents, -1);
 
@@ -130,8 +131,8 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         
         while (true)
         {
-            visitedNodes++;
-            EdgeIterator iter = graph.getEdges(currNode, outEdgeFilter);
+            visitedNodes++;            
+            EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
             while (iter.next())
             {
                 if (!accept(iter))

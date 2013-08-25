@@ -29,14 +29,14 @@ import com.graphhopper.storage.Graph;
 public class AStarTest extends AbstractRoutingAlgorithmTester
 {
     @Override
-    public AlgorithmPreparation prepareGraph( Graph g, final WeightCalculation calc, final FlagEncoder encoder )
+    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final WeightCalculation calc )
     {
         return new NoOpAlgorithmPreparation()
         {
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new AStar(_graph, encoder).setType(calc);
+                return new AStar(_graph, encoder, calc);
             }
         }.setGraph(g);
     }

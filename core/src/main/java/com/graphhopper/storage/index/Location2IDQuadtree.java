@@ -365,7 +365,7 @@ public class Location2IDQuadtree implements Location2IDIndex
         new XFirstSearch()
         {
             @Override
-            protected GHBitSet createBitSet( int size )
+            protected GHBitSet createBitSet()
             {
                 return new GHTBitSet(10);
             }
@@ -391,7 +391,7 @@ public class Location2IDQuadtree implements Location2IDIndex
 
                 return currDist < maxRasterWidth2InMeterNormed;
             }
-        }.start(graph, id, false);
+        }.start(graph.createEdgeExplorer(), id, false);
         return res;
     }
 
