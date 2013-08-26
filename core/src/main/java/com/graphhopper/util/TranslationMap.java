@@ -25,14 +25,19 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * A class which manages the translations in-memory.
+ * A class which manages the translations in-memory. Translations are managed here:
+ * https://docs.google.com/spreadsheet/ccc?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc#gid=0
+ * <p/>
+ * and can be easily converted to a language file via:
+ * <p/>
+ * cat GraphHopper.csv | cut -d',' -s -f1,10 --output-delimiter='=' > ja.txt
  * <p/>
  * @author Peter Karich
  */
 public class TranslationMap
 {
     // use 'en' as reference
-    private static final List<String> LANGUAGES = Arrays.asList("bg", "de", "en", "es", "fr", "ja", "pt", "ro", "ru");
+    private static final List<String> LOCALES = Arrays.asList("bg", "de_DE", "en", "es", "fr", "ja", "pt_PT", "ro", "ru");
     private Map<String, Translation> translations = new HashMap<String, Translation>();
 
     /**
@@ -42,10 +47,10 @@ public class TranslationMap
     {
         try
         {
-            for (String key : LANGUAGES)
+            for (String locale : LOCALES)
             {
-                TranslationHashMap trMap = new TranslationHashMap(key);
-                trMap.doImport(new FileInputStream(new File(folder, key + ".txt")));
+                TranslationHashMap trMap = new TranslationHashMap(locale);
+                trMap.doImport(new FileInputStream(new File(folder, locale + ".txt")));
                 add(trMap);
             }
             return this;
@@ -62,7 +67,7 @@ public class TranslationMap
     {
         try
         {
-            for (String key : LANGUAGES)
+            for (String key : LOCALES)
             {
                 TranslationHashMap trMap = new TranslationHashMap(key);
                 trMap.doImport(TranslationMap.class.getResourceAsStream(key + ".txt"));
@@ -77,9 +82,16 @@ public class TranslationMap
 
     public void add( Translation tr )
     {
-        translations.put(tr.getLanguage(), tr);
+        String locale = tr.getLocale();
+        translations.put(locale, tr);
+        if (locale.contains("_") && locale.endsWith(tr.getLanguage().toUpperCase()))
+            translations.put(tr.getLanguage(), tr);
     }
 
+    /**
+     * Returns the Translation object for the specified locale and falls back to english if the
+     * locale was not found.
+     */
     public Translation getWithFallBack( Locale locale )
     {
         Translation tr = get(locale.toString());
@@ -92,9 +104,17 @@ public class TranslationMap
         return tr;
     }
 
-    public Translation get( String language )
+    /**
+     * Returns the Translation object for the specified locale.
+     */
+    public Translation get( String locale )
     {
-        return translations.get(language);
+        locale = locale.replace("-", "_");
+        Translation tr = translations.get(locale);
+        if (locale.contains("_") && tr == null)
+            tr = translations.get(locale.substring(0, 2));
+
+        return tr;
     }
 
     public static interface Translation
@@ -103,17 +123,19 @@ public class TranslationMap
 
         Map<String, String> asMap();
 
+        String getLocale();
+
         String getLanguage();
     }
 
     public static class TranslationHashMap implements Translation
     {
         private final Map<String, String> map = new HashMap<String, String>();
-        private final String language;
+        private final String locale;
 
-        public TranslationHashMap( String language )
+        public TranslationHashMap( String locale )
         {
-            this.language = language;
+            this.locale = locale;
         }
 
         public void clear()
@@ -122,9 +144,17 @@ public class TranslationMap
         }
 
         @Override
+        public String getLocale()
+        {
+            return locale;
+        }
+
+        @Override
         public String getLanguage()
         {
-            return language;
+            if (locale.contains("_"))
+                return locale.substring(0, 2);
+            return locale;
         }
 
         @Override

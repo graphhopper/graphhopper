@@ -54,17 +54,9 @@ public class I18NServlet extends GHServlet
                     locale = acceptLang.split(",")[0];
             }
 
-            locale = locale.replaceAll("\\-", "_");            
-            String lang = locale;
-            int index = locale.indexOf("_");
-            if (index > 0) {
-                lang = lang.substring(0, lang.indexOf("_"));
-                locale = lang + locale.substring(index).toUpperCase();
-            }
-
-            Translation tr = map.get(lang);
+            Translation tr = map.get(locale);
             JSONObject json = new JSONObject();
-            if (tr != null && !"en".equals(tr.getLanguage()))
+            if (tr != null && !"en".equals(tr.getLocale()))
                 json.put("default", tr.asMap());                
             
             json.put("locale", locale);

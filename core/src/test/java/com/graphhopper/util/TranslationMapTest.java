@@ -36,11 +36,20 @@ public class TranslationMapTest
     {
         Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
         assertEquals("continue onto blp street", enMap.tr("continue_onto", "blp street"));
-                
+
         Translation deMap = SINGLETON.getWithFallBack(Locale.GERMANY);
         assertEquals("Zu Fuß", deMap.tr("web.FOOT"));
-        
+
         Translation ruMap = SINGLETON.getWithFallBack(new Locale("ru"));
         assertEquals("Пешком", ruMap.tr("web.FOOT"));
+
+        deMap = SINGLETON.get("de_DE");
+        assertEquals("Zu Fuß", deMap.tr("web.FOOT"));
+
+        deMap = SINGLETON.get("de");
+        assertEquals("Zu Fuß", deMap.tr("web.FOOT"));
+
+        deMap = SINGLETON.get("de_AT");
+        assertEquals("Zu Fuß", deMap.tr("web.FOOT"));
     }
 }
