@@ -18,17 +18,22 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.StopWatch;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.GZIPInputStream;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,14 +43,14 @@ import org.junit.Test;
  * <p/>
  * @author Peter Karich
  */
-public class RoutingAlgorithmIntegrationTest
+public class RoutingAlgorithmIT
 {
     TestAlgoCollector testCollector;
 
     @Before
     public void setUp()
     {
-        testCollector = new TestAlgoCollector("integration tests");
+        testCollector = new TestAlgoCollector("core integration tests");
     }
 
     List<OneRun> createMonacoCar()
@@ -191,7 +196,7 @@ public class RoutingAlgorithmIntegrationTest
             Location2IDIndex idx = hopper.getIndex();
             final AbstractFlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             WeightCalculation weightCalc = new ShortestCalc();
-            if ("fastest".equals(weightCalcStr))            
+            if ("fastest".equals(weightCalcStr))
                 weightCalc = new FastestCalc(encoder);
 
             Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
@@ -212,6 +217,50 @@ public class RoutingAlgorithmIntegrationTest
         } finally
         {
             Helper.removeDir(new File(graphFile));
+        }
+    }
+
+    @Test
+    public void testPerformance() throws IOException
+    {
+        int N = 10;
+        int noJvmWarming = N / 4;
+
+        Random rand = new Random(0);
+        EncodingManager eManager = new EncodingManager("CAR");
+        FlagEncoder encoder = eManager.getEncoder("CAR");
+        Graph graph = new GraphBuilder(eManager).create();
+
+        String bigFile = "10000EWD.txt.gz";
+        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
+        Collection<AlgorithmPreparation> prepares = RoutingAlgorithmSpecialAreaTests.
+                createAlgos(graph, encoder, false, new ShortestCalc(), eManager);
+        for (AlgorithmPreparation prepare : prepares)
+        {
+            StopWatch sw = new StopWatch();            
+            for (int i = 0; i < N; i++)
+            {
+                int index1 = Math.abs(rand.nextInt(graph.getNodes()));
+                int index2 = Math.abs(rand.nextInt(graph.getNodes()));
+                RoutingAlgorithm d = prepare.createAlgo();
+                if (i >= noJvmWarming)
+                {
+                    sw.start();
+                }
+                Path p = d.calcPath(index1, index2);
+                // avoid jvm optimization => call p.distance
+                if (i >= noJvmWarming && p.getDistance() > -1)
+                {
+                    sw.stop();
+                }
+
+                // System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.nodes());
+            }
+
+            float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
+            System.out.println("# " + getClass().getSimpleName() + " " + prepare.createAlgo().getName()
+                    + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
+            assertTrue("speed to low!? " + perRun + " per run", perRun < 0.07);
         }
     }
 

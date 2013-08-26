@@ -75,14 +75,6 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     }
 
     @Test
-    @Override
-    public void testPerformance() throws IOException
-    {
-        // TODO hmmh preparation takes a bit tooo long
-        // super.testPerformance();
-    }
-
-    @Test
     public void testPathRecursiveUnpacking()
     {
         LevelGraphStorage g2 = (LevelGraphStorage) createGraph();

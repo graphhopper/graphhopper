@@ -400,44 +400,6 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(611555, p.calcPoints().calculateDistance(new DistanceCalc()), 1);
     }
 
-    @Test
-    public void testPerformance() throws IOException
-    {
-        int N = 10;
-        int noJvmWarming = N / 4;
-
-        String name = getClass().getSimpleName();
-        Random rand = new Random(0);
-        Graph graph = createGraph();
-
-        String bigFile = "10000EWD.txt.gz";
-        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
-        AlgorithmPreparation prepare = prepareGraph(graph);
-        StopWatch sw = new StopWatch();
-        for (int i = 0; i < N; i++)
-        {
-            int index1 = Math.abs(rand.nextInt(graph.getNodes()));
-            int index2 = Math.abs(rand.nextInt(graph.getNodes()));
-            RoutingAlgorithm d = prepare.createAlgo();
-            if (i >= noJvmWarming)
-            {
-                sw.start();
-            }
-            Path p = d.calcPath(index1, index2);
-            // avoid jvm optimization => call p.distance
-            if (i >= noJvmWarming && p.getDistance() > -1)
-            {
-                sw.stop();
-            }
-
-            // System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.nodes());
-        }
-
-        float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
-        System.out.println("# " + name + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
-        assertTrue("speed to low!? " + perRun + " per run", perRun < 0.07);
-    }
-
     public Graph getMatrixGraph()
     {
         return getMatrixAlikeGraph();

@@ -35,7 +35,7 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class GraphHopperIntegrationTest
+public class GraphHopperIT
 {
     TranslationMap trMap = TranslationMapTest.SINGLETON;
 
