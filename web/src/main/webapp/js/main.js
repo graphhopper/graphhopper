@@ -527,7 +527,7 @@ function routeLatLng(request, doQuery) {
         if(dist > 100)
             dist = round(dist, 1);
                         
-        descriptionDiv.html("<b>" + dist + "km</b> " + tr("timeInfo", tmpTime));
+        descriptionDiv.html(tr("routeInfo", [dist, "km", tmpTime]));
         
         var hiddenDiv = $("<div id='routeDetails'/>");
         hiddenDiv.hide();
@@ -609,7 +609,7 @@ function routeLatLng(request, doQuery) {
                     
                 addInstruction(instructionsElement, indi, descriptions[m], distances[m]);                
             }
-            addInstruction(instructionsElement, "marker-to", "Finish!", "");
+            addInstruction(instructionsElement, "marker-to", tr("finish"), "");
         }
     });
 }
@@ -705,26 +705,7 @@ function initForm() {
         // no page reload
         e.preventDefault();
         mySubmit();        
-    });
-    
-    $('.defaulting').each(function(index, element) {
-        var jqElement = $(element);
-        var defaultValue = jqElement.attr('defaultValue');        
-        jqElement.focus(function() {
-            var actualValue = jqElement.val();
-            if (actualValue == defaultValue) {
-                jqElement.val('');
-                jqElement.css('color', 'black');
-            }
-        });
-        jqElement.blur(function() {
-            var actualValue = jqElement.val();
-            if (!actualValue) {
-                jqElement.val(defaultValue);
-                jqElement.css('color', 'gray');
-            }
-        });
-    });
+    });    
 }
 
 function floor(val, precision) {
@@ -777,7 +758,6 @@ function stringFormat(str, args) {
 
 function initI18N() {
     $('#searchButton').attr("value", tr("searchButton"));
-    $('#fromInput').attr("defaultValue", tr("fromHint"));
-    $('#toInput').attr("defaultValue", tr("toHint"));
-    $('#toInput').attr("defaultValue", tr("moreButton"));
+    $('#fromInput').attr("placeholder", tr("fromHint"));
+    $('#toInput').attr("placeholder", tr("toHint"));    
 }
