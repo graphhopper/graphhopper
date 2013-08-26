@@ -44,7 +44,7 @@ GHRequest.prototype.init = function(params) {
     if(params.q) {
         var points = params.q.split("p:");
         if(!params.point)
-            params.point = []; 
+            params.point = [];
         for(var i = 0; i < points.length; i++) {
             var str = points[i].trim();
             if(str.length == 0)
