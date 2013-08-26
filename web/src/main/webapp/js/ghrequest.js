@@ -40,6 +40,19 @@ GHRequest.prototype.init = function(params) {
     this.handleBoolean("doZoom", params);
     this.handleBoolean("instructions", params);
     this.handleBoolean("encodedPolyline", params);
+    
+    if(params.q) {
+        var points = params.q.split("p:");
+        if(!params.point)
+            params.point = []; 
+        for(var i = 0; i < points.length; i++) {
+            var str = points[i].trim();
+            if(str.length == 0)
+                continue;
+            
+            params.point.push(str);
+        }
+    }
 }
 
 GHRequest.prototype.handleBoolean = function(key, params) {
