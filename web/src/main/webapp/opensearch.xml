@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+   <ShortName>GraphHopper Maps</ShortName>
+   <Description>GraphHopper Maps gives you the best route for car, bike or by foot.</Description>
+   <Tags>route map openstreetmap</Tags>
+   <Contact>info@graphhopper.com</Contact>
+   <Url type="application/xml" template="http://graphhopper.com/maps?q={searchTerms}"/>
+ </OpenSearchDescription>
