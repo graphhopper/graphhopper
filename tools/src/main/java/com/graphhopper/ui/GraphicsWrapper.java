@@ -128,7 +128,7 @@ public class GraphicsWrapper
     }
     private Logger logger = LoggerFactory.getLogger(getClass());
 
-    void scale( int x, int y, boolean zoomIn )
+    public void scale( int x, int y, boolean zoomIn )
     {
         double tmpFactor = 0.5f;
         if (!zoomIn)

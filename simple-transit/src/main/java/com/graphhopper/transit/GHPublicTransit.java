@@ -1,21 +1,26 @@
 /*
- * Copyright 2013 Thomas Buerli <tbuerli@student.ethz.ch>.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
+ * 
+ *  GraphHopper licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
+ * 
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-package com.graphhopper;
+package com.graphhopper.transit;
 
-import com.graphhopper.reader.GTFSReader;
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.transit.reader.GTFSReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.*;
@@ -25,8 +30,8 @@ import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
-import com.graphhopper.storage.index.LocationTime2IDIndex;
-import com.graphhopper.storage.index.LocationTime2NodeNtree;
+import com.graphhopper.transit.storage.index.LocationTime2IDIndex;
+import com.graphhopper.transit.storage.index.LocationTime2NodeNtree;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
@@ -67,7 +72,7 @@ public class GHPublicTransit implements GraphHopperAPI
 
     public GHPublicTransit()
     {
-        encodingManager = new EncodingManager("PUBLIC:com.graphhopper.routing.util.PublicTransitFlagEncoder");
+        encodingManager = new EncodingManager("PUBLIC:com.graphhopper.transit.routing.util.PublicTransitFlagEncoder");
     }
     
     
@@ -276,7 +281,7 @@ public class GHPublicTransit implements GraphHopperAPI
         {
             throw new IllegalArgumentException("either memory mapped or in-memory has to be specified!");
         }
-        encodingManager = new EncodingManager("PUBLIC:com.graphhopper.routing.util.PublicTransitFlagEncoder");
+        encodingManager = new EncodingManager("PUBLIC:com.graphhopper.transit.routing.util.PublicTransitFlagEncoder");
         properties = new StorableProperties(dir);
         graph = new GraphStorage(dir, encodingManager);
         //prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, defaultAlgorithm, new PublicTransitFlagEncoder());
@@ -319,26 +324,32 @@ public class GHPublicTransit implements GraphHopperAPI
         request.check();
         StopWatch sw = new StopWatch().start();
         GHResponse rsp = new GHResponse();
+        
+        if (!(request instanceof TransitRequest)) {
+            rsp.addError(new IllegalArgumentException("Wrong type of request. No starttime is set!"));
+            return rsp;
+        }
+        TransitRequest request2 = (TransitRequest) request;
+        
 
-
-        if (!setSupportsVehicle(request.getVehicle()))
+        if (!setSupportsVehicle(request2.getVehicle()))
         {
-            rsp.addError(new IllegalArgumentException("Vehicle " + request.getVehicle() + " unsupported. Supported are: " + getEncodingManager()));
+            rsp.addError(new IllegalArgumentException("Vehicle " + request2.getVehicle() + " unsupported. Supported are: " + getEncodingManager()));
             return rsp;
         }
 
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder(request.getVehicle()));
-        int from = index.findID(request.from().lat, request.from().lon, request.from().getTime());
-        int to = index.findExitNode(request.to().lat, request.to().lon);
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder(request2.getVehicle()));
+        int from = index.findID(request2.getFrom().lat, request2.getFrom().lon, request2.getFrom().getTime());
+        int to = index.findExitNode(request2.getTo().lat, request2.getTo().lon);
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
         if (from < 0)
         {
-            rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.from()));
+            rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request2.getFrom()));
         }
         if (to < 0)
         {
-            rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.to()));
+            rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request2.getTo()));
         }
         if (from == to)
         {
@@ -347,8 +358,8 @@ public class GHPublicTransit implements GraphHopperAPI
 
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
-        prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(),
-                encodingManager.getEncoder(request.getVehicle()), request.getType());
+        prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request2.getAlgorithm(),
+                encodingManager.getEncoder(request2.getVehicle()), request2.getType());
         algo = prepare.createAlgo();
 
         if (rsp.hasErrors())
@@ -417,7 +428,7 @@ public class GHPublicTransit implements GraphHopperAPI
         graph.flush();
     }
 
-    void close()
+    public void close()
     {
         if (graph != null)
         {

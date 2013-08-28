@@ -1,12 +1,11 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license 
- *  agreements. See the NOTICE file distributed with this work for 
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  Peter Karich licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
+ *  GraphHopper licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
  * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -16,24 +15,30 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.ui;
+package com.graphhopper.transit.ui;
 
-import com.graphhopper.GHPublicTransit;
+import com.graphhopper.transit.GHPublicTransit;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AlgorithmPreparation;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.PublicTransitFlagEncoder;
+import com.graphhopper.transit.routing.util.PublicTransitFlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.LocationTime2IDIndex;
+import com.graphhopper.transit.storage.index.LocationTime2IDIndex;
+import com.graphhopper.ui.DebugAlgo;
+import com.graphhopper.ui.DebugDijkstraSimple;
+import com.graphhopper.ui.DefaultMapLayer;
+import com.graphhopper.ui.GraphicsWrapper;
+import com.graphhopper.ui.LayeredPanel;
+import com.graphhopper.ui.MapLayer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.TimeUtils;
+import com.graphhopper.transit.util.TimeUtils;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import java.awt.*;

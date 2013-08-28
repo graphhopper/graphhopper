@@ -1,26 +1,27 @@
 /*
- * Copyright 2013 Thomas Buerli <tbuerli@student.ethz.ch>.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
+ * 
+ *  GraphHopper licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
+ * 
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-package com.graphhopper.reader;
+package com.graphhopper.transit.reader;
 
-import com.graphhopper.GHPublicTransit;
+import com.graphhopper.transit.GHPublicTransit;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.PublicTransitFlagEncoder;
-import com.graphhopper.storage.AbstractGraphTester;
+import com.graphhopper.transit.routing.util.PublicTransitFlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -39,8 +40,8 @@ import org.junit.Before;
  *
  * @author Thomas Buerli <tbuerli@student.ethz.ch>
  */
-public class GTFSReaderTest {
-
+public class GTFSReaderTest
+{
     private String dir = "./target/tmp/";
     private String file2 = "test-gtfs2.zip";
     private PublicTransitFlagEncoder encoder = new PublicTransitFlagEncoder();
@@ -48,37 +49,42 @@ public class GTFSReaderTest {
     private int defaultAlightTime = 240;
 
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         new File(dir).mkdirs();
     }
 
     @After
-    public void tearDown() {
+    public void tearDown()
+    {
         Helper.removeDir(new File(dir));
     }
 
-    GraphStorage buildGraph( String directory, EncodingManager encodingManager ) {
+    GraphStorage buildGraph( String directory, EncodingManager encodingManager )
+    {
         return new GraphStorage(new RAMDirectory(directory, false), encodingManager);
     }
 
-
-    private File getFile(String file) throws URISyntaxException  {
+    private File getFile( String file ) throws URISyntaxException
+    {
         return new File(getClass().getResource(file).toURI());
     }
 
-    private void setDefaultAlightTime(int time) {
+    private void setDefaultAlightTime( int time )
+    {
         this.defaultAlightTime = time;
     }
 
     @Test
-    public void testRead() {
+    public void testRead()
+    {
         GHPublicTransit hopper = new GTFSReaderTest.GHPublicTransitTest(file2).importOrLoad();
         Graph graph = hopper.graph();
         assertEquals(142, graph.getNodes());
-        assertEquals(0, AbstractGraphTester.getIdOf(graph, 36.915682));
-        assertEquals(88, AbstractGraphTester.getIdOf(graph, 36.425288));
-        assertEquals(72, AbstractGraphTester.getIdOf(graph, 36.868446));
-        assertEquals(42, AbstractGraphTester.getIdOf(graph, 36.88108));
+        assertEquals(0, getIdOf(graph, 36.915682));
+        assertEquals(88, getIdOf(graph, 36.425288));
+        assertEquals(72, getIdOf(graph, 36.868446));
+        assertEquals(42, getIdOf(graph, 36.88108));
         assertEquals(2, GHUtility.count(graph.getEdges(0, outFilter)));
 
         PublicTransitFlagEncoder flags = encoder;
@@ -112,42 +118,63 @@ public class GTFSReaderTest {
         assertTrue(iter.next());
         assertEquals(2, iter.getAdjNode());
     }
-    
+
     @Test
-    public void testTransfer() {
+    public void testTransfer()
+    {
         GHPublicTransit hopper = new GTFSReaderTest.GHPublicTransitTest(file2).importOrLoad();
         Graph graph = hopper.graph();
-        
+
     }
 
-    private class GHPublicTransitTest extends GHPublicTransit {
+    public static int getIdOf( Graph g, double latitude )
+    {
+        int s = g.getNodes();
+        for (int i = 0; i < s; i++)
+        {
+            if (Math.abs(g.getLatitude(i) - latitude) < 1e-4)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
 
+    private class GHPublicTransitTest extends GHPublicTransit
+    {
         private String testFile;
 
-        private GHPublicTransitTest(String file) {
+        private GHPublicTransitTest( String file )
+        {
             this.testFile = file;
             setDefaultAlightTime(defaultAlightTime);
             setGraphHopperLocation(dir);
         }
 
         @Override
-        protected GTFSReader importGTFS(String ignore) {
-            
+        protected GTFSReader importGTFS( String ignore )
+        {
+
             File tmpFile;
-            try {
+            try
+            {
                 tmpFile = getFile(testFile);
-            } catch (URISyntaxException ex) {
-                throw new RuntimeException("Could not open " + testFile );
+            } catch (URISyntaxException ex)
+            {
+                throw new RuntimeException("Could not open " + testFile);
             }
-            if (!tmpFile.exists()) {
+            if (!tmpFile.exists())
+            {
                 throw new IllegalStateException("Your specified GTFS file does not exist:" + tmpFile.getAbsolutePath());
             }
-            EncodingManager manager = new EncodingManager("TRANSIT:com.graphhopper.routing.util.PublicTransitFlagEncoder");
+            EncodingManager manager = new EncodingManager("PUBLIC:com.graphhopper.transit.routing.util.PublicTransitFlagEncoder");
             GTFSReader reader = new GTFSReader(buildGraph(dir, manager));
-            try {
+            try
+            {
                 reader.setDefaultAlightTime(defaultAlightTime);
                 reader.load(tmpFile);
-            } catch (IOException ex) {
+            } catch (IOException ex)
+            {
                 throw new RuntimeException("Could not load GTFS file ", ex);
             }
             return reader;
