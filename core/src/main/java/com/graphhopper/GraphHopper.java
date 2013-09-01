@@ -379,7 +379,7 @@ public class GraphHopper implements GraphHopperAPI
         if (!load(ghLocation))
         {
             printInfo();
-            importOSM(ghLocation, osmFile);
+            process(ghLocation, osmFile);
         } else
         {
             printInfo();
@@ -387,12 +387,16 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
-    private GraphHopper importOSM( String graphHopperLocation, String osmFileStr )
+    /**
+     * Creates the graph.
+     */
+    private GraphHopper process( String graphHopperLocation, String osmFileStr )
     {
         if (encodingManager == null)
             throw new IllegalStateException("No encodingManager was specified");
 
         setGraphHopperLocation(graphHopperLocation);
+
         try
         {
             importOSM(osmFileStr);
@@ -400,12 +404,11 @@ public class GraphHopper implements GraphHopperAPI
         {
             throw new RuntimeException("Cannot parse OSM file " + osmFileStr, ex);
         }
-        postProcessing();
         cleanUp();
         optimize();
-        prepare();
-        flush();
+        postProcessing();
         initLocationIndex();
+        flush();
         return this;
     }
 
@@ -516,7 +519,7 @@ public class GraphHopper implements GraphHopperAPI
             prepare.setGraph(graph);
         }
 
-        if ("false".equals(graph.getProperties().get("prepare.done")))
+        if (!"true".equals(graph.getProperties().get("prepare.done")))
             prepare();
     }
 
@@ -634,6 +637,11 @@ public class GraphHopper implements GraphHopperAPI
         return tmpIndex;
     }
 
+    /**
+     * Initializes the location index. Currently this has to be done after the ch-preparation!
+     * Because - to improve performance - certain edges won't be available in a ch-graph and the
+     * index needs to know this and selects the correct nodes which still see the correct neighbors.
+     */
     protected void initLocationIndex()
     {
         if (locationIndex != null)

@@ -27,7 +27,9 @@ import com.graphhopper.util.EdgeIteratorState;
 public interface WeightCalculation
 {
     /**
-     * @return the calculated weight with the maximum velocity
+     * Used only for the heuristical estimation in A
+     * <p/>
+     * @return minimal weight. E.g. if you calculate the fastest way it is distance/maxVelocity
      */
     double getMinWeight( double distance );
 

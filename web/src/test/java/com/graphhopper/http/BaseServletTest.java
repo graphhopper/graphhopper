@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public class BaseServletTest
 {
     private static Server server;
-    protected static Logger logger = LoggerFactory.getLogger(GraphHopperIT.class);
+    protected static Logger logger = LoggerFactory.getLogger(GraphHopperServletIT.class);
     protected static int port;
     protected Injector injector;
 
@@ -49,6 +49,9 @@ public class BaseServletTest
         injector = Guice.createInjector(/*Stage.DEVELOPMENT,*/modules);
     }
 
+    /**
+     * This method will start jetty with andorra area loaded as OSM.
+     */
     public void setUpJetty()
     {
         if (injector != null)

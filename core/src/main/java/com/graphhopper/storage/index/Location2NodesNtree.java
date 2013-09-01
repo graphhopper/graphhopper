@@ -350,10 +350,6 @@ public class Location2NodesNtree implements Location2IDIndex
         return graph.getNodes();
     }
 
-    protected void sortNodes( TIntList nodes )
-    {
-    }
-
     @Override
     public void close()
     {
