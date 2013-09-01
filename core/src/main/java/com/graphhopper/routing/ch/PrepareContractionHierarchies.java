@@ -822,13 +822,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             @Override
-            public double getWeight( EdgeBase edge )
+            public double getWeight( EdgeIteratorState edge )
             {
                 return edge.getDistance();
             }
 
             @Override
-            public double revertWeight( EdgeBase iter, double weight )
+            public double revertWeight( EdgeIteratorState iter, double weight )
             {
                 return prepareWeightCalc.revertWeight(iter, weight);
             }

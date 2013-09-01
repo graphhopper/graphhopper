@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.EdgeBase;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Calculates the shortest route - independent of a vehicle as the calculation is based on the
@@ -38,13 +38,13 @@ public class ShortestCalc implements WeightCalculation
     }
 
     @Override
-    public double getWeight( EdgeBase iter )
+    public double getWeight( EdgeIteratorState iter )
     {
         return iter.getDistance();
     }
 
     @Override
-    public double revertWeight( EdgeBase iter, double weight )
+    public double revertWeight( EdgeIteratorState iter, double weight )
     {
         return weight;
     }

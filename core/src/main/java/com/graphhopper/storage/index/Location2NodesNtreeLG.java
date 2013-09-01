@@ -96,7 +96,7 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
         {
 
             @Override
-            public EdgeBase detach()
+            public EdgeIteratorState detach()
             {
                 return tmpIter.detach();
             }            

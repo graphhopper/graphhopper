@@ -159,10 +159,10 @@ public class OSMReaderHelper
     /**
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
-    public Collection<EdgeBase> addOSMWay( TLongList osmNodeIds, int flags )
+    public Collection<EdgeIteratorState> addOSMWay( TLongList osmNodeIds, int flags )
     {
         PointList pointList = new PointList(osmNodeIds.size());
-        List<EdgeBase> newEdges = new ArrayList<EdgeBase>(5);
+        List<EdgeIteratorState> newEdges = new ArrayList<EdgeIteratorState>(5);
         int firstNode = -1;
         int lastIndex = osmNodeIds.size() - 1;
         int lastInBoundsPillarNode = -1;
@@ -245,7 +245,7 @@ public class OSMReaderHelper
         return newEdges;
     }
 
-    EdgeBase addEdge( int fromIndex, int toIndex, PointList pointList, int flags )
+    EdgeIteratorState addEdge( int fromIndex, int toIndex, PointList pointList, int flags )
     {
         if (fromIndex < 0 || toIndex < 0)
         {
@@ -280,7 +280,7 @@ public class OSMReaderHelper
             towerNodeDistance = 0.0001;
         }
 
-        EdgeBase iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
+        EdgeIteratorState iter = g.edge(fromIndex, toIndex, towerNodeDistance, flags);
         if (nodes > 2)
         {
             dpAlgo.simplify(pillarNodes);
@@ -389,7 +389,7 @@ public class OSMReaderHelper
     /**
      * Add a zero length edge with reduced routing options to the graph.
      */
-    public Collection<EdgeBase> addBarrierEdge( long fromId, long toId, int flags, int barrierFlags )
+    public Collection<EdgeIteratorState> addBarrierEdge( long fromId, long toId, int flags, int barrierFlags )
     {
         // clear barred directions from routing flags
         flags &= ~barrierFlags;

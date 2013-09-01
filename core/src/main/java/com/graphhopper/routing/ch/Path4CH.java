@@ -21,7 +21,7 @@ import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeBase;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipExplorer;
 
 /**
@@ -43,7 +43,7 @@ public class Path4CH extends PathBidirRef
     @Override
     protected void processDistance( int tmpEdge, int endNode )
     {
-        EdgeBase mainIter = graph.getEdgeProps(tmpEdge, endNode);
+        EdgeIteratorState mainIter = graph.getEdgeProps(tmpEdge, endNode);
 
         // Shortcuts do only contain valid weight so first expand before adding
         // to distance and time
@@ -51,7 +51,7 @@ public class Path4CH extends PathBidirRef
     }
 
     @Override
-    public double calcDistance( EdgeBase mainIter )
+    public double calcDistance( EdgeIteratorState mainIter )
     {
         return calc.revertWeight(mainIter, mainIter.getDistance());
     }

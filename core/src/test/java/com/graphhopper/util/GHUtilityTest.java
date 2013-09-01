@@ -101,7 +101,7 @@ public class GHUtilityTest
     public void testCopy()
     {
         Graph g = initUnsorted(createGraph());
-        EdgeBase eb = g.edge(6, 5, 11, true);
+        EdgeIteratorState eb = g.edge(6, 5, 11, true);
         eb.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
         LevelGraph lg = new GraphBuilder(encodingManager).levelGraphCreate();
         GHUtility.copyTo(g, lg);

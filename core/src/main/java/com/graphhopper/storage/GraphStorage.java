@@ -620,7 +620,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         @Override
-        public EdgeBase detach()
+        public EdgeIteratorState detach()
         {
             if (edgePointer < 0)
                 throw new IllegalStateException("call next before detaching");
