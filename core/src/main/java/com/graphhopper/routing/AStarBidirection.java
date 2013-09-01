@@ -275,7 +275,7 @@ public class AStarBidirection extends AbstractRoutingAlgorithm
             int neighborNode = iter.getAdjNode();
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
-            double alreadyVisitedWeight = weightCalc.getWeight(iter.getDistance(), iter.getFlags()) + curr.weightToCompare;
+            double alreadyVisitedWeight = weightCalc.getWeight(iter) + curr.weightToCompare;
             AStarEdge de = shortestWeightMap.get(neighborNode);
             if (de == null || de.weightToCompare > alreadyVisitedWeight)
             {

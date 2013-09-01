@@ -315,4 +315,125 @@ public class GHUtility
         }
         return endNode;
     }
+
+    public static class DisabledEdgeIterator implements EdgeSkipIterator
+    {
+        @Override
+        public EdgeIterator detach()
+        {
+            return this;
+        }
+
+        @Override
+        public boolean isShortcut()
+        {
+            return false;
+        }
+
+        @Override
+        public int getSkippedEdge1()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getSkippedEdge2()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void setSkippedEdges( int edge1, int edge2 )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void setDistance( double dist )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void setFlags( int flags )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public boolean next()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getEdge()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getBaseNode()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getAdjNode()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public double getDistance()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getFlags()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public PointList getWayGeometry()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void setWayGeometry( PointList list )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public String getName()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void setName( String name )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+    };
+    
+    
+    /**
+     * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if
+     * not found.
+     */
+    public static EdgeIterator getEdge( GraphStorage graph, int base, int adj )
+    {
+        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
+        while (iter.next())
+        {
+            if (iter.getAdjNode() == adj)
+                return iter;
+        }
+        return null;
+    }
 }
