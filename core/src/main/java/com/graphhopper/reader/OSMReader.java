@@ -73,8 +73,8 @@ public class OSMReader
 
         StopWatch sw1 = new StopWatch().start();
         preProcess(osmFile);
-
         sw1.stop();
+        
         StopWatch sw2 = new StopWatch().start();
         writeOsm2Graph(osmFile);
         sw2.stop();

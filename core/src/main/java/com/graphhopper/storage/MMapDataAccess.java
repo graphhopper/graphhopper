@@ -216,7 +216,7 @@ public class MMapDataAccess extends AbstractDataAccess
         {
             if (ioex == null)
             {
-                throw new AssertionError("internal problem as ioex shouldn't be null");
+                throw new AssertionError("internal problem as the exception 'ioex' shouldn't be null");
             }
             throw ioex;
         }

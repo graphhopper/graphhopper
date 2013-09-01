@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Use this FlagEncoder for bicycle support (not motorbikes).
+ * <p/>
  * @author Peter Karich
  * @author Nop
  */

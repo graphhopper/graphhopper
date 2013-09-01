@@ -24,10 +24,27 @@ package com.graphhopper.storage;
  */
 public class DAType
 {
-    public static final DAType RAM_INT_STORE = new DAType(false, true, true);
-    public static final DAType RAM_INT = new DAType(false, false, true);
-    public static final DAType RAM_STORE = new DAType(false, true, false);
+    /**
+     * The DA object is hold entirely in-memory. Loading and flushing is a no-op. See RAMDataAccess.
+     */
     public static final DAType RAM = new DAType(false, false, false);
+    /**
+     * Optimized RAM DA type for integer access. The set and getBytes methods cannot be used.
+     */
+    public static final DAType RAM_INT = new DAType(false, false, true);
+    /**
+     * The DA object is hold entirely in-memory. It will read load disc and flush to it if they
+     * equivalent methods are called. See RAMDataAccess.
+     */
+    public static final DAType RAM_STORE = new DAType(false, true, false);
+    /**
+     * Optimized RAM_STORE DA type for integer access. The set and getBytes methods cannot be used.
+     */
+    public static final DAType RAM_INT_STORE = new DAType(false, true, true);
+    /**
+     * Memory mapped DA object. See MMapDataAccess. To make it read and write thread-safe you need
+     * to use 'new DAType(MMAP, true)'
+     */
     public static final DAType MMAP = new DAType(true, true, false);
     private final boolean mmap;
     private final boolean storing;

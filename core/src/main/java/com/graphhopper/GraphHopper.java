@@ -327,7 +327,7 @@ public class GraphHopper implements GraphHopperAPI
 
         // prepare
         doPrepare = args.getBool("prepare.doPrepare", doPrepare);
-        String chShortcuts = args.get("prepare.chShortcuts", "no");
+        String chShortcuts = args.get("prepare.chShortcuts", "fastest");
         boolean levelGraph = "true".equals(chShortcuts)
                 || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
         if (levelGraph)

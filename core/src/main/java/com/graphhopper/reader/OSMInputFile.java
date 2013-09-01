@@ -171,7 +171,7 @@ public class OSMInputFile implements Sink, Closeable
         if (item != null)
             return item;
 
-        eof = true;
+        eof = true;        
         return null;
     }
 

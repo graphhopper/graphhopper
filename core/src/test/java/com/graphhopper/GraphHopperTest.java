@@ -124,13 +124,19 @@ public class GraphHopperTest
     public void testFailsForWrongConfig() throws IOException
     {
         instance = new GraphHopper().init(
-                new CmdArgs().put("osmreader.acceptWay", "FOOT,CAR").put("osmreader.osm", testOsm3)).setGraphHopperLocation(ghLoc);
+                new CmdArgs().
+                put("osmreader.acceptWay", "FOOT,CAR").
+                put("prepare.chShortcuts", "no").
+                put("osmreader.osm", testOsm3)).setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         assertEquals(5, instance.getGraph().getNodes());
         instance.close();
 
         instance = new GraphHopper().init(
-                new CmdArgs().put("osmreader.acceptWay", "FOOT").put("osmreader.osm", testOsm3)).setOSMFile(testOsm3);
+                new CmdArgs().
+                put("osmreader.acceptWay", "FOOT").
+                put("prepare.chShortcuts", "no").
+                put("osmreader.osm", testOsm3)).setOSMFile(testOsm3);
         try
         {
             instance.load(ghLoc);
@@ -141,7 +147,10 @@ public class GraphHopperTest
 
         // different order should be ok
         instance = new GraphHopper().init(
-                new CmdArgs().put("osmreader.acceptWay", "CAR,FOOT").put("osmreader.osm", testOsm3)).setOSMFile(testOsm3);
+                new CmdArgs().
+                put("osmreader.acceptWay", "CAR,FOOT").
+                put("prepare.chShortcuts", "no").
+                put("osmreader.osm", testOsm3)).setOSMFile(testOsm3);
         assertTrue(instance.load(ghLoc));
         assertEquals(5, instance.getGraph().getNodes());
     }

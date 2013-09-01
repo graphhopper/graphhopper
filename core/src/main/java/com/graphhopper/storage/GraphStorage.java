@@ -31,13 +31,16 @@ import static com.graphhopper.util.Helper.nf;
 
 /**
  * The main implementation which handles nodes and edges file format. It can be used with different
- * Directory implementations like RAMDirectory for fast and read-thread safe usage which can be
- * flushed to disc or via MMapDirectory for virtual-memory and not thread safe usage.
+ * Directory implementations like RAMDirectory for fast access or via MMapDirectory for
+ * virtual-memory and not thread safe usage.
  * <p/>
- * Life cycle: (1) object creation, (2) configuration, (3) create or loadExisting, (4) usage, (5)
- * close
+ * Note: A RAM DataAccess Object is thread-safe in itself but if used in this Graph implementation
+ * it is not write thread safe.
  * <p/>
- * @see GraphBuilder The GraphBuilder class to easily create a (Level)GraphStorage
+ * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
+ * loadExisting, (4) usage, (5) flush, (5) close
+ * <p/>
+ * @see GraphBuilder Use the GraphBuilder class to create a (Level)GraphStorage easier.
  * @see LevelGraphStorage
  * @author Peter Karich
  */

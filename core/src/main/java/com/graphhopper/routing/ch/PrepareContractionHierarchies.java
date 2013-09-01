@@ -88,6 +88,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private int lastNodesLazyUpdatePercentage = 10;
     private StopWatch allSW = new StopWatch();
     private int neighborUpdatePercentage = 10;
+    private int initialCollectionSize = 10000;
 
     public PrepareContractionHierarchies( FlagEncoder encoder, WeightCalculation type )
     {
@@ -169,6 +170,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return this;
     }
 
+    /**
+     * While creating an algorithm out of this preparation class 10 000 nodes are assumed which can
+     * be too high for your mobile application. E.g. A 500km query only traverses roughly 2000
+     * nodes.
+     */
+    public void setInitialCollectionSize( int initialCollectionSize )
+    {
+        this.initialCollectionSize = initialCollectionSize;
+    }
+
     @Override
     public PrepareContractionHierarchies doWork()
     {
@@ -182,11 +193,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         super.doWork();
         initFromGraph();
         if (!prepareEdges())
-            return this;        
+            return this;
 
         if (!prepareNodes())
             return this;
-        
+
         contractNodes();
         return this;
     }
@@ -228,7 +239,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         if (sortedNodes.isEmpty())
             return false;
-        
+
         return true;
     }
 
@@ -261,7 +272,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         boolean neighborUpdate = true;
         if (neighborUpdatePercentage == 0)
             neighborUpdate = false;
-        
+
         StopWatch neighborSW = new StopWatch();
         while (!sortedNodes.isEmpty())
         {
@@ -545,7 +556,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         {
             int u_fromNode = incomingEdges.getAdjNode();
             // accept only uncontracted nodes
-            if (g.getLevel(u_fromNode) != 0)            
+            if (g.getLevel(u_fromNode) != 0)
                 continue;
 
             double v_u_weight = incomingEdges.getDistance();
@@ -706,7 +717,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             protected void initCollections( int nodes )
             {
                 // algorithm with CH does not need that much memory pre allocated
-                super.initCollections(Math.min(10000, nodes));
+                super.initCollections(Math.min(initialCollectionSize, nodes));
             }
 
             @Override
@@ -753,7 +764,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             protected void initCollections( int nodes )
             {
                 // algorithm with CH does not need that much memory pre allocated
-                super.initCollections(Math.min(10000, nodes));
+                super.initCollections(Math.min(initialCollectionSize, nodes));
             }
 
             @Override
