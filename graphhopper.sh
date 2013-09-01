@@ -22,7 +22,7 @@ fi
 ACTION=$1
 FILE=$2
 
-USAGE="./graphhopper.sh import|ui|test <your-osm-file>"
+USAGE="./graphhopper.sh import|ui|test|measurement|miniui <your-osm-file>"
 if [ "x$ACTION" = "x" ]; then
  echo -e "## action $ACTION not found. try \n$USAGE"
 fi
@@ -217,6 +217,12 @@ elif [ "x$ACTION" = "xtest" ]; then
 
 elif [ "x$ACTION" = "xtorture" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.QueryTorture $3 $4 $5 $6 $7 $8 $9
+
+elif [ "x$ACTION" = "xminiui" ]; then
+ "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/tools/pom.xml" -DskipTests clean install assembly:single
+ JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" printVersion=true config=$CONFIG \
+              graph.location="$GRAPH"
        
 elif [ "x$ACTION" = "xmeasurement" ]; then
  ARGS="graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
