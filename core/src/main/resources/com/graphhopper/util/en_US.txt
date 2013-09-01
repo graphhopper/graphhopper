@@ -1,4 +1,3 @@
-# to make renaming of english phrases easier we use a key
 sharp_left=sharp left
 sharp_right=sharp right
 left=left
@@ -19,3 +18,10 @@ web.BIKE=Bike
 web.CAR=Car
 web.FOOT=Foot
 web.finish=Finish!
+hourAbbr=h
+dayAbbr=d
+minAbbr=min
+kmAbbr=km
+mAbbr=m
+miAbbr=mi
+ftAbbr=ft

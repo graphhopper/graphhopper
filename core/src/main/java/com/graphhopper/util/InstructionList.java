@@ -124,12 +124,12 @@ public class InstructionList
         return distances;
     }
 
-    public List<String> createDistances( Locale locale )
+    public List<String> createDistances( Translation tr )
     {
         // United Kingdom, Canada, Ireland, Australia, the Bahamas, India, and Malaysia 
         // still use some forms of the Imperial System, but are official Metric Nations
         List<String> labels = new ArrayList<String>(distances.size());
-        String country = locale.getCountry();
+        String country = tr.getLocale().getCountry();
         boolean mile = Locale.US.getCountry().equals(country)
                 || Locale.UK.getCountry().equals(country)
                 || Locale.CANADA.getCountry().equals(country);
@@ -143,30 +143,30 @@ public class InstructionList
                 double distInMiles = dist / 1000 / DistanceCalc.KM_MILE;
                 if (distInMiles < 0.9)
                 {
-                    labels.add((int) DistanceCalc.round(distInMiles * 5280, 1) + " ft");
+                    labels.add((int) DistanceCalc.round(distInMiles * 5280, 1) + " " + tr.tr("ftAbbr"));
                 } else
                 {
                     if (distInMiles < 100)
                     {
-                        labels.add(DistanceCalc.round(distInMiles, 2) + " miles");
+                        labels.add(DistanceCalc.round(distInMiles, 2) + " " + tr.tr("miAbbr"));
                     } else
                     {
-                        labels.add((int) DistanceCalc.round(distInMiles, 1) + " miles");
+                        labels.add((int) DistanceCalc.round(distInMiles, 1) + " " + tr.tr("miAbbr"));
                     }
                 }
             } else
             {
                 if (dist < 950)
                 {
-                    labels.add((int) DistanceCalc.round(dist, 1) + " m");
+                    labels.add((int) DistanceCalc.round(dist, 1) + " " + tr.tr("mAbbr"));
                 } else
                 {
                     if (dist < 100000)
                     {
-                        labels.add(DistanceCalc.round(dist / 1000, 2) + " km");
+                        labels.add(DistanceCalc.round(dist / 1000, 2) + " " + tr.tr("kmAbbr"));
                     } else
                     {
-                        labels.add((int) DistanceCalc.round(dist / 1000, 1) + " km");
+                        labels.add((int) DistanceCalc.round(dist / 1000, 1) + " " + tr.tr("kmAbbr"));
                     }
                 }
             }

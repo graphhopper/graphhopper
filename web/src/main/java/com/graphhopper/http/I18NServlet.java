@@ -21,6 +21,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.TranslationMap.Translation;
 import java.io.IOException;
+import java.util.Locale;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -56,10 +57,10 @@ public class I18NServlet extends GHServlet
 
             Translation tr = map.get(locale);
             JSONObject json = new JSONObject();
-            if (tr != null && !"en".equals(tr.getLocale()))
+            if (tr != null && !Locale.US.equals(tr.getLocale()))
                 json.put("default", tr.asMap());                
             
-            json.put("locale", locale);
+            json.put("locale", locale.toString());
             json.put("en", map.get("en").asMap());
             writeJson(req, res, json);
         } catch (Exception ex)

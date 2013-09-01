@@ -518,16 +518,16 @@ function routeLatLng(request, doQuery) {
         var tmpTime = round(json.route.time / 60, 1000);        
         if(tmpTime > 60) {
             if(tmpTime / 60 > 24)
-                tmpTime = floor(tmpTime / 60 / 24, 1) + "d " + round(((tmpTime / 60) % 24), 1) + "h";
+                tmpTime = floor(tmpTime / 60 / 24, 1) + tr2("dayAbbr")+ " " + round(((tmpTime / 60) % 24), 1) + tr2("hourAbbr");
             else
-                tmpTime = floor(tmpTime / 60, 1) + "h " + round(tmpTime % 60, 1) + "min";
+                tmpTime = floor(tmpTime / 60, 1) + tr2("hourAbbr") + " " + round(tmpTime % 60, 1) + tr2("minAbbr");
         } else
-            tmpTime = round(tmpTime % 60, 1) + "min";
+            tmpTime = round(tmpTime % 60, 1) + tr2("minAbbr");
         var dist = round(json.route.distance / 1000, 100);
         if(dist > 100)
             dist = round(dist, 1);
                         
-        descriptionDiv.html(tr("routeInfo", [dist, "km", tmpTime]));
+        descriptionDiv.html(tr("routeInfo", [dist, tr2("kmAbbr"), tmpTime]));
         
         var hiddenDiv = $("<div id='routeDetails'/>");
         hiddenDiv.hide();
@@ -721,14 +721,18 @@ function round(val, precision) {
 }
 
 function tr(key, args) {
+    return tr2("web." + key, args);
+}
+
+function tr2(key, args) {
     if(defaultTranslationMap == null) {
         console.log("ERROR: defaultTranslationMap was not initialized?");
         return key;
     }
     
-    var val = defaultTranslationMap["web." + key];
+    var val = defaultTranslationMap[key];
     if(val == null && enTranslationMap)
-        val = enTranslationMap["web." + key];
+        val = enTranslationMap[key];
     if(val == null)
         return key;
     
