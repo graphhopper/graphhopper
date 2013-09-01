@@ -20,7 +20,13 @@ package com.graphhopper.storage;
 import java.io.Closeable;
 
 /**
- * Interface for a storage abstraction.
+ * Interface for a storage abstraction. Currently is serves just the purpose to ensure the same
+ * methods and names through all kind of 'storable' things in graphhopper.
+ * <p/>
+ * Then the lifecycle is identical for all such objects: <ol> <li>object creation via new</li> <li>optional
+ * configuration via additional setters and getters</li> <li>if(!storable.loadExisting())
+ * storable.create()</li> <li>usage and flush() calls in-between</li> <li>close which does no
+ * flush()</li> <ol>
  * <p/>
  * @author Peter Karich
  */
