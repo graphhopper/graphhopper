@@ -507,7 +507,7 @@ public class GraphHopper implements GraphHopperAPI
         {
             FlagEncoder encoder = encodingManager.getSingle();
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder, 
-                    createCHType(chType, encoder));
+                    createType(chType, encoder));
             tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                     setLazyUpdates(lazyUpdates).
                     setNeighborUpdates(neighborUpdates);
@@ -523,15 +523,6 @@ public class GraphHopper implements GraphHopperAPI
     private boolean setSupportsVehicle( String encoder )
     {
         return encodingManager.supports(encoder);
-    }
-
-    protected WeightCalculation createCHType( String type, FlagEncoder encoder )
-    {
-        if ("fastest".equals(type))
-            return new FastestCalc(encoder);
-        else
-            return new ShortestCalc();
-
     }
 
     protected WeightCalculation createType( String type, FlagEncoder encoder )
