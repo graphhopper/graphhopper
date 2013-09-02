@@ -36,6 +36,6 @@ public class GHResponseTest
         points.add(51.416338, 13.540649);
         instance.setPoints(points);
         String result = instance.createGPX("Test", System.currentTimeMillis());
-        assertEquals("swdfsdf", result);
+        assertEquals(5, result.split("trkpt").length);
     }
 }
