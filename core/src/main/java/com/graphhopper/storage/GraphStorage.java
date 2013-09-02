@@ -1314,7 +1314,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
                     throw new IllegalStateException("No EncodingManager was configured. And no one was found in the graph: " + dir.getLocation());
                 }
                 encodingManager = new EncodingManager(acceptStr);
-            } else if (!acceptStr.isEmpty() && !encodingManager.encoderList().equals(acceptStr))
+            } else if (!acceptStr.isEmpty() && !encodingManager.encoderList().equalsIgnoreCase(acceptStr))
             {
                 throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.encoderList() + "\nGraph: " + acceptStr);
             }

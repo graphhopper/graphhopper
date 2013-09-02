@@ -520,13 +520,9 @@ public class GraphHopper implements GraphHopperAPI
             prepare();
     }
 
-    private boolean setSupportsVehicle( String encoder )
-    {
-        return encodingManager.supports(encoder);
-    }
-
     protected WeightCalculation createType( String type, FlagEncoder encoder )
     {
+        // ignore case
         type = type.toLowerCase();
         if ("shortest".equals(type))
             return new ShortestCalc();
@@ -541,7 +537,7 @@ public class GraphHopper implements GraphHopperAPI
         StopWatch sw = new StopWatch().start();
         GHResponse rsp = new GHResponse();
 
-        if (!setSupportsVehicle(request.getVehicle()))
+        if (!encodingManager.supports(request.getVehicle()))
         {
             rsp.addError(new IllegalArgumentException("Vehicle " + request.getVehicle() + " unsupported. Supported are: " + getEncodingManager()));
             return rsp;

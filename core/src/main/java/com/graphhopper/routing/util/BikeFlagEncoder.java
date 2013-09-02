@@ -93,7 +93,7 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
     @Override
     public String toString()
     {
-        return "BIKE";
+        return "bike";
     }
 
     /**

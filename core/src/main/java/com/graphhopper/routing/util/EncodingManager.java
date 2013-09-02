@@ -33,9 +33,9 @@ import java.util.HashMap;
  */
 public class EncodingManager
 {
-    public static final String CAR = "CAR";
-    public static final String BIKE = "BIKE";
-    public static final String FOOT = "FOOT";
+    public static final String CAR = "car";
+    public static final String BIKE = "bike";
+    public static final String FOOT = "foot";
     private static final HashMap<String, String> defaultEncoders = new HashMap<String, String>();
 
     static
@@ -79,7 +79,7 @@ public class EncodingManager
                 className = entry.substring(pos + 1);
             } else
             {
-                className = defaultEncoders.get(entry);
+                className = defaultEncoders.get(entry.toLowerCase());
                 if (className == null)
                     throw new IllegalArgumentException("Unknown encoder name " + entry);
             }
@@ -139,10 +139,8 @@ public class EncodingManager
     {
         for (int i = 0; i < encoderCount; i++)
         {
-            if (name.equals(encoders.get(i).toString()))
-            {
+            if (name.equalsIgnoreCase(encoders.get(i).toString()))            
                 return encoders.get(i);
-            }
         }
         if (throwExc)
             throw new IllegalArgumentException("Encoder for " + name + " not found.");
