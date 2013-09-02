@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class GHRequest
 {
-    private String algo = "astar";
+    private String algo = "dijkstrabi";
     private GHPlace from;
     private GHPlace to;
     private Map<String, Object> hints = new HashMap<String, Object>(5);
