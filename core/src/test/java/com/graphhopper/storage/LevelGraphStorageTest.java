@@ -18,8 +18,9 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.LevelEdgeFilter;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.util.GHUtility;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -103,7 +104,7 @@ public class LevelGraphStorageTest extends GraphStorageTest
         g.edge(0, 1, 10, true);
         g.edge(0, 2, 20, true);
         g.edge(2, 3, 30, true);
-        EdgeSkipIterator tmpIter = g.edge(3, 4, 40, true);
+        EdgeSkipExplorer tmpIter = g.edge(3, 4, 40, true);
         assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge1());
         assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge2());
 
@@ -112,9 +113,9 @@ public class LevelGraphStorageTest extends GraphStorageTest
         g.setLevel(0, 1);
         g.setLevel(4, 1);
 
-        EdgeIterator iter = g.getEdges(0, new LevelEdgeFilter(g));
+        EdgeIterator iter = g.createEdgeExplorer(new LevelEdgeFilter(g)).setBaseNode(0);
         assertEquals(1, GHUtility.count(iter));
-        iter = g.getEdges(2);
+        iter = g.createEdgeExplorer().setBaseNode(2);
         assertEquals(2, GHUtility.count(iter));
     }
 
@@ -125,24 +126,24 @@ public class LevelGraphStorageTest extends GraphStorageTest
         g.edge(1, 2, 10, true);
         g.edge(1, 0, 20, false);
         g.edge(3, 1, 30, false);
-        EdgeIterator iter = g.getEdges(1);
+        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
         iter.next();
-        assertEquals(2, iter.getAdjNode());
-        assertEquals(1, GHUtility.count(g.getEdges(2, carOutFilter)));
+        assertEquals(2, iter.getAdjNode());        
+        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(2)));
         g.disconnect(iter, EdgeIterator.NO_EDGE, false);
-        assertEquals(0, GHUtility.count(g.getEdges(2, carOutFilter)));
+        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(2)));
 
         // even directed ways change!
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
-        assertEquals(1, GHUtility.count(g.getEdges(0, carInFilter)));
+        assertEquals(1, GHUtility.count(carInExplorer.setBaseNode(0)));
         g.disconnect(iter, EdgeIterator.NO_EDGE, false);
-        assertEquals(0, GHUtility.count(g.getEdges(0, carInFilter)));
+        assertEquals(0, GHUtility.count(carInExplorer.setBaseNode(0)));
 
         iter.next();
         assertEquals(3, iter.getAdjNode());
-        assertEquals(1, GHUtility.count(g.getEdges(3, carOutFilter)));
+        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(3)));
         g.disconnect(iter, EdgeIterator.NO_EDGE, false);
-        assertEquals(0, GHUtility.count(g.getEdges(3, carOutFilter)));
+        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(3)));
     }
 }

@@ -17,13 +17,13 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import static com.graphhopper.util.GHUtility.*;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.EdgeExplorer;
 import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 import org.junit.Test;
@@ -36,7 +36,7 @@ import static org.junit.Assert.*;
 public class PrinctonReaderTest
 {
     private EncodingManager encodingManager = new EncodingManager("CAR");
-    private EdgeFilter carOutEdges = new DefaultEdgeFilter(new EncodingManager("CAR").getEncoder("CAR"), false, true);
+    private EdgeFilter carOutEdges = new DefaultEdgeFilter(encodingManager.getEncoder("CAR"), false, true);
 
     @Test
     public void testRead()
@@ -44,8 +44,9 @@ public class PrinctonReaderTest
         Graph graph = new GraphBuilder(encodingManager).create();
         new PrinctonReader(graph).setStream(PrinctonReader.class.getResourceAsStream("tinyEWD.txt")).read();
         assertEquals(8, graph.getNodes());
-        assertEquals(2, count(graph.getEdges(0, carOutEdges)));
-        assertEquals(3, count(graph.getEdges(6, carOutEdges)));
+        EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
+        assertEquals(2, count(explorer.setBaseNode(0)));
+        assertEquals(3, count(explorer.setBaseNode(6)));
     }
 
     @Test
@@ -54,7 +55,8 @@ public class PrinctonReaderTest
         Graph graph = new GraphBuilder(encodingManager).create();
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
         assertEquals(250, graph.getNodes());
-        assertEquals(13, count(graph.getEdges(244, carOutEdges)));
-        assertEquals(11, count(graph.getEdges(16, carOutEdges)));
+        EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
+        assertEquals(13, count(explorer.setBaseNode(244)));
+        assertEquals(11, count(explorer.setBaseNode(16)));
     }
 }

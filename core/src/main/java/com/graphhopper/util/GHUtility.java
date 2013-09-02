@@ -46,6 +46,7 @@ public class GHUtility
         int nodeIndex = 0;
         try
         {
+            EdgeExplorer iter = g.createEdgeExplorer();
             for (; nodeIndex < nodes; nodeIndex++)
             {
                 double lat = g.getLatitude(nodeIndex);
@@ -59,7 +60,7 @@ public class GHUtility
                     problems.add("longitude is not within its bounds " + lon);
                 }
 
-                EdgeIterator iter = g.getEdges(nodeIndex);
+                iter.setBaseNode(nodeIndex);
                 while (iter.next())
                 {
                     if (iter.getAdjNode() >= nodes)
@@ -120,12 +121,13 @@ public class GHUtility
                 }
                 return true;
             }
-        }.start(g, startNode, false);
+        }.start(g.createEdgeExplorer(), startNode, false);
     }
 
     public static String getNodeInfo( LevelGraph g, int nodeId, EdgeFilter filter )
     {
-        EdgeSkipIterator iter = g.getEdges(nodeId, filter);
+        EdgeSkipExplorer iter = g.createEdgeExplorer(filter);
+        iter.setBaseNode(nodeId);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next())
         {
@@ -137,7 +139,7 @@ public class GHUtility
 
     public static String getNodeInfo( Graph g, int nodeId, EdgeFilter filter )
     {
-        EdgeIterator iter = g.getEdges(nodeId, filter);
+        EdgeIterator iter = g.createEdgeExplorer(filter).setBaseNode(nodeId);
         String str = nodeId + ":" + g.getLatitude(nodeId) + "," + g.getLongitude(nodeId) + "\n";
         while (iter.next())
         {
@@ -178,7 +180,7 @@ public class GHUtility
             new XFirstSearch()
             {
                 @Override
-                protected GHBitSet createBitSet( int size )
+                protected GHBitSet createBitSet()
                 {
                     return bitset;
                 }
@@ -190,7 +192,7 @@ public class GHUtility
                     ref.val++;
                     return super.goFurther(nodeId);
                 }
-            }.start(g, startNode, false);
+            }.start(g.createEdgeExplorer(), startNode, false);
         }
         return createSortedGraph(g, sortedGraph, list);
     }
@@ -200,6 +202,7 @@ public class GHUtility
         int len = oldToNewNodeList.size();
         // important to avoid creating two edges for edges with both directions
         GHBitSet bitset = new GHBitSetImpl(len);
+        EdgeExplorer eIter = g.createEdgeExplorer();
         for (int old = 0; old < len; old++)
         {
             int newIndex = oldToNewNodeList.get(old);
@@ -210,7 +213,7 @@ public class GHUtility
             }
             bitset.add(newIndex);
             sortedGraph.setNode(newIndex, g.getLatitude(old), g.getLongitude(old));
-            EdgeIterator eIter = g.getEdges(old);
+            eIter.setBaseNode(old);
             while (eIter.next())
             {
                 int newNodeIndex = oldToNewNodeList.get(eIter.getAdjNode());
@@ -284,11 +287,12 @@ public class GHUtility
         int len = from.getNodes();
         // important to avoid creating two edges for edges with both directions        
         GHBitSet bitset = new GHBitSetImpl(len);
+        EdgeExplorer eIter = from.createEdgeExplorer();
         for (int oldNode = 0; oldNode < len; oldNode++)
         {
             bitset.add(oldNode);
             to.setNode(oldNode, from.getLatitude(oldNode), from.getLongitude(oldNode));
-            EdgeIterator eIter = from.getEdges(oldNode);
+            eIter.setBaseNode(oldNode);
             while (eIter.next())
             {
                 int adjacentNodeIndex = eIter.getAdjNode();
@@ -306,112 +310,9 @@ public class GHUtility
     {
         if (EdgeIterator.Edge.isValid(edge))
         {
-            EdgeIterator iterTo = g.getEdgeProps(edge, endNode);
+            EdgeBase iterTo = g.getEdgeProps(edge, endNode);
             return iterTo.getAdjNode();
         }
         return endNode;
     }
-
-    public static final EdgeSkipIterator EMPTY = new EdgeSkipIterator()
-    {
-        @Override
-        public boolean isShortcut()
-        {
-            return false;
-        }
-
-        @Override
-        public int getSkippedEdge1()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getSkippedEdge2()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public void setSkippedEdges( int edge1, int edge2 )
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public void setDistance( double dist )
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public void setFlags( int flags )
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public boolean next()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getEdge()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getBaseNode()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getAdjNode()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public double getDistance()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getFlags()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public PointList getWayGeometry()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public void setWayGeometry( PointList list )
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public String getName() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public void setName(String name) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public boolean isEmpty()
-        {
-            return true;
-        }
-    };
 }

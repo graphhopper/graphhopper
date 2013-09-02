@@ -5,6 +5,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="keywords" content="road routing,shortest path,maps,openstreetmap,android,navigation,routenplaner,gis"/>
         <link type="image/png" rel="icon" href="/favicon.ico"/>        
+        <link rel="search" type="application/opensearchdescription+xml" title="GraphHopper Maps" href="opensearch.xml"/>
         <title>GraphHopper Maps</title>
 
         <link rel="stylesheet" href="css/leaflet.css" />
@@ -15,7 +16,7 @@
         <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
         <script type="text/javascript" src="js/jquery.history.js"></script>
         <script type="text/javascript" src="js/ghrequest.js?v=3"></script>
-        <script type="text/javascript" src="js/main.js?v=13"></script>
+        <script type="text/javascript" src="js/main.js?v=14"></script>
         <link rel="stylesheet" type="text/css" href="css/style.css" />
     </head>
     <body>
@@ -34,13 +35,13 @@
                 <div id="fromDiv">
                     <img id="fromIndicator" class="hidden" src="img/indicator.gif"/>
                     <img id="fromFlag" src="img/marker-from.png"/>
-                    <input id="fromInput" class="defaulting" type="text" name="from"  value="From" defaultValue="From"/>
+                    <input id="fromInput" type="text" placeholder="From"/>
                     <div id="fromFound"></div>
                 </div>
                 <div id="toDiv">
                     <img id="toIndicator" class="hidden" src="img/indicator.gif"/>
                     <img id="toFlag" src="img/marker-to.png"/>                    
-                    <input id="toInput" class="defaulting" type="text" name="to" value="To" defaultValue="To"/>
+                    <input id="toInput" type="text" placeholder="To"/>
                     <div id="toFound"></div>
                 </div>
                 <div id="exportLink" class="left"><a href="/maps"><img src='img/link.png'></a></div>

@@ -23,7 +23,7 @@ import com.graphhopper.routing.util.PathSplitter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeBase;
 import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPlace;
@@ -285,7 +285,7 @@ public class PathFinisher
 	 * the edge's nodes if will be inserted, otherwise the edges's geometry is
 	 * returned unchanged. In case the point cannot be located on the edge the
 	 * index returned will be either 0 or full edges' size <code>(
-	 * {@link EdgeIterator#wayGeometry()}.size()+2 )</code> depending whether
+	 * {@link EdgeBase#wayGeometry()}.size()+2 )</code> depending whether
 	 * the GPS point is closer to the start or to the end of the edge.
 	 * 
 	 * <pre>
@@ -301,7 +301,7 @@ public class PathFinisher
 	 * @param gps
 	 * @return
 	 */
-	private PointListIndex insertClosestGpsPoint( EdgeIterator edge, GHPlace gps )
+	private PointListIndex insertClosestGpsPoint( EdgeBase edge, GHPlace gps )
 	{
 		// add start/end edge's point
 		PointList edgePoints = splitter.extractFullGeom(edge, graph);
@@ -341,7 +341,7 @@ public class PathFinisher
 	 * @param edge
 	 *            edge from which the distance is add/removed
 	 */
-	private void updateTimeDist( double addedDist, EdgeIterator edge, PointList fullEdge )
+	private void updateTimeDist( double addedDist, EdgeBase edge, PointList fullEdge )
 	{
 		if(addedDist != 0)
 		{
@@ -370,8 +370,8 @@ public class PathFinisher
 	 */
 	private void buildEdgeToEdgePath()
 	{
-		EdgeIterator fromEdge = this.fromLoc.getClosestEdge();
-		EdgeIterator toEdge = this.toLoc.getClosestEdge();
+		EdgeBase fromEdge = this.fromLoc.getClosestEdge();
+		EdgeBase toEdge = this.toLoc.getClosestEdge();
 		if (fromEdge == null || toEdge == null)
 		{
 			// cannot do anything.

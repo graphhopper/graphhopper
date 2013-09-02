@@ -17,9 +17,7 @@ body {
     padding-left: 10px; 
     padding-right: 15px; 
 }
-.defaulting {
-    color: gray;
-}
+
 #info {
     border: lightgray groove thin;
     display: none;

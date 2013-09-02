@@ -69,7 +69,7 @@ public class XFirstSearchTest
         g.edge(9, 10, 8, true);
         g.edge(5, 10, 1, true);
 
-        bfs.start(g, 0, false);
+        bfs.start(g.createEdgeExplorer(), 0, false);
 
         assertTrue(counter > 0);
         assertEquals(g.getNodes(), counter);

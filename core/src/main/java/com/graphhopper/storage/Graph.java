@@ -19,7 +19,8 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeBase;
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -63,9 +64,9 @@ public interface Graph
      * @param flags see EdgeFlags - involves velocity and direction
      * @return the created edge
      */
-    EdgeIterator edge( int a, int b, double distance, int flags );
+    EdgeBase edge( int a, int b, double distance, int flags );
 
-    EdgeIterator edge( int a, int b, double distance, boolean bothDirections );
+    EdgeBase edge( int a, int b, double distance, boolean bothDirections );
 
     /**
      * Returns a wrapper over the specified edgeId.
@@ -75,7 +76,7 @@ public interface Graph
      * @return an edge iterator over one element where the method next() will always return false.
      * @throws IllegalStateException if edgeId is not valid
      */
-    EdgeIterator getEdgeProps( int edgeId, int endNode );
+    EdgeBase getEdgeProps( int edgeId, int endNode );
 
     /**
      * @return all edges in this graph, where baseNode will be the smaller node.
@@ -86,7 +87,7 @@ public interface Graph
      * Returns an iterator which makes it possible to traverse all edges of the specified node if
      * the filter accepts the edge.
      */
-    EdgeIterator getEdges( int index, EdgeFilter filter );
+    EdgeExplorer createEdgeExplorer( EdgeFilter filter );
 
     /**
      * Returns all the edges reachable from the specified index. Same behaviour as
@@ -94,7 +95,7 @@ public interface Graph
      * <p/>
      * @return all edges regardless of the vehicle type or direction.
      */
-    EdgeIterator getEdges( int index );
+    EdgeExplorer createEdgeExplorer();
 
     /**
      * @return the specified graph g

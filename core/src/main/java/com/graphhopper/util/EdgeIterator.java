@@ -35,69 +35,13 @@ package com.graphhopper.util;
  *
  * @author Peter Karich
  */
-public interface EdgeIterator
+public interface EdgeIterator extends EdgeBase
 {
     /**
-     * To be called to go to the next edge
+     * To be called to go to the next edge state.
      */
     boolean next();
 
-    /**
-     * @return the edge id of the current edge. Do not make any assumptions about the concrete
-     * values, except that for an implemention it is recommended that they'll be contiguous.
-     */
-    int getEdge();
-
-    /**
-     * Returns the node used to instantiate the EdgeIterator. Example: "EdgeIterator iter =
-     * graph.getEdges(baseNode)". Often only used for convenience reasons. Do not confuse this with
-     * a <i>source node</i> of a directed edge.
-     * <p/>
-     * @return the requested node itself
-     * @see EdgeIterator
-     */
-    int getBaseNode();
-
-    /**
-     * @return the adjacent node of baseNode for the current edge.
-     * @see EdgeIterator
-     */
-    int getAdjNode();
-
-    /**
-     * For OSM a way is often a curve not just a straight line and nodes between tower nodes are
-     * necessary to have a more exact geometry. Those nodes are called pillar nodes and will be
-     * returned in this method.
-     * <p/>
-     * @return pillar nodes
-     */
-    PointList getWayGeometry();
-
-    /**
-     * @param list is a sorted collection of nodes between the baseNode and the current adjacent
-     * node
-     */
-    void setWayGeometry( PointList list );
-
-    /**
-     * @return the distance of the current edge edge
-     */
-    double getDistance();
-
-    void setDistance( double dist );
-
-    int getFlags();
-
-    void setFlags( int flags );
-
-    String getName();
-
-    void setName( String name );
-
-    /**
-     * @return true if no data is available where we could iterate over
-     */
-    boolean isEmpty();
     /**
      * integer value to indicate if an edge is valid or not which then would be initialized with
      * this value

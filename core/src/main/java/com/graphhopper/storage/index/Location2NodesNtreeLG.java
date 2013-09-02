@@ -23,8 +23,9 @@ import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import gnu.trove.list.TIntList;
@@ -51,7 +52,7 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
         @Override
         public boolean accept( EdgeIterator iter )
         {
-            return !((EdgeSkipIterator) iter).isShortcut();
+            return !((EdgeSkipExplorer) iter).isShortcut();
         }
     };
     private LevelGraph lg;
@@ -171,26 +172,22 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
             }
 
             @Override
-            public boolean isEmpty()
+            public String getName()
             {
-                return tmpIter.isEmpty();
-            }
-            
-            @Override
-            public String getName() {
                 return tmpIter.getName();
             }
 
             @Override
-            public void setName(String name) {
+            public void setName( String name )
+            {
                 tmpIter.setName(name);
             }
         };
     }
 
     @Override
-    protected EdgeIterator getEdges( int node )
+    protected EdgeExplorer createEdgeExplorer()
     {
-        return lg.getEdges(node, NO_SHORTCUT);
+        return lg.createEdgeExplorer(NO_SHORTCUT);
     }
 }

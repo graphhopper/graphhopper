@@ -2,7 +2,7 @@ package com.graphhopper.routing.noderesolver;
 
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.storage.index.LocationIDResult;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeBase;
 
 /**
  * Basic implementation of the RouteNodeResolver. This implementation takes care
@@ -38,7 +38,7 @@ public class DummyNodeResolver implements RouteNodeResolver
 			return closestLocation.getClosestNode();
 		}
 		
-		EdgeIterator closestEdge = closestLocation.getClosestEdge();
+		EdgeBase closestEdge = closestLocation.getClosestEdge();
 		int flags = closestEdge.getFlags();
 		if (edgeEncoder.isBackward(flags) && edgeEncoder.isForward(flags))
 		{

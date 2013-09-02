@@ -20,10 +20,10 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 /**
@@ -31,21 +31,25 @@ import com.graphhopper.util.EdgeIterator;
  */
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
 {
-    protected Graph graph;
     private EdgeFilter additionalEdgeFilter;
-    protected WeightCalculation weightCalc;
-    protected final EdgeFilter outEdgeFilter;
-    protected final EdgeFilter inEdgeFilter;
+    protected final Graph graph;    
+    protected final WeightCalculation weightCalc;
     protected final FlagEncoder flagEncoder;
+    protected final EdgeExplorer inEdgeExplorer;
+    protected final EdgeExplorer outEdgeExplorer;
 
-    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder )
+    /**
+     * @param graph specifies the graph where this algorithm will run on
+     * @param encoder sets the used vehicle (bike, car, foot)
+     * @param type set the used weight calculation (e.g. fastest, shortest).
+     */
+    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
         this.graph = graph;
-        this.additionalEdgeFilter = EdgeFilter.ALL_EDGES;
-        setType(new ShortestCalc());
+        this.weightCalc = type;
         this.flagEncoder = encoder;
-        outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
-        inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
+        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+        inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
     }
 
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
@@ -56,19 +60,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
 
     protected boolean accept( EdgeIterator iter )
     {
-        return additionalEdgeFilter.accept(iter);
-    }
-
-    protected EdgeIterator getNeighbors( int neighborNode )
-    {
-        return graph.getEdges(neighborNode, outEdgeFilter);
-    }
-
-    @Override
-    public RoutingAlgorithm setType( WeightCalculation wc )
-    {
-        this.weightCalc = wc;
-        return this;
+        return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 
     protected void updateShortest( EdgeEntry shortestDE, int currLoc )

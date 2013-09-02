@@ -21,6 +21,7 @@ import com.graphhopper.reader.OSMWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
 import java.util.Arrays;
 import java.util.Map;
@@ -127,7 +128,8 @@ public class PrepareRoutingSubnetworksTest
         g.optimize();
         assertEquals(4, g.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(g));
-        assertEquals(Arrays.asList(1, 2), GHUtility.getNeighbors(g.getEdges(3)));
+        EdgeExplorer explorer = g.createEdgeExplorer();
+        assertEquals(Arrays.asList(1, 2), GHUtility.getNeighbors(explorer.setBaseNode(3)));
 
         // do not remove because small network is big enough
         g = createSubnetworkTestGraph2(em);

@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class GraphHopperIntegrationTest extends BaseServletTest
+public class GraphHopperIT extends BaseServletTest
 {
     @Before
     public void setUp()

@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This is an in-memory byte-based data structure with the possibility to be stored on flush().
+ * Thread safe.
  * <p/>
  * @author Peter Karich
  */

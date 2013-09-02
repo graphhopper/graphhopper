@@ -1,6 +1,7 @@
 package com.graphhopper.routing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +17,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeBase;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPlace;
 
@@ -31,7 +32,7 @@ public class PathFinisherTest
 
 	private FlagEncoder carEncoder = null;
 	private Graph graph = null;
-	private EdgeIterator ab, bc, cd;
+	private EdgeBase ab, bc, cd;
 	private DistanceCalc calc = new DistanceCalc();
 	private Path pathTest;
 	
@@ -160,22 +161,22 @@ public class PathFinisherTest
 		GHPlace gpsFrom = new GHPlace(50.426962, 4.912174); // GPS point close to AB
 		GHPlace gpsTo = new GHPlace(50.427902, 4.917701); // GPS point close to BC
 		
-		EdgeIterator ba = new RevertedEdge(ab);
-		EdgeIterator cb = new RevertedEdge(bc);
+		EdgeBase ba = new RevertedEdge(ab);
+		EdgeBase cb = new RevertedEdge(bc);
 
 		// build the 4 possible cases
-		Map<String, EdgeIterator[]> testSuite = new HashMap<String, EdgeIterator[]>();
-		testSuite.put("case 1", new EdgeIterator[]{ab, bc});
-		testSuite.put("case 1", new EdgeIterator[]{ab, cb});
-		testSuite.put("case 1", new EdgeIterator[]{ba, bc});
-		testSuite.put("case 1", new EdgeIterator[]{ba, cb});
+		Map<String, EdgeBase[]> testSuite = new HashMap<String, EdgeBase[]>();
+		testSuite.put("case 1", new EdgeBase[]{ab, bc});
+		testSuite.put("case 1", new EdgeBase[]{ab, cb});
+		testSuite.put("case 1", new EdgeBase[]{ba, bc});
+		testSuite.put("case 1", new EdgeBase[]{ba, cb});
 		
 		// empty path
 		SimplePath path = new SimplePath(graph, carEncoder);
 		path.setPoints(new double[][]{}, 50);
 		
 		// test each case, all 4 cases should give the same result.
-		for(Map.Entry<String, EdgeIterator[]> _case : testSuite.entrySet())
+		for(Map.Entry<String, EdgeBase[]> _case : testSuite.entrySet())
 		{
 			LocationIDResult fromLoc = new LocationIDResult();
 			fromLoc.setClosestEdge(_case.getValue()[0]);
@@ -387,17 +388,12 @@ public class PathFinisherTest
 	 * @author NG
 	 * 
 	 */
-	private class RevertedEdge implements EdgeIterator
+	private class RevertedEdge implements EdgeBase
 	{
-		private final EdgeIterator baseEdge;
-		public RevertedEdge( EdgeIterator baseEdge )
+		private final EdgeBase baseEdge;
+		public RevertedEdge( EdgeBase baseEdge )
 		{
 			this.baseEdge = baseEdge;
-		}
-		@Override
-		public boolean next()
-		{
-			return baseEdge.next();
 		}
 		@Override
 		public int getEdge()
@@ -453,11 +449,6 @@ public class PathFinisherTest
 		public void setFlags( int flags )
 		{
 			throw new IllegalStateException("RevertedEdge is read only");
-		}
-		@Override
-		public boolean isEmpty()
-		{
-			return baseEdge.isEmpty();
 		}
 		@Override
 		public String getName()

@@ -101,12 +101,12 @@ public class GHUtilityTest
     public void testCopy()
     {
         Graph g = initUnsorted(createGraph());
-        EdgeIterator iter = g.edge(6, 5, 11, true);
-        iter.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
+        EdgeBase eb = g.edge(6, 5, 11, true);
+        eb.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
         LevelGraph lg = new GraphBuilder(encodingManager).levelGraphCreate();
         GHUtility.copyTo(g, lg);
-        iter = lg.getEdgeProps(iter.getEdge(), 6);
-        assertEquals(Helper.createPointList(-1, 3, 12, 10), iter.getWayGeometry());
+        eb = lg.getEdgeProps(eb.getEdge(), 6);
+        assertEquals(Helper.createPointList(-1, 3, 12, 10), eb.getWayGeometry());
         assertEquals(0, lg.getLevel(0));
         assertEquals(0, lg.getLevel(1));
         assertEquals(0, lg.getLatitude(0), 1e-6);
@@ -114,7 +114,7 @@ public class GHUtilityTest
         assertEquals(2.5, lg.getLatitude(1), 1e-6);
         assertEquals(4.5, lg.getLongitude(1), 1e-6);
         assertEquals(9, lg.getNodes());
-        iter = lg.getEdges(8);
+        EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(8);
         iter.next();
         assertEquals(2.05, iter.getDistance(), 1e-6);
         assertEquals("11", BitUtil.toBitString(iter.getFlags(), 2));
@@ -122,7 +122,7 @@ public class GHUtilityTest
         assertEquals(0.5, iter.getDistance(), 1e-6);
         assertEquals("11", BitUtil.toBitString(iter.getFlags(), 2));
 
-        iter = lg.getEdges(7);
+        iter = lg.createEdgeExplorer().setBaseNode(7);
         iter.next();
         assertEquals(2.1, iter.getDistance(), 1e-6);
         assertEquals("01", BitUtil.toBitString(iter.getFlags(), 2));

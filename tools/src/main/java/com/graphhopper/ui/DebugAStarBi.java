@@ -19,6 +19,7 @@ package com.graphhopper.ui;
 
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import java.awt.Color;
@@ -32,9 +33,9 @@ public class DebugAStarBi extends AStarBidirection implements DebugAlgo
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugAStarBi( Graph graph, FlagEncoder encoder, GraphicsWrapper mg )
+    public DebugAStarBi( Graph graph, FlagEncoder encoder, WeightCalculation type, GraphicsWrapper mg )
     {
-        super(graph, encoder);
+        super(graph, encoder, type);
         this.mg = mg;
     }
 

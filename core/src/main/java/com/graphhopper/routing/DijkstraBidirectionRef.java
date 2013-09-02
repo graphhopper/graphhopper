@@ -17,10 +17,11 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -49,9 +50,9 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm
     protected TIntObjectMap<EdgeEntry> shortestWeightMapOther;
     public PathBidirRef shortest;
 
-    public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder )
+    public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
-        super(graph, encoder);
+        super(graph, encoder, type);
         initCollections(Math.max(20, graph.getNodes()));
     }
 
@@ -138,30 +139,30 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm
     }
 
     void fillEdges( EdgeEntry curr, PriorityQueue<EdgeEntry> prioQueue,
-            TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeFilter filter )
+            TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeExplorer explorer )
     {
 
         int currNode = curr.endNode;
-        EdgeIterator iter = graph.getEdges(currNode, filter);
-        while (iter.next())
+        explorer.setBaseNode(currNode);        
+        while (explorer.next())
         {
-            if (!accept(iter))
+            if (!accept(explorer))
             {
                 continue;
             }
-            int neighborNode = iter.getAdjNode();
-            double tmpWeight = weightCalc.getWeight(iter.getDistance(), iter.getFlags()) + curr.weight;
+            int neighborNode = explorer.getAdjNode();
+            double tmpWeight = weightCalc.getWeight(explorer.getDistance(), explorer.getFlags()) + curr.weight;
             EdgeEntry de = shortestWeightMap.get(neighborNode);
             if (de == null)
             {
-                de = new EdgeEntry(iter.getEdge(), neighborNode, tmpWeight);
+                de = new EdgeEntry(explorer.getEdge(), neighborNode, tmpWeight);
                 de.parent = curr;
                 shortestWeightMap.put(neighborNode, de);
                 prioQueue.add(de);
             } else if (de.weight > tmpWeight)
             {
                 prioQueue.remove(de);
-                de.edge = iter.getEdge();
+                de.edge = explorer.getEdge();
                 de.weight = tmpWeight;
                 de.parent = curr;
                 prioQueue.add(de);
@@ -196,7 +197,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm
         if (currFrom != null)
         {
             shortestWeightMapOther = shortestWeightMapTo;
-            fillEdges(currFrom, openSetFrom, shortestWeightMapFrom, outEdgeFilter);
+            fillEdges(currFrom, openSetFrom, shortestWeightMapFrom, outEdgeExplorer);
             visitedFromCount++;
             if (openSetFrom.isEmpty())
             {
@@ -221,7 +222,7 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm
         if (currTo != null)
         {
             shortestWeightMapOther = shortestWeightMapFrom;
-            fillEdges(currTo, openSetTo, shortestWeightMapTo, inEdgeFilter);
+            fillEdges(currTo, openSetTo, shortestWeightMapTo, inEdgeExplorer);
             visitedToCount++;
             if (openSetTo.isEmpty())
             {

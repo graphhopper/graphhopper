@@ -41,7 +41,7 @@ public class MMapDataAccess extends AbstractDataAccess
 {
     private RandomAccessFile raFile;
     private List<ByteBuffer> segments = new ArrayList<ByteBuffer>();
-    private ByteOrder order;
+    private ByteOrder order = ByteOrder.BIG_ENDIAN;
     private boolean cleanAndRemap = false;
     private transient boolean closed = false;
 
@@ -105,12 +105,11 @@ public class MMapDataAccess extends AbstractDataAccess
     }
 
     /**
-     * Makes it possible to force the order. E.g. if we create the file on a host system and copy it
-     * to a different like android. http://en.wikipedia.org/wiki/Endianness
+     * Makes it possible to force the order. Default is BIG_ENDIAN. But this method is currently a
+     * no-op due to issue: https://github.com/graphhopper/graphhopper/issues/103
      */
     public MMapDataAccess setByteOrder( ByteOrder order )
     {
-        this.order = order;
         return this;
     }
 
@@ -216,14 +215,12 @@ public class MMapDataAccess extends AbstractDataAccess
         {
             if (ioex == null)
             {
-                throw new AssertionError("internal problem as ioex shouldn't be null");
+                throw new AssertionError("internal problem as the exception 'ioex' shouldn't be null");
             }
             throw ioex;
         }
-        if (order != null)
-        {
-            buf.order(order);
-        }
+
+        buf.order(order);
 
         boolean tmp = false;
         if (tmp)
@@ -477,5 +474,5 @@ public class MMapDataAccess extends AbstractDataAccess
     public DAType getType()
     {
         return DAType.MMAP;
-    }        
+    }
 }

@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public class BaseServletTest
 {
     private static Server server;
-    protected static Logger logger = LoggerFactory.getLogger(GraphHopperIntegrationTest.class);
+    protected static Logger logger = LoggerFactory.getLogger(GraphHopperIT.class);
     protected static int port;
     protected Injector injector;
 
@@ -151,7 +151,7 @@ public class BaseServletTest
             resQuery += "&";
         }
         String url = getTestAPIUrl() + "?" + resQuery;
-        Downloader downloader = new Downloader("integration tester");
+        Downloader downloader = new Downloader("web integration tester");
         return new JSONObject(downloader.downloadAsString(url));
     }
 }

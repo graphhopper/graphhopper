@@ -30,14 +30,14 @@ import com.graphhopper.storage.Graph;
 public class DijkstraTest extends AbstractRoutingAlgorithmTester
 {
     @Override
-    public AlgorithmPreparation prepareGraph( Graph g, final WeightCalculation calc, final FlagEncoder encoder )
+    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final WeightCalculation calc)
     {
         return new NoOpAlgorithmPreparation()
         {
             @Override
             public RoutingAlgorithm createAlgo()
             {
-                return new Dijkstra(_graph, encoder).setType(calc);
+                return new Dijkstra(_graph, encoder, calc);
             }
         }.setGraph(g);
     }

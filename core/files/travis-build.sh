@@ -12,7 +12,8 @@ for module in $modules; do
   fi 
   
   echo "====== TEST $module ====="
-  mvn test
+  # verify necessary for failsafe, otherwise it won't fail the build!?
+  mvn test failsafe:integration-test verify  
   EXIT_VAL="$?"
   if [[ "x$EXIT_VAL" != "x0" ]]; then
     exit $EXIT_VAL

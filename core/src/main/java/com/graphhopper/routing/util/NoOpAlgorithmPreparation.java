@@ -52,7 +52,7 @@ public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<N
             {
                 try
                 {
-                    return factory.createAlgo(_graph, encoder).setType(weightCalc);
+                    return factory.createAlgo(_graph, encoder, weightCalc);
                 } catch (Exception ex)
                 {
                     throw new RuntimeException(ex);

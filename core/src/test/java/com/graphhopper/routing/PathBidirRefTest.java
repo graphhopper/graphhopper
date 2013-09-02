@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import static org.junit.Assert.*;
@@ -46,7 +47,8 @@ public class PathBidirRefTest
         Graph g = createGraph();
         g.edge(1, 2, 10, true);
         PathBidirRef pw = new PathBidirRef(g, carEncoder);
-        EdgeIterator iter = g.getEdges(1, carOutEdges);
+        EdgeExplorer explorer = g.createEdgeExplorer(carOutEdges);
+        EdgeIterator iter = explorer.setBaseNode(1);
         iter.next();
         pw.edgeEntry = new EdgeEntry(iter.getEdge(), 2, 0);
         pw.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 10);
@@ -62,13 +64,15 @@ public class PathBidirRefTest
         Graph g = createGraph();
         g.edge(1, 2, 10, false);
         g.edge(2, 3, 20, false);
-        EdgeIterator iter = g.getEdges(1, carOutEdges);
+        EdgeExplorer explorer = g.createEdgeExplorer(carOutEdges);
+        EdgeIterator iter = explorer.setBaseNode(1);
         iter.next();
         PathBidirRef pw = new PathBidirRef(g, carEncoder);
         pw.edgeEntry = new EdgeEntry(iter.getEdge(), 2, 10);
         pw.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 0);
 
-        iter = g.getEdges(3, new DefaultEdgeFilter(carEncoder, true, false));
+        explorer = g.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, false));
+        iter = explorer.setBaseNode(3);
         iter.next();
         pw.edgeTo = new EdgeEntry(iter.getEdge(), 2, 20);
         pw.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 3, 0);

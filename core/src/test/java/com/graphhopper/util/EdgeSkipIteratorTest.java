@@ -49,8 +49,8 @@ public class EdgeSkipIteratorTest
         g.edge(0, 2, 13, carFlagsEncoder.flags(20, true));
 
         assertEquals(2, GHUtility.count(g.getAllEdges()));
-        assertEquals(1, GHUtility.count(g.getEdges(1, carOutFilter)));
-        EdgeIterator iter = g.getEdges(0);
+        assertEquals(1, GHUtility.count(g.createEdgeExplorer(carOutFilter).setBaseNode(1)));
+        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(0);
         assertTrue(iter.next());
         assertEquals(1, iter.getAdjNode());
         assertEquals(carFlagsEncoder.flags(10, true), iter.getFlags());
@@ -62,12 +62,12 @@ public class EdgeSkipIteratorTest
         // update distance
         iter.setDistance(10);
         assertEquals(10, iter.getDistance(), 1e-4);
-        assertEquals(0, GHUtility.count(g.getEdges(1, carOutFilter)));
-        iter = g.getEdges(0);
+        assertEquals(0, GHUtility.count(g.createEdgeExplorer(carOutFilter).setBaseNode(1)));
+        iter = g.createEdgeExplorer().setBaseNode(0);
         assertTrue(iter.next());
         assertEquals(carFlagsEncoder.flags(20, false), iter.getFlags());
         assertEquals(10, iter.getDistance(), 1e-4);
-        assertEquals(1, GHUtility.getNeighbors(g.getEdges(1)).size());
-        assertEquals(0, GHUtility.getNeighbors(g.getEdges(1, carOutFilter)).size());
+        assertEquals(1, GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(1)).size());
+        assertEquals(0, GHUtility.getNeighbors(g.createEdgeExplorer(carOutFilter).setBaseNode(1)).size());
     }
 }

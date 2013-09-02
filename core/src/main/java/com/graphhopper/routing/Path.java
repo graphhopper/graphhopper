@@ -20,10 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
@@ -200,7 +197,7 @@ public class Path
      */
     protected void processDistance( int edgeId, int endNode )
     {
-        EdgeIterator iter = graph.getEdgeProps(edgeId, endNode);
+        EdgeBase iter = graph.getEdgeProps(edgeId, endNode);
         distance += calcDistance(iter);
         time += calcTime(iter.getDistance(), iter.getFlags());
         addEdge(edgeId);
@@ -209,7 +206,7 @@ public class Path
     /**
      * This method returns the distance in kilometer for the specified edge.
      */
-    protected double calcDistance( EdgeIterator iter )
+    protected double calcDistance( EdgeBase iter )
     {
         return iter.getDistance();
     }
@@ -227,7 +224,7 @@ public class Path
      */
     public static interface EdgeVisitor
     {
-        void next( EdgeIterator iter, int index );
+        void next( EdgeBase edgeBase, int index );
     }
 
     /**
@@ -239,15 +236,15 @@ public class Path
         int len = edgeIds.size();
         for (int i = 0; i < len; i++)
         {
-            EdgeIterator iter = graph.getEdgeProps(edgeIds.get(i), tmpNode);
-            if (iter.isEmpty())
+            EdgeBase edgeBase = graph.getEdgeProps(edgeIds.get(i), tmpNode);
+            if (edgeBase == null)
             {
                 throw new IllegalStateException("Edge " + edgeIds.get(i)
                         + " was empty when requested with node " + tmpNode
                         + ", array index:" + i + ", edges:" + edgeIds.size());
             }
-            tmpNode = iter.getBaseNode();
-            visitor.next(iter, i);
+            tmpNode = edgeBase.getBaseNode();
+            visitor.next(edgeBase, i);
         }
     }
 
@@ -267,9 +264,9 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             @Override
-            public void next( EdgeIterator iter, int i )
+            public void next( EdgeBase eb, int i )
             {
-                nodes.add(iter.getBaseNode());
+                nodes.add(eb.getBaseNode());
             }
         });
         return nodes;
@@ -294,15 +291,15 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             @Override
-            public void next( EdgeIterator iter, int i )
+            public void next( EdgeBase eb, int i )
             {
-                PointList pl = iter.getWayGeometry();
+                PointList pl = eb.getWayGeometry();
                 pl.reverse();
                 for (int j = 0; j < pl.getSize(); j++)
                 {
                     cachedPoints.add(pl.getLatitude(j), pl.getLongitude(j));
                 }
-                int baseNode = iter.getBaseNode();
+                int baseNode = eb.getBaseNode();
                 cachedPoints.add(graph.getLatitude(baseNode), graph.getLongitude(baseNode));
             }
         });
@@ -354,22 +351,22 @@ public class Path
             double prevDist;
 
             @Override
-            public void next( EdgeIterator iter, int index )
+            public void next( EdgeBase edgeBase, int index )
             {                
                 // Hmmh, a bit ugly: 'iter' links to the previous node of the path!
                 // Ie. baseNode is the current node and adjNode is the previous.
-                int baseNode = iter.getBaseNode();
+                int baseNode = edgeBase.getBaseNode();
                 double baseLat = graph.getLatitude(baseNode);
                 double baseLon = graph.getLongitude(baseNode);
                 double latitude, longitude;
-                PointList wayGeo = iter.getWayGeometry();
+                PointList wayGeo = edgeBase.getWayGeometry();
                 if (wayGeo.isEmpty())
                 {
                     latitude = baseLat;
                     longitude = baseLon;
                 } else
                 {
-                    int adjNode = iter.getAdjNode();
+                    int adjNode = edgeBase.getAdjNode();
                     prevLat = graph.getLatitude(adjNode);
                     prevLon = graph.getLongitude(adjNode);
                     latitude = wayGeo.getLatitude(wayGeo.getSize() - 1);
@@ -379,8 +376,8 @@ public class Path
                 double orientation = Math.atan2(latitude - prevLat, longitude - prevLon);
                 if (name == null)
                 {
-                    name = iter.getName();
-                    prevDist = calcDistance(iter);
+                    name = edgeBase.getName();
+                    prevDist = calcDistance(edgeBase);
                     cachedWays.add(InstructionList.CONTINUE_ON_STREET, name, prevDist);
                 } else
                 {
@@ -405,11 +402,11 @@ public class Path
                         }
                     }
                                                            
-                    String tmpName = iter.getName();
+                    String tmpName = edgeBase.getName();
                     if (!name.equals(tmpName))
                     {
                         cachedWays.updateLastDistance(prevDist);
-                        prevDist = calcDistance(iter);
+                        prevDist = calcDistance(edgeBase);
                         name = tmpName;
                         double delta = Math.abs(tmpOrientation - prevOrientation);
                         if (delta < 0.2)
@@ -448,7 +445,7 @@ public class Path
                             }
                         }
                     } else
-                        prevDist += calcDistance(iter);
+                        prevDist += calcDistance(edgeBase);
                 }
 
                 prevLat = baseLat;

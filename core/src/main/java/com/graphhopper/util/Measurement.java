@@ -22,10 +22,7 @@ import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.AlgorithmPreparation;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
@@ -88,6 +85,7 @@ public class Measurement
         // TODO make sure the graph is unprepared!
 
         final FlagEncoder vehicle = encodingManager.getEncoder("CAR");
+        final WeightCalculation type = new ShortestCalc();
         StopWatch sw = new StopWatch().start();
         try
         {
@@ -101,14 +99,14 @@ public class Measurement
                 @Override
                 public RoutingAlgorithm createAlgo()
                 {
-                    return new Dijkstra(_graph, vehicle);
+                    return new Dijkstra(_graph, vehicle, type);
                 }
             }.setGraph(g);            
             printTimeOfRouteQuery(prepare2, count / 20, "routing");
 
             System.gc();
             // route via CH -> do preparation before
-            PrepareContractionHierarchies prepare = new PrepareContractionHierarchies().setVehicle(vehicle).setGraph(g);
+            PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(vehicle, type).setGraph(g);
             printPreparationDetails(g, prepare);
             printTimeOfRouteQuery(prepare, count, "routingCH");
             logger.info("store into " + propLocation);

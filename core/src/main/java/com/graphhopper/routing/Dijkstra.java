@@ -18,8 +18,10 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -38,61 +40,56 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     protected boolean alreadyRun;
     protected int visitedNodes;
 
-    public Dijkstra( Graph graph, FlagEncoder encoder )
+    public Dijkstra( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
-        super(graph, encoder);
+        super(graph, encoder, type);
     }
 
     @Override
     public Path calcPath( int from, int to )
     {
         if (alreadyRun)
-        {
             throw new IllegalStateException("Create a new instance per call");
-        }
+
         alreadyRun = true;
         EdgeEntry fromEdge = new EdgeEntry(EdgeIterator.NO_EDGE, from, 0d);
         map.put(from, fromEdge);
         EdgeEntry currEdge = calcEdgeEntry(fromEdge, to);
         if (currEdge == null || currEdge.endNode != to)
-        {
             return new Path(graph, flagEncoder);
-        }
 
         return extractPath(currEdge);
     }
 
     public EdgeEntry calcEdgeEntry( EdgeEntry currEdge, int to )
-    {
+    {       
+        EdgeExplorer explorer = outEdgeExplorer;
         while (true)
         {
             visitedNodes++;
             if (finished(currEdge, to))
-            {
                 break;
-            }
 
             int neighborNode = currEdge.endNode;
-            EdgeIterator iter = getNeighbors(neighborNode);
-            while (iter.next())
+            explorer.setBaseNode(neighborNode);
+            while (explorer.next())
             {
-                if (!accept(iter))
-                {
+                if (!accept(explorer))
                     continue;
-                }
-                int tmpNode = iter.getAdjNode();
-                double tmpWeight = weightCalc.getWeight(iter.getDistance(), iter.getFlags()) + currEdge.weight;
+
+                int tmpNode = explorer.getAdjNode();
+                double tmpWeight = weightCalc.getWeight(explorer.getDistance(), explorer.getFlags()) + currEdge.weight;
                 EdgeEntry nEdge = map.get(tmpNode);
                 if (nEdge == null)
                 {
-                    nEdge = new EdgeEntry(iter.getEdge(), tmpNode, tmpWeight);
+                    nEdge = new EdgeEntry(explorer.getEdge(), tmpNode, tmpWeight);
                     nEdge.parent = currEdge;
                     map.put(tmpNode, nEdge);
                     heap.add(nEdge);
                 } else if (nEdge.weight > tmpWeight)
                 {
                     heap.remove(nEdge);
-                    nEdge.edge = iter.getEdge();
+                    nEdge.edge = explorer.getEdge();
                     nEdge.weight = tmpWeight;
                     nEdge.parent = currEdge;
                     heap.add(nEdge);
@@ -102,14 +99,11 @@ public class Dijkstra extends AbstractRoutingAlgorithm
             }
 
             if (heap.isEmpty())
-            {
                 return null;
-            }
+
             currEdge = heap.poll();
             if (currEdge == null)
-            {
-                throw new AssertionError("cannot happen?");
-            }
+                throw new AssertionError("null currEdge cannot happen?");
         }
         return currEdge;
     }

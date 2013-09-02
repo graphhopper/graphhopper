@@ -32,10 +32,7 @@ import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.Location2IDIndex;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import java.awt.*;
@@ -82,9 +79,9 @@ public class MiniGraphUI
         this.graph = hopper.getGraph();
         prepare = hopper.getPreparation();
         if (prepare == null)
-        {
-            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, "dijkstra", hopper.getEncodingManager().getEncoder("CAR"), wCalc);
-        }
+            prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph,
+                    "dijkstra", hopper.getEncodingManager().getEncoder("CAR"), wCalc);
+
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().getName());
         mg = new GraphicsWrapper(graph);
 
@@ -147,6 +144,7 @@ public class MiniGraphUI
 //                plotPath(path, g2, 1);
 //                g2.setColor(Color.black);
 
+                EdgeExplorer explorer = graph.createEdgeExplorer(EdgeFilter.ALL_EDGES);
                 for (int nodeIndex = 0; nodeIndex < locs; nodeIndex++)
                 {
                     if (fastPaint && rand.nextInt(30) > 1)
@@ -162,7 +160,7 @@ public class MiniGraphUI
                     }
 
                     // accept all
-                    EdgeIterator iter = graph.getEdges(nodeIndex, EdgeFilter.ALL_EDGES);
+                    EdgeIterator iter = explorer.setBaseNode(nodeIndex);
 //                    {
 //                        @Override public boolean accept(EdgeIterator iter) {
 //                            int flags = iter.flags();
@@ -208,7 +206,7 @@ public class MiniGraphUI
 
                 StopWatch sw = new StopWatch().start();
                 logger.info("start searching from:" + dijkstraFromId + " to:" + dijkstraToId + " " + wCalc);
-                path = algo.setType(wCalc).calcPath(dijkstraFromId, dijkstraToId);
+                path = algo.calcPath(dijkstraFromId, dijkstraToId);
 //                mg.plotNode(g2, dijkstraFromId, Color.red);
 //                mg.plotNode(g2, dijkstraToId, Color.BLUE);
                 sw.stop();

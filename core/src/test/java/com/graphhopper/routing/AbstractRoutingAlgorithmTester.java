@@ -50,10 +50,10 @@ public abstract class AbstractRoutingAlgorithmTester
 
     public AlgorithmPreparation prepareGraph( Graph g )
     {
-        return prepareGraph(g, new ShortestCalc(), carEncoder);
+        return prepareGraph(g, carEncoder, new ShortestCalc());
     }
 
-    public abstract AlgorithmPreparation prepareGraph( Graph g, WeightCalculation calc, FlagEncoder encoder );
+    public abstract AlgorithmPreparation prepareGraph( Graph g, FlagEncoder encoder, WeightCalculation calc);
 
     @Test
     public void testCalcShortestPath()
@@ -70,14 +70,14 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graphShortest = createGraph();
         initFastVsShort(graphShortest);
-        Path p1 = prepareGraph(graphShortest, new ShortestCalc(), carEncoder).createAlgo().calcPath(0, 3);
+        Path p1 = prepareGraph(graphShortest, carEncoder, new ShortestCalc()).createAlgo().calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 24000, p1.getDistance(), 1e-6);
         assertEquals(p1.toString(), 8640, p1.getTime());
 
         Graph graphFastest = createGraph();
         initFastVsShort(graphFastest);
-        Path p2 = prepareGraph(graphFastest, new FastestCalc(carEncoder), carEncoder).createAlgo().calcPath(0, 3);
+        Path p2 = prepareGraph(graphFastest, carEncoder, new FastestCalc(carEncoder)).createAlgo().calcPath(0, 3);
         assertEquals(Helper.createTList(0, 4, 6, 7, 5, 3), p2.calcNodes());
         assertEquals(p2.toString(), 31000, p2.getDistance(), 1e-6);
         assertEquals(p2.toString(), 5580, p2.getTime());
@@ -117,7 +117,7 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         Graph graphShortest = createGraph();
         initFootVsCar(graphShortest);
-        Path p1 = prepareGraph(graphShortest, new ShortestCalc(), footEncoder).createAlgo().calcPath(0, 7);
+        Path p1 = prepareGraph(graphShortest, footEncoder, new ShortestCalc()).createAlgo().calcPath(0, 7);
         assertEquals(p1.toString(), 17000, p1.getDistance(), 1e-6);
         assertEquals(p1.toString(), 12240, p1.getTime());
         assertEquals(Helper.createTList(0, 4, 5, 7), p1.calcNodes());
@@ -398,44 +398,6 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(Helper.createTList(2, 0, 1), p.calcNodes());
         assertEquals(Helper.createPointList(1, 1, 1, 0, 0, 0, 0, 1.6, 0, 2, 0, 3, 0, 3.5), p.calcPoints());
         assertEquals(611555, p.calcPoints().calculateDistance(new DistanceCalc()), 1);
-    }
-
-    @Test
-    public void testPerformance() throws IOException
-    {
-        int N = 10;
-        int noJvmWarming = N / 4;
-
-        String name = getClass().getSimpleName();
-        Random rand = new Random(0);
-        Graph graph = createGraph();
-
-        String bigFile = "10000EWD.txt.gz";
-        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile), 8 * (1 << 10))).read();
-        AlgorithmPreparation prepare = prepareGraph(graph);
-        StopWatch sw = new StopWatch();
-        for (int i = 0; i < N; i++)
-        {
-            int index1 = Math.abs(rand.nextInt(graph.getNodes()));
-            int index2 = Math.abs(rand.nextInt(graph.getNodes()));
-            RoutingAlgorithm d = prepare.createAlgo();
-            if (i >= noJvmWarming)
-            {
-                sw.start();
-            }
-            Path p = d.calcPath(index1, index2);
-            // avoid jvm optimization => call p.distance
-            if (i >= noJvmWarming && p.getDistance() > -1)
-            {
-                sw.stop();
-            }
-
-            // System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.nodes());
-        }
-
-        float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
-        System.out.println("# " + name + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
-        assertTrue("speed to low!? " + perRun + " per run", perRun < 0.07);
     }
 
     public Graph getMatrixGraph()
