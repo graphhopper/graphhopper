@@ -125,13 +125,9 @@ public class GraphHopperServlet extends GHServlet
             if (hopper.getEncodingManager().supports(vehicleStr))
             {
                 FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
-                WeightCalculation algoType = new FastestCalc(algoVehicle);
-                if ("shortest".equalsIgnoreCase(algoTypeStr))
-                    algoType = new ShortestCalc();
-
                 rsp = hopper.route(new GHRequest(start, end).
                         setVehicle(algoVehicle.toString()).
-                        setType(algoType).
+                        setType(vehicleStr).
                         setAlgorithm(algoStr).
                         putHint("instructions", enableInstructions).
                         putHint("douglas.minprecision", minPathPrecision));

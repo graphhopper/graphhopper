@@ -17,8 +17,6 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.routing.util.ShortestCalc;
-import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.shapes.GHPlace;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +33,7 @@ public class GHRequest
     private GHPlace to;
     private Map<String, Object> hints = new HashMap<String, Object>(5);
     private String encoderName = "CAR";
-    private WeightCalculation weightCalc = new ShortestCalc();    
+    private String type = "shortest";    
 
     /**
      * Calculate the path from specified startPoint (fromLat, fromLon) to endPoint (toLat, toLon).
@@ -118,15 +116,18 @@ public class GHRequest
         return from + " " + to + " (" + algo + ")";
     }
 
-    public GHRequest setType( WeightCalculation weightCalc )
+    /**
+     * By default it supports fastest and shortest
+     */
+    public GHRequest setType( String type )
     {
-        this.weightCalc = weightCalc;
+        this.type = type;
         return this;
     }
 
-    public WeightCalculation getType()
+    public String getType()
     {
-        return weightCalc;
+        return type;
     }
 
     public GHRequest setVehicle( String encoder )

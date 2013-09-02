@@ -57,13 +57,8 @@ public class GraphHopperIT
                     importOrLoad();
 
             Graph g = hopper.getGraph();
-            final AbstractFlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            WeightCalculation weightCalc = new ShortestCalc();
-            if ("fastest".equals(weightCalcStr))
-                weightCalc = new FastestCalc(encoder);
-
             GHResponse rsp = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
-                    setAlgorithm("astar").setVehicle(vehicle).setType(weightCalc));
+                    setAlgorithm("astar").setVehicle(vehicle).setType(weightCalcStr));
 
             assertEquals(3455, rsp.getDistance(), .1);
             assertEquals(88, rsp.getPoints().getSize());

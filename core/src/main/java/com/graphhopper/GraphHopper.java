@@ -72,7 +72,7 @@ public class GraphHopper implements GraphHopperAPI
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
     private boolean chEnabled = false;
-    private boolean chFast = true;
+    private String chType = "fastest";
     private int periodicUpdates = 3;
     private int lazyUpdates = 10;
     private int neighborUpdates = 20;
@@ -177,8 +177,13 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper setCHShortcuts( boolean enable, boolean fast )
     {
+        return setCHShortcuts(enable, fast == true ? "fastest" : "shortest");
+    }
+
+    public GraphHopper setCHShortcuts( boolean enable, String type )
+    {
         chEnabled = enable;
-        chFast = fast;
+        chType = type;
         if (chEnabled)
             defaultAlgorithm = "bidijkstra";
 
@@ -495,22 +500,14 @@ public class GraphHopper implements GraphHopperAPI
         return true;
     }
 
-    protected WeightCalculation getCHType( FlagEncoder encoder )
-    {
-        if (chFast)
-            return new FastestCalc(encoder);
-        else
-            return new ShortestCalc();
-
-    }
-
     protected void postProcessing()
     {
         encodingManager = graph.getEncodingManager();
         if (chEnabled)
         {
             FlagEncoder encoder = encodingManager.getSingle();
-            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder, getCHType(encoder));
+            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder, 
+                    createCHType(chType, encoder));
             tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                     setLazyUpdates(lazyUpdates).
                     setNeighborUpdates(neighborUpdates);
@@ -528,10 +525,28 @@ public class GraphHopper implements GraphHopperAPI
         return encodingManager.supports(encoder);
     }
 
+    protected WeightCalculation createCHType( String type, FlagEncoder encoder )
+    {
+        if ("fastest".equals(type))
+            return new FastestCalc(encoder);
+        else
+            return new ShortestCalc();
+
+    }
+
+    protected WeightCalculation createType( String type, FlagEncoder encoder )
+    {
+        type = type.toLowerCase();
+        if ("shortest".equals(type))
+            return new ShortestCalc();
+        return new FastestCalc(encoder);
+    }
+
     @Override
     public GHResponse route( GHRequest request )
     {
         request.check();
+
         StopWatch sw = new StopWatch().start();
         GHResponse rsp = new GHResponse();
 
@@ -541,7 +556,8 @@ public class GraphHopper implements GraphHopperAPI
             return rsp;
         }
 
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder(request.getVehicle()));
+        FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         int from = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter).getClosestNode();
         int to = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter).getClosestNode();
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
@@ -569,8 +585,9 @@ public class GraphHopper implements GraphHopperAPI
 
         } else
         {
+            WeightCalculation weightCalc = createType(request.getType(), encoder);
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(),
-                    encodingManager.getEncoder(request.getVehicle()), request.getType());
+                    encoder, weightCalc);
             algo = prepare.createAlgo();
         }
 
