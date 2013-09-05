@@ -180,7 +180,7 @@ public class GraphHopperServlet extends GHServlet
                     InstructionList instructions = rsp.getInstructions();
                     builder.startObject("instructions").
                             object("descriptions", instructions.createDescription(tr)).
-                            object("distances", instructions.createDistances(locale)).
+                            object("distances", instructions.createDistances(tr)).
                             object("indications", instructions.createIndications()).
                             endObject();
                 }
