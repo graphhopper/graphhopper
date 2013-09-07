@@ -194,7 +194,7 @@ public class RoutingAlgorithmIT
                     importOrLoad();
 
             Graph g = hopper.getGraph();
-            Location2IDIndex idx = hopper.getIndex();
+            Location2IDIndex idx = hopper.getLocationIndex();
             final AbstractFlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             WeightCalculation weightCalc = new ShortestCalc();
             if ("fastest".equals(weightCalcStr))
@@ -276,7 +276,7 @@ public class RoutingAlgorithmIT
                 setOSMFile("files/monaco.osm.gz").setGraphHopperLocation(graphFile).
                 importOrLoad();
         final Graph g = hopper.getGraph();
-        final Location2IDIndex idx = hopper.getIndex();
+        final Location2IDIndex idx = hopper.getLocationIndex();
         final List<OneRun> instances = createMonacoCar();
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);

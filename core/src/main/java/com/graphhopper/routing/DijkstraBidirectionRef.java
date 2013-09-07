@@ -147,11 +147,11 @@ public class DijkstraBidirectionRef extends AbstractRoutingAlgorithm
         while (explorer.next())
         {
             if (!accept(explorer))
-            {
                 continue;
-            }
+            
             int neighborNode = explorer.getAdjNode();
-            double tmpWeight = weightCalc.getWeight(explorer.getDistance(), explorer.getFlags()) + curr.weight;
+            double tmpWeight = weightCalc.getWeight(explorer) + curr.weight;
+
             EdgeEntry de = shortestWeightMap.get(neighborNode);
             if (de == null)
             {

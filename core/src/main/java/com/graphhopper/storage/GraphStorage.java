@@ -526,7 +526,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     protected class AllEdgeIterator implements AllEdgesIterator
     {
         protected long edgePointer = -edgeEntryBytes;
-        private long maxEdges = (long) edgeCount * edgeEntryBytes;
+        private final long maxEdges = (long) edgeCount * edgeEntryBytes;
         private int nodeA;
 
         public AllEdgeIterator()
@@ -617,6 +617,17 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         {
             int nameIndexRef = nameIndex.put(name);
             edges.setInt(edgePointer + E_NAME, nameIndexRef);
+        }
+
+        @Override
+        public EdgeBase detach()
+        {
+            if (edgePointer < 0)
+                throw new IllegalStateException("call next before detaching");
+            AllEdgeIterator iter = new AllEdgeIterator();
+            iter.edgePointer = edgePointer;
+            iter.nodeA = nodeA;
+            return iter;
         }
 
         @Override
@@ -841,6 +852,19 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         {
             int nameIndexRef = nameIndex.put(name);
             edges.setInt(edgePointer + E_NAME, nameIndexRef);
+        }
+        
+        @Override
+        public EdgeIterator detach()
+        {
+            if (edgeId == nextEdge)
+                throw new IllegalStateException("call next before detaching");
+
+            EdgeIterable iter = new EdgeIterable(filter);
+            iter.setBaseNode(baseNode);
+            iter.setEdgeId(edgeId);
+            iter.next();
+            return iter;
         }
 
         @Override

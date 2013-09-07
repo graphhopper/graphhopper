@@ -23,11 +23,7 @@ import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeSkipExplorer;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,12 +94,19 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
         final AllEdgesSkipIterator tmpIter = lg.getAllEdges();
         return new AllEdgesIterator()
         {
+
+            @Override
+            public EdgeBase detach()
+            {
+                return tmpIter.detach();
+            }            
+            
             @Override
             public int getMaxId()
             {
                 return tmpIter.getMaxId();
             }
-
+            
             @Override
             public boolean next()
             {

@@ -17,10 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import java.io.IOException;
 import java.util.Arrays;
@@ -94,10 +91,10 @@ public class GraphStorageTest extends AbstractGraphTester
         graph.edge(9, 10, 200, true);
         graph.edge(9, 11, 200, true);
         graph.edge(1, 2, 120, false);
-      
+
         iter1.setName("named street1");
         iter2.setName("named street2");
-        
+
         checkGraph(graph);
         graph.flush();
         graph.close();
@@ -107,7 +104,7 @@ public class GraphStorageTest extends AbstractGraphTester
 
         assertEquals(12, graph.getNodes());
         checkGraph(graph);
-        
+
         assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), -1).getName());
         assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), -1).getName());
         graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList(4.4, 5.5, 6.6, 7.7));
@@ -172,12 +169,41 @@ public class GraphStorageTest extends AbstractGraphTester
         // test if optimize works without error
         gs.optimize();
     }
-    
+
     @Test
-    public void testBigDataEdge() {
+    public void testBigDataEdge()
+    {
         Directory dir = new RAMDirectory();
         gs = new GraphStorage(dir, encodingManager).create(defaultSize);
         gs.setEdgeCount(Integer.MAX_VALUE / 2);
         assertTrue(gs.getAllEdges().next());
+    }
+
+    @Test
+    public void testDetachEdge()
+    {
+        Directory dir = new RAMDirectory();
+        gs = new GraphStorage(dir, encodingManager).create(defaultSize);
+        gs.edge(0, 1, 2, true);
+        gs.edge(0, 2, 2, true);
+        gs.edge(1, 2, 2, true);
+        
+        EdgeIterator iter = gs.createEdgeExplorer().setBaseNode(0);
+        try
+        {
+            // currently not possible to implement without a new property inside EdgeIterable
+            iter.detach();
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+        }
+        
+        iter.next();
+        EdgeBase iter2 = iter.detach();
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(1, iter2.getAdjNode());        
+        iter.next();
+        assertEquals(2, iter.getAdjNode());
+        assertEquals(1, iter2.getAdjNode());
     }
 }

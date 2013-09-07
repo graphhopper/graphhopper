@@ -44,4 +44,25 @@
             <version>1.5</version>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>   
+            <plugin> 
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <archive>  
+                        <manifest> 
+                            <mainClass>com.graphhopper.ui.MiniGraphUI</mainClass>
+                        </manifest>
+                    </archive>
+                     
+                    <!-- for standalone usage -->
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

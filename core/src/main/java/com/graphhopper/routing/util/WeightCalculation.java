@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.EdgeBase;
+
 /**
  * Specifies how the best route is calculated. E.g. the fastest or shortest route.
  * <p/>
@@ -32,10 +34,10 @@ public interface WeightCalculation
     /**
      * @return the calculated weight with the specified velocity
      */
-    double getWeight( double distance, int flags );
+    double getWeight( EdgeBase edge );
 
     /**
      * @return distance from specified weight
      */
-    double revertWeight( double weight, int flags );
+    double revertWeight( EdgeBase iter, double weight );
 }
