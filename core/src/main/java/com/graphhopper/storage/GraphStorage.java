@@ -38,7 +38,7 @@ import static com.graphhopper.util.Helper.nf;
  * it is not write thread safe.
  * <p/>
  * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
- * loadExisting, (4) usage, (5) flush, (5) close
+ * loadExisting, (4) usage, (5) flush, (6) close
  * <p/>
  * @see GraphBuilder Use the GraphBuilder class to create a (Level)GraphStorage easier.
  * @see LevelGraphStorage
@@ -620,7 +620,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         @Override
-        public EdgeBase detach()
+        public EdgeIteratorState detach()
         {
             if (edgePointer < 0)
                 throw new IllegalStateException("call next before detaching");
@@ -1314,7 +1314,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
                     throw new IllegalStateException("No EncodingManager was configured. And no one was found in the graph: " + dir.getLocation());
                 }
                 encodingManager = new EncodingManager(acceptStr);
-            } else if (!acceptStr.isEmpty() && !encodingManager.encoderList().equals(acceptStr))
+            } else if (!acceptStr.isEmpty() && !encodingManager.encoderList().equalsIgnoreCase(acceptStr))
             {
                 throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.encoderList() + "\nGraph: " + acceptStr);
             }

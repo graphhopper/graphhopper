@@ -82,7 +82,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     @Override
     public String toString()
     {
-        return "FOOT";
+        return "foot";
     }
 
     /**

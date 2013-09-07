@@ -35,14 +35,14 @@ package com.graphhopper.util;
  *
  * @author Peter Karich
  */
-public interface EdgeIterator extends EdgeBase
+public interface EdgeIterator extends EdgeIteratorState
 {
     /**
      * To be called to go to the next edge state.
      */
     boolean next();
     
-    EdgeBase detach();
+    EdgeIteratorState detach();
     
     /**
      * integer value to indicate if an edge is valid or not which then would be initialized with

@@ -199,7 +199,7 @@ public class GraphStorageTest extends AbstractGraphTester
         }
         
         iter.next();
-        EdgeBase iter2 = iter.detach();
+        EdgeIteratorState iter2 = iter.detach();
         assertEquals(1, iter.getAdjNode());
         assertEquals(1, iter2.getAdjNode());        
         iter.next();

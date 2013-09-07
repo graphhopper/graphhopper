@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.EdgeBase;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Calculates the fastest route with the specified vehicle (VehicleEncoder).
@@ -42,13 +42,13 @@ public class FastestCalc implements WeightCalculation
     }
 
     @Override
-    public double getWeight( EdgeBase edgeIter )
+    public double getWeight( EdgeIteratorState edgeIter )
     {
         return edgeIter.getDistance() / encoder.getSpeed(edgeIter.getFlags());
     }
 
     @Override
-    public double revertWeight( EdgeBase iter, double weight )
+    public double revertWeight( EdgeIteratorState iter, double weight )
     {
         return weight * encoder.getSpeed(iter.getFlags());
     }

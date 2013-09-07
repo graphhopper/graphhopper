@@ -30,6 +30,9 @@ import com.graphhopper.util.Helper;
 import gnu.trove.list.TIntList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -90,12 +93,25 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest
     @Test
     public void testSortHighLevelFirst()
     {
-        LevelGraph lg = createGraph(new RAMDirectory(), encodingManager);
+        final LevelGraph lg = createGraph(new RAMDirectory(), encodingManager);
         lg.setLevel(1, 10);
         lg.setLevel(2, 30);
         lg.setLevel(3, 20);
         TIntList tlist = Helper.createTList(1, 2, 3);
-        new Location2NodesNtreeLG(lg, new RAMDirectory()).sortNodes(tlist);
+        
+        
+        // nodes with high level should come first to be covered by lower level nodes
+        ArrayList<Integer> list = Helper.tIntListToArrayList(tlist);
+        Collections.sort(list, new Comparator<Integer>()
+        {
+            @Override
+            public int compare( Integer o1, Integer o2 )
+            {
+                return lg.getLevel(o2) - lg.getLevel(o1);
+            }
+        });
+        tlist.clear();
+        tlist.addAll(list);        
         assertEquals(Helper.createTList(2, 3, 1), tlist);
     }
 

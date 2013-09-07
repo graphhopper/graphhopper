@@ -60,23 +60,6 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
     }
 
     @Override
-    protected void sortNodes( TIntList nodes )
-    {
-        // nodes with high level should come first to be covered by lower level nodes
-        ArrayList<Integer> list = Helper.tIntListToArrayList(nodes);
-        Collections.sort(list, new Comparator<Integer>()
-        {
-            @Override
-            public int compare( Integer o1, Integer o2 )
-            {
-                return lg.getLevel(o2) - lg.getLevel(o1);
-            }
-        });
-        nodes.clear();
-        nodes.addAll(list);
-    }
-
-    @Override
     protected int pickBestNode( int nodeA, int nodeB )
     {
         // return lower level nodes as those nodes are always connected to higher ones
@@ -96,7 +79,7 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
         {
 
             @Override
-            public EdgeBase detach()
+            public EdgeIteratorState detach()
             {
                 return tmpIter.detach();
             }            

@@ -658,11 +658,11 @@ public abstract class AbstractGraphTester
     public void testEdgeProperties()
     {
         graph = createGraph();
-        EdgeBase iter1 = graph.edge(0, 1, 10, true);
-        EdgeBase iter2 = graph.edge(0, 2, 20, true);
+        EdgeIteratorState iter1 = graph.edge(0, 1, 10, true);
+        EdgeIteratorState iter2 = graph.edge(0, 2, 20, true);
 
         int edgeId = iter1.getEdge();
-        EdgeBase iter = graph.getEdgeProps(edgeId, 0);
+        EdgeIteratorState iter = graph.getEdgeProps(edgeId, 0);
         assertEquals(10, iter.getDistance(), 1e-5);
 
         edgeId = iter2.getEdge();
@@ -731,7 +731,7 @@ public abstract class AbstractGraphTester
         iter.next();
         iter.next();
         assertTrue(iter.next());
-        EdgeBase oneIter = graph.getEdgeProps(iter.getEdge(), 3);
+        EdgeIteratorState oneIter = graph.getEdgeProps(iter.getEdge(), 3);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(2, oneIter.getBaseNode());
         assertTrue(carEncoder.isForward(oneIter.getFlags()));
@@ -768,7 +768,7 @@ public abstract class AbstractGraphTester
     public void testEdgeReturn()
     {
         graph = createGraph();
-        EdgeBase iter = graph.edge(4, 10, 100, carEncoder.flags(10, false));
+        EdgeIteratorState iter = graph.edge(4, 10, 100, carEncoder.flags(10, false));
         assertEquals(4, iter.getBaseNode());
         assertEquals(10, iter.getAdjNode());
         iter = graph.edge(14, 10, 100, carEncoder.flags(10, false));
@@ -923,10 +923,10 @@ public abstract class AbstractGraphTester
     public void testNameIndex()
     {
         graph = createGraph();
-        EdgeBase iter1 = graph.edge(0, 1, 10, true);
+        EdgeIteratorState iter1 = graph.edge(0, 1, 10, true);
         iter1.setName("named street1");
 
-        EdgeBase iter2 = graph.edge(0, 1, 10, true);
+        EdgeIteratorState iter2 = graph.edge(0, 1, 10, true);
         iter2.setName("named street2");
 
         assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), -1).getName());

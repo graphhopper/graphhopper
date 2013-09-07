@@ -72,7 +72,7 @@ public class GraphHopper implements GraphHopperAPI
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
     private boolean chEnabled = false;
-    private boolean chFast = true;
+    private String chType = "fastest";
     private int periodicUpdates = 3;
     private int lazyUpdates = 10;
     private int neighborUpdates = 20;
@@ -177,8 +177,13 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper setCHShortcuts( boolean enable, boolean fast )
     {
+        return setCHShortcuts(enable, fast == true ? "fastest" : "shortest");
+    }
+
+    public GraphHopper setCHShortcuts( boolean enable, String type )
+    {
         chEnabled = enable;
-        chFast = fast;
+        chType = type;
         if (chEnabled)
             defaultAlgorithm = "bidijkstra";
 
@@ -379,7 +384,7 @@ public class GraphHopper implements GraphHopperAPI
         if (!load(ghLocation))
         {
             printInfo();
-            importOSM(ghLocation, osmFile);
+            process(ghLocation, osmFile);
         } else
         {
             printInfo();
@@ -387,12 +392,16 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
-    private GraphHopper importOSM( String graphHopperLocation, String osmFileStr )
+    /**
+     * Creates the graph.
+     */
+    private GraphHopper process( String graphHopperLocation, String osmFileStr )
     {
         if (encodingManager == null)
             throw new IllegalStateException("No encodingManager was specified");
 
         setGraphHopperLocation(graphHopperLocation);
+
         try
         {
             importOSM(osmFileStr);
@@ -400,12 +409,11 @@ public class GraphHopper implements GraphHopperAPI
         {
             throw new RuntimeException("Cannot parse OSM file " + osmFileStr, ex);
         }
-        postProcessing();
         cleanUp();
         optimize();
-        prepare();
-        flush();
+        postProcessing();
         initLocationIndex();
+        flush();
         return this;
     }
 
@@ -492,22 +500,14 @@ public class GraphHopper implements GraphHopperAPI
         return true;
     }
 
-    protected WeightCalculation getCHType( FlagEncoder encoder )
-    {
-        if (chFast)
-            return new FastestCalc(encoder);
-        else
-            return new ShortestCalc();
-
-    }
-
     protected void postProcessing()
     {
         encodingManager = graph.getEncodingManager();
         if (chEnabled)
         {
             FlagEncoder encoder = encodingManager.getSingle();
-            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder, getCHType(encoder));
+            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder, 
+                    createType(chType, encoder));
             tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                     setLazyUpdates(lazyUpdates).
                     setNeighborUpdates(neighborUpdates);
@@ -516,29 +516,35 @@ public class GraphHopper implements GraphHopperAPI
             prepare.setGraph(graph);
         }
 
-        if ("false".equals(graph.getProperties().get("prepare.done")))
+        if (!"true".equals(graph.getProperties().get("prepare.done")))
             prepare();
     }
 
-    private boolean setSupportsVehicle( String encoder )
+    protected WeightCalculation createType( String type, FlagEncoder encoder )
     {
-        return encodingManager.supports(encoder);
+        // ignore case
+        type = type.toLowerCase();
+        if ("shortest".equals(type))
+            return new ShortestCalc();
+        return new FastestCalc(encoder);
     }
 
     @Override
     public GHResponse route( GHRequest request )
     {
         request.check();
+
         StopWatch sw = new StopWatch().start();
         GHResponse rsp = new GHResponse();
 
-        if (!setSupportsVehicle(request.getVehicle()))
+        if (!encodingManager.supports(request.getVehicle()))
         {
             rsp.addError(new IllegalArgumentException("Vehicle " + request.getVehicle() + " unsupported. Supported are: " + getEncodingManager()));
             return rsp;
         }
 
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder(request.getVehicle()));
+        FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         int from = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter).getClosestNode();
         int to = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter).getClosestNode();
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
@@ -566,8 +572,9 @@ public class GraphHopper implements GraphHopperAPI
 
         } else
         {
+            WeightCalculation weightCalc = createType(request.getType(), encoder);
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(),
-                    encodingManager.getEncoder(request.getVehicle()), request.getType());
+                    encoder, weightCalc);
             algo = prepare.createAlgo();
         }
 
@@ -634,6 +641,11 @@ public class GraphHopper implements GraphHopperAPI
         return tmpIndex;
     }
 
+    /**
+     * Initializes the location index. Currently this has to be done after the ch-preparation!
+     * Because - to improve performance - certain edges won't be available in a ch-graph and the
+     * index needs to know this and selects the correct nodes which still see the correct neighbors.
+     */
     protected void initLocationIndex()
     {
         if (locationIndex != null)

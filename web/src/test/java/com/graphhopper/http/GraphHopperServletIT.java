@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class GraphHopperIT extends BaseServletTest
+public class GraphHopperServletIT extends BaseServletTest
 {
     @Before
     public void setUp()
@@ -43,8 +43,8 @@ public class GraphHopperIT extends BaseServletTest
         JSONObject infoJson = json.getJSONObject("info");
         assertFalse(infoJson.has("errors"));
         double distance = json.getJSONObject("route").getDouble("distance");
-        assertTrue(distance > 9000);
-        assertTrue(distance < 9500);
+        assertTrue("distance wasn't correct:" + distance, distance > 9000);
+        assertTrue("distance wasn't correct:" + distance, distance < 9500);
     }
 
     @Test
@@ -53,8 +53,8 @@ public class GraphHopperIT extends BaseServletTest
         GraphHopperAPI hopper = new GraphHopperWeb();
         assertTrue(hopper.load(getTestAPIUrl()));
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
-        assertTrue(rsp.getErrors().isEmpty());
-        assertTrue(rsp.getDistance() > 9000);
-        assertTrue(rsp.getDistance() < 9500);
+        assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
+        assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() > 9000);
+        assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() < 9500);
     }
 }
