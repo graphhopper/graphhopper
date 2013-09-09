@@ -853,7 +853,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             int nameIndexRef = nameIndex.put(name);
             edges.setInt(edgePointer + E_NAME, nameIndexRef);
         }
-        
+
         @Override
         public EdgeIterator detach()
         {
@@ -1194,8 +1194,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         EdgeIterator iter = getAllEdges();
         while (iter.next())
         {
-            int edge = iter.getEdge();
-            long edgePointer = (long) edge * edgeEntryBytes;
             int nodeA = iter.getBaseNode();
             int nodeB = iter.getAdjNode();
             if (!toMoveSet.contains(nodeA) && !toMoveSet.contains(nodeB))
@@ -1217,11 +1215,15 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
                 updatedB = nodeB;
             }
 
+            int edge = iter.getEdge();
+            long edgePointer = (long) edge * edgeEntryBytes;
             int linkA = edges.getInt(getLinkPosInEdgeArea(nodeA, nodeB, edgePointer));
             int linkB = edges.getInt(getLinkPosInEdgeArea(nodeB, nodeA, edgePointer));
             int flags = edges.getInt(edgePointer + E_FLAGS);
             double distance = getDist(edgePointer);
             writeEdge(edge, updatedA, updatedB, linkA, linkB, distance, flags);
+            if (updatedA < updatedB != nodeA < nodeB)
+                setWayGeometry(getWayGeometry(edgePointer, true), edgePointer, false);
         }
 
         // we do not remove the invalid edges => edgeCount stays the same!
