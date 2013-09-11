@@ -197,7 +197,7 @@ public class Path
      */
     protected void processDistance( int edgeId, int endNode )
     {
-        EdgeBase iter = graph.getEdgeProps(edgeId, endNode);
+        EdgeIteratorState iter = graph.getEdgeProps(edgeId, endNode);
         distance += calcDistance(iter);
         time += calcTime(iter.getDistance(), iter.getFlags());
         addEdge(edgeId);
@@ -206,7 +206,7 @@ public class Path
     /**
      * This method returns the distance in kilometer for the specified edge.
      */
-    protected double calcDistance( EdgeBase iter )
+    protected double calcDistance( EdgeIteratorState iter )
     {
         return iter.getDistance();
     }
@@ -224,7 +224,7 @@ public class Path
      */
     public static interface EdgeVisitor
     {
-        void next( EdgeBase edgeBase, int index );
+        void next( EdgeIteratorState edgeBase, int index );
     }
 
     /**
@@ -236,7 +236,7 @@ public class Path
         int len = edgeIds.size();
         for (int i = 0; i < len; i++)
         {
-            EdgeBase edgeBase = graph.getEdgeProps(edgeIds.get(i), tmpNode);
+            EdgeIteratorState edgeBase = graph.getEdgeProps(edgeIds.get(i), tmpNode);
             if (edgeBase == null)
             {
                 throw new IllegalStateException("Edge " + edgeIds.get(i)
@@ -264,7 +264,7 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             @Override
-            public void next( EdgeBase eb, int i )
+            public void next( EdgeIteratorState eb, int i )
             {
                 nodes.add(eb.getBaseNode());
             }
@@ -291,7 +291,7 @@ public class Path
         forEveryEdge(new EdgeVisitor()
         {
             @Override
-            public void next( EdgeBase eb, int i )
+            public void next( EdgeIteratorState eb, int i )
             {
                 PointList pl = eb.getWayGeometry();
                 pl.reverse();
@@ -351,7 +351,7 @@ public class Path
             double prevDist;
 
             @Override
-            public void next( EdgeBase edgeBase, int index )
+            public void next( EdgeIteratorState edgeBase, int index )
             {                
                 // Hmmh, a bit ugly: 'iter' links to the previous node of the path!
                 // Ie. baseNode is the current node and adjNode is the previous.

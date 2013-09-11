@@ -140,16 +140,15 @@ public class DijkstraBidirection extends AbstractRoutingAlgorithm
     void fillEdges( int currNode, double currWeight, int currRef,
             IntDoubleBinHeap prioQueue, EdgeWrapper wrapper, EdgeExplorer explorer )
     {
-        
+
         explorer.setBaseNode(currNode);
         while (explorer.next())
         {
             if (!accept(explorer))
-            {
                 continue;
-            }
+
             int neighborNode = explorer.getAdjNode();
-            double tmpWeight = weightCalc.getWeight(explorer.getDistance(), explorer.getFlags()) + currWeight;
+            double tmpWeight = weightCalc.getWeight(explorer) + currWeight;
             int newRef = wrapper.getRef(neighborNode);
             if (newRef < 0)
             {

@@ -20,7 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeBase;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -64,9 +64,9 @@ public interface Graph
      * @param flags see EdgeFlags - involves velocity and direction
      * @return the created edge
      */
-    EdgeBase edge( int a, int b, double distance, int flags );
+    EdgeIteratorState edge( int a, int b, double distance, int flags );
 
-    EdgeBase edge( int a, int b, double distance, boolean bothDirections );
+    EdgeIteratorState edge( int a, int b, double distance, boolean bothDirections );
 
     /**
      * Returns a wrapper over the specified edgeId.
@@ -76,7 +76,7 @@ public interface Graph
      * @return an edge iterator over one element where the method next() will always return false.
      * @throws IllegalStateException if edgeId is not valid
      */
-    EdgeBase getEdgeProps( int edgeId, int endNode );
+    EdgeIteratorState getEdgeProps( int edgeId, int endNode );
 
     /**
      * @return all edges in this graph, where baseNode will be the smaller node.

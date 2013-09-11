@@ -21,7 +21,7 @@ import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.util.EdgeBase;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Helper.*;
 import com.graphhopper.util.StopWatch;
@@ -241,7 +241,7 @@ public class OSMReader
         }
 
         TLongList osmNodeIds = way.getNodes();
-        List<EdgeBase> createdEdges = new ArrayList<EdgeBase>();
+        List<EdgeIteratorState> createdEdges = new ArrayList<EdgeIteratorState>();
         // look for barriers along the way
         final int size = osmNodeIds.size();
         int lastBarrier = -1;
@@ -318,7 +318,7 @@ public class OSMReader
                 }
             }
 
-            for (EdgeBase iter : createdEdges)
+            for (EdgeIteratorState iter : createdEdges)
             {
                 iter.setName(name);
             }

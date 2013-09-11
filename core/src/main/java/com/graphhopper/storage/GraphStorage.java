@@ -38,7 +38,7 @@ import static com.graphhopper.util.Helper.nf;
  * it is not write thread safe.
  * <p/>
  * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
- * loadExisting, (4) usage, (5) flush, (5) close
+ * loadExisting, (4) usage, (5) flush, (6) close
  * <p/>
  * @see GraphBuilder Use the GraphBuilder class to create a (Level)GraphStorage easier.
  * @see LevelGraphStorage
@@ -526,7 +526,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     protected class AllEdgeIterator implements AllEdgesIterator
     {
         protected long edgePointer = -edgeEntryBytes;
-        private long maxEdges = (long) edgeCount * edgeEntryBytes;
+        private final long maxEdges = (long) edgeCount * edgeEntryBytes;
         private int nodeA;
 
         public AllEdgeIterator()
@@ -617,6 +617,17 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         {
             int nameIndexRef = nameIndex.put(name);
             edges.setInt(edgePointer + E_NAME, nameIndexRef);
+        }
+
+        @Override
+        public EdgeIteratorState detach()
+        {
+            if (edgePointer < 0)
+                throw new IllegalStateException("call next before detaching");
+            AllEdgeIterator iter = new AllEdgeIterator();
+            iter.edgePointer = edgePointer;
+            iter.nodeA = nodeA;
+            return iter;
         }
 
         @Override
@@ -841,6 +852,19 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         {
             int nameIndexRef = nameIndex.put(name);
             edges.setInt(edgePointer + E_NAME, nameIndexRef);
+        }
+
+        @Override
+        public EdgeIterator detach()
+        {
+            if (edgeId == nextEdge)
+                throw new IllegalStateException("call next before detaching");
+
+            EdgeIterable iter = new EdgeIterable(filter);
+            iter.setBaseNode(baseNode);
+            iter.setEdgeId(edgeId);
+            iter.next();
+            return iter;
         }
 
         @Override
@@ -1170,8 +1194,6 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         EdgeIterator iter = getAllEdges();
         while (iter.next())
         {
-            int edge = iter.getEdge();
-            long edgePointer = (long) edge * edgeEntryBytes;
             int nodeA = iter.getBaseNode();
             int nodeB = iter.getAdjNode();
             if (!toMoveSet.contains(nodeA) && !toMoveSet.contains(nodeB))
@@ -1193,11 +1215,15 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
                 updatedB = nodeB;
             }
 
+            int edge = iter.getEdge();
+            long edgePointer = (long) edge * edgeEntryBytes;
             int linkA = edges.getInt(getLinkPosInEdgeArea(nodeA, nodeB, edgePointer));
             int linkB = edges.getInt(getLinkPosInEdgeArea(nodeB, nodeA, edgePointer));
             int flags = edges.getInt(edgePointer + E_FLAGS);
             double distance = getDist(edgePointer);
             writeEdge(edge, updatedA, updatedB, linkA, linkB, distance, flags);
+            if (updatedA < updatedB != nodeA < nodeB)
+                setWayGeometry(getWayGeometry(edgePointer, true), edgePointer, false);
         }
 
         // we do not remove the invalid edges => edgeCount stays the same!
@@ -1290,7 +1316,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
                     throw new IllegalStateException("No EncodingManager was configured. And no one was found in the graph: " + dir.getLocation());
                 }
                 encodingManager = new EncodingManager(acceptStr);
-            } else if (!acceptStr.isEmpty() && !encodingManager.encoderList().equals(acceptStr))
+            } else if (!acceptStr.isEmpty() && !encodingManager.encoderList().equalsIgnoreCase(acceptStr))
             {
                 throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.encoderList() + "\nGraph: " + acceptStr);
             }

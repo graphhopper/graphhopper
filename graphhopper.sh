@@ -1,5 +1,6 @@
 #!/bin/bash
 
+GH_CLASS=com.graphhopper.GraphHopper
 GH_HOME=$(dirname $0)
 JAVA=$JAVA_HOME/bin/java
 if [ "x$JAVA_HOME" = "x" ]; then
@@ -21,7 +22,7 @@ fi
 ACTION=$1
 FILE=$2
 
-USAGE="./graphhopper.sh import|ui|test <your-osm-file>"
+USAGE="./graphhopper.sh import|ui|test|measurement|miniui <your-osm-file>"
 if [ "x$ACTION" = "x" ]; then
  echo -e "## action $ACTION not found. try \n$USAGE"
 fi
@@ -204,24 +205,30 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
 
 
 elif [ "x$ACTION" = "ximport" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=$CONFIG \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true config=$CONFIG \
       graph.location="$GRAPH" \
       osmreader.osm="$OSM_FILE"
 
 
 elif [ "x$ACTION" = "xtest" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper printVersion=true config=$CONFIG \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true config=$CONFIG \
        graph.location="$GRAPH" osmreader.osm="$OSM_FILE" prepare.chShortcuts=false \
        graph.testIT=true
 
 elif [ "x$ACTION" = "xtorture" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.util.QueryTorture $3 $4 $5 $6 $7 $8 $9
+
+elif [ "x$ACTION" = "xminiui" ]; then
+ "$MAVEN_HOME/bin/mvn" -f "$GH_HOME/tools/pom.xml" -DskipTests clean install assembly:single
+ JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" printVersion=true config=$CONFIG \
+              graph.location="$GRAPH"
        
 elif [ "x$ACTION" = "xmeasurement" ]; then
  ARGS="graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chShortcuts=fastest osmreader.acceptWay=CAR"
  echo -e "\ncreate graph via $ARGS, $JAR"
  START=$(date +%s)
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.GraphHopper $ARGS prepare.doPrepare=false
+ "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS $ARGS prepare.doPrepare=false
  END=$(date +%s)
  IMPORT_TIME=$(($END - $START))
 

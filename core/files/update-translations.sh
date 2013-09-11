@@ -16,5 +16,5 @@ for tr in $translations; do
     continue
   fi
    
-  tail -n+5 $file | cut -d',' -s -f1,$INDEX --output-delimiter='=' > $destination/$tr.txt
+  tail -n+6 "$file" | cut -d',' -s -f1,$INDEX --output-delimiter='=' > $destination/$tr.txt
 done

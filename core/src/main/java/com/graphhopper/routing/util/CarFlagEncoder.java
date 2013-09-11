@@ -241,7 +241,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     @Override
     public String toString()
     {
-        return "CAR";
+        return "car";
     }
     private static final Set<String> BAD_SURFACE = new HashSet<String>()
     {

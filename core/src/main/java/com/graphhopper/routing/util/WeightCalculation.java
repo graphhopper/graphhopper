@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.EdgeIteratorState;
+
 /**
  * Specifies how the best route is calculated. E.g. the fastest or shortest route.
  * <p/>
@@ -25,17 +27,19 @@ package com.graphhopper.routing.util;
 public interface WeightCalculation
 {
     /**
-     * @return the calculated weight with the maximum velocity
+     * Used only for the heuristical estimation in A
+     * <p/>
+     * @return minimal weight. E.g. if you calculate the fastest way it is distance/maxVelocity
      */
     double getMinWeight( double distance );
 
     /**
      * @return the calculated weight with the specified velocity
      */
-    double getWeight( double distance, int flags );
+    double getWeight( EdgeIteratorState edge );
 
     /**
      * @return distance from specified weight
      */
-    double revertWeight( double weight, int flags );
+    double revertWeight( EdgeIteratorState iter, double weight );
 }

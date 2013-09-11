@@ -18,7 +18,7 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.util.EdgeBase;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Result of Location2IDIndex lookup
@@ -30,7 +30,7 @@ public class LocationIDResult
     private double weight = Double.MAX_VALUE;
     private int wayIndex = -3;
     private int closestNode = -1;
-    private EdgeBase closestEdge = null;
+    private EdgeIteratorState edgeIter;
 
     public LocationIDResult()
     {
@@ -41,6 +41,9 @@ public class LocationIDResult
         closestNode = node;
     }
 
+    /**
+     * @return the closest matching node.
+     */
     public int getClosestNode()
     {
         return closestNode;
@@ -51,6 +54,9 @@ public class LocationIDResult
         weight = w;
     }
 
+    /**
+     * @return the distance or a normalized value of it.
+     */
     public double getWeight()
     {
         return weight;
@@ -68,17 +74,20 @@ public class LocationIDResult
     {
         return closestNode >= 0;
     }
-    
-    public void setClosestEdge(EdgeBase edge)
+
+    public void setClosestEdge( EdgeIteratorState detach )
     {
-    	this.closestEdge = edge;
+        edgeIter = detach;
     }
-    
-    public EdgeBase getClosestEdge()
+
+    /**
+     * @return the closest matching edge. Will be null if nothing found.
+     */
+    public EdgeIteratorState getClosestEdge()
     {
-    	return this.closestEdge;
+        return edgeIter;
     }
-    
+
     @Override
     public String toString()
     {

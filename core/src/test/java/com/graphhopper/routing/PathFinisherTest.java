@@ -17,7 +17,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.EdgeBase;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPlace;
 
@@ -32,7 +32,7 @@ public class PathFinisherTest
 
 	private FlagEncoder carEncoder = null;
 	private Graph graph = null;
-	private EdgeBase ab, bc, cd;
+	private EdgeIteratorState ab, bc, cd;
 	private DistanceCalc calc = new DistanceCalc();
 	private Path pathTest;
 	
@@ -161,22 +161,22 @@ public class PathFinisherTest
 		GHPlace gpsFrom = new GHPlace(50.426962, 4.912174); // GPS point close to AB
 		GHPlace gpsTo = new GHPlace(50.427902, 4.917701); // GPS point close to BC
 		
-		EdgeBase ba = new RevertedEdge(ab);
-		EdgeBase cb = new RevertedEdge(bc);
+		EdgeIteratorState ba = new RevertedEdge(ab);
+		EdgeIteratorState cb = new RevertedEdge(bc);
 
 		// build the 4 possible cases
-		Map<String, EdgeBase[]> testSuite = new HashMap<String, EdgeBase[]>();
-		testSuite.put("case 1", new EdgeBase[]{ab, bc});
-		testSuite.put("case 1", new EdgeBase[]{ab, cb});
-		testSuite.put("case 1", new EdgeBase[]{ba, bc});
-		testSuite.put("case 1", new EdgeBase[]{ba, cb});
+		Map<String, EdgeIteratorState[]> testSuite = new HashMap<String, EdgeIteratorState[]>();
+		testSuite.put("case 1", new EdgeIteratorState[]{ab, bc});
+		testSuite.put("case 1", new EdgeIteratorState[]{ab, cb});
+		testSuite.put("case 1", new EdgeIteratorState[]{ba, bc});
+		testSuite.put("case 1", new EdgeIteratorState[]{ba, cb});
 		
 		// empty path
 		SimplePath path = new SimplePath(graph, carEncoder);
 		path.setPoints(new double[][]{}, 50);
 		
 		// test each case, all 4 cases should give the same result.
-		for(Map.Entry<String, EdgeBase[]> _case : testSuite.entrySet())
+		for(Map.Entry<String, EdgeIteratorState[]> _case : testSuite.entrySet())
 		{
 			LocationIDResult fromLoc = new LocationIDResult();
 			fromLoc.setClosestEdge(_case.getValue()[0]);
@@ -388,10 +388,10 @@ public class PathFinisherTest
 	 * @author NG
 	 * 
 	 */
-	private class RevertedEdge implements EdgeBase
+	private class RevertedEdge implements EdgeIteratorState
 	{
-		private final EdgeBase baseEdge;
-		public RevertedEdge( EdgeBase baseEdge )
+		private final EdgeIteratorState baseEdge;
+		public RevertedEdge( EdgeIteratorState baseEdge )
 		{
 			this.baseEdge = baseEdge;
 		}

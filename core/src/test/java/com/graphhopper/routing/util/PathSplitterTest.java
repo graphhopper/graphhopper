@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.util.EdgeBase;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPlace;
 
@@ -58,7 +58,7 @@ public class PathSplitterTest
 		// add 1 edge
 		int flag = 43; // 50Km/h bidir 0b101011 with CarFlagEncoder
 		assertTrue(encodingManager.getSingle().getSpeed(flag) == 50); // checks that CarFlagEncoder hasn't changed
-		EdgeBase ab = graph.edge(1, 2, 432.572, flag);
+		EdgeIteratorState ab = graph.edge(1, 2, 432.572, flag);
 		ab.setWayGeometry(buildPointList(new double[][] {
 				{50.4268054, 4.912115}, {50.4268091, 4.9123011},
 				{50.427086, 4.9142088}}));

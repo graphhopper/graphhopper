@@ -3,7 +3,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
-import com.graphhopper.util.EdgeBase;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.LineEquation;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPlace;
@@ -124,7 +124,7 @@ public class PathSplitter
 	 * @param edge
 	 * @return
 	 */
-	public PointList extractFullGeom( EdgeBase edge, Graph graph )
+	public PointList extractFullGeom( EdgeIteratorState edge, Graph graph )
 	{
 		double fromLat = graph.getLatitude(edge.getBaseNode());
 		double fromLon = graph.getLongitude(edge.getBaseNode());

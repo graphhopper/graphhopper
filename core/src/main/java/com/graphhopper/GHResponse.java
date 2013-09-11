@@ -20,7 +20,9 @@ package com.graphhopper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.shapes.BBox;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -91,22 +93,22 @@ public class GHResponse
         int len = list.getSize();
         if (len == 0)
             return _fallback;
-        
+
         for (int i = 0; i < len; i++)
         {
             double lat = list.getLatitude(i);
             double lon = list.getLongitude(i);
             if (lat > bounds.maxLat)
                 bounds.maxLat = lat;
-            
+
             if (lat < bounds.minLat)
                 bounds.minLat = lat;
-            
+
             if (lon > bounds.maxLon)
                 bounds.maxLon = lon;
-            
+
             if (lon < bounds.minLon)
-                bounds.minLon = lon;            
+                bounds.minLon = lon;
         }
         return bounds;
     }
@@ -155,5 +157,44 @@ public class GHResponse
     public InstructionList getInstructions()
     {
         return instructions;
+    }
+
+    /**
+     * Creates the GPX Format out of the points.
+     * <p/>
+     * TODO make it more reliable and use times from the route as well not only the points.
+     * 
+     * @return string to be stored as gpx file
+     */
+    public String createGPX( String trackName, long startTime )
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:SSZ");
+        String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
+                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' >"
+                + "<metadata>"
+                + "<link href='http://graphhopper.com'>"
+                + "<text>GraphHopper Maps</text>"
+                + "</link>"
+                + " <time>" + formatter.format(new Date()) + "</time>"
+                + "</metadata>";
+        StringBuilder track = new StringBuilder(header);
+        track.append("<trk><name>").append(trackName).append("</name>");
+        track.append("<trkseg>");
+        PointList tmpList = getPoints();
+        for (int i = 0; i < tmpList.getSize(); i++)
+        {
+            double lat = tmpList.getLatitude(i);
+            double lon = tmpList.getLongitude(i);
+            track.append("<trkpt lat='").append(lat).append("' lon='").append(lon).append("'>");
+
+            // TODO add actual driving time
+            startTime = startTime + 1;
+            track.append("<time>").append(formatter.format(startTime)).append("</time>");
+
+            track.append("</trkpt>");
+        }
+        track.append("</trkseg>");
+        track.append("</trk></gpx>");
+        return track.toString().replaceAll("\\'", "\"");
     }
 }

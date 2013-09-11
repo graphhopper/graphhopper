@@ -21,7 +21,7 @@ package com.graphhopper.util;
 /**
  * @author Peter Karich
  */
-public interface EdgeBase {
+public interface EdgeIteratorState {
 
     /**
      * @return the edge id of the current edge. Do not make any assumptions about the concrete

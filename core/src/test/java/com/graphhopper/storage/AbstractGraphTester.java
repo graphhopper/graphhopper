@@ -160,7 +160,7 @@ public abstract class AbstractGraphTester
         assertFalse(i.next());
 
         assertEquals(4, GHUtility.count(carAllExplorer.setBaseNode(1)));
-        
+
         assertEquals(1, GHUtility.count(carInExplorer.setBaseNode(1)));
         assertEquals(2, GHUtility.count(carInExplorer.setBaseNode(2)));
         assertEquals(0, GHUtility.count(carInExplorer.setBaseNode(3)));
@@ -558,8 +558,11 @@ public abstract class AbstractGraphTester
         graph.markNodeRemoved(5);
         graph.markNodeRemoved(10);
 
-        graph.edge(9, 11, 911, true);
-        graph.edge(9, 12, 912, true);
+        PointList pl = new PointList();
+        pl.add(1, 2);
+        pl.add(1, 3);
+        graph.edge(9, 11, 911, true).setWayGeometry(pl);
+        graph.edge(9, 12, 912, true).setWayGeometry(pl);
 
         assertEquals(13, graph.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(graph));
@@ -576,6 +579,15 @@ public abstract class AbstractGraphTester
         assertEquals(Arrays.asList(id11, id12), GHUtility.getNeighbors(carAllExplorer.setBaseNode(id9)));
         assertEquals(Arrays.asList(id9), GHUtility.getNeighbors(carAllExplorer.setBaseNode(id11)));
         assertEquals(Arrays.asList(id9), GHUtility.getNeighbors(carAllExplorer.setBaseNode(id12)));
+
+        EdgeIterator iter = carAllExplorer.setBaseNode(id9);
+        assertTrue(iter.next());
+        assertEquals(id11, iter.getAdjNode());
+        assertEquals(2, iter.getWayGeometry().getLongitude(0), 1e-7);
+        
+        assertTrue(iter.next());
+        assertEquals(id12, iter.getAdjNode());
+        assertEquals(2, iter.getWayGeometry().getLongitude(0), 1e-7);
     }
 
     @Test
@@ -658,11 +670,11 @@ public abstract class AbstractGraphTester
     public void testEdgeProperties()
     {
         graph = createGraph();
-        EdgeBase iter1 = graph.edge(0, 1, 10, true);
-        EdgeBase iter2 = graph.edge(0, 2, 20, true);
+        EdgeIteratorState iter1 = graph.edge(0, 1, 10, true);
+        EdgeIteratorState iter2 = graph.edge(0, 2, 20, true);
 
         int edgeId = iter1.getEdge();
-        EdgeBase iter = graph.getEdgeProps(edgeId, 0);
+        EdgeIteratorState iter = graph.getEdgeProps(edgeId, 0);
         assertEquals(10, iter.getDistance(), 1e-5);
 
         edgeId = iter2.getEdge();
@@ -731,7 +743,7 @@ public abstract class AbstractGraphTester
         iter.next();
         iter.next();
         assertTrue(iter.next());
-        EdgeBase oneIter = graph.getEdgeProps(iter.getEdge(), 3);
+        EdgeIteratorState oneIter = graph.getEdgeProps(iter.getEdge(), 3);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(2, oneIter.getBaseNode());
         assertTrue(carEncoder.isForward(oneIter.getFlags()));
@@ -768,7 +780,7 @@ public abstract class AbstractGraphTester
     public void testEdgeReturn()
     {
         graph = createGraph();
-        EdgeBase iter = graph.edge(4, 10, 100, carEncoder.flags(10, false));
+        EdgeIteratorState iter = graph.edge(4, 10, 100, carEncoder.flags(10, false));
         assertEquals(4, iter.getBaseNode());
         assertEquals(10, iter.getAdjNode());
         iter = graph.edge(14, 10, 100, carEncoder.flags(10, false));
@@ -923,10 +935,10 @@ public abstract class AbstractGraphTester
     public void testNameIndex()
     {
         graph = createGraph();
-        EdgeBase iter1 = graph.edge(0, 1, 10, true);
+        EdgeIteratorState iter1 = graph.edge(0, 1, 10, true);
         iter1.setName("named street1");
 
-        EdgeBase iter2 = graph.edge(0, 1, 10, true);
+        EdgeIteratorState iter2 = graph.edge(0, 1, 10, true);
         iter2.setName("named street2");
 
         assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), -1).getName());

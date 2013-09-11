@@ -159,12 +159,12 @@ public class OSMReaderTest
         assertEquals(n20, iter.getAdjNode());
         assertEquals(93146.888, iter.getDistance(), 1);
 
-        assertEquals(9.4, graph.getLongitude(hopper.getIndex().findID(51.2, 9.4)), 1e-3);
-        assertEquals(10, graph.getLongitude(hopper.getIndex().findID(49, 10)), 1e-3);
-        assertEquals(51.249, graph.getLatitude(hopper.getIndex().findID(51.2492152, 9.4317166)), 1e-3);
+        assertEquals(9.4, graph.getLongitude(hopper.getLocationIndex().findID(51.2, 9.4)), 1e-3);
+        assertEquals(10, graph.getLongitude(hopper.getLocationIndex().findID(49, 10)), 1e-3);
+        assertEquals(51.249, graph.getLatitude(hopper.getLocationIndex().findID(51.2492152, 9.4317166)), 1e-3);
 
         // node 40 is on the way between 30 and 50 => 9.0
-        assertEquals(9, graph.getLongitude(hopper.getIndex().findID(51.25, 9.43)), 1e-3);
+        assertEquals(9, graph.getLongitude(hopper.getLocationIndex().findID(51.25, 9.43)), 1e-3);
     }
 
     @Test
@@ -172,8 +172,8 @@ public class OSMReaderTest
     {
         GraphHopper hopper = new GraphHopperTest(file1).setSortGraph(true).importOrLoad();
         Graph graph = hopper.getGraph();
-        assertEquals(10, graph.getLongitude(hopper.getIndex().findID(49, 10)), 1e-3);
-        assertEquals(51.249, graph.getLatitude(hopper.getIndex().findID(51.2492152, 9.4317166)), 1e-3);
+        assertEquals(10, graph.getLongitude(hopper.getLocationIndex().findID(49, 10)), 1e-3);
+        assertEquals(51.249, graph.getLatitude(hopper.getLocationIndex().findID(51.2492152, 9.4317166)), 1e-3);
     }
 
     @Test
@@ -387,7 +387,7 @@ public class OSMReaderTest
         assertEquals(graph.getLatitude(n20), graph.getLatitude(new20), 1e-5);
         assertEquals(graph.getLongitude(n20), graph.getLongitude(new20), 1e-5);
 
-        assertEquals(n20, hopper.getIndex().findClosest(52, 9.4, EdgeFilter.ALL_EDGES).getClosestNode());
+        assertEquals(n20, hopper.getLocationIndex().findClosest(52, 9.4, EdgeFilter.ALL_EDGES).getClosestNode());
 
         assertEquals(Arrays.asList(n20, n30), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
         assertEquals(Arrays.asList(new20, n10, n50), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));

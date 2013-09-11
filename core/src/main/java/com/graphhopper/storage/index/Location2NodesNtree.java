@@ -18,19 +18,6 @@
  */
 package com.graphhopper.storage.index;
 
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.set.hash.TIntHashSet;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
@@ -50,6 +37,16 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.procedure.TIntProcedure;
+import gnu.trove.set.hash.TIntHashSet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This implementation implements an n-tree to get node ids from GPS location. This replaces
@@ -351,10 +348,6 @@ public class Location2NodesNtree implements Location2IDIndex
         // do not include the edges as we could get problem with LevelGraph due to shortcuts
         // ^ graph.getAllEdges().count();
         return graph.getNodes();
-    }
-
-    protected void sortNodes( TIntList nodes )
-    {
     }
 
     @Override
@@ -661,11 +654,9 @@ public class Location2NodesNtree implements Location2IDIndex
             final EdgeFilter edgeFilter )
     {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
-        final LocationIDResult closestNode = new LocationIDResult();
+        final LocationIDResult closestMatch = new LocationIDResult();
         if (storedNetworkEntryIds.isEmpty())
-        {
-            return closestNode;
-        }
+            return closestMatch;
 
         // clone storedIds to avoid interference with forEach
         final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
@@ -764,17 +755,17 @@ public class Location2NodesNtree implements Location2IDIndex
                         }
 
                         check(tmpNode, tmpDist, -currNode - 2, currEdge);
-                        return closestNode.getWeight() >= 0;
+                        return closestMatch.getWeight() >= 0;
                     }
 
-                    void check( int node, double dist, int wayIndex, EdgeIterator edge )
+                    void check( int node, double dist, int wayIndex, EdgeIterator iter )
                     {
-                        if (dist < closestNode.getWeight())
+                        if (dist < closestMatch.getWeight())
                         {
-                            closestNode.setWeight(dist);
-                            closestNode.setClosestNode(node);
-                            closestNode.setWayIndex(wayIndex);
-                            closestNode.setClosestEdge(graph.getEdgeProps(edge.getEdge(), -1));
+                            closestMatch.setWeight(dist);
+                            closestMatch.setClosestNode(node);
+                            closestMatch.setClosestEdge(iter.detach());                            
+                            closestMatch.setWayIndex(wayIndex);
                         }
                     }
                 }.start(createEdgeExplorer(), networkEntryNodeId, false);
@@ -782,7 +773,7 @@ public class Location2NodesNtree implements Location2IDIndex
             }
         });
 
-        return closestNode;
+        return closestMatch;
     }
 
     protected int pickBestNode( int nodeA, int nodeB )

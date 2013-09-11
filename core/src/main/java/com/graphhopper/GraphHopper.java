@@ -40,13 +40,8 @@ import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
 import com.graphhopper.routing.util.ShortestCalc;
-import com.graphhopper.storage.GHDirectory;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.DAType;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
+import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.storage.*;
 // import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.index.Location2IDQuadtree;
@@ -86,15 +81,15 @@ public class GraphHopper implements GraphHopperAPI
     private String defaultAlgorithm = "bidijkstra";
     private boolean finishPath = true;
     // for index:
-    private Location2IDIndex index;
+    private Location2IDIndex locationIndex;
     private int preciseIndexResolution = 500;
     private boolean edgeCalcOnSearch = true;
     private boolean searchRegion = true;
     // for prepare
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
-    private boolean chUsage = false;
-    private boolean chFast = true;
+    private boolean chEnabled = false;
+    private String chType = "fastest";
     private int periodicUpdates = 3;
     private int lazyUpdates = 10;
     private int neighborUpdates = 20;
@@ -118,7 +113,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         this();
         this.graph = g;
-        initIndex();
+        initLocationIndex();
     }
 
     public GraphHopper setEncodingManager( EncodingManager acceptWay )
@@ -199,13 +194,22 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper setCHShortcuts( boolean enable, boolean fast )
     {
-        chUsage = enable;
-        chFast = fast;
-        if (chUsage)
-        {
+        return setCHShortcuts(enable, fast == true ? "fastest" : "shortest");
+    }
+
+    public GraphHopper setCHShortcuts( boolean enable, String type )
+    {
+        chEnabled = enable;
+        chType = type;
+        if (chEnabled)
             defaultAlgorithm = "bidijkstra";
-        }
+
         return this;
+    }
+
+    public boolean isCHEnabled()
+    {
+        return chEnabled;
     }
 
     /**
@@ -265,6 +269,9 @@ public class GraphHopper implements GraphHopperAPI
 
     public Graph getGraph()
     {
+        if (graph == null)
+            throw new NullPointerException("Graph not initialized");
+
         return graph;
     }
 
@@ -273,9 +280,12 @@ public class GraphHopper implements GraphHopperAPI
         this.graph = graph;
     }
 
-    public Location2IDIndex getIndex()
+    public Location2IDIndex getLocationIndex()
     {
-        return index;
+        if (locationIndex == null)
+            throw new NullPointerException("Location index not initialized");
+
+        return locationIndex;
     }
 
     public AlgorithmPreparation getPreparation()
@@ -313,16 +323,23 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
-    public GraphHopper init( CmdArgs args ) throws IOException
+    /*
+     * Command line configuration overwrites the ones in the config file
+     */
+    protected CmdArgs mergeArgsFromConfig( CmdArgs args ) throws IOException
     {
         if (!Helper.isEmpty(args.get("config", "")))
         {
             CmdArgs tmp = CmdArgs.readFromConfig(args.get("config", ""), "graphhopper.config");
-            // command line configuration overwrites the ones in the config file
             tmp.merge(args);
-            args = tmp;
+            return tmp;
         }
+        return args;
+    }
 
+    public GraphHopper init( CmdArgs args ) throws IOException
+    {
+        args = mergeArgsFromConfig(args);
         String tmpOsmFile = args.get("osmreader.osm", "");
         if (!Helper.isEmpty(tmpOsmFile))
             osmFile = tmpOsmFile;
@@ -405,7 +422,7 @@ public class GraphHopper implements GraphHopperAPI
         if (!load(ghLocation))
         {
             printInfo();
-            importOSM(ghLocation, osmFile);
+            process(ghLocation, osmFile);
         } else
         {
             printInfo();
@@ -413,12 +430,16 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
-    private GraphHopper importOSM( String graphHopperLocation, String osmFileStr )
+    /**
+     * Creates the graph.
+     */
+    private GraphHopper process( String graphHopperLocation, String osmFileStr )
     {
         if (encodingManager == null)
             throw new IllegalStateException("No encodingManager was specified");
 
         setGraphHopperLocation(graphHopperLocation);
+
         try
         {
             importOSM(osmFileStr);
@@ -426,12 +447,11 @@ public class GraphHopper implements GraphHopperAPI
         {
             throw new RuntimeException("Cannot parse OSM file " + osmFileStr, ex);
         }
-        postProcessing();
         cleanUp();
         optimize();
-        prepare();
+        postProcessing();
+        initLocationIndex();
         flush();
-        initIndex();
         return this;
     }
 
@@ -503,7 +523,8 @@ public class GraphHopper implements GraphHopperAPI
         setGraphHopperLocation(graphHopperFolder);
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
-        if (chUsage)
+
+        if (chEnabled)
             graph = new LevelGraphStorage(dir, encodingManager);
         else
             graph = new GraphStorage(dir, encodingManager);
@@ -513,22 +534,18 @@ public class GraphHopper implements GraphHopperAPI
             return false;
 
         postProcessing();
-        initIndex();
+        initLocationIndex();
         return true;
     }
 
-    private void postProcessing()
+    protected void postProcessing()
     {
         encodingManager = graph.getEncodingManager();
-        if (chUsage)
+        if (chEnabled)
         {
-            PrepareContractionHierarchies tmpPrepareCH;
             FlagEncoder encoder = encodingManager.getSingle();
-            if (chFast)
-                tmpPrepareCH = new PrepareContractionHierarchies(encoder, new FastestCalc(encoder));
-            else
-                tmpPrepareCH = new PrepareContractionHierarchies(encoder, new ShortestCalc());
-
+            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder, 
+                    createType(chType, encoder));
             tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                     setLazyUpdates(lazyUpdates).
                     setNeighborUpdates(neighborUpdates);
@@ -537,31 +554,37 @@ public class GraphHopper implements GraphHopperAPI
             prepare.setGraph(graph);
         }
 
-        if ("false".equals(graph.getProperties().get("prepare.done")))
+        if (!"true".equals(graph.getProperties().get("prepare.done")))
             prepare();
     }
 
-    private boolean setSupportsVehicle( String encoder )
+    protected WeightCalculation createType( String type, FlagEncoder encoder )
     {
-        return encodingManager.supports(encoder);
+        // ignore case
+        type = type.toLowerCase();
+        if ("shortest".equals(type))
+            return new ShortestCalc();
+        return new FastestCalc(encoder);
     }
 
     @Override
     public GHResponse route( GHRequest request )
     {
         request.check();
+
         StopWatch sw = new StopWatch().start();
         GHResponse rsp = new GHResponse();
 
-        if (!setSupportsVehicle(request.getVehicle()))
+        if (!encodingManager.supports(request.getVehicle()))
         {
             rsp.addError(new IllegalArgumentException("Vehicle " + request.getVehicle() + " unsupported. Supported are: " + getEncodingManager()));
             return rsp;
         }
         // find edges to route
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder(request.getVehicle()));
-        LocationIDResult from = index.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
-        LocationIDResult to = index.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);
+        FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+        LocationIDResult from = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
+        LocationIDResult to = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);
         StringBuilder debug = new StringBuilder("idLookup:").append(sw.stop().getSeconds()).append('s');
 
         if (from == null)
@@ -582,7 +605,7 @@ public class GraphHopper implements GraphHopperAPI
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
 
-        if (chUsage)
+        if (chEnabled)
         {
             if (request.getAlgorithm().equals("dijkstrabi"))
                 algo = prepare.createAlgo();
@@ -593,8 +616,9 @@ public class GraphHopper implements GraphHopperAPI
 
         } else
         {
+            WeightCalculation weightCalc = createType(request.getType(), encoder);
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph, request.getAlgorithm(),
-                    encodingManager.getEncoder(request.getVehicle()), request.getType());
+                    encoder, weightCalc);
             algo = prepare.createAlgo();
         }
 
@@ -658,36 +682,49 @@ public class GraphHopper implements GraphHopperAPI
         return rsp.setPoints(points).setDistance(distance).setTime(time).setDebugInfo(debug.toString());
     }
 
-    private void initIndex()
+    protected Location2IDIndex createLocationIndex( Directory dir )
     {
-        Directory dir = graph.getDirectory();
+        Location2IDIndex tmpIndex;
         if (preciseIndexResolution > 0)
         {
-            Location2NodesNtree tmpIndex;
+            Location2NodesNtree tmpNIndex;
             if (graph instanceof LevelGraph)
             {
-                tmpIndex = new Location2NodesNtreeLG((LevelGraph) graph, dir);
+                tmpNIndex = new Location2NodesNtreeLG((LevelGraph) graph, dir);
             } else
             {
-                tmpIndex = new Location2NodesNtree(graph, dir);
+                tmpNIndex = new Location2NodesNtree(graph, dir);
             }
-            tmpIndex.setResolution(preciseIndexResolution);
-            tmpIndex.setEdgeCalcOnFind(edgeCalcOnSearch);
-            tmpIndex.setSearchRegion(searchRegion);
-            index = tmpIndex;
+            tmpNIndex.setResolution(preciseIndexResolution);
+            tmpNIndex.setEdgeCalcOnFind(edgeCalcOnSearch);
+            tmpNIndex.setSearchRegion(searchRegion);
+            tmpIndex = tmpNIndex;
         } else
         {
-            index = new Location2IDQuadtree(graph, dir);
-            index.setResolution(Helper.calcIndexSize(graph.getBounds()));
+            tmpIndex = new Location2IDQuadtree(graph, dir);
+            tmpIndex.setResolution(Helper.calcIndexSize(graph.getBounds()));
         }
-        index.setSegmentSize(defaultSegmentSize);
-        if (!index.loadExisting())
-        {
-            index.prepareIndex();
-        }
+
+        if (!tmpIndex.loadExisting())
+            tmpIndex.prepareIndex();
+
+        return tmpIndex;
     }
 
-    private void optimize()
+    /**
+     * Initializes the location index. Currently this has to be done after the ch-preparation!
+     * Because - to improve performance - certain edges won't be available in a ch-graph and the
+     * index needs to know this and selects the correct nodes which still see the correct neighbors.
+     */
+    protected void initLocationIndex()
+    {
+        if (locationIndex != null)
+            throw new IllegalStateException("Cannot initialize locationIndex twice!");
+
+        locationIndex = createLocationIndex(graph.getDirectory());
+    }
+
+    protected void optimize()
     {
         logger.info("optimizing ... (" + Helper.getMemInfo() + ")");
         graph.optimize();
@@ -703,7 +740,7 @@ public class GraphHopper implements GraphHopperAPI
         }
     }
 
-    public void prepare()
+    protected void prepare()
     {
         boolean tmpPrepare = doPrepare && prepare != null;
         graph.getProperties().put("prepare.done", tmpPrepare);
@@ -744,13 +781,10 @@ public class GraphHopper implements GraphHopperAPI
     void close()
     {
         if (graph != null)
-        {
             graph.close();
-        }
-        if (index != null)
-        {
-            index.close();
-        }
+
+        if (locationIndex != null)
+            locationIndex.close();
     }
     
     /**

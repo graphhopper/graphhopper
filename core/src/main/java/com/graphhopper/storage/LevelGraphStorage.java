@@ -20,7 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.EdgeBase;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipExplorer;
 
@@ -134,12 +134,24 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         {
             return EdgeIterator.Edge.isValid(getSkippedEdge1());
         }
+
+        @Override
+        public EdgeIterator detach()
+        {
+            if (edgeId == nextEdge)
+                throw new IllegalStateException("call next before detaching");
+            EdgeSkipIteratorImpl iter = new EdgeSkipIteratorImpl(filter);
+            iter.setBaseNode(baseNode);
+            iter.setEdgeId(edgeId);
+            iter.next();
+            return iter;
+        }
     }
 
     /**
      * Removes the edge in one direction. TODO hide this lower level API somehow.
      */
-    public int disconnect( EdgeBase iter, long prevEdgePointer, boolean sameDirection )
+    public int disconnect( EdgeIteratorState iter, long prevEdgePointer, boolean sameDirection )
     {
         // open up package protected API for now ...
         if (sameDirection)

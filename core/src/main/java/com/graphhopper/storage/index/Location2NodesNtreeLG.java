@@ -23,11 +23,7 @@ import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeSkipExplorer;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -64,23 +60,6 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
     }
 
     @Override
-    protected void sortNodes( TIntList nodes )
-    {
-        // nodes with high level should come first to be covered by lower level nodes
-        ArrayList<Integer> list = Helper.tIntListToArrayList(nodes);
-        Collections.sort(list, new Comparator<Integer>()
-        {
-            @Override
-            public int compare( Integer o1, Integer o2 )
-            {
-                return lg.getLevel(o2) - lg.getLevel(o1);
-            }
-        });
-        nodes.clear();
-        nodes.addAll(list);
-    }
-
-    @Override
     protected int pickBestNode( int nodeA, int nodeB )
     {
         // return lower level nodes as those nodes are always connected to higher ones
@@ -98,12 +77,19 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
         final AllEdgesSkipIterator tmpIter = lg.getAllEdges();
         return new AllEdgesIterator()
         {
+
+            @Override
+            public EdgeIteratorState detach()
+            {
+                return tmpIter.detach();
+            }            
+            
             @Override
             public int getMaxId()
             {
                 return tmpIter.getMaxId();
             }
-
+            
             @Override
             public boolean next()
             {
