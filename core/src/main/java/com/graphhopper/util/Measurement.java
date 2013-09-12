@@ -101,7 +101,9 @@ public class Measurement
                 {
                     return new Dijkstra(_graph, vehicle, type);
                 }
-            }.setGraph(g);            
+            }.setGraph(g);
+            // normal routing takes a lot of time => do not do it so often
+            // => values are not really comparable to routingCH as e.g. the mean distance etc is different
             printTimeOfRouteQuery(prepare2, count / 20, "routing");
 
             System.gc();
