@@ -61,7 +61,7 @@ public class PointList
         if (newSize >= latitudes.length)
         {
             int cap = (int) (newSize * 1.7);
-            if(cap < 8)
+            if (cap < 8)
                 cap = 8;
             latitudes = Arrays.copyOf(latitudes, cap);
             longitudes = Arrays.copyOf(longitudes, cap);
@@ -236,6 +236,25 @@ public class PointList
         latitudes = Arrays.copyOf(latitudes, size);
         longitudes = Arrays.copyOf(longitudes, size);
         return this;
+    }
+
+    /**
+     * Takes the string from a json array ala [lon1,lat1], [lon2,lat2], ... and fills the list from
+     * it.
+     */
+    public void parseJSON( String str )
+    {
+        for (String latlon : str.split("\\["))
+        {
+            if (latlon.trim().length() == 0)
+            {
+                continue;
+            }
+
+            String ll[] = latlon.split(",");
+            String lat = ll[1].replace("]", "").trim();
+            add(Double.parseDouble(lat), Double.parseDouble(ll[0].trim()));
+        }
     }
     public static final PointList EMPTY = new PointList(0)
     {
