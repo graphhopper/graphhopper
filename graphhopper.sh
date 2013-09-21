@@ -205,9 +205,9 @@ if [ "x$ACTION" = "xui" ] || [ "x$ACTION" = "xweb" ]; then
 
 
 elif [ "x$ACTION" = "ximport" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true config=$CONFIG \
-      graph.location="$GRAPH" \
-      osmreader.osm="$OSM_FILE"
+ "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS printVersion=true \
+      config=$CONFIG \
+      $GH_IMPORT_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
 
 
 elif [ "x$ACTION" = "xtest" ]; then
