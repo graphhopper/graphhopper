@@ -23,6 +23,8 @@ import com.graphhopper.reader.OSMWay;
 
 import java.util.HashSet;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Peter Karich
@@ -30,6 +32,7 @@ import java.util.Set;
  */
 public class FootFlagEncoder extends AbstractFlagEncoder
 {
+    private final static Logger logger = LoggerFactory.getLogger(FootFlagEncoder.class);
     private int safeWayBit = 0;
     protected HashSet<String> intended = new HashSet<String>();
     protected HashSet<String> sidewalks = new HashSet<String>();
@@ -203,13 +206,18 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         int index = str.indexOf(":");
         if (index > 0)
         {
-            int minutes = Integer.parseInt(str.substring(0, index)) * 60;
-            minutes += Integer.parseInt(str.substring(index + 1));
-            return minutes;
-        } else
-        {
-            return 0;
+            try
+            {
+                int minutes = Integer.parseInt(str.substring(0, index)) * 60;
+                minutes += Integer.parseInt(str.substring(index + 1));
+                return minutes;
+            } catch (Exception ex)
+            {
+                logger.error("Cannot parse " + str + " using 0 minutes");
+            }
         }
+
+        return 0;
     }
 
     @Override

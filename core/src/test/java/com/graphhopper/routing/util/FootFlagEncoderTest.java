@@ -141,7 +141,7 @@ public class FootFlagEncoderTest
         assertFalse(footEncoder.isAllowed(way) > 0);
         map.put("foot", "yes");
         assertTrue(footEncoder.isAllowed(way) > 0);
-        
+
         map.clear();
         map.put("route", "ferry");
         assertTrue(footEncoder.isAllowed(way) > 0);
@@ -176,6 +176,7 @@ public class FootFlagEncoderTest
         assertEquals(70, FootFlagEncoder.parseDuration("01:10"));
         assertEquals(0, FootFlagEncoder.parseDuration("oh"));
         assertEquals(0, FootFlagEncoder.parseDuration(null));
+        assertEquals(60 * 20, FootFlagEncoder.parseDuration("20:00"));
     }
 
     @Test
@@ -187,7 +188,7 @@ public class FootFlagEncoderTest
         map.put("sac_scale", "hiking");
         int flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
         assertEquals(FootFlagEncoder.MEAN, footEncoder.getSpeed(flags));
-        
+
         map.put("highway", "track");
         map.put("sac_scale", "mountain_hiking");
         flags = footEncoder.handleWayTags(footEncoder.isAllowed(way), way);
