@@ -149,7 +149,7 @@ public class PrepareRoutingSubnetworks
     {
         if (entries >= minNetworkSize)
         {
-            logger.info("did not remove large network (" + entries + ")");
+            // logger.info("did not remove large network (" + entries + ")");
             return;
         }
         EdgeExplorer explorer = g.createEdgeExplorer(edgeFilter);
