@@ -21,7 +21,6 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.XFirstSearch;
 import java.util.*;
 import java.util.Map.Entry;
@@ -41,7 +40,7 @@ public class PrepareRoutingSubnetworks
     private Logger logger = LoggerFactory.getLogger(getClass());
     private final Graph g;
     private final EdgeFilter edgeFilter;
-    private int minNetworkSize = 3000;
+    private int minNetworkSize = 200;
     private int subNetworks = -1;
 
     public PrepareRoutingSubnetworks( Graph g, EncodingManager em )

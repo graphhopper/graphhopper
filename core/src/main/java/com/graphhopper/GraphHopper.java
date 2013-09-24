@@ -69,6 +69,8 @@ public class GraphHopper implements GraphHopperAPI
     private boolean edgeCalcOnSearch = true;
     private boolean searchRegion = true;
     // for prepare
+    private int minNetworkSize = 200;    
+    // for CH prepare
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
     private boolean chEnabled = false;
@@ -339,8 +341,11 @@ public class GraphHopper implements GraphHopperAPI
 
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
+        
+        // optimizable prepare
+        minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
 
-        // prepare
+        // prepare CH
         doPrepare = args.getBool("prepare.doPrepare", doPrepare);
         String chShortcuts = args.get("prepare.chShortcuts", "fastest");
         boolean levelGraph = "true".equals(chShortcuts)
@@ -690,6 +695,7 @@ public class GraphHopper implements GraphHopperAPI
     {
         int prev = graph.getNodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graph, encodingManager);
+        preparation.setMinNetworkSize(minNetworkSize);
         logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
         int n = graph.getNodes();
