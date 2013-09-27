@@ -24,6 +24,8 @@ import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 
 import java.util.HashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
@@ -35,6 +37,7 @@ import java.util.HashSet;
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder
 {
+    private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
     protected int forwardBit = 0;
     protected int backwardBit = 0;
     protected int directionBitMask = 0;
@@ -261,5 +264,40 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     public String getWayInfo( OSMWay way )
     {
         return "";
+    }
+
+    protected static int parseDuration( String str )
+    {
+        if (str == null)
+            return 0;
+
+        int index = str.indexOf(":");
+        if (index > 0)
+        {
+            try
+            {
+                String hourStr = str.substring(0, index);
+                String minStr = str.substring(index + 1);
+                index = minStr.indexOf(":");
+                int minutes = 0;
+                if (index > 0)
+                {
+                    // string contains hours too
+                    String dayStr = hourStr;
+                    hourStr = minStr.substring(0, index);
+                    minStr = minStr.substring(index + 1);
+                    minutes = Integer.parseInt(dayStr) * 60 * 24;
+                }
+
+                minutes += Integer.parseInt(hourStr) * 60;
+                minutes += Integer.parseInt(minStr);
+                return minutes;
+            } catch (Exception ex)
+            {
+                logger.error("Cannot parse " + str + " using 0 minutes");
+            }
+        }
+
+        return 0;
     }
 }

@@ -170,16 +170,6 @@ public class FootFlagEncoderTest
     }
 
     @Test
-    public void testParseDuration()
-    {
-        assertEquals(10, FootFlagEncoder.parseDuration("00:10"));
-        assertEquals(70, FootFlagEncoder.parseDuration("01:10"));
-        assertEquals(0, FootFlagEncoder.parseDuration("oh"));
-        assertEquals(0, FootFlagEncoder.parseDuration(null));
-        assertEquals(60 * 20, FootFlagEncoder.parseDuration("20:00"));
-    }
-
-    @Test
     public void testSlowHiking()
     {
         Map<String, String> map = new HashMap<String, String>();

@@ -21,10 +21,7 @@ import com.graphhopper.search.Geocoding;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GHResponse;
-import com.graphhopper.routing.util.FastestCalc;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.ShortestCalc;
-import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.util.*;
 import com.graphhopper.util.TranslationMap.Translation;
 import com.graphhopper.util.shapes.BBox;
@@ -41,7 +38,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import static javax.servlet.http.HttpServletResponse.*;
-import org.json.JSONException;
 
 /**
  * Servlet to use GraphHopper in a remote application (mobile or browser). Attention: If type is
@@ -86,7 +82,7 @@ public class GraphHopperServlet extends GHServlet
         }
     }
 
-    void writeInfos( HttpServletRequest req, HttpServletResponse res ) throws JSONException
+    void writeInfos( HttpServletRequest req, HttpServletResponse res ) throws Exception
     {
         BBox bb = hopper.getGraph().getBounds();
         List<Double> list = new ArrayList<Double>(4);
@@ -251,7 +247,7 @@ public class GraphHopperServlet extends GHServlet
                     infoPoints.add(place);
                 continue;
             }
-            
+
             // now it is not a coordinate and we need to call geo resolver
             final int index = infoPoints.size();
             infoPoints.add(new GHPlace(Double.NaN, Double.NaN).setName(str));
