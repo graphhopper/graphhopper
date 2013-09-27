@@ -195,23 +195,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         return encoded;
     }
 
-    static int parseDuration( String str )
-    {
-        if (str == null)
-            return 0;
-
-        int index = str.indexOf(":");
-        if (index > 0)
-        {
-            int minutes = Integer.parseInt(str.substring(0, index)) * 60;
-            minutes += Integer.parseInt(str.substring(index + 1));
-            return minutes;
-        } else
-        {
-            return 0;
-        }
-    }
-
     @Override
     public int analyzeNodeTags( OSMNode node )
     {
