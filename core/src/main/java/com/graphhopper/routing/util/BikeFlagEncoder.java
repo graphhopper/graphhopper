@@ -186,8 +186,9 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
 
         } else
         {
-            // TODO read duration and calculate speed 00:30 for ferry
-            encoded = speedEncoder.setValue(0, 10);
+            encoded = handleFerry(way, HIGHWAY_SPEED.get("living_street"),
+                    HIGHWAY_SPEED.get("track"),
+                    HIGHWAY_SPEED.get("primary"));
             encoded |= directionBitMask;
         }
         return encoded;
@@ -313,7 +314,6 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
             put("secondary_link", 16);
             put("tertiary", 18);
             put("tertiary_link", 16);
-
         }
     };
 }

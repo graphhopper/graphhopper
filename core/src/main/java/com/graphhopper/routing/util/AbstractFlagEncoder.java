@@ -300,4 +300,24 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
 
         return 0;
     }
+
+    /**
+     * TODO we just need the distance to calculate the real speed and then add 'duration' for waiting
+     */
+    protected int handleFerry( OSMWay way, int unknownSpeed, int shortTripsSpeed, int longTripsSpeed )
+    {
+        int durationInMinutes = parseDuration(way.getTag("duration"));
+        if (durationInMinutes == 0)
+        {
+            // unknown speed -> put penalty on ferry transport
+            return speedEncoder.setValue(0, unknownSpeed);
+        } else if (durationInMinutes > 60)
+        {
+            // lengthy ferries should be faster than average hiking
+            return speedEncoder.setValue(0, longTripsSpeed);
+        } else
+        {
+            return speedEncoder.setValue(0, shortTripsSpeed);
+        }
+    }
 }

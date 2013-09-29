@@ -234,7 +234,7 @@ public class OSMReader
             return;
         }
 
-        int flags = encodingManager.encodeTags(includeWay, way);
+        int flags = encodingManager.handleWayTags(includeWay, way);
         if (flags == 0)
         {
             return;

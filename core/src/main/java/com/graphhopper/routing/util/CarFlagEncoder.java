@@ -170,8 +170,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         } else
         {
-            // TODO read duration and calculate speed 00:30 for ferry
-            encoded = speedEncoder.setValue(0, 10);
+            encoded = handleFerry(way, SPEED.get("living_street"), SPEED.get("service"), SPEED.get("residential"));
             encoded |= directionBitMask;
         }
 
