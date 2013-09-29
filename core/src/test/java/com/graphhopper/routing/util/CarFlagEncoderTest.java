@@ -56,11 +56,16 @@ public class CarFlagEncoderTest
         assertFalse(encoder.isAllowed(way) > 0);
         map.put("motorcar", "yes");
         assertTrue(encoder.isAllowed(way) > 0);
-        
-        map.clear();        
+
+        map.clear();
         map.put("route", "ferry");
         assertTrue(encoder.isAllowed(way) > 0);
         map.put("motorcar", "no");
+        assertFalse(encoder.isAllowed(way) > 0);
+
+        map.clear();
+        map.put("route", "ferry");
+        map.put("foot", "yes");
         assertFalse(encoder.isAllowed(way) > 0);
     }
 
@@ -73,7 +78,7 @@ public class CarFlagEncoderTest
         map.put("maxspeed", "500");
         int allowed = encoder.isAllowed(way);
         int encoded = encoder.handleWayTags(allowed, way);
-        assertEquals(100, encoder.getSpeed(encoded));                
+        assertEquals(100, encoder.getSpeed(encoded));
     }
 
     @Test
@@ -87,18 +92,18 @@ public class CarFlagEncoderTest
         int allowed = encoder.isAllowed(way);
         int encoded = encoder.handleWayTags(allowed, way);
         assertEquals(95, encoder.getSpeed(encoded));
-        
+
         map.clear();
         map.put("highway", "residential");
         map.put("surface", "cobblestone");
-        allowed = encoder.isAllowed(way);        
+        allowed = encoder.isAllowed(way);
         encoded = encoder.handleWayTags(allowed, way);
         assertEquals(30, encoder.getSpeed(encoded));
     }
 
     @Test
     public void testRailway()
-    {        
+    {
         Map<String, String> map = new HashMap<String, String>();
         OSMWay way = new OSMWay(1, map);
         map.put("highway", "secondary");

@@ -88,7 +88,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         Integer speed = SPEED.get(string);
         if (speed == null)
             throw new IllegalStateException("car, no speed found for:" + string);
-        
+
         return speed;
     }
 
@@ -104,7 +104,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
                 if (motorcarTag == null)
                     motorcarTag = way.getTag("motor_vehicle");
 
-                if (motorcarTag == null || "yes".equals(motorcarTag))
+                if (motorcarTag == null && !way.hasTag("foot") && !way.hasTag("bicycle")
+                        || "yes".equals(motorcarTag))
                     return acceptBit | ferryBit;
             }
             return 0;
