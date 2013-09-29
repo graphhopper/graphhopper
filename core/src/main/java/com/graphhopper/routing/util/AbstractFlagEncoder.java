@@ -22,6 +22,7 @@ import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
+import gnu.trove.list.TLongList;
 
 import java.util.HashSet;
 import org.slf4j.Logger;
@@ -306,6 +307,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
      */
     protected int handleFerry( OSMWay way, int unknownSpeed, int shortTripsSpeed, int longTripsSpeed )
     {
+        // estimate length
+        // graph.getLat+Lon(firstpoint) -> getLat+Lon(lastpoint) <=> TLongList osmNodeIds = way.getNodes();
         int durationInMinutes = parseDuration(way.getTag("duration"));
         if (durationInMinutes == 0)
         {
