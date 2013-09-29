@@ -21,8 +21,8 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.Helper;
-import gnu.trove.list.TLongList;
 
 import java.util.HashSet;
 import org.slf4j.Logger;
@@ -54,6 +54,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
     protected HashSet<String> acceptedRailways = new HashSet<String>(5);
     protected HashSet<String> absoluteBarriers = new HashSet<String>(5);
     protected HashSet<String> potentialBarriers = new HashSet<String>(5);
+    private DistanceCalc calc = new DistancePlaneProjection();
 
     public AbstractFlagEncoder()
     {
@@ -267,6 +268,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
         return "";
     }
 
+    /**
+     * This method parses a string ala "00:00" (hours and minutes) or "0:00:00" (days, hours and
+     * minutes).
+     * <p/>
+     * @return duration value in minutes
+     */
     protected static int parseDuration( String str )
     {
         if (str == null)
@@ -298,25 +305,39 @@ public abstract class AbstractFlagEncoder implements FlagEncoder
                 logger.error("Cannot parse " + str + " using 0 minutes");
             }
         }
-
         return 0;
     }
 
     /**
-     * TODO we just need the distance to calculate the real speed and then add 'duration' for waiting
+     * TODO we just need the distance to calculate the real speed and then add 'duration' for
+     * waiting
      */
     protected int handleFerry( OSMWay way, int unknownSpeed, int shortTripsSpeed, int longTripsSpeed )
     {
-        // estimate length
-        // graph.getLat+Lon(firstpoint) -> getLat+Lon(lastpoint) <=> TLongList osmNodeIds = way.getNodes();
-        int durationInMinutes = parseDuration(way.getTag("duration"));
-        if (durationInMinutes == 0)
+        // to hours
+        double durationInHours = parseDuration(way.getTag("duration")) / 60d;
+        if (durationInHours > 0)
+            try
+            {   // to km
+                double estimatedLength = Double.parseDouble(way.getTag("estimated_distance")) / 1000;
+
+                // If duration AND distance is available we can calculate the speed more precisely
+                // and set both speed to the same value. Factor 1.4 slower because of waiting time!
+                shortTripsSpeed = (int) Math.round(estimatedLength / durationInHours / 1.4);
+                if (shortTripsSpeed > getMaxSpeed())
+                    shortTripsSpeed = getMaxSpeed();
+                longTripsSpeed = shortTripsSpeed;
+            } catch (Exception ex)
+            {
+            }
+
+        if (durationInHours == 0)
         {
             // unknown speed -> put penalty on ferry transport
             return speedEncoder.setValue(0, unknownSpeed);
-        } else if (durationInMinutes > 60)
+        } else if (durationInHours > 1)
         {
-            // lengthy ferries should be faster than average hiking
+            // lengthy ferries should be faster than short trip ferry
             return speedEncoder.setValue(0, longTripsSpeed);
         } else
         {

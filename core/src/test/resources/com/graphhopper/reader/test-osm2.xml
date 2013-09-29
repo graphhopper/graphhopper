@@ -38,7 +38,13 @@
     <node id="70" lat="57.0" lon="10.2">
         <tag k="name" v="End" />
     </node>
-                      
+             
+    <node id="80" lat="54.1" lon="11.1">
+        <tag k="name" v="Ferry2 End" />
+    </node>  
+    <node id="90" lat="55.1" lon="11.2">
+        <tag k="name" v="Ferry2 Start" />
+    </node>         
     
     <way id="10" uid="85761">
         <!-- 0-1, 1-2 -->
@@ -76,7 +82,13 @@
         <tag k="route" v="ferry"/>
         <tag k="motorcar" v="yes"/>         
         <tag k="foot" v="yes"/>
-        <tag k="duration" v="00:30"/>        
+        <tag k="duration" v="01:10"/>        
+    </way>
+    
+    <way id="15" uid="85762">
+        <nd ref="80"/>        
+        <nd ref="90"/>
+        <tag k="route" v="ferry"/>              
     </way>
     
     <way id="20">          

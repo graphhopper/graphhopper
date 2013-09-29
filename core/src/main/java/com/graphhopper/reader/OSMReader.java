@@ -37,8 +37,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class parses an OSM xml file and creates a graph from it. See run.sh on how to use it from
- * command line.
+ * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
+ * parsing process in order to reduce memory usage compared to a single parsing processing.
+ * <p/>
+ * 1. Reads ways from OSM file and stores all associated node ids in osmNodeIdToIndexMap. If a node
+ * occurs once it is a pillar node and if more it is a tower node, otherwise osmNodeIdToIndexMap
+ * returns EMPTY.
+ * <p/>
+ * 2.a) Reads nodes from OSM file and stores lat+lon information either into the intermediate
+ * datastructure for the pillar nodes (pillarLats/pillarLons) or, if a tower node, directly into the
+ * graphStorage via setLatitude/setLongitude. It can also happen that a pillar node needs to be
+ * transformed into a tower node e.g. via barriers or different speed values for one way.
+ * <p/>
+ * 2.b) Reads ways OSM file and creates edges while calculating the speed etc from the OSM tags.
+ * When creating an edge the pillar node information from the intermediate datastructure will be
+ * stored in the way geometry of that edge.
  * <p/>
  * @author Peter Karich
  */
@@ -74,9 +87,9 @@ public class OSMReader
     protected DataAccess pillarLats;
     protected DataAccess pillarLons;
     private DistanceCalc distCalc = new DistanceCalc();
-    private DouglasPeucker dpAlgo = new DouglasPeucker();
-    private int towerId = 0;
-    private int pillarId = 0;
+    private DouglasPeucker simplifyAlgo = new DouglasPeucker();
+    private int nextTowerId = 0;
+    private int nextPillarId = 0;
     // negative but increasing to avoid clash with custom created OSM files
     private long newUniqueOSMId = -Long.MAX_VALUE;
     private boolean exitOnlyPillarNodeException = true;
@@ -84,13 +97,14 @@ public class OSMReader
     public OSMReader( GraphStorage storage, long expectedCap )
     {
         this.graphStorage = storage;
-        osmNodeIdToBarrierMap = new GHLongIntBTree(200);
         this.expectedNodes = expectedCap;
+
+        osmNodeIdToBarrierMap = new GHLongIntBTree(200);
         osmNodeIdToIndexMap = new GHLongIntBTree(200);
+
         dir = graphStorage.getDirectory();
         pillarLats = dir.find("tmpLatitudes");
         pillarLons = dir.find("tmpLongitudes");
-
         pillarLats.create(Math.max(expectedCap, 100));
         pillarLons.create(Math.max(expectedCap, 100));
     }
@@ -241,10 +255,7 @@ public class OSMReader
     }
 
     /**
-     * Process properties, encode flags and create edges for the way
-     * <p/>
-     * @param way
-     * @throws XMLStreamException
+     * Process properties, encode flags and create edges for the way.
      */
     public void processWay( OSMWay way ) throws XMLStreamException
     {
@@ -259,11 +270,26 @@ public class OSMReader
         if (includeWay == 0)
             return;
 
+        // estimate length of the track e.g. for ferry speed calculation
+        TLongList osmNodeIds = way.getNodes();
+        if (osmNodeIds.size() > 1)
+        {
+            int first = getNodeMap().get(osmNodeIds.get(0));
+            int last = getNodeMap().get(osmNodeIds.get(osmNodeIds.size() - 1));
+            double firstLat = getTmpLatitude(first), firstLon = getTmpLongitude(first);
+            double lastLat = getTmpLatitude(last), lastLon = getTmpLongitude(last);
+            if (firstLat != Double.NaN && firstLon != Double.NaN
+                    && lastLat != Double.NaN && lastLon != Double.NaN)
+            {
+                double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);                
+                way.setTag("estimated_distance", estimatedDist + "");
+            }
+        }
+
         int flags = encodingManager.handleWayTags(includeWay, way);
         if (flags == 0)
             return;
 
-        TLongList osmNodeIds = way.getNodes();
         List<EdgeIteratorState> createdEdges = new ArrayList<EdgeIteratorState>();
         // look for barriers along the way
         final int size = osmNodeIds.size();
@@ -348,6 +374,45 @@ public class OSMReader
         }
     }
 
+    // TODO remove this ugly stuff via better preparsing phase! E.g. putting every tags etc into a helper file!
+    private double getTmpLatitude( int id )
+    {
+        if (id == EMPTY)
+            return Double.NaN;
+        if (id < TOWER_NODE)
+        {
+            // tower node
+            id = -id - 3;
+            return graphStorage.getLatitude(id);
+        } else if (id > -TOWER_NODE)
+        {
+            // pillar node
+            id = id - 3;
+            return pillarLats.getInt(id * 4L);
+        } else
+            // e.g. if id is not handled from preparse (e.g. was ignored via isInBounds)
+            return Double.NaN;
+    }
+
+    private double getTmpLongitude( int id )
+    {
+        if (id == EMPTY)
+            return Double.NaN;
+        if (id < TOWER_NODE)
+        {
+            // tower node
+            id = -id - 3;
+            return graphStorage.getLongitude(id);
+        } else if (id > -TOWER_NODE)
+        {
+            // pillar node
+            id = id - 3;
+            return pillarLons.getInt(id * 4L);
+        } else
+            // e.g. if id is not handled from preparse (e.g. was ignored via isInBounds)
+            return Double.NaN;
+    }
+
     static String fixWayName( String str )
     {
         if (str == null)
@@ -391,13 +456,13 @@ public class OSMReader
             addTowerNode(node.getId(), lat, lon);
         } else if (nodeType == PILLAR_NODE)
         {
-            int tmp = pillarId * 4;
+            int tmp = nextPillarId * 4;
             pillarLats.ensureCapacity(tmp + 4);
             pillarLats.setInt(tmp, Helper.degreeToInt(lat));
             pillarLons.ensureCapacity(tmp + 4);
             pillarLons.setInt(tmp, Helper.degreeToInt(lon));
-            getNodeMap().put(node.getId(), pillarId + 3);
-            pillarId++;
+            getNodeMap().put(node.getId(), nextPillarId + 3);
+            nextPillarId++;
         }
         return true;
     }
@@ -421,10 +486,10 @@ public class OSMReader
 
     protected int addTowerNode( long osmId, double lat, double lon )
     {
-        graphStorage.setNode(towerId, lat, lon);
-        int id = -(towerId + 3);
+        graphStorage.setNode(nextTowerId, lat, lon);
+        int id = -(nextTowerId + 3);
         getNodeMap().put(osmId, id);
-        towerId++;
+        nextTowerId++;
         return id;
     }
 
@@ -551,7 +616,7 @@ public class OSMReader
         EdgeIteratorState iter = graphStorage.edge(fromIndex, toIndex, towerNodeDistance, flags);
         if (nodes > 2)
         {
-            dpAlgo.simplify(pillarNodes);
+            simplifyAlgo.simplify(pillarNodes);
             iter.setWayGeometry(pillarNodes);
         }
         return iter;
@@ -678,7 +743,7 @@ public class OSMReader
 
     public OSMReader setWayPointMaxDistance( double maxDist )
     {
-        dpAlgo.setMaxDistance(maxDist);
+        simplifyAlgo.setMaxDistance(maxDist);
         return this;
     }
 

@@ -186,7 +186,8 @@ public class BikeFlagEncoder extends AbstractFlagEncoder
 
         } else
         {
-            encoded = handleFerry(way, HIGHWAY_SPEED.get("living_street"),
+            encoded = handleFerry(way,
+                    HIGHWAY_SPEED.get("living_street"),
                     HIGHWAY_SPEED.get("track"),
                     HIGHWAY_SPEED.get("primary"));
             encoded |= directionBitMask;
