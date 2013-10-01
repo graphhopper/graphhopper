@@ -100,6 +100,12 @@ $(document).ready(function(e) {
         }
                 
         initMap();
+                
+//        var data = JSON.parse("[[10.4049076,48.2802518],[10.405231,48.2801396],...]");
+//        var tempFeature = {
+//            "type": "Feature", "geometry": { "type": "LineString", "coordinates": data }
+//        };        
+//        routingLayer.addData(tempFeature);  
         
         // execute query
         initFromParams(urlParams, true);        
@@ -505,7 +511,7 @@ function routeLatLng(request, doQuery) {
             "geometry": json.route.data
         };
         
-        routingLayer.addData(geojsonFeature);        
+        routingLayer.addData(geojsonFeature);              
         if(json.route.bbox && doZoom) {
             var minLon = json.route.bbox[0];
             var minLat = json.route.bbox[1];
