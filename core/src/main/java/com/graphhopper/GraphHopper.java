@@ -175,7 +175,8 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Enables the use of contraction hierarchies to reduce query times.
      * <p/>
-     * @param enable if fastest route should be calculated (instead of shortest)
+     * @param type can be "fastest", "shortest" or your own weight-calculation type.
+     * @see #disableCHShortcuts()
      */
     public GraphHopper setCHShortcuts( String type )
     {
@@ -187,8 +188,11 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
+    /**
+     * Disables contraction hierarchies. Enabled by default.
+     */
     public GraphHopper disableCHShortcuts()
-    {
+    {        
         chEnabled = false;
         return this;
     }
