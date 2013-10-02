@@ -23,12 +23,7 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.ShortestCalc;
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
@@ -75,7 +70,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private int scOneDir;
     private int scBothDir;
     private Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
-    private LevelEdgeFilterCH levelEdgeFilter;
+    private IgnoreNodeFilter levelEdgeFilter;
     private DijkstraOneToMany algo;
     private boolean removesHigher2LowerEdges = true;
     private long counter;
@@ -653,7 +648,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         vehicleOutExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, false, true));
         vehicleAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
         calcPrioAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
-        levelEdgeFilter = new LevelEdgeFilterCH(g);
+        levelEdgeFilter = new IgnoreNodeFilter(g);
         sortedNodes = new GHTreeMapComposed();
         refs = new PriorityNode[g.getNodes()];
         algo = new DijkstraOneToMany(g, prepareEncoder, shortestCalc);
@@ -665,17 +660,17 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return newShortcuts;
     }
 
-    static class LevelEdgeFilterCH extends LevelEdgeFilter
+    static class IgnoreNodeFilter implements EdgeFilter
     {
         int avoidNode;
-        LevelGraph g;
+        LevelGraph graph;
 
-        public LevelEdgeFilterCH( LevelGraph g )
+        public IgnoreNodeFilter( LevelGraph g )
         {
-            super(g);
+            this.graph = g;
         }
 
-        public LevelEdgeFilterCH setAvoidNode( int node )
+        public IgnoreNodeFilter setAvoidNode( int node )
         {
             this.avoidNode = node;
             return this;
@@ -684,10 +679,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         @Override
         public final boolean accept( EdgeIterator iter )
         {
-            if (!super.accept(iter))
-            {
-                return false;
-            }
             // ignore if it is skipNode or a endNode already contracted
             int node = iter.getAdjNode();
             return avoidNode != node && graph.getLevel(node) == 0;
