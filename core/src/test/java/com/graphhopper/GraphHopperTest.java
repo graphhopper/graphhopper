@@ -74,7 +74,7 @@ public class GraphHopperTest
     public void testPrepare() throws IOException
     {
         instance = new GraphHopper().setInMemory(true, false).setEncodingManager(new EncodingManager("CAR")).
-                setCHShortcuts(true, true).
+                setCHShortcuts("shortest").
                 setGraphHopperLocation(ghLoc).setOSMFile(testOsm);
         instance.importOrLoad();
         GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).setAlgorithm("dijkstrabi"));
@@ -87,6 +87,7 @@ public class GraphHopperTest
     {
         // now all ways are imported
         instance = new GraphHopper().setInMemory(true, false).setEncodingManager(new EncodingManager("CAR,FOOT")).
+                disableCHShortcuts().
                 setGraphHopperLocation(ghLoc).setOSMFile(testOsm3);
         instance.importOrLoad();
 
@@ -166,7 +167,7 @@ public class GraphHopperTest
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
-            assertEquals("Load or init graph before import OSM data", ex.getMessage());
+            assertEquals("Load graph before importing OSM data", ex.getMessage());
         }
 
         // missing graph location
@@ -212,14 +213,14 @@ public class GraphHopperTest
     @Test
     public void testPrepareOnly() throws IOException
     {
-        instance = new GraphHopper().setInMemory(true, true).setCHShortcuts(true, true).
+        instance = new GraphHopper().setInMemory(true, true).setCHShortcuts("shortest").
                 setEncodingManager(new EncodingManager("FOOT")).
                 doPrepare(false).
                 setGraphHopperLocation(ghLoc).setOSMFile(testOsm3);
         instance.importOrLoad();
         instance.close();
 
-        instance = new GraphHopper().setInMemory(true, true).setCHShortcuts(true, true).
+        instance = new GraphHopper().setInMemory(true, true).setCHShortcuts("shortest").
                 setGraphHopperLocation(ghLoc).setOSMFile(testOsm3);
 
         // wrong encoding manager
@@ -234,7 +235,7 @@ public class GraphHopperTest
         }
 
         // use the encoding manager from the graph
-        instance = new GraphHopper().setInMemory(true, true).setCHShortcuts(true, true).
+        instance = new GraphHopper().setInMemory(true, true).setCHShortcuts("shortest").
                 setGraphHopperLocation(ghLoc).setOSMFile(testOsm3);
         instance.load(ghLoc);
     }

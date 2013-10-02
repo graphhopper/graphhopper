@@ -190,6 +190,7 @@ public class RoutingAlgorithmIT
             // make sure we are using fresh graphhopper files with correct vehicle
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopper().setInMemory(true, true).setOSMFile(osmFile).
+                    disableCHShortcuts().
                     setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
                     importOrLoad();
 
@@ -273,6 +274,7 @@ public class RoutingAlgorithmIT
         Helper.removeDir(new File(graphFile));
         final EncodingManager encodingManager = new EncodingManager("CAR");
         GraphHopper hopper = new GraphHopper().setInMemory(true, true).setEncodingManager(encodingManager).
+                disableCHShortcuts().
                 setOSMFile("files/monaco.osm.gz").setGraphHopperLocation(graphFile).
                 importOrLoad();
         final Graph g = hopper.getGraph();

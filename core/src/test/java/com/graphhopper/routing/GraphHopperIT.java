@@ -53,6 +53,7 @@ public class GraphHopperIT
             // make sure we are using fresh graphhopper files with correct vehicle
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopper().setInMemory(true, true).setOSMFile(osmFile).
+                    disableCHShortcuts().
                     setGraphHopperLocation(graphFile).setEncodingManager(new EncodingManager(importVehicles)).
                     importOrLoad();
 

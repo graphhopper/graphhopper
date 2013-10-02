@@ -81,6 +81,7 @@ public class OSMReaderTest
             this.testFile = file;
             setGraphHopperLocation(dir);
             setEncodingManager(new EncodingManager("CAR,FOOT"));
+            disableCHShortcuts();
 
             carEncoder = (CarFlagEncoder) getEncodingManager().getEncoder("CAR");
             footEncoder = (FootFlagEncoder) getEncodingManager().getEncoder("FOOT");
