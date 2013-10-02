@@ -73,7 +73,7 @@ public class GraphHopper implements GraphHopperAPI
     // for CH prepare
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
-    private boolean chEnabled = false;
+    private boolean chEnabled = true;
     private String chType = "fastest";
     private int periodicUpdates = 3;
     private int lazyUpdates = 10;
