@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.NotThreadSafe;
 
 /**
@@ -29,16 +29,18 @@ import com.graphhopper.util.NotThreadSafe;
 public interface RoutingAlgorithm
 {
     /**
-     * Calculates the fastest or shortest path.
+     * Calculates the best path between the specified nodes.
      * <p/>
-     * @return the path but check the method found() to make sure if the path is valid.
+     * @return the path. Call the method found() to make sure that the path is valid.
      */
     Path calcPath( int from, int to );
 
     /**
-     * Changes the used weight calculation (e.g. fastest, shortest). Default is shortest.
+     * Calculates the best path between the specified edges.
+     * <p/>
+     * @return the path. Call the method found() to make sure that the path is valid.
      */
-//    RoutingAlgorithm setType( WeightCalculation calc );
+    Path calcPath( EdgeIteratorState from, EdgeIteratorState to );
 
     /**
      * @return name of this algorithm

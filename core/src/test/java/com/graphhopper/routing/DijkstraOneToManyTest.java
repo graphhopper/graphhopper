@@ -36,7 +36,7 @@ import org.junit.Test;
 public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
 {
     @Override
-    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final WeightCalculation calc)
+    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final WeightCalculation calc )
     {
         return new NoOpAlgorithmPreparation()
         {
@@ -46,6 +46,24 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
                 return new DijkstraOneToMany(_graph, encoder, calc);
             }
         }.setGraph(g);
+    }
+
+    @Override
+    public void testViaEdges()
+    {
+        // not supported
+    }
+
+    @Override
+    public void testViaEdges2()
+    {
+        // not supported
+    }
+
+    @Override
+    public void testDirectedGraphViaEdges()
+    {
+        // not supported
     }
 
     @Test

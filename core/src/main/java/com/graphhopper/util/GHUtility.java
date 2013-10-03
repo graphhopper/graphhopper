@@ -420,13 +420,12 @@ public class GHUtility
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
     };
-    
-    
+
     /**
      * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if
      * not found.
      */
-    public static EdgeIterator getEdge( GraphStorage graph, int base, int adj )
+    public static EdgeIterator getEdge( Graph graph, int base, int adj )
     {
         EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
         while (iter.next())

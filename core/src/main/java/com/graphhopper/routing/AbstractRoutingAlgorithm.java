@@ -32,11 +32,12 @@ import com.graphhopper.util.EdgeIterator;
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
 {
     private EdgeFilter additionalEdgeFilter;
-    protected final Graph graph;    
+    protected final Graph graph;
     protected final WeightCalculation weightCalc;
     protected final FlagEncoder flagEncoder;
     protected final EdgeExplorer inEdgeExplorer;
     protected final EdgeExplorer outEdgeExplorer;
+    private boolean alreadyRun;
 
     /**
      * @param graph specifies the graph where this algorithm will run on
@@ -67,15 +68,49 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     {
     }
 
-    @Override
-    public String toString()
+    protected void checkAlreadyRun()
     {
-        return getName() + "|" + weightCalc;
+        if (alreadyRun)
+            throw new IllegalStateException("Create a new instance per call");
+
+        alreadyRun = true;
+    }
+
+    protected EdgeEntry createEmptyEdgeEntry( int node )
+    {
+        return new EdgeEntry(EdgeIterator.NO_EDGE, node, 0d);
+    }
+
+    /**
+     * To be overwritten from extending class. Should we make this available in RoutingAlgorithm
+     * interface?
+     * <p/>
+     * @return true if finished.
+     */
+    protected abstract boolean finished();
+
+    /**
+     * To be overwritten from extending class. Should we make this available in RoutingAlgorithm
+     * interface?
+     * <p/>
+     * @return true if finished.
+     */
+    protected abstract Path extractPath();
+
+    protected Path createEmptyPath()
+    {
+        return new Path(graph, flagEncoder);
     }
 
     @Override
     public String getName()
     {
         return getClass().getSimpleName();
+    }
+
+    @Override
+    public String toString()
+    {
+        return getName() + "|" + weightCalc;
     }
 }

@@ -28,7 +28,6 @@ import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.EdgeSkipExplorer;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.Helper;
-import java.io.IOException;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -67,10 +66,9 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(encoder, calc).setGraph(g);
         // hack: prepare matrixgraph only once
-        if (g != preparedMatrixGraph)
-        {
+        if (g != preparedMatrixGraph)       
             ch.doWork();
-        }
+        
         return ch;
     }
 

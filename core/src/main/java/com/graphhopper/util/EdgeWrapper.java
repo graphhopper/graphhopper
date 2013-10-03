@@ -22,7 +22,8 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import java.util.Arrays;
 
 /**
- * Used to implement references for a dijkstra written the "none-java" way.
+ * This class acts as a HashMap (nodes to weights) and is used to implement references from one edge
+ * to its parent.
  * <p/>
  * @see DijkstraBidirection
  * @author Peter Karich
@@ -71,27 +72,24 @@ public class EdgeWrapper
     public void putWeight( int ref, double dist )
     {
         if (ref < 1)
-        {
             throw new IllegalStateException("You cannot save a reference with values smaller 1. 0 is reserved");
-        }
+
         weights[ref] = (float) dist;
     }
 
     public void putEdgeId( int ref, int edgeId )
     {
         if (ref < 1)
-        {
             throw new IllegalStateException("You cannot save a reference with values smaller 1. 0 is reserved");
-        }
+
         edgeIds[ref] = edgeId;
     }
 
     public void putParent( int ref, int link )
     {
         if (ref < 1)
-        {
             throw new IllegalStateException("You cannot save a reference with values smaller 1. 0 is reserved");
-        }
+
         parents[ref] = link;
     }
 
@@ -118,9 +116,7 @@ public class EdgeWrapper
     private void ensureCapacity( int size )
     {
         if (size < nodes.length)
-        {
             return;
-        }
 
         resize(Math.round(GROW_FACTOR * size));
     }
@@ -147,5 +143,10 @@ public class EdgeWrapper
     public int getRef( int node )
     {
         return node2ref.get(node);
+    }
+
+    public boolean isEmpty()
+    {
+        return refCounter == 0;
     }
 }

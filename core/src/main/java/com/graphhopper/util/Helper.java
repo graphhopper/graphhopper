@@ -237,18 +237,6 @@ public class Helper
         return str == null || str.trim().length() == 0;
     }
 
-    /*
-     public static EdgePropertyEncoder getVehicleEncoder(String str) {
-     str = str.toLowerCase();
-     if (str.isEmpty() || "car".equals(str))
-     return new CarFlagEncoder();
-     else if ("foot".equals(str))
-     return new FootFlagEncoder();
-     else if ("bike".equals(str))
-     return new BikeFlagEncoder();
-     throw new RuntimeException("VehicleEncoder not found " + str);
-     }
-     */
     /**
      * Determines if the specified ByteBuffer is one which maps to a file!
      */

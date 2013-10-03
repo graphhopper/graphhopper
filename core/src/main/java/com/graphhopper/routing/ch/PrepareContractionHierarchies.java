@@ -21,7 +21,6 @@ import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -191,14 +190,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         allSW.start();
         super.doWork();
-        
-        initFromGraph();        
+
+        initFromGraph();
         if (!prepareEdges())
             return this;
-                
+
         if (!prepareNodes())
             return this;
-        
+
         contractNodes();
         return this;
     }
@@ -722,26 +721,23 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             @Override
-            public boolean checkFinishCondition()
+            public boolean finished()
             {
-                // changed finish condition for CH
-                if (currFrom == null)
-                {
-                    return currTo.weight >= shortest.getWeight();
-                } else if (currTo == null)
-                {
-                    return currFrom.weight >= shortest.getWeight();
-                }
-                return currFrom.weight >= shortest.getWeight() && currTo.weight >= shortest.getWeight();
+                // we need to finish BOTH searches for CH!
+                if (finishedFrom && finishedTo)
+                    return true;
+
+                // changed also the final finish condition for CH                
+                return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
             }
 
             @Override
-            protected PathBidirRef createPath()
+            public void initPath()
             {
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
                 WeightCalculation wc = createWeightCalculation();
-                return new Path4CH(graph, flagEncoder, wc);
+                bestPath = new Path4CH(graph, flagEncoder, wc);
             }
 
             @Override
@@ -769,27 +765,24 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             @Override
-            public boolean checkFinishCondition()
+            protected boolean finished()
             {
+                // we need to finish BOTH searches for CH!
+                if (finishedFrom && finishedTo)
+                    return true;
+                
                 // changed finish condition for CH
-                double tmpWeight = shortest.getWeight() * approximationFactor;
-                if (currFrom == null)
-                {
-                    return currTo.weight >= tmpWeight;
-                } else if (currTo == null)
-                {
-                    return currFrom.weight >= tmpWeight;
-                }
+                double tmpWeight = bestPath.getWeight() * approximationFactor;
                 return currFrom.weight >= tmpWeight && currTo.weight >= tmpWeight;
             }
 
             @Override
-            protected PathBidirRef createPath()
+            protected void initPath()
             {
                 // CH changes the distance in prepareEdges to the weight
                 // now we need to transform it back to the real distance
                 WeightCalculation wc = createWeightCalculation();
-                return new Path4CH(graph, flagEncoder, wc);
+                bestPath = new Path4CH(graph, flagEncoder, wc);
             }
 
             @Override
