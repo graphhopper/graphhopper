@@ -401,7 +401,7 @@ public class MainActivity extends MapActivity
             protected Path saveDoInBackground( Void... v ) throws Exception
             {
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
-                tmpHopp.setCHShortcuts(true, true);
+                tmpHopp.setCHShortcuts("fastest");
                 tmpHopp.load(mapsFolder + currentArea);
                 log("found graph " + tmpHopp.getGraph().toString() + ", nodes:" + tmpHopp.getGraph().getNodes());
                 hopper = tmpHopp;

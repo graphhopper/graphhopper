@@ -43,11 +43,14 @@ public interface Graph
     void setNode( int node, double lat, double lon );
 
     /**
-     * @return the latitude at the specified index
+     * @return the latitude at the specified node index
      */
-    double getLatitude( int node );
+    double getLatitude( int nodeId );
 
-    double getLongitude( int node );
+    /**
+     * @return the longitude at the specified node index
+     */
+    double getLongitude( int nodeId );
 
     /**
      * Returns the implicit bounds of this graph calculated from the lat,lon input of setNode

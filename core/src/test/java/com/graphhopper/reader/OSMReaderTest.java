@@ -81,6 +81,7 @@ public class OSMReaderTest
             this.testFile = file;
             setGraphHopperLocation(dir);
             setEncodingManager(new EncodingManager("CAR,FOOT"));
+            disableCHShortcuts();
 
             carEncoder = (CarFlagEncoder) getEncodingManager().getEncoder("CAR");
             footEncoder = (FootFlagEncoder) getEncodingManager().getEncoder("FOOT");
@@ -289,6 +290,18 @@ public class OSMReaderTest
         int n40 = AbstractGraphTester.getIdOf(graph, 54.0);
         int n50 = AbstractGraphTester.getIdOf(graph, 55.0);
         assertEquals(Arrays.asList(n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n50)));
+
+        // no duration is given => slow speed only!
+        int n80 = AbstractGraphTester.getIdOf(graph, 54.1);
+        EdgeIterator iter = carOutExplorer.setBaseNode(n80);
+        iter.next();
+        assertEquals(10, carEncoder.getSpeed(iter.getFlags()));
+
+        // more precise speed calculation! ~150km (from 54.0,10.1 to 55.0,10.1) in duration=70 minutes -> wow ;)
+        // => 130km/h => / 1.4 => 92km/h        
+        iter = carOutExplorer.setBaseNode(n40);
+        iter.next();
+        assertEquals(100, carEncoder.getSpeed(iter.getFlags()));
     }
 
     @Test

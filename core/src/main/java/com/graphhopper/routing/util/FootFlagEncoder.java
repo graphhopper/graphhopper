@@ -175,20 +175,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         } else
         {
-            int durationInMinutes = parseDuration(way.getTag("duration"));
-            if (durationInMinutes == 0)
-            {
-                // unknown speed -> put penalty on ferry transport
-                encoded = speedEncoder.setValue(0, SLOW);
-            } else if (durationInMinutes > 60)
-            {
-                // lengthy ferries should be faster than average hiking
-                encoded = speedEncoder.setValue(0, FERRY);
-            } else
-            {
-                encoded = speedEncoder.setValue(0, MEAN);
-            }
-
+            encoded = handleFerry(way, SLOW, MEAN, FERRY);
             encoded |= directionBitMask;
         }
 
@@ -250,5 +237,5 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     };
     static final int SLOW = 2;
     static final int MEAN = 5;
-    static final int FERRY = 10;
+    static final int FERRY = 10;    
 }

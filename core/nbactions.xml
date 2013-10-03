@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<actions>
+<actions>     
     <action>
         <actionName>CUSTOM-install</actionName>
         <displayName>install</displayName>
@@ -46,6 +46,13 @@
             <profiler.action>profile</profiler.action>
             <exec.executable>${profiler.java}</exec.executable>
         </properties>
+    </action>
+    <action>
+        <actionName>CUSTOM-inttest</actionName>
+        <displayName>integration tests</displayName>
+        <goals>
+            <goal>failsafe:integration-test</goal>
+        </goals>
     </action>
     <action>
         <actionName>CUSTOM-assembly</actionName>

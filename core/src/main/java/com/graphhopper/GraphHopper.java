@@ -86,11 +86,11 @@ public class GraphHopper implements GraphHopperAPI
     private boolean edgeCalcOnSearch = true;
     private boolean searchRegion = true;
     // for prepare
-    private int minNetworkSize = 200;    
+    private int minNetworkSize = 200;
     // for CH prepare
     private AlgorithmPreparation prepare;
     private boolean doPrepare = true;
-    private boolean chEnabled = false;
+    private boolean chEnabled = true;
     private String chType = "fastest";
     private int periodicUpdates = 3;
     private int lazyUpdates = 10;
@@ -192,20 +192,25 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Enables the use of contraction hierarchies to reduce query times.
      * <p/>
-     * @param enable if fastest route should be calculated (instead of shortest)
+     * @param type can be "fastest", "shortest" or your own weight-calculation type.
+     * @see #disableCHShortcuts()
      */
-    public GraphHopper setCHShortcuts( boolean enable, boolean fast )
+    public GraphHopper setCHShortcuts( String type )
     {
-        return setCHShortcuts(enable, fast == true ? "fastest" : "shortest");
-    }
-
-    public GraphHopper setCHShortcuts( boolean enable, String type )
-    {
-        chEnabled = enable;
+        chEnabled = true;
         chType = type;
         if (chEnabled)
             defaultAlgorithm = "bidijkstra";
 
+        return this;
+    }
+
+    /**
+     * Disables contraction hierarchies. Enabled by default.
+     */
+    public GraphHopper disableCHShortcuts()
+    {        
+        chEnabled = false;
         return this;
     }
 
@@ -379,17 +384,17 @@ public class GraphHopper implements GraphHopperAPI
 
         sortGraph = args.getBool("graph.doSort", sortGraph);
         removeZipped = args.getBool("graph.removeZipped", removeZipped);
-        
+
         // optimizable prepare
         minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
 
         // prepare CH
         doPrepare = args.getBool("prepare.doPrepare", doPrepare);
         String chShortcuts = args.get("prepare.chShortcuts", "fastest");
-        boolean levelGraph = "true".equals(chShortcuts)
+        chEnabled = "true".equals(chShortcuts)
                 || "fastest".equals(chShortcuts) || "shortest".equals(chShortcuts);
-        if (levelGraph)
-            setCHShortcuts(true, !"shortest".equals(chShortcuts));
+        if (chEnabled)
+            setCHShortcuts(chShortcuts);
 
         if (args.has("prepare.updates.periodic"))
             periodicUpdates = args.getInt("prepare.updates.periodic", periodicUpdates);
@@ -463,7 +468,7 @@ public class GraphHopper implements GraphHopperAPI
     protected OSMReader importOSM( String _osmFile ) throws IOException
     {
         if (graph == null)
-            throw new IllegalStateException("Load or init graph before import OSM data");
+            throw new IllegalStateException("Load graph before importing OSM data");
 
         setOSMFile(_osmFile);
         File osmTmpFile = new File(osmFile);
@@ -549,7 +554,7 @@ public class GraphHopper implements GraphHopperAPI
         if (chEnabled)
         {
             FlagEncoder encoder = encodingManager.getSingle();
-            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder, 
+            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
                     createType(chType, encoder));
             tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
                     setLazyUpdates(lazyUpdates).
@@ -576,6 +581,8 @@ public class GraphHopper implements GraphHopperAPI
     public GHResponse route( GHRequest request )
     {
         request.check();
+        if (graph == null)
+            throw new IllegalStateException("Load graph before routing");
 
         StopWatch sw = new StopWatch().start();
         GHResponse rsp = new GHResponse();
@@ -612,6 +619,9 @@ public class GraphHopper implements GraphHopperAPI
 
         if (chEnabled)
         {
+            if (prepare == null)
+                throw new IllegalStateException("Preparation object is null. CH-preparation wasn't done or did you forgot to call setCHShortcuts(false, chType)?");
+
             if (request.getAlgorithm().equals("dijkstrabi"))
                 algo = prepare.createAlgo();
             else if (request.getAlgorithm().equals("astarbi"))
