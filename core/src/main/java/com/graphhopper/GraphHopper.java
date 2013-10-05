@@ -86,6 +86,7 @@ public class GraphHopper implements GraphHopperAPI
     private int workerThreads = -1;
     private int defaultSegmentSize = -1;
     private boolean enableInstructions = true;
+    private boolean fullyLoaded = false;
 
     public GraphHopper()
     {
@@ -94,15 +95,17 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * For testing
      */
-    GraphHopper( GraphStorage g )
+    GraphHopper loadGraph( GraphStorage g )
     {
-        this();
         this.graph = g;
+        fullyLoaded = true;
         initLocationIndex();
+        return this;
     }
 
     public GraphHopper setEncodingManager( EncodingManager acceptWay )
     {
+        ensureNotLoaded();
         this.encodingManager = acceptWay;
         return this;
     }
@@ -141,12 +144,14 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper setPreciseIndexResolution( int precision )
     {
+        ensureNotLoaded();
         preciseIndexResolution = precision;
         return this;
     }
 
     public GraphHopper setInMemory( boolean inMemory, boolean storeOnFlush )
     {
+        ensureNotLoaded();
         if (inMemory)
         {
             if (storeOnFlush)
@@ -162,11 +167,12 @@ public class GraphHopper implements GraphHopperAPI
 
     public GraphHopper setMemoryMapped()
     {
+        ensureNotLoaded();
         dataAccessType = DAType.MMAP;
         return this;
     }
 
-    public GraphHopper doPrepare( boolean doPrepare )
+    public GraphHopper setDoPrepare( boolean doPrepare )
     {
         this.doPrepare = doPrepare;
         return this;
@@ -180,6 +186,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper setCHShortcuts( String type )
     {
+        ensureNotLoaded();
         chEnabled = true;
         chType = type;
         if (chEnabled)
@@ -192,7 +199,8 @@ public class GraphHopper implements GraphHopperAPI
      * Disables contraction hierarchies. Enabled by default.
      */
     public GraphHopper disableCHShortcuts()
-    {        
+    {
+        ensureNotLoaded();
         chEnabled = false;
         return this;
     }
@@ -208,6 +216,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper setEnableInstructions( boolean b )
     {
+        ensureNotLoaded();
         enableInstructions = b;
         return this;
     }
@@ -227,6 +236,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper setGraphHopperLocation( String ghLocation )
     {
+        ensureNotLoaded();
         if (ghLocation == null)
             throw new NullPointerException("graphhopper location cannot be null");
 
@@ -245,6 +255,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper setOSMFile( String osmFileStr )
     {
+        ensureNotLoaded();
         if (Helper.isEmpty(osmFileStr))
             throw new IllegalArgumentException("OSM file cannot be empty.");
 
@@ -260,7 +271,7 @@ public class GraphHopper implements GraphHopperAPI
     public Graph getGraph()
     {
         if (graph == null)
-            throw new NullPointerException("Graph not initialized");
+            throw new IllegalStateException("Graph not initialized");
 
         return graph;
     }
@@ -273,7 +284,7 @@ public class GraphHopper implements GraphHopperAPI
     public Location2IDIndex getLocationIndex()
     {
         if (locationIndex == null)
-            throw new NullPointerException("Location index not initialized");
+            throw new IllegalStateException("Location index not initialized");
 
         return locationIndex;
     }
@@ -288,6 +299,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper setSortGraph( boolean sortGraph )
     {
+        ensureNotLoaded();
         this.sortGraph = sortGraph;
         return this;
     }
@@ -403,7 +415,7 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Creates the graph.
+     * Creates the graph from OSM data.
      */
     private GraphHopper process( String graphHopperLocation, String osmFileStr )
     {
@@ -421,8 +433,7 @@ public class GraphHopper implements GraphHopperAPI
         }
         cleanUp();
         optimize();
-        postProcessing();
-        initLocationIndex();
+        postProcessing();        
         flush();
         return this;
     }
@@ -465,8 +476,8 @@ public class GraphHopper implements GraphHopperAPI
         if (Helper.isEmpty(graphHopperFolder))
             throw new IllegalStateException("graphHopperLocation is not specified. call init before");
 
-        if (graph != null)
-            throw new IllegalStateException("graph is already loaded");
+        if (fullyLoaded)
+            throw new IllegalStateException("graph is already successfully loaded");
 
         if (graphHopperFolder.endsWith("-gh"))
         {
@@ -504,9 +515,9 @@ public class GraphHopper implements GraphHopperAPI
         graph.setSegmentSize(defaultSegmentSize);
         if (!graph.loadExisting())
             return false;
-
+        
         postProcessing();
-        initLocationIndex();
+        fullyLoaded = true;
         return true;
     }
 
@@ -528,6 +539,7 @@ public class GraphHopper implements GraphHopperAPI
 
         if (!"true".equals(graph.getProperties().get("prepare.done")))
             prepare();
+        initLocationIndex();        
     }
 
     protected WeightCalculation createType( String type, FlagEncoder encoder )
@@ -543,8 +555,8 @@ public class GraphHopper implements GraphHopperAPI
     public GHResponse route( GHRequest request )
     {
         request.check();
-        if (graph == null)
-            throw new IllegalStateException("Load graph before routing");
+        if (graph == null || !fullyLoaded)
+            throw new IllegalStateException("Call load or importOrLoad before routing");
 
         StopWatch sw = new StopWatch().start();
         GHResponse rsp = new GHResponse();
@@ -722,6 +734,7 @@ public class GraphHopper implements GraphHopperAPI
         logger.info("flushing graph " + graph.toString() + ", details:" + graph.toDetailsString() + ", "
                 + Helper.getMemInfo() + ")");
         graph.flush();
+        fullyLoaded = true;
     }
 
     void close()
@@ -731,5 +744,11 @@ public class GraphHopper implements GraphHopperAPI
 
         if (locationIndex != null)
             locationIndex.close();
+    }
+
+    private void ensureNotLoaded()
+    {
+        if (fullyLoaded)
+            throw new IllegalStateException("No configuration changes are possible after loading the graph");
     }
 }

@@ -71,18 +71,6 @@ public class GraphHopperTest
     }
 
     @Test
-    public void testPrepare() throws IOException
-    {
-        instance = new GraphHopper().setInMemory(true, false).setEncodingManager(new EncodingManager("CAR")).
-                setCHShortcuts("shortest").
-                setGraphHopperLocation(ghLoc).setOSMFile(testOsm);
-        instance.importOrLoad();
-        GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).setAlgorithm("dijkstrabi"));
-        assertTrue(ph.isFound());
-        assertEquals(3, ph.getPoints().getSize());
-    }
-
-    @Test
     public void testFootAndCar() throws IOException
     {
         // now all ways are imported
@@ -157,6 +145,22 @@ public class GraphHopperTest
     }
 
     @Test
+    public void testNoNPEIfOnlyLoad() throws IOException
+    {
+        // missing import of graph
+        instance = new GraphHopper().setInMemory(true, true);
+        try
+        {
+            assertFalse(instance.load(ghLoc));
+            instance.route(new GHRequest(10, 40, 12, 32));
+            assertTrue(false);
+        } catch (IllegalStateException ex)
+        {
+            assertEquals("Call load or importOrLoad before routing", ex.getMessage());
+        }
+    }
+
+    @Test
     public void testFailsForMissingParameters() throws IOException
     {
         // missing load of graph
@@ -211,11 +215,22 @@ public class GraphHopperTest
     }
 
     @Test
+    public void testPrepare() throws IOException
+    {
+        instance = new GraphHopper().setInMemory(true, false).setEncodingManager(new EncodingManager("CAR")).
+                setCHShortcuts("shortest").
+                setGraphHopperLocation(ghLoc).setOSMFile(testOsm);
+        instance.importOrLoad();
+        GHResponse ph = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).setAlgorithm("dijkstrabi"));
+        assertTrue(ph.isFound());
+        assertEquals(3, ph.getPoints().getSize());
+    }
+
+    @Test
     public void testPrepareOnly() throws IOException
     {
         instance = new GraphHopper().setInMemory(true, true).setCHShortcuts("shortest").
-                setEncodingManager(new EncodingManager("FOOT")).
-                doPrepare(false).
+                setEncodingManager(new EncodingManager("FOOT")).setDoPrepare(false).
                 setGraphHopperLocation(ghLoc).setOSMFile(testOsm3);
         instance.importOrLoad();
         instance.close();
