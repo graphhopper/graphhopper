@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.*;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -73,15 +74,17 @@ public class AStar extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public Path calcPath( EdgeIteratorState from, EdgeIteratorState to )
+    public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
     {
         checkAlreadyRun();
+        EdgeIteratorState from = fromRes.getClosestEdge();
+        EdgeIteratorState to = toRes.getClosestEdge();
 
         if (flagEncoder.isForward(from.getFlags()))
-            fromMap.put(from.getAdjNode(), createEmptyEdgeEntry(from.getAdjNode()));
+            fromMap.put(from.getAdjNode(), createEdgeEntry(from.getAdjNode(), fromRes.getAdjDistance()));
 
         if (flagEncoder.isBackward(from.getFlags()))
-            fromMap.put(from.getBaseNode(), createEmptyEdgeEntry(from.getBaseNode()));
+            fromMap.put(from.getBaseNode(), createEdgeEntry(from.getBaseNode(), fromRes.getBasedDistance()));
 
         if (flagEncoder.isForward(to.getFlags()))
             to1 = to.getBaseNode();
@@ -94,10 +97,8 @@ public class AStar extends AbstractRoutingAlgorithm
 
         currEdge = fromMap.valueCollection().iterator().next();
 
-        int toNode = to1 > 0 ? to1 : to2;
-        // TODO how could we use directly the lat,lon of the query?
-        toLat = graph.getLatitude(toNode);
-        toLon = graph.getLongitude(toNode);
+        toLat = toRes.getQueryPoint().lat;
+        toLon = toRes.getQueryPoint().lon;
         return runAlgo();
     }
 
@@ -108,7 +109,7 @@ public class AStar extends AbstractRoutingAlgorithm
         toLat = graph.getLatitude(to);
         toLon = graph.getLongitude(to);
         to1 = to;
-        currEdge = createEmptyEdgeEntry(from);
+        currEdge = createEdgeEntry(from, 0);
         fromMap.put(from, currEdge);
         return runAlgo();
     }
@@ -175,9 +176,9 @@ public class AStar extends AbstractRoutingAlgorithm
     }
 
     @Override
-    protected AStarEdge createEmptyEdgeEntry( int node )
+    protected AStarEdge createEdgeEntry( int node, double dist )
     {
-        return new AStarEdge(EdgeIterator.NO_EDGE, node, 0, 0);
+        return new AStarEdge(EdgeIterator.NO_EDGE, node, dist, dist);
     }
 
     @Override

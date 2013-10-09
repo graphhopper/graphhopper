@@ -61,9 +61,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    public void initFrom( int from )
+    public void initFrom( int from, double dist )
     {
-        currFrom = createEmptyEdgeEntry(from);
+        currFrom = createEdgeEntry(from, dist);
         bestWeightMapFrom.put(from, currFrom);
         openSetFrom.add(currFrom);
         if (currTo != null)
@@ -74,9 +74,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    public void initTo( int to )
+    public void initTo( int to, double dist )
     {
-        currTo = createEmptyEdgeEntry(to);
+        currTo = createEdgeEntry(to, dist);
         bestWeightMapTo.put(to, currTo);
         openSetTo.add(currTo);
         if (currFrom != null)

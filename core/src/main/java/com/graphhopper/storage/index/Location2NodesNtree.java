@@ -37,7 +37,7 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.list.TIntList;
+import com.graphhopper.util.shapes.CoordTrig;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
@@ -81,6 +81,11 @@ public class Location2NodesNtree implements Location2IDIndex
     static final int START_POINTER = 1;
     private boolean edgeDistCalcOnSearch = true;
     private boolean regionSearch = true;
+    /**
+     * If normed distance is smaller than this value the node or edge is 'identical' and the
+     * algorithm can stop search.
+     */
+    private double equalNormedDelta;
 
     public Location2NodesNtree( Graph g, Directory dir )
     {
@@ -125,14 +130,16 @@ public class Location2NodesNtree implements Location2IDIndex
 
     void prepareAlgo()
     {
+        // 0.1 meter should count as 'equal'
+        equalNormedDelta = distCalc.calcNormalizedDist(0.1);
+
         // now calculate the necessary maxDepth d for our current bounds
         // if we assume a minimum resolution like 0.5km for a leaf-tile                
         // n^(depth/2) = toMeter(dLon) / minResolution
         BBox bounds = graph.getBounds();
         if (graph.getNodes() == 0 || !bounds.check())
-        {
-            throw new IllegalStateException("graph is not valid. bounds are: " + bounds);
-        }
+            throw new IllegalStateException("Bounds of graph are invalid: " + bounds);
+
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
                 (bounds.maxLat - bounds.minLat) / 360 * DistanceCalc.C,
@@ -171,9 +178,8 @@ public class Location2NodesNtree implements Location2IDIndex
             parts *= entries[i];
         }
         if (shiftSum > 64)
-        {
             throw new IllegalStateException("sum of all shifts does not fit into a long variable");
-        }
+
         keyAlgo = new SpatialKeyAlgo(shiftSum).bounds(bounds);
         parts = Math.round(Math.sqrt(parts));
         deltaLat = (bounds.maxLat - bounds.minLat) / parts;
@@ -210,9 +216,8 @@ public class Location2NodesNtree implements Location2IDIndex
     {
         byte b = (byte) Math.round(Math.log(entries) / Math.log(2));
         if (b <= 0)
-        {
             throw new IllegalStateException("invalid shift:" + b);
-        }
+
         return b;
     }
 
@@ -238,9 +243,8 @@ public class Location2NodesNtree implements Location2IDIndex
     {
         LocationIDResult res = findClosest(lat, lon, EdgeFilter.ALL_EDGES);
         if (res == null)
-        {
             return -1;
-        }
+
         return res.getClosestNode();
     }
 
@@ -248,23 +252,17 @@ public class Location2NodesNtree implements Location2IDIndex
     public boolean loadExisting()
     {
         if (initialized)
-        {
             throw new IllegalStateException("Call loadExisting only once");
-        }
 
         if (!dataAccess.loadExisting())
-        {
             return false;
-        }
 
         if (dataAccess.getHeader(0) != MAGIC_INT)
-        {
             throw new IllegalStateException("incorrect location2id index version, expected:" + MAGIC_INT);
-        }
+
         if (dataAccess.getHeader(1 * 4) != calcChecksum())
-        {
             throw new IllegalStateException("location2id index was opened with incorrect graph");
-        }
+
         setMinResolutionInMeter(dataAccess.getHeader(2 * 4));
         prepareAlgo();
         initialized = true;
@@ -275,9 +273,7 @@ public class Location2NodesNtree implements Location2IDIndex
     public Location2IDIndex setResolution( int minResolutionInMeter )
     {
         if (minResolutionInMeter <= 0)
-        {
             throw new IllegalStateException("Negative precision is not allowed!");
-        }
 
         setMinResolutionInMeter(minResolutionInMeter);
         return this;
@@ -287,12 +283,10 @@ public class Location2NodesNtree implements Location2IDIndex
     public Location2IDIndex setApproximation( boolean approx )
     {
         if (approx)
-        {
             distCalc = new DistancePlaneProjection();
-        } else
-        {
+        else
             distCalc = new DistanceCalc();
-        }
+
         return this;
     }
 
@@ -317,9 +311,7 @@ public class Location2NodesNtree implements Location2IDIndex
     public Location2IDIndex prepareIndex()
     {
         if (initialized)
-        {
             throw new IllegalStateException("Call prepareIndex only once");
-        }
 
         StopWatch sw = new StopWatch().start();
         prepareAlgo();
@@ -655,6 +647,7 @@ public class Location2NodesNtree implements Location2IDIndex
     {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
         final LocationIDResult closestMatch = new LocationIDResult();
+        closestMatch.setQueryPoint(new CoordTrig(queryLat, queryLon));
         if (storedNetworkEntryIds.isEmpty())
             return closestMatch;
 
@@ -665,17 +658,17 @@ public class Location2NodesNtree implements Location2IDIndex
         {
             @Override
             public boolean execute( final int networkEntryNodeId )
-            {               
+            {
                 new XFirstSearch()
                 {
                     boolean goFurther = true;
-                    double currDist;
+                    double currNormedDist;
                     double currLat;
                     double currLon;
                     int currNode;
 
                     @Override
-                    protected GHBitSet createBitSet(  )
+                    protected GHBitSet createBitSet()
                     {
                         return checkBitset;
                     }
@@ -686,7 +679,7 @@ public class Location2NodesNtree implements Location2IDIndex
                         currNode = baseNode;
                         currLat = graph.getLatitude(baseNode);
                         currLon = graph.getLongitude(baseNode);
-                        currDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
+                        currNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
                         return goFurther;
                     }
 
@@ -701,23 +694,25 @@ public class Location2NodesNtree implements Location2IDIndex
                             return true;
                         }
 
-                        int tmpNode = currNode;
-                        double tmpLat = currLat;
-                        double tmpLon = currLon;
+                        int tmpClosestNode = currNode;
+                        if (check(tmpClosestNode, currNormedDist, 0, currEdge))
+                        {
+                            if (currNormedDist <= equalNormedDelta)
+                                return false;
+                        }
+
                         int adjNode = currEdge.getAdjNode();
                         double adjLat = graph.getLatitude(adjNode);
                         double adjLon = graph.getLongitude(adjNode);
-
-                        check(tmpNode, currDist, -adjNode - 2, currEdge);
-
-                        double tmpDist;
                         double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
                         // if there are wayPoints this is only an approximation
-                        if (edgeDistCalcOnSearch && adjDist < currDist)
-                        {
-                            tmpNode = adjNode;
-                        }
+                        if (edgeDistCalcOnSearch && adjDist < currNormedDist)
+                            tmpClosestNode = adjNode;
 
+                        double tmpLat = currLat;
+                        double tmpLon = currLon;
+                        double tmpNormedDist;
+                        boolean found = false;
                         PointList pointList = currEdge.getWayGeometry();
                         int len = pointList.getSize();
                         for (int pointIndex = 0; pointIndex < len; pointIndex++)
@@ -728,51 +723,69 @@ public class Location2NodesNtree implements Location2IDIndex
                                     && NumHelper.equalsEps(queryLon, wayLon, 1e-6))
                             {
                                 // equal point found
-                                check(tmpNode, 0d, pointIndex, currEdge);
+                                check(tmpClosestNode, 0d, pointIndex + 1, currEdge);
+                                found = true;
                                 break;
                             } else if (edgeDistCalcOnSearch
                                     && distCalc.validEdgeDistance(queryLat, queryLon,
                                     tmpLat, tmpLon, wayLat, wayLon))
                             {
-                                tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
+                                tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                         tmpLat, tmpLon, wayLat, wayLon);
-                                check(tmpNode, tmpDist, pointIndex, currEdge);
+                                check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge);
+                                if (tmpNormedDist <= equalNormedDelta)
+                                {
+                                    found = true;
+                                    break;
+                                }
                             }
 
                             tmpLat = wayLat;
                             tmpLon = wayLon;
                         }
 
-                        if (edgeDistCalcOnSearch
-                                && distCalc.validEdgeDistance(queryLat, queryLon,
-                                tmpLat, tmpLon, adjLat, adjLon))
-                        {
-                            tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
-                                    tmpLat, tmpLon, adjLat, adjLon);
-                        } else
-                        {
-                            tmpDist = adjDist;
-                        }
+                        if (found)
+                            return false;
 
-                        check(tmpNode, tmpDist, -currNode - 2, currEdge);
-                        return closestMatch.getWeight() >= 0;
+                        if (edgeDistCalcOnSearch
+                                && distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon))
+                            tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
+                        else
+                            tmpNormedDist = adjDist;
+
+                        check(tmpClosestNode, tmpNormedDist, len + 1, currEdge);
+                        return closestMatch.getQueryDistance() > equalNormedDelta;
                     }
 
-                    void check( int node, double dist, int wayIndex, EdgeIterator iter )
+                    boolean check( int node, double normedDist, int wayIndex, EdgeIterator iter )
                     {
-                        if (dist < closestMatch.getWeight())
+                        if (normedDist < closestMatch.getQueryDistance())
                         {
-                            closestMatch.setWeight(dist);
+                            closestMatch.setQueryDistance(normedDist);
                             closestMatch.setClosestNode(node);
-                            closestMatch.setClosestEdge(iter.detach());                            
+                            closestMatch.setClosestEdge(iter.detach());
                             closestMatch.setWayIndex(wayIndex);
+                            return true;
                         }
+                        return false;
                     }
                 }.start(createEdgeExplorer(), networkEntryNodeId, false);
                 return true;
             }
         });
 
+        if (closestMatch.isValid())
+        {
+            // 1. denormalize distance
+            closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));
+
+            // 2. calculate snapped point
+//            CoordTrig snappedPoint = new CoordTrig();
+//            closestMatch.setSnappedPoint(snappedPoint);
+
+            // 3. calculate distance from base node to snapped point -> setBasedDistance
+
+        }
         return closestMatch;
     }
 

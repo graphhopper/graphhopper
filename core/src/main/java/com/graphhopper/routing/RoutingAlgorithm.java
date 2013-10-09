@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.NotThreadSafe;
 
@@ -40,7 +41,7 @@ public interface RoutingAlgorithm
      * <p/>
      * @return the path. Call the method found() to make sure that the path is valid.
      */
-    Path calcPath( EdgeIteratorState from, EdgeIteratorState to );
+    Path calcPath( LocationIDResult from, LocationIDResult to );
 
     /**
      * @return name of this algorithm

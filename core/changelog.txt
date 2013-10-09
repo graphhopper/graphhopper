@@ -1,0 +1,29 @@
+0.2.0
+
+    finally fixed major feature request #27 to allow gps-to-gps queries instead of only junction-to-junction ones.
+    fixed bug #105 for disconnected areas
+    fix which made CH preparation ~5% faster
+    more align API for all algorithms. and initCollection is called via 1000 not something depending on the graph size    
+    API changed
+        case of vehicle now case does not matter
+        returned distance is in meter now
+    better i18n support
+    fixed major bug #102 when removing subnetworks
+    fixed bug #89 for trams on roads
+    completed improvement #93 for ferries
+    edge explorer makes none-CH algorithms ~8% faster    
+    link to all closed issues: https://github.com/graphhopper/graphhopper/issues?milestone=2&state=closed
+
+
+0.1.1
+06 August 2013
+
+    correct maven bundling and some more issues
+    more i18n
+
+0.1
+23 July 2013
+
+    initial version with lots of features and 24 closed issues:
+    https://github.com/graphhopper/graphhopper/issues?milestone=3&state=closed
+    

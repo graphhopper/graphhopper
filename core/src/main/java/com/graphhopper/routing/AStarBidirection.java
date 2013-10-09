@@ -24,6 +24,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.shapes.CoordTrig;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -117,9 +118,15 @@ public class AStarBidirection extends AbstractBidirAlgo
     }
 
     @Override
-    public void initFrom( int from )
+    protected AStarEdge createEdgeEntry( int node, double dist )
     {
-        currFrom = new AStarEdge(-1, from, 0, 0);
+        return new AStarEdge(EdgeIterator.NO_EDGE, node, dist, dist);
+    }
+
+    @Override
+    public void initFrom( int from, double dist )
+    {
+        currFrom = createEdgeEntry(from, dist);
         bestWeightMapFrom.put(from, currFrom);
         prioQueueOpenSetFrom.add(currFrom);
         fromCoord = new CoordTrig(graph.getLatitude(from), graph.getLongitude(from));
@@ -131,9 +138,9 @@ public class AStarBidirection extends AbstractBidirAlgo
     }
 
     @Override
-    public void initTo( int to )
+    public void initTo( int to, double dist )
     {
-        currTo = new AStarEdge(-1, to, 0, 0);
+        currTo = createEdgeEntry(to, dist);
         bestWeightMapTo.put(to, currTo);
         prioQueueOpenSetTo.add(currTo);
         toCoord = new CoordTrig(graph.getLatitude(to), graph.getLongitude(to));

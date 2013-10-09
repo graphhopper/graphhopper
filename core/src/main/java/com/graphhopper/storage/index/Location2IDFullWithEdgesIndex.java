@@ -22,6 +22,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.shapes.CoordTrig;
 
 /**
  * Same as full index but calculates distance to all edges too
@@ -78,8 +79,8 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
     @Override
     public LocationIDResult findClosest( double queryLat, double queryLon, EdgeFilter filter )
     {
-        int nodes = g.getNodes();
         LocationIDResult res = new LocationIDResult();
+        res.setQueryPoint(new CoordTrig(queryLat, queryLon));
         double foundDist = Double.MAX_VALUE;
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next())
@@ -108,7 +109,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
 
                 if (fromDist < foundDist)
                 {
-                    res.setWeight(fromDist);
+                    res.setQueryDistance(fromDist);
                     res.setClosestEdge(iter.detach());
                     res.setClosestNode(node);
                     foundDist = fromDist;
@@ -130,13 +131,12 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
                             fromLat, fromLon, toLat, toLon));
                     if (distEdge < foundDist)
                     {
-                        res.setWeight(distEdge);
+                        res.setQueryDistance(distEdge);
                         res.setClosestNode(node);
                         res.setClosestEdge(iter);
                         if (fromDist > calc.calcDist(toLat, toLon, queryLat, queryLon))
-                        {
                             res.setClosestNode(toNode);
-                        }
+
                         foundDist = distEdge;
                     }
                 }

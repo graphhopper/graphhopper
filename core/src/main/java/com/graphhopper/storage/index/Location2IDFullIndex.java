@@ -23,6 +23,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.shapes.Circle;
+import com.graphhopper.util.shapes.CoordTrig;
 
 /**
  * Very slow O(n) Location2IDIndex but no RAM/disc required.
@@ -74,6 +75,7 @@ public class Location2IDFullIndex implements Location2IDIndex
     public LocationIDResult findClosest( double queryLat, double queryLon, EdgeFilter edgeFilter )
     {
         LocationIDResult res = new LocationIDResult();
+        res.setQueryPoint(new CoordTrig(queryLat, queryLon));
         Circle circle = null;
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next())
@@ -99,11 +101,9 @@ public class Location2IDFullIndex implements Location2IDIndex
                 {
                     res.setClosestEdge(iter.detach());
                     res.setClosestNode(node);
-                    res.setWeight(dist);
-                    if (dist <= 0)
-                    {
+                    res.setQueryDistance(dist);
+                    if (dist <= 0)                    
                         break;
-                    }
 
                     circle = new Circle(tmpLat, tmpLon, dist, calc);
                 }

@@ -69,12 +69,10 @@ public class Location2IDQuadtree implements Location2IDIndex
     public Location2IDIndex setApproximation( boolean approxDist )
     {
         if (approxDist)
-        {
             distCalc = new DistancePlaneProjection();
-        } else
-        {
+        else
             distCalc = new DistanceCalc();
-        }
+
         return this;
     }
 
@@ -94,22 +92,17 @@ public class Location2IDQuadtree implements Location2IDIndex
     public boolean loadExisting()
     {
         if (!index.loadExisting())
-        {
             return false;
-        }
 
         if (index.getHeader(0) != MAGIC_INT)
-        {
             throw new IllegalStateException("incorrect loc2id index version");
-        }
+
         int lat = index.getHeader(1 * 4);
         int lon = index.getHeader(2 * 4);
         int checksum = index.getHeader(3 * 4);
         if (checksum != graph.getNodes())
-        {
             throw new IllegalStateException("index was created from a different graph with "
                     + checksum + ". Current nodes:" + graph.getNodes());
-        }
 
         initAlgo(lat, lon);
         return true;
@@ -159,9 +152,7 @@ public class Location2IDQuadtree implements Location2IDIndex
     {
         latSize = lonSize = (int) Math.sqrt(size);
         if (latSize * lonSize < size)
-        {
             lonSize++;
-        }
     }
 
     private void initBuffer()
@@ -335,9 +326,7 @@ public class Location2IDQuadtree implements Location2IDIndex
             final EdgeFilter edgeFilter )
     {
         if (edgeFilter != EdgeFilter.ALL_EDGES)
-        {
             throw new UnsupportedOperationException("edge filters are not yet implemented for " + Location2IDQuadtree.class.getSimpleName());
-        }
 
         // The following cases (e.g. dead ends or motorways crossing a normal way) could be problematic:
         // |     |
@@ -360,7 +349,8 @@ public class Location2IDQuadtree implements Location2IDIndex
         double mainLon = graph.getLongitude(id);
         final LocationIDResult res = new LocationIDResult();
         res.setClosestNode(id);
-        res.setWeight(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
+        res.setQueryDistance(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
+        res.setQueryPoint(new CoordTrig(queryLat, queryLon));
         goFurtherHook(id);
         new XFirstSearch()
         {
@@ -374,24 +364,25 @@ public class Location2IDQuadtree implements Location2IDIndex
             protected boolean goFurther( int baseNode )
             {
                 if (baseNode == id)
-                {
                     return true;
-                }
 
                 goFurtherHook(baseNode);
                 double currLat = graph.getLatitude(baseNode);
                 double currLon = graph.getLongitude(baseNode);
-                double currDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
-                if (currDist < res.getWeight())
+                double currNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
+                if (currNormedDist < res.getQueryDistance())
                 {
-                    res.setWeight(currDist);
+                    res.setQueryDistance(currNormedDist);
                     res.setClosestNode(baseNode);
                     return true;
                 }
 
-                return currDist < maxRasterWidth2InMeterNormed;
+                return currNormedDist < maxRasterWidth2InMeterNormed;
             }
         }.start(graph.createEdgeExplorer(), id, false);
+
+        // denormalize distance
+        res.setQueryDistance(distCalc.calcDenormalizedDist(res.getQueryDistance()));
         return res;
     }
 

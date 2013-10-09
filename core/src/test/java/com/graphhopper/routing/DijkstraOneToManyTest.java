@@ -61,7 +61,13 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    public void testDirectedGraphViaEdges()
+    public void testViaEdges_directedGraph()
+    {
+        // not supported
+    }
+
+    @Override
+    public void testViaEdges_withCoordinates()
     {
         // not supported
     }

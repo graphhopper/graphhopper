@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -56,14 +57,16 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public Path calcPath( EdgeIteratorState from, EdgeIteratorState to )
+    public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
     {
-        checkAlreadyRun();        
+        checkAlreadyRun();
+        EdgeIteratorState from = fromRes.getClosestEdge();
+        EdgeIteratorState to = toRes.getClosestEdge();
         if (flagEncoder.isForward(from.getFlags()))
-            fromMap.put(from.getAdjNode(), createEmptyEdgeEntry(from.getAdjNode()));
+            fromMap.put(from.getAdjNode(), createEdgeEntry(from.getAdjNode(), fromRes.getAdjDistance()));
 
         if (flagEncoder.isBackward(from.getFlags()))
-            fromMap.put(from.getBaseNode(), createEmptyEdgeEntry(from.getBaseNode()));
+            fromMap.put(from.getBaseNode(), createEdgeEntry(from.getBaseNode(), fromRes.getBasedDistance()));
 
         if (flagEncoder.isForward(to.getFlags()))
             to1 = to.getBaseNode();
@@ -81,9 +84,9 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     @Override
     public Path calcPath( int from, int to )
     {
-        checkAlreadyRun();        
+        checkAlreadyRun();
         to1 = to;
-        currEdge = new EdgeEntry(EdgeIterator.NO_EDGE, from, 0d);
+        currEdge = createEdgeEntry(from, 0);
         fromMap.put(from, currEdge);
         return runAlgo();
     }

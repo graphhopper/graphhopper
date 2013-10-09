@@ -22,6 +22,7 @@ import com.graphhopper.coll.IntDoubleBinHeap;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import gnu.trove.list.TIntList;
@@ -66,7 +67,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public Path calcPath( EdgeIteratorState from, EdgeIteratorState to )
+    public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
     {
         throw new UnsupportedOperationException("Not supported yet.");
     }
@@ -79,7 +80,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             edgeIds = new int[graph.getNodes()];
             Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
         }
-        
+
         fromNode = from;
         endNode = findEndNode(from, to);
         return extractPath();
@@ -110,7 +111,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     {
         if (weights.length < 2)
             return -1;
-        
+
         this.to = to;
         if (doClear)
         {
@@ -151,9 +152,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
             while (iter.next())
             {
-                if (!accept(iter))               
+                if (!accept(iter))
                     continue;
-                
+
                 int adjNode = iter.getAdjNode();
                 double tmpWeight = weightCalc.getWeight(iter) + weights[currNode];
                 if (weights[adjNode] == Double.MAX_VALUE)

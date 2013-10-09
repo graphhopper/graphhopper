@@ -70,11 +70,11 @@ public class DijkstraBidirection extends AbstractBidirAlgo
     }
 
     @Override
-    public void initFrom( int from )
+    public void initFrom( int from, double dist )
     {
         currFrom = from;
-        currFromWeight = 0;
-        currFromRef = parentRefFrom.add(from, 0, EdgeIterator.NO_EDGE);
+        currFromWeight = dist;
+        currFromRef = parentRefFrom.add(from, dist, EdgeIterator.NO_EDGE);
         openSetFrom.insert_(currFromWeight, currFromRef);
         if (currTo >= 0)
         {
@@ -84,11 +84,11 @@ public class DijkstraBidirection extends AbstractBidirAlgo
     }
 
     @Override
-    public void initTo( int to )
+    public void initTo( int to, double dist )
     {
         currTo = to;
-        currToWeight = 0;
-        currToRef = parentRefTo.add(to, 0, EdgeIterator.NO_EDGE);
+        currToWeight = dist;
+        currToRef = parentRefTo.add(to, dist, EdgeIterator.NO_EDGE);
         openSetTo.insert_(currToWeight, currToRef);
         if (currFrom >= 0)
         {

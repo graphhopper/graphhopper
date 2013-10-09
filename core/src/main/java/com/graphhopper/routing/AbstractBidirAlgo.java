@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -34,9 +35,9 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
     protected boolean finishedFrom;
     protected boolean finishedTo;
 
-    public abstract void initFrom( int from );
+    public abstract void initFrom( int from, double dist );
 
-    public abstract void initTo( int to );
+    public abstract void initTo( int to, double dist );
 
     protected abstract void initPath();
 
@@ -52,23 +53,25 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public Path calcPath( EdgeIteratorState from, EdgeIteratorState to )
+    public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
     {
         checkAlreadyRun();
+        EdgeIteratorState from = fromRes.getClosestEdge();
+        EdgeIteratorState to = toRes.getClosestEdge();
         initPath();
 
         // mix 'initFrom' and 'initTo' calls to find also cases where start==end
         if (flagEncoder.isForward(from.getFlags()))
-            initFrom(from.getAdjNode());
+            initFrom(from.getAdjNode(), fromRes.getAdjDistance());
 
         if (flagEncoder.isForward(to.getFlags()))
-            initTo(to.getBaseNode());
+            initTo(to.getBaseNode(), toRes.getBasedDistance());
 
         if (flagEncoder.isBackward(from.getFlags()))
-            initFrom(from.getBaseNode());
+            initFrom(from.getBaseNode(), fromRes.getBasedDistance());
 
         if (flagEncoder.isBackward(to.getFlags()))
-            initTo(to.getAdjNode());
+            initTo(to.getAdjNode(), toRes.getAdjDistance());
 
         checkState(from.getBaseNode(), from.getAdjNode(), to.getBaseNode(), to.getAdjNode());
         return runAlgo();
@@ -79,8 +82,8 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
     {
         checkAlreadyRun();
         initPath();
-        initFrom(from);
-        initTo(to);
+        initFrom(from, 0);
+        initTo(to, 0);
         return runAlgo();
     }
 

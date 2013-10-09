@@ -20,7 +20,9 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.CoordTrig;
 import gnu.trove.list.TIntList;
 import java.util.Random;
 import static org.junit.Assert.*;
@@ -421,7 +423,7 @@ public abstract class AbstractRoutingAlgorithmTester
 
         EdgeIterator from = GHUtility.getEdge(graph, 0, 7);
         EdgeIterator to = GHUtility.getEdge(graph, 4, 3);
-        Path p = prepareGraph(graph).createAlgo().calcPath(from, to);
+        Path p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, to));
 
         assertEquals(p.toString(), Helper.createTList(7, 6, 8, 3), p.calcNodes());
         assertEquals(p.toString(), 45, p.getDistance(), 1e-4);
@@ -429,7 +431,7 @@ public abstract class AbstractRoutingAlgorithmTester
         from = GHUtility.getEdge(graph, 0, 1);
         to = GHUtility.getEdge(graph, 2, 3);
 
-        p = prepareGraph(graph).createAlgo().calcPath(from, to);
+        p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, to));
         assertEquals(p.toString(), Helper.createTList(1, 2), p.calcNodes());
         assertEquals(p.toString(), 1, p.getDistance(), 1e-4);
     }
@@ -441,18 +443,18 @@ public abstract class AbstractRoutingAlgorithmTester
         EdgeIterator from = GHUtility.getEdge(graph, 0, 1);
         EdgeIterator to = GHUtility.getEdge(graph, 2, 3);
 
-        Path p = prepareGraph(graph).createAlgo().calcPath(from, from);
+        Path p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, from));
         assertEquals(p.toString(), 0, p.calcNodes().size());
         assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
 
         graph = createTestGraph();
-        p = prepareGraph(graph).createAlgo().calcPath(from, to);
+        p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, to));
         assertEquals(Helper.createTList(1, 2), p.calcNodes());
         assertEquals(p.toString(), 2, p.getDistance(), 1e-4);
     }
 
     @Test
-    public void testDirectedGraphViaEdges()
+    public void testViaEdges_directedGraph()
     {
         Graph graph = createGraph();
         // 0->1\
@@ -463,13 +465,41 @@ public abstract class AbstractRoutingAlgorithmTester
         graph.edge(2, 3, 1, true);
         graph.edge(3, 4, 1, false);
         graph.edge(4, 0, 1, true);
-        
+
         EdgeIterator from = GHUtility.getEdge(graph, 0, 1);
         EdgeIterator to = GHUtility.getEdge(graph, 3, 4);
 
-        Path p = prepareGraph(graph).createAlgo().calcPath(from, to);
+        Path p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, to));
         assertEquals(Helper.createTList(1, 2, 3), p.calcNodes());
         assertEquals(p.toString(), 2, p.getDistance(), 1e-4);
+    }
+
+    @Test
+    public void testViaEdges_withCoordinates()
+    {
+        Graph graph = createTestGraph();
+        LocationIDResult from = newLR(graph, GHUtility.getEdge(graph, 0, 1));
+        LocationIDResult to = newLR(graph, GHUtility.getEdge(graph, 2, 3));
+
+        // TODO init the result with snapped lat,lon of query AND wayGeo index 
+        // check possibilities: 
+        // on adjacent or base node, on pillar node
+        // near base or adj node, near pillar node
+        // one way stuff
+        // check nodes, distance and time!
+        Path p = prepareGraph(graph).createAlgo().calcPath(from, to);
+        assertEquals(Helper.createTList(1, 2), p.calcNodes());
+        assertEquals(p.toString(), 2, p.getDistance(), 1e-4);
+    }
+
+    LocationIDResult newLR( Graph graph, EdgeIteratorState edge )
+    {
+        LocationIDResult res = new LocationIDResult();
+        res.setClosestEdge(edge);
+        double lat = (graph.getLatitude(edge.getBaseNode()) + graph.getLatitude(edge.getAdjNode())) / 2;
+        double lon = (graph.getLongitude(edge.getBaseNode()) + graph.getLongitude(edge.getAdjNode())) / 2;
+        res.setQueryPoint(new CoordTrig(lat, lon));
+        return res;
     }
 
     public Graph getMatrixGraph()

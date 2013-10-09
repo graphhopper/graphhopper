@@ -19,18 +19,33 @@
 package com.graphhopper.storage.index;
 
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.shapes.CoordTrig;
 
 /**
- * Result of Location2IDIndex lookup
+ * Result of Location2IDIndex lookup.
+ * <p/>
+ * <
+ * pre> X=query coordinates S=snapped coordinates: "snapping" real coords to road N=tower or pillar
+ * node T=closest tower node XS=distance
+ * <p/>
+ * X
+ * |
+ * T--S----N
+ * <p/>
+ * </pre>
  * <p/>
  * @author Peter Karich
  */
 public class LocationIDResult
 {
-    private double weight = Double.MAX_VALUE;
-    private int wayIndex = -3;
+    private double queryDistance = Double.MAX_VALUE;
+    private double basedDistance = 0;
+    private double adjDistance = 0;
+    private int wayIndex = -1;
     private int closestNode = -1;
-    private EdgeIteratorState edgeIter;
+    private EdgeIteratorState edgeState;
+    private CoordTrig queryPoint;
+    private CoordTrig snappedPoint;
 
     public LocationIDResult()
     {
@@ -42,26 +57,58 @@ public class LocationIDResult
     }
 
     /**
-     * @return the closest matching node.
+     * @return the closest matching node. -1 if nothing found or call isValid before.
      */
     public int getClosestNode()
     {
         return closestNode;
     }
 
-    public void setWeight( double w )
+    public void setQueryDistance( double dist )
     {
-        weight = w;
+        queryDistance = dist;
     }
 
     /**
-     * @return the distance or a normalized value of it.
+     * @return the distance of the query to the snapped coordinates. In meter
      */
-    public double getWeight()
+    public double getQueryDistance()
     {
-        return weight;
+        return queryDistance;
     }
 
+    public void setBasedDistance( double dist )
+    {
+        basedDistance = dist;
+    }
+
+    /**
+     * @return the distance from the base node to the snapped point. In meter
+     */
+    public double getBasedDistance()
+    {
+        return basedDistance;
+    }
+
+    public void setAdjDistance( double adjDistance )
+    {
+        this.adjDistance = adjDistance;
+    }
+
+    /**
+     * @return the distance from the adjacent node to the snapped point. In meter
+     */
+    public double getAdjDistance()
+    {
+        return adjDistance;
+    }
+
+    /**
+     * References to a tower node or the index of wayGeometry of the closest edge. If wayGeometry
+     * has lengh L then the wayIndex 0 refers to the *base* node, 1 to L (inclusive) refer to the
+     * wayGeometry indices (minus one) and L+1 to the *adjacent* node. Currently only supported if
+     * returned from Location2NodesNtree.
+     */
     public void setWayIndex( int wayIndex )
     {
         this.wayIndex = wayIndex;
@@ -77,20 +124,44 @@ public class LocationIDResult
 
     public void setClosestEdge( EdgeIteratorState detach )
     {
-        edgeIter = detach;
+        edgeState = detach;
     }
 
     /**
-     * @return the closest matching edge. Will be null if nothing found.
+     * @return the closest matching edge. Will be null if nothing found or call isValid before
      */
     public EdgeIteratorState getClosestEdge()
     {
-        return edgeIter;
+        return edgeState;
+    }
+
+    public void setQueryPoint( CoordTrig queryPoint )
+    {
+        this.queryPoint = queryPoint;
+    }
+
+    public CoordTrig getQueryPoint()
+    {
+        return queryPoint;
+    }
+
+    public void setSnappedPoint( CoordTrig snappedPoint )
+    {
+        this.snappedPoint = snappedPoint;
+    }
+
+    /**
+     * @return the position of the query point 'snapped' to a road segment or node. Can be null if
+     * no result found.
+     */
+    public CoordTrig getSnappedPoint()
+    {
+        return snappedPoint;
     }
 
     @Override
     public String toString()
     {
-        return closestNode + ", " + weight + ", " + wayIndex;
+        return closestNode + ", " + queryDistance + ", " + wayIndex;
     }
 }
