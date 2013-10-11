@@ -1323,7 +1323,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
 
             // nodes
             int hash = nodes.getHeader(0);
-            if (hash != getClass().getName().hashCode())
+            if (hash != getGraphSignature())
             {
                 throw new IllegalStateException("Cannot load the graph - it wasn't create via "
                         + getClass().getName() + "! " + dir);
@@ -1345,6 +1345,10 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             return true;
         }
         return false;
+    }
+    
+    protected long getGraphSignature() {
+    	return getClass().getName().hashCode();
     }
 
     @Override

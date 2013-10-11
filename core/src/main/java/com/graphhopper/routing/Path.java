@@ -156,6 +156,18 @@ public class Path
     }
 
     /**
+     * The graph out of which the edge was build
+     * @return
+     */
+    public Graph graph() {
+    	return this.graph;
+    }
+    
+    public FlagEncoder encoder() {
+    	return this.encoder;
+    }
+    
+    /**
      * Extracts the Path from the shortest-path-tree determined by edgeEntry.
      */
     public Path extract()

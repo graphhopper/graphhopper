@@ -17,22 +17,38 @@
  */
 package com.graphhopper;
 
+import java.io.File;
+import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.PathFinisher;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.noderesolver.DummyNodeResolver;
+import com.graphhopper.routing.noderesolver.RouteNodeResolver;
+import com.graphhopper.routing.util.AlgorithmPreparation;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FastestCalc;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
+import com.graphhopper.routing.util.PrepareRoutingSubnetworks;
+import com.graphhopper.routing.util.RoutingAlgorithmSpecialAreaTests;
+import com.graphhopper.routing.util.ShortestCalc;
+import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.*;
+// import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.index.Location2IDQuadtree;
 import com.graphhopper.storage.index.Location2NodesNtree;
 import com.graphhopper.storage.index.Location2NodesNtreeLG;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.*;
-import java.io.File;
-import java.io.IOException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Main wrapper of the offline API for a simple and efficient usage.
@@ -63,6 +79,7 @@ public class GraphHopper implements GraphHopperAPI
     // for routing:
     private boolean simplifyRequest = true;
     private String defaultAlgorithm = "bidijkstra";
+    private boolean finishPath = true;
     // for index:
     private Location2IDIndex locationIndex;
     private int preciseIndexResolution = 500;
@@ -293,6 +310,27 @@ public class GraphHopper implements GraphHopperAPI
     {
         return prepare;
     }
+    
+	/**
+	 * Checks if the hopper is configured to compute accurate path endings
+	 * 
+	 * @return true if configured to compute accurate path endings
+	 */
+	public boolean isFinishPath() {
+		return this.finishPath;
+	}
+
+	/**
+	 * Configure the hopper to compute (or not) the path endings
+	 * 
+	 * @param finish
+	 *            set to true to compute accurate path endings
+	 * @return
+	 */
+	public GraphHopper setFinishPath(boolean finish) {
+		this.finishPath = finish;
+		return this;
+	}
 
     /**
      * @deprecated until #12 is fixed
@@ -566,22 +604,28 @@ public class GraphHopper implements GraphHopperAPI
             rsp.addError(new IllegalArgumentException("Vehicle " + request.getVehicle() + " unsupported. Supported are: " + getEncodingManager()));
             return rsp;
         }
-
+        // find edges to route
         FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        int from = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter).getClosestNode();
-        int to = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter).getClosestNode();
-        String debug = "idLookup:" + sw.stop().getSeconds() + "s";
+        LocationIDResult from = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
+        LocationIDResult to = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);
+        StringBuilder debug = new StringBuilder("idLookup:").append(sw.stop().getSeconds()).append('s');
 
-        if (from < 0)
+        if (from == null)
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.getFrom()));
 
-        if (to < 0)
+        if (to == null)
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.getTo()));
 
-        if (from == to)
-            rsp.addError(new IllegalArgumentException("Point 1 is equal to point 2"));
-
+        
+        // get nodes to route
+		RouteNodeResolver nodeFinder = this.getNodeResolver(request);
+		boolean sameEdge = this.isSameEdge(from, to);
+		
+		int fromId = nodeFinder.findRouteNode(from, request.getFrom().lat, request.getFrom().lon, true, sameEdge);
+		int toId = nodeFinder.findRouteNode(to, request.getTo().lat, request.getTo().lon, false, sameEdge);
+        
+        // initialize routing algorithm
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
 
@@ -609,13 +653,39 @@ public class GraphHopper implements GraphHopperAPI
         {
             return rsp;
         }
-        debug += ", algoInit:" + sw.stop().getSeconds() + "s";
+        debug.append(", algoInit:").append(sw.stop().getSeconds()).append('s');
 
+        
+        // compute route path
         sw = new StopWatch().start();
-        Path path = algo.calcPath(from, to);
-        debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s"
-                + ", " + path.getDebugInfo();
-        PointList points = path.calcPoints();
+        Path path = algo.calcPath(fromId, toId);
+        debug.append(", ").append(algo.getName()).append("-routing:").append(sw.stop().getSeconds()).append('s')
+             .append(", ").append(path.getDebugInfo());
+        
+        if(logger.isDebugEnabled()) {
+        	logger.debug("Solved path: nodes:{} distance:{} time:{}", new Object[]{path.calcPoints().getSize(), path.getDistance(), path.getTime()});
+        }
+        
+        PointList points;
+        double distance;
+        long time;
+        if(finishPath) {
+	        sw = new StopWatch().start();
+	        PathFinisher finishedPath = new PathFinisher(from, to, request.getFrom(), request.getTo(), path);
+	        finishedPath.setScaleDistance(true);
+	        points = finishedPath.getFinishedPointList();
+	        distance = finishedPath.getFinishedDistance();
+	        time = finishedPath.getFinishedTime();
+	        debug.append(", ").append("finished-path:").append(sw.stop().getSeconds()).append('s');
+	        if(logger.isDebugEnabled()) {
+	        	logger.debug("Finished path: nodes:{} distance:{} time:{}", new Object[]{points.getSize(), distance, time});
+	        }
+        } else {
+        	points = path.calcPoints();
+        	distance = path.getDistance();
+        	time = path.getTime();
+        }
+        // simplify route geometry
         simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
         if (simplifyRequest)
         {
@@ -626,7 +696,7 @@ public class GraphHopper implements GraphHopperAPI
             {
                 new DouglasPeucker().setMaxDistance(minPathPrecision).simplify(points);
             }
-            debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
+            debug.append(", simplify (").append(orig).append("->").append(points.getSize()).append("):").append(sw.stop().getSeconds()).append('s');
         }
 
         enableInstructions = request.getHint("instructions", enableInstructions);
@@ -634,9 +704,9 @@ public class GraphHopper implements GraphHopperAPI
         {
             sw = new StopWatch().start();
             rsp.setInstructions(path.calcInstructions());
-            debug += ", instructions:" + sw.stop().getSeconds() + "s";
+            debug.append(", instructions:").append(sw.stop().getSeconds()).append('s');
         }
-        return rsp.setPoints(points).setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
+        return rsp.setPoints(points).setDistance(distance).setTime(time).setDebugInfo(debug.toString());
     }
 
     protected Location2IDIndex createLocationIndex( Directory dir )
@@ -750,5 +820,28 @@ public class GraphHopper implements GraphHopperAPI
     {
         if (fullyLoaded)
             throw new IllegalStateException("No configuration changes are possible after loading the graph");
+    }
+    
+    /**
+     * Creates a {@link RouteNodeResolver} for the passed request
+     * @param request
+     * @return
+     */
+    private RouteNodeResolver getNodeResolver(GHRequest request) {
+    	// TODO use a better implementation of RouteNodeResolver
+    	return new DummyNodeResolver(encodingManager.getEncoder(request.getVehicle()));
+    }
+    
+    /**
+     * Checks if the two LocationIDResult are actually the same edge.
+     * @param from
+     * @param to
+     * @return
+     */
+    private boolean isSameEdge(LocationIDResult from, LocationIDResult to) {
+    	if(from.getClosestEdge() != null && to.getClosestEdge() != null) {
+    		return from.getClosestEdge().getEdge() == to.getClosestEdge().getEdge();
+    	}
+    	return from.getClosestNode() == to.getClosestNode();
     }
 }

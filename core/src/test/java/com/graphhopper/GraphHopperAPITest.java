@@ -47,7 +47,7 @@ public class GraphHopperAPITest
         graph.edge(0, 4, 40, true);
         graph.edge(4, 3, 40, true);
 
-        GraphHopperAPI instance = new GraphHopper().setEncodingManager(encodingManager).disableCHShortcuts().loadGraph(graph);
+        GraphHopperAPI instance = new GraphHopper().setEncodingManager(encodingManager).disableCHShortcuts().setFinishPath(false).loadGraph(graph);
         GHResponse ph = instance.route(new GHRequest(42, 10.4, 42, 10));
         assertTrue(ph.isFound());
         assertEquals(80, ph.getDistance(), 1e-6);

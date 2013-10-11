@@ -25,3 +25,5 @@ debug.sh
 *.pbf
 *.dem
 *.log
+/.settings
+/.project
