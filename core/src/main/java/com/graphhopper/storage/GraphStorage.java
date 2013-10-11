@@ -431,9 +431,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             lastLink = getLinkPosInEdgeArea(nodeThis, otherNode, edgePointer);
             edgePointer = edges.getInt(lastLink);
             if (edgePointer == EdgeIterator.NO_EDGE)
-            {
                 break;
-            }
         }
 
         if (i >= 10000)
@@ -471,9 +469,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         {
             str += "\n";
             if (edge == EdgeIterator.NO_EDGE)
-            {
                 break;
-            }
+
             str += edge + ": ";
             long edgePointer = (long) edge * edgeEntryBytes;
             for (int j = 0; j < edgeEntryBytes; j += 4)
@@ -600,9 +597,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         @Override
-        public PointList getWayGeometry()
+        public PointList getWayGeometry( int type )
         {
-            return GraphStorage.this.getWayGeometry(edgePointer, getBaseNode() > getAdjNode());
+            return GraphStorage.this.getWayGeometry(edgePointer, getBaseNode() > getAdjNode(), type, getBaseNode(), getAdjNode());
         }
 
         @Override
@@ -829,9 +826,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         @Override
-        public final PointList getWayGeometry()
+        public final PointList getWayGeometry( int mode )
         {
-            return GraphStorage.this.getWayGeometry(edgePointer, baseNode > node);
+            return GraphStorage.this.getWayGeometry(edgePointer, baseNode > node, mode, getBaseNode(), getAdjNode());
         }
 
         @Override
@@ -902,48 +899,59 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             wayGeometry.setBytes(geoRef, bytes, bytes.length);
         } else
         {
-            edges.setInt(edgePointer + E_GEO, EdgeIterator.NO_EDGE);
+            edges.setInt(edgePointer + E_GEO, 0);
         }
     }
 
-    private PointList getWayGeometry( long edgePointer, boolean reverse )
+    private PointList getWayGeometry( long edgePointer, boolean reverse, int mode, int baseNode, int adjNode )
     {
         long geoRef = edges.getInt(edgePointer + E_GEO);
-        if (geoRef == EdgeIterator.NO_EDGE)
+        int count = 0;
+        byte[] bytes = null;
+        if (geoRef > 0)
         {
+            geoRef *= 4;
+            count = wayGeometry.getInt(geoRef);
+            wayGeometry.getInt(geoRef);
+
+            geoRef += 4;
+            bytes = new byte[count * 2 * 4];
+            wayGeometry.getBytes(geoRef, bytes, bytes.length);
+        } else if (mode == 0)
             return PointList.EMPTY;
-        }
 
-        geoRef *= 4;
-        int count = wayGeometry.getInt(geoRef);
-
-        geoRef += 4;
-        byte[] bytes = new byte[count * 2 * 4];
-        wayGeometry.getBytes(geoRef, bytes, bytes.length);
-        PointList pillarNodes = new PointList(count);
+        PointList pillarNodes = new PointList(count + mode);
         if (reverse)
         {
-            int index = bytes.length;
-            for (int i = count - 1; i >= 0; i--)
-            {
-                index -= 4;
-                double lon = Helper.intToDegree(BitUtil.toInt(bytes, index));
-                index -= 4;
-                double lat = Helper.intToDegree(BitUtil.toInt(bytes, index));
-                pillarNodes.add(lat, lon);
-            }
+            if ((mode & 2) != 0)
+                pillarNodes.add(getLatitude(adjNode), getLongitude(adjNode));
         } else
         {
-            int index = 0;
-            for (int i = 0; i < count; i++)
-            {
-                double lat = Helper.intToDegree(BitUtil.toInt(bytes, index));
-                index += 4;
-                double lon = Helper.intToDegree(BitUtil.toInt(bytes, index));
-                index += 4;
-                pillarNodes.add(lat, lon);
-            }
+            if ((mode & 1) != 0)
+                pillarNodes.add(getLatitude(baseNode), getLongitude(baseNode));
         }
+
+        int index = 0;
+        for (int i = 0; i < count; i++)
+        {
+            double lat = Helper.intToDegree(BitUtil.toInt(bytes, index));
+            index += 4;
+            double lon = Helper.intToDegree(BitUtil.toInt(bytes, index));
+            index += 4;
+            pillarNodes.add(lat, lon);
+        }
+
+        if (reverse)
+        {
+            if ((mode & 1) != 0)
+                pillarNodes.add(getLatitude(baseNode), getLongitude(baseNode));
+            pillarNodes.reverse();
+        } else
+        {
+            if ((mode & 2) != 0)
+                pillarNodes.add(getLatitude(adjNode), getLongitude(adjNode));
+        }
+
         return pillarNodes;
     }
 
@@ -1197,23 +1205,17 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             int nodeA = iter.getBaseNode();
             int nodeB = iter.getAdjNode();
             if (!toMoveSet.contains(nodeA) && !toMoveSet.contains(nodeB))
-            {
                 continue;
-            }
 
             // now overwrite exiting edge with new node ids 
             // also flags and links could have changed due to different node order
             int updatedA = oldToNewMap.get(nodeA);
             if (updatedA < 0)
-            {
                 updatedA = nodeA;
-            }
 
             int updatedB = oldToNewMap.get(nodeB);
             if (updatedB < 0)
-            {
                 updatedB = nodeB;
-            }
 
             int edge = iter.getEdge();
             long edgePointer = (long) edge * edgeEntryBytes;
@@ -1223,7 +1225,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             double distance = getDist(edgePointer);
             writeEdge(edge, updatedA, updatedB, linkA, linkB, distance, flags);
             if (updatedA < updatedB != nodeA < nodeB)
-                setWayGeometry(getWayGeometry(edgePointer, true), edgePointer, false);
+                setWayGeometry(getWayGeometry(edgePointer, true, 0, -1, -1), edgePointer, false);
         }
 
         // we do not remove the invalid edges => edgeCount stays the same!

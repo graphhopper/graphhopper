@@ -32,7 +32,7 @@ import java.util.*;
  * @author Peter Karich
  */
 public class InstructionList
-{    
+{
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;
@@ -91,9 +91,7 @@ public class InstructionList
         for (int i = 0; i < indications.size(); i++)
         {
             if (i > 0)
-            {
                 sb.append(", ");
-            }
 
             sb.append('(');
             sb.append(indications.get(i));
@@ -147,12 +145,9 @@ public class InstructionList
                 } else
                 {
                     if (distInMiles < 100)
-                    {
                         labels.add(DistanceCalc.round(distInMiles, 2) + " " + tr.tr("miAbbr"));
-                    } else
-                    {
+                    else
                         labels.add((int) DistanceCalc.round(distInMiles, 1) + " " + tr.tr("miAbbr"));
-                    }
                 }
             } else
             {
@@ -162,12 +157,9 @@ public class InstructionList
                 } else
                 {
                     if (dist < 100000)
-                    {
                         labels.add(DistanceCalc.round(dist / 1000, 2) + " " + tr.tr("kmAbbr"));
-                    } else
-                    {
+                    else
                         labels.add((int) DistanceCalc.round(dist / 1000, 1) + " " + tr.tr("kmAbbr"));
-                    }
                 }
             }
         }
@@ -175,7 +167,7 @@ public class InstructionList
     }
 
     public List<String> createDescription( Translation tr )
-    {        
+    {
         String shLeftTr = tr.tr("sharp_left");
         String shRightTr = tr.tr("sharp_right");
         String slLeftTr = tr.tr("slight_left");
@@ -217,9 +209,7 @@ public class InstructionList
                         break;
                 }
                 if (dir == null)
-                {
                     throw new IllegalStateException("Indication not found " + indi);
-                }
 
                 str = Helper.isEmpty(n) ? tr.tr("turn", dir) : tr.tr("turn_onto", dir, n);
             }
@@ -228,6 +218,9 @@ public class InstructionList
         return instructions;
     }
 
+    /**
+     * Sets the last added distance to the specified value.
+     */
     public void updateLastDistance( double prevDist )
     {
         if (distances.isEmpty())

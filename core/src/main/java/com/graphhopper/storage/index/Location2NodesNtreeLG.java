@@ -24,10 +24,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.util.*;
-import gnu.trove.list.TIntList;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 
 /**
  * The LevelGraph has some edges disconnected (to be more efficient), but this happens before the
@@ -122,9 +118,9 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
             }
 
             @Override
-            public PointList getWayGeometry()
+            public PointList getWayGeometry(int type)
             {
-                return tmpIter.getWayGeometry();
+                return tmpIter.getWayGeometry(type);
             }
 
             @Override

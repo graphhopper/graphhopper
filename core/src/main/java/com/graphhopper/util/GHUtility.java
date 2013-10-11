@@ -144,7 +144,7 @@ public class GHUtility
         while (iter.next())
         {
             str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
-                    + iter.getWayGeometry().getSize() + ", edgeId:" + iter.getEdge()
+                    + iter.getWayGeometry(0).getSize() + ", edgeId:" + iter.getEdge()
                     + "\t" + BitUtil.toBitString(iter.getFlags(), 8) + "\n";
         }
         return str;
@@ -218,15 +218,13 @@ public class GHUtility
             {
                 int newNodeIndex = oldToNewNodeList.get(eIter.getAdjNode());
                 if (newNodeIndex < 0)
-                {
                     throw new IllegalStateException("empty entries should be connected to the others");
-                }
+
                 if (bitset.contains(newNodeIndex))
-                {
                     continue;
-                }
+
                 sortedGraph.edge(newIndex, newNodeIndex, eIter.getDistance(), eIter.getFlags()).
-                        setWayGeometry(eIter.getWayGeometry());
+                        setWayGeometry(eIter.getWayGeometry(0));
             }
         }
         return sortedGraph;
@@ -297,10 +295,10 @@ public class GHUtility
             {
                 int adjacentNodeIndex = eIter.getAdjNode();
                 if (bitset.contains(adjacentNodeIndex))
-                {
                     continue;
-                }
-                to.edge(oldNode, adjacentNodeIndex, eIter.getDistance(), eIter.getFlags()).setWayGeometry(eIter.getWayGeometry());
+
+                to.edge(oldNode, adjacentNodeIndex, eIter.getDistance(), eIter.getFlags()).
+                        setWayGeometry(eIter.getWayGeometry(0));
             }
         }
         return to;
@@ -397,7 +395,7 @@ public class GHUtility
         }
 
         @Override
-        public PointList getWayGeometry()
+        public PointList getWayGeometry( int type )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }

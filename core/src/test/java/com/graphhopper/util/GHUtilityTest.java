@@ -106,7 +106,7 @@ public class GHUtilityTest
         LevelGraph lg = new GraphBuilder(encodingManager).levelGraphCreate();
         GHUtility.copyTo(g, lg);
         eb = lg.getEdgeProps(eb.getEdge(), 6);
-        assertEquals(Helper.createPointList(-1, 3, 12, 10), eb.getWayGeometry());
+        assertEquals(Helper.createPointList(-1, 3, 12, 10), eb.getWayGeometry(0));
         assertEquals(0, lg.getLevel(0));
         assertEquals(0, lg.getLevel(1));
         assertEquals(0, lg.getLatitude(0), 1e-6);

@@ -41,7 +41,7 @@ public class Path4CH extends PathBidirRef
     }
 
     @Override
-    protected void processDistance( int tmpEdge, int endNode )
+    protected void processEdge( int tmpEdge, int endNode )
     {
         EdgeIteratorState mainIter = graph.getEdgeProps(tmpEdge, endNode);
 

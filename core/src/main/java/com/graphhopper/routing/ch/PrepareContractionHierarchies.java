@@ -743,7 +743,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             @Override
             public String getName()
             {
-                return "dijkstraCH";
+                return "dijkstrabiCH";
             }
         };
 
@@ -788,7 +788,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             @Override
             public String getName()
             {
-                return "astarCH";
+                return "astarbiCH";
             }
         };
 

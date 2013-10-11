@@ -103,9 +103,8 @@ public class Path
     private int getFromNode()
     {
         if (!EdgeIterator.Edge.isValid(fromNode))
-        {
             throw new IllegalStateException("Call extract() before retrieving fromNode");
-        }
+        
         return fromNode;
     }
 
@@ -165,7 +164,7 @@ public class Path
         setEndNode(goalEdge.endNode);
         while (EdgeIterator.Edge.isValid(goalEdge.edge))
         {
-            processDistance(goalEdge.edge, goalEdge.endNode);
+            processEdge(goalEdge.edge, goalEdge.endNode);
             goalEdge = goalEdge.parent;
         }
 
@@ -183,7 +182,7 @@ public class Path
     /**
      * Calls calcDistance and adds the edgeId.
      */
-    protected void processDistance( int edgeId, int endNode )
+    protected void processEdge( int edgeId, int endNode )
     {
         EdgeIteratorState iter = graph.getEdgeProps(edgeId, endNode);
         distance += calcDistance(iter);
@@ -192,7 +191,7 @@ public class Path
     }
 
     /**
-     * This method returns the distance in kilometer for the specified edge.
+     * This method returns the distance in meter for the specified edge.
      */
     protected double calcDistance( EdgeIteratorState iter )
     {
@@ -200,7 +199,7 @@ public class Path
     }
 
     /**
-     * Calculates the time in minutes for the specified distance and speed (via flags)
+     * Calculates the time in seconds for the specified distance in meter and speed (via flags)
      */
     protected long calcTime( double distance, int flags )
     {
@@ -266,14 +265,12 @@ public class Path
     public PointList calcPoints()
     {
         if (cachedPoints != null)
-        {
             return cachedPoints;
-        }
+
         cachedPoints = new PointList(edgeIds.size() + 1);
         if (edgeIds.isEmpty())
-        {
             return cachedPoints;
-        }
+        
         int tmpNode = getFromNode();
         cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
         forEveryEdge(new EdgeVisitor()
@@ -281,16 +278,14 @@ public class Path
             @Override
             public void next( EdgeIteratorState eb, int i )
             {
-                PointList pl = eb.getWayGeometry();
+                PointList pl = eb.getWayGeometry(1);
                 pl.reverse();
                 for (int j = 0; j < pl.getSize(); j++)
                 {
                     cachedPoints.add(pl.getLatitude(j), pl.getLongitude(j));
                 }
-                int baseNode = eb.getBaseNode();
-                cachedPoints.add(graph.getLatitude(baseNode), graph.getLongitude(baseNode));
             }
-        });
+        });        
         return cachedPoints;
     }
 
@@ -300,9 +295,8 @@ public class Path
     public InstructionList calcInstructions()
     {
         if (cachedWays != null)
-        {
             return cachedWays;
-        }
+
         cachedWays = new InstructionList(edgeIds.size() / 4);
         if (edgeIds.isEmpty())
         {
@@ -340,14 +334,14 @@ public class Path
 
             @Override
             public void next( EdgeIteratorState edgeBase, int index )
-            {                
+            {
                 // Hmmh, a bit ugly: 'iter' links to the previous node of the path!
                 // Ie. baseNode is the current node and adjNode is the previous.
                 int baseNode = edgeBase.getBaseNode();
                 double baseLat = graph.getLatitude(baseNode);
                 double baseLon = graph.getLongitude(baseNode);
                 double latitude, longitude;
-                PointList wayGeo = edgeBase.getWayGeometry();
+                PointList wayGeo = edgeBase.getWayGeometry(0);
                 if (wayGeo.isEmpty())
                 {
                     latitude = baseLat;
@@ -373,23 +367,17 @@ public class Path
                     if (prevOrientation >= 0)
                     {
                         if (orientation < -Math.PI + prevOrientation)
-                        {
                             tmpOrientation = orientation + 2 * Math.PI;
-                        } else
-                        {
+                        else
                             tmpOrientation = orientation;
-                        }
                     } else
                     {
                         if (orientation > +Math.PI + prevOrientation)
-                        {
                             tmpOrientation = orientation - 2 * Math.PI;
-                        } else
-                        {
+                        else
                             tmpOrientation = orientation;
-                        }
                     }
-                                                           
+
                     String tmpName = edgeBase.getName();
                     if (!name.equals(tmpName))
                     {
@@ -406,31 +394,25 @@ public class Path
                         {
                             // 0.8 ~= 40°
                             if (tmpOrientation > prevOrientation)
-                            {
                                 cachedWays.add(InstructionList.TURN_SLIGHT_LEFT, name, prevDist);
-                            } else
-                            {
+                            else
                                 cachedWays.add(InstructionList.TURN_SLIGHT_RIGHT, name, prevDist);
-                            }
+
                         } else if (delta < 1.8)
                         {
                             // 1.8 ~= 103°
                             if (tmpOrientation > prevOrientation)
-                            {
                                 cachedWays.add(InstructionList.TURN_LEFT, name, prevDist);
-                            } else
-                            {
+                            else
                                 cachedWays.add(InstructionList.TURN_RIGHT, name, prevDist);
-                            }
+
                         } else
                         {
                             if (tmpOrientation > prevOrientation)
-                            {
                                 cachedWays.add(InstructionList.TURN_SHARP_LEFT, name, prevDist);
-                            } else
-                            {
+                            else
                                 cachedWays.add(InstructionList.TURN_SHARP_RIGHT, name, prevDist);
-                            }
+
                         }
                     } else
                         prevDist += calcDistance(edgeBase);
@@ -439,15 +421,12 @@ public class Path
                 prevLat = baseLat;
                 prevLon = baseLon;
                 if (wayGeo.isEmpty())
-                {
                     prevOrientation = orientation;
-                } else
-                {
+                else
                     prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(0), baseLon - wayGeo.getLongitude(0));
-                }
-                
+
                 boolean lastEdgeIter = index == edgeIds.size() - 1;
-                if(lastEdgeIter)
+                if (lastEdgeIter)
                     cachedWays.updateLastDistance(prevDist);
             }
         });

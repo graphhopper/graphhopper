@@ -86,7 +86,7 @@ public class PathBidirRef extends Path
         EdgeEntry currEdge = edgeEntry;
         while (EdgeIterator.Edge.isValid(currEdge.edge))
         {
-            processDistance(currEdge.edge, currEdge.endNode);
+            processEdge(currEdge.edge, currEdge.endNode);
             currEdge = currEdge.parent;
         }
         setFromNode(currEdge.endNode);
@@ -96,7 +96,7 @@ public class PathBidirRef extends Path
         while (EdgeIterator.Edge.isValid(tmpEdge))
         {
             currEdge = currEdge.parent;
-            processDistance(tmpEdge, currEdge.endNode);
+            processEdge(tmpEdge, currEdge.endNode);
             tmpEdge = currEdge.edge;
         }
         setEndNode(currEdge.endNode);

@@ -175,9 +175,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
                 tmpPrevEdge = tmpIter.getEdge();
             }
             if (found)
-            {
-                internalEdgeDisconnect(iter.getEdge(), (long) tmpPrevEdge * edgeEntryBytes, iter.getAdjNode(), iter.getBaseNode());
-            }
+                internalEdgeDisconnect(iter.getEdge(), (long) tmpPrevEdge * edgeEntryBytes, iter.getAdjNode(), iter.getBaseNode());            
         }
         return iter.getEdge();
     }

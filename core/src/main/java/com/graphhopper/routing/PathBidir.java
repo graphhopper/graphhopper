@@ -70,7 +70,7 @@ public class PathBidir extends Path
             if (edgeId < 0)
                 break;
 
-            processDistance(edgeId, nodeFrom);
+            processEdge(edgeId, nodeFrom);
             currRef = edgeWFrom.getParent(currRef);
             nodeFrom = edgeWFrom.getNode(currRef);
         }
@@ -84,7 +84,7 @@ public class PathBidir extends Path
             if (edgeId < 0)
                 break;
 
-            processDistance(edgeId, nodeTo);
+            processEdge(edgeId, nodeTo);
             int tmpRef = edgeWTo.getParent(currRef);
             nodeTo = edgeWTo.getNode(tmpRef);
             currRef = tmpRef;

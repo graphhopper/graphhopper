@@ -27,6 +27,12 @@ import static org.junit.Assert.*;
 public class PointListTest
 {
     @Test
+    public void testEquals()
+    {
+        assertEquals(Helper.createPointList(), PointList.EMPTY);
+    }
+
+    @Test
     public void testReverse()
     {
         PointList instance = new PointList();

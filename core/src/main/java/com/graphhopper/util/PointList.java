@@ -173,25 +173,20 @@ public class PointList
     @Override
     public boolean equals( Object obj )
     {
-        if (obj == null || getClass() != obj.getClass())
-        {
+        if (obj == null)
             return false;
-        }
+
         final PointList other = (PointList) obj;
         if (this.size != other.size)
-        {
             return false;
-        }
+
         for (int i = 0; i < size; i++)
         {
             if (Math.round(latitudes[i] * PRECISION) != Math.round(other.latitudes[i] * PRECISION))
-            {
                 return false;
-            }
+
             if (Math.round(longitudes[i] * PRECISION) != Math.round(other.longitudes[i] * PRECISION))
-            {
                 return false;
-            }
         }
         return true;
     }

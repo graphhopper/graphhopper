@@ -56,7 +56,7 @@ public class PathNative extends Path
             {
                 break;
             }
-            processDistance(edgeId, endNode);
+            processEdge(edgeId, endNode);
             endNode = parents[endNode];
         }
         reverseOrder();

@@ -384,7 +384,7 @@ public class Location2NodesNtree implements Location2IDIndex
                     double lon1 = graph.getLongitude(nodeA);
                     double lat2;
                     double lon2;
-                    PointList points = allIter.getWayGeometry();
+                    PointList points = allIter.getWayGeometry(0);
                     int len = points.getSize();
                     for (int i = 0; i < len; i++)
                     {
@@ -713,7 +713,8 @@ public class Location2NodesNtree implements Location2IDIndex
                         double tmpLon = currLon;
                         double tmpNormedDist;
                         boolean found = false;
-                        PointList pointList = currEdge.getWayGeometry();
+                        // make logic simpler via getWayGeometry(1 or 2)?
+                        PointList pointList = currEdge.getWayGeometry(0);
                         int len = pointList.getSize();
                         for (int pointIndex = 0; pointIndex < len; pointIndex++)
                         {

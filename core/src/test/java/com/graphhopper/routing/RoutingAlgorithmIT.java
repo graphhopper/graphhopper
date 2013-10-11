@@ -127,10 +127,10 @@ public class RoutingAlgorithmIT
     }
 
     List<OneRun> createAndorra()
-    {
+    {        
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 17345, 435));
-        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 11093, 250));
+        list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 11093, 250));        
         return list;
     }
 
@@ -239,7 +239,7 @@ public class RoutingAlgorithmIT
                 createAlgos(graph, encoder, false, new ShortestCalc(), eManager);
         for (AlgorithmPreparation prepare : prepares)
         {
-            StopWatch sw = new StopWatch();            
+            StopWatch sw = new StopWatch();
             for (int i = 0; i < N; i++)
             {
                 int index1 = Math.abs(rand.nextInt(graph.getNodes()));

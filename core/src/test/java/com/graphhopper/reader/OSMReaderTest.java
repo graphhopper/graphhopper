@@ -149,7 +149,7 @@ public class OSMReaderTest
 
         assertEquals("street 123, B 122", iter.getName());
         assertEquals(n50, iter.getAdjNode());
-        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.getWayGeometry());
+        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.getWayGeometry(0));
         assertTrue(flags.isForward(iter.getFlags()));
         assertTrue(flags.isBackward(iter.getFlags()));
 
@@ -218,7 +218,7 @@ public class OSMReaderTest
         assertEquals(93146.888, iter.getDistance(), 1);
         assertTrue(iter.next());
         assertEquals(n40, iter.getAdjNode());
-        AbstractGraphTester.assertPList(Helper.createPointList(), iter.getWayGeometry());
+        AbstractGraphTester.assertPList(Helper.createPointList(), iter.getWayGeometry(0));
 
         // get third added location => 2
         iter = carOutExplorer.setBaseNode(n30);

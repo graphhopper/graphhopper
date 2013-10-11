@@ -19,6 +19,14 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.Helper;
+import static com.graphhopper.storage.AbstractGraphTester.*;
+import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -41,7 +49,41 @@ public class PathTest
     public void testTime()
     {
         FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
-        Path p = new Path(null, encoder);        
+        Path p = new Path(null, encoder);
         assertEquals(60 * 60, p.calcTime(100000, encoder.flags(100, true)));
+    }
+
+    @Test
+    public void testWayList()
+    {
+        EncodingManager carManager = new EncodingManager("CAR");
+        Graph g = new GraphBuilder(carManager).create();
+
+        g.setNode(0, 0.0, 0.1);
+        g.setNode(1, 1.0, 0.1);
+        g.setNode(2, 2.0, 0.1);
+
+        EdgeIteratorState edge1 = g.edge(0, 1, 1, true);
+        edge1.setWayGeometry(Helper.createPointList(8, 1, 9, 1));
+        EdgeIteratorState edge2 = g.edge(2, 1, 1, true);
+        edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
+
+        Path path = new Path(g, carManager.getEncoder("CAR"));        
+        EdgeEntry e1 = new EdgeEntry(edge2.getEdge(), 2, 1);
+        e1.parent = new EdgeEntry(edge1.getEdge(), 1, 1);
+        e1.parent.parent = new EdgeEntry(-1, 0, 1);
+        path.setEdgeEntry(e1);
+        path.extract();
+        // 0-1-2
+        assertPList(Helper.createPointList(0, 0.1, 8, 1, 9, 1, 1, 0.1, 10, 1, 11, 1, 2, 0.1), path.calcPoints());
+
+        path = new Path(g, carManager.getEncoder("CAR"));
+        e1 = new EdgeEntry(edge1.getEdge(), 0, 1);
+        e1.parent = new EdgeEntry(edge2.getEdge(), 1, 1);
+        e1.parent.parent = new EdgeEntry(-1, 2, 1);
+        path.setEdgeEntry(e1);
+        path.extract();
+        // 2-1-0
+        assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
     }
 }

@@ -15,14 +15,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.util;
 
 /**
  * @author Peter Karich
  */
-public interface EdgeIteratorState {
-
+public interface EdgeIteratorState
+{
     /**
      * @return the edge id of the current edge. Do not make any assumptions about the concrete
      * values, except that for an implemention it is recommended that they'll be contiguous.
@@ -50,9 +49,12 @@ public interface EdgeIteratorState {
      * necessary to have a more exact geometry. Those nodes are called pillar nodes and will be
      * returned in this method.
      * <p/>
+     * @param mode can be <ul> <li>0 = only pillar nodes, no tower nodes</li> <li>1 = inclusive the
+     * base tower node only</li> <li>2 = inclusive the adjacent tower node only</li> <li>3 =
+     * inclusive the base and adjacent tower node</li> </ul>
      * @return pillar nodes
      */
-    PointList getWayGeometry();
+    PointList getWayGeometry( int mode );
 
     /**
      * @param list is a sorted collection of nodes between the baseNode and the current adjacent
