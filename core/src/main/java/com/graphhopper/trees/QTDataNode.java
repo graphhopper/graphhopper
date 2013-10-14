@@ -18,8 +18,8 @@
 package com.graphhopper.trees;
 
 import com.graphhopper.geohash.SpatialKeyAlgo;
-import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * @author Peter Karich
@@ -204,7 +204,7 @@ class QTDataNode<V> implements QTNode<V>
     public String toString( SpatialKeyAlgo algo )
     {
         StringBuilder sb = new StringBuilder("dn:").append(count()).append(" ");
-        CoordTrig obj = new CoordTrig();
+        GHPoint obj = new GHPoint();
         for (int i = 0; i < values.length; i++)
         {
             if (values[i] == null)

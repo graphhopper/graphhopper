@@ -26,7 +26,6 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.CoordTrig;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 import static org.junit.Assert.*;

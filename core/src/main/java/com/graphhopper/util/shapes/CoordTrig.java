@@ -26,8 +26,8 @@ import com.graphhopper.util.NumHelper;
  */
 public class CoordTrig<T>
 {
-    public double lat;
-    public double lon;
+    public double lat = Double.NaN;
+    public double lon = Double.NaN;
 
     public CoordTrig()
     {
@@ -43,6 +43,11 @@ public class CoordTrig<T>
     {
         this.lat = lat;
         this.lon = lon;
+    }
+
+    public boolean isValid()
+    {
+        return lat != Double.NaN && lon != Double.NaN;
     }
 
     public void setValue( T t )
@@ -63,18 +68,18 @@ public class CoordTrig<T>
         hash = 83 * hash + (int) (Double.doubleToLongBits(this.lon) ^ (Double.doubleToLongBits(this.lon) >>> 32));
         return hash;
     }
-
+    
     @Override
     public boolean equals( Object obj )
     {
         if (obj == null)
             return false;
-        
+
+        @SuppressWarnings("unchecked")
         final CoordTrig<T> other = (CoordTrig<T>) obj;
         return NumHelper.equalsEps(lat, other.lat) && NumHelper.equalsEps(lon, other.lon);
     }
 
-    
     @Override
     public String toString()
     {

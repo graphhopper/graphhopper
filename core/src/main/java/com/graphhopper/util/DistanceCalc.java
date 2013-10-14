@@ -19,6 +19,7 @@ package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 import static java.lang.Math.*;
 
 /**
@@ -156,7 +157,7 @@ public class DistanceCalc
     /**
      * @return the crossing point c of the vertical line from r to line (a, b)
      */
-    public CoordTrig calcCrossingPointToEdge( double r_lat, double r_lon,
+    public GHPoint calcCrossingPointToEdge( double r_lat, double r_lon,
             double a_lat, double a_lon,
             double b_lat, double b_lon )
     {
@@ -165,12 +166,12 @@ public class DistanceCalc
         double dY_a = a_lat - b_lat;
         if (dY_a == 0)
             // special case: horizontal edge
-            return new CoordTrig(a_lat, r_lon);
+            return new GHPoint(a_lat, r_lon);
 
         double dX_a = a_lon - b_lon;
         if (dX_a == 0)
             // special case: vertical edge        
-            return new CoordTrig(r_lat, a_lon);
+            return new GHPoint(r_lat, a_lon);
 
         double m = dY_a / dX_a;
         double n = a_lat - m * a_lon;
@@ -180,7 +181,7 @@ public class DistanceCalc
         // m + m_i cannot get 0
         double c_x = (n_s - n) / (m + m_i);
         double c_y = m * c_x + n;
-        return new CoordTrig(c_y, c_x);
+        return new GHPoint(c_y, c_x);
     }
 
     /**

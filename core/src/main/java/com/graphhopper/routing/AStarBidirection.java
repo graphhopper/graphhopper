@@ -26,6 +26,7 @@ import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
@@ -129,7 +130,7 @@ public class AStarBidirection extends AbstractBidirAlgo
         currFrom = createEdgeEntry(from, dist);
         bestWeightMapFrom.put(from, currFrom);
         prioQueueOpenSetFrom.add(currFrom);
-        fromCoord = new CoordTrig(graph.getLatitude(from), graph.getLongitude(from));
+        fromCoord = new GHPoint(graph.getLatitude(from), graph.getLongitude(from));
         if (currTo != null)
         {
             bestWeightMapOther = bestWeightMapTo;
@@ -143,7 +144,7 @@ public class AStarBidirection extends AbstractBidirAlgo
         currTo = createEdgeEntry(to, dist);
         bestWeightMapTo.put(to, currTo);
         prioQueueOpenSetTo.add(currTo);
-        toCoord = new CoordTrig(graph.getLatitude(to), graph.getLongitude(to));
+        toCoord = new GHPoint(graph.getLatitude(to), graph.getLongitude(to));
         if (currFrom != null)
         {
             bestWeightMapOther = bestWeightMapFrom;

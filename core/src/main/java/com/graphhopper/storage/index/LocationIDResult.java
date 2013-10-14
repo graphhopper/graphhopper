@@ -20,9 +20,9 @@ package com.graphhopper.storage.index;
 
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.NumHelper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * Result of Location2IDIndex lookup.
@@ -47,12 +47,12 @@ public class LocationIDResult
     private EdgeIteratorState closestEdge;
     private EdgeIteratorState baseEdge;
     private EdgeIteratorState adjEdge;
-    private final CoordTrig queryPoint;
-    private CoordTrig snappedPoint;
+    private final GHPoint queryPoint;
+    private GHPoint snappedPoint;
 
     public LocationIDResult( double queryLat, double queryLon )
     {
-        queryPoint = new CoordTrig(queryLat, queryLon);
+        queryPoint = new GHPoint(queryLat, queryLon);
     }
 
     public void setClosestNode( int node )
@@ -146,7 +146,7 @@ public class LocationIDResult
      * Calculates the position of the query point 'snapped' to a close road segment or node. Can be
      * null if no result found. Call calcSnappedPoint before.
      */
-    public CoordTrig getSnappedPoint()
+    public GHPoint getSnappedPoint()
     {
         checkSnappedPoint();
         return snappedPoint;
@@ -179,10 +179,10 @@ public class LocationIDResult
                 newPoint = true;
             } else
                 // outside of edge boundaries
-                snappedPoint = new CoordTrig(tmpLat, tmpLon);
+                snappedPoint = new GHPoint(tmpLat, tmpLon);
         } else
             // now it is clear that snapped point is directly on adjacent node!
-            snappedPoint = new CoordTrig(tmpLat, tmpLon);
+            snappedPoint = new GHPoint(tmpLat, tmpLon);
 
         // build the two parts of the closest edge
         PointList basePoints = new PointList(index);

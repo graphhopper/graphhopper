@@ -20,29 +20,21 @@ package com.graphhopper.util.shapes;
 import com.graphhopper.util.Helper;
 
 /**
- * Specifies a place by its coordinates, name and/or node id.
+ * Specifies a place by its coordinates or name
  * <p/>
  * @author Peter Karich
  */
-public class GHPlace
+public class GHPlace extends CoordTrig<String>
 {
-    public double lat = Double.NaN;
-    public double lon = Double.NaN;
-    private int nodeId = -1;
     private String name = "";
 
     public GHPlace()
-    {
+    {        
     }
 
     public GHPlace( String name )
     {
         setName(name);
-    }
-
-    public GHPlace( int nodeId )
-    {
-        setNodeId(nodeId);
     }
 
     public GHPlace( double lat, double lon )
@@ -51,15 +43,10 @@ public class GHPlace
         this.lon = lon;
     }
 
-    public GHPlace setNodeId( int node )
+    @Override
+    public void setValue( String t )
     {
-        this.nodeId = node;
-        return this;
-    }
-
-    public int getNodeId()
-    {
-        return nodeId;
+        setName(t);
     }
 
     public GHPlace setName( String name )
@@ -73,19 +60,9 @@ public class GHPlace
         return name;
     }
 
-    public boolean isValidNodeId()
-    {
-        return nodeId != -1;
-    }
-
     public boolean isValidName()
     {
         return !Helper.isEmpty(name);
-    }
-
-    public boolean isValidPoint()
-    {
-        return lat != Double.NaN;
     }
 
     @Override
@@ -93,17 +70,11 @@ public class GHPlace
     {
         String str = "";
         if (isValidName())
-        {
             str += name;
-        }
-        if (isValidPoint())
-        {
+
+        if (isValid())
             str += " " + lat + ", " + lon;
-        }
-        if (isValidNodeId())
-        {
-            str += " (" + nodeId + ")";
-        }
+
         return str.trim();
     }
 

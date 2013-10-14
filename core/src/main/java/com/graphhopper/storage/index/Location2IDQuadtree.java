@@ -32,7 +32,7 @@ import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -190,7 +190,7 @@ public class Location2IDQuadtree implements Location2IDIndex
         }
 
         GHBitSet filledIndices = new GHBitSetImpl(size);
-        CoordTrig coord = new CoordTrig();
+        GHPoint coord = new GHPoint();
         for (int nodeId = 0; nodeId < locs; nodeId++)
         {
             double lat = graph.getLatitude(nodeId);

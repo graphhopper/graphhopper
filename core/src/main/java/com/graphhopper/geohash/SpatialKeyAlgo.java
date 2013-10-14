@@ -86,14 +86,10 @@ public class SpatialKeyAlgo implements KeyAlgo
     private void myinit( int allBits )
     {
         if (allBits > 64)
-        {
             throw new IllegalStateException("allBits is too big and does not fit into 8 bytes");
-        }
 
         if (allBits <= 0)
-        {
             throw new IllegalStateException("allBits must be positive");
-        }
 
 //        if ((allBits & 0x1) == 1)
 //            throw new IllegalStateException("allBits needs to be even to use the same amount for lat and lon");
@@ -176,14 +172,11 @@ public class SpatialKeyAlgo implements KeyAlgo
                 }
             }
             i++;
-            if (i < allBits)
-            {
+            if (i < allBits)            
                 hash <<= 1;
-            } // if allBits is an odd number
+             // if allBits is an odd number
             else
-            {
                 break;
-            }
 
             if (minLonTmp < maxLonTmp)
             {
@@ -199,12 +192,9 @@ public class SpatialKeyAlgo implements KeyAlgo
             }
             i++;
             if (i < allBits)
-            {
                 hash <<= 1;
-            } else
-            {
+            else
                 break;
-            }
         }
         return hash;
     }
