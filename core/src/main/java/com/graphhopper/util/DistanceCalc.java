@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.CoordTrig;
 import static java.lang.Math.*;
 
 /**
@@ -121,7 +122,7 @@ public class DistanceCalc
     }
 
     /**
-     * This method calculates the distance from r to edge g=(a to b) where the crossing point is t
+     * This method calculates the distance from r to edge (a, b) where the crossing point is c
      * <p/>
      * @return the distance in normalized meter
      */
@@ -133,27 +134,53 @@ public class DistanceCalc
         // y <=> lat
         double dY_a = a_lat - b_lat;
         if (dY_a == 0)
-        // special case: horizontal edge
-        {
+            // special case: horizontal edge
             return calcNormalizedDist(a_lat, r_lon, r_lat, r_lon);
-        }
 
         double dX_a = a_lon - b_lon;
         if (dX_a == 0)
-        // special case: vertical edge
-        {
+            // special case: vertical edge        
             return calcNormalizedDist(r_lat, a_lon, r_lat, r_lon);
-        }
 
         double m = dY_a / dX_a;
         double n = a_lat - m * a_lon;
         double m_i = 1 / m;
         double n_s = r_lat + m_i * r_lon;
-        // g should cross s => t=(t_x,t_y)
+        // line g should cross c => c=(c_x,c_y)
         // m + m_i cannot get 0
-        double t_x = (n_s - n) / (m + m_i);
-        double t_y = m * t_x + n;
-        return calcNormalizedDist(r_lat, r_lon, t_y, t_x);
+        double c_x = (n_s - n) / (m + m_i);
+        double c_y = m * c_x + n;
+        return calcNormalizedDist(r_lat, r_lon, c_y, c_x);
+    }
+
+    /**
+     * @return the crossing point c of the vertical line from r to line (a, b)
+     */
+    public CoordTrig calcCrossingPointToEdge( double r_lat, double r_lon,
+            double a_lat, double a_lon,
+            double b_lat, double b_lon )
+    {
+        // x <=> lon
+        // y <=> lat
+        double dY_a = a_lat - b_lat;
+        if (dY_a == 0)
+            // special case: horizontal edge
+            return new CoordTrig(a_lat, r_lon);
+
+        double dX_a = a_lon - b_lon;
+        if (dX_a == 0)
+            // special case: vertical edge        
+            return new CoordTrig(r_lat, a_lon);
+
+        double m = dY_a / dX_a;
+        double n = a_lat - m * a_lon;
+        double m_i = 1 / m;
+        double n_s = r_lat + m_i * r_lon;
+        // line g should cross c => c=(c_x,c_y)
+        // m + m_i cannot get 0
+        double c_x = (n_s - n) / (m + m_i);
+        double c_y = m * c_x + n;
+        return new CoordTrig(c_y, c_x);
     }
 
     /**

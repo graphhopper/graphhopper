@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util.shapes;
 
+import com.graphhopper.util.NumHelper;
+
 /**
  * Double precision coordinates without an associated value. To add one - subclass.
  * <p/>
@@ -37,6 +39,12 @@ public class CoordTrig<T>
         this.lon = lon;
     }
 
+    public void setLatLon( double lat, double lon )
+    {
+        this.lat = lat;
+        this.lon = lon;
+    }
+
     public void setValue( T t )
     {
         throw new UnsupportedOperationException("Use CoordTrigObjEntry for value access");
@@ -47,6 +55,26 @@ public class CoordTrig<T>
         throw new UnsupportedOperationException("Use CoordTrigObjEntry for value access");
     }
 
+    @Override
+    public int hashCode()
+    {
+        int hash = 7;
+        hash = 83 * hash + (int) (Double.doubleToLongBits(this.lat) ^ (Double.doubleToLongBits(this.lat) >>> 32));
+        hash = 83 * hash + (int) (Double.doubleToLongBits(this.lon) ^ (Double.doubleToLongBits(this.lon) >>> 32));
+        return hash;
+    }
+
+    @Override
+    public boolean equals( Object obj )
+    {
+        if (obj == null)
+            return false;
+        
+        final CoordTrig<T> other = (CoordTrig<T>) obj;
+        return NumHelper.equalsEps(lat, other.lat) && NumHelper.equalsEps(lon, other.lon);
+    }
+
+    
     @Override
     public String toString()
     {

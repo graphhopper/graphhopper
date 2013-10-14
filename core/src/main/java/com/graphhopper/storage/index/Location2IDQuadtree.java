@@ -347,10 +347,9 @@ public class Location2IDQuadtree implements Location2IDIndex
         final int id = index.getInt(key * 4);
         double mainLat = graph.getLatitude(id);
         double mainLon = graph.getLongitude(id);
-        final LocationIDResult res = new LocationIDResult();
+        final LocationIDResult res = new LocationIDResult(queryLat, queryLon);
         res.setClosestNode(id);
-        res.setQueryDistance(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
-        res.setQueryPoint(new CoordTrig(queryLat, queryLon));
+        res.setQueryDistance(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));        
         goFurtherHook(id);
         new XFirstSearch()
         {

@@ -18,7 +18,10 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.NumHelper;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.CoordTrig;
 
 /**
@@ -39,16 +42,17 @@ import com.graphhopper.util.shapes.CoordTrig;
 public class LocationIDResult
 {
     private double queryDistance = Double.MAX_VALUE;
-    private double basedDistance = 0;
-    private double adjDistance = 0;
     private int wayIndex = -1;
     private int closestNode = -1;
-    private EdgeIteratorState edgeState;
-    private CoordTrig queryPoint;
+    private EdgeIteratorState closestEdge;
+    private EdgeIteratorState baseEdge;
+    private EdgeIteratorState adjEdge;
+    private final CoordTrig queryPoint;
     private CoordTrig snappedPoint;
 
-    public LocationIDResult()
+    public LocationIDResult( double queryLat, double queryLon )
     {
+        queryPoint = new CoordTrig(queryLat, queryLon);
     }
 
     public void setClosestNode( int node )
@@ -77,32 +81,6 @@ public class LocationIDResult
         return queryDistance;
     }
 
-    public void setBasedDistance( double dist )
-    {
-        basedDistance = dist;
-    }
-
-    /**
-     * @return the distance from the base node to the snapped point. In meter
-     */
-    public double getBasedDistance()
-    {
-        return basedDistance;
-    }
-
-    public void setAdjDistance( double adjDistance )
-    {
-        this.adjDistance = adjDistance;
-    }
-
-    /**
-     * @return the distance from the adjacent node to the snapped point. In meter
-     */
-    public double getAdjDistance()
-    {
-        return adjDistance;
-    }
-
     /**
      * References to a tower node or the index of wayGeometry of the closest edge. If wayGeometry
      * has lengh L then the wayIndex 0 refers to the *base* node, 1 to L (inclusive) refer to the
@@ -114,17 +92,23 @@ public class LocationIDResult
         this.wayIndex = wayIndex;
     }
 
+    public int getWayIndex()
+    {
+        return wayIndex;
+    }
+
     /**
      * @return true if a close node was found
      */
     public boolean isValid()
     {
+        // Location2IDQuadtree does not support edges
         return closestNode >= 0;
     }
 
     public void setClosestEdge( EdgeIteratorState detach )
     {
-        edgeState = detach;
+        closestEdge = detach;
     }
 
     /**
@@ -132,12 +116,25 @@ public class LocationIDResult
      */
     public EdgeIteratorState getClosestEdge()
     {
-        return edgeState;
+        return closestEdge;
     }
 
-    public void setQueryPoint( CoordTrig queryPoint )
+    /**
+     * @return the closest edge but the snapped point get the new adjacent node.
+     */
+    public EdgeIteratorState getBaseEdge()
     {
-        this.queryPoint = queryPoint;
+        checkSnappedPoint();
+        return baseEdge;
+    }
+
+    /**
+     * @return the closest edge but the snapped point gets the new base node.
+     */
+    public EdgeIteratorState getAdjEdge()
+    {
+        checkSnappedPoint();
+        return adjEdge;
     }
 
     public CoordTrig getQueryPoint()
@@ -145,23 +142,167 @@ public class LocationIDResult
         return queryPoint;
     }
 
-    public void setSnappedPoint( CoordTrig snappedPoint )
-    {
-        this.snappedPoint = snappedPoint;
-    }
-
     /**
-     * @return the position of the query point 'snapped' to a road segment or node. Can be null if
-     * no result found.
+     * Calculates the position of the query point 'snapped' to a close road segment or node. Can be
+     * null if no result found. Call calcSnappedPoint before.
      */
     public CoordTrig getSnappedPoint()
     {
+        checkSnappedPoint();
         return snappedPoint;
+    }
+
+    private void checkSnappedPoint()
+    {
+        if (snappedPoint == null)
+            throw new IllegalStateException("Call calcSnappedPoint before");
+    }
+
+    public void calcSnappedPoint( DistanceCalc distCalc )
+    {
+        if (closestEdge == null || wayIndex < 0)
+            throw new IllegalStateException("State is invalid. Set closestEdge AND wayIndex!");
+
+        PointList pl = getClosestEdge().getWayGeometry(3);
+        int size = pl.getSize();
+        int index = getWayIndex();
+        double tmpLat = pl.getLatitude(index);
+        double tmpLon = pl.getLongitude(index);
+        boolean newPoint = false;
+        if (index + 1 < size)
+        {
+            double queryLat = getQueryPoint().lat, queryLon = getQueryPoint().lon;
+            double adjLat = pl.getLatitude(index + 1), adjLon = pl.getLongitude(index + 1);
+            if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon))
+            {
+                snappedPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
+                newPoint = true;
+            } else
+                // outside of edge boundaries
+                snappedPoint = new CoordTrig(tmpLat, tmpLon);
+        } else
+            // now it is clear that snapped point is directly on adjacent node!
+            snappedPoint = new CoordTrig(tmpLat, tmpLon);
+
+        // build the two parts of the closest edge
+        PointList basePoints = new PointList(index);
+        PointList adjPoints = new PointList(index);
+
+        adjPoints.add(snappedPoint.lat, snappedPoint.lon);
+        for (int i = 0; i < pl.getSize(); i++)
+        {
+            if (i < wayIndex || newPoint && i == wayIndex)
+                basePoints.add(pl.getLatitude(i), pl.getLongitude(i));
+
+            if (i > wayIndex)
+                adjPoints.add(pl.getLatitude(i), pl.getLongitude(i));
+        }
+        basePoints.add(snappedPoint.lat, snappedPoint.lon);
+
+        double baseDistance = basePoints.calcDistance(distCalc);
+        double adjDistance = adjPoints.calcDistance(distCalc);
+        baseEdge = new InMemEdgeIState(baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints);
+        adjEdge = new InMemEdgeIState(adjDistance, closestEdge.getFlags(), closestEdge.getName(), adjPoints);
+    }
+
+    /**
+     * Create edge decoupled from graph where distance and nodes are kept in memory.
+     */
+    private static class InMemEdgeIState implements EdgeIteratorState
+    {
+        private final PointList pointList;
+        private double distance;
+        private int flags;
+        private String name;
+
+        /**
+         * @param distance
+         * @param flags
+         * @param name
+         * @param pointList all points including the base and adjacent to avoid back reference to
+         * graph but also to avoid special handling for snapped point which does not exist in the
+         * graph.
+         */
+        public InMemEdgeIState( double distance, int flags, String name, PointList pointList )
+        {
+            this.distance = distance;
+            this.flags = flags;
+            this.name = name;
+            this.pointList = pointList;
+        }
+
+        @Override
+        public int getEdge()
+        {
+            throw new UnsupportedOperationException("Not supported for in-memory edge.");
+        }
+
+        @Override
+        public int getBaseNode()
+        {
+            throw new UnsupportedOperationException("Not supported for in-memory edge.");
+        }
+
+        @Override
+        public int getAdjNode()
+        {
+            throw new UnsupportedOperationException("Not supported for in-memory edge.");
+        }
+
+        @Override
+        public PointList getWayGeometry( int mode )
+        {
+            if (mode != 3)
+                throw new UnsupportedOperationException("Not yet implemented.");
+            return pointList;
+        }
+
+        @Override
+        public void setWayGeometry( PointList list )
+        {
+            throw new UnsupportedOperationException("Not supported for in-memory edge. Set when creating it.");
+        }
+
+        @Override
+        public double getDistance()
+        {
+            return distance;
+        }
+
+        @Override
+        public void setDistance( double dist )
+        {
+            this.distance = dist;
+        }
+
+        @Override
+        public int getFlags()
+        {
+            return flags;
+        }
+
+        @Override
+        public void setFlags( int flags )
+        {
+            this.flags = flags;
+        }
+
+        @Override
+        public String getName()
+        {
+            return name;
+        }
+
+        @Override
+        public void setName( String name )
+        {
+            this.name = name;
+        }
     }
 
     @Override
     public String toString()
     {
-        return closestNode + ", " + queryDistance + ", " + wayIndex;
+        return queryPoint + ", " + closestNode + ", " + snappedPoint + ", " + wayIndex;
     }
 }

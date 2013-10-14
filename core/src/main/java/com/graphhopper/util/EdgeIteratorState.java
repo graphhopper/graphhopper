@@ -18,6 +18,10 @@
 package com.graphhopper.util;
 
 /**
+ * This interface represents an edge and is one possible state of an EdgeIterator.
+ * <p/>
+ * @see EdgeIterator
+ * @see EdgeExplorer
  * @author Peter Karich
  */
 public interface EdgeIteratorState
@@ -45,9 +49,10 @@ public interface EdgeIteratorState
     int getAdjNode();
 
     /**
-     * For OSM a way is often a curve not just a straight line and nodes between tower nodes are
-     * necessary to have a more exact geometry. Those nodes are called pillar nodes and will be
-     * returned in this method.
+     * For OSM a way is often a curve not just a straight line and nodes between tower nodes (which
+     * are used for routing) are necessary to have a more exact geometry. Those nodes are called
+     * pillar nodes and will be returned in this method. Note: it can happen that identical nodes
+     * are dropped and therefor leads to a pointList of size one!
      * <p/>
      * @param mode can be <ul> <li>0 = only pillar nodes, no tower nodes</li> <li>1 = inclusive the
      * base tower node only</li> <li>2 = inclusive the adjacent tower node only</li> <li>3 =

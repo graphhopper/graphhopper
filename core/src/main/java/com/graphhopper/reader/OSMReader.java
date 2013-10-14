@@ -595,15 +595,14 @@ public class OSMReader
         int nodes = pointList.getSize();
         for (int i = 1; i < nodes; i++)
         {
+            // we could save some lines if we would use pointListIncludingTowerNodes.calculateDistance(distCalc);
             lat = pointList.getLatitude(i);
             lon = pointList.getLongitude(i);
             towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
             prevLat = lat;
             prevLon = lon;
             if (nodes > 2 && i < nodes - 1)
-            {
-                pillarNodes.add(lat, lon);
-            }
+                pillarNodes.add(lat, lon);            
         }
         if (towerNodeDistance == 0)
         {

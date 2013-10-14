@@ -63,10 +63,10 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         EdgeIteratorState from = fromRes.getClosestEdge();
         EdgeIteratorState to = toRes.getClosestEdge();
         if (flagEncoder.isForward(from.getFlags()))
-            fromMap.put(from.getAdjNode(), createEdgeEntry(from.getAdjNode(), fromRes.getAdjDistance()));
+            fromMap.put(from.getAdjNode(), createEdgeEntry(from.getAdjNode(), fromRes.getAdjEdge().getDistance()));
 
         if (flagEncoder.isBackward(from.getFlags()))
-            fromMap.put(from.getBaseNode(), createEdgeEntry(from.getBaseNode(), fromRes.getBasedDistance()));
+            fromMap.put(from.getBaseNode(), createEdgeEntry(from.getBaseNode(), fromRes.getBaseEdge().getDistance()));
 
         if (flagEncoder.isForward(to.getFlags()))
             to1 = to.getBaseNode();

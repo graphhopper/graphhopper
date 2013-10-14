@@ -646,8 +646,7 @@ public class Location2NodesNtree implements Location2IDIndex
             final EdgeFilter edgeFilter )
     {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
-        final LocationIDResult closestMatch = new LocationIDResult();
-        closestMatch.setQueryPoint(new CoordTrig(queryLat, queryLon));
+        final LocationIDResult closestMatch = new LocationIDResult(queryLat, queryLon);        
         if (storedNetworkEntryIds.isEmpty())
             return closestMatch;
 
@@ -781,11 +780,8 @@ public class Location2NodesNtree implements Location2IDIndex
             closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));
 
             // 2. calculate snapped point
-//            CoordTrig snappedPoint = new CoordTrig();
-//            closestMatch.setSnappedPoint(snappedPoint);
-
-            // 3. calculate distance from base node to snapped point -> setBasedDistance
-
+            // 3. and distance from base node to snapped point -> setBasedDistance
+            closestMatch.calcSnappedPoint(distCalc);
         }
         return closestMatch;
     }

@@ -26,6 +26,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.CoordTrig;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -265,7 +266,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
     public void testEdgeFilter()
     {
         Graph g = createTestGraph();
-        Location2NodesNtree index = (Location2NodesNtree) createIndex(g, 1000);
+        Location2NodesNtree index = createIndex(g, 1000);
 
         assertEquals(1, index.findClosest(-.6, -.6, EdgeFilter.ALL_EDGES).getClosestNode());
         assertEquals(2, index.findClosest(-.6, -.6, new EdgeFilter()

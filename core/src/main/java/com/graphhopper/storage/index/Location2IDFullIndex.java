@@ -74,8 +74,7 @@ public class Location2IDFullIndex implements Location2IDIndex
     @Override
     public LocationIDResult findClosest( double queryLat, double queryLon, EdgeFilter edgeFilter )
     {
-        LocationIDResult res = new LocationIDResult();
-        res.setQueryPoint(new CoordTrig(queryLat, queryLon));
+        LocationIDResult res = new LocationIDResult(queryLat, queryLon);        
         Circle circle = null;
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next())

@@ -168,7 +168,6 @@ public class PointList
         }
         return points;
     }
-    private final static int PRECISION = 100000;
 
     @Override
     public boolean equals( Object obj )
@@ -182,10 +181,10 @@ public class PointList
 
         for (int i = 0; i < size; i++)
         {
-            if (Math.round(latitudes[i] * PRECISION) != Math.round(other.latitudes[i] * PRECISION))
+            if (!NumHelper.equalsEps(latitudes[i], other.latitudes[i]))
                 return false;
 
-            if (Math.round(longitudes[i] * PRECISION) != Math.round(other.longitudes[i] * PRECISION))
+            if (!NumHelper.equalsEps(longitudes[i], other.longitudes[i]))
                 return false;
         }
         return true;
@@ -197,13 +196,14 @@ public class PointList
         int hash = 5;
         for (int i = 0; i < latitudes.length; i++)
         {
-            hash = 73 * hash + (int) Math.round(latitudes[i] * PRECISION);
+            hash = 73 * hash + (int) Math.round(latitudes[i] * 10000000);
+            hash = 73 * hash + (int) Math.round(longitudes[i] * 10000000);
         }
         hash = 73 * hash + this.size;
         return hash;
     }
 
-    public double calculateDistance( DistanceCalc calc )
+    public double calcDistance( DistanceCalc calc )
     {
         double lat = -1;
         double lon = -1;
@@ -211,9 +211,8 @@ public class PointList
         for (int i = 0; i < size; i++)
         {
             if (i > 0)
-            {
                 dist += calc.calcDist(lat, lon, latitudes[i], longitudes[i]);
-            }
+
             lat = latitudes[i];
             lon = longitudes[i];
         }

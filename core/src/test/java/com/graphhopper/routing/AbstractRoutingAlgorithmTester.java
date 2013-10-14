@@ -22,7 +22,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.CoordTrig;
 import gnu.trove.list.TIntList;
 import java.util.Random;
 import static org.junit.Assert.*;
@@ -39,6 +38,7 @@ public abstract class AbstractRoutingAlgorithmTester
     protected static EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
     protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
     protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
+    private DistanceCalc distCalc  = new DistanceCalc();
 
     protected Graph createGraph()
     {
@@ -405,14 +405,14 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p = prepare.createAlgo().calcPath(4, 0);
         assertEquals(Helper.createTList(4, 1, 0), p.calcNodes());
         assertEquals(Helper.createPointList(0.5, 4.5, 0, 3.5, 0, 3, 0, 2), p.calcPoints());
-        assertEquals(291110, p.calcPoints().calculateDistance(new DistanceCalc()), 1);
+        assertEquals(291110, p.calcPoints().calcDistance(new DistanceCalc()), 1);
 
         // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
         p = prepare.createAlgo().calcPath(2, 1);
         // System.out.println(p.toDetailsString());
         assertEquals(Helper.createTList(2, 0, 1), p.calcNodes());
         assertEquals(Helper.createPointList(1, 1, 1, 0, 0, 0, 0, 1.6, 0, 2, 0, 3, 0, 3.5), p.calcPoints());
-        assertEquals(611555, p.calcPoints().calculateDistance(new DistanceCalc()), 1);
+        assertEquals(611555, p.calcPoints().calcDistance(new DistanceCalc()), 1);
     }
 
     @Test
@@ -494,11 +494,12 @@ public abstract class AbstractRoutingAlgorithmTester
 
     LocationIDResult newLR( Graph graph, EdgeIteratorState edge )
     {
-        LocationIDResult res = new LocationIDResult();
-        res.setClosestEdge(edge);
         double lat = (graph.getLatitude(edge.getBaseNode()) + graph.getLatitude(edge.getAdjNode())) / 2;
         double lon = (graph.getLongitude(edge.getBaseNode()) + graph.getLongitude(edge.getAdjNode())) / 2;
-        res.setQueryPoint(new CoordTrig(lat, lon));
+        LocationIDResult res = new LocationIDResult(lat, lon);
+        res.setClosestEdge(edge);        
+        res.setWayIndex(0);
+        res.calcSnappedPoint(distCalc);
         return res;
     }
 
