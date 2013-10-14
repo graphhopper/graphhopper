@@ -196,8 +196,8 @@ public class PointList
         int hash = 5;
         for (int i = 0; i < latitudes.length; i++)
         {
-            hash = 73 * hash + (int) Math.round(latitudes[i] * 10000000);
-            hash = 73 * hash + (int) Math.round(longitudes[i] * 10000000);
+            hash = 73 * hash + (int) Math.round(latitudes[i] * 1000000);
+            hash = 73 * hash + (int) Math.round(longitudes[i] * 1000000);
         }
         hash = 73 * hash + this.size;
         return hash;
