@@ -37,6 +37,11 @@ public class LocationIDResultTest
     {
         EncodingManager encodingManager = new EncodingManager("CAR");
         Graph g = new GraphStorage(new RAMDirectory(), encodingManager).create(100);
+        //
+        //  /*-*\
+        // 0     1
+        // |
+        // 2
         g.setNode(0, 1, 0);
         g.setNode(1, 1, 2.5);
         g.setNode(2, 0, 0);
@@ -49,17 +54,21 @@ public class LocationIDResultTest
         // snap directly to tower node => pointList could get of size 1?!?      
         // a)
         expl.setBaseNode(2).next();
-        LocationIDResult match = createLocationResult(1, -1, expl, 0);        
+        LocationIDResult match = createLocationResult(1, -1, expl, 0);
         match.calcSnappedPoint(distC);
         PointList basePoints = match.getBaseEdge().getWayGeometry(3);
-        PointList adjPoints = match.getAdjEdge().getWayGeometry(3);        
-        assertEquals(new CoordTrig(0, 0), match.getSnappedPoint());        
+        PointList adjPoints = match.getAdjEdge().getWayGeometry(3);
+        assertEquals(new CoordTrig(0, 0), match.getSnappedPoint());
         assertEquals(1, basePoints.getSize());
         assertEquals(0, basePoints.getLatitude(0), 1e-7);        
         assertEquals(2, adjPoints.getSize());
         assertEquals(0, adjPoints.getLatitude(0), 1e-7);
         assertEquals(1, adjPoints.getLatitude(1), 1e-7);
         // b)
+        match = createLocationResult(1, -1, expl, 1);
+        match.calcSnappedPoint(distC);        
+        assertEquals(new CoordTrig(1, 0), match.getSnappedPoint());
+        // c)
         expl.setBaseNode(1).next();
         match = createLocationResult(1.2, 2.7, expl, 0);
         match.calcSnappedPoint(distC);

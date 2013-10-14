@@ -24,10 +24,7 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.Location2IDIndex;
-import com.graphhopper.storage.index.Location2IDQuadtree;
-import com.graphhopper.storage.index.Location2NodesNtree;
-import com.graphhopper.storage.index.Location2NodesNtreeLG;
+import com.graphhopper.storage.index.*;
 import com.graphhopper.util.*;
 import java.io.File;
 import java.io.IOException;
@@ -66,7 +63,6 @@ public class GraphHopper implements GraphHopperAPI
     // for index:
     private Location2IDIndex locationIndex;
     private int preciseIndexResolution = 500;
-    private boolean edgeCalcOnSearch = true;
     private boolean searchRegion = true;
     // for prepare
     private int minNetworkSize = 200;
@@ -86,6 +82,7 @@ public class GraphHopper implements GraphHopperAPI
     private int workerThreads = -1;
     private int defaultSegmentSize = -1;
     private boolean enableInstructions = true;
+    private boolean calcPoints = true;
 
     public GraphHopper()
     {
@@ -192,7 +189,7 @@ public class GraphHopper implements GraphHopperAPI
      * Disables contraction hierarchies. Enabled by default.
      */
     public GraphHopper disableCHShortcuts()
-    {        
+    {
         chEnabled = false;
         return this;
     }
@@ -209,6 +206,15 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setEnableInstructions( boolean b )
     {
         enableInstructions = b;
+        return this;
+    }
+
+    /**
+     * This methods enables gps point calculation. If disabled only distance will be calculated.
+     */
+    public GraphHopper setEnableCalcPoints( boolean b )
+    {
+        calcPoints = b;
         return this;
     }
 
@@ -557,18 +563,15 @@ public class GraphHopper implements GraphHopperAPI
 
         FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        int from = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter).getClosestNode();
-        int to = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter).getClosestNode();
+        LocationIDResult fromRes = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
+        LocationIDResult toRes = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
-        if (from < 0)
+        if (!fromRes.isValid())
             rsp.addError(new IllegalArgumentException("Cannot find point 1: " + request.getFrom()));
 
-        if (to < 0)
+        if (!toRes.isValid())
             rsp.addError(new IllegalArgumentException("Cannot find point 2: " + request.getTo()));
-
-        if (from == to)
-            rsp.addError(new IllegalArgumentException("Point 1 is equal to point 2"));
 
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
@@ -594,37 +597,45 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         if (rsp.hasErrors())
-        {
             return rsp;
-        }
+
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
 
         sw = new StopWatch().start();
-        Path path = algo.calcPath(from, to);
+        Path path = algo.calcPath(fromRes, toRes);
+
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s"
                 + ", " + path.getDebugInfo();
-        PointList points = path.calcPoints();
-        simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
-        if (simplifyRequest)
-        {
-            sw = new StopWatch().start();
-            int orig = points.getSize();
-            double minPathPrecision = request.getHint("douglas.minprecision", 1d);
-            if (minPathPrecision > 0)
-            {
-                new DouglasPeucker().setMaxDistance(minPathPrecision).simplify(points);
-            }
-            debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
-        }
 
-        enableInstructions = request.getHint("instructions", enableInstructions);
-        if (enableInstructions)
+        calcPoints = request.getHint("calcPoints", calcPoints);
+        if (calcPoints)
         {
-            sw = new StopWatch().start();
-            rsp.setInstructions(path.calcInstructions());
-            debug += ", instructions:" + sw.stop().getSeconds() + "s";
-        }
-        return rsp.setPoints(points).setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
+            PointList points = path.calcPoints();
+            rsp.setFound(points.getSize() > 1);
+            simplifyRequest = request.getHint("simplifyRequest", simplifyRequest);
+            if (simplifyRequest)
+            {
+                sw = new StopWatch().start();
+                int orig = points.getSize();
+                double minPathPrecision = request.getHint("douglas.minprecision", 1d);
+                if (minPathPrecision > 0)
+                    new DouglasPeucker().setMaxDistance(minPathPrecision).simplify(points);
+
+                debug += ", simplify (" + orig + "->" + points.getSize() + "):" + sw.stop().getSeconds() + "s";
+            }
+            rsp.setPoints(points);
+
+            enableInstructions = request.getHint("instructions", enableInstructions);
+            if (enableInstructions)
+            {
+                sw = new StopWatch().start();
+                rsp.setInstructions(path.calcInstructions());
+                debug += ", instructions:" + sw.stop().getSeconds() + "s";
+            }
+        } else
+            rsp.setFound(path.isFound());
+
+        return rsp.setDistance(path.getDistance()).setTime(path.getTime()).setDebugInfo(debug);
     }
 
     protected Location2IDIndex createLocationIndex( Directory dir )
@@ -641,7 +652,6 @@ public class GraphHopper implements GraphHopperAPI
                 tmpNIndex = new Location2NodesNtree(graph, dir);
             }
             tmpNIndex.setResolution(preciseIndexResolution);
-            tmpNIndex.setEdgeCalcOnFind(edgeCalcOnSearch);
             tmpNIndex.setSearchRegion(searchRegion);
             tmpIndex = tmpNIndex;
         } else

@@ -22,7 +22,7 @@ package com.graphhopper.util;
  */
 public class NumHelper
 {
-    private final static double DEFAULT_PRECISION = 1e-7;
+    private final static double DEFAULT_PRECISION = 1e-6;
 
     public static boolean equalsEps( double d1, double d2 )
     {

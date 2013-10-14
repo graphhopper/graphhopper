@@ -26,6 +26,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -58,6 +59,11 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
         return true;
     }
 
+    //  0------\
+    // /|       \
+    // |1----3-\|
+    // |/   /   4
+    // 2---/---/
     Graph createTestGraph()
     {
         Graph graph = createGraph(new RAMDirectory(), encodingManager);
@@ -76,6 +82,22 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
         return graph;
     }
 
+    @Test
+    public void testSnappedPointAndGeometry()
+    {
+        Graph graph = createTestGraph();
+        Location2IDIndex index = createIndex(graph, 1000);
+        // query directly the tower node
+        LocationIDResult res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);
+        assertEquals(new GHPoint(-0.4, 0.9), res.getSnappedPoint());        
+        res = index.findClosest(-0.6, 1.6, EdgeFilter.ALL_EDGES);
+        assertEquals(new GHPoint(-0.6, 1.6), res.getSnappedPoint());
+        
+        // query the edge (1,3)
+        res = index.findClosest(-0.2, 0.3, EdgeFilter.ALL_EDGES);
+        assertEquals(new GHPoint(-0.441624, 0.317259), res.getSnappedPoint());
+    }
+    
     @Test
     public void testInMemIndex()
     {
@@ -246,7 +268,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
     }
 
     @Test
-    public void testMore()
+    public void testFindingWayGeometry()
     {
         Graph g = createGraph(encodingManager);
         g.setNode(10, 51.2492152, 9.4317166);

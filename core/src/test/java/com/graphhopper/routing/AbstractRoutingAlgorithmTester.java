@@ -472,6 +472,11 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, to));
         assertEquals(Helper.createTList(1, 2, 3), p.calcNodes());
         assertEquals(p.toString(), 2, p.getDistance(), 1e-4);
+        
+        from = GHUtility.getEdge(graph, 2, 3);
+        to = GHUtility.getEdge(graph, 3, 2);
+        p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, to));
+        assertEquals(Helper.createTList(2, 3), p.calcNodes());
     }
 
     @Test

@@ -23,8 +23,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
 
 /**
  * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
@@ -37,7 +35,7 @@ import gnu.trove.set.hash.TIntHashSet;
 public class Path
 {
     protected Graph graph;
-    protected FlagEncoder encoder;
+    private FlagEncoder encoder;
     protected double distance;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
@@ -104,7 +102,7 @@ public class Path
     {
         if (!EdgeIterator.Edge.isValid(fromNode))
             throw new IllegalStateException("Call extract() before retrieving fromNode");
-        
+
         return fromNode;
     }
 
@@ -121,7 +119,10 @@ public class Path
 
     void reverseOrder()
     {
-        reverseOrder = !reverseOrder;
+        if(!reverseOrder)
+            throw new IllegalStateException("Switching order multiple times is not supported");
+        
+        reverseOrder = false;
         edgeIds.reverse();
     }
 
@@ -209,7 +210,7 @@ public class Path
     /**
      * Used in combination with forEveryEdge.
      */
-    public static interface EdgeVisitor
+    private static interface EdgeVisitor
     {
         void next( EdgeIteratorState edgeBase, int index );
     }
@@ -217,7 +218,7 @@ public class Path
     /**
      * Iterates over all edges in this path and calls the visitor for it.
      */
-    public void forEveryEdge( EdgeVisitor visitor )
+    private void forEveryEdge( EdgeVisitor visitor )
     {
         int tmpNode = getFromNode();
         int len = edgeIds.size();
@@ -242,7 +243,7 @@ public class Path
     {
         final TIntArrayList nodes = new TIntArrayList(edgeIds.size() + 1);
         if (edgeIds.isEmpty())
-            return nodes;        
+            return nodes;
 
         int tmpNode = getFromNode();
         nodes.add(tmpNode);
@@ -268,7 +269,7 @@ public class Path
         cachedPoints = new PointList(edgeIds.size() + 1);
         if (edgeIds.isEmpty())
             return cachedPoints;
-        
+
         int tmpNode = getFromNode();
         cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
         forEveryEdge(new EdgeVisitor()
@@ -283,7 +284,7 @@ public class Path
                     cachedPoints.add(pl.getLatitude(j), pl.getLongitude(j));
                 }
             }
-        });        
+        });
         return cachedPoints;
     }
 
@@ -297,7 +298,7 @@ public class Path
 
         cachedWays = new InstructionList(edgeIds.size() / 4);
         if (edgeIds.isEmpty())
-            return cachedWays;        
+            return cachedWays;
 
         final int tmpNode = getFromNode();
         forEveryEdge(new EdgeVisitor()
@@ -430,27 +431,6 @@ public class Path
         return cachedWays;
     }
 
-    public TIntSet calculateIdenticalNodes( Path p2 )
-    {
-        TIntHashSet thisSet = new TIntHashSet();
-        TIntHashSet retSet = new TIntHashSet();
-        TIntList nodes = calcNodes();
-        int max = nodes.size();
-        for (int i = 0; i < max; i++)
-        {
-            thisSet.add(nodes.get(i));
-        }
-
-        nodes = p2.calcNodes();
-        max = nodes.size();
-        for (int i = 0; i < max; i++)
-        {
-            if (thisSet.contains(nodes.get(i)))            
-                retSet.add(nodes.get(i));
-        }
-        return retSet;
-    }
-
     @Override
     public String toString()
     {
@@ -463,7 +443,7 @@ public class Path
         for (int i = 0; i < edgeIds.size(); i++)
         {
             if (i > 0)
-                str += "->";            
+                str += "->";
 
             str += edgeIds.get(i);
         }

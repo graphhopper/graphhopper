@@ -84,36 +84,30 @@ public class Path4CH extends PathBidirRef
             EdgeSkipExplorer iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge1, to);
             boolean empty = iter == null;
             if (empty)
-            {
                 iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge2, to);
-            }
+
             expandEdge(iter, false);
 
             if (empty)
-            {
                 iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge1, from);
-            } else
-            {
+            else
                 iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge2, from);
-            }
+
             expandEdge(iter, true);
         } else
         {
             EdgeSkipExplorer iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge1, from);
             boolean empty = iter == null;
             if (empty)
-            {
                 iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge2, from);
-            }
+
             expandEdge(iter, true);
 
             if (empty)
-            {
                 iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge1, to);
-            } else
-            {
+            else
                 iter = (EdgeSkipExplorer) graph.getEdgeProps(skippedEdge2, to);
-            }
+
             expandEdge(iter, false);
         }
     }

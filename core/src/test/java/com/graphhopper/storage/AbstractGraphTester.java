@@ -804,7 +804,6 @@ public abstract class AbstractGraphTester
         pointList = Helper.createPointList(1, 13, 1, 12, 1, 11);
         graph.edge(14, 0, 100, carEncoder.flags(10, false)).setWayGeometry(pointList);
 
-        // if tower node requested => return only tower nodes
         EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
         assertEquals(4, iter.getAdjNode());

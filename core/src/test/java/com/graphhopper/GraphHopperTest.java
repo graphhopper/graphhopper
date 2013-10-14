@@ -96,6 +96,7 @@ public class GraphHopperTest
 
         // A to D
         GHResponse res = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle(EncodingManager.CAR));
+        assertFalse(res.hasErrors());
         assertTrue(res.isFound());
         assertEquals(2, res.getPoints().getSize());
         // => found D

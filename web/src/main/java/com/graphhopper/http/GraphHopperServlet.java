@@ -110,6 +110,7 @@ public class GraphHopperServlet extends GHServlet
             // we can reduce the path length based on the maximum differences to the original coordinates
             double minPathPrecision = getDoubleParam(req, "minPathPrecision", 1d);
             boolean enableInstructions = getBooleanParam(req, "instructions", true);
+            boolean calcPoints = getBooleanParam(req, "calcPoints", true);
             boolean useMiles = getBooleanParam(req, "useMiles", false);
             
             String vehicleStr = getParam(req, "vehicle", "CAR").toUpperCase();
@@ -127,6 +128,7 @@ public class GraphHopperServlet extends GHServlet
                         setVehicle(algoVehicle.toString()).
                         setType(vehicleStr).
                         setAlgorithm(algoStr).
+                        putHint("calcPoints", calcPoints).
                         putHint("instructions", enableInstructions).
                         putHint("douglas.minprecision", minPathPrecision));
             } else

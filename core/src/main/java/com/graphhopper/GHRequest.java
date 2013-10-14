@@ -33,7 +33,7 @@ public class GHRequest
     private GHPlace to;
     private Map<String, Object> hints = new HashMap<String, Object>(5);
     private String encoderName = "CAR";
-    private String type = "shortest";    
+    private String type = "shortest";
 
     /**
      * Calculate the path from specified startPoint (fromLat, fromLon) to endPoint (toLat, toLon).
@@ -55,13 +55,10 @@ public class GHRequest
     public void check()
     {
         if (from == null)
-        {
             throw new IllegalStateException("the 'from' point needs to be initialized but was null");
-        }
+
         if (to == null)
-        {
             throw new IllegalStateException("the 'to' point needs to be initialized but was null");
-        }
     }
 
     public GHPlace getFrom()
@@ -93,9 +90,8 @@ public class GHRequest
     {
         Object old = hints.put(key, value);
         if (old != null)
-        {
             throw new RuntimeException("Key is already associated with " + old + ", your value:" + value);
-        }
+
         return this;
     }
 
@@ -104,9 +100,8 @@ public class GHRequest
     {
         Object obj = hints.get(key);
         if (obj == null)
-        {
             return defaultValue;
-        }
+
         return (T) obj;
     }
 

@@ -37,7 +37,6 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.XFirstSearch;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.CoordTrig;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
@@ -79,7 +78,6 @@ public class Location2NodesNtree implements Location2IDIndex
     private boolean initialized = false;
     // do not start with 0 as a positive value means leaf and a negative means "entry with subentries"
     static final int START_POINTER = 1;
-    private boolean edgeDistCalcOnSearch = true;
     private boolean regionSearch = true;
     /**
      * If normed distance is smaller than this value the node or edge is 'identical' and the
@@ -107,15 +105,6 @@ public class Location2NodesNtree implements Location2IDIndex
     public Location2NodesNtree setMinResolutionInMeter( int minResolutionInMeter )
     {
         this.minResolutionInMeter = minResolutionInMeter;
-        return this;
-    }
-
-    /**
-     * Calculate edge distance to increase map matching precision.
-     */
-    public Location2NodesNtree setEdgeCalcOnFind( boolean edgeCalcOnSearch )
-    {
-        this.edgeDistCalcOnSearch = edgeCalcOnSearch;
         return this;
     }
 
@@ -646,7 +635,7 @@ public class Location2NodesNtree implements Location2IDIndex
             final EdgeFilter edgeFilter )
     {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
-        final LocationIDResult closestMatch = new LocationIDResult(queryLat, queryLon);        
+        final LocationIDResult closestMatch = new LocationIDResult(queryLat, queryLon);
         if (storedNetworkEntryIds.isEmpty())
             return closestMatch;
 
@@ -705,55 +694,38 @@ public class Location2NodesNtree implements Location2IDIndex
                         double adjLon = graph.getLongitude(adjNode);
                         double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
                         // if there are wayPoints this is only an approximation
-                        if (edgeDistCalcOnSearch && adjDist < currNormedDist)
+                        if (adjDist < currNormedDist)
                             tmpClosestNode = adjNode;
 
                         double tmpLat = currLat;
                         double tmpLon = currLon;
                         double tmpNormedDist;
-                        boolean found = false;
-                        // make logic simpler via getWayGeometry(1 or 2)?
-                        PointList pointList = currEdge.getWayGeometry(0);
+                        PointList pointList = currEdge.getWayGeometry(2);
                         int len = pointList.getSize();
                         for (int pointIndex = 0; pointIndex < len; pointIndex++)
                         {
                             double wayLat = pointList.getLatitude(pointIndex);
                             double wayLon = pointList.getLongitude(pointIndex);
-                            if (NumHelper.equalsEps(queryLat, wayLat, 1e-6)
-                                    && NumHelper.equalsEps(queryLon, wayLon, 1e-6))
-                            {
-                                // equal point found
-                                check(tmpClosestNode, 0d, pointIndex + 1, currEdge);
-                                found = true;
-                                break;
-                            } else if (edgeDistCalcOnSearch
-                                    && distCalc.validEdgeDistance(queryLat, queryLon,
-                                    tmpLat, tmpLon, wayLat, wayLon))
+                            if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon))
                             {
                                 tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                         tmpLat, tmpLon, wayLat, wayLon);
+                                check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge);
+                            } else
+                            {
+                                if (pointIndex + 1 == len)
+                                    tmpNormedDist = adjDist;
+                                else
+                                    tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
                                 check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge);
-                                if (tmpNormedDist <= equalNormedDelta)
-                                {
-                                    found = true;
-                                    break;
-                                }
                             }
+                            if (tmpNormedDist <= equalNormedDelta)
+                                return false;
 
                             tmpLat = wayLat;
                             tmpLon = wayLon;
                         }
 
-                        if (found)
-                            return false;
-
-                        if (edgeDistCalcOnSearch
-                                && distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon))
-                            tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
-                        else
-                            tmpNormedDist = adjDist;
-
-                        check(tmpClosestNode, tmpNormedDist, len + 1, currEdge);
                         return closestMatch.getQueryDistance() > equalNormedDelta;
                     }
 

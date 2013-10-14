@@ -161,12 +161,9 @@ public abstract class AbstractLocation2IDIndexTester
         Random rand = new Random(12);
         Location2IDIndex fullIndex;
         if (hasEdgeSupport())
-        {
             fullIndex = new Location2IDFullWithEdgesIndex(g);
-        } else
-        {
-            fullIndex = new Location2IDFullIndex(g);
-        }
+        else
+            fullIndex = new Location2IDFullIndex(g);        
 
         DistanceCalc dist = new DistanceCalc();
         for (int i = 0; i < 100; i++)

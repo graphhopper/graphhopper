@@ -181,7 +181,7 @@ public class LocationIDResult
                 // outside of edge boundaries
                 snappedPoint = new GHPoint(tmpLat, tmpLon);
         } else
-            // now it is clear that snapped point is directly on adjacent node!
+            // snapped point is on adjacent node
             snappedPoint = new GHPoint(tmpLat, tmpLon);
 
         // build the two parts of the closest edge
