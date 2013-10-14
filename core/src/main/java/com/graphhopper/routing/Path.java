@@ -242,9 +242,7 @@ public class Path
     {
         final TIntArrayList nodes = new TIntArrayList(edgeIds.size() + 1);
         if (edgeIds.isEmpty())
-        {
-            return nodes;
-        }
+            return nodes;        
 
         int tmpNode = getFromNode();
         nodes.add(tmpNode);
@@ -299,9 +297,7 @@ public class Path
 
         cachedWays = new InstructionList(edgeIds.size() / 4);
         if (edgeIds.isEmpty())
-        {
-            return cachedWays;
-        }
+            return cachedWays;        
 
         final int tmpNode = getFromNode();
         forEveryEdge(new EdgeVisitor()
@@ -449,10 +445,8 @@ public class Path
         max = nodes.size();
         for (int i = 0; i < max; i++)
         {
-            if (thisSet.contains(nodes.get(i)))
-            {
+            if (thisSet.contains(nodes.get(i)))            
                 retSet.add(nodes.get(i));
-            }
         }
         return retSet;
     }
@@ -469,9 +463,7 @@ public class Path
         for (int i = 0; i < edgeIds.size(); i++)
         {
             if (i > 0)
-            {
-                str += "->";
-            }
+                str += "->";            
 
             str += edgeIds.get(i);
         }

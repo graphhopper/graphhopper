@@ -122,16 +122,12 @@ public class InstructionList
         return distances;
     }
 
-    public List<String> createDistances( Translation tr )
+    public List<String> createDistances( Translation tr, boolean mile )
     {
         // United Kingdom, Canada, Ireland, Australia, the Bahamas, India, and Malaysia 
         // still use some forms of the Imperial System, but are official Metric Nations
         List<String> labels = new ArrayList<String>(distances.size());
         String country = tr.getLocale().getCountry();
-        boolean mile = Locale.US.getCountry().equals(country)
-                || Locale.UK.getCountry().equals(country)
-                || Locale.CANADA.getCountry().equals(country);
-
         for (int i = 0; i < distances.size(); i++)
         {
             double dist = distances.get(i);
