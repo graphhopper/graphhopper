@@ -21,6 +21,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.XFirstSearch;
 import java.util.*;
 import java.util.Map.Entry;
@@ -182,8 +183,8 @@ public class PrepareRoutingSubnetworks
         EdgeExplorer explorer = g.createEdgeExplorer();
         for (int start = 0; start < locs; start++)
         {
-            explorer.setBaseNode(start);
-            if (!explorer.next())
+            EdgeIterator iter = explorer.setBaseNode(start);
+            if (!iter.next())
             {
                 removed++;
                 g.markNodeRemoved(start);

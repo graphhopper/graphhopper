@@ -125,14 +125,14 @@ public class AStar extends AbstractRoutingAlgorithm
             if (finished())
                 break;
 
-            explorer.setBaseNode(currVertex);
-            while (explorer.next())
+            EdgeIterator iter = explorer.setBaseNode(currVertex);
+            while (iter.next())
             {
-                if (!accept(explorer))
+                if (!accept(iter))
                     continue;
 
-                int neighborNode = explorer.getAdjNode();
-                double alreadyVisitedWeight = weightCalc.getWeight(explorer) + currEdge.weightToCompare;
+                int neighborNode = iter.getAdjNode();
+                double alreadyVisitedWeight = weightCalc.getWeight(iter) + currEdge.weightToCompare;
                 AStarEdge nEdge = fromMap.get(neighborNode);
                 if (nEdge == null || nEdge.weightToCompare > alreadyVisitedWeight)
                 {
@@ -143,12 +143,12 @@ public class AStar extends AbstractRoutingAlgorithm
                     distEstimation = alreadyVisitedWeight + currWeightToGoal;
                     if (nEdge == null)
                     {
-                        nEdge = new AStarEdge(explorer.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
+                        nEdge = new AStarEdge(iter.getEdge(), neighborNode, distEstimation, alreadyVisitedWeight);
                         fromMap.put(neighborNode, nEdge);
                     } else
                     {
                         prioQueueOpenSet.remove(nEdge);
-                        nEdge.edge = explorer.getEdge();
+                        nEdge.edge = iter.getEdge();
                         nEdge.weight = distEstimation;
                         nEdge.weightToCompare = alreadyVisitedWeight;
                     }

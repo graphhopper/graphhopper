@@ -22,6 +22,7 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
@@ -147,26 +148,26 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeExplorer explorer )
     {
         int currNode = curr.endNode;
-        explorer.setBaseNode(currNode);
-        while (explorer.next())
+        EdgeIterator iter = explorer.setBaseNode(currNode);
+        while (iter.next())
         {
-            if (!accept(explorer))
+            if (!accept(iter))
                 continue;
 
-            int neighborNode = explorer.getAdjNode();
-            double tmpWeight = weightCalc.getWeight(explorer) + curr.weight;
+            int neighborNode = iter.getAdjNode();
+            double tmpWeight = weightCalc.getWeight(iter) + curr.weight;
 
             EdgeEntry de = shortestWeightMap.get(neighborNode);
             if (de == null)
             {
-                de = new EdgeEntry(explorer.getEdge(), neighborNode, tmpWeight);
+                de = new EdgeEntry(iter.getEdge(), neighborNode, tmpWeight);
                 de.parent = curr;
                 shortestWeightMap.put(neighborNode, de);
                 prioQueue.add(de);
             } else if (de.weight > tmpWeight)
             {
                 prioQueue.remove(de);
-                de.edge = explorer.getEdge();
+                de.edge = iter.getEdge();
                 de.weight = tmpWeight;
                 de.parent = curr;
                 prioQueue.add(de);

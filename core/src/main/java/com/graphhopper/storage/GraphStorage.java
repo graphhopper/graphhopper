@@ -707,7 +707,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         return createEdgeExplorer(allEdgesFilter);
     }
 
-    protected class EdgeIterable implements EdgeExplorer
+    protected class EdgeIterable implements EdgeExplorer, EdgeIterator
     {
         final EdgeFilter filter;
         int baseNode;
@@ -730,7 +730,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         @Override
-        public EdgeExplorer setBaseNode( int baseNode )
+        public EdgeIterator setBaseNode( int baseNode )
         {
             int edge = nodes.getInt((long) baseNode * nodeEntryBytes + N_EDGE_REF);
             setEdgeId(edge);
@@ -1104,13 +1104,13 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         GHBitSet toRemoveSet = new GHBitSetImpl(removeNodeCount);
         removedNodes.copyTo(toRemoveSet);
 
-        EdgeExplorer delEdgesIter = createEdgeExplorer(allEdgesFilter);
+        EdgeExplorer delExplorer = createEdgeExplorer(allEdgesFilter);
         // create map of old node ids pointing to new ids        
         for (int removeNode = removedNodes.next(0);
                 removeNode >= 0;
                 removeNode = removedNodes.next(removeNode + 1))
         {
-            delEdgesIter.setBaseNode(removeNode);
+            EdgeIterator delEdgesIter = delExplorer.setBaseNode(removeNode);
             while (delEdgesIter.next())
             {
                 toRemoveSet.add(delEdgesIter.getAdjNode());
@@ -1160,12 +1160,12 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         GHBitSet toMoveSet = new GHBitSetImpl(removeNodeCount * 3);
-        EdgeExplorer movedEdgeIter = createEdgeExplorer();
+        EdgeExplorer movedEdgeExplorer = createEdgeExplorer();
         // marks connected nodes to rewrite the edges
         for (int i = 0; i < itemsToMove; i++)
         {
             int oldI = oldToNewMap.keyAt(i);
-            movedEdgeIter.setBaseNode(oldI);
+            EdgeIterator movedEdgeIter = movedEdgeExplorer.setBaseNode(oldI);
             while (movedEdgeIter.next())
             {
                 int nodeId = movedEdgeIter.getAdjNode();

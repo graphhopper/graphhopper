@@ -212,11 +212,11 @@ public class AStarBidirection extends AbstractBidirAlgo
 
     private void fillEdges( AStarEdge curr, CoordTrig goal,
             PriorityQueue<AStarEdge> prioQueueOpenSet,
-            TIntObjectMap<AStarEdge> shortestWeightMap, EdgeExplorer iter )
+            TIntObjectMap<AStarEdge> shortestWeightMap, EdgeExplorer explorer )
     {
 
         int currNode = curr.endNode;
-        iter.setBaseNode(currNode);
+        EdgeIterator iter = explorer.setBaseNode(currNode);
         while (iter.next())
         {
             if (!accept(iter))

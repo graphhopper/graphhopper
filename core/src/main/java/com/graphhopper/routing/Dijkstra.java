@@ -23,6 +23,7 @@ import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -100,26 +101,26 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                 break;
 
             int neighborNode = currEdge.endNode;
-            explorer.setBaseNode(neighborNode);
-            while (explorer.next())
+            EdgeIterator iter = explorer.setBaseNode(neighborNode);
+            while (iter.next())
             {
-                if (!accept(explorer))
+                if (!accept(iter))
                     continue;
 
-                int tmpNode = explorer.getAdjNode();
-                double tmpWeight = weightCalc.getWeight(explorer) + currEdge.weight;
+                int tmpNode = iter.getAdjNode();
+                double tmpWeight = weightCalc.getWeight(iter) + currEdge.weight;
 
                 EdgeEntry nEdge = fromMap.get(tmpNode);
                 if (nEdge == null)
                 {
-                    nEdge = new EdgeEntry(explorer.getEdge(), tmpNode, tmpWeight);
+                    nEdge = new EdgeEntry(iter.getEdge(), tmpNode, tmpWeight);
                     nEdge.parent = currEdge;
                     fromMap.put(tmpNode, nEdge);
                     fromHeap.add(nEdge);
                 } else if (nEdge.weight > tmpWeight)
                 {
                     fromHeap.remove(nEdge);
-                    nEdge.edge = explorer.getEdge();
+                    nEdge.edge = iter.getEdge();
                     nEdge.weight = tmpWeight;
                     nEdge.parent = currEdge;
                     fromHeap.add(nEdge);

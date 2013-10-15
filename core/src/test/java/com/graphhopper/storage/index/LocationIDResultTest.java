@@ -53,44 +53,47 @@ public class LocationIDResultTest
 
         // snap directly to tower node => pointList could get of size 1?!?      
         // a)
-        expl.setBaseNode(2).next();
-        LocationIDResult match = createLocationResult(1, -1, expl, 0);
+        EdgeIterator iter = expl.setBaseNode(2);
+        iter.next();
+        LocationIDResult match = createLocationResult(1, -1, iter, 0);
         match.calcSnappedPoint(distC);
         PointList basePoints = match.getBaseEdge().getWayGeometry(3);
         PointList adjPoints = match.getAdjEdge().getWayGeometry(3);
         assertEquals(new CoordTrig(0, 0), match.getSnappedPoint());
         assertEquals(1, basePoints.getSize());
-        assertEquals(0, basePoints.getLatitude(0), 1e-7);        
+        assertEquals(0, basePoints.getLatitude(0), 1e-7);
         assertEquals(2, adjPoints.getSize());
         assertEquals(0, adjPoints.getLatitude(0), 1e-7);
         assertEquals(1, adjPoints.getLatitude(1), 1e-7);
         // b)
-        match = createLocationResult(1, -1, expl, 1);
-        match.calcSnappedPoint(distC);        
+        match = createLocationResult(1, -1, iter, 1);
+        match.calcSnappedPoint(distC);
         assertEquals(new CoordTrig(1, 0), match.getSnappedPoint());
         // c)
-        expl.setBaseNode(1).next();
-        match = createLocationResult(1.2, 2.7, expl, 0);
+        iter = expl.setBaseNode(1);
+        iter.next();
+        match = createLocationResult(1.2, 2.7, iter, 0);
         match.calcSnappedPoint(distC);
         assertEquals(new CoordTrig(1, 2.5), match.getSnappedPoint());
         assertEquals(1, match.getBaseEdge().getWayGeometry(3).getSize());
         assertEquals(4, match.getAdjEdge().getWayGeometry(3).getSize());
-        
+
         // snap directly to pillar node
-        expl.setBaseNode(1).next();
-        match = createLocationResult(2, 1.5, expl, 1);
+        iter = expl.setBaseNode(1);
+        iter.next();
+        match = createLocationResult(2, 1.5, iter, 1);
         match.calcSnappedPoint(distC);
         assertEquals(2, match.getBaseEdge().getWayGeometry(3).getSize());
         assertEquals(3, match.getAdjEdge().getWayGeometry(3).getSize());
         assertEquals(new CoordTrig(1.5, 1.5), match.getSnappedPoint());
-        match = createLocationResult(2, 1.7, expl, 1);
+        match = createLocationResult(2, 1.7, iter, 1);
         match.calcSnappedPoint(distC);
         assertEquals(new CoordTrig(1.5, 1.5), match.getSnappedPoint());
         assertEquals(2, match.getBaseEdge().getWayGeometry(3).getSize());
         assertEquals(3, match.getAdjEdge().getWayGeometry(3).getSize());
-        
+
         // snap to edge - with pillar nodes        
-        match = createLocationResult(1.5, 2, expl, 0);
+        match = createLocationResult(1.5, 2, iter, 0);
         match.calcSnappedPoint(distC);
         assertEquals(new CoordTrig(1.3, 1.9), match.getSnappedPoint());
         assertEquals(2, match.getBaseEdge().getWayGeometry(3).getSize());
@@ -98,7 +101,7 @@ public class LocationIDResultTest
 
         // snap to edge - without pillar nodes
         expl.setBaseNode(2).next();
-        match = createLocationResult(0.5, 0.1, expl, 0);
+        match = createLocationResult(0.5, 0.1, iter, 0);
         match.calcSnappedPoint(distC);
         assertEquals(new CoordTrig(0.5, 0), match.getSnappedPoint());
         assertEquals(2, match.getBaseEdge().getWayGeometry(3).getSize());

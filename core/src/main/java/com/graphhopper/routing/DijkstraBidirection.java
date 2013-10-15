@@ -132,18 +132,18 @@ public class DijkstraBidirection extends AbstractBidirAlgo
     void fillEdges( int currNode, double currWeight, int currRef,
             IntDoubleBinHeap openSet, EdgeWrapper wrapper, EdgeExplorer explorer )
     {
-        explorer.setBaseNode(currNode);
-        while (explorer.next())
+        EdgeIterator iter = explorer.setBaseNode(currNode);
+        while (iter.next())
         {
-            if (!accept(explorer))
+            if (!accept(iter))
                 continue;
 
-            int neighborNode = explorer.getAdjNode();
-            double tmpWeight = weightCalc.getWeight(explorer) + currWeight;
+            int neighborNode = iter.getAdjNode();
+            double tmpWeight = weightCalc.getWeight(iter) + currWeight;
             int newRef = wrapper.getRef(neighborNode);
             if (newRef < 0)
             {
-                newRef = wrapper.add(neighborNode, tmpWeight, explorer.getEdge());
+                newRef = wrapper.add(neighborNode, tmpWeight, iter.getEdge());
                 wrapper.putParent(newRef, currRef);
                 openSet.insert_(tmpWeight, newRef);
             } else
@@ -151,7 +151,7 @@ public class DijkstraBidirection extends AbstractBidirAlgo
                 double weight = wrapper.getWeight(newRef);
                 if (weight > tmpWeight)
                 {
-                    wrapper.putEdgeId(newRef, explorer.getEdge());
+                    wrapper.putEdgeId(newRef, iter.getEdge());
                     wrapper.putWeight(newRef, tmpWeight);
                     wrapper.putParent(newRef, currRef);
                     openSet.update_(tmpWeight, newRef);

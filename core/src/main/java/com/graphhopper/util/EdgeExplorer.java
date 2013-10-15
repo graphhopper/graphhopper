@@ -18,17 +18,16 @@
 package com.graphhopper.util;
 
 /**
- * Class to reuse an EdgeIterator. Use one instance per thread and call setBaseNode before looping
- * over it.
+ * Class to get EdgeIterator create it via graph.createEdgeExplorer(). Use one instance per thread.
  * <p/>
  * @see EdgeIterator
  * @see EdgeIteratorBase
  * @author Peter Karich
  */
-public interface EdgeExplorer extends EdgeIterator
+public interface EdgeExplorer
 {
     /**
      * This method sets the base node for iteration through neighboring edges.
      */
-    EdgeExplorer setBaseNode( int baseNode );
+    EdgeIterator setBaseNode( int baseNode );
 }
