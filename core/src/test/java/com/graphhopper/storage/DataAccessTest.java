@@ -31,7 +31,7 @@ import org.junit.Test;
  */
 public abstract class DataAccessTest
 {
-    private File folder = new File("./target/tmp/da");
+    private final File folder = new File("./target/tmp/da");
     protected String directory;
     protected String name = "dataacess";
 
@@ -41,9 +41,7 @@ public abstract class DataAccessTest
     public void setUp()
     {
         if (!Helper.removeDir(folder))
-        {
             throw new IllegalStateException("cannot delete folder " + folder);
-        }
 
         folder.mkdirs();
         directory = folder.getAbsolutePath() + "/";
@@ -84,7 +82,7 @@ public abstract class DataAccessTest
     }
 
     @Test
-    public void testLoadClose()
+    public void testExceptionIfNoEnsureCapacityWasCalled()
     {
         DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
@@ -96,7 +94,12 @@ public abstract class DataAccessTest
         } catch (Exception ex)
         {
         }
+    }
 
+    @Test
+    public void testLoadClose()
+    {
+        DataAccess da = createDataAccess(name);
         da.create(300);
         da.setInt(2 * 4, 321);
         da.flush();
@@ -135,18 +138,11 @@ public abstract class DataAccessTest
         DataAccess da = createDataAccess(name);
         da.create(128);
         da.setInt(31 * 4, 200);
-        try
-        {
-            // this should fail with an index out of bounds exception
-            da.setInt(32 * 4, 220);
-            assertFalse(true);
-        } catch (Exception ex)
-        {
-        }
+
         assertEquals(200, da.getInt(31 * 4));
         da.ensureCapacity(2 * 128);
         assertEquals(200, da.getInt(31 * 4));
-        // now it shouldn't fail now
+        // now it shouldn't fail
         da.setInt(32 * 4, 220);
         assertEquals(220, da.getInt(32 * 4));
         da.close();
@@ -236,6 +232,23 @@ public abstract class DataAccessTest
         da.trimTo(128 * 1);
         assertEquals(1, da.getSegments());
         assertEquals(301, da.getInt(31 * 4));
+
+        // at least one segment
+        da.trimTo(0);
+        assertEquals(1, da.getSegments());
+        da.close();
+    }
+
+    @Test
+    public void testBoundsCheck()
+    {
+        DataAccess da = createDataAccess(name);
+        da.setSegmentSize(128);
+        da.create(128 * 11);
+        da.setInt(32 * 4, 302);
+
+        // make smaller
+        da.trimTo(128 * 1);
         try
         {
             assertEquals(302, da.getInt(32 * 4));
@@ -244,10 +257,17 @@ public abstract class DataAccessTest
         {
         }
 
-        // at least one segment
-        da.trimTo(0);
-        assertEquals(1, da.getSegments());
-        da.close();
+        da = createDataAccess(name);
+        da.create(128);
+        da.setInt(31 * 4, 200);
+        try
+        {
+            // this should fail with an index out of bounds exception
+            da.setInt(32 * 4, 220);
+            assertFalse(true);
+        } catch (Exception ex)
+        {
+        }
     }
 
     @Test

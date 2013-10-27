@@ -23,7 +23,9 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.LevelGraph;
@@ -53,7 +55,7 @@ public class Measurement
         new Measurement().start(CmdArgs.read(strs));
     }
     private static Logger logger = LoggerFactory.getLogger(Measurement.class);
-    private Map<String, String> properties = new TreeMap<String, String>();
+    private final Map<String, String> properties = new TreeMap<String, String>();
     private long seed;
     private int maxNode;
 
@@ -72,18 +74,20 @@ public class Measurement
         if (Helper.isEmpty(propLocation))
             propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date()) + ".properties";
 
-        seed = args.getLong("measurement.seed", 123);        
+        seed = args.getLong("measurement.seed", 123);
         String gitCommit = args.get("measurement.gitinfo", "");
         int count = args.getInt("measurement.count", 1000);
 
         final EncodingManager encodingManager = new EncodingManager("CAR");
-        Directory dir = new RAMDirectory(graphLocation, true);
+        // TODO revert to
+//        DAType daType = DAType.RAM_STORE;
+        DAType daType = DAType.UNSAFE_STORE;        
+        Directory dir = new GHDirectory(graphLocation, daType);
         LevelGraphStorage g = new LevelGraphStorage(dir, encodingManager);
         if (!g.loadExisting())
             throw new IllegalStateException("Cannot load existing levelgraph at " + graphLocation);
 
         // TODO make sure the graph is unprepared!
-
         final FlagEncoder vehicle = encodingManager.getEncoder("CAR");
         final WeightCalculation type = new ShortestCalc();
         StopWatch sw = new StopWatch().start();
@@ -111,7 +115,7 @@ public class Measurement
             PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(vehicle, type).setGraph(g);
             printPreparationDetails(g, prepare);
             printTimeOfRouteQuery(prepare, count, "routingCH");
-            logger.info("store into " + propLocation);
+            logger.info("store into " + propLocation + ", DA:" + daType);
         } catch (Exception ex)
         {
             logger.error("Problem while measuring " + graphLocation, ex);
@@ -119,7 +123,7 @@ public class Measurement
         } finally
         {
             put("measurement.gitinfo", gitCommit);
-            put("measurement.count", count);            
+            put("measurement.count", count);
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getTime());
             System.gc();
@@ -204,9 +208,9 @@ public class Measurement
                     sum.addAndGet(dist);
                     if (dist > maxDistance.get())
                         maxDistance.set(dist);
-                    
+
                     if (dist < minDistance.get())
-                        minDistance.set(dist);                    
+                        minDistance.set(dist);
                 }
 
                 return p.calcPoints().getSize();

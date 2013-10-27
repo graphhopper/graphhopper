@@ -49,9 +49,7 @@ public class GraphHopper implements GraphHopperAPI
         hopper.importOrLoad();
         RoutingAlgorithmSpecialAreaTests tests = new RoutingAlgorithmSpecialAreaTests(hopper);
         if (args.getBool("graph.testIT", false))
-        {
             tests.start();
-        }
     }
     private final Logger logger = LoggerFactory.getLogger(getClass());
     // for graph:
@@ -169,6 +167,14 @@ public class GraphHopper implements GraphHopperAPI
     {
         ensureNotLoaded();
         dataAccessType = DAType.MMAP;
+        return this;
+    }
+
+    // not yet stable enough to offer it for everyone
+    private GraphHopper setUnsafeMemory()
+    {
+        ensureNotLoaded();
+        dataAccessType = DAType.UNSAFE_STORE;
         return this;
     }
 
@@ -342,6 +348,9 @@ public class GraphHopper implements GraphHopperAPI
         if (dataAccess.contains("MMAP"))
         {
             setMemoryMapped();
+        } else if (dataAccess.contains("UNSAFE"))
+        {
+            setUnsafeMemory();
         } else
         {
             if (dataAccess.contains("SAVE") || dataAccess.contains("INMEMORY"))
@@ -433,7 +442,7 @@ public class GraphHopper implements GraphHopperAPI
         }
         cleanUp();
         optimize();
-        postProcessing();        
+        postProcessing();
         flush();
         return this;
     }
@@ -515,7 +524,7 @@ public class GraphHopper implements GraphHopperAPI
         graph.setSegmentSize(defaultSegmentSize);
         if (!graph.loadExisting())
             return false;
-        
+
         postProcessing();
         fullyLoaded = true;
         return true;
@@ -539,7 +548,7 @@ public class GraphHopper implements GraphHopperAPI
 
         if (!"true".equals(graph.getProperties().get("prepare.done")))
             prepare();
-        initLocationIndex();        
+        initLocationIndex();
     }
 
     protected WeightCalculation createType( String type, FlagEncoder encoder )

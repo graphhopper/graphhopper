@@ -53,7 +53,7 @@ public class GHDirectory implements Directory
 
         // set default access to integer based
         // improves performance on server side, 10% faster for queries, 20% faster for preparation
-        if (!this.defaultType.isMmap())
+        if (this.defaultType.isInMemory())
         {
             if (isStoring())
             {
@@ -98,10 +98,7 @@ public class GHDirectory implements Directory
             return da;
         }
 
-        if (type.isMmap())
-        {
-            da = new MMapDataAccess(name, location);
-        } else
+        if (type.isInMemory())
         {
             if (type.isInteg())
             {
@@ -116,6 +113,12 @@ public class GHDirectory implements Directory
                 else
                     da = new RAMDataAccess(name, location, false);
             }
+        } else if (type.isMMap())
+        {
+            da = new MMapDataAccess(name, location);
+        } else
+        {
+            da = new UnsafeDataAccess(name, location);
         }
 
         if (type.isSynched())

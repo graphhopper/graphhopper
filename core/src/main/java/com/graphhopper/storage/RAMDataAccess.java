@@ -93,9 +93,7 @@ public class RAMDataAccess extends AbstractDataAccess
     public RAMDataAccess create( long bytes )
     {
         if (segments.length > 0)
-        {
-            throw new IllegalThreadStateException("already created");
-        }
+            throw new IllegalThreadStateException("already created");        
 
         // initialize transient values
         setSegmentSize(segmentSizeInBytes);
@@ -107,22 +105,17 @@ public class RAMDataAccess extends AbstractDataAccess
     public void ensureCapacity( long bytes )
     {
         if (bytes < 0)
-        {
             throw new IllegalArgumentException("new capacity has to be strictly positive");
-        }
+
         long cap = getCapacity();
         long todoBytes = bytes - cap;
         if (todoBytes <= 0)
-        {
             return;
-        }
-
+        
         int segmentsToCreate = (int) (todoBytes / segmentSizeInBytes);
         if (todoBytes % segmentSizeInBytes != 0)
-        {
             segmentsToCreate++;
-        }
-
+        
         try
         {
             byte[][] newSegs = Arrays.copyOf(segments, segments.length + segmentsToCreate);
@@ -143,18 +136,15 @@ public class RAMDataAccess extends AbstractDataAccess
     public boolean loadExisting()
     {
         if (segments.length > 0)
-        {
             throw new IllegalStateException("already initialized");
-        }
+        
         if (!store || closed)
-        {
             return false;
-        }
+        
         File file = new File(getFullName());
-        if (!file.exists() || file.length() == 0)
-        {
+        if (!file.exists() || file.length() == 0)        
             return false;
-        }
+        
         try
         {
             RandomAccessFile raFile = new RandomAccessFile(getFullName(), "r");
@@ -162,26 +152,22 @@ public class RAMDataAccess extends AbstractDataAccess
             {
                 long byteCount = readHeader(raFile) - HEADER_OFFSET;
                 if (byteCount < 0)
-                {
                     return false;
-                }
-
+        
                 raFile.seek(HEADER_OFFSET);
                 // raFile.readInt() <- too slow                
                 int segmentCount = (int) (byteCount / segmentSizeInBytes);
                 if (byteCount % segmentSizeInBytes != 0)
-                {
                     segmentCount++;
-                }
+                
                 segments = new byte[segmentCount][];
                 for (int s = 0; s < segmentCount; s++)
                 {
                     byte[] bytes = new byte[segmentSizeInBytes];
                     int read = raFile.read(bytes);
                     if (read <= 0)
-                    {
                         throw new IllegalStateException("segment " + s + " is empty? " + toString());
-                    }
+                    
                     segments[s] = bytes;
                 }
                 return true;
@@ -199,13 +185,11 @@ public class RAMDataAccess extends AbstractDataAccess
     public void flush()
     {
         if (closed)
-        {
             throw new IllegalStateException("already closed");
-        }
+        
         if (!store)
-        {
             return;
-        }
+        
         try
         {
             RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw");
@@ -328,9 +312,8 @@ public class RAMDataAccess extends AbstractDataAccess
         }
 
         if (capacity < segmentSizeInBytes)
-        {
             capacity = segmentSizeInBytes;
-        }
+        
         int remainingSegments = (int) (capacity / segmentSizeInBytes);
         if (capacity % segmentSizeInBytes != 0)
         {

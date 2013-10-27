@@ -32,7 +32,7 @@ import java.util.List;
 
 /**
  * This is a data structure which uses the operating system to synchronize between disc and memory.
- * Do not use this from multiple threads!
+ * Use SynchDAWrapper if you intent to use this from multiple threads!
  * <p/>
  * @author Peter Karich
  */
@@ -122,29 +122,21 @@ public class MMapDataAccess extends AbstractDataAccess
     protected void mapIt( long offset, long byteCount, boolean clearNew )
     {
         if (byteCount < 0)
-        {
             throw new IllegalArgumentException("new capacity has to be strictly positive");
-        }
+        
         if (byteCount <= getCapacity())
-        {
             return;
-        }
 
         long longSegmentSize = segmentSizeInBytes;
         int segmentsToMap = (int) (byteCount / longSegmentSize);
         if (segmentsToMap < 0)
-        {
-            throw new IllegalStateException("Too many segments needs to be allocated. Increase segmentSize.");
-        }
+            throw new IllegalStateException("Too many segments needs to be allocated. Increase segmentSize.");        
 
         if (byteCount % longSegmentSize != 0)
-        {
             segmentsToMap++;
-        }
+        
         if (segmentsToMap == 0)
-        {
-            throw new IllegalStateException("0 segments are not allowed.");
-        }
+            throw new IllegalStateException("0 segments are not allowed.");        
 
         long bufferStart = offset;
         int newSegments;
@@ -205,6 +197,7 @@ public class MMapDataAccess extends AbstractDataAccess
                 cleanHack();
                 try
                 {
+                    // mini sleep to let JVM do unmapping
                     Thread.sleep(5);
                 } catch (InterruptedException iex)
                 {
@@ -243,26 +236,22 @@ public class MMapDataAccess extends AbstractDataAccess
     public boolean loadExisting()
     {
         if (segments.size() > 0)
-        {
             throw new IllegalStateException("already initialized");
-        }
+
         if (closed)
-        {
             return false;
-        }
+
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
-        {
             return false;
-        }
+
         initRandomAccessFile();
         try
         {
             long byteCount = readHeader(raFile);
             if (byteCount < 0)
-            {
                 return false;
-            }
+
             mapIt(HEADER_OFFSET, byteCount - HEADER_OFFSET, false);
             return true;
         } catch (IOException ex)

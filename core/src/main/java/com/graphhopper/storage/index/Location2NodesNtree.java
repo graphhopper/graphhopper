@@ -238,9 +238,8 @@ public class Location2NodesNtree implements Location2IDIndex
     {
         LocationIDResult res = findClosest(lat, lon, EdgeFilter.ALL_EDGES);
         if (res == null)
-        {
             return -1;
-        }
+
         return res.getClosestNode();
     }
 
@@ -248,23 +247,17 @@ public class Location2NodesNtree implements Location2IDIndex
     public boolean loadExisting()
     {
         if (initialized)
-        {
             throw new IllegalStateException("Call loadExisting only once");
-        }
 
         if (!dataAccess.loadExisting())
-        {
             return false;
-        }
 
         if (dataAccess.getHeader(0) != MAGIC_INT)
-        {
             throw new IllegalStateException("incorrect location2id index version, expected:" + MAGIC_INT);
-        }
+
         if (dataAccess.getHeader(1 * 4) != calcChecksum())
-        {
             throw new IllegalStateException("location2id index was opened with incorrect graph");
-        }
+
         setMinResolutionInMeter(dataAccess.getHeader(2 * 4));
         prepareAlgo();
         initialized = true;
@@ -275,9 +268,7 @@ public class Location2NodesNtree implements Location2IDIndex
     public Location2IDIndex setResolution( int minResolutionInMeter )
     {
         if (minResolutionInMeter <= 0)
-        {
             throw new IllegalStateException("Negative precision is not allowed!");
-        }
 
         setMinResolutionInMeter(minResolutionInMeter);
         return this;
@@ -287,12 +278,9 @@ public class Location2NodesNtree implements Location2IDIndex
     public Location2IDIndex setApproximation( boolean approx )
     {
         if (approx)
-        {
             distCalc = new DistancePlaneProjection();
-        } else
-        {
+        else
             distCalc = new DistanceCalc();
-        }
         return this;
     }
 
@@ -317,9 +305,7 @@ public class Location2NodesNtree implements Location2IDIndex
     public Location2IDIndex prepareIndex()
     {
         if (initialized)
-        {
             throw new IllegalStateException("Call prepareIndex only once");
-        }
 
         StopWatch sw = new StopWatch().start();
         prepareAlgo();
@@ -665,7 +651,7 @@ public class Location2NodesNtree implements Location2IDIndex
         {
             @Override
             public boolean execute( final int networkEntryNodeId )
-            {               
+            {
                 new XFirstSearch()
                 {
                     boolean goFurther = true;
@@ -675,7 +661,7 @@ public class Location2NodesNtree implements Location2IDIndex
                     int currNode;
 
                     @Override
-                    protected GHBitSet createBitSet(  )
+                    protected GHBitSet createBitSet()
                     {
                         return checkBitset;
                     }
@@ -732,7 +718,7 @@ public class Location2NodesNtree implements Location2IDIndex
                                 break;
                             } else if (edgeDistCalcOnSearch
                                     && distCalc.validEdgeDistance(queryLat, queryLon,
-                                    tmpLat, tmpLon, wayLat, wayLon))
+                                            tmpLat, tmpLon, wayLat, wayLon))
                             {
                                 tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                         tmpLat, tmpLon, wayLat, wayLon);
@@ -745,7 +731,7 @@ public class Location2NodesNtree implements Location2IDIndex
 
                         if (edgeDistCalcOnSearch
                                 && distCalc.validEdgeDistance(queryLat, queryLon,
-                                tmpLat, tmpLon, adjLat, adjLon))
+                                        tmpLat, tmpLon, adjLat, adjLon))
                         {
                             tmpDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                     tmpLat, tmpLon, adjLat, adjLon);
@@ -764,7 +750,7 @@ public class Location2NodesNtree implements Location2IDIndex
                         {
                             closestMatch.setWeight(dist);
                             closestMatch.setClosestNode(node);
-                            closestMatch.setClosestEdge(iter.detach());                            
+                            closestMatch.setClosestEdge(iter.detach());
                             closestMatch.setWayIndex(wayIndex);
                         }
                     }

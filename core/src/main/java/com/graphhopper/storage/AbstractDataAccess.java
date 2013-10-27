@@ -81,7 +81,7 @@ public abstract class AbstractDataAccess implements DataAccess
     }
 
     /**
-     * @return the remaining space in bytes
+     * Writes some internal data into the beginning of the specified file.
      */
     protected void writeHeader( RandomAccessFile file, long length, int segmentSize ) throws IOException
     {
@@ -99,14 +99,12 @@ public abstract class AbstractDataAccess implements DataAccess
     {
         raFile.seek(0);
         if (raFile.length() == 0)
-        {
             return -1;
-        }
+      
         String versionHint = raFile.readUTF();
         if (!"GH".equals(versionHint))
-        {
             throw new IllegalArgumentException("Not a GraphHopper file! Expected 'GH' as file marker but was " + versionHint);
-        }
+        
         long bytes = raFile.readLong();
         setSegmentSize(raFile.readInt());
         for (int i = 0; i < header.length; i++)
@@ -212,17 +210,14 @@ public abstract class AbstractDataAccess implements DataAccess
     protected boolean checkBeforeRename( String newName )
     {
         if (Helper.isEmpty(newName))
-        {
             throw new IllegalArgumentException("newName mustn't be empty!");
-        }
+
         if (newName.equals(name))
-        {
             return false;
-        }
+
         if (isStoring() && new File(location + newName).exists())
-        {
             throw new IllegalArgumentException("file newName already exists!");
-        }
+
         return true;
     }
 
