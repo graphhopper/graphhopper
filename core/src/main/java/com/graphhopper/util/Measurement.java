@@ -79,9 +79,9 @@ public class Measurement
         int count = args.getInt("measurement.count", 1000);
 
         final EncodingManager encodingManager = new EncodingManager("CAR");
-        // TODO revert to
-//        DAType daType = DAType.RAM_STORE;
-        DAType daType = DAType.UNSAFE_STORE;        
+        
+        DAType daType = DAType.RAM_STORE;
+//        DAType daType = DAType.UNSAFE_STORE;        
         Directory dir = new GHDirectory(graphLocation, daType);
         LevelGraphStorage g = new LevelGraphStorage(dir, encodingManager);
         if (!g.loadExisting())
