@@ -17,8 +17,8 @@
  */
 package com.graphhopper.geohash;
 
-import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.shapes.CoordTrig;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -34,7 +34,7 @@ public class SpatialKeyAlgoTest
     {
         SpatialKeyAlgo algo = new SpatialKeyAlgo(32);
         long val = algo.encode(-24.235345f, 47.234234f);
-        assertEquals("01100110101000111100000110010100", BitUtil.toBitString(val, 32));
+        assertEquals("01100110101000111100000110010100", BitUtil.BIG.toLastBitString(val, 32));
     }
 
     @Test
@@ -46,7 +46,7 @@ public class SpatialKeyAlgoTest
         float lat = 24.235345f;
         float lon = 47.234234f;
         long val = algo.encode(lat, lon);
-        assertEquals("00000000" + "110011000000100101101011", BitUtil.toBitString(val, 32));
+        assertEquals("00000000" + "110011000000100101101011", BitUtil.BIG.toLastBitString(val, 32));
 
         CoordTrig fl = new CoordTrig();
         algo.decode(val, fl);
@@ -67,7 +67,7 @@ public class SpatialKeyAlgoTest
         float lat = 24.235345f;
         float lon = 47.234234f;
         long val = algo.encode(lat, lon);
-        assertEquals("11001100000010010110101100111110", BitUtil.toBitString(val, bits));
+        assertEquals("11001100000010010110101100111110", BitUtil.BIG.toLastBitString(val, bits));
 
         CoordTrig fl = new CoordTrig();
         algo.decode(val, fl);
@@ -87,7 +87,7 @@ public class SpatialKeyAlgoTest
         float lat = 24.235345f;
         float lon = 47.234234f;
         long val = algo.encode(lat, lon);
-        assertEquals("11001100000010010110101100111110" + "11100111" + "01000110", BitUtil.toBitString(val, bits));
+        assertEquals("11001100000010010110101100111110" + "11100111" + "01000110", BitUtil.BIG.toLastBitString(val, bits));
 
         CoordTrig fl = new CoordTrig();
         algo.decode(val, fl);
@@ -117,8 +117,8 @@ public class SpatialKeyAlgoTest
             double precision = DistanceCalc.C / (1 << (i / 2 - 2)) / 4;
             double dist = new DistanceCalc().calcDist(coord.lat, coord.lon, coord2.lat, coord2.lon);
             assertEquals(0, dist, 1e-5);
-//            System.out.println("\n\n##" + i + "\nkeyX:" + BitUtil.toBitString(keyX));
-//            System.out.println("keyY:" + BitUtil.toBitString(keyY));
+//            System.out.println("\n\n##" + i + "\nkeyX:" + BitUtil.BIG.toBitString(keyX));
+//            System.out.println("keyY:" + BitUtil.BIG.toBitString(keyY));
 //            System.out.println("distanceX:" + dist + " precision:" + precision + " difference:" + (dist - precision) + " factor:" + dist / precision);
         }
     }
@@ -207,16 +207,14 @@ public class SpatialKeyAlgoTest
         CoordTrig coord = new CoordTrig();
         SpatialKeyAlgo algo = new SpatialKeyAlgo(8);
         long key = algo.encode(5, 30);
-        assertEquals("0000000000000000000000000000000000000000000000000000000011000001",
-                BitUtil.toBitString(key));
+        assertEquals("11000001", BitUtil.BIG.toLastBitString(key, 8));
         algo.decode(key, coord);
         assertEquals(5.63, coord.lat, 1e-2);
         assertEquals(33.75, coord.lon, 1e-2);
 
         algo = new SpatialKeyAlgo(7);
         key = algo.encode(11.11, 40.66);
-        assertEquals("0000000000000000000000000000000000000000000000000000000001100000",
-                BitUtil.toBitString(key));
+        assertEquals("01100000", BitUtil.BIG.toLastBitString(key, 8));
         assertEquals(5.63, coord.lat, 1e-2);
         assertEquals(33.75, coord.lon, 1e-2);
     }

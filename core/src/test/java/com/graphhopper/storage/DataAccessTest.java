@@ -20,6 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 import java.io.File;
+import java.nio.ByteOrder;
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -31,6 +32,7 @@ import org.junit.Test;
  */
 public abstract class DataAccessTest
 {
+    protected ByteOrder defaultOrder = ByteOrder.LITTLE_ENDIAN;
     private final File folder = new File("./target/tmp/da");
     protected String directory;
     protected String name = "dataacess";
@@ -321,15 +323,15 @@ public abstract class DataAccessTest
         DataAccess da = createDataAccess(name);
         da.create(300);
         assertEquals(128, da.getSegmentSize());
-        byte[] bytes = BitUtil.fromInt(Integer.MAX_VALUE / 3);
+        byte[] bytes = BitUtil.BIG.fromInt(Integer.MAX_VALUE / 3);
         da.setBytes(8, bytes, bytes.length);
         bytes = new byte[4];
         da.getBytes(8, bytes, bytes.length);
-        assertEquals(Integer.MAX_VALUE / 3, BitUtil.toInt(bytes));
+        assertEquals(Integer.MAX_VALUE / 3, BitUtil.BIG.toInt(bytes));
 
         da.setBytes(127, bytes, bytes.length);
         da.getBytes(127, bytes, bytes.length);
-        assertEquals(Integer.MAX_VALUE / 3, BitUtil.toInt(bytes));
+        assertEquals(Integer.MAX_VALUE / 3, BitUtil.BIG.toInt(bytes));
 
         da.close();
 

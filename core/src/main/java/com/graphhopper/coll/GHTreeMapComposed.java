@@ -29,7 +29,8 @@ import java.util.TreeMap;
 public class GHTreeMapComposed
 {
     private static final Integer NOT_EMPTY = new Integer(-3);
-    private TreeMap<Long, Integer> map;
+    private final BitUtil bitUtil = BitUtil.BIG;
+    private final TreeMap<Long, Integer> map;
 
     public GHTreeMapComposed()
     {
@@ -43,7 +44,7 @@ public class GHTreeMapComposed
 
     void remove( int key, int value )
     {
-        long v = BitUtil.toLong(value, key);
+        long v = bitUtil.toLong(value, key);
         if (map.remove(v) != NOT_EMPTY)
         {
             throw new IllegalStateException("cannot remove key " + key + " with value " + value
@@ -59,7 +60,7 @@ public class GHTreeMapComposed
 
     public void insert( int key, int value )
     {
-        long v = BitUtil.toLong(value, key);
+        long v = bitUtil.toLong(value, key);
         map.put(v, NOT_EMPTY);
     }
 

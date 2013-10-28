@@ -17,10 +17,11 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.BitUtilLittle;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import org.slf4j.LoggerFactory;
 
@@ -36,19 +37,10 @@ public class RAMDataAccess extends AbstractDataAccess
     private boolean closed = false;
     private boolean store;
 
-    RAMDataAccess()
-    {
-        this("", "", false);
-    }
 
-    RAMDataAccess( String name )
+    RAMDataAccess( String name, String location, boolean store, ByteOrder order )
     {
-        this(name, name, false);
-    }
-
-    RAMDataAccess( String name, String location, boolean store )
-    {
-        super(name, location);
+        super(name, location, order);
         this.store = store;
     }
 
@@ -221,7 +213,7 @@ public class RAMDataAccess extends AbstractDataAccess
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         assert index + 4 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
-        BitUtil.fromInt(segments[bufferIndex], value, index);
+        bitUtil.fromInt(segments[bufferIndex], value, index);
     }
 
     @Override
@@ -237,7 +229,7 @@ public class RAMDataAccess extends AbstractDataAccess
                     + ", bufIndex:" + bufferIndex + ", bytePos:" + bytePos
                     + ", segPower:" + segmentSizePower);
         }
-        return BitUtil.toInt(segments[bufferIndex], index);
+        return bitUtil.toInt(segments[bufferIndex], index);
     }
 
     @Override

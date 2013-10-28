@@ -30,6 +30,7 @@ import com.graphhopper.util.Helper;
  */
 public class OSMIDMap implements LongIntMap
 {
+    private static final BitUtil bitUtil = BitUtil.LITTLE;
     private final DataAccess keys;
     private final DataAccess values;
     private long lastKey = Long.MIN_VALUE;
@@ -80,7 +81,7 @@ public class OSMIDMap implements LongIntMap
         keys.ensureCapacity(doubleSize + 8);
 
         // store long => double of the orig size
-        byte[] longBytes = BitUtil.fromLong(key);
+        byte[] longBytes = bitUtil.fromLong(key);
         keys.setBytes(doubleSize, longBytes, 8);
         lastKey = key;
         size += 4;
@@ -92,9 +93,8 @@ public class OSMIDMap implements LongIntMap
     {
         long retIndex = binarySearch(keys, 0, getSize(), key);
         if (retIndex < 0)
-        {
             return noEntryValue;
-        }
+        
         return values.getInt(retIndex * 4);
     }
 
@@ -107,31 +107,23 @@ public class OSMIDMap implements LongIntMap
             guess = (high + low) >>> 1;
             long tmp = guess << 3;
             da.getBytes(tmp, longBytes, 8);
-            long guessedKey = BitUtil.toLong(longBytes);
+            long guessedKey = bitUtil.toLong(longBytes);
             if (guessedKey < key)
-            {
                 low = guess;
-            } else
-            {
+            else
                 high = guess;
-            }
         }
 
         if (high == start + len)
-        {
             return ~(start + len);
-        }
 
         long tmp = high << 3;
         da.getBytes(tmp, longBytes, 8);
-        long highKey = BitUtil.toLong(longBytes);
+        long highKey = bitUtil.toLong(longBytes);
         if (highKey == key)
-        {
             return high;
-        } else
-        {
+        else
             return ~high;
-        }
     }
 
     @Override

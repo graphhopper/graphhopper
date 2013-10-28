@@ -132,7 +132,7 @@ public class GHUtility
         while (iter.next())
         {
             str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
-                    + iter.getEdge() + " \t" + BitUtil.toBitString(iter.getFlags(), 8) + "\n";
+                    + iter.getEdge() + " \t" + BitUtil.BIG.toBitString(iter.getFlags(), 8) + "\n";
         }
         return str;
     }
@@ -145,7 +145,7 @@ public class GHUtility
         {
             str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
                     + iter.getWayGeometry().getSize() + ", edgeId:" + iter.getEdge()
-                    + "\t" + BitUtil.toBitString(iter.getFlags(), 8) + "\n";
+                    + "\t" + BitUtil.BIG.toBitString(iter.getFlags(), 8) + "\n";
         }
         return str;
     }

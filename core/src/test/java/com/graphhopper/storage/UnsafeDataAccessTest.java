@@ -17,6 +17,11 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.BitUtil;
+import java.nio.ByteOrder;
+import org.junit.Test;
+import static org.junit.Assert.*;
+
 /**
  *
  * @author Peter Karich
@@ -26,7 +31,7 @@ public class UnsafeDataAccessTest extends DataAccessTest
     @Override
     public DataAccess createDataAccess( String name )
     {
-        return new UnsafeDataAccess(name, directory).setSegmentSize(128);
+        return new UnsafeDataAccess(name, directory, defaultOrder).setSegmentSize(128);
     }
 
     @Override
@@ -34,10 +39,40 @@ public class UnsafeDataAccessTest extends DataAccessTest
     {
         // SKIP as unsafe failes with SIGSEGV and not with an exception!
     }
-    
+
     @Override
     public void testBoundsCheck()
     {
         // SKIP as unsafe has no bounds checks
+    }
+
+    @Test
+    public void testNativeOrder()
+    {
+        BitUtil bitUtil = BitUtil.get(ByteOrder.nativeOrder());
+        long address = UnsafeDataAccess.UNSAFE.allocateMemory(8);
+        long val = 123123123123L * 123L;
+
+        byte[] bytes = new byte[8];
+        bitUtil.fromLong(bytes, val);
+
+        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN))
+        {
+            for (int i = 7; i >= 0; i--)
+            {
+                UnsafeDataAccess.UNSAFE.putByte(address + i, bytes[i]);
+            }
+        } else
+        {
+            // not tested:
+            for (int i = 0; i < 8; i++)
+            {
+                UnsafeDataAccess.UNSAFE.putByte(address + i, bytes[i]);
+            }
+        }
+        
+        long tmp = UnsafeDataAccess.UNSAFE.getLong(address);
+        assertEquals(val, tmp);
+        UnsafeDataAccess.UNSAFE.freeMemory(address);
     }
 }

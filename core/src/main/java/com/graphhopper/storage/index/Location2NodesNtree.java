@@ -26,18 +26,8 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistancePlaneProjection;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.NumHelper;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.XFirstSearch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
@@ -484,7 +474,7 @@ public class Location2NodesNtree implements Location2IDIndex
                 InMemLeafEntry leaf = (InMemLeafEntry) e;
                 int bits = keyAlgo.getBits();
                 // print reverse keys
-                sb.append(BitUtil.toBitString(BitUtil.reverse(key, bits), bits)).append("  ");
+                sb.append(BitUtil.BIG.toBitString(BitUtil.BIG.reverse(key, bits), bits)).append("  ");
                 TIntArrayList entries = leaf.getResults();
                 for (int i = 0; i < entries.size(); i++)
                 {
@@ -602,12 +592,12 @@ public class Location2NodesNtree implements Location2IDIndex
     // this method returns the spatial key in reverse order for easier right-shifting
     final long createReverseKey( double lat, double lon )
     {
-        return BitUtil.reverse(keyAlgo.encode(lat, lon), keyAlgo.getBits());
+        return BitUtil.BIG.reverse(keyAlgo.encode(lat, lon), keyAlgo.getBits());
     }
 
     final long createReverseKey( long key )
     {
-        return BitUtil.reverse(key, keyAlgo.getBits());
+        return BitUtil.BIG.reverse(key, keyAlgo.getBits());
     }
 
     TIntHashSet findNetworkEntries( double queryLat, double queryLon )
@@ -623,7 +613,7 @@ public class Location2NodesNtree implements Location2IDIndex
                 for (double tmpLon = queryLon - deltaLon; tmpLon <= maxLon; tmpLon += deltaLon)
                 {
                     long keyPart = createReverseKey(tmpLat, tmpLon);
-                    // System.out.println(BitUtil.toBitString(key, keyAlgo.bits()));
+                    // System.out.println(BitUtilLittle.toBitString(key, keyAlgo.bits()));
                     fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
                 }
             }

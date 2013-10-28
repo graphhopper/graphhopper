@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
+import java.nio.ByteOrder;
 
 /**
  * This is a data structure which uses an unsafe access to native memory. Notes:
@@ -39,7 +40,7 @@ import java.lang.reflect.Field;
 public class UnsafeDataAccess extends AbstractDataAccess
 {
     @SuppressWarnings("ALL")
-    private static final sun.misc.Unsafe unsafe;
+    static final sun.misc.Unsafe UNSAFE;
 
     static
     {
@@ -48,7 +49,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
             @SuppressWarnings("ALL")
             Field field = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
             field.setAccessible(true);
-            unsafe = (sun.misc.Unsafe) field.get(null);
+            UNSAFE = (sun.misc.Unsafe) field.get(null);
         } catch (Exception e)
         {
             throw new AssertionError(e);
@@ -59,9 +60,9 @@ public class UnsafeDataAccess extends AbstractDataAccess
     private long capacity;
     private transient boolean closed = false;
 
-    UnsafeDataAccess( String name, String location )
+    UnsafeDataAccess( String name, String location, ByteOrder order )
     {
-        super(name, location);
+        super(name, location, order);
     }
 
     @Override
@@ -95,7 +96,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
 
         try
         {
-            address = unsafe.reallocateMemory(address, capacity);
+            address = UNSAFE.reallocateMemory(address, capacity);
         } catch (OutOfMemoryError err)
         {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
@@ -103,7 +104,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
         }
 
         if (clearNewMem)
-            unsafe.setMemory(address + oldCap, todoBytes, (byte) 0);
+            UNSAFE.setMemory(address + oldCap, todoBytes, (byte) 0);
     }
 
     @Override
@@ -199,19 +200,19 @@ public class UnsafeDataAccess extends AbstractDataAccess
     public void close()
     {
         closed = true;
-        unsafe.freeMemory(address);
+        UNSAFE.freeMemory(address);
     }
 
     @Override
     public final void setInt( long bytePos, int value )
     {
-        unsafe.putInt(address + bytePos, value);
+        UNSAFE.putInt(address + bytePos, value);
     }
 
     @Override
     public final int getInt( long bytePos )
     {
-        return unsafe.getInt(address + bytePos);
+        return UNSAFE.getInt(address + bytePos);
     }
 
     @Override
@@ -219,7 +220,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     {
         for (int offset = 0; offset < length; offset++)
         {
-            unsafe.putByte(address + bytePos + offset, values[offset]);
+            UNSAFE.putByte(address + bytePos + offset, values[offset]);
         }
     }
 
@@ -229,7 +230,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
         assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
         for (int offset = 0; offset < length; offset++)
         {
-            values[offset] = unsafe.getByte(address + bytePos + offset);
+            values[offset] = UNSAFE.getByte(address + bytePos + offset);
         }
     }
 

@@ -40,7 +40,7 @@ import static com.graphhopper.util.Helper.nf;
  * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
  * loadExisting, (4) usage, (5) flush, (6) close
  * <p/>
- * @see GraphBuilder Use the GraphBuilder class to create a (Level)GraphStorage easier.
+ * @see GraphBuilderUse the GraphBuilder class to create a (Level)GraphStorage easier.
  * @see LevelGraphStorage
  * @author Peter Karich
  */
@@ -49,7 +49,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     private static final int NO_NODE = -1;
     // distance of around +-1000 000 meter are ok
     private static final float INT_DIST_FACTOR = 1000f;
-    private Directory dir;
+    private final Directory dir;
     // edge memory layout: nodeA,nodeB,linkA,linkB,dist,flags,geometryRef,streetNameRef
     protected final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS, E_GEO, E_NAME;
     protected int edgeEntryBytes;
@@ -75,14 +75,15 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     private int edgeEntryIndex = -4, nodeEntryIndex = -4;
     // length | nodeA | nextNode | ... | nodeB
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 2GB
-    private DataAccess wayGeometry;
+    private final DataAccess wayGeometry;
     // 0 stands for no separate geoRef
     private int maxGeoRef = 4;
     private boolean initialized = false;
     private EncodingManager encodingManager;
-    private NameIndex nameIndex;
+    private final NameIndex nameIndex;
     protected final EdgeFilter allEdgesFilter;
-    private StorableProperties properties;
+    private final StorableProperties properties;
+    private final BitUtil bitUtil;
 
     public GraphStorage( Directory dir, EncodingManager encodingManager )
     {
@@ -90,6 +91,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         this.encodingManager = encodingManager;
         allEdgesFilter = EdgeFilter.ALL_EDGES;
         this.dir = dir;
+        this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.nodes = dir.find("nodes");
         this.edges = dir.find("edges");
         this.wayGeometry = dir.find("geometry");
@@ -884,18 +886,16 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             long geoRef = (long) tmpRef * 4;
             ensureGeometry(geoRef, len * 8 + 4);
             byte[] bytes = new byte[len * 2 * 4 + 4];
-            BitUtil.fromInt(bytes, len, 0);
+            bitUtil.fromInt(bytes, len, 0);
             if (reverse)
-            {
                 pillarNodes.reverse();
-            }
 
             int tmpOffset = 4;
             for (int i = 0; i < len; i++)
             {
-                BitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLatitude(i)), tmpOffset);
+                bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLatitude(i)), tmpOffset);
                 tmpOffset += 4;
-                BitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLongitude(i)), tmpOffset);
+                bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLongitude(i)), tmpOffset);
                 tmpOffset += 4;
             }
 
@@ -910,9 +910,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     {
         long geoRef = edges.getInt(edgePointer + E_GEO);
         if (geoRef == EdgeIterator.NO_EDGE)
-        {
             return PointList.EMPTY;
-        }
 
         geoRef *= 4;
         int count = wayGeometry.getInt(geoRef);
@@ -927,9 +925,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             for (int i = count - 1; i >= 0; i--)
             {
                 index -= 4;
-                double lon = Helper.intToDegree(BitUtil.toInt(bytes, index));
+                double lon = Helper.intToDegree(bitUtil.toInt(bytes, index));
                 index -= 4;
-                double lat = Helper.intToDegree(BitUtil.toInt(bytes, index));
+                double lat = Helper.intToDegree(bitUtil.toInt(bytes, index));
                 pillarNodes.add(lat, lon);
             }
         } else
@@ -937,9 +935,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             int index = 0;
             for (int i = 0; i < count; i++)
             {
-                double lat = Helper.intToDegree(BitUtil.toInt(bytes, index));
+                double lat = Helper.intToDegree(bitUtil.toInt(bytes, index));
                 index += 4;
-                double lon = Helper.intToDegree(BitUtil.toInt(bytes, index));
+                double lon = Helper.intToDegree(bitUtil.toInt(bytes, index));
                 index += 4;
                 pillarNodes.add(lat, lon);
             }

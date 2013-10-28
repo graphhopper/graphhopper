@@ -30,7 +30,7 @@ import org.junit.Test;
  */
 public class GHUtilityTest
 {
-    private EncodingManager encodingManager = new EncodingManager("CAR");
+    private final EncodingManager encodingManager = new EncodingManager("CAR");
 
     Graph createGraph()
     {
@@ -117,15 +117,15 @@ public class GHUtilityTest
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(8);
         iter.next();
         assertEquals(2.05, iter.getDistance(), 1e-6);
-        assertEquals("11", BitUtil.toBitString(iter.getFlags(), 2));
+        assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
         iter.next();
         assertEquals(0.5, iter.getDistance(), 1e-6);
-        assertEquals("11", BitUtil.toBitString(iter.getFlags(), 2));
+        assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
 
         iter = lg.createEdgeExplorer().setBaseNode(7);
         iter.next();
         assertEquals(2.1, iter.getDistance(), 1e-6);
-        assertEquals("01", BitUtil.toBitString(iter.getFlags(), 2));
+        assertEquals("01", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
         assertTrue(iter.next());
         assertEquals(0.7, iter.getDistance(), 1e-6);
     }

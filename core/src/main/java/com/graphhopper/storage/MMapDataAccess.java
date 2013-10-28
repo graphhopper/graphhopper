@@ -41,19 +41,12 @@ public class MMapDataAccess extends AbstractDataAccess
 {
     private RandomAccessFile raFile;
     private List<ByteBuffer> segments = new ArrayList<ByteBuffer>();
-    private ByteOrder order = ByteOrder.BIG_ENDIAN;
     private boolean cleanAndRemap = false;
     private transient boolean closed = false;
 
-    MMapDataAccess()
+    MMapDataAccess( String name, String location, ByteOrder order )
     {
-        this(null, null);
-        throw new IllegalStateException("reserved for direct mapped memory");
-    }
-
-    MMapDataAccess( String name, String location )
-    {
-        super(name, location);
+        super(name, location, order);
     }
 
     MMapDataAccess cleanAndRemap( boolean cleanAndRemap )
@@ -102,16 +95,7 @@ public class MMapDataAccess extends AbstractDataAccess
         // is a flush necessary then?
         // }
         return super.copyTo(da);
-    }
-
-    /**
-     * Makes it possible to force the order. Default is BIG_ENDIAN. But this method is currently a
-     * no-op due to issue: https://github.com/graphhopper/graphhopper/issues/103
-     */
-    public MMapDataAccess setByteOrder( ByteOrder order )
-    {
-        return this;
-    }
+    }    
 
     @Override
     public void ensureCapacity( long bytes )
@@ -213,7 +197,7 @@ public class MMapDataAccess extends AbstractDataAccess
             throw ioex;
         }
 
-        buf.order(order);
+        buf.order(byteOrder);
 
         boolean tmp = false;
         if (tmp)

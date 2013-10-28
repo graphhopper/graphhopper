@@ -501,7 +501,7 @@ public class PrepareContractionHierarchiesTest
         int endNode = Integer.MAX_VALUE / 37 * 17;
 
         long edgeId = (long) fromNode << 32 | endNode;
-        assertEquals((BitUtil.toBitString(edgeId)),
-                BitUtil.toBitString(fromNode, 32) + BitUtil.toBitString(endNode, 32));
+        assertEquals((BitUtil.BIG.toBitString(edgeId)),
+                BitUtil.BIG.toLastBitString(fromNode, 32) + BitUtil.BIG.toLastBitString(endNode, 32));
     }
 }
