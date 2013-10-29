@@ -26,9 +26,11 @@ import java.lang.reflect.Field;
 import java.nio.ByteOrder;
 
 /**
- * This is a data structure which uses an unsafe access to native memory. Notes:
+ * This is a data structure which uses an unsafe access to native memory. The speed up compared to
+ * RAMDataAccess is roughly 10% due to index calculations and BitUtil overhead in RAMDataAccess.
+ * Notes:
  * <p>
- * 1. Highly experimental. Several TODOs like bug fixing and access through file/MMAP working
+ * 1. Highly experimental. Still some bugs and access through file/MMAP should work at some point
  * <p>
  * 2. Compared to MMAP no syncDAWrapper is need to make it safe from multiple threads
  * <p>
@@ -39,14 +41,14 @@ import java.nio.ByteOrder;
 @NotThreadSafe
 public class UnsafeDataAccess extends AbstractDataAccess
 {
-    @SuppressWarnings("ALL")
+    @SuppressWarnings("all")
     static final sun.misc.Unsafe UNSAFE;
 
     static
     {
         try
         {
-            @SuppressWarnings("ALL")
+            @SuppressWarnings("all")
             Field field = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
             field.setAccessible(true);
             UNSAFE = (sun.misc.Unsafe) field.get(null);
@@ -104,7 +106,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
         }
 
         if (clearNewMem)
-            UNSAFE.setMemory(address + oldCap, todoBytes, (byte) 0);
+            UNSAFE.setMemory(address + oldCap, capacity - oldCap, (byte) 0);
     }
 
     @Override
