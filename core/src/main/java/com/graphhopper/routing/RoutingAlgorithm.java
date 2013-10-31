@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIDResult;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.NotThreadSafe;
 
 /**
@@ -37,11 +37,21 @@ public interface RoutingAlgorithm
     Path calcPath( int from, int to );
 
     /**
-     * Calculates the best path between the specified edges.
+     * Calculates the best path between the specified query results from GPS lookup.
+     * <p/>
+     * Note: The underlying implementation introduces a state of the algorithm and so it is tightly
+     * coupled to the query! Reusing this instance should be done carefully: only from within one
+     * thread and only via this calcPath method.
      * <p/>
      * @return the path. Call the method found() to make sure that the path is valid.
      */
     Path calcPath( LocationIDResult from, LocationIDResult to );
+
+    /**
+     * Specify the graph on which this algorithm should operate. API glitch: this method overwrites
+     * graph specified while constructing the algorithm. Only necessary if graph is a QueryGraph.
+     */
+    RoutingAlgorithm setGraph( Graph graph );
 
     /**
      * @return name of this algorithm

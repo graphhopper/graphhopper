@@ -23,18 +23,18 @@ package com.graphhopper;
  * Usage:
  * <pre>
  *
- * // offline
+ * // init offline graph
  * GraphHopperAPI gh = new GraphHopper().setInMemory(true, true);
  * gh.load("graph-hopper-folder");
  *
- * // online
+ * // init online service
  * GraphHopperAPI gh = new GraphHopperWeb();
  * gh.load("http://your-graphhopper-service.com/api");
  *
  * gh.algorithm("astar");
- * GHResponse ph = gh.route(new GeoPoint(fromLat, fromLon), new GeoPoint(toLat, toLon));
+ * GHResponse ph = gh.route(new GHRequest(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon)));
  * print(ph.distance() + " " + ph.time());
- * PointList points = response.createPoints();
+ * PointList points = response.getPoints();
  * for(int i = 0; i &lt; points.size(); i++) {
  *    add(point.latitude(i), point.longitude(i));
  * }
@@ -46,14 +46,17 @@ package com.graphhopper;
 public interface GraphHopperAPI
 {
     /**
-     * Load the specified service or graph file (graphhopper or OSM).
+     * Connects to the specified service (graphhopper URL) or loads a graph from the graphhopper
+     * folder.
+     * <p>
+     * @return true if successfully connected or loaded
      */
     boolean load( String urlOrFile );
 
     /**
      * Calculates the path from specified request with startPoint to endPoint.
      * <p/>
-     * @throws Exceptions if points not found or other problems occur.
+     * @return the response with the route and possible errors
      */
     GHResponse route( GHRequest request );
 }

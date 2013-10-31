@@ -18,18 +18,14 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
-import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.index.Location2NodesNtreeLG;
+import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.util.shapes.BBox;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -52,8 +48,8 @@ public class Measurement
     {
         new Measurement().start(CmdArgs.read(strs));
     }
-    private static Logger logger = LoggerFactory.getLogger(Measurement.class);
-    private Map<String, String> properties = new TreeMap<String, String>();
+    private static final Logger logger = LoggerFactory.getLogger(Measurement.class);
+    private final Map<String, String> properties = new TreeMap<String, String>();
     private long seed;
     private int maxNode;
 
@@ -72,45 +68,47 @@ public class Measurement
         if (Helper.isEmpty(propLocation))
             propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date()) + ".properties";
 
-        seed = args.getLong("measurement.seed", 123);        
-        String gitCommit = args.get("measurement.gitinfo", "");
-        int count = args.getInt("measurement.count", 1000);
+        seed = args.getLong("measurement.seed", 123);
+        String gitCommit = args.get("measurement.gitinfo", "");        
+        int count = args.getInt("measurement.count", 5000);
 
-        final EncodingManager encodingManager = new EncodingManager("CAR");
-        Directory dir = new RAMDirectory(graphLocation, true);
-        LevelGraphStorage g = new LevelGraphStorage(dir, encodingManager);
-        if (!g.loadExisting())
+        GraphHopper hopper = new GraphHopper()
+        {
+            @Override
+            protected void prepare()
+            {
+                // do nothing
+            }
+        }.forDesktop().setEnableInstructions(false);
+        if (!hopper.load(graphLocation))
             throw new IllegalStateException("Cannot load existing levelgraph at " + graphLocation);
 
-        // TODO make sure the graph is unprepared!
+        GraphStorage g = (GraphStorage) hopper.getGraph();
+        if ("true".equals(g.getProperties().get("prepare.done")))
+            throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
-        final FlagEncoder vehicle = encodingManager.getEncoder("CAR");
-        final WeightCalculation type = new ShortestCalc();
+        String vehicleStr = "car";
+        final FlagEncoder vehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
+        final WeightCalculation type = new FastestCalc(vehicle);
         StopWatch sw = new StopWatch().start();
         try
         {
             maxNode = g.getNodes();
             printGraphDetails(g);
-            printLocation2IDQuery(g, dir, count);
+            printLocation2IDQuery(g, hopper.getLocationIndex(), count);
 
-            // route via dijkstra
-            AlgorithmPreparation prepare2 = new NoOpAlgorithmPreparation()
-            {
-                @Override
-                public RoutingAlgorithm createAlgo()
-                {
-                    return new Dijkstra(_graph, vehicle, type);
-                }
-            }.setGraph(g);
-            // normal routing takes a lot of time => do not do it so often
-            // => values are not really comparable to routingCH as e.g. the mean distance etc is different
-            printTimeOfRouteQuery(prepare2, count / 20, "routing");
+            // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
+            // => values are not really comparable to routingCH as e.g. the mean distance etc is different            
+            hopper.disableCHShortcuts();
+            printTimeOfRouteQuery(hopper, count / 20, "routing", vehicleStr);
 
             System.gc();
-            // route via CH -> do preparation before
+
+            // route via CH. do preparation before
             PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(vehicle, type).setGraph(g);
             printPreparationDetails(g, prepare);
-            printTimeOfRouteQuery(prepare, count, "routingCH");
+            hopper.setCHShortcuts("fastest");
+            printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr);
             logger.info("store into " + propLocation);
         } catch (Exception ex)
         {
@@ -119,7 +117,7 @@ public class Measurement
         } finally
         {
             put("measurement.gitinfo", gitCommit);
-            put("measurement.count", count);            
+            put("measurement.count", count);
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getTime());
             System.gc();
@@ -142,6 +140,7 @@ public class Measurement
         put("graph.nodes", g.getNodes());
         put("graph.edges", g.getAllEdges().getMaxId());
         put("graph.sizeInMB", g.getCapacity() / Helper.MB);
+        put("graph.encoder", g.getEncodingManager().getSingle().toString());
     }
 
     private void printPreparationDetails( Graph g, PrepareContractionHierarchies prepare )
@@ -153,15 +152,10 @@ public class Measurement
         put("prepare.shortcuts", prepare.getShortcuts());
     }
 
-    private void printLocation2IDQuery( LevelGraph g, Directory dir, int count )
+    private void printLocation2IDQuery( Graph g, final Location2IDIndex idx, int count )
     {
-        // time(location2id)
         count *= 2;
         final BBox bbox = g.getBounds();
-        final Location2NodesNtreeLG idx = new Location2NodesNtreeLG(g, dir);
-        if (!idx.loadExisting())
-            throw new IllegalStateException("cannot find index at " + dir);
-
         final double latDelta = bbox.maxLat - bbox.minLat;
         final double lonDelta = bbox.maxLon - bbox.minLon;
         final Random rand = new Random(seed);
@@ -178,14 +172,14 @@ public class Measurement
 
                 return val;
             }
-        }.count(count).start();
+        }.setIterations(count).start();
 
         print("location2id", miniPerf);
     }
 
-    private void printTimeOfRouteQuery( final AlgorithmPreparation prepare, int count, String prefix )
+    private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix, final String vehicle )
     {
-        // time(route query)
+        final Graph g = hopper.getGraph();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong sum = new AtomicLong(0);
@@ -197,21 +191,28 @@ public class Measurement
             {
                 int from = rand.nextInt(maxNode);
                 int to = rand.nextInt(maxNode);
-                Path p = prepare.createAlgo().calcPath(from, to);
+                double fromLat = g.getLatitude(from);
+                double fromLon = g.getLongitude(from);
+                double toLat = g.getLatitude(to);
+                double toLon = g.getLongitude(to);
+                GHResponse res = hopper.route(new GHRequest(fromLat, fromLon, toLat, toLon).setType("fastest").setVehicle(vehicle));
+                if (res.hasErrors())
+                    throw new IllegalStateException("errors should NOT happen in Measurement! " + res.getErrors());
+
                 if (!warmup)
                 {
-                    long dist = (long) p.getDistance();
+                    long dist = (long) res.getDistance();
                     sum.addAndGet(dist);
                     if (dist > maxDistance.get())
                         maxDistance.set(dist);
-                    
+
                     if (dist < minDistance.get())
-                        minDistance.set(dist);                    
+                        minDistance.set(dist);
                 }
 
-                return p.calcPoints().getSize();
+                return res.getPoints().getSize();
             }
-        }.count(count).start();
+        }.setIterations(count).start();
 
         put(prefix + ".distanceMin", minDistance.get());
         put(prefix + ".distanceMean", (float) sum.get() / count);
@@ -221,7 +222,7 @@ public class Measurement
 
     void print( String prefix, MiniPerfTest perf )
     {
-        logger.info(perf.report());
+        logger.info(perf.getReport());
         put(prefix + ".sum", perf.getSum());
 //        put(prefix+".rms", perf.getRMS());
         put(prefix + ".min", perf.getMin());

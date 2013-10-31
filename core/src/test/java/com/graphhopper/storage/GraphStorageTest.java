@@ -105,8 +105,8 @@ public class GraphStorageTest extends AbstractGraphTester
         assertEquals(12, graph.getNodes());
         checkGraph(graph);
 
-        assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), -1).getName());
-        assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), -1).getName());
+        assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), iter1.getAdjNode()).getName());
+        assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), iter2.getAdjNode()).getName());
         graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList(4.4, 5.5, 6.6, 7.7));
         checkGraph(graph);
         graph.close();
@@ -123,12 +123,12 @@ public class GraphStorageTest extends AbstractGraphTester
 
         EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList(1.5, 1, 2, 3), iter.getWayGeometry(0));
-        assertEquals(Helper.createPointList(10, 10, 1.5, 1, 2, 3), iter.getWayGeometry(1));
-        assertEquals(Helper.createPointList(1.5, 1, 2, 3, 11, 20), iter.getWayGeometry(2));
+        assertEquals(Helper.createPointList(1.5, 1, 2, 3), iter.fetchWayGeometry(0));
+        assertEquals(Helper.createPointList(10, 10, 1.5, 1, 2, 3), iter.fetchWayGeometry(1));
+        assertEquals(Helper.createPointList(1.5, 1, 2, 3, 11, 20), iter.fetchWayGeometry(2));
 
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList(3.5, 4.5, 5, 6), iter.getWayGeometry(0));
+        assertEquals(Helper.createPointList(3.5, 4.5, 5, 6), iter.fetchWayGeometry(0));
 
         assertEquals(11, g.getLatitude(1), 1e-2);
         assertEquals(20, g.getLongitude(1), 1e-2);
@@ -141,9 +141,9 @@ public class GraphStorageTest extends AbstractGraphTester
         assertEquals(Arrays.asList(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
         
         iter = GHUtility.getEdge(g, 1, 2);
-        assertEquals(Helper.createPointList(), iter.getWayGeometry(0));
-        assertEquals(Helper.createPointList(11, 20), iter.getWayGeometry(1));
-        assertEquals(Helper.createPointList(12, 12), iter.getWayGeometry(2));
+        assertEquals(Helper.createPointList(), iter.fetchWayGeometry(0));
+        assertEquals(Helper.createPointList(11, 20), iter.fetchWayGeometry(1));
+        assertEquals(Helper.createPointList(12, 12), iter.fetchWayGeometry(2));
     }
 
     @Test

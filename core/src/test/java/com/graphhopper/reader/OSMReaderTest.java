@@ -149,7 +149,7 @@ public class OSMReaderTest
 
         assertEquals("street 123, B 122", iter.getName());
         assertEquals(n50, iter.getAdjNode());
-        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.getWayGeometry(0));
+        AbstractGraphTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));
         assertTrue(flags.isForward(iter.getFlags()));
         assertTrue(flags.isBackward(iter.getFlags()));
 
@@ -218,7 +218,7 @@ public class OSMReaderTest
         assertEquals(93146.888, iter.getDistance(), 1);
         assertTrue(iter.next());
         assertEquals(n40, iter.getAdjNode());
-        AbstractGraphTester.assertPList(Helper.createPointList(), iter.getWayGeometry(0));
+        AbstractGraphTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(0));
 
         // get third added location => 2
         iter = carOutExplorer.setBaseNode(n30);
@@ -400,7 +400,7 @@ public class OSMReaderTest
         assertEquals(graph.getLatitude(n20), graph.getLatitude(new20), 1e-5);
         assertEquals(graph.getLongitude(n20), graph.getLongitude(new20), 1e-5);
 
-        assertEquals(n20, hopper.getLocationIndex().findClosest(52, 9.4, EdgeFilter.ALL_EDGES).getClosestNode());
+        assertEquals(n20, hopper.getLocationIndex().findID(52, 9.4));
 
         assertEquals(Arrays.asList(n20, n30), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
         assertEquals(Arrays.asList(new20, n10, n50), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));

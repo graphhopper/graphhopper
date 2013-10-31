@@ -32,7 +32,7 @@ public class GHRequest
     private GHPlace from;
     private GHPlace to;
     private Map<String, Object> hints = new HashMap<String, Object>(5);
-    private String encoderName = "CAR";
+    private String vehicle = "CAR";
     private String type = "shortest";
 
     /**
@@ -125,14 +125,14 @@ public class GHRequest
         return type;
     }
 
-    public GHRequest setVehicle( String encoder )
+    public GHRequest setVehicle( String vehicle )
     {
-        this.encoderName = encoder;
+        this.vehicle = vehicle;
         return this;
     }
 
     public String getVehicle()
     {
-        return encoderName;
+        return vehicle;
     }
 }

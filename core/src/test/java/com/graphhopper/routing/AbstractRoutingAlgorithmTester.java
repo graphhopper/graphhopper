@@ -23,6 +23,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
 import java.util.Random;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -38,7 +39,6 @@ public abstract class AbstractRoutingAlgorithmTester
     protected static EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
     protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
     protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
-    private DistanceCalc distCalc  = new DistanceCalc();
 
     protected Graph createGraph()
     {
@@ -152,7 +152,7 @@ public abstract class AbstractRoutingAlgorithmTester
         graph.edge(0, 1, 7, true);
         graph.edge(0, 4, 6, true);
 
-        graph.edge(1, 4, 1, true);
+        graph.edge(1, 4, 2, true);
         graph.edge(1, 5, 8, true);
         graph.edge(1, 2, 2, true);
 
@@ -243,20 +243,34 @@ public abstract class AbstractRoutingAlgorithmTester
     // 0-1-2-3-4
     // |     / |
     // |    8  |
-    // \   /   /
-    //  7-6-5-/
+    // \   /   |
+    //  7-6----5
     public static void initBiGraph( Graph graph )
     {
-        graph.edge(0, 1, 100, true);
-        graph.edge(1, 2, 1, true);
+        graph.edge(0, 1, 200, true);
+        graph.edge(1, 2, 20, true);
         graph.edge(2, 3, 1, true);
-        graph.edge(3, 4, 1, true);
+        graph.edge(3, 4, 5, true);
         graph.edge(4, 5, 25, true);
         graph.edge(5, 6, 25, true);
         graph.edge(6, 7, 5, true);
         graph.edge(7, 0, 5, true);
         graph.edge(3, 8, 20, true);
         graph.edge(8, 6, 20, true);
+
+        // we need lat,lon for edge precise queries because the distances of snapped point 
+        // to adjacent nodes is calculated from lat,lon of the necessary points
+        graph.setNode(0, 0.001, 0);
+        graph.setNode(1, 0.100, 0.0005);
+        graph.setNode(2, 0.010, 0.0010);
+        graph.setNode(3, 0.001, 0.0011);
+        graph.setNode(4, 0.001, 0.00111);
+
+        graph.setNode(8, 0.0005, 0.0011);
+
+        graph.setNode(7, 0, 0);
+        graph.setNode(6, 0, 0.001);
+        graph.setNode(5, 0, 0.004);
     }
 
     @Test
@@ -269,10 +283,10 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p = prepareGraph(graph).createAlgo().calcPath(0, 4);
         // PrepareTowerNodesShortcutsTest.printEdges((LevelGraph) graph);
         assertEquals(p.toString(), Helper.createTList(0, 7, 6, 8, 3, 4), p.calcNodes());
-        assertEquals(p.toString(), 51, p.getDistance(), 1e-4);
+        assertEquals(p.toString(), 55, p.getDistance(), 1e-4);
 
         p = prepareGraph(graph).createAlgo().calcPath(1, 2);
-        assertEquals(p.toString(), 1, p.getDistance(), 1e-4);
+        assertEquals(p.toString(), 20, p.getDistance(), 1e-4);
         assertEquals(p.toString(), Helper.createTList(1, 2), p.calcNodes());
     }
 
@@ -416,45 +430,49 @@ public abstract class AbstractRoutingAlgorithmTester
     }
 
     @Test
-    public void testViaEdges()
+    public void testViaEdges_BiGraph()
     {
         Graph graph = createGraph();
         initBiGraph(graph);
 
-        EdgeIterator from = GHUtility.getEdge(graph, 0, 7);
-        EdgeIterator to = GHUtility.getEdge(graph, 4, 3);
-        Path p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, to));
+        Path p = calcPath(graph, 0, 7, 4, 3);
+        assertEquals(p.toString(), Helper.createTList(9, 7, 6, 8, 3, 10), p.calcNodes());
+        assertEquals(p.toString(), 157.3, p.getDistance(), 1e-2);
 
-        assertEquals(p.toString(), Helper.createTList(7, 6, 8, 3), p.calcNodes());
-        assertEquals(p.toString(), 45, p.getDistance(), 1e-4);
-
-        from = GHUtility.getEdge(graph, 0, 1);
-        to = GHUtility.getEdge(graph, 2, 3);
-
-        p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, to));
-        assertEquals(p.toString(), Helper.createTList(1, 2), p.calcNodes());
-        assertEquals(p.toString(), 1, p.getDistance(), 1e-4);
+        p = calcPath(graph, 0, 1, 2, 3);
+        assertEquals(p.toString(), Helper.createTList(9, 0, 7, 6, 8, 3, 10), p.calcNodes());
+        assertEquals(p.toString(), 1050.83, p.getDistance(), .2);
     }
 
     @Test
-    public void testViaEdges2()
+    public void testViaEdges_FromEqualsTo()
     {
         Graph graph = createTestGraph();
-        EdgeIterator from = GHUtility.getEdge(graph, 0, 1);
-        EdgeIterator to = GHUtility.getEdge(graph, 2, 3);
 
-        Path p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, from));
-        assertEquals(p.toString(), 0, p.calcNodes().size());
+        QueryGraph qGraph = new QueryGraph(null, graph, EdgeFilter.ALL_EDGES);
+        LocationIDResult from = newQR(qGraph, 0, 1);
+        qGraph.lookup(from);
+        LocationIDResult to = newQR(qGraph, from.getClosestNode(), 1);
+        to.setOnTowerNode(true);
+        qGraph.lookup(to);
+        RoutingAlgorithm algo = prepareGraph(graph).createAlgo();
+        algo.setGraph(qGraph);
+        Path p = algo.calcPath(from, to);
+        assertEquals(new TIntArrayList(), p.calcNodes());
         assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+    }
 
-        graph = createTestGraph();
-        p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, to));
-        assertEquals(Helper.createTList(1, 2), p.calcNodes());
+    @Test
+    public void testViaEdges_WithCoordinates()
+    {
+        Graph graph = createTestGraph();
+        Path p = calcPath(graph, 0, 1, 2, 3);
+        assertEquals(Helper.createTList(8, 1, 2, 9), p.calcNodes());
         assertEquals(p.toString(), 2, p.getDistance(), 1e-4);
     }
 
     @Test
-    public void testViaEdges_directedGraph()
+    public void testViaEdges_SpecialCases()
     {
         Graph graph = createGraph();
         // 0->1\
@@ -466,45 +484,61 @@ public abstract class AbstractRoutingAlgorithmTester
         graph.edge(3, 4, 1, false);
         graph.edge(4, 0, 1, true);
 
-        EdgeIterator from = GHUtility.getEdge(graph, 0, 1);
-        EdgeIterator to = GHUtility.getEdge(graph, 3, 4);
+        graph.setNode(4, 0, 0);
+        graph.setNode(0, 0.00010, 0);
+        graph.setNode(1, 0.00010, 0.0001);
+        graph.setNode(2, 0.00005, 0.00015);
+        graph.setNode(3, 0, 0.0001);
+        double dist23 = new DistanceCalc().calcDist(0.00005, 0.00015, 0, 0.0001);
+        // todo include assertEquals(0.8, dist23, 0.01);
 
-        Path p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, to));
-        assertEquals(Helper.createTList(1, 2, 3), p.calcNodes());
-        assertEquals(p.toString(), 2, p.getDistance(), 1e-4);
-        
-        from = GHUtility.getEdge(graph, 2, 3);
-        to = GHUtility.getEdge(graph, 3, 2);
-        p = prepareGraph(graph).createAlgo().calcPath(newLR(graph, from), newLR(graph, to));
-        assertEquals(Helper.createTList(2, 3), p.calcNodes());
+        Path p = calcPath(graph, 0, 1, 3, 4);
+        assertEquals(Helper.createTList(5, 1, 2, 3, 6), p.calcNodes());
+        assertEquals(p.toString(), 13.1, p.getDistance(), .1);
+
+        // now overlapping edges: 2-3 creates new node '5'
+        p = calcPath(graph, 2, 3, 3, 5);
+        assertEquals(Helper.createTList(5, 6), p.calcNodes());
+        assertEquals(p.toString(), 7.86, p.getDistance(), .1);
+
+        // 'from' and 'to' edge share one node '2'
+        p = calcPath(graph, 1, 2, 3, 2);
+        assertEquals(p.toString(), Helper.createTList(5, 2, 6), p.calcNodes());
+        assertEquals(p.toString(), 15.73, p.getDistance(), .1);
     }
 
-    @Test
-    public void testViaEdges_withCoordinates()
+    Path calcPath( Graph graph, int fromNode1, int fromNode2, int toNode1, int toNode2 )
     {
-        Graph graph = createTestGraph();
-        LocationIDResult from = newLR(graph, GHUtility.getEdge(graph, 0, 1));
-        LocationIDResult to = newLR(graph, GHUtility.getEdge(graph, 2, 3));
-
-        // TODO init the result with snapped lat,lon of query AND wayGeo index 
-        // check possibilities: 
-        // on adjacent or base node, on pillar node
-        // near base or adj node, near pillar node
-        // one way stuff
-        // check nodes, distance and time!
-        Path p = prepareGraph(graph).createAlgo().calcPath(from, to);
-        assertEquals(Helper.createTList(1, 2), p.calcNodes());
-        assertEquals(p.toString(), 2, p.getDistance(), 1e-4);
+        // lookup two edges: fromNode1-fromNode2 and toNode1-toNode2
+        // use QueryGraph to make special cases like identical edge working
+        QueryGraph qGraph = new QueryGraph(null, graph, EdgeFilter.ALL_EDGES);
+        LocationIDResult from = newQR(qGraph, fromNode1, fromNode2);
+        qGraph.lookup(from);
+        LocationIDResult to = newQR(qGraph, toNode1, toNode2);
+        qGraph.lookup(to);
+        RoutingAlgorithm algo = prepareGraph(graph).createAlgo();
+        algo.setGraph(qGraph);
+        return algo.calcPath(from, to);
     }
 
-    LocationIDResult newLR( Graph graph, EdgeIteratorState edge )
+    /**
+     * Creates query result on edge (node1-node2) very close to node1.
+     */
+    LocationIDResult newQR( Graph graph, int node1, int node2 )
     {
-        double lat = (graph.getLatitude(edge.getBaseNode()) + graph.getLatitude(edge.getAdjNode())) / 2;
-        double lon = (graph.getLongitude(edge.getBaseNode()) + graph.getLongitude(edge.getAdjNode())) / 2;
-        LocationIDResult res = new LocationIDResult(lat, lon);
-        res.setClosestEdge(edge);        
+        EdgeIteratorState edge = GHUtility.getEdge(graph, node1, node2);
+        if (edge == null)
+            throw new IllegalStateException("edge not found? " + node1 + "-" + node2);
+
+        double lat = graph.getLatitude(edge.getBaseNode());
+        double lon = graph.getLongitude(edge.getBaseNode());
+        double latAdj = graph.getLatitude(edge.getAdjNode());
+        double lonAdj = graph.getLongitude(edge.getAdjNode());
+        // calculate query point near the base node but not directly on it!
+        LocationIDResult res = new LocationIDResult(lat + (latAdj - lat) * .1, lon + (lonAdj - lon) * .1);
+        res.setClosestNode(edge.getBaseNode());
+        res.setClosestEdge(edge);
         res.setWayIndex(0);
-        res.calcSnappedPoint(distCalc);
         return res;
     }
 

@@ -215,8 +215,7 @@ public class Helper
 
     public static int getSizeOfObjectArray( int length, int factor )
     {
-        // TODO add 4byte to make a multiple of 8 in some cases
-        // TODO compressed oop
+        // improvements: add 4byte to make a multiple of 8 in some cases plus compressed oop
         return factor * (4 + 4 + 4 + 4) + 4 * length;
     }
 

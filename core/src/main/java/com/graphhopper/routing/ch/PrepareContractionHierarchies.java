@@ -681,12 +681,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         }
 
         @Override
-        public final boolean accept( EdgeIterator iter )
+        public final boolean accept( EdgeIteratorState iter )
         {
             if (!super.accept(iter))
-            {
                 return false;
-            }
+
             // ignore if it is skipNode or a endNode already contracted
             int node = iter.getAdjNode();
             return avoidNode != node && graph.getLevel(node) == 0;
@@ -770,7 +769,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 // we need to finish BOTH searches for CH!
                 if (finishedFrom && finishedTo)
                     return true;
-                
+
                 // changed finish condition for CH
                 double tmpWeight = bestPath.getWeight() * approximationFactor;
                 return currFrom.weight >= tmpWeight && currTo.weight >= tmpWeight;

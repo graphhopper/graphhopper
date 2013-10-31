@@ -19,6 +19,7 @@ package com.graphhopper;
 
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
@@ -59,7 +60,6 @@ public class GraphHopper implements GraphHopperAPI
     boolean removeZipped = true;
     // for routing:
     private boolean simplifyRequest = true;
-    private String defaultAlgorithm = "bidijkstra";
     // for index:
     private Location2IDIndex locationIndex;
     private int preciseIndexResolution = 500;
@@ -179,9 +179,6 @@ public class GraphHopper implements GraphHopperAPI
     {
         chEnabled = true;
         chType = type;
-        if (chEnabled)
-            defaultAlgorithm = "bidijkstra";
-
         return this;
     }
 
@@ -373,9 +370,6 @@ public class GraphHopper implements GraphHopperAPI
         if (args.has("prepare.updates.neighbor"))
             neighborUpdates = args.getInt("prepare.updates.neighbor", neighborUpdates);
 
-        // routing
-        defaultAlgorithm = args.get("routing.defaultAlgorithm", defaultAlgorithm);
-
         // osm import
         wayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", wayPointMaxDistance);
         String type = args.get("osmreader.acceptWay", "CAR");
@@ -457,10 +451,7 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Opens or creates a graph. The specified args need a property 'graph' (a folder) and if no
-     * such folder exist it'll create a graph from the provided osm file (property 'osm'). A
-     * property 'size' is used to preinstantiate a datastructure/graph to avoid over-memory
-     * allocation or reallocation (default is 5mio)
+     * Opens existing graph.
      * <p/>
      * @param graphHopperFolder is the folder containing graphhopper files (which can be compressed
      * too)
@@ -563,8 +554,12 @@ public class GraphHopper implements GraphHopperAPI
 
         FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        LocationIDResult fromRes = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
-        LocationIDResult toRes = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);
+        QueryGraph qGraph = new QueryGraph(locationIndex, graph, edgeFilter);
+//        LocationIDResult fromRes = locationIndex.findClosest(qGraph, request.getFrom().lat, request.getFrom().lon, edgeFilter);
+//        LocationIDResult toRes = locationIndex.findClosest(qGraph, request.getTo().lat, request.getTo().lon, edgeFilter);
+        LocationIDResult fromRes = qGraph.lookup(request.getFrom().lat, request.getFrom().lon);
+        LocationIDResult toRes = qGraph.lookup(request.getTo().lat, request.getTo().lon);
+
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
         if (!fromRes.isValid())
@@ -575,7 +570,6 @@ public class GraphHopper implements GraphHopperAPI
 
         sw = new StopWatch().start();
         RoutingAlgorithm algo = null;
-
         if (chEnabled)
         {
             if (prepare == null)
@@ -600,12 +594,10 @@ public class GraphHopper implements GraphHopperAPI
             return rsp;
 
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
-
         sw = new StopWatch().start();
-        Path path = algo.calcPath(fromRes, toRes);
 
-        debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s"
-                + ", " + path.getDebugInfo();
+        Path path = algo.setGraph(qGraph).calcPath(fromRes, toRes);
+        debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
 
         calcPoints = request.getHint("calcPoints", calcPoints);
         if (calcPoints)

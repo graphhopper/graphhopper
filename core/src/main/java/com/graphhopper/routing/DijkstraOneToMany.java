@@ -24,7 +24,6 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.Arrays;
@@ -69,14 +68,15 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     @Override
     public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
     {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new IllegalStateException("not supported yet");
     }
-
+    
     @Override
     public Path calcPath( int from, int to )
     {
         if (edgeIds == null)
         {
+            // create on demand to avoid array creation if only findEndNode is used
             edgeIds = new int[graph.getNodes()];
             Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
         }

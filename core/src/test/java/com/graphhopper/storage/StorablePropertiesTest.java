@@ -29,14 +29,19 @@ import static org.junit.Assert.*;
  */
 public class StorablePropertiesTest
 {
+    Directory createDir( String location, boolean store )
+    {
+        return new RAMDirectory(location, store);        
+    }
+
     @Test
     public void testLoad()
     {
-        StorableProperties instance = new StorableProperties(new RAMDirectory("", false));
+        StorableProperties instance = new StorableProperties(createDir("", false));
         // an in-memory storage does not load anything
         assertFalse(instance.loadExisting());
 
-        instance = new StorableProperties(new RAMDirectory("", true));
+        instance = new StorableProperties(createDir("", true));
         assertFalse(instance.loadExisting());
         instance.close();
     }
@@ -44,7 +49,7 @@ public class StorablePropertiesTest
     @Test
     public void testVersionCheck()
     {
-        StorableProperties instance = new StorableProperties(new RAMDirectory("", false));
+        StorableProperties instance = new StorableProperties(createDir("", false));
         instance.putCurrentVersions();
         assertTrue(instance.checkVersions(true));
 
@@ -66,7 +71,7 @@ public class StorablePropertiesTest
     {
         String dir = "./target/test";
         Helper.removeDir(new File(dir));
-        StorableProperties instance = new StorableProperties(new RAMDirectory(dir, true));
+        StorableProperties instance = new StorableProperties(createDir(dir, true));
         instance.create(1000);
         instance.put("test.min", 123);
         instance.put("test.max", 321);
@@ -74,7 +79,7 @@ public class StorablePropertiesTest
         instance.flush();
         instance.close();
 
-        instance = new StorableProperties(new RAMDirectory(dir, true));
+        instance = new StorableProperties(createDir(dir, true));
         assertTrue(instance.loadExisting());
         assertEquals("123", instance.get("test.min"));
         assertEquals("321", instance.get("test.max"));

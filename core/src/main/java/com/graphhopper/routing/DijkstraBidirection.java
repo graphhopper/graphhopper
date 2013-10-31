@@ -30,12 +30,14 @@ import com.graphhopper.util.EdgeWrapper;
  * more memory efficient as it does not go the normal Java way via references. In first tests this
  * class saves 30% memory, but as you can see it is more complicated.
  * <p/>
- * TODO: use only one EdgeWrapper to save memory. This is not easy if we want it to be as fast as
- * the current solution. But we need to try it out if a forwardSearchBitset.contains(ref) is that
+ * Possible improvements
+ * <p>
+ * 1. use only one EdgeWrapper to save memory. This is not easy if we want it to be as fast as the
+ * current solution. But we need to try it out if a forwardSearchBitset.contains(ref) is that
  * expensive
  * <p/>
- * TODO EdgeWrapper: instead of creating references point to the edges itself => we only need an
- * edge+node array and from that can retrieve eg. the distance
+ * 2. instead of creating references point to the edges itself => we only need an edge+node array
+ * and from that can retrieve eg. the distance
  * <p/>
  * @author Peter Karich
  */

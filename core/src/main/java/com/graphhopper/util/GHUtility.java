@@ -52,10 +52,10 @@ public class GHUtility
                 double lat = g.getLatitude(nodeIndex);
                 if (lat > 90 || lat < -90)
                     problems.add("latitude is not within its bounds " + lat);
-                
+
                 double lon = g.getLongitude(nodeIndex);
                 if (lon > 180 || lon < -180)
-                    problems.add("longitude is not within its bounds " + lon);                
+                    problems.add("longitude is not within its bounds " + lon);
 
                 EdgeIterator iter = explorer.setBaseNode(nodeIndex);
                 while (iter.next())
@@ -78,7 +78,6 @@ public class GHUtility
 //        for (int i = 0; i < nodes; i++) {
 //            new XFirstSearch().start(g, i, false);
 //        }
-
         return problems;
     }
 
@@ -141,7 +140,7 @@ public class GHUtility
         while (iter.next())
         {
             str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
-                    + iter.getWayGeometry(0).getSize() + ", edgeId:" + iter.getEdge()
+                    + iter.fetchWayGeometry(0).getSize() + ", edgeId:" + iter.getEdge()
                     + "\t" + BitUtil.toBitString(iter.getFlags(), 8) + "\n";
         }
         return str;
@@ -221,7 +220,7 @@ public class GHUtility
                     continue;
 
                 sortedGraph.edge(newIndex, newNodeIndex, eIter.getDistance(), eIter.getFlags()).
-                        setWayGeometry(eIter.getWayGeometry(0));
+                        setWayGeometry(eIter.fetchWayGeometry(0));
             }
         }
         return sortedGraph;
@@ -233,9 +232,7 @@ public class GHUtility
         Directory outdir;
         if (store.getDirectory() instanceof MMapDirectory)
         {
-            // TODO mmap will overwrite existing storage at the same location!                
-            throw new IllegalStateException("not supported yet");
-            // outdir = new MMapDirectory(location);                
+            throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");
         } else
         {
             boolean isStoring = ((GHDirectory) store.getDirectory()).isStoring();
@@ -295,7 +292,7 @@ public class GHUtility
                     continue;
 
                 to.edge(oldNode, adjacentNodeIndex, eIter.getDistance(), eIter.getFlags()).
-                        setWayGeometry(eIter.getWayGeometry(0));
+                        setWayGeometry(eIter.fetchWayGeometry(0));
             }
         }
         return to;
@@ -392,7 +389,7 @@ public class GHUtility
         }
 
         @Override
-        public PointList getWayGeometry( int type )
+        public PointList fetchWayGeometry( int type )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }

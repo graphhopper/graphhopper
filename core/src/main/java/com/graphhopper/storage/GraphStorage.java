@@ -164,9 +164,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     {
         checkInit();
         if (encodingManager == null)
-        {
             throw new IllegalStateException("EncodingManager can only be null if you call loadExisting");
-        }
+
         long initSize = Math.max(byteCount, 100);
         nodes.create(initSize);
         initNodeRefs(0, nodes.getCapacity());
@@ -325,7 +324,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     {
         ensureNodeIndex(Math.max(a, b));
         int edge = internalEdgeAdd(a, b, distance, flags);
-        EdgeIterable iter = new EdgeIterable(null);
+        EdgeIterable iter = new EdgeIterable(EdgeFilter.ALL_EDGES);
         iter.setBaseNode(a);
         iter.setEdgeId(edge);
         iter.next();
@@ -366,9 +365,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         int nextEdge = edgeCount;
         edgeCount++;
         if (edgeCount < 0)
-        {
             throw new IllegalStateException("too many edges. new edge id would be negative. " + toString());
-        }
+
         ensureEdgeIndex(edgeCount);
         return nextEdge;
     }
@@ -597,9 +595,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         @Override
-        public PointList getWayGeometry( int type )
+        public PointList fetchWayGeometry( int type )
         {
-            return GraphStorage.this.getWayGeometry(edgePointer, getBaseNode() > getAdjNode(), type, getBaseNode(), getAdjNode());
+            return GraphStorage.this.fetchWayGeometry(edgePointer, getBaseNode() > getAdjNode(), type, getBaseNode(), getAdjNode());
         }
 
         @Override
@@ -635,12 +633,13 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     }
 
     @Override
-    public EdgeIterator getEdgeProps( int edgeId, int adjNode )
+    public EdgeIteratorState getEdgeProps( int edgeId, int adjNode )
     {
         if (edgeId <= EdgeIterator.NO_EDGE || edgeId > edgeCount)
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + nf(edgeCount) + "]");
 
-        if (adjNode < 0 && adjNode != -1)
+        // -1 no longer supported
+        if (adjNode < 0)
             throw new IllegalStateException("adjNode " + adjNode + " out of bounds [0," + nf(nodeCount) + "]");
 
         long edgePointer = (long) edgeId * edgeEntryBytes;
@@ -650,9 +649,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
 
         int nodeB = edges.getInt(edgePointer + E_NODEB);
         SingleEdge edge;
-        if (adjNode == nodeB || adjNode == -1)
+        if (adjNode == nodeB)
         {
-            // API problem for -1 because then it should be a RawEdgeIterator instead
             edge = createSingleEdge(edgeId, nodeA);
             edge.node = nodeB;
             return edge;
@@ -678,7 +676,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
 
         public SingleEdge( int edgeId, int nodeId )
         {
-            super(null);
+            super(EdgeFilter.ALL_EDGES);
             setBaseNode(nodeId);
             setEdgeId(edgeId);
             nextEdge = EdgeIterable.NO_EDGE;
@@ -720,6 +718,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         // used for SingleEdge and as return value of edge()        
         public EdgeIterable( EdgeFilter filter )
         {
+            if (filter == null)
+                throw new IllegalArgumentException("Instead null filter use EdgeFilter.ALL_EDGES");
+
             this.filter = filter;
         }
 
@@ -737,7 +738,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             this.baseNode = baseNode;
             return this;
         }
-
+        
         @Override
         public final boolean next()
         {
@@ -757,15 +758,14 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
                 if (nextEdge == edgeId)
                     throw new AssertionError("endless loop detected for " + baseNode + "," + node + "," + edgePointer);
 
-                foundNext = filter != null && filter.accept(this);
+                foundNext = filter.accept(this);
                 if (foundNext)
                     break;
             }
             // road networks typically do not have nodes with plenty of edges!
             if (i > 1000)
-            {
                 throw new IllegalStateException("something went wrong: no end of edge-list found");
-            }
+
             return foundNext;
         }
 
@@ -799,9 +799,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
 
             // switch direction flags if necessary
             if (baseNode > node)
-            {
                 flags = encodingManager.swapDirection(flags);
-            }
+
             return flags;
         }
 
@@ -826,9 +825,9 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
 
         @Override
-        public final PointList getWayGeometry( int mode )
+        public final PointList fetchWayGeometry( int mode )
         {
-            return GraphStorage.this.getWayGeometry(edgePointer, baseNode > node, mode, getBaseNode(), getAdjNode());
+            return GraphStorage.this.fetchWayGeometry(edgePointer, baseNode > node, mode, getBaseNode(), getAdjNode());
         }
 
         @Override
@@ -903,7 +902,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
     }
 
-    private PointList getWayGeometry( long edgePointer, boolean reverse, int mode, int baseNode, int adjNode )
+    private PointList fetchWayGeometry( long edgePointer, boolean reverse, int mode, int baseNode, int adjNode )
     {
         long geoRef = edges.getInt(edgePointer + E_GEO);
         int count = 0;
@@ -998,15 +997,11 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         properties.copyTo(clonedG.properties);
 
         if (removedNodes == null)
-        {
             clonedG.removedNodes = null;
-        } else
-        {
+        else
             clonedG.removedNodes = removedNodes.copyTo(new GHBitSetImpl());
-        }
 
         clonedG.encodingManager = encodingManager;
-
         initialized = true;
         return clonedG;
     }
@@ -1014,9 +1009,8 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     private GHBitSet getRemovedNodes()
     {
         if (removedNodes == null)
-        {
             removedNodes = new GHBitSetImpl((int) (nodes.getCapacity() / 4));
-        }
+
         return removedNodes;
     }
 
@@ -1037,9 +1031,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     {
         int delNodes = getRemovedNodes().getCardinality();
         if (delNodes <= 0)
-        {
             return;
-        }
 
         // Deletes only nodes. 
         // It reduces the fragmentation of the node space but introduces new unused edges.
@@ -1120,15 +1112,12 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             for (; toMoveNode >= 0; toMoveNode--)
             {
                 if (!removedNodes.contains(toMoveNode))
-                {
                     break;
-                }
             }
 
             if (toMoveNode >= removeNode)
-            {
                 oldToNewMap.put(toMoveNode, removeNode);
-            }
+
             itemsToMove++;
         }
 
@@ -1170,14 +1159,11 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             {
                 int nodeId = movedEdgeIter.getAdjNode();
                 if (nodeId == NO_NODE)
-                {
                     continue;
-                }
+
                 if (removedNodes.contains(nodeId))
-                {
                     throw new IllegalStateException("shouldn't happen the edge to the node "
                             + nodeId + " should be already deleted. " + oldI);
-                }
 
                 toMoveSet.add(nodeId);
             }
@@ -1225,7 +1211,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
             double distance = getDist(edgePointer);
             writeEdge(edge, updatedA, updatedB, linkA, linkB, distance, flags);
             if (updatedA < updatedB != nodeA < nodeB)
-                setWayGeometry(getWayGeometry(edgePointer, true, 0, -1, -1), edgePointer, false);
+                setWayGeometry(fetchWayGeometry(edgePointer, true, 0, -1, -1), edgePointer, false);
         }
 
         // we do not remove the invalid edges => edgeCount stays the same!
@@ -1247,13 +1233,11 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
                         + ", tr.contains(" + adj + "):" + toRemoveSet.contains(adj)
                         + ", base:" + base + ", adj:" + adj + ", nodeCount:" + nodeCount;
                 if (adj >= nodeCount)
-                {
                     throw new RuntimeException("Adj.node problem with edge " + str);
-                }
+
                 if (base >= nodeCount)
-                {
                     throw new RuntimeException("Base node problem with edge " + str);
-                }
+
                 try
                 {
                     explorer.setBaseNode(adj).toString();
@@ -1289,17 +1273,14 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         if (edges.loadExisting())
         {
             if (!nodes.loadExisting())
-            {
                 throw new IllegalStateException("cannot load nodes. corrupt file or directory? " + dir);
-            }
+
             if (!wayGeometry.loadExisting())
-            {
                 throw new IllegalStateException("cannot load geometry. corrupt file or directory? " + dir);
-            }
+
             if (!nameIndex.loadExisting())
-            {
                 throw new IllegalStateException("cannot load name index. corrupt file or directory? " + dir);
-            }
+
             String acceptStr = "";
             if (properties.loadExisting())
             {
@@ -1307,16 +1288,13 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
                 // check encoding for compatiblity
                 acceptStr = properties.get("osmreader.acceptWay");
             } else
-            {
                 throw new IllegalStateException("cannot load properties. corrupt file or directory? " + dir);
-            }
 
             if (encodingManager == null)
             {
                 if (acceptStr.isEmpty())
-                {
                     throw new IllegalStateException("No EncodingManager was configured. And no one was found in the graph: " + dir.getLocation());
-                }
+
                 encodingManager = new EncodingManager(acceptStr);
             } else if (!acceptStr.isEmpty() && !encodingManager.encoderList().equalsIgnoreCase(acceptStr))
             {

@@ -206,11 +206,11 @@ public class RoutingAlgorithmIT
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (AlgorithmPreparation prepare : prepares)
             {
-                for (OneRun or : forEveryAlgo)
+                for (OneRun oneRun : forEveryAlgo)
                 {
-                    int from = idx.findClosest(or.fromLat, or.fromLon, edgeFilter).getClosestNode();
-                    int to = idx.findClosest(or.toLat, or.toLon, edgeFilter).getClosestNode();
-                    testCollector.assertDistance(prepare.createAlgo(), from, to, or.dist, or.locs);
+                    int from = idx.findClosest(g, oneRun.fromLat, oneRun.fromLon, edgeFilter).getClosestNode();
+                    int to = idx.findClosest(g, oneRun.toLat, oneRun.toLon, edgeFilter).getClosestNode();
+                    testCollector.assertDistance(prepare.createAlgo(), from, to, oneRun.dist, oneRun.locs);
                 }
             }
         } catch (Exception ex)

@@ -277,7 +277,7 @@ public class Path
             @Override
             public void next( EdgeIteratorState eb, int i )
             {
-                PointList pl = eb.getWayGeometry(1);
+                PointList pl = eb.fetchWayGeometry(1);
                 pl.reverse();
                 for (int j = 0; j < pl.getSize(); j++)
                 {
@@ -338,7 +338,7 @@ public class Path
                 double baseLat = graph.getLatitude(baseNode);
                 double baseLon = graph.getLongitude(baseNode);
                 double latitude, longitude;
-                PointList wayGeo = edgeBase.getWayGeometry(0);
+                PointList wayGeo = edgeBase.fetchWayGeometry(0);
                 if (wayGeo.isEmpty())
                 {
                     latitude = baseLat;

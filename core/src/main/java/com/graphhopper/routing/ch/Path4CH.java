@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipExplorer;
+import com.graphhopper.util.EdgeSkipIterator;
 
 /**
  * Recursivly unpack shortcuts.
@@ -47,7 +48,7 @@ public class Path4CH extends PathBidirRef
 
         // Shortcuts do only contain valid weight so first expand before adding
         // to distance and time
-        expandEdge((EdgeSkipExplorer) mainIter, false);
+        expandEdge((EdgeSkipIterator) mainIter, false);
     }
 
     @Override
@@ -56,7 +57,7 @@ public class Path4CH extends PathBidirRef
         return calc.revertWeight(mainIter, mainIter.getDistance());
     }
 
-    private void expandEdge( EdgeSkipExplorer mainIter, boolean revert )
+    private void expandEdge( EdgeSkipIterator mainIter, boolean revert )
     {
         if (!mainIter.isShortcut())
         {

@@ -18,6 +18,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,9 +48,7 @@ public class PointList
     public void set( int index, double lat, double lon )
     {
         if (index >= size)
-        {
             throw new ArrayIndexOutOfBoundsException("index has to be smaller than size " + size);
-        }
 
         latitudes[index] = lat;
         longitudes[index] = lon;
@@ -95,10 +94,9 @@ public class PointList
     public double getLongitude( int index )
     {
         if (index >= size)
-        {
             throw new ArrayIndexOutOfBoundsException("Tried to access PointList with too big index! "
                     + "index:" + index + ", size:" + size);
-        }
+
         return longitudes[index];
     }
 
@@ -127,9 +125,8 @@ public class PointList
     public void trimToSize( int newSize )
     {
         if (newSize > size)
-        {
             throw new IllegalArgumentException("new size needs be smaller than old size");
-        }
+
         size = newSize;
     }
 
@@ -140,9 +137,7 @@ public class PointList
         for (int i = 0; i < size; i++)
         {
             if (i > 0)
-            {
                 sb.append(", ");
-            }
 
             sb.append('(');
             sb.append(latitudes[i]);
@@ -162,9 +157,9 @@ public class PointList
         for (int i = 0; i < size; i++)
         {
             points.add(new Double[]
-                    {
-                        getLongitude(i), getLatitude(i)
-                    });
+            {
+                getLongitude(i), getLatitude(i)
+            });
         }
         return points;
     }
@@ -188,6 +183,33 @@ public class PointList
                 return false;
         }
         return true;
+    }
+
+    public PointList clone( boolean reverse )
+    {
+        PointList clonePL = new PointList(size);
+        for (int i = 0; i < size; i++)
+        {
+            clonePL.add(latitudes[i], longitudes[i]);
+        }
+        if (reverse)
+            clonePL.reverse();
+        return clonePL;
+    }
+
+    public PointList copy( int from, int end )
+    {
+        if (from > end)
+            throw new IllegalArgumentException("from must be smaller or equals to end");
+        if (from < 0 || end > size)
+            throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + size);
+
+        PointList copyPL = new PointList(size);
+        for (int i = from; i < end; i++)
+        {
+            copyPL.add(latitudes[i], longitudes[i]);
+        }
+        return copyPL;
     }
 
     @Override
@@ -219,19 +241,6 @@ public class PointList
         return dist;
     }
 
-    public PointList trimToSize()
-    {
-        // 1 free point is ok
-        if (latitudes.length <= size + 1)
-        {
-            return this;
-        }
-
-        latitudes = Arrays.copyOf(latitudes, size);
-        longitudes = Arrays.copyOf(longitudes, size);
-        return this;
-    }
-
     /**
      * Takes the string from a json array ala [lon1,lat1], [lon2,lat2], ... and fills the list from
      * it.
@@ -241,9 +250,7 @@ public class PointList
         for (String latlon : str.split("\\["))
         {
             if (latlon.trim().length() == 0)
-            {
                 continue;
-            }
 
             String ll[] = latlon.split(",");
             String lat = ll[1].replace("]", "").trim();
@@ -287,5 +294,34 @@ public class PointList
         {
             throw new RuntimeException("cannot change EMPTY PointList");
         }
+
+        @Override
+        public void parseJSON( String str )
+        {
+            throw new RuntimeException("cannot change EMPTY PointList");
+        }
+
+        @Override
+        public double calcDistance( DistanceCalc calc )
+        {
+            return 0;
+        }
+
+        @Override
+        public PointList copy( int from, int end )
+        {
+            throw new RuntimeException("cannot copy EMPTY PointList");
+        }
+
+        @Override
+        public PointList clone( boolean reverse )
+        {
+            return this;
+        }
     };
+
+    public GHPoint toGHPoint( int index )
+    {
+        return new GHPoint(getLatitude(index), getLongitude(index));
+    }
 }

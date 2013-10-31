@@ -22,7 +22,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.shapes.CoordTrig;
 
 /**
  * Same as full index but calculates distance to all edges too
@@ -32,11 +31,11 @@ import com.graphhopper.util.shapes.CoordTrig;
 public class Location2IDFullWithEdgesIndex implements Location2IDIndex
 {
     private DistanceCalc calc = new DistanceCalc();
-    private Graph g;
+    private Graph _graph;
 
     public Location2IDFullWithEdgesIndex( Graph g )
     {
-        this.g = g;
+        this._graph = g;
     }
 
     @Override
@@ -73,15 +72,15 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
     @Override
     public int findID( double lat, double lon )
     {
-        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
+        return findClosest(_graph, lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
     }
 
     @Override
-    public LocationIDResult findClosest( double queryLat, double queryLon, EdgeFilter filter )
+    public LocationIDResult findClosest( Graph localGraph, double queryLat, double queryLon, EdgeFilter filter )
     {
         LocationIDResult res = new LocationIDResult(queryLat, queryLon);        
         double foundDist = Double.MAX_VALUE;
-        AllEdgesIterator iter = g.getAllEdges();
+        AllEdgesIterator iter = localGraph.getAllEdges();
         while (iter.next())
         {
             if (!filter.accept(iter))
@@ -98,8 +97,8 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
                     node = iter.getAdjNode();
                 }
 
-                double fromLat = g.getLatitude(node);
-                double fromLon = g.getLongitude(node);
+                double fromLat = localGraph.getLatitude(node);
+                double fromLon = localGraph.getLongitude(node);
                 double fromDist = calc.calcDist(fromLat, fromLon, queryLat, queryLon);
                 if (fromDist < 0)
                 {
@@ -120,8 +119,8 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
                     continue;
                 }
                 int toNode = iter.getAdjNode();
-                double toLat = g.getLatitude(toNode);
-                double toLon = g.getLongitude(toNode);
+                double toLat = localGraph.getLatitude(toNode);
+                double toLon = localGraph.getLongitude(toNode);
 
                 if (calc.validEdgeDistance(queryLat, queryLon,
                         fromLat, fromLon, toLat, toLon))

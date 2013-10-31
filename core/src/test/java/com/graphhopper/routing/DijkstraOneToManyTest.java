@@ -24,7 +24,7 @@ import com.graphhopper.routing.util.NoOpAlgorithmPreparation;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -36,7 +36,7 @@ import org.junit.Test;
 public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
 {
     @Override
-    public AlgorithmPreparation prepareGraph( Graph g, final FlagEncoder encoder, final WeightCalculation calc )
+    public AlgorithmPreparation prepareGraph( Graph defaultGraph, final FlagEncoder encoder, final WeightCalculation calc )
     {
         return new NoOpAlgorithmPreparation()
         {
@@ -45,29 +45,29 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
             {
                 return new DijkstraOneToMany(_graph, encoder, calc);
             }
-        }.setGraph(g);
+        }.setGraph(defaultGraph);
     }
 
     @Override
-    public void testViaEdges()
+    public void testViaEdges_BiGraph()
     {
         // not supported
     }
 
     @Override
-    public void testViaEdges2()
+    public void testViaEdges_SpecialCases()
     {
         // not supported
     }
 
     @Override
-    public void testViaEdges_directedGraph()
+    public void testViaEdges_FromEqualsTo()
     {
         // not supported
     }
 
     @Override
-    public void testViaEdges_withCoordinates()
+    public void testViaEdges_WithCoordinates()
     {
         // not supported
     }
@@ -104,7 +104,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         algo.setEdgeFilter(new EdgeFilter()
         {
             @Override
-            public boolean accept( EdgeIterator iter )
+            public boolean accept( EdgeIteratorState iter )
             {
                 return iter.getAdjNode() != 5;
             }
@@ -117,7 +117,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         algo.setEdgeFilter(new EdgeFilter()
         {
             @Override
-            public boolean accept( EdgeIterator iter )
+            public boolean accept( EdgeIteratorState iter )
             {
                 return iter.getAdjNode() != 3;
             }

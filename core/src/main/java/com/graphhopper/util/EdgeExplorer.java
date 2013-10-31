@@ -28,6 +28,8 @@ public interface EdgeExplorer
 {
     /**
      * This method sets the base node for iteration through neighboring edges.
+     * <p/>
+     * @return EdgeIterator around specified baseNode
      */
-    EdgeIterator setBaseNode( int baseNode );
+    EdgeIterator setBaseNode( int baseNode );       
 }

@@ -21,10 +21,8 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
@@ -40,13 +38,12 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     private TIntObjectMap<EdgeEntry> fromMap;
     private PriorityQueue<EdgeEntry> fromHeap;
     private int visitedNodes;
-    private int to1 = -1;
-    private int to2 = -1;
+    private int to = -1;
     private EdgeEntry currEdge;
 
-    public Dijkstra( Graph graph, FlagEncoder encoder, WeightCalculation type )
+    public Dijkstra( Graph g, FlagEncoder encoder, WeightCalculation type )
     {
-        super(graph, encoder, type);
+        super(g, encoder, type);
         initCollections(1000);
     }
 
@@ -57,35 +54,10 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
-    {
-        checkAlreadyRun();
-        EdgeIteratorState from = fromRes.getClosestEdge();
-        EdgeIteratorState to = toRes.getClosestEdge();
-        if (flagEncoder.isForward(from.getFlags()))
-            fromMap.put(from.getAdjNode(), createEdgeEntry(from.getAdjNode(), fromRes.getAdjEdge().getDistance()));
-
-        if (flagEncoder.isBackward(from.getFlags()))
-            fromMap.put(from.getBaseNode(), createEdgeEntry(from.getBaseNode(), fromRes.getBaseEdge().getDistance()));
-
-        if (flagEncoder.isForward(to.getFlags()))
-            to1 = to.getBaseNode();
-
-        if (flagEncoder.isBackward(to.getFlags()))
-            to2 = to.getAdjNode();
-
-        if (fromMap.isEmpty() || to1 < 0 && to2 < 0)
-            throw new IllegalStateException("Either 'from'-edge or 'to'-edge is inaccessible. From:" + fromMap + ", to1:" + to1 + ", to2:" + to2);
-
-        currEdge = fromMap.valueCollection().iterator().next();
-        return runAlgo();
-    }
-
-    @Override
     public Path calcPath( int from, int to )
     {
         checkAlreadyRun();
-        to1 = to;
+        this.to = to;
         currEdge = createEdgeEntry(from, 0);
         fromMap.put(from, currEdge);
         return runAlgo();
@@ -142,7 +114,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     @Override
     protected boolean finished()
     {
-        return currEdge.endNode == to1 || currEdge.endNode == to2;
+        return currEdge.endNode == to;
     }
 
     @Override

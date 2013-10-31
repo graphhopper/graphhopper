@@ -21,7 +21,6 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.*;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -43,7 +42,6 @@ public class AStar extends AbstractRoutingAlgorithm
     private PriorityQueue<AStarEdge> prioQueueOpenSet;
     private AStarEdge currEdge;
     private int to1 = -1;
-    private int to2 = -1;
     private double toLat;
     private double toLon;
 
@@ -71,35 +69,6 @@ public class AStar extends AbstractRoutingAlgorithm
     {
         fromMap = new TIntObjectHashMap<AStarEdge>();
         prioQueueOpenSet = new PriorityQueue<AStarEdge>(size);
-    }
-
-    @Override
-    public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
-    {
-        checkAlreadyRun();
-        EdgeIteratorState from = fromRes.getClosestEdge();
-        EdgeIteratorState to = toRes.getClosestEdge();
-
-        if (flagEncoder.isForward(from.getFlags()))
-            fromMap.put(from.getAdjNode(), createEdgeEntry(from.getAdjNode(), fromRes.getAdjEdge().getDistance()));
-
-        if (flagEncoder.isBackward(from.getFlags()))
-            fromMap.put(from.getBaseNode(), createEdgeEntry(from.getBaseNode(), fromRes.getBaseEdge().getDistance()));
-
-        if (flagEncoder.isForward(to.getFlags()))
-            to1 = to.getBaseNode();
-
-        if (flagEncoder.isBackward(to.getFlags()))
-            to2 = to.getAdjNode();
-
-        if (fromMap.isEmpty() || to1 < 0 && to2 < 0)
-            throw new IllegalStateException("Either 'from'-edge or 'to'-edge is inaccessible. From:" + fromMap + ", to1:" + to1 + ", to2:" + to2);
-
-        currEdge = fromMap.valueCollection().iterator().next();
-
-        toLat = toRes.getQueryPoint().lat;
-        toLon = toRes.getQueryPoint().lon;
-        return runAlgo();
     }
 
     @Override
@@ -184,7 +153,7 @@ public class AStar extends AbstractRoutingAlgorithm
     @Override
     protected boolean finished()
     {
-        return currEdge.endNode == to1 || currEdge.endNode == to2;
+        return currEdge.endNode == to1;
     }
 
     @Override

@@ -24,7 +24,6 @@ package com.graphhopper.util;
  * Usage:
  * <pre>
  * EdgeExplorer explorer = graph.createEdgeExplorer();
- * // calls to next() etc without calling setBaseNode will cause undefined behaviour!
  * EdgeIterator iter = explorer.setBaseNode(nodeId);
  * // calls to iter.getAdjNode(), getDistance() without calling next() will cause undefined behaviour!
  * while(iter.next()) {

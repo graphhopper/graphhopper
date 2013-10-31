@@ -49,17 +49,17 @@ public interface EdgeIteratorState
     int getAdjNode();
 
     /**
-     * For OSM a way is often a curve not just a straight line and nodes between tower nodes (which
-     * are used for routing) are necessary to have a more exact geometry. Those nodes are called
-     * pillar nodes and will be returned in this method. Note: it can happen that identical nodes
-     * are dropped and therefor leads to a pointList of size one!
+     * For OSM a way is often a curve not just a straight line. These nodes are called pillar nodes
+     * and are between tower nodes (which are used for routing), they are necessary to have a more
+     * exact geometry. Updates to the returned list are not reflected in the graph, for that you've
+     * to use setWayGeometry.
      * <p/>
      * @param mode can be <ul> <li>0 = only pillar nodes, no tower nodes</li> <li>1 = inclusive the
      * base tower node only</li> <li>2 = inclusive the adjacent tower node only</li> <li>3 =
      * inclusive the base and adjacent tower node</li> </ul>
      * @return pillar nodes
      */
-    PointList getWayGeometry( int mode );
+    PointList fetchWayGeometry( int mode );
 
     /**
      * @param list is a sorted collection of nodes between the baseNode and the current adjacent
@@ -68,7 +68,7 @@ public interface EdgeIteratorState
     void setWayGeometry( PointList list );
 
     /**
-     * @return the distance of the current edge edge
+     * @return the distance of the current edge in meter
      */
     double getDistance();
 

@@ -35,7 +35,7 @@ public class BitUtil
                 BitUtil.fromInt(bytes, run, 0);
                 return bytes[3];
             }
-        }.count(10000000).start().report());
+        }.setIterations(10000000).start().getReport());
     }
 
     private BitUtil()
@@ -259,7 +259,7 @@ public class BitUtil
     /**
      * Reverses the bits in the specified val
      * <p/>
-     * @see also http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
+     * @see alsohttp://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
      */
     public static long reverse( long v, int maxBits )
     {

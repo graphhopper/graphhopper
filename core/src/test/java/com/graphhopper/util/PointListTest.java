@@ -48,8 +48,11 @@ public class PointListTest
         instance = new PointList();
         instance.add(1, 1);
         instance.add(2, 2);
+        PointList clonedList = instance.clone(false);
         instance.reverse();
         assertEquals(2, instance.getLongitude(0), 1e-7);
         assertEquals(1, instance.getLongitude(1), 1e-7);
+        
+        assertEquals(clonedList, instance.clone(true));
     }
 }

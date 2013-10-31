@@ -28,7 +28,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.PriorityQueue;
 
 /**
- * Calculates extractPath path in bidirectional way.
+ * Calculates best path in bidirectional way.
  * <p/>
  * 'Ref' stands for reference implementation and is using the normal Java-'reference'-way.
  * <p/>

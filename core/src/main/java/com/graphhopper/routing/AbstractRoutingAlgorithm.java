@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
@@ -32,11 +33,11 @@ import com.graphhopper.util.EdgeIterator;
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
 {
     private EdgeFilter additionalEdgeFilter;
-    protected final Graph graph;
+    protected Graph graph;
+    protected EdgeExplorer inEdgeExplorer;
+    protected EdgeExplorer outEdgeExplorer;
     protected final WeightCalculation weightCalc;
     protected final FlagEncoder flagEncoder;
-    protected final EdgeExplorer inEdgeExplorer;
-    protected final EdgeExplorer outEdgeExplorer;
     private boolean alreadyRun;
 
     /**
@@ -44,15 +45,28 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
      * @param encoder sets the used vehicle (bike, car, foot)
      * @param type set the used weight calculation (e.g. fastest, shortest).
      */
-    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, WeightCalculation type )
+    public AbstractRoutingAlgorithm(Graph graph, FlagEncoder encoder, WeightCalculation type )
+    {
+        this.weightCalc = type;
+        this.flagEncoder = encoder;        
+        setGraph(graph);
+    }
+    
+    @Override
+    public RoutingAlgorithm setGraph( Graph graph )
     {
         this.graph = graph;
-        this.weightCalc = type;
-        this.flagEncoder = encoder;
-        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
-        inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
+        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
+        inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
+        return this;
     }
 
+    @Override
+    public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
+    {
+        return calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
+    }
+    
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
     {
         this.additionalEdgeFilter = additionalEdgeFilter;

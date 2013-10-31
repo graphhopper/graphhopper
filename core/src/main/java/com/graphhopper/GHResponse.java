@@ -194,7 +194,6 @@ public class GHResponse
             double lon = tmpList.getLongitude(i);
             track.append("<trkpt lat='").append(lat).append("' lon='").append(lon).append("'>");
 
-            // TODO add actual driving time
             startTime = startTime + 1;
             track.append("<time>").append(formatter.format(startTime)).append("</time>");
 

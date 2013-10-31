@@ -42,9 +42,9 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
     private final static EdgeFilter NO_SHORTCUT = new EdgeFilter()
     {
         @Override
-        public boolean accept( EdgeIterator iter )
+        public boolean accept( EdgeIteratorState edgeIterState )
         {
-            return !((EdgeSkipExplorer) iter).isShortcut();
+            return !((EdgeSkipIterator) edgeIterState).isShortcut();
         }
     };
     private LevelGraph lg;
@@ -118,9 +118,9 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
             }
 
             @Override
-            public PointList getWayGeometry(int type)
+            public PointList fetchWayGeometry(int type)
             {
-                return tmpIter.getWayGeometry(type);
+                return tmpIter.fetchWayGeometry(type);
             }
 
             @Override
@@ -168,8 +168,8 @@ public class Location2NodesNtreeLG extends Location2NodesNtree
     }
 
     @Override
-    protected EdgeExplorer createEdgeExplorer()
+    protected EdgeFilter getEdgeFilter()
     {
-        return lg.createEdgeExplorer(NO_SHORTCUT);
+        return NO_SHORTCUT;
     }
 }

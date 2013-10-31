@@ -19,6 +19,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * @author Peter Karich
@@ -45,7 +46,7 @@ public class DefaultEdgeFilter implements EdgeFilter
     }
 
     @Override
-    public boolean accept( EdgeIterator iter )
+    public boolean accept( EdgeIteratorState iter )
     {
         int flags = iter.getFlags();
         return out && encoder.isForward(flags) || in && encoder.isBackward(flags);

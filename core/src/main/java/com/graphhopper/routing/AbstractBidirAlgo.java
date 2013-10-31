@@ -21,7 +21,6 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIDResult;
-import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Common subclass for bidirectional algorithms.
@@ -50,31 +49,6 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
     public AbstractBidirAlgo( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
         super(graph, encoder, type);
-    }
-
-    @Override
-    public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
-    {
-        checkAlreadyRun();
-        EdgeIteratorState from = fromRes.getClosestEdge();
-        EdgeIteratorState to = toRes.getClosestEdge();
-        initPath();
-
-        // mix 'initFrom' and 'initTo' calls to find also cases where start==end
-        if (flagEncoder.isForward(from.getFlags()))
-            initFrom(from.getAdjNode(), fromRes.getAdjEdge().getDistance());
-
-        if (flagEncoder.isForward(to.getFlags()))
-            initTo(to.getBaseNode(), toRes.getBaseEdge().getDistance());
-
-        if (flagEncoder.isBackward(from.getFlags()))
-            initFrom(from.getBaseNode(), fromRes.getBaseEdge().getDistance());
-
-        if (flagEncoder.isBackward(to.getFlags()))
-            initTo(to.getAdjNode(), toRes.getAdjEdge().getDistance());
-
-        checkState(from.getBaseNode(), from.getAdjNode(), to.getBaseNode(), to.getAdjNode());
-        return runAlgo();
     }
 
     @Override

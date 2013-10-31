@@ -45,10 +45,9 @@ public class LocationIDResult
     private int wayIndex = -1;
     private int closestNode = -1;
     private EdgeIteratorState closestEdge;
-    private EdgeIteratorState baseEdge;
-    private EdgeIteratorState adjEdge;
     private final GHPoint queryPoint;
     private GHPoint snappedPoint;
+    private boolean onTowerNode;
 
     public LocationIDResult( double queryLat, double queryLon )
     {
@@ -81,20 +80,33 @@ public class LocationIDResult
         return queryDistance;
     }
 
-    /**
-     * References to a tower node or the index of wayGeometry of the closest edge. If wayGeometry
-     * has lengh L then the wayIndex 0 refers to the *base* node, 1 to L (inclusive) refer to the
-     * wayGeometry indices (minus one) and L+1 to the *adjacent* node. Currently only supported if
-     * returned from Location2NodesNtree.
-     */
     public void setWayIndex( int wayIndex )
     {
         this.wayIndex = wayIndex;
     }
 
+    /**
+     * References to a tower node or the index of wayGeometry of the closest edge. If wayGeometry
+     * has lengh L then the wayIndex 0 refers to the *base* node, 1 to L (inclusive) refer to the
+     * wayGeometry indices (minus one) and L+1 to the *adjacent* node. Currently only intialized if
+     * returned from Location2NodesNtree.
+     */
     public int getWayIndex()
     {
         return wayIndex;
+    }
+
+    /**
+     * @param onTN true if snapped point is directly on a tower
+     */
+    public void setOnTowerNode( boolean onTN )
+    {
+        this.onTowerNode = onTN;
+    }
+
+    public boolean isOnTowerNode()
+    {
+        return onTowerNode;
     }
 
     /**
@@ -119,24 +131,6 @@ public class LocationIDResult
         return closestEdge;
     }
 
-    /**
-     * @return the closest edge but the snapped point get the new adjacent node.
-     */
-    public EdgeIteratorState getBaseEdge()
-    {
-        checkSnappedPoint();
-        return baseEdge;
-    }
-
-    /**
-     * @return the closest edge but the snapped point gets the new base node.
-     */
-    public EdgeIteratorState getAdjEdge()
-    {
-        checkSnappedPoint();
-        return adjEdge;
-    }
-
     public CoordTrig getQueryPoint()
     {
         return queryPoint;
@@ -148,155 +142,39 @@ public class LocationIDResult
      */
     public GHPoint getSnappedPoint()
     {
-        checkSnappedPoint();
+        if (snappedPoint == null)
+            throw new IllegalStateException("Calculate snapped point before!");
         return snappedPoint;
     }
 
-    private void checkSnappedPoint()
-    {
-        if (snappedPoint == null)
-            throw new IllegalStateException("Call calcSnappedPoint before");
-    }
-
-    public void calcSnappedPoint( DistanceCalc distCalc )
-    {
-        if (closestEdge == null || wayIndex < 0)
-            throw new IllegalStateException("State is invalid. Set closestEdge AND wayIndex!");
-
-        PointList pl = getClosestEdge().getWayGeometry(3);
-        int size = pl.getSize();
-        int index = getWayIndex();
-        double tmpLat = pl.getLatitude(index);
-        double tmpLon = pl.getLongitude(index);
-        boolean newPoint = false;
-        if (index + 1 < size)
-        {
-            double queryLat = getQueryPoint().lat, queryLon = getQueryPoint().lon;
-            double adjLat = pl.getLatitude(index + 1), adjLon = pl.getLongitude(index + 1);
-            if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon))
-            {
-                snappedPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
-                newPoint = true;
-            } else
-                // outside of edge boundaries
-                snappedPoint = new GHPoint(tmpLat, tmpLon);
-        } else
-            // snapped point is on adjacent node
-            snappedPoint = new GHPoint(tmpLat, tmpLon);
-
-        // build the two parts of the closest edge
-        PointList basePoints = new PointList(index);
-        PointList adjPoints = new PointList(index);
-
-        adjPoints.add(snappedPoint.lat, snappedPoint.lon);
-        for (int i = 0; i < pl.getSize(); i++)
-        {
-            if (i < wayIndex || newPoint && i == wayIndex)
-                basePoints.add(pl.getLatitude(i), pl.getLongitude(i));
-
-            if (i > wayIndex)
-                adjPoints.add(pl.getLatitude(i), pl.getLongitude(i));
-        }
-        basePoints.add(snappedPoint.lat, snappedPoint.lon);
-
-        double baseDistance = basePoints.calcDistance(distCalc);
-        double adjDistance = adjPoints.calcDistance(distCalc);
-        baseEdge = new InMemEdgeIState(baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints);
-        adjEdge = new InMemEdgeIState(adjDistance, closestEdge.getFlags(), closestEdge.getName(), adjPoints);
-    }
-
     /**
-     * Create edge decoupled from graph where distance and nodes are kept in memory.
+     * @return true if snapped point is on an edge and not on a point.
      */
-    private static class InMemEdgeIState implements EdgeIteratorState
+    public boolean calcSnappedPoint( DistanceCalc distCalc )
     {
-        private final PointList pointList;
-        private double distance;
-        private int flags;
-        private String name;
+        if (snappedPoint != null)
+            throw new IllegalStateException("Calculate snapped point only once");
 
-        /**
-         * @param distance
-         * @param flags
-         * @param name
-         * @param pointList all points including the base and adjacent to avoid back reference to
-         * graph but also to avoid special handling for snapped point which does not exist in the
-         * graph.
-         */
-        public InMemEdgeIState( double distance, int flags, String name, PointList pointList )
+        PointList fullPL = getClosestEdge().fetchWayGeometry(3);
+        double tmpLat = fullPL.getLatitude(wayIndex);
+        double tmpLon = fullPL.getLongitude(wayIndex);
+        if (onTowerNode)
         {
-            this.distance = distance;
-            this.flags = flags;
-            this.name = name;
-            this.pointList = pointList;
+            snappedPoint = new GHPoint(tmpLat, tmpLon);
+            return false;
         }
 
-        @Override
-        public int getEdge()
+        double queryLat = getQueryPoint().lat, queryLon = getQueryPoint().lon;
+        double adjLat = fullPL.getLatitude(wayIndex + 1), adjLon = fullPL.getLongitude(wayIndex + 1);
+        if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon))
         {
-            throw new UnsupportedOperationException("Not supported for in-memory edge.");
-        }
-
-        @Override
-        public int getBaseNode()
+            snappedPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
+            return true;
+        } else
         {
-            throw new UnsupportedOperationException("Not supported for in-memory edge.");
-        }
-
-        @Override
-        public int getAdjNode()
-        {
-            throw new UnsupportedOperationException("Not supported for in-memory edge.");
-        }
-
-        @Override
-        public PointList getWayGeometry( int mode )
-        {
-            if (mode != 3)
-                throw new UnsupportedOperationException("Not yet implemented.");
-            return pointList;
-        }
-
-        @Override
-        public void setWayGeometry( PointList list )
-        {
-            throw new UnsupportedOperationException("Not supported for in-memory edge. Set when creating it.");
-        }
-
-        @Override
-        public double getDistance()
-        {
-            return distance;
-        }
-
-        @Override
-        public void setDistance( double dist )
-        {
-            this.distance = dist;
-        }
-
-        @Override
-        public int getFlags()
-        {
-            return flags;
-        }
-
-        @Override
-        public void setFlags( int flags )
-        {
-            this.flags = flags;
-        }
-
-        @Override
-        public String getName()
-        {
-            return name;
-        }
-
-        @Override
-        public void setName( String name )
-        {
-            this.name = name;
+            // outside of edge boundaries
+            snappedPoint = new GHPoint(tmpLat, tmpLon);
+            return false;
         }
     }
 

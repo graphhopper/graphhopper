@@ -74,12 +74,11 @@ public interface Graph
     /**
      * Returns a wrapper over the specified edgeId.
      * <p/>
-     * @param endNode will be returned via adjNode(). If endNode is -1 then adjNode() will be the
-     * bigger node.
+     * @param adjNode is the node that will be returned via adjNode()
      * @return an edge iterator over one element where the method next() will always return false.
      * @throws IllegalStateException if edgeId is not valid
      */
-    EdgeIteratorState getEdgeProps( int edgeId, int endNode );
+    EdgeIteratorState getEdgeProps( int edgeId, int adjNode );
 
     /**
      * @return all edges in this graph, where baseNode will be the smaller node.
@@ -88,13 +87,16 @@ public interface Graph
 
     /**
      * Returns an iterator which makes it possible to traverse all edges of the specified node if
-     * the filter accepts the edge.
+     * the filter accepts the edge. Reduce calling this method as much as possible, e.g. create it 
+     * before a for loop!
+     * <p/>
+     * @see Graph#createEdgeExplorer()
      */
     EdgeExplorer createEdgeExplorer( EdgeFilter filter );
 
     /**
      * Returns all the edges reachable from the specified index. Same behaviour as
-     * graph.getEdges(index, new AllEdgesFilter());
+     * graph.getEdges(index, EdgeFilter.ALL_EDGES);
      * <p/>
      * @return all edges regardless of the vehicle type or direction.
      */
