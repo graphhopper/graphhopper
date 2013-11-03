@@ -553,12 +553,9 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        QueryGraph qGraph = new QueryGraph(locationIndex, graph, edgeFilter);
-//        LocationIDResult fromRes = locationIndex.findClosest(qGraph, request.getFrom().lat, request.getFrom().lon, edgeFilter);
-//        LocationIDResult toRes = locationIndex.findClosest(qGraph, request.getTo().lat, request.getTo().lon, edgeFilter);
-        LocationIDResult fromRes = qGraph.lookup(request.getFrom().lat, request.getFrom().lon);
-        LocationIDResult toRes = qGraph.lookup(request.getTo().lat, request.getTo().lon);
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);        
+        LocationIDResult fromRes = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
+        LocationIDResult toRes = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);       
 
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
@@ -596,7 +593,7 @@ public class GraphHopper implements GraphHopperAPI
         debug += ", algoInit:" + sw.stop().getSeconds() + "s";
         sw = new StopWatch().start();
 
-        Path path = algo.setGraph(qGraph).calcPath(fromRes, toRes);
+        Path path = algo.calcPath(fromRes, toRes);
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
 
         calcPoints = request.getHint("calcPoints", calcPoints);

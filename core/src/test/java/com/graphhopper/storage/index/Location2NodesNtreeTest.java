@@ -89,20 +89,16 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
         Graph graph = createTestGraph();
         Location2IDIndex index = createIndex(graph, 1000);
         // query directly the tower node
-        LocationIDResult res = index.findClosest(graph, -0.4, 0.9, EdgeFilter.ALL_EDGES);
-        DistanceCalc distCalc = new DistanceCalc();
-        res.calcSnappedPoint(distCalc);
-        assertEquals(new GHPoint(-0.4, 0.9), res.getSnappedPoint());        
-        res = index.findClosest(graph, -0.6, 1.6, EdgeFilter.ALL_EDGES);
-        res.calcSnappedPoint(distCalc);
+        LocationIDResult res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);        
+        assertEquals(new GHPoint(-0.4, 0.9), res.getSnappedPoint());
+        res = index.findClosest(-0.6, 1.6, EdgeFilter.ALL_EDGES);        
         assertEquals(new GHPoint(-0.6, 1.6), res.getSnappedPoint());
-        
+
         // query the edge (1,3)
-        res = index.findClosest(graph, -0.2, 0.3, EdgeFilter.ALL_EDGES);
-        res.calcSnappedPoint(distCalc);
+        res = index.findClosest(-0.2, 0.3, EdgeFilter.ALL_EDGES);
         assertEquals(new GHPoint(-0.441624, 0.317259), res.getSnappedPoint());
     }
-    
+
     @Test
     public void testInMemIndex()
     {
@@ -202,7 +198,7 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
         inMemIndex.store(inMemIndex.root, Location2NodesNtree.START_POINTER);
         assertEquals(1 << 20, index.getCapacity());
 
-        LocationIDResult res = index.findClosest(graph, -.5, -.5, EdgeFilter.ALL_EDGES);
+        LocationIDResult res = index.findClosest(-.5, -.5, EdgeFilter.ALL_EDGES);
         assertEquals(1, res.getClosestNode());
     }
 
@@ -294,8 +290,8 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
         Graph graph = createTestGraph();
         Location2NodesNtree index = createIndex(graph, 1000);
 
-        assertEquals(1, index.findClosest(graph, -.6, -.6, EdgeFilter.ALL_EDGES).getClosestNode());
-        assertEquals(2, index.findClosest(graph, -.6, -.6, new EdgeFilter()
+        assertEquals(1, index.findClosest(-.6, -.6, EdgeFilter.ALL_EDGES).getClosestNode());
+        assertEquals(2, index.findClosest(-.6, -.6, new EdgeFilter()
         {
             @Override
             public boolean accept( EdgeIteratorState iter )

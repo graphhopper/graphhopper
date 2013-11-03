@@ -208,8 +208,8 @@ public class RoutingAlgorithmIT
             {
                 for (OneRun oneRun : forEveryAlgo)
                 {
-                    int from = idx.findClosest(g, oneRun.fromLat, oneRun.fromLon, edgeFilter).getClosestNode();
-                    int to = idx.findClosest(g, oneRun.toLat, oneRun.toLon, edgeFilter).getClosestNode();
+                    int from = idx.findClosest(oneRun.fromLat, oneRun.fromLon, edgeFilter).getClosestNode();
+                    int to = idx.findClosest(oneRun.toLat, oneRun.toLon, edgeFilter).getClosestNode();
                     testCollector.assertDistance(prepare.createAlgo(), from, to, oneRun.dist, oneRun.locs);
                 }
             }

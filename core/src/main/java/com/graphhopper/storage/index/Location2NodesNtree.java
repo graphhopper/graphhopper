@@ -64,7 +64,7 @@ public class Location2NodesNtree implements Location2IDIndex
     private DistanceCalc preciseDistCalc = new DistanceCalc();
     private DistanceCalc distCalc = new DistancePlaneProjection();
     final DataAccess dataAccess;
-    private final Graph _graph;
+    private final Graph graph;
     private int[] entries;
     private byte[] shifts;
     // convert spatial key to index for subentry of current depth
@@ -87,7 +87,7 @@ public class Location2NodesNtree implements Location2IDIndex
     public Location2NodesNtree( Graph g, Directory dir )
     {
         MAGIC_INT = Integer.MAX_VALUE / 22316;
-        this._graph = g;
+        this.graph = g;
         dataAccess = dir.find("locationIndex");
         setMinResolutionInMeter(500);
     }
@@ -124,8 +124,8 @@ public class Location2NodesNtree implements Location2IDIndex
         // now calculate the necessary maxDepth d for our current bounds
         // if we assume a minimum resolution like 0.5km for a leaf-tile                
         // n^(depth/2) = toMeter(dLon) / minResolution
-        BBox bounds = _graph.getBounds();
-        if (_graph.getNodes() == 0 || !bounds.check())
+        BBox bounds = graph.getBounds();
+        if (graph.getNodes() == 0 || !bounds.check())
             throw new IllegalStateException("Bounds of graph are invalid: " + bounds);
 
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
@@ -229,7 +229,7 @@ public class Location2NodesNtree implements Location2IDIndex
     @Override
     public int findID( double lat, double lon )
     {
-        LocationIDResult res = findClosest(_graph, lat, lon, EdgeFilter.ALL_EDGES);
+        LocationIDResult res = findClosest(lat, lon, EdgeFilter.ALL_EDGES);
         if (res == null)
             return -1;
 
@@ -327,7 +327,7 @@ public class Location2NodesNtree implements Location2IDIndex
     {
         // do not include the edges as we could get problem with LevelGraph due to shortcuts
         // ^ graph.getAllEdges().count();
-        return _graph.getNodes();
+        return graph.getNodes();
     }
 
     @Override
@@ -368,8 +368,8 @@ public class Location2NodesNtree implements Location2IDIndex
                 {
                     int nodeA = allIter.getBaseNode();
                     int nodeB = allIter.getAdjNode();
-                    double lat1 = _graph.getLatitude(nodeA);
-                    double lon1 = _graph.getLongitude(nodeA);
+                    double lat1 = graph.getLatitude(nodeA);
+                    double lon1 = graph.getLongitude(nodeA);
                     double lat2;
                     double lon2;
                     PointList points = allIter.fetchWayGeometry(0);
@@ -382,8 +382,8 @@ public class Location2NodesNtree implements Location2IDIndex
                         lat1 = lat2;
                         lon1 = lon2;
                     }
-                    lat2 = _graph.getLatitude(nodeB);
-                    lon2 = _graph.getLongitude(nodeB);
+                    lat2 = graph.getLatitude(nodeB);
+                    lon2 = graph.getLongitude(nodeB);
                     addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
                 }
             } catch (Exception ex)
@@ -410,7 +410,7 @@ public class Location2NodesNtree implements Location2IDIndex
                 }
             };
             BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter,
-                    _graph.getBounds().minLat, _graph.getBounds().minLon,
+                    graph.getBounds().minLat, graph.getBounds().minLon,
                     deltaLat, deltaLon);
         }
 
@@ -630,7 +630,7 @@ public class Location2NodesNtree implements Location2IDIndex
     }
 
     @Override
-    public LocationIDResult findClosest( final Graph localGraph, final double queryLat, final double queryLon,
+    public LocationIDResult findClosest( final double queryLat, final double queryLon,
             final EdgeFilter edgeFilter )
     {
         final TIntHashSet storedNetworkEntryIds = findNetworkEntries(queryLat, queryLon);
@@ -641,7 +641,7 @@ public class Location2NodesNtree implements Location2IDIndex
         // clone storedIds to avoid interference with forEach
         final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
         // find nodes from the network entries which are close to 'point'
-        final EdgeExplorer explorer = localGraph.createEdgeExplorer(getEdgeFilter());
+        final EdgeExplorer explorer = graph.createEdgeExplorer(getEdgeFilter());
         storedNetworkEntryIds.forEach(new TIntProcedure()
         {
             @Override
@@ -665,8 +665,8 @@ public class Location2NodesNtree implements Location2IDIndex
                     protected boolean goFurther( int baseNode )
                     {
                         currNode = baseNode;
-                        currLat = localGraph.getLatitude(baseNode);
-                        currLon = localGraph.getLongitude(baseNode);
+                        currLat = graph.getLatitude(baseNode);
+                        currLon = graph.getLongitude(baseNode);
                         currNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
                         return goFurther;
                     }
@@ -683,15 +683,15 @@ public class Location2NodesNtree implements Location2IDIndex
                         }
 
                         int tmpClosestNode = currNode;
-                        if (check(tmpClosestNode, currNormedDist, 0, currEdge, true))
+                        if (check(tmpClosestNode, currNormedDist, 0, currEdge, LocationIDResult.Position.TOWER))
                         {
                             if (currNormedDist <= equalNormedDelta)
                                 return false;
                         }
 
                         int adjNode = currEdge.getAdjNode();
-                        double adjLat = localGraph.getLatitude(adjNode);
-                        double adjLon = localGraph.getLongitude(adjNode);
+                        double adjLat = graph.getLatitude(adjNode);
+                        double adjLon = graph.getLongitude(adjNode);
                         double adjDist = distCalc.calcNormalizedDist(adjLat, adjLon, queryLat, queryLon);
                         // if there are wayPoints this is only an approximation
                         if (adjDist < currNormedDist)
@@ -710,17 +710,17 @@ public class Location2NodesNtree implements Location2IDIndex
                             {
                                 tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                         tmpLat, tmpLon, wayLat, wayLon);
-                                check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge, false);
+                                check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge, LocationIDResult.Position.EDGE);
                             } else
                             {
-                                boolean onTowerNode = false;
+                                LocationIDResult.Position pos = LocationIDResult.Position.PILLAR;
                                 if (pointIndex + 1 == len)
                                 {
                                     tmpNormedDist = adjDist;
-                                    onTowerNode = true;
+                                    pos = LocationIDResult.Position.TOWER;
                                 } else
                                     tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
-                                check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, onTowerNode);
+                                check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
                             }
                             if (tmpNormedDist <= equalNormedDelta)
                                 return false;
@@ -732,7 +732,7 @@ public class Location2NodesNtree implements Location2IDIndex
                         return closestMatch.getQueryDistance() > equalNormedDelta;
                     }
 
-                    boolean check( int node, double normedDist, int wayIndex, EdgeIterator iter, boolean onTowerNode )
+                    boolean check( int node, double normedDist, int wayIndex, EdgeIterator iter, LocationIDResult.Position pos )
                     {
                         if (normedDist < closestMatch.getQueryDistance())
                         {
@@ -740,7 +740,7 @@ public class Location2NodesNtree implements Location2IDIndex
                             closestMatch.setClosestNode(node);
                             closestMatch.setClosestEdge(iter.detach());
                             closestMatch.setWayIndex(wayIndex);
-                            closestMatch.setOnTowerNode(onTowerNode);
+                            closestMatch.setSnappedPosition(pos);
                             return true;
                         }
                         return false;
@@ -750,9 +750,11 @@ public class Location2NodesNtree implements Location2IDIndex
             }
         });
 
-        if (closestMatch.isValid())
-            // denormalize distance
-            closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));
+        if (closestMatch.isValid()) {
+            // denormalize distance            
+            closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));                        
+            closestMatch.calcSnappedPoint(distCalc);
+        }
 
         return closestMatch;
     }
@@ -771,7 +773,7 @@ public class Location2NodesNtree implements Location2IDIndex
 
     protected AllEdgesIterator getAllEdges()
     {
-        return _graph.getAllEdges();
+        return graph.getAllEdges();
     }
 
     // make entries static as otherwise we get an additional reference to this class (memory waste)

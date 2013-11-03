@@ -18,7 +18,6 @@
 package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.Storable;
 
 /**
@@ -48,9 +47,6 @@ public interface Location2IDIndex extends Storable<Location2IDIndex>
     int findID( double lat, double lon );
 
     /**
-     * @param graph used to determine the snapped point. API glitch: this method overwrites the
-     * graph specified while constructing the index. Only necessary if graph is a QueryGraph to
-     * allow setting even virtual close edges without thread safety issues.
      * @param edgeFilter if a graph supports multiple vehicles we have to make sure that the entry
      * node into the graph is accessible from a selected vehicle. E.g. if you have a FOOT-query do:      <pre>
      *   new DefaultEdgeFilter(new FootFlagEncoder());
@@ -60,7 +56,7 @@ public interface Location2IDIndex extends Storable<Location2IDIndex>
      * has at least one edge which is accepted from the specified edgeFilter. If nothing is found it
      * returns null.
      */
-    LocationIDResult findClosest( Graph graph, double lat, double lon, EdgeFilter edgeFilter );
+    LocationIDResult findClosest( double lat, double lon, EdgeFilter edgeFilter );
 
     /**
      * @param approxDist false if initialization and querying should be faster but less precise.

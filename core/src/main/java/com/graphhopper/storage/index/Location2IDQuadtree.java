@@ -55,12 +55,12 @@ public class Location2IDQuadtree implements Location2IDIndex
     protected DistanceCalc distCalc = new DistancePlaneProjection();
     private final DataAccess index;
     private double maxRasterWidth2InMeterNormed;
-    private final Graph _graph;
+    private final Graph graph;
     private int lonSize, latSize;
 
     public Location2IDQuadtree( Graph g, Directory dir )
     {
-        this._graph = g;
+        this.graph = g;
         index = dir.find("loc2idIndex");
         setResolution(100 * 100);
     }
@@ -100,9 +100,9 @@ public class Location2IDQuadtree implements Location2IDIndex
         int lat = index.getHeader(1 * 4);
         int lon = index.getHeader(2 * 4);
         int checksum = index.getHeader(3 * 4);
-        if (checksum != _graph.getNodes())
+        if (checksum != graph.getNodes())
             throw new IllegalStateException("index was created from a different graph with "
-                    + checksum + ". Current nodes:" + _graph.getNodes());
+                    + checksum + ". Current nodes:" + graph.getNodes());
 
         initAlgo(lat, lon);
         return true;
@@ -163,7 +163,7 @@ public class Location2IDQuadtree implements Location2IDIndex
     {
         this.latSize = lat;
         this.lonSize = lon;
-        BBox b = _graph.getBounds();
+        BBox b = graph.getBounds();
         keyAlgo = new LinearKeyAlgo(lat, lon).setBounds(b);
         double max = Math.max(distCalc.calcDist(b.minLat, b.minLon, b.minLat, b.maxLon),
                 distCalc.calcDist(b.minLat, b.minLon, b.maxLat, b.minLon));
@@ -180,7 +180,7 @@ public class Location2IDQuadtree implements Location2IDIndex
 
     private GHBitSet fillQuadtree( int size )
     {
-        int locs = _graph.getNodes();
+        int locs = graph.getNodes();
         if (locs <= 0)
         {
             throw new IllegalStateException("check your graph - it is empty!");
@@ -190,8 +190,8 @@ public class Location2IDQuadtree implements Location2IDIndex
         GHPoint coord = new GHPoint();
         for (int nodeId = 0; nodeId < locs; nodeId++)
         {
-            double lat = _graph.getLatitude(nodeId);
-            double lon = _graph.getLongitude(nodeId);
+            double lat = graph.getLatitude(nodeId);
+            double lon = graph.getLongitude(nodeId);
             int key = (int) keyAlgo.encode(lat, lon);
             long bytePos = (long) key * 4;
             if (filledIndices.contains(key))
@@ -200,8 +200,8 @@ public class Location2IDQuadtree implements Location2IDIndex
                 keyAlgo.decode(key, coord);
                 // decide which one is closer to 'key'
                 double distNew = distCalc.calcNormalizedDist(coord.lat, coord.lon, lat, lon);
-                double oldLat = _graph.getLatitude(oldNodeId);
-                double oldLon = _graph.getLongitude(oldNodeId);
+                double oldLat = graph.getLatitude(oldNodeId);
+                double oldLon = graph.getLongitude(oldNodeId);
                 double distOld = distCalc.calcNormalizedDist(coord.lat, coord.lon, oldLat, oldLon);
                 // new point is closer to quad tree point (key) so overwrite old
                 if (distNew < distOld)
@@ -315,11 +315,11 @@ public class Location2IDQuadtree implements Location2IDIndex
     @Override
     public int findID( final double lat, final double lon )
     {
-        return findClosest(_graph, lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
+        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
     }
 
     @Override
-    public LocationIDResult findClosest( final Graph localGraph, final double queryLat, final double queryLon,
+    public LocationIDResult findClosest( final double queryLat, final double queryLon,
             final EdgeFilter edgeFilter )
     {
         if (edgeFilter != EdgeFilter.ALL_EDGES)
@@ -341,8 +341,8 @@ public class Location2IDQuadtree implements Location2IDIndex
          */
         long key = keyAlgo.encode(queryLat, queryLon);
         final int id = index.getInt(key * 4);
-        double mainLat = localGraph.getLatitude(id);
-        double mainLon = localGraph.getLongitude(id);
+        double mainLat = graph.getLatitude(id);
+        double mainLon = graph.getLongitude(id);
         final LocationIDResult res = new LocationIDResult(queryLat, queryLon);
         res.setClosestNode(id);
         res.setQueryDistance(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
@@ -362,8 +362,8 @@ public class Location2IDQuadtree implements Location2IDIndex
                     return true;
 
                 goFurtherHook(baseNode);
-                double currLat = localGraph.getLatitude(baseNode);
-                double currLon = localGraph.getLongitude(baseNode);
+                double currLat = graph.getLatitude(baseNode);
+                double currLon = graph.getLongitude(baseNode);
                 double currNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, currLat, currLon);
                 if (currNormedDist < res.getQueryDistance())
                 {
@@ -374,7 +374,7 @@ public class Location2IDQuadtree implements Location2IDIndex
 
                 return currNormedDist < maxRasterWidth2InMeterNormed;
             }
-        }.start(localGraph.createEdgeExplorer(), id, false);
+        }.start(graph.createEdgeExplorer(), id, false);
 
         // denormalize distance
         res.setQueryDistance(distCalc.calcDenormalizedDist(res.getQueryDistance()));
@@ -391,7 +391,7 @@ public class Location2IDQuadtree implements Location2IDIndex
         index.setHeader(0, MAGIC_INT);
         index.setHeader(1 * 4, latSize);
         index.setHeader(2 * 4, lonSize);
-        index.setHeader(3 * 4, _graph.getNodes());
+        index.setHeader(3 * 4, graph.getNodes());
         index.flush();
     }
 

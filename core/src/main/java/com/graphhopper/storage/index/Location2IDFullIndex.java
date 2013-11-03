@@ -32,11 +32,11 @@ import com.graphhopper.util.shapes.Circle;
 public class Location2IDFullIndex implements Location2IDIndex
 {
     private DistanceCalc calc = new DistancePlaneProjection();
-    private Graph _graph;
+    private final Graph graph;
 
     public Location2IDFullIndex( Graph g )
     {
-        this._graph = g;
+        this.graph = g;
     }
 
     @Override
@@ -71,11 +71,11 @@ public class Location2IDFullIndex implements Location2IDIndex
     }
 
     @Override
-    public LocationIDResult findClosest( Graph localGraph, double queryLat, double queryLon, EdgeFilter edgeFilter )
+    public LocationIDResult findClosest( double queryLat, double queryLon, EdgeFilter edgeFilter )
     {
         LocationIDResult res = new LocationIDResult(queryLat, queryLon);        
         Circle circle = null;
-        AllEdgesIterator iter = localGraph.getAllEdges();
+        AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next())
         {
             if (!edgeFilter.accept(iter))
@@ -90,8 +90,8 @@ public class Location2IDFullIndex implements Location2IDIndex
                 {
                     node = iter.getAdjNode();
                 }
-                double tmpLat = localGraph.getLatitude(node);
-                double tmpLon = localGraph.getLongitude(node);
+                double tmpLat = graph.getLatitude(node);
+                double tmpLon = graph.getLongitude(node);
                 double dist = calc.calcDist(tmpLat, tmpLon, queryLat, queryLon);
                 if (circle == null || dist < calc.calcDist(circle.getLat(), circle.getLon(), queryLat, queryLon))
                 {
@@ -111,7 +111,7 @@ public class Location2IDFullIndex implements Location2IDIndex
     @Override
     public int findID( double lat, double lon )
     {
-        return findClosest(_graph, lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
+        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
     }
 
     @Override

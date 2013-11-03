@@ -48,12 +48,6 @@ public interface RoutingAlgorithm
     Path calcPath( LocationIDResult from, LocationIDResult to );
 
     /**
-     * Specify the graph on which this algorithm should operate. API glitch: this method overwrites
-     * graph specified while constructing the algorithm. Only necessary if graph is a QueryGraph.
-     */
-    RoutingAlgorithm setGraph( Graph graph );
-
-    /**
      * @return name of this algorithm
      */
     String getName();

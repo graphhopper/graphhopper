@@ -26,6 +26,9 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Peter Karich
@@ -51,9 +54,12 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         this.flagEncoder = encoder;        
         setGraph(graph);
     }
-    
-    @Override
-    public RoutingAlgorithm setGraph( Graph graph )
+        
+    /**
+     * Specify the graph on which this algorithm should operate. API glitch: this method overwrites
+     * graph specified while constructing the algorithm. Only necessary if graph is a QueryGraph.
+     */
+    protected RoutingAlgorithm setGraph( Graph graph )
     {
         this.graph = graph;
         outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
@@ -64,6 +70,12 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     @Override
     public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
     {
+        QueryGraph queryGraph = new QueryGraph(graph);
+        List<LocationIDResult> results = new ArrayList(2);
+        results.add(fromRes);
+        results.add(toRes);                
+        queryGraph.lookup(results);
+        setGraph(queryGraph);
         return calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
     }
     

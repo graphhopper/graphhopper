@@ -47,7 +47,12 @@ public class LocationIDResult
     private EdgeIteratorState closestEdge;
     private final GHPoint queryPoint;
     private GHPoint snappedPoint;
-    private boolean onTowerNode;
+    private Position snappedPosition;
+
+    public static enum Position
+    {
+        EDGE, TOWER, PILLAR
+    }
 
     public LocationIDResult( double queryLat, double queryLon )
     {
@@ -96,17 +101,17 @@ public class LocationIDResult
         return wayIndex;
     }
 
-    /**
-     * @param onTN true if snapped point is directly on a tower
-     */
-    public void setOnTowerNode( boolean onTN )
+    public void setSnappedPosition( Position pos )
     {
-        this.onTowerNode = onTN;
+        this.snappedPosition = pos;
     }
 
-    public boolean isOnTowerNode()
+    /**
+     * @return 0 if on edge. 1 if on pillar node and 2 if on tower node.
+     */
+    public Position getSnappedPosition()
     {
-        return onTowerNode;
+        return snappedPosition;
     }
 
     /**
@@ -148,9 +153,9 @@ public class LocationIDResult
     }
 
     /**
-     * @return true if snapped point is on an edge and not on a point.
+     * Calculates the closet point on the edge from the query point.
      */
-    public boolean calcSnappedPoint( DistanceCalc distCalc )
+    public void calcSnappedPoint( DistanceCalc distCalc )
     {
         if (snappedPoint != null)
             throw new IllegalStateException("Calculate snapped point only once");
@@ -158,29 +163,26 @@ public class LocationIDResult
         PointList fullPL = getClosestEdge().fetchWayGeometry(3);
         double tmpLat = fullPL.getLatitude(wayIndex);
         double tmpLon = fullPL.getLongitude(wayIndex);
-        if (onTowerNode)
+        if (snappedPosition != Position.EDGE)
         {
             snappedPoint = new GHPoint(tmpLat, tmpLon);
-            return false;
+            return;
         }
 
         double queryLat = getQueryPoint().lat, queryLon = getQueryPoint().lon;
         double adjLat = fullPL.getLatitude(wayIndex + 1), adjLon = fullPL.getLongitude(wayIndex + 1);
         if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon))
-        {
             snappedPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
-            return true;
-        } else
-        {
+        else
             // outside of edge boundaries
             snappedPoint = new GHPoint(tmpLat, tmpLon);
-            return false;
-        }
     }
 
     @Override
     public String toString()
     {
-        return queryPoint + ", " + closestNode + ", " + snappedPoint + ", " + wayIndex;
+        if(closestEdge != null)
+            return closestEdge.getBaseNode() + "-" + closestEdge.getAdjNode() + "  " + snappedPoint;
+        return closestNode + ", " + queryPoint + ", " + wayIndex;
     }
 }

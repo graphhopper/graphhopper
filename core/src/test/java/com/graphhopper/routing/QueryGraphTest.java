@@ -17,14 +17,15 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIDResult;
+import static com.graphhopper.storage.index.LocationIDResult.Position.*;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.CoordTrig;
+import com.graphhopper.util.shapes.GHPoint;
+import java.util.Arrays;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -34,8 +35,6 @@ import static org.junit.Assert.*;
  */
 public class QueryGraphTest
 {
-    LocationIDResult match;
-
     void initGraph( Graph g )
     {
         //
@@ -63,64 +62,63 @@ public class QueryGraphTest
         EdgeIterator iter = expl.setBaseNode(2);
         iter.next();
 
-        QueryGraph queryGraph = new QueryGraph(null, g, EdgeFilter.ALL_EDGES);
-        match = createLocationResult(1, -1, iter, 0, true);
-        queryGraph.lookup(match);
-        assertEquals(2, match.getClosestNode());
-        assertEquals(new CoordTrig(0, 0), match.getSnappedPoint());
+        QueryGraph queryGraph = new QueryGraph(g);
+        LocationIDResult res = createLocationResult(1, -1, iter, 0, TOWER);
+        queryGraph.lookup(Arrays.asList(res));
+        assertEquals(new GHPoint(0, 0), res.getSnappedPoint());
 
         // b)
-        match = createLocationResult(1, -1, iter, 1, true);
-        queryGraph.lookup(match);
-        assertEquals(0, match.getClosestNode());
-        assertEquals(new CoordTrig(1, 0), match.getSnappedPoint());
+        res = createLocationResult(1, -1, iter, 1, TOWER);
+        queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(res));
+        assertEquals(new GHPoint(1, 0), res.getSnappedPoint());
         // c)
         iter = expl.setBaseNode(1);
         iter.next();
-        match = createLocationResult(1.2, 2.7, iter, 0, true);
-        queryGraph.lookup(match);
-        assertEquals(1, match.getClosestNode());
-        assertEquals(new CoordTrig(1, 2.5), match.getSnappedPoint());
+        res = createLocationResult(1.2, 2.7, iter, 0, TOWER);
+        queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(res));
+        assertEquals(new GHPoint(1, 2.5), res.getSnappedPoint());
 
         // node number stays
         assertEquals(3, queryGraph.getNodes());
 
         // snap directly to pillar node
-        queryGraph = new QueryGraph(null, g, EdgeFilter.ALL_EDGES);
+        queryGraph = new QueryGraph(g);
         iter = expl.setBaseNode(1);
         iter.next();
-        match = createLocationResult(2, 1.5, iter, 1, false);
-        queryGraph.lookup(match);
-        assertEquals(new CoordTrig(1.5, 1.5), match.getSnappedPoint());
-        assertEquals(3, match.getClosestNode());
+        res = createLocationResult(2, 1.5, iter, 1, PILLAR);
+        queryGraph.lookup(Arrays.asList(res));
+        assertEquals(new GHPoint(1.5, 1.5), res.getSnappedPoint());
+        assertEquals(3, res.getClosestNode());
         assertEquals(3, getPoints(queryGraph, 0, 3).getSize());
         assertEquals(2, getPoints(queryGraph, 3, 1).getSize());
 
-        queryGraph = new QueryGraph(null, g, EdgeFilter.ALL_EDGES);
-        match = createLocationResult(2, 1.7, iter, 1, false);
-        queryGraph.lookup(match);
-        assertEquals(new CoordTrig(1.5, 1.5), match.getSnappedPoint());
-        assertEquals(3, match.getClosestNode());
+        queryGraph = new QueryGraph(g);
+        res = createLocationResult(2, 1.7, iter, 1, PILLAR);
+        queryGraph.lookup(Arrays.asList(res));
+        assertEquals(new GHPoint(1.5, 1.5), res.getSnappedPoint());
+        assertEquals(3, res.getClosestNode());
         assertEquals(3, getPoints(queryGraph, 0, 3).getSize());
         assertEquals(2, getPoints(queryGraph, 3, 1).getSize());
 
         // snap to edge which has pillar nodes        
-        queryGraph = new QueryGraph(null, g, EdgeFilter.ALL_EDGES);
-        match = createLocationResult(1.5, 2, iter, 0, false);
-        queryGraph.lookup(match);
-        assertEquals(new CoordTrig(1.3, 1.9), match.getSnappedPoint());
-        assertEquals(3, match.getClosestNode());
+        queryGraph = new QueryGraph(g);
+        res = createLocationResult(1.5, 2, iter, 0, EDGE);
+        queryGraph.lookup(Arrays.asList(res));
+        assertEquals(new GHPoint(1.3, 1.9), res.getSnappedPoint());
+        assertEquals(3, res.getClosestNode());
         assertEquals(4, getPoints(queryGraph, 0, 3).getSize());
         assertEquals(2, getPoints(queryGraph, 3, 1).getSize());
 
         // snap to edge which has no pillar nodes
-        queryGraph = new QueryGraph(null, g, EdgeFilter.ALL_EDGES);
+        queryGraph = new QueryGraph(g);
         iter = expl.setBaseNode(2);
         iter.next();
-        match = createLocationResult(0.5, 0.1, iter, 0, false);
-        queryGraph.lookup(match);
-        assertEquals(new CoordTrig(0.5, 0), match.getSnappedPoint());
-        assertEquals(3, match.getClosestNode());
+        res = createLocationResult(0.5, 0.1, iter, 0, EDGE);
+        queryGraph.lookup(Arrays.asList(res));
+        assertEquals(new GHPoint(0.5, 0), res.getSnappedPoint());
+        assertEquals(3, res.getClosestNode());
         assertEquals(2, getPoints(queryGraph, 0, 3).getSize());
         assertEquals(2, getPoints(queryGraph, 3, 2).getSize());
     }
@@ -132,50 +130,80 @@ public class QueryGraphTest
         Graph g = new GraphStorage(new RAMDirectory(), encodingManager).create(100);
         initGraph(g);
 
-        // snap to edge which has pillar nodes
-        QueryGraph queryGraph = new QueryGraph(null, g, EdgeFilter.ALL_EDGES);
-        EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(1);
+        // snap to edge which has pillar nodes        
+        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
         iter.next();
-        match = createLocationResult(2, 1.7, iter, 1, false);
-        queryGraph.lookup(match);
-        assertEquals(new CoordTrig(1.5, 1.5), match.getSnappedPoint());
-        assertEquals(3, match.getClosestNode());
+        LocationIDResult res1 = createLocationResult(2, 1.7, iter, 1, PILLAR);
+        QueryGraph queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(res1));
+        assertEquals(new GHPoint(1.5, 1.5), res1.getSnappedPoint());
+        assertEquals(3, res1.getClosestNode());
         assertEquals(3, getPoints(queryGraph, 0, 3).getSize());
-        assertEquals(2, getPoints(queryGraph, 3, 1).getSize());
+        PointList pl = getPoints(queryGraph, 3, 1);
+        assertEquals(2, pl.getSize());
+        assertEquals(new GHPoint(1, 2.5), pl.toGHPoint(0));
+        assertEquals(new GHPoint(1.5, 1.5), pl.toGHPoint(1));
+
+        EdgeIteratorState edge = GHUtility.getEdge(queryGraph, 3, 1);
+        assertNotNull(queryGraph.getEdgeProps(edge.getEdge(), 3));
+        assertNotNull(queryGraph.getEdgeProps(edge.getEdge(), 1));
+
+        edge = GHUtility.getEdge(queryGraph, 3, 0);
+        assertNotNull(queryGraph.getEdgeProps(edge.getEdge(), 3));
+        assertNotNull(queryGraph.getEdgeProps(edge.getEdge(), 0));
 
         // snap again => new virtual node on same edge!
-        iter = queryGraph.createEdgeExplorer().setBaseNode(1);
+        iter = g.createEdgeExplorer().setBaseNode(1);
         iter.next();
-        match = createLocationResult(1.5, 2, iter, 0, false);
-        queryGraph.lookup(match);
-        assertEquals(new CoordTrig(1.3, 1.9), match.getSnappedPoint());
-        assertEquals(4, match.getClosestNode());
+        res1 = createLocationResult(2, 1.7, iter, 1, PILLAR);
+        LocationIDResult res2 = createLocationResult(1.5, 2, iter, 0, EDGE);
+        queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(res1, res2));
+        assertEquals(new GHPoint(1.3, 1.9), res2.getSnappedPoint());
+        assertEquals(4, res2.getClosestNode());
         assertEquals(2, getPoints(queryGraph, 3, 4).getSize());
         assertEquals(2, getPoints(queryGraph, 4, 1).getSize());
         assertNull(GHUtility.getEdge(queryGraph, 3, 1));
+
+        edge = GHUtility.getEdge(queryGraph, 0, 3);
+        assertEquals(3, edge.fetchWayGeometry(3).getSize());
     }
 
+      @Test
+    public void testEdgesShareOneNode()
+    {
+        EncodingManager encodingManager = new EncodingManager("CAR");
+        Graph g = new GraphStorage(new RAMDirectory(), encodingManager).create(100);
+        initGraph(g);
+
+        EdgeIterator iter = GHUtility.getEdge(g, 0, 2);
+        LocationIDResult res1 = createLocationResult(0.5, 0, iter, 0, EDGE);
+        iter = GHUtility.getEdge(g, 1, 0);
+        LocationIDResult res2 = createLocationResult(1.5, 2, iter, 0, EDGE);
+        QueryGraph queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(res1, res2));
+        assertEquals(new GHPoint(0.5, 0), res1.getSnappedPoint());
+        assertEquals(new GHPoint(1.3, 1.9), res2.getSnappedPoint());        
+        assertNotNull(GHUtility.getEdge(queryGraph, 0, 4));
+        assertNotNull(GHUtility.getEdge(queryGraph, 0, 3));        
+    }
+    
     PointList getPoints( Graph g, int base, int adj )
     {
-        return GHUtility.getEdge(g, base, adj).fetchWayGeometry(3);
+        EdgeIteratorState edge = GHUtility.getEdge(g, base, adj);
+        if (edge == null)
+            throw new IllegalStateException("edge " + base + "-" + adj + " not found");
+        return edge.fetchWayGeometry(3);
     }
 
     public LocationIDResult createLocationResult( double lat, double lon,
-            EdgeIteratorState iter, int index, boolean onTowerNode )
+            EdgeIteratorState iter, int index, LocationIDResult.Position pos )
     {
         LocationIDResult tmp = new LocationIDResult(lat, lon);
         tmp.setClosestEdge(iter);
         tmp.setWayIndex(index);
-        tmp.setOnTowerNode(onTowerNode);
-
-        if (tmp.isOnTowerNode())
-        {
-            if (tmp.getWayIndex() == 0)
-                tmp.setClosestNode(tmp.getClosestEdge().getBaseNode());
-            else
-                tmp.setClosestNode(tmp.getClosestEdge().getAdjNode());
-        }
-
+        tmp.setSnappedPosition(pos);
+        tmp.calcSnappedPoint(new DistanceCalc());
         return tmp;
     }
 }

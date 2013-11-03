@@ -31,11 +31,11 @@ import com.graphhopper.util.DistanceCalc;
 public class Location2IDFullWithEdgesIndex implements Location2IDIndex
 {
     private DistanceCalc calc = new DistanceCalc();
-    private Graph _graph;
+    private Graph graph;
 
     public Location2IDFullWithEdgesIndex( Graph g )
     {
-        this._graph = g;
+        this.graph = g;
     }
 
     @Override
@@ -72,15 +72,15 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
     @Override
     public int findID( double lat, double lon )
     {
-        return findClosest(_graph, lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
+        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
     }
 
     @Override
-    public LocationIDResult findClosest( Graph localGraph, double queryLat, double queryLon, EdgeFilter filter )
+    public LocationIDResult findClosest( double queryLat, double queryLon, EdgeFilter filter )
     {
         LocationIDResult res = new LocationIDResult(queryLat, queryLon);        
         double foundDist = Double.MAX_VALUE;
-        AllEdgesIterator iter = localGraph.getAllEdges();
+        AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next())
         {
             if (!filter.accept(iter))
@@ -97,8 +97,8 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
                     node = iter.getAdjNode();
                 }
 
-                double fromLat = localGraph.getLatitude(node);
-                double fromLon = localGraph.getLongitude(node);
+                double fromLat = graph.getLatitude(node);
+                double fromLon = graph.getLongitude(node);
                 double fromDist = calc.calcDist(fromLat, fromLon, queryLat, queryLon);
                 if (fromDist < 0)
                 {
@@ -119,8 +119,8 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
                     continue;
                 }
                 int toNode = iter.getAdjNode();
-                double toLat = localGraph.getLatitude(toNode);
-                double toLon = localGraph.getLongitude(toNode);
+                double toLat = graph.getLatitude(toNode);
+                double toLon = graph.getLongitude(toNode);
 
                 if (calc.validEdgeDistance(queryLat, queryLon,
                         fromLat, fromLon, toLat, toLon))
