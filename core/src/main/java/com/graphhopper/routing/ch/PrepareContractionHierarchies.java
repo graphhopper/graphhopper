@@ -73,7 +73,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private IgnoreNodeFilter levelEdgeFilter;
     private DijkstraOneToMany algo;
-    private boolean removesHigher2LowerEdges = false;
+    private boolean removesHigher2LowerEdges = true;
     private long counter;
     private int newShortcuts;
     private long dijkstraCount;
