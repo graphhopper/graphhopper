@@ -121,29 +121,38 @@ public class LevelGraphStorageTest extends GraphStorageTest
 
     @Test
     public void testDisconnectEdge()
-    {
-        LevelGraphStorage g = (LevelGraphStorage) createGraph();
-        g.edge(1, 2, 10, true);
-        g.edge(1, 0, 20, false);
-        g.edge(3, 1, 30, false);
+    {        
+        LevelGraphStorage g = (LevelGraphStorage) createGraph();        
+        // only remove edges
+        g.edge(1, 2, 10, true).setSkippedEdges(10, 11);
+        g.edge(1, 0, 20, false).setSkippedEdges(12, 13);
+        g.edge(3, 1, 30, false).setSkippedEdges(14, 15);
+        g.edge(4, 1, 30, true);
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
         iter.next();
         assertEquals(2, iter.getAdjNode());        
         assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(2)));
-        g.disconnect(iter, EdgeIterator.NO_EDGE, false);
+        g.disconnect(g.createEdgeExplorer(), iter);        
         assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(2)));
 
         // even directed ways change!
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
         assertEquals(1, GHUtility.count(carInExplorer.setBaseNode(0)));
-        g.disconnect(iter, EdgeIterator.NO_EDGE, false);
+        g.disconnect(g.createEdgeExplorer(), iter);
         assertEquals(0, GHUtility.count(carInExplorer.setBaseNode(0)));
 
         iter.next();
         assertEquals(3, iter.getAdjNode());
         assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(3)));
-        g.disconnect(iter, EdgeIterator.NO_EDGE, false);
+        g.disconnect(g.createEdgeExplorer(), iter);
         assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(3)));
+        
+        // do not remove normal edges
+        iter.next();
+        assertEquals(4, iter.getAdjNode());
+        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(4)));
+        g.disconnect(g.createEdgeExplorer(), iter);
+        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(4)));
     }
 }

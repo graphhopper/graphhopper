@@ -55,29 +55,30 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private final Logger logger = LoggerFactory.getLogger(getClass());
     // preparation dijkstra uses always shortest path as edges are rewritten - see doWork
     private final WeightCalculation shortestCalc = new ShortestCalc();
-    private WeightCalculation prepareWeightCalc;
-    private FlagEncoder prepareEncoder;
+    private final WeightCalculation prepareWeightCalc;
+    private final FlagEncoder prepareEncoder;
     private EdgeSkipExplorer vehicleInExplorer;
     private EdgeSkipExplorer vehicleOutExplorer;
     private EdgeSkipExplorer vehicleAllExplorer;
+    private EdgeSkipExplorer vehicleAllTmpExplorer;
     private EdgeSkipExplorer calcPrioAllExplorer;
     private LevelGraph g;
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
     private PriorityNode refs[];
-    private DataAccess originalEdges;
+    private final DataAccess originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
     private int scOneDir;
     private int scBothDir;
-    private Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
+    private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private IgnoreNodeFilter levelEdgeFilter;
     private DijkstraOneToMany algo;
-    private boolean removesHigher2LowerEdges = true;
+    private boolean removesHigher2LowerEdges = false;
     private long counter;
     private int newShortcuts;
     private long dijkstraCount;
     private double meanDegree;
-    private Random rand = new Random(123);
+    private final Random rand = new Random(123);
     private StopWatch dijkstraSW = new StopWatch();
     private int periodicUpdatesCount = 3;
     private int lastNodesLazyUpdatePercentage = 10;
@@ -354,7 +355,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 }
 
                 if (removesHigher2LowerEdges)
-                    ((LevelGraphStorage) g).disconnect(vehicleAllExplorer, EdgeIterator.NO_EDGE, false);
+                    ((LevelGraphStorage) g).disconnect(vehicleAllTmpExplorer, iter);
             }
         }
 
@@ -647,6 +648,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         vehicleInExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, false));
         vehicleOutExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, false, true));
         vehicleAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
+        vehicleAllTmpExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
         calcPrioAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
         levelEdgeFilter = new IgnoreNodeFilter(g);
         sortedNodes = new GHTreeMapComposed();

@@ -135,12 +135,12 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest
         lg.setLevel(0, 11);
         lg.setLevel(1, 10);
         // disconnect higher 0 from lower 1
-        lg.disconnect(iter1, EdgeIterator.NO_EDGE, false);
+        lg.disconnect(lg.createEdgeExplorer(), iter1);
 
         lg.setLevel(2, 12);
         lg.setLevel(3, 13);
         // disconnect higher 3 from lower 2
-        lg.disconnect(iter1, EdgeIterator.NO_EDGE, false);
+        lg.disconnect(lg.createEdgeExplorer(), iter1);
 
         Location2NodesNtreeLG index = new Location2NodesNtreeLG(lg, new RAMDirectory());
         index.setResolution(100000);

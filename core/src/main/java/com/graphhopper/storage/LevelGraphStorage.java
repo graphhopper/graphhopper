@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeSkipExplorer;
+import com.graphhopper.util.EdgeSkipIterator;
 
 /**
  * A Graph necessary for shortcut algorithms like Contraction Hierarchies. This class enables the
@@ -149,37 +150,27 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
     }
 
     /**
-     * Removes the edge in one direction. TODO hide this lower level API somehow.
+     * Disconnects the shortcuts (higher->lower node) via the specified edgeState pointing from
+     * lower to higher node.
      */
-    public int disconnect( EdgeIteratorState iter, long prevEdgePointer, boolean sameDirection )
+    public void disconnect( EdgeSkipExplorer explorer, EdgeIteratorState edgeState )
     {
-        // open up package protected API for now ...
-        if (sameDirection)
+        // prevEdgePointer belongs to baseNode ... but now we need it for adjNode()!                       
+        EdgeSkipIterator tmpIter = (EdgeSkipIterator) explorer.setBaseNode(edgeState.getAdjNode());
+        int tmpPrevEdge = EdgeIterator.NO_EDGE;
+        boolean found = false;
+        while (tmpIter.next())
         {
-            internalEdgeDisconnect(iter.getEdge(), prevEdgePointer, iter.getBaseNode(), iter.getAdjNode());
-        } else
-        {
-            // prevEdgePointer belongs to baseNode ... but now we need it for adjNode()!           
-            EdgeSkipExplorer tmpIter = createEdgeExplorer();
-            tmpIter.setBaseNode(iter.getAdjNode());
-            int tmpPrevEdge = EdgeIterator.NO_EDGE;
-            boolean found = false;
-            while (tmpIter.next())
+            if (tmpIter.isShortcut() && tmpIter.getEdge() == edgeState.getEdge())
             {
-                if (tmpIter.getEdge() == iter.getEdge())
-                {
-                    found = true;
-                    break;
-                }
+                found = true;
+                break;
+            }
 
-                tmpPrevEdge = tmpIter.getEdge();
-            }
-            if (found)
-            {
-                internalEdgeDisconnect(iter.getEdge(), (long) tmpPrevEdge * edgeEntryBytes, iter.getAdjNode(), iter.getBaseNode());
-            }
+            tmpPrevEdge = tmpIter.getEdge();
         }
-        return iter.getEdge();
+        if (found)
+            internalEdgeDisconnect(edgeState.getEdge(), (long) tmpPrevEdge * edgeEntryBytes, edgeState.getAdjNode(), edgeState.getBaseNode());
     }
 
     @Override
