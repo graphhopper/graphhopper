@@ -126,7 +126,7 @@ public class GraphHopperServlet extends GHServlet
                 FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
                 rsp = hopper.route(new GHRequest(start, end).
                         setVehicle(algoVehicle.toString()).
-                        setType(vehicleStr).
+                        setType(algoTypeStr).
                         setAlgorithm(algoStr).
                         putHint("calcPoints", calcPoints).
                         putHint("instructions", enableInstructions).
