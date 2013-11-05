@@ -119,24 +119,24 @@ public class GraphStorageTest extends AbstractGraphTester
         assertEquals(10, g.getLongitude(0), 1e-2);
         EdgeExplorer explorer = g.createEdgeExplorer(carOutFilter);
         assertEquals(2, GHUtility.count(explorer.setBaseNode(0)));
-        assertEquals(Arrays.asList(1, 2), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(2, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
 
         EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList(1.5, 1, 2, 3), iter.getWayGeometry());
+        assertEquals(Helper.createPointList(3.5, 4.5, 5, 6), iter.getWayGeometry());
 
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList(3.5, 4.5, 5, 6), iter.getWayGeometry());
+        assertEquals(Helper.createPointList(1.5, 1, 2, 3), iter.getWayGeometry());
 
         assertEquals(11, g.getLatitude(1), 1e-2);
         assertEquals(20, g.getLongitude(1), 1e-2);
         assertEquals(2, GHUtility.count(explorer.setBaseNode(1)));
-        assertEquals(Arrays.asList(0, 2), GHUtility.getNeighbors(explorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
 
         assertEquals(12, g.getLatitude(2), 1e-2);
         assertEquals(12, g.getLongitude(2), 1e-2);
         assertEquals(1, GHUtility.count(explorer.setBaseNode(2)));
-        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
     }
 
     @Test
@@ -144,18 +144,25 @@ public class GraphStorageTest extends AbstractGraphTester
     {
         gs = (GraphStorage) createGraph();
         EdgeIterator iter0 = gs.edge(0, 1, 10, true);
-        EdgeIterator iter1 = gs.edge(1, 2, 10, true);
-        gs.edge(0, 3, 10, true);
-        
+        EdgeIterator iter2 = gs.edge(1, 2, 10, true);
+        EdgeIterator iter3 = gs.edge(0, 3, 10, true);
+
         EdgeExplorer explorer = gs.createEdgeExplorer();
 
-        assertEquals(Arrays.asList(1, 3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
-        assertEquals(Arrays.asList(0, 2), GHUtility.getNeighbors(explorer.setBaseNode(1)));
-        // remove edge "1-2" but only from 1
-        gs.internalEdgeDisconnect(iter1.getEdge(), (long) iter0.getEdge() * gs.edgeEntryBytes, iter1.getBaseNode(), iter1.getAdjNode());
-        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
+        // remove edge "1-2" but only from 1 not from 2
+        gs.internalEdgeDisconnect(iter2.getEdge(), -1, iter2.getBaseNode(), iter2.getAdjNode());
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(1), GHUtility.getNeighbors(explorer.setBaseNode(2)));
         // let 0 unchanged -> no side effects
-        assertEquals(Arrays.asList(1, 3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+
+        // remove edge "0-1" but only from 0
+        gs.internalEdgeDisconnect(iter0.getEdge(), (long) iter3.getEdge() * gs.edgeEntryBytes, iter0.getBaseNode(), iter0.getAdjNode());
+        assertEquals(GHUtility.asSet(3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(3)));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
     }
 
     @Test
@@ -187,7 +194,7 @@ public class GraphStorageTest extends AbstractGraphTester
         gs.edge(0, 1, 2, true);
         gs.edge(0, 2, 2, true);
         gs.edge(1, 2, 2, true);
-        
+
         EdgeIterator iter = gs.createEdgeExplorer().setBaseNode(0);
         try
         {
@@ -197,13 +204,13 @@ public class GraphStorageTest extends AbstractGraphTester
         } catch (Exception ex)
         {
         }
-        
+
         iter.next();
         EdgeIteratorState iter2 = iter.detach();
-        assertEquals(1, iter.getAdjNode());
-        assertEquals(1, iter2.getAdjNode());        
-        iter.next();
         assertEquals(2, iter.getAdjNode());
-        assertEquals(1, iter2.getAdjNode());
+        assertEquals(2, iter2.getAdjNode());
+        iter.next();
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(2, iter2.getAdjNode());
     }
 }

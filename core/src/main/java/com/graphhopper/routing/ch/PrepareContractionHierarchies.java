@@ -452,10 +452,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 double existingDirectWeight, EdgeIterator outgoingEdges,
                 int skippedEdge1, int incomingEdgeOrigCount )
         {
-
             // FOUND shortcut 
             // but be sure that it is the only shortcut in the collection 
-            // and also in the graph for u->w. If existing AND identical length => update flags.
+            // and also in the graph for u->w. If existing AND identical weight => update flags.
             // Hint: shortcuts are always one-way due to distinct level of every node but we don't
             // know yet the levels so we need to determine the correct direction or if both directions
             // minor improvement: if (shortcuts.containsKey(sc) 
@@ -580,10 +579,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
                 // compare end node as the limit could force dijkstra to finish earlier
                 if (endNode == w_toNode && algo.getWeight(endNode) <= existingDirectWeight)
-                // FOUND witness path, so do not add shortcut
-                {
+                    // FOUND witness path, so do not add shortcut                
                     continue;
-                }
 
                 sch.foundShortcut(u_fromNode, w_toNode, existingDirectWeight,
                         outgoingEdges, skippedEdge1, incomingEdgeOrigCount);

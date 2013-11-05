@@ -300,14 +300,11 @@ public class Path
     public InstructionList calcInstructions()
     {
         if (cachedWays != null)
-        {
             return cachedWays;
-        }
+
         cachedWays = new InstructionList(edgeIds.size() / 4);
         if (edgeIds.isEmpty())
-        {
             return cachedWays;
-        }
 
         final int tmpNode = getFromNode();
         forEveryEdge(new EdgeVisitor()
@@ -340,7 +337,7 @@ public class Path
 
             @Override
             public void next( EdgeIteratorState edgeBase, int index )
-            {                
+            {
                 // Hmmh, a bit ugly: 'iter' links to the previous node of the path!
                 // Ie. baseNode is the current node and adjNode is the previous.
                 int baseNode = edgeBase.getBaseNode();
@@ -373,23 +370,18 @@ public class Path
                     if (prevOrientation >= 0)
                     {
                         if (orientation < -Math.PI + prevOrientation)
-                        {
                             tmpOrientation = orientation + 2 * Math.PI;
-                        } else
-                        {
+                        else
                             tmpOrientation = orientation;
-                        }
+
                     } else
                     {
                         if (orientation > +Math.PI + prevOrientation)
-                        {
                             tmpOrientation = orientation - 2 * Math.PI;
-                        } else
-                        {
+                        else
                             tmpOrientation = orientation;
-                        }
                     }
-                                                           
+
                     String tmpName = edgeBase.getName();
                     if (!name.equals(tmpName))
                     {
@@ -406,31 +398,24 @@ public class Path
                         {
                             // 0.8 ~= 40°
                             if (tmpOrientation > prevOrientation)
-                            {
                                 cachedWays.add(InstructionList.TURN_SLIGHT_LEFT, name, prevDist);
-                            } else
-                            {
+                            else
                                 cachedWays.add(InstructionList.TURN_SLIGHT_RIGHT, name, prevDist);
-                            }
+
                         } else if (delta < 1.8)
                         {
                             // 1.8 ~= 103°
                             if (tmpOrientation > prevOrientation)
-                            {
                                 cachedWays.add(InstructionList.TURN_LEFT, name, prevDist);
-                            } else
-                            {
+                            else
                                 cachedWays.add(InstructionList.TURN_RIGHT, name, prevDist);
-                            }
+
                         } else
                         {
                             if (tmpOrientation > prevOrientation)
-                            {
                                 cachedWays.add(InstructionList.TURN_SHARP_LEFT, name, prevDist);
-                            } else
-                            {
+                            else
                                 cachedWays.add(InstructionList.TURN_SHARP_RIGHT, name, prevDist);
-                            }
                         }
                     } else
                         prevDist += calcDistance(edgeBase);
@@ -439,15 +424,12 @@ public class Path
                 prevLat = baseLat;
                 prevLon = baseLon;
                 if (wayGeo.isEmpty())
-                {
                     prevOrientation = orientation;
-                } else
-                {
+                else
                     prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(0), baseLon - wayGeo.getLongitude(0));
-                }
                 
                 boolean lastEdgeIter = index == edgeIds.size() - 1;
-                if(lastEdgeIter)
+                if (lastEdgeIter)
                     cachedWays.updateLastDistance(prevDist);
             }
         });

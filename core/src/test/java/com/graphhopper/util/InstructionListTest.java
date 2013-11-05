@@ -62,13 +62,13 @@ public class InstructionListTest
         g.setNode(7, 1.0, 1.1);
         g.setNode(8, 1.0, 1.2);
         g.edge(0, 1, 100, true).setName("0-1");
-        g.edge(1, 2, 110, true);
+        g.edge(1, 2, 110, true).setName("1-2");
 
         g.edge(0, 3, 110, true);
         g.edge(1, 4, 100, true).setName("1-4");
         g.edge(2, 5, 110, true).setName("5-2");
 
-        g.edge(3, 6, 100, true);
+        g.edge(3, 6, 110, true).setName("3-6");
         g.edge(4, 7, 100, true).setName("4-7");
         g.edge(5, 8, 100, true).setName("5-8");
 
@@ -117,6 +117,7 @@ public class InstructionListTest
         assertEquals(Arrays.asList("328 ft", "328 ft", "328 ft", "328 ft", "328 ft", "328 ft"), distStrings);
 
         p = new Dijkstra(g, carManager.getEncoder("CAR"), new ShortestCalc()).calcPath(6, 2);
+        assertEquals(420, p.getDistance(), 1e-2);
         wayList = p.calcInstructions();
         assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2"),
                 wayList.createDescription(trMap.getWithFallBack(Locale.CANADA)));

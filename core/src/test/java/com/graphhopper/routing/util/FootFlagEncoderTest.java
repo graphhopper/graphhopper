@@ -80,9 +80,9 @@ public class FootFlagEncoderTest
         g.edge(0, 2, 10, footEncoder.flags(5, true));
         g.edge(1, 3, 10, footEncoder.flags(10, true));
         EdgeExplorer out = g.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
-        assertEquals(Arrays.asList(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
-        assertEquals(Arrays.asList(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
-        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(out.setBaseNode(2)));
+        assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(out.setBaseNode(2)));
     }
 
     @Test

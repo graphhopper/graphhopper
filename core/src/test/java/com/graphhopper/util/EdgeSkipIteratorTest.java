@@ -50,8 +50,7 @@ public class EdgeSkipIteratorTest
 
         assertEquals(2, GHUtility.count(g.getAllEdges()));
         assertEquals(1, GHUtility.count(g.createEdgeExplorer(carOutFilter).setBaseNode(1)));
-        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(0);
-        assertTrue(iter.next());
+        EdgeIterator iter = GHUtility.getEdge(g, 0, 1);
         assertEquals(1, iter.getAdjNode());
         assertEquals(carFlagsEncoder.flags(10, true), iter.getFlags());
 
@@ -63,8 +62,7 @@ public class EdgeSkipIteratorTest
         iter.setDistance(10);
         assertEquals(10, iter.getDistance(), 1e-4);
         assertEquals(0, GHUtility.count(g.createEdgeExplorer(carOutFilter).setBaseNode(1)));
-        iter = g.createEdgeExplorer().setBaseNode(0);
-        assertTrue(iter.next());
+        iter = GHUtility.getEdge(g, 0, 1);
         assertEquals(carFlagsEncoder.flags(20, false), iter.getFlags());
         assertEquals(10, iter.getDistance(), 1e-4);
         assertEquals(1, GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(1)).size());

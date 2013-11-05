@@ -65,8 +65,8 @@ public class GHUtilityTest
         assertEquals(g.getNodes(), newG.getNodes());
         assertEquals(0, newG.getLatitude(0), 1e-4); // 0
         assertEquals(2.5, newG.getLatitude(1), 1e-4); // 1
-        assertEquals(4.5, newG.getLatitude(2), 1e-4); // 2        
-        assertEquals(4.6, newG.getLatitude(3), 1e-4); // 8
+        assertEquals(4.6, newG.getLatitude(2), 1e-4); // 8
+        assertEquals(4.5, newG.getLatitude(3), 1e-4); // 2                
         assertEquals(3.0, newG.getLatitude(4), 1e-4); // 3
         assertEquals(5.0, newG.getLatitude(5), 1e-4); // 7
         assertEquals(4.2, newG.getLatitude(6), 1e-4); // 5
@@ -80,9 +80,9 @@ public class GHUtilityTest
         // TODO does not handle subnetworks
         // assertEquals(g.nodes(), newG.nodes());
         assertEquals(0, newG.getLatitude(0), 1e-4); // 0
-        assertEquals(2.5, newG.getLatitude(1), 1e-4); // 1        
-        assertEquals(4.5, newG.getLatitude(2), 1e-4); // 2
-        assertEquals(4.6, newG.getLatitude(3), 1e-4); // 8
+        assertEquals(2.5, newG.getLatitude(1), 1e-4); // 1
+        assertEquals(4.6, newG.getLatitude(2), 1e-4); // 8
+        assertEquals(4.5, newG.getLatitude(3), 1e-4); // 2        
     }
 
     @Test
@@ -105,7 +105,7 @@ public class GHUtilityTest
         eb.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
         LevelGraph lg = new GraphBuilder(encodingManager).levelGraphCreate();
         GHUtility.copyTo(g, lg);
-        eb = lg.getEdgeProps(eb.getEdge(), 6);
+        eb = GHUtility.getEdge(lg, 5, 6);
         assertEquals(Helper.createPointList(-1, 3, 12, 10), eb.getWayGeometry());
         assertEquals(0, lg.getLevel(0));
         assertEquals(0, lg.getLevel(1));
@@ -116,17 +116,19 @@ public class GHUtilityTest
         assertEquals(9, lg.getNodes());
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(8);
         iter.next();
-        assertEquals(2.05, iter.getDistance(), 1e-6);
-        assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
-        iter.next();
         assertEquals(0.5, iter.getDistance(), 1e-6);
-        assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
+        assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));        
+        iter.next();
+        assertEquals(2.05, iter.getDistance(), 1e-6);
+        assertEquals("11", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));        
 
         iter = lg.createEdgeExplorer().setBaseNode(7);
         iter.next();
+        assertEquals(.7, iter.getDistance(), 1e-6);
+        
+        iter.next();
         assertEquals(2.1, iter.getDistance(), 1e-6);
         assertEquals("01", BitUtil.BIG.toLastBitString(iter.getFlags(), 2));
-        assertTrue(iter.next());
-        assertEquals(0.7, iter.getDistance(), 1e-6);
+        assertFalse(iter.next());
     }
 }

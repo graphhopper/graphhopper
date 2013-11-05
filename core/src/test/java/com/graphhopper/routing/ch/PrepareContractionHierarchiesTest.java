@@ -39,9 +39,9 @@ import org.junit.Test;
  */
 public class PrepareContractionHierarchiesTest
 {
-    private WeightCalculation type = new ShortestCalc();
-    private EncodingManager encodingManager = new EncodingManager("CAR");
-    private CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
+    private final WeightCalculation type = new ShortestCalc();
+    private final EncodingManager encodingManager = new EncodingManager("CAR");
+    private final CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
 
     LevelGraph createGraph()
     {
@@ -153,7 +153,7 @@ public class PrepareContractionHierarchiesTest
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, type).setGraph(g);
         prepare.doWork();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
-        assertEquals(old + 21, GHUtility.count(g.getAllEdges()));
+        assertEquals(old + 15, GHUtility.count(g.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(0, 10);
         assertEquals(10, p.getDistance(), 1e-6);
@@ -164,6 +164,12 @@ public class PrepareContractionHierarchiesTest
     public void testDirectedGraph3()
     {
         LevelGraph g = createGraph();
+        //5 6 7
+        // \|/
+        //4-3_1<-  0
+        //    \_|/_10
+        //   0__2_11
+        
         g.edge(0, 2, 2, true);
         g.edge(10, 2, 2, true);
         g.edge(11, 2, 2, true);
@@ -192,8 +198,13 @@ public class PrepareContractionHierarchiesTest
             sc2 = tmp;
         }
 
-        assertTrue(sc1.toString(), sc1.from == 2 && sc1.to == 3);
-        assertTrue(sc2.toString(), sc2.from == 2 && sc2.to == 3);
+        // both dirs
+        assertTrue(sc1.toString(), sc1.from == 3 && sc1.to == 2);
+        assertTrue(sc1.toString(), carEncoder.isBoth(sc1.flags));
+        
+        // directed
+        assertTrue(sc2.toString(), sc2.from == 2 && sc2.to == 3);                
+        assertTrue(sc2.toString(), carEncoder.isForward(sc2.flags));
 
         assertEquals(sc1.toString(), 4, sc1.distance, 1e-4);
         assertEquals(sc2.toString(), 12, sc2.distance, 1e-4);
@@ -259,7 +270,7 @@ public class PrepareContractionHierarchiesTest
         int old = g.getAllEdges().getMaxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, type).setGraph(g);
         prepare.doWork();
-        assertEquals(old + 25, g.getAllEdges().getMaxId());
+        assertEquals(old + 26, g.getAllEdges().getMaxId());
         RoutingAlgorithm algo = prepare.createAlgo();
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());

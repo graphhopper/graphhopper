@@ -24,9 +24,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
@@ -81,7 +79,6 @@ public class GHUtility
 //        for (int i = 0; i < nodes; i++) {
 //            new XFirstSearch().start(g, i, false);
 //        }
-
         return problems;
     }
 
@@ -95,9 +92,19 @@ public class GHUtility
         return counter;
     }
 
-    public static List<Integer> getNeighbors( EdgeIterator iter )
+    public static Set<Integer> asSet( int... values )
     {
-        List<Integer> list = new ArrayList<Integer>();
+        Set<Integer> s = new HashSet<Integer>();
+        for (int v : values)
+        {
+            s.add(v);
+        }
+        return s;
+    }
+
+    public static Set<Integer> getNeighbors( EdgeIterator iter )
+    {
+        Set<Integer> list = new HashSet<Integer>();
         while (iter.next())
         {
             list.add(iter.getAdjNode());
@@ -297,9 +304,8 @@ public class GHUtility
             {
                 int adjacentNodeIndex = eIter.getAdjNode();
                 if (bitset.contains(adjacentNodeIndex))
-                {
                     continue;
-                }
+                
                 to.edge(oldNode, adjacentNodeIndex, eIter.getDistance(), eIter.getFlags()).setWayGeometry(eIter.getWayGeometry());
             }
         }
@@ -420,13 +426,12 @@ public class GHUtility
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
     };
-    
-    
+
     /**
      * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if
      * not found.
      */
-    public static EdgeIterator getEdge( GraphStorage graph, int base, int adj )
+    public static EdgeIterator getEdge( Graph graph, int base, int adj )
     {
         EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
         while (iter.next())

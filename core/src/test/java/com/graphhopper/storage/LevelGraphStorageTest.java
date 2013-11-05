@@ -130,10 +130,18 @@ public class LevelGraphStorageTest extends GraphStorageTest
         g.edge(4, 1, 30, true);
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
         iter.next();
-        assertEquals(2, iter.getAdjNode());        
-        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(2)));
-        g.disconnect(g.createEdgeExplorer(), iter);        
-        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(2)));
+        // for now do not remove normal edges
+//        assertEquals(4, iter.getAdjNode());
+//        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(4)));
+//        g.disconnect(g.createEdgeExplorer(), iter);
+//        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(4)));
+        assertEquals(4, iter.getAdjNode());
+        
+        iter.next();
+        assertEquals(3, iter.getAdjNode());
+        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(3)));
+        g.disconnect(g.createEdgeExplorer(), iter);
+        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(3)));
 
         // even directed ways change!
         assertTrue(iter.next());
@@ -142,17 +150,10 @@ public class LevelGraphStorageTest extends GraphStorageTest
         g.disconnect(g.createEdgeExplorer(), iter);
         assertEquals(0, GHUtility.count(carInExplorer.setBaseNode(0)));
 
-        iter.next();
-        assertEquals(3, iter.getAdjNode());
-        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(3)));
-        g.disconnect(g.createEdgeExplorer(), iter);
-        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(3)));
-        
-        // do not remove normal edges
-//        iter.next();
-//        assertEquals(4, iter.getAdjNode());
-//        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(4)));
-//        g.disconnect(g.createEdgeExplorer(), iter);
-//        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(4)));
+        iter.next();        
+        assertEquals(2, iter.getAdjNode());        
+        assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(2)));
+        g.disconnect(g.createEdgeExplorer(), iter);        
+        assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(2)));               
     }
 }

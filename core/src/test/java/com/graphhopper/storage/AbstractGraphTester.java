@@ -137,12 +137,12 @@ public abstract class AbstractGraphTester
         assertEquals(2, i.getAdjNode());
 
         i = carOutExplorer.setBaseNode(1);
-        assertTrue(i.next());
-        assertEquals(2, i.getAdjNode());
+        assertTrue(i.next());        
+        assertEquals(12, i.getAdjNode());
         assertTrue(i.next());
         assertEquals(11, i.getAdjNode());
         assertTrue(i.next());
-        assertEquals(12, i.getAdjNode());
+        assertEquals(2, i.getAdjNode());
         assertFalse(i.next());
     }
 
@@ -174,11 +174,11 @@ public abstract class AbstractGraphTester
 
         i = carOutExplorer.setBaseNode(1);
         assertTrue(i.next());
-        assertEquals(2, i.getAdjNode());
+        assertEquals(12, i.getAdjNode());
         assertTrue(i.next());
         assertEquals(11, i.getAdjNode());
         assertTrue(i.next());
-        assertEquals(12, i.getAdjNode());
+        assertEquals(2, i.getAdjNode());        
         assertFalse(i.next());
     }
 
@@ -311,8 +311,8 @@ public abstract class AbstractGraphTester
         assertEquals(78, graph.getLatitude(3), 1e-6);
         assertEquals(89, graph.getLongitude(3), 1e-6);
 
-        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(carOutExplorer.setBaseNode((1))));
-        assertEquals(Arrays.asList(1, 2, 3, 4, 5), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(carOutExplorer.setBaseNode((1))));
+        assertEquals(GHUtility.asSet(5, 4, 3, 2, 1), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));
         try
         {
             assertEquals(0, count(carOutExplorer.setBaseNode(6)));
@@ -576,18 +576,18 @@ public abstract class AbstractGraphTester
         int id11 = getIdOf(graph, 11); // is now 10
         int id12 = getIdOf(graph, 12); // is now 5
         int id9 = getIdOf(graph, 9);   // is now 9
-        assertEquals(Arrays.asList(id11, id12), GHUtility.getNeighbors(carAllExplorer.setBaseNode(id9)));
-        assertEquals(Arrays.asList(id9), GHUtility.getNeighbors(carAllExplorer.setBaseNode(id11)));
-        assertEquals(Arrays.asList(id9), GHUtility.getNeighbors(carAllExplorer.setBaseNode(id12)));
+        assertEquals(GHUtility.asSet(id12, id11), GHUtility.getNeighbors(carAllExplorer.setBaseNode(id9)));
+        assertEquals(GHUtility.asSet(id9), GHUtility.getNeighbors(carAllExplorer.setBaseNode(id11)));
+        assertEquals(GHUtility.asSet(id9), GHUtility.getNeighbors(carAllExplorer.setBaseNode(id12)));
 
         EdgeIterator iter = carAllExplorer.setBaseNode(id9);
         assertTrue(iter.next());
-        assertEquals(id11, iter.getAdjNode());
+        assertEquals(id12, iter.getAdjNode());
         assertEquals(2, iter.getWayGeometry().getLongitude(0), 1e-7);
         
         assertTrue(iter.next());
-        assertEquals(id12, iter.getAdjNode());
-        assertEquals(2, iter.getWayGeometry().getLongitude(0), 1e-7);
+        assertEquals(id11, iter.getAdjNode());
+        assertEquals(2, iter.getWayGeometry().getLongitude(0), 1e-7);        
     }
 
     @Test
@@ -739,9 +739,7 @@ public abstract class AbstractGraphTester
         {
         }
 
-        EdgeIterator iter = carOutExplorer.setBaseNode(2);
-        iter.next();
-        iter.next();
+        EdgeIterator iter = carOutExplorer.setBaseNode(2);        
         assertTrue(iter.next());
         EdgeIteratorState oneIter = graph.getEdgeProps(iter.getEdge(), 3);
         assertEquals(13, oneIter.getDistance(), 1e-6);
@@ -802,11 +800,11 @@ public abstract class AbstractGraphTester
         // if tower node requested => return only tower nodes
         EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(4, iter.getAdjNode());
-        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.getWayGeometry());
-        assertTrue(iter.next());
-        assertPList(Helper.createPointList(1, 11, 1, 12, 1, 13.0), iter.getWayGeometry());
         assertEquals(14, iter.getAdjNode());
+        assertPList(Helper.createPointList(1, 11, 1, 12, 1, 13.0), iter.getWayGeometry());        
+        assertTrue(iter.next());
+        assertEquals(4, iter.getAdjNode());
+        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.getWayGeometry());        
         assertFalse(iter.next());
 
         iter = carOutExplorer.setBaseNode(0);
@@ -830,8 +828,8 @@ public abstract class AbstractGraphTester
         graph.edge(0, 2, 10, carEncoder.flags(10, true));
         graph.edge(0, 3, 10, footEncoder.flags(10, true) | carEncoder.flags(10, true));
         EdgeExplorer footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
-        assertEquals(Arrays.asList(1, 3), GHUtility.getNeighbors(footOutExplorer.setBaseNode(0)));
-        assertEquals(Arrays.asList(2, 3), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(footOutExplorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(3, 2), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));
     }
 
     @Test
