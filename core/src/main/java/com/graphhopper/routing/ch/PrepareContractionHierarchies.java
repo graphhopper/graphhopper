@@ -187,14 +187,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
         allSW.start();
         super.doWork();
-        
-        initFromGraph();        
+
+        initFromGraph();
         if (!prepareEdges())
             return this;
-                
+
         if (!prepareNodes())
             return this;
-        
+
         contractNodes();
         return this;
     }
@@ -458,10 +458,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // and also in the graph for u->w. If existing AND identical length => update flags.
             // Hint: shortcuts are always one-way due to distinct level of every node but we don't
             // know yet the levels so we need to determine the correct direction or if both directions
-
             // minor improvement: if (shortcuts.containsKey(sc) 
             // then two shortcuts with the same nodes (u<->n.endNode) exists => check current shortcut against both
-
             Shortcut sc = new Shortcut(u_fromNode, w_toNode, existingDirectWeight);
             if (shortcuts.containsKey(sc))
             {
@@ -533,7 +531,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|        
         // meanDegree is used instead of outDegree+inDegree as if one endNode is in both directions
         // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
-
         int edgeDifference = calcScHandler.shortcuts - degree;
 
         // according to the paper do a simple linear combination of the properties to get the priority.
@@ -705,7 +702,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     public RoutingAlgorithm createAlgo()
     {
         // do not change weight within DijkstraBidirectionRef => so use ShortestCalc
-        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g, prepareEncoder, shortestCalc)
+        DijkstraBidirectionRef dijkstrabi = new DijkstraBidirectionRef(g, prepareEncoder, shortestCalc)
         {
             @Override
             protected void initCollections( int nodes )
@@ -745,9 +742,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         };
 
         if (!removesHigher2LowerEdges)
-            dijkstra.setEdgeFilter(new LevelEdgeFilter(g));
+            dijkstrabi.setEdgeFilter(new LevelEdgeFilter(g));
 
-        return dijkstra;
+        return dijkstrabi;
     }
 
     public RoutingAlgorithm createAStar()

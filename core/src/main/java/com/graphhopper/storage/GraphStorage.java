@@ -264,7 +264,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         return cap;
     }
 
-    void ensureNodeIndex( int nodeIndex )
+    final void ensureNodeIndex( int nodeIndex )
     {
         if (nodeIndex < nodeCount)
         {

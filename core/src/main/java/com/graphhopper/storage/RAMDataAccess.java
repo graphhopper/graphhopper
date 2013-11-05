@@ -17,7 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.BitUtilLittle;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;

@@ -78,12 +78,12 @@ public class UnsafeDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public void ensureCapacity( long bytes )
+    public final void ensureCapacity( long bytes )
     {
         ensureCapacity(bytes, true);
     }
 
-    void ensureCapacity( long bytes, boolean clearNewMem )
+    final void ensureCapacity( long bytes, boolean clearNewMem )
     {
         long oldCap = getCapacity();
         long todoBytes = bytes - oldCap;
@@ -218,7 +218,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public void setBytes( long bytePos, byte[] values, int length )
+    public final void setBytes( long bytePos, byte[] values, int length )
     {
         for (int offset = 0; offset < length; offset++)
         {
@@ -227,7 +227,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public void getBytes( long bytePos, byte[] values, int length )
+    public final void getBytes( long bytePos, byte[] values, int length )
     {
         assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
         for (int offset = 0; offset < length; offset++)
@@ -237,19 +237,19 @@ public class UnsafeDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public long getCapacity()
+    public final long getCapacity()
     {
         return capacity;
     }
 
     @Override
-    public int getSegments()
+    public final int getSegments()
     {
         return (int) (capacity / segmentSizeInBytes);
     }
 
     @Override
-    public void trimTo( long bytes )
+    public final void trimTo( long bytes )
     {
         if (bytes > this.capacity)
             throw new IllegalStateException("Use ensureCapacity to increase capacity!");

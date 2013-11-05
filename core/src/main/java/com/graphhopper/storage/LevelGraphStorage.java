@@ -150,7 +150,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
     }
 
     /**
-     * Disconnects the shortcuts (higher->lower node) via the specified edgeState pointing from
+     * Disconnects the edges (higher->lower node) via the specified edgeState pointing from
      * lower to higher node.
      */
     public void disconnect( EdgeSkipExplorer explorer, EdgeIteratorState edgeState )
@@ -161,7 +161,9 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         boolean found = false;
         while (tmpIter.next())
         {
-            if (tmpIter.isShortcut() && tmpIter.getEdge() == edgeState.getEdge())
+            // If we disconnect shortcuts only we could run normal algos on the graph too
+            // BUT CH queries will be 10-20% slower and preparation will be 10% slower
+            if (/*tmpIter.isShortcut() &&*/ tmpIter.getEdge() == edgeState.getEdge())
             {
                 found = true;
                 break;
