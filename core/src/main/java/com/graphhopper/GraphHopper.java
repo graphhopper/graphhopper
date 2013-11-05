@@ -466,7 +466,7 @@ public class GraphHopper implements GraphHopperAPI
                 setWayPointMaxDistance(wayPointMaxDistance).
                 setEnableInstructions(enableInstructions);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
-        reader.doOSM2Graph(osmTmpFile);
+        reader.doOSM2Graph(osmTmpFile);               
         return reader;
     }
 
