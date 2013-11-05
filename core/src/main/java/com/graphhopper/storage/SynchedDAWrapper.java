@@ -88,9 +88,9 @@ class SynchedDAWrapper implements DataAccess
     }
 
     @Override
-    public synchronized void ensureCapacity( long bytes )
+    public synchronized boolean incCapacity( long bytes )
     {
-        inner.ensureCapacity(bytes);
+        return inner.incCapacity(bytes);        
     }
 
     @Override

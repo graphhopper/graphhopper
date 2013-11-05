@@ -88,7 +88,7 @@ public abstract class DataAccessTest
     {
         DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
-        // throw some undefined exception if no ensureCapacity was called
+        // throw some undefined exception if no incCapacity was called
         try
         {
             da.setInt(2 * 4, 321);
@@ -142,7 +142,7 @@ public abstract class DataAccessTest
         da.setInt(31 * 4, 200);
 
         assertEquals(200, da.getInt(31 * 4));
-        da.ensureCapacity(2 * 128);
+        da.incCapacity(2 * 128);
         assertEquals(200, da.getInt(31 * 4));
         // now it shouldn't fail
         da.setInt(32 * 4, 220);
@@ -152,7 +152,7 @@ public abstract class DataAccessTest
         // ensure some bigger area
         da = createDataAccess(name);
         da.create(200 * 4);
-        da.ensureCapacity(600 * 4);
+        da.incCapacity(600 * 4);
         da.close();
     }
 
@@ -189,7 +189,7 @@ public abstract class DataAccessTest
         da.setSegmentSize(128);
         da.create(10);
         assertEquals(1, da.getSegments());
-        da.ensureCapacity(500);
+        da.incCapacity(500);
         int olds = da.getSegments();
         assertTrue(olds > 3);
 

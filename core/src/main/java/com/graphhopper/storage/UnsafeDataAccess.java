@@ -73,22 +73,22 @@ public class UnsafeDataAccess extends AbstractDataAccess
         // TODO use unsafe.pageSize() instead segmentSizeInBytes?
         // e.g. on my system pageSize is only 4096
         setSegmentSize(segmentSizeInBytes);
-        ensureCapacity(bytes);
+        incCapacity(bytes);
         return this;
     }
 
     @Override
-    public final void ensureCapacity( long bytes )
+    public final boolean incCapacity( long bytes )
     {
-        ensureCapacity(bytes, true);
+        return ensureCapacity(bytes, true);
     }
 
-    final void ensureCapacity( long bytes, boolean clearNewMem )
+    final boolean ensureCapacity( long bytes, boolean clearNewMem )
     {
         long oldCap = getCapacity();
         long todoBytes = bytes - oldCap;
         if (todoBytes <= 0)
-            return;
+            return false;
 
         // avoid frequent increase of allocation area, instead increase by segment size
         int allSegments = (int) (bytes / segmentSizeInBytes);
@@ -107,6 +107,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
 
         if (clearNewMem)
             UNSAFE.setMemory(address + oldCap, capacity - oldCap, (byte) 0);
+        return true;
     }
 
     @Override

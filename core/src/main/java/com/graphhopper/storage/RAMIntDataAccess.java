@@ -17,7 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.BitUtilLittle;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -90,29 +89,24 @@ class RAMIntDataAccess extends AbstractDataAccess
 
         // initialize transient values
         setSegmentSize(segmentSizeInBytes);
-        ensureCapacity(Math.max(10 * 4, bytes));
+        incCapacity(Math.max(10 * 4, bytes));
         return this;
     }
 
     @Override
-    public void ensureCapacity( long bytes )
+    public boolean incCapacity( long bytes )
     {
         if (bytes < 0)
-        {
             throw new IllegalArgumentException("new capacity has to be strictly positive");
-        }
+        
         long cap = getCapacity();
         long todoBytes = bytes - cap;
         if (todoBytes <= 0)
-        {
-            return;
-        }
+            return false;        
 
         int segmentsToCreate = (int) (todoBytes / segmentSizeInBytes);
         if (todoBytes % segmentSizeInBytes != 0)
-        {
             segmentsToCreate++;
-        }
 
         try
         {
@@ -122,6 +116,7 @@ class RAMIntDataAccess extends AbstractDataAccess
                 newSegs[i] = new int[1 << segmentSizeIntsPower];
             }
             segments = newSegs;
+            return true;
         } catch (OutOfMemoryError err)
         {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "

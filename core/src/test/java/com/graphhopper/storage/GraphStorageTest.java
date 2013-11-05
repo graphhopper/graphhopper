@@ -66,13 +66,13 @@ public class GraphStorageTest extends AbstractGraphTester
         try
         {
             gs.ensureNodeIndex(123);
-            assertFalse("IllegalStateException should be raised", true);
-        } catch (IllegalStateException ex)
+            assertFalse("AssertionError should be raised", true);
+        } catch (AssertionError err)
         {
             assertTrue(true);
         } catch (Exception ex)
         {
-            assertFalse("IllegalStateException should be raised", true);
+            assertFalse("AssertionError should be raised", true);
         }
     }
 

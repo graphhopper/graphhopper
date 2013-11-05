@@ -76,15 +76,19 @@ public interface DataAccess extends Storable<DataAccess>
 
     /**
      * The first time you use a DataAccess object after configuring it you need to call this. After
-     * that first call you have to use ensureCapacity to ensure that enough space is reserved.
+     * that first call you have to use incCapacity to ensure that enough space is reserved.
      */
     @Override
     DataAccess create( long bytes );
 
     /**
-     * Ensures the specified capacity. The first time you have to call create instead.
+     * Ensures that the capacity of this object is at least the specified bytes. The first time you
+     * have to call 'create' instead.
+     * <p>
+     * @see #create(long)
+     * @return true if size was increased
      */
-    void ensureCapacity( long bytes );
+    boolean incCapacity( long bytes );
 
     /**
      * Reduces the allocate space to the specified bytes. Warning: it'll free the space even if it

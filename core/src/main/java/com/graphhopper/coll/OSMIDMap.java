@@ -75,10 +75,10 @@ public class OSMIDMap implements LongIntMap
             return oldValue;
         }
 
-        values.ensureCapacity(size + 4);
+        values.incCapacity(size + 4);
         values.setInt(size, value);
         long doubleSize = size * 2;
-        keys.ensureCapacity(doubleSize + 8);
+        keys.incCapacity(doubleSize + 8);
 
         // store long => double of the orig size
         byte[] longBytes = bitUtil.fromLong(key);

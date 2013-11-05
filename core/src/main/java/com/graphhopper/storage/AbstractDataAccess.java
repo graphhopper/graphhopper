@@ -125,7 +125,7 @@ public abstract class AbstractDataAccess implements DataAccess
         {
             da.setHeader(h, getHeader(h));
         }
-        da.ensureCapacity(getCapacity());
+        da.incCapacity(getCapacity());
         long cap = getCapacity();
         // currently get/setBytes does not support copying more bytes then segmentSize
         int segSize = Math.min(da.getSegmentSize(), getSegmentSize());

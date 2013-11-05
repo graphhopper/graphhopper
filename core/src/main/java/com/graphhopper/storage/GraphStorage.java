@@ -40,7 +40,7 @@ import static com.graphhopper.util.Helper.nf;
  * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
  * loadExisting, (4) usage, (5) flush, (6) close
  * <p/>
- * @see GraphBuilderUse the GraphBuilder class to create a (Level)GraphStorage easier.
+ * @see GraphBuilderUsethe GraphBuilder class to create a (Level)GraphStorage easier.
  * @see LevelGraphStorage
  * @author Peter Karich
  */
@@ -248,43 +248,20 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
         }
     }
 
-    private long incCapacity( DataAccess da, long deltaCap )
-    {
-        if (!initialized)
-        {
-            throw new IllegalStateException("Call create before or use the GraphBuilder class");
-        }
-        long newSeg = deltaCap / da.getSegmentSize();
-        if (deltaCap % da.getSegmentSize() != 0)
-        {
-            newSeg++;
-        }
-        long cap = da.getCapacity() + newSeg * da.getSegmentSize();
-        da.ensureCapacity(cap);
-        return cap;
-    }
-
     final void ensureNodeIndex( int nodeIndex )
     {
         if (nodeIndex < nodeCount)
-        {
             return;
-        }
 
         long oldNodes = nodeCount;
         nodeCount = nodeIndex + 1;
-        long deltaCap = (long) nodeCount * nodeEntryBytes - nodes.getCapacity();
-        if (deltaCap <= 0)
-        {
+        if (!nodes.incCapacity((long) nodeCount * nodeEntryBytes))
             return;
-        }
 
-        long newBytesCapacity = incCapacity(nodes, deltaCap);
+        long newBytesCapacity = nodes.getCapacity();
         initNodeRefs(oldNodes * nodeEntryBytes, newBytesCapacity);
         if (removedNodes != null)
-        {
             getRemovedNodes().ensureCapacity((int) (newBytesCapacity / nodeEntryBytes));
-        }
     }
 
     /**
@@ -300,20 +277,12 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
 
     private void ensureEdgeIndex( int edgeIndex )
     {
-        long deltaCap = ((long) edgeIndex + 1) * edgeEntryBytes - edges.getCapacity();
-        if (deltaCap <= 0)
-            return;
-
-        incCapacity(edges, deltaCap);
+        edges.incCapacity(((long) edgeIndex + 1) * edgeEntryBytes);
     }
 
     private void ensureGeometry( long bytePos, int byteLength )
     {
-        long deltaCap = bytePos + byteLength - wayGeometry.getCapacity();
-        if (deltaCap <= 0)
-            return;
-
-        incCapacity(wayGeometry, deltaCap);
+        wayGeometry.incCapacity(bytePos + byteLength);
     }
 
     @Override

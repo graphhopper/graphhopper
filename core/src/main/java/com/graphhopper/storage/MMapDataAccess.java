@@ -82,7 +82,7 @@ public class MMapDataAccess extends AbstractDataAccess
         initRandomAccessFile();
         bytes = Math.max(10 * 4, bytes);
         setSegmentSize(segmentSizeInBytes);
-        ensureCapacity(bytes);
+        incCapacity(bytes);
         return this;
     }
 
@@ -98,18 +98,18 @@ public class MMapDataAccess extends AbstractDataAccess
     }    
 
     @Override
-    public void ensureCapacity( long bytes )
+    public boolean incCapacity( long bytes )
     {
-        mapIt(HEADER_OFFSET, bytes, true);
+        return mapIt(HEADER_OFFSET, bytes, true);
     }
 
-    protected void mapIt( long offset, long byteCount, boolean clearNew )
+    protected boolean mapIt( long offset, long byteCount, boolean clearNew )
     {
         if (byteCount < 0)
             throw new IllegalArgumentException("new capacity has to be strictly positive");
         
         if (byteCount <= getCapacity())
-            return;
+            return false;
 
         long longSegmentSize = segmentSizeInBytes;
         int segmentsToMap = (int) (byteCount / longSegmentSize);
@@ -150,6 +150,7 @@ public class MMapDataAccess extends AbstractDataAccess
                 segments.add(newByteBuffer(bufferStart, longSegmentSize));
                 bufferStart += longSegmentSize;
             }
+            return true;
         } catch (IOException ex)
         {
             // we could get an exception here if buffer is too small and area too large

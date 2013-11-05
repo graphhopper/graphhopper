@@ -88,12 +88,12 @@ public class RAMDataAccess extends AbstractDataAccess
 
         // initialize transient values
         setSegmentSize(segmentSizeInBytes);
-        ensureCapacity(Math.max(10 * 4, bytes));
+        incCapacity(Math.max(10 * 4, bytes));
         return this;
     }
 
     @Override
-    public void ensureCapacity( long bytes )
+    public boolean incCapacity( long bytes )
     {
         if (bytes < 0)
             throw new IllegalArgumentException("new capacity has to be strictly positive");
@@ -101,7 +101,7 @@ public class RAMDataAccess extends AbstractDataAccess
         long cap = getCapacity();
         long todoBytes = bytes - cap;
         if (todoBytes <= 0)
-            return;
+            return false;
         
         int segmentsToCreate = (int) (todoBytes / segmentSizeInBytes);
         if (todoBytes % segmentSizeInBytes != 0)
@@ -121,6 +121,7 @@ public class RAMDataAccess extends AbstractDataAccess
                     + cap + ", new bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizePower
                     + ", new segments:" + segmentsToCreate + ", existing:" + segments.length);
         }
+        return true;
     }
 
     @Override
