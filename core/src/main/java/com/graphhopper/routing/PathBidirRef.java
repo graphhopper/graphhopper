@@ -64,18 +64,14 @@ public class PathBidirRef extends Path
     public Path extract()
     {
         if (edgeEntry == null || edgeTo == null)
-        {
             return this;
-        }
 
         int from = GHUtility.getToNode(graph, edgeEntry.edge, edgeEntry.endNode);
         int to = GHUtility.getToNode(graph, edgeTo.edge, edgeTo.endNode);
         if (from != to)
-        {
-            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());
-        }
+            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());        
 
-        sw.start();
+        extractSW.start();
         if (switchWrapper)
         {
             EdgeEntry ee = edgeEntry;
@@ -100,7 +96,7 @@ public class PathBidirRef extends Path
             tmpEdge = currEdge.edge;
         }
         setEndNode(currEdge.endNode);
-        sw.stop();
+        extractSW.stop();
         return setFound(true);
     }
 }

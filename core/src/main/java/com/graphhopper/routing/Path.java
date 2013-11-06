@@ -44,7 +44,7 @@ public class Path
     protected long time;
     private boolean found;
     protected EdgeEntry edgeEntry;
-    StopWatch sw = new StopWatch("extract");
+    final StopWatch extractSW = new StopWatch("extract");
     private int fromNode = -1;
     protected int endNode = -1;
     private TIntList edgeIds;
@@ -103,9 +103,8 @@ public class Path
     private int getFromNode()
     {
         if (!EdgeIterator.Edge.isValid(fromNode))
-        {
             throw new IllegalStateException("Call extract() before retrieving fromNode");
-        }
+
         return fromNode;
     }
 
@@ -160,7 +159,7 @@ public class Path
      */
     public Path extract()
     {
-        sw.start();
+        extractSW.start();
         EdgeEntry goalEdge = edgeEntry;
         setEndNode(goalEdge.endNode);
         while (EdgeIterator.Edge.isValid(goalEdge.edge))
@@ -171,13 +170,21 @@ public class Path
 
         setFromNode(goalEdge.endNode);
         reverseOrder();
-        sw.stop();
+        extractSW.stop();
         return setFound(true);
+    }
+
+    /**
+     * @return the time it took to extract the path in nano (!) seconds
+     */
+    public long getExtractTime()
+    {
+        return extractSW.getNanos();
     }
 
     public String getDebugInfo()
     {
-        return sw.toString();
+        return extractSW.toString();
     }
 
     /**
@@ -266,14 +273,12 @@ public class Path
     public PointList calcPoints()
     {
         if (cachedPoints != null)
-        {
             return cachedPoints;
-        }
+        
         cachedPoints = new PointList(edgeIds.size() + 1);
         if (edgeIds.isEmpty())
-        {
             return cachedPoints;
-        }
+        
         int tmpNode = getFromNode();
         cachedPoints.add(graph.getLatitude(tmpNode), graph.getLongitude(tmpNode));
         forEveryEdge(new EdgeVisitor()
@@ -427,7 +432,7 @@ public class Path
                     prevOrientation = orientation;
                 else
                     prevOrientation = Math.atan2(baseLat - wayGeo.getLatitude(0), baseLon - wayGeo.getLongitude(0));
-                
+
                 boolean lastEdgeIter = index == edgeIds.size() - 1;
                 if (lastEdgeIter)
                     cachedWays.updateLastDistance(prevDist);
