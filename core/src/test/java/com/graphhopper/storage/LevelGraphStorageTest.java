@@ -130,20 +130,20 @@ public class LevelGraphStorageTest extends GraphStorageTest
         iter.next();
         assertEquals(2, iter.getAdjNode());        
         assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(2)));
-        g.disconnect(iter, EdgeIterator.NO_EDGE, false);
+        g.disconnect(g.createEdgeExplorer(), iter);
         assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(2)));
 
         // even directed ways change!
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
         assertEquals(1, GHUtility.count(carInExplorer.setBaseNode(0)));
-        g.disconnect(iter, EdgeIterator.NO_EDGE, false);
+        g.disconnect(g.createEdgeExplorer(), iter);
         assertEquals(0, GHUtility.count(carInExplorer.setBaseNode(0)));
 
         iter.next();
         assertEquals(3, iter.getAdjNode());
         assertEquals(1, GHUtility.count(carOutExplorer.setBaseNode(3)));
-        g.disconnect(iter, EdgeIterator.NO_EDGE, false);
+        g.disconnect(g.createEdgeExplorer(), iter);
         assertEquals(0, GHUtility.count(carOutExplorer.setBaseNode(3)));
     }
 }

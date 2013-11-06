@@ -20,9 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeSkipExplorer;
+import com.graphhopper.util.*;
 
 /**
  * A Graph necessary for shortcut algorithms like Contraction Hierarchies. This class enables the
@@ -106,6 +104,13 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         }
 
         @Override
+        public EdgeSkipIterator setBaseNode( int baseNode )
+        {
+            super.setBaseNode(baseNode);
+            return this;
+        }                
+
+        @Override
         public final void setSkippedEdges( int edge1, int edge2 )
         {
             if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2))
@@ -149,35 +154,29 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
     }
 
     /**
-     * Removes the edge in one direction. TODO hide this lower level API somehow.
+     * Disconnects the higher node from lower nodes.
+     * <p>
+     * @param iter the edge from lower to higher
      */
-    public int disconnect( EdgeIteratorState iter, long prevEdgePointer, boolean sameDirection )
+    public void disconnect( EdgeSkipExplorer explorer, EdgeIteratorState iter )
     {
-        // open up package protected API for now ...
-        if (sameDirection)
+        // search edge with opposite direction        
+        // EdgeIteratorState tmpIter = getEdgeProps(iter.getEdge(), iter.getBaseNode());
+        EdgeSkipIterator tmpIter = explorer.setBaseNode(iter.getAdjNode());
+        int tmpPrevEdge = EdgeIterator.NO_EDGE;
+        boolean found = false;
+        while (tmpIter.next())
         {
-            internalEdgeDisconnect(iter.getEdge(), prevEdgePointer, iter.getBaseNode(), iter.getAdjNode());
-        } else
-        {
-            // prevEdgePointer belongs to baseNode ... but now we need it for adjNode()!           
-            EdgeSkipExplorer tmpIter = createEdgeExplorer();
-            tmpIter.setBaseNode(iter.getAdjNode());
-            int tmpPrevEdge = EdgeIterator.NO_EDGE;
-            boolean found = false;
-            while (tmpIter.next())
+            if (tmpIter.getEdge() == iter.getEdge())
             {
-                if (tmpIter.getEdge() == iter.getEdge())
-                {
-                    found = true;
-                    break;
-                }
-
-                tmpPrevEdge = tmpIter.getEdge();
+                found = true;
+                break;
             }
-            if (found)
-                internalEdgeDisconnect(iter.getEdge(), (long) tmpPrevEdge * edgeEntryBytes, iter.getAdjNode(), iter.getBaseNode());            
+
+            tmpPrevEdge = tmpIter.getEdge();
         }
-        return iter.getEdge();
+        if (found)
+            internalEdgeDisconnect(iter.getEdge(), (long) tmpPrevEdge * edgeEntryBytes, iter.getAdjNode(), iter.getBaseNode());
     }
 
     @Override
@@ -226,6 +225,13 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
         {
             super(edge, nodeId);
         }
+
+        @Override
+        public EdgeSkipIterator setBaseNode( int baseNode )
+        {
+            super.setBaseNode(baseNode);
+            return this;
+        }                
 
         @Override
         public void setSkippedEdges( int edge1, int edge2 )

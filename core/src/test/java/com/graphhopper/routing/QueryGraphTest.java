@@ -169,7 +169,23 @@ public class QueryGraphTest
         assertEquals(3, edge.fetchWayGeometry(3).getSize());
     }
 
-      @Test
+    @Test
+    public void testVirtEdges()
+    {
+        EncodingManager encodingManager = new EncodingManager("CAR");
+        Graph g = new GraphStorage(new RAMDirectory(), encodingManager).create(100);
+        initGraph(g);
+
+        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(0);
+        iter.next();
+        
+        QueryGraph.VirtualEdgeIterator vi = new QueryGraph.VirtualEdgeIterator(2);
+        vi.add(iter.detach());
+        
+        assertTrue(vi.next());
+    }
+
+    @Test
     public void testEdgesShareOneNode()
     {
         EncodingManager encodingManager = new EncodingManager("CAR");
@@ -183,11 +199,11 @@ public class QueryGraphTest
         QueryGraph queryGraph = new QueryGraph(g);
         queryGraph.lookup(Arrays.asList(res1, res2));
         assertEquals(new GHPoint(0.5, 0), res1.getSnappedPoint());
-        assertEquals(new GHPoint(1.3, 1.9), res2.getSnappedPoint());        
+        assertEquals(new GHPoint(1.3, 1.9), res2.getSnappedPoint());
         assertNotNull(GHUtility.getEdge(queryGraph, 0, 4));
-        assertNotNull(GHUtility.getEdge(queryGraph, 0, 3));        
+        assertNotNull(GHUtility.getEdge(queryGraph, 0, 3));
     }
-    
+
     PointList getPoints( Graph g, int base, int adj )
     {
         EdgeIteratorState edge = GHUtility.getEdge(g, base, adj);

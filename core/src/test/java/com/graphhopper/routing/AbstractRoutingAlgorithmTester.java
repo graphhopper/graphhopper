@@ -28,7 +28,6 @@ import com.graphhopper.storage.index.Location2NodesNtreeLG;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
 import java.util.Random;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -457,9 +456,10 @@ public abstract class AbstractRoutingAlgorithmTester
         Graph graph = createGraph();
         initBiGraph(graph);
 
-        Path p = calcPath(graph, 0, 7, 4, 3);
+        // 0-7 to 4-3
+        Path p = calcPathViaQuery(graph, 0.0009, 0, 0.001, 0.001105);
         assertEquals(p.toString(), Helper.createTList(10, 7, 6, 8, 3, 9), p.calcNodes());
-        assertEquals(p.toString(), 324.53, p.getDistance(), 1e-2);
+        assertEquals(p.toString(), 324.11, p.getDistance(), 1e-2);
 
         // 0-1 to 2-3
         p = calcPathViaQuery(graph, 0.001, 0.0001, 0.010, 0.0011);
@@ -505,7 +505,8 @@ public abstract class AbstractRoutingAlgorithmTester
         updateDistancesFor(graph, 2, 0.00005, 0.00015);
         updateDistancesFor(graph, 3, 0, 0.0001);
 
-        Path p = calcPath(graph, 0, 1, 3, 4);
+        // 0-1 to 3-4
+        Path p = calcPathViaQuery(graph, 0.00010, 0.00001, 0, 0.00009);
         assertEquals(Helper.createTList(6, 1, 2, 3, 5), p.calcNodes());
         assertEquals(p.toString(), 26.81, p.getDistance(), .1);
 
@@ -514,14 +515,13 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(Helper.createTList(5, 6), p.calcNodes());
         assertEquals(p.toString(), 7, p.getDistance(), .1);
 
-        // 'from' and 'to' edge share one node '2'
-        p = calcPath(graph, 1, 2, 3, 2);
+        // 'from' and 'to' edge share one node '2': 1-2 to 3-2
+        p = calcPathViaQuery(graph, 0.00009, 0.00011, 0.00001, 0.00011);
         assertEquals(p.toString(), Helper.createTList(6, 2, 5), p.calcNodes());
-        assertEquals(p.toString(), 14.16, p.getDistance(), .1);
+        assertEquals(p.toString(), 12.57, p.getDistance(), .1);
     }
 
-    // Problem: for contraction hierarchy we cannot easily select egdes by nodes
-    // as some edges are skipped
+    // Problem: for contraction hierarchy we cannot easily select egdes by nodes as some edges are skipped
     Path calcPathViaQuery( Graph graph, double fromLat, double fromLon, double toLat, double toLon )
     {
         Location2IDIndex index;
@@ -583,7 +583,7 @@ public abstract class AbstractRoutingAlgorithmTester
     {
         int WIDTH = 10;
         int HEIGHT = 15;
-        Graph tmp = new GraphBuilder(encodingManager).create();
+        Graph tmpGraph = new GraphBuilder(encodingManager).create();
         int[][] matrix = new int[WIDTH][HEIGHT];
         int counter = 0;
         Random rand = new Random(12);
@@ -608,7 +608,7 @@ public abstract class AbstractRoutingAlgorithmTester
                     if (print)
                         System.out.print(" " + (int) dist + "\t           ");
 
-                    tmp.edge(matrix[w][h], matrix[w][h - 1], dist, true);
+                    tmpGraph.edge(matrix[w][h], matrix[w][h - 1], dist, true);
                 }
             }
             if (print)
@@ -631,7 +631,7 @@ public abstract class AbstractRoutingAlgorithmTester
                     float dist = 5 + Math.abs(rand.nextInt(5));
                     if (print)
                         System.out.print("-- " + (int) dist + "\t-- ");
-                    tmp.edge(matrix[w][h], matrix[w - 1][h], dist, true);
+                    tmpGraph.edge(matrix[w][h], matrix[w - 1][h], dist, true);
                 }
                 if (print)
                     System.out.print("(" + matrix[w][h] + ")\t");
@@ -640,6 +640,6 @@ public abstract class AbstractRoutingAlgorithmTester
                 System.out.println();
         }
 
-        return tmp;
+        return tmpGraph;
     }
 }

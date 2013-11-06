@@ -19,7 +19,6 @@ package com.graphhopper;
 
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;

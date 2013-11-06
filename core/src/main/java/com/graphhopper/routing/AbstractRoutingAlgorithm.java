@@ -27,7 +27,6 @@ import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -48,13 +47,13 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
      * @param encoder sets the used vehicle (bike, car, foot)
      * @param type set the used weight calculation (e.g. fastest, shortest).
      */
-    public AbstractRoutingAlgorithm(Graph graph, FlagEncoder encoder, WeightCalculation type )
+    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, WeightCalculation type )
     {
         this.weightCalc = type;
-        this.flagEncoder = encoder;        
+        this.flagEncoder = encoder;
         setGraph(graph);
     }
-        
+
     /**
      * Specify the graph on which this algorithm should operate. API glitch: this method overwrites
      * graph specified while constructing the algorithm. Only necessary if graph is a QueryGraph.
@@ -67,18 +66,23 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         return this;
     }
 
+    protected QueryGraph createQueryGraph()
+    {
+        return new QueryGraph(graph);
+    }
+
     @Override
     public Path calcPath( LocationIDResult fromRes, LocationIDResult toRes )
     {
-        QueryGraph queryGraph = new QueryGraph(graph);
+        QueryGraph queryGraph = createQueryGraph();
         List<LocationIDResult> results = new ArrayList(2);
         results.add(fromRes);
-        results.add(toRes);                
+        results.add(toRes);
         queryGraph.lookup(results);
         setGraph(queryGraph);
         return calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
     }
-    
+
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
     {
         this.additionalEdgeFilter = additionalEdgeFilter;

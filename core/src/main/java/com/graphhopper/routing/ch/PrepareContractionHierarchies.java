@@ -18,10 +18,7 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.coll.GHTreeMapComposed;
-import com.graphhopper.routing.AStarBidirection;
-import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.LevelEdgeFilter;
@@ -35,10 +32,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
 import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,21 +53,22 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private final Logger logger = LoggerFactory.getLogger(getClass());
     // preparation dijkstra uses always shortest path as edges are rewritten - see doWork
     private final WeightCalculation shortestCalc = new ShortestCalc();
-    private WeightCalculation prepareWeightCalc;
-    private FlagEncoder prepareEncoder;
+    private final WeightCalculation prepareWeightCalc;
+    private final FlagEncoder prepareEncoder;
     private EdgeSkipExplorer vehicleInExplorer;
     private EdgeSkipExplorer vehicleOutExplorer;
     private EdgeSkipExplorer vehicleAllExplorer;
+    private EdgeSkipExplorer vehicleAllTmpExplorer;
     private EdgeSkipExplorer calcPrioAllExplorer;
     private LevelGraph g;
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
     private PriorityNode refs[];
-    private DataAccess originalEdges;
+    private final DataAccess originalEdges;
     // shortcut is one direction, speed is only involved while recalculating the endNode weights - see prepareEdges
     private int scOneDir;
     private int scBothDir;
-    private Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
+    private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private LevelEdgeFilterCH levelEdgeFilter;
     private DijkstraOneToMany algo;
     private boolean removesHigher2LowerEdges = true;
@@ -81,7 +76,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private int newShortcuts;
     private long dijkstraCount;
     private double meanDegree;
-    private Random rand = new Random(123);
+    private final Random rand = new Random(123);
     private StopWatch dijkstraSW = new StopWatch();
     private int periodicUpdatesCount = 3;
     private int lastNodesLazyUpdatePercentage = 10;
@@ -274,6 +269,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             neighborUpdate = false;
 
         StopWatch neighborSW = new StopWatch();
+        LevelGraphStorage lg = ((LevelGraphStorage) g);
         while (!sortedNodes.isEmpty())
         {
             if (counter % logSize == 0)
@@ -334,7 +330,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             g.setLevel(wn.node, level);
             level++;
 
-            EdgeIterator iter = vehicleAllExplorer.setBaseNode(wn.node);
+            EdgeSkipIterator iter = (EdgeSkipIterator) vehicleAllExplorer.setBaseNode(wn.node);
             while (iter.next())
             {
                 int nn = iter.getAdjNode();
@@ -358,7 +354,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 }
 
                 if (removesHigher2LowerEdges)
-                    ((LevelGraphStorage) g).disconnect(vehicleAllExplorer, EdgeIterator.NO_EDGE, false);
+                    lg.disconnect(vehicleAllTmpExplorer, iter);
             }
         }
 
@@ -461,10 +457,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             // and also in the graph for u->w. If existing AND identical length => update flags.
             // Hint: shortcuts are always one-way due to distinct level of every node but we don't
             // know yet the levels so we need to determine the correct direction or if both directions
-
             // minor improvement: if (shortcuts.containsKey(sc) 
             // then two shortcuts with the same nodes (u<->n.endNode) exists => check current shortcut against both
-
             Shortcut sc = new Shortcut(u_fromNode, w_toNode, existingDirectWeight);
             if (shortcuts.containsKey(sc))
             {
@@ -536,7 +530,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|        
         // meanDegree is used instead of outDegree+inDegree as if one endNode is in both directions
         // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
-
         int edgeDifference = calcScHandler.shortcuts - degree;
 
         // according to the paper do a simple linear combination of the properties to get the priority.
@@ -651,6 +644,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         vehicleInExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, false));
         vehicleOutExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, false, true));
         vehicleAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
+        vehicleAllTmpExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
         calcPrioAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
         levelEdgeFilter = new LevelEdgeFilterCH(g);
         sortedNodes = new GHTreeMapComposed();
@@ -720,6 +714,19 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             }
 
             @Override
+            protected QueryGraph createQueryGraph()
+            {
+                return new QueryGraph(graph)
+                {
+                    @Override
+                    protected void updateDistance( EdgeIteratorState edge )
+                    {
+                        edge.setDistance(prepareWeightCalc.getWeight(edge));
+                    }
+                };
+            }
+
+            @Override
             public boolean finished()
             {
                 // we need to finish BOTH searches for CH!
@@ -761,6 +768,19 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             {
                 // algorithm with CH does not need that much memory pre allocated
                 super.initCollections(Math.min(initialCollectionSize, nodes));
+            }
+
+            @Override
+            protected QueryGraph createQueryGraph()
+            {
+                return new QueryGraph(graph)
+                {
+                    @Override
+                    protected void updateDistance( EdgeIteratorState edge )
+                    {
+                        edge.setDistance(prepareWeightCalc.getWeight(edge));
+                    }
+                };
             }
 
             @Override

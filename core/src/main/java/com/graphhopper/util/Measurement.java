@@ -69,7 +69,7 @@ public class Measurement
             propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date()) + ".properties";
 
         seed = args.getLong("measurement.seed", 123);
-        String gitCommit = args.get("measurement.gitinfo", "");        
+        String gitCommit = args.get("measurement.gitinfo", "");
         int count = args.getInt("measurement.count", 5000);
 
         GraphHopper hopper = new GraphHopper()
@@ -195,7 +195,8 @@ public class Measurement
                 double fromLon = g.getLongitude(from);
                 double toLat = g.getLatitude(to);
                 double toLon = g.getLongitude(to);
-                GHResponse res = hopper.route(new GHRequest(fromLat, fromLon, toLat, toLon).setType("fastest").setVehicle(vehicle));
+                GHResponse res = hopper.route(new GHRequest(fromLat, fromLon, toLat, toLon).
+                        setType("fastest").setVehicle(vehicle));
                 if (res.hasErrors())
                     throw new IllegalStateException("errors should NOT happen in Measurement! " + res.getErrors());
 

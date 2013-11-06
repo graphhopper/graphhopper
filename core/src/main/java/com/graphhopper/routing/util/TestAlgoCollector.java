@@ -21,6 +21,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.Location2IDIndex;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.PointList;
 import java.util.ArrayList;
@@ -31,7 +32,8 @@ import java.util.List;
  */
 public class TestAlgoCollector
 {
-    private String name;
+    private final String name;
+    private final DistanceCalc distCalc = new DistanceCalc();
     public List<String> errors = new ArrayList<String>();
 
     public TestAlgoCollector( String name )
@@ -40,7 +42,7 @@ public class TestAlgoCollector
     }
 
     public TestAlgoCollector assertDistance( RoutingAlgorithm algo,
-            int from, int to, double distance, int pointCount )
+            LocationIDResult from, LocationIDResult to, double distance, int pointCount )
     {
         Path path = algo.calcPath(from, to);
         if (!path.isFound())
@@ -51,15 +53,23 @@ public class TestAlgoCollector
         }
 
         PointList pointList = path.calcPoints();
-        // Yes, there are indeed real world instances where A-B-C is identical to A-C (in meter precision).
-        // And for from:501620, to:155552 the node difference of astar to bi-dijkstra gets even bigger (7!).
-        if (Math.abs(path.getDistance() - distance) > 10)
+        double tmpDist = pointList.calcDistance(distCalc);
+        if (Math.abs(path.getDistance() - tmpDist) > 2)
+        {
+            errors.add(algo + " path.getDistance was  " + path.getDistance()
+                    + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + pointCount
+                    + ", expected distance " + distance + ") from:" + from + ", to:" + to);
+        }
+        
+        if (Math.abs(path.getDistance() - distance) > 5)
         {
             errors.add(algo + " returns path not matching the expected distance of " + distance
                     + "\t Returned was " + path.getDistance() + "\t (expected points " + pointCount
                     + ", was " + pointList.getSize() + ") from:" + from + ", to:" + to);
         }
-        if (Math.abs(pointList.getSize() - pointCount) > 7)
+        
+        // There are real world instances where A-B-C is identical to A-C (in meter precision).
+        if (Math.abs(pointList.getSize() - pointCount) > 4)
         {
             errors.add(algo + " returns path not matching the expected points of " + pointCount
                     + "\t Returned was " + pointList.getSize() + "\t (expected distance " + distance

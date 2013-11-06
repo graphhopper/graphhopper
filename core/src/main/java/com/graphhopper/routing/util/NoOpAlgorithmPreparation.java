@@ -57,6 +57,12 @@ public abstract class NoOpAlgorithmPreparation extends AbstractAlgoPreparation<N
                     throw new RuntimeException(ex);
                 }
             }
+
+            @Override
+            public String toString()
+            {
+                return createAlgo().getName() + ", " + encoder + ", " + weightCalc;
+            }                        
         };
     }
 }

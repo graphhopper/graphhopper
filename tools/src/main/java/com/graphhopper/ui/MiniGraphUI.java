@@ -29,6 +29,7 @@ import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.Location2IDIndex;
+import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
@@ -130,16 +131,20 @@ public class MiniGraphUI
                     bitset.clear();
                 }
 
-//                int loc = index.findID(49.682000, 9.943000);
-//                mg.plotNode(g2, loc, Color.PINK);
-//                plotNodeName(g2, index.findID(49.682000, 9.943000));
+                g2.setColor(Color.BLUE);
+                
+                double fromLat = 42.56819, fromLon = 1.603231;
+                mg.plotText(g2, fromLat, fromLon, "from");
+                LocationIDResult from = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
+                double toLat = 42.571034, toLon = 1.520662;
+                mg.plotText(g2, toLat, toLon, "to");
+                LocationIDResult to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
 
-//                g2.setColor(Color.RED.brighter().brighter());
-//
-//                path = calcPath(prepare.createAlgo());
-//                System.out.println("now: " + path.toDetailsString());
-//                plotPath(path, g2, 1);
-//                g2.setColor(Color.black);
+                g2.setColor(Color.RED.brighter().brighter());
+                path = prepare.createAlgo().calcPath(from, to);
+                System.out.println("now: " + path.toDetailsString());
+                plotPath(path, g2, 1);
+                g2.setColor(Color.black);
 
                 EdgeExplorer explorer = graph.createEdgeExplorer(EdgeFilter.ALL_EDGES);
                 for (int nodeIndex = 0; nodeIndex < locs; nodeIndex++)
@@ -285,7 +290,7 @@ public class MiniGraphUI
             prevLat = lat;
             prevLon = lon;
         }
-        logger.info("dist:" + tmpPath.getDistance() + ", path points:" + list + ", nodes:" + nodes);
+        logger.info("dist:" + tmpPath.getDistance() + ", path points(" + list.getSize() + "):" + list + ", nodes:" + nodes);
         return tmpPath;
     }
     private int dijkstraFromId = -1;
@@ -428,7 +433,6 @@ public class MiniGraphUI
 //                            logger.info("Removed " + counter + " of " + quadTreeNodes.size() + " nodes");
 //                        }
 //                    });
-
                     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                     frame.setSize(frameWidth + 10, frameHeight + 30);
                     frame.setVisible(true);

@@ -18,7 +18,6 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
