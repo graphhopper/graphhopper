@@ -59,7 +59,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     /**
      * Specified how many entries (integers) are used per edge. interval [0,n)
      */
-    private int edgeCount = 0;
+    protected int edgeCount = 0;
     // node memory layout: edgeRef,lat,lon
     protected final int N_EDGE_REF, N_LAT, N_LON;
     /**
@@ -585,7 +585,7 @@ public class GraphStorage implements Graph, Storable<GraphStorage>
     @Override
     public EdgeIterator getEdgeProps( int edgeId, int adjNode )
     {
-        if (edgeId <= EdgeIterator.NO_EDGE || edgeId > edgeCount)
+        if (edgeId <= EdgeIterator.NO_EDGE || edgeId >= edgeCount)
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds [0," + nf(edgeCount) + "]");
 
         if (adjNode < 0 && adjNode != -1)

@@ -293,10 +293,10 @@ public class PrepareContractionHierarchiesTest
         g.setLevel(8, 8);
 
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(carEncoder, type).setGraph(g);
-        g.edge(1, 4, 2, prepare.getScBothDir()).setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
+        g.shortcut(1, 4, 2, prepare.getScBothDir()).setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
         int f = prepare.getScOneDir();
-        g.edge(4, 6, 2, f).setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
-        g.edge(6, 4, 3, f).setSkippedEdges(iter3_1.getEdge(), iter3_2.getEdge());
+        g.shortcut(4, 6, 2, f).setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
+        g.shortcut(6, 4, 3, f).setSkippedEdges(iter3_1.getEdge(), iter3_2.getEdge());
 
         prepare.initFromGraph();
         // there should be two different shortcuts for both directions!
@@ -331,19 +331,19 @@ public class PrepareContractionHierarchiesTest
         int oneDirFlags = new PrepareContractionHierarchies(carEncoder, w).getScOneDir();
 
         int tmp = iter1.getEdge();
-        iter1 = g.edge(0, 2, 2, oneDirFlags);
+        iter1 = g.shortcut(0, 2, 2, oneDirFlags);
         iter1.setSkippedEdges(tmp, iter2.getEdge());
         tmp = iter1.getEdge();
-        iter1 = g.edge(0, 3, 3, oneDirFlags);
+        iter1 = g.shortcut(0, 3, 3, oneDirFlags);
         iter1.setSkippedEdges(tmp, iter3.getEdge());
         tmp = iter1.getEdge();
-        iter1 = g.edge(0, 4, 4, oneDirFlags);
+        iter1 = g.shortcut(0, 4, 4, oneDirFlags);
         iter1.setSkippedEdges(tmp, iter4.getEdge());
         tmp = iter1.getEdge();
-        iter1 = g.edge(0, 5, 5, oneDirFlags);
+        iter1 = g.shortcut(0, 5, 5, oneDirFlags);
         iter1.setSkippedEdges(tmp, iter5.getEdge());
         tmp = iter1.getEdge();
-        iter1 = g.edge(0, 6, 6, oneDirFlags);
+        iter1 = g.shortcut(0, 6, 6, oneDirFlags);
         iter1.setSkippedEdges(tmp, iter6.getEdge());
         g.setLevel(0, 10);
         g.setLevel(6, 9);

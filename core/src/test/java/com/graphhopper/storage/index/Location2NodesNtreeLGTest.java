@@ -19,6 +19,7 @@
 package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.LevelGraph;
@@ -80,11 +81,13 @@ public class Location2NodesNtreeLGTest extends Location2NodesNtreeTest
         EdgeIterator iter4 = g.edge(3, 4, 14, true);
 
         // create shortcuts
-        EdgeSkipExplorer iter5 = g.edge(0, 2, 20, true);
+        FlagEncoder car = encodingManager.getEncoder("CAR");
+        int flags = car.flags(60, true);
+        EdgeSkipExplorer iter5 = g.shortcut(0, 2, 20, flags);
         iter5.setSkippedEdges(iter1.getEdge(), iter2.getEdge());
-        EdgeSkipExplorer iter6 = g.edge(2, 4, 28, true);
+        EdgeSkipExplorer iter6 = g.shortcut(2, 4, 28, flags);
         iter6.setSkippedEdges(iter3.getEdge(), iter4.getEdge());
-        g.edge(0, 4, 40, true).setSkippedEdges(iter5.getEdge(), iter6.getEdge());
+        g.shortcut(0, 4, 40, flags).setSkippedEdges(iter5.getEdge(), iter6.getEdge());
 
         Location2IDIndex index = createIndex(g, -1);
         assertEquals(2, index.findID(0, 0.5));
