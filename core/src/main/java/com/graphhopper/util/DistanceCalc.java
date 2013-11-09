@@ -133,25 +133,59 @@ public class DistanceCalc
     {
         // x <=> lon
         // y <=> lat
-        double dY_a = a_lat - b_lat;
-        if (dY_a == 0)
+        double delta_lat = a_lat - b_lat;
+        if (delta_lat == 0)
             // special case: horizontal edge
             return calcNormalizedDist(a_lat, r_lon, r_lat, r_lon);
 
-        double dX_a = a_lon - b_lon;
-        if (dX_a == 0)
+        double delta_lon = a_lon - b_lon;
+        if (delta_lon == 0)
             // special case: vertical edge        
             return calcNormalizedDist(r_lat, a_lon, r_lat, r_lon);
 
-        double m = dY_a / dX_a;
+        double m = delta_lat / delta_lon;
         double n = a_lat - m * a_lon;
         double m_i = 1 / m;
         double n_s = r_lat + m_i * r_lon;
         // line g should cross c => c=(c_x,c_y)
         // m + m_i cannot get 0
-        double c_x = (n_s - n) / (m + m_i);
-        double c_y = m * c_x + n;
-        return calcNormalizedDist(r_lat, r_lon, c_y, c_x);
+        double c_lon = (n_s - n) / (m + m_i);
+        double c_lat = m * c_lon + n;
+        return calcNormalizedDist(r_lat, r_lon, c_lat, c_lon);
+    }
+
+    /**
+     * New edge distance calculation where no validEdgeDistance check would be necessary
+     * @return the normalized distance of the query point "r" to the project point "c" onto the line
+     * segment a-b
+     */
+    public double calcNormalizedEdgeDistanceNew( double r_lat, double r_lon,
+            double a_lat, double a_lon,
+            double b_lat, double b_lon )
+    {
+        double delta_lon = b_lon - a_lon;
+        double delta_lat = b_lat - a_lat;
+
+        if (delta_lat == 0)
+            // special case: horizontal edge
+            return calcNormalizedDist(a_lat, r_lon, r_lat, r_lon);
+
+        if (delta_lon == 0)
+            // special case: vertical edge        
+            return calcNormalizedDist(r_lat, a_lon, r_lat, r_lon);
+
+        double norm = delta_lon * delta_lon + delta_lat * delta_lat;
+        double factor = ((r_lon - a_lon) * delta_lon + (r_lat - a_lat) * delta_lat) / norm;
+
+        if (factor > 1 )
+            factor = 1;
+        else if (factor < 0)
+            factor = 0;
+
+        // x,y is projection of r onto segment a-b
+        double c_lon = a_lon + factor * delta_lon;
+        double c_lat = a_lat + factor * delta_lat;
+        return calcNormalizedDist(c_lat, c_lon, r_lat, r_lon);
     }
 
     /**
@@ -161,19 +195,18 @@ public class DistanceCalc
             double a_lat, double a_lon,
             double b_lat, double b_lon )
     {
-        // x <=> lon
-        // y <=> lat
-        double dY_a = a_lat - b_lat;
-        if (dY_a == 0)
+        double delta_lon = b_lon - a_lon;
+        double delta_lat = b_lat - a_lat;
+
+        if (delta_lat == 0)
             // special case: horizontal edge
             return new GHPoint(a_lat, r_lon);
 
-        double dX_a = a_lon - b_lon;
-        if (dX_a == 0)
+        if (delta_lon == 0)
             // special case: vertical edge        
             return new GHPoint(r_lat, a_lon);
 
-        double m = dY_a / dX_a;
+        double m = delta_lat / delta_lon;
         double n = a_lat - m * a_lon;
         double m_i = 1 / m;
         double n_s = r_lat + m_i * r_lon;

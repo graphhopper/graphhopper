@@ -35,7 +35,7 @@ public interface EdgeFilter
     static final EdgeFilter ALL_EDGES = new EdgeFilter()
     {
         @Override
-        public boolean accept( EdgeIteratorState edgeIterState )
+        public final boolean accept( EdgeIteratorState edgeIterState )
         {
             return true;
         }

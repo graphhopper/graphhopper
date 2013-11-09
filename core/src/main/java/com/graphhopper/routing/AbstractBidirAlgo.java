@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.WeightCalculation;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.LocationIDResult;
 
 /**
  * Common subclass for bidirectional algorithms.

@@ -24,6 +24,7 @@ import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.index.LocationIDResult;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,7 +55,7 @@ public class TestAlgoCollector
 
         PointList pointList = path.calcPoints();
         double tmpDist = pointList.calcDistance(distCalc);
-        if (Math.abs(path.getDistance() - tmpDist) > 2)
+        if (Math.abs(path.getDistance() - tmpDist) > 3)
         {
             errors.add(algo + " path.getDistance was  " + path.getDistance()
                     + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + pointCount
@@ -80,20 +81,19 @@ public class TestAlgoCollector
 
     void queryIndex( Graph g, Location2IDIndex idx, double lat, double lon, double expectedDist )
     {
-        int id = idx.findID(lat, lon);
-        if (id < 0)
+        LocationIDResult res = idx.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
+        if (!res.isValid())
         {
             errors.add("node not found for " + lat + "," + lon);
             return;
         }
 
-        double foundLat = g.getLatitude(id);
-        double foundLon = g.getLongitude(id);
-        double dist = new DistanceCalc().calcDist(lat, lon, foundLat, foundLon);
+        GHPoint found = res.getSnappedPoint();
+        double dist = distCalc.calcDist(lat, lon, found.lat, found.lon);
         if (Math.abs(dist - expectedDist) > .1)
         {
             errors.add("queried lat,lon=" + (float) lat + "," + (float) lon
-                    + " (found: " + (float) foundLat + "," + (float) foundLon + ")"
+                    + " (found: " + (float) found.lat + "," + (float) found.lon + ")"
                     + "\n   expected distance:" + expectedDist + ", but was:" + dist);
         }
     }

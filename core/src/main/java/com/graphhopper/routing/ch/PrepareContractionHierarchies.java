@@ -177,6 +177,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     @Override
     public PrepareContractionHierarchies doWork()
     {
+        checkGraph();
         if (prepareEncoder == null)
             throw new IllegalStateException("No vehicle encoder set.");
 
@@ -638,9 +639,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
     PrepareContractionHierarchies initFromGraph()
     {
-        if (g == null)
-            throw new NullPointerException("Graph must not be empty calling doWork of preparation");
-
+        checkGraph();
         vehicleInExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, false));
         vehicleOutExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, false, true));
         vehicleAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
@@ -703,6 +702,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     @Override
     public RoutingAlgorithm createAlgo()
     {
+        checkGraph();
         // do not change weight within DijkstraBidirectionRef => so use ShortestCalc
         DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g, prepareEncoder, shortestCalc)
         {
@@ -759,8 +759,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return dijkstra;
     }
 
-    public RoutingAlgorithm createAStar()
+    public AStarBidirection createAStar()
     {
+        checkGraph();
         AStarBidirection astar = new AStarBidirection(g, prepareEncoder, shortestCalc)
         {
             @Override
@@ -845,6 +846,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 return prepareWeightCalc.revertWeight(iter, weight);
             }
         };
+    }
+
+    private void checkGraph()
+    {
+        if (g == null)
+            throw new NullPointerException("setGraph before usage");
     }
 
     private static class PriorityNode implements Comparable<PriorityNode>

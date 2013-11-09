@@ -101,9 +101,7 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
                 double fromLon = graph.getLongitude(node);
                 double fromDist = calc.calcDist(fromLat, fromLon, queryLat, queryLon);
                 if (fromDist < 0)
-                {
                     continue;
-                }
 
                 if (fromDist < foundDist)
                 {
@@ -115,9 +113,8 @@ public class Location2IDFullWithEdgesIndex implements Location2IDIndex
 
                 // process the next stuff only for baseNode
                 if (i > 0)
-                {
                     continue;
-                }
+                
                 int toNode = iter.getAdjNode();
                 double toLat = graph.getLatitude(toNode);
                 double toLon = graph.getLongitude(toNode);

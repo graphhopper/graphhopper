@@ -20,6 +20,8 @@ package com.graphhopper;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;

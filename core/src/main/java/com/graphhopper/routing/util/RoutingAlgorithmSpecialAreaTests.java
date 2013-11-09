@@ -19,12 +19,13 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.MapEntry;
+import com.graphhopper.routing.AStarBidirection;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.LevelGraph;
-import com.graphhopper.storage.LevelGraphStorage;
 import com.graphhopper.util.StopWatch;
 import static com.graphhopper.routing.util.NoOpAlgorithmPreparation.*;
 import com.graphhopper.storage.RAMDirectory;
@@ -83,24 +84,23 @@ public class RoutingAlgorithmSpecialAreaTests
         for (Entry<AlgorithmPreparation, Location2IDIndex> entry : prepares)
         {
             AlgorithmPreparation prepare = entry.getKey();
-            Location2IDIndex idx = entry.getValue();
+            Location2IDIndex currIdx = entry.getValue();
             int failed = testCollector.errors.size();
 
-            // using index.highResolution=1000
             testCollector.assertDistance(prepare.createAlgo(),
-                    idx.findClosest(50.0314, 10.5105, ef), idx.findClosest(50.0303, 10.5070, ef), 559, 19);
+                    currIdx.findClosest(50.0314, 10.5105, ef), currIdx.findClosest(50.0303, 10.5070, ef), 570, 22);
             testCollector.assertDistance(prepare.createAlgo(),
-                    idx.findClosest(49.51451, 9.967346, ef), idx.findClosest(50.2920, 10.4650, ef), 107840, 1677);
+                    currIdx.findClosest(49.51451, 9.967346, ef), currIdx.findClosest(50.2920, 10.4650, ef), 107544, 1673);
             testCollector.assertDistance(prepare.createAlgo(),
-                    idx.findClosest(50.0780, 9.1570, ef), idx.findClosest(49.5860, 9.9750, ef), 93122, 1292);
+                    currIdx.findClosest(50.0780, 9.1570, ef), currIdx.findClosest(49.5860, 9.9750, ef), 92770, 1285);
             testCollector.assertDistance(prepare.createAlgo(),
-                    idx.findClosest(50.2800, 9.7190, ef), idx.findClosest(49.8960, 10.3890, ef), 77324, 1298);
+                    currIdx.findClosest(50.2800, 9.7190, ef), currIdx.findClosest(49.8960, 10.3890, ef), 77446, 1302);
             testCollector.assertDistance(prepare.createAlgo(),
-                    idx.findClosest(49.8020, 9.2470, ef), idx.findClosest(50.4940, 10.1970, ef), 125764, 2237);
+                    currIdx.findClosest(49.8020, 9.2470, ef), currIdx.findClosest(50.4940, 10.1970, ef), 125567, 2232);
             testCollector.assertDistance(prepare.createAlgo(),
-                    idx.findClosest(49.72449, 9.23482, ef), idx.findClosest(50.4140, 10.2750, ef), 137206, 2348);
+                    currIdx.findClosest(49.72449, 9.23482, ef), currIdx.findClosest(50.4140, 10.2750, ef), 137330, 2350);
             testCollector.assertDistance(prepare.createAlgo(),
-                    idx.findClosest(50.1100, 10.7530, ef), idx.findClosest(49.6500, 10.3410, ef), 74181, 1371);
+                    currIdx.findClosest(50.1100, 10.7530, ef), currIdx.findClosest(49.6500, 10.3410, ef), 74049, 1369);
 
             System.out.println("unterfranken " + prepare.createAlgo() + ": " + (testCollector.errors.size() - failed) + " failed");
         }
@@ -118,24 +118,35 @@ public class RoutingAlgorithmSpecialAreaTests
 
     public static Collection<Entry<AlgorithmPreparation, Location2IDIndex>> createAlgos( Graph g,
             Location2IDIndex idx, FlagEncoder encoder, boolean withCh, WeightCalculation weightCalc, EncodingManager manager )
-    {        
+    {
+        // List<Entry<AlgorithmPreparation, Location2IDIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, Location2IDIndex>>();
         List<Entry<AlgorithmPreparation, Location2IDIndex>> prepare = new ArrayList<Entry<AlgorithmPreparation, Location2IDIndex>>(
                 Arrays.<Entry<AlgorithmPreparation, Location2IDIndex>>asList(
                         new ME(createAlgoPrepare(g, "astar", encoder, weightCalc), idx),
-                        //              new MapEntry<AlgorithmPreparation, Location2IDIndex>(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weightCalc),
+                        // new MapEntry<AlgorithmPreparation, Location2IDIndex>(createAlgoPrepare(g, "dijkstraOneToMany", encoder, weightCalc),
                         new ME(createAlgoPrepare(g, "astarbi", encoder, weightCalc), idx),
                         new ME(createAlgoPrepare(g, "dijkstraNative", encoder, weightCalc), idx),
                         new ME(createAlgoPrepare(g, "dijkstrabi", encoder, weightCalc), idx),
                         new ME(createAlgoPrepare(g, "dijkstra", encoder, weightCalc), idx)));
         if (withCh)
         {
-            LevelGraph graphCH = (LevelGraphStorage) g.copyTo(new GraphBuilder(manager).levelGraphCreate());
+            LevelGraph graphCH = (LevelGraph) g.copyTo(new GraphBuilder(manager).levelGraphCreate());
             PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(encoder, weightCalc).
                     setGraph(graphCH);
-            Location2IDIndex idxCH = new Location2NodesNtreeLG(graphCH, new RAMDirectory()).prepareIndex();            
             prepareCH.doWork();
+            Location2IDIndex idxCH = new Location2NodesNtreeLG(graphCH, new RAMDirectory()).prepareIndex();
             prepare.add(new ME(prepareCH, idxCH));
-            // TODO prepare.add(new ME(prepareCH.createAStar().approximation(true).approximationFactor(.9), idxCH));
+            
+            // still one failing test regardless of the approx factor
+//            PrepareContractionHierarchies prepareCHAStar = new PrepareContractionHierarchies(encoder, weightCalc) {
+//
+//                @Override
+//                public RoutingAlgorithm createAlgo()
+//                {
+//                    return createAStar().setApproximation(true).setApproximationFactor(0.9);
+//                }
+//            }.setGraph(graphCH);            
+//            prepare.add(new ME(prepareCHAStar, idxCH));
         }
         return prepare;
     }
@@ -143,10 +154,10 @@ public class RoutingAlgorithmSpecialAreaTests
     void testIndex()
     {
         TestAlgoCollector testCollector = new TestAlgoCollector("testIndex");
-        testCollector.queryIndex(unterfrankenGraph, idx, 50.081241, 10.124366, 14.0);
+        testCollector.queryIndex(unterfrankenGraph, idx, 50.081241, 10.124366, 11.09);
         testCollector.queryIndex(unterfrankenGraph, idx, 50.081146, 10.124496, 0.0);
-        testCollector.queryIndex(unterfrankenGraph, idx, 49.682000, 9.943000, 602.2);
-        testCollector.queryIndex(unterfrankenGraph, idx, 50.066495, 10.191836, 53.1);
+        testCollector.queryIndex(unterfrankenGraph, idx, 49.682000, 9.943000, 228.32);
+        testCollector.queryIndex(unterfrankenGraph, idx, 50.066495, 10.191836, 14.63);
 
         testCollector.printSummary();
     }

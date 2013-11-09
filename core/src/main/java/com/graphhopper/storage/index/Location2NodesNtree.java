@@ -706,22 +706,26 @@ public class Location2NodesNtree implements Location2IDIndex
                         {
                             double wayLat = pointList.getLatitude(pointIndex);
                             double wayLon = pointList.getLongitude(pointIndex);
+                            LocationIDResult.Position pos = LocationIDResult.Position.EDGE;
                             if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon))
                             {
                                 tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                         tmpLat, tmpLon, wayLat, wayLon);
-                                check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge, LocationIDResult.Position.EDGE);
+                                check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge, pos);
+                            }
+                            // small TODO in theory we could replace "if" with "else if" but validEdgeDistance is too greedy sometimes
+                            // see DistanceCalcTest.testPrecisionBug
+                            if (pointIndex + 1 == len)
+                            {
+                                tmpNormedDist = adjDist;
+                                pos = LocationIDResult.Position.TOWER;
                             } else
                             {
-                                LocationIDResult.Position pos = LocationIDResult.Position.PILLAR;
-                                if (pointIndex + 1 == len)
-                                {
-                                    tmpNormedDist = adjDist;
-                                    pos = LocationIDResult.Position.TOWER;
-                                } else
-                                    tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
-                                check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
+                                tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
+                                pos = LocationIDResult.Position.PILLAR;
                             }
+                            check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
+
                             if (tmpNormedDist <= equalNormedDelta)
                                 return false;
 
@@ -750,9 +754,10 @@ public class Location2NodesNtree implements Location2IDIndex
             }
         });
 
-        if (closestMatch.isValid()) {
+        if (closestMatch.isValid())
+        {
             // denormalize distance            
-            closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));                        
+            closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));
             closestMatch.calcSnappedPoint(distCalc);
         }
 

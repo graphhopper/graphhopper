@@ -555,7 +555,7 @@ public class GraphHopper implements GraphHopperAPI
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);        
         LocationIDResult fromRes = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
         LocationIDResult toRes = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);       
-
+        
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
         if (!fromRes.isValid())

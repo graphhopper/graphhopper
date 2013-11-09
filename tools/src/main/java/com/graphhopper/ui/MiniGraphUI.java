@@ -78,7 +78,7 @@ public class MiniGraphUI
         prepare = hopper.getPreparation();
         if (prepare == null)
             prepare = NoOpAlgorithmPreparation.createAlgoPrepare(graph,
-                    "dijkstra", hopper.getEncodingManager().getEncoder("CAR"), wCalc);
+                    "dijkstra", hopper.getEncodingManager().getEncoder("foot"), wCalc);
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algo:" + prepare.createAlgo().getName());
         mg = new GraphicsWrapper(graph);

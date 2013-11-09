@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.PrinctonReader;
@@ -173,7 +175,7 @@ public class RoutingAlgorithmIT
         list.get(0).locs = 523;
         list.get(1).dist = 12704;
         list.get(1).locs = 404;
-        // if we would use double for lat+lon we would get path length 16.466 instead of 16.452
+
         runAlgo(testCollector, "files/andorra.osm.gz", "target/graph-andorra",
                 list, "FOOT", true, "FOOT", "shortest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -213,7 +215,7 @@ public class RoutingAlgorithmIT
             WeightCalculation weightCalc = new ShortestCalc();
             if ("fastest".equalsIgnoreCase(weightCalcStr))
                 weightCalc = new FastestCalc(encoder);
-
+            
             Collection<Entry<AlgorithmPreparation, Location2IDIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
                     createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, ch, weightCalc, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
