@@ -22,6 +22,7 @@ import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteOrder;
 
 /**
  * @author Peter Karich
@@ -39,14 +40,17 @@ public abstract class AbstractDataAccess implements DataAccess
     protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
     protected transient int segmentSizePower;
     protected transient int indexDivisor;
+    protected final ByteOrder byteOrder;
+    protected final BitUtil bitUtil;
 
-    public AbstractDataAccess( String name, String location )
+    public AbstractDataAccess( String name, String location, ByteOrder order )
     {
+        byteOrder = order;
+        bitUtil = BitUtil.get(order);
         this.name = name;
         if (!Helper.isEmpty(location) && !location.endsWith("/"))
-        {
             throw new IllegalArgumentException("Create DataAccess object via its corresponding Directory!");
-        }
+        
         this.location = location;
     }
 
@@ -81,7 +85,7 @@ public abstract class AbstractDataAccess implements DataAccess
     }
 
     /**
-     * @return the remaining space in bytes
+     * Writes some internal data into the beginning of the specified file.
      */
     protected void writeHeader( RandomAccessFile file, long length, int segmentSize ) throws IOException
     {
@@ -99,14 +103,12 @@ public abstract class AbstractDataAccess implements DataAccess
     {
         raFile.seek(0);
         if (raFile.length() == 0)
-        {
             return -1;
-        }
+
         String versionHint = raFile.readUTF();
         if (!"GH".equals(versionHint))
-        {
             throw new IllegalArgumentException("Not a GraphHopper file! Expected 'GH' as file marker but was " + versionHint);
-        }
+
         long bytes = raFile.readLong();
         setSegmentSize(raFile.readInt());
         for (int i = 0; i < header.length; i++)
@@ -123,7 +125,7 @@ public abstract class AbstractDataAccess implements DataAccess
         {
             da.setHeader(h, getHeader(h));
         }
-        da.ensureCapacity(getCapacity());
+        da.incCapacity(getCapacity());
         long cap = getCapacity();
         // currently get/setBytes does not support copying more bytes then segmentSize
         int segSize = Math.min(da.getSegmentSize(), getSegmentSize());
@@ -136,7 +138,7 @@ public abstract class AbstractDataAccess implements DataAccess
             {
                 for (int offset = 0; offset < segSize; offset += 4)
                 {
-                    BitUtil.fromInt(bytes, getInt(bytePos + offset), offset);
+                    bitUtil.fromInt(bytes, getInt(bytePos + offset), offset);
                 }
             } else
             {
@@ -148,7 +150,7 @@ public abstract class AbstractDataAccess implements DataAccess
             {
                 for (int offset = 0; offset < segSize; offset += 4)
                 {
-                    da.setInt(bytePos + offset, BitUtil.toInt(bytes, offset));
+                    da.setInt(bytePos + offset, bitUtil.toInt(bytes, offset));
                 }
             } else
             {
@@ -212,17 +214,14 @@ public abstract class AbstractDataAccess implements DataAccess
     protected boolean checkBeforeRename( String newName )
     {
         if (Helper.isEmpty(newName))
-        {
             throw new IllegalArgumentException("newName mustn't be empty!");
-        }
+
         if (newName.equals(name))
-        {
             return false;
-        }
+
         if (isStoring() && new File(location + newName).exists())
-        {
             throw new IllegalArgumentException("file newName already exists!");
-        }
+
         return true;
     }
 

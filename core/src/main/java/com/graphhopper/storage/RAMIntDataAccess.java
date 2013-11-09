@@ -17,10 +17,10 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.BitUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -36,19 +36,9 @@ class RAMIntDataAccess extends AbstractDataAccess
     private boolean store;
     private transient int segmentSizeIntsPower;
 
-    RAMIntDataAccess()
+    RAMIntDataAccess( String name, String location, boolean store, ByteOrder order )
     {
-        this("", "", false);
-    }
-
-    RAMIntDataAccess( String name )
-    {
-        this(name, name, false);
-    }
-
-    RAMIntDataAccess( String name, String location, boolean store )
-    {
-        super(name, location);
+        super(name, location, order);
         this.store = store;
     }
 
@@ -99,29 +89,24 @@ class RAMIntDataAccess extends AbstractDataAccess
 
         // initialize transient values
         setSegmentSize(segmentSizeInBytes);
-        ensureCapacity(Math.max(10 * 4, bytes));
+        incCapacity(Math.max(10 * 4, bytes));
         return this;
     }
 
     @Override
-    public void ensureCapacity( long bytes )
+    public boolean incCapacity( long bytes )
     {
         if (bytes < 0)
-        {
             throw new IllegalArgumentException("new capacity has to be strictly positive");
-        }
+        
         long cap = getCapacity();
         long todoBytes = bytes - cap;
         if (todoBytes <= 0)
-        {
-            return;
-        }
+            return false;        
 
         int segmentsToCreate = (int) (todoBytes / segmentSizeInBytes);
         if (todoBytes % segmentSizeInBytes != 0)
-        {
             segmentsToCreate++;
-        }
 
         try
         {
@@ -131,6 +116,7 @@ class RAMIntDataAccess extends AbstractDataAccess
                 newSegs[i] = new int[1 << segmentSizeIntsPower];
             }
             segments = newSegs;
+            return true;
         } catch (OutOfMemoryError err)
         {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
@@ -170,9 +156,8 @@ class RAMIntDataAccess extends AbstractDataAccess
                 // raFile.readInt() <- too slow                
                 int segmentCount = (int) (byteCount / segmentSizeInBytes);
                 if (byteCount % segmentSizeInBytes != 0)
-                {
                     segmentCount++;
-                }
+                
                 segments = new int[segmentCount][];
                 for (int s = 0; s < segmentCount; s++)
                 {
@@ -180,8 +165,7 @@ class RAMIntDataAccess extends AbstractDataAccess
                     int area[] = new int[read];
                     for (int j = 0; j < read; j++)
                     {
-                        // TODO different system have different default byte order!
-                        area[j] = BitUtil.toInt(bytes, j * 4);
+                        area[j] = bitUtil.toInt(bytes, j * 4);
                     }
                     segments[s] = area;
                 }
@@ -223,8 +207,7 @@ class RAMIntDataAccess extends AbstractDataAccess
                     byte[] byteArea = new byte[intLen * 4];
                     for (int i = 0; i < intLen; i++)
                     {
-                        // TODO different system have different default byte order!
-                        BitUtil.fromInt(byteArea, area[i], i * 4);
+                        bitUtil.fromInt(byteArea, area[i], i * 4);
                     }
                     raFile.write(byteArea);
                 }

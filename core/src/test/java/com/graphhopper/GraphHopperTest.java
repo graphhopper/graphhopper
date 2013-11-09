@@ -20,8 +20,6 @@ package com.graphhopper;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.IOException;
@@ -100,10 +98,12 @@ public class GraphHopperTest
         GHResponse res = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle(EncodingManager.CAR));
         assertFalse(res.hasErrors());
         assertTrue(res.isFound());
-        assertEquals(2, res.getPoints().getSize());
-        // => found D
-        assertEquals(51, res.getPoints().getLongitude(1), 1e-3);
-        assertEquals(11.3, res.getPoints().getLatitude(1), 1e-3);
+        assertEquals(3, res.getPoints().getSize());
+        // => found A and D
+        assertEquals(50, res.getPoints().getLongitude(0), 1e-3);
+        assertEquals(11.1, res.getPoints().getLatitude(0), 1e-3);
+        assertEquals(51, res.getPoints().getLongitude(2), 1e-3);
+        assertEquals(11.3, res.getPoints().getLatitude(2), 1e-3);
 
         // A to D not allowed for foot. But the location index will choose a node close to D accessible to FOOT        
         res = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle(EncodingManager.FOOT));
@@ -157,6 +157,22 @@ public class GraphHopperTest
                 put("osmreader.osm", testOsm3)).setOSMFile(testOsm3);
         assertTrue(instance.load(ghLoc));
         assertEquals(5, instance.getGraph().getNodes());
+    }
+
+    @Test
+    public void testNoNPE_ifOnlyLoad() throws IOException
+    {
+        // missing import of graph
+        instance = new GraphHopper().setInMemory(true, true);
+        try
+        {
+            assertFalse(instance.load(ghLoc));
+            instance.route(new GHRequest(10, 40, 12, 32));
+            assertTrue(false);
+        } catch (IllegalStateException ex)
+        {
+            assertEquals("Call load or importOrLoad before routing", ex.getMessage());
+        }
     }
 
     @Test
@@ -217,8 +233,7 @@ public class GraphHopperTest
     public void testPrepareOnly() throws IOException
     {
         instance = new GraphHopper().setInMemory(true, true).setCHShortcuts("shortest").
-                setEncodingManager(new EncodingManager("FOOT")).
-                doPrepare(false).
+                setEncodingManager(new EncodingManager("FOOT")).setDoPrepare(false).
                 setGraphHopperLocation(ghLoc).setOSMFile(testOsm3);
         instance.importOrLoad();
         instance.close();

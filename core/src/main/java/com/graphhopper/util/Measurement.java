@@ -23,9 +23,9 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.index.Location2IDIndex;
 import com.graphhopper.util.shapes.BBox;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -182,7 +183,13 @@ public class Measurement
         final Graph g = hopper.getGraph();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
-        final AtomicLong sum = new AtomicLong(0);
+        final AtomicLong distSum = new AtomicLong(0);
+        final AtomicInteger failedCount = new AtomicInteger(0);
+
+//        final AtomicLong extractTimeSum = new AtomicLong(0);
+//        final AtomicLong calcPointsTimeSum = new AtomicLong(0);
+//        final AtomicLong calcDistTimeSum = new AtomicLong(0);
+//        final AtomicLong tmpDist = new AtomicLong(0);
         final Random rand = new Random(seed);
         MiniPerfTest miniPerf = new MiniPerfTest()
         {
@@ -203,21 +210,32 @@ public class Measurement
                 if (!warmup)
                 {
                     long dist = (long) res.getDistance();
-                    sum.addAndGet(dist);
+                    distSum.addAndGet(dist);
+                    
                     if (dist > maxDistance.get())
                         maxDistance.set(dist);
 
                     if (dist < minDistance.get())
                         minDistance.set(dist);
+                                        
+//                    extractTimeSum.addAndGet(p.getExtractTime());                    
+//                    long start = System.nanoTime();
+//                    size = p.calcPoints().getSize();
+//                    calcPointsTimeSum.addAndGet(System.nanoTime() - start);
                 }
 
                 return res.getPoints().getSize();
             }
-        }.setIterations(count).start();
-
+        }.setIterations(count).start();                    
+        
         put(prefix + ".distanceMin", minDistance.get());
-        put(prefix + ".distanceMean", (float) sum.get() / count);
+        put(prefix + ".distanceMean", (float) distSum.get() / count);
         put(prefix + ".distanceMax", maxDistance.get());
+
+//        put(prefix + ".extractTime", (float) extractTimeSum.get() / count / 1000000f);
+//        put(prefix + ".calcPointsTime", (float) calcPointsTimeSum.get() / count / 1000000f);
+//        put(prefix + ".calcDistTime", (float) calcDistTimeSum.get() / count / 1000000f);
+
         print(prefix, miniPerf);
     }
 

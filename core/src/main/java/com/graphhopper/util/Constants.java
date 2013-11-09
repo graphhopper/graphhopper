@@ -19,7 +19,7 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 /**
- * Taken from Lucene
+ * Defining several important constants for GraphHopper. Partially taken from Lucene.
  */
 public class Constants
 {
@@ -50,11 +50,11 @@ public class Constants
     public static final String OS_ARCH = System.getProperty("os.arch");
     public static final String OS_VERSION = System.getProperty("os.version");
     public static final String JAVA_VENDOR = System.getProperty("java.vendor");
-    public static final int VERSION_NODE = 1;
-    public static final int VERSION_EDGE = 2;
-    public static final int VERSION_GEOMETRY = 1;
-    public static final int VERSION_LOCATION_IDX = 1;
-    public static final int VERSION_NAME_IDX = 1;
+    public static final int VERSION_NODE = 2;
+    public static final int VERSION_EDGE = 3;
+    public static final int VERSION_GEOMETRY = 2;
+    public static final int VERSION_LOCATION_IDX = 2;
+    public static final int VERSION_NAME_IDX = 2;
     /**
      * The version without the snapshot string
      */
@@ -80,7 +80,6 @@ public class Constants
             System.err.println("GraphHopper Initialization ERROR: cannot read version!? " + ex.getMessage());
         }
         int indexM = version.indexOf("-");
-        int indexP = version.indexOf(".");
         if ("${project.version}".equals(version))
         {
             VERSION = "0.0";

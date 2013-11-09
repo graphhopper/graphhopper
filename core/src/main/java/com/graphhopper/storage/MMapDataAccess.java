@@ -32,7 +32,7 @@ import java.util.List;
 
 /**
  * This is a data structure which uses the operating system to synchronize between disc and memory.
- * Do not use this from multiple threads!
+ * Use SynchDAWrapper if you intent to use this from multiple threads!
  * <p/>
  * @author Peter Karich
  */
@@ -41,19 +41,12 @@ public class MMapDataAccess extends AbstractDataAccess
 {
     private RandomAccessFile raFile;
     private List<ByteBuffer> segments = new ArrayList<ByteBuffer>();
-    private ByteOrder order = ByteOrder.BIG_ENDIAN;
     private boolean cleanAndRemap = false;
     private transient boolean closed = false;
 
-    MMapDataAccess()
+    MMapDataAccess( String name, String location, ByteOrder order )
     {
-        this(null, null);
-        throw new IllegalStateException("reserved for direct mapped memory");
-    }
-
-    MMapDataAccess( String name, String location )
-    {
-        super(name, location);
+        super(name, location, order);
     }
 
     MMapDataAccess cleanAndRemap( boolean cleanAndRemap )
@@ -89,7 +82,7 @@ public class MMapDataAccess extends AbstractDataAccess
         initRandomAccessFile();
         bytes = Math.max(10 * 4, bytes);
         setSegmentSize(segmentSizeInBytes);
-        ensureCapacity(bytes);
+        incCapacity(bytes);
         return this;
     }
 
@@ -102,49 +95,32 @@ public class MMapDataAccess extends AbstractDataAccess
         // is a flush necessary then?
         // }
         return super.copyTo(da);
-    }
-
-    /**
-     * Makes it possible to force the order. Default is BIG_ENDIAN. But this method is currently a
-     * no-op due to issue: https://github.com/graphhopper/graphhopper/issues/103
-     */
-    public MMapDataAccess setByteOrder( ByteOrder order )
-    {
-        return this;
-    }
+    }    
 
     @Override
-    public void ensureCapacity( long bytes )
+    public boolean incCapacity( long bytes )
     {
-        mapIt(HEADER_OFFSET, bytes, true);
+        return mapIt(HEADER_OFFSET, bytes, true);
     }
 
-    protected void mapIt( long offset, long byteCount, boolean clearNew )
+    protected boolean mapIt( long offset, long byteCount, boolean clearNew )
     {
         if (byteCount < 0)
-        {
             throw new IllegalArgumentException("new capacity has to be strictly positive");
-        }
+        
         if (byteCount <= getCapacity())
-        {
-            return;
-        }
+            return false;
 
         long longSegmentSize = segmentSizeInBytes;
         int segmentsToMap = (int) (byteCount / longSegmentSize);
         if (segmentsToMap < 0)
-        {
-            throw new IllegalStateException("Too many segments needs to be allocated. Increase segmentSize.");
-        }
+            throw new IllegalStateException("Too many segments needs to be allocated. Increase segmentSize.");        
 
         if (byteCount % longSegmentSize != 0)
-        {
             segmentsToMap++;
-        }
+        
         if (segmentsToMap == 0)
-        {
-            throw new IllegalStateException("0 segments are not allowed.");
-        }
+            throw new IllegalStateException("0 segments are not allowed.");        
 
         long bufferStart = offset;
         int newSegments;
@@ -174,6 +150,7 @@ public class MMapDataAccess extends AbstractDataAccess
                 segments.add(newByteBuffer(bufferStart, longSegmentSize));
                 bufferStart += longSegmentSize;
             }
+            return true;
         } catch (IOException ex)
         {
             // we could get an exception here if buffer is too small and area too large
@@ -205,6 +182,7 @@ public class MMapDataAccess extends AbstractDataAccess
                 cleanHack();
                 try
                 {
+                    // mini sleep to let JVM do unmapping
                     Thread.sleep(5);
                 } catch (InterruptedException iex)
                 {
@@ -220,7 +198,7 @@ public class MMapDataAccess extends AbstractDataAccess
             throw ioex;
         }
 
-        buf.order(order);
+        buf.order(byteOrder);
 
         boolean tmp = false;
         if (tmp)
@@ -243,26 +221,22 @@ public class MMapDataAccess extends AbstractDataAccess
     public boolean loadExisting()
     {
         if (segments.size() > 0)
-        {
             throw new IllegalStateException("already initialized");
-        }
+
         if (closed)
-        {
             return false;
-        }
+
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
-        {
             return false;
-        }
+
         initRandomAccessFile();
         try
         {
             long byteCount = readHeader(raFile);
             if (byteCount < 0)
-            {
                 return false;
-            }
+
             mapIt(HEADER_OFFSET, byteCount - HEADER_OFFSET, false);
             return true;
         } catch (IOException ex)

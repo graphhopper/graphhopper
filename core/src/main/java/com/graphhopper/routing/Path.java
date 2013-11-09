@@ -42,7 +42,7 @@ public class Path
     protected long time;
     private boolean found;
     protected EdgeEntry edgeEntry;
-    StopWatch sw = new StopWatch("extract");
+    final StopWatch extractSW = new StopWatch("extract");
     private int fromNode = -1;
     protected int endNode = -1;
     private TIntList edgeIds;
@@ -160,7 +160,7 @@ public class Path
      */
     public Path extract()
     {
-        sw.start();
+        extractSW.start();
         EdgeEntry goalEdge = edgeEntry;
         setEndNode(goalEdge.endNode);
         while (EdgeIterator.Edge.isValid(goalEdge.edge))
@@ -171,13 +171,21 @@ public class Path
 
         setFromNode(goalEdge.endNode);
         reverseOrder();
-        sw.stop();
+        extractSW.stop();
         return setFound(true);
+    }
+
+    /**
+     * @return the time it took to extract the path in nano (!) seconds
+     */
+    public long getExtractTime()
+    {
+        return extractSW.getNanos();
     }
 
     public String getDebugInfo()
     {
-        return sw.toString();
+        return extractSW.toString();
     }
 
     /**
@@ -367,6 +375,7 @@ public class Path
                             tmpOrientation = orientation + 2 * Math.PI;
                         else
                             tmpOrientation = orientation;
+
                     } else
                     {
                         if (orientation > +Math.PI + prevOrientation)
@@ -409,7 +418,7 @@ public class Path
                                 cachedWays.add(InstructionList.TURN_SHARP_LEFT, name, prevDist);
                             else
                                 cachedWays.add(InstructionList.TURN_SHARP_RIGHT, name, prevDist);
-
+                            
                         }
                     } else
                         prevDist += calcDistance(edgeBase);

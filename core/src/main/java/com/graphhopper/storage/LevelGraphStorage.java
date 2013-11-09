@@ -20,7 +20,10 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeSkipExplorer;
+import com.graphhopper.util.EdgeSkipIterator;
 
 /**
  * A Graph necessary for shortcut algorithms like Contraction Hierarchies. This class enables the
@@ -56,6 +59,12 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
     {
         ensureNodeIndex(index);
         return nodes.getInt((long) index * nodeEntryBytes + I_LEVEL);
+    }
+
+    @Override
+    public EdgeSkipExplorer shortcut( int a, int b, double distance, int flags )
+    {
+        return edge(a, b, distance, flags);
     }
 
     @Override
@@ -154,20 +163,23 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
     }
 
     /**
-     * Disconnects the higher node from lower nodes.
+     * Disconnects the edges (higher->lower node) via the specified edgeState pointing from lower to
+     * higher node.
      * <p>
-     * @param iter the edge from lower to higher
+     * @param edgeState the edge from lower to higher
      */
-    public void disconnect( EdgeSkipExplorer explorer, EdgeIteratorState iter )
+    public void disconnect( EdgeSkipExplorer explorer, EdgeIteratorState edgeState )
     {
         // search edge with opposite direction        
         // EdgeIteratorState tmpIter = getEdgeProps(iter.getEdge(), iter.getBaseNode());
-        EdgeSkipIterator tmpIter = explorer.setBaseNode(iter.getAdjNode());
+        EdgeSkipIterator tmpIter = explorer.setBaseNode(edgeState.getAdjNode());
         int tmpPrevEdge = EdgeIterator.NO_EDGE;
         boolean found = false;
         while (tmpIter.next())
         {
-            if (tmpIter.getEdge() == iter.getEdge())
+            // If we disconnect shortcuts only we could run normal algos on the graph too
+            // BUT CH queries will be 10-20% slower and preparation will be 10% slower
+            if (/*tmpIter.isShortcut() &&*/tmpIter.getEdge() == edgeState.getEdge())
             {
                 found = true;
                 break;
@@ -176,7 +188,7 @@ public class LevelGraphStorage extends GraphStorage implements LevelGraph
             tmpPrevEdge = tmpIter.getEdge();
         }
         if (found)
-            internalEdgeDisconnect(iter.getEdge(), (long) tmpPrevEdge * edgeEntryBytes, iter.getAdjNode(), iter.getBaseNode());
+            internalEdgeDisconnect(edgeState.getEdge(), (long) tmpPrevEdge * edgeEntryBytes, edgeState.getAdjNode(), edgeState.getBaseNode());
     }
 
     @Override

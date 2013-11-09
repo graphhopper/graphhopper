@@ -129,7 +129,7 @@ public class PrepareRoutingSubnetworksTest
         assertEquals(4, g.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(g));
         EdgeExplorer explorer = g.createEdgeExplorer();
-        assertEquals(Arrays.asList(1, 2), GHUtility.getNeighbors(explorer.setBaseNode(3)));
+        assertEquals(GHUtility.asSet(2, 1), GHUtility.getNeighbors(explorer.setBaseNode(3)));
 
         // do not remove because small network is big enough
         g = createSubnetworkTestGraph2(em);

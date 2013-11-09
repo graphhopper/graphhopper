@@ -27,58 +27,75 @@ public class DAType
     /**
      * The DA object is hold entirely in-memory. Loading and flushing is a no-op. See RAMDataAccess.
      */
-    public static final DAType RAM = new DAType(false, false, false);
+    public static final DAType RAM = new DAType(MemRef.HEAP, false, false);
     /**
      * Optimized RAM DA type for integer access. The set and getBytes methods cannot be used.
      */
-    public static final DAType RAM_INT = new DAType(false, false, true);
+    public static final DAType RAM_INT = new DAType(MemRef.HEAP, false, true);
     /**
      * The DA object is hold entirely in-memory. It will read load disc and flush to it if they
      * equivalent methods are called. See RAMDataAccess.
      */
-    public static final DAType RAM_STORE = new DAType(false, true, false);
+    public static final DAType RAM_STORE = new DAType(MemRef.HEAP, true, false);
     /**
      * Optimized RAM_STORE DA type for integer access. The set and getBytes methods cannot be used.
      */
-    public static final DAType RAM_INT_STORE = new DAType(false, true, true);
+    public static final DAType RAM_INT_STORE = new DAType(MemRef.HEAP, true, true);
     /**
      * Memory mapped DA object. See MMapDataAccess. To make it read and write thread-safe you need
      * to use 'new DAType(MMAP, true)'
      */
-    public static final DAType MMAP = new DAType(true, true, false);
-    private final boolean mmap;
+    public static final DAType MMAP = new DAType(MemRef.MMAP, true, false);
+    /**
+     * Experimental API. Do not use yet.
+     */
+    public static final DAType UNSAFE_STORE = new DAType(MemRef.UNSAFE, true, false);
+
+    public enum MemRef
+    {
+        HEAP, MMAP, UNSAFE /*, DIRECT */
+    };
+    private final MemRef memRef;
     private final boolean storing;
     private final boolean integ;
     private final boolean synched;
 
     public DAType( DAType type, boolean synched )
     {
-        this(type.isMmap(), type.isStoring(), type.isInteg(), synched);
+        this(type.getMemRef(), type.isStoring(), type.isInteg(), synched);
         if (!synched)
             throw new IllegalStateException("constructor can only be used with synched=true");
         if (type.isSynched())
             throw new IllegalStateException("something went wrong as DataAccess object is already synched!?");
     }
 
-    public DAType( boolean mmap, boolean storing, boolean integ, boolean synched )
+    public DAType( MemRef memRef, boolean storing, boolean integ, boolean synched )
     {
-        this.mmap = mmap;
+        this.memRef = memRef;
         this.storing = storing;
         this.integ = integ;
         this.synched = synched;
     }
 
-    public DAType( boolean mmap, boolean store, boolean integ )
+    public DAType( MemRef memRef, boolean store, boolean integ )
     {
-        this(mmap, store, integ, false);
+        this(memRef, store, integ, false);
     }
 
     /**
-     * Memory mapped or purely in memory? default is false
+     * Memory mapped or purely in memory? default is HEAP
      */
-    public boolean isMmap()
+    MemRef getMemRef()
     {
-        return mmap;
+        return memRef;
+    }
+    
+    public boolean isInMemory() {
+        return memRef == MemRef.HEAP;
+    }
+    
+    public boolean isMMap() {
+        return memRef == MemRef.MMAP;
     }
 
     /**
@@ -110,7 +127,14 @@ public class DAType
     @Override
     public String toString()
     {
-        String str = isMmap() ? "MMAP" : "RAM";
+        String str;
+        if (getMemRef() == MemRef.MMAP)
+            str = "MMAP";
+        else if (getMemRef() == MemRef.HEAP)
+            str = "RAM";
+        else
+            str = "UNSAFE";
+
         if (isInteg())
             str += "_INT";
         if (isStoring())
@@ -124,7 +148,7 @@ public class DAType
     public int hashCode()
     {
         int hash = 7;
-        hash = 59 * hash + (this.mmap ? 1 : 0);
+        hash = 59 * hash + 37 * this.memRef.hashCode();
         hash = 59 * hash + (this.storing ? 1 : 0);
         hash = 59 * hash + (this.integ ? 1 : 0);
         hash = 59 * hash + (this.synched ? 1 : 0);
@@ -139,7 +163,7 @@ public class DAType
         if (getClass() != obj.getClass())
             return false;
         final DAType other = (DAType) obj;
-        if (this.mmap != other.mmap)
+        if (this.memRef != other.memRef)
             return false;
         if (this.storing != other.storing)
             return false;

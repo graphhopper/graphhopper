@@ -18,7 +18,7 @@
         </goals>
         <properties>
             <exec.classpathScope>runtime</exec.classpathScope>
-            <exec.args>-classpath %classpath com.graphhopper.util.Measurement graph.location=/media/SAMSUNG/maps/sachsen-gh</exec.args>
+            <exec.args>-classpath %classpath com.graphhopper.util.Measurement config=../config.properties osmreader.osm=europe_germany_berlin.pbf</exec.args>
             <exec.executable>java</exec.executable>
         </properties>
     </action>

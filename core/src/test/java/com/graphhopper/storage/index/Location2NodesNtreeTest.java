@@ -210,7 +210,8 @@ public class Location2NodesNtreeTest extends AbstractLocation2IDIndexTester
         assertEquals(Helper.createTList(64, 64, 64, 4), index.getEntries());
 
         // 10111110111110101010
-        assertEquals("01010101111101111101", BitUtil.toBitString(index.createReverseKey(1.7, 0.099), 20));
+        String str44 = "00000000000000000000000000000000000000000000";
+        assertEquals(str44 + "01010101111101111101", BitUtil.BIG.toBitString(index.createReverseKey(1.7, 0.099)));
     }
 
     @Test

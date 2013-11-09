@@ -29,7 +29,9 @@ public interface EdgeExplorer
     /**
      * This method sets the base node for iteration through neighboring edges.
      * <p/>
-     * @return EdgeIterator around specified baseNode
+     * @return EdgeIterator around specified baseNode. The resulting iterator can be a new instance
+     * or a reused instance returned in a previous call. So be sure you do not use the explorer from
+     * multiple threads or in a nested loop
      */
-    EdgeIterator setBaseNode( int baseNode );       
+    EdgeIterator setBaseNode( int baseNode );
 }

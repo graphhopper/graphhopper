@@ -457,9 +457,9 @@ public class OSMReader
         } else if (nodeType == PILLAR_NODE)
         {
             int tmp = nextPillarId * 4;
-            pillarLats.ensureCapacity(tmp + 4);
+            pillarLats.incCapacity(tmp + 4);
             pillarLats.setInt(tmp, Helper.degreeToInt(lat));
-            pillarLons.ensureCapacity(tmp + 4);
+            pillarLons.incCapacity(tmp + 4);
             pillarLons.setInt(tmp, Helper.degreeToInt(lon));
             getNodeMap().put(node.getId(), nextPillarId + 3);
             nextPillarId++;

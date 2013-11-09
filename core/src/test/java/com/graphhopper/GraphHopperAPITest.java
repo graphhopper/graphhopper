@@ -47,7 +47,7 @@ public class GraphHopperAPITest
         graph.edge(0, 4, 40, true);
         graph.edge(4, 3, 40, true);
 
-        GraphHopperAPI instance = new GraphHopper(graph).setEncodingManager(encodingManager).disableCHShortcuts();
+        GraphHopperAPI instance = new GraphHopper().setEncodingManager(encodingManager).disableCHShortcuts().loadGraph(graph);
         GHResponse ph = instance.route(new GHRequest(42, 10.4, 42, 10));
         assertTrue(ph.isFound());
         assertEquals(80, ph.getDistance(), 1e-6);
@@ -65,21 +65,21 @@ public class GraphHopperAPITest
         GraphHopperAPI instance = new GraphHopper().setEncodingManager(encodingManager).disableCHShortcuts();
         try
         {
-            GHResponse ph = instance.route(new GHRequest(42, 10.4, 42, 10));
+            instance.route(new GHRequest(42, 10.4, 42, 10));
             assertTrue(false);
         } catch (Exception ex)
         {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Load graph before"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Call load or importOrLoad before routing"));
         }
 
         instance = new GraphHopper().setEncodingManager(encodingManager);
         try
         {
-            GHResponse ph = instance.route(new GHRequest(42, 10.4, 42, 10));
+            instance.route(new GHRequest(42, 10.4, 42, 10));
             assertTrue(false);
         } catch (Exception ex)
         {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Load graph before"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Call load or importOrLoad before routing"));
         }
 
     }

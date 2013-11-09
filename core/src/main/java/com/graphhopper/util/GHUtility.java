@@ -24,9 +24,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
@@ -91,9 +89,19 @@ public class GHUtility
         return counter;
     }
 
-    public static List<Integer> getNeighbors( EdgeIterator iter )
+    public static Set<Integer> asSet( int... values )
     {
-        List<Integer> list = new ArrayList<Integer>();
+        Set<Integer> s = new HashSet<Integer>();
+        for (int v : values)
+        {
+            s.add(v);
+        }
+        return s;
+    }
+
+    public static Set<Integer> getNeighbors( EdgeIterator iter )
+    {
+        Set<Integer> list = new HashSet<Integer>();
         while (iter.next())
         {
             list.add(iter.getAdjNode());
@@ -128,7 +136,7 @@ public class GHUtility
         while (iter.next())
         {
             str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
-                    + iter.getEdge() + " \t" + BitUtil.toBitString(iter.getFlags(), 8) + "\n";
+                    + iter.getEdge() + " \t" + BitUtil.BIG.toBitString(iter.getFlags(), 8) + "\n";
         }
         return str;
     }
@@ -141,7 +149,7 @@ public class GHUtility
         {
             str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
                     + iter.fetchWayGeometry(0).getSize() + ", edgeId:" + iter.getEdge()
-                    + "\t" + BitUtil.toBitString(iter.getFlags(), 8) + "\n";
+                    + "\t" + BitUtil.BIG.toBitString(iter.getFlags(), 8) + "\n";
         }
         return str;
     }
@@ -417,7 +425,7 @@ public class GHUtility
      * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if
      * not found.
      */
-    public static EdgeIterator getEdge( Graph graph, int base, int adj )
+    public static EdgeIteratorState getEdge( Graph graph, int base, int adj )
     {
         EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
         while (iter.next())

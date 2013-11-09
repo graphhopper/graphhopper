@@ -43,6 +43,7 @@ public class PrepareRoutingSubnetworks
     private final EdgeFilter edgeFilter;
     private int minNetworkSize = 200;
     private int subNetworks = -1;
+    private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
 
     public PrepareRoutingSubnetworks( Graph g, EncodingManager em )
     {
@@ -66,7 +67,8 @@ public class PrepareRoutingSubnetworks
         int del = removeZeroDegreeNodes();
         Map<Integer, Integer> map = findSubnetworks();
         keepLargeNetworks(map);
-        logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes(" + del + ")");
+        logger.info("optimize to remove subnetworks (" + map.size() + "), zero-degree-nodes (" + del + "), "
+                + "maxEdges/node (" + maxEdgesPerNode.get() + ")");
         g.optimize();
         subNetworks = map.size();
     }
@@ -90,18 +92,32 @@ public class PrepareRoutingSubnetworks
 
             new XFirstSearch()
             {
+                int tmpCounter = 0;
+
                 @Override
-                protected GHBitSet createBitSet( )
+                protected GHBitSet createBitSet()
                 {
                     return bs;
                 }
 
                 @Override
-                protected boolean goFurther( int nodeId )
+                protected final boolean goFurther( int nodeId )
                 {
+                    if (tmpCounter > maxEdgesPerNode.get())
+                        maxEdgesPerNode.set(tmpCounter);
+
+                    tmpCounter = 0;
                     integ.incrementAndGet();
                     return true;
                 }
+
+                @Override
+                protected final boolean checkAdjacent( EdgeIterator iter )
+                {
+                    tmpCounter++;
+                    return true;
+                }
+
             }.start(explorer, start, false);
             map.put(start, integ.get());
             integ.set(0);
@@ -157,7 +173,7 @@ public class PrepareRoutingSubnetworks
         new XFirstSearch()
         {
             @Override
-            protected GHBitSet createBitSet(  )
+            protected GHBitSet createBitSet()
             {
                 return bs;
             }
@@ -167,7 +183,7 @@ public class PrepareRoutingSubnetworks
             {
                 g.markNodeRemoved(nodeId);
                 return super.goFurther(nodeId);
-            }            
+            }
         }.start(explorer, start, true);
     }
 

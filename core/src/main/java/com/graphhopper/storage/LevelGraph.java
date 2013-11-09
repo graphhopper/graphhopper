@@ -33,6 +33,8 @@ public interface LevelGraph extends Graph
 
     int getLevel( int index );
 
+    EdgeSkipExplorer shortcut( int a, int b, double distance, int flags );
+
     @Override
     EdgeSkipExplorer edge( int a, int b, double distance, int flags );
 

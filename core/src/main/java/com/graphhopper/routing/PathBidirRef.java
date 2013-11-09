@@ -71,7 +71,7 @@ public class PathBidirRef extends Path
         if (from != to)
             throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString());        
 
-        sw.start();
+        extractSW.start();
         if (switchWrapper)
         {
             EdgeEntry ee = edgeEntry;
@@ -96,7 +96,7 @@ public class PathBidirRef extends Path
             tmpEdge = currEdge.edge;
         }
         setEndNode(currEdge.endNode);
-        sw.stop();
+        extractSW.stop();
         return setFound(true);
     }
 }

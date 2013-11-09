@@ -28,7 +28,8 @@ import com.graphhopper.util.shapes.CoordTrig;
  * <p/>
  * lat0 lon0 | lat1 lon1 | lat2 lon2
  * <p/>
- * Detailed information is available in this blog post:
+ * This works similar to how BIG endianess works for bytes to int packing. Detailed information is
+ * available in this blog post:
  * http://karussell.wordpress.com/2012/05/23/spatial-keys-memory-efficient-geohashes/
  * <p/>
  * The bits are usable as key for hash tables like our SpatialKeyHashtable or for a spatial tree
@@ -93,7 +94,6 @@ public class SpatialKeyAlgo implements KeyAlgo
 
 //        if ((allBits & 0x1) == 1)
 //            throw new IllegalStateException("allBits needs to be even to use the same amount for lat and lon");
-
         this.allBits = allBits;
         initialBits = 1L << (allBits - 1);
         setWorldBounds();
@@ -172,10 +172,11 @@ public class SpatialKeyAlgo implements KeyAlgo
                 }
             }
             i++;
-            if (i < allBits)            
+
+            if (i < allBits)
                 hash <<= 1;
-             // if allBits is an odd number
             else
+                // if allBits is an odd number
                 break;
 
             if (minLonTmp < maxLonTmp)

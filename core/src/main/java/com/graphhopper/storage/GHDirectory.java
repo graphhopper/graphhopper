@@ -19,6 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
 import java.io.File;
+import java.nio.ByteOrder;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,19 +34,18 @@ public class GHDirectory implements Directory
     protected Map<String, DataAccess> map = new HashMap<String, DataAccess>();
     protected Map<String, DAType> types = new HashMap<String, DAType>();
     protected final String location;
-    private DAType defaultType;
+    private final DAType defaultType;
+    private final ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
 
     public GHDirectory( String _location, DAType defaultType )
     {
         this.defaultType = defaultType;
         if (Helper.isEmpty(_location))
-        {
             _location = new File("").getAbsolutePath();
-        }
+
         if (!_location.endsWith("/"))
-        {
             _location += "/";
-        }
+
         location = _location;
         File dir = new File(location);
         if (dir.exists() && !dir.isDirectory())
@@ -53,7 +53,7 @@ public class GHDirectory implements Directory
 
         // set default access to integer based
         // improves performance on server side, 10% faster for queries, 20% faster for preparation
-        if (!this.defaultType.isMmap())
+        if (this.defaultType.isInMemory())
         {
             if (isStoring())
             {
@@ -68,6 +68,12 @@ public class GHDirectory implements Directory
             }
         }
         mkdirs();
+    }
+
+    @Override
+    public ByteOrder getByteOrder()
+    {
+        return byteOrder;
     }
 
     public Directory put( String name, DAType type )
@@ -98,24 +104,27 @@ public class GHDirectory implements Directory
             return da;
         }
 
-        if (type.isMmap())
-        {
-            da = new MMapDataAccess(name, location);
-        } else
+        if (type.isInMemory())
         {
             if (type.isInteg())
             {
                 if (type.isStoring())
-                    da = new RAMIntDataAccess(name, location, true);
+                    da = new RAMIntDataAccess(name, location, true, byteOrder);
                 else
-                    da = new RAMIntDataAccess(name, location, false);
+                    da = new RAMIntDataAccess(name, location, false, byteOrder);
             } else
             {
                 if (type.isStoring())
-                    da = new RAMDataAccess(name, location, true);
+                    da = new RAMDataAccess(name, location, true, byteOrder);
                 else
-                    da = new RAMDataAccess(name, location, false);
+                    da = new RAMDataAccess(name, location, false, byteOrder);
             }
+        } else if (type.isMMap())
+        {
+            da = new MMapDataAccess(name, location, byteOrder);
+        } else
+        {
+            da = new UnsafeDataAccess(name, location, byteOrder);
         }
 
         if (type.isSynched())

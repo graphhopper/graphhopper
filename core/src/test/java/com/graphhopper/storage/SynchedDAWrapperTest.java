@@ -26,6 +26,6 @@ public class SynchedDAWrapperTest extends DataAccessTest
     @Override
     public DataAccess createDataAccess( String name )
     {
-        return new SynchedDAWrapper(new RAMDataAccess(name, directory, true)).setSegmentSize(128);
+        return new SynchedDAWrapper(new RAMDataAccess(name, directory, true, defaultOrder)).setSegmentSize(128);
     }
 }

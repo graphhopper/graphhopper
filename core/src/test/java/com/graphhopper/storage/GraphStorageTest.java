@@ -37,9 +37,7 @@ public class GraphStorageTest extends AbstractGraphTester
     {
         super.setUp();
         if (gs != null)
-        {
-            gs.close();
-        }
+            gs.close();        
     }
 
     @Override
@@ -66,13 +64,13 @@ public class GraphStorageTest extends AbstractGraphTester
         try
         {
             gs.ensureNodeIndex(123);
-            assertFalse("IllegalStateException should be raised", true);
-        } catch (IllegalStateException ex)
+            assertFalse("AssertionError should be raised", true);
+        } catch (AssertionError err)
         {
             assertTrue(true);
         } catch (Exception ex)
         {
-            assertFalse("IllegalStateException should be raised", true);
+            assertFalse("AssertionError should be raised", true);
         }
     }
 
@@ -119,31 +117,33 @@ public class GraphStorageTest extends AbstractGraphTester
         assertEquals(10, g.getLongitude(0), 1e-2);
         EdgeExplorer explorer = g.createEdgeExplorer(carOutFilter);
         assertEquals(2, GHUtility.count(explorer.setBaseNode(0)));
-        assertEquals(Arrays.asList(1, 2), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(2, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
 
         EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList(1.5, 1, 2, 3), iter.fetchWayGeometry(0));
-        assertEquals(Helper.createPointList(10, 10, 1.5, 1, 2, 3), iter.fetchWayGeometry(1));
-        assertEquals(Helper.createPointList(1.5, 1, 2, 3, 11, 20), iter.fetchWayGeometry(2));
+        assertEquals(Helper.createPointList(3.5, 4.5, 5, 6), iter.fetchWayGeometry(0));
 
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList(3.5, 4.5, 5, 6), iter.fetchWayGeometry(0));
+        assertEquals(Helper.createPointList(1.5, 1, 2, 3), iter.fetchWayGeometry(0));
+        assertEquals(Helper.createPointList(10, 10, 1.5, 1, 2, 3), iter.fetchWayGeometry(1));
+        assertEquals(Helper.createPointList(1.5, 1, 2, 3, 11, 20), iter.fetchWayGeometry(2));        
 
         assertEquals(11, g.getLatitude(1), 1e-2);
         assertEquals(20, g.getLongitude(1), 1e-2);
         assertEquals(2, GHUtility.count(explorer.setBaseNode(1)));
-        assertEquals(Arrays.asList(0, 2), GHUtility.getNeighbors(explorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
 
         assertEquals(12, g.getLatitude(2), 1e-2);
         assertEquals(12, g.getLongitude(2), 1e-2);
         assertEquals(1, GHUtility.count(explorer.setBaseNode(2)));
-        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
+
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
         
-        iter = GHUtility.getEdge(g, 1, 2);
-        assertEquals(Helper.createPointList(), iter.fetchWayGeometry(0));
-        assertEquals(Helper.createPointList(11, 20), iter.fetchWayGeometry(1));
-        assertEquals(Helper.createPointList(12, 12), iter.fetchWayGeometry(2));
+        EdgeIteratorState eib = GHUtility.getEdge(g, 1, 2);
+        assertEquals(Helper.createPointList(), eib.fetchWayGeometry(0));
+        assertEquals(Helper.createPointList(11, 20), eib.fetchWayGeometry(1));
+        assertEquals(Helper.createPointList(12, 12), eib.fetchWayGeometry(2));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
     }
 
     @Test
@@ -151,18 +151,25 @@ public class GraphStorageTest extends AbstractGraphTester
     {
         gs = (GraphStorage) createGraph();
         EdgeIterator iter0 = gs.edge(0, 1, 10, true);
-        EdgeIterator iter1 = gs.edge(1, 2, 10, true);
-        gs.edge(0, 3, 10, true);
+        EdgeIterator iter2 = gs.edge(1, 2, 10, true);
+        EdgeIterator iter3 = gs.edge(0, 3, 10, true);
 
         EdgeExplorer explorer = gs.createEdgeExplorer();
 
-        assertEquals(Arrays.asList(1, 3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
-        assertEquals(Arrays.asList(0, 2), GHUtility.getNeighbors(explorer.setBaseNode(1)));
-        // remove edge "1-2" but only from 1
-        gs.internalEdgeDisconnect(iter1.getEdge(), (long) iter0.getEdge() * gs.edgeEntryBytes, iter1.getBaseNode(), iter1.getAdjNode());
-        assertEquals(Arrays.asList(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
+        // remove edge "1-2" but only from 1 not from 2
+        gs.internalEdgeDisconnect(iter2.getEdge(), -1, iter2.getBaseNode(), iter2.getAdjNode());
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(1), GHUtility.getNeighbors(explorer.setBaseNode(2)));
         // let 0 unchanged -> no side effects
-        assertEquals(Arrays.asList(1, 3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+
+        // remove edge "0-1" but only from 0
+        gs.internalEdgeDisconnect(iter0.getEdge(), (long) iter3.getEdge() * gs.edgeEntryBytes, iter0.getBaseNode(), iter0.getAdjNode());
+        assertEquals(GHUtility.asSet(3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(3)));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
     }
 
     @Test
@@ -207,10 +214,11 @@ public class GraphStorageTest extends AbstractGraphTester
 
         iter.next();
         EdgeIteratorState iter2 = iter.detach();
-        assertEquals(1, iter.getAdjNode());
-        assertEquals(1, iter2.getAdjNode());
-        iter.next();
         assertEquals(2, iter.getAdjNode());
-        assertEquals(1, iter2.getAdjNode());
+        assertEquals(2, iter2.getAdjNode());
+        
+        iter.next();
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(2, iter2.getAdjNode());     
     }
 }

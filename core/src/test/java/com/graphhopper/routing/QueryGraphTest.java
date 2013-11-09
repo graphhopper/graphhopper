@@ -192,7 +192,7 @@ public class QueryGraphTest
         Graph g = new GraphStorage(new RAMDirectory(), encodingManager).create(100);
         initGraph(g);
 
-        EdgeIterator iter = GHUtility.getEdge(g, 0, 2);
+        EdgeIteratorState iter = GHUtility.getEdge(g, 0, 2);
         LocationIDResult res1 = createLocationResult(0.5, 0, iter, 0, EDGE);
         iter = GHUtility.getEdge(g, 1, 0);
         LocationIDResult res2 = createLocationResult(1.5, 2, iter, 0, EDGE);

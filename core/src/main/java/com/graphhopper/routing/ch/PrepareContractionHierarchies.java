@@ -25,6 +25,12 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.ShortestCalc;
 import com.graphhopper.routing.util.WeightCalculation;
+import com.graphhopper.routing.AStarBidirection;
+import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.DijkstraOneToMany;
+import com.graphhopper.routing.PathBidirRef;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
@@ -69,7 +75,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private int scOneDir;
     private int scBothDir;
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
-    private LevelEdgeFilterCH levelEdgeFilter;
+    private IgnoreNodeFilter levelEdgeFilter;
     private DijkstraOneToMany algo;
     private boolean removesHigher2LowerEdges = true;
     private long counter;
@@ -452,10 +458,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
                 double existingDirectWeight, EdgeIterator outgoingEdges,
                 int skippedEdge1, int incomingEdgeOrigCount )
         {
-
             // FOUND shortcut 
             // but be sure that it is the only shortcut in the collection 
-            // and also in the graph for u->w. If existing AND identical length => update flags.
+            // and also in the graph for u->w. If existing AND identical weight => update flags.
             // Hint: shortcuts are always one-way due to distinct level of every node but we don't
             // know yet the levels so we need to determine the correct direction or if both directions
             // minor improvement: if (shortcuts.containsKey(sc) 
@@ -580,10 +585,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
                 // compare end node as the limit could force dijkstra to finish earlier
                 if (endNode == w_toNode && algo.getWeight(endNode) <= existingDirectWeight)
-                // FOUND witness path, so do not add shortcut
-                {
+                    // FOUND witness path, so do not add shortcut                
                     continue;
-                }
 
                 sch.foundShortcut(u_fromNode, w_toNode, existingDirectWeight,
                         outgoingEdges, skippedEdge1, incomingEdgeOrigCount);
@@ -628,7 +631,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
 
             if (!updatedInGraph)
             {
-                iter = g.edge(sc.from, sc.to, sc.distance, sc.flags);
+                iter = g.shortcut(sc.from, sc.to, sc.distance, sc.flags);
                 iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                 setOrigEdgeCount(iter.getEdge(), sc.originalEdges);
                 tmpNewShortcuts++;
@@ -645,7 +648,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         vehicleAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
         vehicleAllTmpExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
         calcPrioAllExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(prepareEncoder, true, true));
-        levelEdgeFilter = new LevelEdgeFilterCH(g);
+        levelEdgeFilter = new IgnoreNodeFilter(g);
         sortedNodes = new GHTreeMapComposed();
         refs = new PriorityNode[g.getNodes()];
         algo = new DijkstraOneToMany(g, prepareEncoder, shortestCalc);
@@ -657,17 +660,17 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         return newShortcuts;
     }
 
-    static class LevelEdgeFilterCH extends LevelEdgeFilter
+    static class IgnoreNodeFilter implements EdgeFilter
     {
         int avoidNode;
-        LevelGraph g;
+        LevelGraph graph;
 
-        public LevelEdgeFilterCH( LevelGraph g )
+        public IgnoreNodeFilter( LevelGraph g )
         {
-            super(g);
+            this.graph = g;
         }
 
-        public LevelEdgeFilterCH setAvoidNode( int node )
+        public IgnoreNodeFilter setAvoidNode( int node )
         {
             this.avoidNode = node;
             return this;
@@ -676,9 +679,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         @Override
         public final boolean accept( EdgeIteratorState iter )
         {
-            if (!super.accept(iter))
-                return false;
-
             // ignore if it is skipNode or a endNode already contracted
             int node = iter.getAdjNode();
             return avoidNode != node && graph.getLevel(node) == 0;
@@ -688,14 +688,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     private void setOrigEdgeCount( int index, int value )
     {
         long tmp = (long) index * 4;
-        originalEdges.ensureCapacity(tmp + 4);
+        originalEdges.incCapacity(tmp + 4);
         originalEdges.setInt(tmp, value);
     }
 
     private int getOrigEdgeCount( int index )
     {
         long tmp = (long) index * 4;
-        originalEdges.ensureCapacity(tmp + 4);
+        originalEdges.incCapacity(tmp + 4);
         return originalEdges.getInt(tmp);
     }
 
@@ -704,7 +704,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
     {
         checkGraph();
         // do not change weight within DijkstraBidirectionRef => so use ShortestCalc
-        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g, prepareEncoder, shortestCalc)
+        DijkstraBidirectionRef dijkstrabi = new DijkstraBidirectionRef(g, prepareEncoder, shortestCalc)
         {
             @Override
             protected void initCollections( int nodes )
@@ -754,9 +754,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
         };
 
         if (!removesHigher2LowerEdges)
-            dijkstra.setEdgeFilter(new LevelEdgeFilter(g));
+            dijkstrabi.setEdgeFilter(new LevelEdgeFilter(g));
 
-        return dijkstra;
+        return dijkstrabi;
     }
 
     public AStarBidirection createAStar()

@@ -181,6 +181,21 @@ function initMap() {
         subdomains: ['otile1','otile2','otile3','otile4']
     });
     
+    var thunderTransport = L.tileLayer('http://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png', {
+        attribution: '<a href="http://www.thunderforest.com/transport/">Thunderforest Transport</a>,' + moreAttr, 
+        subdomains: ['a','b','c']
+    });
+    
+    var thunderCycle = L.tileLayer('http://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png', {
+        attribution: '<a href="http://www.thunderforest.com/opencyclemap/">Thunderforest Cycle</a>,' + moreAttr, 
+        subdomains: ['a','b','c']
+    });
+    
+    var thunderOutdoors = L.tileLayer('http://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png', {
+        attribution: '<a href="http://www.thunderforest.com/outdoors/">Thunderforest Outdoors</a>,' + moreAttr, 
+        subdomains: ['a','b','c']
+    });
+    
     //    var mapbox = L.tileLayer('http://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png', {
     //        attribution: '<a href="http://www.mapbox.com">MapBox</a>,' + moreAttr, 
     //        subdomains: ['a','b','c']
@@ -220,6 +235,9 @@ function initMap() {
     var baseMaps = {
         "MapQuest": mapquest,        
         "MapQuest Aerial": mapquestAerial,
+        "TF Transport": thunderTransport,
+        "TF Cycle": thunderCycle,
+        "TF Outdoors": thunderOutdoors,
         // didn't found a usage policy for this "Apple": apple,
         "WanderReitKarte": wrk,
         "Cloudmade": cloudmade,
