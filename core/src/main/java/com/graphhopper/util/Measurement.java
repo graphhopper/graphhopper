@@ -54,6 +54,27 @@ public class Measurement
     private long seed;
     private int maxNode;
 
+    class MeasureHopper extends GraphHopper
+    {
+        @Override
+        protected void prepare()
+        {
+            // do nothing as we need normal graph first. in second step do it explicitely
+        }
+
+        @Override
+        protected void ensureNotLoaded()
+        {
+            // skip check. we know what we are doing
+        }
+
+        public void doPostProcessing()
+        {
+            initCHPrepare();
+            super.prepare();
+        }
+    }
+
     // creates properties file in the format key=value
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
     void start( CmdArgs args )
@@ -73,14 +94,8 @@ public class Measurement
         String gitCommit = args.get("measurement.gitinfo", "");
         int count = args.getInt("measurement.count", 5000);
 
-        GraphHopper hopper = new GraphHopper()
-        {
-            @Override
-            protected void prepare()
-            {
-                // do nothing
-            }
-        }.forDesktop().setEnableInstructions(false);
+        MeasureHopper hopper = new MeasureHopper();
+        hopper.forDesktop().setEnableInstructions(false);
         if (!hopper.load(graphLocation))
             throw new IllegalStateException("Cannot load existing levelgraph at " + graphLocation);
 
@@ -95,7 +110,7 @@ public class Measurement
         try
         {
             maxNode = g.getNodes();
-            printGraphDetails(g);
+            printGraphDetails(g);            
             printLocation2IDQuery(g, hopper.getLocationIndex(), count);
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
@@ -105,10 +120,9 @@ public class Measurement
 
             System.gc();
 
-            // route via CH. do preparation before
-            PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(vehicle, type).setGraph(g);
-            printPreparationDetails(g, prepare);
+            // route via CH. do preparation before                        
             hopper.setCHShortcuts("fastest");
+            hopper.doPostProcessing();
             printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr);
             logger.info("store into " + propLocation);
         } catch (Exception ex)
@@ -167,7 +181,7 @@ public class Measurement
             {
                 double lat = rand.nextDouble() * latDelta + bbox.minLat;
                 double lon = rand.nextDouble() * lonDelta + bbox.minLon;
-                int val = idx.findID(lat, lon);
+                int val = idx.findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
 //                if (!warmup && val >= 0)
 //                    list.add(val);
 
@@ -210,14 +224,20 @@ public class Measurement
                 if (!warmup)
                 {
                     long dist = (long) res.getDistance();
+                    if (dist < 1)
+                    {
+                        failedCount.incrementAndGet();
+                        return 0;
+                    }
+
                     distSum.addAndGet(dist);
-                    
+
                     if (dist > maxDistance.get())
                         maxDistance.set(dist);
 
                     if (dist < minDistance.get())
                         minDistance.set(dist);
-                                        
+
 //                    extractTimeSum.addAndGet(p.getExtractTime());                    
 //                    long start = System.nanoTime();
 //                    size = p.calcPoints().getSize();
@@ -226,8 +246,10 @@ public class Measurement
 
                 return res.getPoints().getSize();
             }
-        }.setIterations(count).start();                    
-        
+        }.setIterations(count).start();
+
+        count -= failedCount.get();
+        put(prefix + ".failedCount", failedCount.get());
         put(prefix + ".distanceMin", minDistance.get());
         put(prefix + ".distanceMean", (float) distSum.get() / count);
         put(prefix + ".distanceMax", maxDistance.get());
@@ -235,7 +257,6 @@ public class Measurement
 //        put(prefix + ".extractTime", (float) extractTimeSum.get() / count / 1000000f);
 //        put(prefix + ".calcPointsTime", (float) calcPointsTimeSum.get() / count / 1000000f);
 //        put(prefix + ".calcDistTime", (float) calcDistTimeSum.get() / count / 1000000f);
-
         print(prefix, miniPerf);
     }
 

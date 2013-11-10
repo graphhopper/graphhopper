@@ -33,7 +33,7 @@ import com.graphhopper.util.EdgeSkipIterator;
  */
 public class Path4CH extends PathBidirRef
 {
-    private WeightCalculation calc;
+    private final WeightCalculation calc;
 
     public Path4CH( Graph g, FlagEncoder encoder, WeightCalculation calc )
     {

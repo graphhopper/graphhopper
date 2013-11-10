@@ -465,7 +465,7 @@ public class GraphHopper implements GraphHopperAPI
                 setWayPointMaxDistance(wayPointMaxDistance).
                 setEnableInstructions(enableInstructions);
         logger.info("using " + graph.toString() + ", memory:" + Helper.getMemInfo());
-        reader.doOSM2Graph(osmTmpFile);               
+        reader.doOSM2Graph(osmTmpFile);
         return reader;
     }
 
@@ -530,21 +530,24 @@ public class GraphHopper implements GraphHopperAPI
     {
         encodingManager = graph.getEncodingManager();
         if (chEnabled)
-        {
-            FlagEncoder encoder = encodingManager.getSingle();
-            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
-                    createType(chType, encoder));
-            tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
-                    setLazyUpdates(lazyUpdates).
-                    setNeighborUpdates(neighborUpdates);
-
-            prepare = tmpPrepareCH;
-            prepare.setGraph(graph);
-        }
+            initCHPrepare();
 
         if (!"true".equals(graph.getProperties().get("prepare.done")))
             prepare();
         initLocationIndex();
+    }
+
+    protected void initCHPrepare()
+    {
+        FlagEncoder encoder = encodingManager.getSingle();
+        PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(encoder,
+                createType(chType, encoder));
+        tmpPrepareCH.setPeriodicUpdates(periodicUpdates).
+                setLazyUpdates(lazyUpdates).
+                setNeighborUpdates(neighborUpdates);
+
+        prepare = tmpPrepareCH;
+        prepare.setGraph(graph);
     }
 
     protected WeightCalculation createType( String type, FlagEncoder encoder )
@@ -573,10 +576,10 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         FlagEncoder encoder = encodingManager.getEncoder(request.getVehicle());
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);        
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         LocationIDResult fromRes = locationIndex.findClosest(request.getFrom().lat, request.getFrom().lon, edgeFilter);
-        LocationIDResult toRes = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);       
-        
+        LocationIDResult toRes = locationIndex.findClosest(request.getTo().lat, request.getTo().lon, edgeFilter);
+
         String debug = "idLookup:" + sw.stop().getSeconds() + "s";
 
         if (!fromRes.isValid())
@@ -707,17 +710,16 @@ public class GraphHopper implements GraphHopperAPI
     protected void prepare()
     {
         boolean tmpPrepare = doPrepare && prepare != null;
-        graph.getProperties().put("prepare.done", tmpPrepare);
         if (tmpPrepare)
         {
             if (prepare instanceof PrepareContractionHierarchies && encodingManager.getVehicleCount() > 1)
-            {
                 throw new IllegalArgumentException("Contraction hierarchies preparation "
                         + "requires (at the moment) only one vehicle. But was:" + encodingManager);
-            }
+
             logger.info("calling prepare.doWork ... (" + Helper.getMemInfo() + ")");
             prepare.doWork();
         }
+        graph.getProperties().put("prepare.done", tmpPrepare);
     }
 
     protected void cleanUp()
@@ -753,7 +755,7 @@ public class GraphHopper implements GraphHopperAPI
             locationIndex.close();
     }
 
-    private void ensureNotLoaded()
+    protected void ensureNotLoaded()
     {
         if (fullyLoaded)
             throw new IllegalStateException("No configuration changes are possible after loading the graph");

@@ -99,7 +99,7 @@ public class QueryGraph implements Graph
             if (base > closestEdge.getAdjNode())
             {
                 EdgeIteratorState reverseEdge = mainGraph.getEdgeProps(closestEdge.getEdge(), base);
-                // #111 reverse edge can be null as long as we disconnect real edges too
+                // #111 reverse edge can be null if real edges are disconnected while CH-prepare
                 if (reverseEdge != null)
                 {
                     closestEdge = reverseEdge;
@@ -144,6 +144,8 @@ public class QueryGraph implements Graph
                 // we can expect at least one entry in the results
                 EdgeIteratorState closestEdge = results.get(0).getClosestEdge();
                 final PointList fullPL = closestEdge.fetchWayGeometry(3);
+                int baseNode = closestEdge.getBaseNode();
+                final EdgeIteratorState reverseState = mainGraph.getEdgeProps(closestEdge.getEdge(), baseNode);
                 // sort results on the same edge by the wayIndex and if equal by distance to pillar node
                 Collections.sort(results, new Comparator<LocationIDResult>()
                 {
@@ -161,8 +163,8 @@ public class QueryGraph implements Graph
 
                             double fromLat = fullPL.getLatitude(o1.getWayIndex());
                             double fromLon = fullPL.getLongitude(o1.getWayIndex());
-                            if (distCalc.calcNormalizedDist(fromLat, fromLon, p1.lat, p1.lat)
-                                    > distCalc.calcNormalizedDist(fromLat, fromLon, p2.lat, p2.lat))
+                            if (distCalc.calcNormalizedDist(fromLat, fromLon, p1.lat, p1.lon)
+                                    > distCalc.calcNormalizedDist(fromLat, fromLon, p2.lat, p2.lon))
                                 return 1;
                             return -1;
                         }
@@ -171,9 +173,7 @@ public class QueryGraph implements Graph
                 });
 
                 GHPoint prevPoint = fullPL.toGHPoint(0);
-                int baseNode = closestEdge.getBaseNode();
                 int adjNode = closestEdge.getAdjNode();
-                EdgeIteratorState reverseState = mainGraph.getEdgeProps(closestEdge.getEdge(), baseNode);
                 int reverseFlags = 0;
                 // #111 avoid this
                 if (reverseState != null)
@@ -223,7 +223,8 @@ public class QueryGraph implements Graph
     }
 
     private void createEdges( GHPoint prevSnapped, int prevWayIndex, GHPoint currSnapped, int wayIndex,
-            boolean onEdge, PointList fullPL, EdgeIteratorState closestEdge, int prevNodeId, int nodeId, int swappedFlags )
+            boolean onEdge, PointList fullPL, EdgeIteratorState closestEdge,
+            int prevNodeId, int nodeId, int swappedFlags )
     {
         int max = wayIndex + 1;
         PointList basePoints = new PointList(max - prevWayIndex + 1);

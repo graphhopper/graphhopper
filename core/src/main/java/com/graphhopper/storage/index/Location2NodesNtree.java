@@ -703,10 +703,7 @@ public class Location2NodesNtree implements Location2IDIndex
                                 tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                                         tmpLat, tmpLon, wayLat, wayLon);
                                 check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge, pos);
-                            }
-                            // small TODO in theory we could replace "if" with "else if" but validEdgeDistance is too greedy sometimes
-                            // see DistanceCalcTest.testPrecisionBug
-                            if (pointIndex + 1 == len)
+                            } else if (pointIndex + 1 == len)
                             {
                                 tmpNormedDist = adjDist;
                                 pos = LocationIDResult.Position.TOWER;

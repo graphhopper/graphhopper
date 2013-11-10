@@ -105,7 +105,7 @@ $(document).ready(function(e) {
 //        var tempFeature = {
 //            "type": "Feature", "geometry": { "type": "LineString", "coordinates": data }
 //        };        
-//        routingLayer.addData(tempFeature);  
+//        routingLayer.addData(tempFeature);
         
         // execute query
         initFromParams(urlParams, true);        

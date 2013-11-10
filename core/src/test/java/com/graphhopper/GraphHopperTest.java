@@ -110,8 +110,8 @@ public class GraphHopperTest
         assertTrue(res.isFound());
         assertEquals(2, res.getPoints().getSize());
         // => found a point on edge A-B        
-        assertEquals(11.687, res.getPoints().getLatitude(1), 1e-3);
-        assertEquals(50.652, res.getPoints().getLongitude(1), 1e-3);
+        assertEquals(11.680, res.getPoints().getLatitude(1), 1e-3);
+        assertEquals(50.644, res.getPoints().getLongitude(1), 1e-3);
 
         // A to E only for foot
         res = instance.route(new GHRequest(11.1, 50, 10, 51).setVehicle(EncodingManager.FOOT));

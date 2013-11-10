@@ -157,6 +157,8 @@ public class LocationIDResult
      */
     public void calcSnappedPoint( DistanceCalc distCalc )
     {
+        if (closestEdge == null)
+            throw new IllegalStateException("No closest edge?");
         if (snappedPoint != null)
             throw new IllegalStateException("Calculate snapped point only once");
 

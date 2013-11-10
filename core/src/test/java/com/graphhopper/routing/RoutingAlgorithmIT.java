@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.PrinctonReader;
@@ -83,6 +81,26 @@ public class RoutingAlgorithmIT
     {
         runAlgo(testCollector, "files/monaco.osm.gz", "target/graph-monaco",
                 createMonacoCar(), "CAR", true, "CAR", "shortest");
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testMoscow()
+    {
+        // extracted via ./graphhopper.sh extract "37.582641,55.805261,37.626929,55.824455"
+
+        List<OneRun> list = new ArrayList<OneRun>();
+        // choose perpendicular
+        // http://localhost:8989/?point=55.818994%2C37.595354&point=55.819175%2C37.596931
+        list.add(new OneRun(55.818994, 37.595354, 55.819175, 37.596931, 1052, 14));
+        // should choose the closest road not the other one (opposite direction)
+        // http://localhost:8989/?point=55.818898%2C37.59661&point=55.819066%2C37.596374
+        list.add(new OneRun(55.818898, 37.59661, 55.819066, 37.596374, 24, 2));
+        // respect one way!
+        // http://localhost:8989/?point=55.819066%2C37.596374&point=55.818898%2C37.59661
+        list.add(new OneRun(55.819066, 37.596374, 55.818898, 37.59661, 1114, 23));
+        runAlgo(testCollector, "files/moscow.osm.gz", "target/graph-moscow",
+                list, "CAR", true, "CAR", "fastest");
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -171,7 +189,7 @@ public class RoutingAlgorithmIT
     public void testAndorraFoot()
     {
         List<OneRun> list = createAndorra();
-        list.get(0).dist = 16362;
+        list.get(0).dist = 16354;
         list.get(0).locs = 523;
         list.get(1).dist = 12704;
         list.get(1).locs = 404;
@@ -215,7 +233,7 @@ public class RoutingAlgorithmIT
             WeightCalculation weightCalc = new ShortestCalc();
             if ("fastest".equalsIgnoreCase(weightCalcStr))
                 weightCalc = new FastestCalc(encoder);
-            
+
             Collection<Entry<AlgorithmPreparation, Location2IDIndex>> prepares = RoutingAlgorithmSpecialAreaTests.
                     createAlgos(hopper.getGraph(), hopper.getLocationIndex(), encoder, ch, weightCalc, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);

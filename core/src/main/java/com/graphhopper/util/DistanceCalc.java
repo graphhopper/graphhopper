@@ -18,7 +18,6 @@
 package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.CoordTrig;
 import com.graphhopper.util.shapes.GHPoint;
 import static java.lang.Math.*;
 
@@ -127,94 +126,104 @@ public class DistanceCalc
      * <p/>
      * @return the distance in normalized meter
      */
-    public double calcNormalizedEdgeDistance( double r_lat, double r_lon,
-            double a_lat, double a_lon,
-            double b_lat, double b_lon )
+    public double calcNormalizedEdgeDistance( double r_lat_deg, double r_lon_deg,
+            double a_lat_deg, double a_lon_deg,
+            double b_lat_deg, double b_lon_deg )
     {
-        // x <=> lon
-        // y <=> lat
-        double delta_lat = a_lat - b_lat;
-        if (delta_lat == 0)
-            // special case: horizontal edge
-            return calcNormalizedDist(a_lat, r_lon, r_lat, r_lon);
-
-        double delta_lon = a_lon - b_lon;
-        if (delta_lon == 0)
-            // special case: vertical edge        
-            return calcNormalizedDist(r_lat, a_lon, r_lat, r_lon);
-
-        double m = delta_lat / delta_lon;
-        double n = a_lat - m * a_lon;
-        double m_i = 1 / m;
-        double n_s = r_lat + m_i * r_lon;
-        // line g should cross c => c=(c_x,c_y)
-        // m + m_i cannot get 0
-        double c_lon = (n_s - n) / (m + m_i);
-        double c_lat = m * c_lon + n;
-        return calcNormalizedDist(r_lat, r_lon, c_lat, c_lon);
+        return calcNormalizedEdgeDistanceNew(r_lat_deg, r_lon_deg, a_lat_deg, a_lon_deg, b_lat_deg, b_lon_deg, false);
     }
 
     /**
      * New edge distance calculation where no validEdgeDistance check would be necessary
+     * <p>
      * @return the normalized distance of the query point "r" to the project point "c" onto the line
      * segment a-b
      */
-    public double calcNormalizedEdgeDistanceNew( double r_lat, double r_lon,
-            double a_lat, double a_lon,
-            double b_lat, double b_lon )
+    public double calcNormalizedEdgeDistanceNew( double r_lat_deg, double r_lon_deg,
+            double a_lat_deg, double a_lon_deg,
+            double b_lat_deg, double b_lon_deg, boolean reduceToSegment )
     {
+        double shrink_factor = cos((toRadians(a_lat_deg) + toRadians(b_lat_deg)) / 2);
+        double a_lat = a_lat_deg;
+        double a_lon = a_lon_deg * shrink_factor;
+
+        double b_lat = b_lat_deg;
+        double b_lon = b_lon_deg * shrink_factor;
+
+        double r_lat = r_lat_deg;
+        double r_lon = r_lon_deg * shrink_factor;
+
         double delta_lon = b_lon - a_lon;
         double delta_lat = b_lat - a_lat;
 
         if (delta_lat == 0)
             // special case: horizontal edge
-            return calcNormalizedDist(a_lat, r_lon, r_lat, r_lon);
+            return calcNormalizedDist(a_lat_deg, r_lon_deg, r_lat_deg, r_lon_deg);
 
         if (delta_lon == 0)
             // special case: vertical edge        
-            return calcNormalizedDist(r_lat, a_lon, r_lat, r_lon);
+            return calcNormalizedDist(r_lat_deg, a_lon_deg, r_lat_deg, r_lon_deg);
 
         double norm = delta_lon * delta_lon + delta_lat * delta_lat;
         double factor = ((r_lon - a_lon) * delta_lon + (r_lat - a_lat) * delta_lat) / norm;
 
-        if (factor > 1 )
-            factor = 1;
-        else if (factor < 0)
-            factor = 0;
-
+        // make new calculation compatible to old
+        if (reduceToSegment)
+        {
+            if (factor > 1)
+                factor = 1;
+            else if (factor < 0)
+                factor = 0;
+        }
         // x,y is projection of r onto segment a-b
         double c_lon = a_lon + factor * delta_lon;
         double c_lat = a_lat + factor * delta_lat;
-        return calcNormalizedDist(c_lat, c_lon, r_lat, r_lon);
+        return calcNormalizedDist(c_lat, c_lon / shrink_factor, r_lat_deg, r_lon_deg);
     }
 
     /**
      * @return the crossing point c of the vertical line from r to line (a, b)
      */
-    public GHPoint calcCrossingPointToEdge( double r_lat, double r_lon,
-            double a_lat, double a_lon,
-            double b_lat, double b_lon )
+    public GHPoint calcCrossingPointToEdge( double r_lat_deg, double r_lon_deg,
+            double a_lat_deg, double a_lon_deg,
+            double b_lat_deg, double b_lon_deg )
     {
+        double shrink_factor = cos((toRadians(a_lat_deg) + toRadians(b_lat_deg)) / 2);
+        double a_lat = a_lat_deg;
+        double a_lon = a_lon_deg * shrink_factor;
+
+        double b_lat = b_lat_deg;
+        double b_lon = b_lon_deg * shrink_factor;
+
+        double r_lat = r_lat_deg;
+        double r_lon = r_lon_deg * shrink_factor;
+
         double delta_lon = b_lon - a_lon;
         double delta_lat = b_lat - a_lat;
 
         if (delta_lat == 0)
             // special case: horizontal edge
-            return new GHPoint(a_lat, r_lon);
+            return new GHPoint(a_lat_deg, r_lon_deg);
 
         if (delta_lon == 0)
             // special case: vertical edge        
-            return new GHPoint(r_lat, a_lon);
+            return new GHPoint(r_lat_deg, a_lon_deg);
 
-        double m = delta_lat / delta_lon;
-        double n = a_lat - m * a_lon;
-        double m_i = 1 / m;
-        double n_s = r_lat + m_i * r_lon;
-        // line g should cross c => c=(c_x,c_y)
-        // m + m_i cannot get 0
-        double c_x = (n_s - n) / (m + m_i);
-        double c_y = m * c_x + n;
-        return new GHPoint(c_y, c_x);
+        double norm = delta_lon * delta_lon + delta_lat * delta_lat;
+        double factor = ((r_lon - a_lon) * delta_lon + (r_lat - a_lat) * delta_lat) / norm;
+
+        if (false)
+        {
+            if (factor > 1)
+                factor = 1;
+            else if (factor < 0)
+                factor = 0;
+        }
+
+        // x,y is projection of r onto segment a-b
+        double c_lon = a_lon + factor * delta_lon;
+        double c_lat = a_lat + factor * delta_lat;
+        return new GHPoint(c_lat, c_lon / shrink_factor);
     }
 
     /**
@@ -232,10 +241,20 @@ public class DistanceCalc
     // r
     //  .
     //    a-------b
-    public boolean validEdgeDistance( double r_lat, double r_lon,
-            double a_lat, double a_lon,
-            double b_lat, double b_lon )
+    public boolean validEdgeDistance( double r_lat_deg, double r_lon_deg,
+            double a_lat_deg, double a_lon_deg,
+            double b_lat_deg, double b_lon_deg )
     {
+        double factor = cos((toRadians(a_lat_deg) + toRadians(b_lat_deg)) / 2);
+        double a_lat = a_lat_deg;
+        double a_lon = a_lon_deg * factor;
+
+        double b_lat = b_lat_deg;
+        double b_lon = b_lon_deg * factor;
+
+        double r_lat = r_lat_deg;
+        double r_lon = r_lon_deg * factor;
+
         double ar_x = r_lon - a_lon;
         double ar_y = r_lat - a_lat;
         double ab_x = b_lon - a_lon;

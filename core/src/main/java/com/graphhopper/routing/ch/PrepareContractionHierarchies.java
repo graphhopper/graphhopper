@@ -751,6 +751,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             {
                 return "dijkstrabiCH";
             }
+
+            @Override
+            public String toString()
+            {
+                return getName() + "|" + prepareWeightCalc;
+            }
         };
 
         if (!removesHigher2LowerEdges)
@@ -809,6 +815,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation<Prepa
             public String getName()
             {
                 return "astarbiCH";
+            }
+
+            @Override
+            public String toString()
+            {
+                return getName() + "|" + prepareWeightCalc;
             }
         };
 

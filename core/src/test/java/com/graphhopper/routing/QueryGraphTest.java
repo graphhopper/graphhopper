@@ -106,7 +106,7 @@ public class QueryGraphTest
         queryGraph = new QueryGraph(g);
         res = createLocationResult(1.5, 2, iter, 0, EDGE);
         queryGraph.lookup(Arrays.asList(res));
-        assertEquals(new GHPoint(1.3, 1.9), res.getSnappedPoint());
+        assertEquals(new GHPoint(1.300019, 1.899962), res.getSnappedPoint());
         assertEquals(3, res.getClosestNode());
         assertEquals(4, getPoints(queryGraph, 0, 3).getSize());
         assertEquals(2, getPoints(queryGraph, 3, 1).getSize());
@@ -159,14 +159,42 @@ public class QueryGraphTest
         LocationIDResult res2 = createLocationResult(1.5, 2, iter, 0, EDGE);
         queryGraph = new QueryGraph(g);
         queryGraph.lookup(Arrays.asList(res1, res2));
-        assertEquals(new GHPoint(1.3, 1.9), res2.getSnappedPoint());
         assertEquals(4, res2.getClosestNode());
+        assertEquals(new GHPoint(1.300019, 1.899962), res2.getSnappedPoint());
+        assertEquals(3, res1.getClosestNode());
+        assertEquals(new GHPoint(1.5, 1.5), res1.getSnappedPoint());
+
+        assertEquals(3, getPoints(queryGraph, 3, 0).getSize());
         assertEquals(2, getPoints(queryGraph, 3, 4).getSize());
         assertEquals(2, getPoints(queryGraph, 4, 1).getSize());
+        assertNull(GHUtility.getEdge(queryGraph, 4, 0));
         assertNull(GHUtility.getEdge(queryGraph, 3, 1));
+    }
 
-        edge = GHUtility.getEdge(queryGraph, 0, 3);
-        assertEquals(3, edge.fetchWayGeometry(3).getSize());
+    @Test
+    public void testOneWay()
+    {
+        EncodingManager encodingManager = new EncodingManager("CAR");
+        Graph g = new GraphStorage(new RAMDirectory(), encodingManager).create(100);
+        g.setNode(0, 0, 0);
+        g.setNode(1, 0, 1);
+        g.edge(0, 1, 10, false);
+
+        EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
+        LocationIDResult res1 = createLocationResult(0.1, 0.1, edge, 0, EDGE);
+        LocationIDResult res2 = createLocationResult(0.1, 0.9, edge, 0, EDGE);
+        QueryGraph queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Arrays.asList(res2, res1));
+        assertEquals(2, res1.getClosestNode());
+        assertEquals(new GHPoint(0, 0.1), res1.getSnappedPoint());
+        assertEquals(3, res2.getClosestNode());
+        assertEquals(new GHPoint(0, 0.9), res2.getSnappedPoint());
+
+        assertEquals(2, getPoints(queryGraph, 0, 2).getSize());
+        assertEquals(2, getPoints(queryGraph, 2, 3).getSize());
+        assertEquals(2, getPoints(queryGraph, 3, 1).getSize());
+        assertNull(GHUtility.getEdge(queryGraph, 3, 0));
+        assertNull(GHUtility.getEdge(queryGraph, 2, 1));
     }
 
     @Test
@@ -178,10 +206,10 @@ public class QueryGraphTest
 
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(0);
         iter.next();
-        
+
         QueryGraph.VirtualEdgeIterator vi = new QueryGraph.VirtualEdgeIterator(2);
         vi.add(iter.detach());
-        
+
         assertTrue(vi.next());
     }
 
@@ -199,7 +227,7 @@ public class QueryGraphTest
         QueryGraph queryGraph = new QueryGraph(g);
         queryGraph.lookup(Arrays.asList(res1, res2));
         assertEquals(new GHPoint(0.5, 0), res1.getSnappedPoint());
-        assertEquals(new GHPoint(1.3, 1.9), res2.getSnappedPoint());
+        assertEquals(new GHPoint(1.300019, 1.899962), res2.getSnappedPoint());
         assertNotNull(GHUtility.getEdge(queryGraph, 0, 4));
         assertNotNull(GHUtility.getEdge(queryGraph, 0, 3));
     }
@@ -213,10 +241,12 @@ public class QueryGraphTest
     }
 
     public LocationIDResult createLocationResult( double lat, double lon,
-            EdgeIteratorState iter, int index, LocationIDResult.Position pos )
+            EdgeIteratorState edge, int index, LocationIDResult.Position pos )
     {
+        if (edge == null)
+            throw new IllegalStateException("Specify edge != null");
         LocationIDResult tmp = new LocationIDResult(lat, lon);
-        tmp.setClosestEdge(iter);
+        tmp.setClosestEdge(edge);
         tmp.setWayIndex(index);
         tmp.setSnappedPosition(pos);
         tmp.calcSnappedPoint(new DistanceCalc());
