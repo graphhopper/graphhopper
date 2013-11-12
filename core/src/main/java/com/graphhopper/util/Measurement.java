@@ -70,8 +70,12 @@ public class Measurement
 
         public void doPostProcessing()
         {
+            StopWatch sw = new StopWatch().start();
+            int edges = getGraph().getAllEdges().getMaxId();
             initCHPrepare();
-            super.prepare();
+            super.prepare();           
+            put("prepare.time", sw.stop().getTime());
+            put("prepare.shortcuts", getGraph().getAllEdges().getMaxId() - edges);
         }
     }
 
@@ -110,7 +114,7 @@ public class Measurement
         try
         {
             maxNode = g.getNodes();
-            printGraphDetails(g);            
+            printGraphDetails(g);
             printLocation2IDQuery(g, hopper.getLocationIndex(), count);
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
@@ -156,15 +160,6 @@ public class Measurement
         put("graph.edges", g.getAllEdges().getMaxId());
         put("graph.sizeInMB", g.getCapacity() / Helper.MB);
         put("graph.encoder", g.getEncodingManager().getSingle().toString());
-    }
-
-    private void printPreparationDetails( Graph g, PrepareContractionHierarchies prepare )
-    {
-        // time(preparation) + shortcuts number
-        StopWatch sw = new StopWatch().start();
-        prepare.doWork();
-        put("prepare.time", sw.stop().getTime());
-        put("prepare.shortcuts", prepare.getShortcuts());
     }
 
     private void printLocation2IDQuery( Graph g, final LocationIndex idx, int count )

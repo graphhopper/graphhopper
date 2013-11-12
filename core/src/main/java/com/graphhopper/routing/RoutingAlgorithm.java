@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.NotThreadSafe;
 
